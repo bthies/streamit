@@ -1,7 +1,7 @@
 /*
  * InitFunction.java: container class to represent an init function
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: InitFunction.java,v 1.8 2002-08-13 21:11:24 dmaze Exp $
+ * $Id: InitFunction.java,v 1.9 2002-08-20 20:04:30 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -51,7 +51,7 @@ public class InitFunction
                 // Add a variable assignment, if we have an initializer:
                 if (param.init != null)
                     paramAssigns += getIndent(indent+1) +
-                        n2j.doAssignment(new ExprVar(param.name),
+                        n2j.doAssignment(new ExprVar(null, param.name),
                                          param.init, symtab) + ";\n";
             }
         }

@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.18 2002-08-16 18:40:50 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.19 2002-08-20 20:04:30 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -161,8 +161,8 @@ public class NodesToJava implements FEVisitor
         Type lhsType = (Type)lhs.accept(eType);
         if (lhsType.isComplex())
         {
-            Expression real = new ExprField(lhs, "real");
-            Expression imag = new ExprField(lhs, "imag");
+            Expression real = new ExprField(lhs.getContext(), lhs, "real");
+            Expression imag = new ExprField(lhs.getContext(), lhs, "imag");
             // If the right hand side is complex too (at this point
             // just test the run-time type of the expression), then we
             // should do field copies; otherwise we only have a real part.

@@ -1,7 +1,7 @@
 /*
  * ExprPop.java: a StreamIt pop expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprPop.java,v 1.1 2002-07-11 20:58:22 dmaze Exp $
+ * $Id: ExprPop.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -14,8 +14,9 @@ package streamit.frontend.nodes;
 public class ExprPop extends Expression
 {
     /** Creates a new pop expression. */
-    public ExprPop()
+    public ExprPop(FEContext context)
     {
+        super(context);
     }
     
     /** Accept a front-end visitor. */

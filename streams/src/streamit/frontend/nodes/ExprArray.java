@@ -1,7 +1,7 @@
 /*
  * ExprArray.java: an array element reference
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprArray.java,v 1.1 2002-07-10 18:03:30 dmaze Exp $
+ * $Id: ExprArray.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -16,8 +16,9 @@ public class ExprArray extends Expression
     private Expression base, offset;
     
     /** Creates a new ExprArray with the specified base and offset. */
-    public ExprArray(Expression base, Expression offset)
+    public ExprArray(FEContext context, Expression base, Expression offset)
     {
+        super(context);
         this.base = base;
         this.offset = offset;
     }

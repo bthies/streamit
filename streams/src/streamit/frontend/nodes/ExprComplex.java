@@ -1,7 +1,7 @@
 /*
  * ExprComplex.java: a complex-valued expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprComplex.java,v 1.1 2002-07-10 18:03:30 dmaze Exp $
+ * $Id: ExprComplex.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -22,8 +22,9 @@ public class ExprComplex extends Expression
     /** Create a new ExprComplex with the specified real and imaginary
      * parts.  Either of real or imag may be null; see the class
      * description for details. */
-    public ExprComplex(Expression real, Expression imag)
+    public ExprComplex(FEContext context, Expression real, Expression imag)
     {
+        super(context);
         this.real = real;
         this.imag = imag;
     }

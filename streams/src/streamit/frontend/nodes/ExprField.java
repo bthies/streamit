@@ -1,7 +1,7 @@
 /*
  * ExprField.java: a field-reference expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprField.java,v 1.1 2002-07-10 18:03:31 dmaze Exp $
+ * $Id: ExprField.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -18,8 +18,9 @@ public class ExprField extends Expression
     
     /** Creates a new field-reference expression, referencing the
      * named field of the specified expression. */
-    public ExprField(Expression left, String name)
+    public ExprField(FEContext context, Expression left, String name)
     {
+        super(context);
         this.left = left;
         this.name = name;
     }

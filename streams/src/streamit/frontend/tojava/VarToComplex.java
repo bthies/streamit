@@ -1,7 +1,7 @@
 /*
  * VarToComplex.java: split variables into separate real/complex parts
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: VarToComplex.java,v 1.5 2002-07-16 18:16:00 dmaze Exp $
+ * $Id: VarToComplex.java,v 1.6 2002-08-20 20:04:30 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -28,9 +28,9 @@ public class VarToComplex extends FEReplacer
         Type type = (Type)exp.accept(getExprType);
         if (type.isComplex())
         {
-            Expression real = new ExprField(exp, "real");
-            Expression imag = new ExprField(exp, "imag");
-            return new ExprComplex(real, imag);
+            Expression real = new ExprField(exp.getContext(), exp, "real");
+            Expression imag = new ExprField(exp.getContext(), exp, "imag");
+            return new ExprComplex(exp.getContext(), real, imag);
         }
         else
             return exp;
@@ -59,9 +59,9 @@ public class VarToComplex extends FEReplacer
         Type type = (Type)exp.accept(getExprType);
         if (type.isComplex())
         {
-            Expression real = new ExprField(exp, "real");
-            Expression imag = new ExprField(exp, "imag");
-            return new ExprComplex(real, imag);
+            Expression real = new ExprField(exp.getContext(), exp, "real");
+            Expression imag = new ExprField(exp.getContext(), exp, "imag");
+            return new ExprComplex(exp.getContext(), real, imag);
         }
         else
             return exp;

@@ -1,7 +1,7 @@
 /*
  * ExprPeek.java: a StreamIt peek expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprPeek.java,v 1.1 2002-07-11 20:58:22 dmaze Exp $
+ * $Id: ExprPeek.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -17,8 +17,9 @@ public class ExprPeek extends Expression
     private Expression expr;
     
     /** Creates a new pop expression. */
-    public ExprPeek(Expression expr)
+    public ExprPeek(FEContext context, Expression expr)
     {
+        super(context);
         this.expr = expr;
     }
 

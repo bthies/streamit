@@ -1,7 +1,7 @@
 /*
  * FEReplacer.java: run through a front-end tree and replace nodes
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEReplacer.java,v 1.3 2002-07-11 20:58:22 dmaze Exp $
+ * $Id: FEReplacer.java,v 1.4 2002-08-20 20:04:28 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -28,7 +28,7 @@ public class FEReplacer implements FEVisitor
         if (base == exp.getBase() && offset == exp.getOffset())
             return exp;
         else
-            return new ExprArray(base, offset);
+            return new ExprArray(exp.getContext(), base, offset);
     }
     
     public Object visitExprBinary(ExprBinary exp)
@@ -38,7 +38,7 @@ public class FEReplacer implements FEVisitor
         if (left == exp.getLeft() && right == exp.getRight())
             return exp;
         else
-            return new ExprBinary(exp.getOp(), left, right);
+            return new ExprBinary(exp.getContext(), exp.getOp(), left, right);
     }
     
     public Object visitExprComplex(ExprComplex exp)
@@ -50,7 +50,7 @@ public class FEReplacer implements FEVisitor
         if (real == exp.getReal() && imag == exp.getImag())
             return exp;
         else
-            return new ExprComplex(real, imag);
+            return new ExprComplex(exp.getContext(), real, imag);
     }
     
     public Object visitExprConstChar(ExprConstChar exp) { return exp; }
@@ -64,7 +64,7 @@ public class FEReplacer implements FEVisitor
         if (left == exp.getLeft())
             return exp;
         else
-            return new ExprField(left, exp.getName());
+            return new ExprField(exp.getContext(), left, exp.getName());
     }
 
     public Object visitExprFunCall(ExprFunCall exp)
@@ -79,7 +79,7 @@ public class FEReplacer implements FEVisitor
             if (param != newParam) hasChanged = true;
         }
         if (!hasChanged) return exp;
-        return new ExprFunCall(exp.getName(), newParams);
+        return new ExprFunCall(exp.getContext(), exp.getName(), newParams);
     }
 
     public Object visitExprPeek(ExprPeek exp)
@@ -88,7 +88,7 @@ public class FEReplacer implements FEVisitor
         if (expr == exp.getExpr())
             return exp;
         else
-            return new ExprPeek(expr);
+            return new ExprPeek(exp.getContext(), expr);
     }
 
     public Object visitExprPop(ExprPop exp) { return exp; }
@@ -101,7 +101,7 @@ public class FEReplacer implements FEVisitor
         if (a == exp.getA() && b == exp.getB() && c == exp.getC())
             return exp;
         else
-            return new ExprTernary(exp.getOp(), a, b, c);
+            return new ExprTernary(exp.getContext(), exp.getOp(), a, b, c);
     }
     
     public Object visitExprUnary(ExprUnary exp)
@@ -110,7 +110,7 @@ public class FEReplacer implements FEVisitor
         if (expr == exp.getExpr())
             return exp;
         else
-            return new ExprUnary(exp.getOp(), expr);
+            return new ExprUnary(exp.getContext(), exp.getOp(), expr);
     }
     
     public Object visitExprVar(ExprVar exp) { return exp; }

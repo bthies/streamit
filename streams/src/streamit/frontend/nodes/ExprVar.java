@@ -1,7 +1,7 @@
 /*
  * ExprVar.java: a named variable reference
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprVar.java,v 1.1 2002-07-10 18:03:31 dmaze Exp $
+ * $Id: ExprVar.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -17,8 +17,9 @@ public class ExprVar extends Expression
     private String name;
     
     /** Create a new ExprVar for a particular named variable. */
-    public ExprVar(String name)
+    public ExprVar(FEContext context, String name)
     {
+        super(context);
         this.name = name;
     }
     

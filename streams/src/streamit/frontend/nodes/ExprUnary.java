@@ -1,7 +1,7 @@
 /*
  * ExprUnary.java: a unary expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprUnary.java,v 1.1 2002-07-10 18:03:31 dmaze Exp $
+ * $Id: ExprUnary.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -25,8 +25,9 @@ public class ExprUnary extends Expression
     
     /** Creates a new ExprUnary applying the specified operator to the
      * specified expression. */
-    public ExprUnary(int op, Expression expr)
+    public ExprUnary(FEContext context, int op, Expression expr)
     {
+        super(context);
         this.op = op;
         this.expr = expr;
     }

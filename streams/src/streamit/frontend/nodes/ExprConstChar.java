@@ -1,7 +1,7 @@
 /*
  * ExprConstChar.java: a single-character literal
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprConstChar.java,v 1.1 2002-07-10 18:03:30 dmaze Exp $
+ * $Id: ExprConstChar.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -14,16 +14,17 @@ public class ExprConstChar extends Expression
     private char val;
     
     /** Create a new ExprConstChar for a particular character. */
-    public ExprConstChar(char val)
+    public ExprConstChar(FEContext context, char val)
     {
+        super(context);
         this.val = val;
     }
     
     /** Create a new ExprConstChar containing the first character of a
      * String. */
-    public ExprConstChar(String str)
+    public ExprConstChar(FEContext context, String str)
     {
-        this(str.charAt(0));
+        this(context, str.charAt(0));
     }
     
     /** Returns the value of this. */

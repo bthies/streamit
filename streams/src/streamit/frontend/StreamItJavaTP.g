@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.35 2002-08-16 21:36:39 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.36 2002-08-20 20:04:24 dmaze Exp $
  */
 
 header {
@@ -48,6 +48,25 @@ options {
 	public void reportError(RecognitionException ex)
 	{
 		ex.printStackTrace(System.err);
+	}
+
+	// In principle this should work, except that we don't have Tokens
+	// here, only ASTs.  Oops.
+	/*
+	public FEContext getContext(Token t)
+	{
+		int line = t.getLine();
+		if (line == 0) line = -1;
+		int col = t.getColumn();
+		if (col == 0) col = -1;
+		return new FEContext(null, line, col);
+	}
+*/
+
+	// So we don't know how to do this.
+	public FEContext getContext(AST ast)
+	{
+		return null;
 	}
 }
 
@@ -557,7 +576,8 @@ variable_decl returns [String t]
 				t += " = " + n2j.makeConstructor(type);
 				if (init != null)
 					t += ";\n" + getIndent() +
-						n2j.doAssignment(new ExprVar(name.getText()), init,
+						n2j.doAssignment(new ExprVar(getContext(name),
+													 name.getText()), init,
 										 symTab);
 			}
 			else if (init != null)
@@ -615,11 +635,11 @@ streamit_expr returns [Expression x] {x=null;}
 	;
 
 pop_expr returns [Expression x] {x=null;}
-	: TK_pop { x = new ExprPop(); }
+	: t:TK_pop { x = new ExprPop(getContext(t)); }
 	;
 
 peek_expr returns [Expression x] {x=null;}
-	: #(TK_peek x=expression) { x = new ExprPeek(x); }
+	: #(t:TK_peek x=expression) { x = new ExprPeek(getContext(t), x); }
 	;
 
 variable_list returns [String t]
@@ -647,11 +667,12 @@ minic_expr returns [Expression x] { x = null; }
 	| x=minic_binary_expr
 	| x=minic_unary_expr
 	| x=value_expression
-	| number:NUMBER { x = ExprConstant.createConstant(number.getText()); }
-	| char_literal:CHAR_LITERAL
-		{ x = new ExprConstChar(char_literal.getText()); }
-	| string_literal:STRING_LITERAL
-		{ x = new ExprConstStr(string_literal.getText()); }
+	| number:NUMBER { x = ExprConstant.createConstant(getContext(number),
+				number.getText()); }
+	| cl:CHAR_LITERAL
+		{ x = new ExprConstChar(getContext(cl), cl.getText()); }
+	| sl:STRING_LITERAL
+		{ x = new ExprConstStr(getContext(sl), sl.getText()); }
 	;
 
 minic_ternary_expr returns [Expression x]
@@ -659,8 +680,8 @@ minic_ternary_expr returns [Expression x]
 	x = null;
 	Expression a, b, c;
 }
-	: #(QUESTION a=expression b=expression c=expression)
-		{ x = new ExprTernary(ExprTernary.TEROP_COND, a, b, c); }
+	: #(t:QUESTION a=expression b=expression c=expression)
+		{ x = new ExprTernary(getContext(t), ExprTernary.TEROP_COND, a, b, c); }
 	;
 
 minic_binary_expr returns [Expression x]
@@ -686,18 +707,15 @@ minic_binary_expr returns [Expression x]
 		| #(MORE_THAN { o = ExprBinary.BINOP_GT; } l=expression r=expression)
 		| #(MORE_EQUAL { o = ExprBinary.BINOP_GE; } l=expression r=expression)
 		)
-		{ x = new ExprBinary(o, l, r); }
+		{ x = new ExprBinary(l.getContext(), o, l, r); }
 	;
 
-minic_unary_expr returns [Expression x] {x=null; Expression y;}
-	: #(PRE_INCR y=expression)
-		{ x = new ExprUnary(ExprUnary.UNOP_PREINC, y); }
-	| #(PRE_DECR y=expression)
-		{ x = new ExprUnary(ExprUnary.UNOP_PREDEC, y); }
-	| #(POST_INCR y=expression)
-		{ x = new ExprUnary(ExprUnary.UNOP_POSTINC, y); }
-	| #(POST_DECR y=expression)
-		{ x = new ExprUnary(ExprUnary.UNOP_POSTDEC, y); }
+minic_unary_expr returns [Expression x] {x=null; Expression y; int o = 0; }
+	: 	( #(PRE_INCR y=expression) { o = ExprUnary.UNOP_PREINC; }
+		| #(PRE_DECR y=expression) { o = ExprUnary.UNOP_PREDEC; }
+		| #(POST_INCR y=expression) { o = ExprUnary.UNOP_POSTINC; }
+		| #(POST_DECR y=expression) { o = ExprUnary.UNOP_POSTDEC; }
+		) { x = new ExprUnary(y.getContext(), o, y); }
 	;
 
 value_expression returns [Expression x]
@@ -707,13 +725,14 @@ value_expression returns [Expression x]
 	List l;
   String func_params = "", array_mods = "";
 }
-	: id:ID { x = new ExprVar(id.getText()); }
+	: id:ID { x = new ExprVar(getContext(id), id.getText()); }
 	| #(DOT left=expression field:ID)
-		{ x = new ExprField(left, field.getText()); }
+		{ x = new ExprField(left.getContext(), left, field.getText()); }
 	| #(LSQUARE x=expression
-			#(LSQUARE (right=expression { x = new ExprArray(x, right); } )+ ))
+			#(LSQUARE (right=expression
+					{ x = new ExprArray(x.getContext(), x, right); } )+ ))
 	| #(LPAREN fn:ID l=func_param_list)
-		{ x = new ExprFunCall(fn.getText(), l); }
+		{ x = new ExprFunCall(getContext(fn), fn.getText(), l); }
 	;
 
 func_param_list returns [List l] { l = new ArrayList();	Expression x; }

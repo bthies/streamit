@@ -1,7 +1,7 @@
 /*
  * ExprFunCall.java: a function call expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprFunCall.java,v 1.3 2002-07-17 17:03:56 dmaze Exp $
+ * $Id: ExprFunCall.java,v 1.4 2002-08-20 20:04:28 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -23,16 +23,18 @@ public class ExprFunCall extends Expression
     
     /** Creates a new function call with the specified name and
      * parameter list. */
-    public ExprFunCall(String name, List params)
+    public ExprFunCall(FEContext context, String name, List params)
     {
+        super(context);
         this.name = name;
         this.params = Collections.unmodifiableList(params);
     }
 
     /** Creates a new function call with the specified name and
      * specified single parameter. */
-    public ExprFunCall(String name, Expression param)
+    public ExprFunCall(FEContext context, String name, Expression param)
     {
+        super(context);
         this.name = name;
         this.params = new ArrayList();
         this.params.add(param);
@@ -41,8 +43,10 @@ public class ExprFunCall extends Expression
 
     /** Creates a new function call with the specified name and
      * two specified parameters. */
-    public ExprFunCall(String name, Expression p1, Expression p2)
+    public ExprFunCall(FEContext context, String name,
+                       Expression p1, Expression p2)
     {
+        super(context);
         this.name = name;
         this.params = new ArrayList();
         this.params.add(p1);

@@ -1,7 +1,7 @@
 /*
  * Decomplexifier.java: convert complex expressions to real arithmetic
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: Decomplexifier.java,v 1.4 2002-07-16 18:49:57 dmaze Exp $
+ * $Id: Decomplexifier.java,v 1.5 2002-08-20 20:04:30 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -49,12 +49,14 @@ public class Decomplexifier
         {
             int num = varGen.nextVar("Complex");
             String varName = varGen.varName(num);
-            Expression varExpr = new ExprVar(varName);
+            Expression varExpr = new ExprVar(exp.getContext(), varName);
             Result result = new Result(varExpr);
             if (exp instanceof ExprComplex)
             {
-                Expression lhsr = new ExprField(varExpr, "real");
-                Expression lhsi = new ExprField(varExpr, "imag");
+                Expression lhsr = new ExprField(exp.getContext(),
+                                                varExpr, "real");
+                Expression lhsi = new ExprField(exp.getContext(),
+                                                varExpr, "imag");
                 ExprComplex cplx = (ExprComplex)exp;
             
                 result.statements += (String)lhsr.accept(n2j) + " = " +

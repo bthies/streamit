@@ -1,7 +1,7 @@
 /*
  * ExprTernary.java: a ternary expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprTernary.java,v 1.1 2002-07-10 18:03:31 dmaze Exp $
+ * $Id: ExprTernary.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -21,8 +21,10 @@ public class ExprTernary extends Expression
     
     /** Creates a new ExprTernary with the specified operation and
      * child expressions. */
-    public ExprTernary(int op, Expression a, Expression b, Expression c)
+    public ExprTernary(FEContext context,
+                       int op, Expression a, Expression b, Expression c)
     {
+        super(context);
         this.op = op;
         this.a = a;
         this.b = b;

@@ -1,7 +1,7 @@
 /*
  * Expression.java: a generic front-end expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: Expression.java,v 1.2 2002-08-19 20:48:14 dmaze Exp $
+ * $Id: Expression.java,v 1.3 2002-08-20 20:04:28 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -15,11 +15,5 @@ abstract public class Expression extends FENode
     public Expression(FEContext context)
     {
         super(context);
-    }
-
-    // Temporary hack:
-    public Expression()
-    {
-        super(null);
     }
 }

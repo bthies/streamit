@@ -37,8 +37,10 @@ public class ExprBinary extends Expression
     /** Create a new binary expression given the operation and the
      * left and right child nodes.  Requires that op is a valid
      * operator code and that left and right are non-null. */
-    public ExprBinary(int op, Expression left, Expression right)
+    public ExprBinary(FEContext context,
+                      int op, Expression left, Expression right)
     {
+        super(context);
         this.op = op;
         this.left = left;
         this.right = right;

@@ -15,13 +15,13 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Options.java,v 1.1 2001-08-30 16:32:58 thies Exp $
+ * $Id: Options.java,v 1.2 2002-12-18 06:30:21 karczma Exp $
  */
 
 package at.dms.util;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
+import at.dms.compiler.getopt.Getopt;
+import at.dms.compiler.getopt.LongOpt;
 
 /**
  * This class implements the entry point of the Java compiler

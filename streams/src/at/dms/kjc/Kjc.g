@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Kjc.g,v 1.2 2001-10-23 16:22:47 dmaze Exp $
+ * $Id: Kjc.g,v 1.3 2002-12-18 06:30:25 karczma Exp $
  */
 
 /*
@@ -40,7 +40,7 @@ header { package at.dms.kjc; }
   import at.dms.compiler.JavadocComment;
   import at.dms.compiler.PositionedError;
   import at.dms.compiler.TokenReference;
-  import at.dms.compiler.tools.antlr.extra.InputBuffer;
+  import at.dms.compiler.antlr.extra.InputBuffer;
 }
 
 // ----------------------------------------------------------------------
@@ -55,7 +55,7 @@ options {
   codeGenMakeSwitchThreshold = 2;  // Some optimizations
   codeGenBitsetTestThreshold = 3;
   defaultErrorHandler = false;     // Don't generate parser error handlers
-  superClass = "at.dms.compiler.tools.antlr.extra.Parser";
+  superClass = "at.dms.compiler.antlr.extra.Parser";
   access = "private";			// Set default rule access
 }
 

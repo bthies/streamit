@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.17 2002-09-27 22:41:55 thies Exp $
+ * $Id: Main.java,v 1.18 2002-12-18 06:30:25 karczma Exp $
  */
 
 package at.dms.kjc;
@@ -34,8 +34,8 @@ import at.dms.compiler.PositionedError;
 import at.dms.compiler.TokenReference;
 import at.dms.compiler.UnpositionedError;
 import at.dms.compiler.WarningFilter;
-import at.dms.compiler.tools.antlr.extra.InputBuffer;
-import at.dms.compiler.tools.antlr.runtime.ParserException;
+import at.dms.compiler.antlr.extra.InputBuffer;
+import at.dms.compiler.antlr.runtime.ParserException;
 import at.dms.util.InconsistencyException;
 import at.dms.util.Utils;
 

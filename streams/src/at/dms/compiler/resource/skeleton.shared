@@ -24,7 +24,7 @@
 
 --- isFinal list
   /** the input buffer */
-  private at.dms.compiler.tools.antlr.extra.InputBuffer buffer;
+  private at.dms.compiler.antlr.extra.InputBuffer buffer;
 
   /** the input device : unused but referenced by generated constructors */
   private java.io.Reader yy_reader;
@@ -138,10 +138,10 @@
   /**
    * Exports the buffer state.
    */
-  public at.dms.compiler.tools.antlr.extra.InputBufferState getBufferState() {
-    at.dms.compiler.tools.antlr.extra.InputBufferState	state;
+  public at.dms.compiler.antlr.extra.InputBufferState getBufferState() {
+    at.dms.compiler.antlr.extra.InputBufferState	state;
 
-    state = new at.dms.compiler.tools.antlr.extra.InputBufferState(yy_buffer,
+    state = new at.dms.compiler.antlr.extra.InputBufferState(yy_buffer,
 								   yy_startRead,
 								   yy_endRead,
 								   yy_currentPos,
@@ -157,7 +157,7 @@
    * Imports the buffer state, if exists, otherwise initialise buffer.
    */
   private void initBufferState() {
-    at.dms.compiler.tools.antlr.extra.InputBufferState	state;
+    at.dms.compiler.antlr.extra.InputBufferState	state;
 
     state = buffer.getBufferState(this);
     if (state == null) {

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Kjc.flex,v 1.4 2002-08-16 20:47:15 thies Exp $
+ * $Id: Kjc.flex,v 1.5 2002-12-18 06:30:25 karczma Exp $
  */
 
 package at.dms.kjc;
@@ -26,20 +26,20 @@ import at.dms.compiler.CompilerMessages;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
 import at.dms.compiler.PositionedError;
-import at.dms.compiler.tools.antlr.extra.CToken;
-import at.dms.compiler.tools.antlr.extra.InputBuffer;
-import at.dms.compiler.tools.antlr.extra.Scanner;
-import at.dms.compiler.tools.antlr.runtime.Token;
+import at.dms.compiler.antlr.extra.CToken;
+import at.dms.compiler.antlr.extra.InputBuffer;
+import at.dms.compiler.antlr.extra.Scanner;
+import at.dms.compiler.antlr.runtime.Token;
 
 %%
 
 %public
 %class KjcScanner
-%extends at.dms.compiler.tools.antlr.extra.Scanner
+%extends at.dms.compiler.antlr.extra.Scanner
 %implements KjcTokenTypes
 
 %function nextTokenImpl
-%type at.dms.compiler.tools.antlr.runtime.Token
+%type at.dms.compiler.antlr.runtime.Token
 
 %unicode
 %pack

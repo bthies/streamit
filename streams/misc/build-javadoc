@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# build-javadoc: creates a Javadoc tree from the StreamIt sources
+# David Maze <dmaze@cag.lcs.mit.edu>
+# $Id: build-javadoc,v 1.1 2003-09-15 14:27:29 dmaze Exp $
+
+rm -rf $STREAMIT_HOME/javadoc
+mkdir $STREAMIT_HOME/javadoc
+
+#DIRS="compiler/kopi/classes library/java scheduler/v1/java compiler/frontend"
+DIRS="compiler library/java eclipse"
+SOURCEPATHS="-sourcepath "
+for i in $DIRS; do
+  SOURCEPATHS="$SOURCEPATHS:$STREAMIT_HOME/$i"
+done
+
+for i in $DIRS; do
+  NEWPACKAGES=`cd $STREAMIT_HOME/$i; find . -follow -type f -name '*.java' -not -name CVS -print | sed -e 's@/[^/]*$@@' -e 's@/@.@g' -e 's@^\.*@@' | sort -u`
+  PACKAGES="$PACKAGES $NEWPACKAGES"
+done
+
+# We seem to have some "debug" Eclipse packages, so adding these -links
+# doesn't actually help matters any.
+#  -link http://dev.eclipse.org/help21/topic/org.eclipse.platform.doc.isv/reference/api/ \
+#  -link http://dev.eclipse.org/help21/topic/org.eclipse.jdt.doc.isv/reference/api/ \
+
+javadoc -J-Xmx128M -use -version -author \
+  -link http://java.sun.com/j2se/1.4.1/docs/api/ \
+  -link http://www.antlr.org/javadoc/ \
+  -doctitle 'StreamIt Compiler Documentation' \
+  -d $STREAMIT_HOME/javadoc \
+  -group 'StreamIt Compiler Packages' 'at.dms.kjc*:streamit.iriter' \
+  -group 'StreamIt Library Packages' 'streamit:streamit.io:streamit.misc' \
+  -group 'StreamIt Scheduler Packages' 'streamit.scheduler*' \
+  -group 'StreamIt Front End Packages' 'streamit.frontend*' \
+  -group 'Eclipse Integration' 'grapheditor*:texteditor*:launcher*' \
+  -group 'Other Kopi Packages' 'at.dms.*' \
+  -group 'Third-Party Packages' '3rdparty.*' \
+  $SOURCEPATHS $PACKAGES

@@ -96,7 +96,7 @@ public class StreaMITMain {
             // Loses debugging information on the exception, sigh.
             // We can't blindly rethrow the exception because it might
             // not be a RuntimeException.  I hate Java.  Die as best we can.
-            System.err.println(e.getTargetException());
+	    e.getTargetException().printStackTrace();
         }
     }
 }

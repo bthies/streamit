@@ -64,11 +64,14 @@ public class CloneGenerator {
 	StringBuffer sb = new StringBuffer();
 	sb.append("/** Returns a deep clone of this object. */\n");
 	if (Modifier.isAbstract(c.getModifiers())) {
-	    // if this is an abstract class, then deepClone method should also be abstract
-	    sb.append("public abstract " + className + " deepClone();\n");
+	    // if this is an abstract class, then deepClone method
+	    // should be empty.  Don't make it abstract because we
+	    // might not want all the children to have to implement if
+	    // (if there are no references to them.)
+	    sb.append("public Object deepClone() { at.dms.util.Utils.fail(\"Error in auto-generated cloning methods - deepClone was called on an abstract class.\"); return null; }\n");
 	} else {
 	    // otherwise, should define contents of class
-	    sb.append("public " + className + " deepClone() {\n");
+	    sb.append("public Object deepClone() {\n");
 	    sb.append("  " + className + " other = new " + className + "();\n");
 	    sb.append("  deepCloneInto(other);\n");
 	    sb.append("  return other;\n");
@@ -91,7 +94,11 @@ public class CloneGenerator {
 	sb.append("/** Clones all fields of this into <other> */\n");
 	sb.append("protected void deepCloneInto(" + c.getName() + " other) {\n");
 	// if there's a superclass, then call deepClone on super.
-	if (c.getSuperclass()!=null) {
+	if (c.getSuperclass()!=null && !c.getSuperclass().getName().equals("java.lang.Object")) {
+	    if (!inTargetClasses(c.getSuperclass().getName())) {
+		System.err.println("WARNING:  Generating call to undefined method " + c.getSuperclass().getName() + ".deepCloneInto as super of " + c.getName() +
+				   "\n  This is because " + c.getSuperclass().getName() + " is not in target classes.");
+	    }
 	    sb.append("  super.deepCloneInto(other);\n");
 	}
 	// copy all fields over, calling clone on them only if they are DeepCloneable
@@ -102,9 +109,11 @@ public class CloneGenerator {
 	    // get the name, type of field
 	    String name = field[i].getName();
 	    Class type = field[i].getType();
-	    if (type.getName().startsWith("at.dms")) {
+	    if (Modifier.isStatic(field[i].getModifiers())) {
+		// do nothing for static fields
+	    } else if (inTargetClasses(type.getName())) {
 		// first pass:  output deep cloning for everything in at.dms
-		sb.append("  other." + name + " = this." + name + ".deepClone();\n");
+		sb.append("  other." + name + " = (" + type.getName() + ")this." + name + ".deepClone();\n");
 	    } else if (type.isArray()) {
 		// clone arrays with typecast...
 		// get number of dimensions in array
@@ -112,7 +121,8 @@ public class CloneGenerator {
 		Class arr = type;
 		while ((arr = arr.getComponentType())!=null) { dims++; };
 		// print the stuff
-		sb.append("  other." + name + " = (" + type.getComponentType() + "");
+		String componentType = type.getComponentType().getName();
+		sb.append("  other." + name + " = (" + componentType + "");
 		// print dims $ of []'s
 		for (int j=0; j<dims; j++) {
 		    sb.append("[]");
@@ -122,8 +132,28 @@ public class CloneGenerator {
 		// for primitives, copy them straight over
 		sb.append("  other." + name + " = this." + name + ";\n");
 	    } else {
-		// for normal objects, do shallow clone
-		sb.append("  other." + name + " = (" + type.getName() + ")this." + name + ".clone();\n");
+		// in this case we have an object... need to figure
+		// out how to clone it.
+		String typeName = type.getName();
+		if (typeName.equals("java.lang.String") ||
+		    typeName.equals("java.io.PrintWriter") ||
+		    typeName.equals("at.dms.compiler.WarningFilter")) {
+		    // don't clone these since they're immutable or shouldn't be copied
+		    sb.append("  other." + name + " = this." + name + ";\n");
+		} else if (name.equals("serializationHandle")) {
+		    // for now, ignore serialization handles.  To be
+		    // changed once we get complete new cloning framework.
+		    sb.append("  other." + name + " = this." + name + ";\n");
+		} else if (typeName.equals("java.util.Hashtable") || 
+			   typeName.equals("java.util.Vector") || 
+			   typeName.equals("java.util.LinkedList") ||
+			   typeName.equals("java.util.Stack")) {
+		    // call clone on these classes
+		    sb.append("  other." + name + " = (" + typeName + ")this." + name + ".clone();\n");
+		} else {
+		    System.err.println("WARNING:  Don't know how to clone field " + name + " of type " + typeName + " in class " + c);
+		    sb.append("  other." + name + " = this." + name + ";\n");
+		}
 	    }
 	}
 	sb.append("}\n");
@@ -204,11 +234,23 @@ public class CloneGenerator {
     };
 
     /**
+     * Whether or not <className> is a class we're generating cloning code for.
+     */
+    private static boolean inTargetClasses(String className) {
+	for (int i=0; i<classes.length; i++) {
+	    if (classes[i].equals(className)) {
+		return true;
+	    }
+	}
+	return false;
+    }
+
+    /**
      * Names of classes to insert cloning stuff on.
      */
     private static final String[] classes = {
-	//"at.dms.kjc.AttributeVisitor",
-	"at.dms.kjc.BytecodeOptimizer",
+	//"at.dms.kjc.AttributeVisitor", -- interface
+	//"at.dms.kjc.BytecodeOptimizer", -- shouldn't have references to this
 	"at.dms.kjc.CArrayType",
 	"at.dms.kjc.CBadClass",
 	"at.dms.kjc.CBinaryClass",
@@ -216,7 +258,7 @@ public class CloneGenerator {
 	"at.dms.kjc.CBinaryMethod",
 	"at.dms.kjc.CBitType",
 	"at.dms.kjc.CBlockContext",
-	"at.dms.kjc.CBlockError",
+	//"at.dms.kjc.CBlockError",  -- ignore the error classes
 	"at.dms.kjc.CBodyContext",
 	"at.dms.kjc.CBooleanType",
 	"at.dms.kjc.CByteType",
@@ -232,20 +274,20 @@ public class CloneGenerator {
 	"at.dms.kjc.CContext",
 	"at.dms.kjc.CDoubleType",
 	"at.dms.kjc.CExpressionContext",
-	"at.dms.kjc.CExpressionError",
+	//"at.dms.kjc.CExpressionError", -- ignore the error classes
 	"at.dms.kjc.CField",
 	"at.dms.kjc.CFloatType",
 	"at.dms.kjc.CInitializerContext",
 	"at.dms.kjc.CIntType",
 	"at.dms.kjc.CInterfaceContext",
 	"at.dms.kjc.CLabeledContext",
-	"at.dms.kjc.CLineError",
+	//"at.dms.kjc.CLineError", -- ignore the error classes
 	"at.dms.kjc.CLongType",
 	"at.dms.kjc.CLoopContext",
 	"at.dms.kjc.CMember",
 	"at.dms.kjc.CMethod",
 	"at.dms.kjc.CMethodContext",
-	"at.dms.kjc.CMethodNotFoundError",
+	//"at.dms.kjc.CMethodNotFoundError", -- ignore the error classes
 	"at.dms.kjc.CModifier",
 	"at.dms.kjc.CNullType",
 	"at.dms.kjc.CNumericType",
@@ -268,10 +310,10 @@ public class CloneGenerator {
 	"at.dms.kjc.CVoidType",
 	"at.dms.kjc.CodeLabel",
 	"at.dms.kjc.CodeSequence",
-	//"at.dms.kjc.Constants",
+	//"at.dms.kjc.Constants", -- interface
 	"at.dms.kjc.DefaultFilter",
-	"at.dms.kjc.EmptyAttributeVisitor",
-	//"at.dms.kjc.Finalizable",
+	//"at.dms.kjc.EmptyAttributeVisitor", -- shouldn't be fields of this type
+	//"at.dms.kjc.Finalizable", -- interface
 	"at.dms.kjc.JAddExpression",
 	"at.dms.kjc.JArrayAccessExpression",
 	"at.dms.kjc.JArrayInitializer",
@@ -375,27 +417,41 @@ public class CloneGenerator {
 	"at.dms.kjc.JVariableDeclarationStatement",
 	"at.dms.kjc.JVariableDefinition",
 	"at.dms.kjc.JWhileStatement",
-	"at.dms.kjc.KjcEmptyVisitor",
-	//"at.dms.kjc.KjcMessages",
+	//"at.dms.kjc.KjcEmptyVisitor", -- shouldn't have references to this
+	//"at.dms.kjc.KjcMessages", -- interface
 	"at.dms.kjc.KjcPrettyPrinter",
-	//"at.dms.kjc.KjcVisitor",
-	"at.dms.kjc.Kopi2SIR",
-	"at.dms.kjc.Main",
+	//"at.dms.kjc.KjcVisitor", -- interface
+	//"at.dms.kjc.Kopi2SIR", -- shouldn't have references to this
+	//"at.dms.kjc.Main", -- shouldn't have references to this
 	"at.dms.kjc.MethodSignatureParser",
-	"at.dms.kjc.ObjectDeepCloner",
-	"at.dms.kjc.ReplacingVisitor",
-	//"at.dms.kjc.SLIRAttributeVisitor",
-	"at.dms.kjc.SLIREmptyAttributeVisitor",
-	"at.dms.kjc.SLIREmptyVisitor",
-	"at.dms.kjc.SLIRReplacingVisitor",
-	//"at.dms.kjc.SLIRVisitor",
-	"at.dms.kjc.StreaMITMain",
-	"at.dms.kjc.StreamItDot",
-	"at.dms.kjc.TestK2S",
-	"at.dms.kjc.KjcOptions",
+	//"at.dms.kjc.ObjectDeepCloner", -- shouldn't have references to this
+	//"at.dms.kjc.ReplacingVisitor", -- shouldn't have references to this
+	//"at.dms.kjc.SLIRAttributeVisitor", -- interface
+	//"at.dms.kjc.SLIREmptyAttributeVisitor", -- shouldn't have refs
+	//"at.dms.kjc.SLIREmptyVisitor",  -- shouldn't have refs
+	//"at.dms.kjc.SLIRReplacingVisitor",  -- shouldn't have refs
+	//"at.dms.kjc.SLIRVisitor", -- interface
+	//"at.dms.kjc.StreaMITMain", -- shouldn't have references to this
+	//"at.dms.kjc.StreamItDot", -- shouldn't have references to this
+	//"at.dms.kjc.TestK2S", -- shouldn't have references to this
+	// "at.dms.kjc.KjcOptions", -- shouldn't have references to this
 	//"at.dms.kjc.KjcTokenTypes",
-	"at.dms.kjc.KjcScanner",
-	"at.dms.kjc.KjcParser",
+	//"at.dms.kjc.KjcScanner", -- shouldn't have references to this
+	//"at.dms.kjc.KjcParser", -- don't want to descend into antlr
+	"at.dms.util.Utils",
+	//"at.dms.compiler.WarningFilter", -- interface
+	"at.dms.compiler.Phylum",
+	"at.dms.compiler.TokenReference",
+	"at.dms.compiler.Compiler",
+	"at.dms.compiler.TabbedPrintWriter",
+	//"at.dms.compiler.PositionedError", -- ignore the error classes
+	"at.dms.compiler.JavadocComment",
+	"at.dms.compiler.JavaStyleComment",
+	"at.dms.classfile.AbstractInstructionAccessor",
+	//"at.dms.util.FormattedException",
+	"at.dms.util.Message",
+	"at.dms.util.MessageDescription"
+	//"at.dms.util.Options" -- shouldn't have references to this
 	//"at.dms.kjc.SimpleDot",  -- don't do this because it has lots of open, close braces
 	//"at.dms.kjc.CloneGenerator", -- don't do this because it has lots of open, close braces
     };

@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.16 2002-11-19 15:10:48 aalamb Exp $
+ * $Id: TestBenchmarks.java,v 1.17 2002-11-20 15:23:01 aalamb Exp $
  **/
 package streamittest;
 
@@ -18,10 +18,6 @@ public class TestBenchmarks extends StreamITTestCase {
      **/
     public TestBenchmarks(String name, int flags) {
 	super (name,flags);
-	// wicked hack to include constprop flag always for nokia.
-	if (name.equals("testNokia")) {
-	    this.compiler = CompilerInterface.createCompilerInterface(flags | CompilerInterface.CONSTPROP);
-	}
 	if (STREAM_ROOT == null) {
 	    STREAM_ROOT = Harness.getStreamITRoot();
 	    BENCH_ROOT = STREAM_ROOT + BENCH_PATH;
@@ -32,7 +28,6 @@ public class TestBenchmarks extends StreamITTestCase {
 	this (name,
               CompilerInterface.NONE |
               CompilerInterface.RAW[4] |
-              CompilerInterface.CONSTPROP |
               CompilerInterface.PARTITION);
     }
 

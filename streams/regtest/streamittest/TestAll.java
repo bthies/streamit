@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.15 2002-11-18 19:05:08 thies Exp $
+ * $Id: TestAll.java,v 1.16 2002-11-20 15:23:01 aalamb Exp $
  **/
 package streamittest;
 
@@ -44,13 +44,11 @@ public class TestAll extends TestCase {
      * add the uniprocessor tests to the test suite framework.
      **/
     public static void addUniprocessorTests(TestSuite allTests) {
-	// try with just const prop
-	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.CONSTPROP));
+	// try with just standard options
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE));
 
-	// const prop and fusion
+	// standard and fusion
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.CONSTPROP |
 				       CompilerInterface.FUSION));
     }
     
@@ -61,8 +59,7 @@ public class TestAll extends TestCase {
 	for (int i=2; i<=8; i+=2) {
  	    allTests.addTest(makeTestSuite(CompilerInterface.NONE |
  					   CompilerInterface.RAW[i] |
- 					   CompilerInterface.DPPARTITION |
- 					   CompilerInterface.CONSTPROP));
+ 					   CompilerInterface.DPPARTITION));
 	}
     }
 
@@ -73,8 +70,7 @@ public class TestAll extends TestCase {
 	// try one without partitioning just in case we want to
 	// compare with original performance
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.RAW[8] | 
-				       CompilerInterface.CONSTPROP));
+				       CompilerInterface.RAW[8]));
 
 	// try all configurations of raw with constprop and partition
 	// This was causing the regtest to go crazy, so I am removing
@@ -82,8 +78,7 @@ public class TestAll extends TestCase {
 	for (int i=4; i<=8; i+=4) {
 	    allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 					   CompilerInterface.RAW[4] |
-					   CompilerInterface.PARTITION |
-					   CompilerInterface.CONSTPROP));
+					   CompilerInterface.PARTITION));
 	}
 
 	// try linear replacement (replace linear filters with a direct implementation).

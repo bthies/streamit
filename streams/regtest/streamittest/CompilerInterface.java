@@ -6,13 +6,13 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.14 2002-11-19 15:10:48 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.15 2002-11-20 15:23:01 aalamb Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
     public static final int NONE               =    0x0;
     //public static final int RAW              =    0x1;
-    public static final int CONSTPROP          =    0x2;
+    //public static final int CONSTPROP          =    0x2;
     public static final int UNROLL             =    0x4; // sets unroll limit to 100000
     public static final int FUSION             =    0x8;
     public static final int PARTITION          =   0x10;
@@ -35,7 +35,7 @@ public class CompilerInterface {
 
     // Options
     public static final String OPTION_STREAMIT           = "--streamit";
-    public static final String OPTION_CONSTPROP          = "--constprop";
+    //public static final String OPTION_CONSTPROP          = "--constprop";
     public static final String OPTION_UNROLL             = "--unroll 100000";
     public static final String OPTION_FUSION             = "--fusion";
     public static final String OPTION_PARTITION          = "--partition";
@@ -183,10 +183,10 @@ public class CompilerInterface {
 	numOptions++;
 	
 	// if we want to turn on constant prop
-	if ((flags & CONSTPROP) == CONSTPROP) {
-	    options[numOptions] = OPTION_CONSTPROP;
-	    numOptions++;
-	}
+// 	if ((flags & CONSTPROP) == CONSTPROP) {
+// 	    options[numOptions] = OPTION_CONSTPROP;
+// 	    numOptions++;
+// 	}
 
 	// if we want to turn on unrolling
 	if ((flags & UNROLL) == UNROLL) {

@@ -2,7 +2,7 @@
  * This should help you test your bed. Next version.
  * Currently used as scratch space for testing a small
  * subset of the total test cases.
- * $Id: TestBed.java,v 1.13 2002-10-04 00:35:34 thies Exp $
+ * $Id: TestBed.java,v 1.14 2002-11-20 15:23:01 aalamb Exp $
  **/
 package streamittest;
 
@@ -10,26 +10,26 @@ import junit.framework.*;
 
 public class TestBed extends StreamITTestCase {
 
-
     public TestBed(String name, int flags) {
 	super (name, flags);
     }
 
-
-
-
     public static Test suite() {
+	TestSuite suite = new TestSuite();;
+	int flags = 0;
 
- 	int flags = (CompilerInterface.NONE |
- 		     CompilerInterface.RAW[4] |
-		     CompilerInterface.PARTITION);
-	//flags = CompilerInterface.NONE;
+	suite.addTest(new TestExamples("testMergeSort",
+				       CompilerInterface.NONE));
 
-	TestSuite suite = new TestSuite();
 
-	suite.addTest(new TestExamples("testAutoCor", flags));
+	suite.addTest(new TestExamples("testMergeSort",
+				       CompilerInterface.FUSION));
 
-	
+	suite.addTest(new TestExamples("testMergeSort",
+				       CompilerInterface.PARTITION    |
+				       CompilerInterface.RAW[4]));
+
+
 	return suite;
 	//return TestAll.makeTestSuite(flags);
     }

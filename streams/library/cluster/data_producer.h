@@ -25,6 +25,8 @@ class data_producer : public socket_holder, public serializable {
   void write_int(int);
   void write_float(float);
 
+  void flush();
+
 };
 
 

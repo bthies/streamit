@@ -50,6 +50,15 @@ void data_producer::write_chunk(void *data, int size, int nitems) {
   items_sent += nitems;
 }
 
+void data_producer::flush() {
+  // sends more data than has been written to the buffer, 
+  // this is called at the end of execution
+
+  if (buf_offset > 0) {
+    sock->write_chunk((char*)data_buffer, __out_data_buffer); 
+  }
+}
+
 void data_producer::write_item(void *data, int size) {
   write_chunk(data, size, 1); 
 }

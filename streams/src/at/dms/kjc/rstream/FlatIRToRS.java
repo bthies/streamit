@@ -40,13 +40,21 @@ public class FlatIRToRS extends ToC
     private int forLoopHeader = 0;
     
     
-    
-    public FlatIRToRS()
+    public FlatIRToRS() 
     {
 	this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
 	doloops = new HashMap();
-	newArrayExprs = null;
+	this.newArrayExprs = null;
+    }
+    
+    
+    public FlatIRToRS(NewArrayExprs newArrayExprs)
+    {
+	this.str = new StringWriter();
+        this.p = new TabbedPrintWriter(str);
+	doloops = new HashMap();
+	this.newArrayExprs = newArrayExprs;
     }
     
     
@@ -370,7 +378,7 @@ public class FlatIRToRS extends ToC
 	//cond is an expression so print the ;
 	print("; ");
 	if (incr != null) {
-	    FlatIRToRS l2c = new FlatIRToRS();
+	    FlatIRToRS l2c = new FlatIRToRS(newArrayExprs);
 	    l2c.doloops = this.doloops;
 	    incr.accept(l2c);
 	    // get String
@@ -410,7 +418,7 @@ public class FlatIRToRS extends ToC
 	//comma'ed form
 	while (exp instanceof JArrayAccessExpression) {
 	    JArrayAccessExpression arr = (JArrayAccessExpression)exp;
-	    FlatIRToRS toRS = new FlatIRToRS();
+	    FlatIRToRS toRS = new FlatIRToRS(newArrayExprs);
 	    arr.getAccessor().accept(toRS);
 	    
 	    access = access + toRS.getString() + ", ";

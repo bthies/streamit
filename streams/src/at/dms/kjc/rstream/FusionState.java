@@ -33,8 +33,14 @@ public abstract class FusionState
     {
 	this.node = node;
 	this.myUniqueID = uniqueID++;
+	peekBufferSize = 0;
     }
+
+    public abstract void initTasks(Vector fields, Vector functions,
+				   JBlock initFunctionCalls, JBlock main);
     
+    public abstract JStatement[] getWork(JBlock enclosingBlock, boolean isInit);
+
     public static FusionState getFusionState(FlatNode node) 
     {
 	if (!fusionState.containsKey(node)) {
@@ -52,7 +58,7 @@ public abstract class FusionState
     }
     
     //for splitters and filters ignore prev, this is overrided for joiners
-    public JVariableDefinition getBufferVar(FlatNode node, boolean init)
+    public JVariableDefinition getBufferVar(FlatNode prev, boolean init)
     {
 	return init ? bufferVarInit[0] : bufferVar[0];
     }

@@ -16,6 +16,10 @@ public class FilterFusionState extends FusionState
     private static String PUSHCOUNTERNAME = "__PUSH_COUNTER_";
     private static String PEEKBUFFERNAME = "__PEEK_BUFFER_";
 
+    private static String FORINDEXNAME = "__work_counter_";
+    private static String RESTORECOUNTER = "__restore_counter_";
+    private static String BACKUPCOUNTER = "__backup_counter_";
+
     private JVariableDefinition popCounterVar;
     private JVariableDefinition pushCounterVar;
     private JVariableDefinition pushCounterVarInit;
@@ -31,6 +35,11 @@ public class FilterFusionState extends FusionState
 	super(fnode);
 
 	filter = (SIRFilter)node.contents;
+
+	//two stage filters are currently only introduced by partitioning 
+	assert !(filter instanceof SIRTwoStageFilter);
+	
+	assert node.ways <= 1 : "Filter FlatNode with more than one outgoing buffer";	    
 	
 	bufferVar = new JVariableDefinition[1];
 	bufferVarInit = new JVariableDefinition[1];
@@ -318,28 +327,109 @@ public class FilterFusionState extends FusionState
 					 loopCounterBackup, 
 					 new JIntLiteral(peekBufferSize));
     }
-
-    /*  not needed anymore
-      public JStatement[] resetIndices(boolean isInit) 
+    
+    public void initTasks(Vector fields, Vector functions,
+			  JBlock initFunctionCalls, JBlock main) 
     {
-	//don't call this on init...
-	assert !isInit;
+	//add helper functions
+	for (int i = 0; i < filter.getMethods().length; i++) {
+	    if (filter.getMethods()[i] != filter.getInit() &&
+		filter.getMethods()[i] != filter.getWork())
+		functions.add(filter.getMethods()[i]);
+	}
 	
-	Vector statements = new Vector();
+	//add init function
+	if (filter.getInit() != null)
+	    functions.add(filter.getInit());
+	
+	//add fields 
+	for (int i = 0; i < filter.getFields().length; i++) 
+	    fields.add(filter.getFields()[i]);
+	
+	//add call to the init function to the init block
+	initFunctionCalls.addStatement(new JExpressionStatement
+				       (null, 
+					new JMethodCallExpression
+					(null, new JThisExpression(null),
+					 filter.getInit().getName(), new JExpression[0]),
+					null));
+	
+	//if this buffer peeks add the declaration for the peek buffer
+	//to the main function
+	JStatement peekBufDecl = getPeekBufDecl();
+	if (peekBufDecl != null) 
+	    main.addStatementFirst(peekBufDecl);
+    }
+    
+    
+    public JStatement[] getWork(JBlock enclosingBlock, boolean isInit) 
+    {
+	JBlock statements = new JBlock(null, new JStatement[0], null);
+	
+	int mult = StrToRStream.getMult(getNode(), isInit);
 
-	if (filter.getPopInt() > 0) {
-	    statements.add(intAssignStm(popCounterVar, -1));
-	}
-	if (filter.getPushInt() > 0) {
-	    assert node.ways == 1;
-	    assert node.edges[0] != null;
-	    
-	    FilterFusionState next = getFusionState(node.edges[0]);
-	    int pushInit = next.peekBufferSize - 1;
-	    statements.add(intAssignStm(pushCounterVar, pushInit));
+	//add the declaration for the pop buffer
+	JStatement popBufDecl = getPopBufDecl(isInit);
+	if (popBufDecl != null) {
+	    enclosingBlock.addStatementFirst(popBufDecl);
 	}
 	
-	return (JStatement[])statements.toArray(new JStatement[0]);
-    }    
-    */
+	
+	//now add the declaration of the pop index and the push index
+	GenerateCCode.addStmtArrayFirst(enclosingBlock, getIndexDecls(isInit));
+
+	//create the loop counter to restore the peeked items from 
+	//the last firings of the filter to the pop buffer
+	if (!isInit && peekBufferSize > 0) {
+	    //create the loop counter
+	    JVariableDefinition loopCounterRestore = 
+		GenerateCCode.newIntLocal(RESTORECOUNTER, myUniqueID, 0);
+	    //add the declaration of the loop counter
+	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
+					     (null, loopCounterRestore, null));
+	    statements.addStatement(peekRestoreLoop(loopCounterRestore,
+						       isInit));
+	}
+	
+	//now add the for loop for the work function executions in this
+	//schedule
+	if (StrToRStream.getMult(getNode(), isInit) > 0) {
+	    //clone work function 
+	    JMethodDeclaration work = filter.getWork();
+	    JBlock oldBody = new JBlock(null, work.getStatements(), null);
+	    
+	    JStatement body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
+	    
+	    //before we add the body make for loop
+	    //get a new local variable
+	    JVariableDefinition forIndex = GenerateCCode.newIntLocal(FORINDEXNAME,
+						       myUniqueID, 0);
+	    
+	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
+					     (null, forIndex, null));
+	    
+	    
+	    body = GenerateCCode.makeForLoop(body, forIndex, new JIntLiteral(mult));
+	    
+	    body.accept(new ConvertChannelExprs(this, isInit));
+	    
+	    statements.addStatement(body);
+	}
+
+	//create the loop to back up the unpop'ed items from the pop buffer
+	//and store them into the peek buffer
+	if (peekBufferSize > 0) {
+	    //create the loop counter
+	    JVariableDefinition loopCounterBackup = 
+		GenerateCCode.newIntLocal(BACKUPCOUNTER, myUniqueID, 0);
+	    //add the declaration of the counter
+	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
+					     (null, loopCounterBackup, null));
+	    statements.addStatement(peekBackupLoop(loopCounterBackup,
+						      isInit));
+	}
+
+	return statements.getStatementArray();
+    }
+    
 }

@@ -24,7 +24,7 @@ import at.dms.util.*;
  */
 //also store any whole array assignments
 //remove any jnewarrayexpression not in a declaration
-public class NewArrayExprs extends SLIRReplacingVisitor 
+public class NewArrayExprs extends SLIRReplacingVisitor implements FlatVisitor
 {
     //hash map holding left -> right in left = right, where right and
     //left are arrays
@@ -36,35 +36,28 @@ public class NewArrayExprs extends SLIRReplacingVisitor
     /**
      * Create an object and perform the anaylsis.  Now one can access
      * The new array expression from the access methods.
-     * Note, this not visit the stream graph, just examine <node>
      *
      * @param node The flat node we want to examine. 
      */
 
     public NewArrayExprs(FlatNode node) 
     {
-	if (node.isFilter()) {
-	    initialize((SIRFilter)node.contents);
-	}
-    }
-    
-    public NewArrayExprs(SIRFilter filter) 
-    {	
-	initialize(filter);
-    }
-
-    private void initialize(SIRFilter filter)
-    {	    
 	arrayAssignments = new HashMap();
 	newArray = new HashMap();
-
-	for (int i = 0; i < filter.getFields().length; i++)
-	    filter.getFields()[i].accept(this);
-	
-	for (int i = 0; i < filter.getMethods().length; i++)
-	    filter.getMethods()[i].accept(this);
+	node.accept(this, null, true);
     }
-    
+
+    public void visitNode(FlatNode node) 
+    {
+	if (node.isFilter()) {
+	    SIRFilter filter = (SIRFilter)node.contents;
+	    for (int i = 0; i < filter.getFields().length; i++)
+		filter.getFields()[i].accept(this);
+	    
+	    for (int i = 0; i < filter.getMethods().length; i++)
+		filter.getMethods()[i].accept(this);
+	}
+    }
     
     /**
      * Given a variable return the corresponding new array expression

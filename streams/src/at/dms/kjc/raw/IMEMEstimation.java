@@ -17,7 +17,7 @@ import java.io.*;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 
-public class IMEMEstimation extends EmptyStreamVisitor
+public class IMEMEstimation implements FlatVisitor
 {
     public static boolean TESTING_IMEM = false;
     /**
@@ -34,21 +34,22 @@ public class IMEMEstimation extends EmptyStreamVisitor
 	user = getUser();
     }
 
-    public void visitFilter(SIRFilter self,
-			    SIRFilterIter iter) {
-	// don't do anything if we've already detected overflow
-	// earlier in graph.
-	if (!everythingFits) {
-	    return;
+    public void visitNode(FlatNode node) {
+	if (node.contents instanceof SIRFilter) {
+	    SIRFilter filter = (SIRFilter)node.contents;
+	    // don't do anything if we've already detected overflow
+	    // earlier in graph.
+	    if (!everythingFits) {
+		return;
+	    }
+	    // otherwise, test for overflow at this node
+	    if (!fits(filter)) {
+		System.out.println("Filter " + filter.getName() + " does not fit in IMEM.");
+		everythingFits = false;
+	    } else {
+		System.out.println("Filter " + filter.getName() + " fits in IMEM.");
+	    }
 	}
-	// otherwise, test for overflow at this node
-	if (!fits(self)) {
-	    System.out.println("Filter " + self.getName() + " does not fit in IMEM.");
-	    everythingFits = false;
-	} else {
-	    System.out.println("Filter " + self.getName() + " fits in IMEM.");
-	}
-       
     }
     
     public IMEMEstimation() 
@@ -60,10 +61,10 @@ public class IMEMEstimation extends EmptyStreamVisitor
      * Returns true iff all filters in <str> fit in IMEM.  Each filter
      * is measured independently (assuming 1 filter per tile).
      */
-    public static boolean testMe(SIRStream str) 
+    public static boolean testMe(FlatNode top) 
     {
 	IMEMEstimation visitor = new IMEMEstimation();
-	IterFactory.createFactory().createIter(str).accept(visitor);
+	top.accept(visitor, null, true);
 	return visitor.everythingFits;
     }
     

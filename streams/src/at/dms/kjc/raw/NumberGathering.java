@@ -432,10 +432,6 @@ public class NumberGathering extends at.dms.util.Utils
 	    if (incr != null) {
 		incr.accept(this);
 	    }
-	    // set unrolled to true, in the event that we decide we
-	    // need to unroll some loops, but no loops have been
-	    // unrolled yet. (see call to setUnrolled(false) below).
-	    self.setUnrolled(true);
 	    // see if we can already infer the number of times this
 	    // loop executes
 	    int numExec = Unroller.getNumExecutions(init, cond, incr, body);

@@ -98,6 +98,7 @@ public class RawBackend {
 	    strOrig = (SIRStream)ObjectDeepCloner.deepCopy(str);
 	}
 	boolean fitsInIMEM;
+	GraphFlattener graphFlattener;
 	do {
 
 	    // do constant propagation on fields
@@ -167,10 +168,40 @@ public class RawBackend {
 	    //constant prop propagates the peek buffer index
 	    new VarDeclRaiser().raiseVars(str);
 
+	    // optionally print a version of the source code that we're
+	    // sending to the scheduler
+	    if (KjcOptions.print_partitioned_source) {
+		new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createFactory().createIter(str));
+	    }
+
+	    //SIRPrinter printer1 = new SIRPrinter();
+	    //IterFactory.createFactory().createIter(str).accept(printer1);
+	    //printer1.close();
+
+	    System.out.println("Flattener Begin...");
+	    executionCounts = SIRScheduler.getExecutionCounts(str);
+	    PartitionDot.printScheduleGraph(str, "schedule.dot", executionCounts);
+	    graphFlattener = new GraphFlattener(str);
+	    graphFlattener.dumpGraph("flatgraph.dot");
+	    System.out.println("Flattener End.");
+
+	    //create the execution counts for other passes
+	    createExecutionCounts(str, graphFlattener);
+
+	    //Generate number gathering simulator code
+	    if (KjcOptions.numbers > 0) {
+		// do this on demand from NumberGathering
+		//SinkUnroller.doit(graphFlattener.top);
+		if (!NumberGathering.doit(graphFlattener.top)) {
+		    System.err.println("Could not generate number gathering code.  Exiting...");
+		    System.exit(1);
+		}
+	    }
+	
 	    // see if we are going to overflow IMEM
 	    if (scaleUnrollFactor) {
 		System.out.println("Trying unroll factor " + KjcOptions.unroll);
-		fitsInIMEM = IMEMEstimation.testMe(str);
+		fitsInIMEM = IMEMEstimation.testMe(graphFlattener.top);
 		if (fitsInIMEM) {
 		    // if we fit, clear backup copy of stream graph
 		    strOrig = null;
@@ -193,26 +224,6 @@ public class RawBackend {
 	    }
 	    
 	} while (!fitsInIMEM);
-	
-	// optionally print a version of the source code that we're
-	// sending to the scheduler
-	if (KjcOptions.print_partitioned_source) {
-	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createFactory().createIter(str));
-	}
-
-	//SIRPrinter printer1 = new SIRPrinter();
-	//IterFactory.createFactory().createIter(str).accept(printer1);
-	//printer1.close();
-
-       	System.out.println("Flattener Begin...");
-	executionCounts = SIRScheduler.getExecutionCounts(str);
-	PartitionDot.printScheduleGraph(str, "schedule.dot", executionCounts);
-	GraphFlattener graphFlattener = new GraphFlattener(str);
-	graphFlattener.dumpGraph("flatgraph.dot");
-	System.out.println("Flattener End.");
-
-	//create the execution counts for other passes
-	createExecutionCounts(str, graphFlattener);
 
 	//see if we can remove any joiners
 	//JoinerRemoval.run(graphFlattener.top);
@@ -245,17 +256,7 @@ public class RawBackend {
 	    SwitchCode.generate(graphFlattener.top);
 	    System.out.println("Switch Code End.");
 	}
-	
-	//Generate number gathering simulator code
-	if (KjcOptions.numbers > 0) {
-	    // do this on demand from NumberGathering
-	    //SinkUnroller.doit(graphFlattener.top);
-	    if (!NumberGathering.doit(graphFlattener.top)) {
-		System.err.println("Could not generate number gathering code.  Exiting...");
-		System.exit(1);
-	    }
-	}
-	
+
 	//remove print statements in the original app
 	//if we are running with decoupled
 	if (KjcOptions.decoupled)

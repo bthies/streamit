@@ -20,7 +20,7 @@ import at.dms.util.*;
  * of the compiler aware of phases.  In some places this is easier
  * than in others; big changes show up in the backends.
  *
- * @version $Id: SIRTwoStageFilter.java,v 1.6 2003-05-27 03:35:03 thies Exp $
+ * @version $Id: SIRTwoStageFilter.java,v 1.7 2003-05-28 05:53:48 thies Exp $
  */
 public class SIRTwoStageFilter extends SIRFilter {
     /* Internal invariant: the init and work phases arrays each have
@@ -67,6 +67,9 @@ public class SIRTwoStageFilter extends SIRFilter {
                                                  initPush, initWork);
         // getPhases()[0] = new SIRWorkFunction(peek, pop, push, work);
 	checkRep();
+        // Confirm that the initWork function is in the methods array.
+        if (initWork != null)
+            addReplacementMethod(initWork, initWork);
     }
 
     /**
@@ -148,7 +151,4 @@ public class SIRTwoStageFilter extends SIRFilter {
                 ("SIRTwoStageFilters have exactly one init phase");
         super.setInitPhases(initPhases);
     }
-
 }
-
-

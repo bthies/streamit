@@ -1,4 +1,4 @@
-void->void pipeline BatcherSort {
+void->void pipeline AutoBatcherSort {
   int SIZE = 16;
   int START = 8; //pow(2, ceil(log2(16)) - 1)
   add IntSource(SIZE);

@@ -12,7 +12,7 @@ import at.dms.kjc.sir.lowering.fission.*;
  * Represents a fission of a filter in a stream graph.
  */
 
-public class FissionTransform extends IdentityTransform {
+public class FissionTransform extends StreamTransform {
     /**
      * The number of ways to fiss.
      */
@@ -25,8 +25,7 @@ public class FissionTransform extends IdentityTransform {
     /**
      * Perform the transform on <str> and return new stream.
      */
-    public SIRStream doTransform(SIRStream str) {
-	str = super.doTransform(str);
+    protected SIRStream doMyTransform(SIRStream str) {
 	// make sure we're fissable
 	Utils.assert((str instanceof SIRFilter) && StatelessDuplicate.isFissable((SIRFilter)str),
 		     "Didn't get a filter or it wasn't fissable: " + str);

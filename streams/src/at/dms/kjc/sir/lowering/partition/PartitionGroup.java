@@ -11,7 +11,7 @@ public class PartitionGroup {
 
     /**
      * Representation of the partitions as the number of children that
-     * fallin each successive partition.  For instance, if it holds
+     * fall in each successive partition.  For instance, if it holds
      *
      *  { 1, 2, 3, 1}
      *

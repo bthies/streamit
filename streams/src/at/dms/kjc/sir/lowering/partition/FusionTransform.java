@@ -12,7 +12,7 @@ import at.dms.kjc.sir.lowering.fusion.*;
  * Represents a fusion of children in a stream graph.
  */
 
-public class FusionTransform extends IdentityTransform {
+public final class FusionTransform extends StreamTransform {
     /**
      * Integers denoting the sorted positions of the partitions in
      * this.  That is, if <partitions> holds <3, 1, 0, 7> then
@@ -28,8 +28,7 @@ public class FusionTransform extends IdentityTransform {
     /**
      * Perform the transform on <str> and return new stream.
      */
-    public SIRStream doTransform(SIRStream str) {
-	str = super.doTransform(str);
+    public SIRStream doMyTransform(SIRStream str) {
 	// make sure we have a container
 	Utils.assert(str instanceof SIRContainer, "Expected container as target of fusion, but got: " + str);
 	// if we have as many partitions as children, then we're done
@@ -67,7 +66,9 @@ public class FusionTransform extends IdentityTransform {
     }
 
     /**
-     * Add a partition AFTER child <i> to the list.
+     * Add a partition AFTER child <i> to the list, where <i> is
+     * 1-indexed.  (So to fuse all children, add partitions at 0 and
+     * size()).
      */
     public void addPartition(int i) {
 	this.partitions.add(new Integer(i));

@@ -5,29 +5,29 @@
  */
 
 // this pipline performs the first few blocks in subband analysis.
-complex[N_ch][N_rg][N_pri]->complex[N_ch][(int) N_rg/N_dn][N_pri] pipline SubAnalysis(int N_ch,int N_rg,int N_pri,int N_dn,int N_lp,int N_td, complex w, complex[] h_lp, complex h_lp){
+complex[N_ch][N_rg][N_pri]->complex[N_ch][N_rg/N_dn][N_pri] pipeline SubAnalysis(int N_ch,int N_rg,int N_pri,int N_dn,int N_lp,int N_td, complex w, complex[N_lp] h_lp, complex[N_td] h_td){
     add FormChg20(N_ch,N_rg,N_pri);
     add ElAnal(N_ch,N_rg,N_pri,N_dn,N_lp,N_td,w,h_lp,h_td);
-    add FromChg21(N_ch,(int) N_rg/N_dn, N_pri);
+    add FromChg21(N_ch,N_rg/N_dn, N_pri);
 }
 								     
 // this SplitJoin gets as its input the elements of different
 // subbbands and pushes them through RnAnal
-complex[N_rg]-> complex[N_rg/N_dn] splitjoin ElAnal(int N_ch,int N_rg, int N_pri,int N_dn,int N_lp,int N_td,complex W, complex[] h_lp, complex h_td ) {
+complex[N_rg]-> complex[N_rg/N_dn] splitjoin ElAnal(int N_ch,int N_rg, int N_pri,int N_dn,int N_lp,int N_td,complex W, complex[N_lp] h_lp, complex[N_td] h_td ) {
     split roundrobin;
     for (int i=0; i< N_ch; i++)
 	for (int j=0; j < N_pri; j ++)
-	    add(new AnalTd(N_rg,N_dn,N_lp,N_td,W,h_lp,h_td));
-    joind roundrobin;
+	    add AnalTd(N_rg,N_dn,N_lp,N_td,W,h_lp,h_td);
+    join roundrobin;
 }
 	
 // this does the frequency shift and low pass filtering and
 // downsampling+time delay equalization for each Range
-complex[N_rg]->complex[(int) N_rg/N_dn] pipeline AnalTd(int N_rg,int N_dn,int N_lp,int N_td,complex W, complex[] h_lp,complex[] h_td) {
+complex[N_rg]->complex[N_rg/N_dn] pipeline AnalTd(int N_rg,int N_dn,int N_lp,int N_td,complex W, complex[N_lp] h_lp,complex[N_td] h_td) {
     add FreqShift(N_rg,W);
     add arrayFIR(N_rg,N_lp,h_lp);
-    add DownSamp(N_inN_dn);
-    add arrayFIR(N_rg/N_dn,N_td,);
+    add DownSamp(N_in, N_dn);
+    add arrayFIR(N_rg/N_dn,N_td,h_td);
 }
 
 // This Filter performs the Frequency shifting, each time it is
@@ -53,15 +53,14 @@ complex[N]->complex[N] filter FreqShift (int N, complex w) {
 }
 		    
 //This Filter performs the down sampling task on imaginary numbers
-complex[N_in]->complex[(int)N_in/N_dn] filter DownSamp(N_in,N_dn) {
+complex[N_in]->complex[N_in/N_dn] filter DownSamp(int N_in,int N_dn) {
     init { }
 
     work push 1 pop 1 {
-	int N_out=(int) N_in/N_dn;
+	int N_out= N_in/N_dn;
 	complex[N_in] in_arr;
 	complex[N_out] out_arr;
 
-	output.push(input.pop());
 	for (int i=0 ; i <N_out ;i=i++)
 	    out_arr[i]=in_arr[i*N_dn];
 	push(out_arr);
@@ -70,7 +69,7 @@ complex[N_in]->complex[(int)N_in/N_dn] filter DownSamp(N_in,N_dn) {
 
 /*
 // this filter performs both a FIR operation over an array	    
-complex[N_arr]->complex[N_arr] filter arrayFIR(int N_arr, int N_lp, complex[] h){
+complex[N_arr]->complex[N_arr] filter arrayFIR(int N_arr, int N_lp, complex[N_lp] h){
 
 init{
 }    

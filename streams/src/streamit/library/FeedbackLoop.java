@@ -65,6 +65,12 @@ public class FeedbackLoop extends Stream
         return 0;
     }
 
+    public short initPathShort (int index)
+    {
+        ASSERT (false);
+        return 0;
+    }
+
     public float initPathFloat (int index)
     {
         ASSERT (false);

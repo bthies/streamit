@@ -1,19 +1,25 @@
 #
 # Makefile: Build the StreaMIT C runtime library
-# $Id: Makefile,v 1.12 2002-11-20 19:30:31 aalamb Exp $
+# $Id: Makefile,v 1.13 2003-09-25 20:05:53 dmaze Exp $
 #
 
+# AUTOCONFISCATE VAR =	@VAR@
+HAVE_FFTW =	1
 CC =		gcc
 CFLAGS =	-O2
 AR =		ar
 RANLIB =	ranlib
+# END AUTOCONFISCATE
+
 LIBRARY =	libstreamit.a
 LIBRARYP =	libstreamit_p.a
 
 NAMES =		stream_context \
-		streamit_fft \
-		streamit_fftw \
-		streamit_io \
+		streamit_fft
+ifeq ($(HAVE_FFTW), 1)
+NAMES +=	streamit_fftw
+endif
+NAMES +=	streamit_io \
 		streamit_message \
 		streamit_run \
 		streamit_splitjoin \

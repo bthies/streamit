@@ -109,13 +109,56 @@ public class Rawify
     }
     
 
+    //see if the switch for the filter needs disregard some of the input because
+    //it is not a multiple of the cacheline
     private static void handleUnneededInput(FilterTraceNode traceNode, boolean init, boolean primepump) 
     {
+	InputTraceNode in = (InputTraceNode)traceNode.getPrevious();
+	FilterInfo filterInfo = FilterInfo.getFilterInfo(traceNode);
+	int items, typeSize;
 	
+	//get the number of items received
+	if (init) 
+	    items = filterInfo.initItemsReceived();
+	else if (primepump) 
+	    items = filterInfo.primePump * filterInfo.pop;
+	else
+	    items = filterInfo.steadyMult * filterInfo.pop;
+	
+	typeSize = Util.getTypeSize(traceNode.getFilter().getInputType());
+	
+	//see if it is a mulitple of the cache line
+	if ((items * typeSize) % RawChip.cacheLineWords != 0) {
+	    SwitchCodeStore.disregardIncoming(OffChipBuffer.getBuffer(in, traceNode).getDRAM(),
+					      (items * typeSize) % RawChip.cacheLineWords,
+					      init || primepump);
+	}
     }
     
+    //see if the switch needs to generate dummy values to fill a cache line in the streaming
+    //dram 
     private static void fillCacheLine(FilterTraceNode traceNode, boolean init, boolean primepump) 
     {
+	OutputTraceNode out = (OutputTraceNode)traceNode.getNext();
+	FilterInfo filterInfo = FilterInfo.getFilterInfo(traceNode);
+	
+	//get the number of items sent
+	int items, typeSize;
+	if (init) 
+	    items = filterInfo.initItemsSent();
+	else if (primepump) 
+	    items = filterInfo.primePump * filterInfo.push;
+	else
+	    items = filterInfo.steadyMult * filterInfo.push;
+
+	typeSize = Util.getTypeSize(traceNode.getFilter().getOutputType());
+	//see if a multiple of cache line, if not generate dummy values...
+	if ((items * typeSize) % RawChip.cacheLineWords != 0) {
+	    SwitchCodeStore.dummyOutgoing(OffChipBuffer.getBuffer(traceNode, out).getDRAM(),
+					  (items * typeSize) % RawChip.cacheLineWords,
+					  init || primepump);
+	}
+	
     }
     
 
@@ -157,7 +200,7 @@ public class Rawify
 	//generate dummy values to fill the cache line!
 	if ((items * typeSize) % RawChip.cacheLineWords != 0) {
 	    int dummy = (items * typeSize) % RawChip.cacheLineWords;
-	    SwitchCodeStore.dummyOutgoing(dest[0], dummy, init);
+	    SwitchCodeStore.dummyOutgoing(dest[0], dummy, init || primepump);
 	}
 	//disregard remainder of inputs coming from temp offchip buffers
 	for (int i = 0; i < traceNode.getSources().length; i++) {
@@ -166,7 +209,7 @@ public class Rawify
 		(iterations * typeSize * 
 		 traceNode.getWeight(source)) % RawChip.cacheLineWords;
 	    SwitchCodeStore.disregardIncoming(OffChipBuffer.getBuffer(source, traceNode).getDRAM(),
-					      remainder, init);
+					      remainder, init || primepump);
 	}
     }
     
@@ -216,7 +259,7 @@ public class Rawify
 	//disregard the dummy values coming out of the dram
 	if ((items * typeSize) % RawChip.cacheLineWords != 0) {
 	    int remainder = (items * typeSize) % RawChip.cacheLineWords;
-	    SwitchCodeStore.disregardIncoming(sourcePort, remainder, init);
+	    SwitchCodeStore.disregardIncoming(sourcePort, remainder, init || primepump);
 	}
 	//write dummy values into each temp buffer with a remainder
 	Iterator it = traceNode.getDestSet().iterator();
@@ -225,7 +268,7 @@ public class Rawify
 	    int remainder = (typeSize * iterations * traceNode.getWeight(in)) %
 		RawChip.cacheLineWords;
 	    SwitchCodeStore.dummyOutgoing(OffChipBuffer.getBuffer(traceNode, in).getDRAM(),
-					  remainder, init);
+					  remainder, init || primepump);
 	}   
     }
     

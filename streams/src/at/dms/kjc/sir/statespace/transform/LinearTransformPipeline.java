@@ -12,7 +12,7 @@ import at.dms.kjc.sir.statespace.*;
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.
  * 
- * $Id: LinearTransformPipeline.java,v 1.10 2004-03-15 21:36:12 sitij Exp $
+ * $Id: LinearTransformPipeline.java,v 1.11 2004-03-17 20:34:47 sitij Exp $
  **/
 
 public class LinearTransformPipeline extends LinearTransform {
@@ -45,7 +45,7 @@ public class LinearTransformPipeline extends LinearTransform {
 	FilterVector init1, init2, initprime;
 
 	int pop1, push1, pop2, push2, total, factor1, factor2;
-	int newPop1, newPop2, newPush1, newPush2, newPeek2, state1, state2;
+	int newPop1, newPop2, newPush1, newPush2, newPeek1, newPeek2, state1, state2;
 
 	boolean combinedPreWorkNeeded;
 	FilterMatrix preworkA1, preworkB1, preworkA2, preworkB2, preworkAprime, preworkBprime;
@@ -98,6 +98,7 @@ public class LinearTransformPipeline extends LinearTransform {
 	    state1 = rep1Expanded.getStateCount();
 	    newPop1 = rep1Expanded.getPopCount();
 	    newPush1 = rep1Expanded.getPushCount();
+	    newPeek1 = rep1Expanded.getPeekCount();
 
 	    A2 = rep2Expanded.getA();
 	    B2 = rep2Expanded.getB();
@@ -143,6 +144,26 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 			n++;
 
 		    n = n-1;
+
+		    /************** new ******/
+		    /*
+		    int tempp = newPop1*n + newPeek1;
+		    LinearPrinter.println("old,new: " + newPeek1 + " " + tempp); 
+			
+			rep1Expanded = rep1Expanded.changePeek(newPop1*n + newPeek1);
+			A1 = rep1Expanded.getA();
+			B1 = rep1Expanded.getB();
+			C1 = rep1Expanded.getC();
+			D1 = rep1Expanded.getD();
+			init1 = rep1Expanded.getInit();
+			state1 = rep1Expanded.getStateCount();
+			newPop1 = rep1Expanded.getPopCount();
+			newPush1 = rep1Expanded.getPushCount();
+			newPeek1 = rep1Expanded.getPeekCount();
+		    */
+		    
+
+		    /************ end new *********/
 
 		    int removeVars = newPeek2 - newPop2;
 		    int extraVars = newPush1*n;

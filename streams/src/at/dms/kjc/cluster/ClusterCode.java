@@ -132,13 +132,39 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("  "+baseType.toString()+" tmp;\n");
 
-	p.print("  tmp = "+in.name()+"in->read_"+baseType.toString()+"();\n");
-	
-	for (int i = 0; i < out.size(); i++) {
-	    NetStream s = (NetStream)out.elementAt(i);		
-	    p.print("  "+s.name()+"out->write_"+baseType.toString()+"(tmp);\n");
+	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
+	    
+	    p.print("  tmp = "+in.name()+"in->read_"+baseType.toString()+"();\n");
+	    
+	    for (int i = 0; i < out.size(); i++) {
+		NetStream s = (NetStream)out.elementAt(i);		
+		p.print("  "+s.name()+"out->write_"+baseType.toString()+"(tmp);\n");
+	    }
+
+	} else if (splitter.getType().equals(SIRSplitType.ROUND_ROBIN)) {
+	    	    
+	    for (int i = 0; i < out.size(); i++) {
+
+		p.print("  tmp = "+in.name()+"in->read_"+baseType.toString()+"();\n");
+		NetStream s = (NetStream)out.elementAt(i);		
+		p.print("  "+s.name()+"out->write_"+baseType.toString()+"(tmp);\n");
+	    }
+
+	} else if (splitter.getType().equals(SIRSplitType.WEIGHTED_RR)) {
+
+	    for (int i = 0; i < out.size(); i++) {
+
+		int num = splitter.getWeight(i);
+		NetStream s = (NetStream)out.elementAt(i);		
+		
+		for (int ii = 0; ii < num; ii++) {
+
+		    p.print("  tmp = "+in.name()+"in->read_"+baseType.toString()+"();\n");
+		    p.print("  "+s.name()+"out->write_"+baseType.toString()+"(tmp);\n");
+		}
+	    }
 	}
-	
+
 	p.print("}\n");
 	
 	p.print("\n");
@@ -234,12 +260,31 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("  "+baseType.toString()+" tmp;\n");
 
-	for (int i = 0; i < in.size(); i++) {
-	    NetStream s = (NetStream)in.elementAt(i);		
-	    p.print("  tmp = "+s.name()+"in->read_"+baseType.toString()+"();\n");
-	    
-	    p.print("  "+out.name()+"out->write_"+baseType.toString()+"(tmp);\n");
-	
+
+	if (joiner.getType().equals(SIRJoinType.ROUND_ROBIN)) {
+
+	    for (int i = 0; i < in.size(); i++) {
+		NetStream s = (NetStream)in.elementAt(i);		
+		p.print("  tmp = "+s.name()+"in->read_"+baseType.toString()+"();\n");
+		
+		p.print("  "+out.name()+"out->write_"+baseType.toString()+"(tmp);\n");
+		
+	    }
+
+	} else if (joiner.getType().equals(SIRJoinType.WEIGHTED_RR)) {
+
+	    for (int i = 0; i < in.size(); i++) {
+
+		NetStream s = (NetStream)in.elementAt(i);		
+		int num = joiner.getWeight(i);
+
+		for (int ii = 0; ii < num; ii++) {
+		    p.print("  tmp = "+s.name()+"in->read_"+baseType.toString()+"();\n");
+		    p.print("  "+out.name()+"out->write_"+baseType.toString()+"(tmp);\n");
+		}
+
+	    }
+
 	}
 
 	p.print("}\n");

@@ -30,5 +30,5 @@ endif
 if ($?TEXINPUTS) then
   setenv TEXINPUTS ${STREAMIT_HOME}/include/tex:${TEXINPUTS}
 else
-  setenv TEXINPUTS .:/usr/share/texmf/tex::${STREAMIT_HOME}/include/tex
+  setenv TEXINPUTS ${STREAMIT_HOME}/include/tex:.:/usr/share/texmf/tex::
 endif

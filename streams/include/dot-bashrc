@@ -34,7 +34,7 @@ fi
 # a blank entry as "the default path".)
 if [ -z "$TEXINPUTS" ]
 then
-  export TEXINPUTS=.:/usr/share/texmf/tex::${STREAMIT_HOME}/include/tex
+  export TEXINPUTS=${STREAMIT_HOME}/include/tex:.:/usr/share/texmf/tex::
 else
   TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
 fi

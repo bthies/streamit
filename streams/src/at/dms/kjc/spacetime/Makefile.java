@@ -107,7 +107,7 @@ public class Makefile
     private void makeHeader() 
     {
 	buf.append("#-*-Makefile-*-\n\n");
-	buf.append("ATTRIBUTES = IMEM_LARGE\n");
+	buf.append("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
 	//I don't think we can use the print service any more...
 	//	buf.append("ATTRIBUTES += USES_PRINT_SERVICE\n")
 ;
@@ -127,6 +127,7 @@ public class Makefile
 	    buf.append("MEMORY_LAYOUT=FOUR_SIDES\n");
 	
 	buf.append("SIM-CYCLES = 500000\n\n");
+	buf.append("BTL-ARGS += -dram_streaming\n");
 	//if we are using the magic network, tell btl
 	if (KjcOptions.magic_net)
 	    buf.append("EXTRA_BTL_ARGS += " +

@@ -408,10 +408,16 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    if (isSimple(filter)) {
 		//simple filter (no remaining items)
 		if (KjcOptions.ratematch) {
+		    //System.out.println(filter.getName());
+		    
+		    int i = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue();
+
 		    //i don't know, the prepeek could be really large, so just in case
 		    //include it.  Make the buffer big enough to hold 
-		    buffersize = Math.max((((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() - 1) * 
-					  filter.getPopInt() + filter.getPeekInt(), prepeek);
+		    buffersize = 
+			Math.max
+			((((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() - 1) * 
+			 filter.getPopInt() + filter.getPeekInt(), prepeek);
 		}
 		else //not ratematching and we do not have a circular buffer
 		    buffersize = maxpeek;
@@ -634,8 +640,8 @@ public class RawExecutionCode extends at.dms.util.Utils
     private boolean noBuffer(SIRFilter filter) 
 	{
 	    //always need a buffer for rate matching.
-	    if (KjcOptions.ratematch)
-		return false;
+	    //	    if (KjcOptions.ratematch)
+	    //	return false;
 	    
 	    if (filter.getPeekInt() == 0 &&
 		(!(filter instanceof SIRTwoStageFilter) ||

@@ -462,7 +462,7 @@ public class IMDCT extends Filter
     /***************************************************************/
     /*                             INV_MDCT                        */
     /***************************************************************/
-    public static final float win[][] =
+    public final float win[][] =
         {
             {
                 -1.6141214951E-02f,

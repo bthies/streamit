@@ -67,7 +67,7 @@ public class Antialias extends Filter
         }
     }
 
-    private static final float cs[] =
+    private final float cs[] =
         {
             0.857492925712f,
             0.881741997318f,
@@ -78,7 +78,7 @@ public class Antialias extends Filter
             0.999899195243f,
             0.999993155067f };
 
-    private static final float ca[] =
+    private final float ca[] =
         {
             -0.5144957554270f,
             -0.4717319685650f,

@@ -42,6 +42,11 @@ public class SIRLatencyRange extends SIRLatencyMax {
 	return min==max;
     }
 
+    public String toString() {
+	
+	return "SIRLatencyRange min=" + min + " max=" + max;
+    }
+
     /**
      * Accepts the specified attribute visitor.
      * @param   p               the visitor

@@ -18,6 +18,10 @@ public class SIRLatency implements Serializable, DeepCloneable {
     
     protected SIRLatency() {}
     
+    public String toString() {
+	return "SIRLatency BEST_EFFORT";
+    }
+
     /**
      * Accepts the specified visitor.
      */

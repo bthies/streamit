@@ -31,14 +31,14 @@ import streamit.library.*;
 
 class TrellisDecoder extends Filter
 {
-    static int SYMBOLSIZE = 2;
-    static int UNINIT = -1;
+     int SYMBOLSIZE = 2;
+     int UNINIT = -1;
 
     /** number of possible states for the decoder to be in **/
-    static int NUMSTATES = 4;
+     int NUMSTATES = 4;
     /** amount of data we are going to process before producing results **/
-    static int TABLELENGTH = 0;
-    static int DATASIZE = 0;
+     int TABLELENGTH = 0;
+     int DATASIZE = 0;
     
     /** state transition matrix **/
     int[][] nextStateTable;
@@ -332,7 +332,6 @@ class TrellisDecoder extends Filter
 	inputValue = inputTable[s1][s2];
 	if (inputValue == UNINIT) {
 	    System.out.println("Error!!! invalid transition from " + s1 + " to " + s2);
-	    throw new RuntimeException("Error");
 	}
 	
 	// look up the cumulative error of s1 
@@ -458,7 +457,7 @@ class TrellisDecoder extends Filter
 	    for (j=0; j<table[i].length; j++) {
 		System.out.print(table[i][j] + " ");
 	    }
-	    System.out.println();
+	    System.out.println("");
 	}
 
     }
@@ -519,7 +518,7 @@ class TrellisDecoder extends Filter
     /** ensures that an integer is actually "binary", eg a 1 or 0 **/
     public void dataCheck(int d) {
 	if ((d != 0) && (d != 1)) {
-	    throw new RuntimeException("non binary digit: " + d);
+	    System.out.println("non binary digit");
 	}
     }
 }

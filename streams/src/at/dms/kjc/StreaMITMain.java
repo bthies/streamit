@@ -4,6 +4,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.lir.*;
 import at.dms.kjc.raw.*;
+import grapheditor.GraphEncoder;
 
 /**
  * This provides the toplevel interface for StreaMIT.
@@ -31,7 +32,8 @@ public class StreaMITMain {
 	    KjcOptions.decoupled)
 	    at.dms.util.Utils.fail("The options magic_net and decoupled are mutually exclusive.");
 	
-	System.out.println("/*");
+	if(!KjcOptions.graph)
+	    System.out.println("/*");
 	Kopi2SIR k2s = new Kopi2SIR(app);
 	SIRStream stream = null;
 	for (int i = 0; i < app.length; i++) {
@@ -42,7 +44,10 @@ public class StreaMITMain {
 
 	SemanticChecker.doCheck(stream);
 	
-	if (KjcOptions.raw != -1) {
+	if(KjcOptions.graph) {
+	    System.err.println("Dumping Graph..");
+	    stream.accept(new GraphEncoder());
+	} else if (KjcOptions.raw != -1) {
 	    System.out.println("*/");
 	    
 	    /* Compiling for raw */

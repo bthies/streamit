@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.29 2002-09-20 19:07:49 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.30 2002-09-23 16:32:54 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -716,9 +716,10 @@ public class NodesToJava implements FEVisitor
         {
             StmtIODecl io = (StmtIODecl)node;
             String result = io.getName() + " = new Channel(" +
-                typeToClass(io.getType()) + ", " + io.getRate1();
-            if (io.getRate2() >= 0)
-                result += ", " + io.getRate2();
+                typeToClass(io.getType()) + ", " +
+                (String)io.getRate1().accept(this);
+            if (io.getRate2() != null)
+                result += ", " + (String)io.getRate2().accept(this);
             result += ")";
             return result;
         }

@@ -1,7 +1,7 @@
 /*
  * StmtIODecl.java: an old-syntax I/O rate declaration
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StmtIODecl.java,v 1.1 2002-09-20 19:03:06 dmaze Exp $
+ * $Id: StmtIODecl.java,v 1.2 2002-09-23 16:32:54 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -17,10 +17,10 @@ public class StmtIODecl extends streamit.frontend.nodes.Statement
 {
     private String name;
     private Type type;
-    private int rate1, rate2;
+    private Expression rate1, rate2;
     
     public StmtIODecl(FEContext context, String name, Type type,
-                      int rate1, int rate2)
+                      Expression rate1, Expression rate2)
     {
         super(context);
         this.name = name;
@@ -29,9 +29,10 @@ public class StmtIODecl extends streamit.frontend.nodes.Statement
         this.rate2 = rate2;
     }
     
-    public StmtIODecl(FEContext context, String name, Type type, int rate)
+    public StmtIODecl(FEContext context, String name, Type type,
+                      Expression rate)
     {
-        this(context, name, type, rate, -1);
+        this(context, name, type, rate, null);
     }
     
     public String getName()
@@ -44,12 +45,12 @@ public class StmtIODecl extends streamit.frontend.nodes.Statement
         return type;
     }
     
-    public int getRate1()
+    public Expression getRate1()
     {
         return rate1;
     }
     
-    public int getRate2()
+    public Expression getRate2()
     {
         return rate2;
     }

@@ -1,0 +1,24 @@
+This directory contains different kinds of sorts, and in some cases
+variants of writing the same sorting method.
+
+The subdirectories are:
+ -- (2) BatcherSort: An implementation of Batcher's Sorting Algorithm,
+and an additional implementation that is to be more fine-grained.
+
+ -- BubbleSort: An implementation of BubbleSort, where the maximum
+    elements found so far "bubble" up to the top of the tape.
+    Fine-Grained; input = 1; output = 1.
+
+ -- ComparisonCounting: An implementation of Comparison Counting.
+    This algorithm performs an N-way split of N elements.  Each path
+    through the split-join calculates the ordered index for each of
+    the N elements by comparing it to every other element.
+
+ -- InsertionSort: An implementation of Insertion Sorting.  More
+    complicated than straight insertion sort to try and reduce number
+    of reorderings.
+
+ -- MergeSort: An implementation of Merge Sort.
+
+ -- RadixSort: An implementation of binary radix sort.  Each
+    successive filter sorts on a different bit.

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.16 2001-10-24 20:34:38 dmaze Exp $
+ * $Id: LIRToC.java,v 1.17 2001-10-25 14:42:24 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1573,13 +1573,20 @@ public class LIRToC
      * Visits a feedback loop delay node.
      */
     public void visitSetDelay(LIRSetDelay self,
+                              JExpression data,
                               JExpression streamContext,
                               int delay,
                               CType type,
                               LIRFunctionPointer fp)
     {
-        /* Duuuh. */
-        print("/* set_delay... */");
+        /* This doesn't work quite right yet, but it's closer. */
+        print("FEEDBACK_DELAY(");
+        data.accept(this);
+        print(", ");
+        streamContext.accept(this);
+        print(", " + delay + ", " + type + ", ");
+        fp.accept(this);
+        print(");");
     }
     
     /**

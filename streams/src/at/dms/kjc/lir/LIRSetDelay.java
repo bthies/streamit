@@ -11,6 +11,11 @@ import at.dms.compiler.*;
 public class LIRSetDelay extends LIRNode 
 {
     /**
+     * The data structure corresponding to the current stream.
+     */
+    private JExpression data;
+    
+    /**
      * The number of items to push.
      */
     private int delay;
@@ -28,12 +33,14 @@ public class LIRSetDelay extends LIRNode
     /**
      * Construct a node.
      */
-    public LIRSetDelay(JExpression streamContext,
+    public LIRSetDelay(JExpression data,
+                       JExpression streamContext,
                        int delay,
                        CType type,
                        LIRFunctionPointer delayfn) 
     {
         super(streamContext);
+        this.data = data;
         this.delay = delay;
         this.type = type;
         this.delayfn = delayfn;
@@ -41,7 +48,7 @@ public class LIRSetDelay extends LIRNode
     
     public void accept(SLIRVisitor v) 
     {
-        v.visitSetDelay(this, this.getStreamContext(), this.delay,
-                        this.type, this.delayfn);
+        v.visitSetDelay(this, this.data, this.getStreamContext(),
+                        this.delay, this.type, this.delayfn);
     }
 }

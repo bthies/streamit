@@ -7,7 +7,10 @@ package at.dms.kjc.sir.statespace;
  * This class holds the A, B, C, D in the equations y = Ax+Bu, x' = Cx + Du which calculates the output
  * vector y and new state vector x' using the input vector u and the old state vector x.<br>
  *
- * $Id: LinearFilterRepresentation.java,v 1.6 2004-02-25 20:55:44 sitij Exp $
+ * This class also holds initial matrices initA, initB that are to be used to 
+ * update the state exactly ONCE (for a prework function).
+ *
+ * $Id: LinearFilterRepresentation.java,v 1.7 2004-03-02 23:24:05 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -21,8 +24,18 @@ public class LinearFilterRepresentation {
     private FilterMatrix C;
     /** the D in x'=Cx+Du. **/
     private FilterMatrix D;
+
     /** the initial state values. **/
     private FilterVector initVec;
+
+    /** a flag for whether a prework stage is needed **/
+    private boolean preworkNeeded;
+
+    /** the A in y=Ax+Bu (prework). **/
+    private FilterMatrix preworkA;
+    /** the B in y=Ax+Bu (prework). **/
+    private FilterMatrix preworkB;
+
     /** the cost of this node */
     private LinearCost cost;
 
@@ -30,7 +43,7 @@ public class LinearFilterRepresentation {
      * The peek count of the filter. This is necessary for doing pipeline combinations
      * and it is information not stored in the dimensions of the
      * representation matrix or vector. peekCount - popCount is the number of variables that
-     * must be popped initially
+     * must be popped initially (to be done with the initialization matrices)
      **/
     private int peekCount;
 
@@ -54,9 +67,54 @@ public class LinearFilterRepresentation {
 	this.D = matrixD.copy();
 	this.initVec = (FilterVector)vec.copy();	
 	this.peekCount = peekc;
-	// we calculate cost on demain (with the linear partitioner)
+	int popCount = this.getPopCount();
+
+	if(popCount == peekc) {  // no separate initialization needed, so use the same matrices
+	    this.preworkNeeded = false;
+	}
+	else {
+	    int stateCount = this.getStateCount();
+	    int offset = peekc - popCount;
+
+	    // preworkA is the identity
+	    this.preworkA = this.createPreWorkA(stateCount);
+
+	    // preworkB puts the inputs into the extra states
+	    this.preworkB = this.createPreWorkB(stateCount,offset);
+	    
+	    this.preworkNeeded = true;
+	}
+
+
+	// we calculate cost on demand (with the linear partitioner)
 	this.cost = null;
     }
+
+
+    public LinearFilterRepresentation(FilterMatrix matrixA,
+				      FilterMatrix matrixB,
+				      FilterMatrix matrixC,
+				      FilterMatrix matrixD,
+				      FilterMatrix preworkA,
+				      FilterMatrix preworkB,
+				      FilterVector vec) {
+
+	this.A = matrixA.copy();
+	this.B = matrixB.copy();
+	this.C = matrixC.copy();
+	this.D = matrixD.copy();
+	this.preworkA = preworkA.copy();
+	this.preworkB = preworkB.copy();
+	this.preworkNeeded = true;
+	this.initVec = (FilterVector)vec.copy();	
+	this.peekCount = this.B.getCols() + this.preworkB.getCols();
+
+	// we calculate cost on demand (with the linear partitioner)
+	this.cost = null;
+    }
+
+
+
     //////////////// Accessors ///////////////////
     
     /** Get the A matrix. **/
@@ -68,7 +126,12 @@ public class LinearFilterRepresentation {
     /** Get the D matrix. **/
     public FilterMatrix getD() {return this.D;}
 
-    /** Get the initialization matrix. **/
+    /** Get the prework A matrix. **/
+    public FilterMatrix getPreWorkA() {return this.preworkA;}
+    /** Get the prework B matrix. **/
+    public FilterMatrix getPreWorkB() {return this.preworkB;}
+
+    /** Get the state vector initialization matrix. **/
     public FilterVector getInit() {return this.initVec;}
 
     /** Get the peek count.  **/
@@ -80,7 +143,49 @@ public class LinearFilterRepresentation {
     /** Get the number of state variables (#rows of A or B, # cols of A or C) **/
     public int getStateCount() { return this.A.getRows();}
 
+    /** Get the prework pop count. (#cols of B - initial) **/
+    public int getPreWorkPopCount() {
+	if(this.preworkB != null)
+	    return this.preworkB.getCols();
+	else
+	    return 0;
+    }
+
+    public boolean preworkNeeded() {
+	return this.preworkNeeded;
+    }
+
+
     //////////////// Utility Functions  ///////////////////
+
+
+    /**
+     * Returns a prework A matrix (which is just the identity!)
+     **/
+
+    public static FilterMatrix createPreWorkA(int states) {
+	FilterMatrix preA = new FilterMatrix(states,states);
+
+	for(int i=0; i<states; i++)
+	    preA.setElement(i,i,ComplexNumber.ONE);
+
+	return preA;
+    }
+
+    /**
+     * Returns a prework B matrix (which is just the identity and zeros underneath!)
+     * inputs should be less than states
+     **/
+
+    public static FilterMatrix createPreWorkB(int states, int inputs) {
+	FilterMatrix preB = new FilterMatrix(states,inputs);
+
+	for(int i=0; i<inputs; i++)
+	    preB.setElement(i,i,ComplexNumber.ONE);
+
+	return preB;
+    }
+
 
     /**
      * Returns true if at least one constant component is non-zero.
@@ -116,7 +221,7 @@ public class LinearFilterRepresentation {
 	int stateCount = this.getStateCount();
 	int oldPush = this.getPushCount();
 	int oldPop  = this.getPopCount();
-	int peekCount = this.getPeekCount();
+	int oldPeek = this.getPeekCount();
 
 	// newA = oldA^(factor);
 	// newB = [oldA^(factor-1) * B  oldA^(factor-2) * B  ...  oldA * B  B]
@@ -194,11 +299,156 @@ public class LinearFilterRepresentation {
 
 	// create a new Linear rep for the expanded filter
 	LinearFilterRepresentation newRep;
-	newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newInitVec,peekCount);
+
+	if(this.preworkNeeded()) {
+	    // prework matrices are the same
+	    FilterMatrix newPreWorkA = this.getPreWorkA();
+	    FilterMatrix newPreWorkB = this.getPreWorkB();
+
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreWorkA,newPreWorkB,newInitVec);
+	
+	}
+	else {
+	    // newpeek - newpop = oldpeek - oldpop
+	    // newpop = factor*oldpop
+
+	    int newPeek = oldPeek - oldPop + oldPop*factor;
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newInitVec,newPeek);
+	}
+
 	return newRep;
     }
     
-					
+				
+
+    /**
+     * Expands this linear representation by factor, using the prework matrices as well 
+     **/
+
+    public LinearFilterRepresentation expand_with_prework(int factor) {
+    
+	// do some argument checks
+	if (factor < 1) {
+	    throw new IllegalArgumentException("need a positive multiplier");
+	}
+
+	// pull out old values for ease in understanding the code.
+	int stateCount = this.getStateCount();
+	int oldPush = this.getPushCount();
+	int oldPop  = this.getPopCount();
+	int oldPeek = this.getPeekCount();
+
+	// newA = oldA^(factor) * preA;
+	// newB = [oldA^(factor * preB  oldA^(factor-1) * B  oldA^(factor-2) * B  ...  oldA * B  B]
+	// newC = [C * preA  C * A * preA  C * A^2 * preA  ...  C * A^(factor-2) * preA  C * A^(factor-1) * preA] (transposed)
+
+	/* 
+	   newD = |C * preB           D                     0               0          0  ...  0      | 
+                  |C * A * preB       C * B                 D               0          0  ...  0      |
+                  |C * A^2 * preB     C * A * B             C * B           D          0  ...  0      |
+                  |C * A^3 * preB     C * A^2 * B           C * A * B       C * B      D  ...  0      |
+                  |       ...              ...                                                        | 
+                  |C*A^(factor)*preB  C*A^(factor-2)*B   C*A^(factor-3)*B                 ...  C*B  D | 
+
+         */
+
+	FilterMatrix oldA = this.getA();
+	FilterMatrix oldB = this.getB();
+	FilterMatrix oldC = this.getC();
+        FilterMatrix oldD = this.getD();
+	
+	FilterMatrix preA = this.getPreWorkA();
+	FilterMatrix preB = this.getPreWorkB();
+	int prePop = this.getPreWorkPopCount();
+	
+	FilterMatrix newA = oldA.copy();
+	FilterMatrix newB = new FilterMatrix(stateCount, oldPop*factor + prePop);
+	FilterMatrix newC = new FilterMatrix(oldPush*factor, stateCount);
+	FilterMatrix newD = new FilterMatrix(oldPush*factor, oldPop*factor + prePop);
+
+	newB.copyAt(0,oldPop*(factor-1) + prePop,oldB);
+
+	if(this.preworkNeeded())
+	    newC.copyAt(0,0,oldC.times(preA));
+	else
+	    newC.copyAt(0,0,oldC);
+
+	FilterMatrix tempB = oldB.copy();
+	FilterMatrix tempC = oldC.copy();
+	FilterMatrix tempD = oldC.times(oldB);
+
+	for(int i=0; i<factor; i++) 
+	  newD.copyAt(oldPush*i,oldPop*i + prePop , oldD);
+
+	if(this.preworkNeeded())
+	    newD.copyAt(0,0,oldC.times(preB));
+
+	for(int i=1; i<factor; i++) {
+	  tempB = newA.times(oldB);
+	  tempC = oldC.times(newA);
+
+	  newB.copyAt(0,oldPop*(factor-i-1) + prePop ,tempB);
+
+	  if(this.preworkNeeded())
+	      newC.copyAt(oldPush*i,0,tempC.times(preA));
+	  else
+	      newC.copyAt(oldPush*i,0,tempC);
+
+	  for(int j=0; j<factor-i; j++)
+	    newD.copyAt(oldPush*(i+j),oldPop*j + prePop ,tempD);
+	 
+
+	  if(this.preworkNeeded())
+	      newD.copyAt(oldPush*i,0,tempC.times(preB));
+ 
+	  newA = newA.times(oldA);
+	  tempD = tempC.times(oldB); 
+	  
+	}
+
+	if(this.preworkNeeded()) {
+
+	    newB.copyAt(0,0,newA.times(preB));
+	    newA = newA.times(preA);
+	    
+	}
+	
+	//System.err.println("--------");
+	//System.err.println("new rows: " + newPeek);
+	//System.err.println("new cols: " + newPush);
+	//System.err.println("new pop: "  + newPop);
+	//System.err.println("old rows: " + oldPeek);
+	//System.err.println("old cols: " + oldPush);
+	//System.err.println("old pop: "  + oldPop);
+	//System.err.println("num copies: " + numCompleteCopies);
+	
+
+	LinearPrinter.println("Matrix A:");
+	LinearPrinter.println(newA.toString());
+	LinearPrinter.println("Matrix B:");
+	LinearPrinter.println(newB.toString());
+	LinearPrinter.println("Matrix C:");
+	LinearPrinter.println(newC.toString());
+	LinearPrinter.println("Matrix D:");
+	LinearPrinter.println(newD.toString());
+
+
+	// initial vector is the same
+	FilterVector newInitVec = (FilterVector)this.getInit().copy();
+
+	// prework matrices are IRRELEVANT
+	FilterMatrix newPreWorkA = this.getPreWorkA();
+	FilterMatrix newPreWorkB = this.getPreWorkB();
+
+	// create a new Linear rep for the expanded filter
+	LinearFilterRepresentation newRep;
+	newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreWorkA,newPreWorkB,newInitVec);
+	return newRep;
+    }
+
+
+
+	
     /**
      * Returns true if this filter is an FIR filter. A linear filter is FIR  
      * if push=pop=1 and no constant component.
@@ -317,6 +567,9 @@ public class LinearFilterRepresentation {
 	return true;
     }
 }
+
+
+
 
 
 

@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.5 2004-02-24 19:56:12 sitij Exp $
+ * $Id: LinearDirectReplacer.java,v 1.6 2004-03-02 23:24:05 sitij Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -134,6 +134,8 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 
 	JThisExpression thisExpr = new JThisExpression(null);
 
+	// create field declarations and field accessors
+
 	for(int i=0; i<numStates; i++) {
 	    varName = "x" + i;
 	    vars[i] = new JVariableDefinition(null, ACC_PUBLIC, new CDoubleType(), varName, null);
@@ -166,26 +168,15 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 
 	//create a prework function that initializes vars with values from the tape
 
-	assignStatements = new Vector();
-	SIRPopExpression popExpr = new SIRPopExpression();
-
-	for(int i=0; i<offset; i++) {
-	    varName = "x" + i;
-	    fieldExpr = new JFieldAccessExpression(null, thisExpr, varName);
-	    assign = new JAssignmentExpression(null, fieldExpr, popExpr);
-
-	    // wrap the assign expression in a expression statement
-	    JExpressionStatement assignWrapper = new JExpressionStatement(null, // tokenReference
-									assign, // expr
-									new JavaStyleComment[0]);
-	    assignStatements.add(assignWrapper);
+	JMethodDeclaration newPreWork;
+	if(linearRep.preworkNeeded()) {
+	    newPreWork = makeInitLinearWork(linearRep,
+					    oldStream.getInputType(),
+					    oldStream.getOutputType(),
+					    linearRep.getPreWorkPopCount());
 	}
-
-	JBlock preWorkBody = new JBlock();
-	preWorkBody.addAllStatements(assignStatements);
-
-	JMethodDeclaration newPreWork = SIRStream.makeEmptyInitWork();
-	newPreWork.setBody(preWorkBody);
+	else
+	    newPreWork = SIRStream.makeEmptyInitWork();
 
 	// create a new work function that calculates the linear representation directly
 	JMethodDeclaration newWork = makeLinearWork(linearRep,
@@ -196,15 +187,15 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	// create a new filter with the new prework, work and init functions
        	SIRTwoStageFilter newFilter = new SIRTwoStageFilter("Linear" + oldStream.getIdent());
 
-	//SIRFilter newFilter = new SIRFilter("Linear" + oldStream.getIdent());
-
 	newFilter.addFields(fields);
 	newFilter.setWork(newWork);
 	newFilter.setInitWork(newPreWork);
 	newFilter.setInit(newInit);
+       
+	/* these are rates for the prework function */
 
-	newFilter.setInitPeek(offset);
-	newFilter.setInitPop(offset);
+	newFilter.setInitPeek(linearRep.getPreWorkPopCount());
+	newFilter.setInitPop(linearRep.getPreWorkPopCount());
 	newFilter.setInitPush(0);
 
 	/** make peek rate equal to pop rate **/
@@ -595,6 +586,235 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 
 	return returnVector;
     }
+
+
+
+    /**
+     * Create a method that computes the function represented in the
+     * linear form FOR THE INIT. (Eg it pushes the direct sum of inputs to the output.)
+     * inputType is the variable type of the peek/pop expression that this filter uses
+     * and output type is the type of the pushExpressions.<br>
+     *
+     * The basic format of the resulting method is:<br>
+     * <pre>
+     * push(a1*peek(0) + b1*peek(1) + ... + x1*peek(n));
+     * push(a2*peek(0) + b2*peek(1) + ... + x2*peek(n));
+     * ...
+     * pop();
+     * pop();
+     * ...
+     * </pre>
+     **/
+    JMethodDeclaration makeInitLinearWork(LinearFilterRepresentation representation,
+				      CType inputType,
+				      CType outputType,
+				      int popCount) {
+	// generate the state update expressions that will make up the body of the
+	// new work method.
+	Vector pushStatements = makeInitPushStatementVector(representation, inputType, outputType);
+	// make a vector filled with the appropriate number of pop expressions
+	Vector popStatements  = new Vector();
+	SIRPopExpression popExpr = new SIRPopExpression(inputType, popCount);
+	// wrap the pop expression so it is a statement.
+	JExpressionStatement popWrapper = new JExpressionStatement(null, // token reference,
+								   popExpr, // expr
+								   new JavaStyleComment[0]);  // comments
+	popStatements.add(popWrapper);
+
+	// now, generate the body of the new method, concatenating state update then pop expressions
+	JBlock preWorkBody = new JBlock();
+	preWorkBody.addAllStatements(pushStatements);
+	preWorkBody.addAllStatements(popStatements);
+
+	JMethodDeclaration newPreWork = SIRStream.makeEmptyInitWork();
+	newPreWork.setBody(preWorkBody);
+
+	return newPreWork;
+			       
+    }
+
+    /**
+     * Generate a Vector of JExpressionStatements which wrap
+     * SIRPushExpressions that implement (directly) the
+     * matrix multiplication represented by the linear representation.
+     **/
+    public Vector makeInitPushStatementVector(LinearFilterRepresentation representation,
+					  CType inputType,
+					  CType outputType) {
+	Vector returnVector = new Vector();
+
+	int popCount = representation.getPreWorkPopCount();
+	int stateCount = representation.getStateCount();
+	//	int peekCount = representation.getPeekCount();   
+
+	JThisExpression thisExpr = new JThisExpression(null);
+	
+	/* for each state, update value based on A and B matrices
+	** this update is performed on TEMPORARY variables
+	** so that every variable is updated with a variable value from the previous iteration
+	*/ 
+	
+	for(int i=0; i<stateCount; i++) {
+	    
+	    // go through each of the elements in this row of the matrix. If the element
+	    // is non zero, then we want to produce a peek(index)*weight
+	    // term (which we will then add together).
+	    // Currently bomb out if we have a non real number
+	    // (no way to generate non-reals at the present).
+	    Vector combinationExpressions = new Vector();
+
+	    for (int j = 0; j < popCount; j++) {
+		ComplexNumber currentWeight = representation.getPreWorkB().getElement(i,j);
+		// if we have a non real number, bomb Mr. Exception
+		if (!currentWeight.isReal()) {
+		    throw new RuntimeException("Direct implementation with complex " +
+					       "numbers is not yet implemented.");
+		}
+
+		// if we have a non zero weight, add a weight*peek node
+		if (currentWeight.equals(ComplexNumber.ZERO)) {
+		    // do nothing for a zero weight
+		} else {
+		    // make an integer IR node for the appropriate peek index (peek (0)
+		    // corresponds to the array row of  at peekSize-1
+		    JIntLiteral peekOffsetNode = new JIntLiteral(j);
+		    // make a peek expression with the appropriate index
+		    SIRPeekExpression peekNode = new SIRPeekExpression(peekOffsetNode, inputType);
+
+		    // IR node for the expression (either peek, or weight*peek)
+		    JExpression exprNode;
+		    // If we have a one, no need to do a multiply
+		    if (currentWeight.equals(ComplexNumber.ONE)) {
+			exprNode = peekNode;
+		    } else {
+			// make literal weight (special case if the weight is an integer)
+			JLiteral weightNode;
+			if (currentWeight.isReal() && currentWeight.isIntegral()) {
+			    weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
+			} else {
+			    weightNode = new JFloatLiteral(null, (float)currentWeight.getReal());
+			}
+			// make a JMultExpression with weight*peekExpression
+			exprNode = new JMultExpression(null,        // tokenReference
+						       weightNode,  // left
+						       peekNode);   // right
+		    }
+		    // add in the new expression node
+		    combinationExpressions.add(exprNode);
+		}
+	    }
+	    
+
+	    // go through each of the elements in this row of the matrix. If the element
+	    // is non zero, then we want to produce a state(index)*weight
+	    // term (which we will then add together).
+	    // Currently bomb out if we have a non real number
+	    // (no way to generate non-reals at the present).
+	    
+	    for(int k = 0; k < stateCount; k++) {
+		ComplexNumber currentWeight = representation.getPreWorkA().getElement(i,k);
+		// if we have a non real number, bomb Mr. Exception
+		if (!currentWeight.isReal()) {
+		    throw new RuntimeException("Direct implementation with complex " +
+					       "numbers is not yet implemented.");
+		}
+
+
+		    // if we have a non zero weight, add a weight*peek node
+		    if (currentWeight.equals(ComplexNumber.ZERO)) {
+			// do nothing for a zero weight
+		    } else {
+
+			String varName = "x" + k;
+			JFieldAccessExpression fieldNode = new JFieldAccessExpression(null, thisExpr, varName);
+			// IR node for the expression (either var, or weight*var)
+			JExpression exprNode;
+			// If we have a one, no need to do a multiply
+			if (currentWeight.equals(ComplexNumber.ONE)) {
+			    exprNode = fieldNode;
+			} else {
+			    // make literal weight (special case if the weight is an integer)
+			    JLiteral weightNode;
+			    if (currentWeight.isReal() && currentWeight.isIntegral()) {
+				weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
+			    } else {
+				weightNode = new JFloatLiteral(null, (float)currentWeight.getReal());
+			    }
+			    // make a JMultExpression with weight*peekExpression
+			    exprNode = new JMultExpression(null,        // tokenReference
+						       weightNode,  // left
+							   fieldNode);   // right
+			}
+			// add in the new expression node
+			combinationExpressions.add(exprNode);
+		    }
+	    }
+
+	    // now we have all of the combination nodes and the offset node.
+	    // What we want to do is to is to combine them all together using addition.
+	    // To do this, we create an add expression tree expanding downward
+	    // to the right as we go.
+	    JLiteral offsetNode = new JDoubleLiteral(null, 0.0);
+	    JExpression assignArgument;
+	    // if no combination expressions, then the push arg is zero
+	    if (combinationExpressions.size() == 0) {
+		// if we have no combination expressions, it means we should simply output a zero
+		assignArgument = offsetNode;
+	    } else {
+		// combination expressions need to be nested.
+		// Start with the right most node
+		int numCombos = combinationExpressions.size();
+		assignArgument = new JAddExpression(null, // tokenReference
+						  ((JExpression)combinationExpressions.get(numCombos-1)), // left
+						  offsetNode); // right
+		// now, for all of the other combinations, make new add nodes with the
+		// comb. exprs as the left argument and the current add expr as the right
+		// argument.
+		for (int k=2; k<=numCombos; k++) {
+		    assignArgument = new JAddExpression(null, // tokenReference,
+						      ((JExpression)combinationExpressions.get(numCombos-k)), // left
+						      assignArgument); // right (use the previous expression)
+		}
+	    }
+
+	    String tempVarName = "temp_x" + i;
+	    JFieldAccessExpression tempFieldExpr = new JFieldAccessExpression(null,thisExpr,tempVarName);
+	    JAssignmentExpression temp_assign = new JAssignmentExpression(null,tempFieldExpr,assignArgument);	    	    	    
+
+	    // wrap the push expression in a expression statement
+	    JExpressionStatement assignWrapper = new JExpressionStatement(null, // tokenReference
+									temp_assign, // expr
+									new JavaStyleComment[0]); // comments
+	    returnVector.add(assignWrapper);
+	}
+
+
+	// now make the temporary assignments permanent
+
+	for(int i=0; i<stateCount;i++) {
+
+	    String tempName = "temp_x"+i;
+	    String finalName = "x"+i;
+	    JFieldAccessExpression tempFieldExpr = new JFieldAccessExpression(null,thisExpr,tempName);
+	    JFieldAccessExpression finalFieldExpr = new JFieldAccessExpression(null,thisExpr,finalName);
+
+	    JAssignmentExpression final_assign = new JAssignmentExpression(null,finalFieldExpr,tempFieldExpr);	    	    	    
+
+
+	    // wrap the push expression in a expression statement
+	    JExpressionStatement assignWrapper = new JExpressionStatement(null, // tokenReference
+									final_assign, // expr
+									new JavaStyleComment[0]); // comments
+	    returnVector.add(assignWrapper);
+
+	}
+
+	return returnVector;
+    }
+
+
+
+
 
 
     /**

@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.4 2004-02-25 20:55:44 sitij Exp $
+ * $Id: FilterMatrix.java,v 1.5 2004-03-02 23:24:05 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -299,11 +299,10 @@ public class FilterMatrix {
 	return;
     }
 
+
     /**
      * Copies numCols from the source matrix starting at (0,sourceOffset)
      * into this matrix beginning at (0,destOffset).
-     * (This is used to merge columns from one filter matrix into another
-     * during splitjoin combinations.)
      **/
     public void copyColumnsAt(int destOffset, FilterMatrix sourceMatrix,
 			      int srcOffset, int numCols) {
@@ -376,6 +375,20 @@ public class FilterMatrix {
 		}
 	    }
 	}
+    }
+
+
+    /**
+     * Copied numRows, numCols at the thisOffset positions of this FilterMatrix
+     * from sourceOffsets of the source filter matrix.
+     **/
+    public void copyRowsAndColsAt(int thisRowOffset, int thisColOffset, FilterMatrix source, int sourceRowOffset, int sourceColOffset, int numRows, int numCols) { 
+
+	FilterMatrix tempMatrix = new FilterMatrix(numRows,source.getCols());
+	tempMatrix.copyRowsAt(0,source,sourceRowOffset,numRows);
+	FilterMatrix tempMatrix2 = new FilterMatrix(numRows,numCols);
+	tempMatrix2.copyColumnsAt(0,tempMatrix,sourceColOffset,numCols);
+	this.copyAt(thisRowOffset,thisColOffset,tempMatrix2);
     }
      
 

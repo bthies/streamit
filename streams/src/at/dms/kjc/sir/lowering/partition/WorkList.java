@@ -61,9 +61,9 @@ class WorkList extends java.util.LinkedList {
 	for (int i=title1.length(); i<max; i++) {
 	    out.print(" ");
 	}
-	out.print("\t" + "Reps" + "\t" + "Estimated Work" + "\t" + "Total Estimated Work");
+	out.print("\t" + "Reps" + "\t" + "Unit Work (Estimated)" + "\t" + "Total Work (Estimated)");
 	if (KjcOptions.simulatework) {
-	    out.println("\t" + "Measured Work" + "\t" + "(Measured-Estimated)/Measured" + "\t" + "Total Measured Work");
+	    out.println("\t" + "Unit Work (Measured)" + "\t" + "Total Work (Measured)" + "\t" + "Estimated/Measured");
 	} else {
 	    out.println();
 	}
@@ -76,8 +76,8 @@ class WorkList extends java.util.LinkedList {
 	    }
 	    out.print("\t" + workInfo.getReps() + "\t" + workInfo.getInexactUnitWork() + "\t" + (workInfo.getReps()*workInfo.getInexactUnitWork()));
 	    if (KjcOptions.simulatework) {
-		out.println("\t" + workInfo.getUnitWork() + "\t" + (((float)workInfo.getUnitWork()-(float)workInfo.getInexactUnitWork())/(float)workInfo.getUnitWork()) + 
-			    "\t" + workInfo.getTotalWork());
+		out.println("\t" + workInfo.getUnitWork() + "\t" + workInfo.getTotalWork() +
+			    "\t" + (((float)workInfo.getInexactUnitWork())/((float)workInfo.getUnitWork())) );
 	    } else {
 		out.println();
 	    }

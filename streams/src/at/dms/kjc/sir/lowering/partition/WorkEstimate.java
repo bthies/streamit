@@ -22,14 +22,8 @@ public class WorkEstimate {
      */
     private HashMap workMap;
 
-    /**
-     * The total amount of work contained in the stream.
-     */
-    private int toplevelWork;
-
     private WorkEstimate() {
 	this.workMap = new HashMap();
-	this.toplevelWork = 0;
     }
 
     /**
@@ -148,20 +142,16 @@ public class WorkEstimate {
     }
 
     /**
-     * Returns the percent of the total stream's work that is consumed
-     * by filter <obj>.  Returns this in the range of 0-100.
-     */
-    public float getPercentageWork(SIRFilter obj) {
-	return 100 * 
-	    ((float)((WorkInfo)workMap.get(obj)).getTotalWork()) / toplevelWork;
-    }
-
-    /**
      * prints work of all functions to system.err.
      */
     public void printWork() {
 	WorkList sorted = getSortedFilterWork();
 	System.err.println("  Work Estimates:");
+	// first sum the total work
+	int totalWork = 0;
+	for (int i=sorted.size()-1; i>=0; i--) {
+	    totalWork += sorted.getWork(i);
+	}
 	for (int i=sorted.size()-1; i>=0; i--) {
 	    SIRFilter obj = sorted.getFilter(i);
 	    String objName = obj.getIdent();
@@ -177,8 +167,8 @@ public class WorkEstimate {
 	    for (int j=length; j<35; j++) {
 		System.err.print(" ");
 	    }
-	    System.err.println("\t" + sorted.getWork(i) + "\t" + "(" +
-			       ((int)getPercentageWork(obj)) + "%)");
+	    float percentageWork = 100.0f * ((float)sorted.getWork(i))/((float)totalWork);
+	    System.err.println("\t" + sorted.getWork(i) + "\t" + "(" + ((int)percentageWork) + "%)");
 	}
     }
 
@@ -205,7 +195,6 @@ public class WorkEstimate {
 		int workEstimate = WorkVisitor.getWork((SIRFilter)obj);
 		WorkInfo wi = WorkInfo.create((SIRFilter)obj,reps,workEstimate);
 		workMap.put(obj, wi);
-		toplevelWork += reps*wi.getTotalWork();
 	    }
 	}
     }

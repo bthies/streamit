@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.6 2003-12-16 20:58:22 dmaze Exp $
+# $Id: run-reg-tests.py,v 1.7 2003-12-23 17:37:45 dmaze Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -98,7 +98,12 @@ class RunRegTests:
         # Use the older popen2 package here, since we want the
         # object to get the return status.
         pop = popen2.Popen4(cmd)
-        msgs = pop.fromchild.read()
+        msgs = ''
+        while 1:
+            data = pop.fromchild.read()
+            if data == '':
+                break
+            msgs += data
         status = pop.wait()
 
         logfile = os.path.join(self.working_dir, filename)
@@ -173,7 +178,12 @@ and load 'results.qmr'.
                             '/regtest/qmtest/examine-results.py ' +
                             self.streamit_home + '/results.qmr' +
                             last_results)
-        summary = pop.fromchild.read()
+        summary = ''
+        while 1:
+            data = pop.fromchild.read()
+            if data == '':
+                break
+            summary += data
         pop.wait()
         self.mail_all(header + summary)
 

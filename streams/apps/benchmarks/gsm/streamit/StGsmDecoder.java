@@ -736,7 +736,7 @@ class LTPInputSplitJoin extends SplitJoin
     {
 	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));
 	this.add(new LTPInputFilter());
-	this.add(new Identity(Float.TYPE));
+	this.add(new Identity(Short.TYPE));
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(2, 160)); //bcr, ncr, drp[0...159]
     }
 }
@@ -747,7 +747,7 @@ class LARInputSplitJoin extends SplitJoin
     public void init()
     {
 	this.setSplitter(WEIGHTED_ROUND_ROBIN (1, 0));  //we don't care about it going to in2
-	this.add(new Identity(Float.TYPE));
+	this.add(new Identity(Short.TYPE));
 	this.add(new LARInputFilter());	
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(160, 8));  //drp[0...160], LARc[0...7];
     }

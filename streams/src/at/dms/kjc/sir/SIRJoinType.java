@@ -68,8 +68,11 @@ public class SIRJoinType implements Serializable {
 	    return SchedJoinType.WEIGHTED_ROUND_ROBIN;
 	} else if (this==WEIGHTED_RR) {
 	    return SchedJoinType.WEIGHTED_ROUND_ROBIN;
+	} else if (this==NULL) {
+	    return SchedJoinType.NULL;
 	} else {
-	    Utils.fail("Type of joiner unsupported in library?");
+	    Utils.fail("Type of joiner \"" + this + 
+		       "\"unsupported in library?");
 	    return -1;
 	}
     }

@@ -67,6 +67,8 @@ public class SIRSplitType implements Serializable {
 	    return SchedSplitType.WEIGHTED_ROUND_ROBIN;
 	} else if (this==DUPLICATE) {
 	    return SchedSplitType.DUPLICATE;
+	} else if (this==NULL) {
+	    return SchedSplitType.NULL;
 	} else {
 	    Utils.fail("Type of splitter unsupported in library?");
 	    return -1;

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.33 2003-04-08 20:42:20 thies Exp $
+ * $Id: KjcOptions.opt,v 1.34 2003-04-11 07:45:43 jasperln Exp $
  */
 
 prefix Kjc
@@ -303,6 +303,13 @@ longname		"raw"
 	default		"-1"
 	requireArgument
 	help		"Compile for RAW with a square layout, with <n> tiles per side"
+
+longname		"rawcol"
+	shortcut	"q"
+	type		int
+	default		"-1"
+	requireArgument
+	help		"Sets the number of column of tiles. With this set raw specifies the number of rows."
 
 longname		"streamit"
 	shortcut	"s"

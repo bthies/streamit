@@ -96,12 +96,12 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	// a given bottleneck.  This is in an attempt to decrease
 	// synchronization and improve utilization.
 	/*
-	  while (tilesUsed>1 && bottleneck==topConfig.get(tilesUsed-1)) {
-	  tilesUsed--;
-	  }
-	  if (tilesUsed<numTiles) {
-	  System.err.println("Decreased tile usage from " + numTiles + " to " + tilesUsed + " without increasing bottleneck.");
-	  }
+	while (tilesUsed>1 && bottleneck==topConfig.get(tilesUsed-1, 0)) {
+	    tilesUsed--;
+	}
+	if (tilesUsed<numTiles) {
+	    System.err.println("Decreased tile usage from " + numTiles + " to " + tilesUsed + " without increasing bottleneck.");
+	}
 	*/
 	// expand config stubs that were shared for symmetry optimizations
 	if (SHARING_CONFIGS) {

@@ -60,8 +60,8 @@ class Propagator extends SLIRReplacingVisitor {
 	if (expr != null) {
 	    JExpression newExp = (JExpression)expr.accept(this);
 	    // if we have a constant AND it's a final variable...
-	    if (newExp.isConstant() /*&& CModifier.contains(modifiers,
-				      ACC_FINAL)*/) {
+	    if (newExp.isConstant() && CModifier.contains(modifiers,
+							  ACC_FINAL)) {
 		// reset the value
 		self.setExpression(newExp);
 		// remember the value for the duration of our visiting

@@ -331,7 +331,7 @@ public class LowerInitFunctions implements StreamVisitor {
 	// set peek count
 	init.addStatement(new LIRSetPeek(LoweringConstants.
 					 getStreamContext(),
-					 self.getPushInt()));
+					 self.getPeekInt()));
 	// set pop count
 	init.addStatement(new LIRSetPop(LoweringConstants.
 					getStreamContext(),

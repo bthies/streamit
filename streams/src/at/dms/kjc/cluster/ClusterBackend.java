@@ -12,7 +12,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.stats.StatisticsGathering;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
-import at.dms.kjc.sir.lowering.partition.dynamicprog.*;
+import at.dms.kjc.sir.lowering.partition.cache.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.lir.*;
@@ -151,7 +151,7 @@ public class ClusterBackend implements FlatVisitor {
 	    if (!KjcOptions.partition_greedy && !KjcOptions.partition_greedier) {
 		KjcOptions.partition_dp = true;
 	    }
-	    str = Partitioner.doit(str, 0, threads, false, limitICode);
+	    str = CachePartitioner.doit(str);
 	    /*
 	    if (str instanceof SIRContainer) {
 		((SIRContainer)str).reclaimChildren();
@@ -160,7 +160,7 @@ public class ClusterBackend implements FlatVisitor {
 	} 
 
 	HashMap partitionMap = new HashMap();
-	str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, limitICode).calcPartitions(partitionMap);
+	str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), threads).calcPartitions(partitionMap);
 	System.err.println("Done Partitioning...");
 
 	if (KjcOptions.sjtopipe) {

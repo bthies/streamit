@@ -45,17 +45,17 @@ typedef struct tape {
   int data_size;
   int tape_length;
 } tape;
-#define PUSH(c, type, d) \
-  { if (++((c)->output_tape->write_pos) >= (c)->output_tape->tape_length ) \
-       (c)->output_tape->write_pos = 0; \
-    ((type *)((c)->output_tape->data))[(c)->output_tape->write_pos] = (d); }
-#define PEEK(c, type, n) \
-  (((type *)(c)->input_tape->data) \
-   [((c)->input_tape->read_pos+n)%(c)->input_tape->tape_length])
-#define POP(c, type) \
-  ((((++((c)->input_tape->read_pos)) >= (c)->input_tape->tape_length) \
-    ? ((c)->input_tape->read_pos = 0) : 0), \
-   ((type *)((c)->input_tape->data))[(c)->input_tape->read_pos])
+#define PUSH_TAPE(t, type, d) \
+  { if (++((t)->write_pos) >= (t)->tape_length) (t)->write_pos = 0; \
+    ((type *)((t)->data))[(t)->write_pos] = (d); }
+#define PEEK_TAPE(t, type, n) \
+  (((type *)(t)->data)[((t)->read_pos+n)%(t)->tape_length])
+#define POP_TAPE(t, type) \
+  ((((++((t)->read_pos)) >= (t)->tape_length) ? ((t)->read_pos = 0) : 0), \
+   ((type *)((t)->data))[(t)->read_pos])
+#define PUSH(c, type, d) PUSH_TAPE((c)->output_tape, type, d)
+#define PEEK(c, type, n) PEEK_TAPE((c)->input_tape, type, n)
+#define POP(c, type) POP_TAPE((c)->input_tape, type)
 struct stream_context;
 
 typedef struct stream_context_list {

@@ -25,7 +25,7 @@ import java.util.Map;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.19 2005-04-04 07:05:45 thies Exp $
+ * @version $Id: GetExprType.java,v 1.20 2005-04-06 12:03:13 thies Exp $
  */
 public class GetExprType extends FENullVisitor
 {
@@ -107,8 +107,7 @@ public class GetExprType extends FENullVisitor
 
     public Object visitExprConstChar(ExprConstChar exp)
     {
-        // return new TypePrimitive(TypePrimitive.TYPE_CHAR);
-        return null;
+	return new TypePrimitive(TypePrimitive.TYPE_CHAR);
     }
     
     public Object visitExprConstFloat(ExprConstFloat exp)
@@ -128,8 +127,7 @@ public class GetExprType extends FENullVisitor
     
     public Object visitExprConstStr(ExprConstStr exp)
     {
-        // return new TypePrimitive(TypePrimitive.TYPE_STRING);
-        return null;
+        return new TypePrimitive(TypePrimitive.TYPE_STRING);
     }
     
     public Object visitExprDynamicToken(ExprDynamicToken exp) 

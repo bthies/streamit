@@ -21,7 +21,7 @@ package streamit.frontend.nodes;
  * the specified type parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypePrimitive.java,v 1.10 2004-01-28 22:26:54 dmaze Exp $
+ * @version $Id: TypePrimitive.java,v 1.11 2005-04-06 12:03:13 thies Exp $
  */
 public class TypePrimitive extends Type
 {
@@ -39,6 +39,10 @@ public class TypePrimitive extends Type
     public static final int TYPE_VOID = 6;
     /** Type constant for boolean types. */
     public static final int TYPE_BOOLEAN = 7;
+    /** Type constant for char types. */
+    public static final int TYPE_CHAR = 8;
+    /** Type constant for string types. */
+    public static final int TYPE_STRING = 0;
 
     /** Type object for boolean types. */
     public static final TypePrimitive booltype =
@@ -56,6 +60,12 @@ public class TypePrimitive extends Type
     /** Type object for void types. */
     public static final TypePrimitive voidtype =
         new TypePrimitive(TYPE_VOID);
+    /** Type object for char types. */
+    public static final TypePrimitive chartype =
+        new TypePrimitive(TYPE_CHAR);
+    /** Type object for string types. */
+    public static final TypePrimitive stringtype =
+        new TypePrimitive(TYPE_STRING);
     
     private int type;
 
@@ -102,6 +112,10 @@ public class TypePrimitive extends Type
             return "void";
         case TYPE_BOOLEAN:
             return "boolean";
+        case TYPE_CHAR:
+            return "char";
+        case TYPE_STRING:
+            return "string";
         default:
             return "<primitive type " + type + ">";
         }
@@ -132,16 +146,23 @@ public class TypePrimitive extends Type
         case TYPE_BOOLEAN:
             return t2 == TYPE_BOOLEAN || t2 == TYPE_BIT ||
                 t2 == TYPE_INT || t2 == TYPE_FLOAT ||
-                t2 == TYPE_COMPLEX;
+                t2 == TYPE_COMPLEX || t2 == TYPE_STRING;
         case TYPE_BIT:
             return t2 == TYPE_BIT || t2 == TYPE_INT ||
-                t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX;
+                t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX ||
+		t2 == TYPE_STRING;
         case TYPE_INT:
-            return t2 == TYPE_INT || t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX;
+            return t2 == TYPE_INT || t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX ||
+		t2 == TYPE_STRING;
         case TYPE_FLOAT:
-            return t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX;
+            return t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX ||
+		t2 == TYPE_STRING;
         case TYPE_COMPLEX:
-            return t2 == TYPE_COMPLEX;
+            return t2 == TYPE_COMPLEX || t2 == TYPE_STRING;
+        case TYPE_CHAR:
+            return t2 == TYPE_CHAR || t2 == TYPE_STRING;
+        case TYPE_STRING:
+            return t2 == TYPE_STRING;
         default:
             assert false : t1;
             return false;

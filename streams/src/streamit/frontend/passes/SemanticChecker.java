@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.26 2005-04-04 20:14:38 thies Exp $
+ * @version $Id: SemanticChecker.java,v 1.27 2005-04-06 12:03:16 thies Exp $
  */
 public class SemanticChecker
 {
@@ -575,6 +575,8 @@ public class SemanticChecker
                             new TypePrimitive(TypePrimitive.TYPE_COMPLEX);
                         Type floattype =
                             new TypePrimitive(TypePrimitive.TYPE_FLOAT);
+                        Type stringtype =
+                            new TypePrimitive(TypePrimitive.TYPE_STRING);
                         if (ct == null)
                         {
                             report (expr,
@@ -584,8 +586,15 @@ public class SemanticChecker
                         // Check whether ct is an appropriate type.
                         switch (expr.getOp())
                         {
-                        // Arithmetic operations:
+                        // Arithmetic / concatenation operations:
                         case ExprBinary.BINOP_ADD:
+			    // can concatenate strings and characters
+                            if (!ct.promotesTo(cplxtype) && !ct.promotesTo(stringtype))
+                                report(expr,
+                                       "cannot perform + on " + ct);
+                            break;
+
+                        // Arithmetic operations:
                         case ExprBinary.BINOP_DIV:
                         case ExprBinary.BINOP_MUL:
                         case ExprBinary.BINOP_SUB:

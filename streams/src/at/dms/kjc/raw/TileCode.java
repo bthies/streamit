@@ -64,6 +64,11 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    fw.write("#include <raw.h>\n");
 	    fw.write("#include <math.h>\n\n");
 
+	    //if there are structures in the code, include
+	    //the structure definition header files
+	    if (RawBackend.structures.length > 0) 
+		fw.write("#include \"structs.h\"\n");
+	    
 	    if(KjcOptions.altcodegen || KjcOptions.decoupled) {
 		fw.write("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
 		fw.write("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");

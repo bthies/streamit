@@ -379,7 +379,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    //file readers/writers the number of columns
 	    if (FileVisitor.fileReaders.size() + 
 		FileVisitor.fileWriters.size() > RawBackend.rawRows)
-		Utils.fail("Too many file readers/writers (must be less than rows.");
+		Utils.fail("Too many file readers/writers (must be less than rows).");
 	    //assign the file streams to the added column starting at the top
 	    //row
 	    while (frs.hasNext()) {

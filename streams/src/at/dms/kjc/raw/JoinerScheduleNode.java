@@ -69,13 +69,81 @@ public class JoinerScheduleNode
 		}
 	    }
 	}
-	ret.append("{\n");
+
    	if (type == DUPLICATE) {
 	    ret.append(dupRecCode(arrayAccess));
 	}
 	else if (type == FIRE) {
+	    ret.append(fireCode(ctype, arrayAccess));
+	}
+	else if (type == RECEIVE) { //receive
+	    ret.append(receiveCode(ctype, arrayAccess, nextDup));
+	    if (nextDup) {
+		ret.append(dupRecCode(arrayAccess));
+	    }
+	    else {
+		ret.append("}\n");
+		ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
+	    }
+	}
+	else if (type == INITPATH){
+	    ret.append("{\n");
+	    ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
+	    ret.append(arrayAccess);
+	    ret.append("= initPath(" + 
+		       initPathIndex + ");\n");
+	    ret.append("}\n");
+	    ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
+	}
+
+	return ret.toString();
+    }
+    
+    private StringBuffer receiveCode(CType type, StringBuffer arrayAccess, 
+				     boolean nextDup) {
+	StringBuffer ret = new StringBuffer();
+	ret.append("{\n");
+	if (type.isClassType()) {
+	    //call the struct's receive method
+	    ret.append("__popPointer" + type + "(&");
+	    ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
+	    ret.append(");\n");
+	}
+	else { //scalar or array type
+	    if (!KjcOptions.altcodegen || KjcOptions.decoupled) 
+		ret.append("/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (");
+	    if (nextDup) {
+		ret.append(DUPVAR);
+	    }
+	    else {
+		ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
+	    }
+	    ret.append(arrayAccess);
+	    
+	    if (KjcOptions.altcodegen || KjcOptions.decoupled){
+		if (type.isFloatingPoint())
+		    ret.append(" = " + Util.CSTIFPVAR + ";\n");
+		else
+		    ret.append(" = " + Util.CSTIINTVAR + ";\n");
+	    }
+	    else
+		ret.append("));\n");
+	}
+	return ret;
+    }
+    
+    private StringBuffer fireCode(CType type, StringBuffer arrayAccess) {
+	StringBuffer ret = new StringBuffer();
+	ret.append("{\n");
+	if (type.isClassType()) {
+	    //call the struct's push method
+	    ret.append("push" + type + "(&");
+	    ret.append("__buffer" + buffer + "[__first" + buffer + "++]");
+	    ret.append(");\n");
+	}
+	else { //array or scalar type
 	    if (KjcOptions.altcodegen || KjcOptions.decoupled) {
-		if (fp)
+		if (type.isFloatingPoint())
 		    ret.append(Util.CSTOFPVAR + " = ");
 		else
 		    ret.append(Util.CSTOINTVAR + " = ");
@@ -89,52 +157,16 @@ public class JoinerScheduleNode
 		ret.append(";\n");
 	    else 
 		ret.append("));\n");
-	    ret.append("}\n");
-	    ret.append("__first" + buffer + " = __first" + buffer + " & __MINUSONE__;\n");
-	   
 	}
-	else if (type == RECEIVE) { //receive
-	    if (!KjcOptions.altcodegen || KjcOptions.decoupled) 
-		ret.append("/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (");
-	    if (nextDup) {
-		ret.append(DUPVAR);
-	    }
-	    else {
-		ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
-	    }
-	    ret.append(arrayAccess);
-	    
-	    if (KjcOptions.altcodegen || KjcOptions.decoupled){
-		if (fp)
-		    ret.append(" = " + Util.CSTIFPVAR + ";\n");
-		else
-		    ret.append(" = " + Util.CSTIINTVAR + ";\n");
-	    }
-	    else
-		ret.append("));\n");
-
-	    if (nextDup) {
-		ret.append(dupRecCode(arrayAccess));
-	    }
-	    else {
-		ret.append("}\n");
-		ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
-	    }
-	}
-	else if (type == INITPATH){
-	    ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
-	    ret.append(arrayAccess);
-	    ret.append("= initPath(" + 
-		       initPathIndex + ");\n");
-	    ret.append("}\n");
-	    ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
-	}
-
-	return ret.toString();
+	ret.append("}\n");
+	//mod the start of the circular buffer
+	ret.append("__first" + buffer + " = __first" + buffer + " & __MINUSONE__;\n");
+	return ret;
     }
     
     private StringBuffer dupRecCode(StringBuffer arrayAccess) {
 	StringBuffer ret = new StringBuffer();
+	ret.append("{\n");
 	ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
 	ret.append(arrayAccess);
 	ret.append(" = " + DUPVAR);

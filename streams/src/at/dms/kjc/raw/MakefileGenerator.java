@@ -180,7 +180,13 @@ public class MakefileGenerator
 	if (KjcOptions.numbers > 0 && NumberGathering.successful) {
 	    fw.write("global printsPerSteady = " + NumberGathering.printsPerSteady + ";\n");
 	    fw.write("global skipPrints = " + NumberGathering.skipPrints + ";\n");
-	    fw.write("global quitAfter = " + KjcOptions.numbers + ";\n\n");
+	    fw.write("global quitAfter = " + KjcOptions.numbers + ";\n");
+	    fw.write("global gSinkX = " + 
+		     Layout.getTile(NumberGathering.sink).getColumn() +
+		     ";\n");
+	    fw.write("global gSinkY = " + 
+		     Layout.getTile(NumberGathering.sink).getRow() +
+		     ";\n");
 	    
 	    fw.write("{\n");
 	    fw.write("  local numberpath = malloc(strlen(streamit_home) + 30);\n");

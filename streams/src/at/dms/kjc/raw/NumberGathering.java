@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Vector;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
@@ -31,11 +32,12 @@ public class NumberGathering extends at.dms.util.Utils
     public static boolean successful = false;
     public static int printsPerSteady = 0;
     public static int skipPrints = 0;
+    public static FlatNode sink;
 
     public static boolean doit(FlatNode top) 
     {
 	successful = false;
-	FlatNode sink = Sink.getSink(top);
+	sink = Sink.getSink(top);
 	//no sink or more than one sink
 	if (sink == null) {
 	    return false;
@@ -46,7 +48,7 @@ public class NumberGathering extends at.dms.util.Utils
 	int prints = CheckPrint.check((SIRFilter)sink.contents);
 	// if we failed, unroll the filter on the loops that we
 	// indicated
-	if (prints==-1) {
+	if (prints == -1) {
 	    SinkUnroller.doit(sink);
 	    prints = CheckPrint.check((SIRFilter)sink.contents);
 	}
@@ -84,29 +86,124 @@ public class NumberGathering extends at.dms.util.Utils
 class Sink implements FlatVisitor 
 {
     private static FlatNode sink;
+    //used if there are multiple sinks, to analyze them...
+    private static HashSet possibleSinks;
     private static boolean multipleSinks;
     private static boolean printOutsideSink;
-    
+    private static FlatNode toplevel;
+
     public static FlatNode getSink(FlatNode top) 
     {
+	toplevel = top;
 	sink = null;
+	possibleSinks = new HashSet();
 	multipleSinks = false;
-	printOutsideSink = false;
 	top.accept(new Sink(), null, true);
 	//if more than one sink return null
 	//we do not handle this case now
 	if (multipleSinks) {
-	    System.out.println("Cannot generate number gathering code: Multiple sinks");
-	    return null;
+	    FlatNode ancestor = getLeastCommonAncestor();
+	    System.out.println("The LCA is " + ancestor.contents.getName());
+	    
+	    Iterator sinksIt = possibleSinks.iterator();
+	    while (sinksIt.hasNext()) {
+		FlatNode current = (FlatNode)sinksIt.next();
+		//traverse the path from the current sink to the ancestor
+		//and check to see if any of the filter have a pop(peek) rate
+		//equal to 0, if so, then the sinks are not synchronized
+		//how to check then?
+		if (!isSynchronized(ancestor, current)) {    
+		    System.out.println("Cannot generate number gathering code: " + 
+				       "Multiple sinks that are not synchronized");
+		    return null;
+		}
+	    }
 	}
-	if (printOutsideSink) {
-	    System.out.println("Cannot generate number gathering code: Print outside the sink");
-	    return null;
-	}
-	
-	return sink;
+	//now pick a sink, we will just pick the first one in possibleSinks
+	return (FlatNode)possibleSinks.iterator().next();
     }
     
+    private static FlatNode getLeastCommonAncestor() 
+    {
+	//a vector of hashsets of all the ancestors of 
+	//each sink
+	Vector ancestors = new Vector();
+	Iterator sinksIt = possibleSinks.iterator();
+	//get all the ancestor for each sink
+	while (sinksIt.hasNext()) {
+	    ancestors.add(getAllAncestors((FlatNode)sinksIt.next()));
+	}
+	//get the set representing the intersection of all
+	//the ancestor sets...this is the common ancestors
+	HashSet commonAncestors = (HashSet)ancestors.get(0);
+
+	for (int i = 1; i < ancestors.size(); i++)
+	    commonAncestors = intersection(commonAncestors, (HashSet)ancestors.get(i));    
+	    
+	//find the most downstream ancestor...
+	FlatNode lca = null;
+	Iterator bft = BreadthFirstTraversal.getTraversal(toplevel).listIterator();
+	while (bft.hasNext()) {
+	    FlatNode current = (FlatNode)bft.next();
+	    if (commonAncestors.contains(current))
+		lca = current;
+	}
+	
+	//this is not the best way of doing it, but it was easy to code up!
+	return lca;
+    }
+
+    private static HashSet getAllAncestors(FlatNode node) 
+    {
+	HashSet ret = new HashSet();
+	//add self
+	ret.add(node);
+	//add the upstream
+	if (node == null || node.incoming == null ) 
+	    return ret;
+	
+	for (int i = 0; i < node.incoming.length; i++)
+	    RawBackend.addAll(ret, getAllAncestors(node.incoming[i]));
+	return ret;
+    }
+
+    private static HashSet intersection(HashSet x, HashSet y) 
+    {
+	HashSet ret = new HashSet();
+	
+	Iterator xit = x.iterator();
+	while (xit.hasNext()) {
+	    Object current = xit.next();
+	    if (y.contains(current))
+		ret.add(current);
+	}
+	return ret;
+    }
+    
+	    
+
+    //returns true if every filter on every path from current to ancestor (following
+    //back edges) has pop > 0, meaning it is synchronized to the upstream
+    private static boolean isSynchronized(FlatNode ancestor, FlatNode current) 
+    {
+	if (ancestor == current) 
+	    return true;
+
+	///check the pop rate
+	if (current.isFilter())
+	    if (((SIRFilter)current.contents).getPopInt() == 0)
+		return false;
+
+	//check all the incoming arcs of the joiner return 
+	//true if all of them are true...
+	for (int i = 0; i < current.incoming.length; i++)
+	    if (!isSynchronized(ancestor, current.incoming[i]))
+		return false;
+
+	return true;    
+    }
+    
+
     public void visitNode(FlatNode node) 
     {
 	if (node.isFilter()) {
@@ -115,14 +212,10 @@ class Sink implements FlatVisitor
 		//sink
 		if (sink != null)
 		    multipleSinks = true;
+		//add this to the hash map of sinks
+		possibleSinks.add(node);
+		//if this is the only sink, record it here
 		sink = node;
-	    }
-	    else {
-		//check if there is a print statement 
-		if (ExistsPrint.exists(filter)) {
-		    printOutsideSink = true;
-		}
-		
 	    }
 	}
     }

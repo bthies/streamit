@@ -7,40 +7,29 @@ import at.dms.util.*;
 import java.util.HashMap;
 
 /**
- * This represents a StreaMIT filter.
+ * This represents a basic StreamIt filter.  In this case, a filter
+ * is a specialized phased filter that has only a single stage
+ * (no prework function or phases), and only a single phase in its
+ * work stage.
+ *
+ * @version $Id: SIRFilter.java,v 1.29 2003-05-16 18:37:55 dmaze Exp $
  */
-public class SIRFilter extends SIRStream implements Cloneable {
-    /**
-     * The number of items that are peeked per invocation.  This
-     * number includes the items that are popped; i.e. if a filter
-     * pops two and peeks 3, then it looks at a total of 3 elements,
-     * not 5 elements.
-     */
-    protected JExpression peek;
-    /**
-     * The number of items that are popped per invocation.
-     */
-    protected JExpression pop;
-    /**
-     * The number of items that are pushed per invocation.
-     */
-    protected JExpression push;
-    /**
-     * The input and output types.  That is, the type of the items on
-     * the input and output channels, respectively.  Each type is void
-     * if and only if this is a source or sink, respectively.
-     */
-    private CType inputType, outputType;
+public class SIRFilter extends SIRPhasedFilter implements Cloneable {
+    /* Internal invariant: the init phases array is null or has zero
+     * elements, the work phases array has exactly one element.
+     * This means we need to set up initPhases and phases even where
+     * we wouldn't otherwise. */
 
     public SIRFilter() {
 	this(null);
+        setPhases(new SIRWorkFunction[1]);
+        getPhases()[0] = new SIRWorkFunction();
     }
 
     public SIRFilter(String ident) {
-	super(null, ident, JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
-	this.pop = new JIntLiteral(0);
-	this.push = new JIntLiteral(0);
-	this.peek = new JIntLiteral(0);
+        super(ident);
+        setPhases(new SIRWorkFunction[1]);
+        getPhases()[0] = new SIRWorkFunction();
     }
     
     public SIRFilter(SIRContainer parent,
@@ -51,41 +40,12 @@ public class SIRFilter extends SIRStream implements Cloneable {
 		     JMethodDeclaration work, 
 		     CType inputType, 
 		     CType outputType) {
-	super(parent, ident, fields, methods);
-	this.peek = peek;
-	this.pop = pop;
-	this.push = push;
-	this.inputType = inputType;
-	this.outputType = outputType;
-	// make this call to ensure that <work> is in <methods> array
-	if (work!=null) {
-	    setWork(work);
-	}
-    }
-
-    /**
-     * Returns the type of this stream.
-     */
-    public LIRStreamType getStreamType() {
-	return LIRStreamType.LIR_FILTER;
-    }
-
-    /**
-     * Copies the state of filter <other> into this.  Fields that are
-     * objects will be shared instead of cloned.
-     */
-    public void copyState(SIRFilter other) {
-	this.pop = other.pop;
-	this.push = other.push;
-	this.peek = other.peek;
-	this.work = other.work;
-	this.init = other.init;
-	this.inputType = other.inputType;
-	this.outputType = other.outputType;
-	this.parent = other.parent;
-	this.fields = other.fields;
-	this.methods = other.methods;
-	this.ident = other.ident;
+        super(parent, ident, fields, methods,
+              new SIRWorkFunction[0], // initPhases
+              new SIRWorkFunction[1], // phases
+              null, inputType, outputType);
+        // Create a single phase corresponding to the work function.
+        getPhases()[0] = new SIRWorkFunction(peek, pop, push, work);
     }
 
     /**
@@ -96,44 +56,43 @@ public class SIRFilter extends SIRStream implements Cloneable {
 			     fields,
 			     methods,
 			     init,
-			     work,
-			     inputType, outputType);
+			     getPhases()[0].getWork(),
+			     getInputType(), getOutputType());
     }
 
-
     public void setPeek(JExpression p) {
-	this.peek = p;
+        getPhases()[0].setPeek(p);
     }
 
     public void setPop(JExpression p) {
-	this.pop = p;
+        getPhases()[0].setPop(p);
     }
     public void setPush(JExpression p) {
-	this.push = p;
+        getPhases()[0].setPush(p);
     }
 
     public void setPeek(int p) {
-	this.peek = new JIntLiteral(p);
+        setPeek(new JIntLiteral(p));
     }
 
     public void setPush(int p) {
-	this.push = new JIntLiteral(p);
+        setPush(new JIntLiteral(p));
     }
 
     public void setPop(int p) {
-	this.pop = new JIntLiteral(p);
+        setPop(new JIntLiteral(p));
     }
 
     public JExpression getPush() {
-	return this.push;
+        return getPhases()[0].getPush();
     }
 
     public JExpression getPeek() {
-	return this.peek;
+        return getPhases()[0].getPeek();
     }
 
     public JExpression getPop() {
-	return this.pop;
+        return getPhases()[0].getPop();
     }
 
     public int getPushForSchedule(HashMap[] counts) {
@@ -157,14 +116,7 @@ public class SIRFilter extends SIRStream implements Cloneable {
      * getPop.
      */
     public int getPopInt() {
-      if (pop instanceof JFloatLiteral) { //clleger
-	pop = new JIntLiteral(null, (int) ((JFloatLiteral)pop).floatValue());
-      }
-	// need int literal to get number
-	if (!(pop instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for pop value in filter " + this.getName() + ", but the constant hasn't been resolved yet. " + pop);
-	}
-	return ((JIntLiteral)pop).intValue();
+        return getPhases()[0].getPopInt();
     }
 
     /**
@@ -174,14 +126,7 @@ public class SIRFilter extends SIRStream implements Cloneable {
      * getPeek.
      */
     public int getPeekInt() {
-      if (peek instanceof JFloatLiteral) { //clleger
-	peek = new JIntLiteral(null, (int) ((JFloatLiteral)peek).floatValue());
-      }
-	// need int literal to get number
-	if (!(peek instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for peek value in filter " + this.getIdent() + ", but the constant hasn't been resolved yet. " + peek);
-	}
-	return ((JIntLiteral)peek).intValue();
+        return getPhases()[0].getPeekInt();
     }
 
     /**
@@ -191,29 +136,23 @@ public class SIRFilter extends SIRStream implements Cloneable {
      * getPush.
      */
     public int getPushInt() {
-	// need int literal to get number
-      if (push instanceof JFloatLiteral) { //clleger
-	push = new JIntLiteral(null, (int) ((JFloatLiteral)push).floatValue());
-      }
-
-	if (!(push instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for push value in filter " + this.getIdent() + ", but the constant hasn't been resolved yet. " + push);
-	}
-	return ((JIntLiteral)push).intValue();
+        return getPhases()[0].getPushInt();
     }
 
-    public void setInputType(CType t){
-	this.inputType = t;
-    }
-    public CType getInputType(){
-	return inputType;
+    /* Overridden from SIRPhasedFilter: */
+    public void setInitPhases(SIRWorkFunction[] initPhases) 
+    {
+        throw new UnsupportedOperationException
+            ("SIRFilters can't have init phases");
     }
 
-    public void setOutputType(CType t) {
-	this.outputType = t;
-    }
-    public CType getOutputType() {
-	return this.outputType;
+    /* Overridden from SIRPhasedFilter: */
+    public void setPhases(SIRWorkFunction[] phases)
+    {
+        if (phases.length != 1)
+            throw new UnsupportedOperationException
+                ("SIRFilters have exactly one work phase");
+        super.setPhases(phases);
     }
 
     public String toString() {

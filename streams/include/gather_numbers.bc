@@ -132,7 +132,7 @@ fn dev_gather_numbers_init(fileName, ioPort)
   }
   
   //register the workcount event
-  EventManager_RegisterHandler("clock", "__clock_handler_workcount");
+  EventManager_RegisterHandler("issued_instruction", "__instr_handler_workcount");
   return 1;
 }
 
@@ -389,11 +389,6 @@ fn dev_gather_numbers_calc(printServiceStruct)
   }
 }
 
-fn __clock_handler_workcount(hms) {
-  local j;
-  for (j = 0; j < gNumProc; ++j) {
-    local status = Proc_GetStallReason(Machine_GetProc(machine,j)); 
-    if (status == 0) 
-      gWorkCount++; 
-  }
+fn __instr_handler_workcount(hms) {
+  AtomicIncrement(&gWorkCount); 
 }

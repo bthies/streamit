@@ -12,10 +12,9 @@ public class InitUpstreamRestriction extends Restriction
         P2PPortal _portal,
         SDEPData _sdep,
         StreamInterface _parent,
-        InitDownstreamRestriction _downstreamRestriction,
-        Restrictions restrictions)
+        InitDownstreamRestriction _downstreamRestriction)
     {
-        super (_portal.getUpstreamInterface(), _portal, restrictions);
+        super (_portal.getUpstreamNode(), _portal);
         
         sdep = _sdep;
         parent = _parent;
@@ -62,7 +61,7 @@ public class InitUpstreamRestriction extends Restriction
         // these steady state restrictions will replace this
         // restriction, thus I don't have to tell the restrictions
         // manager to remove me.
-        stream.initRestrictionsCompleted (portal);
+        portal.getParent().initRestrictionsCompleted (portal);
         
         return false;
     }

@@ -5,37 +5,43 @@ import streamit.misc.OMapIterator;
 import streamit.misc.OSet;
 import streamit.misc.OSetIterator;
 
+import streamit.scheduler2.hierarchical.PhasingSchedule;
+
 /**
  * streamit.scheduler2.constrained.Restriction keeps track of how much
- * a given stream can execute according to some constraint.
+ * a given node can execute according to some constraint.
  */
 
 abstract public class Restriction extends streamit.misc.AssertedClass
 {
-    final StreamInterface stream;
-    final Restrictions restrictions;
+    final LatencyNode node;
+    Restrictions restrictions;
     final P2PPortal portal;
     int maxExecution;
 
     public Restriction(
-        StreamInterface _stream,
-        P2PPortal _portal,
-        Restrictions _restrictions)
+        LatencyNode _node,
+        P2PPortal _portal)
     {
-        stream = _stream;
-        restrictions = _restrictions;
+        node = _node;
         portal = _portal;
+    }
+    
+    public void useRestrictions (Restrictions _restrictions)
+    {
+        ASSERT (_restrictions);
+        restrictions = _restrictions;
     }
 
     public int getNumAllowedExecutions()
     {
-        return maxExecution - restrictions.getNumExecutions(stream);
+        return maxExecution - restrictions.getNumExecutions(node);
     }
 
     public void setMaxExecutions(int _maxExecutions)
     {
         maxExecution =
-            restrictions.getNumExecutions(stream) + _maxExecutions;
+            restrictions.getNumExecutions(node) + _maxExecutions;
     }
 
     public P2PPortal getPortal()
@@ -43,9 +49,9 @@ abstract public class Restriction extends streamit.misc.AssertedClass
         return portal;
     }
 
-    public StreamInterface getStream()
+    public LatencyNode getNode()
     {
-        return stream;
+        return node;
     }
 
     /**
@@ -55,4 +61,11 @@ abstract public class Restriction extends streamit.misc.AssertedClass
      * queue and continue blocking execution. 
      */
     abstract public boolean notifyExpired();
+
+
+    public PhasingSchedule checkMsg ()
+    {
+        ERROR ("ERROR!\ncheckMsg can ONLY be called on a SteadyDownstreamRestriction and SteadyUpstreamRestriction!");
+        return null;
+    }
 }

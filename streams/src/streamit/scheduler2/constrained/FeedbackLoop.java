@@ -169,6 +169,11 @@ public class FeedbackLoop
     
 
 
+    public void createSteadyStateRestrictions(int streamNumExecs)
+    {
+        ERROR ("not implemented");
+    }
+    
     public void initRestrictionsCompleted(P2PPortal portal)
     {
         ERROR ("not implemented");
@@ -191,5 +196,16 @@ public class FeedbackLoop
     {
         ERROR("not implemented");
         return null;
+    }
+    
+    public void registerNewlyBlockedSteadyRestriction(Restriction restriction)
+    {
+        ERROR("not implemented");
+    }
+    
+    public boolean isDoneSteadyState ()
+    {
+        ERROR("not implemented");
+        return false;
     }
 }

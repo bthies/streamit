@@ -59,6 +59,8 @@ public class Pipeline
         }
     }
 
+    LatencyEdge connectingLatencyEdges[];
+
     public void initiateConstrained()
     {
         // register all children
@@ -68,6 +70,8 @@ public class Pipeline
             latencyGraph.registerParent(child, this);
             child.initiateConstrained();
         }
+
+        connectingLatencyEdges = new LatencyEdge[getNumChildren() - 1];
 
         // add all children to the latency graph
         for (int nChild = 0; nChild + 1 < getNumChildren(); nChild++)
@@ -84,6 +88,8 @@ public class Pipeline
             // add self to the two nodes
             topNode.addDependency(edge);
             bottomNode.addDependency(edge);
+
+            connectingLatencyEdges[nChild] = edge;
         }
     }
 
@@ -123,6 +129,7 @@ public class Pipeline
     }
 
     OMap portal2sdep = new OMap();
+    OMap portal2restrictionPair = new OMap();
 
     public void registerConstraint(P2PPortal portal)
     {
@@ -134,17 +141,17 @@ public class Pipeline
         try
         {
             sdep =
-                factory.getScheduler().computeSDEP(
-                    portal.getUpstreamFilter(),
-                    portal.getDownstreamFilter());
+                latencyGraph.computeSDEP(
+                    portal.getUpstreamNode(),
+                    portal.getDownstreamNode());
         }
         catch (NoPathException exception)
         {
             ERROR(
-                "No path from "
-                    + portal.getUpstreamFilter().toString()
+                "Need better message: No path from "
+                    + portal.getUpstreamNode().toString()
                     + " to "
-                    + portal.getUpstreamFilter().toString()
+                    + portal.getUpstreamNode().toString()
                     + "!");
         }
 
@@ -159,7 +166,7 @@ public class Pipeline
 
     // also keep track of which of my children are still managing
     // some restrictions
-    final DLList restrictedChildren = new DLList();
+    final DLList initRestrictedChildren = new DLList();
 
     public void initializeRestrictions(Restrictions _restrictions)
     {
@@ -178,11 +185,7 @@ public class Pipeline
 
             // create the restriction for the downstream filter
             InitDownstreamRestriction initDownstreamRestriction =
-                new InitDownstreamRestriction(
-                    portal,
-                    sdep,
-                    this,
-                    restrictions);
+                new InitDownstreamRestriction(portal, sdep, this);
             restrictions.add(initDownstreamRestriction);
 
             // create the restriction for the upstream filter
@@ -191,11 +194,10 @@ public class Pipeline
                     portal,
                     sdep,
                     this,
-                    initDownstreamRestriction,
-                    restrictions);
+                    initDownstreamRestriction);
             restrictions.add(initUpstreamRestriction);
 
-            numInitialRestrictions += 2;
+            numInitialRestrictions++;
         }
 
         // allow all my children to create restrictions
@@ -206,7 +208,39 @@ public class Pipeline
                 StreamInterface child = getConstrainedChild(nChild);
                 child.initializeRestrictions(restrictions);
 
-                restrictedChildren.pushBack(child);
+                initRestrictedChildren.pushBack(child);
+            }
+        }
+
+        // create init restrictions for peeking filters
+        {
+            int nChild;
+            for (nChild = 0; nChild < getNumChildren() - 1; nChild++)
+            {
+                StreamInterface topChild = getConstrainedChild(nChild);
+                StreamInterface bottomChild =
+                    getConstrainedChild(nChild + 1);
+                LatencyEdge edge = connectingLatencyEdges[nChild];
+
+                // if the steady state of the bottom node peeks no more
+                // than the initialization state of the top node, I don't
+                // need to provide the provide it with any extra data
+                // beyond what's needed for straight initialization
+                if (bottomChild.getSteadyPeek()
+                    - bottomChild.getSteadyPop()
+                    <= bottomChild.getInitPeek() - bottomChild.getInitPop())
+                {
+                    continue;
+                }
+
+                // I need the upstream node to push some extra data
+                // in order to make sure that the steady state will be 
+                // initialized properly!
+                Restriction peekRestriction =
+                    new InitPeekRestriction(edge, this);
+                restrictions.add(peekRestriction);
+
+                numInitialRestrictions++;
             }
         }
     }
@@ -214,40 +248,45 @@ public class Pipeline
     public void initRestrictionsCompleted(P2PPortal portal)
     {
         // first decrease the current count of restrictions
-        numInitialRestrictions -= 2;
+        numInitialRestrictions--;
 
         // now just create a steady-state restriction :)
         OMapIterator portalIter = portal2sdep.find(portal);
+
+        // if this is only a local initialization restriction,
+        // don't bother creating a real restriction for it (obviously)
+        if (portalIter.equals(portal2sdep.end()))
+            return;
+
         SDEPData sdep = (SDEPData)portalIter.getData();
 
         SteadyUpstreamRestriction upstreamRestriction =
-            new SteadyUpstreamRestriction(portal, sdep, this, restrictions);
+            new SteadyUpstreamRestriction(portal, sdep, this);
         SteadyDownstreamRestriction downstreamRestriction =
-            new SteadyDownstreamRestriction(
-                portal,
-                sdep,
-                this,
-                restrictions);
+            new SteadyDownstreamRestriction(portal, sdep, this);
 
         // these will automatically remove the initialization restrictions
         // from the restrictions queues
         restrictions.add(upstreamRestriction);
         restrictions.add(downstreamRestriction);
 
+        portal2restrictionPair.insert(
+            portal,
+            new Pair(upstreamRestriction, downstreamRestriction));
     }
 
     public boolean isDoneInitializing()
     {
         if (numInitialRestrictions != 0)
             return false;
-        while (!restrictedChildren.empty())
+        while (!initRestrictedChildren.empty())
         {
             StreamInterface restrictedChild =
-                (StreamInterface)restrictedChildren.front().get();
+                (StreamInterface)initRestrictedChildren.front().get();
 
             if (restrictedChild.isDoneInitializing())
             {
-                restrictedChildren.popFront();
+                initRestrictedChildren.popFront();
             }
             else
             {
@@ -258,30 +297,152 @@ public class Pipeline
 
     }
 
+    final DLList steadyStateRestrictedChildren = new DLList();
+    boolean checkForAllMessagesNow = false;
+
+    public void createSteadyStateRestrictions(int streamNumExecs)
+    {
+        for (int nChild = 0; nChild < getNumChildren(); nChild++)
+        {
+            StreamInterface child = getConstrainedChild(nChild);
+            child.createSteadyStateRestrictions(
+                streamNumExecs * getChildNumExecs(nChild));
+            steadyStateRestrictedChildren.pushBack(child);
+        }
+
+        checkForAllMessagesNow = true;
+    }
+
+    public boolean isDoneSteadyState()
+    {
+        while (!steadyStateRestrictedChildren.empty())
+        {
+            StreamInterface restrictedChild =
+                (StreamInterface)steadyStateRestrictedChildren
+                    .front()
+                    .get();
+            if (restrictedChild.isDoneSteadyState())
+            {
+                steadyStateRestrictedChildren.popFront();
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    final DLList newlyBlockedRestrictions = new DLList();
+
+    public void registerNewlyBlockedSteadyRestriction(Restriction restriction)
+    {
+        newlyBlockedRestrictions.pushBack(restriction);
+    }
+
+    int internalDataAvailable[];
+
     public PhasingSchedule getNextPhase(
         Restrictions restrs,
         int nDataAvailable)
     {
-        ERROR("not implemented");
-        return null;
+        PhasingSchedule phase = new PhasingSchedule(this);
+
+        if (internalDataAvailable == null)
+        {
+            internalDataAvailable = new int[getNumChildren() + 1];
+        }
+
+        internalDataAvailable[0] = nDataAvailable;
+
+        if (checkForAllMessagesNow)
+        {
+            OMapIterator portal2restrictionPairIter;
+            OMapIterator lastIter = portal2restrictionPair.end();
+            for (portal2restrictionPairIter =
+                portal2restrictionPair.begin();
+                !portal2restrictionPairIter.equals(lastIter);
+                portal2restrictionPairIter.next())
+            {
+                Pair pair = (Pair)portal2restrictionPairIter.getData();
+                SteadyUpstreamRestriction upstreamRestr =
+                    (SteadyUpstreamRestriction)pair.getFirst();
+                SteadyDownstreamRestriction downstreamRestr =
+                    (SteadyDownstreamRestriction)pair.getSecond();
+
+                PhasingSchedule upstreamMsgCheck = upstreamRestr.checkMsg();
+                PhasingSchedule downstreamMsgCheck =
+                    downstreamRestr.checkMsg();
+
+                if (upstreamMsgCheck != null)
+                    phase.appendPhase(upstreamMsgCheck);
+                if (downstreamMsgCheck != null)
+                    phase.appendPhase(downstreamMsgCheck);
+            }
+        }
+
+        for (int nChild = 0; nChild < getNumChildren(); nChild++)
+        {
+            boolean hadNewBlockedRestrictions;
+            do
+            {
+                hadNewBlockedRestrictions = false;
+                StreamInterface child = getConstrainedChild(nChild);
+
+                PhasingSchedule childPhase =
+                    child.getNextPhase(
+                        restrs,
+                        internalDataAvailable[nChild]);
+                internalDataAvailable[nChild] -= childPhase.getOverallPop();
+                internalDataAvailable[nChild
+                    + 1] += childPhase.getOverallPush();
+
+                phase.appendPhase(childPhase);
+
+                while (!newlyBlockedRestrictions.empty())
+                {
+                    ERROR("not tested");
+                    hadNewBlockedRestrictions = true;
+
+                    Restriction restriction =
+                        (Restriction)newlyBlockedRestrictions.front().get();
+                    PhasingSchedule msgPhase = restriction.checkMsg();
+                    if (msgPhase != null)
+                        phase.appendPhase(msgPhase);
+
+                    newlyBlockedRestrictions.popFront();
+                }
+            }
+            while (hadNewBlockedRestrictions);
+        }
+
+        return phase;
     }
 
     public void computeSchedule()
     {
         restrictions = new Restrictions();
-        initializeRestrictions (restrictions);
+        initializeRestrictions(restrictions);
 
         {
-            P2PPortal initPortal = new P2PPortal();
+            LatencyNode topLatencyNode = this.getTopLatencyNode();
+
+            P2PPortal initPortal =
+                new P2PPortal(
+                    true,
+                    topLatencyNode,
+                    topLatencyNode,
+                    0,
+                    0,
+                    this);
 
             InitializationSourceRestriction initRestriction =
-                new InitializationSourceRestriction(
-                    this.getTopConstrainedStream(),
-                    initPortal,
-                    restrictions);
+                new InitializationSourceRestriction(initPortal);
             restrictions.add(initRestriction);
             while (!isDoneInitializing())
             {
+                initRestriction.goAgain();
                 PhasingSchedule initPhase = getNextPhase(restrictions, 0);
                 this.addInitScheduleStage(initPhase);
             }
@@ -290,19 +451,14 @@ public class Pipeline
         }
 
         {
-            P2PPortal steadyPortal = new P2PPortal();
-            SteadyStateSourceRestriction steadyRestriction =
-                new SteadyStateSourceRestriction(
-                    this.getTopConstrainedStream(),
-                    steadyPortal,
-                    restrictions);
-
-            restrictions.add(steadyRestriction);
+            createSteadyStateRestrictions(1);
             PhasingSchedule steadyPhase = getNextPhase(restrictions, 0);
             this.addSteadySchedulePhase(steadyPhase);
-
-            ERROR("Not implemented yet.");
         }
 
+        if (!isDoneSteadyState())
+        {
+            ERROR("This schedule is impossible in some way, or there is a bug in the scheduler");
+        }
     }
 }

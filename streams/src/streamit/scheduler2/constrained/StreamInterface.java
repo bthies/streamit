@@ -28,33 +28,54 @@ import streamit.scheduler2.hierarchical.PhasingSchedule;
 public interface StreamInterface
     extends streamit.scheduler2.hierarchical.StreamInterface
 {
-    public StreamInterface getTopConstrainedStream ();
-    public StreamInterface getBottomConstrainedStream ();
-    
+    public StreamInterface getTopConstrainedStream();
+    public StreamInterface getBottomConstrainedStream();
+
     public LatencyNode getBottomLatencyNode();
     public LatencyNode getTopLatencyNode();
 
     public void initiateConstrained();
-    
+
     /**
      * Initialize this stream for all of its restrictions. This function
      * will create initial restrictions for this stream, and call this 
      * same function for all children of this stream.
      */
-    public void initializeRestrictions (Restrictions restrictions);
+    public void initializeRestrictions(Restrictions restrictions);
+
+    /**
+     * Create restrictions for steady state execution. Basically this
+     * will enter a restriction for EVERY single node, which will be
+     * equal to the steady state number of executions of this node
+     * in the greater parent. These restrictions will never be updated,
+     * only depleted and later blocked. This will ensure that I will
+     * execute every node EXACTLY the right number of times... 
+     */
+    public void createSteadyStateRestrictions(int streamNumExecs);
+
+    /**
+     * Inform the stream that one if its children is now blocked due
+     * to a restriction imposed by the stream. 
+     */
+    public void registerNewlyBlockedSteadyRestriction(Restriction restriction);
 
     /**
      * Check if the stream is done initializing all the portals that are
      * inside it. This will recursively check all the children.
      */
-    public boolean isDoneInitializing ();
+    public boolean isDoneInitializing();
     
+    /**
+     * Check if the stream is done running the steady state schedule.
+     * This will recursively check all the children.
+     */
+    public boolean isDoneSteadyState();
+
     /**
      * Get notification that the initialization of a particular portal
      * is complete. Probably should create new, steady-state restrictions.
      */
     public void initRestrictionsCompleted(P2PPortal portal);
-
 
     public PhasingSchedule getNextPhase(
         Restrictions restrs,

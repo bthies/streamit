@@ -134,44 +134,86 @@ public class Filter
     {
         PhasingSchedule phase = new PhasingSchedule(this);
 
-        Restriction blockingRestriction =
-            restrictions.getBlockingRestriction(this);
-        int nAllowedPhases = blockingRestriction.getNumAllowedExecutions();
-
-        // BUGBUG this can DEFINITELY be a LOT more efficient!
-        int nExecutions = 0;
-        while (nAllowedPhases > nExecutions)
+        no_more_data:
+        while (restrictions.getBlockingRestriction(getLatencyNode())
+            == null)
         {
-            PhasingSchedule schedPhase = getPhaseSchedule(nCurrentPhase);
-            if (schedPhase.getOverallPeek() > nDataAvailable)
-                break;
+            Restriction strongestRestriction =
+                restrictions.getStrongestRestriction(getLatencyNode());
+                
+            int nAllowedPhases = (strongestRestriction != null ?
+                strongestRestriction.getNumAllowedExecutions() : -1);
 
-            phase.appendPhase(schedPhase);
-            nDataAvailable -= schedPhase.getOverallPop();
-            nCurrentPhase++;
-            nExecutions++;
+            // BUGBUG this can DEFINITELY be a LOT more efficient!
+            int nExecutions = 0;
+            while (strongestRestriction == null || nAllowedPhases > nExecutions)
+            {
+                PhasingSchedule schedPhase =
+                    getPhaseSchedule(nCurrentPhase);
+                if (schedPhase.getOverallPeek() > nDataAvailable)
+                    break no_more_data;
+
+                phase.appendPhase(schedPhase);
+                nDataAvailable -= schedPhase.getOverallPop();
+                nCurrentPhase++;
+                nExecutions++;
+            }
+
+            int executed =
+                restrictions.execute(getLatencyNode(), nExecutions);
+            ASSERT(executed == nExecutions);
         }
 
-        int executed = restrictions.execute(this, nExecutions);
-        ASSERT (executed == nExecutions);
-        
-        ERROR("not tested");
         return phase;
     }
-    
-    public boolean isDoneInitializing ()
+
+    public boolean isDoneInitializing()
     {
         return nCurrentPhase >= getNumInitStages();
     }
 
-
     public void initRestrictionsCompleted(P2PPortal portal)
     {
-        ERROR ("not implemented!");
+        ERROR("not implemented!");
     }
-    
+
+    Restrictions restrictions = null;
+
     public void initializeRestrictions(Restrictions _restrictions)
     {
-        
+        restrictions = _restrictions;
+        // I may need to execute my initialization phases!
+        if (getNumInitStages() > 0)
+        {
+            // Yep, I have initialization phases to consider here!
+            FilterInitRestriction restriction =
+                new FilterInitRestriction(this);
+            restrictions.add(restriction);
+        }
+    }
+    
+    boolean isFilterDoneSteadyState = false;
+
+    public void createSteadyStateRestrictions(int streamNumExecs)
+    {
+        FilterSteadyRestriction restriction =
+            new FilterSteadyRestriction(this, streamNumExecs);
+        restrictions.add(restriction);
+    }
+    
+    public void doneSteadyState()
+    {
+        isFilterDoneSteadyState = true;
+    }
+    
+    public boolean isDoneSteadyState ()
+    {
+        return isFilterDoneSteadyState;
+    }
+    
+    public void registerNewlyBlockedSteadyRestriction(Restriction restriction)
+    {
+        // this should only happen if a filter sends a msg to itself!
+        ERROR("not implemented");
     }
 }

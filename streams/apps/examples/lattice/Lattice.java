@@ -1,18 +1,6 @@
 import streamit.*;
 import streamit.io.*;
 
-class Delay extends Filter{
-    public Delay(int d) {  super(d); }
-
-  public void init(int delay){
-    setInput(Float.TYPE); setOutput(Float.TYPE);
-    setPush(1); setPop(1);
-    for (int i=0; i<delay;i++)
-       output.pushFloat(0);
-    }
- public void work() {output.push(input.pop());}
-}
-
 class LatDel extends SplitJoin {// this generates the delays in the lattice structure
   public void init() {
     setSplitter(DUPLICATE());
@@ -69,7 +57,7 @@ public void work(){
 class Counter extends Filter {   // this class is the last stage of a lattice filter
     float i;
 public void init(){ 
-   setInput(Float.TYPE); setOutput(Float.TYPE);
+   setOutput(Float.TYPE);
    setPush(1);setPop(0);
    i = 0;
    }

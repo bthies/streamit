@@ -156,6 +156,53 @@ class IntToFloat extends Filter {
   }
 }
 
+class IntToDouble extends Filter {
+  public void init() {
+    input = new Channel(Integer.TYPE, 1);
+    output = new Channel(Double.TYPE, 1);
+  }
+  public void work() {
+    output.pushDouble(input.popInt());
+  }
+}
+
+class ShortToDouble extends Filter {
+  public void init() {
+    input = new Channel(Short.TYPE, 1);
+    output = new Channel(Double.TYPE, 1);
+  }
+  public void work() {
+    output.pushDouble(input.popShort());
+  }
+}
+
+class DoubleToShort extends Filter {
+  public void init() {
+    input = new Channel(Double.TYPE, 1);
+    output = new Channel(Short.TYPE, 1);
+  }
+  public void work() {
+    output.pushShort((short) (input.popDouble() + 0.5));
+  }
+}
+
+class CountDown extends Filter {
+  private int length;
+  CountDown(int length) {
+    super(length);
+  }
+  public void init(int length) {
+    this.length = length;
+    input = new Channel(Float.TYPE, 1);
+  }
+  public void work() {
+    length--;
+    input.popFloat();
+    if (length == 0)
+      System.out.println("done");
+  }
+}
+
 /** 
 class IntPrinter extends Filter {
   String append;
@@ -212,16 +259,16 @@ class ShortVoid extends Filter {
 }
 
 class FloatToShort extends Filter {
-  public void work() {output.pushShort((short)Math.round(input.popFloat())); }
+  public void work() {output.pushShort((short) (input.popFloat() + 0.5f)); }
   public void init() {input = new Channel(Float.TYPE, 1);
                       output = new Channel(Short.TYPE, 1);}
 }
 
 class ShortToFloat extends Filter {
   public void work() {short i = input.popShort();
-  System.out.println(i);
+//    System.out.println(i);
   float f = (float) i;
-  System.out.println(f);
+//    System.out.println(f);
   output.pushFloat(f); }
   public void init() {input = new Channel(Short.TYPE, 1);
                       output = new Channel(Float.TYPE, 1);}

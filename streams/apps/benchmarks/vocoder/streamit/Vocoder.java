@@ -22,12 +22,19 @@ class ShortPrinter extends Filter {
     output = new Channel(Short.TYPE, 1);}
   ShortPrinter() {}
 }
+class DoublePrinter extends Filter {
+  public void work() { double i = input.popDouble();
+    System.out.println(i); output.pushDouble(i);}
+    public void init() { input = new Channel(Double.TYPE, 1); 
+    output = new Channel(Double.TYPE, 1);}
+  DoublePrinter() {}
+}
 class FloatPrinter extends Filter {
 //    String append, prepend;
 
   public void work() { float i = input.popFloat(); 
     System.out.println(i); 
-    System.out.println("Float");
+//      System.out.println("Float");
     output.pushFloat(i);}
     public void init() { input = new Channel(Float.TYPE, 1); 
     output = new Channel(Float.TYPE, 1);}
@@ -44,7 +51,7 @@ class VocoderSystem extends SplitJoin
     setSplitter(ROUND_ROBIN());
 
     add(new MagnitudeStuff(DFTLen, newLen, speed));
-    add(new PhaseStuff(DFTLen, newLen, c, speed));
+    add(new PhaseStuff(DFTLen, newLen, c, 2f));
 
     setJoiner(ROUND_ROBIN());
   }
@@ -55,12 +62,22 @@ class VocoderSystem extends SplitJoin
 }
 
 interface Constants {
-  public static final int DFT_LENGTH = 32;
-  public static final int NEW_LENGTH = 32;
-  public static final int m_LENGTH = 1;
+  // in my system, i take the DFT_LENGTH and use that number of
+  // samples for the range [0, PI].  In the reference system, he takes
+  // the DFT_LENGTH to be the number of samples for the range [0, 2 *
+  // PI], then uses only half of the value for the range [0, PI].  In
+  // my system, i multiply by two twice; he divides by two countless
+  // number of times.
+
+  public static final int DFT_LENGTH = 4; //
+//    public static final int NEW_LENGTH = 64; //
   public static final int n_LENGTH = 1;
+  public static final int m_LENGTH = 1;
   public static final float FREQUENCY_FACTOR = 1f;
-  public static final float SPEED_FACTOR = 1f;
+  public static final float GLOTTAL_EXPANSION = 1f;
+  public static final int NEW_LENGTH = (int) (DFT_LENGTH * GLOTTAL_EXPANSION / FREQUENCY_FACTOR);
+  public static final int FILE_SIZE = 1906732;
+  public static final float SPEED_FACTOR = 2f;
 
 //    public static final int LARGE = 2147480000;
 //    public static final int LARGE = 852524;
@@ -72,20 +89,26 @@ interface Constants {
 
 class Vocoder extends Pipeline implements Constants {
 
-  //  final int DFT_LENGTH = 100;
-//    public static void main(String args[]) {
-//      new Vocoder().run(args);
-//    }
+  public static final int DFT_LENGTH = 2; //
+//    public static final int NEW_LENGTH = 64; //
+  public static final int n_LENGTH = 1;
+  public static final int m_LENGTH = 1;
+  public static final float FREQUENCY_FACTOR = 1f;
+  public static final float GLOTTAL_EXPANSION = 1f;
+  public static final int NEW_LENGTH = (int) (DFT_LENGTH * GLOTTAL_EXPANSION / FREQUENCY_FACTOR);
+  public static final int FILE_SIZE = 1906732;
+  public static final float SPEED_FACTOR = 2f;
 
   public void init() {
 //      add(new StepSource(6)); //add(new AudioSource());
 //      add(new IntPrinter("\t(orig)\n"));
 //      add(new IntToFloat());
     add(new FilterBank(DFT_LENGTH));
-//      add(new HanningWindow(DFT_LENGTH));
-//      add(new RectangularToPolar());
-//      add(new VocoderSystem(DFT_LENGTH, NEW_LENGTH, FREQUENCY_FACTOR, SPEED_FACTOR));
-//      add(new PolarToRectangular());
+    add(new HanningWindow(DFT_LENGTH));
+    add(new RectangularToPolar());
+    add(new VocoderSystem(DFT_LENGTH, NEW_LENGTH, FREQUENCY_FACTOR, 2f));
+    add(new PolarToRectangular());
+//      add(new FloatPrinter());
     add(new SumReals(NEW_LENGTH));
 
 //      add(new FloatToShort());
@@ -105,10 +128,12 @@ class Main extends StreamIt implements Constants {
   public void init() {
     add(new FileReader("test2.wav", Short.TYPE));
 //      add(new ShortPrinter());
-//      add(new ShortToFloat());
-//      add(new StepSource(100));
     add(new ShortToFloat());
-      add(new FloatPrinter());
+
+//      add(new StepSource(100));
+//      add(new IntToFloat());
+
+//      add(new FloatPrinter());
 
 //      add(new WaveReader());
 //      add(new SplitJoin() {
@@ -122,13 +147,15 @@ class Main extends StreamIt implements Constants {
 //  		    public void init() {
 //  		      setSplitter(ROUND_ROBIN());
 
-//  		      add(new Vocoder());
+		      add(new Vocoder());
+//      add(new FloatPrinter());
 
 //  		      add(new Vocoder());
 //  		      setJoiner(ROUND_ROBIN());
 //  		    }
 //  		  });
-//  		      add(new FloatPrinter("(new)\n"));
+//  		      add(new FloatPrinter());
+//  		      add(new DoublePrinter());
   		add(new FloatToShort());
 //  	      }
 //  	    });
@@ -136,6 +163,7 @@ class Main extends StreamIt implements Constants {
 //  	}
 //        });
 //        add(new ShortPrinter());
+
       add(new FileWriter("test3.wav", Short.TYPE));
   }
 }

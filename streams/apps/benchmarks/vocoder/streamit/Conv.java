@@ -59,9 +59,13 @@ class HanningWindow extends Filter {
   }
 
   public void work() {
+    float real = 0;
+    float imag = 0;
     //convolution with the series {-1/4, 1/2, -1/4}
     //first and last have to be dealt with specially
-    /** Note that everything is doubled (real and imag) **/
+    /** Note that every index is doubled (real and imag) **/
+//      output.pushFloat(input.peekFloat(0) - input.peekFloat(2));
+//      output.pushFloat(input.peekFloat(1) - input.peekFloat(3));
     output.pushFloat(input.peekFloat(0)/2 - 
 	    (input.peekFloat(2) + input.peekFloat(length * 2 - 2))/4f);
     output.pushFloat(input.peekFloat(1)/2 - 
@@ -69,14 +73,16 @@ class HanningWindow extends Filter {
 
     for(int i=1; i < length - 1; i++) {
       int n = i << 1;
-      float real = input.peekFloat(n)/2f;
+      real = input.peekFloat(n)/2f;
       real -= (input.peekFloat(n-2)+input.peekFloat(n+2))/4f;
       output.pushFloat(real);
-      float imag = input.peekFloat(n+1)/2f;
+      imag = input.peekFloat(n+1)/2f;
       imag -= (input.peekFloat(n-1)+input.peekFloat(n+3))/4f;
       output.pushFloat(imag);
     }
 
+//      output.pushFloat(real); //copy last output, don't know why,
+//      output.pushFloat(imag); //but that's what the reference code does
     output.pushFloat(input.peekFloat(length * 2 - 2)/2f -
 		(input.peekFloat(length * 2 - 4) + input.peekFloat(0))/4f);
     output.pushFloat(input.peekFloat(length * 2 - 1)/2f -

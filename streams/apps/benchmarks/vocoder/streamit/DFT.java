@@ -4,12 +4,12 @@ import streamit.io.*;
 class DFTFilter extends Filter
 {
 //the rate by which to deteriorate, assuring stability
-  final float deter = 0.99997f; 
+  float deter; 
   //since the previous complex value is multiplied by the deter each
   //time, by the time the last time sample is windowed out it's
   //effect will have been multiplied by deter DFTLen times, hence it
   //needs to be multiplied by deter^DFTLen before being subtracted
-  final float detern;
+  float detern;
   //  float o[];
   int DFTLen;
   float range;
@@ -40,6 +40,7 @@ class DFTFilter extends Filter
 	nwkiI = wkiR * wkI + wkiI * wkR;
 	wkiR = nwkiR;
 	wkiI = nwkiI;
+	detern *= deter;
       }
       //      System.out.println("Range: " + range + "'s initial start is: "
       //    		       + prev.real() + " " + prev.imag() + "i");
@@ -48,8 +49,15 @@ class DFTFilter extends Filter
     float nextVal = (float) input.peekFloat(DFTLen);
     float current = (float) input.popFloat();
 
+//      System.out.println(prevR);
+//      System.out.println(prevI);
+//      System.out.println(nextVal);
     prevR = prevR * deter + (nextVal - (detern * current));
+//      prevR = prevR * deter + (nextVal - (float)(detern * current));
     prevI = prevI * deter;
+//      System.out.println(prevR);
+//      System.out.println(prevI);
+//      System.out.println("");
 
 //      System.out.println("Range: " + range + "'s initial start is: "
 //    		       + prev.real() + " " + prev.imag() + "i");
@@ -65,6 +73,8 @@ class DFTFilter extends Filter
   public void init(int DFTLen, float range) {
     this.DFTLen = DFTLen;
     this.range = range;
+    this.deter = 0.999999f;
+    this.detern = 1;
     wR = (float)Math.cos(range);
     wI = (float)-Math.sin(range);
     prevR = 0; prevI = 0;
@@ -100,9 +110,6 @@ class DFTFilter extends Filter
 
   public DFTFilter(int DFTLen, float range) {
     super(DFTLen, range);
-    //need to ask about constructors
-    this.detern = (float) Math.exp(DFTLen * Math.log(deter));
-    //as mentioned above, this is deter^DFTLen
   }
 }
 
@@ -113,7 +120,9 @@ class FilterBank extends SplitJoin {
     for(int k=0; k < channels; k++) {
       //this filter is for the kth range
       final float range = (float)(2 * 3.1415926535898f * k)/channels;
-      add(new DFTFilter(channels,range));
+      add(new DFTFilter(channels ,range));
+//        final float range = (float)( 3.1415926535898f * (k - 1))/channels;
+//        add(new DFTFilter(channels * 2,range));
     }
 
     //send real and imaginary parts together
@@ -138,8 +147,32 @@ class SumReals extends Filter {
     output = new Channel(Float.TYPE, 1);
   }
 
+//    public void work() {
+//      float sum = 0;
+//      int i=0;
+//      float first = input.popFloat(); input.popFloat();
+
+//      for(i=1; i < length - 1; i++) {
+//        if (i % 2 == 0)
+//  	sum += input.popFloat();
+//        else
+//  	sum -= input.popFloat();
+//        input.popFloat();
+//      }
+//      sum *= 2; //double the internal ones
+//      sum += first; 
+//      if (i % 2 == 0)
+//        sum += input.popFloat(); 
+//      else
+//        sum -= input.popFloat();
+//      input.popFloat();
+//      sum /= (length * 2);
+//      output.pushFloat(sum);
+//    }
+
   public void work() {
     float sum = 0;
+
     for(int i=0; i < length; i++) {
       if (i % 2 == 0)
 	sum += input.popFloat();
@@ -147,7 +180,7 @@ class SumReals extends Filter {
 	sum -= input.popFloat();
       input.popFloat();
     }
-    sum /= length;
+    sum /= (length);
     output.pushFloat(sum);
   }
 }

@@ -9,7 +9,8 @@ class LinearInterpolator extends Filter {
   public void init(int interpFactor) {
     this.interp = interpFactor;
     input = new Channel(Float.TYPE, 1,2);
-    output = new Channel(Float.TYPE, (int) interpFactor);
+    output = new Channel(Float.TYPE, 2);
+//      output = new Channel(Float.TYPE, interpFactor);
   }
 
   public void work() {
@@ -36,6 +37,7 @@ class Decimator extends Filter {
   public void init(int decim) {
     this.decim = decim;
     input = new Channel(Float.TYPE, decim);
+//      input = new Channel(Float.TYPE, 1);
     output = new Channel(Float.TYPE, 1);
   }
 
@@ -63,10 +65,18 @@ class Remapper extends Pipeline {
 //      int c = gcd(oldLen, newLen);
 //      int m = (int)newLen/c;
 //      int n = (int)oldLen/c;
-    int m = newLen;
-    int n = oldLen;
-    add(new LinearInterpolator(newLen));
+
+//      int m = newLen;
+//      int n = oldLen;
+
+//      add(new LinearInterpolator(m_LENGTH));
+//      add(new Decimator(n_LENGTH));
+
+    add(new LinearInterpolator(20));
     add(new Decimator(oldLen));
+
+//      add(new LinearInterpolator(1));
+//      add(new Decimator(1));
   }
 
   int gcd(int a, int b) {

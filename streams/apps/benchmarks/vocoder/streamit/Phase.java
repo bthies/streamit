@@ -16,13 +16,13 @@ class PhaseUnwrapper extends Filter {
     float unwrapped = input.popFloat();
     unwrapped += estimate;
     float delta = unwrapped - previous;
-    while (delta > 2 * Math.PI * (7f / 8f)) {
+    while (delta > 2 * Math.PI * (11f / 16f)) {
 //        System.out.println("subtracting: " + unwrapped + " + " + estimate + " - " + previous + " is > 2PI");
       unwrapped -= 2 * Math.PI;
       delta -= 2 * Math.PI;
       estimate -= 2 * Math.PI;
     }
-    while (delta < -2 * Math.PI * (7f / 8f)) {
+    while (delta < -2 * Math.PI * (11f / 16f)) {
 //        System.out.println("adding: " + unwrapped + " + " + estimate + " - " + previous + " is < -2PI");
       unwrapped += 2 * Math.PI;
       delta += 2 * Math.PI;
@@ -58,30 +58,47 @@ class FirstDifference extends Filter {
   }
 }
 
+class InnerPhaseStuff extends Pipeline {
+
+  public void init(float c, float speed) {
+    add(new PhaseUnwrapper());
+    add(new FirstDifference());
+    if (c != 1.0) {
+      add(new ConstMultiplier(c));
+    }
+    if (speed != 1.0) {
+//        add(new Remapper(10, speed * 10));
+      add(new Remapper(1, 2));
+    }
+    add(new Accumulator());
+    //  		  add(new FloatPrinter("(phase " + fi + "):", "\n"));
+  }
+  public InnerPhaseStuff(float c, float speed) {
+    super(c, speed);
+  }
+}
+
 class PhaseStuff extends Pipeline {
 
   public void init(final int DFTLen, final int newLen, final float c,
 		   final float speed) {
-    add(new SplitJoin() {
-	public void init() {
-	  setSplitter(ROUND_ROBIN());
-	  for(int i=0; i < DFTLen; i++) {
-	    final int fi = i;
-	    add(new Pipeline() {
-		public void init() {
-		  add(new PhaseUnwrapper());
-		  add(new FirstDifference());
-		  add(new ConstMultiplier(c));
-  		  add(new Remapper(10, (int) (speed * 10)));
-		  add(new Accumulator());
-//  		  add(new FloatPrinter("(phase " + fi + "):", "\n"));
-		}
-	      });
+    if (!(c == 1.0 && speed == 1.0)) {
+      add(new SplitJoin() {
+	  public void init() {
+	    setSplitter(ROUND_ROBIN());
+	    for(int i=0; i < DFTLen; i++) {
+	      final int fi = i;
+	      add(new InnerPhaseStuff(c, speed));
+	    }
+	    setJoiner(ROUND_ROBIN());
 	  }
-	  setJoiner(ROUND_ROBIN());
-	}
-      });
-    add(new Duplicator(DFTLen, newLen));
+	});
+      if (newLen != DFTLen) {
+	add(new Duplicator(DFTLen, newLen));
+      }
+    } else {
+      add(new IdentityFloat());
+    }
   }
 
   PhaseStuff(int DFTLen, int newLen, float c, float speed) {

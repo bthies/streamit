@@ -11,7 +11,7 @@ import at.dms.kjc.flatgraph2.*;
 
 /** This class will rawify the SIR code and it creates the 
  * switch code.  It does not rawify the compute code in place. 
-**/
+ **/
 public class Rawify
 {
     public static void run(ListIterator traces, RawChip rawChip,
@@ -46,6 +46,9 @@ public class Rawify
 			//switch code for the trace
 			//generate switchcode based on the presence of buffering		    
 			int mult = (init) ? filterInfo.initMult : filterInfo.steadyMult;
+			//add the dram command if this filter trace is an endpoint...
+			generateDRAMCommand(filterNode, filterInfo, tile, init, false);
+			
 			if(filterInfo.isLinear())
 			    createSwitchCodeLinear(filterNode,
 						   trace,filterInfo,init,false,tile,rawChip,mult);
@@ -57,19 +60,28 @@ public class Rawify
 						     trace, filterInfo, init, tile, rawChip, mult);
 			//we must add some switch instructions to account for the fact
 			//that we must transfer cacheline sized chunks in the streaming dram
+			//do it for the init and the steady state, primepump is handled below
 			handleCacheLine(filterNode, init, false);
-			//generate the compute code for the trace and place it in
-			//the tile
+			
+			//do every again for the primepump if it is the init stage and add the
+			//compute code for the init stage
 			if (init) {
+			    //add the dram command if this filter trace is an endpoint...
+			    generateDRAMCommand(filterNode, filterInfo, tile, false, true);
 			    //create the prime pump stage switch code 
 			    //after the initialization switch code
 			    createPrimePumpSwitchCode(filterNode, 
-						      trace, filterInfo, init, tile, rawChip);
-			    handleCacheLine(filterNode, init, true);
+						      trace, filterInfo, false, tile, rawChip);
+			    handleCacheLine(filterNode, false, true);
+			    //generate the compute code for the trace and place it in
+			    //the tile			
 			    tile.getComputeCode().addTraceInit(filterInfo);
 			}
-			else
+			else {
+			    //generate the compute code for the trace and place it in
+			    //the tile
 			    tile.getComputeCode().addTraceSteady(filterInfo);
+			}
 		    }
 		    
 		}
@@ -98,6 +110,52 @@ public class Rawify
 	}
 	
     }
+
+    private static void generateDRAMCommand(FilterTraceNode filterNode, FilterInfo filterInfo,
+					    RawTile tile, boolean init, boolean primepump) 
+    {
+	//only generate a DRAM command for filters connected to input or output trace nodes
+	if (filterNode.getPrevious() != null &&
+	    filterNode.getPrevious().isInputTrace()) {
+	    OffChipBuffer buffer = OffChipBuffer.getBuffer(filterNode.getPrevious(), 
+							   filterNode);
+	    //get the number of items received
+	    int items; 
+	    if (init) 
+		items = filterInfo.initItemsReceived();
+	    else if (primepump) 
+		items = filterInfo.primePump * filterInfo.pop;
+	    else
+		items = filterInfo.steadyMult * filterInfo.pop;
+	    
+	    //the transfer size rounded up to by divisible by a cacheline
+	    int bytes = 
+		Util.cacheLineDiv((items * Util.getTypeSize(filterNode.getFilter().getInputType())) *
+				  4);
+	    
+	    tile.getComputeCode().addDRAMCommand(true, init || primepump, bytes, buffer);
+	} 
+	else if (filterNode.getNext() != null &&
+		 filterNode.getNext().isOutputTrace()) {
+	    OffChipBuffer buffer = OffChipBuffer.getBuffer(filterNode,
+							   filterNode.getNext());
+	    //get the number of items sent
+	    int items;
+	    if (init) 
+		items = filterInfo.initItemsSent();
+	    else if (primepump) 
+		items = filterInfo.primePump * filterInfo.push;
+	    else
+		items = filterInfo.steadyMult * filterInfo.push;
+	    
+	    int bytes = 
+		Util.cacheLineDiv((items * Util.getTypeSize(filterNode.getFilter().getOutputType())) *
+				  4);
+	    
+	    tile.getComputeCode().addDRAMCommand(false, init || primepump, bytes, buffer);
+	}
+    }
+    
 
     //we must add some switch instructions to account for the fact
     //that we must transfer cacheline sized chunks in the streaming dram
@@ -164,7 +222,6 @@ public class Rawify
 					  (items * typeSize) % RawChip.cacheLineWords,
 					  init || primepump);
 	}
-	
     }
     
 

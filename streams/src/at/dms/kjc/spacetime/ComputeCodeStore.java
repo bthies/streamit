@@ -68,6 +68,9 @@ public class ComputeCodeStore {
 	//the args for the streaming dram command
 	
 	//cachelines that are needed
+	assert bytes % RawChip.cacheLineBytes == 0 :
+	    "transfer size for dram must be a multiple of cache line size";
+
 	int cacheLines = bytes / RawChip.cacheLineBytes;
 	JExpression[] args = {new JIntLiteral(1),
 			      new JIntLiteral(cacheLines)};

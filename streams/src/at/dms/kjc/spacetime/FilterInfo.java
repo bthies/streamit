@@ -159,7 +159,7 @@ public class FilterInfo
 	else
 	    bottomPeek = 0;
 	
-	//may want to change to use initItemsReceived...
+
 	remaining = initItemsReceived() -
 	    (prePeek + 
 	     bottomPeek + 

@@ -246,5 +246,12 @@ public class Util {
     {
 	return "outputs_" + getFileVar(out);
     }
+
+    //given <i> bytes, round <i> up to the nearest cache
+    //line divisible int
+    public static int cacheLineDiv(int i) 
+    {
+	return (RawChip.cacheLineBytes - (i % RawChip.cacheLineBytes)) + i;
+    }
     
 }

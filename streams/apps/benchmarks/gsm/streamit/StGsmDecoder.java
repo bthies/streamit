@@ -424,15 +424,16 @@ class ReflectionCoeffFilter extends Filter
 		    {
 			mrrp[i] = gsm_sub((short) 0, mrrp[i]);
 		    }
-		//push out outputs:
-		for (j = 0; j < MDRP_LENGTH; j++)
-		{
-		    output.pushShort(mdrp[j]);
-		}
-		for (j = 0; j < MRRP_LENGTH; j++)
-		{
-		    output.pushShort(mrrp[j]);
-		}
+		
+	    }
+	//push outputs
+	for (j = 0; j < MDRP_LENGTH; j++)
+	    {
+		output.pushShort(mdrp[j]);
+	    }
+	for (j = 0; j < MRRP_LENGTH; j++)
+	    {
+		output.pushShort(mrrp[j]);
 	    }
     }
 

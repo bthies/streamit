@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.35 2003-09-02 19:05:58 dmaze Exp $
+# $Id: knit,v 1.36 2003-09-17 08:27:26 thies Exp $
 #
 
 use strict;
@@ -65,6 +65,7 @@ Options available for all backends:
 * --clone-with-serialization, -K
 *                     Use old serialization code to copy objects
 * --fusion, -f        Fuse entire program to a single filter
+* --fission           Do vertical fission up to limit of argument
   --linearreplacement, -I
                       Perform linear transformations based on analysis
 * --linearreplacement2, -Z
@@ -144,6 +145,7 @@ sub get_options
 	       "decoupled|X",
 	       "dppartition|y",
 	       "dpscaling|Y",
+	       "fission|fission=i",
 	       "frequencyreplacement|F",
 	       "fusion|f",
 	       "ilppartition|A",
@@ -307,6 +309,7 @@ sub get_kjc_opts
     $opts{dppartition} && ($kjcopts .= " -y");
     $opts{dpscaling} && ($kjcopts .= " -Y");
     $opts{frequencyreplacement} && ($kjcopts .= " -F");
+    $opts{fission} && ($kjcopts .= " --fission " . $opts{fission});
     $opts{fusion} && ($kjcopts .= " -o");
     $opts{ilppartition} && ($kjcopts .= " -A");
     $opts{linearpartition} && ($kjcopts .= " -B");

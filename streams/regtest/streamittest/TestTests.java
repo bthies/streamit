@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestTests.java,v 1.6 2003-01-19 01:52:13 thies Exp $
+ * $Id: TestTests.java,v 1.7 2003-01-20 14:12:34 thies Exp $
  **/
 package streamittest;
 
@@ -99,8 +99,9 @@ public class TestTests extends StreamITTestCase {
     }
 
     public void testLifter() {
-        doSyntaxConvertTest(TESTS_ROOT, "TestLifter.str", "TestLifter.java");
-	doCompileRunVerifyTest(TESTS_ROOT + "lifter/",
+	String root = TESTS_ROOT + "lifter/";
+        doSyntaxConvertTest(root, "TestLifter.str", "TestLifter.java");
+	doCompileRunVerifyTest(root,
 			       "TestLifter.java",
 			       "TestLifter.out",
 			       0,8);

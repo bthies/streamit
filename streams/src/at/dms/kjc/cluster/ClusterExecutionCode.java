@@ -809,7 +809,7 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 
 	JVariableDefinition var = 
 	    new JVariableDefinition(null, 0, (CType)CStdType.Integer, 
-				    "counter", 
+				    "__counter_"+nodeID, 
 				    new JIntLiteral(0));
 
 	JVariableDefinition var2 = 
@@ -820,12 +820,20 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	JVariableDeclarationStatement var_st = 
 	    new JVariableDeclarationStatement( null, var, null);
 
+
+	JStatement init_stmt = new JExpressionStatement(null,
+					  (new JAssignmentExpression
+					   (null,
+					    new JLocalVariableExpression
+					    (null, var),
+					    new JIntLiteral(0))), null);
+
 	JExpression relation = new JRelationalExpression(null, Constants.OPE_LT, new JLocalVariableExpression(null, var), new JLocalVariableExpression(null, var2));
 
 	JStatement incr_expr = new JExpressionStatement(null, new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var)), null);
 
 	return new JForStatement(null,  
-				 var_st, 
+				 init_stmt, 
 				 relation,
 				 incr_expr,
 				 block,

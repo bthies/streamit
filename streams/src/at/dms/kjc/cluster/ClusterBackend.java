@@ -131,7 +131,7 @@ public class ClusterBackend implements FlatVisitor {
 
 	if (KjcOptions.partition || KjcOptions.ilppartition || KjcOptions.dppartition) {
 	    System.err.println("Running Partitioning...");
-	    	    str = Partitioner.doit(str, 2);
+	    	    str = Partitioner.doit(str, 4);
 	    System.err.println("Done Partitioning...");
 	}
 
@@ -250,15 +250,34 @@ public class ClusterBackend implements FlatVisitor {
 
 	    for (int i = 0; i < senders.length; i++) {
 		SIRStream sender = senders[i].getStream();
-		int id = NodeEnumerator.getSIROperatorId(sender);
-		System.out.println("        sender: ("+sender+") ID:"+id+"\n"+
+
+		try {
+
+		    int id = NodeEnumerator.getSIROperatorId(sender);
+		    System.out.println("        sender: ("+sender+") ID:"+id+"\n"+
 				   "            with latency: ("+senders[i].getLatency()+")");
+
+		} catch (Exception ex) {
+
+		    System.out.println("        sender: ("+sender+") ID: NOT FOUND\n"+
+				   "            with latency: ("+senders[i].getLatency()+")");
+
+		    
+		}
 	    }
 
 	    for (int i = 0; i < receivers.length; i++) {
 		SIRStream receiver = receivers[i];
-		int id = NodeEnumerator.getSIROperatorId(receiver);
-		System.out.println("        receiver: ("+receivers[i]+") ID:"+id);
+		
+		try {
+
+		    int id = NodeEnumerator.getSIROperatorId(receiver);
+		    System.out.println("        receiver: ("+receivers[i]+") ID:"+id);
+		} catch (Exception ex) {
+
+		    System.out.println("        receiver: ("+receivers[i]+") ID: NOT FOUND");
+		    
+		}
 	    }
 
 	    System.out.println();

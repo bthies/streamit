@@ -211,11 +211,13 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	p.print("#include <mysocket.h>\n");
 	p.print("#include <peek_stream.h>\n");
 	p.print("#include <sdep.h>\n");
+	p.print("#include <message.h>\n");
 	p.print("#include <timer.h>\n");
 
 	p.print("\n");
 
 	p.print("extern int __number_of_iterations;\n");
+	p.print("message *__msg_stack_"+selfID+";\n");
 	p.print("int __counter_"+selfID+";\n");
 
 	{
@@ -307,11 +309,13 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	// Method Declarations
 
 
+	JMethodDeclaration work = self.getWork();
+
 	//visit methods of filter, print the declaration first
 	declOnly = true;
 	JMethodDeclaration[] methods = self.getMethods();
 	for (int i =0; i < methods.length; i++) {
-	    methods[i].accept(this);
+	    if (!methods[i].equals(work)) methods[i].accept(this);
 	}
 
 	print("\nvoid check_messages__"+selfID+"();\n");
@@ -327,19 +331,83 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	//now print the functions with body
 	declOnly = false;
 	for (int i =0; i < methods.length; i++) {
-	    methods[i].accept(this);	
+	    if (!methods[i].equals(work)) methods[i].accept(this);
 	}
 
 	//////////////////////////////////////////////
 	// Check Messages
 
 	print("\nvoid check_messages__"+selfID+"() {\n");
+
+	print("  message *msg;\n");
+	print("  for (msg = __msg_stack_"+selfID+"; msg != NULL; msg = msg->next) {\n");
+	print("    if (msg->execute_at == __counter_"+selfID+") {\n");
+
+
+	SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
+
+	/* there should be only one portal or none */
+
+	if (portals.length == 1) {
+	    
+	    CClass pclass = portals[0].getPortalType().getCClass();
+
+	    CMethod pmethods[] = pclass.getMethods();
+
+	    for (int i = 0 ; i < pmethods.length; i++) {
+
+		CMethod portal_method = pmethods[i];
+		CType portal_method_params[] = portal_method.getParameters();
+
+		String method_name = portal_method.getIdent();
+
+		int length = method_name.length();
+
+		if (!method_name.startsWith("<") && 
+		    !method_name.endsWith(">")) {
+
+		    print("      if (msg->method_id == "+i+") {\n");
+
+		    for (int t = 0; t < methods.length; t++) {
+		    
+			String thread_method_name = methods[t].getName();
+			
+			if (thread_method_name.startsWith(method_name) &&
+			    thread_method_name.charAt(length) == '_' &&
+			    thread_method_name.charAt(length + 1) == '_') {
+			    
+			    int param_count = methods[t].getParameters().length;
+
+			    for (int a = 0; a < param_count; a++) {
+				if (portal_method_params[a].toString().equals("int")) {
+				    print("        int p"+a+" = msg->get_int_param();\n");
+				}
+				if (portal_method_params[a].toString().equals("float")) {
+				    print("        float p"+a+" = msg->get_float_param();\n");
+				}
+			    }
+
+			    print("        "+thread_method_name+"__"+selfID+"(");
+			    for (int a = 0; a < param_count; a++) {
+				if (a > 0) print(", ");
+				print("p"+a);
+			    }
+			    print(");\n");
+			}
+		    }
+		    print("      }\n");
+		}
+	    }
+	}
+
+	print("    }\n");
+	print("  }\n");
 	
 	{
 	    Iterator i = receives_from.iterator();
 	    while (i.hasNext()) {
 		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("    if (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n      handle_message__"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n    }\n");
+		print("  if (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n    handle_message__"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n  }\n");
 	    }
 	}
 
@@ -350,10 +418,19 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	
 	print("\nvoid handle_message__"+selfID+"(mysocket *sock) {\n");
+	print("  int size = sock->read_int();\n");
 	print("  int index = sock->read_int();\n");
-	print("  printf(\"Message receieved! thread: "+selfID+", index: %d\\n\", index);\n");
+	print("  int iteration = sock->read_int();\n");
+	print("  printf(\"Message receieved! thread: "+selfID+", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
 
-	SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
+	print("  if (iteration > 0) {\n");
+	print("    message *msg = new message(size, index, iteration);\n");
+	print("    msg->read_params(sock);\n");
+	print("    __msg_stack_"+selfID+" = msg->push_on_stack(__msg_stack_"+selfID+");\n");
+	print("    return;\n");
+	print("  }\n");
+
+	//SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
 
 	/* there should be only one portal or none */
 
@@ -1706,6 +1783,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 		int index = -1;
 
+		int size = 12; // size:4 mindex:4 exec_at:4
+
 		for (int t = 0; t < methods.length; t++) {
 
 		    if (methods[t].getIdent().equals(ident)) {
@@ -1715,9 +1794,30 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		    //print("/* has method: "+methods[t]+" */\n");
 		}
 
+		CType method_params[] = methods[index].getParameters();
+
+		if (params != null) {
+
+		    // in C++ int and float have size of 4 bytes
+
+		    size += params.length * 4; 
+		}
+
+		print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+size+");");
+
 		print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+index+");");
 
-		CType method_params[] = methods[index].getParameters();
+		if (latency instanceof SIRLatencyMax) {
+
+		    int max = ((SIRLatencyMax)latency).getMax();
+
+		    //print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+max+");");
+		    print("__msg_sock_"+selfID+"_"+dst+"out->write_int(sdep_"+selfID+"_"+dst+"->getDstPhase4SrcPhase(__counter_"+selfID+"+"+max+"));");
+
+		} else {
+
+		    print("__msg_sock_"+selfID+"_"+dst+"out->write_int(-1);");
+		}
 
 		if (params != null) {
 		    for (int t = 0; t < params.length; t++) {

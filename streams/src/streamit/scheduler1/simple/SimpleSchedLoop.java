@@ -12,6 +12,8 @@ import java.util.ListIterator;
 
 import java.math.BigInteger;
 
+import at.dms.kjc.sir.*;
+
 // BUGBUG these are for my little hack of DecoderFeedback
 import streamit.scheduler.SchedPipeline;
 import streamit.scheduler.SchedSplitJoin;
@@ -347,14 +349,28 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 
     void schedulingDifficulty ()
     {
+	// get the object we're scheduling
+	Object streamObject = getStreamObject();
         // get the name of the loop class - this will be useful
         // for debugging
-        String className = getStreamObject ().getClass ().getName ();
+	String name;
+	
+	if (streamObject instanceof SIROperator) {
+	    // if we're coming from the compiler, get the name of the
+	    // SIR object
+	    name = ((SIROperator)streamObject).getName();
+	} else {
+	    // otherwise, we're in the java library... just get class name
+	    name = streamObject.getClass ().getName ();
+	}
 
         // BUGBUG hack the DecoderFeedback with fine grained scheduling
-        if (className.equals ("DecoderFeedback")) { fakeDecoderFeedback (); return; }
+        if (name.startsWith ("DecoderFeedback")) { 
+	    fakeDecoderFeedback (); 
+	    return; 
+	}
 
-        ERROR ("Couldn't schedule loop " + className + ".\n" +
+        ERROR ("Couldn't schedule loop " + name + ".\n" +
                "This loop is not necessarily impossible to schedule, " +
                "but this scheduler isn't intelligent enough to do it");
     }

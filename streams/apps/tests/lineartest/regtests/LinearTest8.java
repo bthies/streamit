@@ -266,6 +266,9 @@ class ZeroArrayTest extends Filter {
     }
     public void work() {
 	float[] arr = new float[5];
+	for (int i = 0; i < 5; i++) 
+	    arr[i] = 0.0f;
+	
 	float sum = 0;
 	for (int i=0 ;i<5; i++) {
 	    sum += arr[i];

@@ -65,12 +65,22 @@ class peek_stream : public serializable {
     
     int c_index = tail;
     for (int i = 0; i < queue_size; i++) {
-      buf->write(&queue[c_index], sizeof(T));
+      buf->write(queue[c_index], sizeof(T));
       c_index++;
       if (c_index == PEEK_STREAM_QUEUE_MAXSIZE) c_index = 0;
     }
   }
 
+  virtual void read_object(object_write_buffer *buf) {
+    queue_size = buf->read_int();
+
+    tail = head = 0;
+
+    for (int i = 0; i < queue_size; i++) {
+      buf->read(queue[head], sizeof(T));
+      head++;
+    }
+  }
 
   T pop() {
   

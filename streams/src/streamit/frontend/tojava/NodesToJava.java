@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.2 2002-07-10 19:45:39 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.3 2002-07-11 20:58:49 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -15,6 +15,13 @@ import java.util.Iterator;
  */
 public class NodesToJava implements FEVisitor
 {
+    private StreamType st;
+    
+    public NodesToJava(StreamType st)
+    {
+        this.st = st;
+    }
+    
     public Object visitExprArray(ExprArray exp)
     {
         String result = "";
@@ -105,6 +112,17 @@ public class NodesToJava implements FEVisitor
         }
         result += ")";
         return result;
+    }
+
+    public Object visitExprPeek(ExprPeek exp)
+    {
+        String result = (String)exp.getExpr().accept(this);
+        return st.peekFunction() + "(" + result + ")";
+    }
+    
+    public Object visitExprPop(ExprPop exp)
+    {
+        return st.popFunction() + "()";
     }
 
     public Object visitExprTernary(ExprTernary exp)

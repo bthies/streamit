@@ -17,7 +17,7 @@ flops reported are 3194 flops, which is (3194/11295.5) * 250 = 0.28276747 MFLOPS
 
 workCount = 10103360 / 10270624 = 0.98371433
 workCount = 179751 / 181568     = 0.98999273
-workCount = 178176 / 179888     = 0.095481633
+workCount = 178176 / 179888     = 0.99048297
 
 
 

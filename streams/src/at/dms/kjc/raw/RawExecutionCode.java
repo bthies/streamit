@@ -448,11 +448,15 @@ public class RawExecutionCode extends at.dms.util.Utils
 		    buffersize = Util.nextPow2(maxpeek + remaining);
 	    }
 	    
+	    int dim = (filter.getInputType().isArrayType()) ? 
+		((CArrayType)filter.getInputType()).getDims().length + 1
+		: 1;
+
 	    JVariableDefinition recvBufVar = 
 		new JVariableDefinition(null, 
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
 					new CArrayType(filter.getInputType(), 
-						       1 /* dimension */ ),
+						       dim /* dimension */ ),
 					recvBuffer,
 					bufferInitExp
 					(filter, filter.getInputType(), 
@@ -743,7 +747,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	if (RawBackend.FILTER_DEBUG_MODE) {
 	    statements.addStatement
 		(new SIRPrintStatement(null,
-				       new JStringLiteral(null, filter.getName() + " Starting Steady-State"),
+				       new JStringLiteral(null, filter.getName() + " Starting Steady-State\\n"),
 				       null));
 	}
 	
@@ -803,7 +807,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	if (RawBackend.FILTER_DEBUG_MODE) {
 	    block.addStatement
 		(new SIRPrintStatement(null,
-				       new JStringLiteral(null, filter.getName() + " firing (init)."),
+				       new JStringLiteral(null, filter.getName() + " firing (init).\\n"),
 				       null));
 	}
 	
@@ -878,7 +882,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	if (RawBackend.FILTER_DEBUG_MODE) {
 	    block.addStatement
 		(new SIRPrintStatement(null,
-				       new JStringLiteral(null, filter.getName() + " firing."),
+				       new JStringLiteral(null, filter.getName() + " firing.\\n"),
 				       null));
 	}
 
@@ -977,7 +981,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	if (RawBackend.FILTER_DEBUG_MODE) {
 	    block.addStatement
 		(new SIRPrintStatement(null,
-				       new JStringLiteral(null, filter.getName() + " firing."),
+				       new JStringLiteral(null, filter.getName() + " firing.\\n"),
 				       null));
 	}
 

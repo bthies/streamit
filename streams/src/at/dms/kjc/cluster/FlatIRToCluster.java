@@ -15,8 +15,7 @@ import java.util.HashSet;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.*;
 
 import at.dms.kjc.raw.*;
 
@@ -78,6 +77,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		 ((SIRFilter)node.contents).getName()+"...");
 
 	
+	Set destroyed_vars = new HashSet();
 
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
 	    if (!KjcOptions.nofieldprop) {
@@ -103,11 +103,18 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		((SIRFilter)node.contents).getMethods()[i].accept(new Propagator(new Hashtable()));
 	    } else
 		((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());
-	    ((SIRFilter)node.contents).getMethods()[i].accept(new ArrayDestroyer());
+
+	    ArrayDestroyer destroyer = new ArrayDestroyer();
+	    ((SIRFilter)node.contents).getMethods()[i].accept(destroyer);
+	    destroyer.addDestroyedLocals(destroyed_vars);
+
 	    ((SIRFilter)node.contents).getMethods()[i].accept(new VarDeclRaiser());
 	}
 
 	DeadCodeElimination.doit((SIRFilter)node.contents);
+	RenameDestroyedVars.renameDestroyedVars((SIRFilter)node.contents, destroyed_vars);
+	DeadCodeElimination.doit((SIRFilter)node.contents); // run one more time!
+
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
     
@@ -1799,7 +1806,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
      */
     public void visitLocalVariableExpression(JLocalVariableExpression self,
                                              String ident) {
-        print(ident);
+	print(ident);
     }
 
     /**

@@ -228,24 +228,24 @@ public class SIRScheduler {
 	// go through parents from top to bottom, building up the
 	// field access expression.
 	for (int i=parents.length-1; i>=0; i--) {
-	    if (parents[i] instanceof SIRPipeline) {
-		SIRPipeline pipe = (SIRPipeline)parents[i];
-		// get the child of interest (either the next parent,
-		// or <filter>
-		SIRStream child = (i>0 ? parents[i-1] : filter);
-		// get field name for child context
-		String childName = 
-		    LoweringConstants.getChildName(pipe.indexOf(child));
-		// build up cascaded field reference
-		result = new JFieldAccessExpression(/* tokref */
-						    null,
-						    /* prefix is previous ref*/
-						    result,
-						    /* ident */
-						    childName);
-	    } else {
-		Utils.fail("Only pipelines supported now.");
-	    }
+	  if (parents[i] instanceof SIRPipeline) {
+	    SIRPipeline pipe = (SIRPipeline)parents[i];
+	    // get the child of interest (either the next parent,
+	    // or <filter>
+	    SIRStream child = (i>0 ? parents[i-1] : filter);
+	    // get field name for child context
+	    String childName = 
+	      LoweringConstants.getChildName(pipe.indexOf(child));
+	    // build up cascaded field reference
+	    result = new JFieldAccessExpression(/* tokref */
+						null,
+						/* prefix is previous ref*/
+						result,
+						/* ident */
+						childName);
+	  } else {
+	    Utils.fail("Only pipelines supported now.");
+	  }
 	}
 
 	return result;

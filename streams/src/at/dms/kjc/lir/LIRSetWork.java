@@ -25,4 +25,8 @@ public class LIRSetWork extends LIRNode {
 	super(streamContext);
 	this.work = work;
     }
+
+    public void accept(LIRVisitor v) {
+        v.visitSetWork(this, this.streamContext, this.work);
+    }
 }

@@ -47,7 +47,14 @@ public class LIRNode extends JStatement {
      * Accepts the specified visitor - NOT SUPPORTED YET.
      */
     public void accept(KjcVisitor p) {
-	at.dms.util.Utils.fail("Visitors to LIR nodes not supported yet.");
+        if (p instanceof LIRVisitor)
+            this.accept((LIRVisitor) p);
+        else
+            at.dms.util.Utils.fail("Visitors to LIR nodes not supported yet.");
+    }
+
+    public void accept(LIRVisitor p) {
+        p.visitNode(this);
     }
 
     /**

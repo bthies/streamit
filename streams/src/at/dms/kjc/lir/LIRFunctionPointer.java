@@ -24,4 +24,16 @@ public class LIRFunctionPointer {
     public LIRFunctionPointer(String name) {
 	this.name = name;
     }
+
+    /**
+     * Returns the name of the function pointed to.
+     */
+    public String getName() {
+        return name;
+    }
+
+    public void accept(LIRVisitor v)
+    {
+        v.visitFunctionPointer(this, this.getName());
+    }
 }

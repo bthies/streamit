@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.1 2001-08-30 16:32:53 thies Exp $
+ * $Id: KjcOptions.opt,v 1.2 2002-09-27 22:41:55 thies Exp $
  */
 
 prefix Kjc
@@ -112,12 +112,6 @@ longname		"classpath"
 	requireArgument
 	help		"Changes class path to classpath"
 
-longname		"debug"
-	shortcut	"g"
-	type		boolean
-	default		"false"
-	help		"Produces debug information (does nothing yet)"
-
 longname		"lang"
 	shortcut	"l"
 	type		String
@@ -131,3 +125,91 @@ longname		"filter"
 	default		"at.dms.kjc.DefaultFilter"
 	requireArgument
 	help		"Warning filter"
+
+// Begin StreamIt Options ----------------------------------------------
+
+longname		"debug"
+	shortcut	"g"
+	type		boolean
+	default		"false"
+	help		"Produces debug information (does nothing yet)"
+
+longname		"constprop"
+	shortcut	"c"
+	type		boolean
+	default		"false"
+	help		"Turns on StreamIt Field Prop"
+
+longname		"fusion"
+	shortcut	"o"
+	type		boolean
+	default		"false"
+	help		"Perform maximal filter fusion"
+
+longname		"unroll"
+	shortcut	"u"
+	type		int
+	default		"16"
+	requireArgument
+	help		"Maximum number of loop iterations to unroll"
+
+longname		"partition"
+	shortcut	"a"
+	type		boolean
+	default		"false"
+	help		"Automatically partition stream graph to fit on target"
+
+longname		"sync"
+	shortcut	"k"
+	type		boolean
+	default		"false"
+	help		"Turn on sync removal"
+
+longname		"ratematch"
+	shortcut	"x"
+	type		boolean
+	default		"false"
+	help		"Turn on rate matching for Raw"
+
+longname		"simplesjfusion"
+	shortcut	"S"
+	type		boolean
+	default		"false"
+	help		"Revert to the old, simple SplitJoin fusion algorithm"
+
+longname		"noanneal"
+	shortcut	"N"
+	type		boolean
+	default		"false"
+	help		"Do not run simulated annealing for layout"
+
+longname		"linearanalysis"
+	shortcut	"i"
+	type		boolean
+	default		"false"
+	help		"Perform linear analysis"
+
+longname		"linearreplacement"
+	shortcut	"I"
+	type		boolean
+	default		"false"
+	help		"Perform linear transformations based on linear analysis."
+
+longname		"viram"
+	shortcut	"V"
+	type		boolean
+	default		"false"
+	help		"Compile for VIRAM, a vector uniprocessor"
+
+longname		"raw"
+	shortcut	"r"
+	type		int
+	default		"-1"
+	requireArgument
+	help		"Compile for RAW with a square layout, with <n> tiles per side"
+
+longname		"streamit"
+	shortcut	"s"
+	type		boolean
+	default		"false"
+	help		"Compile StreamIt code."

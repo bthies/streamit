@@ -25,7 +25,7 @@ public class StreaMITMain {
 
 	SemanticChecker.doCheck(stream);
 	
-	if (StreamItOptions.rawRows != -1) {
+	if (KjcOptions.raw != -1) {
 	    System.out.println("*/");
 	
 	    /* Compiling for raw */

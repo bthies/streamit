@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.16 2002-09-15 17:03:04 mgordon Exp $
+ * $Id: Main.java,v 1.17 2002-09-27 22:41:55 thies Exp $
  */
 
 package at.dms.kjc;
@@ -162,28 +162,7 @@ public class Main extends Compiler {
 
     // do streamit pass 
     if (options.streamit) {
-	// copy over all of the streamit options
-	// from the KjcOptions class that KOPI uses.
-	StreamItOptions.debug = options.debug;
-	StreamItOptions.unroll = options.unroll;
-	StreamItOptions.fusion = options.fusion;
-	StreamItOptions.partition = options.partition;
-	StreamItOptions.constprop = options.constprop;
-	StreamItOptions.rawRows = StreamItOptions.rawColumns = options.raw;
-	StreamItOptions.sync = options.sync;
-	StreamItOptions.ratematch = options.ratematch;
-	StreamItOptions.simplesjfusion = options.simplesjfusion;
-	StreamItOptions.noanneal = options.noanneal;
-	StreamItOptions.linearanalysis = options.linearanalysis;
-	StreamItOptions.linearreplacement = options.linearreplacement;
-	StreamItOptions.viram = options.viram;
-
 	StreaMITMain.compile(tree);
-	/*	
-		for (int count=0; count < tree.length; count++) {
-		StreaMITMain.compile(tree[count]);
-		}
-	*/
     }
 
     if (!options.nowrite && !options.streamit) {

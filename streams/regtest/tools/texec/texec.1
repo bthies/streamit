@@ -1,0 +1,56 @@
+.TH TEXEC 1 "Mar 19 1994" "Stanford University" "SUIF Compiler"
+.SH NAME
+texec \- execute a program with a time limit
+.SH SYNOPSIS
+.B texec
+[
+.BI \-t N
+|
+.BI \-s N
+|
+.BI \-m N
+|
+.BI \-h N
+] [
+.B \-v
+]
+.I program
+[
+.I arguments
+]
+.SH DESCRIPTION
+The
+.I texec
+program executes
+.I program
+with a specified time limit.  If the
+program runs for longer than the maximum time, it will be terminated.
+This is useful for running regression tests with a compiler that
+may generate code with infinite loops.  The default time limit is
+infinity.  The
+.I arguments
+are passed to the
+.IR program .
+.SH OPTIONS
+.TP
+.PD 0
+.BI \-t N
+.TP
+.PD
+.BI \-s N
+Set the time limit to
+.I N
+seconds.
+.TP
+.BI \-m N
+Set the time limit to
+.I N
+minutes.
+.TP
+.BI \-h N
+Set the time limit to
+.I N
+hours.
+.TP
+.B \-v
+Print the execution time when the program is terminated.

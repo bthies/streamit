@@ -101,8 +101,7 @@ public class LowerInitFunctions implements StreamVisitor {
 						  /* type on tape */
 						  filter1.getOutputType(), 
 						  /* size of buffer */
-						  10
-			   //schedule.getBufferSizeBetween(ack,SchedStreams!),
+	   schedule.getBufferSizeBetween(filter1, filter2).intValue()
 						  ));
 	    // re-assign filter1 for next step
 	    filter1 = filter2;

@@ -1,12 +1,9 @@
 import streamit.*;
 
 class Incrementer extends Filter {
-    Channel input = new Channel(Integer.TYPE, 1);
-    Channel output = new Channel(Integer.TYPE, 1);
-
-    public void initIO() {
-	this.streamInput = input;
-	this.streamOutput = output;
+    public void init() {
+        input = new Channel(Integer.TYPE, 1);
+        output = new Channel(Integer.TYPE, 1);
     }
 
     public void work() {
@@ -23,10 +20,9 @@ class Unroll extends StreamIt {
     public void init() {
 	int i;
 	this.add(new Filter() {
-		Channel output = new Channel(Integer.TYPE, 1);
 		int x;
-		public void initIO() {
-		    this.streamOutput = output;
+		public void init() {
+		   output = new Channel(Integer.TYPE, 1);
 		}
 		public void work() {
 		    output.pushInt(x++);
@@ -36,9 +32,8 @@ class Unroll extends StreamIt {
 	    add(new Incrementer());
 	}
 	this.add(new Filter() {
-		Channel input = new Channel(Integer.TYPE, 1);
-		public void initIO() {
-		    this.streamInput = input;
+		public void init() {
+		    input = new Channel(Integer.TYPE, 1);
 		}
 		public void work() {
 		    System.out.println(input.popInt());

@@ -8,12 +8,9 @@ public class SimpleSplit extends StreamIt {
     public void init() {
 	// push increasing integers
 	add(new Filter() {
-		Channel output = new Channel(Integer.TYPE, 1);
 		int count;
-		public void initIO() {
-		    this.streamOutput = output;
-		}
 		public void init() {
+		    output = new Channel(Integer.TYPE, 1);
 		    this.count = 0;
 		}
 		public void work() {
@@ -26,11 +23,9 @@ public class SimpleSplit extends StreamIt {
 		    setSplitter(ROUND_ROBIN());
 		    // pop two and push two
 		    this.add(new Filter() {
-			    Channel input = new Channel(Integer.TYPE, 2);
-			    Channel output = new Channel(Integer.TYPE, 2);
-			    public void initIO() {
-				this.streamInput = input;
-				this.streamOutput = output;
+			    public void init() {
+			        input = new Channel(Integer.TYPE, 2);
+			        output = new Channel(Integer.TYPE, 2);
 			    }
 			    public void work() {
 				output.pushInt(input.popInt());
@@ -39,11 +34,9 @@ public class SimpleSplit extends StreamIt {
 			});
 		    // pop two and push two in opposite order
 		    this.add(new Filter() {
-			    Channel input = new Channel(Integer.TYPE, 2);
-			    Channel output = new Channel(Integer.TYPE, 2);
-			    public void initIO() {
-				this.streamInput = input;
-				this.streamOutput = output;
+			    public void init() {
+			        input = new Channel(Integer.TYPE, 2);
+			        output = new Channel(Integer.TYPE, 2);
 			    }
 			    public void work() {
 				int i1 = input.popInt();
@@ -56,9 +49,8 @@ public class SimpleSplit extends StreamIt {
 		}});
 	// print result
 	add(new Filter() {
-		Channel input = new Channel(Integer.TYPE, 1);
-		public void initIO() {
-		    this.streamInput = input;
+		public void init() {
+		    input = new Channel(Integer.TYPE, 1);
 		}
 		public void work() {
 		    System.out.println(input.popInt());

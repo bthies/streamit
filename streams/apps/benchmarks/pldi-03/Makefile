@@ -1,6 +1,10 @@
 FRONTEND = java streamit.frontend.ToJava
 
-all: clean
+all: clean benchmark
+
+
+benchmark: FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java Test.java
+	./reap_freq.pl
 
 
 FIRProgram.java: FIRProgram.str lib/*.str
@@ -24,7 +28,8 @@ Test.java: Test.str lib/*.str
 
 
 clean:
-	rm -f *.dot *.ps *.c *.exe *.class
+	rm -f *.dot *.ps *.c *.exe *.class *.output
+	rm -f dynamorio.log* countflops.log
 	rm -f Test.java
 	rm -f FIRProgram.java SamplingRateConverter.java 
 	rm -f FilterBank.java TargetDetect.java

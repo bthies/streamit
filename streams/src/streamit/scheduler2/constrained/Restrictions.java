@@ -1,5 +1,6 @@
 package streamit.scheduler2.constrained;
 
+import streamit.misc.Pair;
 import streamit.misc.OMap;
 import streamit.misc.OMapIterator;
 import streamit.misc.OSet;
@@ -53,8 +54,8 @@ public class Restrictions extends streamit.misc.AssertedClass
 
             return (leftPrtl < rightPrtl)
                 || (leftPrtl == rightPrtl
-                    && left.getFilter().hashCode()
-                        < right.getFilter().hashCode());
+                    && left.getStream().hashCode()
+                        < right.getStream().hashCode());
         }
     }
 
@@ -67,6 +68,26 @@ public class Restrictions extends streamit.misc.AssertedClass
      */
     final OMap restrictions = new OMap();
 
+    /**
+     * allRestrictions holds all restrictions in a single, easy to
+     * access and search data container.
+     */
+    final OSet allRestrictions =
+        new OSet(new RestrictionPrtlFltrComperator());
+        
+    /**
+     * streamExecutions is a map of StreamInterface to Integer. Basically
+     * it stores how many times each stream has been executed so far
+     */
+    final OMap streamExecutions;
+    final OMapIterator lastStreamExecutionIter;
+    
+    public Restrictions ()
+    {
+        streamExecutions = new OMap ();
+        lastStreamExecutionIter = streamExecutions.end();
+    }
+    
     /**
      * Try to execute a stream nTimes times. The function will return
      * the number of times the stream will be executed, as allowed by
@@ -91,8 +112,9 @@ public class Restrictions extends streamit.misc.AssertedClass
      */
     public int getNumExecutions(StreamInterface stream)
     {
-        ERROR("not implemented");
-        return -1;
+        OMapIterator streamIter = streamExecutions.find(stream);
+        if (streamIter.equals (lastStreamExecutionIter)) return 0;
+        return ((Integer)streamIter.getData()).intValue() ;
     }
 
     /**
@@ -124,17 +146,81 @@ public class Restrictions extends streamit.misc.AssertedClass
      */
     public Restriction add(Restriction restriction)
     {
-        ERROR("Not implemented");
-        return null;
+        StreamInterface restrictedStream = restriction.getStream();
+
+        OMapIterator streamRestrictionsIter =
+            restrictions.find(restrictedStream);
+
+        // first add the restriction
+        {
+            // has this stream had its restrictions initialized yet?
+            if (streamRestrictionsIter.equals(restrictions.end()))
+            {
+                // nope - make sure that the stream has restrictions
+                // initialized before adding :)
+                Pair result =
+                    restrictions.insert(
+                        restrictedStream,
+                        new OSet(new RestrictionExecutionsComperator()));
+
+                // better not have anything in there - that would be 
+                // a bug in the container or something
+                ASSERT(((Boolean)result.getSecond()).booleanValue());
+                streamRestrictionsIter = (OMapIterator)result.getFirst();
+            }
+
+            OSet streamRestrictions =
+                (OSet)streamRestrictionsIter.getData();
+            streamRestrictions.insert(restriction);
+        }
+
+        // now remove any old restrictions
+        Restriction oldRestriction = null;
+        {
+            Pair result = allRestrictions.insert(restriction);
+
+            if (((Boolean)result.getSecond()).booleanValue() == false)
+            {
+                // there already is a restriction for this portal/stream pair!
+                // remove it from allRestrictions first
+                OSetIterator oldRestrictionIter =
+                    (OSetIterator)result.getFirst();
+                oldRestriction = (Restriction)oldRestrictionIter.get();
+                allRestrictions.erase(oldRestrictionIter);
+
+                // insert the restriction into the allRestrictions set
+                allRestrictions.insert(restriction);
+
+                // and now remove it from from restrictions
+                OSet streamRestrictions =
+                    (OSet)streamRestrictionsIter.getData();
+                streamRestrictions.erase(oldRestriction);
+            }
+        }
+
+        return oldRestriction;
     }
 
     /**
      * Remove a restriction to the existing set of restrictions. If
      * restriction is not in the set of restrictions, silently don't
-     * don anything.
+     * do anything.
      */
     public void remove(Restriction restriction)
     {
-        ERROR("Not implemented");
+        // check if the restriction is still in restrictions set
+        OSetIterator restrictionIter = allRestrictions.find(restriction);
+        if (!restrictionIter.equals(allRestrictions.end())
+            && restrictionIter.get() == restriction)
+        {
+            // yep, it's still there; remove it!
+            allRestrictions.erase(restriction);
+            OMapIterator streamRestrictionsIter =
+                restrictions.find(restriction.getStream());
+            ASSERT(!streamRestrictionsIter.equals(restrictions.end()));
+            OSet streamRestrictions =
+                (OSet)streamRestrictionsIter.getData();
+            streamRestrictions.erase(restriction);
+        }
     }
 }

@@ -29,8 +29,7 @@ abstract public class Restriction extends streamit.misc.AssertedClass
 
     public int getNumAllowedExecutions()
     {
-        ASSERT(0);
-        return 0;
+        return maxExecution - restrictions.getNumExecutions(stream);
     }
 
     public void setMaxExecutions(int _maxExecutions)
@@ -44,7 +43,7 @@ abstract public class Restriction extends streamit.misc.AssertedClass
         return portal;
     }
 
-    public StreamInterface getFilter()
+    public StreamInterface getStream()
     {
         return stream;
     }

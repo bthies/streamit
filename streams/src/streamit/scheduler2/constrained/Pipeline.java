@@ -229,6 +229,8 @@ public class Pipeline
                 this,
                 restrictions);
 
+        // these will automatically remove the initialization restrictions
+        // from the restrictions queues
         restrictions.add(upstreamRestriction);
         restrictions.add(downstreamRestriction);
 
@@ -267,6 +269,7 @@ public class Pipeline
     public void computeSchedule()
     {
         restrictions = new Restrictions();
+        initializeRestrictions (restrictions);
 
         {
             P2PPortal initPortal = new P2PPortal();

@@ -167,11 +167,11 @@ public class Filter
 
     public void initRestrictionsCompleted(P2PPortal portal)
     {
-        ERROR ("should never be called!");
+        ERROR ("not implemented!");
     }
     
     public void initializeRestrictions(Restrictions _restrictions)
     {
-        ERROR ("finished, remove error and continue");
+        
     }
 }

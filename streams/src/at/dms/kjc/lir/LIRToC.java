@@ -1,11 +1,12 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.19 2001-10-25 17:31:34 dmaze Exp $
+ * $Id: LIRToC.java,v 1.20 2001-10-25 17:36:00 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
 
 import java.io.StringWriter;
+import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.List;
 import at.dms.util.InconsistencyException;
@@ -1719,6 +1720,10 @@ public class LIRToC
         print("(s);");
         newLine();
         print("connect_tapes(s->context);");
+        newLine();
+        Iterator iter = initStatements.iterator();
+        while (iter.hasNext())
+            ((JStatement)(iter.next())).accept(this);
         newLine();
         print("streamit_run(s->context);");
     }

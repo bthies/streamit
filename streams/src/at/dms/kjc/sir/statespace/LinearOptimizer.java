@@ -236,7 +236,6 @@ public class LinearOptimizer {
 	return true;
     }
 
-
     // removes state index
     private void removeState(int index) {
 
@@ -246,10 +245,14 @@ public class LinearOptimizer {
 	int lastCols = states+inputs-(index+1);
 	int lastRows = states+outputs-(index+1);
 
-        newTotalMatrix.copyRowsAndColsAt(0,0,totalMatrix,0,0,index,index);
+	if(index > 0)
+	    newTotalMatrix.copyRowsAndColsAt(0,0,totalMatrix,0,0,index,index);
+
 	newTotalMatrix.copyRowsAndColsAt(0,index,totalMatrix,0,index+1,index,lastCols);
 	
-	newTotalMatrix.copyRowsAndColsAt(index,0,totalMatrix,index+1,0,lastRows,index);
+	if(index > 0)
+	    newTotalMatrix.copyRowsAndColsAt(index,0,totalMatrix,index+1,0,lastRows,index);
+
 	newTotalMatrix.copyRowsAndColsAt(index,index,totalMatrix,index+1,index+1,lastRows,lastCols);
 	
 	totalMatrix = newTotalMatrix;

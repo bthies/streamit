@@ -823,7 +823,7 @@ public class Operator extends DestroyedClass
             init (initParams.getFloatParam("a"),
                   initParams.getFloatParam("b"),
                   initParams.getFloatParam("c"),
-                  initParams.getIntParam("d"));
+                  initParams.getFloatParam("d"));
         else
         if(initParams.getParamName().equals("float-float-int-int"))
             init (initParams.getFloatParam("x3"),

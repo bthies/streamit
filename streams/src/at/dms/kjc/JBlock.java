@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.10 2001-11-10 19:07:31 thies Exp $
+ * $Id: JBlock.java,v 1.11 2002-02-15 11:26:31 thies Exp $
  */
 
 package at.dms.kjc;
@@ -57,6 +57,21 @@ public class JBlock extends JStatement {
     for (int i=0; i<body.length; i++) {
 	this.body.add(body[i]);
     }
+  }
+
+    /**
+     * Construct a node in the parsing tree
+     * @param	where		the line of this node in the source code
+     * @param	body		a list of statements contained in the block
+     * @param	comment		other comments in the source code
+     */
+    public JBlock(TokenReference where,
+		  List body,
+		  JavaStyleComment[] comments)
+  {
+    super(where, comments);
+    // make a copy of <body>
+    this.body = new LinkedList(body);
   }
 
   // ----------------------------------------------------------------------

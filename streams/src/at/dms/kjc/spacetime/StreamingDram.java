@@ -43,13 +43,13 @@ public class StreamingDram extends IODevice
     public static boolean differentDRAMs(OutputTraceNode out) 
     {
 	HashSet drams = new HashSet();
-	Iterator outputs = out.getDestSet().iterator();
-	while(outputs.hasNext()) {
-	    InputTraceNode in = (InputTraceNode)outputs.next();
+	Iterator edges = out.getDestSet().iterator();
+	while(edges.hasNext()) {
+	    Edge edge = (Edge)edges.next();
 	    //System.out.println(out + "->" + in);
-	    if (drams.contains(OffChipBuffer.getBuffer(out, in).getDRAM()))
+	    if (drams.contains(InterTraceBuffer.getBuffer(edge).getDRAM()))
 		return false;
-	    drams.add(OffChipBuffer.getBuffer(out, in).getDRAM());
+	    drams.add(InterTraceBuffer.getBuffer(edge).getDRAM());
 	}
 	return true;
     }
@@ -62,9 +62,9 @@ public class StreamingDram extends IODevice
 	for (int i = 0; i < in.getSources().length; i++) {
 	    //System.out.println(in.getSources()[i] + " -> " + in + "(" + 
 	    //		       OffChipBuffer.getBuffer(in.getSources()[i], in).getDRAM() + ")");				       
-	    if (drams.contains(OffChipBuffer.getBuffer(in.getSources()[i], in).getDRAM()))
+	    if (drams.contains(InterTraceBuffer.getBuffer(in.getSources()[i]).getDRAM()))
 		return false;
-	    drams.add(OffChipBuffer.getBuffer(in.getSources()[i], in).getDRAM());
+	    drams.add(InterTraceBuffer.getBuffer(in.getSources()[i]).getDRAM());
 	}
 	return true;
     }

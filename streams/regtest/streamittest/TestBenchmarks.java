@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.25 2003-09-13 05:18:03 thies Exp $
+ * $Id: TestBenchmarks.java,v 1.26 2003-09-13 18:58:24 thies Exp $
  **/
 package streamittest;
 
@@ -72,7 +72,7 @@ public class TestBenchmarks extends StreamITTestCase {
         doSyntaxConvertTest(root, "BeamFormer.str", "BeamFormer.java");
         doSyntaxConvertTest(root, "CoarseBeamFormer.str", "CoarseBeamFormer.java");
         doSyntaxConvertTest(root, "SerializedBeamFormer.str", "SerializedBeamFormer.java");
-        doSyntaxConvertTest(root, "SerializedCoarseBeamFormer.str", "SerializedCoarseBeamFormer.java");
+        doSyntaxConvertTest(root, "CoarseSerializedBeamFormer.str", "CoarseSerializedBeamFormer.java");
 	// run java tests again
 	testBeamFormerJava(root);
     }

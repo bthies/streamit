@@ -7,6 +7,7 @@ import at.dms.util.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.sir.lowering.partition.linear.LinearPartitioner;
 import at.dms.kjc.sir.lowering.fusion.*;
 
 /**
@@ -28,14 +29,25 @@ public final class LinearReplaceTransform extends StreamTransform {
      * Perform the transform on <str> and return new stream.
      */
     public SIRStream doMyTransform(SIRStream str) {
-	// again detect that <str> is linear, since it is a newly constructed stream
-	LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, lfa);
-	if (KjcOptions.linearreplacement2) {
-	    LinearIndirectReplacer.doReplace(lfa, str);
-	} else if (KjcOptions.linearreplacement3) {
-	    LinearDiagonalReplacer.doReplace(lfa, str);
+	if (str instanceof SIRFilter) {
+	    // if we just have a filter, figure that the custom
+	    // implementation of the filter is going to be better than
+	    // our own version of matrix multiply... that is, do
+	    // nothing.
 	} else {
-	    LinearDirectReplacer.doReplace(lfa, str);
+	    // again detect that <str> is linear, since it is a newly constructed stream
+	    LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, lfa);
+	    // otherwise, look at the number of multiplies, and do an
+	    // unrolled direct replacement only if it's less than our
+	    // threshoold
+	    if (lfa.getLinearRepresentation(str).getCost().getMultiplies()<=LinearPartitioner.MAX_MULT_TO_UNROLL) {
+		LinearDirectReplacer.doReplace(lfa, str);
+	    } else {
+		LinearDiagonalReplacer.doReplace(lfa, str);
+	    } /* TODO: else if sparse matrix {
+		 LinearIndirectReplacer.doReplace(lfa, str);
+		 }
+	      */
 	}
 	// kind of hard to get a handle on the new stream... return
 	// null for now; this shouldn't get dereferenced in linear

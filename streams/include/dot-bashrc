@@ -1,3 +1,6 @@
+# make sure STREAMIT_HOME is exported
+export STREAMIT_HOME
+
 # take care of classpath
 if [ -z "$CLASSPATH" ]
 then

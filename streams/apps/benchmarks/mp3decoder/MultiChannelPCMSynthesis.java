@@ -26,7 +26,7 @@ class MultiChannelPCMSynthesisInternal extends SplitJoin
 
         granuleInputSize = (/* data size */ 18 + /* for type */ 1) * 32 + /* for type */ 1;
         // depending on how many channels, initialize the splitter appropriately
-        ASSERT (nChannels == 1 || nChannels == 2);
+        // ASSERT (nChannels == 1 || nChannels == 2);
 
         setSplitter(ROUND_ROBIN((/* data size */ 18 + /* for type */ 1) * 32 + /* for type */ 1));
 

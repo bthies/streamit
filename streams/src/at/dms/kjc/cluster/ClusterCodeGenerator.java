@@ -120,21 +120,20 @@ class ClusterCodeGenerator {
 	r.add("\n");
 	r.add("#include <init_instance.h>\n");
         r.add("#include <mysocket.h>\n");
-	r.add("#include <peek_stream.h>\n");
 	r.add("#include <object_write_buffer.h>\n");
 	r.add("#include <save_state.h>\n");
 	r.add("#include <sdep.h>\n");
 	r.add("#include <message.h>\n");
 	r.add("#include <timer.h>\n");
 	r.add("#include <thread_info.h>\n");
-	r.add("\n");
-
-	r.add("#include <data_consumer.h>\n");
-	r.add("#include <data_producer.h>\n");
 	r.add("#include <consumer2.h>\n");
 	r.add("#include <producer2.h>\n");
 	r.add("\n");
 
+	//r.add("#include <peek_stream.h>\n");
+	//r.add("#include <data_consumer.h>\n");
+	//r.add("#include <data_producer.h>\n");
+	
 	r.add("extern int __max_iteration;\n");
 	r.add("extern int __timer_enabled;\n");
 	r.add("extern int __frequency_of_chkpts;\n");
@@ -454,8 +453,9 @@ class ClusterCodeGenerator {
 	    if (!fusedWith.contains(tmp)) {
 		r.add("  sock = init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET);\n");
 		r.add("  sock->set_check_thread_status(cs_fptr);\n");
-		r.add("  sock->set_item_size(sizeof("+in.getType()+"));\n");
+		//r.add("  sock->set_item_size(sizeof("+in.getType()+"));\n");
 		r.add("  "+in.consumer_name()+".set_socket(sock);\n");
+		r.add("  "+in.consumer_name()+".init();\n");
 		r.add("\n");
 	    }
 	}
@@ -468,8 +468,9 @@ class ClusterCodeGenerator {
 	    if (!fusedWith.contains(tmp)) {
 		r.add("  sock = init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET);\n");
 		r.add("  sock->set_check_thread_status(cs_fptr);\n");
-		r.add("  sock->set_item_size(sizeof("+out.getType()+"));\n");
+		//r.add("  sock->set_item_size(sizeof("+out.getType()+"));\n");
 		r.add("  "+out.producer_name()+".set_socket(sock);\n");
+		r.add("  "+out.producer_name()+".init();\n");
 		r.add("\n");
 	    }
 	}
@@ -524,7 +525,7 @@ class ClusterCodeGenerator {
 
 	    FlatNode tmp = NodeEnumerator.getFlatNode(out.getDest());
 	    if (!fusedWith.contains(tmp)) {
-		r.add("  delete "+out.producer_name()+".get_socket();\n");
+		r.add("  "+out.producer_name()+".delete_socket_obj();\n");
 	    }
 	}
 
@@ -534,7 +535,7 @@ class ClusterCodeGenerator {
 
 	    FlatNode tmp = NodeEnumerator.getFlatNode(in.getSource());
 	    if (!fusedWith.contains(tmp)) {
-		r.add("  delete "+in.consumer_name()+".get_socket();\n");
+		r.add("  "+in.consumer_name()+".delete_socket_obj();\n");
 	    }
 	}
 

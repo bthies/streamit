@@ -6,29 +6,39 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.7 2002-07-17 18:35:38 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.8 2002-09-11 18:52:31 aalamb Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
-    public static final int NONE         = 0x0;
-    //public static final int RAW          = 0x1;
-    public static final int CONSTPROP    = 0x2;
-    public static final int UNROLL       = 0x4;
-    public static final int FUSION       = 0x8;
-    public static final int PARTITION    = 0x10;
-    public static final int RAW4         = 0x20;
-    public static final int RAW8         = 0x40;
+    public static final int NONE               = 0x0;
+    //public static final int RAW              = 0x1;
+    public static final int CONSTPROP          = 0x2;
+    public static final int UNROLL             = 0x4;
+    public static final int FUSION             = 0x8;
+    public static final int PARTITION          = 0x10;
+    public static final int RAW4               = 0x20;
+    public static final int RAW8               = 0x40;
+    public static final int LINEAR_ANALYSIS    = 0x80;
+    public static final int LINEAR_REPLACEMENT = 0x100;
+    public static final int DEBUG              = 0x200;
     
-    // Options
-    public static final String OPTION_STREAMIT  = "--streamit";
-    public static final String OPTION_CONSTPROP = "--constprop";
-    public static final String OPTION_UNROLL    = "--unroll";
-    public static final String OPTION_FUSION    = "--fusion";
-    public static final String OPTION_PARTITION = "--partition";
 
-    public static final String OPTION_RAW        = "--raw";
-    public static final String OPTION_FOUR       = "4";
-    public static final String OPTION_EIGHT      = "8";
+
+    // Options
+    public static final String OPTION_STREAMIT           = "--streamit";
+    public static final String OPTION_CONSTPROP          = "--constprop";
+    public static final String OPTION_UNROLL             = "--unroll";
+    public static final String OPTION_FUSION             = "--fusion";
+    public static final String OPTION_PARTITION          = "--partition";
+
+    public static final String OPTION_RAW                = "--raw";
+    public static final String OPTION_FOUR               = "4";
+    public static final String OPTION_EIGHT              = "8";
+
+    public static final String OPTION_LINEAR_ANALYSIS    = "--linearanalysis";
+    public static final String OPTION_LINEAR_REPLACEMENT = "--linearreplacement";
+
+    public static final String OPTION_DEBUG              = "--debug";
     
     // suffix to add to the various pieces of compilation
     public static final String SUFFIX_C    = ".c";
@@ -190,6 +200,25 @@ public class CompilerInterface {
 	    numOptions++;
 	}
 
+	// if we are running linear analysis
+	if ((flags & LINEAR_ANALYSIS) == LINEAR_ANALYSIS) {
+	    options[numOptions] = OPTION_LINEAR_ANALYSIS;
+	    numOptions++;
+	}
+
+	// if we are running linear replacement
+	if ((flags & LINEAR_REPLACEMENT) == LINEAR_REPLACEMENT) {
+	    options[numOptions] = OPTION_LINEAR_REPLACEMENT;
+	    numOptions++;
+	}
+
+	// if we want debugging output
+	if ((flags & DEBUG) == DEBUG) {
+	    options[numOptions] = OPTION_DEBUG;
+	    numOptions++;
+	}
+
+	
 	
 	// copy over the options that were used into an options
 	// array that is the correct size

@@ -25,13 +25,13 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * The factor by which a filter's input or output rate should be
      * multiplied to estimate the horizontal fusion overhead.
      */
-    static final int HORIZONTAL_FILTER_OVERHEAD_FACTOR = 5;
+    static final int HORIZONTAL_FILTER_OVERHEAD_FACTOR = 30;
     /**
      * When estimating overhead of horizontal fusion, this is added if
      * the top or bottommost elements of child pipelines are also
      * containers, instead of filters.
      */
-    static final int HORIZONTAL_CONTAINER_OVERHEAD = 10;
+    static final int HORIZONTAL_CONTAINER_OVERHEAD = 120;
     /**
      * Whether or not we're sharing configurations in symmetrical
      * splitjoins.  Sharing doesn't work with 2-D partitioning, but

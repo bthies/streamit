@@ -406,7 +406,7 @@ public class SpaceTimeBackend
 		System.out.println(traces[i]);
 	    SpaceTimeSchedule sched=TestLayout.layout(traces,rawRows,rawColumns);
 	    traceForrest=Schedule2Dependencies.findDependencies(sched,traces,rawRows,rawColumns);
-	    SoftwarePipeline.pipeline(sched,traces);
+	    SoftwarePipeline.pipeline(sched,traces,io);
 	    for(int i=0;i<traces.length;i++)
 		traces[i].doneDependencies();
 	    System.err.println("TopNodes in Forest: "+traceForrest.length);

@@ -21,7 +21,7 @@ package streamit.frontend.nodes;
  * the specified type parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypePrimitive.java,v 1.6 2003-10-09 19:51:00 dmaze Exp $
+ * @version $Id: TypePrimitive.java,v 1.7 2003-12-18 18:57:29 dmaze Exp $
  */
 public class TypePrimitive extends Type
 {
@@ -73,6 +73,46 @@ public class TypePrimitive extends Type
         }
     }
     
+    /**
+     * Check if this type can be promoted to some other type.
+     * Returns true if a value of this type can be assigned to
+     * a variable of that type.  For primitive types, promotions
+     * are ordered: boolean -> bit -> int -> float -> complex.
+     *
+     * @param that  other type to check promotion to
+     * @return      true if this can be promoted to that
+     */
+    public boolean promotesTo(Type that)
+    {
+        if (super.promotesTo(that))
+            return true;
+        if (!(that instanceof TypePrimitive))
+            return false;
+
+        int t1 = this.type;
+        int t2 = ((TypePrimitive)that).type;
+        
+        // want: "t1 < t2", more or less
+        switch(t1)
+        {
+        case TYPE_BOOLEAN:
+            return t2 == TYPE_BOOLEAN || t2 == TYPE_BIT ||
+                t2 == TYPE_INT || t2 == TYPE_FLOAT ||
+                t2 == TYPE_COMPLEX;
+        case TYPE_BIT:
+            return t2 == TYPE_BIT || t2 == TYPE_INT ||
+                t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX;
+        case TYPE_INT:
+            return t2 == TYPE_INT || t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX;
+        case TYPE_FLOAT:
+            return t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX;
+        case TYPE_COMPLEX:
+            return t2 == TYPE_COMPLEX;
+        default:
+            return false;
+        }
+    }
+
     public boolean equals(Object other)
     {
         // Two cases.  One, this is complex, and so is that:

@@ -110,10 +110,15 @@ public class MakefileGenerator
 	FileWriter fw = new FileWriter("fileio.bc");
 
 	if (KjcOptions.magic_net) 
-	    fw.write("gTurnOffNativeCompilation=1;\n");
+	    fw.write("gTurnOffNativeCompilation = 1;\n");
 
 	fw.write("include(\"<dev/basic.bc>\");\n");
-
+	
+	//let the simulation know how many tiles are mapped to 
+	//filters or joiners
+	fw.write("global gStreamItTilesUsed = " + Layout.getTilesAssigned() + ";\n");
+	fw.write("global gStreamItTiles = " + RawBackend.rawRows * RawBackend.rawColumns +
+		 ";\n");
 	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
 	
 

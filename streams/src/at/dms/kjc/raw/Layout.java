@@ -85,6 +85,10 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	}
     }
 
+    public static int getTilesAssigned() {
+	return assigned.size();
+    }
+
     public static boolean isAssigned(FlatNode node) {
 	return assigned.contains(node);
     }

@@ -248,7 +248,7 @@ public class ClusterBackend implements FlatVisitor {
 	graphFlattener.top.accept(new ClusterBackend(), null, true); 
 
 	//generating code for partitioned nodes
-	ClusterExecutionCode.doit(graphFlattener.top);
+	//ClusterExecutionCode.doit(graphFlattener.top);
 
 	System.out.println("Cluster Code begin...");
 

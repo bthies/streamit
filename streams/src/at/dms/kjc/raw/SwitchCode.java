@@ -23,7 +23,7 @@ public class SwitchCode extends at.dms.util.Utils
     private static final int MAX_LOOKAHEAD = 100;
     //the maximum number of repetitions allowed for a switch sequence
     //this is 2^16 because that is the largest immediate allowed 
-    private static final int MAX_REP = 65535;
+    private static final int MAX_REP = 100;//65535;
 
     public static void generate(FlatNode top) 
     {

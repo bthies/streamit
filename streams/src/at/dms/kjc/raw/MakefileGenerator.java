@@ -378,12 +378,16 @@ public class MakefileGenerator
 	if (hasIO) {
 	    //generate the code for the fileReaders
 	    Iterator frs = FileVisitor.fileReaders.iterator();
+	    fw.write("\tlocal f_readerpath = malloc(strlen(streamit_home) + 30);\n");
+	    fw.write("\tsprintf(f_readerpath, \"%s%s\", streamit_home, \"/include/from_file_raw.bc\");\n");
+	    //include the file reader device
+	    fw.write("\tinclude(f_readerpath);\n");
 	    while (frs.hasNext()) {
+		
 		FlatNode node = (FlatNode)frs.next();
 		SIRFileReader fr = (SIRFileReader)node.contents;
-		fw.write("\tdev_serial_rom_init(\"" + fr.getFileName() +
-			 "\", " + getIOPort(Layout.getTile(node)) + 
-			 ", 1);\n");
+		fw.write("\tdev_from_file_raw(\"" + fr.getFileName() + "\", " + 
+			 getIOPort(Layout.getTile(node)) + ");\n");
 	    }
 	    //generate the code for the file writers
 	    Iterator fws = FileVisitor.fileWriters.iterator();

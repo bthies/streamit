@@ -37,8 +37,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	realTiles = new HashSet();
 	topLevel.accept(new TileCode(), new HashSet(), true);
 	tiles = new HashSet();
-	tiles.addAll(Simulator.initSchedules.keySet());
-	tiles.addAll(Simulator.steadySchedules.keySet());
+	tiles.addAll(RawBackend.simulator.initSchedules.keySet());
+	tiles.addAll(RawBackend.simulator.steadySchedules.keySet());
 
 	Iterator tileIterator = tiles.iterator();
 	while(tileIterator.hasNext()) {
@@ -149,9 +149,9 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    ret.append(";\n");
 	}
 
-	printSchedule(joiner, (JoinerScheduleNode)Simulator.initJoinerCode.get(joiner), ret);
+	printSchedule(joiner, (JoinerScheduleNode)RawBackend.simulator.initJoinerCode.get(joiner), ret);
 	ret.append("while(1) {\n");
-	printSchedule(joiner, (JoinerScheduleNode)Simulator.steadyJoinerCode.get(joiner), ret);
+	printSchedule(joiner, (JoinerScheduleNode)RawBackend.simulator.steadyJoinerCode.get(joiner), ret);
 	ret.append("}}\n");
 
 	return ret.toString();
@@ -319,7 +319,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    realTiles.add(Layout.getTile(node.contents));
 	    joinerCode(node);
 	    //After done with node drops its contents for garbage collection
-	    node.contents=null;
+	    //node.contents=null;
 	    //node.edges=null;
 	    //for(int i=0;i<node.incoming.length;i++) {
 	    //node.incoming[i].contents=null;

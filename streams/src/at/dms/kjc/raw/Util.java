@@ -10,12 +10,54 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.TreeSet;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.io.*;
 
 /**
  * This class contains various function used by multiple passes
  */
 public class Util extends at.dms.util.Utils {
+
+    	
+    /*
+      get the execution Count of the previous node
+    */
+    public static int getCount(HashMap counts, FlatNode node) 
+    {
+	Integer count = ((Integer)counts.get(node));
+
+	if (count == null)
+	    return 0;
+	return count.intValue();
+    }
+    
+    /*
+      get the execution count of the previous node
+    */
+    public static int getCountPrev(HashMap counts, FlatNode prev, FlatNode node) 
+    {
+	if (prev.contents instanceof SIRJoiner || prev.contents instanceof SIRJoiner)
+	    return getCount(counts, prev);
+	
+
+	//prev is a splitter
+	int sumWeights = 0;
+	for (int i = 0; i < prev.ways; i++) 
+	    sumWeights += prev.weights[i];
+	int thisWeight = -1;
+	for (int i = 0; i < prev.ways; i++) {
+	    if (prev.edges[i].equals(node)) {
+		thisWeight = prev.weights[i];
+		break;
+	    }
+	}
+	if (thisWeight == -1)
+	    Utils.fail("Splitter not connected to node");
+	double rate = ((double)thisWeight) / ((double)sumWeights);
+	
+	return ((int)(rate * (double)getCount(counts, prev)));
+    }
+
     
     /*
       for a given CType return the size (number of elements that need to be sent

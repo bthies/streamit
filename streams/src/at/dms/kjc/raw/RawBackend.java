@@ -18,7 +18,8 @@ public class RawBackend {
     //given a flatnode map to the execution count
     public static HashMap initExecutionCounts;
     public static HashMap steadyExecutionCounts;
-
+    //the simulator to be run
+    public static Simulator simulator;
     // get the execution counts from the scheduler
     public static HashMap[] executionCounts;
 
@@ -28,6 +29,11 @@ public class RawBackend {
 			SIRInterfaceTable[]
 			interfaceTables) {
 	System.out.println("Entry to RAW Backend");
+
+	if (StreamItOptions.ratematch)
+	    simulator = new RateMatchSim();
+	else 
+	    simulator = new FineGrainSimulator();
 
 	//this must be run now, FlatIRToC relies on it!!!
 	Renamer.renameAll(str);
@@ -94,7 +100,8 @@ public class RawBackend {
 	System.out.println("Assign End.");
 	//Generate the switch code
 	
-
+	if (StreamItOptions.ratematch)
+	    CalcBufferSize.createBufferSizePow2(rawFlattener.top);
 	System.out.println("Switch Code Begin...");
 	SwitchCode.generate(rawFlattener.top);
 	//	SwitchCode.dumpCode();
@@ -131,23 +138,21 @@ public class RawBackend {
 	    for (Iterator it = executionCounts[i].keySet().iterator();
 		 it.hasNext(); ){
 		SIROperator obj = (SIROperator)it.next();
-		if (!(obj instanceof SIRSplitter)) {
-		    int val = ((int[])executionCounts[i].get(obj))[0];
-		    //System.err.println("execution count for " + obj + ": " + val);
-		    /** This bug doesn't show up in the new version of
-		     * FM Radio - but leaving the comment here in case
-		     * we need to special case any other scheduler bugs.
-		      
-		    if (val==25) { 
-			System.err.println("Warning: catching scheduler bug with special-value "
-					   + "overwrite in RawBackend");
-			val=26;
+		int val = ((int[])executionCounts[i].get(obj))[0];
+		//System.err.println("execution count for " + obj + ": " + val);
+		/** This bug doesn't show up in the new version of
+		 * FM Radio - but leaving the comment here in case
+		 * we need to special case any other scheduler bugsx.
+		 
+		 if (val==25) { 
+		 System.err.println("Warning: catching scheduler bug with special-value "
+		 + "overwrite in RawBackend");
+		 val=26;
 		    }
-		    */
-		    if (rawFlattener.getFlatNode(obj) != null)
-			result[i].put(rawFlattener.getFlatNode(obj), 
+		*/
+		if (rawFlattener.getFlatNode(obj) != null)
+		    result[i].put(rawFlattener.getFlatNode(obj), 
 				      new Integer(val));
-		}
 	    }
 	}
 	
@@ -204,6 +209,13 @@ public class RawBackend {
 		    if((node.schedMult!=0)&&(node.schedDivider!=0))
 			cycles=(cycles*node.schedMult)/node.schedDivider;
 		    result[i].put(node, new Integer(cycles));
+		}
+		if (node.contents instanceof SIRSplitter) {
+		    int sum = 0;
+		    for (int j = 0; j < node.ways; j++)
+			sum += node.weights[j];
+		    int oldVal = ((Integer)result[i].get(node)).intValue();
+		    result[i].put(node, new Integer(sum*oldVal));
 		}
 	    }
 	}

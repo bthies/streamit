@@ -41,6 +41,9 @@ public class FlatNode {
     /* create a new node with <op> */
     public FlatNode(SIROperator op) 
     {
+	if (op == null) {
+	    Utils.fail("");
+	}
 	contents = op;
 	currentEdge = 0;
 	currentIncoming = 0;

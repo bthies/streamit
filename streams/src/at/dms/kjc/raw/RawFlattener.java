@@ -21,6 +21,8 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
     private HashSet feedbackSplitters;
     
     public FlatNode top;
+    
+    private int unique_id;
 
     //maps sir operators to their corresponding flatnode
     private HashMap SIRMap;
@@ -34,7 +36,8 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
     {
 	this.SIRMap = new HashMap();
 	feedbackSplitters = new HashSet();
-	
+	unique_id = 0;
+
 	//create the flat graph
 	createGraph(toplevel);
 	//now we need to fix up the graph a bit
@@ -57,7 +60,8 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	int count = 0;
 	for (Iterator it = SIRMap.entrySet().iterator(); it.hasNext(); ) {
 	    Map.Entry entry = (Map.Entry)it.next();
-	    if (entry.getKey() instanceof SIRFilter) {
+	    if (entry.getKey() instanceof SIRFilter  &&
+		!(entry.getKey() instanceof SIRIdentity) ) {
 		// always count filter
 		count++;
 	    } else if (entry.getKey() instanceof SIRJoiner) {
@@ -697,6 +701,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	if (node.contents instanceof SIRFilter) {
 	    SIRFilter filter = (SIRFilter)node.contents;
 	    Utils.assert(buf!=null);
+
 	    buf.append(node.getName() + "[ label = \"" +
 		       node.getName() + 
 		       " peek: " + filter.getPeekInt() + 

@@ -25,7 +25,8 @@ public class SwitchCode extends at.dms.util.Utils
     public static void generate(FlatNode top) 
     {
 	//Use the simulator to create the switch schedules
-	Simulator.simulate(top);
+	
+	RawBackend.simulator.simulate(top);
 	//now print the schedules
 	dumpSchedules();
     }
@@ -34,10 +35,10 @@ public class SwitchCode extends at.dms.util.Utils
     {
 	//get all the nodes that have either init switch code
 	//or steady state switch code
-	HashSet tiles = new HashSet(Simulator.initSchedules.
+	HashSet tiles = new HashSet(RawBackend.simulator.initSchedules.
 	    keySet());
 	
-	RawBackend.addAll(tiles, Simulator.steadySchedules.keySet());
+	RawBackend.addAll(tiles, RawBackend.simulator.steadySchedules.keySet());
 	RawBackend.addAll(tiles, Layout.getTiles());
 
 	//do not generate switchcode for Tiles assigned to file readers/writers
@@ -60,10 +61,10 @@ public class SwitchCode extends at.dms.util.Utils
 		//get the code
 		String steadyCode = "";
 		String initCode = "";
-		if (Simulator.initSchedules.get(tile) != null)
-		    initCode = ((StringBuffer)Simulator.initSchedules.get(tile)).toString();
-		if (Simulator.steadySchedules.get(tile) != null)
-		    steadyCode = ((StringBuffer)Simulator.steadySchedules.get(tile)).toString();
+		if (RawBackend.simulator.initSchedules.get(tile) != null)
+		    initCode = ((StringBuffer)RawBackend.simulator.initSchedules.get(tile)).toString();
+		if (RawBackend.simulator.steadySchedules.get(tile) != null)
+		    steadyCode = ((StringBuffer)RawBackend.simulator.steadySchedules.get(tile)).toString();
 		
 		//the sequences we are going to compress if compression is needed
 		Repetition[] threeBiggest = null;
@@ -91,7 +92,7 @@ public class SwitchCode extends at.dms.util.Utils
 		//loop label
 		fw.write("sw_loop:\n");
 		//print the steady state switch code
-		if (Simulator.steadySchedules.get(tile) != null)
+		if (RawBackend.simulator.steadySchedules.get(tile) != null)
 		    toASM(steadyCode, threeBiggest, fw);
 		//print the jump ins
 		fw.write("\tj\tsw_loop\n\n");

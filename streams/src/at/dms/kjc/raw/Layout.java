@@ -226,7 +226,6 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    random = new Random(17);
 	    //random placement
 	    randomPlacement();
-	    
 	    //filew = new FileWriter("simanneal.out");
 	    
 	    currentCost = placementCost();

@@ -3,6 +3,7 @@ package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
 import at.dms.util.*;
+import at.dms.compiler.PositionedError;
 import at.dms.kjc.sir.lowering.Propagator;
 import at.dms.kjc.sir.lowering.LoweringConstants;
 import at.dms.compiler.TokenReference;
@@ -13,7 +14,7 @@ import java.util.*;
 /**
  * This represents a stream portal used for messaging
  */
-public class SIRPortal extends JLiteral {
+public class SIRPortal extends JExpression {
 
     protected static LinkedList portals = new LinkedList();
 
@@ -186,6 +187,14 @@ public class SIRPortal extends JLiteral {
     //############################
     // JLiteral extended methods
 
+    /**
+     * Throws an exception (NOT SUPPORTED YET)
+     */
+    public JExpression analyse(CExpressionContext context) throws PositionedError {
+	at.dms.util.Utils.fail("Analysis of custom nodes not supported yet.");
+	return this;
+    }
+
     public boolean isDefault() { 
 	return false; 
     }
@@ -207,8 +216,11 @@ public class SIRPortal extends JLiteral {
      * @param	p		the visitor
      */
     public void accept(KjcVisitor p) {
-	//p.visitNullLiteral();
-	return;
+        if (p instanceof SLIRVisitor) {
+            ((SLIRVisitor)p).visitPortal(this);
+        } else {
+            // otherwise, do nothing
+        }
     }
     
     /**
@@ -216,8 +228,11 @@ public class SIRPortal extends JLiteral {
      * @param	p		the visitor
      */
     public Object accept(AttributeVisitor p) {
-	//return    p.visitNullLiteral(this);
-	return this;
+        if (p instanceof SLIRAttributeVisitor) {
+            return ((SLIRAttributeVisitor)p).visitPortal(this);
+        } else {
+            return this;
+        }
     }
 
 

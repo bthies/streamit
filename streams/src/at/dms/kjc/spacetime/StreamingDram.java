@@ -12,7 +12,12 @@ public class StreamingDram extends IODevice
     private Address lb;
     private Address index;
     private static Address size;
-
+    //true if file reader, set by rawify
+    private boolean fileReader;
+    //true if file write, set by rawify
+    private boolean fileWriter;
+    private String fileToRead;
+    private String fileToWrite;
     
 
     public static void setSize(RawChip chip)
@@ -38,6 +43,8 @@ public class StreamingDram extends IODevice
 	return null;
     }
     
+  
+
     //check to see that all the outputs for an output trace go to different
     //drams
     public static boolean differentDRAMs(OutputTraceNode out) 
@@ -58,17 +65,14 @@ public class StreamingDram extends IODevice
     //drams
     public static boolean differentDRAMs(InputTraceNode in) 
     {
-	System.out.println(in);
-	System.out.println(in.getSources().length);
 	HashSet drams = new HashSet();
-	for (int i = 0; i < in.getSources().length; i++) {
-	    //System.out.println(in.getSources()[i] + " -> " + in + "(" + 
-	    //		       OffChipBuffer.getBuffer(in.getSources()[i], in).getDRAM() + ")");				       
-	    System.out.println(in.getSources()[i] + " " + 
-			      InterTraceBuffer.getBuffer(in.getSources()[i]).getDRAM());
-	    if (drams.contains(InterTraceBuffer.getBuffer(in.getSources()[i]).getDRAM()))
+	//get the source set, so there are no duplicate edges.
+	Iterator edges = in.getSourceSet().iterator();
+	while(edges.hasNext()) {
+	    Edge edge = (Edge)edges.next();
+	    if (drams.contains(InterTraceBuffer.getBuffer(edge).getDRAM()))
 		return false;
-	    drams.add(InterTraceBuffer.getBuffer(in.getSources()[i]).getDRAM());
+	    drams.add(InterTraceBuffer.getBuffer(edge).getDRAM());
 	}
 	return true;
     }
@@ -263,4 +267,37 @@ public class StreamingDram extends IODevice
 	return  "StreamingDRAM (" + port + ")";
     }
 
+    public void setFileReader(String file) 
+    {
+	assert !fileReader : this.toString() + " already reads a file";
+	fileReader = true;
+	fileToRead = file;
+    }
+
+    public void setFileWriter(String file) 
+    {
+	assert !fileWriter : this.toString() + " already writes a file";
+	fileWriter = true;
+	fileToWrite = file;
+    }
+    
+    public boolean isFileReader() 
+    {
+	return fileReader;
+    }
+    
+    public boolean isFileWriter() 
+    {
+	return fileWriter;
+    }
+    
+    public String getFileToWrite() 
+    {
+	return fileToWrite;
+    }
+    
+    public String getFileToRead() 
+    {
+	return fileToRead;
+    }
 }

@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
 import at.dms.kjc.*;
+import at.dms.kjc.flatgraph2.*;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Vector;
@@ -218,6 +219,10 @@ public class OutputTraceNode extends TraceNode
 	return buf.toString();
     }
     
+    public boolean isFileReader() 
+    {
+	return getPrevFilter().getFilter() instanceof FileInputContent;
+    }
 
     /*
     public int itemsReceived(boolean init, boolean primepump) 

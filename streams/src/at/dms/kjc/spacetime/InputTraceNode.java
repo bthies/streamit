@@ -1,6 +1,8 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
+import java.util.HashSet;
+import at.dms.kjc.flatgraph2.*;
 
 /** 
  *
@@ -123,5 +125,29 @@ public class InputTraceNode extends TraceNode
 	if (totalWeights() == 0)
 	    return 0.0;
 	return ((double)getWeight(edge)/(double)totalWeights());
+    }
+    
+    public HashSet getSourceSet() 
+    {
+	HashSet set = new HashSet();
+	for (int i = 0; i < sources.length; i++)
+	    set.add(sources[i]);
+	return set;
+    }
+
+    public String debugString() 
+    {
+	StringBuffer buf = new StringBuffer();
+	buf.append("***** " + this.toString() + " *****\n");
+	for (int i = 0; i < sources.length; i++) {
+	    buf.append("  weight " + weights[i] + ": " + sources[i].toString() + "\n");
+	}
+	buf.append("**********\n");
+	return buf.toString();
+    }
+    
+    public boolean isFileWriter() 
+    {
+	return getNextFilter().getFilter() instanceof FileOutputContent;
     }
 }

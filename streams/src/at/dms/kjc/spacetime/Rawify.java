@@ -31,48 +31,40 @@ public class Rawify
 		//do the appropiate code generation
 		if (traceNode.isFilterTrace()) {
 		    FilterTraceNode filterNode = (FilterTraceNode)traceNode;
-		    if (filterNode.isPredefined()) {
-			//predefined node, may have to do something
-			//if (KjcOptions.magicdram) 
-			//    magicHandlePredefined(filterNode, rawChip, init);
-			//else 
-			Utils.fail("Predefined filters not supported");
-		    }
-		    else { //regular filter!
-			RawTile tile = rawChip.getTile((filterNode).getX(), 
-						       (filterNode).getY());
-			//create the filter info class
-			FilterInfo filterInfo = FilterInfo.getFilterInfo(filterNode);
+		    assert !filterNode.isPredefined() :
+			"Predefined filters should not appear in the trace traversal";
+		    RawTile tile = rawChip.getTile((filterNode).getX(), 
+						   (filterNode).getY());
+		    //create the filter info class
+		    FilterInfo filterInfo = FilterInfo.getFilterInfo(filterNode);
 			//add the dram command if this filter trace is an endpoint...
-			generateFilterDRAMCommand(filterNode, filterInfo, tile, init, false);
-			
-			if(filterInfo.isLinear())
-			    createSwitchCodeLinear(filterNode,
-						   trace,filterInfo,init,false,tile,rawChip);
-			else 
-			    createSwitchCode(filterNode, 
-					     trace, filterInfo, init, false, tile, rawChip);
-
-			//do every again for the primepump if it is the init stage and add the
-			//compute code for the init stage
-			if (init) {
-			    //add the dram command if this filter trace is an endpoint...
-			    generateFilterDRAMCommand(filterNode, filterInfo, tile, false, true);
-			    //create the prime pump stage switch code 
-			    //after the initialization switch code
-			    createSwitchCode(filterNode, 
-					     trace, filterInfo, false, true, tile, rawChip);
-			    //generate the compute code for the trace and place it in
-			    //the tile			
-			    tile.getComputeCode().addTraceInit(filterInfo);
-			}
-			else {
-			    //generate the compute code for the trace and place it in
-			    //the tile
-			    tile.getComputeCode().addTraceSteady(filterInfo);
-			}
-		    }
+		    generateFilterDRAMCommand(filterNode, filterInfo, tile, init, false);
 		    
+		    if(filterInfo.isLinear())
+			createSwitchCodeLinear(filterNode,
+					       trace,filterInfo,init,false,tile,rawChip);
+		    else 
+			createSwitchCode(filterNode, 
+					 trace, filterInfo, init, false, tile, rawChip);
+		    
+		    //do every again for the primepump if it is the init stage and add the
+		    //compute code for the init stage
+		    if (init) {
+			//add the dram command if this filter trace is an endpoint...
+			generateFilterDRAMCommand(filterNode, filterInfo, tile, false, true);
+			//create the prime pump stage switch code 
+			//after the initialization switch code
+			createSwitchCode(filterNode, 
+					 trace, filterInfo, false, true, tile, rawChip);
+			//generate the compute code for the trace and place it in
+			//the tile			
+			tile.getComputeCode().addTraceInit(filterInfo);
+		    }
+		    else {
+			//generate the compute code for the trace and place it in
+			//the tile
+			tile.getComputeCode().addTraceSteady(filterInfo);
+		    }
 		}
 		else if (traceNode.isInputTrace() && !KjcOptions.magicdram) {
 		    assert StreamingDram.differentDRAMs((InputTraceNode)traceNode) :
@@ -237,6 +229,7 @@ public class Rawify
 	//only generate a DRAM command for filters connected to input or output trace nodes
 	if (filterNode.getPrevious() != null &&
 	    filterNode.getPrevious().isInputTrace()) {
+	    
 	    //get this buffer or this first upstream non-redundant buffer
 	    OffChipBuffer buffer = IntraTraceBuffer.getBuffer((InputTraceNode)filterNode.getPrevious(),
 							      filterNode).getNonRedundant();
@@ -454,6 +447,7 @@ public class Rawify
 	    assert dests.hasNext() :
 		"Output should have at least one dest";
 	    Edge edge = (Edge)dests.next();
+	    System.out.println(edge.getDest().debugString());
 	    FilterInfo downstream = FilterInfo.getFilterInfo(edge.getDest().getNextFilter());
 	    //the number of times the source filter fires in the pp while feeding the steady buffer
 	    int ppFilterIt = 
@@ -466,9 +460,10 @@ public class Rawify
 	    //check the sanity of the primepump stage
 	    while (dests.hasNext()){
 		edge = (Edge)dests.next();
+		System.out.println(edge.getDest().debugString());
 		assert ppFilterIt == filterInfo.steadyMult * (filterInfo.primePumpTrue - 
 				 FilterInfo.getFilterInfo(edge.getDest().getNextFilter()).primePumpTrue) :
-		    "Error: Inconsistent primepump stats for output trace node";
+		    "Error: Inconsistent primepump stats for output trace node\n " + traceNode.debugString();
 	    }
 	}
 	

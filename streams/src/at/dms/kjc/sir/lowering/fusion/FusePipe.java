@@ -1,8 +1,5 @@
 package at.dms.kjc.sir.lowering.fusion;
 
-import streamit.scheduler1.*;
-import streamit.scheduler1.simple.*;
-
 import at.dms.util.IRPrinter;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
@@ -62,7 +59,7 @@ public class FusePipe {
      * filters eliminated.
      */
     public static int fuse(SIRPipeline pipe) {
-	return doFuse(pipe, pipe.size(), pipe.size());
+	return internalFuse(pipe, pipe.size(), pipe.size());
     }
 
     /**
@@ -83,7 +80,64 @@ public class FusePipe {
 	    maxLength = (int)Math.ceil(((float)numElim)/((float)(numElim-targetElim)));
 	    //System.err.println("numElim = " + numElim + " targetElim=" + targetElim + " maxLength=" + maxLength);
 	}
-	return doFuse(pipe, maxLength, targetElim);
+	return internalFuse(pipe, maxLength, targetElim);
+    }
+
+    /**
+     * Fuses sections of <pipe> according to <partitions>, which
+     * specifies the grouping sequence of who gets fused together.
+     */
+    public static void fuse(SIRPipeline pipe, PartitionGroup partitions) {
+	RefactorPipeline.addHierarchicalChildren(pipe, partitions);
+	for (int i=0; i<partitions.size(); i++) {
+	    if (partitions.get(i)!=1) {
+		SIRPipeline child = (SIRPipeline)pipe.get(i);
+		internalFuse(child);
+		Lifter.eliminatePipe(child);
+	    }
+	}
+    }
+    
+    /**
+     * Fuses two filters starting from <start> in <pipe>, returning 1
+     * if they were fused and 0 otherwise.
+     */ 
+    public static int fuseTwo(SIRPipeline pipe, int start) {
+	if (isFusable(pipe.get(start)) &&
+	    isFusable(pipe.get(start+1))) {
+		fuse((SIRFilter)pipe.get(start),
+		     (SIRFilter)pipe.get(start+1));
+		return 1;
+	} else {
+	    return 0;
+	}
+    }
+
+    /*
+     * Fuses filters <first> ... <last>.  For now, assumes: 
+     *
+     * 1. all of <first> ... <last> are consecutive filters in their
+     *     parent, which must be an SIRPipeline
+     *
+     */
+    public static void fuse(SIRFilter first,
+			    SIRFilter last) {
+	SIRPipeline parent = (SIRPipeline)first.getParent();
+	// fuse the filters...
+	int firstIndex = parent.indexOf(first);
+	int lastIndex = parent.indexOf(last);
+	System.err.println("Fusing " + (lastIndex-firstIndex+1) + " Pipeline filters.");
+	if (firstIndex==0 && lastIndex==parent.size()-1) {
+	    // optimization: if we're fusing an entire pipeline, just
+	    // call directly
+	    internalFuse(parent);
+	} else {
+	    // otherwise, create a sub-pipeline to contain first..last
+	    RefactorPipeline.addHierarchicalChild(parent, firstIndex, lastIndex);
+	    SIRPipeline newPipe = (SIRPipeline)parent.get(firstIndex);
+	    internalFuse(newPipe);
+	    Lifter.eliminatePipe(newPipe);
+	}
     }
 
     /**
@@ -93,22 +147,26 @@ public class FusePipe {
      * do not have special, compiler-defined work functions.  Return
      * how many filters were ELIMINATED from this pipeline.
      */
-    private static int doFuse(SIRPipeline pipe, int maxLength, int maxElim) {
+    private static int internalFuse(SIRPipeline pipe, int maxLength, int maxElim) {
 	int numEliminated = 0;
 	int start = 0;
 	do {
 	    // find start of candidate stretch for fusion
-	    while (start < pipe.size()-1 && !isFusable(pipe.get(start),pipe.getChildren())) {
+	    while (start < pipe.size()-1 && !isFusable(pipe.get(start))) {
 		start++;
 	    }
 	    // find end of candidate stretch for fusion
 	    int end = start;
-	    while ((end+1) < pipe.size() && isFusable(pipe.get(end+1),pipe.getChildren())
+	    while ((end+1) < pipe.size() && isFusable(pipe.get(end+1))
 		   && (end-start+1<maxLength)) {
 		end++;
 	    }
 	    // if we found anything to fuse
 	    if (end > start) {
+		Utils.assert(pipe.get(start).getParent()==pipe,
+			     "This stream (" + pipe.get(start) + " thinks its parent is " + pipe.get(start).getParent() + 
+			     " even though it should be " + pipe);
+		Utils.assert(pipe.get(start).getParent()==pipe);
 		fuse((SIRFilter)pipe.get(start),
 		     (SIRFilter)pipe.get(end));
 		numEliminated += end-start;
@@ -121,20 +179,58 @@ public class FusePipe {
     }
 
     /**
-     * Fuses two filters starting from <start> in <pipe>, returning 1
-     * if they were fused and 0 otherwise.
-     */ 
-    public static int fuseTwo(SIRPipeline pipe, int start) {
-	if (isFusable(pipe.get(start), pipe.getChildren()) &&
-	    isFusable(pipe.get(start+1), pipe.getChildren())) {
-		fuse((SIRFilter)pipe.get(start),
-		     (SIRFilter)pipe.get(start+1));
-		return 1;
-	} else {
-	    return 0;
+     * The fundamental fuse operation.
+     *
+     * Fuses ALL children of pipe, requiring that they are fusable
+     * filters.  Leaves just a single filter <f>, which will be
+     * <pipe>'s only child following this call.
+     */
+    private static void internalFuse(SIRPipeline pipe) {
+	// if we have just one filter, do nothing
+	if (pipe.size()==1) {
+	    return;
 	}
-    }
 
+	// check that all the filters are fusable
+	for (int i=0; i<pipe.size(); i++) {
+	    Utils.assert(isFusable(pipe.get(i)),
+			 "Trying to fuse a filter that is unfusable: " + 
+			 pipe.get(i) + " " + pipe.get(i).getName());
+	}
+
+	// rename filter contents
+	for (int i=0; i<pipe.size(); i++) {
+	    RenameAll.renameFilterContents((SIRFilter)pipe.get(i));
+	}
+
+	// construct set of filter info
+	List filterInfo = makeFilterInfo(pipe);
+
+	SIRFilter result;
+	InitFuser initFuser;
+
+	// make the initial work function
+	JMethodDeclaration initWork =  makeWork(filterInfo, true);
+	
+	if(pipe.get(0) instanceof SIRTwoStageFilter) {
+	    if (initWork!=null) {
+		Utils.fail("WARNING: InitWork Already Needed when fusing SIRTwoStageFilter");
+	    }
+	    initWork = ((SIRTwoStageFilter)pipe.get(0)).getInitWork();
+	}
+	
+	// make the steady-state work function
+	JMethodDeclaration steadyWork = makeWork(filterInfo, false);
+	
+	// make the fused init functions
+	initFuser = makeInitFunction(filterInfo);
+	
+	// fuse all other fields and methods
+	result = makeFused(filterInfo, initFuser.getInitFunction(), initWork, steadyWork);
+	
+	// insert the fused filter in the parent
+	replace(pipe, result, initFuser.getInitArgs());
+    }
 
     /**
      * Returns how many filters in this can be eliminated in a fusion
@@ -145,12 +241,12 @@ public class FusePipe {
 	int start = 0;
 	do {
 	    // find start of candidate stretch for fusion
-	    while (start < pipe.size()-1 && !isFusable(pipe.get(start),pipe.getChildren())) {
+	    while (start < pipe.size()-1 && !isFusable(pipe.get(start))) {
 		start++;
 	    }
 	    // find end of candidate stretch for fusion
 	    int end = start;
-	    while ((end+1) < pipe.size() && isFusable(pipe.get(end+1),pipe.getChildren())) {
+	    while ((end+1) < pipe.size() && isFusable(pipe.get(end+1))) {
 		end++;
 	    }
 	    // if we found anything to fuse
@@ -167,13 +263,13 @@ public class FusePipe {
      * fusion.  For now, <str> must be a filter with a work function
      * in order for us to fuse it.
      */
-    private static boolean isFusable(SIRStream str,List pipelineElems) {
+    private static boolean isFusable(SIRStream str) {
 	// don't allow two-stage filters that peek
 	if (str instanceof SIRTwoStageFilter) {
-	    //Can fuse in this specific case
-	    if((pipelineElems.get(0)==str)&&(((SIRTwoStageFilter)str).getInitPush()==0))
+	    // can fuse in this specific case
+	    if ((str.getParent().indexOf(str)==0) && (((SIRTwoStageFilter)str).getInitPush()==0)) {
 		return true;
-	    //System.err.println("Couldn't fuse " + str.getName() + " in pipeline because it is 2-stage filter");
+	    }
 	    return false;
 	}
 	if ((str instanceof SIRFilter) && ((SIRFilter)str).getWork()!=null) {
@@ -185,150 +281,31 @@ public class FusePipe {
     }
 
     /**
-     * Fuses sections of <pipe> according to <partitions>, which
-     * specifies the grouping sequence of who gets fused together.
-     */
-    public static void fuse(SIRPipeline pipe, PartitionGroup partitions) {
-	int pos = 0;
-	// keep track of the first and last element in each partition
-	SIRFilter[] first = new SIRFilter[partitions.size()];
-	SIRFilter[] last = new SIRFilter[partitions.size()];
-	for (int i=0; i<partitions.size(); i++) {
-	    // ignore 1-size partitions since they might not be filters
-	    if (partitions.get(i)!=1) {
-		first[i] = (SIRFilter)pipe.get(pos);
-		last[i]  = (SIRFilter)pipe.get(pos+partitions.get(i)-1);
-	    }
-	    pos+=partitions.get(i);
-	}
-	// do the fusion in sections
-	for (int i=0; i<partitions.size(); i++) {
-	    // only need to fuse for partitions.get(i)>1
-	    if (partitions.get(i)!=1) {
-		Utils.assert(first[i].getParent()==pipe, "Parent/child inconsistency with parent=" 
-			     + first[i].getParent() + " and pipe=" + pipe + " and (first) child=" + first[i]);
-		Utils.assert(last[i].getParent()==pipe, "Parent/child inconsistency with parent=" 
-			     + last[i].getParent() + " and pipe=" + pipe + " and (last) child=" + last[i]);
-		fuse(first[i], last[i]);
-	    }
-	}
-    }
-    
-    /**
-     * Fuses filters <first> ... <last>.  For now, assumes: 
-     *
-     * 1. all of <first> ... <last> are consecutive filters in their
-     *     parent, which must be an SIRPipeline
-     *
-     */
-    public static SIRFilter fuse(SIRFilter first,
-				 SIRFilter last) {
-	SIRPipeline parent = (SIRPipeline)first.getParent();
-	// make a list of the filters to be fused
-	List filterList = parent.getChildrenBetween(first, last);
-	System.err.println("Fusing " + (filterList.size()) + " Pipeline filters.");
-	// fuse the filters
-	SIRFilter fused = fuse(filterList);
-	// return the fused filter
-	return fused;
-    }
-
-    /**
-     * In <parent>, replace <filterList> with <fused>, and add
+     * In <parent>, replace all children with <fused>, and add
      * arguments <initArgs> to call to <fused>'s init function.
      */
     private static void replace(SIRPipeline parent, 
-				List filterList, 
 				SIRFilter fused,
 				List initArgs) {
-	// have to get the first and last list items this way since we
-	// only know it's a list. 
-	final SIRStream first = (SIRStream)filterList.get(0);
-	SIRStream last = (SIRStream)filterList.get(filterList.size()-1);
 	// replace <filterList> with <fused>
-	parent.replace(first, last, fused);
+	parent.replace(parent.get(0), parent.get(parent.size()-1), fused);
 	// add args to <fused>'s init
 	parent.setParams(parent.indexOf(fused), initArgs);
     }
 				
-    /*
-     * Returns a fused filter that has same behavior as all of
-     * <filters>.
-     */
-    private static SIRFilter fuse(List filters) {
-	// if we have just one filter, return it
-	if (filters.size()==1) {
-	    return (SIRFilter)filters.get(0);
-	}
-
-	// check that all the filters are fusable
-	for (ListIterator it = filters.listIterator(); it.hasNext(); ) {
-	    SIRStream str = (SIRStream)it.next();
-	    if (!isFusable(str,filters)) {
-		Utils.fail("Trying to fuse a filter that is unfusable: " + 
-			   str + " " + str.getName());
-	    }
-	}
-	
-	// rename the components of the filters
-	for (ListIterator it=filters.listIterator(); it.hasNext(); ) {
-	    RenameAll.renameFilterContents((SIRFilter)it.next());
-	}
-	
-	// construct set of filter info
-	List filterInfo = makeFilterInfo(filters);
-
-	SIRFilter result;
-
-	InitFuser initFuser;
-
-	// make the initial work function
-	JMethodDeclaration initWork =  makeWork(filterInfo, true);
-	
-	if(filters.get(0) instanceof SIRTwoStageFilter) {
-	    if(initWork!=null)
-		Utils.fail("WARNING: InitWork Already Needed when fusing SIRTwoStageFilter");
-	    initWork=((SIRTwoStageFilter)filters.get(0)).getInitWork();
-	}
-	
-	// make the steady-state work function
-	JMethodDeclaration steadyWork =  makeWork(filterInfo, false);
-	
-	// make the fused init functions
-	initFuser = makeInitFunction(filterInfo);
-	
-	// fuse all other fields and methods
-	result = makeFused(filterInfo, initFuser.getInitFunction(), initWork, steadyWork);
-	
-	// insert the fused filter in the parent
-	replace((SIRPipeline)((SIRFilter)filters.get(0)).getParent(), 
-		filters, result, initFuser.getInitArgs());
-	
-	// return result
-	return result;
-    }
-
     /**
      * Tabulates info on <filterList> that is needed for fusion.
      */
-    private static List makeFilterInfo(List filterList) {
+    private static List makeFilterInfo(SIRPipeline pipe) {
 	// make the result
 	List result = new LinkedList();
-	// construct a schedule for <filterList>
-	Schedule schedule = getSchedule(filterList);
-	// get the schedules
-	List initSched = schedule.getInitSchedule();
-	List steadySched = schedule.getSteadySchedule();
-
-	// DEBUGGING OUTPUT
-	//SIRScheduler.printSchedule(initSched, "initialization");
-	//SIRScheduler.printSchedule(steadySched, "steady state");
+	// get execution counts for <pipe>
+	HashMap[] execCount = SIRScheduler.getExecutionCounts(pipe);
 
 	// for each filter...
-	ListIterator it = filterList.listIterator();
-	for (int i=0; it.hasNext(); i++) {
+	for (int i=0; i<pipe.size(); i++) {
 	    // the filter
-	    SIRFilter filter = (SIRFilter)it.next();
+	    SIRFilter filter = (SIRFilter)pipe.get(i);
 
 	    // the peek buffer
 	    JVariableDefinition peekBufferVar = 
@@ -346,24 +323,15 @@ public class FusePipe {
 	    
 	    // number of executions (num[0] is init, num[1] is steady)
 	    int[] num = new int[2];
+	    for (int j=0; j<2; j++) {
+		int[] count = (int[])execCount[j].get(filter);
+		if (count==null) {
+		    num[j] = 0;
+		} else {
+		    num[j] = count[0];
+		}
+	    }
 
-	    // for now, guard against empty/incomplete schedules
-	    // by assuming a count of zero.  Talk to Michal about
-	    // have entries of zero-weight in schedule?  FIXME.
-	    if (initSched.size()>i) {
-		num[0] = ((SchedRepSchedule)initSched.get(i)).
-		    getTotalExecutions().intValue();
-	    } else {
-		num[0] = 0;
-	    }
-	    // do the same for the steady schedule
-	    if (steadySched.size()>i) {
-		num[1] = ((SchedRepSchedule)steadySched.get(i)).
-		    getTotalExecutions().intValue();
-	    } else {
-		num[1] = 0;
-	    }
-	    
 	    // calculate how much data we should buffer between the
 	    // i'th and (i-1)'th filter.  This part of the code is
 	    // ready for two stage filters even though they might not
@@ -456,31 +424,6 @@ public class FusePipe {
 	return result;
     }
 	
-    /**
-     * Interfaces with the scheduler to return a schedule for
-     * <filterList> in <parent>.
-     */
-    private static Schedule getSchedule(List filterList) {
-	// make a scheduler
-	Scheduler scheduler = new SimpleHierarchicalScheduler();
-	// make a dummy parent object as a hook for the scheduler
-	Object parent = new Object();
-	// ask the scheduler to schedule the list
-	SchedPipeline sp = scheduler.newSchedPipeline(parent);
-	// add the filters to the parent
-	for (ListIterator it = filterList.listIterator(); it.hasNext(); ) {
-	    SIRFilter filter = (SIRFilter)it.next();
-	    sp.addChild(scheduler.newSchedFilter(filter, 
-						 filter.getPushInt(),
-						 filter.getPopInt(),
-						 filter.getPeekInt()));
-	}
-	// tell the scheduler we're interested in <parent>
-	scheduler.useStream(sp);
-	// return the schedule
-	return scheduler.computeSchedule();
-    }
-
     /**
      * Returns a JVariableDefinition for a pop buffer for <filter>
      * that executes <num> times in its schedule and appears in the

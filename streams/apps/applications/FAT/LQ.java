@@ -1,5 +1,5 @@
 class LQ {// This class performs the LQ decomposition of its input matrix, the out put is a float[][]
-  public static void main(String[] s){
+    /* public static void main(String[] s){
 	float[][] A={
 	    {1,2,2},
 	    {-8,-1,14}
@@ -8,21 +8,21 @@ class LQ {// This class performs the LQ decomposition of its input matrix, the o
 	for (int i=0; i<2; i++)
 	    for (int j=0; j<3; j++)
 		System.out.println(A[i][j]);
-    }
+		}*/
     
-  public static float[][] LQcalc(int m,int n,float[][] A){
+  public static float[][] LQcalc(int m,int n,Complex [][] A){
 	float[][] B;
 	float[]   x;
 	float[]   w;
 	float[]   v;
 	float normx;
 	float beta;
-	float dotprod;// wiil be used in calculating the dot product
-	x=new float[n];
+	float dotprod;// will be used in calculating the dot product
+	x=new Complex[n];
 	v=new float[n];
 	w=new float[m];
 	
-	B=new float[m][m];
+	B=new Complex[m][m];
 
 	for (int row=0;row <m; row ++){
 	    normx=0;
@@ -46,13 +46,13 @@ class LQ {// This class performs the LQ decomposition of its input matrix, the o
 		{
 		    dotprod=0;
 		    for (int j=row; j <n ; j++)
-			dotprod=dotprod+A[i][j]*v[j];
+			dotprod=dotprod+Comp.Mult(A[i][j],v[j]);
 		    w[i]=beta*dotprod;
 		    //System.out.println(w[i]);
 		}
 	    for (int i=row; i <m ; i++)
 		for (int j=row; j <n ; j++)
-		    A[i][j]=A[i][j]+w[i]*v[j];
+		    A[i][j]=Comp.Add(A[i][j],w[i]*v[j]);
        	}
 	for (int i=0 ; i <m ; i++)
 	    for (int j=0 ; j <=i ; j++)
@@ -108,7 +108,7 @@ class LQ {// This class performs the LQ decomposition of its input matrix, the o
 		for (int j=m-1;j >=0; j--)
 		      sum=Comp.Add(sum,Comp.Mult(L[j][i],w[j]));
 
-		w[i]=Comp.Make((u[i].real-sum.real)/L[i][i],(v[i].imag-sum.imag)/L[i][i]);
+		w[i]=Comp.Make((u[i].real-sum.real)/L[i][i],(u[i].imag-sum.imag)/L[i][i]);
 		  
 	    }
 	return(w);

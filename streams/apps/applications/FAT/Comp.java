@@ -79,6 +79,13 @@ public class Comp {
 	return(c);
     }
 
+    static public Complex Div(Complex a, float b){
+	Complex c= new Complex();
+	c.real=a.real/b;
+	c.imag=a.imag/b;
+	return(c);
+    }
+
     static public float Norm2(Complex a) {
 	float x;
 	x=a.real*a.real+a.imag*a.imag;

@@ -512,6 +512,23 @@ public class Propagator extends SLIRReplacingVisitor {
 						    int oper,
 						    JExpression left,
 						    JExpression right) {
+	switch(oper) {
+	case OPE_SR:
+	    return new JAssignmentExpression(null,left,new JShiftExpression(null,OPE_SR,left,right)).accept(this);
+	case OPE_SL:
+	    return new JAssignmentExpression(null,left,new JShiftExpression(null,OPE_SL,left,right)).accept(this);
+	case OPE_PLUS:
+	    return new JAssignmentExpression(null,left,new JAddExpression(null,left,right)).accept(this);
+	case OPE_MINUS:
+	    return new JAssignmentExpression(null,left,new JMinusExpression(null,left,right)).accept(this);
+	case OPE_STAR:
+	    return new JAssignmentExpression(null,left,new JMultExpression(null,left,right)).accept(this);
+	case OPE_SLASH:
+	    return new JAssignmentExpression(null,left,new JDivideExpression(null,left,right)).accept(this);
+	case OPE_PERCENT:
+	    return new JAssignmentExpression(null,left,new JModuloExpression(null,left,right)).accept(this);
+	default:
+	}
 	if(left instanceof JLocalVariableExpression) {
 	    JLocalVariable var=((JLocalVariableExpression)left).getVariable();
 	    constants.remove(var);
@@ -519,8 +536,9 @@ public class Propagator extends SLIRReplacingVisitor {
 	} //else
 	//System.err.println("WARNING: Compound Assignment of nonvariable: "+left);
 	JExpression newRight = (JExpression)right.accept(this);
-	if (write&&newRight.isConstant())
+	if (write&&newRight.isConstant()) {
             self.setRight(newRight);
+	}
 	return self;
     }
     

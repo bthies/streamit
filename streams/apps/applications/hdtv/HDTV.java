@@ -10,7 +10,7 @@ public class HDTV extends StreamIt
     //static final int NUM_TRELLIS_ENCODERS = 12;
     static final int NUM_TRELLIS_ENCODERS = 12;
     //static final int INTERLEAVE_DEPTH = 52;
-    //static final int INTERLEAVE_DEPTH = 5;
+    static final int INTERLEAVE_DEPTH = 5;
 
     //include variables for parsing here!
     public static void main(String args[]) 
@@ -51,7 +51,7 @@ class HDTVEncodePipeline extends Pipeline {
 	// -- data is bytes in integers--
 	
 	// convolutionally interleave
-	//this.add(new ConvolutionalInterleaver(HDTV.INTERLEAVE_DEPTH));
+	this.add(new ConvolutionalInterleaver(HDTV.INTERLEAVE_DEPTH));
 	
 	// -- data is bytes in integers--
 	
@@ -106,7 +106,7 @@ class HDTVDecodePipeline extends Pipeline {
 	// -- data is bytes in integers--
 	
 	// convolutionally deinterleave and decode
-	//this.add(new ConvolutionalDeinterleaver(HDTV.INTERLEAVE_DEPTH));
+	this.add(new ConvolutionalDeinterleaver(HDTV.INTERLEAVE_DEPTH));
 
 	// -- data is bytes in integers--
 

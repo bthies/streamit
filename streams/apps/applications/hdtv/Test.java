@@ -18,13 +18,17 @@ public class Test extends StreamIt
 	//this.add(new DelayPipeline(5));
 	
 	// try a Convolutional Interleaver
-	this.add(new ConvolutionalInterleaver(5));
-	this.add(new ConvolutionalDeinterleaver(5));	
+	//this.add(new ConvolutionalInterleaver(5));
+	//this.add(new ConvolutionalDeinterleaver(5));	
 
 	// try trellis encoding/decoding pipeline
-	//this.add(new TrellisEncoderPipeline());
-	//this.add(new TrellisDecoderPipeline());
+	//this.add(new TrellisEncoderPipeline(1));	
+	//this.add(new TrellisDecoderPipeline(1));
 
+	//this.add(new TrellisEncoder());
+	//this.add(new TrellisDecoder());
+	
+	
 	// try data reordering...
 	//this.add(new Bitifier());
 	//this.add(new DataReorder(1));

@@ -1,7 +1,7 @@
 \documentclass{article}
 %\usepackage{doublespace}
 %\usepackage{fullpage}
-\usepackage{lscape}
+%\usepackage{lscape}
 \usepackage{epsfig}
 
 \title{HDTV Encoder/Decoder writeup/description}
@@ -360,7 +360,7 @@ lets make the algorithm concrete with a worked through example.
 
 
 The trellis encoding is done by 12 encoders in parallel shown in
-Figure. The
+Figure~\ref{fig:trellis-interleaving}. The
 order in which 
 
 
@@ -404,7 +404,7 @@ in the minimum path that leads to s at time (t-1)
 
 \section{Appendix: Stream Graph}
 
-\begin{landscape}
+%\begin{landscape}
 \begin{figure}
 \center
 \epsfxsize=8in
@@ -412,7 +412,7 @@ in the minimum path that leads to s at time (t-1)
 \caption{Stream Graph of the HDTV application.}
 \label{fig:hdtv-stream-graph}
 \end{figure}
-\end{landscape}
+%\end{landscape}
 
 
 \end{document}

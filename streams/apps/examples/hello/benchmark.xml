@@ -18,6 +18,7 @@ an increasing sequence of numbers, the second prints this sequence.
     <impl lang="StreamIt">
       <desc>"New syntax" StreamIt implementation</desc>
       <file>HelloWorld6.str</file>
+      <file class="output">HelloWorld6.out</file>
     </impl>
   </implementations>
 </benchmark>

@@ -1,7 +1,7 @@
 /*
  * Flybit.java: an interesting piece of the Butterfly example
  * (to demonstrate split/joins)
- * $Id: Flybit.java,v 1.6 2001-10-24 18:53:28 dmaze Exp $
+ * $Id: Flybit.java,v 1.7 2001-10-31 00:37:52 karczma Exp $
  */
 
 import streamit.*;
@@ -37,6 +37,7 @@ class IntSub extends Filter
     {
         output.pushInt(input.popInt() - input.popInt());
     }
+    public void init () { }
 }
 
 class IntAdd extends Filter
@@ -52,6 +53,7 @@ class IntAdd extends Filter
     {
         output.pushInt(input.popInt() + input.popInt());
     }
+    public void init () { }
 }
 
 class IntFly extends SplitJoin
@@ -76,6 +78,7 @@ class IntPrinter extends Filter
     {
         System.out.println (input.popInt ());
     }
+    public void init () { }
 }
 
 public class Flybit extends StreamIt

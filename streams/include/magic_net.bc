@@ -1,21 +1,100 @@
 //want to run with magic crossbar support!!
 
-gMagicCrossbar.transmit_addr = ;
+//include the schedules for sending and receiving from/to each tile
+//this file is created during compiliation and resides in the 
+//working directory...
+//include("magic_schedules.bc");
 
-gMagicCrossbar.receive_addr = ;
+global gMagicCrossbar;
+global SendSchedules;
+global ReceiveSchedules;
 
-fn streamit_magic_network_suppor() {
-  //add the function that initializes things
+gMagicCrossbar.transmit_addr = & fn(tileNum, pc, resultPtr)
+{
+  local schedule;
+
+  schedule = getTransmitSchedule(tileNum);
+
+  *(resultPtr) = schedule.magic;
+  *(schedule) = schedule.next; 
+};
+
+gMagicCrossbar.receive_addr = & fn(tileNum, pc, resultPtr)
+{ 
+  local schedule;
+  schedule = getReceiveSchedule(tileNum);
+  *(resultPtr) = schedule.magic;
+  *(schedule) = schedule.next; 
+};
+
+fn getReceiveSchedule(tileNum) {
+  local i;
+  local ret;
+  local newReceiveSchedules = listi_new();
+  listi_walk_begin(ReceiveSchedules);
+
+  for (i = 0; i < tileNum; i++) {
+    listi_add(newReceiveSchedules, listi_walk_current_val(ReceiveSchedules));
+    listi_walk_next(ReceiveSchedules);
+  };
+
+  ret = listi_walk_current_val(ReceiveSchedules);
+  listi_add(newReceiveSchedules, ret.next);
+  listi_walk_next(ReceiveSchedules);
+
+  for (i = tileNum + 1; i < 16; i++) {
+    listi_add(newReceiveSchedules, listi_walk_current_val(ReceiveSchedules));
+    listi_walk_next(ReceiveSchedules);
+  };
+
+  ReceiveSchedules = newReceiveSchedules;
+  return ret;
+}
+
+fn getTransmitSchedule(tileNum) {
+  local i;
+  local ret;
+  local newSendSchedules = listi_new();
+  listi_walk_begin(SendSchedules);
+
+  for (i = 0; i < tileNum; i++) {
+    listi_add(newSendSchedules, listi_walk_current_val(SendSchedules));
+    listi_walk_next(SendSchedules);
+  };
+
+  ret = listi_walk_current_val(SendSchedules);
+  listi_add(newSendSchedules, ret.next);
+  listi_walk_next(SendSchedules);
+
+  for (i = tileNum + 1; i < 16; i++) {
+    listi_add(newSendSchedules, listi_walk_current_val(SendSchedules));
+    listi_walk_next(SendSchedules);
+  };
+
+  SendSchedules = newSendSchedules;
+  return ret;
+}
+
+fn addMagicFIFOs(){
   listi_add(gMagicInstrHMS.theList,
             & fn (procNum, rs, imm, result_ptr)
-              {
-                     if (!((rs == 0) && (imm == 1)))
-                       return 0;
-		     
-		     // add stuff here
+  {
+    if (!((rs == 0) && (imm == 1)))
+      return 0;
+    
+    printf("\nInstalling Magic Fifo on tile %d.\n", procNum);
+    Proc_SetMagicFIFOsEnabled(Machine_GetProc(machine,procNum), 1);
+    return 1;
+  });
 
-		     // need to do this
-                     Proc_SetMagicFIFOsEnabled(proc, 1);
-                     return 1;
-                   });
 }
+
+
+// the transmit and receive address functions can be changed by reassigning the above function ptrs
+// they return a point to an array which is in the following format:
+//
+// <byte 0>  fifo to read for csti     (0xFE if this is the "line-up" instruction), 0xFF is "no tile"
+// <byte 1> fifo to read for csti2   0xFF is "no tile"
+// <byte 2..80>  a list of destination tiles for csto (e.g., supports multicast) 0xFF is "no tile"
+
+

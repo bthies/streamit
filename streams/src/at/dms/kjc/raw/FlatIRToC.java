@@ -380,10 +380,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	      ((SIRTwoStageFilter)filter).getInitWork().equals(self))))
 	    return;
 
-	//set is init for dynamically allocating arrays...
-	if (filter != null)
-	    isInit = self.equals(filter.getInit());
-
+	
+	
 	   
         newLine();
 	// print(CModifier.toString(modifiers));
@@ -411,6 +409,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print(";");
 	    return;
 	}
+	
+	//set is init for dynamically allocating arrays...
+	if (filter != null &&
+	    self.getName().startsWith("init"))
+	    isInit = true;
+	
 
         print(" ");
         if (body != null) 

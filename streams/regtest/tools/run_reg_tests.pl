@@ -4,7 +4,10 @@
 # in perl because I don't know how to use all of the crazy unix command
 # line utilities necessary to do this stuff.
 #
-# $Id: run_reg_tests.pl,v 1.11 2003-01-23 18:13:25 aalamb Exp $
+# Usage: run_reg_test.pl -- runs all of the regtests  (eg make test-all)
+#        run_reg_test.pl nightly -- runs nightly regtests (eg make test-nightly)
+#
+# $Id: run_reg_tests.pl,v 1.12 2003-03-07 23:55:56 aalamb Exp $
 
 use strict;
 
@@ -22,10 +25,16 @@ my $USERS = "streamit-regtest\@cag.lcs.mit.edu nmani\@cag.lcs.mit.edu";
 $ENV{"AUTOMATIC_TEST"}="true";
 # path for RAW tools
 $ENV{"TOPDIR"}="/home/bits6/NO_BACKUP/streamit/starsearch";
-
-
 # Root location to store the reg test working files
 my $REGTEST_ROOT = "/home/bits7/NO_BACKUP/streamit/regtest_working";
+
+
+# Start the actual work. If the first command line arg is "nightly" 
+# then set the nightly flag
+my $CVS_TARGET = "test-all";
+if (@ARGV[0] eq "nightly") {
+    $CVS_TARGET = "test-nightly";
+}
 
 # Get a time/date stamp without spaces,etc. for the directory name
 my $working_dir = "$REGTEST_ROOT/". get_clean_timedate_stamp();
@@ -87,7 +96,7 @@ close(MHMAIL);
 if ($DEBUG) {
     `/usr/local/bin/make -C $streamit_home/regtest test-bed >& $REG_LOG`;
 } else {
-    `/usr/local/bin/make -C $streamit_home/regtest test-all >& $REG_LOG`;
+    `/usr/local/bin/make -C $streamit_home/regtest $CVS_TARGET >& $REG_LOG`;
 }
 
 ## (date/time stamp the end of the run)
@@ -96,16 +105,16 @@ if ($DEBUG) {
 `touch $REG_ERR`;
 
 # set the results to the admins
-`cat $REG_LOG | mhmail $ADMINS -s \"Streamit Regression Test Log\"`; 
+`cat $REG_LOG | mhmail $ADMINS -s \"Streamit Regression Test Log ($CVS_TARGET)\"`; 
 # set the errors to the admins
-`cat $REG_ERR | mhmail $ADMINS -s \"Streamit Regression Test Errors\"`; 
+`cat $REG_ERR | mhmail $ADMINS -s \"Streamit Regression Test Errors ($CVS_TARGET)\"`; 
 
 
 # open the mhmail program to print the execuative summary to
 if ($DEBUG) {
-    open(MHMAIL, "|mhmail $ADMINS -s \"Streamit Regression Test Summary\"");
+    open(MHMAIL, "|mhmail $ADMINS -s \"Streamit Regression Test Summary ($CVS_TARGET)\"");
 } else {
-    open(MHMAIL, "|mhmail $USERS -s \"Streamit Regression Test Summary\"");
+    open(MHMAIL, "|mhmail $USERS -s \"Streamit Regression Test Summary ($CVS_TARGET)\"");
 }
 # make a note in the email about where the working files are
 print MHMAIL "(Working directory: $streamit_home)\n";

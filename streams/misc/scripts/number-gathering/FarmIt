@@ -118,7 +118,7 @@ for ((low=$3;$low<=$4;low+=1)); do
     fi
 done
 
-#make all of the working directories
+#clear out all of the working directories
 for machine in "${machines[@]}"; do
      if [ ! -d "$rootdir/$machine" ]; then 
 	if ! mkdir "$rootdir/$machine"; then
@@ -129,6 +129,13 @@ for machine in "${machines[@]}"; do
      #the ready file in each directory
      echo -n "" > "$rootdir/$machine/ready"
 done 
+#make out a log directory for output of commands
+if [ ! -d "$rootdir/log" ]; then 
+    if ! mkdir "$rootdir/log"; then
+	echo "Could not create the log directory $rootdir/log"
+	exit 1
+    fi
+fi
 
 #$1 is the machine to execute on , $2 is the number of tiles, $3 is the
 #benchmark file
@@ -159,7 +166,8 @@ issue_commands() {
     command="$command $nice gmake -f Makefile.streamit run;"
     
     echo -ne "\033[1m\e[32;40mCompiling/Running $bench_file (${config}x${config}) on $machine...\033[0m\n"; tput sgr0
-    ssh $current_machine "$command" &> "$working_dir/command"
+    # redirect output to log file
+    ssh $current_machine "$command" > "$rootdir/log/${bench_name}-raw${config}${options// /}" 2>&1
     #ssh $current_machine "$command" &> /dev/null
        
     if [ -f "$working_dir/results.out" ]; then 

@@ -17,8 +17,8 @@ enum Status
 static const unsigned long 		NUM_CHANNELS = 12;	        /*  # of input rows */
 static const unsigned long		NUM_RANGES = 64;	        /*  # of output rows */
 static const unsigned long    		NUM_BEAMS = 4;  		/*  # of beams for beam forming step */
-static const unsigned long    		COARSE_FILTER_SIZE = 16;	/*  # of taps in coarse filter */
-static const unsigned long    		FINE_FILTER_SIZE = 32;	        /*  # of taps in fine filter */
+static const unsigned long    		COARSE_FILTER_SIZE = 64;	/*  # of taps in coarse filter */
+static const unsigned long    		FINE_FILTER_SIZE = 64;	        /*  # of taps in fine filter */
 static const unsigned long 		COARSE_DECIMATION_RATIO = 2;	/*  Decimation ratio after coarse filter */
 static const unsigned long 	       	FINE_DECIMATION_RATIO = 2;	/*  Decimation ratio after fine filter */
 static const unsigned long 	       	NUM_SEGMENTS = 1;  		/*  # of segments to concatenate */

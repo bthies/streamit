@@ -40,8 +40,12 @@ public class ComplexFIRFilter extends Filter {
     }
 
     public void init(int samplFreq, final int dec, int t,
-		     float freq, float g) {
-	
+		     float freq, float g) {	
+        int index;
+        float N;
+        float M;
+        float C_PI = (float)Math.PI;
+
         input = new Channel (Float.TYPE, dec, dec);
         output = new Channel (Float.TYPE,2);
 	
@@ -60,35 +64,29 @@ public class ComplexFIRFilter extends Filter {
 	
 	phase_correctionReal = 1;
 	phase_correctionImag = 0;
+
+        N = (float)numtaps;
+        M = N - 1;
 	
-	buildFilter_complex();
-    }
-
-    public void buildFilter_complex() {
-	int index;
-	float N = (float)numtaps;
-	float M = N - 1;
-	float C_PI = (float)Math.PI;
-
-	if (center_freq == 0.0) {
-	    for (index = 0; index < numtaps; index++) {
-		tapsReal[index] = (float)
-		    (gain * (0.54-0.46*Math.cos(2*C_PI*index/(M))));
-		tapsImag[index] = 0;
-	    }
-	}
-	else {
-	    float arg = 2*C_PI*center_freq/(float)inSampFreq;
-	    for (index = 0; index < numtaps; index++) {
-		tapsReal[index] = (float)
-		    (gain*Math.cos(arg*((float)index)*
-				   (0.54-0.46*Math.cos(2*C_PI*index/(M)))));
-		tapsImag[index] = (float)(gain*(-1)*Math.sin(arg*index)*
-					  (0.54-0.46*Math.cos(2*C_PI*index/(M))));
-	    }
-	    phase_corr_incrReal = (float)(Math.cos(arg*((float)decimation)));
-	    phase_corr_incrImag = (float)((-1)*Math.sin(arg*(float)decimation));
-	}
+        if (center_freq == 0.0) {
+            for (index = 0; index < numtaps; index++) {
+                tapsReal[index] = (float)
+                    (gain * (0.54-0.46*Math.cos(2*C_PI*index/(M))));
+                tapsImag[index] = 0;
+            }
+        }
+        else {
+            float arg = 2*C_PI*center_freq/(float)inSampFreq;
+            for (index = 0; index < numtaps; index++) {
+                tapsReal[index] = (float)
+                    (gain*Math.cos(arg*((float)index)*
+                                   (0.54-0.46*Math.cos(2*C_PI*index/(M)))));
+                tapsImag[index] = (float)(gain*(-1)*Math.sin(arg*index)*
+                                          (0.54-0.46*Math.cos(2*C_PI*index/(M))));
+            }
+            phase_corr_incrReal = (float)(Math.cos(arg*((float)decimation)));
+            phase_corr_incrImag = (float)((-1)*Math.sin(arg*(float)decimation));
+        }
     }
 
     public void work() {

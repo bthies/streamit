@@ -180,7 +180,7 @@ public class Flattener {
 
 	System.err.print("Generating code...");
 	LIRToC.generateCode(flatClass);
-	System.err.println("done.");
+	//System.err.println("done.");
     }
 
 
@@ -201,11 +201,13 @@ public class Flattener {
 	// if we are supposed to transform the graph
 	// by replacing work functions with their linear forms, do so now 
 	if (transform == true) {
-	    LinearFilterDirectReplacer replacer;
+	    LinearReplacer replacer;
 	    // make a new replacer with the information contained in the analyzer
-	    replacer = new LinearFilterDirectReplacer(lfa);
+	    replacer = new LinearReplacer(lfa);
 	    // pump the replacer through the stream graph.
 	    IterFactory.createIter(str).accept(replacer);
+	    // print out the stream graph after linear replacement
+	    LinearDot.printGraph(str, "linear-replace.dot", lfa);
 	}
 	
     }

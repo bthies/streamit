@@ -5,7 +5,7 @@
 
 public class Comp {
 
-    public static void main(String[] args) {
+    /*    public static void main(String[] args) {
 	Complex d= new Complex();
 	d.imag=1;
 	d.real=2;
@@ -15,13 +15,20 @@ public class Comp {
 	Comp.Println(Comp.RoutN(8));
 	Comp.Println(Comp.Exp(d,3));
 	
-    }
+    }*/
 
   static  public Complex Add(Complex a, Complex b)
     { Complex c= new Complex();
 	c.imag= a.imag+b.imag;
 	c.real= b.real+a.real;
 	return(c); 
+    }
+
+    static public Complex Make(float a, float b) {
+	Complex c=new Complex();
+	c.real=a;
+	c.imag=b;
+	return(c);
     }
 
     static public Complex Mult(Complex a, Complex b) {

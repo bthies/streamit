@@ -18,7 +18,7 @@ class CompDelay extends FeedbackLoop {
                 }
                 public void work() {
 		    output.push(input.peek(1));
-		     output.push(input.peek(0));
+		    output.push(input.peek(0));
 		    input.pop();
 		    input.pop();
                 }

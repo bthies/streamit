@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 
 import org.jgraph.graph.ConnectionSet;
 import org.jgraph.graph.DefaultEdge;
@@ -26,7 +27,7 @@ import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
  */
 public class GEFeedbackLoop extends GEStreamNode implements Serializable, GEContainer{
 	
-	//TODO: The values in the children filed of the GEFeedbackLoop are never set.
+	
 	
 	/**
 	 * The splitter belonging to this feedback loop.
@@ -79,6 +80,10 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 		this.loop = loop;
 		this.localGraphStruct = new GraphStructure();
 		this.isExpanded = false;
+		
+		//TODO: The children are never set. 
+		//Temporary solution: set them to the value returned by this.getContainedElements() 
+		this.children = this.getContainedElements();
 	}
 
 	/**
@@ -180,8 +185,10 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 		this.add(this.port);
 		
 		(graphStruct.getAttributes()).put(this, this.attributes);
-		GraphConstants.setAutoSize(this.attributes, true);
-		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.green));
+		GraphConstants.setBorderColor(this.attributes, Color.green.darker());
+		GraphConstants.setLineWidth(this.attributes, 4);
+		GraphConstants.setBounds(this.attributes, bounds); // without this - problems with expansion in layout
+		GraphConstants.setVerticalTextPosition(this.attributes, JLabel.TOP);
 		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);
 	}
 	
@@ -205,8 +212,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 	}	
 	
 	/**
-	 * Expand the GEFEedbackLoop. When it is expanded the elements that it contains are
-	 * displayed.
+	 * Expand the GEFEedbackLoop. When it is expanded the elements that it contains become visible.
 	 */
 	public void expand()
 	{
@@ -224,7 +230,6 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 			while (sourceIter.hasNext())
 			{
 				DefaultEdge s = (DefaultEdge) sourceIter.next();
-				System.out.println(" s hash" +s.hashCode());
 				if (s.equals(edge))
 				{
 					System.out.println(" GEFeedbackLoop Expand: source edges were equal");
@@ -239,14 +244,13 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 			while(targetIter.hasNext())
 			{
 				DefaultEdge t = (DefaultEdge) targetIter.next();
-				System.out.println(" t hash" +t.hashCode());
 				if(t.equals(edge))
 				{
 					System.out.println("GEFeedbackLoop Expand: target edges were equal");
-					cs.disconnect(edge,false);
-					cs.connect(edge, this.joiner.getPort(),false);
-					this.joiner.addTargetEdge(t);
-					edgesToRemove.add(t);
+						cs.disconnect(edge,false);
+						cs.connect(edge, this.joiner.getPort(),false);
+						this.joiner.addTargetEdge(t);
+						edgesToRemove.add(t);
 				}
 			}
 			
@@ -255,12 +259,10 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 			{
 				this.removeSourceEdge((DefaultEdge)removeArray[i]);
 				this.removeTargetEdge((DefaultEdge)removeArray[i]);
-			}
-	
+			}	
 		}
-		
-		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
-		
+
+		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);		
 		for (int i = level; i >= 0; i--)
 		{
 			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
@@ -269,12 +271,11 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 		manager.arrange();	
 		setLocationAfterExpand();
 	}
-	//TODO
-	//TODO
-	//TODO
-	//TODO
-	//TODO
-	//TODO
+
+	/**
+	 * Collapse the GEFeedbackLoop. The elements contained by the GEFeedbackLoop become
+	 * invisible.
+	 */
 	public void collapse()
 	{
 		Object[] nodeList = this.getContainedElements().toArray();
@@ -295,10 +296,14 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 				if(target.equals(edge))
 				{
 					System.out.println(" GEFeedbackLoop Collapse: target edges were equal");
-					cs.disconnect(edge, false);
-					cs.connect(edge, this.getPort(), false);
-					this.addSourceEdge(edge);
-					edgesToRemove.add(edge);
+					System.out.println(" The container of the edge is " + ((GEStreamNode) ((DefaultPort)edge.getSource()).getParent()).getEncapsulatingNode());
+					if (!(this.equals(((GEStreamNode) ((DefaultPort)edge.getSource()).getParent()).getEncapsulatingNode())))
+					{
+						cs.disconnect(edge, false);
+						cs.connect(edge, this.getPort(), false);
+						this.addTargetEdge(edge);
+						edgesToRemove.add(edge);
+					}
 				}
 			}
 		}
@@ -312,10 +317,14 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 				if (target.equals(edge))
 				{
 					System.out.println(" GEFeedbackLoop Collapse: source edges were equal");
-					cs.disconnect(edge,true);
-					cs.connect(edge, this.getPort(),true);
-					this.addTargetEdge(edge);
-					edgesToRemove.add(edge);
+					System.out.println(" The container of the edge is " + ((GEStreamNode) ((DefaultPort)edge.getSource()).getParent()).getEncapsulatingNode());
+					if (!(this.equals(((GEStreamNode) ((DefaultPort)edge.getTarget()).getParent()).getEncapsulatingNode())))
+					{
+						cs.disconnect(edge,true);
+						cs.connect(edge, this.getPort(),true);
+						this.addSourceEdge(edge);
+						edgesToRemove.add(edge);
+					}
 				}
 			}
 		}	

@@ -22,7 +22,7 @@ import java.util.HashMap;
  *
  * @see     streamit.frontend.passes.SymbolTableVisitor
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTable.java,v 1.5 2003-04-14 20:28:35 dmaze Exp $
+ * @version $Id: SymbolTable.java,v 1.6 2003-04-15 20:07:45 dmaze Exp $
  */
 public class SymbolTable
 {
@@ -45,6 +45,7 @@ public class SymbolTable
         {
             this.type = type;
             this.origin = origin;
+            this.kind = kind;
         }
         public Type type;
         public Object origin;

@@ -2022,7 +2022,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		SIRFilter filter = (SIRFilter)parentStream;
 		Vector v = (Vector)right.accept(this);
                 if (v.elementAt(0) instanceof JClassExpression)
-                    filter.setInputType(((JClassExpression)v.elementAt(0)).getType());
+                    filter.setInputType(((JClassExpression)v.elementAt(0)).getClassType());
                 else
                     filter.setInputType(getType(((JStringLiteral)v.elementAt(0)).stringValue()));
 		filter.setPop((JExpression)v.elementAt(1));
@@ -2043,7 +2043,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		Vector v = (Vector)right.accept(this);
 		filter.setPush((JExpression)v.elementAt(1));
                 if (v.elementAt(0) instanceof JClassExpression)
-                    filter.setOutputType(((JClassExpression)v.elementAt(0)).getType());
+                    filter.setOutputType(((JClassExpression)v.elementAt(0)).getClassType());
                 else
                     filter.setOutputType(getType(((JStringLiteral)v.elementAt(0)).stringValue()));
 		return null;

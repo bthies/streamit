@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.45 2004-08-18 17:15:26 mgordon Exp $
+# $Id: strc,v 1.46 2004-08-31 19:00:47 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -195,6 +195,10 @@ Options specific to uniprocessor backend:
 + --poptopeek         Convert all pop expressions into peeks
   --profile           Compile with profiling information
 
+Options specific to the RStream backend:
+  --doloops           Generate doloops instead of for loops where possible
+  --absarray          Generate abstract arrays instead of C arrays
+
 Options specific to Java library backend:
   --iterations, -i    Specify number of iterations to run
   --norun             Schedule but do not run the program
@@ -268,6 +272,8 @@ sub get_options
 			    "sjtopipe",
 			    "spacetime!",
 			    "statespace!",
+			    "absarray!",
+			    "doloops!",
 			    "magicdram!",
 			    "standalone|S",
 			    "rstream|R",
@@ -529,6 +535,8 @@ sub get_kjc_opts
     $opts{wbs} && ($kjcopts .= " --wbs");
     $opts{spacetime} && ($kjcopts .= " --spacetime");
     $opts{magicdram} && ($kjcopts .= " --magicdram");
+    $opts{absarray} && ($kjcopts .= " --absarray");
+    $opts{doloops} && ($kjcopts .= " --doloops");
     $opts{forceplacement} && ($kjcopts .= " --forceplacement");
     $opts{steadymult} && ($kjcopts .= " --steadymult ". $opts{steadymult});
     $opts{scheduler} && ($kjcopts .= " --scheduler ". $opts{scheduler});

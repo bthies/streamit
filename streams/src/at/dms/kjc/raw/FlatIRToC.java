@@ -62,6 +62,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//FieldProp.doPropagate((SIRFilter)node.contents);
 
 	//Optimizations
+	/*
 	if(!KjcOptions.nofieldprop)
 	    System.out.println
 		("Optimizing "+
@@ -102,6 +103,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	}
 	if(KjcOptions.destroyfieldarray)
 	   arrayDest.destroyFieldArrays((SIRFilter)node.contents);
+	*/
 	/*	
 	  try {
 	    SIRPrinter printer1 = new SIRPrinter();
@@ -379,7 +381,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    return;
 
 	//set is init for dynamically allocating arrays...
-	isInit = self.equals(filter.getInit());
+	if (filter != null)
+	    isInit = self.equals(filter.getInit());
 
 	   
         newLine();

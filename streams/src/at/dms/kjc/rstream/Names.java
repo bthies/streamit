@@ -43,5 +43,7 @@ public class Names
     public static String arrayReceiveMethod = "__array_receive__";
 
     public static String main = "__MAIN__";
+
+    public static String fscanf = "fscanf";
 }
 

@@ -58,14 +58,12 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	FlatIRToRS toC = new FlatIRToRS((SIRFilter)node.contents);
 		
 	//optimizations...
-	if(!KjcOptions.nofieldprop)
-	    System.out.println
-		("Optimizing "+
-		 ((SIRFilter)node.contents).getName()+"...");
+	System.out.println
+	    ("Optimizing SIR ...");
 
 	ArrayDestroyer arrayDest=new ArrayDestroyer();
-	//iterate over all the methods, calling the magic below...
 
+	//iterate over all the methods, calling the magic below...
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
 	    JMethodDeclaration method=((SIRFilter)node.contents).getMethods()[i];
 	    if (!KjcOptions.nofieldprop) {
@@ -83,7 +81,8 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 		
 		method.accept(new BlockFlattener());
 		method.accept(new Propagator(new Hashtable()));
-	    } else
+	    } //run the block flattener no matter what
+	    else
 		method.accept(new BlockFlattener());
 	    method.accept(arrayDest);
 	    method.accept(new VarDeclRaiser());
@@ -101,8 +100,11 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	     {
 	     }
 	*/
+
+	//now iterate over all the methods and generate the c code.
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
+    
     
     public FlatIRToRS() 
     {
@@ -124,38 +126,26 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
             return null;
     }
     
-    /**
-     * Close the stream at the end
-     */
-    public void close() {
-        p.close();
-    }
 
     public void setPos(int pos) {
         this.pos = pos;
     }
 
-    /*  
-    public void visitStructure(SIRStructure self,
-                               SIRStream parent,
-                               JFieldDeclaration[] fields)
-    {
-        print("struct " + self.getIdent() + " {\n");
-        for (int i = 0; i < fields.length; i++)
-            fields[i].accept(this);
-        print("};\n");
-    }
-    */
-    
+
+    /**
+     * The main entry point of the visiting done by this class. 
+     * print out c includes, visit the methods, and then generate
+     * the main function in the c code that calls the driver function
+     * that controls execution.
+     *
+     * @param self The filter we are visiting
+     *
+     */
+
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
-
-	//       System.out.println(self.getName());
-	
 	//Entry point of the visitor
 
-	//do not print the raw header if compiling
-	//for uniprocessor
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
 
@@ -174,6 +164,7 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	JMethodDeclaration[] methods = self.getMethods();
 	for (int i =0; i < methods.length; i++)
 	    methods[i].accept(this);
+	
 	//now print the functions with body
 	declOnly = false;
 	for (int i =0; i < methods.length; i++) {
@@ -182,7 +173,7 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	
 	print("int main() {\n");
 	
-	//execute the raw main function
+	//execute the main function
 	print(Names.main + "();\n");
 	
 	//return 0 even though this should never return!
@@ -220,14 +211,7 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
                                       CType type,
                                       String ident,
                                       JExpression expr) {
-        /*
-          if (ident.indexOf("$") != -1) {
-          return; // dont print generated elements
-          }
-        */
-
         newLine();
-        // print(CModifier.toString(modifiers));
 
 	//only stack allocate singe dimension arrays
 	if (expr instanceof JNewArrayExpression) {
@@ -358,11 +342,6 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
                                         CType type,
                                         String ident,
                                         JExpression expr) {
-
-        // print(CModifier.toString(modifiers));
-	//	System.out.println(ident);
-	//System.out.println(expr);
-
 	//we want to stack allocate all arrays not in the init
 	//we convert an assignment statement into the stack allocation statement'
 	//so, just remove the var definition, if the new array expression
@@ -943,7 +922,7 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 
 	assert (!ident.equals(Names.receiveMethod)) :
 	    "Error: RStream code generation should not see network receive method";
-
+	
         print(ident);
 	
 	//we want single precision versions of the math functions
@@ -951,21 +930,21 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	    print("f");
 	    
 	print("(");
-	
-	//if this method we are calling is the call to a structure 
-	//receive method that takes a pointer, we have to add the 
-	//address of operator
-	if (ident.startsWith(Names.structReceiveMethodPrefix))
-	    print("&");
-
-        int i = 0;
-        /* Ignore prefix, since it's just going to be a Java class name.
-        if (prefix != null) {
-            prefix.accept(this);
-            i++;
+	if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+                if (i != 0) {
+                    print(", ");
+                }
+		/* this is a hack but there is no other way to do it,
+		   if we are currently visiting fscanf and we are at the 3rd
+		   argument, prepend an & to get the address and pass the pointer 
+		   to the fscanf
+		*/
+		if (ident == Names.fscanf && i == 2)
+		    print("&");
+                args[i].accept(this);
+            }
         }
-        */
-        visitArgs(args, i);
         print(")");
     }
 
@@ -1781,5 +1760,4 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
 				      SIRFeedbackLoopIter iter) {
     }
-
 }

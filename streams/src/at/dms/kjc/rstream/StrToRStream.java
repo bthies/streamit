@@ -100,11 +100,15 @@ public class StrToRStream {
 		//new BlockFlattener().flattenBlocks(str);
 		//new BranchAnalyzer().analyzeBranches(str);
 	}
+
+	//convert all file readers/writers to normal 
+	//sirfilters, not predefined filters
+	ConvertFileFilters.doit(str);
+
 	
 	Lifter.liftAggressiveSync(str);
 	StreamItDot.printGraph(str, "before-partition.dot");
-	
-	
+
 	//mgordon: I don't know, I could forsee the linear analysis 
 	//and the statespace analysis being useful to Reservoir in the 
 	//future...but don't run it now, there is no point.

@@ -102,9 +102,9 @@ fn dev_work_est_init(fileName, ioPort)
 // local ntiles = gXSize*gYSize
   //allocate some shit, gStreamItFilterTiles
   gFinished = 0;
-  gWorkArray = malloc(gXSize*gYSize*4);
-  for (i = 0; i < gXSize*gYSize*4; i+=4) {
-    *(gWorkArray + i) = -1;
+  gWorkArray = malloc(gNumProc*4);
+  for (i = 0; i < gNumProc; i++) {
+    gWorkArray[i] = -1;
   }
 
   //print some shit
@@ -217,20 +217,20 @@ fn dev_work_est_calc(printServiceStruct)
 	  //printf("%d\n", value);
 
 	  if (value == 0) {
-	    *(gWorkArray + (tileNum * 4)) = time_lo;
+	    gWorkArray[tileNum] = time_lo;
 	  }
 	  else if (value == 1) {
-	    local start_time = *(gWorkArray + (tileNum *4));
+	    local start_time = gWorkArray[tileNum];
 	    
 	    gFinished++;
-	    *(gWorkArray + (tileNum * 4)) = time_lo - start_time;
+	    gWorkArray[tileNum] = time_lo - start_time;
 	    
 	    if (gFinished == gStreamItFilterTiles) {
 	      print_final_stats();
 	      //this should exit!!!!!
 	      gInterrupted = 1;
 	      //this will exit the thread
-	      exit(0);
+	      exit_now(0);
 	    }
 	  }
 	  else 
@@ -249,10 +249,10 @@ fn print_final_stats() {
   local tileNum = 0;
   
   listi_walk_begin(gFilterNames);
-  for (i = 0; i < gXSize*gYSize*4; i+=4) {
-    if (*(gWorkArray + i) != -1) {
+  for (i = 0; i < gNumProc; i++) {
+    if (gWorkArray[i] != -1) {
       fprintf(outputFile,"%d cycles for TileNum %d, %s\n", 
-	      *(gWorkArray +i),tileNum, listi_walk_current_val(gFilterNames));
+	      gWorkArray[i],tileNum, listi_walk_current_val(gFilterNames));
       listi_walk_next(gFilterNames);
     }
     tileNum++;

@@ -50,7 +50,7 @@ global gLastFiveCycles = 0;
 global gDEADLOCK_COUNT = 100000;
 global gLastInsCycle = 0;
 
-//this array store the pc for each processor if they are in a cache miss stall
+//this array stores the pc for each processor if they are in a cache miss stall
 //used so we do not count cache misses multiple times
 global current_cache_miss_pc;
 
@@ -93,8 +93,6 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
       if (steadyStateExecutions == quitAfter + 2) {
 	printf("Generating results.out\n");
 	
-	//we are done getting the numbers, deregister the handler.
-	EventManager_DeRegisterHandler("issued_instruction", "__event_instr_count");
 	print_final_stats();
 	if (gGenerate_BloodGraph) {
 	  printf("Generating bloodgraph for %d cycles (avg of steady-state)...\n", 

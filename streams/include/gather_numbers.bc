@@ -220,8 +220,6 @@ fn print_summary_stats() {
 	  gBrCountTotal, //- ((gNumProc - gStreamItTilesUsed) * totalCycles),
 	  gAdminCountTotal, gAluCountTotal, 
 	  gStreamItTiles*totalCycles);
-  //we are done getting the numbers, deregister the handler.
-  EventManager_DeRegisterHandler("issued_instruction", "__event_instr_count");
 }
 
 fn gather_numbers_init()

@@ -73,14 +73,24 @@ class RegTest:
             self.runCommand("StreamIt compilation",
                             "java at.dms.kjc.Main -s %s > reg-out.c" %
                             string.join(self.sources))
-            self.runCommand("gcc compilation",
-                            "gcc -o reg-out %s reg-out.c -lstreamit -lm" %
-                            opts.get_cflags())
+            if (opts.profile):
+                self.runCommand("gcc compilation (with profiling)",
+                                "gcc -o reg-out_p.o -c %s -pg -a reg-out.c" %
+                                opts.get_cppflags())
+                self.runCommand("gcc linking (with profiling)",
+                                ("gcc -o %s -nodefaultlibs %s reg-out_p.o " +
+                                 "-lstreamit_p -lc_p -lm_p -lgcc") %
+                                (opts.regout_name(), opts.get_ldflags()))
+            else:
+                self.runCommand("gcc compilation",
+                                "gcc -o %s %s reg-out.c -lstreamit -lm" %
+                                (opts.regout_name(), opts.get_cflags()))
             # Stop here if there was an explicit request to not run the test.
             if (not opts.run): return 0
             # Otherwise, at least run the test.
             self.runCommand("Running compiled binary",
-                            "./reg-out %s > reg-out.dat" % self.opts)
+                            "./%s %s > reg-out.dat" %
+                            (opts.regout_name(), self.opts))
             # Stop here if there isn't a reference file.
             if (not self.output): return 0
             # diff the actual results against the expected.
@@ -204,6 +214,7 @@ class Options:
         self.all = 0
         self.cases = []
         self.cflags = '-g -O2'
+        self.profile = 0
         self.set_root(os.environ['STREAMIT_HOME'])
 
     def get_options(self, args):
@@ -228,7 +239,7 @@ class Options:
             if opt == '--libdir':     self.libdir = val
             if opt == '--control':    self.control = val
             if opt == '--debug':      self.cflags = '-g'
-            if opt == '--profile':    self.cflags = '-g -pg -a'
+            if opt == '--profile':    self.profile = 1
             if opt == '--cflags':     self.cflags = val
             if opt == '--case':       self.cases.append(val)
             if opt == '--all':        self.all = 1
@@ -239,8 +250,15 @@ class Options:
         self.libdir = os.path.join(self.root, 'library/c')
         self.control = os.path.join(self.root, 'regtest/control')
 
+    def get_cppflags(self):
+        return "%s -I%s" % (self.cflags, self.libdir)
+    def get_ldflags(self):
+        return "%s -L%s" % (self.cflags, self.libdir)
     def get_cflags(self):
         return "%s -I%s -L%s" % (self.cflags, self.libdir, self.libdir)
+    def regout_name(self):
+        if self.profile: return "reg-out_p"
+        return "reg-out"
 
 opts = Options()
 args = opts.get_options(sys.argv[1:])

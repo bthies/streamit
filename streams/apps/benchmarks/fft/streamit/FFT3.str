@@ -5,7 +5,7 @@
  * where, W is a root of unity. 
  */ 
 
-complex->complex filter Butterfly(float w_re, float w_im) {
+float->float filter Butterfly(float w_re, float w_im) {
 
     init {
     }
@@ -43,7 +43,7 @@ complex->complex filter Butterfly(float w_re, float w_im) {
  * butterflies that are clustered together in the FFT's 
  * butterfly graph for that particular stage 
  */     
-complex->complex splitjoin ButterflyGroup(float w_re, float w_im, int numbflies) {
+float->float splitjoin ButterflyGroup(float w_re, float w_im, int numbflies) {
     split roundrobin(2);
     for (int b=0; b < numbflies; b++)
 	add Butterfly(w_re, w_im);
@@ -55,7 +55,7 @@ complex->complex splitjoin ButterflyGroup(float w_re, float w_im, int numbflies)
  * a particular FFT stage (which is determined by D).  
  */  
 
-complex->complex splitjoin ComputeStage(int D, int N, float W_re3[N/2], float W_im3[N/2]) {
+float->float splitjoin ComputeStage(int D, int N, float[N/2] W_re3, float[N/2] W_im3) {
     /* the length of a butterfly group in terms of points */ 
     int grplen = D + D;  
     /* the number of bfly groups and bflies per group */ 
@@ -89,7 +89,7 @@ complex->complex splitjoin ComputeStage(int D, int N, float W_re3[N/2], float W_
  * there are N/2 butterfly groups with ONLY one butterfly each (So, the butterfly group 
  * degenerates from a splitjoin to a filter) 
  */
-complex->complex splitjoin LastComputeStage(int D, int N, float W_re5[N/2], float W_im5[N/2]) {
+float->float splitjoin LastComputeStage(int D, int N, float[N/2] W_re5, float[N/2] W_im5) {
 
     /* the length of a butterfly group in terms of points */ 
     int grplen = D + D;  
@@ -113,11 +113,10 @@ complex->complex splitjoin LastComputeStage(int D, int N, float W_re5[N/2], floa
   }  
 
 
-complex->complex filter Bitreverse(int N, int logN) {
+float->float filter BitReverse(int N, int logN) {
 
+    init {}
 
-    init
-	{}
     //note: values of push, pop rates should really be determined by N
     //hardcoded to 32 for now
     //only works if N=16
@@ -142,7 +141,7 @@ complex->complex filter Bitreverse(int N, int logN) {
 	for (i=0; i < numbits; i++)
 	{
 	    rev = (rev * 2) | (inp & 1);
-	    inp = imp / 2;
+	    inp = inp / 2;
 	}
 	return rev;
     }
@@ -152,9 +151,9 @@ complex->complex filter Bitreverse(int N, int logN) {
 /** 
  * The top-level stream construct of the FFT kernel  
  */
-complex->complex pipeline FFT3Kernel(int N, int logN, float W_re2a[N/2] float W_im2a[N/2]) {
+float->float pipeline FFT3Kernel(int N, int logN, float[N/2] W_re2, float[N/2] W_im2) {
 
-    add ButterFlyGroup(W_re2[0], W_im2[0], N/2);
+    add ButterflyGroup(W_re2[0], W_im2[0], N/2);
     
       /* the middle ComputeStages - N/2i bflygrps with i bflies each */ 
     for (int i=(N/4); i>1; i=i/2) 
@@ -172,10 +171,10 @@ complex->complex pipeline FFT3Kernel(int N, int logN, float W_re2a[N/2] float W_
  * Sends out real followed by imag part of each input point  
  */ 
 
-void->complex filter ComplexSource(int N) {
+void->float filter FloatSource(int N) {
 
-    float A_re[N];
-    float A_im[N];
+    float[N] A_re;
+    float[N] A_im;
     int idx;
 
     init {
@@ -201,24 +200,22 @@ void->complex filter ComplexSource(int N) {
 /** 
  * Prints the real and imag part of each output point 
  */ 
-complex->void ComplexPrinter 
-{ 
+float->void filter FloatPrinter {
     init {}
  
     work pop 2 
     {
 	print(pop()); 
-	print(popFloat()); 
+	print(pop()); 
     }
-
 }
 
 void->void pipeline FFT3 {
     
-    int N = 16;
+    int N = 32;
     int logN = 5;
-    float W_re1[N/2];
-    float W_im1[N/2];  
+    float[N/2] W_re1;
+    float[N/2] W_im1;  
 
     for (int i=0; i<(N/2); i++) 
     {
@@ -236,7 +233,7 @@ void->void pipeline FFT3 {
 	W_im1[br] = sin((i*2.0*pi)/N); 
     } 
    
-    add ComplexSource(N);
+    add FloatSource(N);
     add FFT3Kernel(N, logN, W_re1, W_im1);
-    add ComplexPrinter();
+    add FloatPrinter();
 }

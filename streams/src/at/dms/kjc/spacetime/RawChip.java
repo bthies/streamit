@@ -59,4 +59,20 @@ public class RawChip {
 	Utils.fail("calling getDirection on non-neighbors");
 	return "";
     }
+    
+    /**
+     * Returns the numbers of tiles of the raw chip that 
+     * have compute code at the given tile
+     **/
+    public int computingTiles() 
+    {
+	int sum = 0;
+
+	for (int i = 0; i < this.gXSize; i++)
+	    for (int j = 0; j < this.gYSize; j++)
+		if (getTile(i, j).hasComputeCode())
+		    sum++;
+	return sum;
+    }
+    
 }

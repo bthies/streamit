@@ -120,7 +120,7 @@ public class Makefile
 	
 	buf.append("include $(TOPDIR)/Makefile.include\n\n");
 	buf.append("RGCCFLAGS += -O3\n\n");
-	buf.append("BTL-MACHINE-FILE = fileio.bc\n\n");
+	buf.append("BTL-MACHINE-FILE = " + BCFile.BCFILE_NAME + "\n\n");
 	
 	if (rawChip.getXSize() > 4 || rawChip.getYSize() > 4)
 	    buf.append("TILE_PATTERN = 8x8\n\n");
@@ -142,5 +142,4 @@ public class Makefile
 			       MAKEFILE_NAME);
 	}
     }
-    
 }

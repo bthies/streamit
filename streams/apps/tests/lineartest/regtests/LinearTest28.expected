@@ -1,3 +1,10 @@
+FIRPipeline_1.matrix
+[[15.0+0.0i]
+ [22.0+0.0i]
+ [13.0+0.0i]
+ [4.0+0.0i]]
+FIRPipeline_1.vector
+[[29.0+0.0i]]
 MockFIRFilter_1.matrix
 [[3.0+0.0i]
  [2.0+0.0i]

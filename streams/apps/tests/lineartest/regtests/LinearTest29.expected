@@ -1,2 +1,26 @@
-jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/*.java
-java streamit.frontend.ToJava --full  regtests/LinearTest29.str > regtests/LinearTest29.java
+Compressor_1.matrix
+[[0.0+0.0i]
+ [0.0+0.0i]
+ [1.0+0.0i]]
+Compressor_1.vector
+[[0.0+0.0i]]
+Expander_1.matrix
+[[0.0+0.0i 1.0+0.0i]]
+Expander_1.vector
+[[0.0+0.0i 0.0+0.0i]]
+LinearWrapper_1.matrix
+[[0.0+0.0i 0.0+0.0i]
+ [5.0+0.0i 0.0+0.0i]
+ [3.0+0.0i 6.0+0.0i]
+ [0.0+0.0i 4.0+0.0i]
+ [0.0+0.0i 2.0+0.0i]]
+LinearWrapper_1.vector
+[[0.0+0.0i 0.0+0.0i]]
+MockFIRFilter_1.matrix
+[[6.0+0.0i]
+ [5.0+0.0i]
+ [4.0+0.0i]
+ [3.0+0.0i]
+ [2.0+0.0i]]
+MockFIRFilter_1.vector
+[[0.0+0.0i]]

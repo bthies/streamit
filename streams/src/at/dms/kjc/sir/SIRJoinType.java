@@ -60,6 +60,14 @@ public class SIRJoinType implements Serializable, DeepCloneable {
 	    throw new Exception();
     }
 
+    public boolean isRoundRobin() {
+	return name.equals("ROUND_ROBIN")||name.equals("WEIGHTED_ROUND_ROBIN");
+    }
+    
+    public boolean isNull() {
+	return name.equals("NULL_SJ");
+    }
+
     public String toString() {
 	return name;
     }

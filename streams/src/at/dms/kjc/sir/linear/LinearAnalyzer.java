@@ -4,6 +4,7 @@ import java.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.linear.*;
+import at.dms.kjc.sir.linear.transform.*;
 import at.dms.kjc.iterator.*;
 
 
@@ -13,7 +14,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.10 2002-11-08 03:43:46 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.11 2002-11-25 20:31:58 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/

@@ -14,7 +14,7 @@ import java.util.*;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.13 2002-10-28 22:53:54 aalamb Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.14 2002-11-25 20:31:58 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -44,6 +44,8 @@ public class LinearFilterRepresentation {
 	this.popCount = popc;
     }
 
+    //////////////// Accessors ///////////////////
+    
     /** Get the A matrix. **/
     public FilterMatrix getA() {return this.A;}
     /** Get the b vector. **/
@@ -55,6 +57,9 @@ public class LinearFilterRepresentation {
     public int getPushCount() {return this.A.getCols();}
     /** Get the pop count. **/
     public int getPopCount() {return this.popCount;}
+
+
+    //////////////// Utility Functions  ///////////////////
 
     /**
      * Returns true if at least one element of the constant vector b are zero.
@@ -74,22 +79,34 @@ public class LinearFilterRepresentation {
 	return false;
     }
 
+    /** placeholder to let us compile for regtests **/
+    public LinearFilterRepresentation expand(int f) {
+	throw new RuntimeException("deprecated");
+    }
+
     /**
-     * Expands the linear representation by the specified constant scaling factor.
-     * See external documenation for details about how this works. I don't think that
-     * the comments will be very happy, as is really easy to understand with a picture,
-     * and very hard to understand without one.
+     * Expands this lienar representation to have the new peek, pop and push rates.
+     * This method directly implements the "expand" operation outlined in
+     * the "Linear Analysis and Optimization of Stream Programs" paper that we
+     * submitted to pldi 03.
      **/
-    public LinearFilterRepresentation expand(int factor) {
-	if (factor < 1) {
-	    throw new IllegalArgumentException("can't expand linear filter representation by factor=" + factor + "<1");
+    public LinearFilterRepresentation expand(int newPeek, int newPop, int newPush) {
+	// do some argument checks
+	if (newPeek < this.getPeekCount()) {
+	    throw new IllegalArgumentException("newPeek is less than old peek");
 	}
+	if (newPush < this.getPushCount()) {
+	    throw new IllegalArgumentException("newPush is less than old push");
+	}
+
+	int factor = 1;
+	
 	int oldPush = this.getPushCount();
 	int oldPeek = this.getPeekCount();
 	int oldPop  = this.getPopCount();
-	int newPush = oldPush * factor;
-	int newPeek = oldPeek + (factor-1)*oldPop;
-	int newPop  = oldPop * factor;
+	//int newPush = oldPush * factor;
+	//int newPeek = oldPeek + (factor-1)*oldPop;
+	//int newPop  = oldPop * factor;
 	FilterMatrix oldMatrix = this.getA();
 	FilterMatrix newMatrix = new FilterMatrix(newPeek, newPush);
 

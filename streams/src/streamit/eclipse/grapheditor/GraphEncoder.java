@@ -34,7 +34,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
                               JMethodDeclaration init,
                               JMethodDeclaration work,
                               CType inputType, CType outputType) {
-	return null;
+	return new Node("FILTER", self.getChildren());
     }
     
     /* visit a phased filter */
@@ -46,7 +46,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                     SIRWorkFunction[] initPhases,
                                     SIRWorkFunction[] phases,
                                     CType inputType, CType outputType) {
-	return null;
+	return new Node("PHASED_FILTER", self.getChildren());
     }
     
     /* visit a splitter */

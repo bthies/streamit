@@ -63,7 +63,7 @@ int->int pipeline Sorter (int N) {
 	    add Sorter(N/2);
 	    add Sorter(N/2);
 	    join roundrobin();
-        }
+        };
         add Merger(N);
     }
 }
@@ -81,6 +81,6 @@ void->int filter SortInput (int N) {
 
 int->void filter IntPrinter {
     work pop 1 {
-	print pop();
+	print(pop());
     }
 }

@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.25 2005-02-01 05:17:47 rabbah Exp $
+ * @version $Id: SemanticChecker.java,v 1.26 2005-04-04 20:14:38 thies Exp $
  */
 public class SemanticChecker
 {
@@ -814,7 +814,10 @@ public class SemanticChecker
 			    // check that initializer is array initializer
 			    // (I guess it could also be conditional expression?  Don't bother.)
 			    if (!(init instanceof ExprArrayInit)) {
-				report (field, "array initialized to non-array type");
+				// this is not an error case because
+				// it might be a function call, e.g.,
+				// to init_array_1D_float(filename, size)
+
 				// stop looking deeper into array decl
 				recurse = false;
 			    } else {

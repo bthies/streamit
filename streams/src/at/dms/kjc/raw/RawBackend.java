@@ -91,7 +91,6 @@ public class RawBackend {
 	    ILPPartitioner.doit(str, 
 				RawBackend.rawRows *
 				RawBackend.rawColumns);
-	    System.exit(0);
 	}
 	
 	if (KjcOptions.partition) {

@@ -4,7 +4,8 @@ import streamit.scheduler.*;
 
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
-import at.dms.kjc.sir.lowering.reordering.*; 
+import at.dms.kjc.sir.lowering.reordering.*;
+import at.dms.kjc.sir.linear.*; 
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
@@ -121,6 +122,12 @@ public class Flattener {
 	new ArrayDestroyer().destroyArrays(str);
 	//Raise variables to the top of their block
 	new VarDeclRaiser().raiseVars(str);
+
+	// if someone wants to run linear analysis:
+	if (StreamItOptions.linearanalysis) {
+	    runLinearAnalysis(str);
+	}
+
 	
 	// make single structure
 	SIRIterator iter = IterFactory.createIter(str);
@@ -142,5 +149,18 @@ public class Flattener {
 
 	return flatClass;
     }
-   
+
+
+    /** Runs linear analysis (and associated optimizations) on the passed stream. **/
+    static void runLinearAnalysis(SIRStream str) {
+	System.out.println("Running Linear Analysis");
+	//Destroys arrays into local variables if possible
+
+	LinearFilterVisitor lfv = LinearFilterVisitor.findLinearFilters(str);
+	
+	// DEBUGGING PRINTING
+	System.out.println("--------- AFTER Linear Analysis --------");
+    }
+
+    
 }

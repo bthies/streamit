@@ -1,0 +1,102 @@
+void->void pipeline MergeSort {
+  int SIZE = 16;
+  int START = SIZE;
+  add IntSource(SIZE);
+  add Sorter(START);
+  add IntPrinter();
+}
+
+/** IntSource.  Just used to test with the same 16 "random" numbers as
+ * in Knuth.  Eventually, probably use a fileReader reading actual
+ * random numbers.
+ **/
+void->int filter IntSource(int SIZE) {
+  int [SIZE]data;
+  int index = 0;
+  init {
+    data[0] = 503; data[1] = 087; data[2] = 512;
+    data[3] = 061; data[4] = 908; data[5] = 170;
+    data[6] = 897; data[7] = 275; data[8] = 653;
+    data[9] = 426; data[10] = 154; data[11] = 509;
+    data[12] = 612; data[13] = 677; data[14] = 765;
+    data[15] = 703;
+  }
+
+  work push 1 {
+    push(data[index++]);
+    if (index == SIZE)
+      index = 0;
+  }
+}
+
+/**
+ * The merger component of the merge sort.  Combines two sorted
+ * streams into another sorted stream, producing a total of <N>
+ * elements.
+ */
+int->int filter Merger (int N) {
+  work push N pop N {
+    // initialize indices
+    int index1 = 0;
+    int index2 = 1;
+
+    // merge values
+    while (index1 < N && index2 < N) {
+      int val1 = peek(index1);
+      int val2 = peek(index2);
+      if (val1 <= val2) {
+	push(val1);
+	index1+=2;
+      } else {
+	push(val2);
+	index2+=2;
+      }
+    }
+
+    // merge remainder if one stream dries out
+    int leftover = index1 < N ? index1 : index2;
+    for (int i=leftover; i < N; i+=2) {
+      push(peek(i));
+    }
+
+    // pop all the inputs
+    for (int i=0; i<N; i++) {
+      pop();
+    }
+  }
+}
+
+/**
+ * Sorts a stream of integers.
+ */
+int->int pipeline Sorter (int N) {
+  // if we have more than two items, then sort in parallel
+  if (N>2) {
+    add splitjoin {
+      split roundrobin();
+      add Sorter(N/2);
+      add Sorter(N/2);
+      join roundrobin();
+    }
+    add Merger(N);
+  } else {
+    add Merger(2);
+  }
+}
+
+/** IntIdentity since Identity<int> still seems to fail in the
+ * uniprocessor
+ **/
+int->int filter IntIdentity() {
+  work push 1 pop 1 {
+    push(pop());
+  }
+}
+
+/** IntPrinter utility
+ **/
+int->void filter IntPrinter() {
+  work pop 1 {
+    print(pop());
+  }
+}

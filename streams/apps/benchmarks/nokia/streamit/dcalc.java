@@ -40,7 +40,7 @@ class dcalc extends StreamIt {
     
     static public void main(String[] t)
     {
-	dcalc test=new dcalc();
+	StreamIt test=new dcalc();
 	test.run(t);
     }
     

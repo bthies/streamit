@@ -20,6 +20,7 @@ public class SIRSchedule  {
     private Scheduler scheduler;
 
     public SIRSchedule(SIRStream toplevel, Scheduler scheduler) {
+        this.scheduler = scheduler;
 	scheduler.computeBufferUse();
     }
 

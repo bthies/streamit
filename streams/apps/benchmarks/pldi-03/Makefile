@@ -92,3 +92,18 @@ cpsg:
 	cp timing/ChannelVocoder-linear-linear-simple.dot $(SG-TARGET)
 	cp timing/Oversampler-linear-linear-simple.dot $(SG-TARGET)
 	cp timing/OneBitDToA-linear-linear-simple.dot $(SG-TARGET)
+
+numbers:
+	./do_generate_programs.pl scripts/quick-few.script 
+	./do_timing_programs.pl scripts/quick-few.script 
+	./do_operation_programs.pl scripts/quick-few.script 
+#	./do_correctness_programs.pl scripts/quick-dtoa.script
+#	./do_correctness_programs.pl scripts/quick-filterbank.script
+#	./do_correctness_programs.pl scripts/quick-fir.script
+#	./do_correctness_programs.pl scripts/quick-fm.script
+#	./do_correctness_programs.pl scripts/quick-oversampler.script
+#	./do_correctness_programs.pl scripts/quick-rateconvert.script
+#	./do_correctness_programs.pl scripts/quick-targetdetect.script
+#	./do_correctness_programs.pl scripts/quick-vocoder.script
+
+

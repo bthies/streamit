@@ -32,20 +32,30 @@ public class GraphEncoder implements AttributeStreamVisitor {
     }
     
 	/** 
-	 * METHOD TO BE CALLED BY JASPER
+	 * Set the toplevel and begin visiting the nodes
 	*/
 	public void encode(SIRStream str)
 	{
 	 
 		graph.setTopLevel((GEStreamNode) str.accept(this));
+		
+		/* ***********************************************************
+		 * DEBUGGING CODE BEGIN
+		 */
 		System.out.println("The toplevel stream is "+ graph.getTopLevel().getName());
 		
 		ArrayList topChildren = graph.getTopLevel().getChildren();
 		for (int i = 0; i< topChildren.size(); i++)
 		{
-			 System.out.println("The children of the toplevel are " + ((GEStreamNode) topChildren.get(i)).getName()); 
+			 System.out.println("The children of the toplevel are " + ((GEStreamNode) topChildren.get(i)).getName());
+			 	  
 		}
-
+		System.out.println("#########################################################");
+		graph.constructGraph();
+	
+		/* 
+		 * DEBUGGING CODE END
+		 * *********************************************************** */
 	}
     
     /**
@@ -310,13 +320,16 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		System.out.println("***** Entering visitPipeline "+ self.getName());
                                 	
 		GEPipeline pipeline = new GEPipeline(self.getName());        
+     
         
 		// Walk through each of the elements in the pipeline.
 		Iterator iter = self.getChildren().iterator();
+		
 		while (iter.hasNext())
 		{
 			SIROperator oper = (SIROperator)iter.next();
-	
+			
+			
 			GEStreamNode currNode = (GEStreamNode) oper.accept(this);
 			pipeline.addChild(currNode);
 				

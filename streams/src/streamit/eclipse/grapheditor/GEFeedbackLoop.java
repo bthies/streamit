@@ -65,8 +65,9 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 		return this.loop;
 	}
 	
-	
+	 
 	public void draw(){};
-	public void construct(){};
+	public GEStreamNode construct(){return null;};
+	public void collapse(){};
 	
 }

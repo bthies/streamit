@@ -53,6 +53,18 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		return this.joiner;
 	}
 	
-	public void draw(){};
-	public void construct(){};
+	/**
+	 * Draw this SplitJoin
+	 */
+	public void draw()
+	{
+		System.out.println("Drawing the SplitJoin " +this.getName());
+	}
+	public GEStreamNode construct()
+	{
+		System.out.println("Constructing the SplitJoin " +this.getName());
+		return null;
+	}
+	
+	public void collapse(){};
 }

@@ -33,5 +33,6 @@ public class GESplitter extends GEStreamNode implements Serializable{
 	}
 	
 	public void draw(){};
-	public void construct(){};
+	public GEStreamNode construct(){return null;};
+	public void collapse(){};
 }

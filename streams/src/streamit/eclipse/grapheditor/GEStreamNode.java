@@ -61,7 +61,7 @@ public abstract class GEStreamNode implements Serializable{
 	}
 
 	abstract public void draw();
-	abstract public void construct();
-
+	abstract GEStreamNode construct();
+	abstract public void collapse();
 	
 }

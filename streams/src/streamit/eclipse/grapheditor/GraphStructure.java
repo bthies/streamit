@@ -87,16 +87,9 @@ public class GraphStructure implements Serializable{
 	public void constructGraph()
 	{
 		this.topLevel.construct();
-		
-		ArrayList nodeList =  (ArrayList) this.topLevel.getChildren();
-		
-	    ListIterator listIter = nodeList.listIterator();
-	    while(listIter.hasNext())
-	    {
-	    	GEStreamNode strNode =  (GEStreamNode) listIter.next();
-	    	strNode.draw(); 
-	    }
 	}
+	
+	
 	
 	/** 
 	 * Sets the toplevel node to <strNode>

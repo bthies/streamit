@@ -461,6 +461,10 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	//generate the code to define the local variables
 	//defineLocalVars(statements, localVariables);
 
+	/*
+
+	// call to init method moved to run function
+
 	//create the params list, for some reason 
 	//calling toArray() on the list breaks a later pass
 	List paramList = filter.getParams();
@@ -481,6 +485,8 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 				   paramArray),
 				  null));
 	
+	*/
+
 	//add the call to initWork
 	if (filter instanceof SIRTwoStageFilter) {
 	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
@@ -838,6 +844,11 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 				    "__tmp_"+nodeID, 
 				    new JIntLiteral(0));
 
+	JVariableDefinition var_tmp2 = 
+	    new JVariableDefinition(null, 0, (CType)CStdType.Integer, 
+				    "__tmp2_"+nodeID, 
+				    new JIntLiteral(0));
+
 	JVariableDefinition var2 = 
 	    new JVariableDefinition(null, 0, (CType)CStdType.Integer, 
 				    "__number_of_iterations", 
@@ -871,11 +882,20 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 
 
 	// for ((__counter_0 = 1); (__counter_0 <= init); __counter_0++) {}
-	// for ((__steady_0 = 1); (__steady_0 <= num_iter; __steady_0++) 
+	//
+	// for ((__tmp2_0 = 0); (__tmp2_0 < num_iter; __tmp2_0++, __steady_0++) 
 	//    for (__tmp = 1; __tmp <= count; __tmp++) {
 	//       counter++;
 	//       ....
 	//    }
+
+
+
+	JExpression relation_if = new JRelationalExpression(null, Constants.OPE_LE, new JLocalVariableExpression(null, var_steady), new JIntLiteral(0));
+
+	JExpressionStatement incr_steady = new JExpressionStatement(null,
+								    new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var_steady))
+								    , null);
 
 	JStatement init_stmt1 = new JExpressionStatement(null,
 					  (new JAssignmentExpression
@@ -896,15 +916,24 @@ new JEmptyStatement(null, null);
 					  (new JAssignmentExpression
 					   (null,
 					    new JLocalVariableExpression
-					    (null, var_steady),
-					    new JIntLiteral(1))), null);
+					    (null, var_tmp2),
+					    new JIntLiteral(0))), null);
 
 
-	JExpression relation2 = new JRelationalExpression(null, Constants.OPE_LE, new JLocalVariableExpression(null, var_steady), new JLocalVariableExpression(null, var2));
+	JExpression relation2 = new JRelationalExpression(null, Constants.OPE_LT, new JLocalVariableExpression(null, var_tmp2), new JLocalVariableExpression(null, var2));
+
+
+
+
+	JExpression _ll[] = new JExpression[2];
+
+	_ll[0] = new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var_tmp2));
+
+	_ll[1] = new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var_steady));
+
+	JStatement incr_expr2 = new JExpressionListStatement(null, _ll, null);
+
 	
-	JStatement incr_expr2 = new JExpressionStatement(null, new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var_steady)), null);
-
-
 
 	JStatement init_stmt3 = new JExpressionStatement(null,
 					  (new JAssignmentExpression
@@ -953,14 +982,22 @@ new JEmptyStatement(null, null);
 	
 
 	
-	for_block.addStatement(new JForStatement(null,
-						 init_stmt1,
-						 relation1,
-						 incr_expr1,
-						 block,
-						 null));
+	for_block.addStatement(
+			       new JIfStatement(null, 
+						relation_if,
+
+						new JForStatement(null,
+								  init_stmt1,
+								  relation1,
+								  incr_expr1,
+								  block,
+								  null),
+						new JEmptyStatement(null, null),
+						null));
 
 
+
+	for_block.addStatement(incr_steady);
 
 	JStatement sss[] = new JStatement[2];
 

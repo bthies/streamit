@@ -250,7 +250,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("\n");
 	
 	p.print("void run_"+thread_id+"(int *flag) {\n");
-	p.print("  int i;\n");
+	p.print("  int i, ii;\n");
 	p.print("  state_flag_"+thread_id+" = flag;\n");
 	
 	p.print("  "+in.consumer_name()+".set_socket(new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET),check_status_during_io__"+thread_id+"));\n");
@@ -261,6 +261,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("  "+s.producer_name()+".set_socket(new mysocket(init_instance::get_outgoing_socket("+s.getSource()+","+s.getDest()+",DATA_SOCKET),check_status_during_io__"+thread_id+"));\n");
 	}
 
+
+	p.print("  save_state::load_state("+thread_id+", &__steady_"+thread_id+", __read_thread__"+thread_id+");\n");
+
+
 	// get int init count
 	Integer initCounts = (Integer)ClusterBackend.initExecutionCounts.get(node);
 	int init;
@@ -270,14 +274,16 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    init = initCounts.intValue();
 	}
 
-	p.print("  for (i = 0; i < "+init+"; i++) {\n");
-	p.print("    check_thread_status(state_flag_"+thread_id+",__thread_"+thread_id+");\n");
-	p.print("    __splitter_"+thread_id+"_work();\n");
+	p.print("  if (__steady_"+thread_id+" == 0) {\n");
+	p.print("    for (i = 0; i < "+init+"; i++) {\n");
+	p.print("      check_thread_status(state_flag_"+thread_id+",__thread_"+thread_id+");\n");
+	p.print("      __splitter_"+thread_id+"_work();\n");
+	p.print("    }\n");
 	p.print("  }\n");
+	p.print("  __steady_"+thread_id+"++;\n");
 
-	
-	p.print("  for (__steady_"+thread_id+" = 1; __steady_"+thread_id+" <= __number_of_iterations; __steady_"+thread_id+"++) {\n");	
-	p.print("    for (i = 0; i < "+ClusterBackend.steadyExecutionCounts.get(node)+"; i++) {\n");
+	p.print("  for (i = 0; i < __number_of_iterations; i++, __steady_"+thread_id+"++) {\n");	
+	p.print("    for (ii = 0; ii < "+ClusterBackend.steadyExecutionCounts.get(node)+"; ii++) {\n");
 	p.print("      check_thread_status(state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __splitter_"+thread_id+"_work();\n");
 	p.print("    }\n");
@@ -507,7 +513,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("\n");
 
 	p.print("void run_"+thread_id+"(int *flag) {\n");
-	p.print("  int i;\n");
+	p.print("  int i, ii;\n");
 	p.print("  state_flag_"+thread_id+" = flag;\n");
 
 	
@@ -520,6 +526,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  "+out.producer_name()+".set_socket(new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET),check_status_during_io__"+thread_id+"));\n");
 
 
+
+	p.print("  save_state::load_state("+thread_id+", &__steady_"+thread_id+", __read_thread__"+thread_id+");\n");
+
+
 	// get int init count
 	Integer initCounts = (Integer)ClusterBackend.initExecutionCounts.get(node);
 	int init;
@@ -529,14 +539,16 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    init = initCounts.intValue();
 	}
 
-	p.print("  for (i = 0; i < "+init+"; i++) {\n");
-	p.print("    check_thread_status(state_flag_"+thread_id+",__thread_"+thread_id+");\n");
-	p.print("    __joiner_"+thread_id+"_work();\n");
+	p.print("  if (__steady_"+thread_id+" == 0) {\n");
+	p.print("    for (i = 0; i < "+init+"; i++) {\n");
+	p.print("      check_thread_status(state_flag_"+thread_id+",__thread_"+thread_id+");\n");
+	p.print("      __joiner_"+thread_id+"_work();\n");
+	p.print("    }\n");
 	p.print("  }\n");
+	p.print("  __steady_"+thread_id+"++;\n");
 
-	
-	p.print("  for (__steady_"+thread_id+" = 1; __steady_"+thread_id+" <= __number_of_iterations; __steady_"+thread_id+"++) {\n");	
-	p.print("    for (i = 0; i < "+ClusterBackend.steadyExecutionCounts.get(node)+"; i++) {\n");
+	p.print("  for (i = 0; i < __number_of_iterations; i++, __steady_"+thread_id+"++) {\n");	
+	p.print("    for (ii = 0; ii < "+ClusterBackend.steadyExecutionCounts.get(node)+"; ii++) {\n");
 	p.print("      check_thread_status(state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __joiner_"+thread_id+"_work();\n");
 	p.print("    }\n");
@@ -582,11 +594,17 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <node_server.h>\n");
 	p.print("#include <init_instance.h>\n");
 	p.print("#include <master_server.h>\n");
+	p.print("#include <save_state.h>\n");
+	p.print("#include <object_write_buffer.h>\n");
+	p.print("#include <ccp.h>\n");
 	p.println();
 
 	p.print("int __number_of_iterations = 20;\n");
 	p.print("vector <thread_info*> thread_list;\n");
 	p.print("int *current_thread_state_flag;\n");
+	p.print("mysocket *server = NULL;\n");
+	p.print("unsigned __ccp_ip = 0;\n");
+	p.print("int __init_iter = 0;\n");
 	p.println();
 
 	for (int i = 0; i < threadNumber; i++) {
@@ -619,31 +637,58 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("  master_pid = getpid();\n");
 
-	p.print("  if (argc > 1 && strcmp(argv[1], \"-console\") == 0) {\n");
-	p.print("    char line[256], tmp;\n");
-	p.print("    master_server *m = new master_server();\n");
-	p.print("    m->print_commands();\n");
-	p.print("    for (;;) {\n");
-	p.print("      printf(\"master> \");fflush(stdout);\n");
-	p.print("      line[0] = 0;\n");
-	p.print("      scanf(\"%[^\\n]\", line);scanf(\"%c\", &tmp);\n");
-	p.print("      m->process_command(line);\n");
-	p.print("    }\n");
-	p.print("  }\n");
+	p.print("  for (int a = 1; a < argc; a++) {");
 
-	p.print("  if (argc > 2 && strcmp(argv[1], \"-i\") == 0) {\n"); 
-	p.print("     int tmp;\n");
-	p.print("     sscanf(argv[2], \"%d\", &tmp);\n");
-	p.print("     printf(\"Argument is: %d\\n\", tmp);\n"); 
-	p.print("     __number_of_iterations = tmp;"); 
+	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-init\") == 0) {\n"); 
+	p.print("       int tmp;\n");
+	p.print("       sscanf(argv[a + 1], \"%d\", &tmp);\n");
+	p.print("       printf(\"Initial Iteration: %d\\n\", tmp);\n"); 
+	p.print("       __init_iter = tmp;"); 
+	p.print("    }\n");
+
+	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-i\") == 0) {\n"); 
+	p.print("       int tmp;\n");
+	p.print("       sscanf(argv[a + 1], \"%d\", &tmp);\n");
+	p.print("       printf(\"Number of Iterations: %d\\n\", tmp);\n"); 
+	p.print("       __number_of_iterations = tmp;"); 
+	p.print("    }\n");
+
+	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-ccp\") == 0) {\n");
+	p.print("       printf(\"CCP address: %s\\n\", argv[a + 1]);\n"); 
+	p.print("       __ccp_ip = lookup_ip(argv[a + 1]);\n");
+	p.print("    }\n");
+
+	p.print("    if (strcmp(argv[a], \"-runccp\") == 0) {\n");
+	p.print("      ccp c;\n");
+	p.print("      if (__init_iter > 0) c.set_init_iter(__init_iter);\n");
+	p.print("      c.run_ccp();\n");
+	p.print("    }\n");	
+
+	p.print("    if (strcmp(argv[a], \"-console\") == 0) {\n");
+	p.print("      char line[256], tmp;\n");
+	p.print("      master_server *m = new master_server();\n");
+	p.print("      m->print_commands();\n");
+	p.print("      for (;;) {\n");
+	p.print("        printf(\"master> \");fflush(stdout);\n");
+	p.print("        line[0] = 0;\n");
+	p.print("        scanf(\"%[^\\n]\", line);scanf(\"%c\", &tmp);\n");
+	p.print("        m->process_command(line);\n");
+	p.print("      }\n");
+	p.print("    }\n");
+
 	p.print("  }\n");
 
 	p.print("  pthread_t id;\n");
 
-	p.print("  init_instance::read_config_file();\n");
+	p.print("  if (__ccp_ip == 0) {\n");
+	p.print("    init_instance::read_config_file();\n");
+	p.print("  } else {\n");
+	p.print("    server = node_server::connect_to_ccp(__ccp_ip);\n");
+	p.print("    node_server::read_cluster_config(server, 6);\n");
+	p.print("  }\n");
 
 	for (int i = 0; i < threadNumber; i++) {
-	    p.print("  if (get_myip() == init_instance::get_node_ip("+i+")) {\n");
+	    p.print("  if (get_myip() == init_instance::get_thread_ip("+i+")) {\n");
 	    p.print("    __declare_sockets_"+i+"();\n");
 	    p.print("  }\n");
 	}
@@ -653,13 +698,12 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	for (int i = 0; i < threadNumber; i++) {
 
-	    p.print("  if (get_myip() == init_instance::get_node_ip("+i+")) {\n");
+	    p.print("  if (get_myip() == init_instance::get_thread_ip("+i+")) {\n");
 
 
 	    p.print("    current_thread_state_flag = (int*)malloc(sizeof(int));\n");
 	    p.print("    *current_thread_state_flag = RUN_STATE; // RUN\n");
 	    p.print("    pthread_create(&id, NULL, run_thread_"+i+", (void*)\"thread"+i+"\");\n");
-
 	    p.print("    thread_info *info = __get_thread_info_"+i+"();\n"); 
 	    p.print("    info->set_pthread(id);\n");
 	    p.print("    info->set_state_flag(current_thread_state_flag);\n");
@@ -671,7 +715,15 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("\n  signal(3, sig_recv);\n\n");
 
 	p.print("  node_server *node = new node_server(thread_list);\n");
-	p.print("  node->run_server();\n");
+
+	p.print("  if (server == NULL) {\n");
+	p.print("    for (;;) {\n");
+	p.print("      server = node->wait_for_connection();\n");
+	p.print("      node->run_server(server);\n");
+	p.print("    }\n");
+	p.print("  }\n");
+
+	p.print("  node->run_server(server);\n");
 
 	//p.print("  for (;;) {}\n");
 	

@@ -74,6 +74,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		("Optimizing "+
 		 ((SIRFilter)node.contents).getName()+"...");
 
+	
+
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
 	    if (!KjcOptions.nofieldprop) {
 		
@@ -102,6 +104,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    ((SIRFilter)node.contents).getMethods()[i].accept(new VarDeclRaiser());
 	}
 
+	
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
     
@@ -237,6 +240,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	p.print("int __counter_"+selfID+" = 0;\n");
 	p.print("int __steady_"+selfID+" = 0;\n");
 	p.print("int __tmp_"+selfID+" = 0;\n");
+	p.print("int __tmp2_"+selfID+" = 0;\n");
 	p.print("int *__state_flag_"+selfID+" = NULL;\n");
 	p.print("thread_info *__thread_"+selfID+" = NULL;\n");
 
@@ -833,6 +837,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	}
 	
+	print("  "+filter.getInit().getName()+"__"+selfID+"();");
+	print("  save_state::load_state("+selfID+", &__steady_"+selfID+", __read_thread__"+selfID+");\n");
 	print("\n  "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
 	
 	/*
@@ -852,7 +858,6 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	}
 
 	
-
 	print("    "+self.getWork().getName()+"__"+selfID+"();\n");
 	print("  } \n");
 

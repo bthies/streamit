@@ -86,7 +86,7 @@ public class FileWriter extends Filter
     /**
      * Destructor
      */
-    void DELETE ()
+    public void DELETE ()
     {
         try
         {

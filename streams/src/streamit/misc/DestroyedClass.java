@@ -40,7 +40,7 @@ public class DestroyedClass extends AssertedClass
 
     // DELETE member functions will be used
     // to provide the actual destructors
-    void DELETE () { }
+    public void DELETE () { }
 
     void Destroy ()
     {

@@ -88,12 +88,12 @@ class Counter extends Filter {   // this class is the last stage of a lattice fi
 public void init(){ 
    setOutput(Float.TYPE);
    setPush(1);
-   i = 0;
+   i = 1;
    }
 
 public void work(){
     output.pushFloat(i);
-    i = i+1;
+    i = 0;
  }
 }
 
@@ -107,13 +107,15 @@ class Lattice extends StreamIt {
 public void init() {
    add(new Counter());
    add(new ZeroStage());
-   add(new CompStage(2));
+   for (int i=2; i<10; i++)
+   add(new CompStage(i));
    add(new LastStage());
   }
 }
 
 
    
+
 
 
 

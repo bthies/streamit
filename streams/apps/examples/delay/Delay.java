@@ -15,10 +15,10 @@ class Delay extends FeedbackLoop {
 		    setPush(2); setPop(2);
                 }
                 public void work() {
-		    this.output.pushInt(this.input.peekInt(1));
-		    this.output.pushInt(this.input.peekInt(0));
-		    this.input.pop();
-		    this.input.pop();
+		    this.output.pushFloat(this.input.peekFloat(1));
+		    this.output.pushFloat(this.input.peekFloat(0));
+		    this.input.popFloat();
+		    this.input.popFloat();
                 }
 	    });
 	setJoiner(ROUND_ROBIN());
@@ -26,5 +26,9 @@ class Delay extends FeedbackLoop {
 
     public int initPathInt(int index) {
 	return 0;
+    }
+
+    public float initPathFloat(int index) {
+	return 0.0f;
     }
 }

@@ -1,0 +1,14 @@
+/**
+ * A simple adder which takes in N items and
+ * pushes out the sum of them.
+ **/
+float->float filter Adder(int N) {
+  work pop N push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) {
+      sum += pop();
+    }
+    push(sum);
+  }
+}
+

@@ -1,0 +1,10 @@
+/* This is a bandpass filter with the rather simple implementation of
+ * a low pass filter cascaded with a high pass filter. The relevant parameters
+ * are: end of stopband=ws and end of passband=wp, such that 0<=ws<=wp<=pi
+ * gain of passband and size of window for both filters. Note that the high 
+ * pass and low pass filters currently use a rectangular window.
+ **/
+float->float pipeline BandPassFilter(float gain, float ws, float wp, int numSamples) {
+  add LowPassFilter(1, wp, numSamples);
+  add HighPassFilter(gain, ws, numSamples);
+}

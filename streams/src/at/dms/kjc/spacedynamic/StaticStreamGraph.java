@@ -497,13 +497,6 @@ public class StaticStreamGraph
 	
 	createExecutionCounts();
 	dumpFlatGraph();
-	//update the flatnodes of this SSG list
-	topLevel.accept(new FlatVisitor() {
-		public void visitNode(FlatNode node) 
-		{
-		    flatNodes.add(node);
-		}
-	    }, null, true);
     }
 
     private void setBottomLevel() 
@@ -628,6 +621,12 @@ public class StaticStreamGraph
 	assert false;
 	return null;
     }
+
+    public List getFlatNodes() 
+    {
+	return flatNodes;
+    }
+    
 
     public FlatNode getTopLevel() {
 	assert topLevel != null : this.toString();

@@ -15,22 +15,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPhylum.java,v 1.3 2001-10-03 05:45:46 mgordon Exp $
+ * $Id: JPhylum.java,v 1.4 2002-05-06 18:30:08 thies Exp $
  */
 
 package at.dms.kjc;
-
 
 import java.util.Vector;
 import at.dms.compiler.PositionedError;
 import at.dms.compiler.TokenReference;
 import at.dms.util.MessageDescription;
+import at.dms.util.Utils;
 
 /**
  * This class represents the root class for all elements of the parsing tree
  */
-public abstract class JPhylum extends at.dms.compiler.Phylum implements Constants {
-
+public abstract class JPhylum extends at.dms.compiler.Phylum implements Constants, Finalizable {
     static Vector registry = new Vector (200);
     
     public static void add(JPhylum j) {
@@ -57,6 +56,16 @@ public abstract class JPhylum extends at.dms.compiler.Phylum implements Constant
 
     this.add(this);
   }
+
+
+  // ----------------------------------------------------------------------
+  // FINALIZABLE INTERFACE
+  // ----------------------------------------------------------------------
+
+    public void assertMutable() {
+	Utils.assert(!StreaMITMain.memoizer.isFinalized(this), 
+		     "A mutability check failed.");
+    }
 
   // ----------------------------------------------------------------------
   // ERROR HANDLING
@@ -151,8 +160,6 @@ public abstract class JPhylum extends at.dms.compiler.Phylum implements Constant
    * @param	p		the visitor
    */
   public abstract Object accept(AttributeVisitor p);
-
-    
 
   /**
    * Sets the line number of this phylum in the code sequence.

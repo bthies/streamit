@@ -1,5 +1,6 @@
 package at.dms.kjc.sir;
 
+import at.dms.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.lowering.Namer;
 import at.dms.kjc.sir.lowering.LoweringConstants;
@@ -11,7 +12,7 @@ import java.io.*;
 /**
  * This represents an operator in the stream graph.
  */
-public abstract class SIROperator extends at.dms.util.Utils {
+public abstract class SIROperator extends Utils implements Finalizable {
     /**
      * The stream structure containing this, or NULL if this is the
      * toplevel stream.
@@ -121,5 +122,13 @@ public abstract class SIROperator extends at.dms.util.Utils {
 
 	// return result
 	return result;
+    }
+
+    /**
+     * This should be called in every mutator.
+     */
+    public void assertMutable() {
+	Utils.assert(!StreaMITMain.memoizer.isFinalized(this), 
+		     "A mutability check failed.");
     }
 }

@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.5 2003-11-25 04:26:51 dmaze Exp $
+# $Id: run-reg-tests.py,v 1.6 2003-12-16 20:58:22 dmaze Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -47,6 +47,7 @@ class RunRegTests:
             self.prep()
             self.run_tests()
             self.report()
+            self.rt_report()
             self.set_latest()
         except PrepError, e:
             self.mail_admins(str(e))
@@ -175,6 +176,17 @@ and load 'results.qmr'.
         summary = pop.fromchild.read()
         pop.wait()
         self.mail_all(header + summary)
+
+    def rt_report(self):
+        os.mkdir(rt_root)
+        # Ignore errors (but hope it works).
+        os.spawnl(os.P_WAIT,
+                  os.path.join(regtest_root,
+                               'regtest/qmtest/rt-results.py'),
+                  'rt-results.py',
+                  os.path.join(self.streamit_home, 'results.qmr'),
+                  rt_root)
+        
 
     def mail_admins(self, contents):
         self.mail_to(admins, 'StreamIt Regression Test Log', contents)

@@ -1,6 +1,6 @@
 /*
  * StreamItParser.g: A grammar for StreamIt
- * $Id: StreamItParser.g,v 1.1 2002-06-12 17:57:29 dmaze Exp $
+ * $Id: StreamItParser.g,v 1.2 2002-06-28 21:20:30 dmaze Exp $
  */
 
 header {
@@ -25,7 +25,7 @@ program	:	(stream_decl)*
 
 stream_decl
 	:	struct_decl
-	|	filter_decl
+	|	(stream_type_decl TK_filter) => filter_decl
 	|	struct_stream_decl
 	;
 
@@ -74,7 +74,7 @@ inline_struct_stream_decl
 
 stream_inside_decl
 	:	init_decl
-	|	function_decl
+	|	(function_decl) => function_decl
 	|	variable_decl SEMI!
 	;
 
@@ -155,17 +155,21 @@ print_statement
 	;
 
 data_type
-	:
-		(	TK_int
-		|	TK_char
-		|	TK_void
-		|	id:ID
-		)
+	:	primitive_type
+	|	TK_complex primitive_type
+	|	TK_void
+	|	id:ID
+	;
+
+primitive_type
+	:	TK_int
+	|	TK_float
+	|	TK_double
 	;
 
 global_declaration
-	:	variable_decl SEMI!
-	|	function_decl
+	:	(function_decl) => function_decl
+	|	variable_decl SEMI!
 	|	struct_decl SEMI!
 	;
 

@@ -101,7 +101,7 @@ public class RawBackend {
 	}
 
 	Lifter.liftAggressiveSync(str);
-       	StreamItDot.printGraph(str, "before.dot");
+       	StreamItDot.printGraph(str, "before-partition.dot");
 
 	// gather application-characterization statistics
 	if (KjcOptions.stats) {
@@ -136,7 +136,7 @@ public class RawBackend {
 	    SJToPipe.doit(str);
 	}
 
-	StreamItDot.printGraph(str, "after.dot");
+	StreamItDot.printGraph(str, "after-partition.dot");
 
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);

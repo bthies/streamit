@@ -78,4 +78,28 @@ public class SchedSplitType extends SchedObject
 
     SchedObject getFirstChild () { return this; }
     SchedObject getLastChild () { return this; }
+
+
+    private String streamName = null;
+
+    public String getStreamName ()
+    {
+        if (streamName == null)
+        {
+            streamName =  "(" + getRoundConsumption () + ") " +
+                          super.getStreamName () +
+                          " (";
+
+            int i;
+            for (i = 0; i < splitWeights.size (); i++)
+            {
+                if (i != 0) streamName = streamName + ", ";
+                streamName = streamName + getOutputWeight (i);
+            }
+
+            streamName = streamName + ")";
+        }
+
+        return streamName;
+    }
 }

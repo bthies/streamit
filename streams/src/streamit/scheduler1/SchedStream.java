@@ -114,4 +114,18 @@ public abstract class SchedStream extends SchedObject
      * It can change where the (active) data is in the buffer.
      */
     abstract public void computeSteadySchedule ();
+
+    private String streamName = null;
+
+    public String getStreamName ()
+    {
+        if (streamName == null)
+        {
+            streamName =  "(" + getConsumption () + ", " + getPeekConsumption () + ") " +
+                          super.getStreamName () + "*" + getNumExecutions ().toString () +
+                          " (" + getProduction () + ")";
+        }
+
+        return streamName;
+    }
 }

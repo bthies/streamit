@@ -73,4 +73,29 @@ public class SchedJoinType extends SchedObject
 
     SchedObject getFirstChild () { return this; }
     SchedObject getLastChild () { return this; }
+
+
+    private String streamName = null;
+
+    public String getStreamName ()
+    {
+        if (streamName == null)
+        {
+            streamName = "(";
+
+            int i;
+            for (i = 0; i < joinWeights.size (); i++)
+            {
+                if (i != 0) streamName = streamName + ", ";
+                streamName = streamName + getInputWeight (i);
+            }
+
+            streamName =  streamName + ") " +
+                          super.getStreamName () +
+                          " (" + getRoundProduction () + ") ";
+
+        }
+
+        return streamName;
+    }
 }

@@ -1,0 +1,129 @@
+void->void pipeline BatcherSort {
+  int SIZE = 16;
+  int START = 8; //pow(2, ceil(log2(16)) - 1)
+  add IntSource(SIZE);
+  add BatcherPipe(SIZE,START);
+  add IntPrinter();
+}
+
+int->int pipeline BatcherPipe(int SIZE, int START) {
+  int test1 = 0;
+  int p;
+
+  for(p = START; (p > 0) ; p = p / 2) {
+    int d = p; 
+    int r = 0;
+    int q = START;
+    while(1 == 1) {
+      add BatcherStep(SIZE, p, d, r);
+//        add IntIdentityPrinter();
+      if (p == q)
+	break;
+      d = q - p;
+      q = q/2;
+      r = p;
+    }
+  }
+}
+
+int->int filter BatcherStep(int SIZE, int p, int d, int r) {
+  work push SIZE pop SIZE {
+    int [SIZE]ordering;
+    for(int i=0; i < SIZE; i++) {
+      ordering[i] = pop();
+    }
+
+    for(int i=0; i < SIZE - d; i++) {
+      if ((i & p) == r) {
+	if (ordering[i] > ordering[i + d]) {
+	  int temp = ordering[i];
+	  ordering[i] = ordering[i + d];
+	  ordering[i + d] = temp;
+	}
+      }
+    }
+
+    for(int i=0; i < SIZE; i++) {
+      push(ordering[i]);
+    }
+  }
+}
+
+//  int->int filter BatcherFilt(int SIZE, int START) {
+//    work push SIZE pop SIZE {
+//      int [SIZE]ordering;
+//      for(int i=0; i < SIZE; i++) {
+//        ordering[i] = pop();
+//      }
+
+//      int test1 = 0;
+//      int p;
+
+//      for(p = START; (p > 0) ; p = p / 2) {
+//        int d = p; 
+//        int r = 0;
+//        int q = START;
+//        while(1 == 1) {
+//  	for(int i=0; i < SIZE - d; i++) {
+//  	  if ((i & p) == r) {
+//  	    if (ordering[i] > ordering[i + d]) {
+//  	      int temp = ordering[i];
+//  	      ordering[i] = ordering[i + d];
+//  	      ordering[i + d] = temp;
+//  	    }
+//  	  }
+//  	}
+//  	if (p == q) 
+//  	  break;
+//  	d = q - p;
+//  	q = q/2;
+//  	r = p;
+//        }
+//      }
+//      for(int i=0; i < SIZE; i++) {
+//        push(ordering[i]);
+//      }
+//    }
+
+//  }  
+
+
+void->int filter IntSource(int SIZE) {
+  int [SIZE]data;
+  int index = 0;
+  init {
+    data[0] = 503; data[1] = 087; data[2] = 512;
+    data[3] = 061; data[4] = 908; data[5] = 170;
+    data[6] = 897; data[7] = 275; data[8] = 653;
+    data[9] = 426; data[10] = 154; data[11] = 509;
+    data[12] = 612; data[13] = 677; data[14] = 765;
+    data[15] = 703;
+  }
+
+  work push 1 {
+    push(data[index++]);
+    if (index == SIZE)
+      index = 0;
+  }
+}
+
+
+int->int filter IntIdentity() {
+  work push 1 pop 1 {
+    push(pop());
+  }
+}
+
+int->int filter IntIdentityPrinter() {
+  work push 1 pop 1 {
+    int i = pop();
+    print(i);
+    push(i);
+  }
+}
+
+int->void filter IntPrinter() {
+  work pop 1 {
+    print(pop());
+  }
+}

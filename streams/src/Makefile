@@ -115,13 +115,13 @@ streamit-eclipse.jar: $(JAVA_TARGET)
 	mkdir classes
 	$(STREAMIT_HOME)/misc/get-antlr antlr.jar
 	cd classes && jar xf ../antlr.jar
-	find . -name '*.class' | cpio -p -d -V classes
+	find . -name '*.class' -or -name '*.java' | cpio -p -d -V classes
 	find . -name '*.properties' | cpio -d -p -V classes
 	cd $(STREAMIT_HOME)/library/java && \
-		find . -name '*.class' | \
+		find . -name '*.class' -or -name '*.java' | \
 		cpio -p -d -V $(STREAMIT_HOME)/compiler/classes
 	cd $(STREAMIT_HOME)/eclipse && \
-		find . -name '*.class' | \
+		find . -name '*.class' -or -name '*.java' | \
 		cpio -p -d -V $(STREAMIT_HOME)/compiler/classes
 	echo "Main-Class: at.dms.kjc.Main" > manifest.streamit
 	jar cf $@ -C classes .

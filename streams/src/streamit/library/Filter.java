@@ -367,6 +367,7 @@ public abstract class Filter extends Stream
         try
         {
             if (schedName.equals ("work")) work (); else
+            if (schedName.equals ("prework")) prework (); else
             getClass().getMethod(phase.name, null).invoke(this, null);
         }
         catch (Throwable x)
@@ -465,6 +466,7 @@ public abstract class Filter extends Stream
     }
 
     public void work() { ERROR ("You must declare your own \"work\" function in a Filter!\n(unless you're using multi-phased Filters and don't have a \"work\"function"); }
+    public void prework() { ERROR ("You must declare your own \"prework\" function in a Filter!\n(unless you're using a filter that doesn't have a \"prework\"function"); }
 
     // provide some empty functions to make writing filters a bit easier
     public void init()

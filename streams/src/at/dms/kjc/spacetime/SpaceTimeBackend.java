@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.stats.StatisticsGathering;
+import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.*;
@@ -23,7 +24,7 @@ public class SpaceTimeBackend
     public static boolean FILTER_DEBUG_MODE = false;
     
     public static SIRStructure[] structures;
-    final private static boolean TEST_SOFT_PIPE = true; //Test Software Pipelining
+    final private static boolean TEST_SOFT_PIPE = false; //Test Software Pipelining
     final private static boolean TEST_BEAMFORMER = false; //Test SplitJoins
 
     
@@ -91,15 +92,25 @@ public class SpaceTimeBackend
 	//IterFactory.createFactory().createIter(str).accept(printer1);
 	//printer1.close();
 	
+	//Linear Analysis
+	LinearAnalyzer lfa=null;
+	if(KjcOptions.linearanalysis||KjcOptions.linearpartition) {
+	    System.out.println("Running linear analysis... ");
+	    lfa=LinearAnalyzer.findLinearFilters(str,KjcOptions.debug,false);
+	    System.out.println("Done with linear analysis.");
+	    LinearDot.printGraph(str,"linear.dot",lfa);
+	    LinearDotSimple.printGraph(str,"linear-simple.dot",lfa,null);
+	}
+	
 	//jasperln's Stuff
 	FlattenGraph.flattenGraph(str);
+	HashMap[] executionCounts=SIRScheduler.getExecutionCounts(str);
 	UnflatFilter[] topNodes=FlattenGraph.getTopLevelNodes();
 	System.out.println("Top Nodes:");
 	for(int i=0;i<topNodes.length;i++)
 	    System.out.println(topNodes[i]);
 	Trace[] traces=null;
 	if(TEST_BEAMFORMER) { //Test for simple one join-split (beamformer)
-	    HashMap[] executionCounts=SIRScheduler.getExecutionCounts(str);
 	    Trace[] traceGraph=TraceExtractor.extractTraces(topNodes,executionCounts);
 	    System.out.println("Traces: "+traceGraph.length);
 	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
@@ -188,7 +199,7 @@ public class SpaceTimeBackend
 	    }
 	} else { //Test Code with traces (Just for pipelines on raw greater than 4x4)
 	    ArrayList traceList=new ArrayList();
-	    HashMap[] executionCounts=SIRScheduler.getExecutionCounts(str);
+	    //HashMap[] executionCounts=SIRScheduler.getExecutionCounts(str);
 	    UnflatFilter currentFilter=topNodes[0];
 	    FilterContent content=new FilterContent(currentFilter.filter,executionCounts);
 	    if(TEST_SOFT_PIPE)
@@ -279,7 +290,26 @@ public class SpaceTimeBackend
 		//System.out.println(((Trace)traceList.get(i)).getHead());
 	    }
 	}
- 
+
+
+	StreaMITMain.clearParams();
+	FlattenGraph.clear();
+	AutoCloner.clear();
+	SIRContainer.destroy();
+	UnflatEdge.clear();
+	str=null;
+	interfaces=null;
+	interfaceTables=null;
+	structs=null;
+	structures=null;
+	lfa=null;
+	executionCounts=null;
+	topNodes=null;
+	System.gc();
+	//----------------------- This Is The Line -----------------------
+	//No Structure, No SIRStreams, Old Stuff Restricted Past This Point
+	//Violators Will Be Garbage Collected
+
 
 	//traceList=null;
 	//content=null;

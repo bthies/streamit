@@ -26,10 +26,12 @@ public class IMEMEstimation extends EmptyStreamVisitor
      */
     private boolean everythingFits = true;
     private static Random rand;
+    private static String user;
 
     static 
     {
 	rand = new Random(17);
+	user = getUser();
     }
 
     public void visitFilter(SIRFilter self,
@@ -98,7 +100,7 @@ public class IMEMEstimation extends EmptyStreamVisitor
 	
 	int length = Math.min(dir.length() , 20);
 
-	dir = dir.substring(0, length) + rand.nextInt(99999);
+	dir = dir.substring(0, length) + rand.nextInt(99999) + user;
 
 	System.out.println("Checking IMEM Size (DIR: " + dir + ") ...");	     
 	File file = new File(dir);
@@ -141,10 +143,11 @@ public class IMEMEstimation extends EmptyStreamVisitor
 	MakefileGenerator.createMakefile();
 	
 	try {
-	    //copy the files 
+	    //move the files 
 	    {
+		System.out.println("moving...");
 		String[] cmdArray = new String[5];
-		cmdArray[0] = "cp";
+		cmdArray[0] = "mv";
 		cmdArray[1] = "tile0.c";
 		cmdArray[2] = "Makefile.streamit";
 		cmdArray[3] = "fileio.bc";
@@ -152,21 +155,9 @@ public class IMEMEstimation extends EmptyStreamVisitor
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
 		jProcess.waitFor();
 	    }
-	    
-	    //remove the files
-	    {
-		String[] cmdArray = new String[4];
-		cmdArray[0] = "rm";
-		cmdArray[1] = "tile0.c";
-		cmdArray[2] = "Makefile.streamit";
-		cmdArray[3] = "fileio.bc";
-		Process jProcess = Runtime.getRuntime().exec(cmdArray);
-		jProcess.waitFor();
-	    }
-	    
-
 	    //now see if the compile succeeds
 	    {
+		System.out.println("build...");
 		String[] cmdArray = new String[6];
 		cmdArray[0] = "make";
 		cmdArray[1] = "-C";
@@ -184,7 +175,7 @@ public class IMEMEstimation extends EmptyStreamVisitor
 
 	    //now determine if the filter fit in IMEM
 	    {
-		
+		System.out.println("verify imem...");
 		String[] cmdArray = new String[6];
 		cmdArray[0] = "make";
 		cmdArray[1] = "-C";
@@ -198,9 +189,10 @@ public class IMEMEstimation extends EmptyStreamVisitor
 		//set the return value based on the exit code of the make 
 		fits = (jProcess.exitValue() == 0);
 	    }
-
+	    /*
 	    //remove the directory
 	    {
+		System.out.println("remove dir...");
  		String[] cmdArray = new String[3];
  		cmdArray[0] = "rm";
  		cmdArray[1] = "-rf";
@@ -208,6 +200,7 @@ public class IMEMEstimation extends EmptyStreamVisitor
  		Process jProcess = Runtime.getRuntime().exec(cmdArray);
  		jProcess.waitFor();
 	    }
+	    */
 	}
 	catch (Exception e) {
 	    e.printStackTrace();
@@ -231,6 +224,21 @@ public class IMEMEstimation extends EmptyStreamVisitor
 	}
 	return false;
     }
-    
+
+    private static String getUser() 
+    {
+	String myvar = "";
+	try {
+	    Process p = Runtime.getRuntime().exec("whoami");
+	    p.waitFor();
+	    BufferedReader br = new BufferedReader
+		( new InputStreamReader( p.getInputStream() ) );
+	    myvar = br.readLine();
+	}
+	catch (Exception e) {
+	    Utils.fail("Error getting user name");
+	}
+	return myvar;
+    }
 }
 

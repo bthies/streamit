@@ -78,10 +78,16 @@ public class SJFlatten
         // Things that we use often:
         SIRSplitter splitter = sj.getSplitter();
         SIRJoiner joiner = sj.getJoiner();
+        boolean dupSplitter;
         
         // Check that we meet the conditions; return the original
         // split/join if we don't.
-        if (splitter.getType() != SIRSplitType.DUPLICATE)
+        if (splitter.getType() == SIRSplitType.DUPLICATE)
+            dupSplitter = true;
+        else if (splitter.getType() == SIRSplitType.ROUND_ROBIN ||
+                 splitter.getType() == SIRSplitType.WEIGHTED_RR)
+            dupSplitter = false;
+        else
             return sj;
         if (joiner.getType() != SIRJoinType.ROUND_ROBIN &&
             joiner.getType() != SIRJoinType.WEIGHTED_RR)
@@ -98,7 +104,15 @@ public class SJFlatten
             if (!(str instanceof SIRFilter))
                 return sj;
             SIRFilter filter = (SIRFilter)str;
-            if (filter.getPopInt() != 1)
+            if (dupSplitter && filter.getPopInt() != 1)
+                return sj;
+            if (splitter.getType() == SIRSplitType.ROUND_ROBIN &&
+                filter.getPopInt() != 1)
+                return sj;
+            if (splitter.getType() == SIRSplitType.WEIGHTED_RR &&
+                filter.getPopInt() != splitter.getWeights()[i])
+                return sj;
+            if (!dupSplitter && filter.getPeekInt() != filter.getPopInt())
                 return sj;
             if (joiner.getType() == SIRJoinType.ROUND_ROBIN &&
                 filter.getPushInt() != 1)
@@ -127,7 +141,7 @@ public class SJFlatten
         }
 
         // So at this point we have an eligible split/join; flatten it.
-        JMethodDeclaration newWork = getWorkFunction(sj, children);
+        JMethodDeclaration newWork = getWorkFunction(sj, children, true);
         JFieldDeclaration[] newFields = getFields(sj, children);
         JMethodDeclaration[] newMethods = getMethods(sj, children);
 
@@ -210,7 +224,8 @@ public class SJFlatten
     }
 
     private static JMethodDeclaration getWorkFunction(SIRSplitJoin sj,
-                                                      List children)
+                                                      List children,
+                                                      boolean dupSplitter)
     {
         // Build the new work function; add the list of statements
         // from each of the component filters.
@@ -228,34 +243,44 @@ public class SJFlatten
             newStatements.addStatement(new JBlock(null, stmts, null));
         }
         
-        // Replace every pop with a peek(0).
-        // TODO: support more than one pop with more intelligent
-        // peeking.
-        newStatements.accept(new SLIRReplacingVisitor() {
-                public Object visitPopExpression(SIRPopExpression oldSelf,
-                                                 CType oldTapeType)
-                {
-                    // Recurse into children.
-                    SIRPopExpression self = (SIRPopExpression)
-                        super.visitPopExpression(oldSelf,
-                                                 oldTapeType);
-                    // Produce the new peek expression.
-                    SIRPeekExpression peek =
-                        new SIRPeekExpression(self.getTokenReference(),
-                                              new JIntLiteral(0));
-                    // Set the tape type appropriately.
-                    peek.setTapeType(self.getType());
-                    // And return it.
-                    return peek;
-                }
-            });
+        // If there's a duplicating splitter, we need to turn pops
+        // into peeks and add in a pop at the end to make everything
+        // work.  For a round-robin splitter, leaving pops as pops
+        // DTRT.
+        if (dupSplitter)
+        {
+            // Replace every pop with a peek(0).
+            // TODO: support more than one pop with more intelligent
+            // peeking.
+            // TODO: think harder about the location of peeks in
+            // relation to the pop.
+            newStatements.accept(new SLIRReplacingVisitor() {
+                    public Object visitPopExpression(SIRPopExpression oldSelf,
+                                                     CType oldTapeType)
+                    {
+                        // Recurse into children.
+                        SIRPopExpression self = (SIRPopExpression)
+                            super.visitPopExpression(oldSelf,
+                                                     oldTapeType);
+                        // Produce the new peek expression.
+                        SIRPeekExpression peek =
+                            new SIRPeekExpression(self.getTokenReference(),
+                                                  new JIntLiteral(0));
+                        // Set the tape type appropriately.
+                        peek.setTapeType(self.getType());
+                        // And return it.
+                        return peek;
+                    }
+                });
+            
+            // Add a single pop at the end.
+            SIRPopExpression pop = new SIRPopExpression();
+            pop.setTapeType(sj.getInputType());
+            newStatements.addStatement(new JExpressionStatement
+                                       (null, pop, null));
+        }
         
-        // Add a single pop at the end.
-        SIRPopExpression pop = new SIRPopExpression();
-        pop.setTapeType(sj.getInputType());
-        newStatements.addStatement(new JExpressionStatement(null, pop, null));
-        
-        // ...and make a new work function based on this.
+        // Now make a new work function based on this.
         JMethodDeclaration newWork =
             new JMethodDeclaration(null,
                                    at.dms.kjc.Constants.ACC_PUBLIC,

@@ -1,21 +1,146 @@
 import streamit.*;
 import java.lang.*;
 
+
+class Helper
+{
+    static short shortify(int a)
+    {
+	if (a >= 32767)
+	{
+	    return 32767;
+	}
+	else
+	{
+	    if (a <= -32768)
+	    {
+		return -32768;
+	    }
+	    else
+	    {
+		return (short) a;
+	    }
+	}
+    }
+    
+    static short gsm_add(short a, short b)
+    {
+	long ltmp = (long) a + (long) b;
+	if (ltmp >= 32767)
+	{
+	    return 32767;
+	}
+	else
+	{
+	    if (ltmp <= -32768)
+	    {
+		return -32768;
+	    }
+	    else
+	    {
+		return (short) ltmp;
+	    }
+	}
+    }
+
+    static short gsm_sub(short a, short b)
+    {
+	long ltmp = (long) a - (long) b;
+	if (ltmp >= 32767)
+	{
+	    return 32767;
+	}
+	else
+	{
+	    if (ltmp <= -32768)
+	    {
+		return -32768;
+	    }
+	    else
+	    {
+		return (short) ltmp;
+	    }
+	}
+    }
+
+    static short gsm_mult(short a, short b)
+    {
+	long temp = (long) a * (long) b >> 15;
+	if (temp >= 32767)
+	{
+	    return 32767;
+	}
+	else
+	{
+	    if (temp <= -32768)
+	    {
+		return -32768;
+	    }
+	    else
+	    {
+		return (short) temp;
+	    }
+	}       
+    }
+
+    static short gsm_mult_r(short a, short b)
+    {
+	long temp = ((long) a * (long) b) + 16384;
+	short answer = (short) (temp >> 15);
+	return answer;
+    }
+
+    static short gsm_abs(short a)
+    {
+	short answer;
+	if (a < 0)
+	{
+	    if (a == -32768)
+	    {
+		answer = 32767;
+	    }
+	    else
+	    {
+		int temp = a * -1;
+		if (temp >= 32767)
+		{
+		    answer = 32767;
+		}
+		else
+		{
+		    if (temp <= -32768)
+		    {
+			answer = -32768;
+		    }
+		    else
+		    {
+			answer = (short) temp;
+		    }
+		}
+	    }
+	}
+	else
+	{
+	    answer = a;
+	}
+	return answer;
+    }
+}
 class RPEDecodeFilter extends Filter 
 {
-    Channel input = new Channel(Integer.TYPE, 1);
-    Channel output = new Channel(Integer.TYPE, 1);
-    int[] mXmc;
+    Channel input = new Channel(Short.TYPE, 1);
+    Channel output = new Channel(Short.TYPE, 1);
+    short[] mXmc;
     static short[] FAC = {29218, 26215, 23832, 21846, 20165, 18725, 17476, 16384};
-    int[] xmp;
-    int[] ep;
+    short[] xmp;
+    short[] ep;
 
     public void init() 
     {
-	mXmc = new int[13];   //mSequence
+	mXmc = new short[13];   //mSequence
 	//others are in work() method	
-	xmp = new int[13]; //intermediary
-	ep = new int[40];  //output
+	xmp = new short[13]; //intermediary
+	ep = new short[40];  //output
     }
 
     public void work() 
@@ -26,22 +151,22 @@ class RPEDecodeFilter extends Filter
 	 *                     Mc - 2 bit grid positioning
 	 */
 	
-	for (int i = 0; i < 13; i++)
+	for (short i = 0; i < 13; i++)
 	{
-	    mXmc[i] = input.popInt();
+	    mXmc[i] = input.popShort();
 	}
-	int xmaxc = input.popInt();    //mRpeMagnitude
-	int mc = input.popInt();       //mRpeGridPosition
+	short xmaxc = input.popShort();    //mRpeMagnitude
+	short mc = input.popShort();       //mRpeGridPosition
 
 	 
 	//Get the exponent, mantissa of Xmaxc:
        
-	int exp = 0;
+	short exp = 0;
 	if (xmaxc > 15)
 	    {
-		exp = (xmaxc >> 3) - 1;
+		exp = Helper.gsm_sub(Helper.shortify(xmaxc >> 3), (short) 1);
 	    }
-	int mant = xmaxc - (exp << 3);
+	short mant = Helper.gsm_sub(xmaxc, Helper.shortify(exp << 3));
 	
 	//normalize mantissa 0 <= mant <= 7;
 	
@@ -54,10 +179,10 @@ class RPEDecodeFilter extends Filter
 	    {
 		while (mant <= 7) 
 		    {
-			mant = mant << 1 | 1;
+			mant = Helper.shortify(mant << 1 | 1);
 			exp--;
 		    }
-		mant -= 8;
+		mant = Helper.gsm_sub(mant, (short) 8);
 	    }
 	
 	/* 
@@ -66,18 +191,18 @@ class RPEDecodeFilter extends Filter
 	 *  the mantissa of xmaxc (FAC[0..7]).
 	 */
 	
-	int temp;
-	int temp1 = FAC[mant];
-	int temp2 = 6 - exp;
-	int temp3 = 1 << (temp2 - 1);
+	short temp;
+	short temp1 = FAC[mant];
+	short temp2 = Helper.gsm_sub((short) 6, exp);
+	short temp3 = Helper.shortify(1 << Helper.gsm_sub(temp2, (short) 1));
 
-	for (int i = 0; i < 13; i++)
+	for (short i = 0; i < 13; i++)
 	    {
-		temp = (mXmc[i] << 1) - 7;    //3 bit unsigned
+		temp = Helper.gsm_sub(Helper.shortify(mXmc[i] << 1), (short) 7);    //3 bit unsigned
 		temp <<= 12;                 //16 bit signed
-		temp = temp1 * temp;
-		temp += temp3;
-		xmp[i] = temp >> temp2;
+		temp = Helper.gsm_mult_r(temp1, temp);
+		temp = Helper.gsm_add(temp, temp3);
+		xmp[i] = Helper.shortify(temp >> temp2);
 	    }
 
 	/**
@@ -89,46 +214,46 @@ class RPEDecodeFilter extends Filter
 	 */
          //output!
 
-	for(int k = 0; k < 40; k++)
+	for(short k = 0; k < 40; k++)
 	    {
 		ep[k] = 0;
 	    }
-	for(int i = 0; i < 12; i++)
+	for(short i = 0; i < 12; i++)
 	    {
 		ep[mc + (3 * i)] = xmp[i];
 	    } 
 	//output the sucker!
-	for (int i = 0; i < ep.length; i++)
+	for (short i = 0; i < ep.length; i++)
 	{
-	    output.pushInt(ep[i]);
+	    output.pushShort(ep[i]);
 	}
     }
 }
 
 class LTPFilter extends Filter 
 {
-    Channel input = new Channel(Integer.TYPE, 1);
-    Channel output = new Channel(Integer.TYPE, 1);
+    Channel input = new Channel(Short.TYPE, 1);
+    Channel output = new Channel(Short.TYPE, 1);
 
-    static int[] QLB = {3277, 11469, 21299, 32767};
-    int[] drp;
-    int nrp;
+    static short[] QLB = {3277, 11469, 21299, 32767};
+    short[] drp;
+    short nrp;
    
     public void init() {
-	drp = new int[160];
+	drp = new short[160];
 	nrp = 40;   //initial condition
     }
 
     public void work()  //output:  drpp
     {
-	int mBcr = input.popInt();  //mLtpGain
-	int mNcr = input.popInt();  //mLtpOffset
+	short mBcr = input.popShort();  //mLtpGain
+	short mNcr = input.popShort();  //mLtpOffset
 	//do it!
-	for (int i = 0; i < 160; i++)
+	for (short i = 0; i < 160; i++)
 	{
-	    drp[i] = input.popInt(); //drp from AdditionUpdateFilter
+	    drp[i] = input.popShort(); //drp from AdditionUpdateFilter
 	}
-	int nr = mNcr;
+	short nr = mNcr;
 	if ((mNcr < 40) || (mNcr > 120))
 	{
 	    nr = nrp;
@@ -136,29 +261,29 @@ class LTPFilter extends Filter
 	nrp = nr;
 
 	//Decoding of the LTP gain mBcr
-	int brp = QLB[mBcr];
-	int drpp = 1;
-	for (int i = 121; i < 161; i++)
+	short brp = QLB[mBcr];
+	short drpp = 1;
+	for (short i = 121; i < 161; i++)
 	{
-	    drpp = brp * drp[i - nr];   //delay and multiply operations
+	    drpp = Helper.gsm_mult_r(brp, drp[i - nr]);   //delay and multiply operations
 	} 
 	
-	output.pushInt(drpp);   //eh!?!?  I can't pass around primitives?!
+	output.pushShort(drpp);   
     }
 }
 
 class AdditionUpdateFilter extends Filter 
 {
-    Channel input = new Channel(Integer.TYPE, 1);
-    Channel output = new Channel(Integer.TYPE, 1);
+    Channel input = new Channel(Short.TYPE, 1);
+    Channel output = new Channel(Short.TYPE, 1);
     
-    int[] ep;
-    int[] drp;
+    short[] ep;
+    short[] drp;
     public void init() 
     {
-	ep = new int[40]; //input
-	drp = new int[160];  //output
-	for (int i = 0; i < drp.length; i++)
+	ep = new short[40]; //input
+	drp = new short[160];  //output
+	for (short i = 0; i < drp.length; i++)
 	{
 	    drp[i] = 0;   //initial conditions
 	}
@@ -167,241 +292,277 @@ class AdditionUpdateFilter extends Filter
     public void work() 
     {
 	//get inputs:
-	for (int i = 0; i < 40; i++)
+	for (short i = 0; i < 40; i++)
 	{
-	    ep[i] = input.popInt();
+	    ep[i] = input.popShort();
 	}
-	int drpp = input.popInt();
+	short drpp = input.popShort();
 
-	for (int j = 121; j < 160; j++)  //add part!
+	for (short j = 121; j < 160; j++)  //add part!
 	{
-	    drp[j] = ep[j - 121] + drpp;
+	    drp[j] = Helper.gsm_add(ep[j - 121], drpp);
 	}
-	for (int k = 0; k < 120; k++)    //update part!
+	for (short k = 0; k < 120; k++)    //update part!
 	{
 	    drp[k] = drp[k + 40];
 	}
 	
-	for (int i = 0; i < drp.length; i++)  //output!
+	for (short i = 0; i < drp.length; i++)  //output!
 	{
-	    output.pushInt(drp[i]);
+	    output.pushShort(drp[i]);
 	}
     }
 }
 
 class ShortTermSynthFilter extends Filter 
 {
-    Channel input = new Channel(Integer.TYPE, 1);
-    Channel output = new Channel(Integer.TYPE, 1);
+    Channel input = new Channel(Short.TYPE, 1);
+    Channel output = new Channel(Short.TYPE, 1);
 
-    static int[] INVA = {13107, 13107, 13107, 13107, 19223, 17476, 31454, 29708};
-    static int[] MIC = {-32, -32, -16, -16, -8, -8, -4, -4};
-    static int[] B = {0, 0, 2048, -2560, 94, -1792};
+    static short[] INVA = {13107, 13107, 13107, 13107, 19223, 17476, 31454, 29708};
+    static short[] MIC = {-32, -32, -16, -16, -8, -8, -4, -4};
+    static short[] B = {0, 0, 2048, -2560, 94, -1792};
     
-    int[] mdrp;   //input
-    int[] mLARc;  //input
-    int[] mLARpp; //intermediary
-    int[] mprevLARpp; //intermediary
-    int[] mLARp;  //intermediary
-    int[] mrrp; //intermediary
-    int[] wt; //temporary array
-    int[] v; //temporary array
-    int[] sr; //output!
+    short[] mdrp;   //input
+    short[] mLARc;  //input
+    short[] mLARpp; //intermediary
+    short[] mprevLARpp; //intermediary
+    short[] mLARp;  //intermediary
+    short[] mrrp; //intermediary
+    short[] wt; //temporary array
+    short[] v; //temporary array
+    short[] sr; //output!
 
     public void init() 
     {
-	mdrp = new int[40];
-	mLARc = new int[8];
-	mLARpp = new int[8];
-	mprevLARpp = new int[8];
-	for(int i = 0; i < mprevLARpp.length; i++)
+	mdrp = new short[40];
+	mLARc = new short[8];
+	mLARpp = new short[8];
+	mprevLARpp = new short[8];
+	for(short i = 0; i < mprevLARpp.length; i++)
 	{
 	    mprevLARpp[i] = 0;
 	}
-	mLARp = new int[8];
-	mrrp = new int[8];
-	wt = new int[160];
-	v = new int[9];
-	for (int i = 0; i < v.length; i++)
+	mLARp = new short[8];
+	mrrp = new short[8];
+	wt = new short[160];
+	v = new short[9];
+	for (short i = 0; i < v.length; i++)
 	{
 	    v[i] = 0;
 	}
-	sr = new int[160];
+	sr = new short[160];
     }
 
     public void work() 
     {
-	for (int i = 0; i < mLARc.length; i++)
+	for (short i = 0; i < mLARc.length; i++)
 	{
-	    mLARc[i] = input.popInt();   //fix inputs!!
+	    mLARc[i] = input.popShort();   //fix inputs!!
 	}
-	for (int i = 0; i < mdrp.length; i++)
+	for (short i = 0; i < mdrp.length; i++)
 	{
-	    mdrp[i] = input.popInt();
+	    mdrp[i] = input.popShort();
 	}
 	
 	//Decoding of the coded Log-Area ratios:
-	for (int i = 0; i < 8; i++)
+	for (short i = 0; i < 8; i++)
 	{
-	    int temp1 = (mLARc[i] + MIC[i]) << 10;
-	    int temp2 = B[i] << 10;
-	    temp1 = temp1 - temp2;
-	    temp1 = INVA[i] * temp1;
-	    mLARpp[i] = temp1 + temp1;
+	    short temp1 = Helper.shortify((Helper.gsm_add(mLARc[i], MIC[i])) << 10);
+	    short temp2 = Helper.shortify(B[i] << 10);
+	    temp1 = Helper.gsm_sub(temp1, temp2);
+	    temp1 = Helper.gsm_mult_r(INVA[i], temp1);
+	    mLARpp[i] = Helper.gsm_add(temp1, temp1);
 	}
 	    //Computation of the quantized reflection coefficients
 
 	//Interpolation of mLARpp to get mLARp:
-	for (int k = 0; k < 13; k++)
+	for (short k = 0; k < 13; k++)
 	{
-	    for(int i = 0; i < 8; i++)
+	    for(short i = 0; i < 8; i++)
 	    {
-		mLARp[i] = (mprevLARpp[i] >> 2) + (mLARpp[i] >> 2);
-		mLARp[i] = mLARp[i] + (mprevLARpp[i] >> 1);
+		mLARp[i] = Helper.gsm_add(Helper.shortify(mprevLARpp[i] >> 2), Helper.shortify(mLARpp[i] >> 2));
+		mLARp[i] = Helper.gsm_add(mLARp[i],  Helper.shortify(mprevLARpp[i] >> 1));
 	    }
 	}
-	for (int k = 13; k < 27; k++)
+	for (short k = 13; k < 27; k++)
 	{
-	    for (int i = 0; i < 8; i++)
+	    for (short i = 0; i < 8; i++)
 	    {
-		mLARp[i] = (mprevLARpp[i] >> 1) + (mLARpp[i] >> 1);
+		mLARp[i] = Helper.gsm_add(Helper.shortify(mprevLARpp[i] >> 1), Helper.shortify(mLARpp[i] >> 1));
 	    }
 	}
-	for (int k = 27; k < 39; k++)
+	for (short k = 27; k < 39; k++)
         {
-	    for (int i = 0; i < 8; i++)
+	    for (short i = 0; i < 8; i++)
 	    {
-		mLARp[i] = (mprevLARpp[i] >> 2) + (mLARpp[i] >> 2);
-		mLARp[i] = mLARp[i] + (mLARpp[i] >> 1);
+		mLARp[i] = Helper.gsm_add(Helper.shortify(mprevLARpp[i] >> 2), Helper.shortify(mLARpp[i] >> 2));
+		mLARp[i] = Helper.gsm_add(mLARp[i], Helper.shortify(mLARpp[i] >> 1));
 	    }
 	}
-	for (int k = 40; k < 160; k++)
+	for (short k = 40; k < 160; k++)
 	{
-	    for (int i = 0; i < 8; i++)
+	    for (short i = 0; i < 8; i++)
 	    {
 		mLARp[i] = mLARpp[i];
 	    }
 	}
 	//set current LARpp to previous:
-	for (int j = 0; j < mprevLARpp.length; j++)
+	for (short j = 0; j < mprevLARpp.length; j++)
 	{
 	    mprevLARpp[j] = mLARpp[j];
 	}
 
 	//Compute mrrp[0..7] from mLARp[0...7]
-	for (int i = 0; i < 8; i++)
+	for (short i = 0; i < 8; i++)
 	{
-	    int temp = Math.abs(mLARp[i]);
+	    short temp = Helper.gsm_abs(mLARp[i]);
 	    if (temp < 11059)
 	    {
-		temp = temp << 1;
+		temp = Helper.shortify(temp << 1);
 	    }
 	    else 
 	    {
 		if (temp < 20070)
 		{
-		    temp = temp + 11059;
+		    temp = Helper.gsm_add(temp, (short) 11059);
 		}
 		else
 		{
-		    temp = (temp >> 2) + 26112;
+		    temp = Helper.gsm_add((short) (temp >> 2), (short) 26112);
 		}
 	    }
 	    mrrp[i] = temp;
 	    if (mLARp[i] < 0)
 	    {
-		mrrp[i] = 0 - mrrp[i];
+		mrrp[i] = Helper.gsm_sub((short) 0, mrrp[i]);
 	    }
 	}
 
 	//Short term synthesis filtering:  uses drp[0..39] and rrp[0...7] 
 	// to produce sr[0...159].  A temporary array wt[0..159] is used.
-	for (int k = 0; k < 40; k++)
+	for (short k = 0; k < 40; k++)
 	{
 	    wt[k] = mdrp[k];
 	}
-	for (int k = 0; k < 40; k++)
+	for (short k = 0; k < 40; k++)
 	{
 	    wt[40+k] = mdrp[k];
 	}
-	for (int k = 0; k < 40; k++)
+	for (short k = 0; k < 40; k++)
 	{
 	    wt[80+k] = mdrp[k];
 	}
-	for (int k = 0; k < 40; k++)
+	for (short k = 0; k < 40; k++)
 	{
 	    wt[120+k] = mdrp[k];
 	}
 	//below is supposed to be from index_start to index_end...how is
 	//this different from just 0 to 159?
-	for (int k = 0; k < 160; k++)
+	for (short k = 0; k < 13; k++)
 	{
-	    int sri = wt[k];
-	    for (int i = 1; i < 8; i++)
+	    short sri = wt[k];
+	    for (short i = 1; i < 8; i++)
 	    {
-		sri = sri - (mrrp[8-i] * v[8-i]);
-		v[9-i] = v[8-i] + (mrrp[8-i] * sri);
+		sri = Helper.gsm_sub(sri, Helper.gsm_mult(mrrp[8-i], v[8-i]));
+		v[9-i] = Helper.gsm_add(v[8-i], Helper.gsm_mult_r(mrrp[8-i], sri));
 	    }
 	    sr[k] = sri;
 	    v[0] = sri;
 	}
-	
-	for (int j = 0; j < sr.length; j++)
+
+	for (short k = 13; k < 27; k++)
 	{
-	    output.pushInt(sr[j]);
+	    short sri = wt[k];
+	    for (short i = 1; i < 8; i++)
+	    {
+		sri = Helper.gsm_sub(sri, Helper.gsm_mult(mrrp[8-i], v[8-i]));
+		v[9-i] = Helper.gsm_add(v[8-i], Helper.gsm_mult_r(mrrp[8-i], sri));
+	    }
+	    sr[k] = sri;
+	    v[0] = sri;
+	}
+
+	for (short k = 27; k < 40; k++)
+	{
+	    short sri = wt[k];
+	    for (short i = 1; i < 8; i++)
+	    {
+		sri = Helper.gsm_sub(sri, Helper.gsm_mult(mrrp[8-i], v[8-i]));
+		v[9-i] = Helper.gsm_add(v[8-i], Helper.gsm_mult_r(mrrp[8-i], sri));
+	    }
+	    sr[k] = sri;
+	    v[0] = sri;
+	}	
+
+	for (short k = 40; k < 160; k++)
+	{
+	    short sri = wt[k];
+	    for (short i = 1; i < 8; i++)
+	    {
+		sri = Helper.gsm_sub(sri, Helper.gsm_mult(mrrp[8-i], v[8-i]));
+		v[9-i] = Helper.gsm_add(v[8-i], Helper.gsm_mult_r(mrrp[8-i], sri));
+	    }
+	    sr[k] = sri;
+	    v[0] = sri;
+	}
+
+	for (short j = 0; j < sr.length; j++)
+	{
+	    output.pushShort(sr[j]);
 	}
     }
 }
 
 class PostProcessingFilter extends Filter 
 {
-    int[] mSr;  //input
-    int[] sro; //output of PostProcessing, input to upscaling/truncation
-    int[] srop; //output
-    int msr;
+    short[] mSr;  //input
+    short[] sro; //output of PostProcessing, input to upscaling/truncation
+    short[] srop; //output
+    short msr;
 
-    Channel input = new Channel(Integer.TYPE, 1);
-    Channel output = new Channel(Integer.TYPE, 1);
+    Channel input = new Channel(Short.TYPE, 1);
+    Channel output = new Channel(Short.TYPE, 1);
 
     public void init() 
     {
-	mSr = new int[160];
-	sro = new int[160];
-	srop = new int[160];
+	mSr = new short[160];
+	sro = new short[160];
+	srop = new short[160];
 	msr = 0; //initial condition
     }
 
     public void work() 
     {
-	for (int i = 0; i < mSr.length; i++)
+	for (short i = 0; i < mSr.length; i++)
 	{
-	    mSr[i] = input.popInt();
+	    mSr[i] = input.popShort();
 	}
 
 	//De-emphasis filtering!
-	for (int k = 0; k < mSr.length; k++)
+	for (short k = 0; k < mSr.length; k++)
 	{
-	    int temp = mSr[k] + (msr * 28180);
+	    short temp = Helper.gsm_add(mSr[k], Helper.gsm_mult_r(msr, (short) 28180));
 	    msr = temp;
 	    sro[k] = msr;
 	}
 
 	//upscaling of output signal:
-	for (int k = 0; k < srop.length; k++)
+	for (short k = 0; k < srop.length; k++)
 	{
-	    srop[k] = sro[k] + sro[k];
+	    srop[k] = Helper.gsm_add(sro[k], sro[k]);
 	}
 
 	//truncation of the output variable:
-	for (int k = 0; k < srop.length; k++)
+	for (short k = 0; k < srop.length; k++)
 	{
-	    srop[k] = srop[k] >> 3;
-	    srop[k] = srop[k] << 3;
+	    srop[k] = Helper.shortify(srop[k] / 8);
+	    srop[k] = Helper.gsm_mult(srop[k], (short) 8);
 	}
 	
-	for (int j = 0; j < srop.length; j++)
+	for (short j = 0; j < srop.length; j++)
 	{
-	    output.pushInt(srop[j]);
+	    output.pushShort(srop[j]);
 	}
     }
 }
@@ -410,15 +571,69 @@ class DecoderFeedback extends FeedbackLoop
 {
     public void init()
     {
-	this.setJoiner(ROUND_ROBIN ());
-	this.setBody(new AdditionUpdateFilter());
-	this.setSplitter(DUPLICATE ());
-	this.setLoop(new LTPFilter());
+	this.setJoiner(WEIGHTED_ROUND_ROBIN (40, 1));  //sequence: ep[0....39], drpp
+  	this.setBody(new AdditionUpdateFilter());
+	this.setSplitter(DUPLICATE ());   
+	//note:  although drp[120...159] are all that are
+	//       required for ShortTermSynth, this is currently
+	//       the simplest way to implement things, theinput will be filtered internally.
+ 	this.setLoop(new LTPLoopStream());
+    }
+}
+
+class LTPLoopStream extends Stream
+{
+    public void init()
+    {
+	this.add(new LTPInputSplitJoin());
+	this.add(new LTPFilter());
+    }
+}
+
+class LTPInputSplitJoin extends SplitJoin
+{
+    public void init()
+    {
+	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));
+	this.add(new LTPInputFilter());
+	this.add(IDENTITY());
+	this.setJoiner(WEIGHTED_ROUND_ROBIN(2, 160)); //bcr, ncr, drp[0...159]
     }
 }
 
 
+class LARInputSplitJoin extends SplitJoin
+{
+    public void init()
+    {
+	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));  //we don't care about it going to in2
+	this.add(IDENTITY());
+	this.add(new LARInputFilter());	
+	this.setJoiner(WEIGHTED_ROUND_ROBIN(160, 8));  //drp[0...160], LARc[0...7];
+    }
+}
 
+class LARInputFilter extends Filter
+{
+    public void init()
+    {
+    }
+
+    public void work()
+    {
+    }
+}
+
+class LTPInputFilter extends Filter
+{
+    public void init()
+    {
+    }
+
+    public void work()
+    {
+    }
+}
 
 
 public class StGsmDecoder extends StreamIt 
@@ -433,10 +648,14 @@ public class StGsmDecoder extends StreamIt
     public void init() {
 	this.add(new RPEDecodeFilter());
 	this.add(new DecoderFeedback());
+	this.add(new LARInputSplitJoin());
 	this.add(new ShortTermSynthFilter());
 	this.add(new PostProcessingFilter());
     }
 }
  
+
+
+
 
 

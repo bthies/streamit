@@ -45,6 +45,14 @@ public class LoweringConstants {
      */
     public static final String OUTPUT_TAPE_NAME = "outTape";
 
+    /**
+     * Returns the name of the <i>'th child for use as a variable name
+     * in the structure for a stream construct.  
+     */
+    public static String getChildName(int childNum) {
+	return "child" + childNum;
+    }
+
     public static JFieldDeclaration getContextField() {
 	// define a variable
 	JVariableDefinition var = 
@@ -62,4 +70,58 @@ public class LoweringConstants {
 				     /* comments */ null);
     }
 
+    /**
+     * Returns a field declaration for the input tape of structures.  
+     */
+    public static JFieldDeclaration getInTapeField() {
+	return getTapeField(INPUT_TAPE_NAME);
+    }
+
+    /**
+     * Returns a field declaration for the output tape of structures.  
+     */
+    public static JFieldDeclaration getOutTapeField() {
+	return getTapeField(OUTPUT_TAPE_NAME);
+    }
+
+    /**
+     * Returns a field declaration for the tape fields of structures.  
+     */
+    private static JFieldDeclaration getTapeField(String name) {
+	// define a variable
+	JVariableDefinition var = 
+	    new JVariableDefinition(/* tokenref */ null, 
+				    /* modifiers */ at.dms.kjc.
+				    Constants.ACC_PUBLIC,
+				    /* type */ CClassType.lookup(
+					       TAPE_TYPE_NAME),
+				    /* identifier  */ name,
+				    /* initializer */ null);
+	// return the field
+	return new JFieldDeclaration(/* tokenref */ null, 
+				     /* variable */ var, 
+				     /* javadoc  */ null, 
+				     /* comments */ null);
+    }
+
+
+    /**
+     * Given that the name of a stream structure is <streamName>, and
+     * the name of a method in that structure is <methodName>, returns
+     * the name for that methd in the flattened class.
+     * */
+    public static String getMethodName(String streamName, String methodName) {
+	return streamName + "_" + methodName;
+    }
+
+    /**
+     * Returns the name of the flattened work function for <filter>.
+     */
+    public static String getWorkName(SIRStream str) {
+	return getMethodName(str.getName(), "work");
+    }
 }
+
+
+
+

@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.6 2001-10-03 05:45:46 mgordon Exp $
+## $Id: Makefile,v 1.7 2001-10-03 09:15:09 thies Exp $
 ##
 
 TOPDIR =	..
@@ -61,7 +61,7 @@ JAVAFILES +=	BytecodeOptimizer					\
 		DefaultFilter JCheckedExpression KjcPrettyPrinter	\
 		KjcScanner KjcVisitor KjcEmptyVisitor Main 		\
 		MethodSignatureParser AttributeVisitor                  \
-		SLIRVisitor SIRPrinter
+		SLIRVisitor
 
 
 # Syntax tree classes

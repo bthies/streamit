@@ -61,5 +61,12 @@ public abstract class SIRStream extends SIROperator {
 	this.init = init;
     }
 
+    /**
+     * gets the init function
+     */
+    public JMethodDeclaration getInit() {
+	return init;
+    }
+
 }
 

@@ -15,7 +15,7 @@
 ## License along with this library; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.2 2001-10-02 17:35:50 thies Exp $
+## $Id: Makefile,v 1.3 2001-10-03 09:15:45 thies Exp $
 ##
 
 TOPDIR =	..
@@ -31,7 +31,7 @@ PACKAGE =	at/dms/util
 JAVAFILES +=	ArrayLocator Utils CharArrayCache FormattedException	\
 		InconsistencyException Message MessageDescription	\
 		NotImplementedException Options				\
-		SimpleStringBuffer UnicodeReader IRPrinter
+		SimpleStringBuffer UnicodeReader IRPrinter SIRPrinter
 
 
 ## ----------------------------------------------------------------------

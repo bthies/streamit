@@ -83,16 +83,23 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 			      JFieldDeclaration[] fields, 
 			      List children) {
 
-	// there is one field for each child, plus one for the context
-	JFieldDeclaration[] classFields = new JFieldDeclaration[children.size()
-							       + fields.length
-							       + 1];
+	// there is one field for each child, plus one for the context,
+	// plus two for the in and out tapes
+	JFieldDeclaration[] classFields = 
+	    new JFieldDeclaration[children.size()
+				 + fields.length
+				 + 1 /* context */
+				 + 2 /* in/out tapes */];
 
 	// pos tracks our filling up of <classFields>
 	int pos = 0;
 
 	// fill in the context
 	classFields[pos++] = LoweringConstants.getContextField();
+
+	// fill in the in/out tapes
+	classFields[pos++] = LoweringConstants.getInTapeField();
+	classFields[pos++] = LoweringConstants.getOutTapeField();
 
 	// fill in the fields of the class
 	for (int i=0; i<fields.length; i++) {
@@ -104,7 +111,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	    // the name of the type in the structure
 	    String typeName = ((SIROperator)children.get(i)).getName();
 	    // the name for the variable in the structure
-	    String varName = "child" + i;
+	    String varName = LoweringConstants.getChildName(i);
 	    // define a variable of the structure
 	    JVariableDefinition var = 
 		new JVariableDefinition(/* tokenref */ null, 
@@ -168,7 +175,9 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	// for each method
 	for (int i=0; i<methods.length; i++) {
 	    // rename the method
-	    methods[i].setName(streamName+"_"+methods[i].getName());
+	    methods[i].setName(LoweringConstants.
+			       getMethodName(streamName, 
+					     methods[i].getName()));
 	    // add the parameter
 	    addParameter(methods[i], 
 			 streamName, 
@@ -233,7 +242,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	// create struct type
 	createStruct(self.getName(), fields, EMPTY_LIST);
 	// add tape parameters to work function
-	addTapeParameters(work);
+	//addTapeParameters(work);
 	// add closure-referencing to methods
 	flattenMethods(self.getName(), methods);
     }

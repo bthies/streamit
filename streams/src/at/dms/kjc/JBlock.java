@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.3 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JBlock.java,v 1.4 2001-10-03 09:15:09 thies Exp $
  */
 
 package at.dms.kjc;
@@ -63,6 +63,23 @@ public class JBlock extends JStatement {
   public boolean isEmpty() {
     return body.length == 0;
   }
+
+    /**
+     * Adds <statement> to this.
+     */
+    public void addStatement(JStatement statement) {
+	// make new array
+	JStatement[] newStatements = 
+	    new JStatement[body.length + 1];
+	// add extra
+	newStatements[0] = statement;
+	// copy old into new
+	for (int i=0; i<body.length; i++) {
+	    newStatements[i+1] = body[i];
+	}
+	// set old to new
+	body = newStatements;
+    }
 
   // ----------------------------------------------------------------------
   // SEMANTIC ANALYSIS
@@ -133,5 +150,5 @@ public class JBlock extends JStatement {
 	return body;
     }
 
-  protected final JStatement[]		body;
+  protected JStatement[]		body;
 }

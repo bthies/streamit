@@ -134,7 +134,7 @@ public class SIRBuilder {
 	SIRFilter f2 = new SIRFilter(toplevel,
 				     /* fields */ JFieldDeclaration.EMPTY,
 				     /* methods */ meth2,
-				     /* peek, pop, push */ 1, 1, 0,
+				     /* peek, pop, push */ 2, 2, 0,
 				     /* work */ meth2[1],
 				     /* i/o type */ type2, type2);
 

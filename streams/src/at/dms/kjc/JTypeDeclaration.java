@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTypeDeclaration.java,v 1.1 2001-08-30 16:32:52 thies Exp $
+ * $Id: JTypeDeclaration.java,v 1.2 2001-10-03 09:15:09 thies Exp $
  */
 
 package at.dms.kjc;
@@ -114,6 +114,23 @@ public abstract class JTypeDeclaration extends JMemberDeclaration {
       sourceClass.setModifiers(modifiers);
     }
   }
+
+  /**
+   * Adds <method> to this.
+   */
+    public void addMethod(JMethodDeclaration method) {
+	// make new array
+	JMethodDeclaration[] newMethods = 
+	    new JMethodDeclaration[methods.length + 1];
+	// add extra method
+	newMethods[0] = method;
+	// copy old into new
+	for (int i=0; i<methods.length; i++) {
+	    newMethods[i+1] = methods[i];
+	}
+	// set old to new
+	methods = newMethods;
+    }
 
   /**
    * Checks whether this type is nested.
@@ -375,3 +392,4 @@ public abstract class JTypeDeclaration extends JMemberDeclaration {
   protected	CSourceClass		sourceClass;
   private	boolean			uniqueSourceClass = true;
 }
+

@@ -148,12 +148,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     //will be set...
     private void initBuiltinFilters() {
 	SIRFileReader fr = new SIRFileReader();
+	fr.setInit(SIRStream.makeEmptyInit());
 	addVisitedOp("FileReader", fr);
 	
 	SIRFileWriter fw = new SIRFileWriter();
+	fw.setInit(SIRStream.makeEmptyInit());
 	addVisitedOp("FileWriter", fw);
 
 	SIRIdentity sirId = new SIRIdentity(null);
+	// init set in SIRIdentity.setType
 	addVisitedOp("Identity", sirId);
     }	
 		     
@@ -433,9 +436,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	if (stream instanceof SIRFileReader) {
 	    if (args.length != 2) 
 		at.dms.util.Utils.fail(lineNumber + ": Exactly 2 args required for FileReader");
-	    if (!(args[0] instanceof JStringLiteral))
-		at.dms.util.Utils.fail(lineNumber + ": First argument to FileReader must be a string");
-	    ((SIRFileReader)stream).setFileName(((JStringLiteral)args[0]).stringValue());
+	    ((SIRFileReader)stream).setFileName(args[0]);
 	    //the second arg will be turned into string by visitFieldExpression because it is a type
 	    if (!(args[1] instanceof JStringLiteral))
 		at.dms.util.Utils.fail(lineNumber + ": Second argument to FileReader must be a type");
@@ -446,9 +447,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	else if (stream instanceof SIRFileWriter) {
 	    if (args.length != 2) 
 		at.dms.util.Utils.fail(lineNumber + ": Exactly 2 args required for FileWriter");
-	    if (!(args[0] instanceof JStringLiteral))
-		at.dms.util.Utils.fail(lineNumber + ": First argument to FileWriter must be a string");
-	    ((SIRFileWriter)stream).setFileName(((JStringLiteral)args[0]).stringValue());
+	    ((SIRFileWriter)stream).setFileName(args[0]);
 	    //the second arg will be turned into string by visitFieldExpression because it is a type
 	    if (!(args[1] instanceof JStringLiteral))
 		at.dms.util.Utils.fail(lineNumber + ": Second argument to FileWriter must be a type");

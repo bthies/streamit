@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JStringLiteral.java,v 1.12 2005-04-06 12:01:52 thies Exp $
+ * $Id: JStringLiteral.java,v 1.13 2005-04-06 13:29:12 thies Exp $
  */
 
 package at.dms.kjc;
@@ -42,6 +42,9 @@ public class JStringLiteral extends JLiteral {
    */
   public JStringLiteral(TokenReference where, String image) {
     this(where, image, false);
+  }
+  public JStringLiteral(String image) {
+    this(null, image, false);
   }
 
   /**

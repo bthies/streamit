@@ -12,20 +12,40 @@ import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.partition.*;
 
+import at.dms.kjc.cluster.DataEstimate;
+import at.dms.kjc.cluster.CodeEstimate;
+
 class CConfigFilter extends CConfig {
     /**
      * The filter corresponding to this.
      */
+
+    private FusionInfo fusion_info;
     private SIRFilter filter;
-	
+
     public CConfigFilter(SIRFilter filter, CachePartitioner partitioner) {
 	super(partitioner);
 	this.filter = filter;
+	
+	//estimate work, code size and data size
+	int work_estimate = partitioner.getWorkEstimate().getWork(filter);
+	int code_size = getICodeSize();
+	int data_size = DataEstimate.estimateDWS(filter);
+	int input = DataEstimate.getTypeSize(filter.getInputType());
+	int output = DataEstimate.getTypeSize(filter.getInputType());
+	fusion_info = new FusionInfo(work_estimate, work_estimate, code_size, data_size, filter.getPopInt(), filter.getPeekInt(), filter.getPushInt(), input, output);	
+    }
+
+    public int numberOfTiles() {
+	return 1;
+    }
+
+    public FusionInfo getFusionInfo() {
+	return fusion_info;
     }
 
     public CCost get(int tileLimit) {
-	int cost = partitioner.getWorkEstimate().getWork(filter);
-	return new CCost(cost, getICodeSize());
+	return getFusionInfo().getCost();
     }
 
     /**
@@ -50,7 +70,8 @@ class CConfigFilter extends CConfig {
 
     public SIRStream getStream() {
 	return filter;
-    }
+    }    
+
 
     /**
      * Add this to the map and return.

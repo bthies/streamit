@@ -16,7 +16,7 @@ abstract class CConfigContainer extends CConfig {
     /**
      * Container we're wrapping
      */
-    private SIRContainer cont;
+    protected SIRContainer cont;
     /**
      * C[n][x1][x2] is best cost if children x1..x2 are assigned to
      * <n> tiles.
@@ -122,6 +122,30 @@ abstract class CConfigContainer extends CConfig {
 	    return child;
 	}
 
+	
+	if (this instanceof CConfigSplitJoin) {
+	    int tiles = this.numberOfTiles();
+	    if (tiles == 1) {
+		return fuseAll(partitions, curPartition, x1, x2, tileLimit, str);   
+	    }
+
+	    return doCut(partitions, curPartition, x1, x2, x1, tileLimit, 0, str);
+	}
+
+
+	if (this instanceof CConfigPipeline) {
+	    
+	    int next = ((CConfigPipeline)this).findGreedyCut(x1, x2);
+	    if (next == -1) {
+		return fuseAll(partitions, curPartition, x1, x2, tileLimit, str);   
+	    }
+	    
+	    return doCut(partitions, curPartition, x1, x2, next, tileLimit, 0, str);
+	}
+	
+
+	/*
+
 	// if we only have one tile left, return fusion transform with
 	// children fused first
 	if (tileLimit==1) {
@@ -141,13 +165,15 @@ abstract class CConfigContainer extends CConfig {
 	    }
 	}
 
+	*/
+
 	Utils.fail("Could not find traceback.");
 	return null;
     }
 
     protected abstract SIRStream doCut(LinkedList partitions, PartitionRecord curPartition,
 				       int x1, int x2, int xPivot, int tileLimit, int tPivot, SIRStream str);
-
+    
     /**
      * Fuses everyone in range.
      */
@@ -194,19 +220,30 @@ abstract class CConfigContainer extends CConfig {
 	// if one of children is unfusable filter (e.g., FileWriter),
 	// then return infinite cost
 	if (unfusableFilter(x1, x2)) {
-	    return new CCost(Integer.MAX_VALUE/2-1, 
-			     CachePartitioner.ICODE_THRESHOLD+1);
+	    return new CCost(Integer.MAX_VALUE/2-1);
 	}
 	
-	// sum across all children
-	CCost cost = new CCost(0, 0);
-	
-	for (int i=x1; i<=x2; i++) {
-	    cost = CCost.add(cost, childConfig(i).get(1));
-	    cost = CCost.add(cost, fusionOverhead());
+	// check if this is a split join!
+
+	if (this instanceof CConfigSplitJoin && (x1>0 || x2<cont.size()-1)) {
+	    return new CCost(Integer.MAX_VALUE/2-1);
+	}
+	    
+	if (this instanceof CConfigSplitJoin) {
+	    return getFusionInfo().getCost();
 	}
 
-	return cost;
+	// check if this is a pipeline
+
+	if (this instanceof CConfigPipeline) {
+	    CConfigPipeline pipe = (CConfigPipeline)this;
+	    return pipe.getFusionInfo(x1, x2).getCost();
+	}
+
+	// not a split join, not a pipeline -> error
+
+	assert (1 == 0);
+	return new CCost(0);
     }
 
     /**

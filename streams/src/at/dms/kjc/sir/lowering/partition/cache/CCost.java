@@ -2,26 +2,17 @@ package at.dms.kjc.sir.lowering.partition.cache;
 
 class CCost {
     /**
-     * The overall cost (includes icode cost, if the icode threshold
-     * is exceeded.)  Taken as the sum over child nodes.
+     * The cost of a single fused partition or a set of partitions
+     * including various fusion overheads.
      */
     private final int cost;
-    /**
-     * The maximum icode size of any component within the container.
-     */
-    private final int iCodeSize;
 
-    public CCost(int cost, int iCodeSize) {
+    public CCost(int cost) {
 	this.cost = cost;
-	this.iCodeSize = iCodeSize;
     }
 
     public int getCost() {
 	return cost;
-    }
-
-    public int getICodeSize() {
-	return iCodeSize;
     }
 
     /**
@@ -29,8 +20,7 @@ class CCost {
      * everything.
      */
     public static CCost MAX_VALUE() {
-	return new CCost(Integer.MAX_VALUE/2-1,
-			 Integer.MAX_VALUE/2-1);
+	return new CCost(Integer.MAX_VALUE/2-1);
     }
 
     /**
@@ -47,17 +37,13 @@ class CCost {
      */
     public static CCost combine(CCost cost1, CCost cost2) {
 	int cost = cost1.getCost() + cost2.getCost();
-	int iCode = Math.max(cost1.getICodeSize(), cost2.getICodeSize());	
 
 	// keep within range so that we can add again
 	if (cost > Integer.MAX_VALUE/2-1) {
 	    cost = Integer.MAX_VALUE/2-1;
 	}
-	if (iCode > Integer.MAX_VALUE/2-1) {
-	    iCode = Integer.MAX_VALUE/2-1;
-	}
 
-	return new CCost(cost, iCode);
+	return new CCost(cost);
     }
 
     /**
@@ -65,6 +51,8 @@ class CCost {
      * they are running in the same partition.  Includes a cost of
      * some fusion overhead.
      */
+
+    /*
     public static CCost add(CCost cost1, CCost cost2) {
 	// first just take sums
 	int cost = cost1.getCost() + cost2.getCost();
@@ -78,16 +66,17 @@ class CCost {
 
 	return new CCost(cost, iCode);
     }
+    */
 
     public boolean equals(Object o) {
 	if (!(o instanceof CCost)) {
 	    return false;
 	}
 	CCost other = (CCost)o;
-	return other.cost==this.cost && other.iCodeSize==this.iCodeSize;
+	return other.cost==this.cost;
     }
 
     public String toString() {
-	return "[cost=" + cost + ", iCode=" + iCodeSize + "]";
+	return "[cost=" + cost + "]";
     }
 }

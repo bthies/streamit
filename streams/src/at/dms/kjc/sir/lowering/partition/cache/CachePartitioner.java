@@ -108,13 +108,20 @@ public class CachePartitioner extends ListPartitioner {
 	System.out.println("  Building stream config... ");
 	CConfig topConfig = buildStreamConfig();
 
+	System.out.println("  Calculating a greedy partitioning... ");
+
+	int gtiles = topConfig.numberOfTiles();
+	System.out.println("  Greedy partitioning requires "+gtiles+" tiles.");
+
+	/*
+
 	// get lower bound on cost: one tile per filter (or limit
 	// specified in command line)
 	int count = (int)Math.min(KjcOptions.cluster, countFilters(str));
 	System.err.println("Trying lower bound of " + count + " tiles.");
 	CCost noFusion = topConfig.get(count);
 	System.err.println("  Partitioner thinks bottleneck is " + noFusion.getCost());
-	System.err.println("  Max iCode size: " + noFusion.getICodeSize());
+	//System.err.println("  Max iCode size: " + noFusion.getICodeSize());
 
 	// start with 1 filter and work our way up to as many filters
 	// are needed.
@@ -131,10 +138,12 @@ public class CachePartitioner extends ListPartitioner {
 	    if (KjcOptions.debug) { topConfig.printArray(numTiles); }
 
 	    System.err.println("  Partitioner thinks bottleneck is " + cost.getCost());
-	    System.err.println("  Max iCode size: " + cost.getICodeSize());
+	    //System.err.println("  Max iCode size: " + cost.getICodeSize());
 
- 	} while (cost.getICodeSize()>ICODE_THRESHOLD || cost.greaterThan(noFusion));
+ 	} while (cost.greaterThan(noFusion));
 	
+	*/
+
 	int tilesUsed = numTiles;
 	
 	System.out.println("  Tracing back...");

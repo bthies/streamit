@@ -23,6 +23,16 @@ abstract class CConfig implements Cloneable {
     }
 
     /**
+     * Returns information about the config if everything is fused.
+     */
+
+    abstract protected FusionInfo getFusionInfo();
+
+    // number of tiles needed for the Config to satisfy cache constraints
+
+    abstract protected int numberOfTiles();
+
+    /**
      * Return the bottleneck work if this config is fit on <tileLimit>
      * tiles.  <nextToJoiner> is 1 iff this is next to a downstream
      * joiner under the current arrangement.

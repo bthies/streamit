@@ -2,6 +2,7 @@ package streamit.scheduler.simple;
 
 import streamit.scheduler.SchedStream;
 import streamit.scheduler.SchedPipeline;
+import streamit.scheduler.SchedRepSchedule;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -132,10 +133,9 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
                 Integer numExecutions = (Integer)numExecutionsForInit.get (child);
                 ASSERT (numExecutions);
 
-                int n = numExecutions.intValue ();
-                for ( ; n > 0 ; n--)
+                if (numExecutions.intValue () > 0)
                 {
-                    initSchedule.add (child.getSteadySchedule ());
+                    initSchedule.add (new SchedRepSchedule (BigInteger.valueOf (numExecutions.intValue ()), child.getSteadySchedule ()));
                 }
             }
         }
@@ -189,14 +189,9 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
                 SimpleSchedStream child = (SimpleSchedStream) iter.next ();
                 ASSERT (child);
 
-                BigInteger numExecutions = child.getNumExecutions ();
-
-                // enter all the appropriate sub-schedules into the schedule
-                while (numExecutions.signum () != 0)
-                {
-                    steadySchedule.add (child.getSteadySchedule ());
-                    numExecutions = numExecutions.subtract (BigInteger.ONE);
-                }
+                // in steady state processing, every child should be executed
+                // at least once!
+                steadySchedule.add (new SchedRepSchedule (child.getNumExecutions (), child.getSteadySchedule ()));
             }
 
         }

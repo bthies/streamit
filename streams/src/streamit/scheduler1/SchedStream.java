@@ -92,7 +92,6 @@ public abstract class SchedStream extends SchedObject
     public void multNumExecutions (BigInteger mult)
     {
         // make sure that mutliplying by something > 0
-        String str = mult.toString();
         ASSERT (mult.compareTo (BigInteger.ZERO) == 1);
 
         numExecutions = numExecutions.multiply (mult);

@@ -4,6 +4,7 @@ import streamit.Pipeline;
 import streamit.scheduler.simple.SimpleHierarchicalSchedulerPow2;
 import streamit.scheduler.simple.SimpleHierarchicalScheduler;
 import streamit.scheduler.SchedStream;
+import streamit.scheduler.SchedRepSchedule;
 
 import java.util.List;
 import java.util.ListIterator;
@@ -36,6 +37,16 @@ public class StreamIt extends Pipeline
                 Object child = iter.next ();
                 ASSERT (child);
                 runSchedule (child);
+            }
+        } else
+        if (schedule instanceof SchedRepSchedule)
+        {
+            SchedRepSchedule repSchedule = (SchedRepSchedule) schedule;
+
+            int nTimes = repSchedule.getTotalExecutions ().intValue ();
+            for ( ; nTimes > 0; nTimes--)
+            {
+                runSchedule (repSchedule.getOriginalSchedule ());
             }
         } else ASSERT (false);
     }

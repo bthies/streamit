@@ -3,6 +3,7 @@ package streamit.scheduler.simple;
 import streamit.scheduler.SchedSplitJoin;
 import streamit.scheduler.SchedStream;
 import streamit.scheduler.simple.SimpleSchedStream;
+import streamit.scheduler.SchedRepSchedule;
 
 import java.util.List;
 import java.util.LinkedList;
@@ -100,10 +101,9 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
                 Object splitObject = getSplitType ().getSplitObject ();
                 ASSERT (splitObject);
 
-                int i;
-                for (i = 0; i < initSplitRunCount; i++)
+                if (initSplitRunCount > 0)
                 {
-                    initSchedule.add (splitObject);
+                    initSchedule.add (new SchedRepSchedule (BigInteger.valueOf (initSplitRunCount), splitObject));
                 }
             }
 
@@ -135,11 +135,9 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
             BigInteger numExecutions = getNumSplitExecutions ();
             ASSERT (numExecutions != null && numExecutions.signum () == 1);
 
-            while (!numExecutions.equals (numExecutions.ZERO))
+            if (numExecutions.signum () == 1)
             {
-                numExecutions = numExecutions.subtract (numExecutions.ONE);
-
-                steadySchedule.add (splitObject);
+                steadySchedule.add (new SchedRepSchedule (numExecutions, splitObject));
             }
         }
 
@@ -194,13 +192,9 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
                     scheduler.schedule.setSplitBufferSize (child.getStreamObject (), joinObject, outBuffer);
                 }
 
-                // add the schedule numExecutions times
-                while (!numExecutions.equals (numExecutions.ZERO))
-                {
-                    numExecutions = numExecutions.subtract (numExecutions.ONE);
-
-                    steadySchedule.add (childSchedule);
-                }
+                // in steady state schedule, every child should be executed
+                // at least once per iteration!
+                steadySchedule.add (new SchedRepSchedule (numExecutions, childSchedule));
             }
         }
 
@@ -212,11 +206,9 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
             BigInteger numExecutions = getNumJoinExecutions ();
             ASSERT (numExecutions != null && numExecutions.signum () == 1);
 
-            while (!numExecutions.equals (numExecutions.ZERO))
+            if (numExecutions.signum () == 1)
             {
-                numExecutions = numExecutions.subtract (numExecutions.ONE);
-
-                steadySchedule.add (joinObject);
+                steadySchedule.add (new SchedRepSchedule (numExecutions, joinObject));
             }
         }
     }

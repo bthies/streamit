@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="StreamIt" default="build" basedir=".">
+  <description>
+    ANT build file for the StreamIt compiler and library.
+  </description>
+  <property name="build.compiler" value="jikes"/>
+  <property name="build.compiler.emacs" value="true"/>
+  <property name="build.compiler.fulldepend" value="true"/>
+  <target name="frontend-lex">
+    <antlr target="compiler/streamit/frontend/StreamItLex.g"/>
+  </target>
+  <target name="frontend-parser-fe" depends="frontend-lex">
+    <antlr target="compiler/streamit/frontend/StreamItParserFE.g"/>
+  </target>
+  <target name="compiler" depends="frontend-parser-fe"
+    description="Build the StreamIt compiler and front-end">
+    <javac debug="true" depend="true">
+      <src path="compiler"/>
+      <src path="library/java"/>
+      <exclude name="streamit/stair/**"/>
+      <exclude name="at/dms/kjc/raw2/**"/>
+      <exclude name="streamit/iriter/**"/>
+    </javac>
+  </target>
+  <target name="build" depends="compiler"
+    description="Build the StreamIt compiler, front-end, and libraries">
+  </target>
+  <target name="clean">
+    <delete>
+      <fileset dir="." includes="**/*.class"/>
+    </delete>
+  </target>
+</project>

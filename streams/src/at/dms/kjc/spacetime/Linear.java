@@ -179,9 +179,12 @@ public class Linear extends BufferedCommunication implements Constants {
 	inline=new InlineAssembly();
 	body[body.length-4]=inline;
 	//Preloop
-	final int turns=pos*num;
-	//final int extra=bufferSize-popCount*(turns+num-2); //How many extra before switching from peekbuffer to network
-	//final int extraTurns=(int)Math.ceil(((double)extra)/popCount)+1;
+	int turns=pos*num; //Default number of turns
+	int excess=bufferSize-popCount*(num+turns);
+	if(excess>0) { //Handle excess items on peekbuffer
+	    System.err.println("WARNING: EXCESS ITEMS ON PEEKBUFFER DETECTED!");
+	    turns+=Math.ceil(((double)excess)/popCount);
+	}
 	if(begin) {
 	    System.out.println("EXTRA: "+bufferSize);
 	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
@@ -220,8 +223,6 @@ public class Linear extends BufferedCommunication implements Constants {
 				inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
 				inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
 			    }
-		//TODO: Handle Remaining Items
-		
 		/*} else
 		  for(int j=0;j<popCount;j++)
 		  for(int k=topPopNum;k>=0;k--) {

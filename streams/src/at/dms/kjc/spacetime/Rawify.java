@@ -979,7 +979,13 @@ public class Rawify
 	final boolean begin=content.getBegin();
 	final boolean end=content.getEnd();
 	final int pos=content.getPos();
-	final int turns=pos*numCoeff;
+	int bufferRemaining=filterInfo.remaining; //Use peek buffer while bufferRemaining>0 else use net
+	if(filterInfo.initMult>0)
+	    bufferRemaining+=peek-pop;
+	int turns=pos*numCoeff; //Default number of turns
+	int excess=bufferRemaining-pop*(numCoeff+turns);
+	if(excess>0) //Handle excess items on peekbuffer
+	    turns+=Math.ceil(((double)excess)/pop);
 	//System.out.println("SRC: "+src);
 	//System.out.println("DEST: "+dest);
 	//Begin codegen
@@ -997,9 +1003,6 @@ public class Rawify
 	      testIns.addRoute(SwitchIPort.CSTO,dest);
 	      code.appendIns(testIns,false);*/
 
-	    int bufferRemaining=filterInfo.remaining; //Use peek buffer while bufferRemaining>0 else use net
-	    if(filterInfo.initMult>0)
-		bufferRemaining+=peek-pop;
 	    for(int i=0;i<numPop;i++)
 		for(int j=0;j<pop;j++)
 		    if(bufferRemaining>0)

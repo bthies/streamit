@@ -2009,6 +2009,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     {
 	if (s instanceof CArrayType){
 	    print(((CArrayType)s).getElementType());
+	    print("*");
 	}
         else if (s.getTypeID() == TID_BOOLEAN)
             print("int");

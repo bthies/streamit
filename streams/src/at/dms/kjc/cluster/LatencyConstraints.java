@@ -95,7 +95,9 @@ public class LatencyConstraints {
 	
 	System.out.println("sender: "+sender+" receiver: "+receiver);
 
-	AssertedClass.ASSERT(sender, (b != null), "Information about message direction requested when no such data has been gathered");
+        assert b != null:
+            "Information about message direction from " + sender + " to " +
+            receiver + " requested when no such data has been gathered";
 
 	return b.booleanValue();
     }

@@ -15,7 +15,7 @@ import java.util.ArrayList;
  * inserted in <code>NodesToJava</code>.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertIODecls.java,v 1.3 2003-02-12 22:27:04 dmaze Exp $
+ * @version $Id: InsertIODecls.java,v 1.4 2003-02-19 18:44:14 dmaze Exp $
  */
 public class InsertIODecls extends InitMunger
 {
@@ -129,6 +129,7 @@ public class InsertIODecls extends InitMunger
         FuncWork work = (FuncWork)findWork(fns);
         StreamType st = spec.getStreamType();
         List newStmts = new ArrayList();
+        newStmts.add(new StmtSetTypes(work.getContext(), st));
         if (!(st.getIn() instanceof TypePrimitive) ||
             ((TypePrimitive)st.getIn()).getType() != TypePrimitive.TYPE_VOID)
         {

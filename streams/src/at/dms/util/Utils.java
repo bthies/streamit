@@ -15,11 +15,14 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.12 2003-04-06 12:03:16 thies Exp $
+ * $Id: Utils.java,v 1.13 2003-04-08 09:50:07 thies Exp $
  */
 
 package at.dms.util;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.lowering.LoweringConstants;
 import java.lang.reflect.Array;
@@ -288,10 +291,16 @@ public abstract class Utils implements Serializable {
 
     /**
      * Returns a block with a loop counter declaration and a for loop
-     * that executes <body> for <count> number of times.  Use
+     * that executes <body> for <count> number of times.  Executes in
+     * the forward direction, counting up from 0 to count-1 with
      * <loopIndex> as the loop counter.
+     *
+     * Note that <loopIndex> should not appear in a different variable
+     * decl; it will get one in this routine.
      */
     public static JStatement makeForLoop(JStatement body, JExpression count, JVariableDefinition loopIndex) {
+	// make sure we start counting from 0
+	loopIndex.setInitializer(new JIntLiteral(0));
 	// make a declaration statement for our new variable
 	JVariableDeclarationStatement varDecl =
 	    new JVariableDeclarationStatement(null, loopIndex, null);
@@ -323,12 +332,81 @@ public abstract class Utils implements Serializable {
     }
 
     /**
+     * Returns a block with a loop counter declaration and a for loop
+     * that executes <body> for <count> number of times.  Executes in
+     * the backwards direction, counting down from count-1 to zero
+     * with <loopIndex> as the loop counter.  
+     *
+     * Note that <loopIndex> should not appear in a different variable
+     * decl; it will get one in this routine.
+     */
+    public static JStatement makeCountdownForLoop(JStatement body, JExpression count, JVariableDefinition loopIndex) {
+	// make sure we start at count-1
+	loopIndex.setInitializer(new JMinusExpression(null, count, new JIntLiteral(1)));
+	// make a declaration statement for our new variable
+	JVariableDeclarationStatement varDecl =
+	    new JVariableDeclarationStatement(null, loopIndex, null);
+	// make a test if our variable is less than <count>
+	JExpression cond = 
+	    new JRelationalExpression(null,
+				      Constants.OPE_GE,
+				      new JLocalVariableExpression(null, loopIndex),
+				      new JIntLiteral(0));
+	// make a decrement for <var>
+	JStatement incr = 
+	    new JExpressionStatement(null,
+				     new JPostfixExpression(null,
+							    Constants.
+							    OPE_POSTDEC,
+							    new JLocalVariableExpression(null, loopIndex)),
+				     null);
+	// make the for statement
+	JStatement forStatement = 
+	    new JForStatement(/* tokref */ null,
+			      /* init */ new JEmptyStatement(null, null),
+			      cond,
+			      incr,
+			      body,
+			      /* comments */ null);
+	// return the block
+	JStatement[] statements = {varDecl, forStatement};
+	return new JBlock(null, statements, null);
+    }
+
+    /**
      * If <type> is void, then return <int> type; otherwise return
      * <type>.  This is a hack to get around the disallowance of void
      * arrays in C--should fix this better post-asplos.
      */
     public static CType voidToInt(CType type) {
 	return type==CStdType.Void ? CStdType.Integer : type;
+    }
+
+    /**
+     * Returns value of environment variable named <var>, or null if
+     * the variable is undefined.
+     */
+    public static String getEnvironmentVariable(String var) {
+	String result = null;
+	try {
+	    String OS = System.getProperty("os.name").toLowerCase();
+	    String command = (OS.indexOf("windows") > -1 ? "set" : "env");
+	    Process p = Runtime.getRuntime().exec(command);
+	    BufferedReader br = new BufferedReader ( new InputStreamReader( p.getInputStream() ) );
+	    String line;
+	    while((line = br.readLine()) != null) {
+		int pos = line.indexOf('=');
+		String key = line.substring(0, pos);
+		if (key.equals(var)) {
+		    return line.substring(pos+1);
+		}
+	    }
+	    return null;
+	} catch (IOException e) {
+	    e.printStackTrace();
+	    Utils.fail("I/O exception trying to retrieve environment variable \"" + var + "\"");
+	    return null;
+	}
     }
 
   // ----------------------------------------------------------------------

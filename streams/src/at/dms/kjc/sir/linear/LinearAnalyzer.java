@@ -14,11 +14,16 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.18 2003-03-22 21:37:12 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.19 2003-03-22 23:37:00 thies Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
     HashMap filtersToLinearRepresentation;
+
+    /** Whether or not we should refactor linear children into a
+     * separate pipeline, if some of their siblings are not linear.
+     */
+    boolean refactorLinearChildren;
 
     // counters to keep track of how many of what type of stream constructs we have seen.
     int filtersSeen        = 0;
@@ -26,8 +31,9 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     int splitJoinsSeen     = 0;
     int feedbackLoopsSeen  = 0;
 
-    public LinearAnalyzer() {
+    public LinearAnalyzer(boolean refactorLinearChildren) {
 	this.filtersToLinearRepresentation = new HashMap();
+	this.refactorLinearChildren = refactorLinearChildren;
 	checkRep();
     }
 
@@ -82,8 +88,8 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      *
      * If the debug flag is set, then we print a lot of debugging information
      **/
-    public static LinearAnalyzer findLinearFilters(SIRStream str, boolean debug) {
-	return findLinearFilters(str, debug, new LinearAnalyzer());
+    public static LinearAnalyzer findLinearFilters(SIRStream str, boolean debug, boolean refactorLinearChildren) {
+	return findLinearFilters(str, debug, new LinearAnalyzer(refactorLinearChildren));
     }
     
     /**
@@ -214,18 +220,29 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 		childrenToWrap.add(currentKid);
 		LinearPrinter.println(" adding linear child:(" + currentKid + ")");
 	    } else {
-		// kid was non linear. Replace the children thus far in self with the new pipeline
-		// and update the mapping from filters to LinearFilterRepresentations.
-		LinearPrinter.println(" non-linear child:(" + currentKid + ")");
-		LinearPrinter.println(" wrapping children.");
-		doPipelineAdd(self, childrenToWrap, this.filtersToLinearRepresentation);
-		// reset our list
-		childrenToWrap = new LinkedList();
+		// kid was non-linear.  If we're not refactoring
+		// linear children, then just quit here
+		if (!refactorLinearChildren) {
+		    break;
+		} else {
+		    // Otherwise, replace the children thus far in self with the new pipeline
+		    // and update the mapping from filters to LinearFilterRepresentations.
+		    LinearPrinter.println(" non-linear child:(" + currentKid + ")");
+		    LinearPrinter.println(" wrapping children.");
+		    doPipelineAdd(self, childrenToWrap, this.filtersToLinearRepresentation);
+		    // reset our list
+		    childrenToWrap = new LinkedList();
+		}
 	    }
 	}
-	// add the current list of children (to catch the end of the pipeline)
-	// Note: this doesn't add empty pipelines
-	doPipelineAdd(self, childrenToWrap, this.filtersToLinearRepresentation);
+	// add the current list of children (to catch the end of the
+	// pipeline).  We should do this if we're refactoring, or if
+	// all of the children are linear (and we should mark the
+	// whole pipeline as linear.)  Note: this doesn't add empty
+	// pipelines
+	if (refactorLinearChildren || childrenToWrap.size()==self.size()) {
+	    doPipelineAdd(self, childrenToWrap, this.filtersToLinearRepresentation);
+	}
 	// check to make sure that we didn't foobar ourselves.
 	checkRep();
 

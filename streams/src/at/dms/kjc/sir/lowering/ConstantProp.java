@@ -7,6 +7,8 @@ import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
+import at.dms.compiler.JavaStyleComment;
+import at.dms.compiler.JavadocComment;
 
 /**
  * This class propagates constants and unrolls loops.  Currently only
@@ -31,10 +33,15 @@ public class ConstantProp {
      * a JLocalVariable to a JLiteral for all constants that are known.
      */
     private void propagateAndUnroll(SIRStream str, Hashtable constants) {
-	// propagate constants within init function of <str>
-	str.getInit().accept(new Propagator(constants));
-	// unroll loops within init function of <str>
-	//str.getInit().accept(new Unroller(constants));
+	Unroller unroller;
+	do {
+	    // propagate constants within init function of <str>
+	    str.getInit().accept(new Propagator(constants));
+	    // unroll loops within init function of <str>
+	    unroller = new Unroller(constants);
+	    str.getInit().accept(unroller);
+	    // iterate until nothing unrolls
+	} while (unroller.hasUnrolled());
 	// recurse into sub-streams
 	recurse(str, constants);
     }
@@ -82,13 +89,9 @@ public class ConstantProp {
 	    if (args[i] instanceof JLiteral) {
 		// if it's already a literal, just record it
 		constants.put(parameters[i], args[i]);
-		System.out.println("recognizing that " + parameters[i] +
-				   " is " + args[i]);
 	    } else if (constants.get(args[i])!=null) {
 		// otherwise if it's associated w/ a literal, then record that
 		constants.put(parameters[i], constants.get(args[i]));
-		System.out.println("recognizing that " + parameters[i] +
-				   " is " + constants.get(args[i]));
 	    }
 	}
 	// recurse into sub-stream
@@ -389,10 +392,8 @@ class Propagator extends EmptyAttributeVisitor {
 					       String ident) {
 	// if we know the value of the variable, return a literal.
 	// otherwise, just return self
-	System.out.println("visiting variable " + self.getVariable());
 	Object constant = constants.get(self.getVariable());
 	if (constant!=null) {
-	    System.out.println("return const " + constant);
 	    return constant;
 	} else {
 	    return self;
@@ -545,6 +546,10 @@ class Unroller extends EmptyAttributeVisitor {
      * Map of known constants (JLocalVariable -> JLiteral)
      */
     private Hashtable constants;
+    /**
+     * Whether or not anything has been unrolled.
+     */
+    private boolean hasUnrolled;
 
     /**
      * Creates one of these given that <constants> maps
@@ -554,11 +559,293 @@ class Unroller extends EmptyAttributeVisitor {
     public Unroller(Hashtable constants) {
 	super();
 	this.constants = constants;
+	this.hasUnrolled = false;
     }
 
     // ----------------------------------------------------------------------
-    // METHODS AND FIELDS
+    // SUPPORT FOR UNROLL METHODS - just plug in their results
     // ----------------------------------------------------------------------
+
+    /**
+     * prints a labeled statement
+     */
+    public Object visitLabeledStatement(JLabeledStatement self,
+					String label,
+					JStatement stmt) {
+	JStatement newStmt = (JStatement)stmt.accept(this);
+	if (newStmt!=null && newStmt!=stmt) {
+	    self.setBody(newStmt);
+	}
+	return self;
+    }
+
+    /**
+     * prints a if statement
+     */
+    public Object visitIfStatement(JIfStatement self,
+				   JExpression cond,
+				   JStatement thenClause,
+				   JStatement elseClause) {
+	cond.accept(this);
+	JStatement newThen = (JStatement)thenClause.accept(this);
+	if (newThen!=null && newThen!=thenClause) {
+	    self.setThenClause(newThen);
+	}
+	if (elseClause != null) {
+	    JStatement newElse = (JStatement)elseClause.accept(this);
+	    if (newElse!=null && newElse!=elseClause) {
+		self.setElseClause(newElse);
+	    }
+	}
+	return self;
+    }
+
+    /**
+     * prints a compound statement
+     */
+    public Object visitCompoundStatement(JCompoundStatement self,
+					 JStatement[] body) {
+	for (int i = 0; i < body.length; i++) {
+	    JStatement newBody = (JStatement)body[i].accept(this);
+	    if (newBody!=null && newBody!=body[i]) {
+		body[i] = newBody;
+	    }
+	}
+	return self;
+    }
+
+    /**
+     * prints a do statement
+     */
+    public Object visitDoStatement(JDoStatement self,
+				   JExpression cond,
+				   JStatement body) {
+	JStatement newBody = (JStatement)body.accept(this);
+	if (newBody!=null && newBody!=body) {
+	    self.setBody(newBody);
+	}
+	cond.accept(this);
+	return self;
+    }
+
+    /**
+     * prints an expression statement
+     */
+    public Object visitBlockStatement(JBlock self,
+				      JStatement[] body,
+				      JavaStyleComment[] comments) {
+	for (int i=0; i<body.length; i++) {
+	    JStatement newBody = (JStatement)body[i].accept(this);
+	    if (newBody!=null && newBody!=body[i]) {
+		System.out.println("switching " + body[i] + " to " + newBody);
+		self.setStatement(i, newBody);
+	    }
+	}
+	return self;
+    }
+
+    /**
+     * prints an array length expression
+     */
+    public Object visitSwitchGroup(JSwitchGroup self,
+				   JSwitchLabel[] labels,
+				   JStatement[] stmts) {
+	for (int i = 0; i < labels.length; i++) {
+	    labels[i].accept(this);
+	}
+	for (int i = 0; i < stmts.length; i++) {
+	    JStatement newStmt = (JStatement)stmts[i].accept(this);
+	    if (newStmt!=null && newStmt!=stmts[i]) {
+		stmts[i] = newStmt;
+	    }
+	}
+	return self;
+    }
+
+    // ----------------------------------------------------------------------
+    // ACTUAL UNROLL METHODS
+    // ----------------------------------------------------------------------
+
+    /**
+     * visits a for statement
+     */
+    public Object visitForStatement(JForStatement self,
+				    JStatement init,
+				    JExpression cond,
+				    JStatement incr,
+				    JStatement body) {
+	// first recurse into body
+	JStatement newStmt = (JStatement)body.accept(this);
+	if (newStmt!=null && newStmt!=body) {
+	    self.setBody(newStmt);
+	}
+	// check for loop induction variable
+	UnrollInfo info = getUnrollInfo(init, cond, incr, body);
+	// if we can unroll...
+	if (info!=null) {
+	    // do unrolling
+	    return doUnroll(info, body);
+	}
+	return self;
+    }
+
+    /**
+     * Given the loop body <body> and unroll info <info>, perform the
+     * unrolling and return a statement block of the new statements.
+     */
+    private JBlock doUnroll(UnrollInfo info, JStatement body) {
+	// get number of times to unroll
+	int count = calcUnrollFactor(info);
+	System.out.println("unroll count: " + count);
+	// duplicate <body> the given number of times, enclosing
+	// in a statement block
+	JStatement[] newBody;
+	if (body instanceof JBlock) {
+	    JBlock block = (JBlock)body;
+	    // prevent nested JBlock structures by flattening them here
+	    newBody = new JStatement[count*block.size()];
+	    // fill in the new body
+	    for (int i=0; i<count; i++) {
+		int j = 0;
+		for (ListIterator it = block.getStatementIterator(); 
+		     it.hasNext(); 
+		     j++) {
+		    newBody[i*block.size()+j] 
+			= (JStatement)ObjectDeepCloner.deepCopy(it.next());
+		}
+	    }
+	} else {
+	    newBody = new JStatement[count];
+	    // fill in the new body
+	    for (int i=0; i<count; i++) {
+		newBody[i] = (JStatement)ObjectDeepCloner.deepCopy(body);
+	    }
+	}
+	// mark that we've unrolled
+	this.hasUnrolled = true;
+	// return new block instead of the for loop
+	return new JBlock(null, newBody, null);
+    }
+
+    /**
+     * Return whether or not this has unrolled any loops.
+     */
+    public boolean hasUnrolled() {
+	return hasUnrolled;
+    }
+    
+    /**
+     * Gets unroll info for this loop.  Right now, we check that:
+     *
+     *  1. the initialization is an assignemnt of a constant to a variable
+     *      - further, the variable is not declared in the initialization;
+     *        it is only assigned to there (no "for (int i=...)")
+     *  2. the condition is a relational less-than test of the var and a const
+     *  3. the incr is addition or multiplication by a const. (use +=1, not ++)
+     *  4. the variable is an integer
+     *
+     *  We do not check that the induction variable is unmodified in
+     *  the loop.  You'll break this if you modify it.
+     *
+     * This will return <null> if the loop can not be unrolled. 
+     */
+    private UnrollInfo getUnrollInfo(JStatement init,
+				     JExpression cond,
+				     JStatement incr,
+				     JStatement body) {
+	try {
+	    // inspect initialization...
+	    JAssignmentExpression initExpr 
+		= (JAssignmentExpression)
+		((JExpressionListStatement)init).getExpression(0);
+	    JLocalVariable var 
+		= ((JLocalVariableExpression)initExpr.getLeft()).getVariable();
+	    int initVal 
+		= ((JIntLiteral)initExpr.getRight()).intValue();
+
+	    // inspect condition...
+	    JRelationalExpression condExpr = (JRelationalExpression)cond;
+	    // make sure variable is the same
+	    if (var != 
+		((JLocalVariableExpression)condExpr.getLeft()).getVariable()) {
+		return null;
+	    }
+	    // get the upper limit
+	    int finalVal = ((JIntLiteral)condExpr.getRight()).intValue();
+
+	    // inspect increment...
+	    JCompoundAssignmentExpression incrExpr
+		= (JCompoundAssignmentExpression)
+		((JExpressionListStatement)incr).getExpression(0);
+	    // make sure the variable is the same
+	    if (var != 
+		((JLocalVariableExpression)incrExpr.getLeft()).getVariable()) {
+		return null;
+	    }
+	    // get the operation
+	    int oper = incrExpr.getOperation();
+	    // get the increment amount
+	    int incrVal = ((JIntLiteral)incrExpr.getRight()).intValue();
+	    
+	    // return result
+	    return new UnrollInfo(initVal, finalVal, oper, incrVal);
+	} catch (ClassCastException e) {
+	    System.out.println("Didn't unroll because:");
+	    e.printStackTrace();
+	    // assume we failed 'cause assumptions violated -- return null
+	    return null;
+	}
+    }
+
+    /**
+     * Returns the number of times that a loop with unroll info <info>
+     * can be unrolled.
+     */
+    private int calcUnrollFactor(UnrollInfo info) {
+	switch(info.oper) {
+	case OPE_PLUS: 
+	    return (info.finalVal-info.initVal)/info.incrVal;
+	case OPE_STAR: 
+	    // simulate execution of multiplication
+	    int count = 0;
+	    int val = info.initVal;
+	    while (val < info.finalVal) {
+		val *= info.incrVal;
+		count++;
+	    }
+	    return count;
+	default: 
+	    Utils.fail("Can only unroll add/mul increments for now.");
+	    // dummy value
+	    return 0;
+	}
+    }
+
+    class UnrollInfo {
+	/**
+	 * The initial value of the induction variable.
+	 */
+	public final int initVal;
+	/**
+	 * The final value of the induction variable.
+	 */
+	public final int finalVal;
+	/**
+	 * The operation that is being used to change the induction variable.
+	 */
+	public final int oper;
+	/**
+	 * The increment.
+	 */
+	public final int incrVal;
+	
+	public UnrollInfo(int initVal, int finalVal, int oper, int incrVal) {
+	    this.initVal = initVal;
+	    this.finalVal = finalVal;
+	    this.oper = oper;
+	    this.incrVal = incrVal;
+	}
+    }
 
 }
 

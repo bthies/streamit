@@ -735,9 +735,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	str = new StringWriter();
         p = new TabbedPrintWriter(str);
 
-	p.print("frequency_of_checkpoints 1000 // must be a multiple of 1000 or 0 for disabled.\n");
-	p.print("outbound_data_buffer 400      // <= 1400 or 0 for disabled.\n");
-	p.print("number_of_iterations 10000    // number of steady state iterations\n");
+	p.print("frequency_of_checkpoints 0    // Must be a multiple of 1000 or 0 for disabled.\n");
+	p.print("outbound_data_buffer 1000     // Number of bytes to buffer before writing to socket. Must be <= 1400 or 0 for disabled\n");
+	p.print("number_of_iterations 10000    // Number of steady state iterations can be overriden by parameter -i <number>\n");
 
 	try {
 	    FileWriter fw = new FileWriter("cluster-setup.txt");

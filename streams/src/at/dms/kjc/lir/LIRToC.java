@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.30 2001-10-29 15:41:44 dmaze Exp $
+ * $Id: LIRToC.java,v 1.31 2001-10-29 19:32:27 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1910,7 +1910,10 @@ public class LIRToC
      * prints a boolean literal
      */
     public void visitBooleanLiteral(boolean value) {
-        print(value);
+        if (value)
+            print(1);
+        else
+            print(0);
     }
 
     /**
@@ -2094,6 +2097,14 @@ public class LIRToC
 
     protected void newLine() {
         p.println();
+    }
+
+    // Special case for CTypes, to map some Java types to C types.
+    protected void print(CType s) {
+        if (s.getTypeID() == TID_BOOLEAN)
+            print("int");
+        else
+            print(s.toString());
     }
 
     protected void print(Object s) {

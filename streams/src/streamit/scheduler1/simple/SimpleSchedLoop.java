@@ -46,25 +46,121 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
             ((SimpleSchedStream) getLoopFeedbackPath ()).computeSchedule ();
         }
 
+        // counters for how much data is buffered
+        // before each element of the loop
+        BigInteger bodyBuffer;
+        BigInteger splitBuffer;
+        BigInteger loopBuffer;
+        BigInteger joinBuffer;
+
+        // keep track of maximal size of buffer needed (will NOT start every
+        // execution on the same buffer boundary!)
+        BigInteger maxSplitBuffer;
+        BigInteger maxJoinBuffer;
+        BigInteger maxBodyBuffer;
+        BigInteger maxLoopBuffer;
+
+        // compute the initialization schedule
+        {
+            int nInitRunSplit;
+            int nInitRunBody;
+            int nInitRunJoin;
+
+            SimpleSchedStream body = (SimpleSchedStream) getLoopBody ();
+            SimpleSchedStream feedback = (SimpleSchedStream)getLoopFeedbackPath ();
+
+            ASSERT (body);
+            ASSERT (feedback);
+
+            // figure out how many times the split needs to run:
+            // and initDataProduction for the entire loop
+            {
+                int feedbackDataNeeded = (feedback.getPeekConsumption () - feedback.getConsumption ())
+                                       + feedback.getInitDataConsumption ();
+
+                int splitProduction = getLoopSplit ().getOutputWeight (1);
+                nInitRunSplit = (feedbackDataNeeded + splitProduction - 1) / splitProduction;
+                loopBuffer = BigInteger.valueOf (nInitRunSplit * splitProduction - feedbackDataNeeded);
+                maxLoopBuffer = BigInteger.valueOf (nInitRunSplit * splitProduction);
+                initDataProduction = nInitRunSplit * getLoopSplit ().getOutputWeight (0);
+            }
+
+            // figure out how many times the body needs to be run:
+            {
+                int splitDataNeeded = getLoopFeedbackPath ().getConsumption () * nInitRunSplit;
+                int bodyProduction = body.getProduction ();
+                nInitRunBody = (splitDataNeeded + (bodyProduction - 1) - body.getInitDataProduction ()) / bodyProduction;
+                splitBuffer = BigInteger.valueOf (bodyProduction * nInitRunBody + body.getInitDataProduction ());
+                maxSplitBuffer = BigInteger.valueOf (nInitRunBody * bodyProduction + body.getInitDataProduction ());
+            }
+
+            // figure out how many times the join needs to be run
+            // and initDataConsumption for the entire loop
+            {
+                int bodyDataNeeded = (body.getPeekConsumption () - body.getConsumption ())
+                                   + body.getInitDataConsumption ()
+                                   + nInitRunBody * body.getProduction ();
+                int joinProduction = getLoopJoin ().getRoundProduction ();
+                nInitRunJoin = (bodyDataNeeded + joinProduction - 1) / joinProduction;
+                bodyBuffer = BigInteger.valueOf (nInitRunJoin * joinProduction - bodyDataNeeded);
+                maxBodyBuffer = BigInteger.valueOf (nInitRunJoin * joinProduction);
+                initDataConsumption = nInitRunJoin * getLoopJoin ().getInputWeight (0);
+            }
+
+            // now setup buffer sizes for the join
+            {
+                int loopInitProduction = feedback.getInitDataProduction ();
+                int joinConsumption = getLoopJoin ().getInputWeight (1);
+                joinBuffer = BigInteger.valueOf (getLoopDelay () - (nInitRunJoin * joinConsumption) + loopInitProduction);
+                maxJoinBuffer = joinBuffer.max (BigInteger.valueOf (getLoopDelay ()));
+
+                // check if this is a legal schedule in the first place
+                if (getLoopDelay () - nInitRunJoin * joinConsumption < 0)
+                {
+                    schedulingDifficulty ();
+                }
+            }
+
+            // finally, actually create the init schedule
+            {
+                for ( ; nInitRunJoin > 0; nInitRunJoin--)
+                {
+                    initSchedule.add (getLoopJoin ().getJoinObject ());
+                }
+
+                if (body.getInitSchedule () != null)
+                {
+                    initSchedule.add (body.getInitSchedule ());
+                }
+
+                for ( ; nInitRunBody > 0; nInitRunBody--)
+                {
+                    initSchedule.add (body.getSteadySchedule ());
+                }
+
+                for ( ; nInitRunSplit > 0; nInitRunSplit--)
+                {
+                    initSchedule.add (getLoopSplit ().getSplitObject ());
+                }
+
+                if (feedback.getInitSchedule () != null)
+                {
+                    initSchedule.add (feedback.getInitSchedule ());
+                }
+            }
+        }
+
+        // store the starting buffer sizes:
+        BigInteger startBodyBuffer = bodyBuffer;
+        BigInteger startSplitBuffer = splitBuffer;
+        BigInteger startLoopBuffer = loopBuffer;
+        BigInteger startJoinBuffer = joinBuffer;
+
         // counters for how many times each component of the loop gets executed
         BigInteger splitExecutions = getNumSplitExecutions ();
         BigInteger joinExecutions = getNumJoinExecutions ();
         BigInteger bodyExecutions = getNumBodyExecutions ();
         BigInteger loopExecutions = getNumLoopExecutions ();
-
-        // counters for how much data is buffered
-        // before each element of the loop
-        BigInteger bodyBuffer = BigInteger.ZERO;
-        BigInteger splitBuffer = BigInteger.ZERO;
-        BigInteger loopBuffer = BigInteger.ZERO;
-        BigInteger joinBuffer = getLoopDelay ();
-
-        // keep track of maximal size of buffer needed (will NOT start every
-        // execution on the same buffer boundary!)
-        BigInteger maxSplitBuffer = splitBuffer;
-        BigInteger maxJoinBuffer = joinBuffer;
-        BigInteger maxBodyBuffer = bodyBuffer;
-        BigInteger maxLoopBuffer = loopBuffer;
 
         // there are four elements of the loop that need to be completed
         // everytime one of these elements decreases its num executions
@@ -170,21 +266,16 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 
             if (!movedForward)
             {
-                // get the name of the loop class - this will be useful
-                // for debugging
-                String className = getStreamObject ().getClass ().getName ();
-                ERROR ("Couldn't schedule loop " + className + ".\n" +
-                       "This loop is not necessarily impossible to schedule, " +
-                       "but this scheduler isn't intelligent enough to do it");
+                schedulingDifficulty ();
             }
         }
 
         // make sure that after execution of this schedule, the size of buffers
         // left over is SAME as when we started!
-        ASSERT (bodyBuffer.equals (BigInteger.ZERO));
-        ASSERT (splitBuffer.equals (BigInteger.ZERO));
-        ASSERT (loopBuffer.equals (BigInteger.ZERO));
-        ASSERT (joinBuffer.equals (getLoopDelay ()));
+        ASSERT (bodyBuffer.equals (startBodyBuffer));
+        ASSERT (splitBuffer.equals (startSplitBuffer));
+        ASSERT (loopBuffer.equals (startLoopBuffer));
+        ASSERT (joinBuffer.equals (startJoinBuffer));
 
         // store the buffer size information
         scheduler.schedule.setBufferSize (getLoopJoin ().getJoinObject (), getLoopBody ().getStreamObject (), maxBodyBuffer);
@@ -214,5 +305,15 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
     {
         ASSERT (initDataProduction >= 0);
         return initDataProduction;
+    }
+
+    void schedulingDifficulty ()
+    {
+        // get the name of the loop class - this will be useful
+        // for debugging
+        String className = getStreamObject ().getClass ().getName ();
+        ERROR ("Couldn't schedule loop " + className + ".\n" +
+               "This loop is not necessarily impossible to schedule, " +
+               "but this scheduler isn't intelligent enough to do it");
     }
 }

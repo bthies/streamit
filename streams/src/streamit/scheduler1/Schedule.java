@@ -112,12 +112,30 @@ public class Schedule extends AssertedClass
     public List getSteadySchedule ()
     {
         ASSERT (steadySchedule);
+        checkSchedule ((List)steadySchedule);
         return steadySchedule;
     }
 
     public List getInitSchedule ()
     {
+        ASSERT (initSchedule);
+        checkSchedule ((List)initSchedule);
         return initSchedule;
+    }
+
+    void checkSchedule (List schedule)
+    {
+        ASSERT (schedule);
+
+        ListIterator iter = schedule.listIterator ();
+        while (iter.hasNext ())
+        {
+            Object c = iter.next ();
+            ASSERT (c);
+
+            if (c instanceof List) checkSchedule ((List)c);
+            ASSERT (! (c instanceof SchedStream));
+        }
     }
 
     public void setSchedules (Object steadySchedule, Object initSchedule)

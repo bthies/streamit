@@ -7,7 +7,7 @@ public class SchedLoop extends SchedStream
     SchedSplitType split;
     SchedJoinType join;
     SchedStream body, loop;
-    BigInteger delay;
+    int delay;
 
     BigInteger numSplitExecutions, numJoinExecutions;
 
@@ -18,7 +18,7 @@ public class SchedLoop extends SchedStream
         this.body = body;
         this.split = split;
         this.loop = loop;
-        this.delay = BigInteger.valueOf (delay);
+        this.delay = delay;
     }
 
     public SchedStream getLoopBody ()
@@ -185,7 +185,7 @@ public class SchedLoop extends SchedStream
     /**
      * Get the loop delay, as specified in the program.
      */
-    public BigInteger getLoopDelay ()
+    public int getLoopDelay ()
     {
         ASSERT (delay);
         return delay;

@@ -125,11 +125,6 @@ public class SchedPipeline extends SchedStream
             }
         }
 
-        // copy the peek of the first child into my peek value
-        // this is the correct peek value to have in a pipeline
-        {
-        }
-
         // initialize self
         {
             setNumExecutions (BigInteger.ONE);

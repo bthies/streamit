@@ -14,7 +14,7 @@ import java.util.Iterator;
 
 
 /**
- *The Layout class generates mapping of filters to raw tiles.  It assumes that the 
+ *The Layout class generates mapping of filters to raw tiles.  It assumes that the Sis
  * namer has been run and that the stream graph has been partitioned.
  */
 public class Layout extends at.dms.util.Utils implements FlatVisitor {
@@ -286,6 +286,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	dumpLayout();
     }
     
+    
      private static double annealMaxTemp() throws Exception
      {
  	double T = 1.0;
@@ -383,7 +384,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	HashSet routers = new HashSet();
 	int sum = 0;
 	while(nodesIt.hasNext()) {
-	    sum += placementCostHelper((FlatNode)nodesIt.next(), routers);
+	    FlatNode node = (FlatNode)nodesIt.next();
+	    sum += placementCostHelper(node, routers);
 	}
 	return sum;
     }
@@ -412,14 +414,30 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    //sqrt(calculate steadyStateExcutions * hops * pushed)
 	    int hops = route.length -2;
 	    int items;
-	    //if joiner then number of executions of source * push of source
-	    //if splitter then number of executions of dest * pop of dest
+	    //case 1:
+	    //if sending thru a splitter 
 	    if (node.edges[0].contents instanceof SIRSplitter) {
-		items = ((Integer)RawBackend.steadyExecutionCounts.get(dest)).intValue() *
-		    ((SIRFilter)dest.contents).getPopInt();
+		//if the final dest is a filter then just get the execution count of the 
+		//dest filter * its pop rate
+		if (dest.contents instanceof SIRFilter) {
+		    items = ((Integer)RawBackend.steadyExecutionCounts.get(dest)).intValue() *
+			((SIRFilter)dest.contents).getPopInt();
+		}
+		//we are sending to a joiner thru a splitter (should only happen when 
+		//a splitter is connected to a feedback loop).
+		else {
+		    double rate = 1.0;
+		    //calculate the percentage of time this path is taken for the
+		    //feedback loop
+		    if (dest.incomingWeights.length >= 2)
+			rate = ((double)dest.incomingWeights[0])/(double)(dest.incomingWeights[0] +
+							dest.incomingWeights[1]);
+		    items = (int)(((Integer)RawBackend.steadyExecutionCounts.get(dest)).intValue() / rate);
+		}
 	    }
-	    else {
-		//check if the source is a joiner if so push = 1
+	    else {  //sending without an intermediate splitter
+		//if sending from a joiner, items = execution count
+		//if sending from a filter, items = exe count * items pushed
 		int push;
 		if (node.contents instanceof SIRJoiner)
 		    push = 1;
@@ -428,13 +446,11 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		items = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() *
 		    push;
 	    }
-	    //  System.out.println("Items, hops  " + node.contents.getName() + ": " + items);
-	    sum += /*((int)Math.sqrt*/(items * hops) + items * Math.pow(numAssigned * 2.0, 3.0);
+	    sum += /*((int))Math.sqrt*/(items * hops) + items * Math.pow(numAssigned * 2.0, 3.0);
 	}
-	//System.out.println("Cost for node " + node.contents.getName() + ": " + sum);
-	
-	return sum;
+    return sum;
     }
+
     
     //return true if the perturbation is accepted
     private static boolean perturbConfiguration(double T) throws Exception
@@ -574,15 +590,30 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    }	
 	    else return getDownStreamHelper(node.edges[0]);
 	}
-	else {
-	    //SIRSplitter
+	else if (node.contents instanceof SIRSplitter) {
 	    HashSet ret = new HashSet();
+	    /*
+	    if (node.contents.getParent() instanceof SIRFeedbackLoop) {
+		//add the connection to all the nodes outside of the feedback
+		if (node.ways > 1) {
+		    RawBackend.addAll(ret, getDownStreamHelper(node.edges[0]));
+		    ret.add(node.edges[1]);
+		}
+		else 
+		    ret.add(node.edges[0]);
+	    }
+	    */
 	    for (int i = 0; i < node.ways; i++) {
 		RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
 	    }
 	    return ret;
 	}
+	Utils.fail("Serious Error in Simulated Annealing");
+	
+	return null;
     }
+    
+      
     
 	    
     //but not north neighbor or west
@@ -696,109 +727,3 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
    
 }
 
-	
-//     public static void simAnnealAssignElliot(FlatNode node) 
-//     {
-// 	double T, Tf;
-// 	HashMap sirBest, tileBest;
-// 	int bestCost;
-
-// 	init(node);
-// 	random = new Random(17);
-// 	randomPlacement();
-// 	System.out.println("Initial placement cost: " + placementCost());
-// 	//clone the random placement
-
-// 	HashMap sir  = (HashMap)SIRassignment.clone();
-// 	HashMap tile = (HashMap)tileAssignment.clone();
-// 	T = annealMaxTemp();
-
-// 	//reset the initial random placement
-// 	SIRassignment  = sir;
-// 	tileAssignment = tile;
-// 	Tf = annealMinTemp();
-
-// 	//reset the initial random placement
-// 	SIRassignment  = sir;
-// 	tileAssignment = tile;
-
-// 	int i, bestIter = 0;
-      
-// 	bestCost = placementCost();
-// 	int cost = bestCost;
-// 	sirBest = (HashMap)SIRassignment.clone();
-// 	tileBest = (HashMap)tileAssignment.clone();
-
-// 	for (i = 0; i < ANNEALITERATIONS; i++) {
-// 	    perturbConfiguration(T);
-// 	    T = .999 * T;
-// 	    if (T <= Tf) break;
-// 	    cost = placementCost();
-// 	    if (cost < bestCost) {
-// 		bestIter = i;
-// 		sirBest = (HashMap)SIRassignment.clone();
-// 		tileBest = (HashMap)tileAssignment.clone();
-// 		bestCost = cost;
-// 	    }
-// 	    if (cost == 0)
-// 		break;
-// 	}
-// 	if (cost > bestCost) {
-// 	    SIRassignment = sirBest;
-// 	    tileAssignment = tileBest;
-// 	}
-// 	else
-// 	    bestIter = i;
-// 	System.out.println("Final placement cost: " + placementCost() +
-// 			   " " + bestIter);
-// 	dumpLayout();
-//     }
-   
-//     private static double annealMaxTemp() 
-//     {
-// 	double T = 1.0;
-// 	int total = 0, accepted = 0;
-// 	HashMap sirInit  = (HashMap)SIRassignment.clone();
-// 	HashMap tileInit = (HashMap)tileAssignment.clone();
-	
-// 	for (int i = 0; i < MAXTEMPITERATIONS; i++) {
-// 	    T = 2.0 * T;
-// 	    //c_old <- c_init
-// 	    SIRassignment = sirInit;
-// 	    tileAssignment = tileInit;
-// 	    if (perturbConfiguration(T))
-// 		accepted ++;
-// 	    total++;
-// 	    if (((double)accepted) / ((double)total) > .999)
-// 		break;
-// 	}
-// 	//c_old <- c_init
-// 	SIRassignment = sirInit;
-// 	tileAssignment = tileInit;
-// 	return T;
-//     }
-    
-//     private static double annealMinTemp () 
-//     {
-// 	double T = 1.0;
-// 	int total = 0, accepted = 0;
-// 	HashMap sirInit  = (HashMap)SIRassignment.clone();
-// 	HashMap tileInit = (HashMap)tileAssignment.clone();
-	
-// 	for (int i = 0; i < MINTEMPITERATIONS; i++) {
-// 	    T = 0.5 * T;
-// 	    //c_old <- c_init
-// 	    SIRassignment = sirInit;
-// 	    tileAssignment = tileInit;
-// 	    if (perturbConfiguration(T))
-// 		accepted ++;
-// 	    total++;
-// 	    if (((double)accepted) / ((double)total) < .001)
-// 		break;
-// 	}
-// 	//c_old <- c_init
-// 	SIRassignment = sirInit;
-// 	tileAssignment = tileInit;
-// 	return T;
-//     }
-    

@@ -100,7 +100,29 @@ public class FlatNode {
 	
 	incoming[currentIncoming++] = from;
     }
-	    
+	
+    /*
+      This function is called by rawFlattener after createGraph is called.
+      It is called for each splitter of a feedback loop.  
+      createGraph connects the outgoing edges of the splitter of a feedback
+      in the reverse order and this swaps them
+    */
+    public void swapSplitterEdges() 
+    {
+	if (!(contents instanceof SIRSplitter) ||
+	    !(contents.getParent() instanceof SIRFeedbackLoop))
+	    Utils.fail("We do not want to swap the edges on non-splitter");
+	if(edges.length != 2)
+	    return;
+    
+	//The weights are correct and do not need to be swapped
+	
+	FlatNode temp = edges[0];
+	edges[0] = edges[1];
+	edges[1] = temp;
+    }
+    
+	
     /** 
      * accept a visitor, since this graph can have loops, 
      * we have to keep track of what he have visited.  
@@ -113,9 +135,13 @@ public class FlatNode {
 	
 	set.add(this);
 	v.visitNode(this);
-	for (int i = 0; i < ways; i++)
+	for (int i = 0; i < ways; i++) {
+	    if (edges[i] == null)
+		continue;
 	    if (!set.contains(edges[i]))
 		edges[i].accept(v, set, false);
+	}
     }
+    
 }
 

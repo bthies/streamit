@@ -54,13 +54,21 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	
 	SimulationCounter counters = 
 	    new SimulationCounter(JoinerSimulator.schedules);
+	
+	
+	//create copies of the executionCounts
+	HashMap initExecutionCounts = (HashMap)RawBackend.initExecutionCounts.clone();
+	HashMap steadyExecutionCounts = (HashMap)RawBackend.steadyExecutionCounts.clone();
 
 	joinerCode = initJoinerCode;
-	initSchedules = (new Simulator(top, true)).go(RawBackend.initExecutionCounts, counters, null);
+	initSchedules = (new Simulator(top, true)).goInit(initExecutionCounts, counters, null);
+	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");
-       
+
 	joinerCode = steadyJoinerCode;
-	steadySchedules = (new Simulator(top, false)).go(RawBackend.steadyExecutionCounts, counters, null);
+	steadySchedules = (new Simulator(top, false)).go(steadyExecutionCounts, counters, null);
+	testExecutionCounts(steadyExecutionCounts);
+	System.out.println("End of steady-state simulation");
     }
     
    
@@ -75,12 +83,95 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	//execution order
 	bottom = null;
 	initSimulation = init;
-	//toplevel.accept(this, new HashSet(), false);
-
-	//System.out.println("Bottom node " + bottom.contents.getName());
     }
-
-
+    
+    /*
+      This function tests to see if a simulation of a schedule has executed
+      to its completion.  It checks if all the execution counts for 
+      mapped streams are 0
+    */
+    private static void testExecutionCounts(HashMap exeCounts) 
+    {
+	boolean bad = false;
+	
+	Iterator it = exeCounts.keySet().iterator();
+	while(it.hasNext()) {
+	    FlatNode node = (FlatNode)it.next();
+	    if (Layout.getTile(node) != null) {
+		if (((Integer)exeCounts.get(node)).intValue() != 0) {
+		    System.out.println(node.contents.getName() + " has " + 
+				       exeCounts.get(node) + " executions remaining!!!!");
+		    bad = true;
+		}
+	    }
+	}
+	if (bad)
+	    Utils.fail("Error in simulator.  Some nodes did not execute.  See above...");
+	
+    }
+    
+    /*
+      This function is called before the init simulation is run.  It creates the code
+      in the joiner code to call the initpath function and place the results in the
+      correct buffer of the joiner
+    */
+    private void callInitPaths(SimulationCounter counters) 
+    {
+	//find all the joiners that are immediately contained in a FeedbackLoop
+	Iterator joiners = Layout.joiners.iterator();
+	//clone the joiner schedules
+	
+	FlatNode joiner;
+	//iterate over all of the joiners of a feedbackloop
+	while (joiners.hasNext()) {
+	    joiner = (FlatNode)joiners.next();
+	    if ((((SIRJoiner)joiner.contents).getParent() instanceof SIRFeedbackLoop)) {
+		//create the initPath calls 
+		SIRFeedbackLoop loop = (SIRFeedbackLoop)((SIRJoiner)joiner.contents).getParent();
+		int delay = loop.getDelayInt();
+		JoinerScheduleNode current = ((JoinerScheduleNode)JoinerSimulator.schedules.get(joiner));
+		for (int i = 0; i < delay; i++) {
+		    //for each init path call find the correct buffer to place it in.
+		    while(true) {
+			if (current.buffer.endsWith("1")) {
+			    //create the joinerCode Node and put it in the init schedule
+			    JoinerScheduleNode prev = 
+				(JoinerScheduleNode)currentJoinerCode.get(joiner);
+			    JoinerScheduleNode code = new JoinerScheduleNode(i, current.buffer);
+			    if (prev == null) {
+				//first node in joiner code
+				//this will add it to the joiner code hashmap
+				//this hashmap store the first instruction of each code sequence
+				joinerCode.put(joiner, code);
+			    }
+			    else {
+				//connect to the prev
+				prev.next = code;
+			    }
+			    //set current
+			    currentJoinerCode.put(joiner, code);
+			    //record that a data item was placed in this buffer
+			    counters.incrementJoinerBufferCount(joiner, current.buffer);
+			    //we found a buffer so break and place the next initPath call
+			    current = current.next;
+			    break;
+			}
+			current = current.next;
+		    }
+		}
+	    }
+	}
+    }
+    
+    //The start of the simulation for the initialization schedule
+    private HashMap goInit(HashMap counts, SimulationCounter counters, FlatNode lastToFire) 
+    {
+	//create the initpath calls
+	callInitPaths(counters);
+	//simulate
+	return go(counts, counters, lastToFire);
+    }
+	    
  
     /* the main simulation method */
     private HashMap go(HashMap counts, SimulationCounter counters, FlatNode lastToFire) 
@@ -91,22 +182,14 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	while(true) {
 	    //find out who should fire
 	    fire = whoShouldFire(lastToFire, counts, counters);
-	    
 	    //if no one left to fire, stop
 	    if (fire == null)
 		break;
-	    
-	 
-
 	    //keep track of everything needed when a node fires
 	    int items = fireMe(fire, counters, counts);
 	    //simulate the firings
 	    //1 item for a joiner, push items for a filter
-	    	    
-	    //System.out.println(fire.contents.getName() + " pushing " + items);
-
 	    for (int i = 0; i < items; i++) {
-	
 		//get the destinations of this item
 		//could be multiple dests with duplicate splitters
 		//a filter always has one outgoing arc, so sent to way 0
@@ -117,7 +200,6 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		//if (fire != lastToFire)
 		go(counts, counters, fire);
 	    }
-	    
 	}
 	return switchSchedules;
     }
@@ -181,7 +263,6 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	//erase the trailing ,
 	buf.setCharAt(buf.length() - 1, '\n');
 	
-
 	//generate all the other 
 	Iterator tiles = next.keySet().iterator();
 	while (tiles.hasNext()) {
@@ -192,8 +273,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		switchSchedules.put(tile, new StringBuffer());
 	    buf = (StringBuffer)switchSchedules.get(tile);
 	    Coordinate prevTile = (Coordinate)previous.get(tile);
-	    buf.append("route ");
-	    Iterator nexts = ((HashSet)next.get(tile)).iterator();
+	    buf.append("route ");	    Iterator nexts = ((HashSet)next.get(tile)).iterator();
 	    while(nexts.hasNext()) {
 		Coordinate nextTile = (Coordinate)nexts.next();
 		if (!nextTile.equals(tile))
@@ -219,19 +299,22 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    return ((SIRFilter)fire.contents).getPopInt();
     }
    
+    private void decrementExecutionCounts(FlatNode fire, HashMap executionCounts) 
+    {
+	int oldVal = ((Integer)executionCounts.get(fire)).intValue();
+	if (oldVal - 1 < 0)
+	    Utils.fail("Executed too much");
+	executionCounts.put(fire, new Integer(oldVal - 1));
+    }
+    
     //consume the data and return the number of items produced
     private int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
-	//System.out.println("Firing " + fire.contents.getName());
-	
-
 	if (fire.contents instanceof SIRFilter) {
 	    //decrement the schedule execution counter
-	    int oldVal = ((Integer)executionCounts.get(fire)).intValue();
-	    if (oldVal - 1 < 0)
-		Utils.fail("Executed too much");
-	    executionCounts.put(fire, new Integer(oldVal - 1));
+	    decrementExecutionCounts(fire, executionCounts);
 	    
+	    //consume the date from the buffer
 	    counters.decrementBufferCount(fire, 
 					  itemsNeededToFire(fire, counters));
 	    
@@ -248,68 +331,62 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    return ret;
 	}
 	else if (fire.contents instanceof SIRJoiner) {
-	    //System.out.println("Firing a joiner");
-	    
-	    //determine if this joiner fired because of an initpath call
-	    //if so just increment the number of calls to the initpath
-	    if (counters.canFeedbackJoinerFire(fire)) {
-		counters.incrementInitPathCall(fire);
-		return 1;
-	    }
-	    else { //otherwise the joiner fired normally ...
-		return fireJoiner(fire, counters, executionCounts);
-
-	    }
+	    return fireJoiner(fire, counters, executionCounts);
 	}
+    
 	Utils.fail("Trying to fire a non-filter or joiner");
 	return -1;
     }
     
+    /*
+      add the joiner code to the code schedule for the given joiner
+    */
+    private void addJoinerCode(FlatNode fire, JoinerScheduleNode code) 
+    {
+	//add to the joiner code for this fire
+	    JoinerScheduleNode prev = 
+		(JoinerScheduleNode)currentJoinerCode.get(fire);
+	    if (prev == null) {
+		//first node in joiner code
+		joinerCode.put(fire, code);
+	    }
+	    else {
+		//connect 
+		prev.next = code;
+	    }
+	    //set code
+	    currentJoinerCode.put(fire, code);
+    }
+    
+    
+    
     private int fireJoiner(FlatNode fire, SimulationCounter counters, HashMap executionCounts)
     {
-	//A joiner can fire if needs to receive data from its upstream filter or if it can
-	//send data downstream
+	//receive data and put it into the correct buffer
 	if (counters.getBufferCount(fire) > 0) {
 	    //decrement the buffer from the joiner
 	    counters.decrementBufferCount(fire, 1);
 	    //get the joiner buffer as determined by getDestination and stored in a list 
 	    String joinerBuffer = counters.getJoinerReceiveBuffer(fire);
-	    //System.out.println(fire.contents.getName() + " adding to joiner buffer " + joinerBuffer);
-	    
 	    //as determined by the simulation
 	    counters.incrementJoinerBufferCount(fire, joinerBuffer);
 	    //add to the joiner code for this fire
-	    JoinerScheduleNode prev = 
-		(JoinerScheduleNode)currentJoinerCode.get(fire);
 	    JoinerScheduleNode current = new JoinerScheduleNode();
 	    current.buffer = joinerBuffer;
 	    current.type = JoinerScheduleNode.RECEIVE;
-	    if (prev == null) {
-		//first node in joiner code
-		joinerCode.put(fire, current);
-	    }
-	    else {
-		//connect 
-		prev.next = current;
-	    }
-	    //set current
-	    currentJoinerCode.put(fire, current);
-	    return 0;
+	    addJoinerCode(fire, current);
+	    return 0; 
 	}
 	else {
-	    //else, this joiner fired because it received data
-	    //that can be sent on
-	    JoinerScheduleNode previous = 
-		(JoinerScheduleNode)currentJoinerCode.get(fire);
+	    //The joiner is passing a data item, record this as an execution
+	    decrementExecutionCounts(fire, executionCounts);
+
+	    //else, this joiner fired because it has data that can be sent downstream
 	    JoinerScheduleNode current = new JoinerScheduleNode();
 	    current.buffer = counters.getJoinerBuffer(fire);
 	    current.type = JoinerScheduleNode.FIRE;
-	    previous.next = current;
-	    //System.out.println(fire.contents.getName() + " sending from joiner buffer " + current.buffer);
+	    addJoinerCode(fire, current);
 	    
-	    
-	    //set current
-	    currentJoinerCode.put(fire, current);
 	    //decrement the buffer
 	    counters.decrementJoinerBufferCount(fire, counters.getJoinerBuffer(fire));
 	    //step the schedule
@@ -412,22 +489,24 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	Vector queue = new Vector();
 	FlatNode node;
 	FlatNode mostDownStream = null;
-			
-	//System.out.println("Starting from " + start.contents.getName());
 	
 	queue.add(start);
 	while (!queue.isEmpty()) {
+  
 	    node = (FlatNode)queue.get(0);
+	    queue.remove(0);
+	    
+	    if (node == null)
+		continue;
+	    
 	    visited.add(node);
 	    if (canFire(node, executionCounts, counters)) {
 		mostDownStream = node;
 	    }
-	    queue.remove(0);
+
 	    //to keep the order of the nodes of a splitjoin in the correct order
 	    //(the order defined by the joiner) add to the queue in the reverse order
-
-	     for (int i = node.ways - 1; i >= 0; i--) {
-	    //for (int i = 0; i < node.ways; i++) {
+	    for (int i = node.ways - 1; i >= 0; i--) {
 		if (!visited.contains(node.edges[i]))
 			queue.add(node.edges[i]);
 	    }
@@ -442,23 +521,20 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     private boolean canFire(FlatNode node, HashMap executionCounts, 
 			    SimulationCounter counters) 
     {
+	if (node == null)
+	    return false;
+
 	if (node.contents instanceof SIRFilter) {
 	    //check if this node has fired the number of times given by
 	    //the schedule
-	    
-	    //System.out.println("Checking execution count: " + 
-	    //node.contents.getName());
-	 
-	    //System.out.println("Can I fire " + node.contents.getName() + " " + counters.getBufferCount(node) + " " + itemsNeededToFire(node, counters));
-   
 	    Integer count = (Integer)executionCounts.get(node);
+	    //if a node is not executed at all in a schedule it will not have an
+	    //entry
 	    if (count == null)
 		return false;
 	    if (count.intValue() == 0) {
-		//System.out.println("executed enough already");
 		return false;
 	    }
-	    
 	    if (counters.getBufferCount(node) >= itemsNeededToFire(node, counters)) {
 		return true;
 	    }
@@ -466,20 +542,29 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		return false;
 	}
 	else if (node.contents instanceof SIRJoiner) {
-	    //System.out.println("Can I fire " + node.contents.getName() + " " + counters.getBufferCount(node));
 	    //first of all, a joiner can only fire it is the most downstream
 	    //joiner in a joiner group
 	    if (!Layout.joiners.contains(node))
 		return false;
-	    //if this joiner is inside of a feedbackloop then it can fire
-	    //as many times as the delay
-	    if (counters.canFeedbackJoinerFire(node))
-		return true;
-	    //determine if a joiner can fire
-	    //if the buffer associated with its current 
-	    //input has an item in it or if it has input waiting to be buffered
+	    //determine if the joiner can receive and buffer data
+	    //this does not count as an execution of the joiner
+	    //only sending data counts as an execution, that is why we check that 
+	    //next
 	    if (counters.getBufferCount(node) > 0) 
 		return true;
+	    
+	    //check if this node has fired the number of times given by
+	    //the schedule
+	    Integer count = (Integer)executionCounts.get(node);
+	    //if a node is not executed at all in a schedule it will not have an
+	    //entry
+	    if (count == null)
+		return false;
+	    if (count.intValue() == 0) {
+		return false;
+	    }
+	    
+	    //determine if the joiner can send data downstream from a buffer
 	    if (counters.getJoinerBufferCount(node, counters.
 	    				      getJoinerBuffer(node)) > 0)
 		return true;
@@ -490,7 +575,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    return false;
     }
    	
-    //look for bottom node
+    //Just a debugging function, not used
     public void visitNode(FlatNode node) 
     {
 	System.out.println(node.contents.getName());
@@ -515,9 +600,24 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     
     private String getJoinerBuffer(FlatNode node, FlatNode previous) 
     {
+	//	System.out.println(node.contents.getName());
+	//System.out.println(previous.contents.getName());
 	for (int i = 0; i < node.inputs; i++) {
+	    if (node.incoming[i] == null)
+		continue;
+	    
 	    if (node.incoming[i] == previous)
 		return String.valueOf(i);
+	    if (node.incoming[i].contents instanceof SIRSplitter) {
+		FlatNode temp = node.incoming[i];
+		while (true) {
+		    if (temp == previous)
+			return String.valueOf(i);
+		    if (!(temp.contents instanceof SIRSplitter))
+			break;
+		    temp = temp.incoming[0];
+		}
+	    }
 	}
 	
 	Utils.fail("cannot find previous node in joiner list");
@@ -539,112 +639,3 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     }
        
 }
- //  private void generateSwitchCode(FlatNode fire, List dests) 
-//     {
-// 	//keeps the next hop for the sends
-// 	HashSet sends = new HashSet();
-// 	//keeps routes for all of the intermediate hops
-// 	//this hashset points to a hashset 
-// 	//the secode hash map is indexed by the sources of 
-// 	//the route instructions for the tile
-// 	//the second hashmap points to a hashset
-// 	//of all the dest for a given source
-
-// 	HashMap routes = new HashMap();
-       
-// 	//maps receivers to their previous hop
-// 	HashMap receives = new HashMap();
-		
-// 	//fill the maps
-// 	ListIterator destsIt = dests.listIterator();
-// 	while (destsIt.hasNext()) {
-// 	    FlatNode dest = (FlatNode)destsIt.next();
-// 	    Coordinate[] hops = 
-// 		(Coordinate[])Router.getRoute(fire, dest).toArray(new Coordinate[0]);
-// 	    //add each route to the maps
-// 	    sends.add(hops[1]);
-// 	    //add the intermediate routes
-// 	    for (int i = 1; i < hops.length -1; i++) {
-// 		if (!routes.containsKey(hops[i]))
-// 		    routes.put(hops[i], new HashMap());
-// 		HashMap prevs = (HashMap)routes.get(hops[i]);
-// 		if (!prevs.containsKey(hops[i-1]))
-// 		    prevs.put(hops[i-1], new HashSet());
-// 		HashSet nexts = (HashSet)prevs.get(hops[i-1]);
-// 		nexts.add(hops[i+1]);
-// 	    }
-// 	    //add the receive
-// 	    receives.put(hops[hops.length-1], hops[hops.length - 2]);
-// 	}
-// 	//now generate the send, routes, and receives
-// 	addSends(fire, sends);
-// 	addRoutes(routes);
-// 	addReceives(receives);
-//     }
-//  private void addRoutes(HashMap routes) 
-//     {
-// 	//get each router node
-// 	Iterator routerIt = routes.keySet().iterator();
-// 	while (routerIt.hasNext()) {
-// 	    //for each router get all the sources
-// 	    Coordinate router = (Coordinate)routerIt.next();
-// 	    //get the router's switch code buffer
-// 	    if (!switchSchedules.containsKey(router))
-// 		switchSchedules.put(router, new StringBuffer());
-	
-// 	    StringBuffer buf = (StringBuffer)switchSchedules.get(router);
-// 	    //for each source get the dests
-// 	    Iterator sourcesIt = ((HashMap)routes.get(router)).keySet().iterator();
-// 	    while(sourcesIt.hasNext()) {
-// 		//generate the switch code, for each source send to all the dests
-// 		//in one route instruction
-// 		Coordinate source = (Coordinate)sourcesIt.next();
-// 		Iterator destsIt = 
-// 		    ((HashSet)((HashMap)routes.get(router)).get(source)).iterator();
-// 		buf.append("\tnop\troute ");
-// 		while(destsIt.hasNext()) {
-// 		    Coordinate dest = (Coordinate)destsIt.next();
-// 		    buf.append("$c" + Layout.getDirection(router, source) + "i->$c" +
-// 			       Layout.getDirection(router, dest) + "o,");
-// 		}
-// 		buf.setCharAt(buf.length() - 1, '\n');
-// 	    }
-// 	}
-//     }
-        
-//     private void addSends(FlatNode fire, HashSet sends) 
-//     {
-// 	if (!switchSchedules.containsKey(Layout.getTile(fire)))
-// 	    switchSchedules.put(Layout.getTile(fire), new StringBuffer());
-	
-// 	StringBuffer buf = (StringBuffer)switchSchedules.get(Layout.getTile(fire));
-	
-// 	Iterator it = sends.iterator();
-	
-// 	buf.append("\tnop\troute ");
-// 	while (it.hasNext()) {
-// 	    Coordinate dest = (Coordinate)it.next();
-// 	    buf.append("$csto->" + "$c" + 
-// 		       Layout.getDirection(Layout.getTile(fire), dest) + 
-// 		       "o,");
-// 	}
-// 	//erase the trailing ,
-// 	buf.setCharAt(buf.length() - 1, '\n');
-//     }
-    
-//     private void addReceives(HashMap receives) 
-// 	{
-// 	    Iterator it = receives.keySet().iterator();
-	    
-// 	    while (it.hasNext()) {
-// 		Coordinate rec = (Coordinate)it.next();
-// 		Coordinate send = (Coordinate)receives.get(rec);
-// 		if (!switchSchedules.containsKey(rec))
-// 		    switchSchedules.put(rec, new StringBuffer());
-// 		StringBuffer buf = (StringBuffer)switchSchedules.get(rec);
-// 		buf.append("\tnop\troute ");
-// 		buf.append("$c" + Layout.getDirection(rec, send) + "i");
-// 		buf.append("->$csti\n");
-// 	    }
-// 	}
-    

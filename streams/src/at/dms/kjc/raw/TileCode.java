@@ -56,21 +56,17 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    FileWriter fw = 
 		new FileWriter("tile" + Layout.getTileNumber(Layout.getTile(joiner)) 
 			       + ".c");
-	    
+	    fw.write("/* " + joiner.contents.getName() + "*/\n");
 	    fw.write("#include <raw.h>\n");
 	    fw.write("#include <math.h>\n\n");
-	    fw.write(createJoinerWork(joiner));
 	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)
 		fw.write(createInitPath(joiner) + "\n");	    
+	    fw.write(createJoinerWork(joiner));
 	    //write the extern for the function to init the 
 	    //switch
 	    fw.write("void raw_init();\n\n");
 	    fw.write("void begin(void) {\n");
-	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)
-		fw.write("  int i;\n\n");
 	    fw.write("  raw_init();\n");
-	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)
-		fw.write(initPathCallCode(joiner));
 	    fw.write("  work();\n");
 	    fw.write("}\n");
 	    fw.close();
@@ -96,18 +92,6 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	JMethodDeclaration initPath = ((SIRFeedbackLoop)joiner.contents.getParent()).getInitPath();
 	initPath.accept(toC);
 	return toC.getString();
-    }
-
-    private static String initPathCallCode(FlatNode joiner) {
-	if (!(joiner.contents.getParent() instanceof SIRFeedbackLoop))
-	    return "";
-	
-	StringBuffer buf = new StringBuffer();
-	int delay = ((SIRFeedbackLoop)joiner.contents.getParent()).getDelayInt();
-	JMethodDeclaration initPath = ((SIRFeedbackLoop)joiner.contents.getParent()).getInitPath();
-	buf.append("\n  for (i = 0; i < " + delay + "; i++) \n");
-	buf.append("    static_send(" + initPath.getName() + "(i));\n");
-	return buf.toString();
     }
 
     private static String createJoinerWork(FlatNode joiner) 
@@ -151,6 +135,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     private static void printSchedule(JoinerScheduleNode first, StringBuffer ret, boolean fp) {
 	// get the array of the schedule
 	JoinerScheduleNode[] nodes = JoinerScheduleNode.toArray(first);
+	//	System.out.println("Joiner sched size " + nodes.length);
 	// pos is our location in <nodes>
 	int pos = 0;
 	// keep going 'til we've printed all the nodes
@@ -273,7 +258,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     {
 	if (i == null) return 0;
 
-	System.out.println(node.contents.getName() + " BufferSize = " + i);
+	//	System.out.println(node.contents.getName() + " BufferSize = " + i);
 	
 	//	return 1024;
 	

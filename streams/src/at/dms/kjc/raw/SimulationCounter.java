@@ -28,8 +28,6 @@ public class SimulationCounter {
 
     private HashMap joinerBufferCounts;
     
-    private HashMap joinerInitPathCalls;
-
     private HashMap joinerReceiveBuffer;
     
     static 
@@ -41,7 +39,6 @@ public class SimulationCounter {
 	joinerReceiveBuffer = new HashMap();
 	arcCountsIncoming = new HashMap();
 	arcCountsOutgoing = new HashMap();
-	joinerInitPathCalls = new HashMap();
 	bufferCount = new HashMap();
 	fired = new HashSet();
 	currentJoinerScheduleNode = (HashMap)joinerSchedules.clone();
@@ -179,71 +176,6 @@ public class SimulationCounter {
 	    System.err.println("Trying to reset a non-zero counter.");
 	arcCountsOutgoing.put(node, currentArcCounts);
     }
-
-    public boolean canFeedbackJoinerFire(FlatNode node) {
-	//check if this joiner is mapped
-	if (!Layout.joiners.contains(node))
-	    return false;
-	//check if this is a feedbackloop joiner
-	if (!(((SIRJoiner)node.contents).getParent() instanceof SIRFeedbackLoop))
-	    return false;
-	//get the delay
-	int delay = ((SIRFeedbackLoop)node.contents.getParent()).getDelayInt();
-	
-	if (!(joinerInitPathCalls.containsKey(node)))
-	    joinerInitPathCalls.put(node, new Integer(0));
-	
-	boolean ret = false;
-	
-	int timesFired = ((Integer)joinerInitPathCalls.get(node)).intValue();
-	if (timesFired < delay)
-	   ret = true;
-	
-	return ret;
-    }
-    
-    public void incrementInitPathCall(FlatNode node) 
-    {
-	int timesFired = ((Integer)joinerInitPathCalls.get(node)).intValue();
-	joinerInitPathCalls.put(node, new Integer(timesFired + 1));
-    }
 }
 
 
-//older code may need later
-//     public int getArcCountIncoming(FlatNode node, int way) {
-// 	/* Create counters in the hashmap if this node has not
-// 	   been visited already 
-// 	*/
-// 	if (!arcCountsIncoming.containsKey(node)) {
-// 	    int[] nodeCounters = new int[node.inputs];
-// 	    for (int i = 0; i < node.inputs; i++) {
-// 		nodeCounters[i] = node.incomingWeights[i];
-// 	    }
-// 	    arcCountsIncoming.put(node, nodeCounters);
-// 	}
-// 	//Get the counter and return the count for the given way
-// 	int[] currentArcCounts = (int[])arcCountsIncoming.get(node);
-// 	return currentArcCounts[way];
-//     }
-    
-//     public void decrementArcCountIncoming(FlatNode node, int way) 
-//     {
-// 	int[] currentArcCounts = (int[])arcCountsIncoming.get(node);
-// 	if (currentArcCounts[way] > 0)
-// 	    currentArcCounts[way]--;
-// 	else 
-// 	    System.err.println("Trying to decrement a way with a zero count.");
-	
-// 	arcCountsIncoming.put(node, currentArcCounts);
-//     }
-    
-//     public void resetArcCountIncoming(FlatNode node, int way) 
-//     {
-// 	int[] currentArcCounts = (int[])arcCountsIncoming.get(node);
-// 	if (currentArcCounts[way] == 0)
-// 	    currentArcCounts[way] = node.incomingWeights[way];
-// 	else
-// 	    System.err.println("Trying to reset a non-zero counter.");
-// 	arcCountsIncoming.put(node, currentArcCounts);
-//     }

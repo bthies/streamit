@@ -71,7 +71,7 @@ public class JoinerSimulator
 				     JoinerCounter counters,
 				     String buf) 
     {
-	if (node.contents instanceof SIRFilter) {
+	if (node.contents instanceof SIRFilter || node.contents instanceof SIRSplitter) {
 	    //fill in the joiner schedule node
 	    schedNode.type = JoinerScheduleNode.RECEIVE;
 	    schedNode.buffer = buf;
@@ -79,11 +79,11 @@ public class JoinerSimulator
 	    ((HashSet)buffers.get(current)).add(buf);
 	    return;
 	}
-	else if (node.contents instanceof SIRSplitter) {
-	    //just pass thru joiners they only have one downstream connection
-	    simulateDataItem(node.incoming[0], schedNode,
-			     counters, buf);
-	}
+	//else if (node.contents instanceof SIRSplitter) {
+	    //just pass thru splitters they only have one upstream connection
+	//   simulateDataItem(node.incoming[0], schedNode,
+	//     	     counters, buf);
+	//}
 	else if (node.contents instanceof SIRJoiner) {
 	    //here is the meat
 	    SIRJoiner joiner = (SIRJoiner)node.contents;

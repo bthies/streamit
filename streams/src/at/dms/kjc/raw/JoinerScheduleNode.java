@@ -4,10 +4,23 @@ public class JoinerScheduleNode
 {
     public static final int FIRE = 0;
     public static final int RECEIVE = 1;
-       
+    public static final int INITPATH = 2;
+
     public JoinerScheduleNode next;
     public int type;
     public String buffer;
+    public int initPathIndex = 0;
+
+    public JoinerScheduleNode() 
+    {
+    }
+        
+    //create an initPath call node...
+    public JoinerScheduleNode(int index, String buf) {
+	type = INITPATH;
+	initPathIndex = index;
+	buffer = buf;
+    }
     
     public int getType() 
     {
@@ -34,7 +47,7 @@ public class JoinerScheduleNode
 	    //       buffer + ") print_int(2000);\n");
 	    
 	}
-	else { //receive
+	else if (type == RECEIVE) { //receive
 	    ret.append("__buffer" + buffer + "[__last" + buffer + "++] = static_receive");
 	    if (fp)
 		ret.append("_f");
@@ -42,6 +55,12 @@ public class JoinerScheduleNode
 	    ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
 	    //ret.append("if (last" + buffer + " >= BUFSIZE) last" + buffer + " = 0;\n");
 	}
+	else if (type == INITPATH){
+	    ret.append("__buffer" + buffer + "[__last" + buffer + "++] = initPath(" + 
+		       initPathIndex + ");\n");
+	    ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
+	}
+	
 	return ret.toString();
     }
     
@@ -50,7 +69,7 @@ public class JoinerScheduleNode
      * this.
      */
     public boolean equals(JoinerScheduleNode other) {
-	return type==other.type && buffer.equals(other.buffer);
+	return type==other.type && buffer.equals(other.buffer) && initPathIndex == other.initPathIndex;
     }
 
     /**
@@ -81,8 +100,12 @@ public class JoinerScheduleNode
     {
 	if (type == FIRE)
 	    System.out.print("Fire: ");
-	else 
+	else if (type == RECEIVE) 
 	    System.out.print("Receive: ");
+	else if (type == INITPATH) {
+	    System.out.println("InitPath: " + initPathIndex);
+	    return;
+	}
 	System.out.println(buffer);
     }
 

@@ -135,7 +135,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			    SIRFilterIter iter) {
 	if (self.getPeekInt() > 4 * self.getPopInt()) 
 	    circular = false;
-      
+	
 	//System.out.println(self.getName());
 
 	//Entry point of the visitor
@@ -267,7 +267,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	// print(CModifier.toString(modifiers));
 	print(returnType);
 	print(" ");
-	print(ident);
+	//just print initPath() instead of initPath<Type>
+	if (ident.startsWith("initPath"))
+	    print("initPath"); 
+	else 
+	    print(ident);
 	print("(");
 	int count = 0;
 	

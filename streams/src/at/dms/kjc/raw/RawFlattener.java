@@ -15,6 +15,10 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 {
     private FlatNode currentNode;
     private StringBuffer buf;
+    //this hashset stores the splitters of feedbackloops
+    //so the edges can be swapped after createGraph()
+    //see the note in the create graph algorithm
+    private HashSet feedbackSplitters;
     
     public FlatNode top;
 
@@ -27,7 +31,17 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
     public RawFlattener(SIROperator toplevel) 
     {
 	this.SIRMap = new HashMap();
+	feedbackSplitters = new HashSet();
+	//create the flat graph
 	createGraph(toplevel);
+	//now we need to fix up the graph a bit
+	//we need to add all the back edges of the splitter of a feedbacks
+	Iterator it = feedbackSplitters.iterator();
+	while(it.hasNext()) {
+	    ((FlatNode)it.next()).swapSplitterEdges();
+	    
+	}
+	
     }
 
     /**
@@ -99,6 +113,12 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	    currentNode = joinerNode;
 	    
 	}
+	//HACK!!
+	//note:  this algorithm incorrectly connects the splitter of a 
+	//feedbackloop to the loop before it connects the splitter to the
+	//next downstream stream.
+	//to fix this, quickly, create a list of the splitters of fbl
+	//and swap the edges after the algorithm is finished...nice
 	if (current instanceof SIRFeedbackLoop) {
 	    SIRFeedbackLoop loop = (SIRFeedbackLoop)current;
 	    FlatNode joinerNode = addFlatNode (loop.getJoiner());
@@ -114,12 +134,27 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	    createGraph(loop.getBody());
 	    FlatNode.addEdges(currentNode, splitterNode);
 	    
+	    //here is the hack!
+	    swapEdgesLater(splitterNode);
+	    
 	    currentNode = splitterNode;
 	    createGraph(loop.getLoop());
 	    FlatNode.addEdges(currentNode, joinerNode);
 	    currentNode = splitterNode;
 	}
     }
+
+    /*add the splitter of a feedback loop to a hashset 
+      so we can swap the edges after createGraph() has run
+    */
+    private void swapEdgesLater(FlatNode splitter) 
+    {
+	if (feedbackSplitters.contains(splitter))
+	    Utils.fail("Trying to add multiple back edges from a splitter of a feedbackloop");
+	
+	feedbackSplitters.add(splitter);
+    }
+    
 
     /**
      * Adds a flat node for the given SIROperator, and return it.
@@ -183,6 +218,8 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
       
 	}
 	for (int i = 0; i < node.ways; i++) {
+	    if (node.edges[i] == null)
+		continue;
 	    if (node.edges[i].contents instanceof SIRJoiner)
 		continue;
 	    buf.append(node.contents.getName() + " -> " 

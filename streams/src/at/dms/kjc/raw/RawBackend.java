@@ -145,7 +145,44 @@ public class RawBackend {
 		}
 	    }
 	}
+	//now, in the above calculation, an execution of a joiner node is 
+	//considered one cycle of all of its inputs.  For the remainder of the
+	//raw backend, I would like the execution of a joiner to be defined as
+	//the joiner passing one data item down stream
+	//to calculate this, simply multiple the execution count generated above
+	//by the sum of the incoming weights of the joiner
+	for (int i=0; i < 2; i++) {
+	    Iterator it = result[i].keySet().iterator();
+	    while(it.hasNext()){
+		FlatNode node = (FlatNode)it.next();
+		if (node.contents instanceof SIRJoiner) {
+		    int sum = 0;
+		    for (int j = 0; j < node.inputs; j++)
+			sum += node.incomingWeights[j];
+		    int oldVal = ((Integer)result[i].get(node)).intValue();
+		    result[i].put(node, new Integer(sum*oldVal));
+		}
+	    }
+	}
     }
+    
+    //debug function
+    //run me after layout please
+    public static void printJoinerCounts(HashMap init, HashMap steady) {
+	HashMap[] result = { init, 
+			     steady	};
+		
+	for (int i=0;i < 2;i++) {
+	    Iterator it = result[i].keySet().iterator();
+	    while(it.hasNext()) {
+		FlatNode node = (FlatNode)it.next();
+		//	if (Layout.joiners.contains(node)) 
+		System.out.println(node.contents.getName() + " " +
+				   ((Integer)result[i].get(node)).intValue());
+	    }
+	}
+    }
+    
 
     //simple helper function to find the topmost pipeline
     private static SIRStream getTopMostParent (FlatNode node) 

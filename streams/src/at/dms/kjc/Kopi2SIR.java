@@ -641,10 +641,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
 	printMe("FieldDeclaration " + ident);
 	/* Input declaration set the fields for the current
-	   stream */ 
-	if (CModifier.contains(CModifier.ACC_STATIC, modifiers))
+	   stream */
+	/* if the field is static and not final, it could be used
+	   for message passing, so we flag an error */ 
+	if (CModifier.contains(CModifier.ACC_STATIC, modifiers) &&
+	    !CModifier.contains(CModifier.ACC_FINAL, modifiers))
 	    at.dms.util.Utils.fail(printLine(self) +
-				   "Cannot declare fields static");
+				   "Cannot declare field " + ident +
+				   " static (only final static).");
+				   
 
 	/* Output declaration set the fields for the current
 	   stream */

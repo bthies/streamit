@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.37 2004-01-28 17:11:34 dmaze Exp $
+# $Id: strc,v 1.38 2004-01-30 20:12:00 dmaze Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -59,6 +59,7 @@ The STREAMIT_HOME environment variable is unset.  Please see the
 instructions in the INSTALL file; you will need to modify your shell's
 startup files, then log out and log in again.
 EOH
+#'
     exit(1);
   }
 if (!@ARGV)
@@ -110,6 +111,7 @@ Options:
   --standalone, -S    Generate C file without library dependencies
 * --cluster n         Compile for a networked cluster with n nodes
 * --viram             Compile for VIRAM, a vector uniprocessor
+* --backend class     Explicitly specify the backend class
   --library           Run in the Java library instead of compiling
   --memory, -Xmx      Specify Java runtime heap limit
   --verbose           Print commands as they are executed
@@ -199,6 +201,7 @@ sub get_options
 			    "optimize|O=i",
 			    "altcodegen",
 			    "atlas!",
+			    "backend=s",
 			    "clone-with-serialization|clone_with_serialization",
 			    "debug!",
 			    "decoupled",
@@ -436,6 +439,7 @@ sub get_kjc_opts
       }
     $opts{altcodegen} && ($kjcopts .= " --altcodegen");
     $opts{atlas} && ($kjcopts .= " --atlas");
+    $opts{backend} && ($kjcopts .= " --backend " . $opts{backend});
     $opts{'clone-with-serialization'} && ($kjcopts .= " --clone_with_serialization");
     $opts{debug} && ($kjcopts .= " --debug");
     $opts{decoupled} && ($kjcopts .= " --decoupled");

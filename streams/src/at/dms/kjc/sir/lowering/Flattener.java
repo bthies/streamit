@@ -51,7 +51,7 @@ public class Flattener {
 	FieldInitMover.moveStreamInitialAssignments(str);
 	
 	// propagate constants and unroll loops
-	System.err.print("Expanding graph... ");
+	System.err.print("Running Constant Prop and Unroll... ");
 	ConstantProp.propagateAndUnroll(str);
 	System.err.println("done.");
 
@@ -94,9 +94,9 @@ public class Flattener {
 	*/
 
 	if (KjcOptions.fusion) {
-	    System.err.println("Running FuseAll...");
+	    System.err.print("Running FuseAll...");
 	    FuseAll.fuse(str);
-	    System.err.println("...done with Fuseall.");
+	    System.err.println("done.");
 	    /* DEBUGGING PRINTING
 	    System.out.println("--------- AFTER FUSION ------------");
 	    printer1 = new SIRPrinter();
@@ -114,9 +114,12 @@ public class Flattener {
 	new VarDeclRaiser().raiseVars(str);
 	System.err.println("done.");
 	
-        // do constant propagation on fields
-        if (KjcOptions.constprop) {
-	    System.err.print("Propagating fields... ");
+	/* aal -- changed so that the default action is to do field prop.
+	 * turn off field prop using --nofieldprop or -L */
+	// do constant propagation on fields
+        if (KjcOptions.nofieldprop) {
+	} else {
+	    System.err.print("Propagating constant fields... ");
 	    FieldProp.doPropagate(str);
 	    System.err.println("done.");
 	}
@@ -133,7 +136,8 @@ public class Flattener {
 	printer1.close();
 	*/
 	
-	if (KjcOptions.constprop) {
+	if (KjcOptions.nofieldprop) {
+	} else {
 	    //Flatten Blocks
 	    System.err.print("Flattening blocks... ");
 	    new BlockFlattener().flattenBlocks(str);
@@ -144,9 +148,9 @@ public class Flattener {
 	    System.err.println("done.");
 	}
 	//Destroys arrays into local variables if possible
-	System.err.print("Destroying arrays... ");
+	//System.err.print("Destroying arrays... ");
 	//new ArrayDestroyer().destroyArrays(str);
-	System.err.println("done.");
+	//System.err.println("done.");
 	//Raise variables to the top of their block
 	System.err.print("Raising variables... ");
 	new VarDeclRaiser().raiseVars(str);

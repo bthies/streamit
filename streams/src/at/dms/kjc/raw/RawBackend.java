@@ -76,9 +76,11 @@ public class RawBackend {
 	new VarDeclRaiser().raiseVars(str);
 
         // do constant propagation on fields
-        if (KjcOptions.constprop) {
-	    System.out.println("Running Constant Propagation of Fields");
+        if (KjcOptions.nofieldprop) {
+	} else {
+	    System.out.println("Running Constant Field Propagation...");
 	    FieldProp.doPropagate(str);
+	    System.out.println("Done Constant Field Propagation...");
 	    //System.out.println("Analyzing Branches..");
 	    //new BlockFlattener().flattenBlocks(str);
 	    //new BranchAnalyzer().analyzeBranches(str);

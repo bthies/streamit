@@ -59,7 +59,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	//Optimizations
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
-	    if (KjcOptions.constprop) {
+	    if (!KjcOptions.nofieldprop) {
 		System.out.println("Optimizing "+((SIRFilter)node.contents).getMethods()[i].getName()+"..");
 		Unroller unroller;
 		do {

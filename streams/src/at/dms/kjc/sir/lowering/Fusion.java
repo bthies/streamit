@@ -64,12 +64,15 @@ public class Fusion {
 	JBlock newStatements = new JBlock(null, new JStatement[0], null);
 	// add the set of statements from <f1>, <count1> times
 	for (int i=0; i<count1; i++) {
-	    // get old statement list
-	    List old = f1.getWork().getStatements();
-	    // clone the list
-	    List oldClone = (List)ObjectDeepCloner.deepCopy(old, false);
+	    // get old work function
+	    JMethodDeclaration old = f1.getWork();
+	    // clone the function (we have to clone the function since
+	    // we can only clone JPhylum objects; can't just clone the
+	    // list of statements in the function.)
+	    JMethodDeclaration oldClone 
+		= (JMethodDeclaration)ObjectDeepCloner.deepCopy(old, false);
 	    // add these statements to new body
-	    newStatements.addAllStatements(0, oldClone);
+	    newStatements.addAllStatements(0, oldClone.getStatements());
 	}
 
 	// change each push() statement into an assignment to a local var...
@@ -121,12 +124,15 @@ public class Fusion {
 	// add the set of statements from <f2>, <count2> times
 	JBlock newConsumers = new JBlock(null, new JStatement[0], null);
 	for (int i=0; i<count2; i++) {
-	    // get old statement list
-	    List old = f2.getWork().getStatements();
-	    // clone the list
-	    List oldClone = (List)ObjectDeepCloner.deepCopy(old, false);
-	    // add these statements to the end of the new body
-	    newConsumers.addAllStatements(0, oldClone);
+	    // get old work function
+	    JMethodDeclaration old = f2.getWork();
+	    // clone the function (we have to clone the function since
+	    // we can only clone JPhylum objects; can't just clone the
+	    // list of statements in the function.)
+	    JMethodDeclaration oldClone 
+		= (JMethodDeclaration)ObjectDeepCloner.deepCopy(old, false);
+	    // add these statements to new body
+	    newConsumers.addAllStatements(0, oldClone.getStatements());
 	}
 
 	// go through consumers, replacing pop's with references to

@@ -234,12 +234,16 @@ public class SJFlatten
         while (childIter.hasNext())
         {
             SIRFilter filter = (SIRFilter)childIter.next();
-            // Get the old statement list, and clone it.
-            List old = filter.getWork().getStatements();
-            List oldClone = (List)ObjectDeepCloner.deepCopy(old, false);
+            // Get the old work function (have to clone the function
+            // instead of the list at this point.)
+            JMethodDeclaration old = filter.getWork();
+            JMethodDeclaration oldClone = 
+		(JMethodDeclaration)ObjectDeepCloner.deepCopy(old, false);
+	    // get the new statements
+	    List statements = oldClone.getStatements();
             // Add a block containing these statements.
-            JStatement[] stmts = new JStatement[oldClone.size()];
-            stmts = (JStatement[])oldClone.toArray(stmts);
+            JStatement[] stmts = new JStatement[statements.size()];
+            stmts = (JStatement[])statements.toArray(stmts);
             newStatements.addStatement(new JBlock(null, stmts, null));
         }
         

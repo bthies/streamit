@@ -35,10 +35,6 @@ class BeamFormer extends Filter
 
   public void init(int nBeams, int nChannels, int nSamples)
   {
-    // there are two init() functions in this program.
-    // you should only have one (or you'll trash our compiler).
-    ASSERT (false);
-
     numberOfBeams      = nBeams;
     numberOfChannels   = nChannels;
     numberOfSamples    = nSamples;
@@ -49,11 +45,6 @@ class BeamFormer extends Filter
     output = new Channel (Float.TYPE, numberOfBeams*numberOfSamples);
 
     // NEED TO GENERATE BF WEIGHTS HERE
-  }
-
-  public void init(float weights[])
-  {
-    BeamFormingWeights = weights;
   }
 
   public void work()

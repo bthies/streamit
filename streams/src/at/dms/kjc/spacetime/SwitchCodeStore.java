@@ -16,7 +16,7 @@ public class SwitchCodeStore {
 
     public void appendIns(SwitchIns ins, boolean init) {
 	//this tile has switch code
-	parent.setSwitchCode();
+	parent.setSwitches();
 	if (init) 
 	    initSwitchIns.add(ins);
 	else

@@ -58,11 +58,13 @@ public class RawTile {
 	return computeCode;
     }
 
-    public void setSwitchCode() {
+    //this is set by SwitchCodeStore
+    public void setSwitches() {
 	switches = true;
     }
 
-    public void setComputeCode() {
+    //this is set by ComputeCodeStore
+    public void setComputes() {
 	computes = true;
     }
     

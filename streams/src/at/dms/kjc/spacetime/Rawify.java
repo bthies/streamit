@@ -25,11 +25,16 @@ public class Rawify
 	    while (traceNode != null) {
 		//do the appropiate code generation
 		if (traceNode instanceof FilterTraceNode) {
+		    RawTile tile = rawChip.getTile(((FilterTraceNode)traceNode).getX(), 
+						   ((FilterTraceNode)traceNode).getY());
 		    //create the filter info class
 		    FilterInfo filterInfo = new FilterInfo((FilterTraceNode)traceNode);
-		    
+		    //switch code for the trace
 		    createSwitchCode((FilterTraceNode)traceNode, 
-				     trace, filterInfo, init, rawChip);
+				     trace, filterInfo, init, tile, rawChip);
+		    //generate the compute code for the trace and place it in
+		    //the tile
+		    tile.getComputeCode().addTrace(filterInfo);
 		}
 		else 
 		    continue;
@@ -48,9 +53,9 @@ public class Rawify
 
     private static void createSwitchCode(FilterTraceNode node, Trace parent, 
 					 FilterInfo filterInfo,
-					 boolean init, RawChip rawChip) 
+					 boolean init, RawTile tile,
+					 RawChip rawChip) 
     {
-	RawTile tile = rawChip.getTile(node.getX(), node.getY());
 	//get the multiplicity based on the init variable
 	int mult = (init) ? node.getInitMult() : node.getSteadyMult();
 	

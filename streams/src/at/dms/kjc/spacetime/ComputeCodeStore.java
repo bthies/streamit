@@ -14,6 +14,12 @@ public class ComputeCodeStore {
     protected JMethodDeclaration rawMain;
 
     protected RawTile parent;
+    //index into the main function for this tile that keeps
+    //the index where we should add the next init stage call
+    protected int initIndex;
+    //steady index for steady state calls
+    protected int steadyIndex;
+    protected JBlock steadyLoop;
 
     public ComputeCodeStore(RawTile parent) {
 	this.parent = parent;
@@ -23,24 +29,56 @@ public class ComputeCodeStore {
 					 CStdType.Void, main,
 					 JFormalParameter.EMPTY,
 					 CClassType.EMPTY,
-					 new JBlock(), null, null);
-	
+					 new JBlock(null, new JStatement[0], null) , null, null);
+	initIndex = steadyIndex = 0;
+	//create the body of steady state loop
+	steadyLoop = new JBlock(null, new JStatement[0], null);
+	//add it to the while statement
+	rawMain.addStatement(new JWhileStatement(null, new JBooleanLiteral(null, true),
+						 steadyLoop, null));
     }
 
     public void addTrace(FilterInfo filterInfo)
     {
-	//generate the block to add
-	JBlock block = new JBlock();
+	//now this raw tile has compute code so tell it so
+	parent.setComputes();
 
+
+	//Create a new RawExecutionCode object for this trace
+	RawExecutionCode exeCode = new RawExecutionCode(filterInfo);
+	
 	//check if we can use direct communication, easy check because
 	//no crossed routes
 	//	if (filterInfo.bottomPeek == 0 && filterInfo.remaining == 0 &&
 	
 	//add the fields of the trace
-
-	//add the initialization routine of the phase
-	
-	//add the work function of the phase
+	addFields(exeCode.getVarDecls());
+	//get the initialization routine of the phase
+	JMethodDeclaration init = exeCode.getInitStageMethod();
+	//add the method
+	addMethod(init);
+	//now add a call to the init stage in main at the appropiate index
+	//and increment the index
+	rawMain.getBody().
+	    addStatement(initIndex++,
+			 new JExpressionStatement
+			 (null, 
+			  new JMethodCallExpression(null,
+						    new JThisExpression(null),
+						    init.getName(),
+						    new JExpression[0]),
+			  null));
+	//add the steady state
+	JMethodDeclaration steady = exeCode.getSteadyMethod();
+	addMethod(steady);
+	steadyLoop.addStatement(steadyIndex++, 
+				new JExpressionStatement
+				(null, 
+				 new JMethodCallExpression(null,
+							   new JThisExpression(null),
+							   steady.getName(),
+							   new JExpression[0]),
+				 null));
     }
     
 
@@ -108,5 +146,20 @@ public class ComputeCodeStore {
 	}
 	// reset old to new
 	this.fields = newFields;
+    }
+    
+    public JMethodDeclaration[] getMethods() 
+    {
+	return methods;
+    }
+
+    public JFieldDeclaration[] getFields() 
+    {
+	return fields;
+    }
+    
+    public JMethodDeclaration getMainFunction() 
+    {
+	return rawMain;
     }
 }

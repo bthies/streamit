@@ -16,6 +16,11 @@ import java.io.*;
 
 /** A class with useful functions that span classes **/
 public class Util {
+    public static String CSTOINTVAR = "__csto_integer__";
+    public static String CSTOFPVAR = "__csto_float__";
+    public static String CSTIFPVAR = "__csti_float__";
+    public static String CSTIINTVAR = "__csti_integer__";
+    
 
     public static int nextPow2(int i) {
 	String str = Integer.toBinaryString(i);

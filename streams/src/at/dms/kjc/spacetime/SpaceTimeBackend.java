@@ -16,6 +16,9 @@ import at.dms.kjc.lir.*;
  **/
 public class SpaceTimeBackend 
 {
+    public static boolean FILTER_DEBUG_MODE = false;
+    public static SIRStructure[] structures;
+    
     public static void run(SIRStream str,
 			   JInterfaceDeclaration[] 
 			   interfaces,
@@ -23,6 +26,8 @@ public class SpaceTimeBackend
 			   interfaceTables,
 			   SIRStructure[]
 			   structs) {
+	structures = structs;
+	
 	int rawRows = -1;
 	int rawColumns = -1;
 
@@ -80,6 +85,8 @@ public class SpaceTimeBackend
 	Rawify.run(initTrav, rawChip, false);
 	//generate the switch code assembly files...
 	GenerateSwitchCode.run(rawChip);
+	//generate the compute code from the SIR
+	GenerateComputeCode.run(rawChip);
     }
 }
 

@@ -4,8 +4,6 @@ the init function requires the value for float[N_ch] b,float[N_bm] d,a vectors, 
 
 */
 
-import streamit.*;
-
 
 complex->complex filter ComplexIdentity() {
     init{}

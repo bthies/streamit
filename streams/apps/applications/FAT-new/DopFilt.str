@@ -6,8 +6,6 @@ the init function requires the value for float[N_pc] , the values for the steeri
 
 */
 
-import streamit.*;
-import FFT2.*;
 
 complex[N_bm][N_srg][N_pri]->complex[N_bm][N_srg][N_dop][N_pri-N_dop+1] pipline  DopFilt(int N_bm,int N_srg,int N_pri,int N_dop) {
 

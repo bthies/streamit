@@ -4,7 +4,6 @@ the init function requires the value for float[N_ch] b,float[N_bm] d,a vectors, 
 
 */
 
-import streamit.*;
 
 complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_srg, int N_pri,float alpha, float[] a, float[] b, float[] d)  {//
     complex [N_ch][N_bm] V; // the steering matrix

@@ -5,7 +5,6 @@ the init function requires the value for float[N_pc] , the values for the steeri
 
 */
 
-import streamit.*;
 
 complex->complex[N_dop][N_srg][N_dop] filter STAP(int N_bm,int N_srg,int N_dop,int N_stag,int N_ts, int[] T_stap) {//
     init{}

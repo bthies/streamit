@@ -2,7 +2,6 @@
 
 /* This is the subband synthesis block it performs up sampling by interleaving samples with zeroes and then filtering and frequency shifting the output of this filter is used for target detection */
 
-import streamit.*;
 
 // this pipline performs the first few blocks in subband synthesis.
 

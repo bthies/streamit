@@ -4,7 +4,6 @@ the init function requires the value for float[N_ch] b,float[N_bm] d,a vectors, 
 
 */
 
-import streamit.*;
 
 
 complex->complex pipeline ElPipe(int N_bm,int N_srg,int N_pri,int N_dop,int N_pc,complex[] h_pc) {

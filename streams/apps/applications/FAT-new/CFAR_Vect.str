@@ -3,7 +3,6 @@ the cube to vectors this will do the complete the CFAR operation over a cube.
 
 */
 
-import streamit.*;
 
 complex[N_rg]->float[N_rg] filter CFAR_Vect(int N_rg,int N_cfar,int G, float mu){//
     

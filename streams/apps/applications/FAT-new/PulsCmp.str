@@ -6,7 +6,6 @@ the init function requires the value for float[N_pc] , the values for the steeri
 
 */
 
-import streamit.*;
 
 complex[N_bm][N_srg][N_pri]->complex[N_bm][N_srg][N_pri] pipeline PulseCmp( int N_bm,int N_srg, int N_pri,int N_pc, complex[] h_pc)
   {

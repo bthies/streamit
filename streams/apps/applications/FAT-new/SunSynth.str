@@ -2,7 +2,6 @@
 
 /* This is the subband analysis block, the input is a N_ch*N_rg*N_pri block, the output is a data cube of size N_ch*N_srg*N_pri,that has been multiplied by e^(j....) and then lowpass filtered, a down sapmling is done to make it of the size N_srg*N_dn=N_rg */
 
-import streamit.*;
 
 // this pipline performs the first few blocks in subband analysis.
 

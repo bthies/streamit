@@ -90,10 +90,14 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 	//LinkedList saveDefs=varDefs;
 	int size=self.size();
 	for (int i=0;i<size;i++) {
+	    boolean neg=false;
+	    //if(i<0)
+	    //continue;
 	    JStatement oldBody = (JStatement)self.getStatement(i);
 	    Object newBody = oldBody.accept(this);
 	    if (!(newBody instanceof JStatement))
 		continue;
+	    //System.out.println("VarDeclRaiser:"+newBody);
 	    if(newBody instanceof JVariableDeclarationStatement) {
 		self.removeStatement(i);
 		varDefs.add(newBody);
@@ -104,22 +108,19 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 		    if(val!=null) {
 			def.setValue(null);
 			TokenReference ref=((JVariableDeclarationStatement)newBody).getTokenReference();
-			newBody=new JExpressionStatement(ref,new JAssignmentExpression(ref,new JLocalVariableExpression(ref,def),val),null);
-			self.addStatement(i,(JStatement)newBody);
-			i++;
+			JStatement state=new JExpressionStatement(ref,new JAssignmentExpression(ref,new JLocalVariableExpression(ref,def),val),null);
+			self.addStatement(i,(JStatement)state);
+			//i++;
 			size++;
 		    }
 		}
-		i--;
+		neg=true;
 		size--;
-	    } else if (newBody!=null && newBody!=oldBody) {
-		self.setStatement(i,(JStatement)newBody);
-	    }
-	    if(newBody instanceof JExpressionStatement) {
+	    } else if(newBody instanceof JExpressionStatement) {
 		JExpressionStatement exp=(JExpressionStatement)newBody;
 		if(exp.getExpression() instanceof JAssignmentExpression) {
 		    JAssignmentExpression assign=(JAssignmentExpression)exp.getExpression();
-		    if(assign.getRight() instanceof JNewArrayExpression) {
+		    if((assign.getRight() instanceof JNewArrayExpression)&&(assign.getLeft() instanceof JLocalVariableExpression)) {
 			JNewArrayExpression newArray=(JNewArrayExpression)assign.getRight();
 			//Make sure all dimensions are IntLiterals
 			JExpression[] dims=newArray.getDims();
@@ -130,12 +131,39 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 			if(ok) {
 			    newArrays.add(newBody);
 			    self.removeStatement(i);
-			    i--;
+			    //i--;
+			    neg=true;
 			    size--;
 			}
 		    }
-		}		    
+		}
+	    } else if(newBody instanceof JExpressionListStatement) {
+		JExpression[] exps=((JExpressionListStatement)newBody).getExpressions();
+		for(int k=0;k<exps.length;k++)
+		    if(exps[k] instanceof JAssignmentExpression) {
+			JAssignmentExpression assign=(JAssignmentExpression)exps[k];
+			if((assign.getRight() instanceof JNewArrayExpression)&&(assign.getLeft() instanceof JLocalVariableExpression)) {
+			    JNewArrayExpression newArray=(JNewArrayExpression)assign.getRight();
+			    //Make sure all dimensions are IntLiterals
+			    JExpression[] dims=newArray.getDims();
+			    boolean ok=true;
+			    for(int j=0;j<dims.length;j++)
+				if(!(dims[j] instanceof JIntLiteral))
+				    ok=false;
+			    if(ok) {
+				newArrays.add(newBody);
+				self.removeStatement(i);
+				//i--;
+				neg=true;
+				size--;
+			    }
+			}
+		    }
+	    } else if (newBody!=null && newBody!=oldBody) {
+		self.setStatement(i,(JStatement)newBody);
 	    }
+	    if(neg)
+		i--;
 	}
 	if(parent==self) {
 	    for(int i=newArrays.size()-1;i>=0;i--)

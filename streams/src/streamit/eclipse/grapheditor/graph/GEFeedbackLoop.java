@@ -152,7 +152,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 		graphStruct.containerNodes.addContainerToLevel(level, this);
 		lvel++; // Contained elements of this will be at a higher level
 		
-		graphStruct.getJGraph().addMouseListener(new JGraphMouseAdapter(graphStruct.getJGraph(), graphStruct));	
+			
 		this.localGraphStruct = graphStruct;	
 					
 		joiner.construct(graphStruct, lvel);
@@ -179,10 +179,11 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 		System.out.println("Connecting " + loop.getName()+  " to "+ joiner.getName());
 		graphStruct.connectDraw(loop, joiner);
 	
-		graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(),graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
+		// 1/18/04 graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(),graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
+		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
 		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100,100)));
 				
-		return this;
+		return this.splitter;
 	}
 	
 	/**
@@ -433,6 +434,22 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 		{
 			this.localGraphStruct.setLocationContainersAtLevel(i);
 		}
+	}
+	
+	/**
+	 * Get the first node contained by the GEPipeline. 
+	 */
+	public GEStreamNode getFirstNodeInContainer()
+	{
+		return this.joiner;
+	}
+	
+	/**
+	 * Set which node is the first one container by the GEPipeline.
+	 */
+	public void  setFirstNodeInContainer(GEStreamNode firstNode)
+	{
+		this.joiner = (GEJoiner) firstNode;
 	}
 	
 	/**

@@ -28,6 +28,7 @@ import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
 public class GEPipeline extends GEStreamNode implements Serializable, GEContainer{
 			
 	private GEStreamNode lastNode;	
+	private GEStreamNode firstNode;
 	
 	/**
 	 * The sub-graph structure that is contained within this pipeline.
@@ -68,10 +69,8 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		System.out.println("Constructing the pipeline" +this.getName());
 		boolean first = true;
 		this.level = lvel;
-		
 		graphStruct.containerNodes.addContainerToLevel(this.level, this);
 		lvel++;
-		graphStruct.getJGraph().addMouseListener(new JGraphMouseAdapter(graphStruct.getJGraph(), graphStruct));
 		
 		this.localGraphStruct = graphStruct;
 		
@@ -89,22 +88,32 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 			if(!first)
 			{
 				System.out.println("Connecting " + lastNode.getName()+  " to "+ strNode.getName());		 
-				graphStruct.connectDraw(lastNode, strNode); //this.localGraphStruct.connectDraw(lastNode, strNode);
+				if (strNode instanceof GEContainer)
+				{
+					graphStruct.connectDraw(lastNode, ((GEContainer)strNode).getFirstNodeInContainer()); //this.localGraphStruct.connectDraw(lastNode, strNode);
+				}
+				else
+				{
+					graphStruct.connectDraw(lastNode, strNode); //this.localGraphStruct.connectDraw(lastNode, strNode);
+				}
 			}
+
 			lastNode = lastTemp;
 			first = false;
 		}
 	
 		//this.localGraphStruct.getGraphModel().insert(this.localGraphStruct.getCells().toArray(), this.localGraphStruct.getAttributes(), this.localGraphStruct.getConnectionSet(), null, null);
-		graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(), graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
+	
+		// removed to avoid multiple instances in the model: graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(), graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
+		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);			
 		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100,100)));
 
 		if (graphStruct.getTopLevel() == this)
 		{
-			graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{this}, nodeList.toArray());
+			//graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{this}, nodeList.toArray());
 		}
 				
-		return this;
+		return lastNode;
 	}	
 	
 	/**
@@ -117,9 +126,8 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		this.add(this.port);
 
 		(graphStruct.getAttributes()).put(this, this.attributes);
-	//	GraphConstants.setAutoSize(this.attributes, true);	
+		//GraphConstants.setAutoSize(this.attributes, true);	
 		//GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.blue));
-		
 		GraphConstants.setBorderColor(this.attributes, Color.red.darker());
 		GraphConstants.setLineWidth(this.attributes, 4);
 		GraphConstants.setBounds(this.attributes, bounds);
@@ -420,6 +428,22 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		
 	}
 	
+	/**
+	 * Get the first node contained by the GEPipeline. 
+	 */
+	public GEStreamNode getFirstNodeInContainer()
+	{
+		return this.firstNode;
+	}
+	
+	/**
+	 * Set which node is the first one container by the GEPipeline.
+	 */
+	public void  setFirstNodeInContainer(GEStreamNode firstNode)
+	{
+		this.firstNode = firstNode;
+	
+	}
 	
 	/**
  	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 

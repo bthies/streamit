@@ -66,6 +66,10 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	 */
 	private int level;
 
+
+	public GEStreamNode firstNode;
+
+
 	/**
 	 * GESplitJoin constructor.
 	 * @param name The name of the GESplitJoin.
@@ -80,6 +84,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		this.setChildren(split.getSuccesors());
 		this.localGraphStruct = new GraphStructure();
 		this.isExpanded = false;
+
 	}
 
 	/**
@@ -117,11 +122,10 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	{
 		System.out.println("Constructing the SplitJoin " +this.getName());
 		this.level = lvel;
-		
 		graphStruct.containerNodes.addContainerToLevel(level, this);
 		lvel++;
 		
-		graphStruct.getJGraph().addMouseListener(new JGraphMouseAdapter(graphStruct.getJGraph(), graphStruct));
+		
 		//graphStruct.getJGraph().getGraphLayoutCache().setVisible(this, true);
 		
 		//this.localGraphStruct.setJGraph(graphStruct.getJGraph());
@@ -139,7 +143,14 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 			lastNodeList.add(strNode.construct(graphStruct,lvel));// lastNodeList.add(strNode.construct(this.localGraphStruct)); 
 			
 			System.out.println("Connecting " + splitter.getName()+  " to "+ strNode.getName());	
-			graphStruct.connectDraw(splitter, strNode); //this.localGraphStruct.connectDraw(splitter, strNode); 
+			if (strNode instanceof GEContainer)
+			{
+				graphStruct.connectDraw(splitter, ((GEContainer)strNode).getFirstNodeInContainer()); //this.localGraphStruct.connectDraw(splitter, strNode);
+			}
+			else
+			{
+				graphStruct.connectDraw(splitter, strNode); //this.localGraphStruct.connectDraw(splitter, strNode);
+			} 
 		}
 		
 		listIter =  lastNodeList.listIterator();
@@ -153,11 +164,11 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 			graphStruct.connectDraw(strNode, joiner); //this.localGraphStruct.connectDraw(strNode, joiner); 
 		}	
 	
-		//this.localGraphStruct.getGraphModel().insert(localGraphStruct.getCells().toArray(),localGraphStruct.getAttributes(), localGraphStruct.getConnectionSet(), null, null);
-		graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(),graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
 		
+		//graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(),graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
+		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
 		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100,100)));		
-		return this;
+		return this.joiner;
 	}
 	
 	/**
@@ -422,6 +433,23 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		{
 			this.localGraphStruct.setLocationContainersAtLevel(i);
 		}
+	}
+	
+	/**
+	 * Get the first node contained by the GESplitJoin (this will always be
+	 * the GESplitter corresponding to the splitjoin). 
+	 */
+	public GEStreamNode getFirstNodeInContainer()
+	{
+		return this.splitter;
+	}
+	
+	/**
+	 * Set which node is the first one container by the GEPipeline.
+	 */
+	public void  setFirstNodeInContainer(GEStreamNode firstNode)
+	{
+		this.splitter = (GESplitter) firstNode;
 	}
 	
 	/**

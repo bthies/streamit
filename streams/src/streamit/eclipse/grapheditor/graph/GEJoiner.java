@@ -137,7 +137,8 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 		
 		this.port = new DefaultPort();
 		this.add(this.port);
-		graphStruct.getCells().add(this);
+		graphStruct.getGraphModel().insert(new Object[] {this}, null, null, null, null);
+		
 	}
 	
 	

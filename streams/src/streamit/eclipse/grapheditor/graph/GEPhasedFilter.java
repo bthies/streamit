@@ -162,9 +162,10 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 			this.setUserObject(this.getNameLabel());
 		}
 		
-		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100,100)));
-		graphStruct.getCells().add(this);
-
+		this.initDrawAttributes(graphStruct, new Rectangle(new Point(10,10)));
+		
+		graphStruct.getGraphModel().insert(new Object[] {this}, null, null, null, null);
+		
 		return this;
 	}
 	

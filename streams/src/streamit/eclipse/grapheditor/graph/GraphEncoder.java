@@ -348,6 +348,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		// Walk through each of the elements in the pipeline.
 		Iterator iter = self.getChildren().iterator();
 	
+		boolean first = true;
 		while (iter.hasNext())
 		{
 			SIROperator oper = (SIROperator)iter.next();
@@ -355,8 +356,13 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			
 			GEStreamNode currNode = (GEStreamNode) oper.accept(this);
 			pipeline.addChild(currNode);
+			if (first)
+			{
+				pipeline.setFirstNodeInContainer(currNode);
+			}
 			currNode.setEncapsulatingNode(pipeline);	
-		
+			
+			first =false;
 		}
 		  
 		graph.addHierarchy(pipeline, pipeline.getSuccesors());
@@ -402,6 +408,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		join.setEncapsulatingNode(splitjoin);
 		
 		splitjoin.addChild(split);
+		splitjoin.firstNode = split;
 	
 		// ...and walk through the body.
 		Iterator iter = self.getParallelStreams().iterator();

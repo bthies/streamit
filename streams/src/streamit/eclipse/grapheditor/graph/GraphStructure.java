@@ -23,7 +23,8 @@ import org.jgraph.graph.ConnectionSet;
 import org.jgraph.graph.DefaultEdge;
 import org.jgraph.graph.DefaultGraphModel;
 import org.jgraph.graph.GraphConstants;
-import org.jgraph.graph.PortView;
+
+import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
 //import com.sun.rsasign.t;
 
 /**
@@ -32,7 +33,6 @@ import org.jgraph.graph.PortView;
  * @author jcarlos
  */
 public class GraphStructure implements Serializable{
-
 
 	/**
 	 * The graph model.
@@ -51,11 +51,6 @@ public class GraphStructure implements Serializable{
 	private ConnectionSet cs;
 	
 	/**
-	 * Specifies the cells that are present in the JGraph. Necessary to draw the graph.
-	 */
-	private ArrayList cells;
-	
-	/**
 	 * Specifies attributes required by the JGraph.
 	 */
 	private Hashtable globalAttributes;
@@ -65,31 +60,31 @@ public class GraphStructure implements Serializable{
 	 */   
 	private GEStreamNode topLevel;
 
-
 	/**
-	 * The node in the GraphStructure that is currently highlighted.
+	 * The nodes in the GraphStructure that are currently highlighted.
 	 */
-	private GEStreamNode highlightedNode = null;
-	
-
 	private ArrayList highlightedNodes =null;
-
-
 	
 	/**
-	 * The current level at which the graph is being examined;
+	 * The current level at which the graph is being examined.
 	 */
 	public int currentLevelView = 0;
+
+	/**
+	 * The IFile corresponding to this GraphStructure. The IFile contains the
+	 * source code representation of the GraphStructure. 
+	 */
 	private IFile ifile = null;
+
+	/**
+	 * The collection of container nodes that are present in the GraphStructure. 
+	 */
 	public ContainerNodes containerNodes= null;
-	
-			
+				
 	// does not appear to be necessary if this.model and the other JGraph fields
 	// will be used to specify the GraphStructure.
 	private HashMap graph;
-
-
-
+	
 	public JScrollPane panel;
 	
 	/**
@@ -99,20 +94,13 @@ public class GraphStructure implements Serializable{
 	{
 		graph = new HashMap();
 		cs = new ConnectionSet();
-		cells = new ArrayList();
 		globalAttributes= new Hashtable();
-		
 		this.model = new DefaultGraphModel();
 		this.jgraph = new JGraph();
-		
 		jgraph.addMouseListener(new JGraphMouseAdapter(jgraph, this));
 		containerNodes = new ContainerNodes();
 	}
-	
 
-	
-	
-	
 	/**
 	 * Create hierarchy in which <parenNode> encapsulates <children>
 	 * @param parentNode
@@ -328,63 +316,53 @@ public class GraphStructure implements Serializable{
 		*/
 	}
 	
-	/*
 	/**
 	 * Construct graph representation.
-	 */
-	public void constructGraph()
-	{
-			System.out.println("Entered constructGraph");
-			this.jgraph.addMouseListener(new JGraphMouseAdapter(jgraph, this));
-			this.topLevel.construct(this, 0);
-			model.insert(cells.toArray(), globalAttributes, cs, null, null);
-	}
-	
+	 */	
 	public void constructGraph(JScrollPane pane)
 	{
 		System.out.println("Constructor with pane as an argument");
 		this.panel = pane;
 		this.topLevel.setIsNodeConnected(true);
 		this.topLevel.construct(this, 0);
-		model.insert(cells.toArray(), globalAttributes, cs, null, null);
-	//	this.jgraph.getGraphLayoutCache().setVisible(jgraph.getRoots(), true);	
+		//model.insert(cells.toArray(), globalAttributes, cs, null, null);
+		
+		
+		model.edit(globalAttributes, cs, null, null);
+		
+		this.jgraph.getGraphLayoutCache().setVisible(jgraph.getRoots(), true);
 				
-				
-				
+		JGraphLayoutManager manager = new JGraphLayoutManager(this);
+		manager.arrange();	
+/*				
 		int i = 0;
 		while(this.containerNodes.expandContainersAtLevel(i))
 		{
 			i++;
 			this.currentLevelView++;
 		}
-				
+		*/
+
 		//******************************************
 		// TEST CODE BEGIN
 		//******************************************	
 		/*	
 		Iterator keyIter = this.levelContainers.keySet().iterator();
 		Iterator valIter = this.levelContainers.values().iterator();
-		
-		while(keyIter.hasNext())
-		{
+		while(keyIter.hasNext()) {
 			System.out.println("Key = " + keyIter.next());	
 		}
 		int x =0;
-		while(valIter.hasNext())
-		{
-			
+		while(valIter.hasNext()) {
 			Iterator  listIter = ((ArrayList) valIter.next()).iterator();
-			while (listIter.hasNext())
-			{
-			
+			while (listIter.hasNext()){
 				System.out.println("Iter = " + x + " value = "+listIter.next());
 			}
 			x++;	
 		}*/
 		//******************************************
 		// TEST CODE END
-		//******************************************		
-								
+		//******************************************									
 	}
 	
 	/**
@@ -409,7 +387,6 @@ public class GraphStructure implements Serializable{
 		
 		lastNode.addSourceEdge(edge);
 		currentNode.addTargetEdge(edge);		
-		cells.add(edge);	
 		
 		lastNode.setIsNodeConnected(true);
 		currentNode.setIsNodeConnected(true);
@@ -420,28 +397,6 @@ public class GraphStructure implements Serializable{
 		//this.getGraphModel().insert(this.getCells().toArray(),
 		//								this.getAttributes(), 
 		//								this.getConnectionSet(), null, null);
-	}
-	
-	public void connectDraw(PortView lastNode, PortView currentNode)
-	{
-		DefaultEdge edge = new DefaultEdge();
-		Map edgeAttrib = GraphConstants.createMap();
-		globalAttributes.put(edge, edgeAttrib);
-		
-		GraphConstants.setLineEnd(edgeAttrib, GraphConstants.ARROW_CLASSIC);
-		GraphConstants.setLineWidth(edgeAttrib, 6);
-		GraphConstants.setDashPattern(edgeAttrib, new float[] {2,4});
-		GraphConstants.setEndFill(edgeAttrib, true);
-			
-		cs.connect(edge, lastNode.getCell(), currentNode.getCell());
-		
-		//lastNode.addSourceEdge(edge);
-		//currentNode.addTargetEdge(edge);		
-		cells.add(edge);	
-		
-		this.getGraphModel().insert(this.getCells().toArray(),
-									this.getAttributes(), 
-									this.getConnectionSet(), null, null);
 	}
 	
 	/**
@@ -515,8 +470,6 @@ public class GraphStructure implements Serializable{
 		}
 	}
 
-
-	
 	/**
 	 * Get the JGraph of GraphStructure.
 	 * @return this.jgraph
@@ -533,6 +486,7 @@ public class GraphStructure implements Serializable{
 	public void setJGraph(JGraph jgraph)
 	{
 		this.jgraph = jgraph;
+		jgraph.addMouseListener(new JGraphMouseAdapter(jgraph, this));
 	}
 	
 	/**
@@ -545,7 +499,7 @@ public class GraphStructure implements Serializable{
 	}
 
 	/**
-	 * Sets the graph model to <model>.
+	 * Sets the graph model to model..
 	 * @param model
 	 */
 	public void setGraphModel(DefaultGraphModel model)
@@ -563,7 +517,7 @@ public class GraphStructure implements Serializable{
 	}
 
 	/** 
-	 * Sets the toplevel node to <strNode>
+	 * Sets the toplevel node to strNode.
 	 * @param strNode
 	 */
 	public void setTopLevel(GEStreamNode strNode)
@@ -597,16 +551,7 @@ public class GraphStructure implements Serializable{
 	{
 		return this.globalAttributes;
 	}
-
-	/**
-	 * Get the cells of the GraphStructure.
-	 * @return this.cells
-	 */
-	public ArrayList getCells()
-	{
-		return this.cells;
-	}
-		
+	
 	/**
 	 * Get the connection set of GraphStructure.
 	 * @return this.cs;
@@ -615,15 +560,40 @@ public class GraphStructure implements Serializable{
 	{
 		return this.cs;
 	}
-	
+
+	/**
+	 * Get the IFile that corresponds to this GraphStructure.
+	 * @return IFile
+	 */	
 	public IFile getIFile()
 	{
 		return this.ifile;
 	}
 	
+	/**
+	 * Set the IFile that corresponds to this GraphStructure.
+	 * @param ifile IFile.
+	 */
 	public void setIFile(IFile ifile)
 	{
 		this.ifile = ifile;
+	}
+	
+	/**
+	 * Output the code representation of the GraphStructure.
+	 * @param out
+	 */
+	public void outputCode(PrintWriter out)
+	{
+	    this.topLevel.outputCode(out);
+	    
+	    ArrayList childList = this.topLevel.children;
+	    Iterator childIter = childList.iterator();
+	    
+	    while (childIter.hasNext())
+	    {
+	   		((GEStreamNode) childIter.next()).outputCode(out); 	
+	    }	    
 	}
 	
 	
@@ -637,23 +607,5 @@ public class GraphStructure implements Serializable{
 		return (ArrayList) this.graph.get(node);
 	}
 	*/
-	
-	public void outputCode(PrintWriter out)
-	{
-	    this.topLevel.outputCode(out);
-	    
-	    ArrayList childList = this.topLevel.children;
-	    Iterator childIter = childList.iterator();
-	    
-	    while (childIter.hasNext())
-	    {
-	   		((GEStreamNode) childIter.next()).outputCode(out); 	
-	    }
-	    
-	    
-	}
+
 }
-
-
-
-

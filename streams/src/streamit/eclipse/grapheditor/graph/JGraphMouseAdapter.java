@@ -29,7 +29,7 @@ public class JGraphMouseAdapter extends MouseAdapter {
 		this.graphStruct = graphStruct;
 		
 	}
-   
+  /* 
 	public void mousePressed(MouseEvent e)
 	{
 		int x = e.getX(), y = e.getY();
@@ -74,7 +74,7 @@ public class JGraphMouseAdapter extends MouseAdapter {
 		}
 	
 	}
-
+*/
 //	public void mouseReleased(MouseEvent e)
 //	{
 		/* demoremove

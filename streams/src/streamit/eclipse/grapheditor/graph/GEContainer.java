@@ -18,7 +18,9 @@ public interface GEContainer {
 
 	public void calculateDimension();
 	public void layoutChildren();
-	
+
+	public GEStreamNode getFirstNodeInContainer();
+	public void setFirstNodeInContainer(GEStreamNode firstNode);	
 	
 	
 	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is

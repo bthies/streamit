@@ -203,10 +203,12 @@ class ShiftRegisterFilter extends Filter
 class CrcInputFilter extends Filter
 {
     int[] mdata;
+    boolean counter;
     EncoderInput mencodefile;
 
     public void init()
     {
+	counter = false;
 	mencodefile = new EncoderInput();
 	mdata = new int[mencodefile.mInputLength];
 	output = new Channel(Integer.TYPE, 1);
@@ -214,13 +216,23 @@ class CrcInputFilter extends Filter
 
     public void work()
     {
-	mdata = mencodefile.readFile();
-	for (int i = 0; i < mencodefile.mInputLength; i++)
+	if(!counter)
 	{
-	    //System.err.println("inputting " + mdata[i]);
-	    output.pushInt(mdata[i]);
+	    counter = true;
+	    output.pushInt(0);
 	}
+	else
+	{
+	    output.pushInt(1);
+	}     
     }
+	//mdata = mencodefile.readFile();
+	   //for (int i = 0; i < mencodefile.mInputLength; i++)
+	   //{
+	    //System.errprintln("inputting " + mdata[i]);
+    //output.pushInt(mdata[i]);
+       //}
+    
 
 }//CrcInputFilter
 
@@ -239,7 +251,7 @@ class FeedbackEndFilter extends Filter
     {
 	mInitFeedbackData = input.popInt();
 	mRegisterOutput = input.popInt();
-	System.err.println("Shift Register 3 is " + mRegisterOutput);
+	//System.err.println("Shift Register 3 is " + mRegisterOutput);
 	output.pushInt(mRegisterOutput);
     }
 }//FeedbackEndFilter
@@ -328,7 +340,7 @@ class FeedbackBodyStream extends Pipeline
 	//x^30
 	this.add(new ShiftRegisterFilter(31));
 	//x^31
-	this.add(new Identity(Boolean.TYPE)); 
+	this.add(new Identity(Integer.TYPE)); 
 
 	//this.add(new ShiftRegisterFilter(3));
 	this.add(new FeedbackEndFilter());

@@ -140,7 +140,10 @@ public class ClusterBackend implements FlatVisitor {
 	System.err.println("Running Partitioning... target number of threads: "+threads);
 	// actually fuse components if fusion flag is enabled
 	if (KjcOptions.fusion) {
-	    KjcOptions.partition_dp = true;
+	    // turn on dynamic programming if no other partitioning is turned on
+	    if (!KjcOptions.partition_greedy && !KjcOptions.partition_greedier) {
+		KjcOptions.partition_dp = true;
+	    }
 	    str = Partitioner.doit(str, 0, threads, false);
 	}
 	HashMap partitionMap = new HashMap();

@@ -7,7 +7,7 @@ import streamit.io.*;
 
 public class MP3Simple extends StreamIt
 {
-    static public void main(String[] args)
+    public static void main(String[] args)
     {
         new MP3Simple ().run(args);
     }

@@ -15,7 +15,8 @@ my $SL_POST = " -lstreamit -lsrfftw -lsfftw -lm ";
 my $CMP = "/u/aalamb/streams/regtest/tools/compare_uni.pl";
 my $CMP_PATH = "/u/aalamb/streams/regtest/tools/";
 
-my @tests = ("regtests/LinearTest1.java",
+my @tests = (
+	     "regtests/LinearTest1.java",
 	     "regtests/LinearTest2.java",
 	     "regtests/LinearTest3.java",
 	     "regtests/LinearTest4.java",
@@ -44,9 +45,19 @@ my @tests = ("regtests/LinearTest1.java",
 	     "regtests/LinearTest27.str",
 	     "regtests/LinearTest28.str",
 	     "regtests/LinearTest29.str",
+	     "regtests/LinearTest30.str",
 	     );
 
-@tests = ("regtests/LinearTest14.str");
+@tests = (
+	  "regtests/LinearTest26.str",
+	  #"regtests/LinearTest27.str",
+	  #"regtests/LinearTest28.str",
+	  #"regtests/LinearTest29.str",
+	  #"regtests/LinearTest30.str",
+
+	  	  
+	  
+);
 
 
 my $current_test;

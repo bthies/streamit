@@ -18,13 +18,15 @@ BOTH-OPTIONS      =  --unroll 100000 --linearanalysis --linearreplacement --freq
 LINEAR-REG-TEST = linear_regtest.pl
 
 # current test
-CURRENT-TEST = regtests/LinearTest14
+CURRENT-TEST = regtests/LinearTest31
 
 all: clean java-compile uni-compile raw-compile
 
 
 linear-compile:
-	jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/*.java
+	jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/*.java 
+	jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/transform/*.java
+	jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/frequency/*.java
 
 
 test-current-replace: linear-compile
@@ -78,3 +80,4 @@ clean:
 	rm -f regtests/LinearTest18.java regtests/LinearTest19.java regtests/LinearTest20.java regtests/LinearTest21.java 
 	rm -f regtests/LinearTest22.java regtests/LinearTest23.java regtests/LinearTest24.java regtests/LinearTest25.java 
 	rm -f regtests/LinearTest26.java regtests/LinearTest27.java regtests/LinearTest28.java regtests/LinearTest29.java 
+	rm -f regtests/LinearTest30.java regtests/LinearTest31.java regtests/LinearTest32.java regtests/LinearTest33.java 

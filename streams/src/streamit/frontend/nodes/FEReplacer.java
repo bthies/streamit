@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.31 2003-12-01 21:44:19 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.32 2004-02-13 21:23:53 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -367,7 +367,14 @@ public class FEReplacer implements FEVisitor
         List oldStatements = newStatements;
         newStatements = new ArrayList();
         for (Iterator iter = stmt.getStmts().iterator(); iter.hasNext(); )
-            doStatement((Statement)iter.next());
+        {
+            Statement s = (Statement)iter.next();
+            // completely ignore null statements, causing them to
+            // be dropped in the output
+            if (s == null)
+                continue;
+            doStatement(s);
+        }
         Statement result = new StmtBlock(stmt.getContext(), newStatements);
         newStatements = oldStatements;
         return result;

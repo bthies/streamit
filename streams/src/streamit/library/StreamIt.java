@@ -85,7 +85,11 @@ public class StreamIt extends Pipeline
                 int nTimes = repSchedule.getNumReps ();
                 for ( ; nTimes > 0; nTimes--)
                 {
-                    runSchedule (repSchedule.getSubScheds ());
+                    int nSched;
+                    for (nSched = 0; nSched < repSchedule.getNumPhases(); nSched++)
+                    {
+                        runSchedule (repSchedule.getSubSched (nSched));
+                    }
                 }
             }
 

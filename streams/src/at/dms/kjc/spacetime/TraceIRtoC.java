@@ -365,7 +365,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	//so, just remove the var definition, if the new array expression
 	//is not included in this definition, just remove the definition,
 	//when we visit the new array expression we will print the definition...
-	if (type.isArrayType()) { // && !isInit) {
+	if (type.isArrayType() && !isInit) {
 	    String[] dims = ArrayDim.findDim(tile.getComputeCode(), ident);
 	    //but only do this if the array has corresponding 
 	    //new expression, otherwise don't print anything.

@@ -1082,7 +1082,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	//right now array var definition is separate from allocation
 	//we convert an assignment statement into the stack allocation statement'
 	//so, just remove the var definition
-	if (type.isArrayType()) { // && !isInit) {
+	if (type.isArrayType() && !isInit) {
 	    String[] dims = ArrayDim.findDim(filter, ident);
 	    //but only do this if the array has corresponding 
 	    //new expression, otherwise don't print anything.

@@ -18,7 +18,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.19 2003-04-19 21:41:29 thies Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.20 2003-04-20 13:31:07 thies Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -145,14 +145,12 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 
 	LinearFilterRepresentation linearRep = this.linearityInformation.getLinearRepresentation(self);
 	/** set the target FFT size appropriately if it hasn't already been set */
-	int targetNumberOfOutputs = fftSizeFactor * linearRep.getPeekCount();
-	LinearPrinter.println("  target output size: " + targetNumberOfOutputs);
-	
+
 	/* now is when we get to the fun part, we have a linear representation
 	 * that computes an FIR (ef pop 1, push 1, peek x) and we want to replace it with an FFT.
 	 * Note that N is the block size of the input that we are looking at. */
 	int x = linearRep.getPeekCount();
-	int N = calculateN(targetNumberOfOutputs,x);
+	int N = calculateN(x);
 	int filterSize = N+2*(x-1); // this is the size of the overall filter
 	LinearPrinter.println("  creating frequency filter.\n" +
 			      "   N+(x-1)=" + (N+x-1) + " (outputs per steady state)\n" + 
@@ -291,7 +289,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	// make work function
 	// work function
 	JStatement body[] = { Utils.makeForLoop(new JExpressionStatement(null, new SIRPushExpression(new SIRPopExpression(type), type), null), freqPush),
-			      Utils.makeForLoop(Utils.makeForLoop(new JExpressionStatement(null, new SIRPopExpression(type), null), freqPop-1), freqPush) };
+			      new JExpressionStatement(null, new SIRPopExpression(type, freqPush*(freqPop-1)), null) };
 	
 	JMethodDeclaration work =  new JMethodDeclaration( /* tokref     */ null,
 							   /* modifiers  */ at.dms.kjc.
@@ -310,7 +308,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 					 JFieldDeclaration.EMPTY(),
 					 JMethodDeclaration.EMPTY(),
 					 // peek, pop, push
-					 new JIntLiteral(freqPop), new JIntLiteral(freqPop), new JIntLiteral(1),
+					 new JIntLiteral(freqPop*freqPush), new JIntLiteral(freqPop*freqPush), new JIntLiteral(freqPush),
 					 work,
 					 type,
 					 type);
@@ -684,10 +682,10 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** adds <n> popFloat() statements to the end of <body>. **/
     public void makePopStatements(JBlock body, int n) {
 	// always put them in a loop exceeds the unroll count
-	SIRPopExpression popExpr = new SIRPopExpression(CStdType.Float);
+	SIRPopExpression popExpr = new SIRPopExpression(CStdType.Float, n);
 	// wrap the pop expression so it is a statement.
 	JExpressionStatement popWrapper = new JExpressionStatement(null, popExpr, null);
-	body.addStatement(Utils.makeForLoop(popWrapper, n));
+	body.addStatement(popWrapper);
     }
 
     /**
@@ -773,32 +771,26 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     
 
     /**
-     * calculates the appropriate size FFT to perform. It is passed a target N, the number
-     * of outputs to produce, and x, the length
+     * calculates the appropriate size FFT to perform. It is passed x, the length
      * of the impuse response of the filter, and it returns the actual N, the
      * number of output points that will be produced by one execution of the
      * filter.
+     *
+     * This implementation works by calculating a targetN that is a
+     * multiple of x, and then scaling up to the next power of two.
      **/
-    public int calculateN(int targetN, int x) {
+    public static int calculateN(int x) {
+	int targetNumberOfOutputs = fftSizeFactor * x; 
+	LinearPrinter.println("  target output size: " + targetNumberOfOutputs);
+	
 	// we know N + 2(x-1) = 2^r
 	// so we calculate r as floor(lg(N+2(x-1))) +1 where lg is log base 2
 	
 	// and then N = 2^r - 2(x-1)
-	int arg = targetN + 2*(x-1);
+	int arg = targetNumberOfOutputs + 2*(x-1);
 	int r = (int)Math.floor(Math.log(arg)/Math.log(2)) + 1;
 	// now, calculate N
 	int N = (int)Math.pow(2,r) - 2*(x-1);
 	return N;
     }
-
-
-
-
-
-
-
 }
-
-
-
-

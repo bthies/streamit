@@ -32,6 +32,10 @@ report:
 
 
 
+# run tests to stress partitioning and scaling
+test-partition: compile
+	$(TESTER) streamittest.TestPartition
+
 # run all tests with no optimizations
 test-once: compile
 	$(TESTER) streamittest.TestOnce

@@ -180,8 +180,8 @@ public class LatencyConstraints {
 		    streamit.scheduler2.constrained.Scheduler cscheduler2 =
 			new streamit.scheduler2.constrained.Scheduler(topStreamIter);
 
-		    streamit.scheduler2.iriter.Iterator iter1 = IterFactory.createIter(f1);
-		    streamit.scheduler2.iriter.Iterator iter2 = IterFactory.createIter(f2);
+		    streamit.scheduler2.iriter.Iterator iter1 = IterFactory.createFactory().createIter(f1);
+		    streamit.scheduler2.iriter.Iterator iter2 = IterFactory.createFactory().createIter(f2);
 
 		    streamit.scheduler2.SDEPData sdep2;
 

@@ -70,7 +70,7 @@ public class DoSchedules {
         if (str instanceof SIRFilter) {
 	    SIRFilter filter = (SIRFilter)str;
 
-	    calcNode(IterFactory.createIter(filter), str);
+	    calcNode(IterFactory.createFactory().createIter(filter), str);
         }
 
 	/*
@@ -78,7 +78,7 @@ public class DoSchedules {
 	    SIRPhasedFilter filter = (SIRPhasedFilter)str;
 
 	    streamit.scheduler2.iriter.Iterator lastIter = 
-		IterFactory.createIter(filter);	
+		IterFactory.createFactory().createIter(filter);	
 	    
 	    calcNode(lastIter, str);
         }

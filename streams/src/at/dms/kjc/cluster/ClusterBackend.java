@@ -152,14 +152,16 @@ public class ClusterBackend implements FlatVisitor {
 	// optionally print a version of the source code that we're
 	// sending to the scheduler
 	if (KjcOptions.print_partitioned_source) {
-	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createIter(str)); 
+	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createFactory().createIter(str)); 
 	}
 
 	//run constrained scheduler
 
        	System.out.print("Constrained Scheduler Begin...");
 
-	topStreamIter = IterFactory.createIter(str);
+	//topStreamIter = IterFactory.createFactory().createIter(str);
+	topStreamIter = IterFactory.createFineGrainedFactory().createIter(str);
+	new streamit.scheduler2.print.PrintGraph().printProgram(topStreamIter);
 
 	streamit.scheduler2.constrained.Scheduler cscheduler =
 	    new streamit.scheduler2.constrained.Scheduler(topStreamIter);
@@ -172,9 +174,9 @@ public class ClusterBackend implements FlatVisitor {
 	SIRFilter last = (SIRFilter)((SIRPipeline)str).get(pipe_size-1);
 
 	streamit.scheduler2.iriter.Iterator firstIter = 
-	    IterFactory.createIter(first);
+	    IterFactory.createFactory().createIter(first);
 	streamit.scheduler2.iriter.Iterator lastIter = 
-	    IterFactory.createIter(last);	
+	    IterFactory.createFactory().createIter(last);	
 
 	streamit.scheduler2.SDEPData sdep;
 

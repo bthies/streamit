@@ -95,7 +95,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    ((SIRFilter)node.contents).getMethods()[i].accept(new VarDeclRaiser());
 	}
 
-        IterFactory.createIter((SIRFilter)node.contents).accept(toC);
+        IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
     
     public FlatIRToCluster() 
@@ -662,9 +662,9 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		    new streamit.scheduler2.constrained.Scheduler(ClusterBackend.topStreamIter);
 		
 		streamit.scheduler2.iriter.Iterator firstIter = 
-		    IterFactory.createIter(sender);
+		    IterFactory.createFactory().createIter(sender);
 		streamit.scheduler2.iriter.Iterator lastIter = 
-		    IterFactory.createIter(receiver);	
+		    IterFactory.createFactory().createIter(receiver);	
 		
 		streamit.scheduler2.SDEPData sdep = null;
 

@@ -306,8 +306,9 @@ public class Linear extends BufferedCommunication implements Constants {
 	    int index=0;
 	    int emptySpots=popCount*(turns+topPopNum)-bufferSize;
 	    //Order reversed
-	    for(int turn=0;turn<turns;turn++) //Last iteration may not be from buffer
-		for(int j=0;j<popCount;j++)
+	    for(int turn=0;turn<turns;turn++) { //Last iteration may not be from buffer
+		throw new AssertionError("Shouldn't go in here!");
+		/*for(int j=0;j<popCount;j++)
 		    if(true||emptySpots>0) {
 			for(int k=topPopNum;k>=0;k--) {
 			    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
@@ -324,13 +325,18 @@ public class Linear extends BufferedCommunication implements Constants {
 			    inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
 			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 			}
-		    }
+			}*/
+	    }
 	    for(int i=0;i<topPopNum;i++)
-		for(int j=0;j<popCount;j++)
+		for(int j=0;j<popCount;j++) {
+		    inline.add("move  "+tempRegs[0]+",\\t$csti");
+		    inline.add("sw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+		    index+=4;
 		    if(true||emptySpots>0) {
 			for(int k=topPopNum;k>i;k--) {
-			    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+			    //inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			    inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 			}
 			emptySpots--;
 		    } else {
@@ -344,6 +350,7 @@ public class Linear extends BufferedCommunication implements Constants {
 			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 			}
 		    }
+		}
 	    //Fill peekBuffer
 	    for(int i=0;i<pos*num;i++) {
 		inline.add("sw    $csti,\\t"+index+"("+tempReg+")");

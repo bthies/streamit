@@ -1230,14 +1230,15 @@ public class Rawify
 	if(begin) {
 	    //int emptySpots=pop*(turns+numPop-1)-bufferSize;
  	    if(turns>0) {
+		throw new AssertionError("Shouldn't go in here!");
 		//Order between values (from peek buffer) and partial sums is reversed
 		//So use Reg2 as a buffer to reorder partial sum and values
 		//Save partial sum
 		//ins=new FullIns(tile,new MoveIns(SwitchReg.R2,SwitchIPort.CSTO));
 		//code.appendIns(ins, false);
-		for(int turn=0;turn<turns;turn++)
+
+		/*for(int turn=0;turn<turns;turn++)
 		    for(int j = 0; j<pop; j++) {
-			//if(emptySpots>0) {
 			    //Pass first value
 			    ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
 			    ins.addRoute(src, SwitchOPort.CSTI);
@@ -1249,27 +1250,16 @@ public class Rawify
 				newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
 				code.appendIns(newIns, false);
 			    }
-			    //emptySpots--;
-			    /*} else {
-			    //Pass value from peek buffer
-			    ins=new FullIns(tile);
-			    ins.addRoute(SwitchIPort.CSTO,dest);
-			    code.appendIns(ins,false);
-			    }*/
 			if(j==0) { //Partial sum
 			    //Save partial sum
 			    FullIns newIns=new FullIns(tile);
-			    /*if(turn<turns-1)
-			      newIns=new FullIns(tile,new MoveIns(SwitchReg.R2,SwitchIPort.CSTO));
-			      else
-			      newIns=new FullIns(tile); //Don't pull off last partial sum*/
 			    if(end) //Send out partial sum
 				newIns.addRoute(SwitchReg.R2,dest); //Final output to static net1
 			    else
 				newIns.addRoute(SwitchReg.R2,dest2);
 			    code.appendIns(newIns, false);
 			}
-		    }
+			}*/
 	    }
 	    for(int i=0;i<numPop-1;i++)
 		for(int j=0;j<pop;j++) {
@@ -1279,6 +1269,8 @@ public class Rawify
 		    //Pass first value
 		    ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
 		    ins.addRoute(src, SwitchOPort.CSTI);
+		    if(!end)
+			ins.addRoute(src,dest);
 		    code.appendIns(ins, false);
 		    //Repeat first value
 		    for(int k=numPop-2;k>i;k--) {
@@ -1343,6 +1335,8 @@ public class Rawify
 		    //Pass first value
 		    ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
 		    ins.addRoute(src, SwitchOPort.CSTI);
+		    if(!end)
+			ins.addRoute(src,dest);
 		    code.appendIns(ins, false);
 		    //Repeat first value
 		    for(int k=numPop-2;k>i;k--) {

@@ -81,7 +81,8 @@ public class ManualPartition {
     }
 
     /**
-     * Returns stream by given name.
+     * Returns stream by given <name> that is deep child of <str>.
+     * Returns null if no such stream exists.
      */
     public static SIRStream getStream(SIRStream str, final String name) {
 	final ArrayList result = new ArrayList();
@@ -94,7 +95,11 @@ public class ManualPartition {
 		}
 	    });
 	assert result.size()<=1;
-	return (SIRStream)result.get(0);
+	if (result.size()>0) {
+	    return (SIRStream)result.get(0);
+	} else {
+	    return null;
+	}
     }
 
     /**

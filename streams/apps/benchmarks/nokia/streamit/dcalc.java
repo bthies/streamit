@@ -39,7 +39,7 @@ class vectdouble extends SplitJoin{// duplicates a vector
 }
 
 class sourcerSplit extends SplitJoin {
-    public sourcerSplit(int M,int end,int left) {/*super(M,end,r);*/}
+    public sourcerSplit(int M,int end,int left) {super(M,end,left);}
     
     public void init(int M,int end,int left) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(0,left-M));
@@ -50,7 +50,7 @@ class sourcerSplit extends SplitJoin {
 }
 
  class multvectdoub extends Pipeline{// duplicates a vector and makes a copy
-     public multvectdoub( int M,int N,int end,int left) {/*super (M,N,end,r);*/}
+     public multvectdoub( int M,int N,int end,int left) {super (M,N,end,left);}
      public void init(int M, int N,int end,int left) {
 	 add (new sourcerSplit(M,end,left));
 	 add (new multvect(M,N));
@@ -61,7 +61,7 @@ class sourcerSplit extends SplitJoin {
 
 
  class AhrL1 extends SplitJoin{// calculates Ahr and duplicates L and passes  Ahr,L (2 of them) to the next level 
-     public AhrL1( int M,int N,int end) {/*super (M,N,end,r);*/}
+     public AhrL1( int M,int N,int end) {super (M,N,end);}
      public void init(int M,int N,int end) {
 	 setSplitter(WEIGHTED_ROUND_ROBIN(M*(N+1)-M,N*(N+1)/2));
 	 add (new multvectdoub(M,N,end,M*(N+1)));
@@ -92,7 +92,7 @@ class sourcerSplit extends SplitJoin {
 
 
  class Ahrd extends Pipeline{// the input is Ar, L , the output is Ahr,d,AhA 
-     public Ahrd( int M,int N,int end) {/*super (M,N,end,r);*/}
+     public Ahrd( int M,int N,int end) { super (M,N,end); }
      public void init(int M,int N,int end) {
 	 add (new AhrL1(M,N,end));
 	 add (new split_ahrd(N));
@@ -101,7 +101,7 @@ class sourcerSplit extends SplitJoin {
  }
 
 class AhrdAhA extends SplitJoin{// the input is r, L,AhA, the output is Ahr,d,AhA 
-    public AhrdAhA(int M,int N,int end) {/*super (M,N,end,r);*/}
+    public AhrdAhA(int M,int N,int end) { super (M,N,end); }
     public void init(int M,int N,int end) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(M*(N+1)+N*(N+1)/2-M,N*(N+1)/2));
 	add (new Ahrd(M,N,end));
@@ -169,7 +169,7 @@ class AhrdAhA extends SplitJoin{// the input is r, L,AhA, the output is Ahr,d,Ah
 	 //setPop(N);
      }
      public void work() {
-	 System.out.println("Starting");
+	 // System.out.println("Starting");
 
 	 for (int i=0; i< N;i++)
 	     {

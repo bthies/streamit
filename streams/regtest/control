@@ -18,6 +18,12 @@ test fib2 {
   source Fib2.java
 }
 
+test fir {
+  directory docs/examples/hand/fir
+  make
+  source LinkedFirTest.java
+}
+
 test flybit {
   directory docs/examples/hand/flybit
   source Flybit.java

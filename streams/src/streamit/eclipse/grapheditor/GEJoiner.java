@@ -67,7 +67,7 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 	 * Contructs the joiner and returns <this>.
 	 * @return <this>
 	 */
-	public GEStreamNode construct(GraphStructure graphStruct)
+	public GEStreamNode construct(GraphStructure graphStruct, int level)
 	{
 		System.out.println("Constructing the Joiner " +this.getName());
 		
@@ -99,4 +99,7 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 	}
 	
 	public void collapseExpand(JGraph jgraph){};
+	public void collapse(JGraph jgraph){};
+	public void expand(JGraph jgraph){};
+
 }

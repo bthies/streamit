@@ -67,7 +67,7 @@ public class GESplitter extends GEStreamNode implements Serializable{
 	 * Construct the GESplitter and return <this>. 
 	 * @return <this>.
 	 */
-	public GEStreamNode construct(GraphStructure graphStruct)
+	public GEStreamNode construct(GraphStructure graphStruct, int level)
 	{
 		System.out.println("Constructing the Splitter " +this.getName());
 		
@@ -97,4 +97,7 @@ public class GESplitter extends GEStreamNode implements Serializable{
 	}
 		
 	public void collapseExpand(JGraph jgraph){};
+	public void collapse(JGraph jgraph){};
+	public void expand(JGraph jgraph){};
+
 }

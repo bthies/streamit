@@ -96,12 +96,12 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	}
 	
 	
-	public GEStreamNode construct(GraphStructure graphStruct)
+	public GEStreamNode construct(GraphStructure graphStruct, int level)
 	{
 		System.out.println("Constructing the feedback loop " +this.getName());
 		this.draw();
-		joiner.construct(graphStruct);
-		GEStreamNode lastBody = body.construct(graphStruct);
+		joiner.construct(graphStruct, level);
+		GEStreamNode lastBody = body.construct(graphStruct, level);
 				
 		System.out.println("Connecting " + joiner.getName()+  " to "+ body.getName());		
 		graphStruct.connectDraw(joiner, lastBody );
@@ -109,8 +109,8 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 		System.out.println("Connecting " + body.getName()+  " to "+ splitter.getName());
 		graphStruct.connectDraw(body, splitter);
 		
-		splitter.construct(graphStruct);
-		GEStreamNode lastLoop = loop.construct(graphStruct); 
+		splitter.construct(graphStruct, level);
+		GEStreamNode lastLoop = loop.construct(graphStruct, level); 
 		
 		System.out.println("Connecting " + splitter.getName()+  " to "+ loop.getName());
 		graphStruct.connectDraw(splitter, loop);
@@ -122,5 +122,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	}
 	
 	public void collapseExpand(JGraph jgraph){};
-	
+	public void collapse(JGraph jgraph){};
+	public void expand(JGraph jgraph){};
+
 }

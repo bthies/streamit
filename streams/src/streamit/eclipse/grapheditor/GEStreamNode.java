@@ -53,6 +53,10 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 */
 	protected boolean isInfoDisplayed;
 
+
+	protected ArrayList sourceEdges;
+	protected ArrayList targetEdges;
+
 	/**
 	 * GEStreamNode constructor.
 	 * @param type The type of the GEStreamNode (must be defined as a GEType)
@@ -67,6 +71,8 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 		this.setInfo(name);
 		this.isInfoDisplayed = true;
 		this.encapsulatingNode = null;
+		this.sourceEdges = new ArrayList();
+		this.targetEdges = new ArrayList();
 	}
 
 	/**
@@ -168,13 +174,46 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 		this.info = info;
 	}
 	
+	public void addTargetEdge(DefaultEdge target)
+	{
+		this.targetEdges.add(target);
+	}
+	
+	public void addSourceEdge(DefaultEdge source)
+	{
+		this.sourceEdges.add(source);
+	}
+	
+	public void removeTargetEdge(DefaultEdge target)
+	{
+		this.targetEdges.remove(target);
+	}
+	
+	public void removeSourceEdge(DefaultEdge source)
+	{
+		this.sourceEdges.remove(source);
+	}
+
+	
+	
+	
+	public ArrayList getTargetEdges()
+	{
+		return this.targetEdges;	
+	}
+	
+	public ArrayList getSourceEdges()
+	{
+		return this.sourceEdges;
+	}
+	
 	/**
 	 * Construct the GEStreamNode. The subclasses must implement this method according to
 	 * their specific needs.
 	 * @param graphStruct GraphStructure to which GEStreamNode belongs.
 	 * @return GEStreamNode 
 	 */
-	abstract GEStreamNode construct(GraphStructure graphStruct);
+	abstract GEStreamNode construct(GraphStructure graphStruct, int level);
 	
 	/**
 	 * Expand or collapse the GEStreamNode structure depending on wheter it was already 
@@ -182,7 +221,8 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 * @param jgraph The JGraph that will be modified to allow the expanding/collapsing.
 	 */	
 	abstract public void collapseExpand(JGraph jgraph);
-	
+	abstract public void collapse(JGraph jgraph);
+	abstract public void expand(JGraph jgraph);
 	
 	abstract public void draw();
 	

@@ -25,10 +25,26 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 	private GraphStructure localGraphStruct;
 
 	/**
+	 * Boolean that specifies if the elements contained by the Pipeline are 
+	 * displayed (it is expanded) or they are hidden (it is collapsed).
+	 */
+	private boolean isExpanded;
+
+	/**
+	 * The level of how deep the elements of this pipeline are with respect to 
+	 * other container nodes that they belong to.
+	 * The toplevel pipeline has level 0. The elements of another pipeline within
+	 * this toplevel pipeline would have its level equal to 1 (same applies to other 
+	 * container nodes such as splitjoins and feedback loops).
+	 */
+	private int level;
+	
+	/**
 	 * The frame in which the contents of the pipeline (whatever is specified
 	 * by localGraphStruct) will be drawn.
 	 */
 	private LiveJGraphInternalFrame frame;
+	
 
 	/**
 	 * GEPipeline constructor.
@@ -44,11 +60,15 @@ public class GEPipeline extends GEStreamNode implements Serializable{
  	 * Constructs the pipeline and returns <this> so that the GEPipeline can 
  	 * be connected to its succesor and predecessor.
  	*/
-	public GEStreamNode construct(GraphStructure graphStruct)
+	public GEStreamNode construct(GraphStructure graphStruct, int level)
 	{
+		
 		System.out.println("Constructing the pipeline" +this.getName());
 		boolean first = true;
 		this.draw();
+		
+		graphStruct.addToLevelContainer(level, this);
+		level++;
 	
 		/*	
 		DefaultGraphModel model = new DefaultGraphModel();
@@ -72,7 +92,7 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = (GEStreamNode) listIter.next();
-			GEStreamNode lastTemp = strNode.construct(graphStruct); //GEStreamNode lastTemp = strNode.construct(this.localGraphStruct);
+			GEStreamNode lastTemp = strNode.construct(graphStruct, level); //GEStreamNode lastTemp = strNode.construct(this.localGraphStruct);
 			
 			if(!first)
 			{
@@ -127,13 +147,6 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		return this;
 	}	
 	
-	/**
-	 * Draw this Pipeline
-	 */	
-	public void draw()
-	{
-		System.out.println("Drawing the pipeline " +this.getName());
-	}
 	
 	/**
 	 * Expand or collapse the GEStreamNode structure depending on wheter it was already 
@@ -142,35 +155,124 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 	 */
 	public void collapseExpand(JGraph jgraph)
 	{
-		System.out.println("Collapsing/Expanding the Pipeline");
-		
+		if (isExpanded)
+		{
+			this.collapse(jgraph);
+			isExpanded = false;
+		}
+		else
+		{
+			
+			this.expand(jgraph);
+			isExpanded = true;
+		}		
+	}
+	
+	public void expand(JGraph jgraph)
+	{
+			
 		/*
 		if(this.isInfoDisplayed) {		
 			Rectangle rect = GraphConstants.getBounds(this.attributes);
 			this.frame.setLocation(new Point(rect.x, rect.y));
 			this.frame.setVisible(true);
-		}
-		else {
+		} else {
 			this.frame.setLocation(GraphConstants.getOffset(this.attributes));
 			this.frame.setVisible(false);
 		}
 		*/
 	
-		Object[] nodeList = this.getSuccesors().toArray();
-		
-		if(jgraph.getGraphLayoutCache().isPartial())
-		{
+	/*	if(jgraph.getGraphLayoutCache().isPartial()) {
 			System.out.println("the graph is partial");
-		}
-		else
-		{
-			System.out.println("the graph is not partial");
-		}
-		 
-		jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, false);
+		}*/	 
+		
+		Object[] nodeList = this.getSuccesors().toArray();
+		ConnectionSet cs = this.localGraphStruct.getConnectionSet();	
 		jgraph.getGraphLayoutCache().setVisible(nodeList, true);
+		
+		Iterator eIter = localGraphStruct.getGraphModel().edges(this.getPort());
+		
+		boolean temp = true;
+		
+		while (eIter.hasNext())
+		{
+			DefaultEdge edge = (DefaultEdge) eIter.next();
+			
+			if (nodeList.length > 0)
+			{
+			
+				if (temp)
+				{
+					cs.disconnect(edge,false);
+					cs.connect(edge, nodeList[0], false);
+					temp = false;
+				}	
+				else
+				{
+					cs.disconnect(edge, true);
+					cs.connect(edge, nodeList[nodeList.length-1], true);		
+				}	
+			}
+		}
+		
+		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
+		jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, false);
+		
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
-		manager.arrange();
+		manager.arrange();	
+
+	}
+	
+	public void collapse(JGraph jgraph)
+	{
+		Object[] nodeList = this.getSuccesors().toArray();
+		ConnectionSet cs = this.localGraphStruct.getConnectionSet();	
+		
+		jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, true);
+		
+		Iterator firstEdgeIter = localGraphStruct.getGraphModel().edges(((GEStreamNode) nodeList[0]).getPort());
+		Iterator lastEdgeIter = localGraphStruct.getGraphModel().edges(((GEStreamNode) nodeList[nodeList.length-1]).getPort());
+		
+		
+		if (firstEdgeIter.hasNext())
+		{
+			DefaultEdge fEdge = (DefaultEdge) firstEdgeIter.next();
+			cs.disconnect(fEdge,false);
+			cs.connect(fEdge, this, false);
+		}	
+		
+		ArrayList lList = new ArrayList();
+		while (lastEdgeIter.hasNext())
+		{
+			lList.add(lastEdgeIter.next());
+		}
+		if (lList.size() == 1)
+		{
+			DefaultEdge lEdge = (DefaultEdge) lastEdgeIter.next();
+			cs.disconnect(lEdge, true);
+			cs.connect(lEdge, nodeList[nodeList.length-1], true);	
+		}
+		else if (lList.size() > 1)
+		{
+			lastEdgeIter.next();
+			DefaultEdge lEdge = (DefaultEdge) lastEdgeIter.next();
+			cs.disconnect(lEdge, true);
+			cs.connect(lEdge, nodeList[nodeList.length-1], true);		
+		}
+		
+		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
+		jgraph.getGraphLayoutCache().setVisible(nodeList, false);
+		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
+		manager.arrange();	
+		
+	}
+	
+	/**
+	 * Draw this Pipeline
+	 */	
+	public void draw()
+	{
+		System.out.println("Drawing the pipeline " +this.getName());
 	}
 
 

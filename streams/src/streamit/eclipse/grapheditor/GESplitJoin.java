@@ -43,6 +43,13 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	private GraphStructure localGraphStruct;
 
 	/**
+	 * Boolean that specifies if the elements contained by the GESplitJoin are 
+	 * displayed (it is expanded) or they are hidden (it is collapsed).
+	 */
+	private boolean isExpanded;
+
+
+	/**
 	 * The frame in which the contents of the SplitJoin (whatever is specified
 	 * by localGraphStruct) will be drawn.
 	 */
@@ -61,6 +68,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		this.joiner = join;
 		this.setChildren(split.getSuccesors());
 		this.localGraphStruct = new GraphStructure();
+		this.isExpanded = false;
 	}
 
 	/**
@@ -94,10 +102,13 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	 * Constructs the splitjoin and returns the last node in the splitjoin that wil be connecting
 	 * to the next graph structure.
 	 */	
-	public GEStreamNode construct(GraphStructure graphStruct)
+	public GEStreamNode construct(GraphStructure graphStruct, int level)
 	{
 		System.out.println("Constructing the SplitJoin " +this.getName());
 		this.draw();
+		
+		graphStruct.addToLevelContainer(level, this);
+		level++;
 		
 		/*
 		DefaultGraphModel model = new DefaultGraphModel();
@@ -114,7 +125,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		//this.localGraphStruct.setJGraph(graphStruct.getJGraph());
 		this.localGraphStruct = graphStruct;	
 		
-		this.splitter.construct(graphStruct); //this.splitter.construct(this.localGraphStruct); 
+		this.splitter.construct(graphStruct, level); //this.splitter.construct(this.localGraphStruct); 
 		
 		ArrayList nodeList = (ArrayList) this.getSuccesors();
 		Iterator listIter =  nodeList.listIterator();
@@ -123,7 +134,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = ((GEStreamNode) listIter.next());
-			lastNodeList.add(strNode.construct(graphStruct));// lastNodeList.add(strNode.construct(this.localGraphStruct)); 
+			lastNodeList.add(strNode.construct(graphStruct,level));// lastNodeList.add(strNode.construct(this.localGraphStruct)); 
 			
 			System.out.println("Connecting " + splitter.getName()+  " to "+ strNode.getName());	
 			graphStruct.connectDraw(splitter, strNode); //this.localGraphStruct.connectDraw(splitter, strNode); 
@@ -131,7 +142,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		
 		listIter =  lastNodeList.listIterator();
 		
-		this.joiner.construct(graphStruct); //this.joiner.construct(this.localGraphStruct); 
+		this.joiner.construct(graphStruct, level); //this.joiner.construct(this.localGraphStruct); 
 		
 		while(listIter.hasNext())
 		{
@@ -185,6 +196,14 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		return this.getSplitter().getSuccesors();
 	}
 	
+	 public ArrayList getContainedElements()
+	 {
+	 	ArrayList tempList = getSplitter().getSuccesors();
+	 	tempList.add(0, this.getSplitter());
+	 	tempList.add(this.getJoiner());
+	 	return tempList;
+	 	
+	 }
 	 
 	/**
 	 * Draw this SplitJoin
@@ -194,7 +213,6 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		System.out.println("Drawing the SplitJoin " +this.getName());
 	}	
 	
-	
 	/**
 	 * Expand or collapse the GESplitJoin structure depending on wheter it was already 
 	 * collapsed or expanded. 
@@ -202,44 +220,232 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	 */	
 	public void collapseExpand(JGraph jgraph)
 	{
-		Object[] nodeList = this.getChildren().toArray();
-		
-		if(jgraph.getGraphLayoutCache().isPartial())
+		if (isExpanded)
 		{
-			System.out.println("the graph is partial");
+			this.collapse(jgraph);
+			isExpanded = false;
 		}
 		else
 		{
-			System.out.println("the graph is not partial");
+			
+			this.expand(jgraph);
+			isExpanded = true;
 		}
-
-		ConnectionSet cs = this.localGraphStruct.getConnectionSet();
-		Iterator edgeIter = cs.getEdges().iterator();
+	}	
+	
+	/**
+	 * Expand the GESplitJoin. When it is expanded the elements that it contains are
+	 * displayed.
+	 */
+	public void expand(JGraph jgraph)
+	{
+		Object[] nodeList = this.getContainedElements().toArray();
+		ConnectionSet cs = this.localGraphStruct.getConnectionSet();	
 		jgraph.getGraphLayoutCache().setVisible(nodeList, true);
-		while(edgeIter.hasNext())
+		
+		//Iterator eIter = (DefaultGraphModel.getEdges(localGraphStruct.getGraphModel(), new Object[]{this})).iterator();
+		Iterator eIter = localGraphStruct.getGraphModel().edges(this.getPort());
+		
+		ArrayList edgesToRemove =  new ArrayList();
+		
+		
+		while (eIter.hasNext())
 		{
-			DefaultEdge edge = (DefaultEdge) edgeIter.next();
-			System.out.println(" edge " +edge.getSource());
-			if (edge.getSource() == this)
+			DefaultEdge edge = (DefaultEdge) eIter.next();
+		
+			
+			Iterator sourceIter = this.getSourceEdges().iterator();	
+			System.out.println(" edge hash" +edge.hashCode());
+			while (sourceIter.hasNext())
 			{
-				System.out.println("Changing the edge at the source of the splitjoin");
+				DefaultEdge s = (DefaultEdge) sourceIter.next();
+				System.out.println(" s hash" +s.hashCode());
+				if (s.equals(edge))
+				{
+					
+					System.out.println("source edges were equal");
+					cs.disconnect(edge, true);
+					cs.connect(edge, this.joiner.getPort(), true);		
+					this.joiner.addSourceEdge(s);
+					//sourceIter.remove();
+					edgesToRemove.add(s);
+				}
+			}
+			
+			Iterator targetIter = this.getTargetEdges().iterator();
+			while(targetIter.hasNext())
+			{
+				DefaultEdge t = (DefaultEdge) targetIter.next();
+				System.out.println(" t hash" +t.hashCode());
+				if(t.equals(edge))
+				{
+					System.out.println("target edges were equal");
+					cs.disconnect(edge,false);
+					cs.connect(edge, this.splitter.getPort(),false);
+					this.splitter.addTargetEdge(t);
+					//targetIter.remove();
+					edgesToRemove.add(t);
+				}
+			}
+			
+			Object[] removeArray = edgesToRemove.toArray();
+			for(int i = 0; i<removeArray.length;i++)
+			{
+				this.removeSourceEdge((DefaultEdge)removeArray[i]);
+				this.removeTargetEdge((DefaultEdge)removeArray[i]);
+			}
+			
+			
+			
+			
+			/*if (temp) {
+				cs.disconnect(edge,false);
+				cs.connect(edge, this.splitter.getPort(),false);
+				temp = false;	
+			}else {
 				cs.disconnect(edge, true);
-				cs.connect(edge, this.joiner.getPort(), true);
-			}
-			if (edge.getTarget() == this)
-			{
-				System.out.println("Changing the edge at the target of the splitjoin");
-				cs.disconnect(edge, false);
-				cs.connect(edge, this.splitter.getPort(), true);
-			}
+				cs.connect(edge, this.joiner.getPort(), true);		
+			}*/
 		}
 		
 		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
 		jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, false);
 		
+		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
+		manager.arrange();	
+		setLocationAfterExpand();
+	}
+	
+	
+	/**
+	 * Expand the GESplitJoin. When it is expanded the elements that it contains are
+	 * displayed.
+ 	 */
+	
+	public void collapse(JGraph jgraph)
+	{
+		Object[] nodeList = this.getContainedElements().toArray();
+		ConnectionSet cs = this.localGraphStruct.getConnectionSet();	
+		jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, true);
+		
+		Iterator splitEdgeIter = localGraphStruct.getGraphModel().edges(this.getSplitter().getPort());
+		Iterator joinEdgeIter = localGraphStruct.getGraphModel().edges(this.getJoiner().getPort());
+		
+		ArrayList removeArray =  new ArrayList();
+		
+		
+		while (splitEdgeIter.hasNext())
+		{
+			DefaultEdge edge = (DefaultEdge) splitEdgeIter.next();
+			
+			
+			Iterator sourceIter = this.getJoiner().getSourceEdges().iterator();
+			while(sourceIter.hasNext())
+			{
+				DefaultEdge target = (DefaultEdge) sourceIter.next();
+				if(target.equals(edge))
+				{
+					System.out.println("source equals edge");
+					cs.disconnect(edge, true);
+					cs.connect(edge, this.getPort(), true);
+					this.addSourceEdge(edge);
+					removeArray.add(edge);
+				}
+			}
+			
+			Iterator targetIter = this.getSplitter().getTargetEdges().iterator();	
+			while(targetIter.hasNext())
+			{
+				DefaultEdge source = (DefaultEdge) targetIter.next();
+				if (source.equals(edge))
+				{
+					System.out.println("target equals target");
+					cs.disconnect(edge,false);
+					cs.connect(edge, this.getPort(),false);
+					this.addTargetEdge(edge);
+					removeArray.add(edge);
+				}
+			}
+		}
+		while (joinEdgeIter.hasNext())
+		{
+			DefaultEdge edge = (DefaultEdge) joinEdgeIter.next();
+		
+			
+			Iterator sourceIter = this.getJoiner().getSourceEdges().iterator();
+			while(sourceIter.hasNext())
+			{
+				DefaultEdge source = (DefaultEdge) sourceIter.next();
+				if(source.equals(edge))
+				{
+					System.out.println("source equals edge");
+					cs.disconnect(edge, true);
+					cs.connect(edge, this.getPort(), true);
+					this.addSourceEdge(edge);
+					removeArray.add(edge);
+				}
+			}
+			
+			Iterator targetIter = this.getSplitter().getTargetEdges().iterator();	
+			while(targetIter.hasNext())
+			{
+				DefaultEdge target = (DefaultEdge) targetIter.next();
+				if (target.equals(edge))
+				{
+					System.out.println("target equals target");
+					cs.disconnect(edge,false);
+					cs.connect(edge, this.getPort(),false);
+					this.addTargetEdge(edge);
+					removeArray.add(edge);
+				}
+			}
+			
+		}	
+			
+			
+			
+		
+		
+		/*
+		if (splitEdgeIter.hasNext())
+		{
+			DefaultEdge sEdge = (DefaultEdge) splitEdgeIter.next();
+			cs.disconnect(sEdge, false);
+			cs.connect(sEdge, this, false);
+		}
+
+		ArrayList joinEdgeArray = new ArrayList();
+		while (joinEdgeIter.hasNext())
+		{
+			joinEdgeArray.add(joinEdgeIter.next());
+		}
+			
+		DefaultEdge jEdge = (DefaultEdge) joinEdgeArray.get(joinEdgeArray.size()-1);
+		cs.disconnect(jEdge,true);
+		cs.connect(jEdge, this,true);
+		*/
+										
+		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
+		jgraph.getGraphLayoutCache().setVisible(nodeList, false);
 		
 		//JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
-		//manager.arrange();
+		JGraphLayoutManager manager = new JGraphLayoutManager(jgraph);
+		manager.arrange();	
+	}
+	
+	private void setLocationAfterExpand()
+	{
+		Object[] nodeList = this.getContainedElements().toArray();
+		for (int i = 0; i < nodeList.length; i++)
+		{
+			GEStreamNode node = (GEStreamNode) nodeList[i];
+			System.out.println ("node "+ node);
+			Point p = GraphConstants.getOffset(node.getAttributes());
+			Rectangle r = node.defaultBounds;
+			System.out.println("The point is " + r.toString());
+			
+		}
 		
-	}	
+	}
+
 }

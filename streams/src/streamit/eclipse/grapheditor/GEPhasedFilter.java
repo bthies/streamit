@@ -106,7 +106,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	 * Contructs the filter and returns <this>.
 	 * @return <this>
 	 */
-	public GEStreamNode construct(GraphStructure graphStruct)
+	public GEStreamNode construct(GraphStructure graphStruct, int level)
 	{
 		System.out.println("Constructing the filter " +this.getName());
 		
@@ -180,4 +180,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		System.out.println("The user object is " +this.getUserObject().toString());
 		System.out.println(jgraph.convertValueToString(this)); 
 	}
+	public void collapse(JGraph jgraph){};
+	public void expand(JGraph jgraph){};
+
 }

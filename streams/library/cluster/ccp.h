@@ -19,24 +19,29 @@
 
 #include <mysocket.h>
 #include <ccp_session.h>
+#include <node_server.h>
+#include <save_state.h>
 
 class ccp {
 
-  vector <ccp_session*> sessions;
-  map<int, int> partition;         // from thread to machine id
-  map<int, unsigned> machines;     // from machine id to ip address
-
   int number_of_threads;
   int machines_in_partition;
+  map<int, int> partition;         // from thread to machine id
 
+  map<int, unsigned> machines;     // from machine id to ip address
+
+  bool waiting_to_start_execution;
   int initial_iteration;
+
+  vector <ccp_session*> sessions;
   
   void read_config_file();
+  void assign_nodes_to_partition();
 
-  void start_execution();
+  void send_cluster_config(int iter = 0);
 
-  void handle_extra_node();
-  void handle_node_failure();
+  void handle_change_in_number_of_nodes();
+  void execute_partitioner(int number_of_nodes);
 
  public:
 

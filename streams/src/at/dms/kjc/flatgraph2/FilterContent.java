@@ -263,11 +263,14 @@ public class FilterContent {
     }
 
     public int getPushInt() {
+	if(linear)
+	    return 1;
 	return steady[0].getPushInt();
     }
 
     public int getPopInt() {
-	if (linear) return getPopCount();
+	if(linear)
+	    return getPopCount();
 	return steady[0].getPopInt();
     }
 

@@ -751,40 +751,114 @@ public class Rawify
     private static void createSwitchCodeLinear(FilterTraceNode node, Trace parent, 
 					       FilterInfo filterInfo, boolean init, boolean primePump, 
 					       RawTile tile, RawChip rawChip) {
-	//createReceiveCode(0,  node,  parent,  filterInfo,  init,  primePump,  tile,  rawChip);
-	ComputeNode sourceNode = null;
-	int mult;
+	System.err.println("Creating switchcode linear: "+node);
+
+	//START Copy Gordo
+	int mult, sentItems = 0;
 	
-	if (init)
+	//don't cache align if the only source is a file reader
+	boolean cacheAlignSource = true;
+	if (node.getPrevious() instanceof InputTraceNode) {
+	    OffChipBuffer buf = IntraTraceBuffer.getBuffer((InputTraceNode)node.getPrevious(), 
+							   node).getNonRedundant();
+	    if (buf != null && buf.getDest() instanceof OutputTraceNode &&
+		((OutputTraceNode)buf.getDest()).isFileReader())
+		cacheAlignSource = false;
+	}
+	
+	//don't cache align the dest if the true dest is a file writer
+	boolean cacheAlignDest = true; 
+	if (node.getNext() instanceof OutputTraceNode) {
+	    OutputTraceNode output = (OutputTraceNode)node.getNext();
+	    if (output.oneOutput() && OffChipBuffer.unnecessary(output) &&
+		output.getSingleEdge().getDest().isFileWriter() &&
+		OffChipBuffer.unnecessary(output.getSingleEdge().getDest()))
+		cacheAlignDest = false;
+	}
+	
+
+      
+	if (primePump)
+	    mult = filterInfo.primePump - (filterInfo.push == 0 ? 0 :
+		(filterInfo.primePumpItemsNotConsumed() / filterInfo.push));
+	else if (init)
 	    mult = filterInfo.initMult;
 	else 
 	    mult = filterInfo.steadyMult;
+	//STOP Copy from Gordo
+
+
+	ComputeNode sourceNode = null;
+
+	//int mult;
+	//if (init)
+	//mult = filterInfo.initMult;
+	//else 
+	//mult = filterInfo.steadyMult;
+	
+	/* OLD
+	  if (node.getPrevious().isFilterTrace())
+	  sourceNode = rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(),  
+	  ((FilterTraceNode)node.getPrevious()).getY());
+	  else {
+	  if (KjcOptions.magicdram && node.getPrevious() !=  null &&
+	  node.getPrevious().isInputTrace() &&
+	  tile.hasIODevice()) 
+	  sourceNode = tile.getIODevice();
+	  else { 
+	  System.err.println("BLAH1");
+	  return;
+	  }
+	  }*/
 	
 	if (node.getPrevious().isFilterTrace())
-	    sourceNode = rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(),  
+	    sourceNode = rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(), 
 					 ((FilterTraceNode)node.getPrevious()).getY());
 	else {
-	    if (KjcOptions.magicdram && node.getPrevious() !=  null &&
+	    if (KjcOptions.magicdram && node.getPrevious() != null &&
 		node.getPrevious().isInputTrace() &&
 		tile.hasIODevice()) 
 		sourceNode = tile.getIODevice();
 	    else 
-		return;
+		sourceNode = 
+		    IntraTraceBuffer.getBuffer((InputTraceNode)node.getPrevious(), 
+					       node).getNonRedundant().getDRAM();
 	}
+	
 	SwitchIPort src = rawChip.getIPort(sourceNode, tile);
 	SwitchIPort src2 = rawChip.getIPort2(sourceNode, tile);
 	sourceNode = null;
 	ComputeNode destNode = null;
+
+	/* OLD
+	  if (node.getNext().isFilterTrace())
+	  destNode = rawChip.getTile(((FilterTraceNode)node.getNext()).getX(),  
+	  ((FilterTraceNode)node.getNext()).getY());
+	  else {
+	  if (KjcOptions.magicdram && node.getNext() !=  null &&
+	  node.getNext().isOutputTrace() && tile.hasIODevice())
+	  destNode = tile.getIODevice();
+	  else {
+	  System.err.println("BLAH2");
+	  return;
+	  }
+	  }*/
+
 	if (node.getNext().isFilterTrace())
-	    destNode = rawChip.getTile(((FilterTraceNode)node.getNext()).getX(),  
+	    destNode = rawChip.getTile(((FilterTraceNode)node.getNext()).getX(), 
 				       ((FilterTraceNode)node.getNext()).getY());
 	else {
-	    if (KjcOptions.magicdram && node.getNext() !=  null &&
+	    if (KjcOptions.magicdram && node.getNext() != null &&
 		node.getNext().isOutputTrace() && tile.hasIODevice())
 		destNode = tile.getIODevice();
-	    else
-		return;
+	    else {
+		destNode = 
+		    IntraTraceBuffer.getBuffer(node, (OutputTraceNode)node.getNext()).
+		    getNonRedundant().getDRAM();
+	    }
+	    
 	}
+	
 	SwitchOPort dest = rawChip.getOPort(tile, destNode);
 	SwitchOPort dest2 = rawChip.getOPort2(tile, destNode);
 	destNode = null;
@@ -797,6 +871,8 @@ public class Rawify
 	System.out.println("SRC: "+src);
 	System.out.println("DEST: "+dest);
 	SwitchCodeStore code = tile.getSwitchCode();
+	System.err.println("Getting HERE!");
+	code.appendIns(new Comment("HERE!"),init||primePump);
 	boolean first=true;
 	for(int i = 0; i<numPop-1; i++)
 	    for(int j = 0; j<pop; j++) {
@@ -1043,6 +1119,58 @@ public class Rawify
 	  code.appendIns(newIns,init||primePump);*/
 	//code.appendIns(new JumpIns(label.getLabel()),init||primePump);
 	ins.setProcessorIns(new JumpIns(label.getLabel()));
+
+	//START Copy from Gordo
+	//now we must take care of the remaining items on the input tape 
+	//after the initialization phase if the upstream filter produces more than
+	//we consume in init
+	if (init && filterInfo.remaining > 0) {
+	    appendReceiveInstructions(node, 
+				      filterInfo.remaining * Util.getTypeSize(node.getFilter().getInputType()),
+				      filterInfo, init, false, tile, rawChip);
+	}
+
+	//we must add some switch instructions to account for the fact
+	//that we must transfer cacheline sized chunks in the streaming dram
+	//do it for the init and the steady state, primepump 
+
+	//some sanity checks!
+
+	/*if (primePump)
+	  assert (sentItems == (filterInfo.totalItemsSent(init, primePump) - 
+	  filterInfo.primePumpItemsNotConsumed())) :
+	  "insane";
+	  else
+	  assert (sentItems == filterInfo.totalItemsSent(init, primePump)) :
+	  "insane";*/
+
+	//generate code to fill the remainder of the cache line
+	if (!KjcOptions.magicdram && node.getNext().isOutputTrace() && 
+	    cacheAlignDest)
+	    fillCacheLine(node, init, primePump, sentItems);
+
+	if (primePump && filterInfo.push > 0 &&
+	    filterInfo.primePumpItemsNotConsumed() / filterInfo.push > 0) {
+	    mult = (filterInfo.primePumpItemsNotConsumed() / filterInfo.push);
+	    for (int i = 0; i < mult; i++) {
+		//append the receive code
+		createReceiveCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+		//append the send code 
+		createSendCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+	    }
+	    //handle filling the cache line for the steady buffer of the primepump 
+	    //stage
+	    if (!KjcOptions.magicdram && node.getNext().isOutputTrace() && cacheAlignDest)
+		fillCacheLine(node, init, primePump, 
+			      filterInfo.primePumpItemsNotConsumed());
+	}
+	//because all dram transfers must be multiples of cacheline
+	//generate code to disregard the remainder of the transfer
+	if (!KjcOptions.magicdram && node.getPrevious().isInputTrace() && cacheAlignSource)
+	    handleUnneededInput(node, init, primePump, 
+				filterInfo.totalItemsReceived(init, primePump));
+
+	//STOP Copy From Gordo
     }
 
 

@@ -65,6 +65,30 @@ public class FeedbackLoop extends Stream
         return 0;
     }
 
+    public float initPathFloat (int index)
+    {
+        ASSERT (false);
+        return 0;
+    }
+
+    public char initPathChar (int index)
+    {
+        ASSERT (false);
+        return 0;
+    }
+
+    /**
+     * initialize the path with an object.
+     * If this isn't what you wanted (and it asserts here), then you
+     * need to add an appropriate if-else in connectGraph (there is a comment
+     * about it in the appropriate place)
+     */
+    public Object initPathObject (int index)
+    {
+        ASSERT (false);
+        return null;
+    }
+
     // not used here!
     public void add(Stream s)
     {
@@ -160,10 +184,20 @@ public class FeedbackLoop extends Stream
                 if (type == Integer.TYPE)
                 {
                     feedbackChannel.pushInt (initPathInt (index));
-                } else {
-                    // There should be another type implemented - check
-                    // what type is and add an appropriate if-else statement
-                    ASSERT (false);
+                } else
+                if (type == Float.TYPE)
+                {
+                    feedbackChannel.pushFloat (initPathFloat (index));
+                } else
+                if (type == Character.TYPE)
+                {
+                    feedbackChannel.pushChar (initPathChar (index));
+                } else
+                {
+                    // this is essentially a default
+                    // if this isn't what you want, you should implement
+                    // another if-else clause!
+                    feedbackChannel.push (initPathObject (index));
                 }
             }
         }

@@ -133,14 +133,18 @@ public abstract class SIRContainer extends SIRStream {
     }
 
     /**
-     * Resets all children of this to have this as their parent.  This
-     * is needed because a stream can have exactly one parent, but
-     * sometimes a stream is shuffled around between different parents
-     * (e.g. in partitioning).
+     * Resets all children of this to have this as their parent, and
+     * calls reclaimChildren on all children that are containers.
+     * This is needed because a stream can have exactly one parent,
+     * but sometimes a stream is shuffled around between different
+     * parents (e.g. in partitioning).
      */
     public void reclaimChildren() {
 	for (int i=0; i<size(); i++) {
 	    get(i).setParent(this);
+	    if (get(i) instanceof SIRContainer) {
+		((SIRContainer)get(i)).reclaimChildren();
+	    }
 	}
     }
 

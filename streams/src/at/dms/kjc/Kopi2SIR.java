@@ -371,7 +371,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    /* the end of the visit */
 	}
 	catch (Throwable t) {
-	    System.err.println("Unknown error at or around line " + lineNumber);
+	    System.err.println("Error at or around line " + lineNumber);
 	    System.err.println("Stack Trace:\n");
 	    t.printStackTrace();
 	    System.exit(-1);
@@ -1365,6 +1365,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    SIRStream st = (SIRStream)getVisitedOp(((JUnqualifiedInstanceCreation)SIROp).
 						   getType().getCClass().getIdent());
 	    
+	    //if we cannot find the stream in the symbol table then 
+	    //we have not seen the declaration before the use
+	    if (st == null)
+		at.dms.util.Utils.fail(lineNumber + 
+				       ": cannot find declaration of stream " +
+				       ((JUnqualifiedInstanceCreation)SIROp).
+				       getType().getCClass().getIdent());
 	    newST = (SIRStream) ObjectDeepCloner.deepCopy(st);
 	    //SIRStream newST = (SIRStream) st.clone();
 	    newST.setParent((SIRContainer)parentStream);
@@ -1388,7 +1395,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	else if (regMethod.equals("setLoop"))
 	    ((SIRFeedbackLoop)parentStream).setLoop(newST);
 	else
-	    at.dms.util.Utils.fail("Invalid Registration Method");
+	    at.dms.util.Utils.fail(lineNumber + ": Invalid Registration Method");
 
 	//Already an SIRinit statement (this is a local variable expression)
 	//we used the init statement from the symbol table

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.42 2001-11-01 16:02:29 dmaze Exp $
+ * $Id: LIRToC.java,v 1.43 2001-11-02 19:46:24 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1012,15 +1012,11 @@ public class LIRToC
                                         JExpression[] dims,
                                         JArrayInitializer init)
     {
-        print("new ");
+        print("malloc(");
+        dims[0].accept(this);
+        print(" * sizeof(");
         print(type);
-        for (int i = 0; i < dims.length; i++) {
-            print("[");
-            if (dims[i] != null) {
-                dims[i].accept(this);
-            }
-            print("]");
-        }
+        print("))");
         if (init != null) {
             init.accept(this);
         }
@@ -2194,7 +2190,12 @@ public class LIRToC
 
     // Special case for CTypes, to map some Java types to C types.
     protected void print(CType s) {
-        if (s.getTypeID() == TID_BOOLEAN)
+        if (s instanceof CArrayType)
+        {
+            print(((CArrayType)s).getElementType());
+            print("*");
+        }
+        else if (s.getTypeID() == TID_BOOLEAN)
             print("int");
         else if (s.toString().endsWith("Portal"))
 	    // ignore the specific type of portal in the C library

@@ -1,6 +1,8 @@
 FRONTEND = java streamit.frontend.ToJava
 COMPILER = java -Xmx1800M  at.dms.kjc.Main -s
 
+ANALYSIS-OPTIONS = --debug --linearanalysis --unroll 10000
+
 BEAMFORMER-HOME = $(STREAMIT_HOME)/apps/benchmarks/beamformer/streamit
 FM-HOME = $(STREAMIT_HOME)/apps/benchmarks/fm/streamit
 
@@ -16,35 +18,19 @@ filterbank-results: FilterBank.java
 	./reap_freq.pl scripts/filterbank.script
 sampling-results: SamplingRateConverter.java
 	./reap_freq.pl scripts/sample.script
-test-results: Test.java
-	./reap_freq.pl scripts/test.script
-
-fm-results: FMRadioApp.java
+fm-results: LinkedFMTest.java
 	./reap_freq.pl scripts/fmradio.script
 beamformer-results: CoarseSerializedBeamFormer.java
 	./reap_freq.pl scripts/beamformer.script
+test-results: Test.java
+	./reap_freq.pl scripts/test.script
 
 
 
-benchmarks: FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java Test.java CoarseSerializedBeamFormer.java LinkedFMTest.java
+benchmarks: FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java Test.java CoarseSerializedBeamFormer.java LinkedFMTest.java OneBitDToA.java
 
 
 
-# rules to make the stream graphs for the paper appendix
-stream-graphs: clean benchmarks
-	mkdir streamgraphs
-	$(COMPILER)  FIRProgram.java
-	dot -Tps before.dot > streamgraphs/fir.ps
-	$(COMPILER)  SamplingRateConverter.java
-	dot -Tps before.dot > streamgraphs/samplingrate.ps
-	$(COMPILER)  FilterBank.java
-	dot -Tps before.dot > streamgraphs/filterbank.ps
-	$(COMPILER)  TargetDetect.java
-	dot -Tps before.dot > streamgraphs/target.ps
-	$(COMPILER)  FMRadioApp.java
-	dot -Tps before.dot > streamgraphs/fm.ps
-	$(COMPILER)  CoarseSerializedBeamFormer.java
-	dot -Tps before.dot > streamgraphs/beamform.ps
 
 
 fir-scaling: fir-scaling0 fir-scaling1 fir-scaling2
@@ -80,7 +66,46 @@ clean:
 	make -C $(BEAMFORMER-HOME) clean
 	rm -f *.dot *.ps *.c *.exe *.class *.output
 	rm -f dynamorio.log* countflops.log
-	rm -f Test.java
+	rm -f Test.java BF*.java
 	rm -f FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java 
 	rm -f CoarseSerializedBeamFormer.java LinkedFMTest.java
 	rm -rf streamgraphs
+
+report_clean:
+	rm -rf linear_report.* workingfiles
+
+report: report_clean
+	./harvest_linearity.pl
+	latex linear_report.tex
+	latex linear_report.tex
+	dvips -Ppdf linear_report.dvi -o linear_report.ps
+	ps2pdf linear_report.ps
+
+#redundancy data gathering
+redundant-fir: benchmarks
+	$(COMPILER) $(ANALYSIS-OPTIONS) FIRProgram.java > redundant/fir.output
+	./parse_redundant_output.pl redundant/fir.output
+redundant-target: benchmarks
+	$(COMPILER) $(ANALYSIS-OPTIONS) TargetDetect.java > redundant/target.output
+	./parse_redundant_output.pl redundant/target.output
+redundant-filterbank: benchmarks
+	$(COMPILER) $(ANALYSIS-OPTIONS) FilterBank.java > redundant/filterbank.output
+	./parse_redundant_output.pl redundant/filterbank.output
+redundant-sampling: benchmarks
+	$(COMPILER) $(ANALYSIS-OPTIONS) SamplingRateConverter.java > redundant/sample.output
+	./parse_redundant_output.pl redundant/sample.output
+redundant-fm: benchmarks
+	$(COMPILER) $(ANALYSIS-OPTIONS) LinkedFMTest.java > redundant/fm.output
+	./parse_redundant_output.pl redundant/fm.output
+
+redundant-beamformer: benchmarks
+	$(COMPILER) $(ANALYSIS-OPTIONS) CoarseSerializedBeamFormer.java > redundant/beam.output
+	./parse_redundant_output.pl redundant/beam.output
+
+
+
+
+current-test: OneBitDToA.java
+	jikes OneBitDToA.java
+	#$(COMPILER) OneBitDToA.java > OneBitDToA.c
+	java OneBitDToA -i 1000 > output.tsv

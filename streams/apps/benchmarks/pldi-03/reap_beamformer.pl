@@ -39,8 +39,8 @@ my $NUM_ITERS = 10000;
 #directory:filename:max size for frequency
 my @sizes;
 my ($i, $j);
-for ($i=12; $i<=12; $i+=1) {
-    for ($j=1; $j<=4; $j+=1) {
+for ($i=1; $i<=12; $i+=1) {
+    for ($j=6; $j<=6; $j+=1) {
 	@sizes = (@sizes, "$i:$j");
     }
 }

@@ -109,6 +109,8 @@ public class Util extends at.dms.util.Utils {
 	    return ((SIRFilter)node.contents).getOutputType();
 	else if (node.contents instanceof SIRJoiner)
 	    return getJoinerType(node);
+	else if (node.contents instanceof SIRSplitter)
+	    return getOutputType(node.incoming[0]);
 	else {
 	    Utils.fail("Cannot get output type for this node");
 	    return null;

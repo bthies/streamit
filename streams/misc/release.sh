@@ -2,12 +2,12 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.36 2003-10-17 17:08:59 thies Exp $
+# $Id: release.sh,v 1.37 2003-10-17 17:57:45 dmaze Exp $
 #
 
 # Interesting/configurable variables:
-VERSION=0.0.20030528
-TAG=streamit-snapshot-20030528
+VERSION=2.0
+TAG=streamit-2-0
 test -z "$TMPDIR" && TMPDIR=/tmp
 PRECIOUS=
 

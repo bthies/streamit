@@ -18,6 +18,7 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable {
 	      new JIntLiteral(1), new JIntLiteral(1), new JIntLiteral(1),
 	      /* input type */ type,
 	      /* output type */ type);
+	setType(type);
     }
 
     /**

@@ -320,7 +320,7 @@ fn dev_gather_numbers_calc(printServiceStruct)
 	    //this should exit!!!!!
 	    gInterrupted = 1;
 	    //this will exit the thread
-	    exit(0);
+	    exit_now(0);
 	  }
 	  //print the stats
 	  if (steadyStateExecutions > 1) {

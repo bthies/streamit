@@ -76,6 +76,14 @@ public interface StreamInterface
      * is complete. Probably should create new, steady-state restrictions.
      */
     public void initRestrictionsCompleted(P2PPortal portal);
+    
+    /**
+     * Notify the stream that its steady state has just completed.
+     * The parameter is a LatencyNode corresponding to the node whose
+     * steady state has just completed. This is used for identifying 
+     * splitters and joiners.
+     */
+    public void doneSteadyState (LatencyNode node);
 
     public PhasingSchedule getNextPhase(
         Restrictions restrs,

@@ -185,7 +185,11 @@ public class Pipeline
 
             // create the restriction for the downstream filter
             InitDownstreamRestriction initDownstreamRestriction =
-                new InitDownstreamRestriction(portal, sdep, this);
+                new InitDownstreamRestriction(
+                    portal,
+                    sdep,
+                    this,
+                    restrictions);
             restrictions.add(initDownstreamRestriction);
 
             // create the restriction for the upstream filter
@@ -194,7 +198,8 @@ public class Pipeline
                     portal,
                     sdep,
                     this,
-                    initDownstreamRestriction);
+                    initDownstreamRestriction,
+                    restrictions);
             restrictions.add(initUpstreamRestriction);
 
             numInitialRestrictions++;
@@ -313,6 +318,11 @@ public class Pipeline
         checkForAllMessagesNow = true;
     }
 
+    public void doneSteadyState (LatencyNode node)
+    {
+        ERROR ("Pipelines do not own any nodes to have steady state!");
+    }
+    
     public boolean isDoneSteadyState()
     {
         while (!steadyStateRestrictedChildren.empty())

@@ -10,17 +10,20 @@ public class InitDownstreamRestriction extends Restriction
     public InitDownstreamRestriction(
         P2PPortal _portal,
         SDEPData _sdep,
-        StreamInterface _parent)
+        StreamInterface _parent,
+        Restrictions restrictions)
     {
         super(_portal.getDownstreamNode(), _portal);
+
+        useRestrictions(restrictions);
 
         sdep = _sdep;
         parent = _parent;
 
         ERROR("not implemented");
     }
-    
-    public boolean notifyExpired ()
+
+    public boolean notifyExpired()
     {
         return false;
     }

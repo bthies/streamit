@@ -196,13 +196,14 @@ public class Filter
 
     public void createSteadyStateRestrictions(int streamNumExecs)
     {
-        FilterSteadyRestriction restriction =
-            new FilterSteadyRestriction(this, streamNumExecs);
+        NodeSteadyRestriction restriction =
+            new NodeSteadyRestriction(getLatencyNode (), streamNumExecs, this);
         restrictions.add(restriction);
     }
     
-    public void doneSteadyState()
+    public void doneSteadyState (LatencyNode node)
     {
+        ASSERT (node == getLatencyNode ());
         isFilterDoneSteadyState = true;
     }
     

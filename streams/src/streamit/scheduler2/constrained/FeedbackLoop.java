@@ -208,4 +208,9 @@ public class FeedbackLoop
         ERROR("not implemented");
         return false;
     }
+
+    public void doneSteadyState (LatencyNode node)
+    {
+        ERROR("not implemented");
+    }
 }

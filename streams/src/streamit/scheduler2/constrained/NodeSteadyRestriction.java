@@ -1,26 +1,31 @@
 package streamit.scheduler2.constrained;
 
-public class FilterSteadyRestriction extends Restriction
+public class NodeSteadyRestriction extends Restriction
 {
-    final Filter filter;
-    FilterSteadyRestriction(Filter _filter, int numSteadyState)
+    final LatencyNode node;
+    
+    NodeSteadyRestriction(
+        LatencyNode _node,
+        int numSteadyState,
+        StreamInterface _parent)
     {
         super(
-            _filter.getLatencyNode(),
+            _node,
             new P2PPortal(
                 true,
-                _filter.getLatencyNode(),
-                _filter.getLatencyNode(),
+                _node,
+                _node,
                 numSteadyState,
                 numSteadyState,
-                _filter));
-        filter = _filter;
+                _parent));
+                
+         node = _node;
     }
 
     public boolean notifyExpired()
     {
         // this restriction should never be removed or unblocked!
-        filter.doneSteadyState();
+        portal.getParent().doneSteadyState(node);
         return false;
     }
 

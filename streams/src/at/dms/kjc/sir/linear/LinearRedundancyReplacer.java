@@ -10,7 +10,7 @@ import at.dms.kjc.iterator.*;
 
 /**
  * RedundantReplacer.
- * $Id: LinearRedundancyReplacer.java,v 1.10 2003-05-12 14:36:40 aalamb Exp $
+ * $Id: LinearRedundancyReplacer.java,v 1.11 2003-05-12 14:42:05 aalamb Exp $
  **/
 public class LinearRedundancyReplacer extends LinearReplacer implements Constants{
     /** The prefix to use to name fields. **/
@@ -209,7 +209,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	    LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
 	    String fieldName = tupleData.getName(t);
 	    String indexName = fieldName + INDEX_POSTFIX;
-	    int    fieldSize = tupleDat.agetMaxUse(t) + 1;
+	    int    fieldSize = tupleData.getMaxUse(t) + 1;
 	    // make a field allocation for fieldName of size maxUse
 	    body.addStatement(makeFieldAllocation(fieldName, fieldSize, "state for " + t));
 	    body.addStatement(makeFieldInitialization(indexName, 0, "index for " + t));

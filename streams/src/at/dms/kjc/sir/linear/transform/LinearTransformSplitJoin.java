@@ -9,8 +9,13 @@ import java.util.*;
 
 /**
  * Contains the code for merging all the filters from a split join
- * into a single monolithic matrix. <p>
- * $Id: LinearTransformSplitJoin.java,v 1.6 2002-12-02 23:03:06 aalamb Exp $
+ * into a single monolithic matrix. See the pldi-03-linear
+ * <a href="http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf">
+ * paper</a> or Andrew's
+ * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
+ * thesis</a> for more information.<br>
+ *
+ * $Id: LinearTransformSplitJoin.java,v 1.7 2003-05-30 14:05:04 aalamb Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;
@@ -87,7 +92,8 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	
 	// now, copy the cols of the matrices (and vectors) into the expanded versions
 	// for each expanded matrix, copy joinWeight[i] cols into the new matrix and vector
-	// at an offset that makes the output work out correctly. See paper (specifically Figure 10 in the submission)
+	// at an offset that makes the output work out correctly.
+	// See paper (http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf) Figure 9
 	// start copying the cols of the right most filter at the appropriate start offset
 	int startOffset = 0;
 	for (int i=(filterCount-1); i>=0; i--) { // iterate through filters from right to left
@@ -114,9 +120,10 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	    startOffset += this.roundRobinJoinerWeights[i];
 	}
 
-	// calculate what the new pop rate is (it needs to the the same for all filters)
+	// calculate what the new pop rate is (it needs to the the same for all expanded filters)
+	// if it is not the same, then we have a problem (specifically, this splitjoin is not
+	// schedulable....)
 	int newPopCount = expandedReps[0].getPopCount();
-	// again, paranoia to make sure that they are all the same
 	for (int i=0; i<filterCount; i++) {
 	    if (newPopCount != expandedReps[i].getPopCount()) {
 		throw new RuntimeException("Inconsistency -- pop counts are not all the same");
@@ -130,7 +137,7 @@ public class LinearTransformSplitJoin extends LinearTransform{
 
 
     /**
-     * Utility method that
+     * Utility method.
      * Parses a List of LinearFilter representations into an array of
      * of LinearFilterRepresentations.
      **/
@@ -152,8 +159,9 @@ public class LinearTransformSplitJoin extends LinearTransform{
     
     /**
      * Calculate the necessary information to combine the splitjoin when the splitter is
-     * a duplicate. See the documentation (eg what will be my thesis) for an explanation
-     * of what is going on and why the expansion factors are chosen the way that they are.<p>
+     * a duplicate. See thesis (http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf)
+     * for an explanation of what is going on and why the
+     * expansion factors are chosen the way that they are.<br>
      *
      * The input is a List of LinearFilterRepresentations and a matching array of joiner
      * weights. Note that this method merely calls the other calculateDuplicate so that
@@ -173,9 +181,9 @@ public class LinearTransformSplitJoin extends LinearTransform{
     }
 
     /**
-     * the function that does the actual work of calculating the
-     * necessary expansion numbers for filters and the joiner.
-     * basiclly, it takes as input an array of filter reps and an array of joiner weights
+     * Does the actual work of calculating the
+     * necessary expansion factors for filters and the joiner.
+     * Basiclly, it takes as input an array of filter reps and an array of joiner weights
      * and (if all checks pass) calculates the weights necessary to expand each filter
      * by and the factor necessary to expand the roundrobin joiner by. It then returns a
      * LinearTransformSplitjoin which has that information embedded in it.
@@ -189,10 +197,9 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	// Each filter needs to be expanded by a factor fact(i) = x/push(i);
 	// overall, the joiner needs to be expanded by a factor x/weight(i) which needs to be
 	// the same for all i.
-
 	
 	// keep track of the min number of times that the joiner needs to fire for
-	// each filter, 
+	// each filter
 	int joinerFirings[] = new int[filterCount];
 	int currentJoinerExpansionFactor = 0;
 	for (int i=0; i<filterCount; i++) {
@@ -261,7 +268,7 @@ public class LinearTransformSplitJoin extends LinearTransform{
 					    joinerWeights);
     }
 
-    /** Calculates the maxmum peek rate (o_i * joinRep + e_i - o_i) for all of the filters. **/
+    /** Calculates the maxmum peek rate (o_i * firings + e_i - o_i) for all of the filters. **/
     public static int getMaxPeek(LinearFilterRepresentation[] filterReps, int[] filterFirings) {
 	int maxPeek = -1;
 	for (int i=0; i<filterReps.length; i++) {
@@ -271,16 +278,18 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	return maxPeek;
     }
 
-    /** Structure to hold new peek/pop/push rates for linear reps **/
+    /** Structure to hold new peek/pop/push rates for linear reps. **/
     static class ExpansionRule {
 	int peek;
 	int pop;
 	int push;
+	/** Create a new ExpansionRule. **/
 	ExpansionRule(int e, int o, int u) {
 	    this.peek = e;
 	    this.pop  = o;
 	    this.push = u;
 	}
+	/** Nice human readable string (for debugging...) **/
 	public String toString() {
 	    return ("(peek:" + this.peek +
 		    ", pop:" + this.pop +
@@ -288,14 +297,4 @@ public class LinearTransformSplitJoin extends LinearTransform{
 		    ")");
 	}
     }
-
-
-
-    
-    
 }
-
-
-
-
- 

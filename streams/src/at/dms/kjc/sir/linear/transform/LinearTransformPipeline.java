@@ -10,9 +10,14 @@ import at.dms.kjc.sir.linear.*;
  * come one after another in a pipeline into a single filter that does
  * the same work. This combination might require each of the individual
  * filters to be expanded by some factor, and then a matrix multiplication
- * can be performed.<p>
+ * can be performed.
+ * See the pldi-03-linear
+ * <a href="http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf">
+ * paper</a> or Andrew's
+ * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
+ * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformPipeline.java,v 1.8 2002-12-10 20:07:09 aalamb Exp $
+ * $Id: LinearTransformPipeline.java,v 1.9 2003-05-30 14:05:04 aalamb Exp $
  **/
 public class LinearTransformPipeline extends LinearTransform {
     List repList;
@@ -108,20 +113,19 @@ public class LinearTransformPipeline extends LinearTransform {
 
     /**
      * Sets up the calculation of the overall linear representation of
-     * a sequential list of linear representations. 
+     * a sequential list of linear representations.<br>
      *
      * If filter one computes y = xA1 + b1 and filter 2 computes y=xA2 + b2 then
      * the overall filter filter1 --> filter 2 will compute
      * y = (xA1 + b1)A2 + b2 = xA1A2 + (b1A2 + b2), which itself can be represented  
-     * with the LFR: A = A1A2 and b = (b1A2 + b2).<p>
+     * with the LFR: A = A1A2 and b = (b1A2 + b2).<br>
      *
      * There are a bunch of subtlties involved with computing the overall representation
      * due to various size restrictions (eg the sizes of the matrices have to be
      * compatible. See the pldi-03-linear paper for the gory details.<p> 
      **/
     public static LinearTransform calculate(List linearRepList) {
-	// actually, we are going to punt any actual work until the "transform"
-	// method is called.
+	// we punt any actual work until the "transform" method is called.
 	return new LinearTransformPipeline(linearRepList);
     }
 }

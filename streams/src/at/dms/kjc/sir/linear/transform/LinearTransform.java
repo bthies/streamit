@@ -2,29 +2,27 @@ package at.dms.kjc.sir.linear.transform;
 
 import at.dms.kjc.sir.linear.*;
 import java.util.*;
-//import at.dms.kjc.*;
-//mport at.dms.kjc.sir.*;
-//import at.dms.kjc.sir.linear.*;
-//import at.dms.kjc.iterator.*;
 
 /**
  * A LinearTransform communicates information
- * about how to transform one or more linear transforms into
- * a new linear representation. For example, for pipeline combinations,
- * the LRT contains information about what factor to use for expansion
- * for both filters trying to be combined.<p>
+ * about how to transform one or more linear representations into
+ * a new linear representation (eg combination rules).
+ * For example, for pipeline combinations,
+ * the Linear Transform contains information about what expansion factors to use
+ * for the filters to be combined.<br>
  *
  * The interface to a LinearTransform is simple the transform()
  * method, which will return the overall linear representation
  * that the transform calculates. To create a LinearTransform,
  * you use one of the static methods in the subclasses to pre-compute
- * whatever is necessary, and then you call transfor() on the returned
- * object.
+ * whatever information is necessary, and then you call transform()
+ * on the returned LinearTransform object.<br>
+ *
+ * $Id: LinearTransform.java,v 1.7 2003-05-30 14:05:03 aalamb Exp $
  **/
 public abstract class LinearTransform {
-
     /**
-     * Actually implements the transform. Returns
+     * Actually implements the specific transform. Returns
      * a LinearFilterRepresentation that results from
      * applying the appropriate transformation.
      **/
@@ -42,7 +40,8 @@ public abstract class LinearTransform {
 	return (a*b)/gcd(a,b);
     }
 
-    /** calculates the least common multiple of all the integers contained in the array. **/
+
+    /** Calculates the least common multiple of all the integers contained in the array. **/
     public static int lcm(int[] numbers) {
 	// if we don't have any numbers, complain.
 	if (!(numbers.length > 0)) {
@@ -56,11 +55,13 @@ public abstract class LinearTransform {
     }
 							 
 
-
     /**
-     * Return the greatest factor that evenly divids both m and n.
+     * Return the greatest factor that evenly divids both m and n (ie the
+     * greatest common denominator).
      * Valid for 0 < n < m.
-     * From http://www.brent.worden.org/algorithm/mathematics/greatestCommonDenominator.html.
+     * From
+     * <a href="http://www.brent.worden.org/algorithm/mathematics/greatestCommonDenominator.html">
+     * http://www.brent.worden.org/algorithm/mathematics/greatestCommonDenominator.html.</a>
      **/
     public static int gcd(int a, int b) {
 	if ((a <= 0) || (b <= 0)) {
@@ -83,7 +84,7 @@ public abstract class LinearTransform {
 	return d;
     }
 
-    /** gets the gcd of an array of numbers **/
+    /** Gets the gcd of an array of numbers. **/
     public static int gcd(int[] arr) {
 	if (arr.length < 1) {
 	    throw new IllegalArgumentException("No numbers passed to gcd");

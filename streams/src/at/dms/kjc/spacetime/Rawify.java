@@ -1001,15 +1001,14 @@ public class Rawify
 	      testIns.addRoute(SwitchIPort.CSTO,dest);
 	      code.appendIns(testIns,false);*/
 
+	    boolean first=true; //Don't forward first value
 	    if(turns>0) {
 		if(turns>1) {
-		    boolean first=true;
 		    //Order between values (from peek buffer) and partial sums is reversed
+		    //So use Reg1 as a buffer to reorder partial sum and values
 		    for(int turn=1;turn<turns;turn++)
 			for(int j = 0; j<pop; j++) {
 			    if(j==0) {
-				//FullIns newIns=new FullIns(tile);
-				//newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
 				FullIns newIns=new FullIns(tile,new MoveIns(SwitchReg.R1,SwitchIPort.CSTO));
 				if(first)
 				    first=false;
@@ -1021,19 +1020,22 @@ public class Rawify
 			    ins.addRoute(SwitchIPort.CSTO,dest);
 			    code.appendIns(ins,false);
 			}
-		    //Route remainder
+		    //Route remainding partial sum
 		    FullIns ins=new FullIns(tile);
 		    ins.addRoute(SwitchReg.R1,dest);
 		    code.appendIns(ins,false);
 		}
+		first=false; //First value successfully ignored
 	    }
 	    //Order back to normal
 	    for(int j = 0; j<pop; j++) {
 		//Pass first value
 		FullIns ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
 		ins.addRoute(src, SwitchOPort.CSTI);
-		//if(!end)
-		ins.addRoute(src,dest);
+		if(first)
+		    first=false;
+		else
+		    ins.addRoute(src,dest);
 		code.appendIns(ins, false);
 		//Repeat first value
 		for(int k = numPop-2; k>= 0; k--) {
@@ -1044,12 +1046,10 @@ public class Rawify
 		//Pass out partial sum to next filter
 		if(j==0) {
 		    FullIns newIns=new FullIns(tile);
-		    //newIns.addRoute(src, SwitchOPort.CSTI); //Used to be src2,csti2
 		    newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
 		    code.appendIns(newIns, false);
 		}
 	    }
-	    //}
 	} else {
 
 	    //Test: passing start down

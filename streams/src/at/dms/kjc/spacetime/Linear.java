@@ -52,6 +52,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	System.out.println("POS: "+pos);
 	idx=new int[num];
 	topPopNum=num-1;
+	System.out.println("TOPPOPNUM: "+topPopNum);
 	for(int i=0,j=0;j<num;i+=popCount,j++) {
 	    //System.err.println("Adding idx: "+i);
 	    idx[j]=i;
@@ -179,29 +180,28 @@ public class Linear extends BufferedCommunication implements Constants {
 	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
 	    inline.add("la "+tempReg+", %0");
 	    int index=0;
-	    for(int i=0;i<topPopNum;i++)
-		for(int j=0;j<popCount;j++) {
-		    inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
-		    index+=4;
-		    for(int k=i;k>=0;k--) {
-			inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
-			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
-		    }
-		}
 	    if(turns>0) {
-		for(int turn=1;turn<turns;turn++) //Last iteration may not be from buffer
+		for(int i=0;i<=topPopNum;i++)
 		    for(int j=0;j<popCount;j++) {
-			//if(turn==0) //First execution don't pass on values
-			//inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
-			//else
-			//Load value and send to switch
-			inline.add("lw!   "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+			inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
 			index+=4;
-			for(int k=topPopNum;k>=0;k--) {
+			for(int k=i;k>=0;k--) {
 			    inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
 			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 			}
 		    }
+		if(turns>1) {
+		    for(int turn=1;turn<turns;turn++) //Last iteration may not be from buffer
+			for(int j=0;j<popCount;j++) {
+			    //Load value and send to switch
+			    inline.add("lw!   "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+			    index+=4;
+			    for(int k=topPopNum;k>=0;k--) {
+				inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+				inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+			    }
+			}
+		}
 	    }
 	    //TODO: Handle Remaining Items
 	    for(int j=0;j<popCount;j++)
@@ -209,7 +209,6 @@ public class Linear extends BufferedCommunication implements Constants {
 		    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
 		    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
 		}
-	    //}
 	} else {
 	    for(int i=0;i<=topPopNum;i++)
 		for(int j=0;j<popCount;j++)

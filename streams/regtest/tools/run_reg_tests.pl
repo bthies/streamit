@@ -4,7 +4,7 @@
 # in perl because I don't know how to use all of the crazy unix command
 # line utilities necessary to do this stuff.
 #
-# $Id: run_reg_tests.pl,v 1.5 2002-12-10 15:23:28 aalamb Exp $
+# $Id: run_reg_tests.pl,v 1.6 2002-12-11 19:18:47 aalamb Exp $
 
 use strict;
 
@@ -13,7 +13,7 @@ use strict;
 my $DEBUG = 0;
 
 # admin email addresses where we want the crazy emails to go (space separated)
-my $ADMINS = "aalamb\@mit.edu";
+my $ADMINS = "aalamb\@mit.edu mgordon\@cag.lcs.mit.edu";
 # user email addresses who want to get regtest-results
 my $USERS = "commit-stream\@cag.lcs.mit.edu nmani\@cag.lcs.mit.edu";
 

@@ -20,26 +20,30 @@ import streamit.*;
  * Implements an FIR Filter
  */
 
-class FirFilter extends Filter {
+public class FirFilter extends Filter {
 
     int numberOfTaps;
     float COEFF[];
 
     public FirFilter (int numTaps)
     {
-        super ();
-        numberOfTaps = numTaps;
-        COEFF = new float[numTaps];
+        super (numTaps);
     }
 
-    public void init() {
-        input = new Channel (Float.TYPE, 1);
+    public void init(int numTaps) {
+        input = new Channel (Float.TYPE, 1, 10);
         output = new Channel (Float.TYPE, 1);
+        numberOfTaps = numTaps;
+        COEFF = new float[numTaps];
         //Build the FIR Coefficients
         //NEED TO DO THIS
         //XXXMJB
+	for (int i=0; i<numTaps; i++) {
+	    COEFF[i] = i;
+	}
     }
 
+    /*
     public void init(float taps[])
     //in case someone wants to specify the taps explicitly
     //anyone who uses this function has to be very careful.
@@ -47,6 +51,7 @@ class FirFilter extends Filter {
         COEFF = taps;
         numberOfTaps = taps.length;
     }
+    */
 
     public void work() {
         float sum = 0;
@@ -58,15 +63,3 @@ class FirFilter extends Filter {
         output.pushFloat(sum);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-

@@ -15,15 +15,15 @@ import at.dms.kjc.sir.lowering.partition.*;
 
 public class LinearPartitioner {
     /**
+     * Debugging.
+     */
+    static final boolean DEBUG = false;
+
+    /**
      * Whether or not we're trying to cut splitjoins horizontally and
      * vertically (otherwise we just consider each child pipeline).
      */
     static final boolean ENABLE_TWO_DIMENSIONAL_CUTS = false;
-
-    /**
-     * Debugging.
-     */
-    static final boolean DEBUG = false;
 
     /**
      * Relative cost of an add to a multiply (for estimating cost of

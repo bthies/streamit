@@ -69,7 +69,12 @@ class LDPConfigFilter extends LDPConfig {
 	    return Integer.MIN_VALUE;
 	} else {
 	    LinearFilterRepresentation l = lfa.getLinearRepresentation(filter);
-	    return getScalingFactor(l, filter) * (l.getCost().getDirectCost() - l.getCost().getFrequencyCost() );
+	    /*
+	    System.err.println("For " + filter + " scalingfactor=" + getScalingFactor(l, filter) + 
+			       " and savings = ( " + l.getCost().getDirectCost() + " (direct) - " + l.getCost().getFrequencyCost() + 
+			       " (freq) ) = " + (l.getCost().getDirectCost() - l.getCost().getFrequencyCost()));
+	    */
+	    return getScalingFactor(l, filter) * (l.getCost().getDirectCost() - l.getCost().getFrequencyCost());
 	}
     }
 

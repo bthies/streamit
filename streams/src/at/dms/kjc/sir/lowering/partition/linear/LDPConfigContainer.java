@@ -151,6 +151,12 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    LinearFilterRepresentation[] l = { lfa.getLinearRepresentation(pipe.get(0)), lfa.getLinearRepresentation(pipe.get(1)) };
 		    childCost = ( getScalingFactor(l[0], pipe.get(0)) * l[0].getCost().getDirectCost() + 
 				  getScalingFactor(l[1], pipe.get(1)) * l[1].getCost().getDirectCost() );
+		    /*
+		    System.err.println("childCost = " + getScalingFactor(l[0], pipe.get(0)) +" * " + l[0].getCost().getDirectCost() + " + " 
+				       + getScalingFactor(l[1], pipe.get(1)) + " * " + l[1].getCost().getDirectCost()
+				       + " = " + getScalingFactor(l[0], pipe.get(0)) * l[0].getCost().getDirectCost() + 
+				       getScalingFactor(l[1], pipe.get(1)) * l[1].getCost().getDirectCost());
+		    */
 		}
 
 		// get cost of self
@@ -159,6 +165,14 @@ abstract class LDPConfigContainer extends LDPConfig {
 
 		// calculate savings as child savings, PLUS diff between child cost and my cost
 		savings = childSavings + (childCost - myCost);
+		/*
+		System.err.println("for linear collapse " + y1 + "--" + y2 + ":");
+		System.err.println("  scalingFactor = " + getScalingFactor(l, str));
+		System.err.println("  l.getCost().getDirectCost() = " + l.getCost().getDirectCost());
+		System.err.println("  myCost = " + getScalingFactor(l, str) * l.getCost().getDirectCost());
+		System.err.println("  childCost = " + childCost);
+		System.err.println("  childSavings = " + childSavings);
+		*/
 	    }
 	    break;
 	}

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.53 2005-02-23 20:22:07 mgordon Exp $
+# $Id: strc,v 1.54 2005-03-21 23:44:18 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -189,6 +189,7 @@ Options specific to Raw backend:
   --steadymul n       For the SpaceTime RAW backend, multiply the steady-state multiplicities by n
   --forceplacement    For the SpaceTime RAW backend, use try to minimize communication in layout
   --scheduler         For the SpaceTime RAW backend, either work, dep, or comm
+  --malloczeros       For spacedynamic, generate malloc instead of calloc (malloc will zero)
 
 Options specific to uniprocessor backend:
   --frequencyreplacement, -F
@@ -296,6 +297,7 @@ sub get_options
 			    "cluster=i",
 			    "steadymult=i",
 			    "forceplacement!",
+			    "malloczeros!",
 			    "scheduler=s",
 			    "destroyfieldarray!",
 			    "cacheopt!",
@@ -560,6 +562,7 @@ sub get_kjc_opts
     $opts{absarray} && ($kjcopts .= " --absarray");
     $opts{doloops} && ($kjcopts .= " --doloops");
     $opts{forceplacement} && ($kjcopts .= " --forceplacement");
+    $opts{malloczeros} && ($kjcopts .= " --malloczeros");
     $opts{steadymult} && ($kjcopts .= " --steadymult ". $opts{steadymult});
     $opts{scheduler} && ($kjcopts .= " --scheduler ". $opts{scheduler});
     return $kjcopts;

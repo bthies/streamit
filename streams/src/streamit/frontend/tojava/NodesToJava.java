@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.43 2003-01-10 19:21:37 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.44 2003-02-10 21:25:02 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -320,6 +320,8 @@ public class NodesToJava implements FEVisitor
 	    result = "System.out.println(";
         } else if (exp.getName().equals("super")) {
             result = "super(";
+        } else if (exp.getName().equals("setDelay")) {
+            result = "setDelay(";
 	} else {
 	    // Math.sqrt will return a double, but we're only supporting
 	    // float's now, so add a cast to float.  Not sure if this is

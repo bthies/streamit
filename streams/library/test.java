@@ -24,7 +24,7 @@ class PrintInt extends Filter
     }
 }
 
-public class test extends Stream
+public class test extends FeedbackLoop
 {
     static public void main (String [] t)
     {
@@ -33,34 +33,29 @@ public class test extends Stream
     }
     public void Init ()
     {
-        Add (new FeedbackLoop ()
-        {
-            public void Init ()
-            {
-                SetDelay (2);
-                SetJoiner (WEIGHTED_ROUND_ROBIN (0,1));
-                SetBody (new Filter ()
-                {
-                    public void InitIO ()
-                    {
-                        input = new Channel (Integer.TYPE);
-                        output = new Channel (Integer.TYPE);
-                    }
-
-                    public void Work ()
-                    {
-                        output.PushInt (input.PeekInt (0) + input.PeekInt (1));
-                        input.PopInt ();
-                    }
-                });
-                SetSplitter (DUPLICATE ());
-            }
-
-            public void InitPath (int index, Channel path)
-            {
-                path.PushInt(index);
-            }
-        });
-        Add (new PrintInt ());
+	SetDelay (2);
+	SetJoiner (WEIGHTED_ROUND_ROBIN (0,1));
+	SetBody (new Filter ()
+	    {
+		public void InitIO ()
+		{
+		    input = new Channel (Integer.TYPE);
+		    output = new Channel (Integer.TYPE);
+		}
+		
+		public void Work ()
+		{
+		    output.PushInt (input.PeekInt (0) + input.PeekInt (1));
+		    input.PopInt ();
+		}
+	    });
+	SetLoop (new PrintInt());
+	SetSplitter (DUPLICATE ());
+    }
+    
+    public void InitPath (int index, Channel path)
+    {
+	path.PushInt(index);
     }
 }
+

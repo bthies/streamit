@@ -2,6 +2,7 @@ package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.lowering.Namer;
+import at.dms.kjc.sir.lowering.LoweringConstants;
 
 import java.util.List;
 import java.util.LinkedList;
@@ -93,4 +94,33 @@ public abstract class SIROperator extends at.dms.util.Utils {
 	return (SIRContainer[])result.toArray(new SIRContainer[0]);
     }
 
+    /**
+     * Returns an expression that accesses the structure of the parent
+     * of this, assuming that the toplevel structure of the last
+     * parent is named as in LoweringConstants.getDataField()
+     */
+    public JExpression getParentStructureAccess() {
+	// get parents of <str>
+	SIRStream parents[] = getParents();
+
+	// construct result expression
+	JExpression result = LoweringConstants.getDataField();
+
+	// go through parents from top to bottom, building up the
+	// field access expression.
+	for (int i=parents.length-2; i>=0; i--) {
+	    // get field name for child context
+	    String childName = parents[i].getRelativeName();
+	    // build up cascaded field reference
+	    result = new JFieldAccessExpression(/* tokref */
+						null,
+						/* prefix is previous ref*/
+						result,
+						/* ident */
+						childName);
+	}
+
+	// return result
+	return result;
+    }
 }

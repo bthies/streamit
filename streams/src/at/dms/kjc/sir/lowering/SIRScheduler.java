@@ -222,12 +222,13 @@ public class SIRScheduler {
 	if (schedObject instanceof List) {
 	    // make arg for list -- just the current context
 	    return LoweringConstants.getDataField();
-	} else if (schedObject instanceof SIRFilter ||
-		   schedObject instanceof SIRSplitter ||
+	} else if (schedObject instanceof SIRFilter) {
+	    // make arg for filter node
+	    return makeFilterWorkArgument((SIRFilter)schedObject);
+	} else if (schedObject instanceof SIRSplitter ||
 		   schedObject instanceof SIRJoiner ) {
-	    // make arg for leaf node
-	    return makeLeafWorkArgument((SIROperator)schedObject, 
-					toplevel);
+	    // make arg for splitter/joiner node 
+	    return makeSplitJoinWorkArgument((SIROperator)schedObject);
 	} else {
 	    // otherwise, fail
 	    Utils.fail("SIRScheduler expected List or SIRFilter but found" +
@@ -239,52 +240,35 @@ public class SIRScheduler {
 
     /**
      * Returns an expression that returns the data structure
-     * corresponding to <str>, tracing pointers from the data
-     * structure for <toplevel>.  <str> should be either an SIRFilter,
-     * SIRJoiner, or SIRSplitter--that is, a "leaf" node in the tree.
+     * corresponding to <filter>, tracing pointers from the data
+     * structure for <toplevel>.
      * */
-    private JExpression makeLeafWorkArgument(SIROperator str,
-					     SIRStream toplevel) {
+    private JExpression makeFilterWorkArgument(SIRFilter str) {
+	// get access to structure of <str>'s parent
+	JExpression parent = str.getParentStructureAccess();
 
-	// get parents of <str>
-	SIRStream parents[] = str.getParents();
+	// return reference to <str> off of parent
+	return new JFieldAccessExpression(/* tokref */
+					  null,
+					  /* prefix is previous ref*/
+					  parent,
+					  /* ident */
+					  str.getRelativeName());
+    }
 
-	// construct result expression
-	JExpression result = LoweringConstants.getDataField();
+    /**
+     * Returns an expression that returns the data structure
+     * corresponding to <str>, tracing pointers from the data
+     * structure for <toplevel>.  <str> is either an SIRSplitter or
+     * and SIRJoiner.
+     *  
+     */
+    private JExpression makeSplitJoinWorkArgument(SIROperator str) {
+	// get access to structure of <str>'s parent
+	JExpression parent = str.getParentStructureAccess();
 
-	// go through parents from top to bottom, building up the
-	// field access expression.
-	for (int i=parents.length-2; i>=-1; i--) {
-	    // get the child of interest (either the next parent,
-	    // or <str>)
-	    SIROperator child = (i>=0 ? parents[i] : str);
-	    // get field name for child context
-	    String childName = child.getRelativeName();
-	    System.err.println("relative name on child " + i + ": " +
-	    	       childName);
-	    // build up cascaded field reference
-	    result = new JFieldAccessExpression(/* tokref */
-						null,
-						/* prefix is previous ref*/
-						result,
-						/* ident */
-						childName);
-	}
-
-	// if we have a splitter or joiner, then the argument should
-	// be to the context instead of just to the data structure, so
-	// append a reference to the context
-	if (str instanceof SIRSplitter || str instanceof SIRJoiner) {
-	    result = new JFieldAccessExpression(/* tokref */
-						null,
-						/* prefix is previous ref*/
-						result,
-						/* ident */
-						LoweringConstants.
-						CONTEXT_VAR_NAME);
-	}
-
-	return result;
+	// return reference to context of parent
+	return LoweringConstants.getStreamContext(parent);
     }
 }
 

@@ -1,6 +1,6 @@
 Documentation for StreamIT Regression Testing framework
 Andrew Lamb (aalamb@mit.edu) 6/25/2002
-$Id: regtest_manual.txt,v 1.1 2002-06-25 20:02:13 aalamb Exp $
+$Id: regtest_manual.txt,v 1.2 2002-06-28 22:17:30 aalamb Exp $
 
 
 Introduction
@@ -10,7 +10,6 @@ A new test (and regression test) framework exists in streams/regtest/ based on J
 Each streamit program in the regression testing framework can be automatically compiled and run, with its output checked against the contents of a file you specifty. Both the uniprocessor backend and the RAW backend are supported. You can also check simply that a program compiles but not check its output.
 
 
-
 Running a Regression Test
 
 The easiest way to run the regression test suite is to go to the regtest directory and run make. However, this will take a long time (like overnight long) beccause each test program is compiled using several different optimizations . A far better way to use the regression testing framework on a regular basis is to add a regression test for the specific program you are working on.
@@ -18,6 +17,8 @@ The easiest way to run the regression test suite is to go to the regtest directo
 Based on the makefile, either a text user interface or a graphical user interface can be used by JUnit. The graphical UI reports failures in detail as they occur. The text UI waits until all tests are run before issuing its detailed report. 
 
 As the regression tests are run, all error messages are placed in the file regtest_errors.txt. In general, a test fails only when some external utility returns with a non-zero error message. However, even if 0 is returned, any output to stderr is dumped to regtest_errors.txt. If a non-zero result is returned, then stdout is also dumped to regtest_errors.txt. After all of the regression tests have been run, regtest_errors.txt provides a useful way to perform a post-mortem on any test that fails.
+
+The defualt target of the Makefile included in the main regtest directory will automatically run the full suite of regression tests, which takes a loooong time. If you want something to run before checkin, you might consider running "make test-checkin" which will run all of the tests for the uniprocessor path, or "make test-checkin-raw" which will run all of the tests with the compiler given the --raw 4 option.
 
 
 Adding New Tests (Do Often)
@@ -38,6 +39,8 @@ And you are all set to go. If you want to run only your new tests, run either of
 (textui UI)    junit.textui.TestRunner  streamittest.TestApps
 
 replacing streamittest.TestApps with your class's completely qualified name.
+
+You are also free to play with the streamittest/TestBed.java file as a personal sandbox to test out various combinations of tests. To run your testbed test suite, you simply call make test-bed.
 
 
 Internals Explanation and Organization

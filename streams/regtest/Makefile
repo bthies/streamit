@@ -4,17 +4,58 @@ TEXTTEST= $(JAVA) junit.textui.TestRunner
 GUITEST = $(JAVA) junit.swingui.TestRunner
 COMPILER= jikes -classpath $(CP)
 
-# use to determine which tester gets used
+# set up which tester gets used
 #TESTER  = $(GUITEST)
 TESTER  = $(TEXTTEST)
 
-all: compile all-tests
 
-all-tests: compile
+
+# if automatic_test is definied (by another makefile or the cron job script
+# make sure that the text tester is always used
+ifneq ($(AUTOMATIC_TEST),)
+  TESTER  = $(TEXTTEST)
+endif
+
+
+
+
+
+all: compile test-all
+
+# test run all applications, with all combos of optimizations (takes a looong time)
+test-all: compile
 	$(TESTER) streamittest.TestAll
 
-app-tests: compile
+# create a report (with performance numbers) from last regression run
+report:
+	tools/parse_results.pl regtest_log.txt regtest_errors.txt regtest_results.txt
+
+
+
+# run all tests with no optimizations
+test-once: compile
+	$(TESTER) streamittest.TestOnce
+
+# run testbed (scratch work space)
+test-bed: compile
+	$(TESTER) streamittest.TestBed
+
+# run application tests
+test-apps: compile
 	$(TESTER) streamittest.TestApps
+
+
+
+#checkin tests
+test-checkin: compile do-test-checkin report
+test-checkin-raw: compile do-test-checkin-raw report	
+
+do-test-checkin:
+	$(TESTER) streamittest.TestCheckin
+
+do-test-checkin-raw: compile
+	$(TESTER) streamittest.TestCheckinRaw
+
 
 compile:
 	$(COMPILER) streamittest/*.java

@@ -20,6 +20,8 @@ print `mkdir -p $OUTPUTDIR`;
 
 #loop on the tests
 foreach (@input_lines) {
+    # ignore blank lines...
+    if (not $_) {next;}
     my ($postfix, $options, $filename) = split(":");
     
     # if the file already exists, then skip

@@ -14,6 +14,7 @@ SCRIPTS = scripts/fir.script \
 	  scripts/bf.script \
 	  scripts/vocoder.script \
 	  scripts/oversamp.script \
+	  scripts/onebit.script \
 
 
 all: clean benchmarks

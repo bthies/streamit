@@ -328,7 +328,7 @@ sub remove_prints {
     # read in the c file
     my $contents = read_file("$path/$base_filename.c");
     # replace printf with //printf
-    $contents =~ s/printf/\/\/printf/g;
+    $contents =~ s/(printf.*)/\/\/$1\nPOP_DEFAULTB\(float\);/g;
     # write the changes back to disk
     write_file($contents, "$path/$base_filename.c");
 }

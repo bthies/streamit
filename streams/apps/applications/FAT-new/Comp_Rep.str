@@ -1,5 +1,6 @@
 complex->complex splitjoin Comp_Rep(int N) {
-    split duplicate(N);
-    add ComplexIdentity();
-    join roundrobin();
+    split duplicate;
+    for (int i = 0; i < N; i++)
+        add Identity<complex>();
+    join roundrobin;
 }

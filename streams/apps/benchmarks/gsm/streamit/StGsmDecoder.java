@@ -516,14 +516,14 @@ class LARInputFilter extends Filter
     boolean donepushing;
 
 #include "DecoderInput.java"
-#define MDATA_LENGTH 151840
+#define MDATA_LENGTH 260
 #define SINGLE_FRAME_LENGTH 260
 
     public void init()
     {
 	mdata = new short[MDATA_LENGTH];
 	single_frame = new short[SINGLE_FRAME_LENGTH];
-	input = new Channel(Short.TYPE, 151840);
+	input = new Channel(Short.TYPE, 260);
 	output = new Channel(Short.TYPE, 8); 
 	donepushing = false;
     }
@@ -531,7 +531,7 @@ class LARInputFilter extends Filter
     public void work()
     {
 	int i, j, k;
-	int frame_index = 0;
+	//int frame_index = 0;
 	for (i = 0; i < MDATA_LENGTH; i++)
 	    {
 		mdata[i] = input.popShort();
@@ -541,14 +541,14 @@ class LARInputFilter extends Filter
 	    {
 		//AssertedClass.SERROR("Done Pushing at LARInputFilter!");
 	    }
-	for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
-	    {
+	//for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
+	//   {
 		for (k = 0; k < SINGLE_FRAME_LENGTH; k++)
 		    {
-			single_frame[k] = mdata[frame_index + k];
+			single_frame[k] = mdata[k];
 		    }
 		getParameters(single_frame);
-		frame_index += 260;
+		//frame_index += 260;
 	  
 	
 		//now, push the stuff on!
@@ -557,7 +557,7 @@ class LARInputFilter extends Filter
 			output.pushShort(mLarParameters[i]);
 		    }
 		donepushing = true;
-	    }
+		//    }
 	//System.err.println("LARinputFilter gooo!");
 
     }
@@ -633,13 +633,13 @@ class LTPInputFilter extends Filter
     boolean donepushing;
 
 #include "DecoderInput.java"
-#define MDATA_LENGTH 151840
+#define MDATA_LENGTH 260
 
     public void init()
     {
 	mdata = new short[MDATA_LENGTH];
 	single_frame = new short[SINGLE_FRAME_LENGTH];
-	input = new Channel(Short.TYPE, 151840);
+	input = new Channel(Short.TYPE, 260);
 	output = new Channel(Short.TYPE, 8);
 	donepushing = false;
     }
@@ -647,7 +647,7 @@ class LTPInputFilter extends Filter
     public void work()
     {
 	int i, j, k;
-	int frame_index = 0;
+	//int frame_index = 0;
 	for (i = 0; i < MDATA_LENGTH; i++)
 	    {
 		mdata[i] = input.popShort();
@@ -657,14 +657,14 @@ class LTPInputFilter extends Filter
 	    {
 		//AssertedClass.SERROR("Done Pushing at LTPInputFilter!");
 	    }
-	for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
-	    {
+	//for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
+	//  {
 		for (k = 0; k < SINGLE_FRAME_LENGTH; k++)
 		    {
-			single_frame[k] = mdata[frame_index + k];
+			single_frame[k] = mdata[k];
 		    }
 		getParameters(single_frame);
-		frame_index += 260;
+		//frame_index += 260;
 	  	  
 	  
 		//now, push the stuff on!
@@ -673,7 +673,7 @@ class LTPInputFilter extends Filter
 			output.pushShort(mLtpGain[i]);
 			output.pushShort(mLtpOffset[i]);
 		    }
-	    }
+		//  }
 	donepushing = true;
 	//System.err.println("LTP Input filter gooooo!");
     }
@@ -761,7 +761,7 @@ class RPEInputFilter extends Filter
     {
 	mdata = new short[MDATA_LENGTH];
 	single_frame = new short[SINGLE_FRAME_LENGTH];
-	input = new Channel(Short.TYPE, 151840);
+	input = new Channel(Short.TYPE, 260);
 	output = new Channel(Short.TYPE, 60); 
 	donepushing = false;
     }
@@ -769,7 +769,7 @@ class RPEInputFilter extends Filter
     public void work()
     {
 	int i, j, k, a;
-	int frame_index = 0;
+	//int frame_index = 0;
 	//System.err.println("I get here!!!");
 	for (i = 0; i < MDATA_LENGTH; i++)
 	    {
@@ -781,14 +781,14 @@ class RPEInputFilter extends Filter
 		//AssertedClass.SERROR("Done Pushing at RPEInputFilter!");
 	    }
 
-	for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
-	    {
+	//for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
+	//  {
 		for (k = 0; k < SINGLE_FRAME_LENGTH; k++)
 		    {
-			single_frame[k] = mdata[frame_index + k];
+			single_frame[k] = mdata[k];
 		    }
 		getParameters(single_frame);
-		frame_index += 260;
+		//frame_index += 260;
 	  
 	  
 		//now, push the stuff on!
@@ -802,7 +802,7 @@ class RPEInputFilter extends Filter
 			output.pushShort(mRpeGridPosition[i]);
 		    }
 		donepushing = true;
-	    }
+		//  }
 	//System.err.println("RPE Input Filter yeah!");
     }
 }

@@ -20,14 +20,10 @@ class init_instance {
 
   static short listen_port;
   
-  static map<sock_dscr, int> in_sockets;
-  static map<sock_dscr, int> out_sockets;
+  static vector<sock_dscr> in_connections, out_connections;
+  static map<sock_dscr, int> in_sockets, out_sockets;
+  static map<sock_dscr, bool> in_done, out_done;
 
-  static map<sock_dscr, bool> in_done;
-
-  static vector<sock_dscr> in_connections;
-
-  static vector<sock_dscr> out_connections;
   //static vector<unsigned> out_ip_addrs;
 
   static map<int, string> thread_machines;

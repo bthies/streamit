@@ -22,12 +22,14 @@ pthread_mutex_t init_instance::bind_lock = PTHREAD_MUTEX_INITIALIZER;
 
 vector<sock_dscr> init_instance::in_connections;
 vector<sock_dscr> init_instance::out_connections;
-//vector<unsigned> init_instance::out_ip_addrs;
 
 map<sock_dscr, bool> init_instance::in_done;
+map<sock_dscr, bool> init_instance::out_done;
 
 map<sock_dscr, int> init_instance::in_sockets;
 map<sock_dscr, int> init_instance::out_sockets;
+
+//vector<unsigned> init_instance::out_ip_addrs;
 
 short init_instance::listen_port = 22222;
 
@@ -121,11 +123,75 @@ void init_instance::initialize_sockets() {
   for (vector<sock_dscr>::iterator i = in_connections.begin(); i < in_connections.end(); ++i) {
   
     sock_dscr sd = *i;
-
     in_done[sd] = false;
+    //printf("set to false in_done %d %d\n", sd.from, sd.to);
     
   } 
 
+  for (vector<sock_dscr>::iterator i = out_connections.begin(); i < out_connections.end(); ++i) {
+  
+    sock_dscr sd = *i;
+    out_done[sd] = false;
+    //printf("set to false out_done %d %d\n", sd.from, sd.to);
+
+  }
+
+  // create pipes where applicable
+
+  printf("Creating kernel level pipes");
+  fflush(stdout);
+  
+  for (vector<sock_dscr>::iterator i = out_connections.begin(); i < out_connections.end(); ++i) {
+  
+    sock_dscr sd = *i;
+
+    map<sock_dscr, bool>::iterator i = in_done.find(sd);
+
+    if (i != in_done.end()) {
+    
+      // create pipe
+
+      //printf("Creataing pipe for socket %d %d %d\n", sd.from, sd.to, sd.type);
+      printf(".");
+      fflush(stdout);
+      
+      int pfd[2];
+      int retval = pipe(pfd);
+      if (retval != 0) perror("pipe");
+
+      out_sockets[sd] = pfd[1];
+      in_sockets[sd] = pfd[0];
+      
+      out_done[sd] = true;
+      in_done[sd] = true;
+    }
+  }
+
+  printf("done\n");
+
+  for (vector<sock_dscr>::iterator i = in_connections.begin(); i < in_connections.end(); ++i) {
+  
+    sock_dscr sd = *i;
+    map<sock_dscr, bool>::iterator i2 = in_done.find(sd);
+
+    if (i2 != in_done.end() && (*i2).second == true) {
+      //printf("erasing in %d %d\n", sd.from, sd.to); 
+      in_connections.erase(i);
+      i--;
+    }
+  }
+
+  for (vector<sock_dscr>::iterator i = out_connections.begin(); i < out_connections.end(); ++i) {
+  
+    sock_dscr sd = *i;
+    map<sock_dscr, bool>::iterator i2 = out_done.find(sd);
+
+    if (i2 != out_done.end() && (*i2).second == true) { 
+      //printf("erasing out %d %d\n", sd.from, sd.to); 
+      out_connections.erase(i);
+      i--;
+    }
+  }
   
   // create & run accept thread
 

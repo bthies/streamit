@@ -2,12 +2,14 @@ package streamit;
 
 import streamit.scheduler2.Scheduler;
 import streamit.iriter.Iterator;
+import java.util.List;
 
 // the feedback loop
 public class FeedbackLoop extends Stream
 {
     Joiner joiner;
     Splitter splitter;
+    List enqueued;
     int delay;
     Stream body, loop;
 
@@ -15,15 +17,21 @@ public class FeedbackLoop extends Stream
     public FeedbackLoop(int N)
     {
         super(N);
+        enqueued = new java.util.ArrayList();
     }
 
     // constructor with delay left unspecified
     public FeedbackLoop()
     {
         super();
+        enqueued = new java.util.ArrayList();
     }
 
-    public FeedbackLoop(float f) { super(f); }
+    public FeedbackLoop(float f)
+    {
+        super(f);
+        enqueued = new java.util.ArrayList();
+    }
 
     // set delay of feedback loop--that is, difference in original
     // stream position between items that arrive to joiner at same time,
@@ -109,6 +117,36 @@ public class FeedbackLoop extends Stream
     {
         ASSERT (false);
         return null;
+    }
+
+    /*
+     * alternate loop initialization -- push individual items on to
+     * the output channel of the loop stream at init time.
+     */
+
+    public void enqueueInt (int value)
+    {
+        enqueued.add(new Integer(value));
+    }
+    
+    public void enqueueShort (short value)
+    {
+        enqueued.add(new Short(value));
+    }
+    
+    public void enqueueFloat (float value)
+    {
+        enqueued.add(new Float(value));
+    }
+
+    public void enqueueChar (char value)
+    {
+        enqueued.add(new Character(value));
+    }
+
+    public void enqueueObject (Object value)
+    {
+        enqueued.add(value);
     }
 
     // not used here!
@@ -198,6 +236,8 @@ public class FeedbackLoop extends Stream
         }
 
         // now fill up the feedback path with precomputed data:
+        ASSERT(delay == 0 || enqueued.isEmpty());
+        if (delay != 0)
         {
             Channel feedbackChannel = loop.getOutputChannel ();
             for (int index = 0; index < delay; index++)
@@ -226,6 +266,44 @@ public class FeedbackLoop extends Stream
                     feedbackChannel.push (initPathObject (index));
                 }
             }
+        }
+        else
+        {
+            Channel feedbackChannel = loop.getOutputChannel ();
+            for (java.util.Iterator iter = enqueued.iterator();
+                 iter.hasNext(); )
+            {
+                Class type = feedbackChannel.getType ();
+                if (type == Integer.TYPE)
+                {
+                    Integer value = (Integer)iter.next();
+                    feedbackChannel.pushInt (value.intValue());
+                } else
+                if (type == Short.TYPE)
+                {
+                    Short value = (Short)iter.next();
+                    feedbackChannel.pushShort (value.shortValue());
+                } else
+                if (type == Character.TYPE)
+                {
+                    Character value = (Character)iter.next();
+                    feedbackChannel.pushChar (value.charValue());
+                } else
+                if (type == Float.TYPE)
+                {
+                    Float value = (Float)iter.next();
+                    feedbackChannel.pushFloat (value.floatValue());
+                } else
+                {
+                    // this is essentially a default
+                    // if this isn't what you want, you should implement
+                    // another if-else clause!
+                    feedbackChannel.push (iter.next());
+                }
+                delay++;
+            }
+            // Throw out the enqueued list now.
+            enqueued = null;
         }
     }
 

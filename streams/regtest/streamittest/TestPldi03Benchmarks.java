@@ -1,6 +1,6 @@
 /**
  * Interface for the PLDI 02 benchmarks in the 
- * $Id: TestPldi03Benchmarks.java,v 1.2 2003-02-24 16:52:20 aalamb Exp $
+ * $Id: TestPldi03Benchmarks.java,v 1.3 2003-03-10 15:52:13 aalamb Exp $
  **/
 package streamittest;
 
@@ -36,6 +36,8 @@ public class TestPldi03Benchmarks extends StreamITTestCase {
 	suite.addTest(TestPldi03Benchmarks.suite(CompilerInterface.NONE | CompilerInterface.DEBUG | CompilerInterface.UNROLL | CompilerInterface.LINEAR_REPLACEMENT));
 	// frequency replacement
 	suite.addTest(TestPldi03Benchmarks.suite(CompilerInterface.NONE | CompilerInterface.DEBUG | CompilerInterface.UNROLL | CompilerInterface.FREQ_REPLACEMENT));
+	//redundancy replacement
+	suite.addTest(TestPldi03Benchmarks.suite(CompilerInterface.NONE | CompilerInterface.DEBUG | CompilerInterface.UNROLL | CompilerInterface.REDUND_REPLACEMENT));
 	return suite;
     }
 

@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.18 2003-01-29 22:13:42 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.19 2003-03-10 15:52:13 aalamb Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -28,12 +28,13 @@ public class CompilerInterface {
     public static final int LINEAR_ANALYSIS    = 0x2000;
     public static final int LINEAR_REPLACEMENT = 0x4000;
     public static final int FREQ_REPLACEMENT   = 0x8000;
-    public static final int DEBUG              = 0x10000;
-    public static final int POPTOPEEK          = 0x20000;
-    public static final int DPPARTITION        = 0x40000;
-    public static final int NUMBERS            = 0x80000;
-    public static final int REMOVE_GLOBALS     = 0x100000;
-    public static final int DPSCALE            = 0x200000;
+    public static final int REDUND_REPLACEMENT = 0x10000;
+    public static final int DEBUG              = 0x20000;
+    public static final int POPTOPEEK          = 0x40000;
+    public static final int DPPARTITION        = 0x80000;
+    public static final int NUMBERS            = 0x100000;
+    public static final int REMOVE_GLOBALS     = 0x200000;
+    public static final int DPSCALE            = 0x400000;
     
     // Options
     public static final String OPTION_STREAMIT           = "--streamit";
@@ -47,6 +48,7 @@ public class CompilerInterface {
     public static final String OPTION_LINEAR_ANALYSIS    = "--linearanalysis";
     public static final String OPTION_LINEAR_REPLACEMENT = "--linearreplacement";
     public static final String OPTION_FREQ_REPLACEMENT   = "--frequencyreplacement 3";
+    public static final String OPTION_REDUND_REPLACEMENT = "--redundantreplacement";
 
     public static final String OPTION_DEBUG              = "--debug";
     public static final String OPTION_POPTOPEEK          = "--poptopeek";
@@ -260,11 +262,18 @@ public class CompilerInterface {
 	    numOptions++;
 	}
 
-	// if we are running linear replacement
+	// if we are running frequency replacement
 	if ((flags & FREQ_REPLACEMENT) == FREQ_REPLACEMENT) {
 	    options[numOptions] = OPTION_FREQ_REPLACEMENT;
 	    numOptions++;
 	}
+
+	// if we are running redundant replacement
+	if ((flags & REDUND_REPLACEMENT) == REDUND_REPLACEMENT) {
+	    options[numOptions] = OPTION_REDUND_REPLACEMENT;
+	    numOptions++;
+	}
+
 	
 	// if we want debugging output
 	if ((flags & DEBUG) == DEBUG) {

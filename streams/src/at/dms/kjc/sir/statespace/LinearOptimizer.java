@@ -15,7 +15,7 @@ public class LinearOptimizer {
     boolean preNeeded;
 
     /* extracts totalMatrix, totalPreMatrix, and other parameters from linear rep orig, 
-       adding a constant state at the end
+       adding a constant state at the beginning
 
        totalMatrix = | A  B |     totalPreMatrix = | preA  preB |
                      | C  0 |
@@ -29,16 +29,16 @@ public class LinearOptimizer {
 	preNeeded = orig.preworkNeeded();
 
 	totalMatrix = new FilterMatrix(states+outputs,states+inputs);
-	totalMatrix.copyAt(0,0,orig.getA());
-	totalMatrix.copyAt(0,states,orig.getB());
-	totalMatrix.copyAt(states,0,orig.getC());
-	totalMatrix.setElement(states-1,states-1,ComplexNumber.ONE);
+	totalMatrix.copyAt(1,1,orig.getA());
+	totalMatrix.copyAt(1,states,orig.getB());
+	totalMatrix.copyAt(states,1,orig.getC());
+	totalMatrix.setElement(0,0,ComplexNumber.ONE);
 
 	D = orig.getD();
 
 	initVec = new FilterVector(states);
-	initVec.copyAt(0,0,orig.getInit());
-	initVec.setElement(states-1,ComplexNumber.ONE);
+	initVec.copyAt(0,1,orig.getInit());
+	initVec.setElement(0,ComplexNumber.ONE);
 
 	storedInputs = orig.getStoredInputCount();
 
@@ -46,24 +46,45 @@ public class LinearOptimizer {
 	    pre_inputs = orig.getPreWorkPopCount();
 	    totalPreMatrix = new FilterMatrix(states,states+pre_inputs);
 
-	    totalPreMatrix.copyAt(0,0,orig.getPreWorkA());
-	    totalPreMatrix.copyAt(0,states,orig.getPreWorkB());
-	    totalPreMatrix.setElement(states-1,states-1,ComplexNumber.ONE);
+	    totalPreMatrix.copyAt(1,1,orig.getPreWorkA());
+	    totalPreMatrix.copyAt(1,states,orig.getPreWorkB());
+	    totalPreMatrix.setElement(0,0,ComplexNumber.ONE);
 	}
     }
 
 
+    // main function that does all the optimizations
     public LinearFilterRepresentation optimize() {
 
-	int s;
+	int s1, s2;
 
 	zeroInitEntries();
-	s = reduceParameters();
+	s1 = reduceParameters();
+	LinearPrinter.println("got reduction up to value " + s1);
 
-	LinearPrinter.println("got reduction up to value " + s);
+	if(s1 > 0) {
+	    if(areRemovable(s1)) {
+		LinearPrinter.println("Removable");
+		removeStates(s1);
+	    }
+	}
+
+	/*
+		
+	transposeSystem();
+	s2 = reduceParameters();
+	LinearPrinter.println("got reduction up to value " + s2);
 	
+	transposeSystem();
+	*/
+	
+	return extractRep();
+    }
 
-	// extract representation from matrices
+
+    // extract representation from matrices
+    private LinearFilterRepresentation extractRep() {
+
 	LinearFilterRepresentation newRep;
 	FilterMatrix A, B, C, preA, preB;
 
@@ -93,17 +114,16 @@ public class LinearOptimizer {
     }
 
     
-    // requires that the last init vector entry is 1
+    // requires that the first init vector entry is 1
     // makes all other init vector entries 0    
     private void zeroInitEntries() {
 
-	int newStates = states-1;
 	double temp;
 
-	for(int i=0; i<newStates; i++) {	    
-	    if(initVec.getElement(i) != ComplexNumber.ZERO) {
+	for(int i=1; i<states; i++) {	    
+	    if(!initVec.getElement(i).equals(ComplexNumber.ZERO)) {
 		temp = initVec.getElement(i).getReal();
-		addMultiple(newStates,i,-temp);
+		addMultiple(0,i,-temp);
 	    }
 	}
 
@@ -143,6 +163,82 @@ public class LinearOptimizer {
 	*/
     }
 
+
+    // removes states  1..index
+    private void removeStates(int index) {
+
+	int newStates = states-index;
+
+	FilterMatrix newTotalMatrix = new FilterMatrix(newStates+outputs,newStates+inputs);	
+	int lastCols = states+inputs-(index+1);
+	int lastRows = states+outputs-(index+1);
+
+	newTotalMatrix.setElement(0,0,totalMatrix.getElement(0,0));
+	
+	newTotalMatrix.copyRowsAndColsAt(1,0,totalMatrix,index+1,0,lastRows,1);
+	newTotalMatrix.copyRowsAndColsAt(1,1,totalMatrix,index+1,index+1,lastRows,lastCols);
+	
+	totalMatrix = newTotalMatrix;
+
+	if(preNeeded) {
+	    FilterMatrix newPreMatrix = new FilterMatrix(newStates,newStates+pre_inputs);
+	    int lastPreCols = states+pre_inputs-(index+1);
+	    int lastPreRows = states-(index+1);
+
+	    
+	    newPreMatrix.setElement(0,0,totalPreMatrix.getElement(0,0));;
+	   
+	    if(index < states-1) {
+		newPreMatrix.copyRowsAndColsAt(1,0,totalPreMatrix,index+1,0,lastPreRows,1);
+		newPreMatrix.copyRowsAndColsAt(1,1,totalPreMatrix,index+1,index+1,lastPreRows,lastPreCols);
+	    }
+	    totalPreMatrix = newPreMatrix;
+	}
+
+	FilterVector newInitVec = new FilterVector(newStates);
+
+	newInitVec.setElement(0,initVec.getElement(0));
+	if(index < states-1)
+	    newInitVec.copyColumnsAt(1,initVec,index,states-(index+1));
+
+	
+	initVec = newInitVec;
+
+	states = newStates;
+    }
+
+
+    // checks whether or not states 1..index are removable
+    // assumes state 0 is the constant 1, 
+    private boolean areRemovable(int index) {
+
+	for(int i=1; i<= index; i++) {
+	    // first check that each state has initial value 0
+	    // note that this should automatically be true because we zeroed out these states earlier
+	    if(!initVec.getElement(index).equals(ComplexNumber.ZERO))
+		return false;
+
+	    // check that each state doesn't get updated by state 0
+	    // (we already know each state doesn't get updated by states greater than index)
+	    if(!totalMatrix.getElement(i,0).equals(ComplexNumber.ZERO))
+		return false;
+
+	    if(preNeeded) {
+		// check that each state doesn't get updated by state 0 in the prework matrix
+		if(!totalPreMatrix.getElement(i,0).equals(ComplexNumber.ZERO))
+		    return false;
+
+		//check that each state doesn't get initialized by inputs
+		for(int j=0; j<pre_inputs; j++) {
+		    if(!totalPreMatrix.getElement(i,states+j).equals(ComplexNumber.ZERO))
+			return false;
+		}
+	    }
+	}
+	
+	// set of states passes all the tests, so they are removable
+	return true;
+    }
 
 
     private int reduceParameters() {
@@ -241,7 +337,8 @@ public class LinearOptimizer {
 	LinearPrinter.println("ADDED MULTIPLE " + a + " " + b + " " + val);			
     }
 
-
+    // multiplies row a, col a by val in totalMatrix, totalPreMatrix
+    // also multiplies element a by val in init vector
     private void scale(int a, double val) {
 
 	totalMatrix.multiplyRowAndCol(a,val);
@@ -255,9 +352,27 @@ public class LinearOptimizer {
     }
 
 
+    //transpose the matrices, and swap the values of inputs, outputs
+    private void transposeSystem() {
+	
+	totalMatrix = totalMatrix.transpose();
+	if(preNeeded)
+	    totalPreMatrix = totalPreMatrix.transpose();
+
+	int temp = outputs;
+	outputs = inputs;
+	inputs = temp;
+    }
+
+
+
+
+
+
+
     public static LinearFilterRepresentation getObservableRep(LinearFilterRepresentation orig) {
 
-	LinearFilterRepresentation transOrig = transposeSystem(orig);
+	LinearFilterRepresentation transOrig = orig;
 
 	int states = transOrig.getStateCount();
 	int outputs = transOrig.getPushCount();
@@ -426,38 +541,6 @@ public class LinearOptimizer {
 	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,orig.getStoredInputCount(),newInit);
 
 	return newRep;
-    }
-
-
-
-
-
-    private static LinearFilterRepresentation transposeSystem(LinearFilterRepresentation l) {
-
-	FilterMatrix transA, transB, transC, transD;
-	LinearFilterRepresentation transRep;
-	boolean preNeeded = l.preworkNeeded();
-
-	transA = l.getA().transpose();
-	transB = l.getB().transpose();
-	transC = l.getC().transpose();
-	transD = l.getD().transpose();
-
-	if(preNeeded) {
-	    FilterMatrix transPreA, transPreB;
-
-	    transPreA = l.getPreWorkA().transpose();
-	    transPreB = l.getPreWorkB().transpose();
-
-	    transRep = new LinearFilterRepresentation(transA,transB,transC,transD,transPreA,transPreB,l.getStoredInputCount(),l.getInit());
-
-	}
-	else
-	    transRep = new LinearFilterRepresentation(transA,transB,transC,transD,l.getStoredInputCount(),l.getInit());
-
-
-	return transRep;
-
     }
 
 

@@ -45,7 +45,9 @@ public class Util extends at.dms.util.Utils {
 	if (!(prev.contents instanceof SIRSplitter))
 	    return getCount(counts, prev);
 	
-
+	//	if (((SIRSplitter)prev.contents).getType() == SIRSplitType.DUPLICATE)
+	//   return getCount(counts, prev);
+	
 	//prev is a splitter
 	int sumWeights = 0;
 	for (int i = 0; i < prev.ways; i++) 

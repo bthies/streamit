@@ -74,7 +74,7 @@ public class RawBackend {
 	    //new BlockFlattener().flattenBlocks(str);
 	    //new BranchAnalyzer().analyzeBranches(str);
 	}
-	
+
 	AdjustGranularity.doit(str, 
 			       StreamItOptions.rawRows * 
 			       StreamItOptions.rawColumns);
@@ -237,6 +237,28 @@ public class RawBackend {
 		    int oldVal = ((Integer)result[i].get(node)).intValue();
 		    result[i].put(node, new Integer(sum*oldVal));
 		    //System.out.println("SchedSplit:"+node+" "+i+" "+sum+" "+oldVal);
+		}
+	    }
+	}
+	
+	//increment the execution count for all two-stage filters that have 
+	//initpop == initpush == 0, do this for the init schedule only
+	//we must do this for all the two-stage filters, 
+	//so iterate over the keyset from the steady state 
+	Iterator it = result[1].keySet().iterator();
+	while(it.hasNext()){
+	    FlatNode node = (FlatNode)it.next();
+	    if (node.contents instanceof SIRTwoStageFilter) {
+		SIRTwoStageFilter two = (SIRTwoStageFilter) node.contents;
+		if (two.getInitPush() == 0 &&
+		    two.getInitPop() == 0) {
+		    Integer old = (Integer)result[0].get(node);
+		    //if this 2-stage was not in the init sched
+		    //set the oldval to 0
+		    int oldVal = 0;
+		    if (old != null)
+			oldVal = old.intValue();
+		    result[0].put(node, new Integer(1 + oldVal));   
 		}
 	    }
 	}

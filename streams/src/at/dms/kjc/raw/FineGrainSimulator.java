@@ -57,14 +57,14 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 
 
 	joinerCode = initJoinerCode;
-	//System.out.println("\n\nInit Execution Counts");
-	//RawBackend.printCounts(RawBackend.initExecutionCounts);
+	//	System.out.println("\n\nInit Execution Counts");
+	//	RawBackend.printCounts(RawBackend.initExecutionCounts);
 	initSchedules = (new FineGrainSimulator(top, true)).goInit(initExecutionCounts, counters, null);
 	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");
 
 	//	System.out.println("\n\nSteady Execution Counts");
-	//RawBackend.printCounts(RawBackend.steadyExecutionCounts);
+	//      RawBackend.printCounts(RawBackend.steadyExecutionCounts);
 
 	counters.resetBuffers();
 
@@ -300,41 +300,19 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     
     private int itemsNeededToFire(FlatNode fire, SimulationCounter counters) 
     {
-	if (initSimulation) {
-	    if (!counters.hasFired(fire)) {
-		if (fire.contents instanceof SIRTwoStageFilter){
-		    //if the twostage does nothing in its initWork()
-		    //then the initWork should not count as an execution
-		    //return peek items as the needed items
-		    SIRTwoStageFilter two = (SIRTwoStageFilter)fire.contents;
-		    if (two.getInitPeek() == 0 &&
-			two.getInitPush() == 0 &&
-			two.getInitPop() == 0) {
-			return two.getPeekInt();
-		    }
-		    return ((SIRTwoStageFilter)fire.contents).getInitPeek();
-		}
-		else 
-		    return ((SIRFilter)fire.contents).getPeekInt();
-	    }
-	    else 
-		return ((SIRFilter)fire.contents).getPeekInt();
+	//if this is the first time a two stage initpeek is needed to execute
+	if (initSimulation &&
+	    !counters.hasFired(fire) &&
+	    fire.contents instanceof SIRTwoStageFilter) {
+	    return ((SIRTwoStageFilter)fire.contents).getInitPeek();
 	}
-	else 
-	    return ((SIRFilter)fire.contents).getPeekInt();
+	//otherwise peek items are needed
+	return ((SIRFilter)fire.contents).getPeekInt();
     }
    
     private void decrementExecutionCounts(FlatNode fire, HashMap executionCounts, SimulationCounter counters) 
     {
-	if (fire.contents instanceof SIRTwoStageFilter &&
-	    (!counters.hasFired(fire)) && initSimulation &&
-	    ((SIRTwoStageFilter)fire.contents).getInitPush() == 0 &&
-	    ((SIRTwoStageFilter)fire.contents).getInitPop() == 0)// &&
-	    // !(((SIRTwoStageFilter)fire.contents).getInitPeek() == 0)) 
-	    {
-		//		System.out.println("Not Counting-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
-		return;
-	    }
+	//decrement one from the execution count
 	int oldVal = ((Integer)executionCounts.get(fire)).intValue();
 	if (oldVal - 1 < 0)
 	    Utils.fail("Executed too much");
@@ -342,30 +320,15 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     }
     
     private int consumedItems(FlatNode fire, SimulationCounter counters) {
-	if (initSimulation) {
-	    if (!counters.hasFired(fire)) {
-		if (fire.contents instanceof SIRTwoStageFilter){
-		    //if the twostage does nothing in its initWork()
-		    //then the initWork should not count as an execution
-		    //return peek items as the needed items
-		    SIRTwoStageFilter two = (SIRTwoStageFilter)fire.contents;
-		    if (two.getInitPeek() == 0 &&
-			two.getInitPush() == 0 &&
-			two.getInitPop() == 0) {
-			return two.getPeekInt();
-		    }
-		    return ((SIRTwoStageFilter)fire.contents).getInitPop();
-		}
-		else 
-		    return ((SIRFilter)fire.contents).getPopInt();
-	    }
-	    else 
-		return ((SIRFilter)fire.contents).getPopInt();
-	}
-	else 
-	    return ((SIRFilter)fire.contents).getPopInt();
+	//if this is the first time a two stage fires consume initpop
+	if (initSimulation &&
+	    !counters.hasFired(fire) &&
+	    fire.contents instanceof SIRTwoStageFilter)
+	    return ((SIRTwoStageFilter)fire.contents).getInitPop();
+	//otherwise just consume pop
+	return ((SIRFilter)fire.contents).getPopInt();
     }
-
+    
     //consume the data and return the number of items produced
     private int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
@@ -379,21 +342,14 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    
 	    //for a steady state execution return the normal push
 	    int ret = ((SIRFilter)fire.contents).getPushInt();
+	    
 	    //if the filter is a two stage, and it has not fired
 	    //return the initPush() unless the initWork does nothing
-	    if (fire.contents instanceof SIRTwoStageFilter)
-		if (!counters.hasFired(fire) && initSimulation) {
-		    SIRTwoStageFilter two = (SIRTwoStageFilter)fire.contents;
-		    if (!(//two.getInitPeek() == 0 &&
-			  two.getInitPush() == 0 &&
-			  two.getInitPop() == 0)) {
-			ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
-		    }
-		    else {
-			counters.setFired(fire);
-			ret = 0;
-		    }
-		}
+	    if (initSimulation &&
+		!counters.hasFired(fire) &&
+		fire.contents instanceof SIRTwoStageFilter)
+		ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
+
 	    //now this node has fired
 	    counters.setFired(fire);
 	    return ret;

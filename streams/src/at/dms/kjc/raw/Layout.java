@@ -73,6 +73,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
 	top.accept(new Layout(), new HashSet(), false);
 	
+	System.out.println("Tiles assigned: " + assigned.size());
+
 	if (assigned.size() > 
 	    (StreamItOptions.rawRows * StreamItOptions.rawColumns)) {
 	    System.err.println("\nLAYOUT ERROR: Need " + assigned.size() +

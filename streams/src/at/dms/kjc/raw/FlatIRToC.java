@@ -202,8 +202,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//	circular = !(self.getPeekInt() > 4 * self.getPopInt()) && !ratematch;
 	
 
-	//	System.out.println(self.getName());
-
+       System.out.println(self.getName());
+	
 	//Entry point of the visitor
 	print("#include <raw.h>\n");
 	print("#include <stdlib.h>\n");
@@ -331,61 +331,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     
    			
     private void rateMatch(SIRFilter self) {
-
-	int recvbufsize = CalcBufferSize.
-	    getConsBufSize(Layout.getNode(Layout.getTile(self)));
-	int sendbufsize = CalcBufferSize.
-	    getProdBufSize(Layout.getNode(Layout.getTile(self)));
-		
-	//print the buffer declarations
-	if (!self.getInputType().equals(CStdType.Void))
-	    bufferDeclaration(self.getInputType(), recvBuffer, 
-			      (new Integer(recvbufsize)).toString());
-
-	if (!self.getOutputType().equals(CStdType.Void))
-	bufferDeclaration(self.getOutputType(), sendBuffer, 
-			  (new Integer(sendbufsize)).toString());
-	
-	print ("#define " + RECVBITS + " " + (recvbufsize - 1) + "\n");
-	print ("#define " + SENDBITS + " " + (sendbufsize - 1) + "\n");
-	
-	print(" int " + sendIndex + " = -1;\n");
-	print(" int " + recvIndex + " = -1;\n");
-	
-	//Visit fields declared in the filter class
-	JFieldDeclaration[] fields = self.getFields();
-	for (int i = 0; i < fields.length; i++)
-	    fields[i].accept(this);
-
-	//visit methods of filter, print the declaration first
-	declOnly = true;
-	JMethodDeclaration[] methods = self.getMethods();
-	for (int i =0; i < methods.length; i++)
-	    methods[i].accept(this);
-	//now print the functions with body
-	declOnly = false;
-	for (int i =0; i < methods.length; i++) {
-	    methods[i].accept(this);	
-	}
-	
-	//get the buffer sizes
-
-
-	print("void begin(void) {\n");
-	print("  raw_init();\n");
-	print(FLOAT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
-	print(INT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
-	print("  " + self.getInit().getName() + "(");
-	print(InitArgument.getInitArguments(self));
-	print (");\n");
-	if (self instanceof SIRTwoStageFilter) {
-	    print("  " + ((SIRTwoStageFilter)self).getInitWork().getName() + "();\n");
-	}
-	print("  " + self.getWork().getName() + "();\n");
-	print("}\n");
-	
-
-	createFile();
     }
 	
 
@@ -540,194 +485,19 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
     private void printRateMatchWorkHeader(int pop, int peek, int push, JBlock workBlock)  
     {
-	print("{\n");
 
-	Integer init = (Integer)RawBackend.initExecutionCounts.
-	    get(Layout.getNode(Layout.getTile(filter)));
-	//	Integer steady = (Integer)RawBackend.steadyExecutionCounts.
-	//    get(Layout.getNode(Layout.getTile(filter)));
-	
-	int initCount = 0;
-	int steadyCount = 
-	    BlockExecutionCounts.getBlockCount(Layout.getNode(Layout.getTile(filter)));
-	
-	if (init != null) 
-	    initCount = init.intValue();
-
-	//if this is a two stage filter, count one of the initial executions 
-	//as the initWork execution and decrement the number of times the 
-	//work function is called in the init Schedule
-	if (filter instanceof SIRTwoStageFilter) {
-	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
-	    if (!(two.getInitPeek() == 0 && two.getInitPush() == 0 &&
-		  two.getInitPop() == 0))
-		initCount--;
-	}
-	
-
-	//	if (steady != null)
-	//    steadyCount = steady.intValue();
-	
-	//initialization
-	//receive what the previous filter produces
-	
-	int prevInitCount = 0;
-	int prevPush = 0;
-	
-	FlatNode node = Layout.getNode(Layout.getTile(filter));
-	FlatNode previous = null;
-	
-	if (node.inputs > 0) {
-	    previous = node.incoming[0];
-	    prevInitCount = Util.getCountPrev(RawBackend.initExecutionCounts, 
-					 previous, node);
-	    if (prevInitCount > 0) {
-		if (previous.contents instanceof SIRSplitter || 
-		    previous.contents instanceof SIRJoiner) 
-		    prevPush = 1;
-		else
-		    prevPush = ((SIRFilter)previous.contents).getPushInt();
-	    }
-	}
-	
-	int initialItemsToReceive = (prevInitCount * prevPush);
-	
-	//if the previous node is a two stage filter then count its initWork
-	//in the initialItemsTo Receive
-	if (previous != null && previous.contents instanceof SIRTwoStageFilter) {
-	    initialItemsToReceive -= ((SIRTwoStageFilter)previous.contents).getPushInt();
-	    initialItemsToReceive += ((SIRTwoStageFilter)previous.contents).getInitPush();
-	}
-	
-	//subtract the number of items the initWork took from the previous 
-	//stream for the initialization code.
-	if (filter instanceof SIRTwoStageFilter) {
-	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
-	    if (!(two.getInitPeek() == 0 && two.getInitPush() == 0 &&
-		  two.getInitPop() == 0)) {
-		initialItemsToReceive -= two.getInitPeek();
-	    }
-	}
-	
-	if (initialItemsToReceive > 0) {
-	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + initialItemsToReceive +
-		  "; " + exeIndex + "++)\n");
-	    printReceive();
-	}   
-	
-	//execute the work function
-	if (initCount > 0) {
-	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + initCount + "; " +
-		  exeIndex + "++)\n");
-	    workBlock.accept(this);
-	    //send the data produced
-	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + (push * initCount) +
-		  "; " + exeIndex + "++)\n");
-	    print("{\n");
-	    //printRateMatchSend();
-	    //end the send
-	    print(";\n");
-	    //end the send loop
-	    print("}\n");
-	}
-	
-	//steady state
-	
-	print("while(1) {\n");
-	
-	//	if (FineGrainSimulator.getInitialSteadyExe(Layout.getNode(Layout.getTile(filter))) > 0) {
-	//    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + 
-	//		  + "; " + FineGrainSimulator.getInitialSteadyExe(Layout.getNode(Layout.getTile(filter)))
-	//	  exeIndex + "++) {\n");
-	//    workBlock.accept(this);
-	//    print("}\n");
-	//	}
-	
-	
-	if (pop > 0) {
-	    //receive everything
-	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + (pop * steadyCount) +
-		  "; " + exeIndex + "++)\n");
-	    printReceive();
-	}
-	
-	//perform work for the prescibed iterations
-	print("for (" + exeIndex + " = 0; " + exeIndex + " < " + steadyCount + "; " +
-	      exeIndex + "++)\n");
-	print("{");
    	
     }
     
     private void printRateMatchSend() 
     {
-	Utils.fail("not used");
-	CType tapeType = filter.getOutputType();
-	
-	if (tapeType.isArrayType()) {
-	    CType baseType = ((CArrayType)tapeType).getBaseType();
-	    String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
-	    
-	    for (int i = 0; i < dims.length; i++) {
-		print("for (" + ARRAY_INDEX + i + " = 0; " +
-		      ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-		      ARRAY_INDEX + i + "++)\n");
-	    }
-	    print("{");
-	    print("static_send_from_mem((void*)&(" + baseType + ") ");
-	    print(sendBuffer + "[(++" + sendIndex + ") & " + SENDBITS + "]");
-	    
-	    for (int i = 0; i < dims.length; i++) {
-		print("[" + ARRAY_INDEX + i + "]");
-	    }
-	    print(")");
-	}
-	else if(tapeType.isClassType()) {
-	}
-	else {
-	    print("static_send((" + tapeType + ")");	    
-	    print(sendBuffer + "[(++" + sendIndex + ") & " + SENDBITS + "])");
-	}
+
 
     }
     
     
     private void printRateMatchWorkTrailer(int push) 
     {
-	//	Integer steady = (Integer)RawBackend.steadyExecutionCounts.
-	//    get(Layout.getNode(Layout.getTile(filter)));
-	
-	int steadyCount = 
-	    BlockExecutionCounts.getBlockCount(Layout.getNode(Layout.getTile(filter)));
-	
-	//if (steady != null)
-	//   steadyCount = steady.intValue();
-	
-
-	//close the execution loop
-	print("}\n");
-
-	/*	if (push > 0) {
-	    //send everything
-	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + (push * steadyCount) +
-		  "; " + exeIndex + "++)\n");
-	    print("{\n");
-	    printRateMatchSend();
-	    //end the send
-	    print(";\n");
-	    //end the send loop
-	    print("}\n");
-	    print(sendBufferIndex + " &= " + SENDBITS + ";\n");
-	    print(sendIndex + " &= " + SENDBITS + ";\n");
-	}
-	*/
-	print(recvBufferIndex + " &= " + RECVBITS + ";\n");
-	print(recvIndex + " &= " + RECVBITS + ";\n");
-       
-	
-	//end the while loop
-	print("}\n");
-	//end the method decl
-	print("}\n");
 
     }
 
@@ -776,19 +546,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	if (init != null) 
 	    initCount = init.intValue();
 
-	boolean initWorkFire = false;
-
 	//if this is a two stage filter, count one of the initial executions 
 	//as the initWork execution and decrement the number of times the 
 	//work function is called in the init Schedule
-	if (filter instanceof SIRTwoStageFilter) {
-	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
-	    if (!(two.getInitPush() == 0 &&
-		  two.getInitPop() == 0))
-		initWorkFire = true;
-	}
-
-	if (initWorkFire)
+	if (filter instanceof SIRTwoStageFilter)
 	    initCount--;
 	
 	//!!!!   initCount will be -1 if this is a two stage and 
@@ -812,7 +573,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		else
 		    prevPush = ((SIRFilter)previous.contents).getPushInt();
 	    }
-	    //	    System.out.println("previous: " + previous.getName());
+	    //System.out.println("previous: " + previous.getName());
 	    //System.out.println("prev Push: " + prevPush + " prev init: " + prevInitCount);
 	}
 
@@ -822,21 +583,19 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	//if the previous node is a two stage filter then count its initWork
 	//in the initialItemsTo Receive
-	if (previous != null && previous.contents instanceof SIRTwoStageFilter &&
-	    !(((SIRTwoStageFilter)previous.contents).getInitPop() == 0 &&
-	      ((SIRTwoStageFilter)previous.contents).getInitPush() == 0)) {
+	if (previous != null && previous.contents instanceof SIRTwoStageFilter) {
 	    remainingItemsToReceive -= ((SIRTwoStageFilter)previous.contents).getPushInt();
 	    remainingItemsToReceive += ((SIRTwoStageFilter)previous.contents).getInitPush();
 	}
 	
-	//	System.out.println("recalculated if prev is 2stage: " + remainingItemsToReceive);
+       	//System.out.println("recalculated if prev is 2stage: " + remainingItemsToReceive);
 
 	//subtract the number of items the initWork took from the previous 
 	//stream for the initialization code.
 	if (filter instanceof SIRTwoStageFilter) {
 	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
 	    remainingItemsToReceive -= two.getInitPeek();
-	    //	    System.out.println("our init work: " + remainingItemsToReceive);  
+	    //System.out.println("our init work: " + remainingItemsToReceive);  
 	}
 	else  {//if we are not a twostage we receive peek items on the first execution 
 	    if (initCount > 0)
@@ -844,7 +603,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	}
 	remainingItemsToReceive -= (initCount * pop);
 
-	//	System.out.println("our work calls in init sch: " + remainingItemsToReceive);
+	//System.out.println("our work calls in init sch: " + remainingItemsToReceive);
 
 	//execute the work function
 	if (initCount > 0) {
@@ -865,7 +624,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		print(" }\n");
 	    }
 	    
-	    //	    System.out.println("difference from peek to initpeek: " + remainingItemsToReceive + "\n\n");
+	    //System.out.println("difference from peek to initpeek: " + remainingItemsToReceive + "\n\n");
 	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + initCount + "; " +
 		  exeIndex + "++)\n");
 	    print("{\n");

@@ -13,6 +13,8 @@ import java.util.*;
 
 public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 {
+    public int filterCount;
+
     private FlatNode currentNode;
     private StringBuffer buf;
     //this hashset stores the splitters of feedbackloops
@@ -56,7 +58,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
      * whose output is not connected to another joiner.
      */
     public int getNumTiles() {
-	dumpGraph("crash.dot");
+	//	dumpGraph("crash.dot");
 	int count = 0;
 	for (Iterator it = SIRMap.entrySet().iterator(); it.hasNext(); ) {
 	    Map.Entry entry = (Map.Entry)it.next();
@@ -745,8 +747,10 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	
 	buf.append("digraph Flattend {\n");
 	buf.append("size = \"8, 10.5\";");
+	filterCount = 0;
 	top.accept(this, new HashSet(), true);
-	buf.append("}\n");
+	System.out.println("Filters in Graph: " + filterCount);
+	buf.append("}\n");	
 	try {
 	    FileWriter fw = new FileWriter(filename);
 	    fw.write(buf.toString());
@@ -762,6 +766,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
     public void visitNode(FlatNode node) 
     {
 	if (node.contents instanceof SIRFilter) {
+	    filterCount++;
 	    SIRFilter filter = (SIRFilter)node.contents;
 	    Utils.assert(buf!=null);
 

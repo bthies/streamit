@@ -2,9 +2,7 @@
 #PBS -o /dev/null
 #PBS -e /dev/null
 #PBS -m n
-#PBS -M $USER@cag.lcs.mit.edu
 #PBS -q unbound
-#PBS -v STREAMIT_HOME=/u/$USER/src/streams
 #PBS -N STREAMIT_RUN
 #PBS -S /bin/bash
 
@@ -12,6 +10,10 @@
 #qsub -q short@cagfarm-01 script
 
 #must have BENCHMARK OPTIONS RESULTS_DIR defined
+
+##pBS -M jasperln@cag.lcs.mit.edu
+##pBS -v STREAMIT_HOME=/u/jasperln/src/streams
+export STREAMIT_HOME=/u/$USER/src/streams
 
 source /u/$USER/.bashrc
 

@@ -203,6 +203,18 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("int " + Util.CSTIINTVAR + ";\n");
 	}
 	
+	if (RawBackend.FILTER_DEBUG_MODE &&
+	    self.getOutputType().isNumeric()) {
+	    print("void static_send_print(");
+	    print(self.getOutputType() + " f) {\n");
+	    if (self.getOutputType().isFloatingPoint()) 
+		print("print_float(f);\n");
+	    else 
+		print("print_int(f);\n");
+	    print("static_send(f);\n");
+	    print("}\n\n");
+	}
+	
 	//if there are structures in the code, include
 	//the structure definition header files
 	if (RawBackend.structures.length > 0) 
@@ -216,17 +228,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("void raw_init2();\n");
 	}
 
-	if (RawBackend.FILTER_DEBUG_MODE &&
-	    self.getOutputType().isNumeric()) {
-	    print("void static_send_print(");
-	    print(self.getOutputType() + " f) {\n");
-	    if (self.getOutputType().isFloatingPoint()) 
-		print("print_float(f);\n");
-	    else 
-		print("print_int(f);\n");
-	    print("static_send(f);\n");
-	    print("}\n\n");
-	}
+
 		
 	//not used any more
 	//print("unsigned int " + FLOAT_HEADER_WORD + ";\n");
@@ -1670,7 +1672,15 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			    CType tapeType,
 			    JExpression val) 
     {
+	//	if (tapeType != val.getType()) {
+	//    Utils.fail("type of push argument does not match filter output type");
+	//	}
+	
 	print(Util.staticNetworkSendPrefix(tapeType));
+	//if the type of the argument to the push statement does not 
+	//match the filter output type, print a cast.
+	if (tapeType != val.getType())
+	    print("(" + tapeType + ")");
 	val.accept(this);
 	print(Util.staticNetworkSendSuffix());
     }

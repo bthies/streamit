@@ -354,9 +354,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    args[0] = (JExpression) args[0].accept(this);
 	
 	if (exp.getIdent().startsWith("push")) {
-	    if (!args[0].getType().equals(parentStream.getOutputType()))
+	    /*	    if (!args[0].getType().equals(parentStream.getOutputType()))
 		Utils.fail(printLine(exp) + 
-			   "Type of push argument does not match filter output type");
+		"Type of push argument does not match filter output type "); */
 	    newExp = new SIRPushExpression(args[0]);
 	    ((SIRPushExpression)newExp).setTapeType(parentStream.getOutputType());
 	}

@@ -122,45 +122,6 @@ public class RuntimeHarness extends Harness {
 	    
 	    boolean result = executeNative(getRawCompareCommandArray(rawOutputFile, expectedFile),
 					   outStream);
-
-	    // if we got a good comparison, print out the results (eg speed) to the result printer
-	    if (result == true) {
-		String resultString = outStream.toString();		    
-		// parse the result string -- it is two numbers separated
-		// by a space. The first number is the final cycle count of
-		// when a result was produced. The second is the last line of the
-		// expected output that was compared (to make sure that things don't
-		// go awry -- this should be around 1000).
-
-		try {
-		    StringTokenizer st = new StringTokenizer(resultString, " "); // split on space
-		    String programCycles  = st.nextToken();
-		    String comparisonLine = st.nextToken();
-
-		    // convert program cycles from hex to decimal
-		    int cycles = Integer.parseInt(programCycles, 16);
-		    
-		    // assemble the message that we are going to be putting into
-		    // the results file
-		    String message = (programCycles + " " +
-				      cycles + " " +
-				      comparisonLine);
-		    
-		    // make a note that we are starting a comparison in the results file
-		    ResultPrinter.printRawHeader(root + filename,
-						 flattenCommandArray(options));
-		    
-		    ResultPrinter.printRaw(message);
-		} catch (java.util.NoSuchElementException e) {
-		    // if we catch this exception it means that there was an error parsing the
-		    // output generated from comparing the output. Print an error.
-		    ResultPrinter.printError("Ouput from comparison did not parse: " +
-					     resultString + "-->" + e.getMessage());
-		    return false;
-		} 
-
-	    }
-
 	    return result;
 	} catch (Exception e) {
 	    ResultPrinter.printError("Caught an exception while comparing raw output: " +

@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.17 2002-11-27 01:31:38 thies Exp $
+ * $Id: TestAll.java,v 1.18 2002-12-10 15:22:24 aalamb Exp $
  **/
 package streamittest;
 
@@ -33,9 +33,6 @@ public class TestAll extends TestCase {
 
 	addUniprocessorTests(allTests);
 	addRawTests(allTests);
-	/*
-	addRawScaleTests(allTests);
-	*/
 
 	return allTests;
     }
@@ -53,17 +50,6 @@ public class TestAll extends TestCase {
     }
     
     /**
-     * For testing scalability performance on RAW.
-     */
-    public static void addRawScaleTests(TestSuite allTests) {
-	for (int i=2; i<=8; i+=2) {
- 	    allTests.addTest(makeTestSuite(CompilerInterface.NONE |
- 					   CompilerInterface.RAW[i] |
- 					   CompilerInterface.DPPARTITION));
-	}
-    }
-
-    /**
      * add the raw tests to the test suite framework.
      **/
     public static void addRawTests(TestSuite allTests) {
@@ -77,15 +63,10 @@ public class TestAll extends TestCase {
 	// all but 4
 	for (int i=4; i<=8; i+=4) {
 	    allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-					   CompilerInterface.RAW[4] |
+					   CompilerInterface.RAW[i] |
 					   CompilerInterface.PARTITION));
 	}
 
-	// try linear replacement (replace linear filters with a direct implementation).
-// 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-// 				       CompilerInterface.CONSTPROP |
-// 				       CompilerInterface.LINEAR_REPLACEMENT));
-	
     }
 
 

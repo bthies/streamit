@@ -17,54 +17,14 @@ public class ResultPrinter {
      * dumped as well.
      **/
     static final String ERROR_FILE       = "regtest_errors.txt";
-    /**
-     * The "results" file has, for each test,
-     * the test that was run, the number of outputs it produces, and the
-     * cycle count in both dec and hex that the last output was produced.
-     **/
-    static final String RESULTS_FILE     = "regtest_results.txt";
     /** File where the successful tests are written (to put a carrot in the reg test results). **/
     static final String SUCCESS_FILE      = "regtest_success.txt";
     /** file where lines are written to direct the performance reaper script. **/
     static final String PERFORMANCE_FILE      = "regtest_perf_script.txt";
  
     static FileWriter errorStream    = null;
-    static FileWriter resultStream   = null;
     static FileWriter successStream  = null;
     static FileWriter performanceStream  = null;
-
-    /**
-     * Prints the filename of the program that is being tested,
-     * and prints which options were used to compile it.
-     **/
-    public static void printRawHeader(String filename, String options) {
-	printRaw((new Date()).toString() + ":" + 
-		 filename + "(" + options + ")\n");
-    }				      
-    /**
-     * Prints stuff to the raw results file.
-     **/
-    public static void printRaw(String message) {
-	// make the filewriter if necessary
-	if (resultStream == null) {
-	    MakeFileWriters();
-	}
-	
-	try {
-	    // write to the output file
-	    resultStream.write(message);
-	    // flush
-	    resultStream.flush();
-	} catch (Exception e) {
-	    System.out.println("Error printing to the result file");
-	    e.printStackTrace();
-	    throw new RuntimeException();
-	}
-	if (VERBOSE) {
-	    System.out.println(message);
-	}
-	
-    }
 
     /**
      * Print an informational message
@@ -168,8 +128,6 @@ public class ResultPrinter {
 	try {
 	    // create the file writer for the error messages
 	    errorStream       = new FileWriter(ERROR_FILE);
-	    // create the file writer for the results file in append mode
-	    resultStream      = new FileWriter(RESULTS_FILE, true);
 	    // create the file writer for the results file
 	    successStream     = new FileWriter(SUCCESS_FILE);
 	    // create the file writer for the performance script file
@@ -189,10 +147,6 @@ public class ResultPrinter {
 	    if (errorStream != null) {
 		// force disk flush
 		errorStream.flush();
-	    }
-	    if (resultStream != null) {
-		// force disk flush
-		resultStream.flush();
 	    }
 	    if (successStream != null) {
 		// force disk flush

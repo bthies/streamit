@@ -1,0 +1,50 @@
+/** Test Linear pipeline combinations a little more strenously, by using larger matricies. **/
+void->void pipeline IndirectTest {
+  add FloatSource();
+  add LinearFilter1();
+  add LinearFilter2();
+  add FloatSink();
+}
+
+void->float filter FloatSource {
+  float x;
+  init {
+    x = 0;
+  }
+  work push 1 {
+    push(x);
+    x = x + 1;
+  }
+}
+
+float->void filter FloatSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+// Start of real filters
+
+/** Filter computes [[1 2 3][4 5 6][7 8 9]] **/
+float->float filter LinearFilter1 {
+  work pop 3 push 3 {
+    float t1 = pop();
+    float t2 = pop();
+    float t3 = pop();
+    push(9*t1 + 6*t2 + 3*t3);
+    push(8*t1 + 5*t2 + 2*t3);
+    push(7*t1 + 4*t2 + 1*t3);
+  }
+}
+
+/** Filter computes [[1 2 0 2][2 1 1 1]] **/
+float->float filter LinearFilter2 {
+  work pop 2 push 4 {
+    float t1 = pop();
+    float t2 = pop();
+    push(1*t1 + 2*t2);
+    push(1*t1 + 0*t2);
+    push(1*t1 + 2*t2);
+    push(2*t1 + 1*t2);
+  }
+}

@@ -34,8 +34,8 @@ void->int filter VectSource(int N, int[N] Z) {
  */ 
 void->int splitjoin TwoVectSource(int N) {
     /* set up the input vectors */ 
-    int[N] A;// = new int[N];
-    int[N] B;// = new int[N];
+    int[N] A;
+    int[N] B;
     for (int i = 0; i < N; i++) {
 	A[i] = i; 
 	B[i] = i; //N-i; 

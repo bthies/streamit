@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JParenthesedExpression.java,v 1.4 2001-11-02 17:35:30 mgordon Exp $
+ * $Id: JParenthesedExpression.java,v 1.5 2002-10-29 20:44:43 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -130,6 +130,10 @@ public class JParenthesedExpression extends JExpression {
     public void setExpr(JExpression e)
     {
 	expr = e;
+    }
+
+    public JExpression getExpr() {
+	return expr;
     }
 
 

@@ -253,12 +253,18 @@ public class LowerInitFunctions implements StreamVisitor {
     /**
      * Lowers an SIRInitStatement and returns the result.
      */
-    private JExpressionStatement
+    private JStatement
 	lowerInitStatement(SIRStream str, SIRInitStatement initStatement) {
-	// get args from <initStatement>
-	JExpression[] args = initStatement.getArgs();
 	// get target of initialization
 	SIRStream target = initStatement.getTarget();
+	// if the target is a special type that doesn't need
+	// initializing, then just return an empty statement
+	if (!target.needsInit()) {
+	    return new JEmptyStatement(null, null);
+	}
+
+	// get args from <initStatement>
+	JExpression[] args = initStatement.getArgs();
 	
 	// create the new argument--the reference to the child's state
 	JExpression childState 

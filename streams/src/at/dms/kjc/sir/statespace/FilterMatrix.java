@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.5 2004-03-02 23:24:05 sitij Exp $
+ * $Id: FilterMatrix.java,v 1.6 2004-03-09 21:43:07 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -167,6 +167,109 @@ public class FilterMatrix {
 					       numCols + ")");
 	}
     }
+
+    /** Return the determinant of this matrix (if it is square and real) **/
+
+    public double determinant() {
+	
+	if(this.getRows()!=this.getCols())
+	    throw new IllegalArgumentException("can't take determinant of non-square matrix");
+
+	if(this.realFlag==false)
+	    throw new IllegalArgumentException("won't do determinant of complex matrix");
+
+	int length = this.getRows();
+
+	if(length==1)
+	    return this.getElement(0,0).getReal();
+
+	double sum, factor;
+	sum = 0.0;
+	FilterMatrix temp = new FilterMatrix(length-1,length-1);
+	temp.copyRowsAndColsAt(0,0,this,1,1,length-1,length-1);
+
+	//go along the first row of the matrix
+	for(int i=0; i < length; i++) {
+
+	    factor = this.getElement(0,i).getReal();
+	    factor *= temp.determinant();
+	    if((i % 2)==1)
+		factor *= -1.0;
+	    sum += factor;
+
+	    if(i<length-1)
+		temp.copyRowsAndColsAt(0,i,this,1,i,length-1,1);
+
+	}
+
+	return sum;
+
+    }
+
+
+    /** Returns the inverse of this matrix, if it exists **/
+
+    public FilterMatrix inverse() {
+	
+	double det;
+
+	try {
+	    det = this.determinant();
+	}
+	catch(IllegalArgumentException e) {
+	    throw new IllegalArgumentException("Cannot take inverse of this matrix: " + e);
+	}
+
+	if(det==0.0)
+	    throw new IllegalArgumentException("Cannot take inverse of this matrix: determinant is zero");
+
+	int length = this.getRows();
+	FilterMatrix returnMatrix = new FilterMatrix(length,length);
+
+	if(length==1) {
+	    double oldVal = this.getElement(0,0).getReal();
+	    returnMatrix.setElement(0,0, new ComplexNumber(1/oldVal,0));
+	}
+	else {
+
+	    FilterMatrix temp = new FilterMatrix(length-1,length);
+	    FilterMatrix temp2 = new FilterMatrix(length-1,length-1);
+	    double factor;
+
+	    for(int i=0; i < length; i++) {
+		
+		if(i > 0)
+		    temp.copyRowsAndColsAt(0,0,this,0,0,i,length);
+
+		if(i < length-1)
+		    temp.copyRowsAndColsAt(i,0,this,i+1,0,length-i-1,length);
+
+		temp2.copyColumnsAt(0,temp,1,length-1);
+
+
+		for(int j=0; j < length; j++) {
+
+
+		    LinearPrinter.println("i,j,minor: " + i + " " + j + " " + temp2);
+		 
+		    factor = temp2.determinant() / det;
+		    if(((i+j) % 2)==1)
+			factor *= -1;
+
+		    returnMatrix.setElement(j,i, new ComplexNumber(factor,0));
+
+		    if(j < length-1)
+			temp2.copyColumnsAt(j,temp,j,1);
+
+
+		}
+	    }
+	}
+
+	return returnMatrix;
+
+    }
+
 
     /** Return a copy of this FilterMatrix. **/
     public FilterMatrix copy() {

@@ -8,45 +8,38 @@ import streamit.AssertedClass;
 public class Schedule extends AssertedClass
 {
     /**
-     * This map holds the sizes of buffers necessary for all structures
-     * in the schedule (filters, streams, splitjoins and feedback loops).
-     * The key is the structure and the value is an array size 2 of BigInteger.
-     * The first element in the array is the size of input buffer, the
-     * second element in the array is the size of the output buffer.
+     * This map holds size of buffers needed between various streams
+     * in order to run the schedule computed by the scheduler.
+     * Basically, for every consecutive pair of streams (hierarchically,
+     * meaning that for example, pipeline's children know how to connect
+     * to each other, and two pipeline know how to connect to each other, but
+     * their children don't know how to connect to each other's children.
      */
     final Map bufferSizes = new HashMap ();
 
-    public BigInteger getInputBufferSize (SchedStream stream)
+    public BigInteger getBufferSizeBetweeen (SchedStream streamSrc, SchedStream streamDst)
     {
-        Object result = bufferSizes.get (stream);
+        Object result = bufferSizes.get (streamSrc);
         if (result == null) return null;
 
-        BigInteger [] sizesArray = (BigInteger []) result;
-        ASSERT (sizesArray);
+        ASSERT (result instanceof Object []);
+        Object [] dataArray = (Object []) result;
 
-        return sizesArray [0];
+        ASSERT (dataArray [0] == streamDst);
+        ASSERT (dataArray [1] instanceof BigInteger);
+
+        return (BigInteger) dataArray [1];
     }
 
-    public BigInteger getOutputBufferSize (SchedStream stream)
+    public void setBufferSize (SchedStream streamSrc, SchedStream streamDst, BigInteger bufferSize)
     {
-        Object result = bufferSizes.get (stream);
-        if (result == null) return null;
+        ASSERT (!bufferSizes.containsKey (streamSrc));
 
-        BigInteger [] sizesArray = (BigInteger []) result;
-        ASSERT (sizesArray);
+        Object [] dataArray = new Object [2];
+        dataArray [0] = streamDst;
+        dataArray [1] = bufferSize;
 
-        return sizesArray [1];
-    }
-
-    public void setBufferSizes (SchedStream stream, BigInteger inputSize, BigInteger outputSize)
-    {
-        ASSERT (!bufferSizes.containsKey (stream));
-
-        BigInteger [] sizesArray = new BigInteger [2];
-        sizesArray [0] = inputSize;
-        sizesArray [1] = outputSize;
-
-        bufferSizes.put (stream, sizesArray);
+        bufferSizes.put (streamSrc, dataArray);
     }
 
     List schedule = new LinkedList ();

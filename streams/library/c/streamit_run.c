@@ -35,6 +35,8 @@ void connect_tapes (stream_context *c)
         }
         break;
     case SPLIT_JOIN:
+      // split/join code deals with tapes magically.
+      break;
     case FEEDBACK_LOOP:
     default:
         assert (0);

@@ -81,6 +81,7 @@ void set_stream_type(stream_context *c, stream_type type)
         c->type_data.pipeline_data.last_child = NULL;
         break;
     case SPLIT_JOIN:
+      break;
     case FEEDBACK_LOOP:
     default:
         assert (0);
@@ -131,6 +132,7 @@ void register_child(stream_context *c, stream_context *child)
         }
         break;
     case SPLIT_JOIN:
+      break;
     case FEEDBACK_LOOP:
     default:
         assert (0);

@@ -16,6 +16,11 @@ public class SchedPipeline extends SchedStream
         ASSERT (result);
     }
 
+    public List getChildren ()
+    {
+        return allChildren;
+    }
+
     void computeSteadySchedule ()
     {
         // go through all the children and get them initialized

@@ -49,11 +49,22 @@ public class Schedule extends AssertedClass
         bufferSizes.put (stream, sizesArray);
     }
 
-    List schedule;
+    List schedule = new LinkedList ();
 
     public List getSchedule ()
     {
         return schedule;
+    }
+
+    public void setSchedule (Object newSchedule)
+    {
+        if (newSchedule instanceof List)
+        {
+            schedule = (List) newSchedule;
+        } else {
+            schedule = new LinkedList ();
+            schedule.add (newSchedule);
+        }
     }
 
     public void addToSchedule (Object scheduleElement)

@@ -23,7 +23,7 @@ public abstract class SchedStream extends AssertedClass
     public void setConsumption (int c)
     {
         ASSERT (c >= 0);
-        ASSERT (peeks > -1 ^ c <= peeks);
+        ASSERT (peeks == -1 ^ c <= peeks);
         consumes = c;
         if (peeks < 0) peeks = c;
     }

@@ -716,7 +716,13 @@ public class Propagator extends SLIRReplacingVisitor {
 			//System.err.println("Array assigned:"+var+"["+accessor+"]="+newRight);
 			if(array!=null)
 			    if(accessor instanceof JIntLiteral) {
-				array[((JIntLiteral)accessor).intValue()]=newRight;
+				int idx=((JIntLiteral)accessor).intValue();
+				if(idx>=0&&idx<array.length)
+				    array[idx]=newRight;
+				else {
+				    System.err.println("WARNING: Could not Propagate array "+var+" "+array.length+" "+idx);
+				    constants.remove(var);
+				}
 			    } else
 				constants.remove(var);
 			else

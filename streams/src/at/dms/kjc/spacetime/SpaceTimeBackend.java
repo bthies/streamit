@@ -120,20 +120,21 @@ public class SpaceTimeBackend
 	Trace[] traces=null;
 	Trace[] traceGraph=null; //used if REAL
 
-	if (true) {
-	    //get the work estimation
-	    WorkEstimate work = WorkEstimate.getWorkEstimate(str);
-	    SimplePartitioner partitioner = new SimplePartitioner(topNodes,executionCounts,lfa, work);
-	    traceGraph = partitioner.partition();
-	    System.out.println("UnPrunnedTraces: "+traceGraph.length);
-	    partitioner.dumpGraph("traces.dot");
-	}	
-	else {
+	if (false) {
 	    traceGraph = TraceExtractor.extractTraces(topNodes,executionCounts,lfa);
 	    System.out.println("UnPrunnedTraces: "+traceGraph.length);
 	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
 	}
-	
+
+	//get the work estimation
+	WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+	SimplePartitioner partitioner = new SimplePartitioner(topNodes,executionCounts,lfa, work, rawChip);
+	traceGraph = partitioner.partition();
+	System.out.println("UnPrunnedTraces: "+traceGraph.length);
+	partitioner.dumpGraph("traces.dot");
+    
+	(new SimpleScheduler(partitioner)).schedule();
+
 	System.exit(0);
 	
 	/*System.gc();

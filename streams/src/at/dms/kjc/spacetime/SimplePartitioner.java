@@ -8,31 +8,18 @@ import at.dms.kjc.flatgraph2.*;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.partition.*;
 
-public class SimplePartitioner 
+public class SimplePartitioner extends Partitioner
 {
     //trace work threshold, higher number, more restrictive, smaller traces
     private static final double TRASHOLD = 0.40;
-    private UnflatFilter[] topFilters;
-    private HashMap[] exeCounts;
-    private LinearAnalyzer lfa;
-    //sirfilter -> work estimation
-    private WorkEstimate work;
     //filtercontent -> work estimation
     private HashMap workEstimation;
-    //trace->bottleNeck work estimation
-    private HashMap traceBNWork;
-    //the completed trace graph
-    private Trace[] traceGraph;
 
     public SimplePartitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,LinearAnalyzer lfa,
-			     WorkEstimate work) 
+			     WorkEstimate work, RawChip rawChip) 
     {
-	this.topFilters = topFilters;
-	this.exeCounts = exeCounts;
-	this.lfa = lfa;
-	this.work = work;
+	super(topFilters, exeCounts, lfa, work, rawChip);
 	workEstimation = new HashMap();
-	traceBNWork = new HashMap();
     }
     
 
@@ -59,6 +46,8 @@ public class SimplePartitioner
 
 	    TraceNode node;
 	    Trace trace;
+	    int filtersInTrace = 1;
+	    
 	    if (!visited.contains(unflatFilter)) {
 		visited.add(unflatFilter);
 		//create the input trace node
@@ -89,7 +78,6 @@ public class SimplePartitioner
 			    node.setNext(filterNode);
 			    filterNode.setPrevious(node);
 			    node=filterNode;
-
 			}
 		    }
 		    else {
@@ -104,10 +92,15 @@ public class SimplePartitioner
 		    trace = new Trace(node);
 		}
 		
+		//should be at least one filter in the trace by now, don't worry about 
+		//linear stuff right now...
+
 		traces.add(trace);
 		int bottleNeckWork = getWorkEstimate(unflatFilter);
 		//try to add more filters to the trace...
-		while (continueTrace(unflatFilter, filterContent.isLinear(), bottleNeckWork)) {
+		while (continueTrace(unflatFilter, filterContent.isLinear(), bottleNeckWork,
+				     ++filtersInTrace)) { //tell continue trace you are trying to put
+		                                          //another filter in the trace
 		    UnflatFilter downstream = unflatFilter.out[0][0].dest;
 		    FilterContent dsContent = getFilterContent(downstream);
 
@@ -178,10 +171,10 @@ public class SimplePartitioner
     }
 
 
-    //given <unflatFilter> determine if we should continue the current trace we are
+    //given <unflatFilter> determine if we should continue the current race we are
     //building
     private boolean continueTrace(UnflatFilter unflatFilter, boolean isLinear, 
-				  int bottleNeckWork) 
+				  int bottleNeckWork, int newTotalFilters) 
     {
 	//if this is not connected to anything or 
 	//it is connected to more than one filter or one filter it is 
@@ -200,14 +193,18 @@ public class SimplePartitioner
 	    //start a new trace if we switch from linear to non-linear and vice-versa
 	    if (!(isLinear == dest.isLinear()))
 		return false;
-	    
+
+	    //check the size of the trace, the length must be less than number of tiles + 1 
+	    if (newTotalFilters > rawChip.getTotalTiles())
+		return false;
+
 	    //check the work estimation
 	    int destEst = getWorkEstimate(dest);
 	    double ratio = (bottleNeckWork > destEst) ? (double)destEst / (double)bottleNeckWork :
 		(double) bottleNeckWork / (double) destEst;
 	    ratio = Math.abs(ratio);
-	    System.out.println("bottleNeckWork = " + bottleNeckWork + " / " + 
-			       "next = " + destEst + " = " + ratio);
+	    //System.out.println("bottleNeckWork = " + bottleNeckWork + " / " + 
+	    //		       "next = " + destEst + " = " + ratio);
 	    if (ratio < TRASHOLD) 
 		return false;
 	    
@@ -344,11 +341,7 @@ public class SimplePartitioner
 	return out.toString();
     }
 
-    public int getTraceBNWork(Trace trace) 
-    {
-	assert traceBNWork.containsKey(trace);
-	return ((Integer)traceBNWork.get(trace)).intValue();
-    }
+ 
     
 }
 

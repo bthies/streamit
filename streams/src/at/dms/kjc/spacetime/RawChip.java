@@ -66,6 +66,11 @@ public class RawChip {
 	return tiles[x][y];
     }
 
+    public int getTotalTiles() 
+    {
+	return gXSize * gYSize;
+    }
+
     public int getXSize() {
 	return gXSize;
     }

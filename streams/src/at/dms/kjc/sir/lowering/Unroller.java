@@ -215,20 +215,29 @@ public class Unroller extends SLIRReplacingVisitor {
 	// get the initial value of the counter
 	int counter = info.initVal;
 	// simulate execution of the loop...
+	Propagator prop=new Propagator(new Hashtable());
 	while (done(counter,info)) {
 	    // replace induction variable with its value current value
-	    Hashtable newConstants = new Hashtable();
-	    newConstants.put(info.var, new JIntLiteral(counter));
+	    prop.getConstants().put(info.var, new JIntLiteral(counter));
 	    // do the replacement
             JStatement newBody =
                 (JStatement)ObjectDeepCloner.deepCopy(self.getBody());
-	    newBody.accept(new Propagator(newConstants));
+	    newBody.accept(prop);
 	    // add to statement list
 	    statementList.add(newBody);
 	    // increment counter
 	    counter = incrementCounter(counter, info);
 	}
 	statementList.add(new JExpressionStatement(self.getTokenReference(),new JAssignmentExpression(self.getTokenReference(),new JLocalVariableExpression(self.getTokenReference(),info.var),new JIntLiteral(counter)),null));
+	/*	Hashtable cons=prop.getConstants();
+		Enumeration enum=prop.getChanged().keys();
+		while(enum.hasMoreElements()) {
+		JLocalVariable var=(JLocalVariable)enum.nextElement();
+		Object val=cons.get(var);
+		if(val instanceof JLiteral)
+		statementList.add(new JExpressionStatement(null,new JAssignmentExpression(null,new JLocalVariableExpression(null,var),(JLiteral)val),null));
+		System.err.println(var+"="+val);
+		}*/
 	// mark that we've unrolled
 	this.hasUnrolled = true;
 	// return new block instead of the for loop

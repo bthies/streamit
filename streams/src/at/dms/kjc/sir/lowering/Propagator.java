@@ -50,6 +50,12 @@ public class Propagator extends SLIRReplacingVisitor {
     private static int loopDepth=0;
 
     /**
+     * List of vars mutated so the can be assigned the right
+     * value at the end of a block
+     */
+    private LinkedList mutated;
+
+    /**
      * Creates one of these given that <constants> maps
      * JLocalVariables to JLiterals for the scope that we'll be
      * visiting.
@@ -61,6 +67,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	added=false;
 	write=true;
 	knownFields=new Hashtable();
+	mutated=new LinkedList();
     }
     
     public Propagator(Hashtable constants,boolean write) {
@@ -70,6 +77,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	added=false;
 	this.write=write;
 	knownFields=new Hashtable();
+	mutated=new LinkedList();
     }
     
     public Propagator construct(Hashtable constants) {
@@ -82,6 +90,10 @@ public class Propagator extends SLIRReplacingVisitor {
 
     public Hashtable getConstants() {
 	return constants;
+    }
+
+    public Hashtable getChanged() {
+	return changed;
     }
 
     // ----------------------------------------------------------------------
@@ -419,6 +431,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	    if (newBody!=null && newBody!=body) {
 		self.setBody(newBody);
 	    }
+	    
 	    constants=saveConstants;
 	}
 	loopDepth--;
@@ -479,6 +492,7 @@ public class Propagator extends SLIRReplacingVisitor {
 		    JLiteral lit=(JLiteral)val;
 		    if(lit!=null)
 			if(lit instanceof JIntLiteral) {
+			    mutated.add(var);
 			    constants.put(var,new JIntLiteral(lit.getTokenReference(),((JIntLiteral)lit).intValue()+((self.getOper()==OPE_POSTINC) ? 1 : -1)));
 			    added=true;
 			    return lit;
@@ -503,6 +517,7 @@ public class Propagator extends SLIRReplacingVisitor {
 		    JLiteral lit=(JLiteral)val;
 		    if(lit!=null)
 			if(lit instanceof JIntLiteral) {
+			    mutated.add(var);
 			    JIntLiteral out=new JIntLiteral(lit.getTokenReference(),((JIntLiteral)lit).intValue()+((self.getOper()==OPE_PREINC) ? 1 : -1));
 			    constants.put(var,out);
 			    added=true;
@@ -870,10 +885,10 @@ public class Propagator extends SLIRReplacingVisitor {
 	Object constant = constants.get(self.getVariable());
 	if (constant instanceof JLiteral) {
 	    return constant;
-	} else if(constant instanceof JLocalVariableExpression) {
+	} /*else if(constant instanceof JLocalVariableExpression) {
 	    //if(constant.equals(constants.get(((JLocalVariableExpression)constant).getVariable()))) //Constant has been unchanged
 	    return constant;
-	}
+	    }*/
 	return self;
     }
 
@@ -1126,8 +1141,8 @@ public class Propagator extends SLIRReplacingVisitor {
 				Object val=array[index];
 				//System.err.println("Accessing:"+var+"["+index+"]="+val);
 				if(val!=null) {
-				    //if(val instanceof JLiteral)
-				    return val;
+				    if(val instanceof JLiteral)
+					return val;
 				    //else if(val instanceof JLocalVariableExpression)
 				    //if(val.equals(constants.get(((JLocalVariableExpression)val).getVariable()))) //Constant has been unchanged
 				    //return val;
@@ -1247,6 +1262,17 @@ public class Propagator extends SLIRReplacingVisitor {
 		      if(propVarLocal(var)&&var.getValue()!=null)
 		      copyMap.put(var.getValue(),var);
 		      }*/
+		}
+		while(mutated.size()!=0) {
+		    JLocalVariable var=(JLocalVariable)mutated.removeFirst();
+		    size++;
+		    Object val=constants.get(var);
+		    if(val!=null)
+			self.addStatement(i++,new JExpressionStatement(null,new JAssignmentExpression(null,new JLocalVariableExpression(null,var),(JLiteral)val),null));
+		    else {
+			System.err.println("WARNING: Unknown Mutated Value For "+var);
+			self.addStatement(i++,new JExpressionStatement(null,new JLocalVariableExpression(null,var),null));
+		    }
 		}
 	    }
 	}

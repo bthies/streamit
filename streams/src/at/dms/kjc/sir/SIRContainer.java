@@ -20,6 +20,14 @@ public abstract class SIRContainer extends SIRStream {
     protected MutableList children;
     protected MutableList params;
 
+    /**
+     * Tracks state of a recursive definition so Kopi2SIR and
+     * Constant Prop know what to do
+     * null if not recursive stream definition
+     * Used to expand recursive streams as necessary in Constant Prop
+     */
+    protected Kopi2SIR recursiveDef;
+
     protected SIRContainer() {
 	super();
 	this.children = new MutableList();
@@ -33,6 +41,14 @@ public abstract class SIRContainer extends SIRStream {
 	super(parent, ident, fields, methods);
 	this.children = new MutableList();
 	this.params = new MutableList();
+    }
+
+    public Kopi2SIR getRecurse() {
+	return recursiveDef;
+    }
+
+    public void setRecurse(Kopi2SIR k2s) {
+	recursiveDef=k2s;
     }
 
     /**

@@ -32,13 +32,13 @@ public final class VerticalCutTransform extends StreamTransform {
 	PartitionGroup group = PartitionGroup.createFromArray(partitions);
 	
 	if (str instanceof SIRSplitJoin) {
-	    return RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, group);
+	    RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, group);
 	} else if (str instanceof SIRPipeline) {
-	    return RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, group);
+	    RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, group);
 	} else {
 	    Utils.fail("Only support vertical cuts on SplitJoins and Pipelines, but got: " + str);
-	    return null;
 	}
+	return str;
     }
 
 }

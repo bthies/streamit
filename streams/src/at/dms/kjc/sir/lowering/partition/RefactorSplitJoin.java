@@ -11,24 +11,19 @@ import java.util.List;
 public class RefactorSplitJoin {
     /**
      * Given a splitjoin <sj> and a partitioning <partition> of its
-     * children, returns a new splitjoin in which all the elements of
-     * each partition are factored into their own splitjoin.  The
-     * returned element is also replaced in the parent (that is, the
-     * parent is mutated.)
+     * children, mutates <sj> so that all the elements of each
+     * partition are factored into their own splitjoin.
      */
-    public static SIRSplitJoin addHierarchicalChildren(SIRSplitJoin sj, PartitionGroup partition) {
+    public static void addHierarchicalChildren(SIRSplitJoin sj, PartitionGroup partition) {
+	// get copy of children and params
+	List children = sj.getChildren();
+	List params = sj.getParams();
+	
 	// the new and old weights for the splitter and joiner
 	int[] oldSplit=sj.getSplitter().getWeights();
 	int[] oldJoin=sj.getJoiner().getWeights();
 	JExpression[] newSplit=new JExpression[partition.size()];
 	JExpression[] newJoin=new JExpression[partition.size()];
-
-	// new splitjoin
-	SIRSplitJoin newSplitJoin=new SIRSplitJoin(sj.getParent(), 
-						   sj.getIdent(),
-						   sj.getFields(), 
-						   sj.getMethods());
-	newSplitJoin.setInit(SIRStream.makeEmptyInit());
 
 	// for all the partitions...
 	for(int i=0;i<partition.size();i++) {
@@ -37,7 +32,7 @@ public class RefactorSplitJoin {
 		// if there is only one stream in the partition, then
 		// we don't need to do anything; just add the children
 		int pos = partition.getFirst(i);
-		newSplitJoin.add(sj.get(pos), sj.getParams(pos));
+		sj.add((SIRStream)children.get(pos), (List)params.get(pos));
 		newSplit[i]=new JIntLiteral(oldSplit[pos]);
 		newJoin[i]=new JIntLiteral(oldJoin[pos]);
 	    } else {
@@ -47,8 +42,8 @@ public class RefactorSplitJoin {
 		JExpression[] childSplit=new JExpression[partSize];
 		JExpression[] childJoin=new JExpression[partSize];
 		// the child splitjoin
-		SIRSplitJoin childSplitJoin=new SIRSplitJoin(newSplitJoin,
-							     newSplitJoin.getIdent() + "_child" + i,
+		SIRSplitJoin childSplitJoin=new SIRSplitJoin(sj,
+							     sj.getIdent() + "_child" + i,
 							     JFieldDeclaration.EMPTY(),
 							     JMethodDeclaration.EMPTY());
 		childSplitJoin.setInit(SIRStream.makeEmptyInit());
@@ -59,7 +54,7 @@ public class RefactorSplitJoin {
 		    sumJoin+=oldJoin[l];
 		    childSplit[k]=new JIntLiteral(oldSplit[l]);
 		    childJoin[k]=new JIntLiteral(oldJoin[l]);
-		    childSplitJoin.add(sj.get(l), sj.getParams(l));
+		    childSplitJoin.add((SIRStream)children.get(l), (List)params.get(l));
 		}
 		// in the case of a duplicate splitter, <create>
 		// disregards the weights array and makes them all 1
@@ -69,17 +64,12 @@ public class RefactorSplitJoin {
 		// update new toplevel splitjoin
 		newSplit[i]=new JIntLiteral(sumSplit);
 		newJoin[i]=new JIntLiteral(sumJoin);
-		newSplitJoin.add(childSplitJoin);
+		sj.add(childSplitJoin);
 	    }
 	}
 	// set the splitter and joiner types according to the new weights
-	newSplitJoin.setSplitter(SIRSplitter.create(newSplitJoin,sj.getSplitter().getType(),newSplit));
-	newSplitJoin.setJoiner(SIRJoiner.create(newSplitJoin,sj.getJoiner().getType(),newJoin));
-	// replace in parent
-	sj.getParent().replace(sj,newSplitJoin);
-
-	// return new sj
-	return newSplitJoin;
+	sj.setSplitter(SIRSplitter.create(sj,sj.getSplitter().getType(),newSplit));
+	sj.setJoiner(SIRJoiner.create(sj,sj.getJoiner().getType(),newJoin));
     }
 
     /**

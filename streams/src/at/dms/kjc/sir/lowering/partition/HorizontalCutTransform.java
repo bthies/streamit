@@ -32,7 +32,8 @@ public final class HorizontalCutTransform extends StreamTransform {
 	Utils.assert(str instanceof SIRSplitJoin, "Can only do horizontal cut on splitjoin, but got: " + str);
 	// add one because of indexing convention in partitiongroup
 	int[] partitions = { cutPos + 1 };
-	return RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, 
-							 PartitionGroup.createFromArray(partitions));
+	RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, 
+						  PartitionGroup.createFromArray(partitions));
+	return str;
     }
 }

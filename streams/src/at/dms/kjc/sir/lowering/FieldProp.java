@@ -300,6 +300,8 @@ public class FieldProp
                             return orig;
                     }
                 });
+            // Also run some simple algebraic simplification now.
+            meths[i].accept(new Propagator(new Hashtable()));
         }
     }
 }

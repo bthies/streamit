@@ -2,6 +2,7 @@ package streamit.frontend.passes;
 
 import streamit.frontend.nodes.*;
 import streamit.frontend.tojava.TempVarGen;
+import java.util.List;
 
 /**
  * Give a rigid ordering to operations such as ++, --, and pop().
@@ -11,11 +12,12 @@ import streamit.frontend.tojava.TempVarGen;
  * a temporary variable.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DisambiguateUnaries.java,v 1.2 2003-05-20 16:04:16 dmaze Exp $
+ * @version $Id: DisambiguateUnaries.java,v 1.3 2003-07-09 18:12:37 dmaze Exp $
  */
 public class DisambiguateUnaries extends SymbolTableVisitor
 {
     private TempVarGen varGen;
+    private List successors;
     
     public DisambiguateUnaries(TempVarGen varGen)
     {
@@ -23,12 +25,21 @@ public class DisambiguateUnaries extends SymbolTableVisitor
         this.varGen = varGen;
     }
     
+    protected void doStatement(Statement stmt)
+    {
+        successors = new java.util.ArrayList();
+        Statement result = (Statement)stmt.accept(this);
+        if (result != null)
+            addStatement(result);
+        addStatements(successors);
+    }
+
     public Object visitExprUnary(ExprUnary expr)
     {
-        // Is this preinc or predec?  If not, we don't care.
-        // (Might we care about postinc or postdec?)
+        // Does this modify its argument?
         int op = expr.getOp();
-        if (op == ExprUnary.UNOP_PREINC || op == ExprUnary.UNOP_PREDEC)
+        if (op == ExprUnary.UNOP_PREINC || op == ExprUnary.UNOP_PREDEC ||
+            op == ExprUnary.UNOP_POSTINC || op == ExprUnary.UNOP_POSTDEC)
         {
             // Insert a statement: a = a + 1.
             // Assume that the child expression of expr is a valid
@@ -36,14 +47,16 @@ public class DisambiguateUnaries extends SymbolTableVisitor
             // reference, or local variable.
             FEContext ctx = expr.getContext();
             Expression lhs = expr.getExpr();
+            int bop = ExprBinary.BINOP_ADD;
+            if (op == ExprUnary.UNOP_PREDEC || op == ExprUnary.UNOP_POSTDEC)
+                bop = ExprBinary.BINOP_SUB;
             Expression rhs =
-                new ExprBinary(ctx,
-                               op == ExprUnary.UNOP_PREINC ?
-                               ExprBinary.BINOP_ADD :
-                               ExprBinary.BINOP_SUB,
-                               lhs,
-                               new ExprConstInt(ctx, 1));
-            addStatement(new StmtAssign(ctx, lhs, rhs, 0));
+                new ExprBinary(ctx, bop, lhs, new ExprConstInt(ctx, 1));
+            Statement assign = new StmtAssign(ctx, lhs, rhs, 0);
+            if (op == ExprUnary.UNOP_PREINC || op == ExprUnary.UNOP_PREDEC)
+                addStatement(assign);
+            else
+                successors.add(assign);
             return lhs;
         }
         return expr;

@@ -21,7 +21,7 @@ public class VariablesUsed extends SLIREmptyVisitor
 
     /**
      * Given <entry>, the starting point of the visit, return 
-     * all variables used or defined during the IR visit.
+     * a HashSet of all variables used or defined during the IR visit.
      *
      *
      * @param entry The contruct that starts the visiting

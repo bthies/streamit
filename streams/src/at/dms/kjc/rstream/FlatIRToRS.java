@@ -223,12 +223,16 @@ public class FlatIRToRS extends ToC implements StreamVisitor
                                       String ident,
                                       JExpression expr) {
 	newLine();
-        	
+	assert !(expr instanceof JNewArrayExpression) :
+	    "New Array expression in field declaration";
+
+	/*
 	if (expr instanceof JArrayInitializer) {
 	    declareInitializedArray(type, ident, expr);
 	    return;
 	}
-
+	*/
+	
 	if (type.isArrayType()) {
 	    handleArrayDecl(ident, type);
 
@@ -275,20 +279,18 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	print(brackets);
     }
     
-
     /**
      * prints a variable declaration statement
      */
     public void visitVariableDefinition(JVariableDefinition self,
                                         int modifiers,
                                         CType type,
-                                        String ident,                                        
-					JExpression expr) {
+                                        String ident,                                        JExpression expr) {
 
-	if (expr instanceof JArrayInitializer) {
+	/*if (expr instanceof JArrayInitializer) {
 		declareInitializedArray(type, ident, expr);
 		return;
-        }
+		}*/
 	
 	if (type.isArrayType()) {
 	    handleArrayDecl(ident, type);
@@ -336,39 +338,6 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	    dims[i].accept(this);
 	}
 	print(")");
-	
-
-	/*
-	print("calloc(");
-        dims[0].accept(this);
-        print(", sizeof(");
-        print(type);
-	if(dims.length>1)
-	    print("*");
-        print("))");
-	if(dims.length>1) {
-	    for(int off=0;off<(dims.length-1);off++) {
-		//Right now only handles JIntLiteral dims
-		//If cast expression then probably a failure to reduce
-		int num=((JIntLiteral)dims[off]).intValue();
-		for(int i=0;i<num;i++) {
-		    print(",\n");
-		    //If lastLeft null then didn't come right after an assignment
-		    lastLeft.accept(this);
-		    print("["+i+"]=calloc(");
-		    dims[off+1].accept(this);
-		    print(", sizeof(");
-		    print(type);
-		    if(off<(dims.length-2))
-			print("*");
-		    print("))");
-		}
-	    }
-	}
-        if (init != null) {
-            init.accept(this);
-        }
-	*/
     }
     
     /**
@@ -476,7 +445,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	if (cond != null) {
 	    cond.accept(this);
 	}
-	    //cond is an expression so print the ;
+	//cond is an expression so print the ;
 	print("; ");
 	if (incr != null) {
 	    FlatIRToRS l2c = new FlatIRToRS(filter);

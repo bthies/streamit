@@ -53,7 +53,6 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
     {
 	if (node.isFilter()) {
 	    SIRFilter filter = (SIRFilter)node.contents;
-	    //iterate over the methods to check for a comm. exp.
 	    JMethodDeclaration[] methods = filter.getMethods();
 	    for (int i = 0; i < methods.length; i++) {
 		varUses = UseDefInfo.getUsesMap(methods[i]);
@@ -150,6 +149,17 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	assert forLevel >= 0;
     }
     
+    /**
+     * Check to see that the scope of the induction var is 
+     * limited to the for loop, i.e. it is not used outside 
+     * of the loop.
+     *
+     * @param jfor The for statement
+     * @param doInfo The do loop information, used for to get induction variable
+     *
+     * @return True if all the uses or def of the induction variable 
+     * are in the body of the for loop, false otherwise.
+     */
 
     public boolean scopeOfInduction(JForStatement jfor, 
 				    DoLoopInformation doInfo) 
@@ -171,7 +181,6 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	}
 	return true;
     }
-    
 
     /**
      * Calculate the increment expression for the do loop and 
@@ -188,11 +197,15 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 				     DoLoopInformation info)
     {
 	if (incrExp instanceof JBinaryExpression) {
+	    //if 
 	    if (incrExp instanceof JCompoundAssignmentExpression) {
+		//compound assignment expression of the form left (op=) right 
 		JCompoundAssignmentExpression comp = 
 		    (JCompoundAssignmentExpression)incrExp;
+		//make sure left is the induction variable
 		if (comp.getLeft() instanceof JLocalVariableExpression &&
 		    ((JLocalVariableExpression)comp.getLeft()).getVariable().equals(info.induction)) {
+		    //return right if plus or -right if minus
 		    if (comp.getOperation() == OPE_PLUS) {
 			info.incr = new JExpressionStatement(null, comp.getRight(), null);
 		    } else if (comp.getOperation() == OPE_MINUS) {
@@ -203,13 +216,16 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		}
 	    }
 	    else if (incrExp instanceof JAssignmentExpression) {
+		//normal assignment expression left = right
 		JAssignmentExpression ass = (JAssignmentExpression)incrExp;
+		//only handle plus and minus 
 		if (ass.getRight() instanceof JAddExpression ||
 		    ass.getRight() instanceof JMinusExpression) {
 		    JBinaryExpression bin = (JBinaryExpression)ass.getRight();
-		    //check that the left is an access to the induction variable
+		    //if left of binary is an access to the induction variable
 		    if (bin.getLeft() instanceof JLocalVariableExpression &&
 			((JLocalVariableExpression)bin.getLeft()).getVariable().equals(info.induction)) {
+			//if plus return the right, if minus return -right
 			if (ass.getRight() instanceof JAddExpression)
 			    info.incr = new JExpressionStatement(null, bin.getRight(), null);
 			if (ass.getRight() instanceof JMinusExpression)
@@ -217,6 +233,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 								 new JUnaryMinusExpression(null, bin.getRight()),
 								 null);
 		    }
+		    //analogue of above...
 		    if (bin.getRight() instanceof JLocalVariableExpression &&
 			((JLocalVariableExpression)bin.getRight()).getVariable().equals(info.induction)) {
 			if (ass.getRight() instanceof JMinusExpression)
@@ -229,7 +246,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		}
 	    }
 	}
-	else if (incrExp instanceof JPrefixExpression) {
+	else if (incrExp instanceof JPrefixExpression) {  //prefix op expr 
 	    JPrefixExpression pre = (JPrefixExpression)incrExp;
 	    //check that we assigning the induction variable
 	    if (pre.getExpr() instanceof JLocalVariableExpression &&
@@ -241,7 +258,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		}		
 	    }
 	}
-	else if (incrExp instanceof JPostfixExpression) {
+	else if (incrExp instanceof JPostfixExpression) { //postfix expr op
 	    JPostfixExpression post = (JPostfixExpression)incrExp;
 	    //check that we assigning the induction variable
 	    if (post.getExpr() instanceof JLocalVariableExpression &&
@@ -256,10 +273,18 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	
     }
     
-
+    /**
+     * Give the condition expression of the for loop, return the 
+     * conditional expression for in do loop form. So just <expr>
+     * in <induction_var> <= <expr> 
+     *
+     * @param condExp The condition expression of the for loop
+     * @param info The do loop information as calculated so far
+     */
     private void getDLCondExpression(JExpression condExp,
 				    DoLoopInformation info) 
     {
+	//only handle binary relational expressions
 	if (condExp instanceof JRelationalExpression) {
 	    JRelationalExpression cond = (JRelationalExpression)condExp;
 	    
@@ -290,10 +315,20 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	}
     }
     
-
+    /**
+     * Given the initialization expression of a for loop, 
+     * generate the initialization expression of the do loop,
+     * if possible and place in info
+     *
+     * @param initExp the init expression of a for loop
+     * @param info The empty do loop information
+     *
+     */
     private void getInductionVariable(JExpression initExp, 
 				      DoLoopInformation info) 
     {
+	//make sure it is an assignment expression 
+	//remember that all var defs have been lifted...
 	if (initExp instanceof JAssignmentExpression) {
 	    JAssignmentExpression ass = (JAssignmentExpression)initExp;
 	    
@@ -311,12 +346,24 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	    else 
 		return;
 	    
+	    //set the initialization statement of the for loop...
 	    info.init = new JExpressionStatement(null, ass.getRight(), null);
 	}
     }
     
 
-    public static JExpression getExpression(JStatement orig) 
+    /**
+     * Given a statement, return the expression that this statement is 
+     * composed of, if not an expression statement return null.
+     *
+     *
+     * @param orig The statement
+     *
+     *
+     * @return null if <orig> does not contain an expression or
+     * the expression if it does.
+     */
+    public static JExpression getExpression(JStatement orig)
     {
 	if (orig instanceof JExpressionListStatement) {
 	    JExpressionListStatement els = (JExpressionListStatement)orig;
@@ -333,6 +380,15 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
     }
 }
 
+/**
+ * Check the body of a for loop for various to see if it can
+ * be converted to a do loop.
+ *
+ *
+ * @author Michael Gordon
+ * 
+ */
+
 class CheckLoopBody extends SLIREmptyVisitor 
 {
     private DoLoopInformation info;
@@ -341,6 +397,16 @@ class CheckLoopBody extends SLIREmptyVisitor
     private boolean hasFields;
     private boolean hasMethods;
 
+    /**
+     * Check the body of a for loop to see if it can be converted to a 
+     * do loop.  Make sure the induction var is not assigned in the body, 
+     * make sure the condition and test are not altered in the loop.
+     *
+     * @param info The do loop information with all fields filled
+     * @param body The body of the for loop
+     *
+     * @return True if all tests pass, otherwise false.
+     */
     public static boolean check(DoLoopInformation info, JStatement body)
     {
 	CheckLoopBody check = new CheckLoopBody(info, body);
@@ -361,6 +427,9 @@ class CheckLoopBody extends SLIREmptyVisitor
 	  }
 	System.out.println("*** Vars assigned.  ");
 	*/
+
+	//for all the variables we want to check,
+	//make sure they are not assigned
 	it = check.varsToCheck.iterator();
 	while (it.hasNext()) {
 	    Object var = it.next();
@@ -390,7 +459,8 @@ class CheckLoopBody extends SLIREmptyVisitor
     {
 	//add the induction variable
 	varsToCheck.add(info.induction);
-	StrToRStream.addAll(varsToCheck, VariablesUsed.getVars(info.init));
+	//find all the vars to check if they are assigned,
+	//anything used in the cond init or incr...
 	StrToRStream.addAll(varsToCheck, VariablesUsed.getVars(info.cond));
 	StrToRStream.addAll(varsToCheck, VariablesUsed.getVars(info.incr));
 
@@ -401,7 +471,6 @@ class CheckLoopBody extends SLIREmptyVisitor
 		hasFields = true;
 	}
     }
-	
 
     public void visitMethodCallExpression(JMethodCallExpression self,
 					  JExpression prefix,

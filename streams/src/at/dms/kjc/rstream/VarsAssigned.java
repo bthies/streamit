@@ -7,7 +7,9 @@ import at.dms.kjc.flatgraph.*;
 import java.util.HashSet;
 
 /**
- *
+ * Find all the vars that are possible assigned given a tree in the
+ * IR.
+ * 
  * @author Michael Gordon
  * 
  */
@@ -17,11 +19,11 @@ public class VarsAssigned extends SLIREmptyVisitor
     private HashSet vars;
 
     /**
-     * Given <exp>, the lhs of an assignment expression, or
+     * Given <entry>, the lhs of an assignment expression, or
      * the exp of a prefix or posfix increment/decrement exp
      * return the var(s) assigned in this expression
      *
-     * @param exp See above
+     * @param entry See above
      *
      *
      * @return A Hashset containing JLocalVariables for assigned locals 

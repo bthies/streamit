@@ -9,9 +9,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 /**
- * This class will return a HashSet containing all the
- * variables (locals and fields) used (use or def) from the entry
- * point of the visitor. 
+ * This class will return a HashMap from local vars->hashset.  The hashset
+ * contains all the uses of a local variable variable from the
+ * starting point of the visitor. 
  *
  * @author Michael Gordon
  * 
@@ -21,13 +21,34 @@ public class UseDefInfo extends SLIREmptyVisitor
 {
     private HashMap uses;
 
+    /**
+     * Given a method, return a hashmap from local vars -> HashSet, 
+     * where the hashset holds all the access of the local variable in 
+     * the method.
+     *
+     * @param meth The method to search.
+     *
+     *
+     * @return The hashmap as described above.
+     * 
+     */
     public static HashMap getUsesMap(JMethodDeclaration meth) 
     {
 	UseDefInfo useInfo = new UseDefInfo();
 	meth.accept(useInfo);
 	return useInfo.uses;
     }
-    
+
+     /**
+     * Given a for loop, return a hashmap from local vars -> HashSet, 
+     * where the hashset holds all the accesses of the local variable in 
+     * the for looping including body, init, cond, and increment.
+     *
+     * @param jfor the for statement.
+     *
+     * @return The hashmap as described above.
+     * 
+     */
     public static HashSet getForUses(JForStatement jfor) 
     {
 	UseDefInfo useInfo = new UseDefInfo();
@@ -45,7 +66,16 @@ public class UseDefInfo extends SLIREmptyVisitor
 	return ret;
     }
     
-
+    /**
+     * Given an IR tree, return a hashmap from local vars -> HashSet, 
+     * where the hashset holds all the accesses of the local variable in 
+     * the tree.
+     *
+     * @param jsomething the start of the visitor
+     *
+     * @return The hashmap as described above.
+     * 
+     */
     public static HashSet getUses(JPhylum jsomething)  
     {
 	UseDefInfo useInfo = new UseDefInfo();

@@ -45,7 +45,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * equivalent (and have equal amounts of work.)
      */
     private HashSet uniformSJ;
-    
+
     public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles) {
 	super(str, work, numTiles);
 	this.configMap = new HashMap();
@@ -286,6 +286,5 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	    return config;
 	}
     }
-
 }
 

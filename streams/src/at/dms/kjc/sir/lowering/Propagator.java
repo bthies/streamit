@@ -213,6 +213,14 @@ class Propagator extends SLIRReplacingVisitor {
 	    if(elseClause!=null)
 		elseClause.accept(this);
 	} else {
+	    /*
+	    SIRPrinter printer = new SIRPrinter();
+	    System.out.println("analyzing the expression");
+	    self.accept(printer);
+	    printer.close();
+	    System.out.println();
+	    */
+	    
 	    JExpression newExp = (JExpression)cond.accept(this);
 	    if (newExp.isConstant()) {
 		self.setCondition(newExp);
@@ -686,6 +694,10 @@ class Propagator extends SLIRReplacingVisitor {
 	    }
 	    if (newRight.isConstant()) {
 		self.setRight(newRight);
+	    }
+	    // return the evaluated relational expression if both sides are constant
+	    if (newLeft.isConstant() && newRight.isConstant()) {
+		return self.constantFolding();
 	    }
 	}
 	return self;

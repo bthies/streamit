@@ -34,7 +34,8 @@ public class ArrayDim extends SLIREmptyVisitor {
 	   fields[i].accept(ad);
 
 	//visit the method now
-	meth.accept(ad);
+	if (meth != null) 
+	    meth.accept(ad);
 
 	if (ad.dims == null)
 	    return null;

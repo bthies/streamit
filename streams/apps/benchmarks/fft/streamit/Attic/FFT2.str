@@ -1,6 +1,6 @@
 complex->complex filter CombineDFT(int n)
 {  
-    complex[n] Ws;
+    complex Ws[n];
 
     init
     {
@@ -14,7 +14,7 @@ complex->complex filter CombineDFT(int n)
     work push n peek n pop n 
     {
         int i;
-	complex[n] results;
+	complex results[n];
 
 	for (i = 0; i < n/2; i ++)
         {
@@ -69,18 +69,18 @@ complex->complex pipeline FFTReorder(int nWay)
     int n = nWay;
     while (n > 2)
     {
-        add (new FFTReorderSimple (n));
-	n /= 2;
+        add FFTReorderSimple(n);
+	n = n / 2;
     }    
 }
 
 complex->complex pipeline FFT2 (int nWay)
 {
-        add (new FFTReorder (nWay));
+        add FFTReorder(nWay);
         int n = 2;
         while (n <= nWay)
         {
-            add (new CombineDFT (n));
+            add CombineDFT(n);
             n = n * 2;
         }
     

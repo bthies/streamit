@@ -20,6 +20,11 @@ public abstract class Stream extends Operator
         super(a, b, c);
     }
 
+    public Stream(int a, float b)
+    {
+        super(a, b);
+    }
+
     public Stream(float a, float b, float c)
     {
         super(a, b, c);
@@ -33,6 +38,21 @@ public abstract class Stream extends Operator
     public Stream(float x, float y, float z, int a, float b)
     {
         super(x,y,z,a,b);
+    }
+
+    public Stream(int a, int b, int c, float d, int e)
+    {
+        super (a,b,c,d,e);
+    }
+
+    public Stream(int a, int b, int c, float d, float e)
+    {
+        super (a,b,c,d,e);
+    }
+
+    public Stream(int a, int b, float c, int d, float e)
+    {
+        super (a,b,c,d,e);
     }
 
     public Stream(float x, float y, float z, int a)

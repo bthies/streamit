@@ -18,6 +18,13 @@ public class Operator extends DestroyedClass
             .add("z1", z1);
     }
 
+    public Operator(int a, float b)
+    {
+        initParams = new ParameterContainer("int-float")
+            .add("a", a)
+            .add("b", b);
+    }
+
     public Operator(float a, float b, float c)
     {
         initParams = new ParameterContainer("float-float-float")
@@ -33,6 +40,36 @@ public class Operator extends DestroyedClass
             .add("y3", y3)
             .add("z3", z3)
             .add("a3", a3);
+    }
+
+    public Operator(int a, int b, float c, int d, float e)
+    {
+        initParams = new ParameterContainer ("int-int-float-int-float")
+            .add("a", a)
+            .add("b", b)
+            .add("c", c)
+            .add("d", d)
+            .add("e", e);
+    }
+
+    public Operator(int a, int b, int c, float d, float e)
+    {
+        initParams = new ParameterContainer ("int-int-int-float-float")
+            .add("a", a)
+            .add("b", b)
+            .add("c", c)
+            .add("d", d)
+            .add("e", e);
+    }
+
+    public Operator(int a, int b, int c, float d, int e)
+    {
+        initParams = new ParameterContainer ("int-int-int-float-int")
+            .add("a", a)
+            .add("b", b)
+            .add("c", c)
+            .add("d", d)
+            .add("e", e);
     }
 
     public Operator(float x2, float y2, float z2, int a2, float b2)
@@ -123,6 +160,18 @@ public class Operator extends DestroyedClass
     public void init(float x, float y, int z) { invalidInitError (); }
 
     public void init(float a, float b, float c) { invalidInitError(); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(int a, int b, float c, int d, float e) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(int a, int b, int c, float d, float e) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(int a, float b) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(int a, int b, int c, float d, int e) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
     public void init(float x, float y, int z, int a) { invalidInitError (); }
@@ -379,6 +428,10 @@ public class Operator extends DestroyedClass
                   initParams.getIntParam("b"),
                   initParams.getIntParam("c"));
         else
+        if(initParams.getParamName().equals("int-float"))
+            init (initParams.getIntParam("a"),
+                  initParams.getFloatParam("b"));
+        else
         if(initParams.getParamName().equals("float-float-int"))
             init (initParams.getFloatParam("x1"),
                   initParams.getFloatParam("y1"),
@@ -396,6 +449,27 @@ public class Operator extends DestroyedClass
                   initParams.getFloatParam("z2"),
                   initParams.getIntParam("a2"),
                   initParams.getFloatParam("b2"));
+        else
+        if(initParams.getParamName().equals("int-int-float-int-float"))
+            init (initParams.getIntParam("a"),
+                  initParams.getIntParam("b"),
+                  initParams.getFloatParam("c"),
+                  initParams.getIntParam("d"),
+                  initParams.getFloatParam("e"));
+        else
+        if(initParams.getParamName().equals("int-int-int-float-float"))
+            init (initParams.getIntParam("a"),
+                  initParams.getIntParam("b"),
+                  initParams.getIntParam("c"),
+                  initParams.getFloatParam("d"),
+                  initParams.getFloatParam("e"));
+        else
+        if(initParams.getParamName().equals("int-int-int-float-int"))
+            init (initParams.getIntParam("a"),
+                  initParams.getIntParam("b"),
+                  initParams.getIntParam("c"),
+                  initParams.getFloatParam("d"),
+                  initParams.getIntParam("e"));
         else
         if(initParams.getParamName().equals("float-float-float-int"))
             init (initParams.getFloatParam("x2"),

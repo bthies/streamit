@@ -75,8 +75,7 @@ public class FusePipe {
 	    }
 	    // if we found anything to fuse
 	    if (end > start) {
-		fuse(pipe, 
-		     (SIRFilter)pipe.get(start),
+		fuse((SIRFilter)pipe.get(start),
 		     (SIRFilter)pipe.get(end));
 		System.err.println("Fusing " + (end-start+1) + " filters!");
 	    }
@@ -94,15 +93,15 @@ public class FusePipe {
     }
 	
     /**
-     * Fuses filters <first> ... <last> in Pipeline <parent>.  For
-     * now, assumes: 
+     * Fuses filters <first> ... <last>.  For now, assumes: 
      *
-     *  1. all of <first> ... <last> are consecutive filters in <parent>.
+     * 1. all of <first> ... <last> are consecutive filters in their
+     *     parent, which must be an SIRPipeline
      *
      */
-    public static void fuse(SIRPipeline parent,
-			    SIRFilter first,
+    public static void fuse(SIRFilter first,
 			    SIRFilter last) {
+	SIRPipeline parent = (SIRPipeline)first.getParent();
 	// make a list of the filters to be fused
 	List filterList = parent.getChildrenBetween(first, last);
 	// fuse the filters

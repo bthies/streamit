@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.36 2003-05-28 05:58:45 thies Exp $
+ * $Id: KjcOptions.opt,v 1.37 2003-05-28 17:01:43 thies Exp $
  */
 
 prefix Kjc
@@ -129,7 +129,7 @@ longname		"filter"
 // Begin StreamIt Options ----------------------------------------------
 
 longname		"stats"
-	shortcut	"h"
+	shortcut	"."
 	type		boolean
 	default		"false"
 	help		"Gathers statistics for application characterization."

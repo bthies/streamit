@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPrefixExpression.java,v 1.4 2001-11-15 22:00:46 dmaze Exp $
+ * $Id: JPrefixExpression.java,v 1.5 2002-06-22 09:52:14 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -47,6 +47,10 @@ public class JPrefixExpression extends JExpression {
     this.oper = oper;
     this.expr = expr;
   }
+
+    public String toString() {
+	return "Prefix:"+oper+expr;
+    }
 
   // ----------------------------------------------------------------------
   // ACCESSORS

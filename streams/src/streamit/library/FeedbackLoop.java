@@ -1,5 +1,7 @@
 package streamit;
 
+import streamit.scheduler.ScheduleBuffers;
+
 // the feedback loop
 public class FeedbackLoop extends Stream
 {
@@ -253,7 +255,7 @@ public class FeedbackLoop extends Stream
     // This code constructs an independent graph for the scheduler
     // ----------------------------------------------------------------
 
-    void setupBufferLengths (Schedule schedule)
+    void setupBufferLengths (ScheduleBuffers buffers)
     {
         // some of these asserts are restrictions on functionality
         // of this function and not on what a correct streamit structure would
@@ -266,24 +268,24 @@ public class FeedbackLoop extends Stream
         // just go through and init the bloody buffers
 
         // start with getting body and loop to initialize their interal buffers
-        body.setupBufferLengths (schedule);
-        loop.setupBufferLengths (schedule);
+        body.setupBufferLengths (buffers);
+        loop.setupBufferLengths (buffers);
 
         // now setup the buffer sizes:
 
         // between joiner and body
         joiner.getIOField ("output", 0).makePassThrough ();
-        body.getInputChannel ().setChannelSize (schedule.getBufferSizeBetween (joiner, body).intValue ());
+        body.getInputChannel ().setChannelSize (buffers.getBufferSizeBetween (joiner, body));
 
         // between body and splitter
-        splitter.getIOField ("input", 0).setChannelSize (schedule.getBufferSizeBetween (body, splitter).intValue ());
+        splitter.getIOField ("input", 0).setChannelSize (buffers.getBufferSizeBetween (body, splitter));
         body.getOutputChannel ().makePassThrough ();
 
         // between splitter and loop
-        loop.getInputChannel ().setChannelSize (schedule.getBufferSizeBetween (splitter, loop).intValue ());
+        loop.getInputChannel ().setChannelSize (buffers.getBufferSizeBetween (splitter, loop));
 
         // between loop and joiner
-        loop.getOutputChannel ().setChannelSize (schedule.getBufferSizeBetween (loop, joiner).intValue ());
+        loop.getOutputChannel ().setChannelSize (buffers.getBufferSizeBetween (loop, joiner));
 
         // make sure that the input/output channels push data through right away:
         if (getInputChannel () != null) getInputChannel ().makePassThrough ();

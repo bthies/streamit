@@ -2,7 +2,7 @@ package streamit.scheduler;
 
 import streamit.misc.AssertedClass;
 
-/* $Id: Schedule.java,v 1.3 2002-05-22 00:28:17 karczma Exp $ */
+/* $Id: Schedule.java,v 1.4 2002-05-24 23:10:31 karczma Exp $ */
 
 /**
  * <dl>
@@ -22,6 +22,16 @@ import streamit.misc.AssertedClass;
 public class Schedule extends AssertedClass
 {
     /**
+     * Checks if the Schedule is a bottom-level schedule.
+     * If the Schedule contains a work function that needs
+     * to be called, it is a bottom schedule.  If it contains
+     * a bunch of sub-schedules, which need to be executed
+     * in order, this is not a bottom schedule.
+     * @return true if this Schedule is a bottom schedule
+     */
+    public boolean isBottomSchedule () { return workFunc != null; }
+    
+    /**
      * all the sub-schedules that are contained by this schedule
      */
     Schedule[] subScheds;
@@ -32,7 +42,7 @@ public class Schedule extends AssertedClass
      * this function will ASSERT.
      * @return subschedules of this schedule
      */
-    final Schedule[] getSubScheds()
+    public Schedule[] getSubScheds()
     {
         ASSERT(subScheds != null);
         return subScheds;
@@ -49,7 +59,7 @@ public class Schedule extends AssertedClass
      * function will ASSERT.
      * @return work function associated with schedule
      */
-    Object getWorkFunc()
+    public Object getWorkFunc()
     {
         ASSERT(workFunc != null);
         return workFunc;

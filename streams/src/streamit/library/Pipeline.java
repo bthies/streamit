@@ -3,6 +3,8 @@ package streamit;
 import java.util.*;
 import java.math.BigInteger;
 
+import streamit.scheduler.ScheduleBuffers;
+
 /**
  *  implements a pipeline - stream already has all the functionality,
  *  so there's no need to put it in Pipeline - just inherit Stream :)
@@ -164,7 +166,7 @@ public class Pipeline extends Stream
         }
     }
 
-    void setupBufferLengths (Schedule schedule)
+    void setupBufferLengths (ScheduleBuffers buffers)
     {
         ListIterator childIter;
         childIter = (ListIterator) streamElements.iterator ();
@@ -177,7 +179,7 @@ public class Pipeline extends Stream
             // advance the iterator:
             Stream child = (Stream) childIter.next ();
             ASSERT (child != null);
-            child.setupBufferLengths (schedule);
+            child.setupBufferLengths (buffers);
 
             source = sink;
             sink = child;
@@ -186,11 +188,11 @@ public class Pipeline extends Stream
             {
                 ASSERT (sink);
 
-                BigInteger buffSize = schedule.getBufferSizeBetween (source, sink);
+                int buffSize = buffers.getBufferSizeBetween (source, sink);
                 ASSERT (buffSize);
 
                 source.getOutputChannel ().makePassThrough ();
-                sink.getInputChannel ().setChannelSize (buffSize.intValue ());
+                sink.getInputChannel ().setChannelSize (buffSize);
             }
         }
     }

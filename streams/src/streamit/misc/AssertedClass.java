@@ -25,8 +25,11 @@ public class AssertedClass
 
         System.err.println ("An ASSERT has failed in class " + (object != null ? object.getClass ().getName () : "(unknown)") + ".  Exiting.\n\n" + message +
 			    "\n");
-        new RuntimeException().printStackTrace();
-        System.exit (1);
+                
+        // print the trace and throw an exception
+        RuntimeException e = new RuntimeException ();
+        e.printStackTrace();
+        throw e;
     }
 
     public void ASSERT(boolean condition)
@@ -74,6 +77,11 @@ public class AssertedClass
         ASSERT (this, false);
     }
 
+    public void ERROR (RuntimeException e)
+    {
+        SERROR (e);
+    }
+
     public void ERROR (Throwable e)
     {
         SERROR (e);
@@ -114,11 +122,18 @@ public class AssertedClass
         ASSERT (null, cond != null);
     }
 
+    public static void SERROR (RuntimeException e)
+    {
+        System.err.println ("An error has occured: " + e.toString ());
+        e.printStackTrace (System.err);
+        throw e;
+    }
+
     public static void SERROR (Throwable e)
     {
         System.err.println ("An error has occured: " + e.toString ());
         e.printStackTrace (System.err);
-        System.exit (1);
+        System.exit (0);
     }
 
     public static void SERROR (String error)

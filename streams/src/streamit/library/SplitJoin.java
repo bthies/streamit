@@ -3,6 +3,7 @@ package streamit;
 import java.util.*;
 import java.lang.reflect.*;
 import java.math.BigInteger;
+import streamit.scheduler.ScheduleBuffers;
 
 // creates a split/join
 public class SplitJoin extends Stream
@@ -303,7 +304,7 @@ public class SplitJoin extends Stream
     public Splitter getSplitter () { return splitter; }
     public Joiner getJoiner () { return joiner; }
     
-    void setupBufferLengths (Schedule schedule)
+    void setupBufferLengths (ScheduleBuffers buffers)
     {
         ListIterator iter;
         iter = childrenStreams.listIterator ();
@@ -314,32 +315,24 @@ public class SplitJoin extends Stream
             Stream child = (Stream) iter.next ();
             ASSERT (child);
 
-            child.setupBufferLengths (schedule);
+            child.setupBufferLengths (buffers);
 
             // init the split channel
             {
-                BigInteger splitBufferSize = schedule.getBufferSizeBetween (splitter, child);
-                ASSERT (splitBufferSize);
+                int splitBufferSize = buffers.getBufferSizeBetween (this, child);
 
                 // if the size of the buffer is zero, there is no corresponding
                 // channel, so don't try to set it.
-                if (splitBufferSize.signum () != 0)
-                {
-                    child.getInputChannel ().setChannelSize (splitBufferSize.intValue ());
-                }
+                child.getInputChannel ().setChannelSize (splitBufferSize);
             }
 
             // init the join channel
             {
-                BigInteger joinBufferSize = schedule.getBufferSizeBetween (child, joiner);
-                ASSERT (joinBufferSize);
+                int joinBufferSize = buffers.getBufferSizeBetween (child, this);
 
                 // if the size of the buffer is zero, there is no corresponding
                 // channel, so don't try to set it.
-                if (joinBufferSize.signum () != 0)
-                {
-                    child.getOutputChannel ().setChannelSize (joinBufferSize.intValue ());
-                }
+                child.getOutputChannel ().setChannelSize (joinBufferSize);
             }
         }
     }

@@ -1,6 +1,6 @@
 package streamit;
 
-import streamit.scheduler.Schedule;
+import streamit.scheduler.ScheduleBuffers;
 
 // a filter is the lowest-level block of streams
 public abstract class Filter extends Stream
@@ -148,7 +148,7 @@ public abstract class Filter extends Stream
         }
     }
 
-    void setupBufferLengths (Schedule schedule)
+    void setupBufferLengths (ScheduleBuffers buffers)
     {
         // this function doesn't need to do anything
     }

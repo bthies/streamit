@@ -3,6 +3,9 @@ package streamit;
 import streamit.Pipeline;
 import java.util.List;
 import java.util.ListIterator;
+import java.lang.reflect.Array;
+
+import streamit.scheduler.Schedule;
 
 /**
  * Main class
@@ -58,27 +61,34 @@ public class StreamIt extends Pipeline
                 
             }
         } else
-        if (schedule instanceof List)
+        if (schedule instanceof Array)
         {
-            List list = (List) schedule;
-            ListIterator iter = list.listIterator ();
+            Object [] array = (Object []) schedule;
+            int size = array.length;
 
-            while (iter.hasNext ())
+
+            for (int index = 0; index < size; index++)
             {
-                Object child = iter.next ();
+                Object child = array [index];
                 ASSERT (child);
                 runSchedule (child);
             }
         } else
-        if (schedule instanceof SchedRepSchedule)
+        if (schedule instanceof Schedule)
         {
-            SchedRepSchedule repSchedule = (SchedRepSchedule) schedule;
-
-            int nTimes = repSchedule.getTotalExecutions ().intValue ();
-            for ( ; nTimes > 0; nTimes--)
+            Schedule repSchedule = (Schedule) schedule;
+            
+            if (repSchedule.isBottomSchedule ())
             {
-                runSchedule (repSchedule.getOriginalSchedule ());
+                runSchedule (repSchedule.getWorkFunc ());
+            } else {
+                int nTimes = repSchedule.getNumReps ();
+                for ( ; nTimes > 0; nTimes--)
+                {
+                    runSchedule (repSchedule.getSubScheds ());
+                }
             }
+
         } else ASSERT (false);
     }
 
@@ -136,14 +146,10 @@ public class StreamIt extends Pipeline
         // setup the scheduler
         if (printGraph)
         {
-            scheduler = new SimpleHierarchicalScheduler ();
-
-            SchedStream stream;
-            stream = (SchedStream) constructSchedule ();
-            ASSERT (stream);
-
-            scheduler.useStream (stream);
-            scheduler.print (System.out);
+            // this is not implemented yet.  when I'm done with
+            // some certain amount of the scheduler, I can start
+            // using the iterators to do this properly.
+            ASSERT (false);
         }
 
         if (!doRun) System.exit (0);
@@ -151,27 +157,33 @@ public class StreamIt extends Pipeline
         // setup the scheduler
         if (scheduledRun)
         {
+            // not implemented yet. waiting for the scheduler to
+            // be done.
+            ASSERT (false);
+            
+            /*
             scheduler = new SimpleHierarchicalScheduler ();
-
+    
             SchedStream stream;
             stream = (SchedStream) constructSchedule ();
             ASSERT (stream);
-
+    
             scheduler.useStream (stream);
             scheduler.computeSchedule ();
-
+    
             // setup the buffer lengths for the stream setup here:
             setupBufferLengths (scheduler.getSchedule ());
-
+    
             // run the init schedule:
             runSchedule (scheduler.getSchedule ().getInitSchedule ());
-
+    
             // and run the steady schedule forever:
             while (nIters != 0)
             {
                 runSchedule (scheduler.getSchedule ().getSteadySchedule ());
                 if (nIters > 0) nIters--;
             }
+            */
         } else {
             while (true)
             {

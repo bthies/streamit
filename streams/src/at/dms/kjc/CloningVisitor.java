@@ -136,10 +136,6 @@ public class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 	toBeCloned.add(self);
 	// visit node
 	visitStream(self);
-	// visit children
-	for (int i=0; i<self.size(); i++) {
-	    iter.get(i).accept(this);
-	}
     }
 
     /* pre-visit a splitjoin */
@@ -149,10 +145,6 @@ public class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 	toBeCloned.add(self);
 	// visit node
 	visitStream(self);
-	// visit children
-	for (int i=0; i<self.size(); i++) {
-	    iter.get(i).accept(this);
-	}
     }
 
     /* pre-visit a feedbackloop */
@@ -162,10 +154,6 @@ public class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 	toBeCloned.add(self);
 	// visit node
 	visitStream(self);
-	// visit body stream
-	iter.getBody().accept(this);
-	// visit loop stream
-	iter.getLoop().accept(this);
     }
 
     /**

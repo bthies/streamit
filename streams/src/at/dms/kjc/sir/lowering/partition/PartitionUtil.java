@@ -56,11 +56,11 @@ public class PartitionUtil {
 	for (int i=0; i<tileWork.length; i++) {
 	    double util = ((double)tileWork[i]) / ((double)maxWork);
 	    totalUtil += util / ((double)tileWork.length);
-	    System.err.println("tile " + i + " has work:\t" + tileWork[i] 
+	    System.out.println("tile " + i + " has work:\t" + tileWork[i] 
 			       + "\t Estimated utilization:\t" + Utils.asPercent(util));
-	    System.err.print(tileContents[i]);
+	    //System.out.print(tileContents[i]);
 	}
 
-	System.err.println("Estimated total utilization: " + Utils.asPercent(totalUtil));
+	System.out.println("Estimated total utilization: " + Utils.asPercent(totalUtil));
     }
 }

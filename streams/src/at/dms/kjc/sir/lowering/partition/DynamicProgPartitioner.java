@@ -93,8 +93,10 @@ public class DynamicProgPartitioner extends ListPartitioner {
 		    for (int i=1; i<self.size(); i++) {
 			SIRStream child = self.get(i);
 			if (equivStructure(lastEquiv, child)) {
+			    /*
 			    System.err.println("Detected symmetry between " + 
 					       firstChild.getName() + " and " + child.getName());
+			    */
 			    configMap.put(child, lastConfig);
 			} else {
 			    lastEquiv = child;
@@ -103,7 +105,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 		    }
 		    // if all were equivalent, then add them to uniform list
 		    if (lastEquiv== self.get(0)) {
-			System.err.println("Detected uniform splitjoin: " + self.getName());
+			System.out.println("Detected uniform splitjoin: " + self.getName());
 			uniformSJ.add(self);
 		    }
 		    return makeConfig(self);

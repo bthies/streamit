@@ -295,11 +295,16 @@ public class RawBackend {
 	    }
 	}
 	
+	//The following code fixes an implementation quirk of two-stage-filters
+	//in the *FIRST* version of the scheduler.  It is no longer needed,
+	//but I am keeping it around just in case we every need to go back to the old
+	//scheduler.
+	
 	//increment the execution count for all two-stage filters that have 
 	//initpop == initpush == 0, do this for the init schedule only
 	//we must do this for all the two-stage filters, 
 	//so iterate over the keyset from the steady state 
-	Iterator it = result[1].keySet().iterator();
+	/*	Iterator it = result[1].keySet().iterator();
 	while(it.hasNext()){
 	    FlatNode node = (FlatNode)it.next();
 	    if (node.contents instanceof SIRTwoStageFilter) {
@@ -315,7 +320,7 @@ public class RawBackend {
 		    result[0].put(node, new Integer(1 + oldVal));   
 		}
 	    }
-	}
+	    }*/
     }
     
     //debug function

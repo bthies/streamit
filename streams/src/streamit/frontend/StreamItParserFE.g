@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.49 2004-11-15 06:11:29 thies Exp $
+ * $Id: StreamItParserFE.g,v 1.50 2005-02-01 05:07:54 rabbah Exp $
  */
 
 header {
@@ -539,6 +539,8 @@ multExpr returns [Expression x] { x = null; Expression r; int o = 0; }
 		(	( STAR { o = ExprBinary.BINOP_MUL; }
 			| DIV  { o = ExprBinary.BINOP_DIV; }
 			| MOD  { o = ExprBinary.BINOP_MOD; }
+			| LSHIFT { o = ExprBinary.BINOP_LSHIFT; }
+			| RSHIFT { o = ExprBinary.BINOP_RSHIFT; }
 			)
 			r=castExpr
 			{ x = new ExprBinary(x.getContext(), o, x, r); }
@@ -554,8 +556,7 @@ castExpr returns [Expression x] { x = null; Type t=null; }
 
 inc_dec_expr returns [Expression x] { x = null; }
 	:	(incOrDec) => x=incOrDec
-	|	b:BANG x=value_expr { x = new ExprUnary(getContext(b),
-												ExprUnary.UNOP_NOT, x); }
+	|	b:BANG x=value_expr { x = new ExprUnary(getContext(b), ExprUnary.UNOP_NOT, x); }
 	|	x=value_expr
 	;
 
@@ -576,6 +577,7 @@ value_expr returns [Expression x] { x = null; boolean neg = false; }
 	:	(m:MINUS { neg = true; })?
 		(x=minic_value_expr | x=streamit_value_expr)
 		{ if (neg) x = new ExprUnary(getContext(m), ExprUnary.UNOP_NEG, x); }
+	|	c:BITWISE_COMPLEMENT x=value_expr { x = new ExprUnary(getContext(c), ExprUnary.UNOP_COMPLEMENT, x); }
 	;
 
 streamit_value_expr returns [Expression x] { x = null; }

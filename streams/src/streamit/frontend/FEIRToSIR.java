@@ -663,6 +663,9 @@ public class FEIRToSIR implements FEVisitor, Constants {
   public Object visitExprUnary(ExprUnary exp) {
     debug("In visitExprUnary\n");
     switch (exp.getOp()) {
+    case ExprUnary.UNOP_COMPLEMENT:
+      debug("  Unhandled unary complement\n");
+      return null;
     case ExprUnary.UNOP_NOT:
       /* BUG: possibly...  it seems like you can't have a unary not! */
       debug("  Unhandled unary not\n");

@@ -62,7 +62,7 @@ public class OSet
 
     public Pair insert(Object data)
     {
-        Pair result = tree.insert(data);
+        Pair result = tree.insert(data, false);
         return new Pair(
             new OSetIterator((RBNode) result.first),
             result.second);

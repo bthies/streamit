@@ -36,6 +36,19 @@ public class OMapIterator extends AssertedClass
     {
         return ((Pair)setIter.get()).second;
     }
+    
+    /**
+     * Overwrite the data mapped to a certain key. Returns the old object
+     * mapped to the key.
+     */
+    public Object setData(Object newData)
+    {
+        Pair mapPair = (Pair)setIter.get(); 
+        Object oldData = mapPair.second;
+        mapPair.second = newData;
+        
+        return oldData;
+    }
 
     public void next()
     {

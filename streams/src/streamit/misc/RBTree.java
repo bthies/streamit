@@ -16,7 +16,7 @@
 
 package streamit.misc;
 
-/* $Id: RBTree.java,v 1.6 2003-10-09 21:03:16 dmaze Exp $ */
+/* $Id: RBTree.java,v 1.7 2003-11-03 20:23:20 karczma Exp $ */
 
 public class RBTree extends AssertedClass
 {
@@ -112,7 +112,7 @@ public class RBTree extends AssertedClass
         return node;
     }
 
-    public Pair insert(Object insertData)
+    public Pair insert(Object insertData, boolean replace)
     {
         ASSERT(insertData);
 
@@ -187,9 +187,16 @@ public class RBTree extends AssertedClass
                 }
                 else
                 {
-                    // insertData == parentData => replace the node
-                    // and quit
-                    insertionPoint.nodeData = insertData;
+                    // insertData == parentData =>
+                    // there already exists a node with the key equal
+                    // to the key in insertData
+                    // if the user so requests, replace the old data with
+                    // insertData.
+                    if (replace)
+                    {
+                        insertionPoint.nodeData = insertData;
+                    }
+                    
                     return new Pair(insertionPoint, Boolean.FALSE);
                 }
             }

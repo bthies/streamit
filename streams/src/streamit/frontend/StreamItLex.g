@@ -1,6 +1,6 @@
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.6 2002-08-16 19:04:46 dmaze Exp $
+ * $Id: StreamItLex.g,v 1.7 2002-09-09 20:39:08 dmaze Exp $
  */
 
 header {
@@ -42,8 +42,6 @@ tokens {
 	"continue"; "return";
 	// Intrinsic values:
 	"pi";
-	// Other:
-	"print";
 }
 
 ARROW :	"->" ;

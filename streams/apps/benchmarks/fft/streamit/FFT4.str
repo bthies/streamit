@@ -6,17 +6,17 @@ void->void pipeline FFT {
 
 float->float splitjoin FFTKernel (int N) {
     add splitjoin {
-	split RoundRobin(N/2, N/2);
+	split roundrobin(N/2, N/2);
 	for (int i=0; i<2; i++) {
 	    add splitjoin {
-		split RoundRobin();
+		split roundrobin();
 		add Identity<float>();
 		add Identity<float>();
-		join RoundRobin(N/4, N/4);
-	    }
+		join roundrobin(N/4, N/4);
+	    };
 	}
-	join RoundRobin();
-    }
+	join roundrobin();
+    };
     for (int i=2; i<N; i*=2) {
 	add Butterfly(i, N);
     }
@@ -24,17 +24,17 @@ float->float splitjoin FFTKernel (int N) {
 
 float->float pipeline Butterfly (int N, int W) {
     add splitjoin {
-	split RoundRobin(N, N);
+	split roundrobin(N, N);
 	add Multiply();
 	add Identity<float>();
-	join RoundRobin();
-    }
+	join roundrobin();
+    };
     add splitjoin {
-	split Duplicate();
+	split duplicate;
 	add Subtract();
 	add Add();
-	join RoundRobin(N, N);
-    }
+	join roundrobin(N, N);
+    };
 }
 
 void->float filter OneSource {
@@ -68,7 +68,7 @@ float->float filter Subtract {
 
 float->void filter FloatPrinter {
     work pop 1 {
-	System.out.println(pop());
+	print(pop());
     }
 }
 

@@ -1,6 +1,6 @@
 /*
  * HelloWorld6.c: translated "hello, world" StreaMIT example
- * $Id: HelloWorld6.c,v 1.1 2001-09-25 18:31:57 dmaze Exp $
+ * $Id: HelloWorld6.c,v 1.2 2001-09-25 18:57:01 dmaze Exp $
  */
 
 #include "streamit.h"
@@ -10,7 +10,7 @@
 
 typedef struct HelloWorld6_1_data
 {
-  filter_context c;
+  filter_context *c;
   int x;
 } HelloWorld6_1_data;
 
@@ -33,7 +33,7 @@ void HelloWorld6_1_work(void *dv, tape *in_tape, tape *out_tape)
 
 typedef struct HelloWorld6_2
 {
-  filter_context c;
+  filter_context *c;
 } HelloWorld6_2;
 
 void HelloWorld6_2_init(HelloWorld6_2_data *d, void *p)
@@ -51,7 +51,7 @@ void HelloWorld6_2_work(void *dv, tape *in_tape, tape *out_tape)
 
 typedef struct HelloWorld6_data
 {
-  filter_context c;
+  filter_context *c;
   HelloWorld6_1 *child1;
   HelloWorld6_2 *child2;
 } HelloWorld6_data;
@@ -60,13 +60,15 @@ void HelloWorld6_init(HelloWorld6_data *d, void *p)
 {
   set_stream_type(d->c, PIPELINE);
   set_work(d->c, HelloWorld6_work);
-
+  
   d->child1 = malloc(sizeof(HelloWorld6_1_data));
-  register_child(d->c, d->child1);
+  d->child1->c = create_context(d->child1);
+  register_child(d->c, d->child1->c);
   HelloWorld6_1_init(d->child1, d);
 
   d->child2 = malloc(sizeof(HelloWorld6_2_data));
-  register_child(d->c, d->child2);
+  d->child2->c = create_context(d->child2);
+  register_child(d->c, d->child2->c);
   HelloWorld6_2_init(d->child2, d);
 }
 
@@ -77,4 +79,13 @@ void HelloWorld6_work(void *dv, tape *in_tape, tape *out_tape)
   dv->child1->x++;
   itape[0] = dv->child1->x;
   printf("%d\n", itape[0]);
+}
+
+int main(int argc, char **argv)
+{
+  HelloWorld6_data *test = malloc(sizeof(HelloWorld6_data));
+  test->c = create_context(test);
+  HelloWorld6_init(test, NULL);
+  
+  streamit_run(test->c);
 }

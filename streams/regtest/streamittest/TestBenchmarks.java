@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.13 2002-11-07 17:45:42 thies Exp $
+ * $Id: TestBenchmarks.java,v 1.14 2002-11-07 22:41:08 dmaze Exp $
  **/
 package streamittest;
 
@@ -53,6 +53,7 @@ public class TestBenchmarks extends StreamITTestCase {
         suite.addTest(new TestBenchmarks("testFm", flags));
         suite.addTest(new TestBenchmarks("testGsm", flags));
         suite.addTest(new TestBenchmarks("testNokia", flags));
+        suite.addTest(new TestBenchmarks("testMatMulBlock", flags));
 
 	return suite;
     }
@@ -152,6 +153,14 @@ public class TestBenchmarks extends StreamITTestCase {
         doCompileTest(root, "LinkedVocoder.java");
         doMake(root, "more-imem");
         doRunTest(root, "LinkedVocoder.java", 0, 1);
+    }
+
+    public void testMatMulBlock()
+    {
+        String root = BENCH_ROOT + "matmul-block/streamit/";
+        doSyntaxConvertTest(root, "MatrixMultBlock.str", "MatrixMultBlock.java");
+        doCompileTest(root, "MatrixMultBlock.java");
+        doRunTest(root, "MatrixMultBlock.java", 0, 108);
     }
 }
 

@@ -59,4 +59,12 @@ public class SIRPipelineIter extends SIRIterator implements PipelineIter {
 	}
 	v.postVisitPipeline(obj, this);
     }
+
+    /**
+     * This function is needed by the scheduler, but isn't useful from
+     * the compiler.
+     */
+    public Iterator getUnspecializedIter() {
+	return this;
+    }
 }

@@ -1,6 +1,7 @@
 package at.dms.kjc.iterator; 
 
 import at.dms.kjc.sir.*;
+import at.dms.util.*;
 import streamit.scheduler.iriter.*;
 
 public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
@@ -114,6 +115,24 @@ public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
     }
 
     /**
+     * Returns n-th work function associated with this Splitter.
+     * @return n-th work function for the Splitter
+     */
+    public Object getSplitterWork (int nWork) {
+	Utils.fail("todo - still need to implement");
+	return null;
+    }
+
+    /**
+     * Returns n-th work function associated with this Joiner.
+     * @return n-th work function for the Joiner
+     */
+    public Object getJoinerWork(int nWork) {
+	Utils.fail("todo - still need to implement");
+	return null;
+    }
+
+    /**
      * Returns distribution of weights on a particular invocation
      * of work function for Joiner of this SplitJoin.  The 
      * distribution is simply an array of ints, with numChildren 
@@ -146,4 +165,11 @@ public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
 	v.postVisitSplitJoin(obj, this);
     }
 
+    /**
+     * This function is needed by the scheduler, but isn't useful from
+     * the compiler.
+     */
+    public Iterator getUnspecializedIter() {
+	return this;
+    }
 }

@@ -96,4 +96,12 @@ public class SIRFilterIter extends SIRIterator implements FilterIter {
     public void accept(StreamVisitor v) {
 	v.visitFilter(obj, this);
     }
-}
+
+    /**
+     * This function is needed by the scheduler, but isn't useful from
+     * the compiler.
+     */
+    public Iterator getUnspecializedIter() {
+	return this;
+    }
+ }

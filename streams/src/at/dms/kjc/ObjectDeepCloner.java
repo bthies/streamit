@@ -322,9 +322,9 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 	// visit node
 	visitStream(self);
 	// visit body stream
-	iter.get(SIRFeedbackLoop.BODY).accept(this);
+	iter.getBody().accept(this);
 	// visit loop stream
-	iter.get(SIRFeedbackLoop.BODY).accept(this);
+	iter.getLoop().accept(this);
     }
 
     /**

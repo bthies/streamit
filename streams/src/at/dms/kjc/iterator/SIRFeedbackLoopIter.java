@@ -42,7 +42,7 @@ public class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter
      * Returns an iterator for the body of the FeedbackLoop.
      * @return iterator for the body of the FeedbackLoop
      */
-    public Iterator getBody () { 
+    public Iterator getBodyChild () { 
 	return IterFactory.createIter(obj.getBody(),
 				      this,
 				      SIRFeedbackLoop.BODY);
@@ -52,10 +52,22 @@ public class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter
      * Returns an iterator for the loop of the FeedbackLoop.
      * @return iterator for the loop of the FeedbackLoop
      */
-    public Iterator getLoop () { 
+    public Iterator getLoopChild () { 
 	return IterFactory.createIter(obj.getLoop(),
 				      this,
 				      SIRFeedbackLoop.LOOP);
+    }
+
+    public SIRIterator getLoop() {
+	return IterFactory.createIter(obj.getLoop(),
+				      this,
+				      SIRFeedbackLoop.LOOP);
+    }
+
+    public SIRIterator getBody() {
+	return IterFactory.createIter(obj.getBody(),
+				      this,
+				      SIRFeedbackLoop.BODY);
     }
 
     /**
@@ -86,6 +98,24 @@ public class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter
      */
     public int getSplitterNumWork () {
 	return 1;
+    }
+
+    /**
+     * Returns n-th work function associated with this Splitter.
+     * @return n-th work function for the Splitter
+     */
+    public Object getSplitterWork (int nWork) {
+	Utils.fail("todo - still need to implement");
+	return null;
+    }
+
+    /**
+     * Returns n-th work function associated with this Joiner.
+     * @return n-th work function for the Joiner
+     */
+    public Object getJoinerWork(int nWork) {
+	Utils.fail("todo - still need to implement");
+	return null;
     }
 
     /**
@@ -162,5 +192,13 @@ public class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter
 	((SIRIterator)getBody()).accept(v);
 	((SIRIterator)getLoop()).accept(v);
 	v.postVisitFeedbackLoop(obj, this);
+    }
+
+    /**
+     * This function is needed by the scheduler, but isn't useful from
+     * the compiler.
+     */
+    public Iterator getUnspecializedIter() {
+	return this;
     }
 }

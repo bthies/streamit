@@ -186,6 +186,19 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     }
 
     /**
+     * Returns whether or not the given name represents a toplevel
+     * (void->void) stream that can be executed by itself.
+     */
+    public boolean isToplevelStream(String name) {
+	return (name.equals("StreamIt") ||
+		name.equals("StreamItFilter") ||
+		name.equals("StreamItPhasedFilter") ||
+		name.equals("StreamItPipeline") ||
+		name.equals("StreamItSplitJoin") ||
+		name.equals("StreamItFeedbackLoop"));
+    }
+
+    /**
      * Searches for <className> and returns associated op.  Does not
      * worry about anything recursive--should call getVisitedOp in the
      * general case.
@@ -232,7 +245,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     private SIROperator newSIROP(JClassDeclaration clazz)  {
 	String TYPE = clazz.getSourceClass().getSuperClass().getIdent();
     
-	if (TYPE.equals("Pipeline") || TYPE.equals("StreamIt")) {
+	if (TYPE.equals("Pipeline") || TYPE.equals("StreamIt") || TYPE.equals("StreamItPipeline")) {
 	    SIRPipeline current = new SIRPipeline((SIRContainer)parentStream, 
 						  clazz.getIdent(),
 				   JFieldDeclaration.EMPTY(),
@@ -247,7 +260,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             parentStream = current;
             return current;
         }
-	if (TYPE.equals("Filter")) {
+	if (TYPE.equals("Filter") || TYPE.equals("StreamItFilter")) {
 	    SIRFilter current = new SIRFilter();
 	    current.setParent((SIRContainer)parentStream);
 	    current.setIdent(clazz.getIdent());
@@ -256,7 +269,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    parentStream = current;
 	    return current;
 	}
-        if (TYPE.equals("PhasedFilter")) {
+        if (TYPE.equals("PhasedFilter") || TYPE.equals("StreamItPhasedFilter")) {
             SIRPhasedFilter current = new SIRPhasedFilter();
             current.setParent((SIRContainer)parentStream);
             current.setIdent(clazz.getIdent());
@@ -265,14 +278,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             parentStream = current;
             return current;
         }
-	if (TYPE.equals("FeedbackLoop")) {
+	if (TYPE.equals("FeedbackLoop") || TYPE.equals("StreamItFeedbackLoop")) {
 	    SIRFeedbackLoop current = new SIRFeedbackLoop();
 	    current.setParent((SIRContainer)parentStream);
 	    current.setIdent(clazz.getIdent());
 	    parentStream = current;
 	    return current;
 	}
-	if (TYPE.equals("SplitJoin")) {
+	if (TYPE.equals("SplitJoin") || TYPE.equals("StreamItSplitJoin")) {
 	    SIRSplitJoin current = new SIRSplitJoin((SIRContainer)parentStream,
 						    clazz.getIdent());
 	    parentStream = current;
@@ -280,7 +293,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	}
 						    
 	at.dms.util.Utils.fail(printLine(clazz) + 
-			       "You are creating an unsupported streaMIT Operator: "
+			       "You are creating an unsupported StreamIt Operator: "
 			       + TYPE + ".");
 	return null;
     }
@@ -487,7 +500,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	}
 
 	//If this class is public then it is the topLevel stream (entry point)
-	if (self.getSourceClass().getSuperClass().getIdent().equals("StreamIt")) {
+	if (isToplevelStream(self.getSourceClass().getSuperClass().getIdent())) {
 	    if (topLevel == null)
 		topLevel = (SIRStream) current;
 	    else
@@ -550,8 +563,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 		if (typeDeclarations[i] instanceof JClassDeclaration) {
 		    JClassDeclaration decl = (JClassDeclaration)
 			typeDeclarations[i];
-		    if (decl.getSourceClass().getSuperClass().
-			getIdent().equals("StreamIt")) {
+		    if (isToplevelStream(decl.getSourceClass().getSuperClass().getIdent())) {
 			if (TopLevelDeclaration != null)
 			    at.dms.util.Utils.fail(printLine(decl) + 
 						   "Top level stream already set.");

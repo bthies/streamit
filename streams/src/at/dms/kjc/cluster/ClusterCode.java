@@ -128,12 +128,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("void __splitter_"+thread_id+"_work() {\n");
 
-	p.print("  "+baseType.toString()+" tmp;\n");
-
 	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
-	    
-	    p.print("  tmp = "+in.consumer_name()+".read_"+baseType.toString()+"();\n");
-	    
+
+	    p.print("  "+baseType.toString()+" tmp;\n");	
+	    p.print("  tmp = "+in.consumer_name()+".read_"+baseType.toString()+"();\n");	    
 	    for (int i = 0; i < out.size(); i++) {
 		NetStream s = (NetStream)out.elementAt(i);		
 		p.print("  "+s.producer_name()+".write_"+baseType.toString()+"(tmp);\n");
@@ -141,8 +139,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	} else if (splitter.getType().equals(SIRSplitType.ROUND_ROBIN)) {
 	    	    
+	    p.print("  "+baseType.toString()+" tmp;\n");
 	    for (int i = 0; i < out.size(); i++) {
-
 		p.print("  tmp = "+in.consumer_name()+".read_"+baseType.toString()+"();\n");
 		NetStream s = (NetStream)out.elementAt(i);		
 		p.print("  "+s.producer_name()+".write_"+baseType.toString()+"(tmp);\n");

@@ -1,4 +1,4 @@
-SOURCES  = HDTV.java TrellisEncoder.java TrellisDecoder.java PreCoder.java PreDecoder.java UngerboeckEncoder.java UngerboeckDecoder.java ReedSolomonEncoder.java ReedSolomonDecoder.java ConvolutionalInterleaver.java ConvolutionalDeinterleaver.java TrellisDecoderPipeline.java TrellisEncoderPipeline.java SymbolMapper.java SymbolUnMapper.java DelayPipeline.java DataReorder.java DataUnReorder.java
+SOURCES  = HDTV.java TrellisEncoder.java TrellisDecoder.java PreCoder.java PreDecoder.java UngerboeckEncoder.java UngerboeckDecoder.java ReedSolomonEncoder.java ReedSolomonDecoder.java ConvolutionalInterleaver.java ConvolutionalDeinterleaver.java TrellisDecoderPipeline.java TrellisEncoderPipeline.java SymbolMapper.java SymbolUnMapper.java DelayPipeline.java DataReorder.java Bitifier.java UnBitifier.java NoiseSource.java
 
 COMPILER = java -Xmx512M  at.dms.kjc.Main -s
 LINKER   = gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c 
@@ -35,7 +35,7 @@ uni: uni-compile
 #HDTV.exe -i 1000
 
 raw-compile:
-	$(COMPILER) --raw 8 -partition --fusion $(SOURCES)
+	$(COMPILER) --raw 8 -partition $(SOURCES)
 raw: raw-compile
 	make -f Makefile.streamit run
 

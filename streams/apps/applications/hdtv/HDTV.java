@@ -10,7 +10,7 @@ public class HDTV extends StreamIt
     //static final int NUM_TRELLIS_ENCODERS = 12;
     static final int NUM_TRELLIS_ENCODERS = 12;
     //static final int INTERLEAVE_DEPTH = 52;
-    static final int INTERLEAVE_DEPTH = 5;
+    //static final int INTERLEAVE_DEPTH = 5;
 
     //include variables for parsing here!
     public static void main(String args[]) 
@@ -64,6 +64,9 @@ class HDTVEncodePipeline extends Pipeline {
 	this.add(new DataReorder(1)); // 1 means reorder
 
 	// -- data is bits in integers--
+
+	// insert some noise
+	//this.add(new NoiseSource(1000));
 	
 	// create our symbols to transmit over the noisy channel
 	this.add(new SymbolMapper());
@@ -230,20 +233,18 @@ class SyncGenerator extends Filter {
     }
     public void work() {
 	// push out the sync value on to the output tape
-	generateSync();
-	// copy the remaining 828 symbols from the input to the output
-	for (int i=0; i<DATA_SEGMENT_SIZE; i++) {
-	    output.pushInt(input.popInt());
-	}
-    }
-    public void generateSync() {
-	// the sync, according to the a53, rev b spec
+      	// the sync, according to the a53, rev b spec
 	// is binary 1001, encoded as symbols
 	// 5 -5 -5 5
 	output.pushInt(5);
 	output.pushInt(-5);
 	output.pushInt(-5);
 	output.pushInt(5);
+
+	// copy the remaining 828 symbols from the input to the output
+	for (int i=0; i<DATA_SEGMENT_SIZE; i++) {
+	    output.pushInt(input.popInt());
+	}
     }
 
 }

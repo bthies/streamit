@@ -120,7 +120,7 @@ public class SimpleDot extends StreamItDot
      * pipelines and splitjoins in LinearDot.
      **/
     public String getClusterString(SIRStream self) {
-	String qualified = self.getClass()+"";
+	String qualified = self.getIdent()+"";
 	int i = qualified.lastIndexOf(".");
 	if (i>0) {
 	    qualified = qualified.substring(i+4).toLowerCase();

@@ -1,7 +1,8 @@
-
-void->void pipeline DCT() {
+// the IDCT uses a sligthly different structure than the DCT,
+// this, I think will help load balancing
+void->void pipeline IDCT() {
     add source();
-    add DCTcore(4);
+    add IDCTcore(4);
     add sink(4);
 }
 
@@ -13,16 +14,15 @@ void->void pipeline DCT() {
 void->float filter source () {
 	float[4] test;
     init{
-	test[0]=1;
-	test[1]=1;
-	test[2]=1;
-	test[3]=1;
+	test[0]=2*sqrt(2);
+	test[1]=0;
+	test[2]=0;
+	test[3]=0;
     }
 
     work push 4 {
 	push(test[0]);
 	push(test[1]);
-
 	push(test[2]);
 	push(test[3]);
     }
@@ -42,14 +42,14 @@ float->void filter sink(int N) {
 
 
 // this pipeline performs the core DCT operation
-float->float pipeline DCTcore(int N) {
+float->float pipeline IDCTcore(int N) {
     if (N==2) {
-	add TwoPointDCT();
+	add TwoPointIDCT();
     }
     else {
+	add Irecurse(N);
+	add Idecimate(N);
 	add bitrev(N);
-	add decimate(N);
-	add recurse(N);
     }
 }
 
@@ -58,10 +58,10 @@ float->float pipeline DCTcore(int N) {
 
 // this split join gets the weighted bit reversed input and performes
 // the DCT recursion
-float->float splitjoin recurse(int N) {
-    split roundrobin(N/2);
-    add DCTcore(N/2);
-    add reordDCT(N/2);
+float->float splitjoin Irecurse(int N) {
+    split roundrobin(1);
+    add IDCTcore(N/2);
+    add reordIDCT(N/2);
     join roundrobin(1);
 }
 	
@@ -69,9 +69,9 @@ float->float splitjoin recurse(int N) {
 
 // this pipeline performes the second DCT operation which requires 
 // combining the outputs
-float->float pipeline reordDCT(int N) {
-    add DCTcore(N);
-    add outmix(N);
+float->float pipeline reordIDCT(int N) {
+    add inmix(N);
+    add IDCTcore(N);
 }
 
 
@@ -79,19 +79,20 @@ float->float pipeline reordDCT(int N) {
 
 
 // peeks and pops subject of further inquiry
-// this filter performs the combinations at the output
-// of the second DCT (look at Rao, Yim 61)
-float->float filter outmix(int N){
+// this filter performs the combinations at the input
+// of the second IDCT (look at Rao, Yim 61)
+float->float filter inmix(int N){
     work push N pop N {
 	float[N] in_arr;
    	
 	for (int i=0; i<N; i++)
 	    in_arr[i]=pop();
 	
-	for (int i=0;i<(N-1);i++)
-	    push(in_arr[i]+in_arr[i+1]);
+	for (int i=N-2;i>=0;i--)
+	    in_arr[i]=in_arr[i]-in_arr[i+1];
 
-	push(in_arr[N-1]);
+	for (int i=0; i<N; i++)
+	    push(in_arr[i]);
     }
 }
 
@@ -104,7 +105,7 @@ float->float filter outmix(int N){
 
 
 //this filter handles the case of N=2
-float->float filter TwoPointDCT() {
+float->float filter TwoPointIDCT() {
     float scale;
 
     init {
@@ -118,8 +119,8 @@ float->float filter TwoPointDCT() {
 	a=pop();
 	b=pop();
 
-	println(a);
-	println(b);
+	//println(a);
+	//println(b);
 	
 	push((a+b)/scale);
 	push((a-b)/scale);
@@ -128,32 +129,36 @@ float->float filter TwoPointDCT() {
 
 
 
-// this filter mixes the inputs with correct with correct weights
-float->float filter decimate(int N) {
-    float[N/2] coef; //this arrays stores the coefs
+// this filter regenerates the numbers with correct  weights
+float->float splitjoin Idecimate(int N) {
+        float coef; //this arrays stores the coefs
+	split roundrobin(2);
 
-    init {
+
 	for (int i=0;i<(N/2);i++){
-	     coef[i]=1/(2*sqrt(2.0/N)*cos((2*i+1)*pi/(2*N)));
+	     coef=1/(2*sqrt(2.0/N)*cos((2*i+1)*pi/(2*N)));
+	     add recover(coef);	     // recover is a filter with structure similar to a twopoin DCT
+	}
 
-	   }
-    }
+	join roundrobin(1);
+}
 
-    work push N pop N {
-	float[N] in_arr; //input array
-	for (int i=0;i<N;i++)
-	    in_arr[i]=pop();
+// this is the recovery filter when it undoes the weighted mixing
+// of the DCT
+ 
+float->float filter recover(float coef) {
+    
+    work push 2 pop 2 {
+	float a;
+	float b;
 
-	for (int i=0;i<N/2;i++)
-	    push(in_arr[i]+in_arr[i+N/2]);
+	a=pop();
+	b=pop();
 
-	float temp;
+	b=b/coef;
 
-	for (int i=0;i<N/2;i++)
-	    {
-	    temp=in_arr[i]-in_arr[i+N/2];
-	    push(temp*coef[i]);
-	    }		
+	push((a+b)/2);
+	push((a-b)/2);		
    
     }
 }
@@ -165,7 +170,7 @@ float->float filter decimate(int N) {
 // this round roubin splitjoin uses the reversal filter to perform the bit reversal
 // operation. only the second half of a sequence is reversed.
 float->float splitjoin bitrev(int N) {
-    split roundrobin(N/2);
+   split roundrobin(N/2);
    add DamnIdentity();
    add reversal(N/2);
    join roundrobin(N/2);

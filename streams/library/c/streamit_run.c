@@ -49,6 +49,6 @@ void streamit_run (stream_context *c)
     // run the work function indefinitely
     while (1)
     {
-        c->work_function (c->stream_data, c->input_tape, c->output_tape);
+        c->work_function (c->stream_data);
     }
 }

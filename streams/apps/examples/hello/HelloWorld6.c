@@ -1,10 +1,9 @@
 /*
  * HelloWorld6.c: translated "hello, world" StreaMIT example
- * $Id: HelloWorld6.c,v 1.7 2001-09-28 20:18:24 karczma Exp $
+ * $Id: HelloWorld6.c,v 1.8 2001-10-03 14:10:32 thies Exp $
  */
 
 #include "streamit.h"
-#include <stdio.h>
 #include <stdlib.h>
 
 /* dzm: I expect that the code will be output in roughly this order,
@@ -17,7 +16,7 @@ typedef struct HelloWorld6_1_data
 } HelloWorld6_1_data;
 
 void HelloWorld6_1_init(HelloWorld6_1_data *d, void *p);
-void HelloWorld6_1_work(HelloWorld6_1_data *d, tape *in_tape, tape *out_tape);
+void HelloWorld6_1_work(HelloWorld6_1_data *d);
 
 /* dzm: We need to tell the library the type/size of the channel. */
 void HelloWorld6_1_init(HelloWorld6_1_data *d, void *p)
@@ -29,10 +28,10 @@ void HelloWorld6_1_init(HelloWorld6_1_data *d, void *p)
 }
 
 /* dzm: subtlety involving the ++ operator and macros.  Hmm. */
-void HelloWorld6_1_work(HelloWorld6_1_data *d, tape *in_tape, tape *out_tape)
+void HelloWorld6_1_work(HelloWorld6_1_data *d)
 {
   d->x++;
-  PUSH(out_tape, int, d->x);
+  PUSH(d->c, int, d->x);
 }
 
 typedef struct HelloWorld6_2_data
@@ -41,7 +40,7 @@ typedef struct HelloWorld6_2_data
 } HelloWorld6_2_data;
 
 void HelloWorld6_2_init(HelloWorld6_2_data *d, void *p);
-void HelloWorld6_2_work(HelloWorld6_2_data *d, tape *in_tape, tape *out_tape);
+void HelloWorld6_2_work(HelloWorld6_2_data *d);
 
 void HelloWorld6_2_init(HelloWorld6_2_data *d, void *p)
 {
@@ -51,9 +50,9 @@ void HelloWorld6_2_init(HelloWorld6_2_data *d, void *p)
 }
 
 /* dzm: Way magical. */
-void HelloWorld6_2_work(HelloWorld6_2_data *d, tape *in_tape, tape *out_tape)
+void HelloWorld6_2_work(HelloWorld6_2_data *d)
 {
-  printf("%d\n", POP(in_tape, int));
+  printf("%d\n", POP(d->c, int));
 }
 
 typedef struct HelloWorld6_data
@@ -64,7 +63,7 @@ typedef struct HelloWorld6_data
 } HelloWorld6_data;
 
 void HelloWorld6_init(HelloWorld6_data *d, void *p);
-void HelloWorld6_work(HelloWorld6_data *d, tape *in_tape, tape *out_tape);
+void HelloWorld6_work(HelloWorld6_data *d);
 
 void HelloWorld6_init(HelloWorld6_data *d, void *p)
 {
@@ -84,7 +83,7 @@ void HelloWorld6_init(HelloWorld6_data *d, void *p)
   create_tape(d->child1->c, d->child2->c, sizeof(int), 1);
 }
 
-void HelloWorld6_work(HelloWorld6_data *d, tape *in_tape, tape *out_tape)
+void HelloWorld6_work(HelloWorld6_data *d)
 {
   int itape[1];
   d->child1->x++;

@@ -9,14 +9,14 @@ typedef struct tape {
   int tape_length;
 } tape;
 
-#define PUSH(t, type, d) { if (++(t)->write_pos >= (t)->tape_length ) \
-                             (t)->write_pos = 0; \
-                           ((type *)(t)->data)[(t)->write_pos] = (d); }
-#define PEEK(t, type, n) (((type *)t->data)[(t->read_pos+n)%t->tape_length])
-#define POP(t, type) ((((++t->read_pos) >= t->tape_length) ? (t->read_pos = 0) : 0), \
-                      ((type *)t->data)[t->read_pos])
+#define PUSH(c, type, d) { if (++(c)->output_tape->write_pos >= (c)->output_tape->tape_length ) \
+                             (c)->output_tape->write_pos = 0; \
+                           ((type *)(c)->output_tape->data)[(c)->output_tape->write_pos] = (d); }
+#define PEEK(c, type, n) (((type *)c->input_tape->data)[(c->input_tape->read_pos+n)%c->input_tape->tape_length])
+#define POP(c, type) ((((++c->input_tape->read_pos) >= c->input_tape->tape_length) ? (c->input_tape->read_pos = 0) : 0), \
+                      ((type *)c->input_tape->data)[c->input_tape->read_pos])
 
-typedef void (*work_fn)(void *, tape *in, tape *out);
+typedef void (*work_fn)(void *);
 
 typedef enum stream_type {
   INVALID_STREAM_TYPE,
@@ -91,7 +91,6 @@ typedef union latency {
 
 /* TODO: define LATENCY_BEST_EFFORT as a special case */
 typedef void (*streamit_handler)(void *);
-typedef void (*work_fn)(void *, tape *in, tape *out);
 typedef streamit_handler *interface_table;
 
 stream_context *create_context(void *p);

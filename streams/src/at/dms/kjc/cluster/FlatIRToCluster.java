@@ -348,10 +348,28 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	print("\nvoid check_messages__"+selfID+"() {\n");
 
-	print("  message *msg;\n");
+	print("  message *msg, *last = NULL;\n");
+
+
+	if (restrictedExecution) {
+	    print("  while (__credit_"+selfID+" <= __counter_"+selfID+") {\n");
+	}
+	
+	{
+	    Iterator i = receives_from.iterator();
+	    while (i.hasNext()) {
+		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+		print("  if (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n    handle_message__"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n  } // if\n");
+	    }
+	}
+
+	if (restrictedExecution) {
+	    print("  } // while \n");
+	}
+
 
 	print("  for (msg = __msg_stack_"+selfID+"; msg != NULL; msg = msg->next) {\n");
-	print("    if (msg->execute_at == __counter_"+selfID+") {\n");
+	print("    if (msg->execute_at <= __counter_"+selfID+") {\n");
 
 
 	SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
@@ -408,28 +426,19 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		    print("      }\n");
 		}
 	    }
+	    
+	    print("      if (last != NULL) { \n");
+	    print("        last->next = msg->next;\n");
+	    print("      } else {\n");
+	    print("        __msg_stack_"+selfID+" = msg->next;\n");
+	    print("      }\n");
+	    print("      delete msg;\n");
+
 	}
 
 	print("    }\n");
-	print("  } // for \n");
-
-	
-	if (restrictedExecution) {
-	    print("  while (__credit_"+selfID+" <= __counter_"+selfID+") {\n");
-	}
-	
-	{
-	    Iterator i = receives_from.iterator();
-	    while (i.hasNext()) {
-		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("  if (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n    handle_message__"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n  } // if\n");
-	    }
-	}
-
-	if (restrictedExecution) {
-	    print("  } // while \n");
-	}
-
+	print("    last = msg;\n");
+ 	print("  } // for \n");
 
 	print("}\n");
 	

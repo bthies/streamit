@@ -827,9 +827,9 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 					   (null,
 					    new JLocalVariableExpression
 					    (null, var),
-					    new JIntLiteral(0))), null);
+					    new JIntLiteral(1))), null);
 
-	JExpression relation = new JRelationalExpression(null, Constants.OPE_LT, new JLocalVariableExpression(null, var), new JLocalVariableExpression(null, var2));
+	JExpression relation = new JRelationalExpression(null, Constants.OPE_LE, new JLocalVariableExpression(null, var), new JLocalVariableExpression(null, var2));
 
 	JStatement incr_expr = new JExpressionStatement(null, new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var)), null);
 

@@ -151,28 +151,28 @@ public class OperatorPhases extends Misc
     {
         return nPhases;
     }
-    
-    int getPhasePeek (int nPhase, int channel)
+
+    int getPhasePeek(int nPhase, int channel)
     {
-        ASSERT (nPhase >= 0 && nPhase < nPhases);
-        ASSERT (channel >= 0 && channel < nInputChannels);
-        
-        return channelPeek [channel][nPhase];
+        ASSERT(nPhase >= 0 && nPhase < nPhases);
+        ASSERT(channel >= 0 && channel < nInputChannels);
+
+        return channelPeek[channel][nPhase];
     }
 
     int getPhasePop(int nPhase, int channel)
     {
-        ASSERT (nPhase >= 0 && nPhase < nPhases);
-        ASSERT (channel >= 0 && channel < nInputChannels);
-        
-        return channelPop [channel][nPhase];
+        ASSERT(nPhase >= 0 && nPhase < nPhases);
+        ASSERT(channel >= 0 && channel < nInputChannels);
+
+        return channelPop[channel][nPhase];
     }
 
-    int getPhasePush (int nPhase, int channel)
+    int getPhasePush(int nPhase, int channel)
     {
-        ASSERT (nPhase >= 0 && nPhase < nPhases);
-        ASSERT (channel >= 0 && channel < nOutputChannels);
-        
-        return channelPush [channel][nPhase];
+        ASSERT(nPhase >= 0 && nPhase < nPhases);
+        ASSERT(channel >= 0 && channel < nOutputChannels);
+
+        return channelPush[channel][nPhase];
     }
 }

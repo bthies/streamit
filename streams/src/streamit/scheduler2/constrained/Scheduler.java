@@ -27,17 +27,13 @@ public class Scheduler extends streamit.scheduler2.Scheduler
         steadySchedule = rootStream.getSteadySchedule();
     }
 
-    public SDEPData computeSDEP(
-        Iterator src,
-        Iterator dst)
+    public SDEPData computeSDEP(Iterator src, Iterator dst)
     {
         LatencyGraph graph = factory.getLatencyGraph();
         LatencyNode srcNode =
             ((Filter)factory.newFrom(src, null)).getLatencyNode();
         LatencyNode dstNode =
             ((Filter)factory.newFrom(dst, null)).getLatencyNode();
-        return graph.computeSDEP(
-            srcNode,
-            dstNode);
+        return graph.computeSDEP(srcNode, dstNode);
     }
 }

@@ -103,22 +103,26 @@ public class LatencyEdge extends Misc implements SDEPData
                 int dstStage = 0, srcStage = 0;
                 int nDataInChannel = initDataInChannel;
                 {
+                    int totalConsumed = 0;
                     for (dstStage = 0;
-                        dstStage < dst.getInitNumPhases();
+                        dstStage < dst.getInitNumPhases()
+                            || totalConsumed < initDataInChannel;
                         dstStage++)
                     {
                         int dataNeeded =
                             dst.getPhasePeek(dstStage, inputChannel);
 
-                        while (dataNeeded >= nDataInChannel)
+                        while (dataNeeded > nDataInChannel)
                         {
                             nDataInChannel
                                 += src.getPhasePush(srcStage, outputChannel);
                             srcStage++;
                         }
 
-                        nDataInChannel
-                            -= dst.getPhasePop(dstStage, inputChannel);
+                        int dataPopped =
+                            dst.getPhasePop(dstStage, inputChannel);
+                        nDataInChannel -= dataPopped;
+                        totalConsumed += dataPopped;
                     }
                 }
 
@@ -170,7 +174,7 @@ public class LatencyEdge extends Misc implements SDEPData
                         srcStage++;
                     }
 
-                    dst2srcDependency[dstStage+1] = srcStage;
+                    dst2srcDependency[dstStage + 1] = srcStage;
 
                     nDataInChannel
                         -= dst.getPhasePop(dstStage, inputChannel);
@@ -400,7 +404,8 @@ public class LatencyEdge extends Misc implements SDEPData
                 (nDstPhase - (numInitDstExec + 1)) / numSteadyDstExec;
             int nSmallerDstPhase =
                 ((nDstPhase - (numInitDstExec + 1)) % numSteadyDstExec)
-                    + numInitDstExec + 1;
+                    + numInitDstExec
+                    + 1;
             return dst2srcDependency[nSmallerDstPhase]
                 + nSteadyStates * numSteadySrcExec;
         }
@@ -412,18 +417,20 @@ public class LatencyEdge extends Misc implements SDEPData
         int addDstPhase = 0;
         if (nSrcPhase >= numInitSrcExec + numSteadySrcExec + 1)
         {
-            int fullExecs = (nSrcPhase - numInitSrcExec - 1) / numSteadySrcExec;
+            int fullExecs =
+                (nSrcPhase - numInitSrcExec - 1) / numSteadySrcExec;
             addDstPhase = fullExecs * numSteadyDstExec;
-            nSrcPhase =
-                nSrcPhase - fullExecs * numSteadySrcExec;
+            nSrcPhase = nSrcPhase - fullExecs * numSteadySrcExec;
         }
 
         int dstPhaseLow = 0,
             dstPhaseHigh = numInitDstExec + numSteadyDstExec;
+       
+        // make the binary search biased towards finding the low answer
         while (dstPhaseHigh - dstPhaseLow > 1)
         {
             int dstPhaseMid = (dstPhaseLow + dstPhaseHigh) / 2;
-            if (dst2srcDependency[dstPhaseMid] > nSrcPhase)
+            if (dst2srcDependency[dstPhaseMid] >= nSrcPhase)
             {
                 dstPhaseHigh = dstPhaseMid;
             }
@@ -433,14 +440,18 @@ public class LatencyEdge extends Misc implements SDEPData
             }
         }
 
+        // now comes the slight contradiction:
+        // If there is an entry of nSrcPhase, I want to get the lowest index
+        // that contains it. But if such an entry doesn't exist, I want the
+        // high-end entry! 
         int dstPhase;
-        if (dst2srcDependency[dstPhaseHigh] <= nSrcPhase)
+        if (dst2srcDependency[dstPhaseLow] == nSrcPhase)
         {
-            dstPhase = dstPhaseHigh;
+            dstPhase = dstPhaseLow;
         }
         else
         {
-            dstPhase = dstPhaseLow;
+            dstPhase = dstPhaseHigh;
         }
 
         return dstPhase + addDstPhase;

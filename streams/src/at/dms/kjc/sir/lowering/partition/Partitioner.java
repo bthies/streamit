@@ -37,7 +37,7 @@ public class Partitioner {
      */
     public static SIRStream doit(SIRStream str, int curCount, int targetCount, boolean joinersNeedTiles, boolean limitICode, HashSet noHorizFuse) {
 	// horizontal fusion constraints only respected by dynamic programming partitioner
-	if (!KjcOptions.partition_dp) {
+	if (!KjcOptions.partition_dp && noHorizFuse.size()>0) {
 	    System.err.println("WARNING:  The partitioner you are using (greedy?) does not support horizontal\n" + 
 			       "          fusion constraints.  To respect these, use dynamic programming partitioner.");
 	}

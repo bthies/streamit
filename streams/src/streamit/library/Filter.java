@@ -223,7 +223,7 @@ public abstract class Filter extends Stream
 
     public void addInitPhase(int e, int o, int u, String name)
     {
-        steadyPhases.add(new PhaseInfo(e, o, u, name));
+        initPhases.add(new PhaseInfo(e, o, u, name));
         multiPhaseStyle = true;
     }
 

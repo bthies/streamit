@@ -60,7 +60,7 @@ public class StreamIt extends Pipeline
             {
                 usefulSet.add (sched);
                 //System.out.print("X");
-                System.out.println ("$" + index + " = " + sched.getWorkFunc());
+                System.out.println ("$" + index + " = " + sched.getStream().getObject() + "." + sched.getWorkFunc());
                 if (top) totalSize++;
                 return;
             }
@@ -330,7 +330,7 @@ public class StreamIt extends Pipeline
             // setup the buffer lengths for the stream setup here:
             setupBufferLengths(buffers);
 
-            /*
+            
             System.out.print ("[");
             this.computeSize(initSched, true);
             System.out.println ("]");
@@ -341,7 +341,7 @@ public class StreamIt extends Pipeline
             System.out.println ("buff size = " + totalBuffer);
             System.out.println ("nodex = " + selfStream.getNumNodes());
             System.out.println ("node firings = " + selfStream.getNumNodeFirings());
-            */
+            
             
             // run the init schedule:
             runSchedule(initSched);

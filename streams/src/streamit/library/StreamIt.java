@@ -41,7 +41,7 @@ public class StreamIt extends Pipeline
         return (Integer)integers.get(i);
     }
     
-    void computeSize (Object s, boolean top)
+    public void computeSize (Object s, boolean top)
     {
         if (sizeMap.get(s) != null) 
         {

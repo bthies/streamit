@@ -15,7 +15,7 @@ import java.util.ArrayList;
  * inserted in <code>NodesToJava</code>.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertIODecls.java,v 1.6 2003-02-21 15:34:59 dmaze Exp $
+ * @version $Id: InsertIODecls.java,v 1.7 2003-09-16 20:45:39 dmaze Exp $
  */
 public class InsertIODecls extends InitMunger
 {
@@ -44,13 +44,14 @@ public class InsertIODecls extends InitMunger
      * @param fns   List of functions to search
      * @return      Primary work function in fns
      */
-    public static Function findWork(List fns)
+    public static Function findWork(List fns, boolean init)
     {
         Function work = null;
         for (Iterator iter = fns.iterator(); iter.hasNext(); )
         {
             Function fn = (Function)iter.next();
-            if (fn.getCls() == Function.FUNC_WORK)
+            int cls = init ? Function.FUNC_PREWORK : Function.FUNC_WORK;
+            if (fn.getCls() == cls)
             {
                 if (fn.getName() == null)
                     work = fn;
@@ -79,11 +80,25 @@ public class InsertIODecls extends InitMunger
     private Object ssLibrary(StreamSpec spec)
     {
         List fns = new ArrayList(spec.getFuncs());
-        // Assert that this class cast works.
-        FuncWork work = (FuncWork)findWork(fns);
         StreamType st = spec.getStreamType();
         List newStmts = new ArrayList();
-        newStmts.add(new StmtSetTypes(work.getContext(), st));
+        newStmts.add(new StmtSetTypes(spec.getContext(), st));
+        translateWork(spec, (FuncWork)findWork(fns, true), true, newStmts);
+        translateWork(spec, (FuncWork)findWork(fns, false), false, newStmts);
+        fns = replaceInitWithPrepended(spec.getContext(), fns, newStmts);
+        
+        return new StreamSpec(spec.getContext(), spec.getType(),
+                              spec.getStreamType(), spec.getName(),
+                              spec.getParams(), spec.getVars(), fns);
+    }
+
+    private void translateWork(StreamSpec spec, FuncWork work,
+                               boolean init, List newStmts)
+    {
+        // Do nothing if we didn't actually find the function.
+        if (work == null)
+            return;
+        
         // We need to add phases.  Is this a phased filter?
         if (work.getPopRate() == null && work.getPushRate() == null)
         {
@@ -105,20 +120,13 @@ public class InsertIODecls extends InitMunger
                 
                 // Now add the phase.
                 newStmts.add
-                    (new StmtAddPhase(work.getContext(), false, phase));
+                    (new StmtAddPhase(work.getContext(), init, phase));
             }
         }
         else
-        {
             // Add the work function as the only phase.
-            newStmts.add(new StmtAddPhase(work.getContext(), false, work));
-        }
+            newStmts.add(new StmtAddPhase(work.getContext(), init, work));
 
-        fns = replaceInitWithPrepended(spec.getContext(), fns, newStmts);
-        
-        return new StreamSpec(spec.getContext(), spec.getType(),
-                              spec.getStreamType(), spec.getName(),
-                              spec.getParams(), spec.getVars(), fns);
     }
 
     /** Do the rewrite work for the compiler flow. */
@@ -126,7 +134,7 @@ public class InsertIODecls extends InitMunger
     {
         List fns = new ArrayList(spec.getFuncs());
         // Assert that this class cast works.
-        FuncWork work = (FuncWork)findWork(fns);
+        FuncWork work = (FuncWork)findWork(fns, false);
         StreamType st = spec.getStreamType();
         List newStmts = new ArrayList();
         // This is a phased filter iff the work function has

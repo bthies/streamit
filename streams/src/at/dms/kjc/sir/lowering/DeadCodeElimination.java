@@ -2,10 +2,12 @@ package at.dms.kjc.sir.lowering;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.compiler.JavaStyleComment;
 
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.ListIterator;
 
 /**
  * Removes what dead code we can detect within a filter.
@@ -17,6 +19,7 @@ public class DeadCodeElimination {
 	// declarations
 	removeDeadFieldDecls(filter);
 	removeDeadLocalDecls(filter);
+	removeEmptyStatements(filter);
     }
 
     /**
@@ -39,8 +42,24 @@ public class DeadCodeElimination {
 		    public void visitAssignmentExpression(JAssignmentExpression self,
 							  JExpression left,
 							  JExpression right) {
+			// if not a local variable must descend into left
+			if (!(left instanceof JLocalVariableExpression)) {
+			    left.accept(this);
+			}
 			right.accept(this);
 		    }
+
+		    public void visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
+								  int oper,
+								  JExpression left,
+								  JExpression right) {
+			// if not a local variable must descend into left
+			if (!(left instanceof JLocalVariableExpression)) {
+			    left.accept(this);
+			}
+			right.accept(this);
+		    }
+
 
 		    public void visitLocalVariableExpression(JLocalVariableExpression self,
 							     String ident) {
@@ -62,13 +81,10 @@ public class DeadCodeElimination {
 		final boolean REMOVING = (j==1);
 		methods[i].accept(new SLIRReplacingVisitor() {
 
-			/**
-			 * prints an assignment expression
-			 */
-			public Object visitAssignmentExpression(JAssignmentExpression self,
-								JExpression left,
-								JExpression right) {
-			    
+
+			private boolean eliminateAssignment(JExpression left,
+							    JExpression right) {
+
 			    final boolean assigningToDeadVar[] = new boolean[1];
 			    final boolean assigningToLiveVar[] = new boolean[1];
 			    final LinkedList dead = new LinkedList();
@@ -95,6 +111,16 @@ public class DeadCodeElimination {
 				  "supported by DeadCodeElimination.");
 				*/
 			    } else if (assigningToDeadVar[0] && REMOVING) {
+				return true;
+			    }
+			    return false;
+			}
+
+			public Object visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
+						    int oper,
+						    JExpression left,
+						    JExpression right) {
+			    if (eliminateAssignment(left, right)) { 
 				// replace with RHS instead of
 				// empty statement since there
 				// might be side effects on right
@@ -102,7 +128,22 @@ public class DeadCodeElimination {
 				// pop expressions, etc.)
 				return right;
 			    }
-			    return super.visitAssignmentExpression(self, left, right);
+			    return self;
+			}
+
+
+			public Object visitAssignmentExpression(JAssignmentExpression self,
+								JExpression left,
+								JExpression right) {   
+			    if (eliminateAssignment(left, right)) { 
+				// replace with RHS instead of
+				// empty statement since there
+				// might be side effects on right
+				// side (method calls, increments,
+				// pop expressions, etc.)
+				return right;
+			    }
+			    return self;
 			}
 		    });
 	    }
@@ -172,4 +213,73 @@ public class DeadCodeElimination {
 	}
 	*/
     }
+
+    /**
+     * Removes empty statements
+     */
+    private static void removeEmptyStatements(SIRFilter filter) {
+	// get field references in all the methods
+	JMethodDeclaration[] methods = filter.getMethods();
+	for (int i=0; i<methods.length; i++) {
+	    JBlock newBody = (JBlock)methods[i].getBody().accept(new SLIRReplacingVisitor() {
+		    public Object visitBlockStatement(JBlock self,
+						      JavaStyleComment[] comments) {
+			ArrayList newStatements = new ArrayList();
+			for (ListIterator it = self.getStatementIterator(); it.hasNext(); ) {
+			    JStatement oldBody = (JStatement)it.next();
+			    Object newBody = oldBody.accept(this);
+			    if (newBody != null) newStatements.add(newBody);
+			}
+			return new JBlock(null,(JStatement[])newStatements.toArray(new JStatement[0]),null);
+		    }
+		    public Object visitEmptyStatement(JEmptyStatement self) {
+			return null;
+		    }
+		    public Object visitExpressionStatement(JExpressionStatement self,
+							   JExpression expr) {
+			if (expr instanceof JLiteral) { return null; }
+			if (expr instanceof JLocalVariableExpression) { return null; }
+			if (expr instanceof JFieldAccessExpression) { return null; }
+			return self;
+		    }
+		    public Object visitExpressionListStatement(JExpressionListStatement self,
+							       JExpression[] expr) {
+			ArrayList newList = new ArrayList();
+			for (int i = 0; i < expr.length; i++) {
+			    if (expr[i] instanceof JLiteral) continue;
+			    if (expr[i] instanceof JLocalVariableExpression) continue;
+			    if (expr[i] instanceof JFieldAccessExpression) continue;
+			    Object newExpr = expr[i].accept(this);
+			    if (newExpr != null) {
+				newList.add(newExpr);
+			    }
+			}
+			if (newList.size() == 0) return null;
+			return new JExpressionListStatement(null, (JExpression[])newList.toArray(new JExpression[0]), null);
+		    }
+		    public Object visitCompoundStatement(JCompoundStatement self,
+							 JStatement[] body) {
+
+			ArrayList newList = new ArrayList();
+			for (int i = 0; i < body.length; i++) {
+			    Object newExpr = body[i].accept(this);
+			    if (newExpr != null) {
+				newList.add(newExpr);
+			    }
+			}
+			if (newList.size() == 0) return null;
+			return new JCompoundStatement(null, (JStatement[])newList.toArray(new JStatement[0]));
+		    }
+		    public Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
+								  JVariableDefinition[] vars) {
+			if (vars.length == 0) return null; else return self;
+		    }
+		});
+	    methods[i].setBody(newBody);
+	}
+    }
+
 }
+
+
+

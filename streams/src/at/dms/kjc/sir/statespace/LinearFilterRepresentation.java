@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * This class also holds initial matrices initA, initB that are to be used to 
  * update the state exactly ONCE (for a prework function).
  *
- * $Id: LinearFilterRepresentation.java,v 1.13 2004-04-02 20:41:11 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.14 2004-04-07 18:13:46 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -746,7 +746,8 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 				      "\n Matrix C:\n" + C + 
 				      "\n Matrix D:\n" + D +
 				      "\n PreworkA:\n" + preworkA +
-				      "\n PreworkB:\n" + preworkB );
+				      "\n PreworkB:\n" + preworkB +
+				      "\n Init:\n" + initVec);
 	return retString;
     }
 

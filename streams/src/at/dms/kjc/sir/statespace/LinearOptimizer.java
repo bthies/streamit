@@ -18,7 +18,7 @@ public class LinearOptimizer {
 	totalMatrix.copyAt(0,0,l.getA());
 	totalMatrix.copyAt(0,states,l.getB());
 	totalMatrix.copyAt(states,0,l.getC());
-	totalMatrix.copyAt(states,states,l.getD());
+	//totalMatrix.copyAt(states,states,l.getD());
 
 	int i = states-1;
 	int j = totalCols-1;
@@ -56,6 +56,8 @@ public class LinearOptimizer {
 	    
 		if(r >= 0) {
 		    totalMatrix.swapRowsAndCols(r,i);
+		    init.swapCols(r,i);
+
 		    LinearPrinter.println("SWAPPED " + i + " " + r);
 		}
 	    }
@@ -69,7 +71,8 @@ public class LinearOptimizer {
 		    if(!totalMatrix.getElement(k,j).equals(ComplexNumber.ZERO)) {
 			double temp = totalMatrix.getElement(k,j).getReal();
 			totalMatrix.addRowAndCol(i,k,-temp/curr);
-
+			init.addCol(k,i,-temp/curr);
+			
 		    }
 		}
 	    }
@@ -78,6 +81,9 @@ public class LinearOptimizer {
 	    j = j - 1; 
 	}
 
+	if(i==j)
+	    LinearPrinter.println("i = j = " + i);
+
 	FilterMatrix newA,newB,newC,newD,newpreA,newpreB;
 	FilterVector newInit;
 	LinearFilterRepresentation newRep;
@@ -85,12 +91,12 @@ public class LinearOptimizer {
 	newA = new FilterMatrix(states,states);
 	newB = new FilterMatrix(states,inputs);
 	newC = new FilterMatrix(outputs,states);
-	newD = new FilterMatrix(outputs,inputs);
+	newD = l.getD();
 
 	newA.copyRowsAndColsAt(0,0,totalMatrix,0,0,states,states);
 	newB.copyRowsAndColsAt(0,0,totalMatrix,0,states,states,inputs);
 	newC.copyRowsAndColsAt(0,0,totalMatrix,states,0,outputs,states);
-	newD.copyRowsAndColsAt(0,0,totalMatrix,states,states,outputs,inputs);
+	//newD.copyRowsAndColsAt(0,0,totalMatrix,states,states,outputs,inputs);
 
 	newRep = new LinearFilterRepresentation(newA,newB,newC,newD,l.getStoredInputCount(),init);
 

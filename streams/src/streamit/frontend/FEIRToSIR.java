@@ -691,16 +691,37 @@ public class FEIRToSIR implements FEVisitor, Constants {
                            SymbolTable.KIND_FUNC_PARAM);
         i++;
     }
-    JMethodDeclaration result =
-        new JMethodDeclaration(contextToReference(func),
-                               ACC_PUBLIC,
-                               feirTypeToSirType(func.getReturnType()),
-                               func.getName(),
-                               sirParams,
-                               CClassType.EMPTY,
-                               statementToJBlock(func.getBody()),
-                               null, /* javadoc */
-                               null); /* comments */
+    JMethodDeclaration result;
+    // Slightly different object for constructor vs. otherwise.
+    if (parent.getIdent() != null &&
+        parent.getIdent().equals(func.getName()))
+    {
+        // In a constructor.  We need to do slightly special things
+        // to handle the function body.
+        JStatement[] newBody = new JStatement[1];
+        newBody[0] = (JStatement)func.getBody().accept(this);
+        result =
+            new JConstructorDeclaration(contextToReference(func),
+                                        ACC_PUBLIC,
+                                        func.getName(),
+                                        sirParams,
+                                        CClassType.EMPTY,
+                                        null, /* constructor call */
+                                        newBody,
+                                        null, /* javadoc */
+                                        null); /* comments */
+    }
+    else
+        result =
+            new JMethodDeclaration(contextToReference(func),
+                                   ACC_PUBLIC,
+                                   feirTypeToSirType(func.getReturnType()),
+                                   func.getName(),
+                                   sirParams,
+                                   CClassType.EMPTY,
+                                   statementToJBlock(func.getBody()),
+                                   null, /* javadoc */
+                                   null); /* comments */
     symtab = oldSymTab;
     return result;
   }

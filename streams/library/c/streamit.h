@@ -122,14 +122,14 @@ typedef struct tape {
 
 #define INCR_TAPE_LOCALB(p, m, n) ((p) = ((p)+n) & (m))
 #define PUSH_TAPE_LOCALB(d, p, m, type, v) \
-  (*((type *)((d)+INCR_TAPE_LOCALB(p, m, sizeof(type))))=(v))
+  (*((type *)((char *)(d)+INCR_TAPE_LOCALB(p, m, sizeof(type))))=(v))
 #define POP_TAPE_LOCALB(d, p, m, type) \
-  (*((type *)((d)+INCR_TAPE_LOCALB(p, m, sizeof(type)))))
+  (*((type *)((char *)(d)+INCR_TAPE_LOCALB(p, m, sizeof(type)))))
 #define PEEK_TAPE_LOCALB(d, p, m, type, n) \
-  (*((type *)((d)+(((p)+((n)+1)*sizeof(type))&(m)))))
+  (*((type *)((char *)(d)+(((p)+((n)+1)*sizeof(type))&(m)))))
 #define LOCALIZE_TAPE(rt, rd, rp, rm, wt, wd, wp, wm)\
-  ((rt ? ((rd=rt->data), (rp=rt->read_pos), (rm=rt->mask)) : 0), \
-   (wt ? ((wd=wt->data), (wp=wt->write_pos), (wm=wt->mask)) : 0))
+  ((rd=rt?rt->data:NULL), (rp=rt?rt->read_pos:0), (rm=rt?rt->mask:0), \
+   (wd=wt?wt->data:NULL), (wp=wt?wt->write_pos:0), (wm=wt?wt->mask:0))
 #define UNLOCALIZE_TAPE(rt, rp, wt, wp) \
   ((rt ? (rt->read_pos=rp) : 0), (wt ? (wt->write_pos=wp) : 0))
 #define PUSH_DEFAULTB(type, v) PUSH_TAPE_LOCALB(__wd, __wp, __wm, type, v)
@@ -137,20 +137,19 @@ typedef struct tape {
 #define PEEK_DEFAULTB(type, n) PEEK_TAPE_LOCALB(__rd, __rp, __rm, type, n)
 #define VARS_DEFAULTB() void *__rd, *__wd; int __rp, __rm, __wp, __wm
 #define LOCALIZE_DEFAULTB(c) \
-  int __localize_defaultb_dummy = \
     (LOCALIZE_TAPE((c)->input_tape, __rd, __rp, __rm, \
                 (c)->output_tape, __wd, __wp, __wm))
 #define UNLOCALIZE_DEFAULTB(c) \
   UNLOCALIZE_TAPE((c)->input_tape, __rp, (c)->output_tape, __wp)
 #define INCR_TAPE_POS(t, v, n) INCR_TAPE_LOCALB((t)->v, (t)->mask, (n))
 #define PEEK_TAPE(t, type, n) \
-  (*((type *)((t)->data+(((n+1)*sizeof(type))&(t)->mask))))
+  (*((type *)((char *)((t)->data)+(((n+1)*sizeof(type))&(t)->mask))))
 #define INCR_TAPE_WRITE(t, size) INCR_TAPE_POS(t, write_pos, size)
 #define INCR_TAPE_READ(t, size) INCR_TAPE_POS(t, read_pos, size)
 #define PUSH_TAPE(t, type, d) \
-  (*((type *)((t)->data+INCR_TAPE_POS(t, write_pos, sizeof(type))))=(d))
+  (*((type *)((char *)((t)->data)+INCR_TAPE_POS(t, write_pos, sizeof(type))))=(d))
 #define POP_TAPE(t, type) \
-  (*((type *)((t)->data+INCR_TAPE_POS(t, read_pos, sizeof(type)))))
+  (*((type *)((char *)((t)->data)+INCR_TAPE_POS(t, read_pos, sizeof(type)))))
 #define PUSH(c, type, d) PUSH_TAPE((c)->output_tape, type, d)
 #define PEEK(c, type, n) PEEK_TAPE((c)->input_tape, type, n)
 #define POP(c, type) POP_TAPE((c)->input_tape, type)
@@ -166,8 +165,8 @@ typedef struct tape {
    ((l) == 16) ? memcpy((d), (s), 16) : \
    ((l) == 20) ? memcpy((d), (s), 20) : \
    memcpy((d), (s), (l)))
-#define READ_ADDR(t) ((t)->data + (t)->read_pos)
-#define WRITE_ADDR(t) ((t)->data + (t)->write_pos)
+#define READ_ADDR(t) ((char *)((t)->data) + (t)->read_pos)
+#define WRITE_ADDR(t) ((char *)((t)->data) + (t)->write_pos)
 #define COPY_TAPE_ITEM(s, d) \
   (streamit_memcpy(WRITE_ADDR(d), READ_ADDR(s), (d)->data_size))
 #define FEEDBACK_DELAY(d, c, n, t, f) { \

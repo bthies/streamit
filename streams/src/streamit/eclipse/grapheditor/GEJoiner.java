@@ -5,6 +5,11 @@
 package grapheditor;
 import java.io.*;
 
+import com.jgraph.graph.*;
+import java.awt.Color;
+import javax.swing.BorderFactory; 
+
+import java.awt.Point;
 /**
  * GEJoiner is the graph editor's internal representation of a joiner.
  * @author jcarlos
@@ -39,6 +44,20 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 	public GEStreamNode construct(GraphStructure graphStruct)
 	{
 		System.out.println("Constructing the Joiner " +this.getName());
+		
+		
+		(graphStruct.getAttributes()).put(this, this.attributes);
+		GraphConstants.setAutoSize(this.attributes, true);
+		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
+		GraphConstants.setBorder(this.attributes , BorderFactory.createRaisedBevelBorder());
+		GraphConstants.setBackground(this.attributes, Color.orange);
+
+		
+		
+		this.port = new DefaultPort();
+		this.add(this.port);
+		graphStruct.getCells().add(this);
+		
 		this.draw();
 		return this;
 	}

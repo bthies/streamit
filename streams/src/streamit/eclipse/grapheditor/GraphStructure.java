@@ -7,14 +7,14 @@ package grapheditor;
 import java.util.*;
 import java.io.*;
 
-import java.awt.Rectangle;
+import java.awt.*;
 
 //import com.sun.rsasign.t;
 import com.jgraph.graph.*;
 import com.jgraph.JGraph;
 
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
+import javax.swing.*;
+import grapheditor.jgraphextension.*;
 
 
 /**
@@ -36,13 +36,14 @@ public class GraphStructure implements Serializable{
 	private int width;
 	private int height;
 	
-	
+	public LiveJGraphDemo liveDemo; 
+	public LiveJGraphInternalFrame internalFrame;
 	
 	
 	// The toplevel GEStreamNode. Typically it should be a GEPipeline object.  
 	private GEStreamNode topLevel;
 
-	
+	/*
 	public GraphStructure(ArrayList nodes)
 	{
 		for (int i = 0;  i < nodes.size(); i++)
@@ -58,9 +59,10 @@ public class GraphStructure implements Serializable{
 		jgraph = new JGraph(model);
 		x = 20;
 		y = 20;
-		width = 50;
-		height = 50;
+		width = 80;
+		height = 30;
 	}
+	*/
 	
 	public GraphStructure()
 	{
@@ -70,12 +72,10 @@ public class GraphStructure implements Serializable{
 		globalAttributes= new Hashtable();
 		model = new DefaultGraphModel();
 		jgraph = new JGraph(model);
-		x = 20;
-		y = 20;
-		width = 50;
-		height = 50;
-		
-		
+		x = 0;
+		y = 0;
+		width = 100;
+		height = 90;		
 	}
 	
 	/**
@@ -123,21 +123,55 @@ public class GraphStructure implements Serializable{
 		return (ArrayList) this.graph.get(node);
 	}
 	
+	
+	
+	
+	
+	
 	/**
 	 * Construct graph so that it could be drawn by a GUI component
 	 */
 	public void constructGraph()
 	{
-		this.topLevel.construct(this);
-		model.insert(cells.toArray(), globalAttributes, cs, null, null);
 		
-		// Testing drawing of components by using JFrames
-		JFrame frame = new JFrame();
-		frame.getContentPane().add(new JScrollPane(jgraph));
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
+	//	try{
+			
+			liveDemo = new LiveJGraphDemo();
+			this.topLevel.construct(this);
+			model.insert(cells.toArray(), globalAttributes, cs, null, null);
 		
+			// Testing drawing of components by using JFrames
+			
+			
+			/*
+			System.out.println("Creating the JFrame");
+			JFrame frame = new JFrame();
+			System.out.println("Adding the JScrollPane with JGraph");
+			
+			jgraph.addMouseListener(new JGraphMouseAdapter(jgraph));
+			jgraph.getModel().addGraphModelListener(new JGraphModelListener());
+			
+			frame.getContentPane().add(new JScrollPane(jgraph));
+			
+			System.out.println("Setting the default close operation");
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			System.out.println("Packing");
+			frame.pack();
+			System.out.println("Setting visible");
+			frame.setVisible(true);
+			System.out.println("Finished setting visible");
+			*/
+			
+			
+	//	}
+	/*		
+		catch(Exception e)
+		{
+			System.out.println("Entered catch exception in constructGraph method in GraphStructure");
+			System.out.println("!!! EXCEPTION : " + e.toString());
+			System.out.println("Info : " + e.fillInStackTrace());
+		}
+		*/
 	}
 	
 	
@@ -174,10 +208,61 @@ public class GraphStructure implements Serializable{
 				
 		cells.add(edge);	
 	}
+	
+	
+	
+	
 
-	public Rectangle setRectCoords()
+	public Rectangle setRectCoords(GEStreamNode node)
 	{
-		return new Rectangle(x + 50, y + 50, width, height);
+		Rectangle rect =  new Rectangle(x, y, width, height);
+		
+		if (node.getType() == GEType.PHASED_FILTER)
+		{
+			System.out.println("################################## setting COORDS for FILTER");
+			y+=500;
+			
+			rect.y = y;
+		}
+		else if (node.getType() == GEType.SPLIT_JOIN)
+		{
+			System.out.println("################################## setting COORDS for SplitJoin");
+			x+= 600;
+			rect.x = x;
+		}
+		
+		else{
+		
+		
+		if (node.getEncapsulatingNode() != null)
+		{
+		
+			if ((node.getEncapsulatingNode().getType() == GEType.SPLIT_JOIN) && 
+			    (node.getType() != GEType.JOINER) && 
+			    (node.getType() != GEType.SPLITTER))  
+			{
+				x += 100;
+			}
+			else if (node.getType() == GEType.JOINER)
+			{
+				rect.height = 400;
+				rect.width = 400;
+				y += 120;
+				rect.y = y;
+				y += 120;
+			}
+			
+			else
+			{
+				y += 120;
+			}
+		}
+		else
+		{
+			y += 120;
+		}
+		}
+		return rect;
 	}
 
 	public ArrayList getCells()
@@ -188,7 +273,38 @@ public class GraphStructure implements Serializable{
 	public Hashtable getAttributes()
 	{
 		return this.globalAttributes;
-		
 	}
+	
+	public JGraph getJGraph()
+	{
+		return this.jgraph;
+	}
+	
+	public ConnectionSet getConnectionSet()
+	{
+		return this.cs;
+	}
+	
+	public DefaultGraphModel getGraphModel()
+	{
+		return this.model;
+	}
+	
+	public void setGraphModel(DefaultGraphModel model)
+	{
+		this.model = model; 
+	}
+	
+	public void setJGraph(JGraph jgraph)
+	{
+		this.jgraph = jgraph;
+	}
+	
+	
+	
+	
 }
+
+
+
 

@@ -4,7 +4,7 @@
  * To change the template for this generated file go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */ 
-package grapheditor;
+package grapheditor; 
 import java.util.*;
 import java.io.*;
 
@@ -21,15 +21,17 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	protected String type;
 	protected String name;
 	protected DefaultPort port;
+	protected GEStreamNode encapsulatingNode;
+
 
 	public GEStreamNode(String type, String name)
 	{
-		super();
+		super("<HTML><H5>"+name+"</H5></html>");
 		System.out.println("Constructing the stream node");
 		this.type = type;
 		this.children = new ArrayList();
 		this.name = name;
-		
+		this.encapsulatingNode = null;
 	}
 
 	/**
@@ -55,9 +57,7 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 */
 	public String getName()
 	{
-		System.out.println("Entering getName()");
-		return this.name;
-		 
+		return this.name;	 
 	}
 	
 	/**
@@ -76,6 +76,25 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	{
 		return this.port;
 	}
+	
+	/**
+	 * Sets the node that encapsulates this
+	 * @param node The GEStreamNode that encapsulates this
+	 */
+	public void setEncapsulatingNode(GEStreamNode node)
+	{
+		this.encapsulatingNode = node;
+	}
+	
+	/**
+	 * Gets the encapsulating node of this
+	 * @return The encapsulating node of GEStreamNode
+	 */
+	public GEStreamNode getEncapsulatingNode()
+	{
+		return this.encapsulatingNode;
+	}
+	
 	
 
 	abstract public void draw();

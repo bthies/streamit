@@ -6,6 +6,8 @@ import java.io.*;
 import java.util.*;
 
 
+ 
+
 public class GraphEncoder implements AttributeStreamVisitor {
  
     //May Want outputStream or stdout. Not sure
@@ -55,11 +57,22 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		System.out.println("#########################################################");
 		graph.constructGraph();
 	
+		System.out.println("End of Test");
 		/* 
 		 * DEBUGGING CODE END
 		 * *********************************************************** */
+		 
+
+
+
+
+
 	}
-    
+			
+		 
+		 	 
+		 
+		 
     /**
      * Visit a SIRStructure
      */
@@ -320,15 +333,10 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		System.out.println("***** Entering visitPipeline "+ self.getName());
                                 	
 		GEPipeline pipeline = new GEPipeline(self.getName());        
-     
-        
+         
+	
 		// Walk through each of the elements in the pipeline.
 		Iterator iter = self.getChildren().iterator();
-		
-		//
-		//DefaultGraphCell lastCell = null;
-		//
-	
 	
 		while (iter.hasNext())
 		{
@@ -337,29 +345,8 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			
 			GEStreamNode currNode = (GEStreamNode) oper.accept(this);
 			pipeline.addChild(currNode);
-			
-			/*
-			DefaultGraphCell currCell = new DefaultGraphCell(self.getName());
-			Map cellAttrib = GraphConstants.createMap();
-			DefaultPort port = new DefaultPort();
-			currCell.add(port);
-			GraphConstants.setBorder(cellAttrib, BorderFactory.createRaisedBevelBorder());
-			GraphConstants.setBounds(cellAttrib, new Rectangle(100,100,100,100));
-			GraphConstants.setBackground(cellAttrib, Color.blue);
-			
-			
-			if (lastCell != null)
-			{
-				DefaultEdge edge = new DefaultEdge();
-				Map edgeAttrib = GraphConstants.createMap();
-				GraphConstants.setLineEnd(edgeAttrib, GraphConstants.ARROW_CLASSIC);
-				ConnectionSet cs = new ConnectionSet(edge, (Port) lastCell.getChildAt(0), (Port) currCell.getChildAt(0));
-				Object cells[] = new Object[]{edge, lastCell, currCell};
-			}
-	
-			
-			lastCell = currCell;
-			*/
+			currNode.setEncapsulatingNode(pipeline);	
+		
 		}
 		  
 		graph.addHierarchy(pipeline, pipeline.getSuccesors());
@@ -397,8 +384,12 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		// Visit the splitter and joiner 
 		GESplitter split = (GESplitter)splitter.accept(this);
 		GEJoiner join = (GEJoiner) joiner.accept(this);
+
 		
 		
+		GESplitJoin splitjoin =  new GESplitJoin(self.getName(), split, join);
+		split.setEncapsulatingNode(splitjoin);
+		join.setEncapsulatingNode(splitjoin);
 	
 		// ...and walk through the body.
 		Iterator iter = self.getParallelStreams().iterator();
@@ -408,10 +399,10 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			GEStreamNode strNode = (GEStreamNode)oper.accept(this);		
 	 		split.addChild(strNode);
 			strNode.addChild(join);		
-			
+			strNode.setEncapsulatingNode(splitjoin);
 		}
 		
-		GESplitJoin splitjoin =  new GESplitJoin(self.getName(), split, join);
+		
 		graph.addHierarchy(splitjoin, split.getSuccesors());
 		
 		/* ***********************************************************

@@ -8,6 +8,9 @@ package grapheditor;
 
 import java.io.*;
 import java.util.*;
+import com.jgraph.graph.*;
+import com.jgraph.JGraph;
+import grapheditor.jgraphextension.*;
 
 /**
  * @author jcarlos
@@ -30,6 +33,10 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		
 	}
 
+	/**
+	 * Set the children of <this>
+	 * @param children The new value (ArrayList) of the children of GESplitJoin
+	 */
 	private void setChildren(ArrayList children)
 	{
 		this.children = children;
@@ -60,9 +67,20 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	public GEStreamNode construct(GraphStructure graphStruct)
 	{
 		System.out.println("Constructing the SplitJoin " +this.getName());
-		
 		this.draw();
-		this.splitter.construct(graphStruct);
+		
+		// Create a graph structure that will be contained within a LiveJGraphInternalFrame.
+		GraphStructure localGraphStruct = new GraphStructure();
+		localGraphStruct.liveDemo = graphStruct.liveDemo;
+
+		DefaultGraphModel model = new DefaultGraphModel();
+		localGraphStruct.setGraphModel(model);
+		localGraphStruct.setJGraph(new JGraph(model));
+				
+		LiveJGraphInternalFrame frame = new LiveJGraphInternalFrame(localGraphStruct.getJGraph());
+		localGraphStruct.internalFrame = frame;
+		
+		this.splitter.construct(localGraphStruct); ////// this.splitter.construct(graphStruct);
 		
 		ArrayList nodeList = (ArrayList) this.getSuccesors();
 		Iterator listIter =  nodeList.listIterator();
@@ -71,25 +89,58 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = ((GEStreamNode) listIter.next());
-			lastNodeList.add(strNode.construct(graphStruct));
+			lastNodeList.add(strNode.construct(localGraphStruct)); ///////// lastNodeList.add(strNode.construct(graphStruct));
 			
-			System.out.println("Connecting " + splitter.getName()+  " to "+ strNode.getName());
-			graphStruct.connectDraw(splitter, strNode);
+			System.out.println("Connecting " + splitter.getName()+  " to "+ strNode.getName());	
+			localGraphStruct.connectDraw(splitter, strNode); ///////// graphStruct.connectDraw(splitter, strNode);
 		}
 		
 		listIter =  lastNodeList.listIterator();
-		this.joiner.construct(graphStruct);
+		
+		this.joiner.construct(localGraphStruct); //////// this.joiner.construct(graphStruct);
 		
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = (GEStreamNode) listIter.next();
-			
 			System.out.println("Connecting " + strNode.getName()+  " to "+ joiner.getName());
-			graphStruct.connectDraw(strNode, joiner);
+			localGraphStruct.connectDraw(strNode, joiner); //////// graphStruct.connectDraw(strNode, joiner);
 		}	
+	
+		model.insert(localGraphStruct.getCells().toArray(),localGraphStruct.getAttributes(), localGraphStruct.getConnectionSet(), null, null);
+
+		DefaultGraphCell splitjoinCell = new DefaultGraphCell(frame);	
+		this.port = new DefaultPort();
+		splitjoinCell.add(this.port);
+		frame.setGraphCell(splitjoinCell);
+
+		frame.setGraphStruct(graphStruct);
 		
-		System.out.println("exiting splitjoin construction");
-		return this.joiner ;
+		frame.setGraphModel(model);
+		frame.create(this.getName());
+		frame.setSize(320, 700);
+		
+		
+	
+		//(graphStruct.getAttributes()).put(this, this.attributes);
+		//GraphConstants.setAutoSize(this.attributes, true);
+		//GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
+		
+		graphStruct.getCells().add(splitjoinCell); 
+		//(graphStruct.getGraphModel()).insert(new Object[] {splitjoinCell}, null, null, null, null);
+						
+		
+		graphStruct.internalFrame.getContentPane().add(frame);
+		// did not actually solve the problem, as originally thought (07/24/03)
+		//graphStruct.internalFrame.getDesktopPane().add(frame);
+	
+	
+		try 
+		{	
+			frame.setSelected(true);
+		} 
+		catch(Exception pve) {}
+	
+		return this;
 	}
 	
 	

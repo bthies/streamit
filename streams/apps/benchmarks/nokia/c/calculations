@@ -8,19 +8,27 @@ SPEC-SMEM-SIZE = -smem_size 262144
 
 BTL-ARGS += $(SPEC-IMEM-SIZE) $(SPEC-SMEM-SIZE)
 
+Got new version from ali, changed the parameters to (K,N,Q,W) = (4,5,10,7)
 
 
 
-first  iteration done at 0x15b4b (88907 cycles)
-second iteration done at 0x2a78c (173964 cycles) (delta=85057)
-third  iteration done at 0x3f3cd (259021 cycles) (delta=85057)
+(K,N,Q,W) = (4,5,10,7)
 
-==> iter takes 85057/85057 cycles (average = 85057)
+first  iteration done at 0x1939f3 (1653235 cycles)
+second iteration done at 0x324067 (3293287 cycles) (delta=1640052)
+third  iteration done at 0x4b46db (4933339 cycles) (delta=1640052)
 
-we are producing a 4 element output array, we produce 4 numbers, 85057 cycles, so normalized to 10^5 cycles, 128*(100000/85057) = 150.48732
 
-flops reported are 11390 flops, which is (11390/85057) * 250 = 33.47755 MFLOPS
+==> iter takes 1640052/1640052 cycles (average = 1640052)
 
-workCount = 1387868 / 1422512 = 0.9756459
-workCount = 1329065 / 1360912 = 0.97659878
-workCount = 1329065 / 1360912 = 0.97659878
+we are producing a 20 element output array, 1640052 cycles, so normalized to 10^5 cycles, 20*(100000/1640052) = 1.2194735
+
+flops reported are 102010 flops, which is (102010/1640052) * 250 = 15.549812 MFLOPS
+
+
+workCount = 25843348 / 26451760 = 0.97699919
+workCount = 25645256 / 26240832 = 0.97730346
+
+
+(K,N,Q,W) = (4,5,10,7)
+

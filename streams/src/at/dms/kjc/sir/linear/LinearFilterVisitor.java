@@ -211,6 +211,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// if both the non linear flag is unset and there are enough pushes, return true
 	return ((!this.nonLinearFlag) && enoughPushesSeen);
     }
+    /** Sets the non linear flag to true. Used when a non linear exception is thrown. **/
+    public void setNonLinear() {
+	this.nonLinearFlag = true;
+    }
+	   
     /** get the matrix representing this filter. **/
     public FilterMatrix getMatrixRepresentation() {
 	return this.representationMatrix;

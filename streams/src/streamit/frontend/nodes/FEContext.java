@@ -1,7 +1,7 @@
 /*
  * FEContext.java: explain where a front-end node came from
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEContext.java,v 1.1 2002-08-19 20:19:02 dmaze Exp $
+ * $Id: FEContext.java,v 1.2 2003-07-07 21:21:06 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -87,5 +87,10 @@ public class FEContext
         int line = getLineNumber();
         if (line >= 0) return file + ":" + line;
         return file;
+    }
+
+    public String toString()
+    {
+        return getLocation();
     }
 }

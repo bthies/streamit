@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearFilterAnalyzer.java,v 1.6 2002-08-30 20:13:25 aalamb Exp $
+ * $Id: LinearFilterAnalyzer.java,v 1.7 2002-09-03 21:28:24 aalamb Exp $
  **/
 public class LinearFilterAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear forms. never would have guessed that, would you? **/
@@ -111,9 +111,10 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
  **/
 class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     /**
-     * Mappings from variables to LinearForms. Each LinearForm holds the
+     * Mappings from JLocalVariables and JFieldAccessExpressons
+     * to LinearForms. Each LinearForm holds the
      * affine representation that maps the expression to a combination of
-     * inputs (eg peek expressions indexes);
+     * inputs (eg peek expressions indexes) and possibly a constant.
      **/
     private HashMap variablesToLinearForms;
 
@@ -204,11 +205,67 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 //     public Object visitArrayInitializer(JArrayInitializer self, JExpression[] elems){return null;}
 //     public Object visitArrayLengthExpression(JArrayLengthExpression self, JExpression prefix) {return null;}
 
+    /**
+     * Visit's an assignment statement. If the LHS is a variable (local or field)
+     * and the RHS becomes a linear form, then we add a mapping from
+     * the variable (JLocalVariableExpression or JFieldAccessExpression)
+     * to the linear form in the variablesToLinearForm map.
+     **/
     public Object visitAssignmentExpression(JAssignmentExpression self, JExpression left, JExpression right) {
 	LinearPrinter.println("  visiting assignment expression: " + self);
-	return super.visitAssignmentExpression(self, left, right);
+	LinearPrinter.println("   left side: " + left);
+	LinearPrinter.println("   right side: " + right);
+
+	// make sure that we start with legal state
+	checkRep();
+
+	// if the RHS of the expression is a field expression, bomb an error
+	// for the moment. Eventually we have to worry about aliasing.
+	if (right instanceof JFieldAccessExpression) {
+	    throw new RuntimeException("Assigning values _from_ fields is not yet supported");
+	}
+
+	
+	// check the RHS to see if it is a linear form -- pump us through it
+	LinearForm rightLinearForm = (LinearForm)right.accept(this);
+
+	// if the RHS is not a linear form, we are done (because this expression computes
+	// something nonlinear we need to remove any mappings to the left hand
+	// side of the assignment expression (because it now contains something non linear).
+	if (rightLinearForm == null) {
+	    removeMapping(left);
+	    return null;
+	}
+
+	
+	// now, if the left hand side is JLocalVariableExpression add a mapping
+	// from the variable to the linear form
+	if (left instanceof JLocalVariableExpression) {
+	    JLocalVariableExpression lve = (JLocalVariableExpression)left; // casting happiness
+	    JLocalVariable lv = lve.getVariable(); // get the variable
+	    LinearPrinter.println("   adding a mapping from " + lv +
+				  " to " + rightLinearForm);
+	    // add the mapping from the local variable to the linear form
+	    this.variablesToLinearForms.put(lv, rightLinearForm);
+				  
+	}
+	if (left instanceof JFieldAccessExpression) {
+	    // wrap the access expression so that the equals methods work out
+	    FieldAccessWrapper wrapper = FieldAccessWrapper.wrapFieldAccess((JFieldAccessExpression)left);
+	    LinearPrinter.println("   adding a field mapping from " + wrapper +
+				  " to " + rightLinearForm);
+
+	    this.variablesToLinearForms.put(wrapper, rightLinearForm);
+	}
+
+	// make sure that we didn't screw up our state
+	checkRep();
+	
+	return null;
     }
 
+
+    
     /**
      * visits a binary expression: eg add, sub, etc.
      * If the operator is a plus or minus,
@@ -355,9 +412,49 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 // 						 JPackageImport[] importedPackages,
 // 				       JClassImport[] importedClasses,
 // 				       JTypeDeclaration[] typeDeclarations){return null;}
-//     public Object visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
-// 						    int oper, JExpression left,
-// 						    JExpression right){return null;}
+
+    /**
+     * visits a compound assignment expression -- eg +=, -=, etc.
+     * If the left hand side is a JLocalVariableExpression or JFieldAccessExpression
+     * we add the appropriate mapping in variablesToLinearForms.
+     **/
+    public Object visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
+						    int oper, JExpression left,
+ 						    JExpression right){
+
+
+	// act based on the operaton being performed. -- code mostly copied from Propagator.java
+	// The basic premise is to expand out the compound operation into a normal JAssignmentExpression
+	// and stuff ourselves (the visitor) through the new construct. This allows us to use our existing code.
+	switch(oper) {
+
+	case OPE_SR: // shift right operator:  >> -- non linear
+	    return new JAssignmentExpression(null,left,new JShiftExpression(null,OPE_SR,left,right)).accept(this);
+
+	case OPE_SL: // shift left operator:  << -- non linear
+	    return new JAssignmentExpression(null,left,new JShiftExpression(null,OPE_SL,left,right)).accept(this);
+
+	case OPE_PLUS: // plus operator:  +  -- linear!
+	    return new JAssignmentExpression(null,left,new JAddExpression(null,left,right)).accept(this);
+
+	case OPE_MINUS: // minus operator:  -  -- linear!
+	    return new JAssignmentExpression(null,left,new JMinusExpression(null,left,right)).accept(this);
+
+	case OPE_STAR: // multiplication operator:  +  -- linear!
+	    return new JAssignmentExpression(null,left,new JMultExpression(null,left,right)).accept(this);
+
+	case OPE_SLASH: // division operator:  / -- linear!
+	    return new JAssignmentExpression(null,left,new JDivideExpression(null,left,right)).accept(this);
+
+	case OPE_PERCENT: // modulus operator:  % -- non linear
+	    return new JAssignmentExpression(null,left,new JModuloExpression(null,left,right)).accept(this);
+
+	default:
+	    throw new RuntimeException("Unknown operation while analyzing compound assignment expression:" + oper);
+	}
+    }
+
+
 //     public Object visitCompoundStatement(JCompoundStatement self, JStatement[] body){return null;}
 //     public Object visitConditionalExpression(JConditionalExpression self, JExpression cond,
 // 					     JExpression left, JExpression right){return null;}
@@ -374,7 +471,36 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 //     public Object visitExpressionStatement(JExpressionStatement self, JExpression expr){return null;}
 //     public Object visitFieldDeclaration(JFieldDeclaration self, int modifiers,
 // 					CType type, String ident, JExpression expr){return null;}
-//     public Object visitFieldExpression(JFieldAccessExpression self, JExpression left, String ident){return null;}
+    /**
+     * visits a field access expression. If there is a linear form mapped to this
+     * expression in variablesToLinearForms, we return that. If there is no linear
+     * form mapped to this expression, we simply return null;
+     **/
+    public Object visitFieldExpression(JFieldAccessExpression self, JExpression left, String ident){
+	checkRep();
+	LinearPrinter.println("  visiting field access expression: " + self);
+	LinearPrinter.println("   left: " + left);
+	LinearPrinter.println("   ident: " + ident);
+
+	checkRep();
+
+	// wrap the field access and then use that wrapper as the
+	// key into the variables->linearform mapping
+	FieldAccessWrapper wrapper = FieldAccessWrapper.wrapFieldAccess(self);
+
+	// if we have a mapping, return it. Otherwise return null.
+	if (this.variablesToLinearForms.containsKey(wrapper)) {
+	    LinearPrinter.println("   (found mapping for " + wrapper + ")");
+	    return this.variablesToLinearForms.get(wrapper);
+	} else {
+	    LinearPrinter.println("   (no mapping found for " + wrapper + ")");
+	    Iterator keyIter = this.variablesToLinearForms.keySet().iterator();
+	    while(keyIter.hasNext()) {
+		LinearPrinter.println("key: " + keyIter.next());
+	    }
+	    return null;
+	}
+    }
 //     public Object visitFormalParameters(JFormalParameter self, boolean isFinal,
 // 					CType type, String ident){return null;}
 //     public Object visitForStatement(JForStatement self, JStatement init,
@@ -393,7 +519,30 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 //     public Object visitJavadoc(JavadocComment self){return null;}
 //     public Object visitLabeledStatement(JLabeledStatement self, String label,
 // 					JStatement stmt){return null;}
-//     public Object visitLocalVariableExpression(JLocalVariableExpression self, String ident){return null;}
+
+    /**
+     * Visit a local variable expression. If we have a mapping of this
+     * variable in our mappings to linear forms, return the linear form
+     * otherwise return null.
+     **/
+    public Object visitLocalVariableExpression(JLocalVariableExpression self, String ident){
+ 	LinearPrinter.println("  visiting local var expression: " + self);
+	LinearPrinter.println("   variable: " + self.getVariable());
+	
+	checkRep();
+
+	// get the variable that this expression represents
+	JLocalVariable theVariable = self.getVariable();
+	
+	// if we have a mapping, return it. Otherwise return null
+	if (this.variablesToLinearForms.containsKey(theVariable)) {
+	    LinearPrinter.println("   (found mapping!)");
+	    return this.variablesToLinearForms.get(theVariable);
+	} else {
+	    LinearPrinter.println("   (mapping not found!)");
+	    return null;
+	}
+    }
 //     public Object visitLogicalComplementExpression(JUnaryExpression self, JExpression expr){return null;}
 //     public Object visitMethodCallExpression(JMethodCallExpression self, JExpression prefix,
 // 					    String ident, JExpression[] args){return null;}
@@ -615,6 +764,46 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 
 
+
+    /**
+     * Removes the mapping of a local variable expression or a field access expression
+     * from the variablesToLinearForm mapping. Throws an exception if we try to remove
+     * a mapping to a type that we don't know about
+     **/
+    public void removeMapping(JExpression expr) {
+	// dispatch on type
+	if (expr instanceof JLocalVariableExpression) {
+	    removeMapping((JLocalVariableExpression)expr);
+	} else if (expr instanceof JFieldAccessExpression) {
+	    removeMapping((JFieldAccessExpression)expr);
+	} else {
+	    throw new RuntimeException("Can have linear mappings to " + expr +
+				       " (of type " + expr.getClass().getName());
+	}
+    }
+    
+    /**
+     * Removes the mapping for a particular JLocalVariable in a JLocalVariableExpression.
+     * Does not report errors when a variable that is not in the mapping is "removed."
+     **/
+    public void removeMapping(JLocalVariableExpression lve) {
+	// extract the variable
+	JLocalVariable theVariable = lve.getVariable();
+	// if the variable is a key in the mappings, then remove the mapping
+	if (this.variablesToLinearForms.containsKey(theVariable)) {
+	    LinearPrinter.println("  Removing mapping for " + theVariable);
+	    this.variablesToLinearForms.remove(theVariable);
+	}
+    }
+    /**
+     * Removes the mapping for a particular JFieldAccessExpression
+     * Does not report errors when a variable that is not in the mapping is "removed."
+     **/
+    public void removeMapping(JFieldAccessExpression fae) {
+	throw new RuntimeException("Not yet implemented");
+    }
+    
+
     
 
     /**
@@ -626,26 +815,34 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	return new LinearForm(this.peekSize);
     }
 
-/** Creates a blank linear form that has the specified offset **/
-private LinearForm getOffsetLinearForm(double offset) {
-    checkRep();
-    LinearForm lf = this.getBlankLinearForm();
-    lf.setOffset(offset);
-    LinearPrinter.println("  created constant linear form for " + offset);
-    return lf;
-}
+    /** Creates a blank linear form that has the specified offset **/
+    private LinearForm getOffsetLinearForm(double offset) {
+	checkRep();
+	LinearForm lf = this.getBlankLinearForm();
+	lf.setOffset(offset);
+	LinearPrinter.println("  created constant linear form for " + offset);
+	return lf;
+    }
 
     /**
      * Check the representation invariants of the LinearFilterVisitor.
      **/
     private void checkRep() {
 	// check that the only values in the HashMap are LinearForm objects
-	Iterator valIter = this.variablesToLinearForms.values().iterator();
-	while(valIter.hasNext()) {
-	    Object o = valIter.next();
-	    if (o == null) {throw new RuntimeException("Null object in value map");}
-	    if (!(o instanceof LinearForm)) {throw new RuntimeException("Non LinearForms in value map");}
+	Iterator keyIter = this.variablesToLinearForms.keySet().iterator();
+	while(keyIter.hasNext()) {
+	    Object key = keyIter.next();
+	    if (key == null) {throw new RuntimeException("Null key in linear form map");}
+	    // make sure that they key is a JLocalVariable or a JFieldAccessExpression
+	    if (!((key instanceof JLocalVariable) ||
+		  (key instanceof FieldAccessWrapper))) {
+		throw new RuntimeException("Non local or field access wrapper in linear form map.");
+	    }
+	    Object val = this.variablesToLinearForms.get(key);
+	    if (!(val instanceof LinearForm)) {throw new RuntimeException("Non LinearForm in value map");}
 	}
+	
+	
 	// make sure that the peekoffset is not less than one, and that it
 	// is not greater than the peeksize
 	if (this.peekOffset < 0) {throw new RuntimeException("Peekoffset < 0");}

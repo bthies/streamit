@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.42 2003-09-16 16:27:00 jasperln Exp $
+ * $Id: KjcOptions.opt,v 1.43 2003-09-17 08:27:59 thies Exp $
  */
 
 prefix Kjc
@@ -386,3 +386,9 @@ longname		"spacetime"
 	type		boolean
 	default		"false"
 	help		"Uses the spacetime partitioner."
+
+longname		"fission"
+	type		int
+	default		"-1"
+	requireArgument
+	help		"Perform vertical fission wherever possible, with maximum of <n>-way fiss per filter."

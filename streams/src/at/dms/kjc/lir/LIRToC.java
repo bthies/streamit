@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.68 2002-07-01 21:42:00 jasperln Exp $
+ * $Id: LIRToC.java,v 1.69 2002-07-12 20:13:39 jasperln Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1109,9 +1109,9 @@ public class LIRToC
                                         JExpression[] dims,
                                         JArrayInitializer init)
     {
-        print("malloc(");
+        print("calloc(");
         dims[0].accept(this);
-        print(" * sizeof(");
+        print(", sizeof(");
         print(type);
 	if(dims.length>1)
 	    print("*");
@@ -1125,9 +1125,9 @@ public class LIRToC
 		    print(",\n");
 		    //If lastLeft null then didn't come right after an assignment
 		    lastLeft.accept(this);
-		    print("["+i+"]=malloc(");
+		    print("["+i+"]=calloc(");
 		    dims[off+1].accept(this);
-		    print(" * sizeof(");
+		    print(", sizeof(");
 		    print(type);
 		    if(off<(dims.length-2))
 			print("*");

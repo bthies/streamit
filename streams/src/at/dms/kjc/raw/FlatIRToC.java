@@ -946,9 +946,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	  if (init != null) {
 	  init.accept(this);
 	  }*/
-	print("malloc(");
+	print("calloc(");
         dims[0].accept(this);
-        print(" * sizeof(");
+        print(", sizeof(");
         print(type);
 	if(dims.length>1)
 	    print("*");
@@ -962,9 +962,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		    print(",\n");
 		    //If lastLeft null then didn't come right after an assignment
 		    lastLeft.accept(this);
-		    print("["+i+"]=malloc(");
+		    print("["+i+"]=calloc(");
 		    dims[off+1].accept(this);
-		    print(" * sizeof(");
+		    print(", sizeof(");
 		    print(type);
 		    if(off<(dims.length-2))
 			print("*");

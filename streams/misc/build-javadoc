@@ -2,7 +2,7 @@
 #
 # build-javadoc: creates a Javadoc tree from the StreamIt sources
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-javadoc,v 1.2 2003-10-09 18:53:31 dmaze Exp $
+# $Id: build-javadoc,v 1.3 2003-10-09 21:14:50 dmaze Exp $
 
 rm -rf $STREAMIT_HOME/javadoc
 mkdir $STREAMIT_HOME/javadoc
@@ -30,7 +30,7 @@ javadoc -J-Xmx128M -use -version -author \
   -doctitle 'StreamIt Compiler Documentation' \
   -d $STREAMIT_HOME/javadoc \
   -group 'StreamIt Compiler Packages' 'at.dms.kjc*:streamit.iriter' \
-  -group 'StreamIt Library Packages' 'streamit:streamit.io:streamit.misc' \
+  -group 'StreamIt Library Packages' 'streamit.library*:streamit.misc' \
   -group 'StreamIt Scheduler Packages' 'streamit.scheduler*' \
   -group 'StreamIt Front End Packages' 'streamit.frontend*' \
   -group 'Eclipse Integration' 'grapheditor*:texteditor*:launcher*' \

@@ -8,7 +8,7 @@ import at.dms.kjc.raw.Util;
 import java.lang.*;
 import java.util.HashMap;
 
-class DataEstimate {
+public class DataEstimate {
 
     public static int getTypeSize(CType type) {
 
@@ -23,8 +23,6 @@ class DataEstimate {
     }
 
     public static int estimateDWS(SIROperator oper) {
-	int id = NodeEnumerator.getSIROperatorId(oper);
-	FlatNode node = NodeEnumerator.getFlatNode(id);
 
 	if (oper instanceof SIRFilter) {
 	    SIRFilter filter = (SIRFilter)oper;

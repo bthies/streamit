@@ -7,19 +7,23 @@ class object_write_buffer {
 
   int size;
 
+  int read_offset;
+
  public:
 
   object_write_buffer();
   
-  void reset();
-  
-  void write(void *ptr, int size);
-
-  void write_int(int data);
-  void write_float(float data);
+  void erase();
+  void set_read_offset(int offset);
 
   int get_size();
-  int get_data_int(int offset);
+  
+  void write(void *ptr, int size);
+  void write_int(int data);
+  void write_float(float data);
+  
+  int read_int();
+  float read_float();
 
 };
 

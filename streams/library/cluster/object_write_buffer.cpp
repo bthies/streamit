@@ -2,11 +2,20 @@
 #include <object_write_buffer.h>
 
 object_write_buffer::object_write_buffer() {
-  reset();
+  size = 0;
+  read_offset = 0;
 }
 
-void object_write_buffer::reset() {
+void object_write_buffer::erase() {
   size = 0;
+}
+
+void object_write_buffer::set_read_offset(int offset) {
+  read_offset = offset;
+}
+
+int object_write_buffer::get_size() {
+  return size;
 }
 
 void object_write_buffer::write(void *data, int dsize) {
@@ -22,14 +31,16 @@ void object_write_buffer::write_float(float data) {
   write(&data, sizeof(float));
 }
 
-int object_write_buffer::get_size() {
-  return size;
+int object_write_buffer::read_int() {
+  int result;
+  memcpy(&result, buf + read_offset, sizeof(int));
+  read_offset+=4;
+  return result;
 }
 
-int object_write_buffer::get_data_int(int offset) {
-  int result;
-  
-  memcpy(&result, buf + offset, sizeof(int));
-
+float object_write_buffer::read_float() {
+  float result;
+  memcpy(&result, buf + read_offset, sizeof(float));
+  read_offset+=4;
   return result;
 }

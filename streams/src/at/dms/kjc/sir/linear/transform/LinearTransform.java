@@ -94,7 +94,19 @@ public abstract class LinearTransform {
 	}
 	return currentGcd;
     }
-    
+
+    /**
+     * Gets the ceiling of the division of two integers. Eg
+     * divCeil(5,3) = ceil(5/3) = 2
+     **/
+    public static int divCeiling(int a, int b) {
+	int dividend = a/b;
+	int remainder = a%b;
+	if (remainder != 0) {
+	    dividend++;
+	}
+	return dividend;
+    }
 }
 
 

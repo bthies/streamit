@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CLoopContext.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CLoopContext.java,v 1.2 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -136,7 +136,7 @@ public class CLoopContext extends CBodyContext {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private final JLoopStatement		stmt;
+    private /*final*/ JLoopStatement		stmt; // removed final for cloner
   private CBodyContext			breakContextSummary;
   private CBodyContext			continueContextSummary;
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Phylum.java,v 1.1 2001-08-30 16:32:31 thies Exp $
+ * $Id: Phylum.java,v 1.2 2003-05-16 21:06:35 thies Exp $
  */
 
 package at.dms.compiler;
@@ -55,5 +55,5 @@ public abstract class Phylum extends Utils {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private final TokenReference	where;		// position in the source text
+    private /* final */ TokenReference	where;		// position in the source text.  removed "final" for cloner.
 }

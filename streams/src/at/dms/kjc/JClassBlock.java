@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassBlock.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: JClassBlock.java,v 1.2 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -61,5 +61,5 @@ public class JClassBlock extends JBlock {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private final boolean		isStatic;
+    private /* final*/  boolean		isStatic;// removed final for cloner
 }

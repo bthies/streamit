@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Compiler.java,v 1.1 2001-08-30 16:32:31 thies Exp $
+ * $Id: Compiler.java,v 1.2 2003-05-16 21:06:35 thies Exp $
  */
 
 package at.dms.compiler;
@@ -270,7 +270,7 @@ public abstract class Compiler {
   // --------------------------------------------------------------------
 
   // each compilation session is identified by a timestamp
-  private final long		timestamp;
+    private /* final*/ long		timestamp; // removed final for cloner
 
   // the output stream for diagnostic messages
   private PrintWriter		err = new PrintWriter(System.err);

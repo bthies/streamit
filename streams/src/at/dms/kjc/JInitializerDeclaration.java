@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JInitializerDeclaration.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JInitializerDeclaration.java,v 1.3 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -131,5 +131,5 @@ public class JInitializerDeclaration extends JMethodDeclaration {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private final boolean		isDummy;
+    private /* final */ boolean		isDummy; // removed final for cloner
 }

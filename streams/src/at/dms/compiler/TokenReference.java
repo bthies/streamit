@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenReference.java,v 1.2 2001-10-24 17:41:30 mgordon Exp $
+ * $Id: TokenReference.java,v 1.3 2003-05-16 21:06:35 thies Exp $
  */
 
 package at.dms.compiler;
@@ -102,6 +102,6 @@ public class TokenReference implements Serializable {
 
   private static TokenReference	last = NO_REF;
 
-  private final String		file;
-  private final int		line;
+    private /* final */ String		file;  // removed final for cloner
+	     private /* final */ int		line;  // removed final for cloner
 }

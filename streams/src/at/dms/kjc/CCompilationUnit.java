@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CCompilationUnit.java,v 1.2 2002-08-16 20:47:15 thies Exp $
+ * $Id: CCompilationUnit.java,v 1.3 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -124,10 +124,10 @@ public class CCompilationUnit implements java.io.Serializable {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private final String			packageName;
-
-  private final JClassImport[]		importedClasses;
-  private final JPackageImport[]	importedPackages;
-
-  private final Hashtable		loadedClasses;
+    private /* final */ String			packageName; // removed final for cloner
+    
+    private /* final */ JClassImport[]		importedClasses; // removed final for cloner
+    private /* final */ JPackageImport[]	importedPackages; // removed final for cloner
+    
+    private /* final */ Hashtable		loadedClasses; // removed final for cloner
 }

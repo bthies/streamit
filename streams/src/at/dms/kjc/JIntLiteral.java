@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JIntLiteral.java,v 1.5 2002-06-24 00:45:39 thies Exp $
+ * $Id: JIntLiteral.java,v 1.6 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -262,6 +262,6 @@ public class JIntLiteral extends JLiteral {
   // ----------------------------------------------------------------------
 
 	// value = MAX_VALUE + 1, valid only as argument to unary minus
-  private final boolean		invert;
-  private final int		value;
+    private /* final */ boolean		invert;  // removed final for cloner
+    private /* final */ int		value;  // removed final for cloner
 }

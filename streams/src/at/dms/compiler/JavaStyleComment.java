@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavaStyleComment.java,v 1.2 2001-10-25 00:41:52 mgordon Exp $
+ * $Id: JavaStyleComment.java,v 1.3 2003-05-16 21:06:35 thies Exp $
  */
 
 package at.dms.compiler;
@@ -80,7 +80,7 @@ public class JavaStyleComment implements Serializable {
   // ----------------------------------------------------------------------
 
   protected	String		text;
-  private final boolean		isLineComment;
-  private final boolean		spaceBefore;
-  private final boolean		spaceAfter;
+    private /* final */ boolean		isLineComment; // removed "final" for cloner
+    private /* final */ boolean		spaceBefore; // removed "final" for cloner
+    private  /* final */ boolean		spaceAfter; // removed "final" for cloner
 }

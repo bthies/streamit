@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JByteLiteral.java,v 1.4 2002-06-24 00:45:38 thies Exp $
+ * $Id: JByteLiteral.java,v 1.5 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -171,5 +171,5 @@ public class JByteLiteral extends JLiteral {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private final byte		value;
+    private /* final */ byte		value; // removed final for cloner
 }

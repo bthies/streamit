@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPackageImport.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
+ * $Id: JPackageImport.java,v 1.3 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -149,7 +149,7 @@ public class JPackageImport extends JPhylum {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private final String			name;
-  private final JavaStyleComment[]	comments;
+    private /* final */ String			name;  // removed final for cloner
+    private /* final */ JavaStyleComment[]	comments;  // removed final for cloner
   private Vector			classesUsed;
 }

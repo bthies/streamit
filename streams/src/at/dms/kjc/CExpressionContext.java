@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CExpressionContext.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CExpressionContext.java,v 1.2 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -121,10 +121,10 @@ public class CExpressionContext extends CContext {
   /**
    * Is the expression the left hand side of an assignment ?
    */
-  private final boolean		isLeftSide;
+    private /* final */ boolean		isLeftSide; // removed final for cloner
 
   /**
    * Will the result of the evaluation of the expression be discarded ?
    */
-  private final boolean		discardValue;
+      private /* final */ boolean		discardValue; // removed final for cloner
 }

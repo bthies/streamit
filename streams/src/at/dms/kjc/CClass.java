@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClass.java,v 1.2 2003-05-16 01:52:34 thies Exp $
+ * $Id: CClass.java,v 1.3 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -781,9 +781,9 @@ public abstract class CClass extends CMember {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private final String		sourceFile;
-  private final	String		qualifiedName;
-  private final	String		packageName;
+    private /* final*/ String		sourceFile;    // removed final for cloner
+    private /* final*/	String		qualifiedName; // removed final for cloner
+    private /* final*/	String		packageName;  // removed final for cloner
 
   private CClassType[]		interfaces;
   private CClassType		type;

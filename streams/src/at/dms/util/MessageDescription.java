@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MessageDescription.java,v 1.2 2003-05-16 04:54:29 thies Exp $
+ * $Id: MessageDescription.java,v 1.3 2003-05-16 21:06:42 thies Exp $
  */
 
 package at.dms.util;
@@ -134,7 +134,7 @@ public class MessageDescription {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private final String		format;
-  private final String		reference;
+    private /* final */ String		format; // removed final for cloner
+	     private /* final */ String		reference; // removed final for cloner
   private int			level;
 }

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Message.java,v 1.1 2001-08-30 16:32:58 thies Exp $
+ * $Id: Message.java,v 1.2 2003-05-16 21:06:42 thies Exp $
  */
 
 package at.dms.util;
@@ -103,6 +103,6 @@ public class Message {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private final MessageDescription	description;
-  private final Object[]		parameters;
+    private /* final */ MessageDescription	description; // removed final for cloner
+	     private /* final */ Object[]		parameters; // removed final for cloner
 }

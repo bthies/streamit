@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JRelationalExpression.java,v 1.5 2002-06-25 19:59:28 jasperln Exp $
+ * $Id: JRelationalExpression.java,v 1.6 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -396,5 +396,5 @@ public class JRelationalExpression extends JBinaryExpression {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  protected final int		oper;
+    protected /* final */  int		oper; // removed final for cloner
 }

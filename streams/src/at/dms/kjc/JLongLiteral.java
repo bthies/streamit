@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLongLiteral.java,v 1.4 2002-06-24 00:45:39 thies Exp $
+ * $Id: JLongLiteral.java,v 1.5 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -237,6 +237,6 @@ public class JLongLiteral extends JLiteral {
   // ----------------------------------------------------------------------
 
 	// value = MAX_VALUE + 1, valid only as argument to unary minus
-  private final boolean		invert;
-  private final long		value;
+    private /* final */ boolean		invert; // removed final for cloner
+    private /* final */ long		value;  // removed final for cloner
 }

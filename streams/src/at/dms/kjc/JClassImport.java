@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassImport.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JClassImport.java,v 1.3 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -134,8 +134,8 @@ public class JClassImport extends JPhylum {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private final String			name;
-  private final String			ident;
-  private final JavaStyleComment[]	comments;
+    private /* final */ String			name;  // removed final for cloner
+    private /* final */ String			ident;  // removed final for cloner
+  private /* final */ JavaStyleComment[]	comments;  // removed final for cloner
   private boolean			used;
 }

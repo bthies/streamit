@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoubleLiteral.java,v 1.5 2002-07-03 14:26:59 jasperln Exp $
+ * $Id: JDoubleLiteral.java,v 1.6 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -209,5 +209,5 @@ public class JDoubleLiteral extends JLiteral {
   // ----------------------------------------------------------------------
 
   private static final long	ZERO_BITS = Double.doubleToLongBits(0d);
-  private final double		value;
+    private /* final */ double		value;  // removed final for cloner
 }

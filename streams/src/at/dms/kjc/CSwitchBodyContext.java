@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSwitchBodyContext.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: CSwitchBodyContext.java,v 1.2 2003-05-16 21:06:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -131,7 +131,7 @@ public class CSwitchBodyContext extends CBodyContext {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private final JSwitchStatement	stmt;
-  private final Hashtable		labels = new Hashtable();
-  private boolean			defaultExist;
+    private /* final */ JSwitchStatement	stmt; // removed final for cloner
+    private /* final */ Hashtable		labels = new Hashtable(); // removed final for cloner
+    private boolean			defaultExist;
 }

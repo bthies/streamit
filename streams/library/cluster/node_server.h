@@ -2,8 +2,9 @@
 #ifndef __NODE_SERVER_H
 #define __NODE_SERVER_H
 
-#include <thread_list_element.h>
+#include <vector>
 
+#include <thread_info.h>
 
 #define LIST_COMMAND 1
 
@@ -23,11 +24,11 @@
 
 class node_server {
 
-  thread_list_element *thread_top;
+  vector <thread_info*> thread_list;
 
  public:
   
-  node_server(thread_list_element *thread_list_top);
+  node_server(vector <thread_info*> list);
 
   void run_server();
 

@@ -3,11 +3,11 @@
 
 #include <mysocket.h>
 #include <open_socket.h>
-#include <thread_list_element.h>
+#include <thread_info.h>
 
 
-node_server::node_server(thread_list_element *thread_list_top) {
-  thread_top = thread_list_top;
+node_server::node_server(vector <thread_info*> list) {
+  thread_list = list;
 }
 
 void node_server::run_server() {
@@ -28,25 +28,32 @@ void node_server::run_server() {
       if (sock->eof()) break;
       
       if (cmd == LIST_COMMAND) {
- 	for (thread_list_element *tmp = thread_top;
-	     tmp != NULL; 
-	     tmp = tmp->get_next()) {
-	  
-	  sock->write_int(tmp->get_thread_id());
+
+	for (vector<thread_info*>::iterator iter = thread_list.begin();
+	     iter < thread_list.end();
+	     ++iter) {
+
+	  thread_info *info = *iter;
+
+	  sock->write_int( info->get_thread_id() );
+
 	}
+
 	sock->write_int(-1);
       }
 
       if (cmd == PAUSE_COMMAND) {
 	int thread_id = sock->read_int();
 
-	for (thread_list_element *tmp = thread_top;
-	     tmp != NULL; 
-	     tmp = tmp->get_next()) {
+	for (vector<thread_info*>::iterator iter = thread_list.begin();
+	     iter < thread_list.end();
+	     ++iter) {
 
-	  if (tmp->get_thread_id() == thread_id) {
+	  thread_info *info = *iter;
 
-	    (*tmp->get_state_flag()) = PAUSE_STATE;
+	  if ( info->get_thread_id() == thread_id ) {
+
+	    *(info->get_state_flag()) = PAUSE_STATE;
 	  }
 	}
       }
@@ -54,13 +61,15 @@ void node_server::run_server() {
       if (cmd == RESTART_COMMAND) {
 	int thread_id = sock->read_int();
 
-	for (thread_list_element *tmp = thread_top;
-	     tmp != NULL; 
-	     tmp = tmp->get_next()) {
+	for (vector<thread_info*>::iterator iter = thread_list.begin();
+	     iter < thread_list.end();
+	     ++iter) {
 
-	  if (tmp->get_thread_id() == thread_id) {
+	  thread_info *info = *iter;
 
-	    (*tmp->get_state_flag()) = RUN_STATE;
+	  if ( info->get_thread_id() == thread_id ) {
+
+	    *(info->get_state_flag()) = RUN_STATE;
 	  }
 	}
       }
@@ -69,3 +78,7 @@ void node_server::run_server() {
   }
 
 }
+
+
+
+

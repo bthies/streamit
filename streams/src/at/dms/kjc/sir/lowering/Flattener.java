@@ -41,12 +41,6 @@ public class Flattener {
 			       SIRInterfaceTable[]
 			       interfaceTables,
 			       SIRStructure[] structs) {
-	/* DEBUGGING PRINTING *
-        System.out.println("--------- ON ENTRY TO FLATTENER ----------------");
-	SIRPrinter printer1 = new SIRPrinter();
-	IterFactory.createFactory().createIter(str).accept(printer1);
-	printer1.close();
-	*/
 
 	// move field initializations into init function
 	FieldInitMover.moveStreamInitialAssignments(str);
@@ -67,6 +61,12 @@ public class Flattener {
 	    System.err.println("done.");
 	}
 	
+	/* DEBUGGING PRINTING *
+	SIRPrinter printer1 = new SIRPrinter("ir1.txt");
+	IterFactory.createFactory().createIter(str).accept(printer1);
+	printer1.close();
+	*/
+
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
 	INIT_STATEMENTS_RESOLVED = true;

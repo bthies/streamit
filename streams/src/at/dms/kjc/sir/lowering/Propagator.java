@@ -1165,7 +1165,8 @@ public class Propagator extends SLIRReplacingVisitor {
         {
             if (ident.equals("sin") || ident.equals("cos") ||
                 ident.equals("log") || ident.equals("exp") ||
-		ident.equals("atan")) {
+		ident.equals("atan") || ident.equals("sqrt") ||
+		ident.equals("floor") || ident.equals("ceil")) {
 		JExpression narg = doPromote(args[0],
 					     new JDoubleLiteral(null, 0.0));
 		double darg = narg.doubleValue();
@@ -1185,6 +1186,15 @@ public class Propagator extends SLIRReplacingVisitor {
                 if (ident.equals("atan"))
                     return new JDoubleLiteral(self.getTokenReference(),
                                               Math.atan(darg));
+                if (ident.equals("sqrt"))
+                    return new JDoubleLiteral(self.getTokenReference(),
+                                              Math.sqrt(darg));
+                if (ident.equals("floor"))
+                    return new JDoubleLiteral(self.getTokenReference(),
+                                              Math.floor(darg));
+                if (ident.equals("ceil"))
+                    return new JDoubleLiteral(self.getTokenReference(),
+                                              Math.ceil(darg));
 	    }
 	}
         return self;

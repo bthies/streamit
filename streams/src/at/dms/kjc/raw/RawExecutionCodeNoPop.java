@@ -319,7 +319,7 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
 					CStdType.Integer,
 					recvBufferBits,
-					new JIntLiteral(buffersize));
+					new JIntLiteral(buffersize - 1));
 	    
 	    //the receive buffer index (start of the buffer)
 	    JVariableDefinition recvBufferIndexVar = 

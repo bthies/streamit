@@ -61,8 +61,9 @@ public class BufferedCommunication extends RawExecutionCode
 	
 	JMethodDeclaration[] methods = filterInfo.filter.getMethods();
 
-	if (filterInfo.traceNode.getNext() != null &&
-	    !filterInfo.traceNode.getNext().isFilterTrace()) {
+	if (!KjcOptions.magicdram && 
+	    (filterInfo.traceNode.getNext() != null &&
+	     !filterInfo.traceNode.getNext().isFilterTrace())) {
 	    	InterTraceCommunication inter = new InterTraceCommunication(filterInfo);
 		for (int i = 0; i < methods.length; i++) {
 		    methods[0].accept(inter);
@@ -334,7 +335,7 @@ public class BufferedCommunication extends RawExecutionCode
 
 	    //add the code to receive the items into the buffer from the network
 	    //but only if its upstream neighbor is a filter trace node...
-	    if (filterInfo.traceNode.getPrevious().isFilterTrace()) {
+	    if (KjcOptions.magicdram || filterInfo.traceNode.getPrevious().isFilterTrace()) {
 		statements.addStatement
 		    (makeForLoop(receiveCode(filter, filter.getInputType(), 
 					     generatedVariables),
@@ -346,7 +347,8 @@ public class BufferedCommunication extends RawExecutionCode
 	    statements.addStatement(body);
 	    //if a simple filter, reset the simpleIndex
 	    if (filterInfo.isSimple() && 
-		filterInfo.traceNode.getPrevious().isFilterTrace()) {
+		(KjcOptions.magicdram ||
+		 filterInfo.traceNode.getPrevious().isFilterTrace())) {
 		statements.addStatement
 		    (new JExpressionStatement(null,
 					      (new JAssignmentExpression
@@ -363,7 +365,8 @@ public class BufferedCommunication extends RawExecutionCode
 	//work function for the first time
 	    
 	    if (filterInfo.bottomPeek > 0 && 
-		filterInfo.traceNode.getPrevious().isFilterTrace()) {
+		(KjcOptions.magicdram ||
+		filterInfo.traceNode.getPrevious().isFilterTrace())) {
 		statements.addStatement
 		    (makeForLoop(receiveCode(filter, filter.getInputType(),
 					     generatedVariables),
@@ -379,7 +382,8 @@ public class BufferedCommunication extends RawExecutionCode
 	//add the code to collect all data produced by the upstream filter 
 	//but not consumed by this filter in the initialization stage
 	if (filterInfo.remaining > 0 &&
-	    filterInfo.traceNode.getPrevious().isFilterTrace()) {
+	    (KjcOptions.magicdram ||
+	    filterInfo.traceNode.getPrevious().isFilterTrace())) {
 	   statements.addStatement
 		(makeForLoop(receiveCode(filter, filter.getInputType(),
 					 generatedVariables),
@@ -396,7 +400,7 @@ public class BufferedCommunication extends RawExecutionCode
 	
 	//reset the simple index if we are receiving from another trace
 	//to allow it to write to the buffer in the correct index
-	if (filterInfo.isSimple() && 
+	if (!KjcOptions.magicdram && filterInfo.isSimple() && 
 		filterInfo.traceNode.getPrevious().isInputTrace()) {
 		statements.addStatement
 		    (new JExpressionStatement(null,
@@ -435,7 +439,8 @@ public class BufferedCommunication extends RawExecutionCode
 
 	//reset the simple index
 	if (filterInfo.isSimple() && 
-	    filterInfo.traceNode.getPrevious().isFilterTrace()) {
+	    (KjcOptions.magicdram || 
+	    filterInfo.traceNode.getPrevious().isFilterTrace())) {
 	    block.addStatement
 		(new JExpressionStatement(null,
 					  (new JAssignmentExpression
@@ -448,7 +453,7 @@ public class BufferedCommunication extends RawExecutionCode
 	
 	//if this filter is the last in the trace and communicating to anothter filter
 	//who is simple, reset the simple index during each iteration
-	if (filterInfo.traceNode.getNext().isOutputTrace() &&
+	if (!KjcOptions.magicdram && filterInfo.traceNode.getNext().isOutputTrace() &&
 	    upstream != null && upstream.isSimple()) {
 	    block.addStatement
 		(new JExpressionStatement(null,
@@ -461,7 +466,7 @@ public class BufferedCommunication extends RawExecutionCode
 	}
 	
 	
-	if (filterInfo.traceNode.getPrevious().isFilterTrace()) {
+	if (KjcOptions.magicdram || filterInfo.traceNode.getPrevious().isFilterTrace()) {
 	    //add the statements to receive pop * steady mult items into the buffer
 	    //execute this before the for loop that has the work function
 	    block.addStatement
@@ -513,7 +518,7 @@ public class BufferedCommunication extends RawExecutionCode
 	
 	//reset the simple index outside of the loop if this filter is the first
 	//in the trace because it uses the buffer that for the entire steady state
-	if (filterInfo.isSimple() && 
+	if (!KjcOptions.magicdram && filterInfo.isSimple() && 
 	    filterInfo.traceNode.getPrevious() != null &&
 	    filterInfo.traceNode.getPrevious().isInputTrace()) {
 	    block.addStatementFirst
@@ -530,7 +535,7 @@ public class BufferedCommunication extends RawExecutionCode
 	//if this filter is the last in the trace and communicating to anothter filter
 	//who is simple, reset the simple index (the next filter's) during each iteration
 	//do not do this in the loop, because it fills the entire buffer
-	if (filterInfo.traceNode.getNext().isOutputTrace() &&
+	if (!KjcOptions.magicdram && filterInfo.traceNode.getNext().isOutputTrace() &&
 	    upstream != null && upstream.isSimple()) {
 	    block.addStatementFirst
 		(new JExpressionStatement(null,
@@ -580,7 +585,8 @@ public class BufferedCommunication extends RawExecutionCode
 	
 	//if a simple filter and the previous trace is a filter , reset the simpleIndex
 	if (filterInfo.isSimple() && 
-	    filterInfo.traceNode.getPrevious().isFilterTrace()){
+	    (KjcOptions.magicdram ||
+	    filterInfo.traceNode.getPrevious().isFilterTrace())) {
 	    block.addStatement
 		(new JExpressionStatement(null,
 					  (new JAssignmentExpression
@@ -591,7 +597,7 @@ public class BufferedCommunication extends RawExecutionCode
 					    new JIntLiteral(-1))), null));
 	}
 	
-	if (filterInfo.traceNode.getPrevious().isFilterTrace()) {
+	if (KjcOptions.magicdram || filterInfo.traceNode.getPrevious().isFilterTrace()) {
 	    JStatement innerReceiveLoop = 
 		makeForLoop(receiveCode(filter, filter.getInputType(),
 					generatedVariables),

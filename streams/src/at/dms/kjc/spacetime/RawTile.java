@@ -1,8 +1,8 @@
 package at.dms.kjc.spacetime;
 
-public class RawTile {
-    private int X;
-    private int Y;
+import at.dms.kjc.*;
+
+public class RawTile extends ComputeNode {
     private int tileNumber;
     //true if this tile has switch code
     private boolean switches;
@@ -12,10 +12,10 @@ public class RawTile {
     private SwitchCodeStore switchCode;
     private ComputeCodeStore computeCode;
 
-    private RawChip rawChip;
+    private IODevice ioDevice;
 
     public RawTile(int row, int col, RawChip rawChip) {
-	this.rawChip = rawChip;
+	super(rawChip);
 	X = row;
 	Y = col;
 	setTileNumber();
@@ -23,6 +23,22 @@ public class RawTile {
 	switches = false;
 	switchCode = new SwitchCodeStore(this);
 	computeCode = new ComputeCodeStore(this);
+	ioDevice = null;
+    }
+
+    public boolean hasIODevice() 
+    {
+	return (ioDevice != null);
+    }
+    
+    public void setIODevice(IODevice io) 
+    {
+	this.ioDevice = io;
+    }
+
+    public IODevice getIODevice() 
+    {
+	return ioDevice;
     }
 
     private void setTileNumber() {
@@ -34,9 +50,6 @@ public class RawTile {
 	tileNumber = (Y * columns) + X;
     }
 
-    public RawChip getRawChip() {
-	return rawChip;
-    }
 
     public int getTileNumber() {
 	return tileNumber;
@@ -68,11 +81,5 @@ public class RawTile {
 	computes = true;
     }
     
-    public int getX() {
-	return X;
-    }
-
-    public int getY() {
-	return Y;
-    }
+   
 }

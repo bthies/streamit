@@ -979,12 +979,21 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	     ident.equals("atan2") ||
 	     ident.equals("ceil") ||
 	     ident.equals("cos") ||
+	     ident.equals("sin") ||
+	     ident.equals("cosh") ||
+	     ident.equals("sinh") ||
 	     ident.equals("exp") ||
-	     ident.equals("floorf") ||
+	     ident.equals("fabs") ||
+	     ident.equals("modf") ||
+	     ident.equals("fmod") ||
+	     ident.equals("frexp") ||
+	     ident.equals("floor") ||	     
 	     ident.equals("log") ||
+	     ident.equals("log10") ||
 	     ident.equals("pow") ||
 	     ident.equals("rint") ||
 	     ident.equals("sqrt") ||
+	     ident.equals("tanh") ||
 	     ident.equals("tan")))
 	    return true;
 	return false;
@@ -1099,6 +1108,24 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    print(")");
         }
     }
+
+     /**
+     * prints a cast expression
+     */
+    public void visitCastExpression(JCastExpression self,
+				    JExpression expr,
+				    CType type)
+    {
+	print("(");
+        print("(");
+        print(type);
+        print(")");
+        print("(");
+	expr.accept(this);
+	print(")");
+        print(")");
+    }
+    
 
     /**
      * prints a cast expression
@@ -1796,6 +1823,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
     {
 	if (s instanceof CArrayType){
 	    print(((CArrayType)s).getElementType());
+	    print("*");
 	}
         else if (s.getTypeID() == TID_BOOLEAN)
             print("int");

@@ -34,7 +34,7 @@ public class DirectCommunication extends RawExecutionCode
 	
 	//runs some tests to see if we can 
 	//generate code direct commmunication code
-	if (fi.traceNode.getPrevious() != null && 
+	if (!KjcOptions.magicdram && fi.traceNode.getPrevious() != null && 
 	    fi.traceNode.getPrevious().isInputTrace())
 	    return false;
 	if (KjcOptions.ratematch)
@@ -69,14 +69,15 @@ public class DirectCommunication extends RawExecutionCode
 
 	//if the next filter is not a filtertraceNode, it is a outputtracenode
 	//so we have to write the output of the filter to the next filter's 
-	//input buffer
-	if (filterInfo.traceNode.getNext() != null &&
-	    !filterInfo.traceNode.getNext().isFilterTrace()) {
+	//input buffer, do this only for the hacked intratile communication
+	if (!KjcOptions.magicdram && 
+	    (filterInfo.traceNode.getNext() != null &&
+	    !filterInfo.traceNode.getNext().isFilterTrace())) {
 	    JMethodDeclaration[] methods = filterInfo.filter.getMethods();
 	    InterTraceCommunication inter = new InterTraceCommunication(filterInfo);
 	    for (int i = 0; i < methods.length; i++) {
 		methods[i].accept(inter);
-	    }
+	    }	
 	}
     }
 
@@ -165,7 +166,7 @@ public class DirectCommunication extends RawExecutionCode
 
 	//if this filter is the last in the trace and communicating to anothter filter
 	//who is simple, reset the simple index during each iteration
-	if (filterInfo.traceNode.getNext() != null &&
+	if (!KjcOptions.magicdram && filterInfo.traceNode.getNext() != null &&
 	    filterInfo.traceNode.getNext().isOutputTrace() &&
 	    upstream != null && upstream.isSimple()) {
 	    block.addStatement

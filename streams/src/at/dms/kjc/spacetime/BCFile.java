@@ -42,8 +42,11 @@ public class BCFile
 
 	if (KjcOptions.decoupled)
 	    decoupled();
-	
 	mappedFunction();
+
+	if (KjcOptions.magicdram) 
+	    magicDram();
+
 	if (KjcOptions.numbers > 0) // && NumberGathering.successful)
 	    numberGathering();
 	if (KjcOptions.magic_net)
@@ -148,6 +151,26 @@ public class BCFile
 	//append the 0 to end the conjuction
 	buf.append("0) {return 1; }\n");
 	buf.append("return 0;\n");
+	buf.append("}\n");
+    }
+
+    private void magicDram() 
+    {
+	buf.append("{\n");
+	//generate includes
+	for (int i = 0; i < rawChip.getDevices().length; i++) {
+	    MagicDram dram = (MagicDram)rawChip.getDevices()[i];
+	    if (dram == null) 
+		continue;
+	    buf.append("\tinclude(\"magicdram" + dram.getPort()+ ".bc\");\n");
+	}
+	//install devices
+	for (int i = 0; i < rawChip.getDevices().length; i++) {
+	    MagicDram dram = (MagicDram)rawChip.getDevices()[i];
+	    if (dram == null) 
+		continue;
+	    buf.append("\tdev_magic_dram" + dram.getPort() + "_init(" + dram.getPort() + ");\n");
+	}
 	buf.append("}\n");
     }
     

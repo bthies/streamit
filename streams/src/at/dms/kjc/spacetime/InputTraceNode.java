@@ -9,20 +9,30 @@ public class InputTraceNode extends TraceNode
 {
     private int[] weights;
     private OutputTraceNode[] sources;
+    private static int unique = 0;
+    private String ident;
 
-    public InputTraceNode(int[] weight,
+    public InputTraceNode(int[] weights,
 			  OutputTraceNode[] sources) {
-	this.weights = weights;
+	this(weights);
 	this.sources = sources;
-	if (weight.length != sources.length)
+	if (weights.length != sources.length)
 	    Utils.fail("Add comment later");
+
     }
 
-    public InputTraceNode(int[] weight) {
+    public InputTraceNode(int[] weights) {
 	this.weights=weights;
+	ident = "input" + unique;
+	unique++;
     }
 
-    public int[] getWeight() {
+    public String getIdent() 
+    {
+	return ident;
+    }
+    
+    public int[] getWeights() {
 	return weights;
     }
 
@@ -33,4 +43,13 @@ public class InputTraceNode extends TraceNode
     public void setSources(OutputTraceNode[] sources) {
 	this.sources=sources;
     }
+
+    public int totalWeights() 
+    {
+	int sum = 0;
+	for (int i = 0; i < weights.length; i++) 
+	    sum += weights[i];
+	return sum;
+    }
+    
 }

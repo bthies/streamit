@@ -16,7 +16,7 @@ public class RouteIns extends SwitchIns {
 	this.tile = tile;
     }
 
-    public void addRoute(RawTile source, RawTile dest) {
+    public void addRoute(ComputeNode source, ComputeNode dest) {
 	if (source == null || dest == null) 
 	    Utils.fail("Trying to add a null source or dest to route instruction");
 	sources.add(source);
@@ -30,7 +30,7 @@ public class RouteIns extends SwitchIns {
 	    //append the src, then ->, then dst
 	    String dir;
 	    
-	    dir = tile.getRawChip().getDirection(tile, (RawTile)sources.get(i));
+	    dir = tile.getRawChip().getDirection(tile, (ComputeNode)sources.get(i));
 	    if (dir.equals("st"))
 		ins += "$c" + dir + "o";
 	    else 
@@ -38,7 +38,7 @@ public class RouteIns extends SwitchIns {
 
 	    ins += "->";
 	    
-	    dir = tile.getRawChip().getDirection(tile, (RawTile)dests.get(i));
+	    dir = tile.getRawChip().getDirection(tile, (ComputeNode)dests.get(i));
 	    if (dir.equals("st"))
 		ins += "$c" + dir + "i";
 	    else

@@ -238,6 +238,10 @@ public class SpaceTimeBackend
 	GenerateSwitchCode.run(rawChip);
 	//generate the compute code from the SIR
 	GenerateComputeCode.run(rawChip);
+	//generate the magic dram code if enabled
+	if (KjcOptions.magicdram) {
+	    MagicDram.GenerateCode(rawChip);
+	}
 	Makefile.generate(rawChip);
 	BCFile.generate(rawChip);
     }

@@ -239,9 +239,6 @@ public class ClusterBackend implements FlatVisitor {
 	graphFlattener.top.accept(d_sched, new HashSet(), true);
 	d_sched.findPhases();
 
-	FusionCode.generateFusionHeader();
-	FusionCode.generateFusionFile(d_sched);
-
 	if (KjcOptions.removeglobals) {
 	    RemoveGlobals.doit(graphFlattener.top);
 	}
@@ -276,6 +273,10 @@ public class ClusterBackend implements FlatVisitor {
 
 	ClusterCode.setPartitionMap(partitionMap);
 	ClusterCode.generateCode(graphFlattener.top);
+
+	FusionCode.generateFusionHeader();
+	FusionCode.generateFusionFile(d_sched);
+
 	ClusterCode.generateMasterFile();
 	ClusterCode.generateMakeFile();
 	ClusterCode.generateConfigFile();

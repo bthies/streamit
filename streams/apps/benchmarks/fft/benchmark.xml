@@ -23,29 +23,39 @@
       <file>driver.c</file>
       <file>fft.c</file>
     </impl>
-    <impl lang="StreamIt" dir="streamit">
+    <impl lang="StreamIt" dir="streamit" id="fft2">
       <desc>
       Blocked, coarse-grained version for use as a benchmark.  Conceptually it is a single pipeline, but the main path is duplicated into a splitjoin to expose parallelism.  Inputs in natural order, outputs in natural order.
       </desc>
-      <file>FFT2.str</file>
+      <file class="source">FFT2.str</file>
+      <file class="output">FFT2.out</file>
     </impl>
-    <impl lang="StreamIt" dir="streamit">
+    <impl lang="StreamIt" dir="streamit" id="fft3">
       <desc>
       More fine-grained than FFT2.  Inputs in natural order, outputs in bit-reversed order (does NOT include bit-reversal stage).
       </desc>
-      <file>FFT3.str</file>
+      <file class="source">FFT3.str</file>
+      <file class="output">FFT3.out</file>
     </impl>
-    <impl lang="StreamIt" dir="streamit">
+    <impl lang="StreamIt" dir="streamit" id="fft4">
       <desc>
       More fine-grained than FFT3.  Derived from original example in CC'02 paper, and intended only to demonstrate language features (has dummy weights; does not compute real FFT).  Inputs in bit-reversed order, outputs in natural order (does NOT include bit-reversal stage).
       </desc>
-      <file>FFT4.str</file>
+      <file class="source">FFT4.str</file>
+      <file class="output">FFT4.out</file>
     </impl>
-    <impl lang="StreamIt" dir="streamit">
+    <impl lang="StreamIt" dir="streamit" id="fft5">
       <desc>
       Fine-grained version, more elegant than FFT4.  Inputs in natural order, outputs in natural order.
       </desc>
-      <file>FFT5.str</file>
+      <file class="source">FFT5.str</file>
+      <file class="output">FFT5.out</file>
+    </impl>
+    <impl lang="StreamIt" dir="streamit" id="fft6">
+      <file class="source">FFT6.str</file>
+    </impl>
+    <impl lang="StreamIt" dir="streamit" id="fft7">
+      <file class="source">FFT7.str</file>
     </impl>
   </implementations>
 </benchmark>

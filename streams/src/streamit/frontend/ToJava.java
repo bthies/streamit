@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.54 2004-02-12 21:36:27 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.55 2004-07-28 20:14:48 jasperln Exp $
  */
 public class ToJava
 {
@@ -49,7 +49,7 @@ public class ToJava
     }
 
     private boolean printHelp = false;
-    private boolean libraryFormat = false;
+    public static boolean libraryFormat = false;
     private String outputFile = null;
     private List inputFiles = new java.util.ArrayList();
 

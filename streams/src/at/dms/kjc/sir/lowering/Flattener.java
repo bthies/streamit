@@ -40,6 +40,9 @@ public class Flattener {
 		    (SIRFilter)((SIRPipeline)str).get(1));
 	*/
 
+        // flatten split/joins with duplicate splitters and RR joiners
+        // str = DupRR.doFlatten(str);
+
 	// DEBUGGING PRINTING
 	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");
 	printer1 = new SIRPrinter();

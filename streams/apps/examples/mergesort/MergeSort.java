@@ -68,14 +68,17 @@ class Sorter extends Pipeline {
     }
 
     public void init(final int N) {
-	add(new SplitJoin() {
-		public void init() {
-		    setSplitter(ROUND_ROBIN());
-		    this.add(new Sorter(N/2));
-		    this.add(new Sorter(N/2));
-		    setJoiner(ROUND_ROBIN());
-		}
-	    });
+	// if we have more than two items, then sort in parallel
+	if (N>2) {
+	    add(new SplitJoin() {
+		    public void init() {
+			setSplitter(ROUND_ROBIN());
+			this.add(new Sorter(N/2));
+			this.add(new Sorter(N/2));
+			setJoiner(ROUND_ROBIN());
+		    }
+		});
+	}
 	add(new Merger(N));
     }
 

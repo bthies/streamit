@@ -1,0 +1,8 @@
+float->float feedbackloop delay(int N) {
+    join roundrobin;
+    body Identity<float>();
+    split roundrobin;
+    loop Identity<float>();
+    for (int i = 0; i < N; i++) enqueue(0.0);
+}
+

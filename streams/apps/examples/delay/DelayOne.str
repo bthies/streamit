@@ -1,0 +1,10 @@
+float->float filter DelayOne {
+    float last;
+    init { 
+        last = 0.0; 
+    }
+    work pop 1 push 1 { 
+        push(last); 
+	last = pop(); 
+    }
+}

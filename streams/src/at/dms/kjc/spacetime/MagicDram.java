@@ -27,7 +27,7 @@ public class MagicDram extends IODevice
     public MagicDram(RawChip chip, int port, RawTile tile) 
     {
 	super(chip, port, tile);
-	tile.setIODevice(this);
+	tile.addIODevice(this);
 	steadyInsList = new LinkedList();
 	initInsList = new LinkedList();
 	indices = new HashSet();

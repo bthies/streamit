@@ -14,9 +14,9 @@ public class RawTile extends ComputeNode {
     private SwitchCodeStore switchCode;
     private ComputeCodeStore computeCode;
 
-    private IODevice ioDevice;
-    //private String[] ioDevDirection;
-    //private int numIODevices;
+    private StreamingDram dram;
+    
+    private IODevice[] IODevices;
 
     private HashSet offChipBuffers;
 
@@ -29,7 +29,7 @@ public class RawTile extends ComputeNode {
 	switches = false;
 	switchCode = new SwitchCodeStore(this);
 	computeCode = new ComputeCodeStore(this);
-	ioDevice = null;
+	IODevices = new IODevice[0];
 	offChipBuffers = new HashSet();
     }
 
@@ -39,12 +39,17 @@ public class RawTile extends ComputeNode {
 
     public boolean hasIODevice() 
     {
-	return (ioDevice != null);
+	return (IODevices.length > 1);
     }
     
-    public void setIODevice(IODevice io) 
+    public void addIODevice(IODevice io) 
     {
-	ioDevice = io;
+	assert IODevices.length < 1 : "Trying to add too many neighboring IO devices";
+	IODevice[] newIOs = new IODevice[IODevices.length + 1];
+	for (int i = 0; i < IODevices.length; i++)
+	    newIOs[i] = IODevices[i];
+	newIOs[newIOs.length - 1] = io;
+	IODevices = newIOs;
     }
 
     public void addBuffer(OffChipBuffer buf) 
@@ -57,11 +62,28 @@ public class RawTile extends ComputeNode {
 	return offChipBuffers;
     }
     
+    public StreamingDram getDRAM() 
+    {
+	return dram;
+    }
+    
+    public void setDRAM(StreamingDram sd) 
+    {
+	dram = sd;
+    }
+    
+
+    public IODevice[] getIODevices() 
+    {
+	return IODevices;
+    }
 
     public IODevice getIODevice() 
     {
-	return ioDevice;
+	assert IODevices.length == 1 : "cannot use getIODevice()";
+	return IODevices[0];
     }
+    
     
     private void setTileNumber() {
 	tileNumber = (Y * rawChip.getXSize()) + X;
@@ -127,8 +149,8 @@ public class RawTile extends ComputeNode {
     
     public void printDram() 
     {
-	if (ioDevice != null) 
-	    System.out.println("Tile: " + getTileNumber() + " -> port: " + ioDevice.getPort());
+	if (dram != null) 
+	    System.out.println("Tile: " + getTileNumber() + " -> port: "  + dram.getPort());
 	else
 	    System.out.println("Tile: " + getTileNumber() + " -> null ");
     }

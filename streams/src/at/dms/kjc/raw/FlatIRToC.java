@@ -1690,7 +1690,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			      JFieldDeclaration[] fields,
 			      JMethodDeclaration[] methods,
 			      JMethodDeclaration init,
-			      int delay,
 			      JMethodDeclaration initPath)
     {
     }
@@ -1726,7 +1725,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			       JFieldDeclaration[] fields,
 			       JMethodDeclaration[] methods,
 			       JMethodDeclaration init,
-			       int delay,
 			       JMethodDeclaration initPath)
     {
     }

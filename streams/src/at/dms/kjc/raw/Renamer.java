@@ -90,7 +90,6 @@ public class Renamer extends at.dms.util.Utils implements StreamVisitor
 				     JFieldDeclaration[] fields,
 				     JMethodDeclaration[] methods,
 				     JMethodDeclaration init,
-				     int delay,
 				     JMethodDeclaration initPath) {
     }
 
@@ -118,7 +117,6 @@ public class Renamer extends at.dms.util.Utils implements StreamVisitor
 				      JFieldDeclaration[] fields,
 				      JMethodDeclaration[] methods,
 				      JMethodDeclaration init,
-				      int delay,
 				      JMethodDeclaration initPath) {
     }
     

@@ -188,7 +188,7 @@ public class SimulationCounter {
 	if (!(((SIRJoiner)node.contents).getParent() instanceof SIRFeedbackLoop))
 	    return false;
 	//get the delay
-	int delay = ((SIRFeedbackLoop)node.contents.getParent()).getDelay();
+	int delay = ((SIRFeedbackLoop)node.contents.getParent()).getDelayInt();
 	
 	if (!(joinerInitPathCalls.containsKey(node)))
 	    joinerInitPathCalls.put(node, new Integer(0));

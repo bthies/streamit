@@ -103,7 +103,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    return "";
 	
 	StringBuffer buf = new StringBuffer();
-	int delay = ((SIRFeedbackLoop)joiner.contents.getParent()).getDelay();
+	int delay = ((SIRFeedbackLoop)joiner.contents.getParent()).getDelayInt();
 	JMethodDeclaration initPath = ((SIRFeedbackLoop)joiner.contents.getParent()).getInitPath();
 	buf.append("\n  for (i = 0; i < " + delay + "; i++) \n");
 	buf.append("    static_send(" + initPath.getName() + "(i));\n");

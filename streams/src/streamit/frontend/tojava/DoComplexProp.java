@@ -28,7 +28,7 @@ import java.util.ArrayList;
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DoComplexProp.java,v 1.20 2003-07-30 20:01:58 dmaze Exp $
+ * @version $Id: DoComplexProp.java,v 1.21 2003-07-30 20:12:25 dmaze Exp $
  */
 public class DoComplexProp extends SymbolTableVisitor
 {
@@ -68,10 +68,8 @@ public class DoComplexProp extends SymbolTableVisitor
         {
             ExprField fr = (ExprField)cplx.getReal();
             ExprField fi = (ExprField)cplx.getImag();
-            if (fr.getName().equals("real") &&
-                fr.getLeft() instanceof ExprVar &&
-                fi.getName().equals("imag") &&
-                fi.getLeft() instanceof ExprVar &&
+            if (fr.getName().equals("real") && fr.getLeft().isLValue() &&
+                fi.getName().equals("imag") && fi.getLeft().isLValue() &&
                 fr.getLeft().equals(fi.getLeft()))
             {
                 return fi.getLeft();

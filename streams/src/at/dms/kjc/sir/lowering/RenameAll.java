@@ -19,7 +19,11 @@ public class RenameAll extends SLIRReplacingVisitor
 {
     /** How many variables have been renamed.  Used to uniquify names. */
     static private int counter = 0;
-
+    
+    /** This renamer is used by the renameOverAllFilters, to rename
+	across filters, keep names distinct over all the filter */
+    static public RenameAll globalRenamer;
+    
     private String newName(String oldName)
     {
         String name = oldName + "__" + counter;
@@ -85,6 +89,31 @@ public class RenameAll extends SLIRReplacingVisitor
 	RenameAll ra = new RenameAll();
 	SIRFilter f2 = ra.renameFilter(f1);
 	f1.copyState(f2);
+    }
+
+    /**
+     * Renames the contents of all filters in that are connected to
+     * <str> or a parent of <str>, this will rename over all the filters.
+     * So the names in each filter will be globally distinct
+     */
+    public static void renameOverAllFilters(SIRStream str) {
+	//reset the global renamer
+	globalRenamer = new RenameAll();
+	
+	SIRStream toplevel = str;
+	while (toplevel.getParent()!=null) {
+	    toplevel = toplevel.getParent();
+	}
+	// name the stream structure
+	IterFactory.createIter(toplevel).accept(new EmptyStreamVisitor() {
+		/* visit a filter */
+		public void visitFilter(SIRFilter self,
+					SIRFilterIter iter) {
+		    //RenameAll.renameFilterContents(self);
+		    SIRFilter f2 = RenameAll.globalRenamer.renameFilter(self);
+		    self.copyState(f2);
+		}
+	    });
     }
 
     /**

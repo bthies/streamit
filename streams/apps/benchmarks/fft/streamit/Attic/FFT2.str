@@ -1,4 +1,4 @@
-complex->complex Filter CombineDFT(int n)
+complex->complex filter CombineDFT(int n)
 {  
     complex[n] Ws;
 

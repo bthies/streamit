@@ -18,7 +18,7 @@ class Filter1 extends Filter {
 
     Channel input = new Channel(Float.TYPE, 1);
     Channel output = new Channel(Float.TYPE, 1);
-    float weights[];
+    //    float weights[];
     int curr;
     int W;
 
@@ -29,9 +29,9 @@ class Filter1 extends Filter {
     public void init(int N, int W) {
         int i;
         this.W = W;
-        this.weights = new float[W];
-        for (i=0; i<W; i+=1)
-            weights[i] = calcWeight(i, N, W);
+        //this.weights = new float[W];
+	//        for (i=0; i<W; i+=1)
+	//            weights[i] = calcWeight(i, N, W);
         curr = 0;
     }
 
@@ -46,7 +46,7 @@ class Filter1 extends Filter {
 
     public void work() {
         output.pushFloat(input.popFloat()*
-                         weights[curr++]);
+                         2); //weights[curr++]);
         if(curr>= W) curr = 0;
     }
 }

@@ -96,6 +96,7 @@ streamit.jar: $(JAVA_TARGET)
 	rm -rf classes
 	mkdir classes
 	find . -name '*.class' | cpio -p -d -V classes
+	find . -name '*.properties' | cpio -d -p -V classes
 	cd $(STREAMIT_HOME)/library/java && \
 		find . -name '*.class' | \
 		cpio -p -d -V $(STREAMIT_HOME)/compiler/classes

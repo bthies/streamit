@@ -1,3 +1,4 @@
+
 package at.dms.kjc.sir.lowering;
 
 import java.util.*;
@@ -39,6 +40,7 @@ class Unroller extends SLIRReplacingVisitor {
 	this.constants = constants;
 	this.hasUnrolled = false;
 	modified=new Hashtable();
+	curModified=new Hashtable();
     }
 
     /**
@@ -69,8 +71,11 @@ class Unroller extends SLIRReplacingVisitor {
     public Object visitAssignmentExpression(JAssignmentExpression self,
 					    JExpression left,
 					    JExpression right) {
-	if(left instanceof JLocalVariableExpression)
-	    curModified.put(((JLocalVariableExpression)left).getVariable(),Boolean.TRUE);
+	if(left instanceof JLocalVariableExpression) {
+	    JLocalVariable var=((JLocalVariableExpression)left).getVariable();
+	    if(var!=null)
+		curModified.put(var,Boolean.TRUE);
+	}
 	return super.visitAssignmentExpression(self,left,right);
     }
 
@@ -93,7 +98,7 @@ class Unroller extends SLIRReplacingVisitor {
 	UnrollInfo info = getUnrollInfo(init, cond, incr, body);
 	// check to see if var was modified
 	// if we can unroll...
-	if((!modified.containsKey(info.var))&&info!=null) {
+	if(info!=null&&(!modified.containsKey(info.var))) {
 	    // Set modified
 	    curModified.put(info.var,Boolean.TRUE);
 	    // do unrolling

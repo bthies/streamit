@@ -629,8 +629,9 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     }
 
     private static String shortName(String str) {
-	return str.substring(0, str.indexOf("_"));
+	return str.substring(0, Math.min(str.length(), 15));
     }
+
     private static HashSet getDownStream(FlatNode node) 
     {
 	if (node == null)

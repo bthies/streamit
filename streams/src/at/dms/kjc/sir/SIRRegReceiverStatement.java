@@ -11,12 +11,9 @@ import at.dms.compiler.*;
  */
 public class SIRRegReceiverStatement extends JStatement {
 
-    /**
-     * The name of the portal to register with.
-     */
     private JExpression portal;
     private SIRStream receiver;
-    private CMethod[] methods;
+    private JMethodDeclaration[] methods;
 
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
@@ -25,7 +22,7 @@ public class SIRRegReceiverStatement extends JStatement {
     /**
      * Construct a node in the parsing tree
      */
-    public SIRRegReceiverStatement(JExpression portal, SIRStream receiver, CMethod[] methods) {
+    public SIRRegReceiverStatement(JExpression portal, SIRStream receiver, JMethodDeclaration[] methods) {
 	super(null, null);
 	this.portal = portal;
 	this.receiver = receiver;
@@ -61,7 +58,7 @@ public class SIRRegReceiverStatement extends JStatement {
     /**
      * Get the methods  for this statement
      */
-    public CMethod[] getMethods() {
+    public JMethodDeclaration[] getMethods() {
 	return this.methods;
     }
 

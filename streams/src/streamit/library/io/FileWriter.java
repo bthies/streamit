@@ -24,6 +24,7 @@ public class FileWriter extends Filter
         }
         catch(Throwable e)
         {
+            System.err.println (e.getMessage ());
             ERROR ("Could not open file " + fileName + " for writing.");
         }
     }
@@ -63,7 +64,8 @@ public class FileWriter extends Filter
         }
         catch (Throwable e)
         {
-            ERROR ("There was an error reading from a file");
+            System.err.println (e.getMessage ());
+            ERROR ("There was an error writing to a file");
         }
     }
 }

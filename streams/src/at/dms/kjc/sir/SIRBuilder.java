@@ -92,7 +92,10 @@ public class SIRBuilder {
 	SIRFilter f1 = new SIRFilter(toplevel,
 				     /* fields */ fields1,
 				     /* methods */ meth1,
-				     /* peek, pop, push */ 0, 0, 1,
+				     /* peek, pop, push */ 
+				     new JIntLiteral(0), 
+				     new JIntLiteral(0), 
+				     new JIntLiteral(1),
 				     /* work */ meth1[1],
 				     /* i/o type */ type1, type1);
 	f1.setInit(meth1[0]);
@@ -138,7 +141,10 @@ public class SIRBuilder {
 	SIRFilter f2 = new SIRFilter(toplevel,
 				     /* fields */ JFieldDeclaration.EMPTY,
 				     /* methods */ meth2,
-				     /* peek, pop, push */ 1, 1, 0,
+				     /* peek, pop, push */ 
+				     new JIntLiteral(1), 
+				     new JIntLiteral(1), 
+				     new JIntLiteral(0),
 				     /* work */ meth2[1],
 				     /* i/o type */ type2, type2);
 	

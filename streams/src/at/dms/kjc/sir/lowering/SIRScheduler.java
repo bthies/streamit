@@ -398,11 +398,13 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 			      JFieldDeclaration[] fields,
 			      JMethodDeclaration[] methods,
 			      JMethodDeclaration init,
-			      int peek, int pop, int push,
 			      JMethodDeclaration work,
 			      CType inputType, CType outputType) {
 	// represent the filter
-	return scheduler.newSchedFilter(self, push, pop, peek);
+	return scheduler.newSchedFilter(self, 
+					self.getPushInt(), 
+					self.getPopInt(),
+					self.getPeekInt());
     }
   
     /* pre-visit a pipeline */

@@ -280,7 +280,6 @@ public class LowerInitFunctions implements StreamVisitor {
 			    JFieldDeclaration[] fields,
 			    JMethodDeclaration[] methods,
 			    JMethodDeclaration init,
-			    int peek, int pop, int push,
 			    JMethodDeclaration work,
 			    CType inputType, CType outputType) {
 	// set stream type to filter
@@ -290,15 +289,15 @@ public class LowerInitFunctions implements StreamVisitor {
 	// set push count
 	init.addStatement(new LIRSetPush(LoweringConstants.
 					 getStreamContext(),
-					 push));
+					 self.getPushInt()));
 	// set peek count
 	init.addStatement(new LIRSetPeek(LoweringConstants.
 					 getStreamContext(),
-					 push));
+					 self.getPushInt()));
 	// set pop count
 	init.addStatement(new LIRSetPop(LoweringConstants.
 					getStreamContext(),
-					push));
+					self.getPopInt()));
 
 	// set work function
 	init.addStatement(new LIRSetWork(LoweringConstants.

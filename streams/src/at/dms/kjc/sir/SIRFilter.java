@@ -2,6 +2,7 @@ package at.dms.kjc.sir;
 
 import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.*;
+import at.dms.util.*;
 
 /**
  * This represents a StreaMIT filter.
@@ -13,25 +14,32 @@ public class SIRFilter extends SIRStream implements Cloneable {
      * pops two and peeks 3, then it looks at a total of 3 elements,
      * not 5 elements.
      */
-    private int peek;
+    private JExpression peek;
     /**
      * The number of items that are popped per invocation.
      */
-    private int pop;
+    private JExpression pop;
     /**
      * The number of items that are pushed per invocation.
      */
-    private int push;
+    private JExpression push;
     /**
      * The input and output types.  That is, the type of the items on
      * the input and output channels, respectively.
      */
     private CType inputType, outputType;
 
+    public SIRFilter() {
+	super();
+	this.pop = new JIntLiteral(0);
+	this.push = new JIntLiteral(0);
+	this.peek = new JIntLiteral(0);
+    }
+
     public SIRFilter(SIRContainer parent,
 		     JFieldDeclaration[] fields, 
 		     JMethodDeclaration[] methods, 
-		     int peek, int pop, int push, 
+		     JExpression peek, JExpression pop, JExpression push, 
 		     JMethodDeclaration work, 
 		     CType inputType, 
 		     CType outputType) {
@@ -69,13 +77,6 @@ public class SIRFilter extends SIRStream implements Cloneable {
 	return f;
     }
 
-     /**
-     * Constructs a SIRFilter with null variables (use set*)
-     */
-    public SIRFilter() {
-	super();
-    }
-
     /**
      * Accepts visitor <v> at this node.
      */
@@ -85,11 +86,9 @@ public class SIRFilter extends SIRStream implements Cloneable {
 		      fields,
 		      methods,
 		      init,
-		      peek, pop, push,
 		      work,
 		      inputType, outputType);
     }
-
 
     /**
      * Accepts attribute visitor <v> at this node.
@@ -100,21 +99,75 @@ public class SIRFilter extends SIRStream implements Cloneable {
 			     fields,
 			     methods,
 			     init,
-			     peek, pop, push,
 			     work,
 			     inputType, outputType);
     }
 
 
-    public void setPeek(int p) {
+    public void setPeek(JExpression p) {
 	this.peek = p;
     }
-    public void setPop(int p) {
+    public void setPop(JExpression p) {
 	this.pop = p;
     }
-    public void setPush(int p) {
+    public void setPush(JExpression p) {
 	this.push = p;
     }
+
+    public JExpression getPush() {
+	return this.push;
+    }
+
+    public JExpression getPeek() {
+	return this.peek;
+    }
+
+    public JExpression getPop() {
+	return this.pop;
+    }
+
+    /**
+     * Returns how many items are popped.  This will throw an
+     * exception if the integral numbers haven't been calculated
+     * yet--in this case one can only get the JExpression, but calling
+     * getPop.
+     */
+    public int getPopInt() {
+	// need int literal to get number
+	if (!(pop instanceof JIntLiteral)) {
+	    Utils.fail("Trying to get integer value for pop value, but the constant hasn't been resolved yet.  It is of class " + pop.getClass());
+	}
+	return ((JIntLiteral)pop).intValue();
+    }
+
+    /**
+     * Returns how many items are peeked.  This will throw an
+     * exception if the integral numbers haven't been calculated
+     * yet--in this case one can only get the JExpression, but calling
+     * getPeek.
+     */
+    public int getPeekInt() {
+	// need int literal to get number
+	if (!(peek instanceof JIntLiteral)) {
+	    Utils.fail("Trying to get integer value for peek value, but the constant hasn't been resolved yet.  It is of class " + peek.getClass());
+	}
+	return ((JIntLiteral)peek).intValue();
+    }
+
+    /**
+     * Returns how many items are pushed.This will throw an
+     * exception if the integral numbers haven't been calculated
+     * yet--in this case one can only get the JExpression, but calling
+     * getPush.
+     */
+    public int getPushInt() {
+	// need int literal to get number
+	if (!(push instanceof JIntLiteral)) {
+	    Utils.fail("Trying to get integer value for push value, but the constant hasn't been resolved yet.  It is of class " + push.getClass());
+	}
+	return ((JIntLiteral)push).intValue();
+    }
+
     public void setInputType(CType t){
 	this.inputType = t;
     }

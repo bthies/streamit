@@ -31,7 +31,6 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 		     JFieldDeclaration[] fields,
 		     JMethodDeclaration[] methods,
 		     JMethodDeclaration init,
-		     int peek, int pop, int push,
 		     JMethodDeclaration work,
 		     CType inputType, CType outputType){
 	
@@ -44,9 +43,9 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 	    fields[i].accept(this);
 	for (int i = 0; i < methods.length; i++)
 	    methods[i].accept(this);
-	attrPrint("peek", (new Integer(peek)).toString());
-	attrPrint("Pop", (new Integer(pop)).toString());
-	attrPrint("push", (new Integer(push)).toString());
+	attrPrint("peek", self.getPeek());
+	attrPrint("pop", self.getPop());
+	attrPrint("push", self.getPush());
 	if (inputType != null)
 	    attrPrint("InputType", inputType.toString());
 	if (outputType != null)

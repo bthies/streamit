@@ -100,7 +100,6 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 			    JFieldDeclaration[] fields,
 			    JMethodDeclaration[] methods,
 			    JMethodDeclaration init,
-			    int peek, int pop, int push,
 			    JMethodDeclaration work,
 			    CType inputType, CType outputType) {
 	plainVisit(self);

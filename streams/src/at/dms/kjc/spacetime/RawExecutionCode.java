@@ -79,7 +79,7 @@ public abstract class RawExecutionCode
     public abstract JFieldDeclaration[] getVarDecls();
     public abstract JMethodDeclaration[] getHelperMethods();
     public abstract JMethodDeclaration getInitStageMethod();
-    public abstract JMethodDeclaration getSteadyMethod();
+    public abstract JBlock getSteadyBlock();
     
     
      /**

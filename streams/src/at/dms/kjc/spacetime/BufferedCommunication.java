@@ -412,7 +412,7 @@ public class BufferedCommunication extends RawExecutionCode
 				      null); 
     }
     
-    public JMethodDeclaration getSteadyMethod() 
+    public JBlock getSteadyBlock() 
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
@@ -498,6 +498,7 @@ public class BufferedCommunication extends RawExecutionCode
 					    new JIntLiteral(-1))), null));
 	}
 	
+	/*
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 				      CStdType.Void,
 				      steadyStage + uniqueID,
@@ -506,6 +507,8 @@ public class BufferedCommunication extends RawExecutionCode
 				      block,
 				      null,
 				      null);
+	*/
+	return block;
     }
 
 

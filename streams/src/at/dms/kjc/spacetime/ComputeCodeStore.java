@@ -69,8 +69,9 @@ public class ComputeCodeStore {
 	    addTraceFieldsAndMethods(exeCode, filterInfo);
 	}
 	//add the steady state
-	JMethodDeclaration steady = exeCode.getSteadyMethod();
-	addMethod(steady);
+	JBlock steady = exeCode.getSteadyBlock();
+	steadyLoop.addStatement(steadyIndex++, steady);
+	/* addMethod(steady);
 	steadyLoop.addStatement(steadyIndex++, 
 				new JExpressionStatement
 				(null, 
@@ -79,6 +80,7 @@ public class ComputeCodeStore {
 							   steady.getName(),
 							   new JExpression[0]),
 				 null));
+	*/
     }
     
 

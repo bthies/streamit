@@ -147,7 +147,7 @@ public class DirectCommunication extends RawExecutionCode
 	return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);	
     }
     
-    public JMethodDeclaration getSteadyMethod() 
+    public JBlock getSteadyBlock()
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
@@ -172,7 +172,7 @@ public class DirectCommunication extends RawExecutionCode
 							     loopCounter,
 							     null));
 	block.addStatement(loop);
-	
+	/*
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 				      CStdType.Void,
 				      steadyStage + uniqueID,
@@ -181,6 +181,8 @@ public class DirectCommunication extends RawExecutionCode
 				      block,
 				      null,
 				      null);
+	*/
+	return block;
     }
     
     //generate the loop for the work function firings in the 

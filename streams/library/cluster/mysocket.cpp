@@ -59,12 +59,24 @@ mysocket::mysocket(int s) {
 }
 
 
+void mysocket::close() {
+  ::close(fd);
+  fd = -1;
+}
+
+int mysocket::eof() {
+  if (fd == -1) return -1;
+  return 0;
+}
+
 int mysocket::get_fd() {
   return fd;
 }
 
 
 bool mysocket::data_available() {
+
+  if (fd == -1) return false;
 
   struct pollfd pfd;
   pfd.fd = fd;
@@ -81,6 +93,8 @@ bool mysocket::data_available() {
 int mysocket::write_OOB(char val) {
   int retval;
 
+  if (fd == -1) return -1;
+
   retval = send(fd, &val, 1, MSG_OOB);
   if (retval == 1) return 0;
   return -1;
@@ -88,6 +102,8 @@ int mysocket::write_OOB(char val) {
 
 int mysocket::check_OOB(char *val) {
   int flag;
+
+  if (fd == -1) return 0;
 
   if (ioctl(fd, SIOCATMARK, &flag) == -1) { perror("ioctl"); return 0; }
   if (flag) {
@@ -101,6 +117,8 @@ int mysocket::check_OOB(char *val) {
 
 
 int mysocket::write_chunk(char *buf, int len) {
+
+  if (fd == -1) return -1;
 
   total_data_sent += len;
 
@@ -152,6 +170,8 @@ int mysocket::write_chunk(char *buf, int len) {
 
 int mysocket::read_chunk(char *buf, int len) {
 
+  if (fd == -1) return -1;
+
   total_data_received += len;
 
   /////////////////////////////////
@@ -160,6 +180,11 @@ int mysocket::read_chunk(char *buf, int len) {
   int retval;
 
   retval = read(fd, buf, len);
+
+  if (retval == 0) {
+    close(); 
+    return -1;
+  }
 
   if (retval == len) return 0;
 
@@ -188,6 +213,11 @@ int mysocket::read_chunk(char *buf, int len) {
       //printf("read_chunk :: select returns true\n");
       
       retval = read(fd, buf + done, len - done);
+
+      if (retval == 0) {
+	close(); 
+	return -1;
+      }
 
       if (retval > 0) done += retval;
     }

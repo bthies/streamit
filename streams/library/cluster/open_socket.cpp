@@ -102,6 +102,9 @@ mysocket *open_socket::listen(short port) {
       //     ((ip>>24) % 256), 
       //     cliaddr.sin_port );
 
+      ::close(listenfd); // closing the listen socket
+
+
       if (sock == -1) {	
 
 	printf("failed\n");
@@ -111,12 +114,12 @@ mysocket *open_socket::listen(short port) {
       } else {
 	
 	if ( fcntl(sock, F_SETFL, O_NONBLOCK) == -1 ) {
-	
+
 	  return NULL;
 	}
 
 	//printf("done (%d)\n", sock);
-	
+
 	return new mysocket(sock);
       }
     }

@@ -24,6 +24,9 @@ class mysocket {
 
   mysocket() {}
   mysocket(int s);
+
+  int eof();
+  void close();
   
   bool data_available();
   int get_fd();

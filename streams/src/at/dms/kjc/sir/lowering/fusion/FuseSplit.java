@@ -630,7 +630,12 @@ public class FuseSplit {
 		BufferInfo buffer = (j==0 ? childInfo[i].peekBuffer : childInfo[i].pushBuffer);
 		// calculate dimensions of the buffer
 		JExpression[] dims = { new JIntLiteral(null, buffer.size) };
-		// add a statement initializeing the buffer
+		//get the type for the buffer, it will be the output type for the
+		//push buffer, and the input type for peek buffer
+		CType type = (j==0 ? Utils.voidToInt(childInfo[i].filter.getInputType()) :
+			      Utils.voidToInt(childInfo[i].filter.getOutputType()));
+		// add a statement initializing the buffer
+
 		init.addStatementFirst
 		    (new JExpressionStatement(null,
 					      new JAssignmentExpression
@@ -639,8 +644,7 @@ public class FuseSplit {
 									  new JThisExpression(null),
 									  buffer.target.getVariable().getIdent()),
 					       new JNewArrayExpression(null,
-								       Utils.voidToInt(childInfo[i].filter.
-										       getInputType()),
+								       type,
 								       dims,
 								       null)), null));
 	    }

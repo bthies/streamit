@@ -1,0 +1,38 @@
+# this performs linking, packaging, symbol creation for a one-tile
+# version of fft.
+#
+
+LIMIT = TRUE
+SIM-CYCLES = 5000000
+SIM-COMMAND = sv(88907); sv(85057); sv(85057); 
+
+BTL-MACHINE-FILE = fileio.bc
+
+ROOT = test
+TILES = 00
+
+include $(TOPDIR)/Makefile.include
+
+ifndef TOPDIR
+$(error TOPDIR not defined, make sure to include Makefile.include)
+endif
+
+OBJECT_FILES_00 = src/toast.o \
+lib/libgsm.a \
+src/toast_alaw.o \
+src/toast_audio.o \
+src/toast_ulaw.o \
+src/toast_lin.o
+
+
+include $(COMMONDIR)/Makefile.all
+
+BTL-ARGS += -host
+INCLUDES += -I./inc -I./src
+
+SPEC-IMEM-SIZE = -imem_size 131072
+SPEC-SMEM-SIZE = -smem_size 262144
+
+BTL-ARGS += $(SPEC-IMEM-SIZE) $(SPEC-SMEM-SIZE)
+
+DEFS += -DRAW

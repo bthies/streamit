@@ -1,0 +1,9 @@
+# makefile for testing the uniprocessor performance
+all:
+	# remove the old foo.l and foo.l.gsm
+	rm -rf bin/foo.l
+	rm -rf bin/foo.l.gsm
+	# copy foo 10 times into foo.l
+	(cat bin/foo bin/foo bin/foo bin/foo bin/foo bin/foo bin/foo bin/foo bin/foo bin/foo > bin/foo.l)
+	# toast that sucker
+	time bin/toast bin/foo.l

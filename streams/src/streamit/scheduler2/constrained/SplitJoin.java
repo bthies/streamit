@@ -201,7 +201,7 @@ public class SplitJoin
 
     public void initRestrictionsCompleted(P2PPortal portal)
     {
-        ERROR("not implemented");
+        numInitialRestrictions--;
     }
 
     public void initializeRestrictions(Restrictions _restrictions)

@@ -131,9 +131,11 @@ public class LatencyEdge extends Misc implements SDEPData
                 int nDataInChannel = initDataInChannel;
                 {
                     int minProducedData =
-                        dst.getInitPop(inputChannel)
-                            + (dst.getSteadyStatePeek(inputChannel)
-                                - dst.getSteadyStatePop(inputChannel))
+                        MAX(
+                            dst.getInitPeek(inputChannel),
+                            dst.getInitPop(inputChannel)
+                                + (dst.getSteadyStatePeek(inputChannel)
+                                    - dst.getSteadyStatePop(inputChannel)))
                             - initDataInChannel;
 
                     int totalConsumed = 0;
@@ -142,12 +144,14 @@ public class LatencyEdge extends Misc implements SDEPData
                             || totalConsumed < initDataInChannel
                             || nDataInChannel + totalConsumed
                                 < minProducedData;
-                        dstStage++)
+                        )
                     {
                         int dataNeeded =
                             dst.getPhasePeek(dstStage, inputChannel);
 
-                        while (dataNeeded > nDataInChannel)
+                        while (dataNeeded > nDataInChannel
+                            && nDataInChannel + totalConsumed
+                                < minProducedData)
                         {
                             int dataPushed =
                                 src.getPhasePush(srcStage, outputChannel);
@@ -155,10 +159,14 @@ public class LatencyEdge extends Misc implements SDEPData
                             srcStage++;
                         }
 
-                        int dataPopped =
-                            dst.getPhasePop(dstStage, inputChannel);
-                        nDataInChannel -= dataPopped;
-                        totalConsumed += dataPopped;
+                        if (dataNeeded <= nDataInChannel)
+                        {
+                            int dataPopped =
+                                dst.getPhasePop(dstStage, inputChannel);
+                            nDataInChannel -= dataPopped;
+                            totalConsumed += dataPopped;
+                            dstStage++;
+                        }
                     }
                 }
 

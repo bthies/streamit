@@ -55,6 +55,13 @@ public class Util extends at.dms.util.Utils {
 	//   return getCount(counts, prev);
 	
 	//prev is a splitter
+	double rate = getRRSplitterWeight(prev, node);
+	return ((int)(rate * (double)getCount(counts, prev)));
+    }
+
+    //get the percentage of items sent from splitter prev to  node
+    public static double getRRSplitterWeight(FlatNode prev, FlatNode node) {
+	//prev is a splitter
 	int sumWeights = 0;
 	for (int i = 0; i < prev.ways; i++) 
 	    sumWeights += prev.weights[i];
@@ -65,14 +72,12 @@ public class Util extends at.dms.util.Utils {
 		break;
 	    }
 	}
-	if (thisWeight == -1)
-	    Utils.fail("Splitter not connected to node "+prev+"->"+node);
-	double rate = ((double)thisWeight) / ((double)sumWeights);
 	
-	return ((int)(rate * (double)getCount(counts, prev)));
+	if (thisWeight == -1)
+	    Utils.fail("Splitter not connected to node: "+prev+"->"+node);
+	return ((double)thisWeight) / ((double)sumWeights);
     }
 
-    
     /*
       for a given CType return the size (number of elements that need to be sent
       when routing).
@@ -196,7 +201,12 @@ public class Util extends at.dms.util.Utils {
 	    buf.append(" = (" + tapeType + ")");
 	} 
 	else {
-	    buf.append("(static_send(");    
+	    buf.append("(");
+	    if (RawBackend.FILTER_DEBUG_MODE)
+		buf.append("static_send_print");
+	    else
+		buf.append("static_send");
+	    buf.append("(");    
 	    //temporary fix for type changing filters
 	    buf.append("(" + tapeType + ")");
 	}

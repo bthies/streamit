@@ -29,8 +29,7 @@ public class ComplexFIRFilter extends Filter {
     float center_freq, gain;
     float[] tapsReal;
     float[] tapsImag;
-    float[] inputArrayReal;
-    float[] inputArrayImag;
+    float[] inputArray;
 
 
     public ComplexFIRFilter (int sampFreq, int dec, int t,
@@ -43,7 +42,7 @@ public class ComplexFIRFilter extends Filter {
     public void init(int samplFreq, final int dec, int t,
 		     float freq, float g) {
 	
-        input = new Channel (Float.TYPE, 2*dec, 2*dec);
+        input = new Channel (Float.TYPE, dec, dec);
         output = new Channel (Float.TYPE,2);
 	
 	inSampFreq = samplFreq;
@@ -54,8 +53,7 @@ public class ComplexFIRFilter extends Filter {
 	
 	tapsReal = new float[numtaps];
 	tapsImag = new float[numtaps];
-	inputArrayReal = new float[numtaps];
-	inputArrayImag = new float[numtaps];
+	inputArray = new float[numtaps];
 
 	phase_corr_incrReal = 1;
 	phase_corr_incrImag = 0;
@@ -99,8 +97,7 @@ public class ComplexFIRFilter extends Filter {
 	int i, t;
 
 	for (t = 0; t < numtaps; t++) {
-	    inputArrayImag[t] = input.peekFloat((2*numtaps) - (2*t));
-	    inputArrayReal[t] = input.peekFloat((2*numtaps) - (2*t+1));
+	    inputArray[t] = input.peekFloat(t);
 	}
 	
 	for (t = 0; t < 2*decimation; t++) {
@@ -109,7 +106,7 @@ public class ComplexFIRFilter extends Filter {
 	}
 	
 	for(t = 0; t < numtaps; t++) {
-		resultReal += tapsReal[t] * inputArrayReal[t];
+		resultReal += tapsReal[t] * inputArray[t];
 		resultImag += tapsImag[t];
 	}
 	

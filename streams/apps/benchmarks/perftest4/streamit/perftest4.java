@@ -1,10 +1,12 @@
 import streamit.*;
 class TestSource extends Filter{
     public void init() {
-	output = new Channel(Float.TYPE, 1);
+	output = new Channel(Float.TYPE, 1650);
     }
     public void work() {
-	output.pushFloat(0);
+	int i;
+	for (i = 0; i < 1650; i++) 
+	    output.pushFloat(0);
     }
 }
 	    

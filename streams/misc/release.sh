@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.12 2003-08-12 20:24:03 dmaze Exp $
+# $Id: release.sh,v 1.13 2003-09-04 18:37:54 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -59,13 +59,12 @@ builddirs() {
 # Get a checked-out copy of the source tree.
 mkdir $WORKING/streams
 DIRS="streams/knit streams/README.source"
-builddirs streams compiler library include misc
+builddirs streams compiler library include misc eclipse
 builddirs streams/apps benchmarks examples libraries sorts
 builddirs streams/docs cookbook implementation-notes manual runtime-interface
-builddirs streams/docs syntax
+builddirs streams/docs release syntax
 
 cvs export -r $TAG -d $WORKING $DIRS
-cvs export -r $TAG -d $SRCDIR streams/docs/release
 
 # Some benchmarks we can't (or won't) export; trim those here.
 rm -rf $WORKING/streams/apps/benchmarks/beamformer/c
@@ -73,6 +72,14 @@ rm -rf $WORKING/streams/apps/benchmarks/cfar
 rm -rf $WORKING/streams/apps/benchmarks/gsm/c
 rm -rf $WORKING/streams/apps/benchmarks/nokia
 rm -rf $WORKING/streams/apps/benchmarks/perftest4
+
+# Build interesting bits of the documentation; they go in both releases.
+for d in cookbook manual release syntax; do
+  make -C $WORKING/streams/docs/$d
+done
+for f in COPYING COPYING.GPL INSTALL NEWS OPTIONS README REGTEST; do
+  cp $WORKING/streams/docs/release/$f $WORKING/streams
+done
 
 # Make stable copies for all of the trees.  Clean the binary tree a little
 # in the process.

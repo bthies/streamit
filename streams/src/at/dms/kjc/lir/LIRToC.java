@@ -1,12 +1,11 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.80 2003-04-06 11:58:55 thies Exp $
+ * $Id: LIRToC.java,v 1.81 2003-04-08 09:48:28 thies Exp $
  */
 
 package at.dms.kjc.lir;
 
-import java.io.StringWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.List;
@@ -52,9 +51,36 @@ public class LIRToC
 	System.out.println("#include <stdio.h>");
 	System.out.println("#include <stdlib.h>");
 	System.out.println("#include <math.h>");
+	printAtlasInterface();
 	LIRToC l2c = new LIRToC(new TabbedPrintWriter(new PrintWriter(System.out)));
 	flat.accept(l2c);
 	l2c.close();
+    }
+
+    // include literal ATLAS interface if appropriate
+    private static void printAtlasInterface() {
+	if (KjcOptions.atlas) {
+	    // copy this over instead of doing an include reference so
+	    // that 1) the generated C file can move around, wherever
+	    // there's an ATLAS install, and 2) atlas-interface.c is short
+	    try {
+		String filename = (getEnvironmentVariable("STREAMIT_HOME") +
+				   File.separator + "include" + 
+				   File.separator + "atlas" + 
+				   File.separator + "atlas-interface.c");
+		System.out.println("\n/* Starting include of file " + filename + " ---------- */\n");
+		BufferedReader br = new BufferedReader(new FileReader(filename));
+		String line;
+		while ((line = br.readLine()) != null) {
+		    System.out.println(line);
+		}
+		br.close();
+		System.out.println("\n/* Done with include of " + filename + " ---------- */");
+	    } catch (IOException e) {
+		e.printStackTrace();
+		fail("IOException looking for atlas-interface.c");
+	    }
+	}
     }
 
     /**

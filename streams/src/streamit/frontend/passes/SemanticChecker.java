@@ -11,7 +11,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.7 2003-07-09 19:30:35 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.8 2003-07-09 19:32:36 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -198,7 +198,11 @@ public class SemanticChecker
         prog.accept(new FEReplacer() {
                 public Object visitSCSimple(SCSimple creator)
                 {
-                    if (!streamNames.containsKey(creator.getName()))
+                    String name = creator.getName();
+                    if (!name.equals("Identity") &&
+                        !name.equals("FileReader") &&
+                        !name.equals("FileWriter") &&
+                        !streamNames.containsKey(creator.getName()))
                         report(creator, "no such stream '" +
                                creator.getName() + "'");
                     return super.visitSCSimple(creator);

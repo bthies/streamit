@@ -110,8 +110,8 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 		LinkedList newVars=new LinkedList();
 		for(int j=0;j<varArray.length;j++) {
 		    JLocalVariable var=(JLocalVariable)varArray[j];
-		    if(!visitedVars.containsKey(var)) {
-			visitedVars.put(var,Boolean.TRUE);
+		    if(!visitedVars.containsKey(var.getIdent())) {
+			visitedVars.put(var.getIdent(),Boolean.TRUE);
 			newVars.add(var);
 		    }
 		}

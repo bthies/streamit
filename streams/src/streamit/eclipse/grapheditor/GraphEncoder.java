@@ -384,6 +384,8 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		GESplitJoin splitjoin =  new GESplitJoin(self.getName(), split, join);
 		split.setEncapsulatingNode(splitjoin);
 		join.setEncapsulatingNode(splitjoin);
+		
+		splitjoin.addChild(split);
 	
 		// ...and walk through the body.
 		Iterator iter = self.getParallelStreams().iterator();
@@ -394,8 +396,9 @@ public class GraphEncoder implements AttributeStreamVisitor {
 	 		split.addChild(strNode);
 			strNode.addChild(join);		
 			strNode.setEncapsulatingNode(splitjoin);
+			splitjoin.addChild(strNode);
 		}
-		
+		splitjoin.addChild(join);
 		
 		graph.addHierarchy(splitjoin, split.getSuccesors());
 		

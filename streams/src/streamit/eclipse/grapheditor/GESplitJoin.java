@@ -98,17 +98,23 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	{
 		System.out.println("Constructing the SplitJoin " +this.getName());
 		this.draw();
-					
+		
+		/*
 		DefaultGraphModel model = new DefaultGraphModel();
 		this.localGraphStruct.setGraphModel(model);
 		JGraph jgraph = new JGraph(model);
-		jgraph.addMouseListener(new JGraphMouseAdapter(jgraph));
-		this.localGraphStruct.setJGraph(jgraph);
-							
+		jgraph.addMouseListener(new JGraphMouseAdapter(jgraph));					
 		frame = new LiveJGraphInternalFrame(this.localGraphStruct.getJGraph());
 		this.localGraphStruct.internalFrame = frame;
+		*/
 		
-		this.splitter.construct(this.localGraphStruct); 
+		graphStruct.getJGraph().addMouseListener(new JGraphMouseAdapter(graphStruct.getJGraph()));
+		//graphStruct.getJGraph().getGraphLayoutCache().setVisible(this, true);
+		
+		//this.localGraphStruct.setJGraph(graphStruct.getJGraph());
+		this.localGraphStruct = graphStruct;	
+		
+		this.splitter.construct(graphStruct); //this.splitter.construct(this.localGraphStruct); 
 		
 		ArrayList nodeList = (ArrayList) this.getSuccesors();
 		Iterator listIter =  nodeList.listIterator();
@@ -117,55 +123,55 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = ((GEStreamNode) listIter.next());
-			lastNodeList.add(strNode.construct(this.localGraphStruct)); 
+			lastNodeList.add(strNode.construct(graphStruct));// lastNodeList.add(strNode.construct(this.localGraphStruct)); 
 			
 			System.out.println("Connecting " + splitter.getName()+  " to "+ strNode.getName());	
-			this.localGraphStruct.connectDraw(splitter, strNode); 
+			graphStruct.connectDraw(splitter, strNode); //this.localGraphStruct.connectDraw(splitter, strNode); 
 		}
 		
 		listIter =  lastNodeList.listIterator();
 		
-		this.joiner.construct(this.localGraphStruct); 
+		this.joiner.construct(graphStruct); //this.joiner.construct(this.localGraphStruct); 
 		
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = (GEStreamNode) listIter.next();
 			System.out.println("Connecting " + strNode.getName()+  " to "+ joiner.getName());
-			this.localGraphStruct.connectDraw(strNode, joiner); 
+			graphStruct.connectDraw(strNode, joiner); //this.localGraphStruct.connectDraw(strNode, joiner); 
 		}	
 	
-		this.localGraphStruct.getGraphModel().insert(localGraphStruct.getCells().toArray(),localGraphStruct.getAttributes(), localGraphStruct.getConnectionSet(), null, null);
+		//this.localGraphStruct.getGraphModel().insert(localGraphStruct.getCells().toArray(),localGraphStruct.getAttributes(), localGraphStruct.getConnectionSet(), null, null);
+		graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(),graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
+	
 	
 		this.port = new DefaultPort();
 		this.add(this.port);
-		frame.setGraphCell(this);
-
-		frame.setGraphStruct(graphStruct);
 		
+		/*
+		frame.setGraphCell(this);
+		frame.setGraphStruct(graphStruct);
 		frame.setGraphModel(graphStruct.getGraphModel());
 		frame.create(this.getName());
 		frame.setSize(400, 400);
-		
+		*/
 		
 		(graphStruct.getAttributes()).put(this, this.attributes);
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
 		
 		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);
+		graphStruct.getJGraph().getGraphLayoutCache().setVisible(this.getChildren().toArray(), false);
 						
-		graphStruct.internalFrame.getContentPane().add(frame);
-		//graphStruct.internalFrame.getDesktopPane().add(frame);
-	
-		try 
-		{	
-			frame.setSelected(true);
-		} 
-		catch(Exception pve) {}
 		
+		//graphStruct.internalFrame.getContentPane().add(frame);
 		/*
+		try {	
+			frame.setSelected(true);
+		} catch(Exception pve) {}
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		manager.arrange();
 		*/
+		
 		return this;
 	}
 	
@@ -186,7 +192,6 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	public void draw()
 	{
 		System.out.println("Drawing the SplitJoin " +this.getName());
-		// TO BE ADDED
 	}	
 	
 	
@@ -197,16 +202,44 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	 */	
 	public void collapseExpand(JGraph jgraph)
 	{
-		if(this.isInfoDisplayed)
-		{		
-			Rectangle rect = GraphConstants.getBounds(this.attributes);
-			this.frame.setLocation(new Point(rect.x, rect.y));
-			this.frame.setVisible(true);
+		Object[] nodeList = this.getChildren().toArray();
+		
+		if(jgraph.getGraphLayoutCache().isPartial())
+		{
+			System.out.println("the graph is partial");
 		}
 		else
 		{
-			this.frame.setLocation(GraphConstants.getOffset(this.attributes));
-			this.frame.setVisible(false);
+			System.out.println("the graph is not partial");
 		}
+
+		ConnectionSet cs = this.localGraphStruct.getConnectionSet();
+		Iterator edgeIter = cs.getEdges().iterator();
+		jgraph.getGraphLayoutCache().setVisible(nodeList, true);
+		while(edgeIter.hasNext())
+		{
+			DefaultEdge edge = (DefaultEdge) edgeIter.next();
+			System.out.println(" edge " +edge.getSource());
+			if (edge.getSource() == this)
+			{
+				System.out.println("Changing the edge at the source of the splitjoin");
+				cs.disconnect(edge, true);
+				cs.connect(edge, this.joiner.getPort(), true);
+			}
+			if (edge.getTarget() == this)
+			{
+				System.out.println("Changing the edge at the target of the splitjoin");
+				cs.disconnect(edge, false);
+				cs.connect(edge, this.splitter.getPort(), true);
+			}
+		}
+		
+		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
+		jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, false);
+		
+		
+		//JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
+		//manager.arrange();
+		
 	}	
 }

@@ -49,6 +49,7 @@ public class GraphStructure implements Serializable{
 		globalAttributes= new Hashtable();
 		model = new DefaultGraphModel();
 		jgraph = new JGraph(model);
+		jgraph.addMouseListener(new JGraphMouseAdapter(jgraph));
 		x = 0;
 		y = 0;
 		width = 100;
@@ -108,6 +109,8 @@ public class GraphStructure implements Serializable{
 			System.out.println("Entered constructGraph");
 			editorFrame = new GraphEditorFrame();
 			System.out.println("Finished creating editorFrame");
+			
+			this.jgraph.addMouseListener(new JGraphMouseAdapter(jgraph));
 			this.topLevel.construct(this);
 			model.insert(cells.toArray(), globalAttributes, cs, null, null);
 
@@ -129,7 +132,7 @@ public class GraphStructure implements Serializable{
 		System.out.println("Finished creating editorFrame");
 		this.topLevel.construct(this);
 		model.insert(cells.toArray(), globalAttributes, cs, null, null);
-		
+	//	this.jgraph.getGraphLayoutCache().setVisible(jgraph.getRoots(), true);	
 		
 		
 	}

@@ -74,26 +74,15 @@ public class GraphStructure implements Serializable{
 
 	private ArrayList highlightedNodes =null;
 
-	/**
-	 * Specifies container objects (i.e. pipelines, splitjoins, feedback loops) at each 
-	 * different level of depth. Level of depth increases as the GEStreamNode is contained
-	 * by a container object that is also contained by another container object and so on.
-	 * As a consequence, the toplevel GEStreamNode has level zero.
-	 * The map has the levels as its keys, and the cotnainer objects within that level as the
-	 * values of the map.
-	 */
-	private HashMap levelContainers;
+
 	
 	/**
 	 * The current level at which the graph is being examined;
 	 */
 	public int currentLevelView = 0;
-
-
 	private IFile ifile = null;
-
+	public ContainerNodes containerNodes= null;
 	
-	public ArrayList allContainers;
 			
 	// does not appear to be necessary if this.model and the other JGraph fields
 	// will be used to specify the GraphStructure.
@@ -109,16 +98,20 @@ public class GraphStructure implements Serializable{
 	public GraphStructure()
 	{
 		graph = new HashMap();
-		levelContainers = new HashMap();
 		cs = new ConnectionSet();
 		cells = new ArrayList();
 		globalAttributes= new Hashtable();
-		model = new DefaultGraphModel();
-		jgraph = new JGraph(model);
-		allContainers =  new ArrayList();
+		
+		this.model = new DefaultGraphModel();
+		this.jgraph = new JGraph();
+		
 		jgraph.addMouseListener(new JGraphMouseAdapter(jgraph, this));
-	
+		containerNodes = new ContainerNodes();
 	}
+	
+
+	
+	
 	
 	/**
 	 * Create hierarchy in which <parenNode> encapsulates <children>
@@ -138,10 +131,10 @@ public class GraphStructure implements Serializable{
 	{
 		ArrayList allNodes = new ArrayList();
 		allNodes.add(this.topLevel);
-		Iterator containerIter = this.allContainers.iterator();
+		Iterator containerIter = this.containerNodes.getAllContainers().iterator();
 		while(containerIter.hasNext())
 		{
-			Iterator iterChild = ((GEStreamNode)containerIter.next()).getContainedElements().iterator();
+			Iterator iterChild = ((GEContainer)containerIter.next()).getContainedElements().iterator();
 			while(iterChild.hasNext())
 			{
 				allNodes.add(iterChild.next());	
@@ -359,7 +352,7 @@ public class GraphStructure implements Serializable{
 				
 				
 		int i = 0;
-		while(this.expandContainersAtLevel(i))
+		while(this.containerNodes.expandContainersAtLevel(i))
 		{
 			i++;
 			this.currentLevelView++;
@@ -451,116 +444,6 @@ public class GraphStructure implements Serializable{
 									this.getConnectionSet(), null, null);
 	}
 	
-	
-	/**
-	 * Add the container node at level. 
-	 * @param level Level at which the Container will be added.
-	 * @param node Container node (GEPipeline, GESplitJoin, GEFeedbackLoop)
-	 */
-	public void addToLevelContainer(int level, GEStreamNode node)
-	{
-		ArrayList levelList = null;
-		if(this.levelContainers.get(new Integer(level)) == null)
-		{
-			levelList = new ArrayList();
-			levelList.add(node);
-			this.levelContainers.put(new Integer(level), levelList);
-		}
-		else
-		{
-			levelList = (ArrayList) this.levelContainers.get(new Integer(level));
-			levelList.add(node);
-		}
-		this.allContainers.add(node);
-		
-	}
-	
-	/**
-	 * Expand all of the container nodes located at level.
-	 * @param level The level at which all containers will be expanded.
-	 * @return True there were elements at the level to be expanded, false otherwise
-	 */		
-	public boolean expandContainersAtLevel(int level)
-	{
-		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
-		if (levelList != null)
-		{
-			Iterator listIter = levelList.iterator();
-			while(listIter.hasNext())
-			{
-				 GEStreamNode node = (GEStreamNode) listIter.next();
-				 
-				 if (node.getSuccesors().size() != 0)
-				 {
-				 	node.expand(this.getJGraph());
-				 }
-			}
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-	/**
-	 * Collapse all of the container nodes located at level.
-	 * @param level The level at which all containers will be collapsed.
-	 */		
-	public void collapseContainersAtLevel(int level)
-	{
-		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
-		if (levelList != null)
-		{
-			Iterator listIter = levelList.iterator();
-			while(listIter.hasNext())
-			{
-				 GEStreamNode node = (GEStreamNode) listIter.next();
-				 if (node.getSuccesors().size() != 0 )
-				 {
-				 	node.collapse(this.getJGraph());
-				 }
-			}
-		}		
-	}
-
-	/**
-	 * Make invisible all of the container nodes located at level.
-	 * @param level The level at which all containers will be made invisible.
-	 */	
-	public void hideContainersAtLevel(int level)
-	{
-		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
-		if (levelList != null)
-		{
-			Iterator listIter = levelList.iterator();
-			while(listIter.hasNext())
-			{
-				 GEStreamNode node = (GEStreamNode) listIter.next();
-				 node.hide();
-			}
-		}				
-	}
-	
-	/**
-	 * Make visible all of the container nodes located at level.
-	 * @param level The level at which all containers will be made visible.
-	 */
-	public void unhideContainersAtLevel(int level)
-	{
-		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
-		if (levelList != null)
-		{
-			Iterator listIter = levelList.iterator();
-			while(listIter.hasNext())
-			{
-				 GEStreamNode node = (GEStreamNode) listIter.next();
-				 node.unhide();
-			}
-		}				
-	}
-	
-
 	/**
 	 * Highlight the GEStreamNode. 
 	 * @param strNode GEStreamNode to be highlighted. 
@@ -587,55 +470,6 @@ public class GraphStructure implements Serializable{
 	}
 	
 	/**
-	 * Return all of the container nodes (GEPipeline, GESplitJoin, GEFeedbackLoop) 
-	 * that the GraphStructure contains.
-	 * @return Object array with the container nodes
-	 */
-	public ArrayList getAllContainers()
-	{	
-		//return this.levelContainers.values().toArray();
-		return this.allContainers;
-	}
-	
-	public Object[] getAllContainerNames()
-	{
-		Iterator allContIter = this.allContainers.iterator();
-		ArrayList names = new ArrayList();
-		while(allContIter.hasNext())
-		{	
-			names.add(((GEStreamNode)allContIter.next()).name);
-		}
-		return names.toArray();
-	}
-	
-	public GEStreamNode getContainerNodeFromName(String name)
-	{	
-		if (name == "Toplevel")
-		{
-			System.out.println("Returning toplevel from getContainerNodeFromName");
-			return this.topLevel;
-		}
-		
-		
-		Iterator aIter = this.allContainers.iterator();
-		GEStreamNode node = null;
-		while(aIter.hasNext())
-		{
-			node = (GEStreamNode) aIter.next();
-			if (name == node.getName())
-			{
-				System.out.println("Returning node from getContainerNodeFromName");
-				return node;
-			}
-		}
-		
-		System.out.println("Returning null from getContainerNodeFromName");
-		return null;
-		
-	}
-	
-	
-	/**
 	 * Sets the location of the Container nodes at level. The bounds of the container
 	 * node are set in such a way that the elements that it contains are enclosed.
 	 * Also, changes the location of the label so that it is more easily viewable.
@@ -644,13 +478,14 @@ public class GraphStructure implements Serializable{
 	
 	public void setLocationContainersAtLevel(int level)
 	{
-		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
+		ArrayList levelList = this.containerNodes.getContainersAtLevel(level);
+		
 		if (levelList != null)
 		{
 			Iterator listIter = levelList.iterator();
 			while(listIter.hasNext())
 			{
-				GEStreamNode node = (GEStreamNode) listIter.next();
+				GEContainer node = (GEContainer) listIter.next();
 				System.out.println("node is "+ node);
 				this.jgraph.getGraphLayoutCache().setVisible(new Object[]{node}, true);
 				Object[] containedCells = node.getContainedElements().toArray();
@@ -661,13 +496,14 @@ public class GraphStructure implements Serializable{
 				Rectangle cellBounds = AbstractCellView.getBounds(containedCellViews);
 				
 				
-				GraphConstants.setVerticalAlignment(node.getAttributes(), 1);
-				GraphConstants.setAutoSize(node.getAttributes(), false);
+				Map attribs = ((GEStreamNode) node).getAttributes();
+				GraphConstants.setVerticalAlignment(attribs, 1);
+				GraphConstants.setAutoSize(attribs, false);
 				if (cellBounds != null)
 				{
 					cellBounds.height += 60;
 					cellBounds.width += 60;
-					GraphConstants.setBounds(node.getAttributes(), cellBounds);
+					GraphConstants.setBounds(attribs, cellBounds);
 				}
 				
 				// The lines below are supposed to change label location, but they don't
@@ -678,6 +514,8 @@ public class GraphStructure implements Serializable{
 			}
 		}
 	}
+
+
 	
 	/**
 	 * Get the JGraph of GraphStructure.
@@ -814,15 +652,6 @@ public class GraphStructure implements Serializable{
 	    
 	    
 	}
-	
-	
-/*	
-	public Rectangle setRectCoords(GEStreamNode node)
-	{
-		Rectangle rect = new Rectangle(x, y, width, height);
-		return rect;
-	}
-*/
 }
 
 

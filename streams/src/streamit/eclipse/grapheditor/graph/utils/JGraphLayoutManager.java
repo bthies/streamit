@@ -9,6 +9,8 @@ import org.jgraph.layout.LayoutController;
 import org.jgraph.layout.SugiyamaLayoutAlgorithm;
 import org.jgraph.layout.SugiyamaLayoutController;
 
+import streamit.eclipse.grapheditor.graph.GraphStructure;
+
 
 
 /**
@@ -20,7 +22,7 @@ import org.jgraph.layout.SugiyamaLayoutController;
  *
  */
 public class JGraphLayoutManager {
-	private JGraph jgraph;
+	private GraphStructure graphStruct;
 	private LayoutAlgorithm algorithm;
 	private LayoutController controller;
 
@@ -31,9 +33,9 @@ public class JGraphLayoutManager {
 	 */
 
 
-	public JGraphLayoutManager(JGraph jgraph)
+	public JGraphLayoutManager(GraphStructure graphStruct)
 	{
-		this.jgraph = jgraph;
+		this.graphStruct = graphStruct;
 		this.algorithm = new SugiyamaLayoutAlgorithm();
 		this.controller = new SugiyamaLayoutController();
 	}
@@ -47,9 +49,9 @@ public class JGraphLayoutManager {
 	 */
 	 
 
-	public JGraphLayoutManager(JGraph jgraph, LayoutAlgorithm algorithm, LayoutController controller)
+	public JGraphLayoutManager(GraphStructure graphStruct, LayoutAlgorithm algorithm, LayoutController controller)
 	{
-		this.jgraph = jgraph;
+		this.graphStruct = graphStruct;
 		this.algorithm = algorithm;
 		this.controller = controller;
 	}
@@ -61,7 +63,8 @@ public class JGraphLayoutManager {
 
 	public void arrange()
 	{
-		algorithm.perform(this.jgraph, true, this.controller.getConfiguration());
+		StreamItLayoutAlgorithm sla = new StreamItLayoutAlgorithm();
+		sla.perform(this.graphStruct);
 	}
 
 

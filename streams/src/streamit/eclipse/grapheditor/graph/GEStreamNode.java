@@ -4,6 +4,8 @@
 package streamit.eclipse.grapheditor.graph;
  
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -11,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
 
-import org.jgraph.JGraph;
 import org.jgraph.graph.DefaultEdge;
 import org.jgraph.graph.DefaultGraphCell;
 import org.jgraph.graph.DefaultPort;
@@ -405,6 +406,26 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 		return this.sourceEdges;
 	}
 	
+	public Dimension getDimension()
+	{
+		return GraphConstants.getSize(this.attributes);
+	}
+	
+	public void setDimension(Dimension dim)
+	{
+		GraphConstants.setSize(this.attributes, dim);
+	}
+	
+	public Point getLocation()
+	{
+		return GraphConstants.getOffset(this.attributes);
+	}
+	
+	public void setLocation(Point loc)
+	{
+		GraphConstants.setOffset(this.attributes, loc);
+	}
+	
 	/**
 	 * Write the textual representation of the arguments that correspond 
 	 * to this GEStreamNode. The arguments will be written in the form:
@@ -490,15 +511,6 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 * @return GEStreamNode 
 	 */
 	abstract GEStreamNode construct(GraphStructure graphStruct, int level);
-	
-	/**
-	 * Expand or collapse the GEStreamNode structure depending on wheter it was already 
-	 * collapsed or expanded. 
-	 * @param jgraph The JGraph that will be modified to allow the expanding/collapsing.
-	 */	
-	abstract public void collapseExpand(JGraph jgraph);
-	abstract public void collapse(JGraph jgraph);
-	abstract public void expand(JGraph jgraph);
 
 
 	/**
@@ -523,12 +535,7 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 * @return true if it was possible to make the node visible; otherwise, return false.
 	 */	
 	abstract public boolean unhide();
-	
-	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
-	 * not a container node (can't have any contained elements), then null is returned.
-	 * @return ArrayList of contained elements. If <this> is not a container, return null.
-	 */
-	abstract public ArrayList getContainedElements();
+
 
 	/**
 	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 

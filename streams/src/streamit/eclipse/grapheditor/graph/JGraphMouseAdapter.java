@@ -46,11 +46,11 @@ public class JGraphMouseAdapter extends MouseAdapter {
 				highlightList.add(node);
 			//	graphStruct.highlightNodes(highlightList);
 				
-//				System.out.println(" CALLING METHOD TO GO TO CORRESPONDING CODE IN .STR FILE FOR NODE "+node.getName());
+				System.out.println(" CALLING METHOD TO GO TO CORRESPONDING CODE IN .STR FILE FOR NODE "+node.getName());
 				IFile fili = NodeCreator.getIFile(node);
 				if (fili != null)
 				{
-//					System.out.println ("THE IFILE CORRESPONDING TO " + node.getNameNoID()+ "  IS " + fili.toString());
+					System.out.println ("THE IFILE CORRESPONDING TO " + node.getNameNoID()+ "  IS " + fili.toString());
 									
 					try 
 					{
@@ -75,8 +75,8 @@ public class JGraphMouseAdapter extends MouseAdapter {
 	
 	}
 
-	public void mouseReleased(MouseEvent e)
-	{
+//	public void mouseReleased(MouseEvent e)
+//	{
 		/* demoremove
 		int x = e.getX(), y = e.getY();
 
@@ -93,7 +93,7 @@ public class JGraphMouseAdapter extends MouseAdapter {
 				graphStruct.highlightNodes(highlightList);
 			}
 		}*/
-	}
+//	}
 
 
 }

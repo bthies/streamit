@@ -140,9 +140,6 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 		graphStruct.getCells().add(this);
 	}
 	
-	public void collapseExpand(JGraph jgraph){};
-	public void collapse(JGraph jgraph){};
-	public void expand(JGraph jgraph){};
 	
 	/**
 	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
@@ -163,12 +160,6 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 	{
 		return false;
 	};
-	
-	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
-	 * not a container node, then a list with no elements is returned.
-	 * @return ArrayList of contained elements. If <this> is not a container, return empty list.
-	 */
-	public ArrayList getContainedElements(){return new ArrayList();};
 	
 	/**
 	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 

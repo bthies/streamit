@@ -4,6 +4,7 @@
 package streamit.eclipse.grapheditor.graph;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.PrintWriter;
@@ -13,7 +14,6 @@ import java.util.Iterator;
 
 import javax.swing.JLabel;
 
-import org.jgraph.JGraph;
 import org.jgraph.graph.ConnectionSet;
 import org.jgraph.graph.DefaultEdge;
 import org.jgraph.graph.DefaultPort;
@@ -25,7 +25,7 @@ import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
  * GEPipeline is the graph internal representation of a pipeline. 
  * @author jcarlos
  */
-public class GEPipeline extends GEStreamNode implements Serializable{
+public class GEPipeline extends GEStreamNode implements Serializable, GEContainer{
 			
 	private GEStreamNode lastNode;	
 	
@@ -69,7 +69,7 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		boolean first = true;
 		this.level = lvel;
 		
-		graphStruct.addToLevelContainer(this.level, this);
+		graphStruct.containerNodes.addContainerToLevel(this.level, this);
 		lvel++;
 		graphStruct.getJGraph().addMouseListener(new JGraphMouseAdapter(graphStruct.getJGraph(), graphStruct));
 		
@@ -120,8 +120,8 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 	//	GraphConstants.setAutoSize(this.attributes, true);	
 		//GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.blue));
 		
-		// demoremove GraphConstants.setBorderColor(this.attributes, Color.red.darker());
-		// demoremove GraphConstants.setLineWidth(this.attributes, 4);
+		GraphConstants.setBorderColor(this.attributes, Color.red.darker());
+		GraphConstants.setLineWidth(this.attributes, 4);
 		GraphConstants.setBounds(this.attributes, bounds);
 		GraphConstants.setVerticalTextPosition(this.attributes, JLabel.TOP);
 		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);	
@@ -132,27 +132,27 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 	 * collapsed or expanded. 
 	 * @param jgraph The JGraph that will be modified to allow the expanding/collapsing.
 	 */
-	public void collapseExpand(JGraph jgraph)
+	public void collapseExpand()
 	{
 		if (isExpanded)
 		{
-			this.collapse(jgraph);
+			this.collapse();
 			isExpanded = false;
 		}
 		else
 		{
-			this.expand(jgraph);
+			this.expand();
 			isExpanded = true;
 		}		
 	}
 	/**
 	 * Expand the GEPipeline so that the nodes that it contains become visible.
 	 */
-	public void expand(JGraph jgraph)
+	public void expand()
 	{
 		Object[] nodeList = this.getSuccesors().toArray();
 		ConnectionSet cs = this.localGraphStruct.getConnectionSet();	
-		jgraph.getGraphLayoutCache().setVisible(nodeList, true);
+		localGraphStruct.getJGraph().getGraphLayoutCache().setVisible(nodeList, true);
 		
 		Iterator eIter = localGraphStruct.getGraphModel().edges(this.getPort());
 		ArrayList edgesToRemove =  new ArrayList();
@@ -207,11 +207,11 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		
 		for (int i = level; i >= 0; i--)
 		{
-			this.localGraphStruct.hideContainersAtLevel(i);
+			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
 		}
 		
 		//CHANGE 12/2/03 JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
-		JGraphLayoutManager manager = new JGraphLayoutManager(jgraph);
+		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();
 		setLocationAfterExpand();
 	}	
@@ -219,7 +219,7 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 	/**
 	 * Collapse the GEPipeline so that the nodes it contains become invisible. 
 	 */
-	public void collapse(JGraph jgraph)
+	public void collapse()
 	{
 		Object[] nodeList = this.getSuccesors().toArray();
 		ConnectionSet cs = this.localGraphStruct.getConnectionSet();	
@@ -314,15 +314,15 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		this.localGraphStruct.getGraphModel().edit(localGraphStruct.getAttributes(), cs, null, null);
 	
 		System.out.println("THE NODELIST " +nodeList.toString() + " in Pipeline " + this.name);
-		jgraph.getGraphLayoutCache().setVisible(nodeList, false);
+		this.localGraphStruct.getJGraph().getGraphLayoutCache().setVisible(nodeList, false);
 		
 		for (int i = level - 1; i >= 0; i--)
 		{
-			this.localGraphStruct.hideContainersAtLevel(i);
+			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
 		}	
 		
 		//JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
-		JGraphLayoutManager manager = new JGraphLayoutManager(jgraph);
+		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();	
 		
 		for (int i = level - 1; i >= 0; i--)
@@ -374,6 +374,52 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		out.println("}");
 		out.println();
 	}
+	
+	/**
+	 * Determine the dimension of the pipeline. This is determined by how many children
+	 * the pipeline has. The height is the sum of the heights of the children. 
+	 * The width ids the maximum width of the children.  
+	 *
+	 */
+	public void calculateDimension()
+	{
+		Iterator childIter = this.getSuccesors().iterator();
+		int height = 0;
+		int width  = Constants.MIN_WIDTH;
+		while (childIter.hasNext())
+		{
+			GEStreamNode node = (GEStreamNode) childIter.next();
+			Dimension dim = null;
+			if (node instanceof GEContainer)
+			{
+				dim = node.getDimension();
+			}
+			else
+			{
+				dim = Constants.DEFAULT_DIMENSION; 
+			}
+			height += dim.height + Constants.X_SEPARATION;
+			if (dim.width > width)
+			{
+				width = dim.width;
+			}	
+		}
+		this.setDimension(new Dimension(width, height));
+	}
+	
+	public void layoutChildren()
+	{
+		
+		Point pt = this.getLocation();
+		Iterator childIter = this.getSuccesors().iterator();
+		while (childIter.hasNext())
+		{
+			GEStreamNode node = (GEStreamNode) childIter.next();
+			node.setLocation(new Point(Constants.x+50, Constants.y+50));
+		}
+		
+	}
+	
 	
 	/**
  	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 

@@ -25,7 +25,7 @@ import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
  * GEFeedbackLoop is the graph internal representation of  a feedback loop.
  * @author jcarlos
  */
-public class GEFeedbackLoop extends GEStreamNode implements Serializable{
+public class GEFeedbackLoop extends GEStreamNode implements Serializable, GEContainer{
 	
 	/**
 	 * The splitter belonging to this feedback loop.
@@ -60,6 +60,9 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	 */
 	private boolean isExpanded;
 
+
+	
+
 	/**
 	 * GEFeedbackLoop constructor.
 	 * @param name The name of the GEFeedbackLoop.
@@ -68,7 +71,8 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	 * @param body The GEStreamNode that represents the body of theGEFeedbackLoop.
 	 * @param loop The GEStreamNode that represents the body of the GEFeedbackLoop.
 	 */
-	public GEFeedbackLoop(String name, GESplitter split, GEJoiner join, GEStreamNode body, GEStreamNode loop)
+	public GEFeedbackLoop(String name, GESplitter split, GEJoiner join, 
+						  GEStreamNode body, GEStreamNode loop)
 	{
 		super(GEType.FEEDBACK_LOOP, name);
 		this.splitter = split;
@@ -78,6 +82,29 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 		this.localGraphStruct = new GraphStructure();
 		this.isExpanded = false;
 	}
+
+	/**
+	 * GEFeedbackLoop constructor.
+	 * @param name The name of the GEFeedbackLoop.
+	 * @param split The GESplitter that corresponds to this GEFeedbackLoop.
+	 * @param join The GEJoiner that corresponds to this GEFeedbackLoop.
+	 * @param body The GEStreamNode that represents the body of theGEFeedbackLoop.
+	 * @param loop The GEStreamNode that represents the body of the GEFeedbackLoop.
+	 * @param gs The GraphStructure that this is part of.
+	 */
+	public GEFeedbackLoop(String name, GESplitter split, GEJoiner join, 
+						  GEStreamNode body, GEStreamNode loop, GraphStructure gs)
+	{
+		super(GEType.FEEDBACK_LOOP, name);
+		this.splitter = split;
+		this.joiner = join;
+		this.body = body;
+		this.loop = loop;
+		this.localGraphStruct = gs;
+		this.isExpanded = false;
+	}
+
+
 	
 	/**
 	 * Get the splitter part of this.
@@ -122,7 +149,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 		
 		/**Set the level of this and add this to list of containers at this level **/
 		this.level = lvel;
-		graphStruct.addToLevelContainer(level, this);
+		graphStruct.containerNodes.addContainerToLevel(level, this);
 		lvel++; // Contained elements of this will be at a higher level
 		
 		graphStruct.getJGraph().addMouseListener(new JGraphMouseAdapter(graphStruct.getJGraph(), graphStruct));	
@@ -180,17 +207,17 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	 * collapsed or expanded. 
 	 * @param jgraph 
 	 */	
-	public void collapseExpand(JGraph jgraph)
+	public void collapseExpand()
 	{
 		if (isExpanded)
 		{
-			this.collapse(jgraph);
+			this.collapse();
 			isExpanded = false;
 		}
 		else
 		{
 			
-			this.expand(jgraph);
+			this.expand();
 			isExpanded = true;
 		}
 	}	
@@ -199,11 +226,11 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	 * Expand the GESplitJoin. When it is expanded the elements that it contains are
 	 * displayed.
 	 */
-	public void expand(JGraph jgraph)
+	public void expand()
 	{
 		Object[] nodeList = this.getContainedElements().toArray();
 		ConnectionSet cs = this.localGraphStruct.getConnectionSet();	
-		jgraph.getGraphLayoutCache().setVisible(nodeList, true);
+		this.localGraphStruct.getJGraph().getGraphLayoutCache().setVisible(nodeList, true);
 		
 		
 		Iterator eIter = localGraphStruct.getGraphModel().edges(this.getPort());
@@ -256,10 +283,10 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 		
 		for (int i = level; i >= 0; i--)
 		{
-			this.localGraphStruct.hideContainersAtLevel(i);
+			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
 		}
 		
-		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
+		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();	
 		setLocationAfterExpand();
 	}
@@ -269,11 +296,11 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	//TODO
 	//TODO
 	//TODO
-	public void collapse(JGraph jgraph)
+	public void collapse()
 	{
 		Object[] nodeList = this.getContainedElements().toArray();
 		ConnectionSet cs = this.localGraphStruct.getConnectionSet();	
-		jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, true);
+		this.localGraphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{this}, true);
 		
 		Iterator splitEdgeIter = localGraphStruct.getGraphModel().edges(this.getSplitter().getPort());
 		Iterator joinEdgeIter = localGraphStruct.getGraphModel().edges(this.getJoiner().getPort());
@@ -355,16 +382,16 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	
 		GraphConstants.setAutoSize(this.attributes, true);			
 		this.localGraphStruct.getGraphModel().edit(localGraphStruct.getAttributes(), cs, null, null);
-		jgraph.getGraphLayoutCache().setVisible(nodeList, false);
+		this.localGraphStruct.getJGraph().getGraphLayoutCache().setVisible(nodeList, false);
 		
 		for (int i = level - 1; i >= 0; i--)
 		{
-			this.localGraphStruct.hideContainersAtLevel(i);
+			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
 		}	
 
 		
 		//JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
-		JGraphLayoutManager manager = new JGraphLayoutManager(jgraph);
+		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();
 		
 		for (int i = level - 1; i >= 0; i--)
@@ -391,7 +418,8 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	   return tempList;
 	 	
 	}
-	
+	public void layoutChildren(){};
+		public void calculateDimension(){};
 
 	/**
 	 * Sets the location of the Container nodes that have a level less than or equal 

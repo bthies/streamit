@@ -3,7 +3,6 @@
  */
 package streamit.eclipse.grapheditor.graph;
 
-import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.PrintWriter;
@@ -12,12 +11,14 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
 
-import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 
 import org.jgraph.JGraph;
 import org.jgraph.graph.DefaultPort;
 import org.jgraph.graph.GraphConstants;
+
+import streamit.eclipse.grapheditor.graph.resources.ImageLoader;
 
 /**
  *  GEPhasedFilter is the graph editor's internal representation of a phased filter.
@@ -35,6 +36,9 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	 */
 	private ArrayList workFunctions;
 	
+	private GraphStructure localGraphStruct;
+	
+	
 	/**
 	 * GEPhasedFilter constructor.
 	 * @param name The name of this GEPhasedFilter.
@@ -44,7 +48,19 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		super(GEType.PHASED_FILTER, name);
 		initWorkFunctions = new ArrayList();
 		workFunctions = new ArrayList();
+		this.localGraphStruct = new GraphStructure();
 	}
+
+		
+	public GEPhasedFilter(String name, GraphStructure gs)
+	{
+		super(GEType.PHASED_FILTER, name);
+		initWorkFunctions = new ArrayList();
+		workFunctions = new ArrayList();
+		this.localGraphStruct = gs;
+
+	}
+	
 	
 	/**
 	 *	Returns true if wf was added to collection of init work functions
@@ -174,9 +190,6 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		GraphConstants.setVerticalTextPosition(this.attributes, JLabel.CENTER);
 		GraphConstants.setBounds(this.attributes, bounds);
 	
-		//demoadd
-		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.red));
-		/* demoremove
 		try 
 		{
 			ImageIcon icon = ImageLoader.getImageIcon("filter.GIF");
@@ -184,7 +197,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		} catch (Exception ex) 
 		{
 			ex.printStackTrace();
-		}*/
+		}
 		
 		this.port = new DefaultPort();
 		this.add(this.port);
@@ -219,7 +232,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	 * collapsed or expanded. 
 	 * @param jgraph The JGraph that will be modified to allow the expanding/collapsing.
 	 */
-	public void collapseExpand(JGraph jgraph)
+	public void collapseExpand()
 	{
 		if (this.isInfoDisplayed)
 		{
@@ -227,7 +240,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 			GraphConstants.setValue(change, this.getNameLabel());
 			Map nest = new Hashtable ();
 			nest.put(this, change);
-			jgraph.getModel().edit(nest, null, null, null);
+			this.localGraphStruct.getJGraph().getModel().edit(nest, null, null, null);
 						
 			this.isInfoDisplayed = false;
 		}
@@ -237,16 +250,13 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 			GraphConstants.setValue(change, this.getInfoLabel());
 			Map nest = new Hashtable ();
 			nest.put(this, change);
-			jgraph.getModel().edit(nest, null, null, null);
+			this.localGraphStruct.getJGraph().getModel().edit(nest, null, null, null);
 																	
 			this.isInfoDisplayed = true;
 		}
 		System.out.println("The user object is " +this.getUserObject().toString());
-		System.out.println(jgraph.convertValueToString(this)); 
+		System.out.println(this.localGraphStruct.getJGraph().convertValueToString(this)); 
 	}
-
-	public void collapse(JGraph jgraph){};
-	public void expand(JGraph jgraph){};
 	
 	/**
 	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
@@ -267,12 +277,6 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	{
 		return false;
 	};
-
-	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
-	 * not a container node, then a list with no elements is returned.
-	 * @return ArrayList of contained elements. If <this> is not a container, return empty list.
-	 */
-	public ArrayList getContainedElements(){return new ArrayList();};
 	
 	/**
 	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 

@@ -60,7 +60,7 @@ public class NodeCreator {
 			}
 			else if (GEType.PHASED_FILTER == type)
 			{
-				node = new GEPhasedFilter(name);
+				node = new GEPhasedFilter(name, graphStruct);
 				((GEPhasedFilter)node).setPushPopPeekRates(Integer.parseInt(properties.getProperty(GEProperties.KEY_PUSH_RATE)),
 														   Integer.parseInt(properties.getProperty(GEProperties.KEY_POP_RATE)),
 														   Integer.parseInt(properties.getProperty(GEProperties.KEY_PEEK_RATE)));
@@ -125,7 +125,7 @@ public class NodeCreator {
 		node.setOutputTape(properties.getProperty(GEProperties.KEY_OUTPUT_TAPE));
 		node.setInputTape(properties.getProperty(GEProperties.KEY_INPUT_TAPE));
 			
-		GEStreamNode parentNode = graphStruct.getContainerNodeFromName(properties.getProperty(GEProperties.KEY_PARENT));
+		GEStreamNode parentNode = graphStruct.containerNodes.getContainerNodeFromName(properties.getProperty(GEProperties.KEY_PARENT));
 		node.setEncapsulatingNode(parentNode);
 		node.setDepthLevel(parentNode.getDepthLevel() + 1);
 		
@@ -138,7 +138,7 @@ public class NodeCreator {
 		if ((node.getType() == GEType.PIPELINE) || (node.getType() == GEType.SPLIT_JOIN) || 
 			(node.getType() == GEType.FEEDBACK_LOOP))
 			{	
-				graphStruct.addToLevelContainer(parentNode.getDepthLevel() + 1, node);	
+				graphStruct.containerNodes.addContainerToLevel(parentNode.getDepthLevel() + 1, node);	
 			}
 			
 		//graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(), graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);	
@@ -178,7 +178,7 @@ public class NodeCreator {
 		//TODO: Fix this hack
 		((GEPipeline) node).isExpanded  = true;
 		
-		graphStruct.addToLevelContainer(0, node);
+		graphStruct.containerNodes.addContainerToLevel(0, node);
 		//graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(), graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
 	
 		node.initDrawAttributes(graphStruct, new Rectangle(30, 30, 700, 700));

@@ -149,10 +149,6 @@ public class GESplitter extends GEStreamNode implements Serializable{
 	{
 		System.out.println("Drawing the Splitter " +this.getName());
 	}
-		
-	public void collapseExpand(JGraph jgraph){};
-	public void collapse(JGraph jgraph){};
-	public void expand(JGraph jgraph){};
 	
 	/**
 	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
@@ -173,12 +169,6 @@ public class GESplitter extends GEStreamNode implements Serializable{
 	{
 		return false;
 	};
-
-	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
-	 * not a container node, then a list with no elements is returned.
-	 * @return ArrayList of contained elements. If <this> is not a container, return empty list.
-	 */
-	public ArrayList getContainedElements(){return new ArrayList();};
 
 
 	/**

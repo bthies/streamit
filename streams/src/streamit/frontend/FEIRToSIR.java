@@ -264,9 +264,9 @@ public class FEIRToSIR implements FEVisitor {
       return new CArrayType(feirTypeToSirType(ta.getBase()),
 			    1);
     } else if (type instanceof TypeStruct) {
-      return classTable.get(((TypeStruct) type).getName());
+      return (CType) classTable.get(((TypeStruct) type).getName());
     } else if (type instanceof TypeStructRef) {
-      return classTable.get(((TypeStructRef) type).getName());
+      return (CType) classTable.get(((TypeStructRef) type).getName());
     }
     /* This shouldn't happen */
     debug("  UNIMPLEMENTED - shouldn't happen\n");
@@ -388,6 +388,13 @@ public class FEIRToSIR implements FEVisitor {
 
   public Object visitExprComplex(ExprComplex exp) {
     debug("In visitExprComplex\n");
+    debug("  UNIMPLEMENTED\n");
+    /* unimplemented */
+    return null;
+  }
+
+  public Object visitFieldDecl(FieldDecl decl) {
+    debug("In visitFieldDecl\n");
     debug("  UNIMPLEMENTED\n");
     /* unimplemented */
     return null;
@@ -542,7 +549,7 @@ public class FEIRToSIR implements FEVisitor {
   public Object visitSplitJoinSpec(StreamSpec spec) {
     int i;
     List list;
-    SIRSplitJoin result = new SIRSplitJoin(parent, spec.getName());
+    SIRSplitJoin result = new SIRSplitJoin((SIRContainer) parent, spec.getName());
     StmtVarDecl[] vars = new StmtVarDecl[spec.getVars().size()];
     SIRStream oldParent = parent;
 
@@ -583,7 +590,7 @@ public class FEIRToSIR implements FEVisitor {
   public Object visitFeedbackLoopSpec(StreamSpec spec) {
     int i;
     List list;
-    SIRFeedbackLoop result = new SIRFeedbackLoop(parent, spec.getName());
+    SIRFeedbackLoop result = new SIRFeedbackLoop((SIRContainer) parent, spec.getName());
     StmtVarDecl[] vars = new StmtVarDecl[spec.getVars().size()];
     SIRStream oldParent = parent;
 
@@ -728,7 +735,7 @@ public class FEIRToSIR implements FEVisitor {
       newWeights[i] = (JExpression) ((Expression) weights.get(i)).accept(this);
     }
 
-    return SIRSplitter.createWeightedRR(parent, newWeights);
+    return SIRSplitter.createWeightedRR((SIRContainer) parent, newWeights);
   }
 
   public Object visitStmtAdd(StmtAdd stmt) {
@@ -870,13 +877,19 @@ public class FEIRToSIR implements FEVisitor {
 
   public Object visitStmtJoin(StmtJoin stmt) {
     debug("In visitStmtJoin\n");
-    parent.setJoiner(stmt.getJoiner().accept(this));
+    if (parent instanceof SIRFeedbackLoop) {
+      ((SIRFeedbackLoop) parent).setJoiner((SIRJoiner) stmt.getJoiner().accept(this));
+    } else if (parent instanceof SIRSplitJoin) {
+      ((SIRSplitJoin) parent).setJoiner((SIRJoiner) stmt.getJoiner().accept(this));
+    }
     return null;
   }
 
   public Object visitStmtLoop(StmtLoop stmt) {
     debug("In visitStmtLoop\n");
-    parent.setLoop(stmt.getCreator().accept(this));
+    if (parent instanceof SIRFeedbackLoop) {
+      ((SIRFeedbackLoop) parent).setLoop((SIRStream) stmt.getCreator().accept(this));
+    }
     return null;
   }
 
@@ -903,7 +916,6 @@ public class FEIRToSIR implements FEVisitor {
   public Object visitStmtSplit(StmtSplit stmt) {
     debug("In visitStmtSplit\n");
     return stmt.getSplitter().accept(this);
-    return null;
   }
 
   public Object visitStmtVarDecl(StmtVarDecl stmt) {

@@ -49,6 +49,26 @@ public class SIRPhaseInvocation extends JStatement {
         this.push = null;
     }
 
+	public JMethodCallExpression getCall()
+	{
+		return call;
+	}
+	
+	public JExpression getPeek()
+	{
+		return peek;
+	}
+	
+	public JExpression getPop()
+	{
+		return pop;
+	}
+	
+	public JExpression getPush()
+	{
+		return push;
+	}
+	
     public void setCall(JMethodCallExpression call)
     {
         this.call = call;

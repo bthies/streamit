@@ -6,7 +6,7 @@ package at.dms.kjc.sir.linear;
  * the same work. This combination might require each of the individual
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.<p>
- * $Id: LinearTransformPipeline.java,v 1.2 2002-09-18 01:02:50 aalamb Exp $
+ * $Id: LinearTransformPipeline.java,v 1.3 2002-09-18 17:15:37 aalamb Exp $
  **/
 class LinearTransformPipeline extends LinearTransform {
     /** The upstream filter representation. **/
@@ -67,8 +67,8 @@ class LinearTransformPipeline extends LinearTransform {
 	LinearFilterRepresentation upstreamExpandedRep  = this.upstreamRep.expand(this.upstreamExpandFactor);
 	LinearFilterRepresentation downstreamExpandedRep = this.downstreamRep.expand(this.downstreamExpandFactor);
 
-	LinearPrinter.println("Combining pipeline. Upstream A = \n" + upstreamExpandedRep.getA());
-	LinearPrinter.println("Combining pipeline. Downstream A = \n" + downstreamExpandedRep.getA());
+	//LinearPrinter.println("Combining pipeline. Upstream A = \n" + upstreamExpandedRep.getA());
+	//LinearPrinter.println("Combining pipeline. Downstream A = \n" + downstreamExpandedRep.getA());
 
 	// If the dimensions match up, then perform the actual matrix
 	// multiplication

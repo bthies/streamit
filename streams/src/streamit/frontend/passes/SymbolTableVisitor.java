@@ -28,7 +28,7 @@ import java.util.Map;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.13 2003-12-22 19:54:10 dmaze Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.14 2004-02-13 21:22:28 dmaze Exp $
  */
 public class SymbolTableVisitor extends FEReplacer
 {
@@ -93,7 +93,9 @@ public class SymbolTableVisitor extends FEReplacer
     public Type getType(Expression expr)
     {
         // To think about: should we cache GetExprType objects?
-        return (Type)expr.accept(new GetExprType(symtab, streamType));
+        GetExprType get = new GetExprType(symtab, streamType, structsByName);
+        Type type = (Type)expr.accept(get);
+        return actualType(type);
     }
 
     /**

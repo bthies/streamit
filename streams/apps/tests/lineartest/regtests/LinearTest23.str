@@ -4,7 +4,7 @@
  **/
 void->void pipeline LinearTest23 {
    add FloatSource();
-   add SimpleAverageFIR(8);
+   add SimpleAverageFIR(10);
    //add LowPassFilter(10);
    add FloatSink();
  }

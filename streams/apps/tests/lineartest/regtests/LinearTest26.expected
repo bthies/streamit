@@ -1,0 +1,15 @@
+AverageFilter_1.matrix
+[[0.5+0.0i]
+ [0.5+0.0i]]
+AverageFilter_1.vector
+[[0.0+0.0i]]
+Compressor_1.matrix
+[[0.0+0.0i]
+ [0.0+0.0i]
+ [1.0+0.0i]]
+Compressor_1.vector
+[[0.0+0.0i]]
+Expander_1.matrix
+[[0.0+0.0i 1.0+0.0i]]
+Expander_1.vector
+[[0.0+0.0i 0.0+0.0i]]

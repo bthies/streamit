@@ -1,0 +1,33 @@
+FIRPipelineBad_1.matrix
+[[5.0+0.0i 6.0+0.0i 7.0+0.0i 8.0+0.0i]
+ [10.0+0.0i 12.0+0.0i 14.0+0.0i 16.0+0.0i]
+ [15.0+0.0i 18.0+0.0i 21.0+0.0i 24.0+0.0i]
+ [20.0+0.0i 24.0+0.0i 28.0+0.0i 32.0+0.0i]]
+FIRPipelineBad_1.vector
+[[0.0+0.0i 0.0+0.0i 0.0+0.0i 0.0+0.0i]]
+FIRPipelineGood_1.matrix
+[[70.0+0.0i]]
+FIRPipelineGood_1.vector
+[[0.0+0.0i]]
+LinearFilterOne_1.matrix
+[[1.0+0.0i]
+ [2.0+0.0i]
+ [3.0+0.0i]
+ [4.0+0.0i]]
+LinearFilterOne_1.vector
+[[0.0+0.0i]]
+LinearFilterOne_2.matrix
+[[1.0+0.0i]
+ [2.0+0.0i]
+ [3.0+0.0i]
+ [4.0+0.0i]]
+LinearFilterOne_2.vector
+[[0.0+0.0i]]
+LinearFilterTwo_1.matrix
+[[5.0+0.0i 6.0+0.0i 7.0+0.0i 8.0+0.0i]]
+LinearFilterTwo_1.vector
+[[0.0+0.0i 0.0+0.0i 0.0+0.0i 0.0+0.0i]]
+LinearFilterTwo_2.matrix
+[[5.0+0.0i 6.0+0.0i 7.0+0.0i 8.0+0.0i]]
+LinearFilterTwo_2.vector
+[[0.0+0.0i 0.0+0.0i 0.0+0.0i 0.0+0.0i]]

@@ -11,7 +11,7 @@ public class LoweringConstants {
     /**
      * The name of the type serving as the stream context.
      */
-    public static final String CONTEXT_TYPE_NAME = "stream_context";
+    public static final String CONTEXT_TYPE_NAME = "stream_context*";
 
     /**
      * The name of the variable holding the stream context in structures.

@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.3 2004-02-18 20:04:00 dmaze Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.4 2004-02-19 15:52:29 dmaze Exp $
  */
 public class SIRToStreamIt
     extends at.dms.util.Utils
@@ -274,15 +274,33 @@ public class SIRToStreamIt
         else if (type.isRoundRobin())
         {
             print("split roundrobin(");
-            boolean first = true;
-            for (int i = 0; i < weights.length; i++)
+
+            // Check (the hard way) for a uniform round-robin.
+            boolean uniform = false;
+            if (weights.length > 0)
             {
-                assert weights[i] != null;
-                if (!first)
-                    print(", ");
-                first = false;
-                weights[i].accept(this);
+                uniform = true;
+                int w = self.getWeight(0);
+                for (int i = 1; i < weights.length; i++)
+                    if (self.getWeight(i) != w)
+                        uniform = false;
             }
+
+            if (uniform)
+                print(self.getWeight(0));
+            else
+            {
+                boolean first = true;
+                for (int i = 0; i < weights.length; i++)
+                {
+                    assert weights[i] != null;
+                    if (!first)
+                        print(", ");
+                    first = false;
+                    weights[i].accept(this);
+                }
+            }
+            
             print(");");
         }
         else

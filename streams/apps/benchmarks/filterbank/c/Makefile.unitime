@@ -1,5 +1,5 @@
 all:
-	gcc -O3 filterbank_uni.c -o ./filterbank_uni
-	time ./filterbank_uni
+	gcc -O3 filterbank.c -o ./filterbank
+	time ./filterbank
 clean:
-	rm -rf ./filterbank_uni
+	rm -rf ./filterbank

@@ -106,9 +106,6 @@ public class Flattener {
 	//Raise variables to the top of their block
 	new VarDeclRaiser().raiseVars(str);
 	
-	// name the components
-	SIRIterator iter = IterFactory.createIter(str);
-	
 	// make single structure
 	JClassDeclaration flatClass = Structurer.structure(str, 
 							   interfaces,

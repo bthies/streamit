@@ -16,7 +16,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.26 2003-04-09 11:13:20 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.27 2003-04-09 20:49:08 thies Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from streams to linear representations. never would have guessed that, would you? **/
@@ -78,9 +78,11 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	if (this.streamsToLinearRepresentation.containsKey(key)) {
 	    throw new IllegalArgumentException("tried to add key mapping.");
 	}
+	/* Partitioner needs this for efficiency.
 	if (this.streamsToLinearRepresentation.containsValue(rep)) {
 	    throw new IllegalArgumentException("tried to add rep second time.");
 	}
+	*/
 	this.streamsToLinearRepresentation.put(key,rep);
 	checkRep();
     }
@@ -89,6 +91,15 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	return this.streamsToLinearRepresentation.keySet().iterator();
     }
     
+    /** adds a record that <str> is non-linear **/
+    public void addNonLinear(SIRStream str) {
+	nonLinearStreams.add(str);
+    }
+    /** adds a mapping from sir stream to linear filter rep. **/
+    public boolean isNonLinear(SIRStream key) {
+	return nonLinearStreams.contains(key);
+    }
+
     /**
      * Main entry point -- searches the passed stream for linear
      * filters and calculates their associated matricies.  Uses a

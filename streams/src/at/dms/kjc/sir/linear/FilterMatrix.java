@@ -19,7 +19,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.16 2003-04-08 09:49:14 thies Exp $
+ * $Id: FilterMatrix.java,v 1.17 2003-04-09 20:49:08 thies Exp $
  **/
 
 public class FilterMatrix {
@@ -353,6 +353,35 @@ public class FilterMatrix {
 	    }
 	}
 
+	// if we get here, the other matrix is the same as this one.
+	return true;
+    }
+
+    /**
+     * Return true if the passed object is a FilterMatrix with the
+     * same dimensions as this, that has zeros/ones (and all its
+     * zeros and ones) at exactly the same locations as this.
+     **/
+    public boolean hasEqualZeroOneElements(FilterMatrix other) {
+	// compare sizes
+	if (this.getRows() != other.getRows()) {return false;}
+	if (this.getCols() != other.getCols()) {return false;}
+
+	// now, compare element by element
+	for (int i=0; i<this.internalSizeRows; i++) {
+	    for (int j=0; j<this.internalSizeCols; j++) {
+		boolean thisZero = this.getElement(i,j).equals(ComplexNumber.ZERO);
+		boolean otherZero = other.getElement(i,j).equals(ComplexNumber.ZERO);
+		if (thisZero != otherZero) {
+		    return false;
+		}
+		boolean thisOne = this.getElement(i,j).equals(ComplexNumber.ONE);
+		boolean otherOne = other.getElement(i,j).equals(ComplexNumber.ONE);
+		if (thisOne != otherOne) {
+		    return false;
+		}
+	    }
+	}
 	// if we get here, the other matrix is the same as this one.
 	return true;
     }

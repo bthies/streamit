@@ -1,18 +1,21 @@
-/* this Filter performs subband Dopler Compression.
-The most computationally efficient method for Pulse Compression is FFT, yet since the complex number support is not yet completely supported by the compiler, I will use the convolutional DFT to perform pulse compression. For code reusablility, the code for performing the actual DFT is implemented in a separate file.
+/* This Filter performs subband Dopler Compression.  The most
+ * computationally efficient method for Pulse Compression is FFT, yet
+ * since the complex number support is not yet completely supported by
+ * the compiler, I will use the convolutional DFT to perform pulse
+ * compression. For code reusablility, the code for performing the
+ * actual DFT is implemented in a separate file.
 
-in the work function gets an N_bm*N_srg*N_pri Matrix and a weigths matrix as its input and the output is a N_bm*N_srg*N_dop*N_st such that N_st+N_dop=N_pri+1;,
-the init function requires the value for float[N_pc] , the values for the steering matrix V(s) is computed during the initialization part;
+ * In the work function gets an N_bm*N_srg*N_pri Matrix and a weigths
+ * matrix as its input and the output is a N_bm*N_srg*N_dop*N_st such
+ * that N_st+N_dop=N_pri+1;, the init function requires the value for
+ * float[N_pc] , the values for the steering matrix V(s) is computed
+ * during the initialization part;
+ */
 
-*/
-
-
-complex[N_bm][N_srg][N_pri]->complex[N_bm][N_srg][N_dop][N_pri-N_dop+1] pipline  DopFilt(int N_bm,int N_srg,int N_pri,int N_dop) {
-
+complex[N_bm][N_srg][N_pri]->complex[N_bm][N_srg][N_dop][N_pri-N_dop+1] pipline DopFilt(int N_bm,int N_srg,int N_pri,int N_dop) {
     add Chg40(N_bm,N_srg,N_pri,N_dop);
     add ParaFFT(N_bm,N_srg,N_dop,N_pri-N_dop+1);
     add Chg41(N_bm,N_srg,N_dop,N_pri-N_dop+1);	
-	
 }
 
 // This is a parrallel version of FFTVect
@@ -23,12 +26,8 @@ complex[N_dop]->complex[N_dop] splitjoin ParaFFT(int N_bm,int N_srg, int N_dop,i
 		add FFTVect(N_dop);
 }
   
-
-
 // This filter gets the three dimensional array and generates the staggers
-
 complex[N_bm][N_srg][N_pri]->complex[N_dop] filter Chg40(int N_bm, int N_srg, int N_pri, int N_dop) {
-
     init{}
     work pop 1 push (N_bm*N_srg*(N_pri-N_dop+1)) {
 	complex[N_bm][N_srg][N_pri] InCube;
@@ -43,12 +42,10 @@ complex[N_bm][N_srg][N_pri]->complex[N_dop] filter Chg40(int N_bm, int N_srg, in
 			OutVect[l]=InCube[i][j][k+l];
 		    push(OutVect);
 		}
-
     }
 }
 
 // This filter gets the staggers and generates the four dimensional array;
-
 complex[N_dop]->complex[N_bm][N_srg][N_dop][N_stag] filter Chg41(int N_bm,int N_srg, int N_dop, int N_stag) {
 
     init{}
@@ -70,9 +67,7 @@ complex[N_dop]->complex[N_bm][N_srg][N_dop][N_stag] filter Chg41(int N_bm,int N_
     }
 }
 
-
 // This function performs FFT over arrays.
-
 complex[N]->complex[N] pipeline FFTVect(int N){
     add DecompVect(N); // we are changing the vector to its elements
     add FFT2(N);       // taking the FFT
@@ -80,26 +75,21 @@ complex[N]->complex[N] pipeline FFTVect(int N){
 
 }
 
-
-
-
-
 // This function gets a vector and decomposes it to its elements.
 complex[N]-> complex filter DecompVect(int N){
-    init{
-    }
+    init{}
 
     work pop 1 push N {
 	complex[N] InVect;
 	InVect= pop();
 
 	for (int i ; i < N; i++)
-	       push(inVect[i]);
+	    push(inVect[i]);
     }
 }
 
-// This function gets elements of a vector and puts them back togeather.
-
+// This function gets elements of a vector and puts them back
+// togeather.
 complex->complex[N] filter CompVect{
     init{
     }
@@ -113,41 +103,3 @@ complex->complex[N] filter CompVect{
 	push(OutVect);
     }
 }
-	   
-	    
-	    
-
-
-   
-
-
-
-    
-
-    
-
-    
-	
-
-
-	
-	
-	
-
-	
-	
-	
-	    
-
-
-	
-    
-	
-
-    
-
-
-
-
-
-

@@ -1,60 +1,45 @@
-/* this Filter performs the CFAR detection over one vector, together with an split join for the tackling a cube, and changing
-the cube to vectors this will do the complete the CFAR operation over a cube.
-
-*/
-
+/* This Filter performs the CFAR detection over one vector, together
+ * with an split join for the tackling a cube, and changing the cube
+ * to vectors this will do the complete the CFAR operation over a
+ * cube.
+ */
 
 complex[N_rg]->float[N_rg] filter CFAR_Vect(int N_rg,int N_cfar,int G, float mu){//
-    
 
+    init {}
 
-init {	
-    }
+    work pop 1 push 1{
 
-work pop 1 push 1{
-
-     complex[N_rg] InVect;
-     float[N_rg] OutVect;
-     float       norm;     
-     InVect=pop();
+	complex[N_rg] InVect;
+	float[N_rg] OutVect;
+	float norm;
+	InVect=pop();
      
-     for (int k=0; k < N_rg ; k++){
-	 float Tijk=0;
-	 int N_nei=0;
+	for (int k=0; k < N_rg ; k++){
+	    float Tijk=0;
+	    int N_nei=0;
 	 
-	 for (int l=0; (l <N_cfar) and ((k-l-G) >=0 ); l++){	   
-	     N_nei+=1;	     
-	     Tijk=Tijk+InVect[k-l-G].real*InVect[k-l-G].real+InVect[k-l-G].imag*InVect[k-l-G].imag;
-	 }
+	    for (int l=0; (l <N_cfar) and ((k-l-G) >=0 ); l++){	   
+		N_nei+=1;	     
+		Tijk=Tijk+InVect[k-l-G].real*InVect[k-l-G].real+InVect[k-l-G].imag*InVect[k-l-G].imag;
+	    }
 	 
-	 for (int l=0; (l < N_cfar) and ((k+l+G)<N_rg); l++){
-	     N_nei+=1;
-	     Tijk=Tijk+InVect[k+l+G].real*InVect[k+l+G].real+InVect[k+l+G].imag*InVect[k+l+G].imag;
-	 }
+	    for (int l=0; (l < N_cfar) and ((k+l+G)<N_rg); l++){
+		N_nei+=1;
+		Tijk=Tijk+InVect[k+l+G].real*InVect[k+l+G].real+InVect[k+l+G].imag*InVect[k+l+G].imag;
+	    }
 	 
-	 norm=InVect[k]*N_nei/Tijk;
+	    norm=InVect[k]*N_nei/Tijk;
 
-	 if (norm > mu) 
-	     OutVect[k]=norm;// other wise it will be zero by default.
-	 else
-	     OutVect[k]=0;	 		        
+	    if (norm > mu) 
+		OutVect[k]=norm;// other wise it will be zero by default.
+	    else
+		OutVect[k]=0;	 		        
 
-     }
-     push(OutVect);
- 
- }
-}
-	
-
-	
-
-
-	
-	
-	
-
-	
-	
+	}
+	push(OutVect);
+    }
+}	
 	
 	    
 

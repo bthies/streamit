@@ -1,20 +1,18 @@
-/* this Filter performes the adaptive Beamforming,
-in the work function gets an N_ch*N_srg*N_pri Matrix as its input and the output is a N_bm*N_srg*N_pri,
-the init function requires the value for float[N_ch] b,float[N_bm] d,a vectors, the values for the steering matrix V(s) is computed during the initialization part;
+/* This Filter performes the adaptive Beamforming, in the work
+ * function gets an N_ch*N_srg*N_pri Matrix as its input and the
+ * output is a N_bm*N_srg*N_pri, the init function requires the value
+ * for float[N_ch] b,float[N_bm] d,a vectors, the values for the
+ * steering matrix V(s) is computed during the initialization part;
+ */
 
-*/
 
-
-complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_srg, int N_pri,float alpha, float[] a, float[] b, float[] d)  {//
+complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_srg, int N_pri,float alpha, float[] a, float[] b, float[] d)  {
     complex [N_ch][N_bm] V; // the steering matrix
     complex [N_ch][5*N_ch] A_ext;// the extended version of A which will have dimensions N_ch*(6N_ch)
     complex[N_ch] v0_stap; // will be used in generating the v_stap
 
-
-
-init {
-    
-    complex dummy;
+    init {
+	complex dummy;
     
 	for ( int i=0; i <N_bm ; i++)
 	    for (int j=0; j < N_ch ; j++)
@@ -27,10 +25,9 @@ init {
 	for (int i=0; i < N_ch; i++)
 	    for (int j=5*N_ch ; j<6*N_ch; j++){
 		if (i==j) {
-		A_ext[i][j]=alpha;
+		    A_ext[i][j]=alpha;
 		}
 		else A_ext[i][j]=0;
-		
 	    }
 	//
 
@@ -38,23 +35,20 @@ init {
 	v0_stap[0]=1;
 	for (int i=1; i < N_ch; i++)
 	    v0_stap[i]=v0_stap[i-1]*dummy;
-	
-	    
-       
     }
 
-    work push 1 pop 1{
-	
-    complex [N_ch] u   ;
-    complex [N_ch][N_bm] W ;        
-    complex [N_ch][N_srg][N_pri] InCube;
-    //complex [N_bm][N_srg][N_pri] OutCube;we don't push outcube 
+    work push 1 pop 1 {
+	complex [N_ch] u   ;
+	complex [N_ch][N_bm] W ;        
+	complex [N_ch][N_srg][N_pri] InCube;
+	//complex [N_bm][N_srg][N_pri] OutCube;we don't push outcube 
 
-    float sum;
-    float [N_ch][N_ch] L;
-    CubVect Vstap_Ocub(N_ch,N_bm,N_srg,N_pri);
+	float sum;
+	float [N_ch][N_ch] L;
+	CubVect Vstap_Ocub(N_ch,N_bm,N_srg,N_pri);
     
-    complex dummy1,dummy2; //these dummy variables are used for matrix multipication 
+	// these dummy variables are used for matrix multipication 
+	complex dummy1,dummy2; 
 
 	InCube=input.pop();
 
@@ -64,7 +58,8 @@ init {
 
 	L=LQ.comp(N_ch,6*N_ch,A_ext);
 
-	for (int i=0; i < N_bm; i++){ // this loop calculates the beam correction matrix using Wiener-Hopf Formula
+	// this loop calculates the beam correction matrix using Wiener-Hopf Formula
+	for (int i=0; i < N_bm; i++){ 
 
 	    for (int j=0; j < N_ch; j++)
 		u[j]=V[j][i];
@@ -92,15 +87,16 @@ init {
 			Vstap_Ocub.Cube[k][j][i]+=dummy1*InCube[l][j][i];
 		    }
 		}
-	// pushing the elements  over the tape
 
+	// pushing the elements  over the tape
 	for (int i=0; i < N_bm; i++)
 	    for (int j=0; j < N_srg; j++)
 		for (int k=0; k< N_pri; k++)
 		    push(Vstap_Ocub.Cube[i][j][k]);
 	
 
-	// From this part on, I will be generating the v_stap that will be used in the Space-Time Adaptive Processing
+	// From this part on, I will be generating the v_stap that
+	// will be used in the Space-Time Adaptive Processing
         complex[N_bm] v_stap;
 	for (int i=0; i < N_bm;i++){
 
@@ -119,35 +115,7 @@ init {
 	    push(v_stap[i]);
 
 	Vstap_Ocub.Vect=v_stap;
-	
-            
 
 	output.push(W_Ocub);
-	    }
+    }
 }
-	
-
-	
-
-
-	
-	
-	
-
-	
-	
-	
-	    
-
-
-	
-    
-	
-
-    
-
-
-
-
-
-

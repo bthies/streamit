@@ -1,29 +1,17 @@
-/* this Filter performs the CFAR detection over one vector, together with an split join for the tackling a cube, and changing
-the cube to vectors this will do the complete the CFAR operation over a cube.
-
+/* This Filter performs the CFAR detection over one vector, together
+ * with an split join for the tackling a cube, and changing the cube
+ * to vectors this will do the complete the CFAR operation over a
+ * cube.
 */
-//
-    
 
-complex[N_cnb][N_rg][N_dop]->float[N_cnb][N_rg][N_dop] pipline CFAR(int N_cnb,int N_rg,int N_dop,int N_cfar,int G, float mu){
-
+complex[N_cnb][N_rg][N_dop]->float[N_cnb][N_rg][N_dop] pipline 
+    CFAR(int N_cnb,int N_rg,int N_dop,int N_cfar,int G, float mu) {
     add FormChg20(N_cnb,N_rg,N_dop);
     for (int i=0; i < N_cnb; i++)
 	for (int j=0; j <N_dop;j++)
 	    add CFAR_Vect(N_rg,N_cfar,G,mu);
     add FormChg21Real(N_cnb,N_rg,N_dop);
- 
-}
-	
-
-	
-
-
-	
-	
-	
-
-	
+}	
 	
 	
 	    

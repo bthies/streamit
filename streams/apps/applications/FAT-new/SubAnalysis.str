@@ -1,86 +1,72 @@
-
-
-/* This is the subband analysis block, the input is a N_ch*N_rg*N_pri block, the output is a data cube of size N_ch*N_srg*N_pri,that has been multiplied by e^(j....) and then lowpass filtered, a down sapmling is done to make it of the size N_srg*N_dn=N_rg */
-
+/* This is the subband analysis block, the input is a N_ch*N_rg*N_pri
+ * block, the output is a data cube of size N_ch*N_srg*N_pri,that has
+ * been multiplied by e^(j....) and then lowpass filtered, a down
+ * sapmling is done to make it of the size N_srg*N_dn=N_rg 
+ */
 
 // this pipline performs the first few blocks in subband analysis.
-
 complex[N_ch][N_rg][N_pri]->complex[N_ch][(int) N_rg/N_dn][N_pri] pipline SubAnalysis(int N_ch,int N_rg,int N_pri,int N_dn,int N_lp,int N_td, complex w, complex[] h_lp, complex[] h_td){
     add FormChg20(N_ch,N_rg,N_pri);
     add ElAnal(N_ch,N_rg,N_pri,N_dn,N_lp,N_td,w,h_lp,h_td);
     add FromChg21(N_ch,(int) N_rg/N_dn, N_pri);
 }
-
 								     
 // this SplitJoin gets as its input the elements of different subbbands and pushes them through RnAnal
-complex[N_rg]-> complex[N_rg/N_dn] splitjoin ElAnal(int N_ch,int N_rg, int N_pri,int N_dn,int N_lp,int N_td,complex W, complex[] h_lp, complex h_td )
-{
-	split roundrobin;
-	for (int i=0; i< N_ch; i++)
-	    for (int j=0; j < N_pri; j ++)
-		add(new AnalTd(N_rg,N_dn,N_lp,N_td,W,h_lp,h_td));
-	join roundrobin;
- }
-
+complex[N_rg]-> complex[N_rg/N_dn] splitjoin ElAnal(int N_ch,int N_rg, int N_pri,int N_dn,int N_lp,int N_td,complex W, complex[] h_lp, complex h_td) {
+    split roundrobin;
+    for (int i=0; i< N_ch; i++)
+	for (int j=0; j < N_pri; j ++)
+	    add(new AnalTd(N_rg,N_dn,N_lp,N_td,W,h_lp,h_td));
+    join roundrobin;
+}
 	
 // this does the frequency shift and low pass filtering and downsampling+time delay equalization for each Range
-  		    
-complex[N_rg]->complex[(int) N_rg/N_dn] pipeline AnalTd(int N_rg,int N_dn,int N_lp,int N_td,complex W, complex[] h_lp,complex[] h_td){ 
-        add FreqShift(N_rg,W);
-	add arrayFIR(N_rg,N_lp,h_lp);
-	add DownSamp(N_rg,N_dn);
-	add arrayFIR(N_rg/N_dn,N_td,);
+complex[N_rg]->complex[(int) N_rg/N_dn] pipeline AnalTd(int N_rg,int N_dn,int N_lp,int N_td,complex W, complex[] h_lp,complex[] h_td) { 
+    add FreqShift(N_rg,W);
+    add arrayFIR(N_rg,N_lp,h_lp);
+    add DownSamp(N_rg,N_dn);
+    add arrayFIR(N_rg/N_dn,N_td,);
 }
 
-
-
-//This Filter performs the Frequency shifting, each time it is invoked, elements of a sequence of length N_rg are read and they are multiplied by W^n Where n is the index.
-
-complex[N]->complex[N] filter FreqShift (int N, complex w);{
+// This Filter performs the Frequency shifting, each time it is
+// invoked, elements of a sequence of length N_rg are read and they
+// are multiplied by W^n Where n is the index.
+complex[N]->complex[N] filter FreqShift (int N, complex w) {
     complex[N] X ; // X contains the coefficients
  
     init {
 	X[0]=1;
 	for (int i=1; i <N; i++)
-	    X[i]=X[i-1]*w;	
-		    
-                }
+	    X[i]=X[i-1]*w;
+    }
     
-  work push 1 pop 1 peek 0  {
-
-      complex[N] y;
-      y=pop();
-      for (int i=1; i < N; i++)
-	  y[i]=y[i]*X[i];
-      push(y);      
-
-  }
-
+    work push 1 pop 1 peek 0  {
+	complex[N] y;
+	y=pop();
+	for (int i=1; i < N; i++)
+	    y[i]=y[i]*X[i];
+	push(y);      
+    }
 }
 		    
-	  
-
-	
-		
 //This Filter performs the down sampling task on imaginary numbers
-
 complex[N_in]->complex[(int)N_in/N_dn] filter DownSamp(N_in,N_dn) {
              
-               init {
-		    }
-	       work push 1 pop 1 {
-                   int N_out=(int) N_in/N_dn;
-		   complex[N_in] in_arr;
-		   complex[N_out] out_arr;
+    init {
+    }
+    work push 1 pop 1 {
+	int N_out=(int) N_in/N_dn;
+	complex[N_in] in_arr;
+	complex[N_out] out_arr;
 
 		   
-		    output.push(input.pop());
-		    for (int i=0 ; i <N_out ;i=i++)
-			out_arr[i]=in_arr[i*N_dn];
-		    push(out_arr);
+	output.push(input.pop());
+	for (int i=0 ; i <N_out ;i=i++)
+	    out_arr[i]=in_arr[i*N_dn];
+	push(out_arr);
 		    
 		    		 		    
-	       }
+    }
 }
 
 
@@ -88,96 +74,74 @@ complex[N_in]->complex[(int)N_in/N_dn] filter DownSamp(N_in,N_dn) {
 // this filter performs both a FIR operation over an array	    
 complex[N_arr]->complex[N_arr] filter arrayFIR(int N_arr, int N_lp, complex[] h){
 
-    init{
-    }    
+init{
+}    
 
-    work push 1 pop 1 peek 0 {
-	complex[N_arr] in_arr;
-	complex[N_arr] out_arr;
+work push 1 pop 1 peek 0 {
+complex[N_arr] in_arr;
+complex[N_arr] out_arr;
 
-	in_arr=pop();
+in_arr=pop();
 
-	for (int i=0 ; i < N_lp  ; i++){
-	    out_arr[i]=0;
-	    for (int j=0; (j < N_lp) & ((i-j)>=0) ; j++)
-		out_arr[i]=out_arr[i]+h[j]*in_arr[i-j];
-	}
+for (int i=0 ; i < N_lp  ; i++){
+out_arr[i]=0;
+for (int j=0; (j < N_lp) & ((i-j)>=0) ; j++)
+out_arr[i]=out_arr[i]+h[j]*in_arr[i-j];
+}
 		
-	for (int i=N_lp ; i < N_in ; i++){
-	    out_arr[i]=0;
-	    for (int j=0; (j < N_lp) ; j++)
-		out_arr[i]=out_arr[i]+h[j]*in_arr[i-j];
-	}
+for (int i=N_lp ; i < N_in ; i++){
+out_arr[i]=0;
+for (int j=0; (j < N_lp) ; j++)
+out_arr[i]=out_arr[i]+h[j]*in_arr[i-j];
+}
 
-	push(out_arr);
-    }
+push(out_arr);
+}
 	    
 	    
 	
 */  
 
-
-
-
-
-
 /*
- This filter takes a three dimentional array and extracs its columns 
-    complex[N_ch][N_rg][N_pri]->complex[N_rg] filter FormChg20(N_ch,N_rg,N_pri) {
-    init {}
+  This filter takes a three dimentional array and extracs its columns 
+  complex[N_ch][N_rg][N_pri]->complex[N_rg] filter FormChg20(N_ch,N_rg,N_pri) {
+  init {}
 
-    work push N_ch*N_pri pop 1 {
-	complex[N_ch][N_rg][N_pri] in_arr;
-	complex[N_rg] out_arr;
+  work push N_ch*N_pri pop 1 {
+  complex[N_ch][N_rg][N_pri] in_arr;
+  complex[N_rg] out_arr;
 	
-	in_arr= pop();
+  in_arr= pop();
 
-	for (int i=0; i <N_ch; i++)
-	    for (int j=0; j<N_pri; j++){
-		for (int k=0; k < N_rg; k++)
-		    out_arr[k]=in_arr[i][k][j];
-		push(out_arr);
-	    }
+  for (int i=0; i <N_ch; i++)
+  for (int j=0; j<N_pri; j++){
+  for (int k=0; k < N_rg; k++)
+  out_arr[k]=in_arr[i][k][j];
+  push(out_arr);
+  }
 
-    }
-}
+  }
+  }
 
 
-// This filter takes a one dimesional array and recreats the three dimentional version
+  // This filter takes a one dimesional array and recreats the three dimentional version
 
-complex[N_srg]->complex[N_ch][N_srg][N_pri] filter FormChg21(N_ch,N_srg,N_pri) {
+  complex[N_srg]->complex[N_ch][N_srg][N_pri] filter FormChg21(N_ch,N_srg,N_pri) {
 
-    init{}
+  init{}
 
-    work push 1 pop N_ch*N_pri {
+  work push 1 pop N_ch*N_pri {
 	
-	comlpex[N_srg] in_arr;
-	complex[N_ch][N_srg][N_pri] out_arr;
+  comlpex[N_srg] in_arr;
+  complex[N_ch][N_srg][N_pri] out_arr;
 
-	for (int i=0; i < N_ch;i++)
-	    for (int j=0; j < N_pri; j++){
-		in_arr=pop();
-		for (int k=0; k < N_srg; k++)
-		    out_arr[i][k][j]=in_arr[k];
-	    }
-	push(out_arr);
-    }
-}
-	    
-
-
+  for (int i=0; i < N_ch;i++)
+  for (int j=0; j < N_pri; j++){
+  in_arr=pop();
+  for (int k=0; k < N_srg; k++)
+  out_arr[i][k][j]=in_arr[k];
+  }
+  push(out_arr);
+  }
+  }
 */
-
-
-
-
-
-
-
-
-
-
-
-
-
-

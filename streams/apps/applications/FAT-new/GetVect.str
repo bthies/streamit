@@ -2,25 +2,9 @@
 complex[N]->complex filter GetVect(int N_ch,int N_bm,int N_srg,int N_pri) {
     init {}
     work pop 1 push N {
-	 InStruct;
+	InStruct;
 	InVect=pop();
 	for (int i=0 ; i < N; i++)
 	    push(InVect[i]);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

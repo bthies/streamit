@@ -1,9 +1,7 @@
-
 // this filter performs both a FIR operation over an array	    
-complex[N_arr]->complex[N_arr] filter arrayFIR(int N_arr, int N_lp, complex[] h){
+complex[N_arr]->complex[N_arr] filter arrayFIR(int N_arr, int N_lp, complex[] h) {
 
-    init{
-    }    
+    init{}
 
     work push 1 pop 1 peek 0 {
 	complex[N_arr] in_arr;
@@ -25,25 +23,4 @@ complex[N_arr]->complex[N_arr] filter arrayFIR(int N_arr, int N_lp, complex[] h)
 
 	push(out_arr);
     }
-}	    
-	    
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}

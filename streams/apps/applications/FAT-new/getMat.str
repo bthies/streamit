@@ -12,24 +12,15 @@ MatCub -> complex[][][] filter getCub(int N_bm, int N_srg, int N_pri) {
     }
 }
 
-
-    /*
-public class MatCub {
+/*
+  public class MatCub {
     public Complex [][][] Cube;
     public Complex [][]   Mat;
-
-    public MatCub(int N_bm, int N_srg, int N_pri, int m, int n){
-	Cube = new Complex[N_bm] [N_srg] [N_pri];
-	Mat= new Complex[m][n];// these structures should be initialized
-    }
-	
     
-}
-
-
-    */
-
-
-
-
-
+    public MatCub(int N_bm, int N_srg, int N_pri, int m, int n){
+    Cube = new Complex[N_bm] [N_srg] [N_pri];
+    Mat= new Complex[m][n];// these structures should be initialized
+    }
+    
+    }
+*/

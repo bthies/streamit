@@ -1,75 +1,77 @@
-/* this Filter performs subband Dopler Compression.The most computationally intensive method for Pulse Compression is FFT, yet since the complex number support is not yet completely supported by the compiler, I will use the convolutional DFT to perform pulse compression. For code reusablility, the code for performing the actual DFT is implemented in a separate file.
+/* This Filter performs subband Dopler Compression. The most
+ * computationally intensive method for Pulse Compression is FFT, yet
+ * since the complex number support is not yet completely supported by
+ * the compiler, I will use the convolutional DFT to perform pulse
+ * compression. For code reusablility, the code for performing the
+ * actual DFT is implemented in a separate file.
 
-in the work function gets an N_bm*N_srg*N_pri Matrix and a weigths matrix as its input and the output is a N_bm*N_srg*N_dop*N_st such that N_st+N_dop=N_pri+1;,
-the init function requires the value for float[N_pc] , the values for the steering matrix V(s) is computed during the initialization part;
-
-*/
-
+ * in the work function gets an N_bm*N_srg*N_pri Matrix and a weigths
+ * matrix as its input and the output is a N_bm*N_srg*N_dop*N_st such
+ * that N_st+N_dop=N_pri+1;, the init function requires the value for
+ * float[N_pc] , the values for the steering matrix V(s) is computed
+ * during the initialization part;
+ */
 
 complex->complex[N_dop][N_srg][N_dop] filter STAP(int N_bm,int N_srg,int N_dop,int N_stag,int N_ts, int[] T_stap) {//
     init{}
 
-work push 1 pop (N_bm*N_stag+N_bm*N_stag*N_srg*N_dop) {
+    work push 1 pop (N_bm*N_stag+N_bm*N_stag*N_srg*N_dop) {
 
-    complex[N_bm][N_srg][N_dop][N_stag] InTetr; //the incoming four dimenisional array
-    complex[N_bm*N_stag] InVect; // the incomming steering vector
-    complex[N_dop][N_srg][N_dop] OutArr// this will be the output of the stap phase
+	complex[N_bm][N_srg][N_dop][N_stag] InTetr; //the incoming four dimenisional array
+	complex[N_bm*N_stag] InVect; // the incomming steering vector
+	complex[N_dop][N_srg][N_dop] OutArr;// this will be the output of the stap phase
 
-    complex[N_srg][N_dop][N_bm*N_stag] X; // X is the matrix in equation 9.
+	complex[N_srg][N_dop][N_bm*N_stag] X; // X is the matrix in equation 9.
 
-    int stack =N_bm*N_stag              ; // stack is the size of the stacked vector
+	int stack =N_bm*N_stag; // stack is the size of the stacked vector
 
-    float Norm_Fact = (float) Math.sqrt(N_ts);
+	float Norm_Fact = (float) Math.sqrt(N_ts);
 
-    for (int i=0; i<N_bm;i++)
-	for (int j=0; j<N_srg; j++)
-	    for (int k=0; k < N_dop; k++)
-		for (int l=0; l < N_stag; l++)
-		    InTetr[i][j][k][l]=pop();
+	for (int i=0; i<N_bm;i++)
+	    for (int j=0; j<N_srg; j++)
+		for (int k=0; k < N_dop; k++)
+		    for (int l=0; l < N_stag; l++)
+			InTetr[i][j][k][l]=pop();
 
-    for (int i=0; i < (N_bm*N_stag);i++)
-	Invect[i]=pop();
+	for (int i=0; i < (N_bm*N_stag);i++)
+	    Invect[i]=pop();
 
-    // Here I creat the x_jk matrix as defined in eq 9:
-    
+	// Here I creat the x_jk matrix as defined in eq 9:
+	for (int i=0; i<N_srg;i++)
+	    for (int j=0; j< N_dop; j++)
+		for (int k=0; k <N_stag;k++)
+		    for (int l=0;l<N_bm;l++)
+			X[i][j][l+N_bm*k]=InTetr[l][i][j][k];
 
-    for (int i=0; i<N_srg;i++)
-	for (int j=0; j< N_dop; j++)
-	    for (int k=0; k <N_stag;k++)
-		for (int l=0;l<N_bm;l++)
-		    X[i][j][l+N_bm*k]=InTetr[l][i][j][k];
+	// Here I go over the buisness of creating R_k matrixes:
+	for (int i=0; i < N_dop; i++){
+	    complex [N_bm*N_stag][N_ts] R_gen; // this will be used in generating
+	    complex [N_bm*N_stag][N_ts] L    ; // the output of the LQ decomposition
+	    complex [N_bm*N_stag] w          ; // this is the w function as defined in eq 14
+	    comlex[N_bm*N_stag] u;	
 
-    // Here I go over the buisness of creating R_k matrixes:
+	    for (int j=0; j < (N_bm*N_stag); j++)
+		for (int k=0; k < N_ts; k++)
+		    R_gen[j][k]=X[T_stap[k]][i][j]/Norm_Fact;
 
-    for (int i=0; i < N_dop; i++){
-	complex [N_bm*N_stag][N_ts] R_gen; // this will be used in generating
-	complex [N_bm*N_stag][N_ts] L    ; // the output of the LQ decomposition
-	complex [N_bm*N_stag] w          ; // this is the w function as defined in eq 14
-	comlex[N_bm*N_stag] u;	
+	    L=LQ.LQcalc((N_bm*N_stag),N_ts,R_gen);
 
-	for (int j=0; j < (N_bm*N_stag); j++)
-	    for (int k=0; k < N_ts; k++)
-		R_gen[j][k]=X[T_stap[k]][i][j]/Norm_Fact;
+	    u=LQ.forw((N_bm*N_stag),L,Invect); // doing the forward and backward substitution
+	    w=LQ.back((N_bm*N_stag),L,u);      // doing the back sub
 
-	L=LQ.LQcalc((N_bm*N_stag),N_ts,R_gen);
-
-	u=LQ.forw((N_bm*N_stag),L,Invect); // doing the forward and backward substitution
-	w=LQ.back((N_bm*N_stag),L,u);      // doing the back sub
-
-	for (int j=0; j < N_srg; j++)
-	    for (int k; k < N_dop; k++){
-		OutArr[i][j][k]=0;
+	    for (int j=0; j < N_srg; j++)
+		for (int k; k < N_dop; k++){
+		    OutArr[i][j][k]=0;
 		
-		for (int l; l < stack; l++){
-		    complex dummy;
-		    dummy=w[l];
-		    dummy.imag=-1*dummy.imag;
-		    OutArr[i][j][k]+=dummy*X[j][k][l];
+		    for (int l; l < stack; l++){
+			complex dummy;
+			dummy=w[l];
+			dummy.imag=-1*dummy.imag;
+			OutArr[i][j][k]+=dummy*X[j][k][l];
+		    }
 		}
-	    }
-    }
-		       
+	}
 
-    output.push(OutArr);
+	output.push(OutArr);
+    }
 }
-}    

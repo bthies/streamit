@@ -15,18 +15,3 @@ complex[N_bm][N_srg][N_dop][N_stag]->complex filter DegenTetr(int N_bm,int N_srg
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

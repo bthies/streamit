@@ -58,14 +58,14 @@ public class SIRJoiner extends SIROperator {
 				   SIRJoinType type, 
 				   JExpression[] weights) {
 	if (type==SIRJoinType.NULL) {
-	    return new SIRJoiner(parent, type, initLiteralArray(weights.length, 0), true);
+	    return new SIRJoiner(parent, type, Utils.initLiteralArray(weights.length, 0), true);
 	} else if (type==SIRJoinType.WEIGHTED_RR) {
 	    return createWeightedRR(parent,weights);
 	} else if (type==SIRJoinType.ROUND_ROBIN) {
 	    JExpression weight = (weights.length>0 ? weights[0] : new JIntLiteral(1));
 	    createUniformRR(parent,weight);
 	} else {
-	    fail("Unrecognized joiner type.");
+	    Utils.fail("Unrecognized joiner type.");
 	}
 	// stupid compiler
 	return null;
@@ -79,18 +79,18 @@ public class SIRJoiner extends SIROperator {
 				   int n) {
 	if (type==SIRJoinType.COMBINE) {
 	    // fill weights with 1
-	    return new SIRJoiner(parent, type, initLiteralArray(n, 1), true);
+	    return new SIRJoiner(parent, type, Utils.initLiteralArray(n, 1), true);
         } else if (type==SIRJoinType.NULL) {
 	    // for null type, fill with zero weights
-	    return new SIRJoiner(parent, type, initLiteralArray(n, 0), true);
+	    return new SIRJoiner(parent, type, Utils.initLiteralArray(n, 0), true);
 	} else if (type==SIRJoinType.WEIGHTED_RR) {
 	    // if making a weighted round robin, should use other constructor
-	    fail("Need to specify weights for weighted round robin");
+	    Utils.fail("Need to specify weights for weighted round robin");
 	} else if (type==SIRJoinType.ROUND_ROBIN) {
 	    // if making a round robin, should use other constructor
-	    fail("Need to specify weight for uniform round robin");
+	    Utils.fail("Need to specify weight for uniform round robin");
 	} else {
-	    fail("Unreckognized joiner type.");
+	    Utils.fail("Unreckognized joiner type.");
 	}
 	// stupid compiler
 	return null;
@@ -115,7 +115,7 @@ public class SIRJoiner extends SIROperator {
 	// make a uniform rr joiner
 	return new SIRJoiner(parent, 
 			     SIRJoinType.WEIGHTED_RR,
-			     initArray(Math.max(parent.size(), 1), weight),
+			     Utils.initArray(Math.max(parent.size(), 1), weight),
 			     true);
     }
 
@@ -129,7 +129,7 @@ public class SIRJoiner extends SIROperator {
 	    obj.type!=SIRJoinType.WEIGHTED_RR) {
 	    return type==obj.type;
 	} else {
-	    return equalArrays(getWeights(), obj.getWeights());
+	    return Utils.equalArrays(getWeights(), obj.getWeights());
 	}
     }
 
@@ -155,7 +155,7 @@ public class SIRJoiner extends SIROperator {
      */
     public void rescale(int extent) {
 	if (uniform) {
-	    this.weights = initArray(extent, weights[0]);
+	    this.weights = Utils.initArray(extent, weights[0]);
 	}
     }
 

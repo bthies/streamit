@@ -61,16 +61,16 @@ public class SIRSplitter extends SIROperator {
 				     SIRSplitType type, 
 				     JExpression[] weights) {
 	if (type==SIRSplitType.DUPLICATE) {
-	    return new SIRSplitter(parent, type, initLiteralArray(weights.length, 1), true);
+	    return new SIRSplitter(parent, type, Utils.initLiteralArray(weights.length, 1), true);
         } else if (type==SIRSplitType.NULL) {
-	    return new SIRSplitter(parent, type, initLiteralArray(weights.length, 0), true);
+	    return new SIRSplitter(parent, type, Utils.initLiteralArray(weights.length, 0), true);
 	} else if (type==SIRSplitType.WEIGHTED_RR) {
 	    return createWeightedRR(parent,weights);
 	} else if (type==SIRSplitType.ROUND_ROBIN) {
 	    JExpression weight = (weights.length>0 ? weights[0] : new JIntLiteral(1));
 	    createUniformRR(parent, weight);
 	} else {
-	    fail("Unreckognized splitter type.");
+	    Utils.fail("Unreckognized splitter type.");
 	}
 	// stupid compiler
 	return null;
@@ -85,18 +85,18 @@ public class SIRSplitter extends SIROperator {
 				     int n) {
 	if (type==SIRSplitType.DUPLICATE) {
 	    // fill weights with 1
-	    return new SIRSplitter(parent, type, initLiteralArray(n, 1), true);
+	    return new SIRSplitter(parent, type, Utils.initLiteralArray(n, 1), true);
         } else if (type==SIRSplitType.NULL) {
 	    // for null type, fill with zero weights
-	    return new SIRSplitter(parent, type, initLiteralArray(n, 0), true);
+	    return new SIRSplitter(parent, type, Utils.initLiteralArray(n, 0), true);
 	} else if (type==SIRSplitType.WEIGHTED_RR) {
 	    // if making a weighted round robin, should use other constructor
-	    fail("Need to specify weights for weighted round robin");
+	    Utils.fail("Need to specify weights for weighted round robin");
 	} else if (type==SIRSplitType.ROUND_ROBIN) {
 	    // if making a round robin, should use other constructor
-	    fail("Need to specify weight for uniform round robin");
+	    Utils.fail("Need to specify weight for uniform round robin");
 	} else {
-	    fail("Unreckognized splitter type.");
+	    Utils.fail("Unreckognized splitter type.");
 	}
 	// stupid compiler
 	return null;
@@ -120,7 +120,7 @@ public class SIRSplitter extends SIROperator {
 					      JExpression weight) {
 	return new SIRSplitter(parent, 
 			       SIRSplitType.WEIGHTED_RR,
-			       initArray(Math.max(parent.size(), 1), weight),
+			       Utils.initArray(Math.max(parent.size(), 1), weight),
 			       true);
     }
 
@@ -135,7 +135,7 @@ public class SIRSplitter extends SIROperator {
 	        type!=SIRSplitType.WEIGHTED_RR) {
 	    return type==obj.type;
 	} else {
-	    return equalArrays(getWeights(), obj.getWeights());
+	    return Utils.equalArrays(getWeights(), obj.getWeights());
 	}
     }
 
@@ -145,7 +145,7 @@ public class SIRSplitter extends SIROperator {
      */
     public void rescale(int extent) {
 	if (uniform) {
-	    this.weights = initArray(extent, weights[0]);
+	    this.weights = Utils.initArray(extent, weights[0]);
 	}
     }
     

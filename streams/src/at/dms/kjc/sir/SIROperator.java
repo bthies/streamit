@@ -5,24 +5,13 @@ import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.lowering.LoweringConstants;
 
-import java.util.List;
-import java.util.LinkedList;
+import java.util.*;
 import java.io.*;
 
 /**
  * This represents an operator in the stream graph.
  */
-public abstract class SIROperator extends Utils implements Finalizable {
-    /**
-     * Keep a unique number for all SIROperators (for hashing,
-     * debugging, etc.)
-     */
-    private static int MAX_NUMBER = 0;
-    /**
-     * A unique number for each sir operator.
-     */
-    private final int myNumber;
-
+public abstract class SIROperator implements Finalizable, Serializable {
     /**
      * The stream structure containing this, or NULL if this is the
      * toplevel stream.
@@ -34,12 +23,10 @@ public abstract class SIROperator extends Utils implements Finalizable {
      */
     protected SIROperator(SIRContainer parent) {
 	this.parent = parent;
-	this.myNumber = MAX_NUMBER++;
     }
 
     protected SIROperator() {
 	this.parent = null;
-	this.myNumber = MAX_NUMBER++;
     }
 
     /**
@@ -165,7 +152,7 @@ public abstract class SIROperator extends Utils implements Finalizable {
      * then this will return a different name for each instantiation.
      */
     public String getName() {
-	return getIdent() + "_" + myNumber;
+	return getIdent() + "_" + Namer.getUniqueNumber(this);
     }
 
     /**
@@ -176,14 +163,59 @@ public abstract class SIROperator extends Utils implements Finalizable {
     }
 
     public int hashCode() {
-	return myNumber;
+	return Namer.getUniqueNumber(this);
     }
-    
+
+    /**
+     * This is only for the efficiency of the Namer (class included
+     * below)... need a way to maintain mapping of the hashcodes
+     * themselves.  Do this using the memory-based hashcode.
+     */
+    private int origHashCode() {
+	return super.hashCode();
+    }
+
     /**
      * This should be called in every mutator.
      */
     public void assertMutable() {
 	Utils.assert(!IterFactory.isFinalized(this), 
 		     "A mutability check failed.");
+    }
+
+    /**
+     * Just abstracting the naming methods and fields into their own
+     * unit... no other reason for this class.
+     */
+    private static class Namer {
+	/**
+	 * Mapping from original hash codes of SIROperators to
+	 * Integers that represent the unique identifier for that
+	 * object.  Use a mapping that is maintained in a
+	 * demand-driven way instead of a field to simplify
+	 * cloning/serialization issues.
+	 */
+	private static HashMap opToNumber = new HashMap();
+	/**
+	 * The last number assigned to an SIROperator.
+	 */
+	private static int MAX_NUMBER = -1;
+	
+	/**
+	 * Return a unique number for <op>, that is deterministic between
+	 * multiple runs of the program (does not depend on memory
+	 * allocation).
+	 */
+	static int getUniqueNumber(SIROperator op) {
+	    Integer key = new Integer(op.origHashCode());
+	    if (opToNumber.containsKey(key)) {
+		return ((Integer)opToNumber.get(key)).intValue();
+	    } else {
+		// otherwise, register a number for it
+		int result = ++MAX_NUMBER;
+		opToNumber.put(key, new Integer(result));
+		return result;
+	    }
+	}
     }
 }

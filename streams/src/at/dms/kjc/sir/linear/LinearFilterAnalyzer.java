@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearFilterAnalyzer.java,v 1.4 2002-08-20 19:12:47 aalamb Exp $
+ * $Id: LinearFilterAnalyzer.java,v 1.5 2002-08-20 21:08:33 aalamb Exp $
  **/
 public class LinearFilterAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear forms. never would have guessed that, would you? **/
@@ -166,7 +166,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	this.peekOffset = 0;
 	this.pushOffset = 0;
 	this.representationMatrix = new FilterMatrix(numPeeks, numPushes);
-	this.representationVector = new FilterVector(numPeeks);
+	this.representationVector = new FilterVector(numPushes);
 	this.nonLinearFlag = false;
 	checkRep();
 
@@ -219,20 +219,17 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 						  String oper,
 						  JExpression left,
 						  JExpression right) {
-	// for some reason, JAddExpressions implement all of + - * / statements
+
 	// and I can't seem to figure out where the constants to recognize the
 	// operators are. Therefore, I am going to hard code in the strings. Sorry about that.
-	if (!(self instanceof JAddExpression)) {
-	    return null;
-	}
 	// if we are computing an additon or subtraction, we are all set, otherwise
 	// we are done
-	if (!(oper.equals("+") || oper.equals("-"))) {
+	if (!(oper.equals("+") || oper.equals("-") || oper.equals("*") || oper.equals("\\"))) {
 	    LinearPrinter.println("  can't process " + oper + " linearly");
 	    return null;
 	}
 
-	LinearPrinter.println("  visiting JAddExpression(" + oper + ")");
+	LinearPrinter.println("  visiting JBinaryExpression(" + oper + ")");
 	
 	// first of all, try and figure out if left and right sub expression can
 	// be represented in linear form.
@@ -241,9 +238,31 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 	// if both the left and right are non null, we are golden and can combine these two,
 	// otherwise give up.
-	if ((leftLinearForm == null) || (rightLinearForm == null)) {
+	if (leftLinearForm == null) {
+	    LinearPrinter.println("  left arg (" + left + ") was not linear"); 
 	    return null;
 	}
+	if (rightLinearForm == null) {
+	LinearPrinter.println("  right arg (" + right + ") was not linear"); 
+	    return null;
+	}
+
+	// if both expressions were linear, we can try to merge them together
+	// dispatch on type -- sorry to all you language purists
+	if (self instanceof JAddExpression) {
+	    return combineAddExpression(leftLinearForm, rightLinearForm, oper);
+	} else if (self instanceof JMultExpression) {
+	    return combineMultExpression(leftLinearForm, rightLinearForm, oper);
+	} else {
+	    throw new RuntimeException("Non JAdd/JMult implementing +, -, *, /");
+	}
+    }
+
+    /**
+     * Combines an add expression whose arguments are both linear forms -- implements
+     * a straightup element wise vector add.
+     **/
+    private Object combineAddExpression(LinearForm leftLinearForm, LinearForm rightLinearForm, String oper) {
 	// if the operator is subtraction, negate the right expression
 	if (oper.equals("-")) {
 	    leftLinearForm = leftLinearForm.negate();
@@ -251,9 +270,20 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 	// now, add the two forms together and return the resulut
 	LinearForm combinedLinearForm = leftLinearForm.plus(rightLinearForm);
-	    
+	
 	return combinedLinearForm;
     }
+
+    /**
+     * Combines a multiplication expression which has at most one non constant
+     * sub expression.
+     **/
+    private Object combineMultExpression(LinearForm leftLinearForm, LinearForm rightLinearForm, String oper) {
+	// we have to first test to see if we have at least one linear argument.
+	return null;
+    }
+    
+    
 
 //     public Object visitBitwiseComplementExpression(JUnaryExpression self, JExpression expr){return null;}
 //     public Object visitBitwiseExpression(JBitwiseExpression self,
@@ -530,8 +560,6 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     public Object visitNullLiteral(JNullLiteral self) {
 	return null;
     }
-
-
 
 
 

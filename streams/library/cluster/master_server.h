@@ -28,17 +28,21 @@ class master_server {
   vector <node_info*> nodes;
   map <int, node_info*> node_map;
 
+
+  node_info *connect(unsigned ip);
+  vector<int> list(node_info *node);
+
+  int pause(node_info *node, int id);
+  int restart(node_info *node, int id);
+
+  vector<int> indata(node_info *node, int id);
+  vector<int> outdata(node_info *node, int id);
+
  public:
   
   master_server() {}
 
   void print_commands();
-
-  node_info *connect(unsigned ip);
-  vector<int> *list(node_info *node);
-
-  void pause(node_info *node, int id);
-  void restart(node_info *node, int id);
 
   void process_command(char *cmd);
 

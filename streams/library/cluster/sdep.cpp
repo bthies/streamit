@@ -11,7 +11,7 @@
     dst2srcDependency = (int*)malloc(sizeof(int)*(initDst+steadyDst+1));
   }
 
-  void sdep::setDst2SrcDependecny(int dst, int src) {
+  void sdep::setDst2SrcDependency(int dst, int src) {
     dst2srcDependency[dst] = src;
   }
 

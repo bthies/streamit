@@ -16,7 +16,7 @@ public:
 
   sdep(int initSrc, int initDst, int steadySrc, int steadyDst);
 
-  void setDst2SrcDependecny(int dst, int src);
+  void setDst2SrcDependency(int dst, int src);
 
   int getSrcPhase4DstPhase(int nDstPhase);
   int getDstPhase4SrcPhase(int nSrcPhase);  

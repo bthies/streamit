@@ -103,6 +103,7 @@ public class SwitchCodeStore {
 	    
 	    while (it.hasNext()) {
 		next = (ComputeNode)it.next();
+		SpaceTimeBackend.println("    Route on " + current + ": " + prev + "->" + next);
 		//only add the instructions to the raw tile
 		if (current instanceof RawTile) {
 		//create the route instruction if it does not exist
@@ -118,13 +119,13 @@ public class SwitchCodeStore {
 	}
 	//add the non-null instructions
 	for (int i = 0; i < ins.length; i++) {
-	    if (ins[i] != null) {
+	    if (ins[i] != null) { 
 		if (stage == 0) 
-		    ((RawTile)source).getSwitchCode().appendCommAddrIns(ins[i]);
+		    source.getRawChip().getTile(i).getSwitchCode().appendCommAddrIns(ins[i]);
 		if (stage == 1) 
-		    ((RawTile)source).getSwitchCode().appendIns(ins[i], true);
-		if (stage == 1)
-		    ((RawTile)source).getSwitchCode().appendIns(ins[i], false);
+		    source.getRawChip().getTile(i).getSwitchCode().appendIns(ins[i], true);
+		if (stage == 2)
+		    source.getRawChip().getTile(i).getSwitchCode().appendIns(ins[i], false);
 	    }
 	}
     }

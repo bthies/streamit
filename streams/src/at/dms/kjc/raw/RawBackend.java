@@ -58,9 +58,9 @@ public class RawBackend {
 	StreamItDot.printGraph(str, "before.dot");
 	
 	if (StreamItOptions.fusion) {
-	    System.out.println("Running SJFusion...");
+	    System.out.println("Running FuseAll...");
 	    FuseAll.fuse(str);
-	    System.out.println("Done SJFusion...");
+	    System.out.println("Done FuseAll...");
 	}
 
 	//VarDecl Raise to move array assignments up

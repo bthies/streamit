@@ -46,10 +46,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     private static String ARRAY_INDEX = "__ARRAY_INDEX__";
     private static String ARRAY_COPY = "__ARRAY_COPY__";
 
-    private final String FLOAT_HEADER_WORD = "__FLOAT_HEADER_WORD__";
-    private final String INT_HEADER_WORD = "__INT_HEADER_WORD__";
-    
-
     //fields for the var names we introduce with the rate match code
     private static String recvBuffer = "__RECVBUFFER__";
     private static String sendBuffer = "__SENDBUFFER__";
@@ -200,10 +196,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("#include <raw.h>\n");
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
-
-	//print the inline asm 
-	print("static inline void static_send_from_mem(void *val) instr_one_input(\"lw $csto,0(%0)\");\n");
-	print("static inline void static_receive_to_mem(void *val) instr_one_input(\"sw $csti,0(%0)\");\n");
 	
 	//print the extern for the function to init the 
 	//switch
@@ -212,8 +204,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("int " + TAPE_INDEX + " = -1;\n");
 	print("int " + BUFFER_INDEX + ";\n");
 
-	print("unsigned int " + FLOAT_HEADER_WORD + ";\n");
-	print("unsigned int " + INT_HEADER_WORD + ";\n");
 
 	if (ratematch) {
 	    print("int " + recvBufferIndex + "= -1;\n");
@@ -291,8 +281,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	
 	print("void begin(void) {\n");
 	print("  raw_init();\n");
-	print(FLOAT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
-	print(INT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
 	print("  " + self.getInit().getName() + "(");
 	print(InitArgument.getInitArguments(self));
 	print (");\n");
@@ -368,8 +356,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	print("void begin(void) {\n");
 	print("  raw_init();\n");
-	print(FLOAT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
-	print(INT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
 	print("  " + self.getInit().getName() + "(");
 	print(InitArgument.getInitArguments(self));
 	print (");\n");
@@ -634,7 +620,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		      ARRAY_INDEX + i + "++)\n");
 	    }
 	    print("{");
-	    print("static_send_from_mem((void*)&(" + baseType + ") ");
+	    print("static_send((" + baseType + ") ");
 	    
 	    for (int i = 0; i < dims.length; i++) {
 		print("[" + ARRAY_INDEX + i + "]");
@@ -643,7 +629,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	else if(tapeType.isClassType()) {
 	}
 	else {
-	    print("static_send_from_mem((void*)&(" + tapeType + ")");	    
+	    print("static_send((" + tapeType + ")");	    
 	}
 	print(sendBuffer + "[(++" + sendIndex + ") & " + SENDBITS + "])");
     }
@@ -721,28 +707,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     
     private void printCircularWorkHeader(boolean isSteadyState, int pop, int peek) 
     {
-	print("{\n");
-	// don't print the header for "work" functions in a two-stage
-	// filter, since it should go in initWork instead.  Here we
-	// calculate if we're already printed this header in initWork.
-	boolean alreadyPrinted = isSteadyState && 
-	    filter instanceof SIRTwoStageFilter &&
-	    ((SIRTwoStageFilter)filter).getInitPeek() > 0;
-	if (peek > 0 && !alreadyPrinted) {
-	    //	    print("int i, " + TAPE_INDEX + " = -1;\n");
-	    /*int buffersize = nextPow2(filter.getPeekInt());
-	      print ("#define " + BUFFER_SIZE + " " + buffersize + "\n");
-	      print ("#define " + BITS + " " + (buffersize - 1) + "\n");
-	      print(filter.getInputType() + 
-	      " " + BUFFER + "[" + BUFFER_SIZE + "];\n");*/
-	    print(" for (" + BUFFER_INDEX + " = 0; " + BUFFER_INDEX + " < " + peek + 
-		  "; " + BUFFER_INDEX + "++)\n");
-	    printReceive();
-	}
-	if (isSteadyState) {
-	    print(" while (1) {\n");
-	}
-	if (debug) print("   print_int("+ Layout.getTileNumber(filter) + ");\n");
+	printWorkHeader(isSteadyState, pop, peek);
     }
     
     private void printCircularWorkTrailer(boolean loop, int pop, int peek) 
@@ -774,7 +739,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		  ARRAY_INDEX + i + "++)\n");
 	}
 	print("{\n");
-	print("static_receive_to_mem((void*)&(");
 	 if (circular)
 		print("   " + BUFFER + "[" + BUFFER_INDEX + " & " + BITS + "]");
 	    else if (ratematch)
@@ -784,15 +748,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	for (int i = 0; i < dims.length; i++) 
 	    print("[" + ARRAY_INDEX + i + "]");
-
-	print("));\n");
 	
 	//print(" = ");
 	//if (baseType.equals(CStdType.Float))
 	///	print("static_receive_f();\n");
 		//else 
 	//   print("static_receive();\n");
-	 print("}\n");
+	print("}\n");
     }
     
     private void printClassReceive()
@@ -807,20 +769,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	else if (filter.getInputType().isClassType())
 	    printClassReceive();
 	else {
-	    print("static_receive_to_mem((void*)&(");
-	    
 	    if (circular)
-		print("   " + BUFFER + "[" + BUFFER_INDEX + " & " + BITS + "]");
+		print("   " + BUFFER + "[" + BUFFER_INDEX + " & " + BITS + "] = ");
 	    else if (ratematch)
-		print("   " + recvBuffer + "[(++" + recvIndex + ") & " + RECVBITS + "]");
+		print("   " + recvBuffer + "[(++" + recvIndex + ") & " + RECVBITS + "] = ");
 	    else 
-		print("   " + BUFFER + "[" + BUFFER_INDEX + "]");
-	    print("));\n");
-	    
-	    // if (filter.getInputType().equals(CStdType.Float))
-	    //	print(" = static_receive_f();\n");
-	    //else 
-	    //	print(" = static_receive();\n");
+		print("   " + BUFFER + "[" + BUFFER_INDEX + "] = ");
+	    if (filter.getInputType().equals(CStdType.Float))
+		print("static_receive_f();\n");
+	    else 
+		print("static_receive();\n");
 	    
 	}
 	print("}\n");
@@ -829,21 +787,23 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     private void printWorkHeader(boolean isSteadyState, int pop, int peek) 
     {
 	print("{\n");
-	// don't print the header for "work" functions in a two-stage
-	// filter, since it should go in initWork instead.  Here we
-	// calculate if we're already printed this header in initWork.
-	boolean alreadyPrinted = isSteadyState && 
-	    filter instanceof SIRTwoStageFilter &&
-	    ((SIRTwoStageFilter)filter).getInitPeek() > 0;
-	if (peek > 0 && !alreadyPrinted) {
+	// keep in mind that a two-stage filter might already have
+	// peeked some items from the network.  in this case, only
+	// peek the extra that haven't been peeked yet.
+	int bottomPeek;
+	if (isSteadyState && filter instanceof SIRTwoStageFilter) {
+	    bottomPeek = ((SIRTwoStageFilter)filter).getInitPeek();
+	} else {
+	    bottomPeek = 0;
+	}
+	if (bottomPeek < peek) {
 	    //print("int i, " + TAPE_INDEX + " = -1;\n");
 	    print("/* work header */\n");
 	    //	print(filter.getInputType() + 
 	    //       " buffer[" + filter.getPeekInt() + "];\n");
-	    print(" for (" + BUFFER_INDEX + " = 0; " + BUFFER_INDEX + " < " + 
+	    print(" for (" + BUFFER_INDEX + " = " + bottomPeek + "; " + BUFFER_INDEX + " < " + 
 		  peek + "; " + BUFFER_INDEX + "++) \n");
 	    printReceive();
-
 	}
 	if (isSteadyState) {
 	    print(" while (1) {\n");
@@ -864,11 +824,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	    
 	    print("/* work trailer 1 */\n");
-	    // this should be filter.peek (not initPeek) regardless of
-	    // whether we're generating code for the init or
-	    // steady-state work functions
 	    print(" for (" + BUFFER_INDEX + " = " + TAPE_INDEX + "; " + BUFFER_INDEX + " < " + 
-		  filter.getPeekInt() + "; " + BUFFER_INDEX + "++) \n");
+		  peek + "; " + BUFFER_INDEX + "++) \n");
 	    printReceive();
 	    print(TAPE_INDEX + " = -1;\n");
 	}
@@ -1867,33 +1824,25 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		 type.equals(CStdType.Integer) ||
 		 type.equals(CStdType.Short))
 	    {
-		//print("print_int(");
-		print("gdn_send(" + INT_HEADER_WORD + ");\n");
-		print("gdn_send(");
+		print("print_int(");
 		exp.accept(this);
 		print(");");
 	    }
 	else if (type.equals(CStdType.Char))
 	    {
-		//print("print_int(");
-		print("gdn_send(" + INT_HEADER_WORD + ");\n");
-		print("gdn_send(");
+		print("print_int(");
 		exp.accept(this);
 		print(");");
 	    }
 	else if (type.equals(CStdType.Float))
 	    {
-		//print("print_float(");
-		print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
-		print("gdn_send(");
+		print("print_float(");
 		exp.accept(this);
 		print(");");
 	    }
         else if (type.equals(CStdType.Long))
 	    {
-		//print("print_int(");
-		print("gdn_send(" + INT_HEADER_WORD + ");\n");
-		print("gdn_send(");
+		print("print_int(");
 		exp.accept(this);
 		print(");");
 	    }

@@ -540,7 +540,6 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 		    for(int i=0;i<tempWeights.length;i++) {
 			tempWeights[i]=((Integer)newWeights.get(i)).intValue();
 		    }
-		    System.out.println(newEdges);
 		    joinerNode.incomingWeights=tempWeights;
 		    joinerNode.currentIncoming=tempEdges.length;
 		    joinerNode.inputs=tempEdges.length;

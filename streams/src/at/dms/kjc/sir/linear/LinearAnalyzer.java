@@ -17,9 +17,11 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.33 2003-10-24 22:03:59 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.34 2003-11-02 13:10:13 jasperln Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
+    private final static boolean CHECKREP=false; //Whether to checkrep or not
+    
     /** Mapping from streams to linear representations. Never would have guessed that, would you? **/
     HashMap streamsToLinearRepresentation;
 
@@ -46,14 +48,16 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	this.streamsToLinearRepresentation = new HashMap();
 	this.nonLinearStreams = new HashSet();
 	this.refactorLinearChildren = refactorLinearChildren;
-	checkRep();
+	if(CHECKREP)
+	    checkRep();
     }
 
     ///////// Accessors    
 
     /** Returns true if the specified filter has a linear representation that we have found. **/
     public boolean hasLinearRepresentation(SIRStream stream) {
-	checkRep();
+	if(CHECKREP)
+	    checkRep();
 	// just check to see if the hash set has a mapping to something other than null.
 	return (this.streamsToLinearRepresentation.get(stream) != null);
     }
@@ -62,13 +66,15 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * null if we do not have a mapping.
      **/
     public LinearFilterRepresentation getLinearRepresentation(SIRStream stream) {
-	checkRep();
+	if(CHECKREP)
+	    checkRep();
 	return (LinearFilterRepresentation)this.streamsToLinearRepresentation.get(stream);
     }
     
     /** Removes the specified SIRStream from the linear represention mapping. **/
     public void removeLinearRepresentation(SIRStream stream) {
-	checkRep();
+	if(CHECKREP)
+	    checkRep();
 	if (!this.hasLinearRepresentation(stream)) {
 	    throw new IllegalArgumentException("Don't know anything about " + stream);
 	}
@@ -77,7 +83,8 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 
     /** Adds a mapping from SIRStream to LinearFilterRep. **/
     public void addLinearRepresentation(SIRStream key, LinearFilterRepresentation rep) {
-	checkRep();
+	if(CHECKREP)
+	    checkRep();
 	if ((key == null) || (rep == null)) {
 	    throw new IllegalArgumentException("null in add linear rep");
 	}
@@ -87,7 +94,8 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// uncomment this if you want to generate files for each matrix in the program
 	//writeToFile(key, rep);
 	this.streamsToLinearRepresentation.put(key,rep);
-	checkRep();
+	if(CHECKREP)
+	    checkRep();
     }
     /** Gets an iterator over all of the linear representations that this LinearAnalyzer knows about. **/
     public Iterator getFilterIterator() {
@@ -222,7 +230,8 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    nonLinearStreams.add(self);
 	}
 	// check that we have not violated the rep invariant
-	checkRep();
+	if(CHECKREP)
+	    checkRep();
     }
     
     public void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {
@@ -296,7 +305,8 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    doPipelineAdd(self, childrenToWrap);
 	}
 	// check to make sure that we didn't foobar ourselves.
-	checkRep();
+	if(CHECKREP)
+	    checkRep();
 
 	// debugging stuff -- print out the final contents of the pipeline with parents
 	kidIter = self.getChildren().iterator();
@@ -704,18 +714,20 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     }
 
     private void checkRep() {
-	// make sure that all keys in FiltersToMatricies are strings, and that all
-	// values are LinearForms.
-	Iterator keyIter = this.streamsToLinearRepresentation.keySet().iterator();
-	while(keyIter.hasNext()) {
-	    Object o = keyIter.next();
-	    if (o == null) {throw new RuntimeException("Null key in LinearAnalyzer.");}
-	    if (!(o instanceof SIRStream)) {throw new RuntimeException("Non stream key in LinearAnalyzer");}
-	    SIRStream key = (SIRStream)o;
-	    Object val = this.streamsToLinearRepresentation.get(key);
-	    if (val == null) {throw new RuntimeException("Null value found in LinearAnalyzer");}
-	    if (!(val instanceof LinearFilterRepresentation)) {
-		throw new RuntimeException("Non LinearFilterRepresentation found in LinearAnalyzer");
+	if(CHECKREP) {
+	    // make sure that all keys in FiltersToMatricies are strings, and that all
+	    // values are LinearForms.
+	    Iterator keyIter = this.streamsToLinearRepresentation.keySet().iterator();
+	    while(keyIter.hasNext()) {
+		Object o = keyIter.next();
+		if (o == null) {throw new RuntimeException("Null key in LinearAnalyzer.");}
+		if (!(o instanceof SIRStream)) {throw new RuntimeException("Non stream key in LinearAnalyzer");}
+		SIRStream key = (SIRStream)o;
+		Object val = this.streamsToLinearRepresentation.get(key);
+		if (val == null) {throw new RuntimeException("Null value found in LinearAnalyzer");}
+		if (!(val instanceof LinearFilterRepresentation)) {
+		    throw new RuntimeException("Non LinearFilterRepresentation found in LinearAnalyzer");
+		}
 	    }
 	}
     }

@@ -1225,7 +1225,7 @@ public class Rawify
 	//Postloop
 	//turns=index*numPop+extra;
 	//turns=pos*numPop;
-	turns=index*numPop;
+	turns=index*numPop;//+(int)Math.ceil(((double)bufferSize)/pop); //Make sure to fill peekbuffer
 	System.out.println("SWITCH TURNS: "+turns);
 	if(begin) {
 	    //int emptySpots=pop*(turns+numPop-1)-bufferSize;
@@ -1307,6 +1307,8 @@ public class Rawify
 	    for(int i=0;i<pos*numPop;i++) {
 		ins = new FullIns(tile);
 		ins.addRoute(src,dest);
+		//Pass up to tile to put into peekbuffer
+		ins.addRoute(src,SwitchOPort.CSTI);
 		code.appendIns(ins, false);
 	    }
 	} else {

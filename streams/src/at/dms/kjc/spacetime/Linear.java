@@ -42,8 +42,8 @@ public class Linear extends BufferedCommunication implements Constants {
 	//assert filterInfo.remaining<=0:"Items remaining in buffer not supported for linear filters.";
 	FilterTraceNode node=filterInfo.traceNode;
 	System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Linear.");
-	assert filterInfo.initMult<1:"Still need to create init function";
-	assert filterInfo.primePump<1:"Still need to create primePump";
+	assert filterInfo.initMult<1:"Still need to create init function"+filterInfo.initMult;
+	assert filterInfo.primePump<1:"Still need to create primePump: "+filterInfo.primePump;
 	FilterContent content=filterInfo.filter;
 	array=content.getArray();
 	begin=content.getBegin();
@@ -293,7 +293,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	body[body.length-1]=inline;
 	//turns=index*num+extra;
 	//turns=pos*num;
-	turns=index*num;
+	turns=index*num;//+(int)Math.ceil(((double)bufferSize)/popCount); //Make sure to fill peekbuffer
 	System.out.println("TILE TURNS: "+turns);
 	/*if(begin) {
 	  inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
@@ -304,11 +304,11 @@ public class Linear extends BufferedCommunication implements Constants {
 	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
 	    inline.add("la "+tempReg+", %0");
 	    int index=0;
-	    int emptySpots=popCount*(turns+num)-bufferSize;
+	    int emptySpots=popCount*(turns+topPopNum)-bufferSize;
 	    //Order reversed
 	    for(int turn=0;turn<turns;turn++) //Last iteration may not be from buffer
 		for(int j=0;j<popCount;j++)
-		    if(emptySpots>0) {
+		    if(true||emptySpots>0) {
 			for(int k=topPopNum;k>=0;k--) {
 			    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
 			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
@@ -327,7 +327,7 @@ public class Linear extends BufferedCommunication implements Constants {
 		    }
 	    for(int i=0;i<topPopNum;i++)
 		for(int j=0;j<popCount;j++)
-		    if(emptySpots>0) {
+		    if(true||emptySpots>0) {
 			for(int k=topPopNum;k>i;k--) {
 			    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
 			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
@@ -344,6 +344,11 @@ public class Linear extends BufferedCommunication implements Constants {
 			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 			}
 		    }
+	    //Fill peekBuffer
+	    for(int i=0;i<pos*num;i++) {
+		inline.add("sw    $csti,\\t"+index+"("+tempReg+")");
+		index+=4;
+	    }
 	} else {
 	    //Order reversed
 	    for(int turn=0;turn<turns;turn++)

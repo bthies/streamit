@@ -383,7 +383,7 @@ public class FlatNode {
     }
     
 
-    public int getWeight(FlatNode to) 
+   public int getWeight(FlatNode to) 
     {
 	for (int i = 0; i < ways; i++) {
 	    if (edges[i] == to)
@@ -412,6 +412,12 @@ public class FlatNode {
 	assert false : "Node " + prev + " not connected to " + this;
 	return -1;
     }
-     
+
+    public SIRFilter getFilter() 
+    {
+	assert isFilter();
+	return (SIRFilter)contents;
+    }
+    
 }
 

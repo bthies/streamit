@@ -36,20 +36,10 @@ public class StreaMITMain {
 	}
 	else {
 	    /* Compiling for uniprocessor */
-	    JClassDeclaration flat = Flattener.flatten(stream, 
-						       k2s.getInterfaces(),
-						       k2s.getInterfaceTables(),
-                                                       k2s.getStructures());
-	    System.out.println("*/");
-	
-	    System.out.println("#include \"streamit.h\"");
-	    System.out.println("#include <stdio.h>");
-	    System.out.println("#include <stdlib.h>");
-	    System.out.println("#include <math.h>");
-	    LIRToC l2c = new LIRToC();
-	    flat.accept(l2c);
-	    l2c.close();
-	    System.out.println(l2c.getString());
+	    Flattener.flatten(stream, 
+			      k2s.getInterfaces(),
+			      k2s.getInterfaceTables(),
+			      k2s.getStructures());
 	}
     }
 }

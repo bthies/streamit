@@ -7,7 +7,7 @@ import javax.swing.*;
 
 import com.jgraph.JGraph;
 import com.jgraph.graph.*;
-//import com.jgraph.pad.resources.Translator;
+//// import com.jgraph.pad.resources.Translator;
 
 import java.awt.Frame;
 import java.awt.Point;
@@ -48,7 +48,7 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 
 	/** Progressbar is shown while the algorithm is running
 	 */
-        //protected ProgressDialog dlgProgress = new ProgressDialog((Frame) null, Translator.getString("Progress") + ":", false); /* #Finished */
+	//// protected ProgressDialog dlgProgress = new ProgressDialog((Frame) null, Translator.getString("Progress") + ":", false); /* #Finished */
 
 	/** A vector with Integer Objects. The Vector contains the
 	 *  history of movements per loop
@@ -67,9 +67,6 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 	 *  It was needed for the progress dialog
 	 */
 	int iteration = 0;
-
-	public Point max;
-	public Point spacing;
 
 	/**
 	 * Implementation.
@@ -97,7 +94,7 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 		CellView[] selectedCellViews =
 			jgraph.getGraphLayoutCache().getMapping(selectedCells);
 
-		spacing = new Point();
+		Point spacing = new Point();
 		/*  The Algorithm distributes the nodes on a grid.
 		 *  For this grid you can configure the horizontal spacing.
 		 *  This field specifies the configured value
@@ -120,7 +117,7 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 					SugiyamaLayoutController.KEY_VERTICAL_SPACING));
 
 		// set the progress dialog visible
-		// dlgProgress.setVisible(true);
+		//// dlgProgress.setVisible(true);
 
 		// search all roots
 		Vector roots = searchRoots(jgraph, selectedCellViews);
@@ -140,8 +137,6 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 
 		Point min = findMinimumAndSpacing(selectedCellViews, spacing);
 
-		max = findMaximum(selectedCellViews, spacing);
-
 		// draw the graph in the window
 		drawGraph(jgraph, levels, min, spacing);
 
@@ -150,7 +145,7 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 		//cleanUp(selectedCellViews);
 
 		// sets the progress dialog unvisible
-		// dlgProgress.setVisible(false);
+		//// dlgProgress.setVisible(false);
 	}
 
 	/** Debugdisplay for the edge crosses indicators on the System out
@@ -251,8 +246,12 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 
 		// Error Msg if the graph has no roots
 		if (roots.size() == 0) {
-		    System.out.println("There are no roots");
-		    // JOptionPane.showMessageDialog(null, Translator.getString("TheGraphIsNotADAG"/*#Finished:Original="The Graph is not a DAG. Can't use Sugiyama Algorithm!"*/), null,JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(
+				null,
+				//// Translator.getString("TheGraphIsNotADAG"/*#Finished:Original="The Graph is not a DAG. Can't use Sugiyama Algorithm!"*/),
+				"TheGraphIsNotADAG",
+				null,
+				JOptionPane.ERROR_MESSAGE);
 		}
 		return roots;
 	}
@@ -348,8 +347,14 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 		// mark as not visited
 		// O(allCells)
 		for (int i = 0; i < selectedCellViews.length; i++) {
+		
+			/**
+			 * Modified by jcarlos to be able to apply the algorithm when there are invisible cells.
+			 */ 
 			CellView cellView = selectedCellViews[i];
-			cellView.getAttributes().remove(SUGIYAMA_VISITED);
+			if (cellView !=null) {
+				cellView.getAttributes().remove(SUGIYAMA_VISITED);
+			}
 		}
 
 		Enumeration enumRoots = rootVertexViews.elements();
@@ -461,24 +466,31 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 				// the cellView and their bounds
 				CellView cellView = graphCellViews[i];
 
-				Rectangle cellViewBounds = cellView.getBounds();
+				/**
+				 * Modified by jcarlos to be able to layout invisible cells.
+				 */
+				if (cellView != null)
+				{
+				
+					Rectangle cellViewBounds = cellView.getBounds();
 
-				// checking min area
-				try {
-					if (cellViewBounds.x < min_x)
-						min_x = cellViewBounds.x;
-					if (cellViewBounds.y < min_y)
-						min_y = cellViewBounds.y;
-					/*
-					if (cellViewBounds.width > spacing.x)
-						spacing.x = cellViewBounds.width;
-					if (cellViewBounds.height > spacing.y)
-						spacing.y = cellViewBounds.height;
+					// checking min area
+					try {
+						if (cellViewBounds.x < min_x)
+							min_x = cellViewBounds.x;
+						if (cellViewBounds.y < min_y)
+							min_y = cellViewBounds.y;
+						/*
+						if (cellViewBounds.width > spacing.x)
+							spacing.x = cellViewBounds.width;
+						if (cellViewBounds.height > spacing.y)
+							spacing.y = cellViewBounds.height;
 						*/
 
-				} catch (Exception e) {
-					System.err.println("---------> ERROR in calculateValues."/*#Frozen*/);
-					e.printStackTrace();
+					} catch (Exception e) {
+						System.err.println("---------> ERROR in calculateValues."/*#Frozen*/);
+						e.printStackTrace();
+					}
 				}
 			}
 			// if the cell sice is bigger than the userspacing
@@ -490,94 +502,6 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 		}
 		return null;
 	}
-
-	// ADDED by Juan Carlos Reyes
-	//
-	
-	protected Point findMaximum(
-			CellView[] graphCellViews,
-			Point spacing) {
-			try {
-
-				// variables
-				/* represents the maximum x value for the paint area
-				 */
-				int max_x = 0;
-
-				/* represents the minimum y value for the paint area
-				 */
-				int max_y = 0;
-
-				// find the maximum & minimum coordinates
-
-				for (int i = 0; i < graphCellViews.length; i++) {
-
-					// the cellView and their bounds
-					
-					
-					
-					CellView cellView = graphCellViews[i];
-					 
-
-					Rectangle cellViewBounds = GraphConstants.getBounds(((DefaultGraphCell) cellView.getCell()).getAttributes());
-
-					// checking min area
-					try {
-						if (cellViewBounds.width > max_x)
-						{
-							max_x = cellViewBounds.width;	
-						}
-						max_y += cellViewBounds.height;
-						/*
-						if (cellViewBounds.width > spacing.x)
-							spacing.x = cellViewBounds.width;
-						if (cellViewBounds.height > spacing.y)
-							spacing.y = cellViewBounds.height;
-							*/
-
-					} catch (Exception e) {
-						System.err.println("---------> ERROR in calculateValues."/*#Frozen*/);
-						e.printStackTrace();
-					}
-				}
-				// if the cell sice is bigger than the userspacing
-				// dublicate the spacingfactor
-				return new Point(max_x, max_y);
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			return null;
-		}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-
-
-
-
-
-
 
 	/** Updates the progress based on the movements count
 	 *
@@ -594,13 +518,11 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 		}
 
 		// Calculate the new progress
-		//if (movements.size() > 1) {
-		//	dlgProgress.setValue(movements.size() - 1);
-		// }
+		//// if (movements.size() > 1) { dlgProgress.setValue(movements.size() - 1); }
 	}
 
 	protected void solveEdgeCrosses(JGraph jgraph, Vector levels) {
-	    //dlgProgress.setMessage(Translator.getString("SolvingCrossOverPoints"/*#Finished:Original="solving cross over points ..."*/));
+		//// dlgProgress.setMessage(Translator.getString("SolvingCrossOverPoints"/*#Finished:Original="solving cross over points ..."*/));
 
 		movements = new Vector(100);
 		movementsCurrentLoop = -1;
@@ -636,7 +558,7 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 
 			updateProgress4Movements();
 		}
-		// dlgProgress.setToMaximum();
+		//// dlgProgress.setToMaximum();
 	}
 
 	/**

@@ -48,18 +48,16 @@ public class SugiyamaLayoutController implements LayoutController {
      * Implementation.
      */
     public void configure() {
-		/*
+		System.out.println("MUST ADD THE CONFIGURATION CODE IN SUGIYAMALAYOUTCONTROLLER");
+/*
         SugiyamaLayoutConfigurationDialog dialog = new SugiyamaLayoutConfigurationDialog(new JFrame());
         dialog.setIndention(properties.getProperty(         KEY_HORIZONTAL_SPACING));
         dialog.setVerticalSpacing(properties.getProperty(   KEY_VERTICAL_SPACING));
-
         dialog.setVisible(true);
         if (dialog.canceled()) return;
-
         properties.put(KEY_HORIZONTAL_SPACING,  dialog.getIndention());
         properties.put(KEY_VERTICAL_SPACING,    dialog.getVerticalSpacing());
         */
-        
     }
 
     /**

@@ -4,7 +4,7 @@
 package grapheditor.jgraphextension;
 
 import com.jgraph.JGraph;
-//import com.jgraph.layout.*;
+import com.jgraph.layout.*;
 
 /**
  * JGraphLayoutManager performs the layout of a JGraph according to a LayoutAlgorithm and 
@@ -15,7 +15,7 @@ import com.jgraph.JGraph;
  *
  */
 public class JGraphLayoutManager {
-/*	
+	
 	private JGraph jgraph;
 	private LayoutAlgorithm algorithm;
 	private LayoutController controller;
@@ -26,7 +26,7 @@ public class JGraphLayoutManager {
 	 * @param jgraph The JGraph structure to be laid out.
 	 */
 
-/*
+
 	public JGraphLayoutManager(JGraph jgraph)
 	{
 		this.jgraph = jgraph;
@@ -42,7 +42,7 @@ public class JGraphLayoutManager {
 	 * @param controller The LayoutController that specifies the properties of the LayoutAlgorithm.
 	 */
 	 
-/*
+
 	public JGraphLayoutManager(JGraph jgraph, LayoutAlgorithm algorithm, LayoutController controller)
 	{
 		this.jgraph = jgraph;
@@ -54,7 +54,7 @@ public class JGraphLayoutManager {
 	 * Perform the layout of the JGraph accoring to the specified LayoutAlgorithm
 	 * and LayoutController.
 	 */
-/*
+
 	public void arrange()
 	{
 		algorithm.perform(this.jgraph, true, this.controller.getConfiguration());
@@ -65,5 +65,5 @@ public class JGraphLayoutManager {
 	{
 		
 	}
-*/	
+	
 }

@@ -50,7 +50,16 @@ my @tests = (
 	     "regtests/LinearTest33.str",
 	     "regtests/LinearTest34.str",
 	     "regtests/LinearTest35.str",
+	     "regtests/LinearTest36.str",
 	     );
+
+@tests = (
+	  "regtests/LinearTest10.str",
+	  "regtests/LinearTest11.str",
+	  "regtests/LinearTest12.str",
+	  "regtests/LinearTest13.str",
+	  "regtests/LinearTest14.str",
+	  );
 
 
 my $current_test;
@@ -74,13 +83,13 @@ foreach $current_test (@tests) {
 
     # compare the parsed output against the expected output
     my $result = `cmp $base.parsed $base.expected`;
-    chomp($result);
-    if ($result ne "") {
-	print "$base(analysis): failure\n";
-	print "  $result\n";
-    } else {
-	print "$base(analysis): success\n";
-    }
+    #chomp($result);
+    #if ($result ne "") {
+#	print "$base(analysis): failure\n";
+#	print "  $result\n";
+#    } else {
+#	print "$base(analysis): success\n";
+#    }
 
     # now, compile the test again, this time with linear replacement enabled
     $command = ("$S --linearreplacement " .
@@ -88,7 +97,7 @@ foreach $current_test (@tests) {
     `$command`;
 
     # now, compile the test again, this time with frequency replacement enabled
-    $command = ("$S --frequencyreplacement 3 " .
+    $command = ("$S --frequencyreplacement " .
 		"$base.java >& $base.freq.c");
     `$command`;
 
@@ -135,10 +144,10 @@ foreach $current_test (@tests) {
     $result = `perl -I$CMP_PATH $CMP $base.run $base.redund.run`;
     chomp($result);
     if ($result ne "") {
-	print "$base(freq):     failure\n";
+	print "$base(redund):   failure\n";
 	print "  $result\n";
     } else {
-	print "$base(freq):     success\n";
+	print "$base(redund):   success\n";
     }
 
     

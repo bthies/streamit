@@ -19,9 +19,9 @@ sub main {
     my @pipeline_contents;
     my @splitjoin_contents;
     # do a pattern match to extract the matrix/vector pairs for filters
-    @filter_contents = $output_contents =~ m/Linear filter found: .*?name=(.*?) (.*?)\n-->Matrix:\n(.*?)-->Constant Vector:\n(.*?]]\n)/sig;
-    @pipeline_contents = $output_contents =~ m/Linear pipeline found: .*?name=(.*?) (.*?)\n-->Matrix:\n(.*?)-->Constant Vector:\n(.*?]]\n)/sig;
-    @splitjoin_contents = $output_contents =~ m/Linear splitjoin found: .*?name=(.*?) (.*?)\n-->Matrix:\n(.*?)-->Constant Vector:\n(.*?]]\n)/sig;
+    @filter_contents = $output_contents =~ m/Linear filter found: .*?name=(.*?)\d*?_\d*?\n-->Matrix:\n(.*?)-->Constant Vector:\n(.*?]]\n)/sig;
+    @pipeline_contents = $output_contents =~ m/Linear pipeline found: .*?name=(.*?)\d*?_\d*?\n-->Matrix:\n(.*?)-->Constant Vector:\n(.*?]]\n)/sig;
+    @splitjoin_contents = $output_contents =~ m/Linear splitjoin found: .*?name=(.*?)\d*?_\d*?\n-->Matrix:\n(.*?)-->Constant Vector:\n(.*?]]\n)/sig;
 
     # combine the set of contents together
     my @contents = (@filter_contents, @pipeline_contents, @splitjoin_contents);
@@ -30,7 +30,7 @@ sub main {
     my %data;
     while(@contents) {
 	my $name = shift(@contents);
-	my $foo= shift(@contents);
+#my $foo= shift(@contents);
 	my $matrix=shift(@contents); 
         chomp($matrix);
 	my $vector = shift(@contents);

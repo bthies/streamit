@@ -43,10 +43,21 @@ public class Layout extends at.dms.util.Utils implements
     /* hashset of Flatnodes representing all the joiners
        that are mapped to tiles */
     private  HashSet joiners;
-    
+
+    /** cost function constants **/
+
+    //the multipler for the dynamic network cost
+    public static double DYN_MULT = 1000;
+    //the weight of an ilegale static layout
+    public static double ILLEGAL_WEIGHT = 1E6;
+    //the weights assigned to a static route that goes thru an assigned tile
+    public static double ASSIGNED_WEIGHT = 100;
+
+    //simualted annealing constants
     public static int MINTEMPITERATIONS = 200;
     public static int MAXTEMPITERATIONS = 200;
     public static int ANNEALITERATIONS = 10000;
+
     public static double TFACTR = 0.9;
 
     private FileWriter filew;    
@@ -455,7 +466,7 @@ public class Layout extends at.dms.util.Utils implements
 	    
 	    memoryCost = getMemoryCost(ssg);
 
-	    cost += dynamicCost + staticCost + memoryCost;
+	    cost += (dynamicCost * DYN_MULT) + staticCost + memoryCost;
 	}
 	
 	return cost;
@@ -530,7 +541,7 @@ public class Layout extends at.dms.util.Utils implements
 	    if (usedTiles.contains(srcNode)) {
 		//System.out.println(srcNode);
 		//return -1.0;
-		cost += 1E6;
+		cost += ILLEGAL_WEIGHT;
 	    }
 	    
 	    //get all the dests for this node that are assigned tiles
@@ -551,7 +562,7 @@ public class Layout extends at.dms.util.Utils implements
 		//thru the tile assigned to the dst
 		if (usedTiles.contains(dstNode)) {
 		    //System.out.println(dstNode);
-		    cost += 1E6;
+		    cost += ILLEGAL_WEIGHT;
 		    //return -1.0;
 		}
 		
@@ -563,7 +574,7 @@ public class Layout extends at.dms.util.Utils implements
 		if (route.length == 0) {
 		    //System.out.println("Cannot find route from src to dst within SSG " + 
 		    //		       src + "(" + srcNode + ") -> " + dst + "(" + dstNode + ")");
-		    cost += 1E6;
+		    cost += ILLEGAL_WEIGHT;
 		    //return -1.0;
 		}
 		
@@ -578,7 +589,7 @@ public class Layout extends at.dms.util.Utils implements
 		    //make sure that this route does not pass thru any tiles assigned to other SSGs
 		    //otherwise we have a illegal layout!!!!
 		    if (usedTiles.contains(route[i])) {
-			cost += 1E6;
+			cost += ILLEGAL_WEIGHT;
 			//return -1.0;
 		    }
 		    
@@ -586,7 +597,7 @@ public class Layout extends at.dms.util.Utils implements
 		    tiles.add(route[i]);
 		    
 		    if (getNode((RawTile)route[i]) != null) //assigned tile
-			numAssigned += 100.0;
+			numAssigned += ASSIGNED_WEIGHT;
 		    else {
 			//router tile, only penalize it if we have routed through it before
 			if (routers.contains(route[i]))

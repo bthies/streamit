@@ -48,6 +48,8 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 
 	SIRFilter filter = (SIRFilter)ObjectDeepCloner.deepCopy(oldFilter);
 
+	Util.removeIO(filter);
+
 	StreamGraph streamGraph = StreamGraph.constructStreamGraph(filter);
 	StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[0];
 

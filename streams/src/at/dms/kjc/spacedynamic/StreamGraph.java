@@ -488,7 +488,11 @@ public class StreamGraph
 	StreamGraph streamGraph = new StreamGraph(node, new RawChip(1, 1));
 	streamGraph.createStaticStreamGraphs();
 	streamGraph.tileAssignmentOneFilter();
-
+	
+	//gather the information on file readers and writers in the graph
+	streamGraph.fileState = new FileState(streamGraph);
+	//now ready to layout	
+	streamGraph.layout = new Layout(streamGraph);
 	return streamGraph;
     }
     

@@ -92,6 +92,8 @@ public class IMEMEstimation implements FlatVisitor
 	//new cloned filter
 	SIRFilter filter = (SIRFilter)ObjectDeepCloner.deepCopy(oldFilter);
 
+	Util.removeIO(filter);
+
 	//just call this 
 	StreamGraph streamGraph = StreamGraph.constructStreamGraph(filter);
 	StaticStreamGraph fakeSSG = streamGraph.getStaticSubGraphs()[0];

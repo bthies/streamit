@@ -31,7 +31,9 @@ public class RawTile extends ComputeNode {
 
     public void addIOPort(IOPort io)
     {
-	assert IOPorts.length < 2 : "Trying to add too many neighboring IO devices";
+	assert IOPorts.length < 2 || 
+	    rawChip.getTotalTiles() == 1 && IOPorts.length < 5: 
+	    "Trying to add too many neighboring IO devices";
 	IOPort[] newIOs = new IOPort[IOPorts.length + 1];
 	for (int i = 0; i < IOPorts.length; i++)
 	    newIOs[i] = IOPorts[i];

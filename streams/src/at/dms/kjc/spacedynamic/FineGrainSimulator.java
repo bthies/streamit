@@ -286,20 +286,20 @@ public class FineGrainSimulator extends Simulator
 	HashMap prev = new HashMap();
 	HashMap next = new HashMap();
 
-	//System.out.println("Firing: " + fire + " " + layout.getTile(fire));
+	//	System.out.println("Firing: " + fire + " " + layout.getComputeNode(fire));
 
 	ListIterator destsIt = dests.listIterator();
 	while (destsIt.hasNext()) {
  	    FlatNode dest = (FlatNode)destsIt.next();
 	    assert dest != null;
 	    assert !(layout.getIdentities().contains(dest));
-	    //System.out.println("  Dest: " + dest + " " + layout.getTile(dest));
+	    //  System.out.println("  Dest: " + dest + " " + layout.getTile(dest));
  	    ComputeNode[] hops = 
  		(ComputeNode[])layout.router.
 		getRoute(ssg, layout.getComputeNode(fire), layout.getComputeNode(dest)).toArray(new ComputeNode[0]);
 
 	    //for (int i = 0; i < hops.length; i++)
-	    //System.out.println("     " + hops[i]);
+	    //		System.out.println("     " + hops[i]);
 	    
 	    //add to fire's next
 	    if (!next.containsKey(layout.getComputeNode(fire))) 

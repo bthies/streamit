@@ -17,19 +17,24 @@ import java.io.*;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 
-public class IMEMEstimation implements FlatVisitor
+public class IMEMEstimation extends EmptyStreamVisitor
 {
     public static boolean TESTING_IMEM = false;
+    /**
+     * Whether or not everything this visitor has seen so far fits in
+     * IMEM.
+     */
+    private boolean everythingFits = true;
     
-    public void visitNode(FlatNode node) 
-    {
-	if (node.isFilter()) {
-	    SIRFilter self = (SIRFilter)node.contents;
-	    if (fits(self))
-		System.out.println("***** " + self.getName() + " fits in IMEM");
-	    else 
-		System.out.println("***** " + self.getName() + " does not fit in IMEM");
+    public void visitFilter(SIRFilter self,
+			    SIRFilterIter iter) {
+	if (!fits(self)) {
+	    System.out.println("Filter " + self.getName() + " does not fit in IMEM.");
+	    everythingFits = false;
+	} else {
+	    System.out.println("Filter " + self.getName() + " fits in IMEM.");
 	}
+       
     }
     
     public IMEMEstimation() 
@@ -37,10 +42,15 @@ public class IMEMEstimation implements FlatVisitor
 	
     }
     
-
-    public static void testMe(FlatNode top) 
+    /**
+     * Returns true iff all filters in <str> fit in IMEM.  Each filter
+     * is measured independently (assuming 1 filter per tile).
+     */
+    public static boolean testMe(SIRStream str) 
     {
-	top.accept(new IMEMEstimation(), null, true);
+	IMEMEstimation visitor = new IMEMEstimation();
+	IterFactory.createFactory().createIter(str).accept(visitor);
+	return visitor.everythingFits;
     }
     
 

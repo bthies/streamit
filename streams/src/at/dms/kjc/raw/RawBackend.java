@@ -89,73 +89,107 @@ public class RawBackend {
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
 
-        // do constant propagation on fields
-        if (KjcOptions.nofieldprop) {
-	} else {
-	    System.out.println("Running Constant Field Propagation...");
-	    FieldProp.doPropagate(str);
-	    System.out.println("Done Constant Field Propagation...");
-	    //System.out.println("Analyzing Branches..");
-	    //new BlockFlattener().flattenBlocks(str);
-	    //new BranchAnalyzer().analyzeBranches(str);
+	// loop to decrease unroll factor until everything fits in IMEM
+	SIRStream strOrig = null;
+	// only need to make copy if there is some unrolling, since
+	// otherwise we won't roll back
+	if (KjcOptions.unroll>1) {
+	    strOrig = (SIRStream)ObjectDeepCloner.deepCopy(str);
 	}
+	boolean fitsInIMEM;
+	do {
 
-	Lifter.liftAggressiveSync(str);
-       	StreamItDot.printGraph(str, "before-partition.dot");
+	    // do constant propagation on fields
+	    if (KjcOptions.nofieldprop) {
+	    } else {
+		System.out.println("Running Constant Field Propagation...");
+		FieldProp.doPropagate(str);
+		System.out.println("Done Constant Field Propagation...");
+		//System.out.println("Analyzing Branches..");
+		//new BlockFlattener().flattenBlocks(str);
+		//new BranchAnalyzer().analyzeBranches(str);
+	    }
+	    
+	    Lifter.liftAggressiveSync(str);
+	    StreamItDot.printGraph(str, "before-partition.dot");
+	    
+	    // gather application-characterization statistics
+	    if (KjcOptions.stats) {
+		StatisticsGathering.doit(str);
+	    }
 
-	// gather application-characterization statistics
-	if (KjcOptions.stats) {
-	    StatisticsGathering.doit(str);
-	}
+	    str = Flattener.doLinearAnalysis(str);
+	    str = Flattener.doStateSpaceAnalysis(str);
 
-	str = Flattener.doLinearAnalysis(str);
-	str = Flattener.doStateSpaceAnalysis(str);
+	    if (KjcOptions.fusion) {
+		System.out.println("Running FuseAll...");
+		str = FuseAll.fuse(str);
+		Lifter.lift(str);
+		System.out.println("Done FuseAll...");
+	    }
 
-	if (KjcOptions.fusion) {
-	    System.out.println("Running FuseAll...");
-	    str = FuseAll.fuse(str);
-	    Lifter.lift(str);
-	    System.out.println("Done FuseAll...");
-	}
+	    if (KjcOptions.fission>1) {
+		System.out.println("Running Vertical Fission...");
+		FissionReplacer.doit(str, KjcOptions.fission);
+		Lifter.lift(str);
+		System.out.println("Done Vertical Fission...");
+	    }
 
-	if (KjcOptions.fission>1) {
-	    System.out.println("Running Vertical Fission...");
-	    FissionReplacer.doit(str, KjcOptions.fission);
-	    Lifter.lift(str);
-	    System.out.println("Done Vertical Fission...");
-	}
+	    // turn on partitioning if there aren't enough tiles for all
+	    // the filters
+	    int count = new GraphFlattener(str).getNumTiles();
+	    int numTiles = RawBackend.rawRows * RawBackend.rawColumns;
+	    boolean partitioning = KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_greedier || KjcOptions.partition_ilp;
+	    if (count>numTiles && !partitioning) {
+		System.out.println("Need " + count + " tiles, so turning on partitioning...");
+		KjcOptions.partition_dp = true;
+		partitioning = true;
+	    }
 
-	// turn on partitioning if there aren't enough tiles for all
-	// the filters
-	int count = new GraphFlattener(str).getNumTiles();
-	int numTiles = RawBackend.rawRows * RawBackend.rawColumns;
-	boolean partitioning = KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_greedier || KjcOptions.partition_ilp;
-	if (count>numTiles && !partitioning) {
-	    System.out.println("Need " + count + " tiles, so turning on partitioning...");
-	    KjcOptions.partition_dp = true;
-	    partitioning = true;
-	}
+	    if (partitioning) {
+		System.err.println("Running Partitioning...");
+		str = Partitioner.doit(str, count, numTiles, true);
+		System.err.println("Done Partitioning...");
+	    }
 
-	if (partitioning) {
-	    System.err.println("Running Partitioning...");
-	    str = Partitioner.doit(str, count, numTiles, true);
-	    System.err.println("Done Partitioning...");
-	}
+	    if (KjcOptions.sjtopipe) {
+		SJToPipe.doit(str);
+	    }
 
-	if (KjcOptions.sjtopipe) {
-	    SJToPipe.doit(str);
-	}
+	    StreamItDot.printGraph(str, "after-partition.dot");
 
-	StreamItDot.printGraph(str, "after-partition.dot");
-
-	//VarDecl Raise to move array assignments up
-	new VarDeclRaiser().raiseVars(str);
+	    //VarDecl Raise to move array assignments up
+	    new VarDeclRaiser().raiseVars(str);
 
 	
-	//VarDecl Raise to move peek index up so
-	//constant prop propagates the peek buffer index
-	new VarDeclRaiser().raiseVars(str);
+	    //VarDecl Raise to move peek index up so
+	    //constant prop propagates the peek buffer index
+	    new VarDeclRaiser().raiseVars(str);
 
+	    // see if we are going to overflow IMEM
+	    if (KjcOptions.unroll>1) {
+		fitsInIMEM = IMEMEstimation.testMe(str);
+		if (fitsInIMEM) {
+		    // if we fit, clear backup copy of stream graph
+		    strOrig = null;
+		    System.gc();
+		} else if (KjcOptions.unroll<=1) {
+		    // if we have reached bottom of unrolling, fail
+		    Utils.fail("A filter overflows IMEM even though there is no unrolling.");
+		} else {
+		    // otherwise, cut unrolling in half and recurse
+		    System.out.println("Cutting unroll factor from " + KjcOptions.unroll + " to " + (KjcOptions.unroll/2) + " to try to fit in IMEM...");
+		    KjcOptions.unroll = KjcOptions.unroll / 2;
+		    str = (SIRStream)ObjectDeepCloner.deepCopy(strOrig);
+		}
+	    } else {
+		// it might not fit in IMEM, but we can't decrease the
+		// unrolling any, so just go ahead
+		fitsInIMEM = true;
+	    }
+	    
+	} while (!fitsInIMEM);
+	
 	// optionally print a version of the source code that we're
 	// sending to the scheduler
 	if (KjcOptions.print_partitioned_source) {

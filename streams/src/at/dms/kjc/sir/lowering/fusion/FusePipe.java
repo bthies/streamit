@@ -87,7 +87,7 @@ public class FusePipe {
      * Fuses sections of <pipe> according to <partitions>, which
      * specifies the grouping sequence of who gets fused together.
      */
-    public static void fuse(SIRPipeline pipe, PartitionGroup partitions) {
+    public static SIRStream fuse(SIRPipeline pipe, PartitionGroup partitions) {
 	// make a new pipeline having the proper partition
 	// arrangement, and replace all current children of <pipe>
 	// with this <newPipe>.  This is because we're trying to just
@@ -95,13 +95,17 @@ public class FusePipe {
 	SIRPipeline newPipe = RefactorPipeline.addHierarchicalChildren(pipe, partitions);
 	newPipe.setInit(SIRStream.makeEmptyInit());
 	pipe.replace(pipe.get(0), pipe.get(pipe.size()-1), newPipe);
+	SIRStream out=null;
 	for (int i=0; i<partitions.size(); i++) {
 	    if (partitions.get(i)!=1) {
 		SIRPipeline child = (SIRPipeline)newPipe.get(i);
 		internalFuse(child);
+		out=child.get(0);
 		Lifter.eliminatePipe(child);
 	    }
 	}
+	Lifter.eliminatePipe(newPipe);
+	return out;
     }
     
     /**

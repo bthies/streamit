@@ -13,7 +13,8 @@ import java.util.*;
  * This flattens any set of filters into a single splitjoin.
  */
 public class FuseSplit {
-
+    private static SIRStream lastFused;
+    
     /**
      * Names for variables introduced in this pass.
      */
@@ -96,11 +97,22 @@ public class FuseSplit {
             // leave the 1-way components alone, since they weren't
             // getting fused originally
             if (partition.get(i)>1) {
-                fuse((SIRSplitJoin)sj.get(i));
+                SIRContainer fused=(SIRContainer)fuse((SIRSplitJoin)sj.get(i));
+		if(KjcOptions.partition_greedier)
+		    if(fused instanceof SIRPipeline) {
+			FusePipe.fuse((SIRPipeline)fused);
+			Lifter.eliminatePipe((SIRPipeline)fused);
+		    } else
+			Lifter.eliminateSJ((SIRSplitJoin)fused);
+		lastFused=fused.get(0);
             }
         }
-
+	Lifter.eliminateSJ(sj);
 	return sj;
+    }
+
+    public static SIRStream getLastFused() {
+	return lastFused;
     }
 
     /**

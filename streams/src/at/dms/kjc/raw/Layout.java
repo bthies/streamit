@@ -292,22 +292,27 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    int k = 0;
 		    nsucc = 0;
 		    for (k = 0; k < nover; k++) {
-			if (perturbConfiguration(t)) {
-			    layout.filew.write(configuration++ + " " + placementCost() + "\n");
+			boolean accepted = perturbConfiguration(t);
+			currentCost = placementCost();
+			
+			if (accepted) {
+			    layout.filew.write(configuration++ + " " + currentCost + "\n");
 			    nsucc++;
 			}
-		
-			currentCost = placementCost();
+			
+			
 			//keep the layout with the minimum cost
 			//this will be the final layout
 			if (currentCost < minCost) {
 			    minCost = currentCost;
 			    //save the layout with the minimum cost
-		        sirMin = (HashMap)layout.SIRassignment.clone();
-			tileMin = (HashMap)layout.tileAssignment.clone();
+			    sirMin = (HashMap)layout.SIRassignment.clone();
+			    tileMin = (HashMap)layout.tileAssignment.clone();
 			}
-			if (placementCost() == 0.0)
+			
+			if (currentCost == 0.0)
 			    break;
+
 		    }
 		    
 		    t *= TFACTR;
@@ -428,27 +433,28 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	int row = 0;
 	int column = 0;
 
+	//start laying out at top right corner because of file reader
 	for (row = 0; row < RawBackend.rawRows; row ++) {
 	    if (row % 2 == 0) {
-		for (column = 0; column < RawBackend.rawColumns;) {
+		for (column = RawBackend.rawColumns -1; column >= 0;) {
 		    if (!dfTraversal.hasNext())
 			break;
 		    FlatNode node = (FlatNode)dfTraversal.next();
 		    if (!layout.assigned.contains(node))
 			continue;
 		    assign(getTile(row, column), node);
-		    column++;
+		    column--;
 		}
 	    }
 	    else {
-		for (column = RawBackend.rawColumns -1; column >= 0;) {
+		for (column = 0; column < RawBackend.rawColumns;) {
 		    if (!dfTraversal.hasNext())
 			break; 
 		    FlatNode node = (FlatNode)dfTraversal.next();
 		    if (!layout.assigned.contains(node))
 			continue;
 		    assign(getTile(row, column), node); 
-		    column--;
+		    column++;
 		}
 	    }
 	    if (!dfTraversal.hasNext())
@@ -534,6 +540,9 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    items = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() *
 			push;
 	    }
+	    //if (hops > 0 && numAssigned > 0.0)
+	    //		System.out.println(node + ": " + hops + " " + numAssigned);
+	    
 	    sum += ((items * hops) + (items * Util.getTypeSize(Util.getOutputType(node)) * 
 		    /*Math.pow(*/numAssigned /** 2.0, 3.0)*/ * 10.0));
 	}
@@ -808,7 +817,6 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    }
 	}
     }
-    
 
     public void visitNode(FlatNode node) 
     {
@@ -839,6 +847,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    }
 	}
     }
+
+
    
 }
 

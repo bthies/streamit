@@ -17,7 +17,6 @@
 package streamit.frontend.tojava;
 
 import streamit.frontend.nodes.*;
-import streamit.frontend.ToJava;
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.88 2004-11-15 12:34:47 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.89 2004-11-16 06:10:28 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -936,7 +935,7 @@ public class NodesToJava implements FEVisitor
             result.append(doParams(func.getParams(), null));
             result.append(" { }\n");
         }
-	if(ToJava.libraryFormat) {
+	if(libraryFormat) {
 	    //implement fireMessage
 	    result.append(indent+"protected void fireMessage(int message,Object[] args) {\n");
 	    addIndent();

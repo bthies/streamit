@@ -20,6 +20,30 @@ public class SIRIdentity extends SIRFilter implements Cloneable {
 	peek = new JIntLiteral(1);
     }
 
+    private static 	JMethodDeclaration fns[];
+    
+    static {
+
+	fns = new JMethodDeclaration[2];
+
+	JStatement[] emptybody1 = new JStatement[0];
+	JBlock emptyblock1 = new JBlock(null, emptybody1, null);
+	JFormalParameter string[] = {
+	    new JFormalParameter(null, 0, CStdType.String, "type", false)};
+	fns[1] =
+	    new JMethodDeclaration( /* tokref     */ null,
+				    /* modifiers  */ at.dms.kjc.
+				    Constants.ACC_PUBLIC,
+				    /* returntype */ CStdType.Void,
+				    /* identifier */ "init",
+				    /* parameters */ JFormalParameter.EMPTY,
+				    /* exceptions */ CClassType.EMPTY,
+				    /* body       */ emptyblock1,
+				    /* javadoc    */ null,
+				    /* comments   */ null);
+    }
+  
+    
     public SIRIdentity(SIRContainer parent,
 		       String ident,
 		       CType type) {
@@ -34,6 +58,8 @@ public class SIRIdentity extends SIRFilter implements Cloneable {
 	pop = new JIntLiteral(1);
 	push = new JIntLiteral(1);
 	peek = new JIntLiteral(1);
+
+	setInit(fns[1]);
     }
     
     /**
@@ -54,6 +80,28 @@ public class SIRIdentity extends SIRFilter implements Cloneable {
     public void setType(CType t) {
 	this.setInputType(t);
 	this.setOutputType(t);
+	
+	JStatement work1body[] = new JStatement[1];
+	work1body[0] =  
+	    new JExpressionStatement
+	    (null, new SIRPushExpression
+	     (new SIRPopExpression(), t),
+	     null);
+	
+	JBlock work1block = new JBlock(/* tokref   */ null,
+				/* body     */ work1body,
+				/* comments */ null);
+	JMethodDeclaration workfn =  new JMethodDeclaration( /* tokref     */ null,
+					  /* modifiers  */ at.dms.kjc.
+					  Constants.ACC_PUBLIC,
+					  /* returntype */ CStdType.Void,
+					  /* identifier */ "work",
+					  /* parameters */ JFormalParameter.EMPTY,
+					  /* exceptions */ CClassType.EMPTY,
+					  /* body       */ work1block,
+					  /* javadoc    */ null,
+					  /* comments   */ null);
+	setWork(workfn);
     }
     
     /**
@@ -79,7 +127,9 @@ public class SIRIdentity extends SIRFilter implements Cloneable {
      * Returns name just so can possibly show up on dot file
      */
     public String getName() {
-        return "ContextContainer";
+	//change this back later
+	return "Identity";
+	//        return "ContextContainer";
     }
 }
 

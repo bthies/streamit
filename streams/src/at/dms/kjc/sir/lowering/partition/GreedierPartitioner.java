@@ -147,14 +147,15 @@ public class GreedierPartitioner {
 	    newNode.prev=prev;
 	    Pair inter=prev.p2;
 	    if(inter!=null) { //Reuse old Pair
+		if(inter.n2!=p.n1)
+		    Utils.fail("HERE");
 		pairs.remove(inter);
-		if(newNode==null)
-		    Utils.fail("GAH");
 		inter.n2=newNode;
+		newNode.p1=inter;
 		inter.work(prev,newNode);
 		pairs.put(inter,null);
 	    } else if(prev.filter.getParent()==newNode.filter.getParent()) { //New Pair
-		//pairs.put(new Pair(prev,newNode),null);
+		pairs.put(new Pair(prev,newNode),null);
 	    } else
 		System.out.println("DIFFERENT PARENT! "+prev.filter+" "+result+" "+prev.filter.getParent()+" "+result.getParent());
 	}
@@ -163,8 +164,11 @@ public class GreedierPartitioner {
 	    newNode.next=next;
 	    Pair inter=next.p1;
 	    if(inter!=null) { //Reuse old Pair
+		if(inter.n1!=p.n2)
+		    Utils.fail("HERE2");
 		pairs.remove(inter);
 		inter.n1=newNode;
+		newNode.p2=inter;
 		inter.work(next,newNode);
 		pairs.put(inter,null);
 	    } else if(next.filter.getParent()==newNode.filter.getParent()) { //New Pair

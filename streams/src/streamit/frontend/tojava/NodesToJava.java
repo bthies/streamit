@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.63 2003-07-07 18:59:52 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.64 2003-07-15 15:09:15 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -545,7 +545,16 @@ public class NodesToJava implements FEVisitor
         String result = "{\n";
         addIndent();
         for (Iterator iter = stmt.getStmts().iterator(); iter.hasNext(); )
-            result += indent + (String)((Statement)(iter.next())).accept(this) + ";\n";
+        {
+            Statement s = (Statement)iter.next();
+            String line = indent;
+            line += (String)s.accept(this);
+            line += ";";
+            if (s.getContext() != null)
+                line += " // " + s.getContext();
+            line += "\n";
+            result += line;
+        }
         unIndent();
         result += indent + "}";
         return result;

@@ -1,8 +1,8 @@
 FRONTEND = java streamit.frontend.ToJava
-COMPILER = java -Xmx1500M  at.dms.kjc.Main -s
-SL       = gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c
+COMPILER = java -Xmx1800M  at.dms.kjc.Main -s
 
 BEAMFORMER-HOME = $(STREAMIT_HOME)/apps/benchmarks/beamformer/streamit
+FM-HOME = $(STREAMIT_HOME)/apps/benchmarks/fm/streamit
 
 all: clean benchmarks
 
@@ -26,7 +26,7 @@ beamformer-results: CoarseSerializedBeamFormer.java
 
 
 
-benchmarks: FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java Test.java CoarseSerializedBeamFormer.java
+benchmarks: FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java Test.java CoarseSerializedBeamFormer.java LinkedFMTest.java
 
 
 
@@ -55,12 +55,16 @@ fir-scaling1: Test.java
 fir-scaling2: Test.java
 	./reap_fir.pl 2 | mhmail aalamb@mit.edu -s "() FIR scaling results are ready"
 
+# rule to make the beamformer application and copy it to this directory
 CoarseSerializedBeamFormer.java: $(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.java
 	cp $(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.java .
 $(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.java:
 	make -C $(BEAMFORMER-HOME)
-
-FMRadioApp.java:
+# rule to make the fm radio app and copy it to this directory
+LinkedFMTest.java: $(FM-HOME)/LinkedFMTest.java
+	cp $(FM-HOME)/LinkedFMTest.java .
+$(FM-HOME)/LinkedFMTest.java:
+	make -C $(FM-HOME)
 
 # rule to create java files from .str files
 %.java: %.str lib/*.str
@@ -78,5 +82,5 @@ clean:
 	rm -f dynamorio.log* countflops.log
 	rm -f Test.java
 	rm -f FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java 
-	rm -f CoarseSerializedBeamFormer.java
+	rm -f CoarseSerializedBeamFormer.java LinkedFMTest.java
 	rm -rf streamgraphs

@@ -1,5 +1,6 @@
 package at.dms.kjc.raw;
 
+import at.dms.kjc.flatgraph.FlatNode;
 import java.util.LinkedList;
 
 public class DFTraversal implements FlatVisitor 
@@ -19,7 +20,7 @@ public class DFTraversal implements FlatVisitor
     }
     
     
-    public void visitNode(FlatNode node) 
+    public void visitNode(flatgraph.FlatNode node) 
     {
 	traversal.add(node);
     }

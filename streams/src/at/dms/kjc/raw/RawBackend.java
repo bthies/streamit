@@ -1,5 +1,6 @@
 package at.dms.kjc.raw;
 
+import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
@@ -135,31 +136,31 @@ public class RawBackend {
        	System.out.println("Flattener Begin...");
 	executionCounts = SIRScheduler.getExecutionCounts(str);
 	PartitionDot.printScheduleGraph(str, "schedule.dot", executionCounts);
-	RawFlattener rawFlattener = new RawFlattener(str);
-	rawFlattener.dumpGraph("flatgraph.dot");
+	GraphFlattener graphFlattener = new GraphFlattener(str);
+	graphFlattener.dumpGraph("flatgraph.dot");
 	System.out.println("Flattener End.");
 
 	//create the execution counts for other passes
-	createExecutionCounts(str, rawFlattener);
+	createExecutionCounts(str, graphFlattener);
 
 	//see if we can remove any joiners
-	//JoinerRemoval.run(rawFlattener.top);
+	//JoinerRemoval.run(graphFlattener.top);
 
 	// layout the components (assign filters to tiles)	
-	Layout.simAnnealAssign(rawFlattener.top);
-	//Layout.handAssign(rawFlattener.top);
+	Layout.simAnnealAssign(graphFlattener.top);
+	//Layout.handAssign(graphFlattener.top);
 	
-	//Layout.handAssign(rawFlattener.top);
+	//Layout.handAssign(graphFlattener.top);
 	System.out.println("Assign End.");
 
 	//Generate the switch code	
-	CalcBufferSize.createBufferSizePow2(rawFlattener.top);
+	CalcBufferSize.createBufferSizePow2(graphFlattener.top);
 
 	//if rate matching is requested, check if we can do it
 	//if we can, then keep KjcOptions.rateMatch as true, 
 	//otherwise set it to false
 	if (KjcOptions.ratematch) {
-	    if (RateMatch.doit(rawFlattener.top))
+	    if (RateMatch.doit(graphFlattener.top))
 		System.out.println("Rate Matching Test Successful.");
 	    else {
 		KjcOptions.ratematch = false;
@@ -168,19 +169,19 @@ public class RawBackend {
 	}
 		
 	if (KjcOptions.magic_net) {
-	    MagicNetworkSchedule.generateSchedules(rawFlattener.top);
+	    MagicNetworkSchedule.generateSchedules(graphFlattener.top);
 	}
 	else {
 	    System.out.println("Switch Code Begin...");
-	    SwitchCode.generate(rawFlattener.top);
+	    SwitchCode.generate(graphFlattener.top);
 	    System.out.println("Switch Code End.");
 	}
 	
 	//Generate number gathering simulator code
 	if (KjcOptions.numbers > 0) {
 	    // do this on demand from NumberGathering
-	    //SinkUnroller.doit(rawFlattener.top);
-	    if (!NumberGathering.doit(rawFlattener.top)) {
+	    //SinkUnroller.doit(graphFlattener.top);
+	    if (!NumberGathering.doit(graphFlattener.top)) {
 		System.err.println("Could not generate number gathering code.  Exiting...");
 		System.exit(1);
 	    }
@@ -189,20 +190,20 @@ public class RawBackend {
 	//remove print statements in the original app
 	//if we are running with decoupled
 	if (KjcOptions.decoupled)
-	    RemovePrintStatements.doIt(rawFlattener.top);
+	    RemovePrintStatements.doIt(graphFlattener.top);
 	
 	//Generate the tile code
-	RawExecutionCode.doit(rawFlattener.top);
+	RawExecutionCode.doit(graphFlattener.top);
 
 	if (KjcOptions.removeglobals) {
-	    RemoveGlobals.doit(rawFlattener.top);
+	    RemoveGlobals.doit(graphFlattener.top);
 	}
 	
 	//VarDecl Raise to move array assignments down?
 	new VarDeclRaiser().raiseVars(str);
 	
 	System.out.println("Tile Code begin...");
-	TileCode.generateCode(rawFlattener.top);
+	TileCode.generateCode(graphFlattener.top);
 	System.out.println("Tile Code End.");
 	//generate the makefiles
 	System.out.println("Creating Makefile.");
@@ -221,7 +222,7 @@ public class RawBackend {
     }
    
     private static void createExecutionCounts(SIRStream str,
-					      RawFlattener rawFlattener) {
+					      GraphFlattener graphFlattener) {
 	// make fresh hashmaps for results
 	HashMap[] result = { initExecutionCounts = new HashMap(), 
 			     steadyExecutionCounts = new HashMap()} ;
@@ -248,15 +249,15 @@ public class RawBackend {
 		     obj.getName().startsWith("Fused_FilterBank")))
 		    val++;
 	       */
-		if (rawFlattener.getFlatNode(obj) != null)
-		    result[i].put(rawFlattener.getFlatNode(obj), 
+		if (graphFlattener.getFlatNode(obj) != null)
+		    result[i].put(graphFlattener.getFlatNode(obj), 
 				  new Integer(val));
 	    }
 	}
 	
-	//Schedule the new Identities and Splitters introduced by RawFlattener
-	for(int i=0;i<RawFlattener.needsToBeSched.size();i++) {
-	    FlatNode node=(FlatNode)RawFlattener.needsToBeSched.get(i);
+	//Schedule the new Identities and Splitters introduced by GraphFlattener
+	for(int i=0;i<GraphFlattener.needsToBeSched.size();i++) {
+	    FlatNode node=(FlatNode)GraphFlattener.needsToBeSched.get(i);
 	    int initCount=-1;
 	    if(node.incoming.length>0) {
 		if(initExecutionCounts.get(node.incoming[0])!=null)
@@ -294,7 +295,7 @@ public class RawBackend {
 		if(steadyCount>=0)
 		    result[1].put(node,new Integer(steadyCount));
 	    } else if(node.contents instanceof SIRJoiner) {
-		FlatNode oldNode=rawFlattener.getFlatNode(node.contents);
+		FlatNode oldNode=graphFlattener.getFlatNode(node.contents);
 		if(executionCounts[0].get(node.oldContents)!=null)
 		    result[0].put(node,new Integer(((int[])executionCounts[0].get(node.oldContents))[0]));
 		if(executionCounts[1].get(node.oldContents)!=null)

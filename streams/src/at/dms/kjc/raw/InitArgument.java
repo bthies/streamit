@@ -1,5 +1,6 @@
 package at.dms.kjc.raw;
 
+import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;

@@ -1,5 +1,6 @@
 package at.dms.kjc.raw;
 
+import at.dms.kjc.flatgraph.FlatNode;
 import java.util.HashMap;
 import java.util.Vector;
 import java.util.Iterator;

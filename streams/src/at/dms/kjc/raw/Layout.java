@@ -528,7 +528,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	
 	buf.append("digraph Layout {\n");
 	buf.append("size = \"8, 10.5\"");
-	buf.append("node [shape=box];\nedge[arrowhead=dot, style=dotted]\n");
+	buf.append("node [shape=box,fixedsize=true,width=4,height=1];\nnodesep=.5;\nranksep=\"3.5 equally\";\nedge[arrowhead=dot, style=dotted]\n");
 	for (int i = 0; i < StreamItOptions.rawRows; i++) {
 	    buf.append("{rank = same;");
 	    for (int j = 0; j < StreamItOptions.rawColumns; j++) {
@@ -542,7 +542,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		while (neighbors.hasNext()) {
 		    Coordinate n = (Coordinate)neighbors.next();
 		    buf.append("tile" + getTileNumber(getTile(i,j)) + " -> tile" +
-			       getTileNumber(n) + " [weight = 10000];\n");
+			       getTileNumber(n) + " [weight = 100000000];\n");
 		}
 	    }
 	}
@@ -553,18 +553,25 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    if (FileVisitor.fileNodes.contains(node))
 		continue;
 	    buf.append("tile" +   getTileNumber(node) + "[label=\"" + 
-			node.getName() + "\"];\n");
+		       //getTileNumber(node) + "\"];\n");
+		       node.getName() + "\"];\n");
 	     
 	     //we only map joiners and filters to tiles and they each have
 	     //only one output
 	     Iterator downstream = getDownStream(node).iterator();
+	     int y=getTile(node).getRow();
 	     while(downstream.hasNext()) {
 		 FlatNode n = (FlatNode)downstream.next();
 		 if (FileVisitor.fileNodes.contains(n))
 		     continue;
 		 buf.append("tile" + getTileNumber(node) + 
 			    " -> tile" +
-			    getTileNumber(n) + " [weight = 1];\n");
+			    getTileNumber(n) + " [weight = 1]");
+		 int thisRow=getTile(n).getRow();
+		 if(Math.abs(thisRow-y)<=1)
+		     buf.append(";\n");
+		 else
+		     buf.append(" [constraint=false];\n");
 	     }
 	     
 	}
@@ -625,7 +632,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    }
 	    */
 	    for (int i = 0; i < node.ways; i++) {
-		RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
+		if(node.weights[i]!=0)
+		    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
 	    }
 	    return ret;
 	}

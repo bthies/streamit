@@ -9,7 +9,7 @@ public class UnflatFilter {
     public SIRFilter filter;
     public int[] inWeights,outWeights;
     //IntList inWeights,outWeights;
-    UnflatEdge[] in;
+    public UnflatEdge[] in;
     public UnflatEdge[][] out;
     private static int nullNum=0;
     private String name;

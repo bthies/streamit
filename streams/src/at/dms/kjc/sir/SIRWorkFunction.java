@@ -92,6 +92,16 @@ public class SIRWorkFunction extends SIROperator
     {
         return this.push;
     }
+
+    public JMethodDeclaration getWork()
+    {
+        return this.work;
+    }
+    
+    public void setWork(JMethodDeclaration work)
+    {
+        this.work = work;
+    }
     
     /**
      * Returns how many items are popped.  This will throw an

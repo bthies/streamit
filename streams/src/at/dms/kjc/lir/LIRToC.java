@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.89 2003-12-08 22:34:43 dmaze Exp $
+ * $Id: LIRToC.java,v 1.90 2003-12-08 23:24:57 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -2020,8 +2020,7 @@ public class LIRToC
         print("register_receiver(");
         portal.accept(this);
         print(", ");
-        streamContext.accept(this);
-        print("->" + childName + "->" + CONTEXT_NAME + ", ");
+        print(THIS_NAME + "->" + childName + "->" + CONTEXT_NAME + ", ");
         print(itable.getVarDecl().getIdent());
         print(", LATENCY_BEST_EFFORT);");
         // (But shouldn't there be a latency field in here?)

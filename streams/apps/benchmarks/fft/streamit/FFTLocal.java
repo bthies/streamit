@@ -4,6 +4,8 @@ class IdentityLocal extends Filter {
     Channel input = new Channel(Float.TYPE, 1);
     Channel output = new Channel(Float.TYPE, 1);
 
+    public void init() {}
+
     public void initIO() {
         this.streamInput = input;
         this.streamOutput = output;
@@ -172,7 +174,7 @@ class FloatPrinterLocal extends Filter
     }
     public void work ()
     {
-        System.out.println (input.popFloat ());
+        input.popFloat ();
     }
 }
 
@@ -183,7 +185,7 @@ public class FFTLocal extends StreamIt {
 
     public void init() {
         this.add(new OneSourceLocal());
-        this.add(new FFTKernelLocal(16));
+        this.add(new FFTKernelLocal(8192));
         this.add(new FloatPrinterLocal());
     }
 }

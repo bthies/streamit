@@ -1,6 +1,6 @@
 package streamit.scheduler2.print;
 
-/* $Id: PrintProgram.java,v 1.4 2003-04-02 09:15:57 thies Exp $ */
+/* $Id: PrintProgram.java,v 1.5 2003-04-06 20:07:20 karczma Exp $ */
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -383,9 +383,9 @@ public class PrintProgram extends streamit.misc.AssertedClass
                 int nIn;
                 for (nIn = 0; nIn < fl.getFanIn() - 1; nIn++)
                 {
-                    outputStream.writeBytes(fl.getSplitPushWeights(0)[nIn] + ", ");
+                    outputStream.writeBytes(fl.getJoinPopWeights(0)[nIn] + ", ");
                 }
-                outputStream.writeBytes(fl.getSplitPushWeights(0)[nIn] + "));\n");
+                outputStream.writeBytes(fl.getJoinPopWeights(0)[nIn] + "));\n");
             }
 
             outputStream.writeBytes("  }\n");

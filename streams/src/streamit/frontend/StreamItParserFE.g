@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.20 2002-11-20 15:53:46 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.21 2002-11-20 17:09:59 dmaze Exp $
  */
 
 header {
@@ -42,10 +42,8 @@ options {
 		if (line == 0) line = -1;
 		int col = t.getColumn();
 		if (col == 0) col = -1;
-		return new FEContext(fileName, line, col);
+		return new FEContext(getFilename(), line, col);
 	}
-
-	public String fileName;
 }
 
 program	returns [Program p]

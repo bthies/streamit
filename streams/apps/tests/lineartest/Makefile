@@ -11,12 +11,14 @@ ANALYSIS-OPTIONS  = --constprop --linearanalysis --debug
 LINTRANS-OPTIONS =  --constprop --linearanalysis --linearreplacement --debug
 # options to use for frquency transformation
 FREQTRANS-OPTIONS =  --constprop --linearanalysis --frequencyreplacement --debug
+# options to use for both transformations
+BOTH-OPTIONS      =  --constprop --linearanalysis --linearreplacement --frequencyreplacement --debug
 
 # regression testing perl script
 LINEAR-REG-TEST = linear_regtest.pl
 
 # current test
-CURRENT-TEST = regtests/LinearTest22
+CURRENT-TEST = regtests/LinearTest24
 
 all: clean java-compile uni-compile raw-compile
 
@@ -40,6 +42,12 @@ test-current-freq: linear-compile
 	$(UNI-COMPILER) test-freq.c -o test-freq.exe
 	$(UNI-COMPILER) test-normal.c -o test-normal.exe
 	#./test-freq.exe -i 1
+
+test-current-both: linear-compile
+	$(NEW-FRONTEND) $(CURRENT-TEST).str > $(CURRENT-TEST).java
+	$(STREAMIT-COMPILER) $(BOTH-OPTIONS) $(CURRENT-TEST).java > current.output
+	./parse_linear_output.pl current.output
+
 
 
 test-current: linear-compile

@@ -35,27 +35,6 @@ class FloatSubtract extends Filter
     }
 }
 
-/**
- * Class BandPassFilter
- *
- * Implements a Low Pass FIR Filter
- */
-
-public class BandPassFilter extends Pipeline {
-
-    public BandPassFilter(float sampleRate, float lowFreq, float highFreq, int numTaps, float gain)
-    {
-        super(sampleRate, lowFreq, highFreq, numTaps, gain);
-    }
-
-
-    public void init(float sampleRate, float lowFreq, float highFreq, int numTaps, float gain)
-    {
-        add(new BandPassSplitJoin(sampleRate, lowFreq, highFreq, numTaps));
-        add (new FloatSubtract ());
-    }
-
-}
 
 /**
  * Need to have a separate class for now (instead of inlining this
@@ -79,6 +58,28 @@ class BandPassSplitJoin extends SplitJoin {
 	this.add(new LowPassFilter(sampleRate, lowFreq, numTaps, 0));
 	setJoiner(ROUND_ROBIN());
     }
+}
+
+/**
+ * Class BandPassFilter
+ *
+ * Implements a Low Pass FIR Filter
+ */
+
+public class BandPassFilter extends Pipeline {
+
+    public BandPassFilter(float sampleRate, float lowFreq, float highFreq, int numTaps, float gain)
+    {
+        super(sampleRate, lowFreq, highFreq, numTaps, gain);
+    }
+
+
+    public void init(float sampleRate, float lowFreq, float highFreq, int numTaps, float gain)
+    {
+        add(new BandPassSplitJoin(sampleRate, lowFreq, highFreq, numTaps));
+        add (new FloatSubtract ());
+    }
+
 }
 
 

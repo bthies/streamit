@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Optgen.g,v 1.1 2001-08-30 16:32:46 thies Exp $
+ * $Id: Optgen.g,v 1.2 2003-06-05 11:25:16 jasperln Exp $
  */
 
 // Import the necessary classes
@@ -41,6 +41,10 @@ options {
   codeGenBitsetTestThreshold = 3;
   defaultErrorHandler = false;		// Don't generate parser error handlers
   access = "private";			// Set default rule access
+}
+
+{
+ private int optshort=-1;
 }
 
 public aCompilationUnit [String sourceFile]
@@ -129,7 +133,7 @@ aOptionDefinition []
   returns [OptionDefinition self]
 {
  String longname;
- String shortname;
+ String shortname=null;
  String type;
  String defaultValue;
  String argument = null;
@@ -137,7 +141,7 @@ aOptionDefinition []
 }
 :
   "longname"	longname = aString[]
-  "shortcut"	shortname = aString[]
+  ( "shortcut"	shortname = aString[]| {shortname="\""+String.valueOf(optshort)+"\"";optshort--;} )
   "type"	type = aOptionType[]
   "default"	defaultValue = aString[]
   ( "optionalDefault" argument = aString[] | "requireArgument" { argument = ""; }| )

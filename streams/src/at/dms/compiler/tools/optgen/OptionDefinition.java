@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: OptionDefinition.java,v 1.2 2002-09-27 22:41:39 thies Exp $
+ * $Id: OptionDefinition.java,v 1.3 2003-06-05 11:25:16 jasperln Exp $
  */
 
 package at.dms.compiler.tools.optgen;
@@ -102,9 +102,15 @@ class OptionDefinition {
    * @param	prefix		the literal prefix
    */
   public void printParseArgument(PrintWriter out) {
-    out.print("    case \'");
-    out.print(shortname);
-    out.println("\':");
+    out.print("    case ");
+    if(shortname.length()>1) 
+	out.print(shortname);
+    else {
+	out.print("\'");
+	out.print(shortname);
+	out.print("\'");
+    }
+    out.println(":");
 
     out.print("      ");
     out.print(longname);
@@ -187,9 +193,15 @@ class OptionDefinition {
     } else {
       out.print("LongOpt.OPTIONAL_ARGUMENT");
     }
-    out.print(", null, \'");
-    out.print(shortname);
-    out.print("\')");
+    out.print(", null, ");
+    if(shortname.length()>1)
+	out.print(shortname);
+    else {
+	out.print("\'");
+	out.print(shortname);
+	out.print("\'");
+    }
+    out.print(")");
   }
 
   public void printShortOption(PrintWriter out) {

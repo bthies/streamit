@@ -4,11 +4,13 @@ import at.dms.compiler.tools.antlr.runtime.*;
 
   import java.util.Vector;
 
-  import at.dms.compiler.tools.common.Utils;
+import at.dms.compiler.tools.common.Utils;
 
 public class OptgenParser extends at.dms.compiler.tools.antlr.runtime.LLkParser
        implements OptgenTokenTypes
  {
+
+ private int optshort=-1;
 
 protected OptgenParser(TokenBuffer tokenBuf, int k) {
   super(tokenBuf,k);
@@ -289,7 +291,7 @@ public OptgenParser(ParserSharedInputState state) {
 		
 		
 		String longname;
-		String shortname;
+		String shortname=null;
 		String type;
 		String defaultValue;
 		String argument = null;
@@ -298,8 +300,25 @@ public OptgenParser(ParserSharedInputState state) {
 		
 		match(LITERAL_longname);
 		longname=aString();
-		match(LITERAL_shortcut);
-		shortname=aString();
+		{
+		switch ( LA(1)) {
+		case LITERAL_shortcut:
+		{
+			match(LITERAL_shortcut);
+			shortname=aString();
+			break;
+		}
+		case LITERAL_type:
+		{
+			shortname="\""+String.valueOf(optshort)+"\"";optshort--;
+			break;
+		}
+		default:
+		{
+			throw new NoViableAltException(LT(1), getFilename());
+		}
+		}
+		}
 		match(LITERAL_type);
 		type=aOptionType();
 		match(LITERAL_default);

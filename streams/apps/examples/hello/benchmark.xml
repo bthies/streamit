@@ -6,18 +6,17 @@ This is a demonstration benchmark, intended to be the simplest
 possible StreamIt program.  There are two filters; the first generates
 an increasing sequence of numbers, the second prints this sequence.
   </description>
-  <reference>(none)</reference>
   <implementations>
     <impl lang="C">
-      <desc>MIT, to demonstrate compiler output format</desc>
+      <desc>Demonstration of compiler output format</desc>
       <file>HelloWorld6.c</file>
     </impl>
     <impl lang="Java">
-      <desc>MIT, "old syntax" implementation</desc>
+      <desc>"Old syntax" Java implementation</desc>
       <file>HelloWorld6.java</file>
     </impl>
     <impl lang="StreamIt">
-      <desc>MIT, "new syntax" implementation</desc>
+      <desc>"New syntax" StreamIt implementation</desc>
       <file>HelloWorld6.str</file>
     </impl>
   </implementations>

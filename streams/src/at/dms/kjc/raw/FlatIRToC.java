@@ -1067,7 +1067,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	  print(", ");
 	*/
         num.accept(this);
-        print("])");
+        print(" + 1])");
     }
     
     public void visitPopExpression(SIRPopExpression self,

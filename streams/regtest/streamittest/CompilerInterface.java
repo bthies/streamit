@@ -6,14 +6,14 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.10 2002-10-07 05:18:47 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.11 2002-10-21 18:52:38 aalamb Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
     public static final int NONE               =    0x0;
     //public static final int RAW              =    0x1;
     public static final int CONSTPROP          =    0x2;
-    public static final int UNROLL             =    0x4;
+    public static final int UNROLL             =    0x4; // sets unroll limit to 100000
     public static final int FUSION             =    0x8;
     public static final int PARTITION          =   0x10;
     public static final int[] RAW              = { 0x00,   // ignore the 0 case
@@ -35,7 +35,7 @@ public class CompilerInterface {
     // Options
     public static final String OPTION_STREAMIT           = "--streamit";
     public static final String OPTION_CONSTPROP          = "--constprop";
-    public static final String OPTION_UNROLL             = "--unroll";
+    public static final String OPTION_UNROLL             = "--unroll 100000";
     public static final String OPTION_FUSION             = "--fusion";
     public static final String OPTION_PARTITION          = "--partition";
 
@@ -276,4 +276,5 @@ public class CompilerInterface {
 	}
 	return false;
     }
+
 }

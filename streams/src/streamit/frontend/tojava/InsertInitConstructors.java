@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.9 2003-06-25 15:33:23 dmaze Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.10 2003-06-27 19:45:50 dmaze Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
@@ -110,6 +110,20 @@ public class InsertInitConstructors extends InitMunger
 
     public Object visitStmtVarDecl(StmtVarDecl decl)
     {
+        // Prepass: check all of the types in the declaration.
+        // If none of them need constructors, don't actually
+        // go through with this.  (So what?  This hack lets
+        // the code work correctly even with a variable declaration
+        // in the initializer part of a for loop, otherwise the
+        // declaration gets pulled out of the loop and null replaces
+        // the initializer.)
+        boolean needed = false;
+        for (int i = 0; i < decl.getNumVars(); i++)
+            if (needsConstructor(decl.getType(i)))
+                needed = true;
+        if (!needed)
+            return decl;
+        
         // We're not actually going to modify this declaration, but
         // we may generate some additional statements (for constructors)
         // that go after it.

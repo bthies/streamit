@@ -71,20 +71,29 @@ public class SIRScheduler implements Constants {
 
     /**
      * Does the scheduling, adding a work function corresponding to
-     * <toplevel> to <flatClass>.
+     * <toplevel> to <flatClass>.  Returns the schedule built as part
+     * of this.
      */
-    public static Schedule schedule(SIRStream toplevel, 
-				    JClassDeclaration flatClass) {
-	return new SIRScheduler(flatClass).schedule(toplevel);
+    public static Schedule buildWorkFunctions(SIRStream toplevel, 
+					      JClassDeclaration flatClass) {
+	return new SIRScheduler(flatClass).buildWorkFunctions(toplevel);
+    }
+
+    /**
+     * Returns a schedule for <str>.
+     */
+    public static Schedule getSchedule(SIRStream str) {
+	// keep track of two-stage filters in a dummy HashMap
+	return getSchedule(str, new HashMap());
     }
 
     /**
      * The private, instance-wise version of <schedule>, to do the
      * scheduling.
      */
-    private Schedule schedule(SIRStream toplevel) {
+    private Schedule buildWorkFunctions(SIRStream toplevel) {
 	// get the schedule
-	Schedule schedule = getSchedule(toplevel);
+	Schedule schedule = getSchedule(toplevel, twoStageFilters);
 	// do steady-state scheduling
 	scheduleSteady(toplevel, schedule);
 	// do initial scheduling
@@ -94,9 +103,11 @@ public class SIRScheduler implements Constants {
     }
     
     /**
-     * Interface with the scheduler to get a schedule for <toplevel>
+     * Interface with the scheduler to get a schedule for <toplevel>.
+     * Records all associations of two-stage filters in <twoStageFilters>.
      */
-    private Schedule getSchedule(SIRStream toplevel) {
+    private static Schedule getSchedule(SIRStream toplevel,
+				 HashMap twoStageFilters) {
 	// make a scheduler
 	Scheduler scheduler = new SimpleHierarchicalSchedulerPow2();
 	// get a representation of the stream structure

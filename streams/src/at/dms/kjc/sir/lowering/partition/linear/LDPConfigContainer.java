@@ -109,8 +109,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 	    }
 	}
 	for (int i=0; i<uniform.length; i++) {
-	    if (uniform[i]) {
-		debugMessage("Found row " + i + "/" + (uniform.length-1) + " of " + cont.getIdent() + " to be uniform.");
+	    if (uniform[i] && width[i]>1) {
+		debugMessage("Found row " + i + "/" + (uniform.length-1) + " of " + cont.getName() + " to be uniform.");
 	    }
 	}
     }
@@ -145,9 +145,11 @@ abstract class LDPConfigContainer extends LDPConfig {
 		for (int i1=low; i1<=high; i1++) {
 		    // only aliasing from i2=i1..high matters, but we'd just as well go i2=low...high
 		    for (int i2=low; i2<=high; i2++) {
-			for (int i3=0; i3<width[low]; i3++) {
-			    A[i3][i3][i1][i2] = A[0][0][i1][i2];
-			    strCache[i3][i3][i1][i2] = strCache[0][0][i1][i2];
+			for (int xWidth=0; xWidth<width[low]-1; xWidth++) {
+			    for (int xStart=1; xStart<width[low]-xWidth; xWidth++) {
+				A[xStart][xStart+xWidth][i1][i2] = A[0][xWidth][i1][i2];
+				strCache[xStart][xStart+xWidth][i1][i2] = strCache[xStart][xStart+xWidth][i1][i2];
+			    }
 			}
 		    }
 		}
@@ -367,8 +369,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	    // consider each pipeline individually.
 	    boolean tryHoriz = false;
 	    if (x1==x2) {
-		// if we have a pipeline or we can't make vertical
-		// cut, must try the horizontal cut
+		// if we have a pipeline, must try the horizontal cut
 		tryHoriz = true;
 	    } else {
 		// if we're in 2-D cut mode, then see if there's a chance to try it
@@ -415,7 +416,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 				     get(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, factored.get(1)) );
 		}
 	    } else {
-		debugMessage(" Not trying vertical cut.");
+		debugMessage(" Not trying horizontal cut.");
 	    }
 
 	    // do linear analysis here, now that children have been

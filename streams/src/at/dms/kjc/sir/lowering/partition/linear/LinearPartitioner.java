@@ -131,7 +131,7 @@ public class LinearPartitioner {
      */
     private LDPConfig buildStreamConfig() {
 	RefactorSplitJoin.addDeepRectangularSyncPoints(str);
-	StreamItDot.printGraph(str, "debug.dot");
+	StreamItDot.printGraph(str, "ldp-partition-input.dot");
 	return (LDPConfig)str.accept(new ConfigBuilder());
     }
 

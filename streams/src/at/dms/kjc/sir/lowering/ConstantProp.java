@@ -37,10 +37,10 @@ public class ConstantProp {
 	do {
 	    // make a propagator
 	    Propagator propagator = new Propagator(constants);
-	    // propagate into split/join weights, if we have them
-	    propagateSplitJoins(propagator, str);
 	    // propagate constants within init function of <str>
 	    str.getInit().accept(propagator);
+	    // propagate into fields of <str>
+	    propagateFields(propagator, str);
 	    // unroll loops within init function of <str>
 	    unroller = new Unroller(constants);
 	    str.getInit().accept(unroller);
@@ -61,22 +61,48 @@ public class ConstantProp {
     }
 
     /**
-     * Given a propagator <propagator>, this propagates constants into
-     * any Splitter or Joiner nodes in <str>, in order to resolve the
-     * weights of the splitting/joining.
+     * Given a propagator <propagator>, this propagates constants
+     * through the fields of <str>.
      */
-    private void propagateSplitJoins(Propagator propagator, SIRStream str) {
-	// only have something to do for splitjoins and feedbackloops
-	if (str instanceof SIRSplitJoin) {
+    private void propagateFields(Propagator propagator, SIRStream str) {
+	if (str instanceof SIRFilter) {
+	    propagateFilterFields(propagator, (SIRFilter)str);
+	} if (str instanceof SIRSplitJoin) {
+	    // for split-joins, resolve the weights of splitters and
+	    // joiners
 	    propagator.visitArgs(((SIRSplitJoin)str).
 				 getJoiner().getInternalWeights());
 	    propagator.visitArgs(((SIRSplitJoin)str).
 				 getSplitter().getInternalWeights());
 	} else if (str instanceof SIRFeedbackLoop) {
+	    // for feedback loops, resolve the weights of splitters
+	    // and joiners
 	    propagator.visitArgs(((SIRFeedbackLoop)str).
 				 getJoiner().getInternalWeights());
 	    propagator.visitArgs(((SIRFeedbackLoop)str).
 				 getSplitter().getInternalWeights());
+	}
+    }
+
+    /**
+     * Use <propagator> to propagate constants into the fields of <filter>
+     */
+    private void propagateFilterFields(Propagator propagator, 
+				       SIRFilter filter) {
+	// propagate to pop expression
+	JExpression newPop = (JExpression)filter.getPop().accept(propagator);
+	if (newPop!=null && newPop!=filter.getPop()) {
+	    filter.setPop(newPop);
+	}
+	// propagate to peek expression
+	JExpression newPeek = (JExpression)filter.getPeek().accept(propagator);
+	if (newPeek!=null && newPeek!=filter.getPop()) {
+	    filter.setPop(newPeek);
+	}
+	// propagate to push expression
+	JExpression newPush = (JExpression)filter.getPop().accept(propagator);
+	if (newPush!=null && newPush!=filter.getPop()) {
+	    filter.setPop(newPush);
 	}
     }
 

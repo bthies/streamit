@@ -89,13 +89,13 @@ public class RegisterStreams implements FlatVisitor {
     }
 
     public static NetStream getFilterInStream(SIRFilter filter) {
-    
-	return (NetStream)((Vector)filterInStreams.get(filter)).elementAt(0);
+    	Vector v = (Vector)filterInStreams.get(filter);
+	if (v.size() == 0) return null; else return (NetStream)v.elementAt(0);
     }
 
     public static NetStream getFilterOutStream(SIRFilter filter) {
-    
-	return (NetStream)((Vector)filterOutStreams.get(filter)).elementAt(0);
+    	Vector v = (Vector)filterOutStreams.get(filter);
+	if (v.size() == 0) return null; else return (NetStream)v.elementAt(0);
     }
 
 

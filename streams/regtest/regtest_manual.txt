@@ -1,55 +1,107 @@
 Documentation for StreamIT Regression Testing framework
 Andrew Lamb (aalamb@mit.edu) 6/25/2002
-$Id: regtest_manual.txt,v 1.3 2002-07-17 18:35:22 aalamb Exp $
+$Id: regtest_manual.txt,v 1.4 2002-10-02 14:00:12 dmaze Exp $
 
 
 Introduction
 
-A new test (and regression test) framework exists in streams/regtest/ based on JUnit (www.junit.org), an open-source java based regression testing framework. The tests themselves are specified in java classes and typically refer to streamit program sources and sample output. The Makefile in the streams/regtest controls the regression testing.
+A new test (and regression test) framework exists in streams/regtest/ based on
+JUnit (www.junit.org), an open-source java based regression testing framework.
+The tests themselves are specified in java classes and typically refer to
+streamit program sources and sample output. The Makefile in the
+streams/regtest controls the regression testing.
 
-Each streamit program in the regression testing framework can be automatically compiled and run, with its output checked against the contents of a file you specifty. Both the uniprocessor backend and the RAW backend are supported. You can also check simply that a program compiles but not check its output.
+Each streamit program in the regression testing framework can be automatically
+compiled and run, with its output checked against the contents of a file you
+specifty. Both the uniprocessor backend and the RAW backend are supported. You
+can also check simply that a program compiles but not check its output.
 
 
 Running a Regression Test
 
-The easiest way to run the regression test suite is to go to the regtest directory and run make. However, this will take a long time (like overnight long) beccause each test program is compiled using several different optimizations . A far better way to use the regression testing framework on a regular basis is to add a regression test for the specific program you are working on.
+The easiest way to run the regression test suite is to go to the regtest
+directory and run make. However, this will take a long time (like overnight
+long) beccause each test program is compiled using several different
+optimizations . A far better way to use the regression testing framework on a
+regular basis is to add a regression test for the specific program you are
+working on.
 
-Based on the makefile, either a text user interface or a graphical user interface can be used by JUnit. The graphical UI reports failures in detail as they occur. The text UI waits until all tests are run before issuing its detailed report. 
+Based on the makefile, either a text user interface or a graphical user
+interface can be used by JUnit. The graphical UI reports failures in detail as
+they occur. The text UI waits until all tests are run before issuing its
+detailed report. 
 
-As the regression tests are run, all error messages are placed in the file regtest_errors.txt. In general, a test fails only when some external utility returns with a non-zero error message. However, even if 0 is returned, any output to stderr is dumped to regtest_errors.txt. If a non-zero result is returned, then stdout is also dumped to regtest_errors.txt. After all of the regression tests have been run, regtest_errors.txt provides a useful way to perform a post-mortem on any test that fails.
+As the regression tests are run, all error messages are placed in the file
+regtest_errors.txt. In general, a test fails only when some external utility
+returns with a non-zero error message. However, even if 0 is returned, any
+output to stderr is dumped to regtest_errors.txt. If a non-zero result is
+returned, then stdout is also dumped to regtest_errors.txt. After all of the
+regression tests have been run, regtest_errors.txt provides a useful way to
+perform a post-mortem on any test that fails.
 
-The defualt target of the Makefile included in the main regtest directory will automatically run the full suite of regression tests, which takes a loooong time. If you want something to run before checkin, you might consider running "make test-checkin" which will run all of the tests for the uniprocessor path, or "make test-checkin-raw" which will run all of the tests with the compiler given the --raw 4 option.
+The defualt target of the Makefile included in the main regtest directory will
+automatically run the full suite of regression tests, which takes a loooong
+time. If you want something to run before checkin, you might consider running
+"make test-checkin" which will run all of the tests for the uniprocessor path,
+or "make test-checkin-raw" which will run all of the tests with the compiler
+given the --raw 4 option.
 
 
 Adding New Tests (Do Often)
 
-The easiest way to add another program regression test is to modify the java files in the streams/regtest/streamittest directory. Specifically, TestExamples.java and TestApps.java contain code for executing and testing examples in the streams/docs/examples/hand/ directoy and apps in the streams/Apps. To add a test, you need to do two things:
+The easiest way to add another program regression test is to modify the java
+files in the streams/regtest/streamittest directory. Specifically,
+TestExamples.java and TestApps.java contain code for executing and testing
+examples in the streams/docs/examples/hand/ directoy and apps in the
+streams/Apps. To add a test, you need to do two things:
+
 1. Make a public void method named something like newTest()
-2. Add a line (like the ones already present) in the suite() method with something like 
+2. Add a line (like the ones already present) in the suite() method with
+   something like
    suite.addTest(new TestExamples("testFieldProp2", flags));
 
-Sometimes you might want to make your own suite (say if you want to be able to run some tests individually, but still have them integrated into the regression testing framework). The procedure to add a new TestSuite is straightforward:
+Sometimes you might want to make your own suite (say if you want to be able to
+run some tests individually, but still have them integrated into the
+regression testing framework). The procedure to add a new TestSuite is
+straightforward:
+
 1. Copy streamittest/TestTemplate.java into your new test file.
 2. Replace TestTemplate with your new test name
 3. Add a line in TestAll .makeTestSuite like
    suite.addTest(TestTemplate.suite(flags));
 
-And you are all set to go. If you want to run only your new tests, run either of the commands:
+And you are all set to go. If you want to run only your new tests, run either
+of the commands:
+
 (graphical UI) junit.swingui.TestRunner streamittest.TestApps
 (textui UI)    junit.textui.TestRunner  streamittest.TestApps
 
 replacing streamittest.TestApps with your class's completely qualified name.
 
-You are also free to play with the streamittest/TestBed.java file as a personal sandbox to test out various combinations of tests. To run your testbed test suite, you simply call make test-bed.
+You are also free to play with the streamittest/TestBed.java file as a
+personal sandbox to test out various combinations of tests. To run your
+testbed test suite, you simply call make test-bed.
 
 
 Internals Explanation and Organization
 
-All tests in JUnit are derived from the TestCase class. TestCase is a bit of a misnomer because a single TestCase class often contains numerous individual test cases. TestCases can be run directly by the a TestRunner, or they can be grouped together into TestSuites. (You can execute a TestRunners on an individual TestCase as shown above).
+All tests in JUnit are derived from the TestCase class. TestCase is a bit of a
+misnomer because a single TestCase class often contains numerous individual
+test cases. TestCases can be run directly by the a TestRunner, or they can be
+grouped together into TestSuites. (You can execute a TestRunners on an
+individual TestCase as shown above).
 
-All TestCases for streamit extend StreamITTestCase, which contains useful utility procedures for executing and verifying a program's output. 
+All TestCases for streamit extend StreamITTestCase, which contains useful
+utility procedures for executing and verifying a program's output. 
 
-The basic idea of Harness, CompilerHarness and RuntimeHarness is to abstract away (via several levels of indirection) the nonsense involved with executing native commands in java. CompilerInterface is provided to abstract away the calls to the compiler and to encapsulate the compiler options. This insulates StreamItTestCase, and we don't need to pass around compiler options all over the place. ResultPrinter is the central control station via which all output is generated. By outputting via ResultPrinter, capturing relevant output becomes easy.
+The basic idea of Harness, CompilerHarness and RuntimeHarness is to abstract
+away (via several levels of indirection) the nonsense involved with executing
+native commands in java. CompilerInterface is provided to abstract away the
+calls to the compiler and to encapsulate the compiler options. This insulates
+StreamItTestCase, and we don't need to pass around compiler options all over
+the place. ResultPrinter is the central control station via which all output
+is generated. By outputting via ResultPrinter, capturing relevant output
+becomes easy.
 
 Success Definitions (checked for in streamittest.Harness):
 Streamit Compilation: java returns 0
@@ -61,29 +113,32 @@ Raw Execution:   auto generated "make run" return 0
 
 There are several files that the regtest generates via the ResultPrinter class:
 regtest_errors: 
-      The regression test framework dumps the raw stderr for any process that it
-runs to regtest_errors. In addition, after running any program/script that returns
-a non zero exit value, both stdout and stderr are dumped to the error file.
+      The regression test framework dumps the raw stderr for any process that
+      it runs to regtest_errors. In addition, after running any program/script
+      that returns a non zero exit value, both stdout and stderr are dumped to
+      the error file.
 
 regtest_results:
-      The regression test framework puts two lines in the results file for each 
-successful execution/verification that it performs on raw. The first line is a date/time 
-stamp along with the filename that was run and the options used to compile. The second
-line has the following format: (cycle in hex) (cycle in dec) (#output produced)
-which tells us the (roughly) # cycles needed to produce an output. This is not totally 
-accurate because it doesn't take into account startup costs.
+      The regression test framework puts two lines in the results file for
+      each successful execution/verification that it performs on raw. The
+      first line is a date/time stamp along with the filename that was run and
+      the options used to compile. The second line has the following format:
+      (cycle in hex) (cycle in dec) (#output produced)
+      which tells us the (roughly) # cycles needed to produce an output. This
+      is not totally accurate because it doesn't take into account startup
+      costs.
 
 regtest_success:
-      The regtest framework writes a line for each successful test that it performs.
-This serves the dual purpose of letting us know explicitly which tests were run
-and succeeded and also lets us give people a pat on the back when we are sending out 
-test results.
+      The regtest framework writes a line for each successful test that it
+      performs.  This serves the dual purpose of letting us know explicitly
+      which tests were run and succeeded and also lets us give people a pat on
+      the back when we are sending out test results.
 
 regtest_perf_script.txt:
-      The regression test framework writes a line in the perf script for each successful 
-raw execution run that it encounters. The perf script is then fed to the reap_results.pl
-script which automates gathering numbers and making graphs for compiler's performance
-for raw.
+      The regression test framework writes a line in the perf script for each
+      successful raw execution run that it encounters. The perf script is then
+      fed to the reap_results.pl script which automates gathering numbers and
+      making graphs for compiler's performance for raw.
 
 
 

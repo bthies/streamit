@@ -1,4 +1,6 @@
-package at.dms.kjc.sir.linear;
+package at.dms.kjc.sir.linear.transform;
+
+import at.dms.kjc.sir.linear.*;
 
 /**
  * Represents a pipeline combination transform. Combines two filter that
@@ -6,9 +8,9 @@ package at.dms.kjc.sir.linear;
  * the same work. This combination might require each of the individual
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.<p>
- * $Id: LinearTransformPipeline.java,v 1.5 2002-10-23 21:12:44 aalamb Exp $
+ * $Id: LinearTransformPipeline.java,v 1.6 2002-11-25 20:33:26 aalamb Exp $
  **/
-class LinearTransformPipeline extends LinearTransform {
+public class LinearTransformPipeline extends LinearTransform {
     /** The upstream filter representation. **/
     LinearFilterRepresentation upstreamRep;
     /** the downstream filter representation. **/

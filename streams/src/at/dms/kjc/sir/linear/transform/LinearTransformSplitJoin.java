@@ -1,5 +1,6 @@
-package at.dms.kjc.sir.linear;
+package at.dms.kjc.sir.linear.transform;
 
+import at.dms.kjc.sir.linear.*;
 import java.util.*;
 //import at.dms.kjc.*;
 //mport at.dms.kjc.sir.*;
@@ -9,7 +10,7 @@ import java.util.*;
 /**
  * Contains the code for merging all the filters from a split join
  * into a single monolithic matrix.
- * $Id: LinearTransformSplitJoin.java,v 1.4 2002-10-18 18:12:10 aalamb Exp $
+ * $Id: LinearTransformSplitJoin.java,v 1.5 2002-11-25 20:33:26 aalamb Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;

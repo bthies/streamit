@@ -1,7 +1,9 @@
-package at.dms.kjc.sir.linear;
+package at.dms.kjc.sir.linear.transform;
+
+import at.dms.kjc.sir.linear.*;
 
 /** Represents a null transform -- eg no transform is applied. **/
-class LinearTransformNull extends LinearTransform {
+public class LinearTransformNull extends LinearTransform {
     /** The reason that no transformation could be applied. **/
     String reason;
     /**

@@ -1,5 +1,6 @@
-package at.dms.kjc.sir.linear;
+package at.dms.kjc.sir.linear.transform;
 
+import at.dms.kjc.sir.linear.*;
 import java.util.*;
 //import at.dms.kjc.*;
 //mport at.dms.kjc.sir.*;

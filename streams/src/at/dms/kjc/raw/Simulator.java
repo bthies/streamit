@@ -311,7 +311,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 			return getDestination(node.edges[i], counters);
 		    }
 		}
-		//none where greater than zero, reset all counters
+		//none were greater than zero, reset all counters
 		//and send to the first
 		for (int i = 0; i < node.ways; i++) {
 		    counters.resetArcCountOutgoing(node, i);

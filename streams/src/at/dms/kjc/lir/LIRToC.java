@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.28 2001-10-26 22:06:55 dmaze Exp $
+ * $Id: LIRToC.java,v 1.29 2001-10-26 22:08:53 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1398,7 +1398,9 @@ public class LIRToC
                                       JExpression[] params,
                                       SIRLatency latency)
     {
-	print("send_" + iname + "_" + ident + "(" + portal + ", ");
+	print("send_" + iname + "_" + ident + "(");
+        portal.accept(this);
+        print(", ");
         latency.accept(this);
         if (params != null)
             for (int i = 0; i < params.length; i++)

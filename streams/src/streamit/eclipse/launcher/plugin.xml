@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin
+	id="launcher"
+	name = "%pluginName"
+	version="1.0.0"
+	provider-name = "%providerName"
+	class="launcher.StreamItLauncherPlugin">
+	
+	<requires>
+		<import plugin="org.eclipse.ui"/>
+		<import plugin="org.eclipse.core.resources"/>
+		<import plugin="org.eclipse.debug.core"/>
+		<import plugin="org.eclipse.debug.ui"/>
+		<import plugin="org.eclipse.jdt.debug.ui"/>
+		<import plugin="org.eclipse.jdt.launching"/>
+		<import plugin="org.eclipse.jdt.core"/>
+	</requires>
+	
+	<runtime>
+		<library name="launcher.jar"/>
+	</runtime>
+
+	<!-- ================================================================== -->
+	<!-- Extension point: org.eclipse.debug.core.launchConfigurationTypes	-->
+	<!-- ================================================================== -->
+	<extension point = "org.eclipse.debug.core.launchConfigurationTypes">
+		<launchConfigurationType
+		   	id="launcher.localStreamItApplication"
+			name="%streamItLauncherName"
+			delegate="launcher.StreamItLocalApplicationLaunchConfigurationDelegate"
+			modes= "run, debug">
+			<fileExtension extension="str" default="true"/>
+		</launchConfigurationType>			
+	</extension>
+
+	<!-- ================================================================== -->
+	<!-- Extension point: org.eclipse.debug.core.sourceLocators				-->
+	<!-- ================================================================== -->
+<!-- 
+	<extension point = "org.eclipse.debug.core.sourceLocators">
+		<sourceLocator
+			id="launcher.javaSourceLocator"
+			class="launcher.StreamItUISourceLocator"
+			name="%streamItSourceLocator"/>
+	</extension>
+-->
+	<!-- ================================================================== -->
+	<!-- Extension point: org.eclipse.debug.core.launchConfigurationComparators -->
+	<!-- ================================================================== -->
+
+	<!-- ================================================================== -->
+	<!-- Extension point: org.eclipse.debug.core.statusHandlers				-->
+	<!-- ================================================================== -->
+
+	<!-- ================================================================== -->
+	<!-- Extension point: org.eclipse.debug.ui.launchConfigurationTabGroups -->
+	<!-- ================================================================== -->
+	<extension point = "org.eclipse.debug.ui.launchConfigurationTabGroups">
+		<launchConfigurationTabGroup
+			id="launcher.launchConfigurationTabGroup.localStreamItApplicationTabGroup"
+			type ="launcher.localStreamItApplication"
+			class="launcher.LocalStreamItApplicationTabGroup">
+		</launchConfigurationTabGroup>
+	</extension>
+
+	<!-- ================================================================== -->
+	<!-- Extension point: org.eclipse.debug.ui.launchConfigurationTypeImages -->
+	<!-- ================================================================== -->
+<!--	
+	<extension point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+		<launchConfigurationTypeImage
+			id="launcher.launchConfigurationTypeImage.localStreamItApplication"
+			configTypeID="launcher.localStreamItApplication"
+			icon="icons/full/ctool16/java_app.gif">
+		</launchConfigurationTypeImage>	
+	</extension>
+-->
+
+	<!-- ================================================================== -->
+	<!-- Extension point: org.eclipse.debug.ui.launchShortcuts				-->
+	<!-- ================================================================== -->
+<!--
+	<extension point = "org.eclipse.debug.ui.launchShortcuts">
+		<shortcut
+			id="launcher.localStreamItShortcut"
+			class="launcher.StreamItApplicationLaunchShortcut"
+			label="%StreamItApplicationLaunchShortcut.label"
+			icon="icons/full/ctool16/java_app.gif"
+			helpContextId="org.eclipse.jdt.debug.ui.shortcut_local_java_application"
+			modes="run, debug">
+			<perspective id="org.eclipse.jdt.ui.JavaPerspective"/>
+			<perspective id="org.eclipse.jdt.ui.JavaHierarchyPerspective"/>
+			<perspective id="org.eclipse.jdt.ui.JavaBrowsingPerspective"/>
+			<perspective id="org.eclipse.debug.ui.DebugPerspective"/>
+		</shortcut>
+	</extension>
+-->	
+</plugin>

@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.8 2002-10-03 20:20:04 dmaze Exp $
+# $Id: knit,v 1.9 2002-10-04 01:57:05 dmaze Exp $
 #
 
 use strict;
@@ -64,17 +64,17 @@ sub get_options
 	       "output|o=s",
 	       "raw|r=i",
 	       "verbose|v",
-	       "constprop|c!",
-	       "fusion|f!",
-	       "linearanalysis|i!",
-	       "linearreplacement|I!",
-	       "noanneal|N!",
-	       "partition|a!",
-	       "ratematch|x!",
-	       "simplesjfusion|S!",
-	       "sync|k!",
-	       "unroll|u!",
-	       "viram|V!");
+	       "constprop|c",
+	       "fusion|f",
+	       "linearanalysis|i",
+	       "linearreplacement|I",
+	       "noanneal|N",
+	       "partition|a",
+	       "ratematch|x",
+	       "simplesjfusion|S",
+	       "sync|k",
+	       "unroll|u",
+	       "viram|V");
   }
 
 sub call

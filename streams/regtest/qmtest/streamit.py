@@ -1,7 +1,7 @@
 #
 # streamit.py: Python extensions to QMTest for StreamIt
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamit.py,v 1.2 2003-11-20 17:08:41 dmaze Exp $
+# $Id: streamit.py,v 1.3 2003-11-20 22:42:39 dmaze Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -22,6 +22,7 @@ class TimedExecutable(qm.executable.RedirectedExecutable):
     # Insert some texec in here.
     def Run(self, arguments=[], environment=None, dir=None, path=None):
         newpath = os.environ["STREAMIT_HOME"] + "/regtest/tools/texec/texec"
+	if not path: path=arguments[0]
         arguments = [newpath, '-s', str(self.timeout), path] + arguments[1:]
         return qm.executable.RedirectedExecutable.Run(self, arguments,
                                                       environment,

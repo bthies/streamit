@@ -25,8 +25,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 {
     /* The  one to one parent*/
     private SIRStream parentStream;
-    /* the SIROperator parent (may equal parentStream) */
-    private SIROperator parentOperator;
     /* The Top Level SIR Operator */
     private SIRStream topLevel;
 
@@ -48,7 +46,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Kopi2SIR() {
 	parentStream = null;
 	topLevel = null;
-	parentOperator = null;
 	currentMethod = null;
 	visitedSIROps = new Hashtable(100);
     }
@@ -65,15 +62,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
     
     private void blockStart(String str) {
-	//System.out.println("attribute_visit" + str +"\n");
+	System.out.println("attribute_visit" + str +"\n");
     }
 
     private void printMe(String str) {
-	//System.out.println(str);
+	System.out.println(str);
     }
 
     
-    /* creates a new SIROperator setting parentOperator to this object
+    /* creates a new SIROperator setting parentStream to this object
        also, if the SIROperator is one to one, parentStream is set */
     private SIROperator newSIROP(JClassDeclaration clazz) {
 	String TYPE = clazz.getSourceClass().getSuperClass().getIdent();
@@ -82,7 +79,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    SIRPipeline current = new SIRPipeline((SIRContainer)parentStream, 
 				   JFieldDeclaration.EMPTY,
 				   JMethodDeclaration.EMPTY);
-	    parentOperator = parentStream = current;
+	    parentStream = current;
 	    return current;
 	}
 	if (TYPE.equals("Filter")) {
@@ -90,7 +87,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    current.setParent((SIRContainer)parentStream);
 	    current.setFields(JFieldDeclaration.EMPTY);
 	    current.setMethods(JMethodDeclaration.EMPTY);
-	    parentOperator = parentStream = current;
+	    parentStream = current;
 	    return current;
 	}
 	if (TYPE.equals("FeedbackLoop")) {
@@ -98,9 +95,17 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    current.setParent((SIRContainer)parentStream);
 	    current.setFields(JFieldDeclaration.EMPTY);
 	    current.setMethods(JMethodDeclaration.EMPTY);
-	    parentOperator = parentStream = current;
+	    parentStream = current;
 	    return current;
 	}
+	if (TYPE.equals("SplitJoin")) {
+	    SIRSplitJoin current = new SIRSplitJoin((SIRContainer)parentStream,
+						     JFieldDeclaration.EMPTY,
+						     JMethodDeclaration.EMPTY);
+	    parentStream = current;
+	    return current;
+	}
+						    
 	at.dms.util.Utils.fail("You are creating an unsupported streaMIT Operator: "
 			       + TYPE + ".");
 	return null;
@@ -121,45 +126,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	return false;
     }
 
-
-    /* given a string of the form push*, pop*, or peek*.  This method
-       returns the CType of corresponding to the *. */
-    private CType getTapeType(String exp) {
-	// based on the string type, set the type
-	
-	String type = "";
-
-	// Extract type
-	if (exp.startsWith("push") || exp.startsWith("peek"))
-	    type = exp.substring(4);
-	else if(exp.startsWith("pop"))
-	    type = exp.substring(3);
-	else
-	    at.dms.util.Utils.fail("SIR Expression Expected");
-	//Return CType based on extracted Type String
-	if (type.equals("Int"))
-	    return CStdType.Integer;
-	else if (type.equals("Character"))
-	    return CStdType.Char;
-	else if (type.equals("Boolean"))
-	    return CStdType.Boolean;
-	else if (type.equals("Byte"))
-	    return CStdType.Byte;
-	else if (type.equals("Double"))
-	    return CStdType.Double;
-	else if (type.equals("Float"))
-	    return CStdType.Float;
-	else if (type.equals("Short"))
-	    return CStdType.Short;
-	else if (type.equals("String"))
-	    return CStdType.String;	
-	else if (type.equals("Long"))
-	    return CStdType.Long;
-	else
-	    at.dms.util.Utils.fail("Non-Supported Type for SIR Push/Pop/Peek");
-	return null;
-    }
-   
     /* Given a method call expression, this function will create/return a 
        SIR Expression if the method call orignally denoted one. */
     private JPhylum newSIRExp(JMethodCallExpression exp, JExpression[] args) {
@@ -175,15 +141,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	
 	if (exp.getIdent().startsWith("push")) {
 	    newExp = new SIRPushExpression(args[0]);
-	    ((SIRPushExpression)newExp).setTapeType(getTapeType(exp.getIdent()));
+	    ((SIRPushExpression)newExp).setTapeType(((SIRFilter)parentStream).getOutputType());
 	}
 	if (exp.getIdent().startsWith("pop")) {
 	    newExp = new SIRPopExpression();
-	    ((SIRPopExpression)newExp).setTapeType(getTapeType(exp.getIdent()));
+	    ((SIRPopExpression)newExp).setTapeType(((SIRFilter)parentStream).getInputType());
 	}
 	if (exp.getIdent().startsWith("peek")) {
 	    newExp = new SIRPeekExpression(args[0]);
-	    ((SIRPeekExpression)newExp).setTapeType(getTapeType(exp.getIdent())); 
+	    ((SIRPeekExpression)newExp).setTapeType(((SIRFilter)parentStream).getInputType()); 
 	}
 	if (exp.getIdent().startsWith("println")) {
 	    newExp = new SIRPrintStatement(null, args[0], null);
@@ -252,7 +218,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
 	/* The current SIR Operator we are creating */
 	SIROperator current;
-	SIROperator oldParentOperator = parentOperator;
 	SIRStream oldParentStream = parentStream;
 	/* true if this class was created with an anonymous creation */
 	boolean anonCreation = false;
@@ -299,8 +264,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    addVisitedOp(ident, current);
 	     
 	parentStream = oldParentStream;
-	parentOperator = oldParentOperator;
-	
 	printMe( "Out " + self.getSourceClass().getSuperClass().getIdent()
 			    + num);
 	return current;
@@ -344,6 +307,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	blockStart("ClassBody");
 	for (int i = 0; i < decls.length ; i++)
             trash = decls[i].accept(this);
+	for (int i = 0; i < body.length ; i++)
+            trash = body[i].accept(this);
+	
 	
 	/* Install Empty Init Method */
 	if (parentStream.getInit() == null && !(parentStream instanceof SIRPipeline)) {
@@ -364,9 +330,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
         for (int i = 0; i < methods.length ; i++)
             trash = methods[i].accept(this); 
-        for (int i = 0; i < body.length ; i++)
-            trash = body[i].accept(this);
-	return null;
+     	return null;
     }
 
      /**
@@ -387,57 +351,29 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
     
 
-    /* this methods sets the input type of the given filter.  If
-       Type gives the type */
-    private void setInputType(SIRFilter filter, String type) {
-	// based on the string type, set the type
+    //return the Ctype based on the string type
+    private CType getType(String type) {
 	if (type.equals("Integer"))
-	    filter.setInputType(CStdType.Integer);
+	    return CStdType.Integer;
 	else if (type.equals("Character"))
-	    filter.setInputType(CStdType.Char);
+	    return CStdType.Char;
 	else if (type.equals("Boolean"))
-	    filter.setInputType(CStdType.Boolean);
+	    return CStdType.Boolean;
 	else if (type.equals("Byte"))
-	    filter.setInputType(CStdType.Byte);
+	    return CStdType.Byte;
 	else if (type.equals("Double"))
-	    filter.setInputType(CStdType.Double);
+	    return CStdType.Double;
 	else if (type.equals("Float"))
-	    filter.setInputType(CStdType.Float);
+	    return CStdType.Float;
 	else if (type.equals("Short"))
-	    filter.setInputType(CStdType.Short);
+	    return CStdType.Short;
 	else if (type.equals("String"))
-	    filter.setInputType(CStdType.String);	
+	    return CStdType.String;	
 	else if (type.equals("Long"))
-	    filter.setInputType(CStdType.Long);
+	    return CStdType.Long;
 	else
 	    at.dms.util.Utils.fail("Non-Supported Type for Filter Input");
-    }
-
-
-    /* this methods sets the output type of the given filter.  If
-       Type gives the type */
-    private void setOutputType(SIRFilter filter, String type) {
-	// based on the string type, set the type
-	if (type.equals("Integer"))
-	    filter.setOutputType(CStdType.Integer);
-	else if (type.equals("Character"))
-	    filter.setOutputType(CStdType.Char);
-	else if (type.equals("Boolean"))
-	    filter.setOutputType(CStdType.Boolean);
-	else if (type.equals("Byte"))
-	    filter.setOutputType(CStdType.Byte);
-	else if (type.equals("Double"))
-	    filter.setOutputType(CStdType.Double);
-	else if (type.equals("Float"))
-	    filter.setOutputType(CStdType.Float);
-	else if (type.equals("Short"))
-	    filter.setOutputType(CStdType.Short);
-	else if (type.equals("String"))
-	    filter.setOutputType(CStdType.String);	
-	else if (type.equals("Long"))
-	    filter.setOutputType(CStdType.Long);
-	else
-	    at.dms.util.Utils.fail("Non-Supported Type for Filter Output");
+	return null;
     }
 
     // ----------------------------------------------------------------------
@@ -461,7 +397,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		at.dms.util.Utils.fail("Input declaration on non-Filter");
 	    SIRFilter filter = (SIRFilter)parentStream;
 	    Vector v = (Vector)expr.accept(this);
-	    setInputType(filter, (String)v.elementAt(0));
+	    filter.setInputType(getType((String)v.elementAt(0)));
 	    filter.setPop(((JIntLiteral)v.elementAt(1)).intValue());
 	    //If a peek value is given, and it is greater than pops
 	    //set the peek
@@ -485,7 +421,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    Vector v = (Vector)expr.accept(this);
 	    int push = ((JIntLiteral)v.elementAt(1)).intValue();
 	    filter.setPush(push);
-	    setOutputType(filter, (String)v.elementAt(0));
+	    filter.setOutputType(getType((String)v.elementAt(0)));
 	    return self;
 	}
 	else {   /*Normal field declaration, add this field */
@@ -1177,8 +1113,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 						   getType().getCClass().getIdent());
 	    SIRStream newST = (SIRStream) st.clone();
 	    newST.setParent((SIRContainer)parentStream);
-	    if (regMethod.equals("add"))
-		((SIRPipeline)parentStream).add(newST);
+	    if (regMethod.equals("add")) {
+		if (parentStream instanceof SIRPipeline)
+		    ((SIRPipeline)parentStream).add(newST);
+		else 
+		    ((SIRSplitJoin)parentStream).add(newST);
+	    }
 	    else if (regMethod.equals("setBody"))
 		((SIRFeedbackLoop)parentStream).setBody(newST);
 	    else if (regMethod.equals("setLoop"))
@@ -1219,8 +1159,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	}
 	else if (ident.equals("add")) {            //Handle an add call in a pipeline
 	    //Parent must be a pipeline
-	    if (!(parentStream instanceof SIRPipeline)) 
-		at.dms.util.Utils.fail("Add method called on Non-Pipeline");
+	    if (!((parentStream instanceof SIRPipeline) || parentStream instanceof SIRSplitJoin)) 
+		at.dms.util.Utils.fail("Add not called on Pipeline or SplitJoin");
 	    if (args.length > 1)
 		at.dms.util.Utils.fail("Exactly one arg to add() allowed");
 	    //Visit the argument (Exactly one)
@@ -1268,21 +1208,24 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	}
        
 	else if (ident.equals("setSplitter")) {
-	    if (!(parentStream instanceof SIRFeedbackLoop))
-		at.dms.util.Utils.fail("setSplitter called on non-FeedbackLoop");
-	    ((SIRFeedbackLoop)parentStream).setSplitter(buildSplitter(args[0]));
-	    //reset currentMethod on all returns
+	    if ((parentStream instanceof SIRFeedbackLoop))
+		((SIRFeedbackLoop)parentStream).setSplitter(buildSplitter(args[0]));
+	    else if ((parentStream instanceof SIRSplitJoin))
+		((SIRSplitJoin)parentStream).setSplitter(buildSplitter(args[0]));
+	    else 
+		at.dms.util.Utils.fail("setSplitter not called on FeedbackLoop or SplitJoin");    
 	    currentMethod = parentMethod;
-	    //we want to ignore remove this method from the block
 	    return null;
 	}
 	else if (ident.equals("setJoiner")) {
-	    if (!(parentStream instanceof SIRFeedbackLoop))
-		 at.dms.util.Utils.fail("setSplitter called on non-FeedbackLoop");
-	     ((SIRFeedbackLoop)parentStream).setJoiner(buildJoiner(args[0]));
-	     //reset currentMethod on all returns
-	     currentMethod = parentMethod;
-	     //we want to ignore remove this method from the block
+	    if (parentStream instanceof SIRFeedbackLoop)
+		((SIRFeedbackLoop)parentStream).setJoiner(buildJoiner(args[0]));
+	    else if (parentStream instanceof SIRSplitJoin)
+		((SIRSplitJoin)parentStream).setJoiner(buildJoiner(args[0]));
+	    else
+		at.dms.util.Utils.fail("setSplitter called on non-FeedbackLoop");
+	    currentMethod = parentMethod;
+	    //we want to ignore remove this method from the block
 	     return null;
 	}
       	else {             //Not an SIR call

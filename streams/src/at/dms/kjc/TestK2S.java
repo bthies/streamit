@@ -119,8 +119,6 @@ public class TestK2S extends Main
 
 	Kopi2SIR k2s = new Kopi2SIR();
 	SIRStream[] topLevel = new SIRStream[tree.length];
-
-	System.out.println(tree.length);
 	
 	for (int count = 0; count < tree.length; count++)
 	    {

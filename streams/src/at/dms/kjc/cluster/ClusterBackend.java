@@ -141,6 +141,9 @@ public class ClusterBackend implements FlatVisitor {
 	FieldProp.doPropagate(str);
 	System.out.println(" done.");
 
+	// expand array initializers loaded from a file
+	ArrayInitExpander.doit(str);
+
 	//System.out.println("Analyzing Branches..");
 	//new BlockFlattener().flattenBlocks(str);
 	//new BranchAnalyzer().analyzeBranches(str);

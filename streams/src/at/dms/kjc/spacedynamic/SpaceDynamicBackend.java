@@ -84,6 +84,9 @@ public class SpaceDynamicBackend {
 
 	FieldProp.doPropagate(str);
 
+	// expand array initializers loaded from a file
+	ArrayInitExpander.doit(str);
+
 	/*
 	if (Flattener.hasDynamicRates(str)) {
 	    System.err.println("Failure: Dynamic rates are not yet supported in the Raw backend.");

@@ -81,6 +81,9 @@ public class SpaceTimeBackend
 	    System.out.println("Done Constant Field Propagation...");
 	}
 
+	// expand array initializers loaded from a file
+	ArrayInitExpander.doit(str);
+
 	Lifter.liftAggressiveSync(str);
 
 	if (KjcOptions.fission>1) {	

@@ -118,6 +118,9 @@ public class RawBackend {
 		//new BranchAnalyzer().analyzeBranches(str);
 	    }
 	    
+	    // expand array initializers loaded from a file
+	    ArrayInitExpander.doit(str);
+
 	    Lifter.liftAggressiveSync(str);
 	    NumberDot.printGraph(str, "numbered.dot");
 	    StreamItDot.printGraph(str, "before-partition.dot");

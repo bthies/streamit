@@ -128,6 +128,9 @@ public class StrToRStream {
 		//new BranchAnalyzer().analyzeBranches(str);
 	}
 
+	// expand array initializers loaded from a file
+	ArrayInitExpander.doit(str);
+
 	//convert all file readers/writers to normal 
 	//sirfilters, not predefined filters
 	ConvertFileFilters.doit(str);

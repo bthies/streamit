@@ -21,15 +21,16 @@ class Optimizer implements StreamVisitor {
 
     public static void optimize(SIRStream str) {
 	Optimizer est = new Optimizer();
+	System.out.print("Optimizing filters...");
 	IterFactory.createFactory().createIter(str).accept(est);
+	System.out.println("done.");
     }
 
     public void visitFilter(SIRFilter filter,
 		     SIRFilterIter iter) { 
 
 	//unroll all methods
-
-	System.out.println("Optimizing "+filter+"...");
+	//System.out.println("Optimizing "+filter+"...");
 
 	for (int i = 0; i < filter.getMethods().length; i++) {
 	    JMethodDeclaration method=filter.getMethods()[i];

@@ -12,7 +12,9 @@ class Estimator implements StreamVisitor {
 
     public static void estimate(SIRStream str) {
 	Estimator est = new Estimator();
+	System.out.print("Estimating Code size of Filters...");
 	IterFactory.createFactory().createIter(str).accept(est);
+	System.out.println("done.");
     }
 
     public void visitFilter(SIRFilter filter,
@@ -24,7 +26,7 @@ class Estimator implements StreamVisitor {
 	code = est.getCodeSize();
 	locals = est.getLocalsSize();
 
-	System.out.println("Estimator Filter: "+filter+" Code: "+code+" Locals: "+locals);
+	//System.out.println("Estimator Filter: "+filter+" Code: "+code+" Locals: "+locals);
 	
     }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JExpressionStatement.java,v 1.4 2002-02-20 16:26:50 thies Exp $
+ * $Id: JExpressionStatement.java,v 1.5 2002-09-24 19:43:25 thies Exp $
  */
 
 package at.dms.kjc;
@@ -101,6 +101,15 @@ public class JExpressionStatement extends JStatement {
 
     // ignore the result
     expr.genCode(code, true);
+  }
+
+  public String toString() {
+    StringBuffer	buffer = new StringBuffer();
+
+    buffer.append("JExpressionStatement[");
+    buffer.append(expr.toString());
+    buffer.append("]");
+    return buffer.toString();
   }
 
   // ----------------------------------------------------------------------

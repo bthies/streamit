@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCompoundAssignmentExpression.java,v 1.3 2001-10-29 12:53:51 thies Exp $
+ * $Id: JCompoundAssignmentExpression.java,v 1.4 2002-09-24 19:43:25 thies Exp $
  */
 
 package at.dms.kjc;
@@ -251,6 +251,22 @@ public class JCompoundAssignmentExpression extends JAssignmentExpression {
     left.genEndStoreCode(code, discardValue);
   }
     
+  /**
+   * Returns a string representation of this object.
+   */
+  public String toString() {
+    StringBuffer	buffer = new StringBuffer();
+
+    buffer.append("JCompoundAssignmentExpression[");
+    buffer.append(oper);
+    buffer.append(", ");
+    buffer.append(left.toString());
+    buffer.append(", ");
+    buffer.append(right.toString());
+    buffer.append("]");
+    return buffer.toString();
+  }
+
     /**
      * Get operation of this.
      */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JAssignmentExpression.java,v 1.4 2002-06-24 11:31:27 jasperln Exp $
+ * $Id: JAssignmentExpression.java,v 1.5 2002-09-24 19:43:25 thies Exp $
  */
 
 package at.dms.kjc;
@@ -131,7 +131,20 @@ public class JAssignmentExpression extends JBinaryExpression {
     return p.visitAssignmentExpression(this, left, right);
  }
 
-    
+  /**
+   * Returns a string representation of this object.
+   */
+  public String toString() {
+    StringBuffer	buffer = new StringBuffer();
+
+    buffer.append("JAssignmentExpression[");
+    buffer.append(left.toString());
+    buffer.append(", ");
+    buffer.append(right.toString());
+    buffer.append("]");
+    return buffer.toString();
+  }
+
   /**
    * Generates JVM bytecode to evaluate this expression.
    *

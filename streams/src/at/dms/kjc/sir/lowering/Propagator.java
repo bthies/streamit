@@ -1014,7 +1014,13 @@ public class Propagator extends SLIRReplacingVisitor {
 	    }
 	}
 	// do constant-prop if we have both as constants
-	if (newLeft.isConstant() && newRight.isConstant()) {
+	if (write && newLeft.isConstant() && newRight.isConstant()) {
+	    /*
+	    System.err.println("\nconstant oldLeft: " + left);
+	    System.err.println("constant oldRight: " + right);
+	    System.err.println("constant newLeft: " + newLeft);
+	    System.err.println("constant newRight: " + newRight);
+	    */
 	    // here we want to compute some constants without mutating
 	    // <self>.  In KOPI the easiest way to do this seems to be
 	    // to mutate the original, get the information, then

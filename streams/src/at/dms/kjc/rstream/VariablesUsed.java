@@ -53,8 +53,9 @@ public class VariablesUsed extends SLIREmptyVisitor
 	vars.add(ident);
     }
 
-     public void visitLocalVariableExpression(JLocalVariableExpression self,
-					      String ident) {
-	 vars.add(self.getVariable());
+    public void visitLocalVariableExpression(JLocalVariableExpression self,
+					     String ident) 
+    {
+	vars.add(self.getVariable());
     }
 }

@@ -184,12 +184,6 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	createFile();
     }
 
-    public void visitPhasedFilter(SIRPhasedFilter self,
-                                  SIRPhasedFilterIter iter) {
-        // This is a stub; it'll get filled in once we figure out how phased
-        // filters should actually work.
-    }
-
     private void createFile() {
 	System.out.println("Code for application written to str.c");
 	try {
@@ -883,36 +877,6 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
     }
 
     /**
-     * This should never be called 
-     * Generates code to receive an array type into the buffer
-     **/
-    /*
-    public void popArray(JExpression arg) 
-    {
-	String dims[] = Util.makeString(((CArrayType)filter.getInputType()).getDims());
-	
-	//print the array indices
-	for (int i = 0; i < dims.length; i++) {
-	    print("for (" + Names.ARRAY_INDEX + i + " = 0; " +
-		  Names.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-		  Names.ARRAY_INDEX + i + "++)\n");
-	}
-	
-	print("{");
-	//print out the receive assembly
-	print(Util.staticNetworkReceivePrefix());
-	//print out the buffer variable and the index
-	arg.accept(this);
-	//now append the remaining dimensions
-	for (int i = 0; i < dims.length; i++) {
-		print("[" + Names.ARRAY_INDEX + i + "]");
-	    }
-	//finish up the receive assembly
-	print(Util.staticNetworkReceiveSuffix(((CArrayType)filter.getInputType()).getBaseType()));
-	print("}");
-    }
-    */
-    /**
      * prints a method call expression
      */
     public void visitMethodCallExpression(JMethodCallExpression self,
@@ -1362,25 +1326,6 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	    type = CStdType.Integer;
 	}
 	
-	//if we have the number gathering stuff on, convert each print 
-	//to a magic instruction, there are only print statements in the sink
-	//all other prints have been removed...
-	if (KjcOptions.numbers > 0) {
-	    //assign the expression to a dummy var do it does not get
-	    //optimized out...
-	    print("dummy");
-	    if (type.isFloatingPoint())
-		print("Float");
-	    else 
-		print("Int");
-	    print(" = ");
-	    exp.accept(this);
-	    print(";\n");
-	    print("__asm__ volatile (\"magc $0, $0, 2\");\n");
-	    return;
-	}
-
-	    
 	if (type.equals(CStdType.Boolean))
 	    {
 		Utils.fail("Cannot print a boolean");
@@ -1431,31 +1376,6 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	assert false : "RStream Front-end should not see a push statement";
     }
     
-    public void visitRegReceiverStatement(SIRRegReceiverStatement self,
-                                          JExpression portal,
-					  SIRStream receiver, 
-					  JMethodDeclaration[] methods)
-    {
-        print("register_receiver(");
-        portal.accept(this);
-        print(", data->context, ");
-        print(self.getItable().getVarDecl().getIdent());
-        print(", LATENCY_BEST_EFFORT);");
-        // (But shouldn't there be a latency field in here?)
-    }
-    
-    public void visitRegSenderStatement(SIRRegSenderStatement self,
-                                        String fn,
-                                        SIRLatency latency)
-    {
-        print("register_sender(this->context, ");
-        print(fn);
-        print(", ");
-        latency.accept(this);
-        print(");");
-    }
-
-
     // ----------------------------------------------------------------------
     // UTILS
     // ----------------------------------------------------------------------
@@ -1760,4 +1680,11 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
 				      SIRFeedbackLoopIter iter) {
     }
+
+    public void visitPhasedFilter(SIRPhasedFilter filter, 
+				  SIRPhasedFilterIter iter) 
+    {
+	
+    }
+    
 }

@@ -5,6 +5,7 @@ import at.dms.kjc.sir.*;
 import java.util.ListIterator;
 import at.dms.kjc.flatgraph.*;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
 
 /**
@@ -20,7 +21,8 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 {
     //
     private int forLevel = 0;
-    
+    private HashMap varUses;
+
     /**
      * The entry point of this class, given a stream <top> and 
      * everything downstream of it, classify the for loop in each method of
@@ -52,6 +54,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	    //iterate over the methods to check for a comm. exp.
 	    JMethodDeclaration[] methods = filter.getMethods();
 	    for (int i = 0; i < methods.length; i++) {
+		varUses = UseDefInfo.getUsesMap(methods[i]);
 		//iterate over the statements
 		for (ListIterator it = methods[i].getStatementIterator();
 		     it.hasNext(); ){
@@ -67,6 +70,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
     {
 	forLevel = 0;
     }
+    
     
     /**
      * See comments in method.
@@ -126,6 +130,12 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	    //variables
 	    CheckLoopBody checkBody = new CheckLoopBody(info);
 	    checkBody.check(body);
+	    
+	    //check that the induction variable is only used in the body of
+	    //the loop and no where outside the loop
+	    System.out.println("Scope of Induction Variable: " + 
+			       scopeOfInduction(self,
+						info));
 	}
 	
 	//check for nested for loops that can be converted...
@@ -134,6 +144,28 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	//leaving for loop
 	forLevel--;
 	assert forLevel >= 0;
+    }
+    
+
+    public boolean scopeOfInduction(JForStatement jfor, 
+				    DoLoopInformation doInfo) 
+    {
+	//check the scope of the induction variable...
+	Iterator allInductionUses =
+	    ((HashSet)varUses.get(doInfo.induction)).iterator();
+	
+	//add all the uses in the for loop
+	HashSet usesInForLoop = UseDefInfo.getForUses(jfor);
+	
+	while (allInductionUses.hasNext()) {
+	    Object use = allInductionUses.next();
+	    if (!usesInForLoop.contains(use)) {
+		System.out.println("Couldn't find " + use + " in loop.");
+		return false;
+	    }
+	    
+	}
+	return true;
     }
     
 

@@ -135,6 +135,10 @@ public class StrToRStream {
 
 	StreamItDot.printGraph(str, "after-partition.dot");
 
+	//SIRPrinter printer1 = new SIRPrinter("sir.out");
+	//IterFactory.createFactory().createIter(str).accept(printer1);
+	//printer1.close();
+	
 
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);

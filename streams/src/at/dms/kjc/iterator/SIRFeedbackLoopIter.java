@@ -39,6 +39,13 @@ public class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter
     }
 
     /**
+     * Returns delay of feedbackloop
+     */ 
+    public int getDelaySize() {
+	return obj.getDelayInt();
+    }
+
+    /**
      * Returns an iterator for the body of the FeedbackLoop.
      * @return iterator for the body of the FeedbackLoop
      */

@@ -39,6 +39,7 @@ public class KjcOptions extends at.dms.util.Options {
     public boolean sync = false;
     public boolean ratematch = false;
     public boolean simplesjfusion = false;
+    public boolean linearanalysis = false;
     
     public boolean processOption(int code, Getopt g) {
 	switch (code) {
@@ -92,6 +93,9 @@ public class KjcOptions extends at.dms.util.Options {
 	    ratematch = !false;return true;
 	case 'S':
 	    simplesjfusion = !false;return true;
+	case 'i':
+	    linearanalysis = !false;return true;
+	    
 	default:
 	    return super.processOption(code, g);
 	}
@@ -99,7 +103,7 @@ public class KjcOptions extends at.dms.util.Options {
 
     public String[] getOptions() {
 	String[]	parent = super.getOptions();
-	String[]	total = new String[parent.length + 24];
+	String[]	total = new String[parent.length + 25];
 	System.arraycopy(parent, 0, total, 0, parent.length);
 	total[parent.length + 0] = "  --beautify, -b:       Beautifies the source code [false]";
 	total[parent.length + 1] = "  --verbose, -v:        Prints out information during compilation [false]";
@@ -127,6 +131,7 @@ public class KjcOptions extends at.dms.util.Options {
 	total[parent.length + 22] = "  --sync, -k:            Turn on sync removal";
 	total[parent.length + 23] = "  --ratematch, -x:       Turn on rate matching for raw";
 	total[parent.length + 24] = "  --simplesjfusion, -S:  Revert to the old, simple SplitJoin fusion algorithm";
+	total[parent.length + 25] = "  --linearanalysis, -i:  Perform linear analysis and transformations";
 	return total; 
     }
 
@@ -191,7 +196,8 @@ public class KjcOptions extends at.dms.util.Options {
 	new LongOpt("raw", LongOpt.REQUIRED_ARGUMENT, null, 'r'),
 	new LongOpt("sync", LongOpt.NO_ARGUMENT, null, 'k'),
 	new LongOpt("ratematch", LongOpt.NO_ARGUMENT, null, 'x'),
-	new LongOpt("simplesjfusion", LongOpt.NO_ARGUMENT, null, 'S')
+	new LongOpt("simplesjfusion", LongOpt.NO_ARGUMENT, null, 'S'),
+	new LongOpt("linearanalysis", LongOpt.NO_ARGUMENT, null, 'i')
     };
 }
 

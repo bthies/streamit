@@ -1,0 +1,52 @@
+// should combine filter2 and decimator, but not filter1
+void->void pipeline Test1 {
+  add Source();
+  add Filter1();
+  add Filter2();
+  add Decimator(2);
+  add Sink();
+}
+
+void->float filter Source {
+  int x;
+  init {x = 0;}
+  work push 1 {
+    push(x);
+    if (x<10) {
+      x++;
+    } else {
+      x = 0;
+    }
+  }
+}
+
+float->void filter Sink {
+  work pop 1 {print(pop());}
+}
+
+float->float filter Filter1 {
+  work peek 3 pop 3 push 1 {
+    push(4*peek(0) + 3*peek(1) + 2*peek(2));
+    pop();
+    pop();
+    pop();
+  }
+}
+
+float->float filter Decimator (int N) {
+    work pop N push 1 {
+	push(pop());
+	for (int i=0; i<N-1; i++) {
+	    pop();
+	}
+    }
+}
+
+float->float filter Filter2 {
+  work pop 1 push 3 {
+    float t = pop();
+    push(7*t);
+    push(6*t);
+    push(5*t);
+  }
+}

@@ -25,14 +25,14 @@ import streamit.io.*;
 public class FilterBank extends Pipeline {
     
     
-    public FilterBank (int N_samp,int N_rows,int N_ch ,float[][] H,float[][] F)
+    public FilterBank (int N_samp,int N_ch,int N_col ,float[][] H,float[][] F)
     {
-        super (N_samp,N_rows,N_ch,H,F);
+        super (N_samp,N_ch,N_col,H,F);
     }
     
     public void init( int N_samp,int N_ch,int N_col,float[][] H,float[][] F ) {
 	
-	add (new Branches(N_samp,N_ch,N_col,0,H,F));
+	add (new Branches(N_samp,N_ch,N_col,H,F));
 	add (new Combine(N_samp));
 	
     }

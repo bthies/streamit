@@ -30,9 +30,9 @@ class sink extends Filter{
 
 	for (int i=0; i< N;i++)
 	    {
-		System.out.print("This is ");
-		System.out.print(i);
-		System.out.print(" : ");
+		//System.out.print("This is ");
+		//System.out.print(i);
+		//System.out.print(" : ");
 		System.out.println(input.popFloat());
 }
 
@@ -53,27 +53,35 @@ class FBtest extends StreamIt {
    
 
     public void init() {
+	int N_sim=1024*2;
+	int N_samp=32;
+	int N_ch=N_samp;
+	int N_col=32;
+
+	float[] r=new float[N_sim];
+	float[][] H=new float[N_ch][N_col];
+	float[][] F=new float[N_ch][N_col];
+		
+	for (int i=0;i<N_sim;i++)
+	    r[i]=i+1;
+
+	//float sum=0;	
+
+	for (int i=0;i<N_col;i++) {
+	    //sum+=1;
+	    //sum=sum/7;
+
+	    for (int j=0;j<N_ch;j++){
+		//sum+=1;
+		H[j][i]=i*N_col+j*N_ch+j+i+j+1;
+		//sum++;
+		F[j][i]=i*j+j*j+j+i;
 	
-	float[] r=new float[5];
-	r[0]=0;
-	r[1]=1;
-	r[2]=2;
-	r[3]=3;
-	r[4]=4;
+	    }
+	}
+    
 	
-	
-	int N_samp=2;
-	int N_ch=2;
-	int N_col=3;
-	float [][] F={
-	    {1,2,3},
-	    {2,1,3}
-	};
-	
-	float [][] H={
-	    {1,0,2},
-	    {5,1,1}
-	};
+
 	
 	add (new source(r));
 	add (new FilterBank(N_samp,N_ch,N_col,H,F));

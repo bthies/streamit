@@ -31,7 +31,7 @@ public class FIR extends Pipeline {
     }
 
     public void init(float[] COEFF) {
-	add (new delay(COEFF.length));
+	add (new DelayPipeline(COEFF.length-1));
 	add (new FirFilter(COEFF));
     }
 

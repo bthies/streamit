@@ -27,24 +27,28 @@ import streamit.io.*;
 public class Branches extends SplitJoin {
 
 
- public Branches (int N_samp,int N_rows,int N_ch,int N_dum ,float[][] H,float[][] F)
+ public Branches (int N_samp,int N_rows,int N_col,float[][] H,float[][] F)
 
     {
-        super (N_samp,N_rows,N_ch,N_dum,H,F);
+        super (N_samp,N_rows,N_col,H,F);
     }
 
-    public void init( int N_samp,int N_ch,int N_col,int N_dum,float[][] H,float[][] F ) {
-
-	float[] H_ch=new float[N_col];
-	float[] F_ch=new float[N_col];
+    public void init( int N_samp,int N_ch,int N_col,float[][] H,float[][] F ) {
 	setSplitter(DUPLICATE());
-	for (int i=0; i < N_ch; i++)
+	for (int i=0; i<N_ch ; i++)
+	    {
+	    float[] H_ch=new float[N_col];
+	    float[] F_ch=new float[N_col];
+	    
 	    	for (int j=0; j<N_col;j++)
 		{
 		    H_ch[j]=H[i][j];
 		    F_ch[j]=F[i][j];
-		    add (new Bank(N_samp,H_ch,F_ch));
-		}	
+		}
+
+		add (new Bank(N_samp,H_ch,F_ch));
+	    }
+			
 	setJoiner(ROUND_ROBIN());
 		    
     }

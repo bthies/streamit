@@ -35,12 +35,12 @@ public class Bank extends Pipeline {
     public void init(  int N,float[] H,float[] F ) {
 	
   
-	//add (new source(r)); They are here for debugging purposes
+	///add (new source(r)); They are here for debugging purposes
 	add (new FIR(H));
 	add (new DownSamp(N));
 	add (new UpSamp(N));
 	add (new FIR(F));
-	//add (new sink(r.length));
+	///add (new sink(r.length));
     }
     
 

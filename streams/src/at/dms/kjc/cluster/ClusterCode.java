@@ -390,6 +390,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	
 	p.print("#include <pthread.h>\n");
 	p.print("#include <unistd.h>\n");
+	p.print("#include <signal.h>\n");
 	p.print("#include <string.h>\n");
 	p.print("#include <stdio.h>\n");
 	p.println();
@@ -410,9 +411,25 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	}
 
+
+	p.println();
+
+	p.print("int master_pid;\n");
+
+	p.println();
+
+	p.print("void sig_recv(int sig_nr) {\n");
+	p.print("  if (master_pid == getpid()) {\n");
+	p.print("    printf(\"\n data sent     : %d\\n\", mysocket::get_total_data_sent());\n");
+        p.print("    printf(\" data received : %d\\n\", mysocket::get_total_data_received());\n");
+	p.print("  }\n");
+	p.print("}\n");
+
 	p.println();
 
 	p.print("int main(int argc, char **argv) {\n");
+
+	p.print("  master_pid = getpid();\n");
 
 	p.print("  if (argc > 2 && strcmp(argv[1], \"-i\") == 0) {\n"); 
 	p.print("     int tmp;\n");
@@ -442,6 +459,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	
 	    p.print("  }\n");
 	}
+
+	p.print("\n  signal(3, sig_recv);\n\n");
 
 	p.print("  for (;;) {}\n");
 	

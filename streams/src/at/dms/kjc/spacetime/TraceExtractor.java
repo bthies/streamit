@@ -117,7 +117,7 @@ public class TraceExtractor {
 	    parent.put(traces[i].getHead(),traces[i]);
 	for(int i=0;i<traces.length;i++) {
 	    Trace trace=traces[i];
-	    buf.append(trace.hashCode()+" [ label = \""+traceName(trace)+"\" ];\n");
+	    buf.append(trace.hashCode()+" [ "+traceName(trace)+"\" ];\n");
 	    Trace[] next=getNext(trace,parent);
 	    for(int j=0;j<next.length;j++)
 		buf.append(trace.hashCode()+" -> "+next[j].hashCode()+";\n");
@@ -137,7 +137,11 @@ public class TraceExtractor {
 	TraceNode node=trace.getHead();
 	if(node instanceof InputTraceNode)
 	    node=node.getNext();
-	StringBuffer out=new StringBuffer(node.toString());
+	StringBuffer out=null;
+	if(((FilterTraceNode)node).getFilter().getLinear()!=null)
+	    out=new StringBuffer("color=cornflowerblue, style=filled, label=\""+node.toString());
+	else
+	    out=new StringBuffer("label=\""+node.toString());
 	node=node.getNext();
 	while(node!=null&&node instanceof FilterTraceNode) {
 	    out.append("\\n"+node.toString());

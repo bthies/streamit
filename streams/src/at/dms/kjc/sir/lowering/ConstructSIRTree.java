@@ -84,11 +84,9 @@ class InitializationHoister extends SLIRReplacingVisitor {
 	// think the RAW backend assumes it), this is a nice place to
 	// check it
 	for (int i=0; i<self.getArgs().size(); i++) {
-	    /*
 	    Utils.assert(self.getArgs().get(i) instanceof JLiteral,
 			 "Expected constant arguments to init, but found non-constant " +
 			 self.getArgs().get(i) + " in parent " + parent + "\n");
-	    */
 	}
 	
 	// return an empty statement to eliminate the init

@@ -10,7 +10,7 @@ import at.dms.kjc.sir.linear.LinearForm;
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.4 2002-08-15 20:36:13 aalamb Exp $
+ * $Id: TestLinear.java,v 1.5 2002-08-16 21:11:09 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -31,6 +31,7 @@ public class TestLinear extends TestCase {
 	suite.addTest(new TestLinear("testFilterVector"));
 	suite.addTest(new TestLinear("testLinearForm"));
 	suite.addTest(new TestLinear("testLinearFormAddition"));
+	suite.addTest(new TestLinear("testLinearFormCopyToColumn"));
 	
 	
 	return suite;
@@ -361,6 +362,58 @@ public class TestLinear extends TestCase {
 	lf1 = new LinearForm(10);
 	lf2 = new LinearForm(11);
 	try{lf1.plus(lf2); fail("diff linear form size");} catch (RuntimeException e) {}
-
     }
+
+    public void testLinearFormCopyToColumn() {
+	LinearForm lf;
+	FilterMatrix fm;
+	int MAX = 10;
+	
+	fm = new FilterMatrix(MAX,MAX);
+	lf = new LinearForm(MAX);
+	// test that we can't add the linear form to the wrong column
+	try {lf.copyToColumn(fm, MAX); fail();}catch(RuntimeException e){}
+	// make sure that we can't add a linear form of the incorrect size
+	try {(new LinearForm(MAX-1)).copyToColumn(fm,MAX/2); fail();} catch (IllegalArgumentException e){}
+
+	// set up the linear form with values, and then test to ensure that the values were copied
+	for (int i=0; i<MAX; i++) {
+	    lf.setWeight(i, new ComplexNumber(i+.01, i-.01));
+	}
+
+	// try copying into the first col
+	int col = 0;
+	lf.copyToColumn(fm, col);
+	// ensure that all elements got there safely
+	for (int i=0; i<MAX; i++) {
+	    assertTrue("elements are the same", lf.getWeight(i).equals(fm.getElement(i,col)));
+	    assertTrue("elements are the same", fm.getElement(i,col).equals(lf.getWeight(i)));
+	}
+
+	// copy another column
+	fm = new FilterMatrix(MAX,MAX);
+	col = MAX/2;
+	lf.copyToColumn(fm, col);
+	// ensure that all elements got there safely
+	for (int i=0; i<MAX; i++) {
+	    assertTrue("elements are the same", lf.getWeight(i).equals(fm.getElement(i,col)));
+	    assertTrue("elements are the same", fm.getElement(i,col).equals(lf.getWeight(i)));
+	}
+	// make sure that the other elements are still 0
+	for (int i=0; i<MAX; i++) {
+	    for (int j=0; j<MAX; j++) {
+		if (col == j) {
+		    // should be the same as lf
+		    assertTrue("elements are the same", lf.getWeight(i).equals(fm.getElement(i,j)));
+		    assertTrue("elements are the same", fm.getElement(i,j).equals(lf.getWeight(i)));
+		} else {
+		    // should be zero
+		    assertTrue("Still zero", fm.getElement(i,j).equals(ComplexNumber.ZERO));
+		    assertTrue("Still zero", ComplexNumber.ZERO.equals(fm.getElement(i,j)));
+		}
+	    }
+	}
+    }
+
+
 }

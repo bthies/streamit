@@ -684,7 +684,7 @@ class LTPPipeline extends Pipeline
     {
 	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
 	this.add(new LTPInputFilter());
-	this.add(new ShortPrinter('g'));
+	//this.add(new ShortPrinter('g'));
     }
 }
 class LARPipeline extends Pipeline
@@ -703,8 +703,8 @@ class LTPInputSplitJoin extends SplitJoin
     {
 	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));
 	this.add(new LTPPipeline());
-	//this.add(new ShortIdentity());
-	this.add(new ShortPrinter('d'));
+	this.add(new ShortIdentity());
+	//this.add(new ShortPrinter('d'));
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(2, 160)); //bcr, ncr, drp[0...159]
     }
 }
@@ -714,15 +714,15 @@ class LTPLoopStream extends Pipeline
     public void init()
     {
 	this.add(new LTPInputSplitJoin());
-	this.add(new Pipeline() 
-	    {
-		public void init()
-		{
-		    this.add(new ShortPrinter('e'));
+	//this.add(new Pipeline() 
+	//    {
+	//	public void init()
+	//	{
+	//	    this.add(new ShortPrinter('e'));
 		    this.add(new LTPFilter());
-		    this.add(new ShortPrinter('b')); 
-		}
-	    });
+	//	    this.add(new ShortPrinter('b')); 
+	//	}
+	//   });
     }
 }
 class DecoderFeedback extends FeedbackLoop
@@ -732,7 +732,7 @@ class DecoderFeedback extends FeedbackLoop
 	this.setDelay(1);
 	this.setJoiner(WEIGHTED_ROUND_ROBIN (40, 1));  //sequence: ep[0....39], drpp
   	//this.setBody(new AdditionUpdateFilter());
-	this.setBody(new StupidStream()); //debug 
+	this.setBody(new AdditionUpdateFilter()); //debug 
 	this.setSplitter(DUPLICATE ());   
 	//note:  although drp[120...159] are all that are
 	//       required for ShortTermSynth, this is currently

@@ -24,7 +24,6 @@ import org.eclipse.jdt.internal.debug.core.model.JDIThread;
 import org.eclipse.jdt.internal.debug.ui.BreakpointUtils;
 import org.eclipse.jdt.internal.debug.ui.DebugUIMessages;
 import org.eclipse.jdt.internal.debug.ui.JDIModelPresentation;
-import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.swt.graphics.Image;
 
 import streamit.eclipse.debugger.core.IStreamItDebuggerConstants;
@@ -50,13 +49,6 @@ public class StreamItModelPresentation extends JDIModelPresentation {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#addListener(org.eclipse.jface.viewers.ILabelProviderListener)
-	 */
-	public void addListener(ILabelProviderListener listener) {
-		fModel.addListener(listener);
-	}
-
-	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
 	 */
 	public void dispose() {
@@ -68,13 +60,6 @@ public class StreamItModelPresentation extends JDIModelPresentation {
 	 */
 	public boolean isLabelProperty(Object element, String property) {
 		return fModel.isLabelProperty(element, property);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#removeListener(org.eclipse.jface.viewers.ILabelProviderListener)
-	 */
-	public void removeListener(ILabelProviderListener listener) {
-		fModel.removeListener(listener);
 	}
 	
 	// From org.eclipse.jdt.internal.debug.ui.JDIModelPresentation

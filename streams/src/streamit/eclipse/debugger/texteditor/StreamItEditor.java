@@ -3,21 +3,10 @@
  * modifier - Kimberly Kuo
  *******************************************************************************/
 
-/*******************************************************************************
- * Copyright (c) 2000, 2003 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Common Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v10.html
- * 
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
 package streamit.eclipse.debugger.texteditor;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.text.source.IVerticalRulerInfo;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
@@ -113,10 +102,5 @@ public class StreamItEditor extends TextEditor {
 	
 		setSourceViewerConfiguration(new StreamItEditorSourceViewerConfiguration(this));
 		setRulerContextMenuId("#StreamItRulerContext"); //$NON-NLS-1$
-		
-		
     }
-	public IVerticalRulerInfo getA() {
-		return getVerticalRuler();
-	}
 }

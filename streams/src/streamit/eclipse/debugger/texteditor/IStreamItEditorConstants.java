@@ -2,18 +2,9 @@
  * StreamIt Plugin adapted from Example Readme Tool
  * modifier - Kimberly Kuo
  *******************************************************************************/
-
-/*******************************************************************************
- * Copyright (c) 2000, 2003 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Common Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v10.html
- * 
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
 package streamit.eclipse.debugger.texteditor;
+
+import streamit.eclipse.debugger.StreamItDebuggerPlugin;
 
 /**
  * This interface contains constants for use only within the
@@ -21,10 +12,10 @@ package streamit.eclipse.debugger.texteditor;
  */
 public interface IStreamItEditorConstants {
 
-    public static final String PLUGIN_ID 
-	= "streamit.eclipse.debugger.texteditor"; //$NON-NLS-1$
-    public static final String PREFIX = PLUGIN_ID + "."; //$NON-NLS-1$
-
+    //public static final String PLUGIN_ID = "streamit.eclipse.debugger.texteditor"; //$NON-NLS-1$
+    public static final String PREFIX = StreamItDebuggerPlugin.getUniqueIdentifier() + "."; //$NON-NLS-1$
+	public static String ID_STREAMIT_EDITOR = PREFIX + "texteditor.StreamItEditor";
+	
     // Preference constants
 	public static final String PRE_KEYWORD = PREFIX + "keyword";
 	public static final String PRE_STR_KEYWORD = PREFIX + "strkeyword";
@@ -33,8 +24,7 @@ public interface IStreamItEditorConstants {
 	public static final String PRE_STR_COMMON = PREFIX + "strcommon";
 	
     // Help context ids
-    public static final String PREFERENCE_PAGE_CONTEXT
-	= PREFIX + "preference_page_context"; //$NON-NLS-1$
+    public static final String PREFERENCE_PAGE_CONTEXT = PREFIX + "preference_page_context"; //$NON-NLS-1$
 
 	public static String[] CATEGORY_DEFAULTS =
 	{ "Keyword", "StreamIt Keyword", "Type", "Constant", "StreamIt Commonword" };

@@ -94,9 +94,9 @@ public class StreamItLocalApplicationLaunchConfigurationDelegate extends Abstrac
 			
 			project.build(IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
 
-			if (mode.equals(ILaunchManager.DEBUG_MODE)) 
+			if (mode.equals(ILaunchManager.DEBUG_MODE))
 				DebugUIPlugin.getStandardDisplay().syncExec(new PreDebuggingRunnable(project, args[1], javaFileName, javaFile));
-						
+
 			// run java code
 			ILaunchManager manager = getLaunchManager();
 			ILaunchConfigurationType type = manager.getLaunchConfigurationType(IJavaLaunchConfigurationConstants.ID_JAVA_APPLICATION);

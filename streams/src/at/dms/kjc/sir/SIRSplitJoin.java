@@ -221,4 +221,9 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     public SIRSplitJoin() {
 	super();
     }
+
+    public String toString() {
+	return "SIRSplitJoin name=" + getName() + " ident=" + getIdent();
+    }
+
 }

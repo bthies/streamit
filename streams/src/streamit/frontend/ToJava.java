@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.52 2003-12-15 21:36:19 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.53 2004-01-14 22:52:18 dmaze Exp $
  */
 public class ToJava
 {
@@ -200,13 +200,13 @@ public class ToJava
         return prog;
     }
 
-    public void run(String[] args)
+    public int run(String[] args)
     {
         doOptions(args);
         if (printHelp)
         {
             printUsage();
-            return;
+            return 0;
         }
         
         Program prog = null;
@@ -219,31 +219,31 @@ public class ToJava
         catch (java.io.IOException e)
         {
             e.printStackTrace(System.err);
-            System.exit(1);
+            return 1;
         }
         catch (antlr.RecognitionException e)
         {
             e.printStackTrace(System.err);
-            System.exit(1);
+            return 1;
         }
         catch (antlr.TokenStreamException e)
         {
             e.printStackTrace(System.err);
-            System.exit(1);
+            return 1;
         }
 
         if (prog == null)
         {
             System.err.println("Compilation didn't generate a parse tree.");
-            System.exit(1);
+            return 1;
         }
 
         prog = (Program)prog.accept(new RenameBitVars());
         if (!SemanticChecker.check(prog))
-            System.exit(1);
+            return 1;
         prog = (Program)prog.accept(new AssignLoopTypes());
         if (prog == null)
-            System.exit(1);
+            return 1;
 
         TempVarGen varGen = new TempVarGen();
         prog = lowerIRToJava(prog, libraryFormat, varGen);
@@ -265,13 +265,15 @@ public class ToJava
         catch (java.io.IOException e)
         {
             e.printStackTrace(System.err);
-            System.exit(1);
+            return 1;
         }
+        return 0;
     }
     
     public static void main(String[] args)
     {
-        new ToJava().run(args);
+        int result = new ToJava().run(args);
+        System.exit(result);
     }
 }
 

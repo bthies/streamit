@@ -12,7 +12,7 @@ import java.util.HashMap;
  * (no prework function or phases), and only a single phase in its
  * work stage.
  *
- * @version $Id: SIRFilter.java,v 1.31 2003-05-28 05:58:53 thies Exp $
+ * @version $Id: SIRFilter.java,v 1.32 2003-12-02 20:47:05 thies Exp $
  */
 public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     /* Internal invariant: the init phases array is null or has zero
@@ -49,6 +49,13 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
         // Confirm that the work function is in the methods array.
         if (work != null)
             addReplacementMethod(work, work);
+	// check for void type if we have 0 inputs or outputs
+	Utils.assert(this instanceof SIRTwoStageFilter || 
+		     ((!(peek instanceof JIntLiteral) || ((JIntLiteral)peek).intValue()>0) || inputType==CStdType.Void),
+		     "Filter " + this + " declares peek rate of 0 but has input type of " + inputType + " which should be Void instead.");
+	Utils.assert(this instanceof SIRTwoStageFilter || 
+		     ((!(push instanceof JIntLiteral) || ((JIntLiteral)push).intValue()>0) || outputType==CStdType.Void),
+		     "Filter " + this + " declares push rate of 0 but has output type of " + outputType + " which should be Void instead.");
     }
 
     /**

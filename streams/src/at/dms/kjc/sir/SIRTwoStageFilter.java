@@ -20,7 +20,7 @@ import at.dms.util.*;
  * of the compiler aware of phases.  In some places this is easier
  * than in others; big changes show up in the backends.
  *
- * @version $Id: SIRTwoStageFilter.java,v 1.8 2003-05-28 05:58:53 thies Exp $
+ * @version $Id: SIRTwoStageFilter.java,v 1.9 2003-12-02 20:47:05 thies Exp $
  */
 public class SIRTwoStageFilter extends SIRFilter {
     /* Internal invariant: the init and work phases arrays each have
@@ -70,6 +70,12 @@ public class SIRTwoStageFilter extends SIRFilter {
         // Confirm that the initWork function is in the methods array.
         if (initWork != null)
             addReplacementMethod(initWork, initWork);
+	Utils.assert(((!(peek instanceof JIntLiteral) || ((JIntLiteral)peek).intValue()>0) || inputType==CStdType.Void) ||
+		     ((initPeek >0) || inputType==CStdType.Void),
+		     "TwoStageFilter " + this + " declares peek and initPeek rate of 0 but has input type of " + inputType + " which should be Void instead.");
+	Utils.assert(((!(push instanceof JIntLiteral) || ((JIntLiteral)push).intValue()>0) || outputType==CStdType.Void) ||
+		     ((initPush >0) || outputType==CStdType.Void),
+		     "TwoStageFilter " + this + " declares push and initPush rate of 0 but has output type of " + outputType + " which should be Void instead.");
     }
 
     /**

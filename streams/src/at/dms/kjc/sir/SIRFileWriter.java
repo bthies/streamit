@@ -22,7 +22,7 @@ public class SIRFileWriter extends SIRPredefinedFilter implements Cloneable {
 	      new JIntLiteral(null, 1),
 	      new JIntLiteral(null, 1),
 	      new JIntLiteral(null, 0),
-	      null, null);
+	      null, CStdType.Void);
 	this.fileName = "";
     }
 

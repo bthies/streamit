@@ -1,0 +1,13 @@
+#!/bin/sh
+#PBS -l nodes=1:dual2.2GHz
+#PBS -k n
+#PBS -m n
+#PBS -q long
+#PBS -v STREAMIT_HOME=/u/dmaze/src/streams
+#PBS -N streamit-nightly
+#PBS -S /bin/sh
+
+# Run the "nightly" regression tests under OpenPBS.  Submit this script
+# using 'qsub', possibly via cron.
+
+$STREAMIT_HOME/regtest/tools/run_reg_tests.pl nightly

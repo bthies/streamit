@@ -75,7 +75,8 @@ ifeq ($(CAG_BUILD),1)
 STREAMIT_BACKENDS += \
   streamit/eclipse/grapheditor/graph/GraphEncoder.class \
   at/dms/kjc/spacetime/SpaceTimeBackend.class \
-  at/dms/kjc/cluster/ClusterBackend.class
+  at/dms/kjc/cluster/ClusterBackend.class \
+  at/dms/kjc/sir/SIRToStreamIt.class
 endif
 
 JAVA_TARGET = \

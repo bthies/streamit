@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.49 2004-11-17 00:02:34 janiss Exp $
+# $Id: strc,v 1.50 2004-12-01 23:38:43 janiss Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -294,7 +294,8 @@ sub get_options
 			    "destroyfieldarray!",
 			    "cacheopt!",
 			    "rename1!",
-			    "rename2!");
+			    "rename2!",
+			    "peekratio=i");
     return $result if !$result;
     # Figure out which partitioning is in use, if any:
     $opts{partition} = "greedier" if $opts{'partition-greedier'};
@@ -541,6 +542,7 @@ sub get_kjc_opts
     $opts{cacheopt} && ($kjcopts .= " --cacheopt");
     $opts{rename1} && ($kjcopts .= " --rename1");
     $opts{rename2} && ($kjcopts .= " --rename2");
+    $opts{peekratio} && ($kjcopts .= " --peekratio " . $opts{peekratio});
     $opts{wbs} && ($kjcopts .= " --wbs");
     $opts{spacetime} && ($kjcopts .= " --spacetime");
     $opts{magicdram} && ($kjcopts .= " --magicdram");

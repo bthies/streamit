@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.61 2004-11-17 00:02:38 janiss Exp $
+ * $Id: KjcOptions.opt,v 1.62 2004-12-01 23:38:48 janiss Exp $
  */
 
 prefix Kjc
@@ -293,6 +293,13 @@ longname		"cacheopt"
 	type		boolean
 	default		"false"
 	help		"Perform cache optimization"
+
+longname		"peekratio"
+	type		int
+	default		"-1"
+	requireArgument
+	help		"Increases multiplicity of peeking filters to make sure that (pop * ratio) >= (peek - pop)"
+
 
 longname		"rename1"
 	type		boolean

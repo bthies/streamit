@@ -1,7 +1,9 @@
 package at.dms.kjc;
 
+import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.*;
 import java.util.*;
+import java.io.*;
 
 /**
  * This class does the front-end processing to turn a Kopi compilation
@@ -10,6 +12,8 @@ import java.util.*;
  */
 public class StreamItDot implements AttributeStreamVisitor
 {
+    private PrintStream outputStream;
+
     /**
      * Inner class to represent dot graph components.
      */
@@ -29,9 +33,9 @@ public class StreamItDot implements AttributeStreamVisitor
     
     private int lastNode;
 
-    public StreamItDot()
-    {
-        lastNode = 0;
+    public StreamItDot(PrintStream outputStream) {
+	lastNode = 0;
+	this.outputStream = outputStream;
     }
 
     /**
@@ -60,9 +64,33 @@ public class StreamItDot implements AttributeStreamVisitor
         print("}\n");
     }
 
+    /**
+     * Prints dot graph of <str> to System.out
+     */
+    public static void printGraph(SIRStream str) {
+	str.accept(new StreamItDot(System.out));
+    }
+
+    /**
+     * Prints dot graph of <str> to <filename>
+     */
+    public static void printGraph(SIRStream str, String filename) {
+	try {
+	    FileOutputStream out = new FileOutputStream(filename);
+	    StreamItDot dot = new StreamItDot(new PrintStream(out));
+	    dot.print("digraph streamit {\n");
+	    str.accept(dot);
+	    dot.print("}\n");
+	    out.flush();
+	    out.close();
+	} catch (IOException e) {
+	    e.printStackTrace();
+	}
+    }
+
     void print(String f) 
     {
-        System.out.print(f);
+	outputStream.print(f);
     }
 
     void printEdge(String from, String to)
@@ -111,7 +139,8 @@ public class StreamItDot implements AttributeStreamVisitor
                               CType inputType, CType outputType)
     {
         // Return a name pair with both ends pointing to this.
-        return new NamePair(makeLabelledNode(self.getRelativeName()));
+	//        return new NamePair(makeLabelledNode(self.getRelativeName()));
+	return new NamePair(makeLabelledNode(self.getIdent()));
     }
     
     /* visit a splitter */

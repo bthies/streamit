@@ -1,0 +1,28 @@
+complex->complex[N_bm][N_srg][N_pri] filter GenCub(int N_bm,int N_srg,int N_pri) {
+    init {}
+    work pop N_bm*N_srg*N_pri push 1 {
+	complex[N_bm][N_srg][N_pri] OutArr;
+
+	for (int i=0; i<N_bm; i++)
+	    for (int j=0; j < N_srg; j++)
+		for (int k=0; k < N_pri; k++)
+		    OutArr[i][j][k]=pop();
+	push(OutArr);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

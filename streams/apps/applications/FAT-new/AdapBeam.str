@@ -1,0 +1,154 @@
+/* this Filter performes the adaptive Beamforming,
+in the work function gets an N_ch*N_srg*N_pri Matrix as its input and the output is a N_bm*N_srg*N_pri,
+the init function requires the value for float[N_ch] b,float[N_bm] d,a vectors, the values for the steering matrix V(s) is computed during the initialization part;
+
+*/
+
+import streamit.*;
+
+complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_srg, int N_pri,float alpha, float[] a, float[] b, float[] d)  {//
+    complex [N_ch][N_bm] V; // the steering matrix
+    complex [N_ch][5*N_ch] A_ext;// the extended version of A which will have dimensions N_ch*(6N_ch)
+    complex[N_ch] v0_stap; // will be used in generating the v_stap
+
+
+
+init {
+    
+    complex dummy;
+    
+	for ( int i=0; i <N_bm ; i++)
+	    for (int j=0; j < N_ch ; j++)
+		V[j][i]=Comp.Mult(b[j],Comp.etoj(-d[i]-a[i]*j));
+
+	alpha=(float) Math.sqrt(alpha);
+	A_ext= new Complex[N_ch][6*N_ch];
+
+	// are the initial values zero? no they are not (from hasani)
+	for (int i=0; i < N_ch; i++)
+	    for (int j=5*N_ch ; j<6*N_ch; j++){
+		if (i==j) {
+		A_ext[i][j]=alpha;
+		}
+		else A_ext[i][j]=0;
+		
+	    }
+	//
+
+	dummy=e^(2i*3.1415926535/N_ch);
+	v0_stap[0]=1;
+	for (int i=1; i < N_ch; i++)
+	    v0_stap[i]=v0_stap[i-1]*dummy;
+	
+	    
+       
+    }
+
+    work push 1 pop 1{
+	
+    complex [N_ch] u   ;
+    complex [N_ch][N_bm] W ;        
+    complex [N_ch][N_srg][N_pri] InCube;
+    //complex [N_bm][N_srg][N_pri] OutCube;we don't push outcube 
+
+    float sum;
+    float [N_ch][N_ch] L;
+    CubVect Vstap_Ocub(N_ch,N_bm,N_srg,N_pri);
+    
+    complex dummy1,dummy2; //these dummy variables are used for matrix multipication 
+
+	InCube=input.pop();
+
+	for (int i=0;i< N_ch; i++)
+	    for (int j=0; j < 5*N_ch; j++)
+		A_ext[i][j]=InCube[i][j][1]/((float)Math.sqrt(5*N_ch));
+
+	L=LQ.comp(N_ch,6*N_ch,A_ext);
+
+	for (int i=0; i < N_bm; i++){ // this loop calculates the beam correction matrix using Wiener-Hopf Formula
+
+	    for (int j=0; j < N_ch; j++)
+		u[j]=V[j][i];
+	    
+	    u=LQ.forw(N_ch,L,u);
+	    sum=0;
+	    	    
+	    for (int j=0;j < N_ch; j++)
+		sum=sum+u[j].real*u[j].real+u[j].imag*u[j].imag;
+
+	    u=LQ.back(N_ch,L,u);
+
+	    for (int j=0; j < N_ch;j++)
+		W[j][i]=u[j]/sum;
+	}
+	
+       
+	for (int i=0; i < N_pri; i++)
+	    for (int j=0; j < N_srg; j++)
+		for (int k=0; k < N_bm; k++){
+		    Vstap_Ocub.Cube[k][j][i]=0;
+		    for (int l=0; l < N_ch; l++){
+			dummy1=W[l][k];
+			dummy1.imag= -1*dummy1.imag;
+			Vstap_Ocub.Cube[k][j][i]+=dummy1*InCube[l][j][i];
+		    }
+		}
+	// pushing the elements  over the tape
+
+	for (int i=0; i < N_bm; i++)
+	    for (int j=0; j < N_srg; j++)
+		for (int k=0; k< N_pri; k++)
+		    push(Vstap_Ocub.Cube[i][j][k]);
+	
+
+	// From this part on, I will be generating the v_stap that will be used in the Space-Time Adaptive Processing
+        complex[N_bm] v_stap;
+	for (int i=0; i < N_bm;i++){
+
+	    v_stap[i]=0;
+	    
+	    for (int j=0; j < N_ch; j++) {
+
+		dummy1=W[j][i];
+		dummy1.imag=-1*dummy1.imag;
+		
+		v_stap[i]+=dummy1*v0_stap[j];
+	    }
+	}
+
+	for (int i=; i < N_bm; i++)
+	    push(v_stap[i]);
+
+	Vstap_Ocub.Vect=v_stap;
+	
+            
+
+	output.push(W_Ocub);
+	    }
+}
+	
+
+	
+
+
+	
+	
+	
+
+	
+	
+	
+	    
+
+
+	
+    
+	
+
+    
+
+
+
+
+
+

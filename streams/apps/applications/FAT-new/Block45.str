@@ -1,0 +1,44 @@
+/* this Filter performes the adaptive Beamforming,
+in the work function gets an N_ch*N_srg*N_pri Matrix as its input and the output is a N_bm*N_srg*N_pri,
+the init function requires the value for float[N_ch] b,float[N_bm] d,a vectors, the values for the steering matrix V(s) is computed during the initialization part;
+
+*/
+
+import streamit.*;
+
+
+complex->complex splitjoin Block45(int N_bm,int N_srg,int N_pri,int N_dop,int N_pc,complex[] h_pc) {
+
+    split roundrobin (N_bm*N_srg*N_pri,N_bm);
+    add Elpipe(N_bm,N_srg,N_pri,N_dop,N_pc,h_pc);
+    add ComplexIdentity();
+    join roundrobin(N_bm*N_srg*N_dop*(N_pri+1-N_dop),N_bm);
+    
+    
+}
+	
+
+	
+
+
+	
+	
+	
+
+	
+	
+	
+	    
+
+
+	
+    
+	
+
+    
+
+
+
+
+
+

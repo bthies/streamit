@@ -1,0 +1,34 @@
+
+// This filter takes a three dimentional array and extracs its columns 
+    complex[N_ch][N_rg][N_pri]->complex[N_rg] filter FormChg20(N_ch,N_rg,N_pri) {
+    init {}
+
+    work push N_ch*N_pri pop 1 {
+	complex[N_ch][N_rg][N_pri] in_arr;
+	complex[N_rg] out_arr;
+	
+	in_arr= pop();
+
+	for (int i=0; i <N_ch; i++)
+	    for (int j=0; j<N_pri; j++){
+		for (int k=0; k < N_rg; k++)
+		    out_arr[k]=in_arr[i][k][j];
+		push(out_arr);
+	    }
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

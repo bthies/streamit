@@ -1,0 +1,41 @@
+/* this Filter performes the adaptive Beamforming,
+in the work function gets an N_ch*N_srg*N_pri Matrix as its input and the output is a N_bm*N_srg*N_pri,
+the init function requires the value for float[N_ch] b,float[N_bm] d,a vectors, the values for the steering matrix V(s) is computed during the initialization part;
+
+*/
+
+import streamit.*;
+
+
+complex->complex filter ComplexIdentity() {
+    init{}
+    work pop 1 push 1 {
+	push(pop());
+    }
+}
+	
+
+	
+
+
+	
+	
+	
+
+	
+	
+	
+	    
+
+
+	
+    
+	
+
+    
+
+
+
+
+
+

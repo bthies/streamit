@@ -28,7 +28,7 @@ public class Lifter implements StreamVisitor {
      */
     private int syncRemoval;
 
-    private Lifter(int removeSync) {
+    private Lifter(int syncRemoval) {
 	this.syncRemoval = syncRemoval;
     }
 

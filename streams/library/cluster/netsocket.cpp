@@ -30,6 +30,9 @@ unsigned get_myip() {
 unsigned lookup_ip(const char *hostname) {
 
   struct hostent *host = gethostbyname(hostname);
+  if (host == NULL) {
+    fprintf(stderr, "ERROR unable to lookup ip address of host %s\n", hostname);
+  }
   return *(unsigned *)host->h_addr_list[0];
 }
 

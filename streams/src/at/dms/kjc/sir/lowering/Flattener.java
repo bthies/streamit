@@ -274,6 +274,8 @@ public class Flattener {
 		System.err.print("Running anti-redundant replacement...");
 		LinearRedundancyReplacer.doReplace(lfa, lra, str);
 		System.err.println("done.");
+		// print out the stream graph after linear redundant replacement
+		LinearDot.printGraph(str, "linear-redundant-replace.dot", lfa);
 	    }
 	    
 

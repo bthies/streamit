@@ -14,7 +14,7 @@ TRANSFORMATION-OPTIONS =  --constprop --linearanalysis --linearreplacement
 LINEAR-REG-TEST = linear_regtest.pl
 
 # current test
-CURRENT-TEST = regtests/LinearTest18
+CURRENT-TEST = regtests/LinearTest20
 
 all: clean java-compile uni-compile raw-compile
 

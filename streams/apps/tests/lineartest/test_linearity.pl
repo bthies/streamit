@@ -88,8 +88,6 @@ my @files = (
 	     "regtests/LinearTest16.str",
 	     );
 
-@files = (	     "$benchmark_path/fm/streamit/LinkedFMTest.java",);
-
 # delete the output files from any previous runs
 `rm -rf $RESULTS_DIR`;
 # remake the directory

@@ -58,8 +58,8 @@ public class WorkEstimate {
 	TreeMap treeMap = new TreeMap(new Comparator() {
 		public int compare(Object o1, Object o2) {
 		    // assume these are map.entry's
-		    int work1 = ((WorkInfo)map.get(o1)).totalWork();
-		    int work2 = ((WorkInfo)map.get(o2)).totalWork();
+		    int work1 = ((WorkInfo)map.get(o1)).getTotalWork();
+		    int work2 = ((WorkInfo)map.get(o2)).getTotalWork();
 		    if (o1==o2) {
 			return 0;
 		    } else if (work1 < work2) {
@@ -98,12 +98,12 @@ public class WorkEstimate {
 	    // get its parent
 	    SIRContainer parent = filter.getParent();
 	    // get work
-	    int work = ((WorkInfo)entry.getValue()).totalWork();
+	    int work = ((WorkInfo)entry.getValue()).getTotalWork();
 	    if(parent instanceof SIRSplitJoin)
 		work/=2; //Account for using semiFuse of SplitJoins
 	    // if it doesn't contain parent, add parent
 	    if (!containerMap.containsKey(parent)) {
-		containerMap.put(parent, new WorkInfo(work));
+		containerMap.put(parent, new WorkInfo(1, work));
 	    } else {
 		// otherwise, just increment the work
 		((WorkInfo)containerMap.get(parent)).incrementWork(work);
@@ -119,7 +119,17 @@ public class WorkEstimate {
      */
     public int getWork(SIRFilter obj) {
 	Utils.assert(workMap.containsKey(obj), "Don't have work for " + obj);
-	return ((WorkInfo)workMap.get(obj)).totalWork();
+	return ((WorkInfo)workMap.get(obj)).getTotalWork();
+    }
+
+    /**
+     * Returns the number of times that filter <obj> executes in this
+     * estimate.  Requires that <obj> was present in the original
+     * graph used to construct this.
+     */
+    public int getReps(SIRFilter obj) {
+	Utils.assert(workMap.containsKey(obj), "Don't have work for " + obj);
+	return ((WorkInfo)workMap.get(obj)).getReps();
     }
 
     /**
@@ -128,7 +138,7 @@ public class WorkEstimate {
      */
     public float getPercentageWork(SIRFilter obj) {
 	return 100 * 
-	    ((float)((WorkInfo)workMap.get(obj)).totalWork()) / toplevelWork;
+	    ((float)((WorkInfo)workMap.get(obj)).getTotalWork()) / toplevelWork;
     }
 
     /**
@@ -168,11 +178,10 @@ public class WorkEstimate {
 	     it.hasNext(); ){
 	    SIROperator obj = (SIROperator)it.next();
 	    if (obj instanceof SIRFilter) {
-		int count = ((int[])executionCounts.get(obj))[0];
+		int reps = ((int[])executionCounts.get(obj))[0];
 		int work = WorkVisitor.getWork((SIRFilter)obj);
-		//System.out.println("Work:"+obj+" "+count+" "+work);
-		workMap.put(obj, new WorkInfo(count*work));
-		toplevelWork += count*work;
+		workMap.put(obj, new WorkInfo(reps,work));
+		toplevelWork += reps*work;
 	    }
 	}
     }

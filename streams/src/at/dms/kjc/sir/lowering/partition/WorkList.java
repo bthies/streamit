@@ -17,10 +17,10 @@ class WorkList extends java.util.LinkedList {
     }
 
     /**
-     * Gets work at position <i>.
+     * Gets total work at position <i>.
      */
     public int getWork(int i) {
-	return ((WorkInfo)((Map.Entry)super.get(i)).getValue()).totalWork();
+	return ((WorkInfo)((Map.Entry)super.get(i)).getValue()).getTotalWork();
     }
 
     /**
@@ -61,15 +61,15 @@ class WorkList extends java.util.LinkedList {
 	for (int i=title1.length(); i<max; i++) {
 	    out.print(" ");
 	}
-	out.println("\t" + "Work");
+	out.println("\t" + "Reps" + "\t" + "Work" + "\t" + "TotalWork");
 	for (int i=size()-1; i>=0; i--) {
 	    SIRStream str = (SIRStream)((Map.Entry)super.get(i)).getKey();
-	    int work = getWork(i);
+	    WorkInfo workInfo = (WorkInfo)((Map.Entry)super.get(i)).getValue();
 	    out.print(str.getIdent());
 	    for (int j=str.getIdent().length(); j<max; j++) {
 		out.print(" ");
 	    }
-	    out.println("\t" + work);
+	    out.println("\t" + workInfo.getReps() + "\t" + workInfo.getUnitWork() + "\t" + workInfo.getTotalWork());
 	}
 	out.close();
     }

@@ -21,7 +21,7 @@ import streamit.scheduler2.Scheduler;
 public abstract class Structure extends Stream
 {
     // Can't add child streams to a structure.
-    public void add(Stream s) { throw new NoSuchMethodException(); }
+    public void add(Stream s) { throw new UnsupportedOperationException(); }
     public void connectGraph() { }
     public void setupBufferLengths(Scheduler schedule) { }
 }

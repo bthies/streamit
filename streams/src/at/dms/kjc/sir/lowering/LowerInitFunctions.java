@@ -178,9 +178,7 @@ public class LowerInitFunctions implements StreamVisitor {
     private void registerSplitJoinTapes(SIRSplitJoin str, 
 					JMethodDeclaration init) {
         // get parent context
-        JExpression parentContext =
-            LoweringConstants.getStreamContext(LoweringConstants.
-                                               getChildStruct(str));
+        JExpression parentContext = LoweringConstants.getStreamContext();
 	// go through elements
 	for (int i=0; i<str.size(); i++) {
 	    // get i'th child

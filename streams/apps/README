@@ -1,0 +1,31 @@
+Here are the applications contained in this directory:
+
+AMRadio			An old attempt at an AMRadio (not using now)
+
+BeamFormer		The original Beamformer implementation, which leads
+			to buffer overflow.
+
+BeamFormer-fine		More fine-grained Beamformer, which moves some state
+			into a filter to prevent exploding I/O ratios.  This
+			is what we used for ASPLOS, etc.
+
+Crc			CRC encoder and decoder.
+
+FMRadio			An old FMRadio; new one is in docs/examples/hand/fm.
+
+Gsm			GSM vocoder.
+
+libraries		Miscellaneous library filters used by other apps.
+
+matrixmult		Matrix multiplication.
+
+mp3decoder		Parts of an MP3 decoder (beginning stages still 
+			unimplemented since they are variable rate).
+
+PCADemo			An old version of the Beamformer, modeled off of
+			unclassified example program from Lincoln Lab
+			for DARPA's Polymorphic Computing Architecture (PCA)
+
+perftest4		A performance test from Spectrumware.
+
+specs			Specifications of applications we're implementing.

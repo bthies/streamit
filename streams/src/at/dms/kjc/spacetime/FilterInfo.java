@@ -158,7 +158,6 @@ public class FilterInfo
 	    (prePeek + 
 	     bottomPeek + 
 	     Math.max((initFire - 2), 0) * pop);
-	
 	return remaining;
     }
 

@@ -153,7 +153,6 @@ public class SpaceTimeBackend
 	scheduler.schedule();
 	SchedulePrimePump.doit(scheduler.getSchedule());
 	
-
 	//mgordon's stuff
 	assert !KjcOptions.magicdram : 
 

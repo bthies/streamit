@@ -20,13 +20,16 @@ public class TraceDotGraph
 	    FileWriter fw = new FileWriter(fileName);
 	    fw.write("digraph TraceDotGraph {\n");
 	    fw.write("size = \"8, 10.5\";\n");
+	    LinkedList tracesList = new LinkedList(steadyTrav);
+	    for (int i = 0; i < io.length; i++)
+		tracesList.add(io[i]);
 	    //HashSet traceSet = new HashSet();
 	    //Util.addAll(traceSet, steadyTrav);
 	    //add the file readers and writes if they exist
 	    //for (int i = 0; i < io.length; i++)
 	    //traceSet.add(io[i]);
-
-	    Iterator traces = steadyTrav.iterator();
+	    
+	    Iterator traces = tracesList.iterator();
 	    while (traces.hasNext()) {
 		Trace trace = (Trace)traces.next();
 		TraceNode node = trace.getHead();

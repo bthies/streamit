@@ -22,17 +22,17 @@ public class InitSchedule
 	    queue.add(topTraces[i]);
 	    while (!queue.isEmpty()) {
 		Trace trace = (Trace)queue.removeFirst();
-		if (trace.getHead().getNextFilter().isPredefined())
-		    continue;
 		if (!visited.contains(trace)) {
-		    System.out.println("Adding " + trace + " to init schedule.");
-		    schedule.add(trace);
 		    visited.add(trace);
 		    Iterator dests = trace.getTail().getDestSet().iterator();
 		    while (dests.hasNext()) {
 			Trace current = ((Edge)dests.next()).getDest().getParent();
 			if (!visited.contains(current))
 			    queue.add(current);
+		    }
+		    if (!trace.getHead().getNextFilter().isPredefined()) {
+			System.out.println("Adding " + trace + " to init schedule.");		    
+			schedule.add(trace);
 		    }
 		}
 	    }

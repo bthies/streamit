@@ -41,7 +41,7 @@ public class FilterPhaser extends EmptyStreamVisitor
     public static void resolvePhasedFilters(SIRStream str)
     {
         FilterPhaser phaser = new FilterPhaser();
-        IterFactory.createIter(str).accept(phaser);
+        IterFactory.createFactory().createIter(str).accept(phaser);
     }
     
     public void visitPhasedFilter(SIRPhasedFilter str, SIRPhasedFilterIter iter)

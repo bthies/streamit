@@ -105,7 +105,7 @@ public class RenameAll extends SLIRReplacingVisitor
 	    toplevel = toplevel.getParent();
 	}
 	// name the stream structure
-	IterFactory.createIter(toplevel).accept(new EmptyStreamVisitor() {
+	IterFactory.createFactory().createIter(toplevel).accept(new EmptyStreamVisitor() {
 		/* visit a filter */
 		public void visitFilter(SIRFilter self,
 					SIRFilterIter iter) {
@@ -126,7 +126,7 @@ public class RenameAll extends SLIRReplacingVisitor
 	    toplevel = toplevel.getParent();
 	}
 	// name the stream structure
-	IterFactory.createIter(toplevel).accept(new EmptyStreamVisitor() {
+	IterFactory.createFactory().createIter(toplevel).accept(new EmptyStreamVisitor() {
 		/* visit a filter */
 		public void visitFilter(SIRFilter self,
 					SIRFilterIter iter) {

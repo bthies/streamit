@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.8 2003-06-02 18:19:23 aalamb Exp $
+ * $Id: LinearDirectReplacer.java,v 1.9 2003-10-24 22:04:00 thies Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -61,7 +61,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	// make a new replacer with the information contained in the analyzer and the costs
 	LinearDirectReplacer replacer = new LinearDirectReplacer(lfa, replaceCosts);
 	// pump the replacer through the stream graph.
-	IterFactory.createIter(str).accept(replacer);
+	IterFactory.createFactory().createIter(str).accept(replacer);
     }
 
     /**

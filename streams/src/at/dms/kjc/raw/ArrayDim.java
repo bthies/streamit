@@ -27,7 +27,7 @@ public class ArrayDim extends SLIREmptyVisitor implements StreamVisitor{
     public static String[] findDim(SIRFilter filter, String var)
     {
 	ArrayDim ad = new ArrayDim(var);
-	IterFactory.createIter(filter).accept(ad);
+	IterFactory.createFactory().createIter(filter).accept(ad);
 	
 	
 	if (ad.dims == null)

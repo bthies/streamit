@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * splitjoins and pipelines with linear representations with a single
  * filter that computes the same function.<br>
  *
- * $Id: LinearIndirectReplacer.java,v 1.4 2003-06-02 18:19:23 aalamb Exp $
+ * $Id: LinearIndirectReplacer.java,v 1.5 2003-10-24 22:04:00 thies Exp $
  **/
 public class LinearIndirectReplacer extends LinearDirectReplacer implements Constants{
     // names of fields
@@ -69,7 +69,7 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
 	// make a new replacer with the information contained in the analyzer and the costs
 	LinearIndirectReplacer replacer = new LinearIndirectReplacer(lfa, replaceCosts);
 	// pump the replacer through the stream graph.
-	IterFactory.createIter(str).accept(replacer);
+	IterFactory.createFactory().createIter(str).accept(replacer);
     }
 
     protected SIRFilter makeEfficientImplementation(SIRStream oldStream,

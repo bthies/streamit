@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * requirements. Refer to the documentation in LinearRedundancy
  * for more information.<br>
  *
- * $Id: LinearRedundancyReplacer.java,v 1.12 2003-06-02 18:19:23 aalamb Exp $
+ * $Id: LinearRedundancyReplacer.java,v 1.13 2003-10-24 22:04:00 thies Exp $
  **/
 public class LinearRedundancyReplacer extends LinearReplacer implements Constants{
     /** The prefix to use to name fields. **/
@@ -45,7 +45,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 				 SIRStream str) {
 	LinearReplacer replacer = new LinearRedundancyReplacer(lfa, lra);
 	// pump the replacer through the stream graph.
-	IterFactory.createIter(str).accept(replacer);
+	IterFactory.createFactory().createIter(str).accept(replacer);
     }
 
    

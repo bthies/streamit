@@ -25,7 +25,7 @@ public class SemanticChecker {
 	    out.println("ERROR:  No Top-Level Stream defined!");
 	    System.exit(-1);
 	} else {
-	    IterFactory.createIter(str).accept(new StreamSemanticChecker(out));
+	    IterFactory.createFactory().createIter(str).accept(new StreamSemanticChecker(out));
 	}
     }
 

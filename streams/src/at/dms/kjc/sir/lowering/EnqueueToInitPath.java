@@ -22,7 +22,7 @@ import at.dms.kjc.flatgraph.FlatVisitor;
  * that enqueue statements are outside of any control flow.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: EnqueueToInitPath.java,v 1.2 2003-10-09 08:47:04 thies Exp $
+ * @version $Id: EnqueueToInitPath.java,v 1.3 2003-10-24 22:04:06 thies Exp $
  */
 public class EnqueueToInitPath
 {
@@ -33,7 +33,7 @@ public class EnqueueToInitPath
      */
     public static void doInitPath(SIRStream str)
     {
-        SIRIterator iter = IterFactory.createIter(str);
+        SIRIterator iter = IterFactory.createFactory().createIter(str);
         iter.accept(new EmptyStreamVisitor() {
                 public void postVisitFeedbackLoop(SIRFeedbackLoop self,
                                                   SIRFeedbackLoopIter iter)

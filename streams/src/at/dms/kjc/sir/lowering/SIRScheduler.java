@@ -193,7 +193,7 @@ public class SIRScheduler implements Constants {
      * Interface with the scheduler to get a schedule for <str>.
      */
     private static Scheduler computeSchedule(SIRStream str) {
-	streamit.scheduler2.Scheduler scheduler = new streamit.scheduler2.minlatency.Scheduler(IterFactory.createIter(str));
+	streamit.scheduler2.Scheduler scheduler = new streamit.scheduler2.minlatency.Scheduler(IterFactory.createFactory().createIter(str));
 	scheduler.computeSchedule();
 	//System.err.println("Back from scheduler package.");
 	return scheduler;

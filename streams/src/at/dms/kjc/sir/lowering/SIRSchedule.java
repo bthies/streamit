@@ -40,8 +40,8 @@ public class SIRSchedule  {
 	    op2 = op2.getParent();
 	}
 	// create iterators
-	SIRIterator iter1 = IterFactory.createIter((SIRStream)op1);
-	SIRIterator iter2 = IterFactory.createIter((SIRStream)op2);
+	SIRIterator iter1 = IterFactory.createFactory().createIter((SIRStream)op1);
+	SIRIterator iter2 = IterFactory.createFactory().createIter((SIRStream)op2);
 	// call scheduler
 	//System.err.println("Looking for schedule between " + op1 + " and " + op2);
 	return scheduler.getBufferSizeBetween(iter1, iter2);

@@ -25,7 +25,7 @@ public class PopToPeek extends EmptyStreamVisitor implements Constants {
     
     /** Removes all pops in the work functions of the filters contained within str. **/
     public static void removeAllPops(SIRStream str) {
-	IterFactory.createIter(str).accept(new PopToPeek());
+	IterFactory.createFactory().createIter(str).accept(new PopToPeek());
     }
     
     /** visit a filter and do the transformation on it. **/

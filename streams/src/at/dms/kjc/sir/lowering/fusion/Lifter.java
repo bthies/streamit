@@ -38,7 +38,7 @@ public class Lifter implements StreamVisitor {
      * the graph.
      */
     public static void lift(SIRStream str) {
-	IterFactory.createIter(str).accept(new Lifter(SYNC_REMOVAL_NO_NEW_JOINERS));
+	IterFactory.createFactory().createIter(str).accept(new Lifter(SYNC_REMOVAL_NO_NEW_JOINERS));
     }
 
     /**
@@ -46,7 +46,7 @@ public class Lifter implements StreamVisitor {
      * points.
      */
     public static void liftPreservingSync(SIRStream str) {
-	IterFactory.createIter(str).accept(new Lifter(SYNC_REMOVAL_NONE));
+	IterFactory.createFactory().createIter(str).accept(new Lifter(SYNC_REMOVAL_NONE));
     }
 
     /**
@@ -54,7 +54,7 @@ public class Lifter implements StreamVisitor {
      * could possibly add joiners to the graph.
      */
     public static void liftAggressiveSync(SIRStream str) {
-	IterFactory.createIter(str).accept(new Lifter(SYNC_REMOVAL_MAX_STRUCTURED));
+	IterFactory.createFactory().createIter(str).accept(new Lifter(SYNC_REMOVAL_MAX_STRUCTURED));
     }
 
     /**
@@ -62,7 +62,7 @@ public class Lifter implements StreamVisitor {
      * least, removes the ones that would be inserted by partitioning.)
      */
     public static void eliminateIdentities(SIRStream str) {
-	IterFactory.createIter(str).accept(new EmptyStreamVisitor() {
+	IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
 		public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {
 		    for (int i=self.size()-1; i>=0; i--) {
 			if (self.get(i) instanceof SIRIdentity) {

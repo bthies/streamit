@@ -26,7 +26,7 @@ public class FissionReplacer extends LinearReplacer {
      * each fission expansion not exceeding <maxFissAmount>.
      */
     public static void doit(SIRStream str, int maxFissAmount) {
-	IterFactory.createIter(str).accept(new FissionReplacer(maxFissAmount));
+	IterFactory.createFactory().createIter(str).accept(new FissionReplacer(maxFissAmount));
     }
 
     /**

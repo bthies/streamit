@@ -158,11 +158,11 @@ public class RawBackend {
 	// optionally print a version of the source code that we're
 	// sending to the scheduler
 	if (KjcOptions.print_partitioned_source) {
-	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createIter(str));
+	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createFactory().createIter(str));
 	}
 
 	//SIRPrinter printer1 = new SIRPrinter();
-	//IterFactory.createIter(str).accept(printer1);
+	//IterFactory.createFactory().createIter(str).accept(printer1);
 	//printer1.close();
 
        	System.out.println("Flattener Begin...");

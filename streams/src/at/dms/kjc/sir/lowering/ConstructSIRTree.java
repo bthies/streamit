@@ -24,7 +24,7 @@ public class ConstructSIRTree {
 
     public static void doit(SIRStream str) {
 	// visit the hoister in all containers
-	IterFactory.createIter(str).accept(new EmptyStreamVisitor() {
+	IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
 		/* pre-visit a pipeline */
 		public void preVisitPipeline(SIRPipeline self,
 					     SIRPipelineIter iter) {

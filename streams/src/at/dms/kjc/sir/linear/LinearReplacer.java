@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * A LinearReplacer is the base class that all replacers that make
  * use of linear information inherit from.<br>
  *
- * $Id: LinearReplacer.java,v 1.19 2003-09-17 08:29:07 thies Exp $
+ * $Id: LinearReplacer.java,v 1.20 2003-10-24 22:04:00 thies Exp $
  **/
 public abstract class LinearReplacer extends EmptyStreamVisitor implements Constants{
     // in visitors of containers, only make a replacement if we're
@@ -51,7 +51,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 	// basically, push a new visitor through which keeps track of the
 	LinearChildCounter kidCounter = new LinearChildCounter();
 	// stuff the counter through the stream
-	IterFactory.createIter(self).accept(kidCounter);
+	IterFactory.createFactory().createIter(self).accept(kidCounter);
 	return kidCounter.getKids();
 	
     }

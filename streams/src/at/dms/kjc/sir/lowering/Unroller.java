@@ -67,7 +67,7 @@ public class Unroller extends SLIRReplacingVisitor {
      */
     public static void unrollFilter(SIRFilter filter) {
 	// set all loops to be unrolled again
-	IterFactory.createIter(filter).accept(new EmptyStreamVisitor() {
+	IterFactory.createFactory().createIter(filter).accept(new EmptyStreamVisitor() {
 		public void preVisitStream(SIRStream filter, SIRIterator iter) {
 		    for (int i=0; i<filter.getMethods().length; i++) {
 			filter.getMethods()[i].accept(new SLIREmptyVisitor() {

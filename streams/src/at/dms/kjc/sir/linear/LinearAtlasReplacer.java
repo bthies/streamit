@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * This replacer works by calling the matrix multiply routines in the
  * ATLAS package, which it assumes are installed in $ATLAS_HOME.<br>
  *
- * $Id: LinearAtlasReplacer.java,v 1.2 2003-06-02 15:09:39 aalamb Exp $
+ * $Id: LinearAtlasReplacer.java,v 1.3 2003-10-24 22:03:59 thies Exp $
  **/
 public class LinearAtlasReplacer extends LinearDirectReplacer implements Constants{
     // names of fields
@@ -56,7 +56,7 @@ public class LinearAtlasReplacer extends LinearDirectReplacer implements Constan
 	// make a new replacer with the information contained in the analyzer and the costs
 	LinearAtlasReplacer replacer = new LinearAtlasReplacer(lfa, replaceCosts);
 	// pump the replacer through the stream graph.
-	IterFactory.createIter(str).accept(replacer);
+	IterFactory.createFactory().createIter(str).accept(replacer);
     }
 
     protected SIRFilter makeEfficientImplementation(SIRStream oldStream,

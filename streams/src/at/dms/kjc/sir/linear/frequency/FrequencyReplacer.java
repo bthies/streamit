@@ -15,7 +15,7 @@ import at.dms.compiler.*;
  * However, now there is one very slick frequency replacer (LEETFrequencyReplacer)
  * that is always used.<br>
  *
- * $Id: FrequencyReplacer.java,v 1.9 2003-05-30 14:51:54 aalamb Exp $
+ * $Id: FrequencyReplacer.java,v 1.10 2003-10-24 22:04:03 thies Exp $
  **/
 public abstract class FrequencyReplacer extends LinearReplacer implements Constants{
     /**
@@ -27,7 +27,7 @@ public abstract class FrequencyReplacer extends LinearReplacer implements Consta
 	FrequencyReplacer replacer = new LEETFrequencyReplacer(lfa);
 		
 	// pump the replacer through the stream graph.
-	IterFactory.createIter(str).accept(replacer);
+	IterFactory.createFactory().createIter(str).accept(replacer);
     }
 
 }

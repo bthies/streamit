@@ -107,14 +107,14 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	   /*	
 	  try {
 	    SIRPrinter printer1 = new SIRPrinter();
-	    IterFactory.createIter((SIRFilter)node.contents).accept(printer1);
+	    IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(printer1);
 	    printer1.close();
 	}
 	catch (Exception e) 
 	    {
 	    }
 	*/
-        IterFactory.createIter((SIRFilter)node.contents).accept(toC);
+        IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
     
     public FlatIRToC() 

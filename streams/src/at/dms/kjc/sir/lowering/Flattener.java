@@ -44,7 +44,7 @@ public class Flattener {
 	/* DEBUGGING PRINTING *
         System.out.println("--------- ON ENTRY TO FLATTENER ----------------");
 	SIRPrinter printer1 = new SIRPrinter();
-	IterFactory.createIter(str).accept(printer1);
+	IterFactory.createFactory().createIter(str).accept(printer1);
 	printer1.close();
 	*/
 
@@ -135,7 +135,7 @@ public class Flattener {
 	}
 
 	// make single structure
-	SIRIterator iter = IterFactory.createIter(str);
+	SIRIterator iter = IterFactory.createFactory().createIter(str);
 	System.err.print("Structuring... ");
 	JClassDeclaration flatClass = Structurer.structure(iter,
 							   interfaces,
@@ -146,7 +146,7 @@ public class Flattener {
 	// optionally print a version of the source code that we're
 	// sending to the scheduler
 	if (KjcOptions.print_partitioned_source) {
-	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createIter(str));
+	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createFactory().createIter(str));
 	}
 
 	// build schedule as set of higher-level work functions
@@ -203,7 +203,7 @@ public class Flattener {
 	/* DEBUGGING PRINTING
 	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");
 	printer1 = new SIRPrinter();
-	IterFactory.createIter(str).accept(printer1);
+	IterFactory.createFactory().createIter(str).accept(printer1);
 	printer1.close();
 	*/
 	

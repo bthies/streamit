@@ -37,7 +37,7 @@ public class FuseAll implements StreamVisitor {
 		if (wrapper.size()>1) {
 		    wrapper = SIRContainer.makeWrapper(wrapper);
 		}
-		IterFactory.createIter(wrapper.get(0)).accept(fuseAll);
+		IterFactory.createFactory().createIter(wrapper.get(0)).accept(fuseAll);
 		hasFused = false;
 	    } catch (SuccessfulFuseException e) {}
 	}

@@ -18,13 +18,13 @@ import java.util.*;
  * int i;
  * i = 5;
  * </pre>
- * $Id: FieldInitMover.java,v 1.7 2003-05-12 16:27:06 thies Exp $
+ * $Id: FieldInitMover.java,v 1.8 2003-10-24 22:04:06 thies Exp $
  **/
 public class FieldInitMover extends EmptyStreamVisitor {
   
     public static void moveStreamInitialAssignments(SIRStream str) {
 	FieldInitMover mover = new FieldInitMover();
-	IterFactory.createIter(str).accept(mover);
+	IterFactory.createFactory().createIter(str).accept(mover);
     }
 
 

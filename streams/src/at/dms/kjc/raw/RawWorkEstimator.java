@@ -168,7 +168,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
     {
 	System.out.println("Begin Testing Work Estimator ... ");
 	
-	IterFactory.createIter(stream).accept(new RawWorkEstimator());
+	IterFactory.createFactory().createIter(stream).accept(new RawWorkEstimator());
 	System.out.println("Finished Testing Work Estimator ... ");
     }
     

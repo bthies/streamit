@@ -1,0 +1,14 @@
+
+void->float filter FFTTestSource(int N) {
+
+  work push 2*N pop 0 {
+    int i;
+    push(0.0);
+    push(0.0);
+    push(1.0);
+    push(0.0);
+
+    for(i=0; i<2*(N-2); i++)
+      push(0.0);
+  }
+}

@@ -24,7 +24,7 @@ LINKED_FILE =   Linked${MAIN_FILE};
 
 STREAMIT_MAKEFILE = Makefile.streamit 
 
-all: clean
+all: link
 	javac *.java 
 
 clean:

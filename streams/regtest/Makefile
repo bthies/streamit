@@ -76,6 +76,8 @@ test-linear: compile
 # Base functionality
 compile:
 	$(COMPILER) streamittest/*.java
+	rm -f ../library/c/libstreamit.a
+	$(MAKE) -C ../library/c
 
 clean:
 	rm -rf streamittest/*.class

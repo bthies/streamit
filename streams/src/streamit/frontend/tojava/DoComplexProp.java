@@ -1,7 +1,7 @@
 /*
  * DoComplexProp.java: perform constant propagation on function bodies
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.7 2002-09-18 19:08:31 dmaze Exp $
+ * $Id: DoComplexProp.java,v 1.8 2002-10-04 19:05:38 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -91,6 +91,7 @@ public class DoComplexProp extends FEReplacer
 
     private Expression doExprProp(Expression expr)
     {
+        expr = (Expression)expr.accept(this);
         expr = (Expression)expr.accept(varToComplex);
         expr = (Expression)expr.accept(cplxProp);
         return expr;
@@ -128,9 +129,44 @@ public class DoComplexProp extends FEReplacer
         return exprVar;
     }
 
+    /**
+     * Create an initialized temporary variable to hold an arbitrary
+     * expression.  Uses addStatement() to add an initializer for
+     * the variable, and returns the variable.
+     */
+    private Expression makeAnyTemporary(Expression expr)
+    {
+        String tempVar = varGen.varName(varGen.nextVar(null));
+        Expression exprVar = new ExprVar(expr.getContext(), tempVar);
+        Type type = (Type)expr.accept(getExprType);
+        addStatement(new StmtVarDecl(expr.getContext(), type, tempVar, expr));
+        symTab.register(tempVar, type);
+        return exprVar;
+    }
+
     protected Expression doExpression(Expression expr)
     {
         return doExprProp(expr);
+    }
+
+    public Object visitExprPeek(ExprPeek expr)
+    {
+        Expression x = (Expression)super.visitExprPeek(expr);
+        // If the stream's input type is complex, we want a temporary
+        // instead.
+        if (streamType.getIn().isComplex())
+            x = makeAnyTemporary(x);
+        return x;
+    }
+
+    public Object visitExprPop(ExprPop expr)
+    {
+        Expression x = (Expression)super.visitExprPop(expr);
+        // If the stream's input type is complex, we want a temporary
+        // instead.
+        // if (streamType.getIn().isComplex())
+        //     x = makeAnyTemporary(x);
+        return x;
     }
 
     public Object visitFunction(Function func)

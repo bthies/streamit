@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.39 2003-06-18 03:25:07 jasperln Exp $
+ * $Id: KjcOptions.opt,v 1.40 2003-07-01 22:23:11 janiss Exp $
  */
 
 prefix Kjc
@@ -308,6 +308,12 @@ longname		"viram"
 	type		boolean
 	default		"false"
 	help		"Compile for VIRAM, a vector uniprocessor"
+
+longname		"cluster"
+	shortcut	"#"
+	type		boolean
+	default		"false"
+	help		"Compile for a network cluster"
 
 longname		"raw"
 	shortcut	"r"

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.8 2003-10-05 02:07:46 thies Exp $
+# $Id: strc,v 1.9 2003-10-06 18:40:21 dmaze Exp $
 #
 
 use strict;
@@ -71,10 +71,10 @@ Usage: strc [options] file.str ...
 Options:
   --help              Show this screen
 * --more-help         Include internal-only options
-  --java              Input file is "old" syntax (in Java)
+* --java              Input file is "old" syntax (in Java)
   --output filename   Write a binary to filename
-  --raw n             Compile for RAW, with an n-by-n grid
-  --cluster           Compile for a networked cluster
+  --raw n, -r n       Compile for RAW, with an n-by-n grid
+* --cluster           Compile for a networked cluster
 * --viram, -V         Compile for VIRAM, a vector uniprocessor
   --verbose           Print commands as they are executed
   --library           Run in the Java library instead of compiling
@@ -82,35 +82,35 @@ Options:
 
 Options available for all backends:
   -O0, -O1, -O2       Use predefined optimization sets
-  --destroyfieldarray Break arrays in structures into component elements
-* --clone-with-serialization, -K
+* --destroyfieldarray Break arrays in structures into component elements
+* --clone-with-serialization
 *                     Use old serialization code to copy objects
 * --fusion, -f        Fuse entire program to a single filter
 * --fission           Do vertical fission up to limit of argument
-  --linearreplacement, -I
+  --linearreplacement, -l
                       Perform linear transformations based on analysis
-* --linearreplacement2, -Z
+* --linearreplacement2
 *                     Do linear replacement using a level of indirection
-* --linearreplacement3, -R
+* --linearreplacement3
 *                     Do linear replacement using diagonal replacement
-  --nofieldprop, -L   Do not propagate constant field values
-  --nolinearcollapse, -H
-                      Do not combine filters with linear replacement
+* --nofieldprop, -L   Do not propagate constant field values
+* --nolinearcollapse, -H
+*                     Do not combine filters with linear replacement
 * --print-partitioned-source, -c
 *                     Print equivalent source after partitioning
 * --redundantreplacement, -t
 *                     Create linear filters without redundant computation
 * --simplesjfusion    Revert to the old, simple SplitJoin fusion algorithm
-  --sjtopipe, -J      Convert split-joins to pipelines
+* --sjtopipe, -J      Convert split-joins to pipelines
 * --stats             Gather statistics for program characterization
 * --tokopi            Use experimental frontend-to-SIR conversion
-  --sync, -k          Turn on sync removal
+* --sync, -k          Turn on sync removal
   --unroll, -u        Specify loop unrolling limit
 
 Options specific to RAW backend:
-  --partition, -a     Automatically partition stream graph (greedy)
-  --dppartition, -y   Use the dynamic programming partitioner
-  --altcodegen, -z    Alternate RAW communication code generation
+  --partition, -p     Automatically partition stream graph (greedy)
+  --dppartition, -d   Use the dynamic programming partitioner
+* --altcodegen, -z    Alternate RAW communication code generation
 * --decoupled, -X     Generate dummy communication code
 * --dpscaling, -Y     Collect theoretical scaling statistics
 * --ilppartition, -A  Use the integer linear programming partitioner
@@ -119,20 +119,20 @@ Options specific to RAW backend:
   --numbers n, -N     Automatically gather numbers and put in results.out
 * --ptraccess, -Q     Access buffers through a pointer
 * --ratematch, -x     Turn on rate matching
-  --rawcol, -q        Specify number of columns; --raw has number of rows
-  --raw-uni, -U       Use RAW backend to generate uniprocessor code
+  --rawcol, -c        Specify number of columns; --raw has number of rows
+  --raw-uni, -S       Use RAW backend to generate uniprocessor code
 * --removeglobals, -G Inline all functions and turn globals into locals
-  --simulatework, -T  Use simulator for work estimation
+  --simulatework, -s  Use simulator for work estimation
 * --spacetime         Use space-time partitioner
   --wbs               Use work-based simulator for communication code
 
 Options specific to uniprocessor backend:
   --frequencyreplacement, -F
                       Convert FIR filters to frequency
-  --linearpartition, -B
+  --linearpartition, -L
                       Automatically selecting targets of linear analyses
-* --atlas, -E         Use ATLAS for generated matrix multiplies
-  --poptopeek, -P     Convert all pop expressions into peeks
+* --atlas             Use ATLAS for generated matrix multiplies
+* --poptopeek, -P     Convert all pop expressions into peeks
   --profile           Compile with profiling information
 
 Options specific to Java library backend:
@@ -163,10 +163,10 @@ sub get_options
 			    "verbose|v",
 			    "optimize|O=i",
 			    "altcodegen|z",
-			    "atlas|E",
-			    "clone-with-serialization|clone_with_serialization|K",
+			    "atlas!",
+			    "clone-with-serialization|clone_with_serialization",
 			    "decoupled|X",
-			    "dppartition|y",
+			    "dppartition|d",
 			    "dpscaling|Y",
 			    "fission|fission=i",
 			    "frequencyreplacement|F",
@@ -174,19 +174,19 @@ sub get_options
 			    "ilppartition|A",
 			    "iterations|i=i",
 			    "library!",
-			    "linearpartition|B",
-			    "linearreplacement|I",
-			    "linearreplacement2|Z",
-			    "linearreplacement3|R",
+			    "linearpartition|L",
+			    "linearreplacement|l",
+			    "linearreplacement2",
+			    "linearreplacement3",
 			    "magic-net|magic_net|M",
 			    "memory|Xmx=s",
 			    "noanneal|W",
 			    "nofieldprop|L",
 			    "nolinearcollapse|H",
-			    "norun!",
-			    "nosched!",
+			    "norun",
+			    "nosched",
 			    "numbers|N=i",
-			    "partition|a",
+			    "partition|p",
 			    "poptopeek|P",
 			    "marksteady!",
 			    "printsched!",
@@ -194,12 +194,12 @@ sub get_options
 			    "profile!",
 			    "ptraccess|Q",
 			    "ratematch|x",
-			    "rawcol|q=i",
-			    "raw-uni|raw_uni|U",
+			    "rawcol|c=i",
+			    "raw-uni|raw_uni|S",
 			    "redundantreplacement|t",
 			    "removeglobals|G",
 			    "simplesjfusion|S",
-			    "simulatework|T",
+			    "simulatework|s",
 			    "sjtopipe|J",
 			    "spacetime!",
 			    "stats!",

@@ -19,11 +19,13 @@ public abstract class SIRContainer extends SIRStream {
      */
     private MutableList children;
     private MutableList params;
+    private static LinkedList toClear=new LinkedList();
 
     protected SIRContainer() {
 	super();
 	this.children = new MutableList();
 	this.params = new MutableList();
+	toClear.add(this);
     }
 
     protected SIRContainer(SIRContainer parent,
@@ -33,6 +35,18 @@ public abstract class SIRContainer extends SIRStream {
 	super(parent, ident, fields, methods);
 	this.children = new MutableList();
 	this.params = new MutableList();
+	toClear.add(this);
+    }
+
+    //Do not use unless not using structure anymore
+    public static void destroy() {
+	while(toClear.size()>0) {
+	    SIRContainer cont=(SIRContainer)toClear.removeFirst();
+	    cont.children.clear();
+	    cont.children=null;
+	    cont.params.clear();
+	    cont.params=null;
+	}
     }
 
     /**

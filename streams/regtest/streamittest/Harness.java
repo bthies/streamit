@@ -109,8 +109,6 @@ public class Harness {
 	    ByteArrayOutputStream lsBuff = new ByteArrayOutputStream();
 	    executeNative(getLsCommandOpts(fileName), lsBuff);
 	    
-	    ResultPrinter.printError("LSBUFF "+lsBuff.size()+":"+lsBuff.toString());
-
 	    // parse ls output:
 	    StringTokenizer st = new StringTokenizer(lsBuff.toString(), // output from ls
 						     "\n"); // split on newline

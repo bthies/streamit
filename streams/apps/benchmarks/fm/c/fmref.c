@@ -1,7 +1,7 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref.c,v 1.13 2003-10-29 16:14:34 dmaze Exp $
+ * $Id: fmref.c,v 1.14 2003-11-05 18:03:02 dmaze Exp $
  */
 
 #ifdef raw
@@ -135,6 +135,7 @@ void begin(void)
 
 void fb_compact(FloatBuffer *fb)
 {
+  memmove(fb->buff, fb->buff+fb->rpos, fb->rlen);
   fb->rlen -= fb->rpos;
   fb->rpos = 0;
 }

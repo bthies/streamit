@@ -99,16 +99,6 @@ public class LinearCost {
      * Must be comparable to values returned by getDirectCost().
      */
     public long getFrequencyCost() {
-	// Multiply by factor of 4 because above we count multilies 3
-	// times and adds once.  Even though we only add N-1 times for
-	// a column of N, we add again for the constant vector, so
-	// it's not off by one.  Then add the rows to represent the
-	// overhead of copying input items, and of doing the FFT (it
-	// might actually be rows*log(rows) or something, but
-	// disregard this.)  Finally, multiply by the pop count since
-	// we have to duplicate the whole effort for every item that
-	// we pop.
-
 	// okay.  this works by taking the fft cost, adding 1 as a
 	// constant overhead per node, adding a small percentage of
 	// the rows cost to indicate copying overhead (if you don't
@@ -143,10 +133,6 @@ public class LinearCost {
      * The offset 0.65 was obtained experimentally.
      */
     public double getFrequencyComputationCost() {
-	// add one to cols because we have <cols>+1 FFT's that we do
-	// per iteration: one for the input, and one for what we push.
-	// but then divide by two, so that the base case is correct
-	// for what we measured.
 	return ((double)cols) * Math.log( 1.0 + ((float)(4*rows)) / (1.0 + ((float)LEETFrequencyReplacer.calculateN(rows))/50.0));
     }
 }

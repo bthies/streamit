@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.22 2002-09-11 20:38:55 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.23 2002-09-13 16:16:39 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -17,6 +17,7 @@ import java.util.List;
 public class NodesToJava implements FEVisitor
 {
     private StreamType st;
+    private String streamName;
     // A string consisting of an even number of spaces.
     private String indent;
     
@@ -310,6 +311,8 @@ public class NodesToJava implements FEVisitor
 	    result = "System.out.print(";
 	} else if (exp.getName().equals("println")) {
 	    result = "System.out.println(";
+        } else if (exp.getName().equals("super")) {
+            result = "super(";
 	} else {
 	    // Math.sqrt will return a double, but we're only supporting
 	    // float's now, so add a cast to float.  Not sure if this is
@@ -377,7 +380,9 @@ public class NodesToJava implements FEVisitor
     public Object visitFunction(Function func)
     {
         String result = indent + "public ";
-        result += convertType(func.getReturnType()) + " " + func.getName();
+        if (!func.getName().equals(streamName))
+            result += convertType(func.getReturnType()) + " ";
+        result += func.getName();
         result += doParams(func.getParams()) + " ";
         result += (String)func.getBody().accept(this);
         result += "\n";
@@ -632,9 +637,8 @@ public class NodesToJava implements FEVisitor
         // that we want to save it.
         StreamType oldST = st;
         st = spec.getStreamType();
-
-        // We should unignore the stream parameters long enough to write
-        // a constructor for non-anonymous streams.
+        String oldStreamName = streamName;
+        streamName = spec.getName();
 
         // Output field definitions:
         for (Iterator iter = spec.getVars().iterator(); iter.hasNext(); )
@@ -647,6 +651,7 @@ public class NodesToJava implements FEVisitor
         for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
             result += (String)(((Function)iter.next()).accept(this));
 
+        streamName = oldStreamName;
         st = oldST;
         unIndent();
         result += "}\n";

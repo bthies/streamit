@@ -41,7 +41,7 @@ public class SimpleScheduler
 	Trace[] tempArray = (Trace[])partitioner.getTraceGraph().clone();
 	Arrays.sort(tempArray, 
 		    new CompareTraceBNWork(partitioner));
-	List sortedTraces = Arrays.asList(tempArray);
+	LinkedList sortedTraces = new LinkedList(Arrays.asList(tempArray));
 
 	
 	//reverse the list
@@ -57,15 +57,15 @@ public class SimpleScheduler
 
 	while (!sortedTraces.isEmpty()) {
 	    Trace trace = (Trace)sortedTraces.get(0);
-	    System.out.println("Scheduling " + trace);
+	    System.out.println("Trying to schedule " + trace);
 	    while (true) {
 		HashMap layout = canScheduleTrace(trace);
 		//if we cannot schedule this trace...
 		if (layout == null) {
 		    //try to schedule other traces that will fit before the 
 		    //room becomes available for this trace
-		    while (scheduleSmallerTrace(sortedTraces, trace)) {
-		    }
+		    //while (scheduleSmallerTrace(sortedTraces, trace)) {
+		    //}
 		    //increment current time to next smallest avail time
 		    incrementCurrentTime();
 		}
@@ -93,9 +93,10 @@ public class SimpleScheduler
     
 
     //layout maps FilterTraceNodes -> RawTiles...
-    private void scheduleTrace(HashMap layout, Trace trace, List sortedList) 
+    private void scheduleTrace(HashMap layout, Trace trace, LinkedList sortedList) 
     {
 	assert layout != null && trace != null;
+	System.out.println("Scheduling Trace: " + trace);
 	//remove this trace from the list of traces to schedule
 	sortedList.remove(trace);
 	//add the trace to the schedule
@@ -109,10 +110,14 @@ public class SimpleScheduler
 	    RawTile tile = (RawTile)layout.get(node);
 	    ((FilterTraceNode)node).setXY(tile.getX(), 
 					  tile.getY());
+
 	    //add to the avail time for the tile
 	    //add the bottleneck work
 	    tileAvail[tile.getTileNumber()] = currentTime 
 		+ partitioner.getTraceBNWork(trace);
+	    
+	    System.out.println("  *(" + currentTime + ") Assigning " + node + " to " + tile + 
+			       "(new avail: " + tileAvail[tile.getTileNumber()] + ")");
 
 	    //if this is a file node, record that we have 
 	    //used this tile to either read or write a file...
@@ -124,11 +129,12 @@ public class SimpleScheduler
 		assert tile.hasIODevice() && !writesFile[tile.getTileNumber()];
 		writesFile[tile.getTileNumber()] = true;
 	    }
+	    node = node.getNext();
 	}
     }
     
     //remove it from the sortedTraces list...
-    private boolean scheduleSmallerTrace(List sortedTraces, Trace bigTrace) 
+    private boolean scheduleSmallerTrace(LinkedList sortedTraces, Trace bigTrace) 
     {
 	return false;
     }
@@ -142,8 +148,9 @@ public class SimpleScheduler
 	//try all starting tiles
 	for (int i = 0; i < rawChip.getTotalTiles(); i++) {
 	    HashMap layout = new HashMap();
+	    System.out.println("     (trying " + rawChip.getTile(i) + ")");
 	    //if successful, return layout
-	    if (getLayout(trace.getHead().getNextFilter(), rawChip.getTile(0), 
+	    if (getLayout(trace.getHead().getNextFilter(), rawChip.getTile(i), 
 			  layout))
 		return layout;
 	}
@@ -153,26 +160,67 @@ public class SimpleScheduler
 
     private boolean getLayout(FilterTraceNode filter, RawTile tile, HashMap layout) 
     {
+
 	//check if this tile is available, if not return false
-	if (!isTileAvail(tile))
+	if (!isTileAvail(tile)) {
+	    System.out.println("       (Tile not currently available)");
 	    return false;
+	}
 	
-	//if this is an endpoint, it must be on a border tile
-	if (filter.getNext() instanceof OutputTraceNode &&
-	    !tile.hasIODevice())
+	//cannot assign a tile twice...
+	if (layout.containsValue(tile)) {
+	    System.out.println("       (Tile Already Assigned)");
 	    return false;
+	}
+
+	//if this is an endpoint, it must be on a border tile
+	if ((filter.getNext().isOutputTrace() || filter.getPrevious().isInputTrace()) &&
+	    !tile.hasIODevice()) {
+	    System.out.println("       (Endpoint not at border tile)");
+	    return false;
+	}
 	
 	//check file readers/writers, they must be 
 	//on border and each tile can have one of each
 	if (filter.isFileInput() && !(tile.hasIODevice() && 
-				      readsFile[tile.getTileNumber()]))
+				      readsFile[tile.getTileNumber()])) {
+	    System.out.println("       (Failed file reader)");
 	    return false;
+	}
+	
 	if (filter.isFileOutput() && !(tile.hasIODevice() &&
-				       writesFile[tile.getTileNumber()]))
+				       writesFile[tile.getTileNumber()])) {
+	    System.out.println("       (Failed file writer)");
 	    return false;
-
+	}
+	
 	//see if the downstream filters fit
-	if (filter.getNext() instanceof FilterTraceNode) {
+	if (filter.getNext().isFilterTrace()) {
+	    Vector neighbors = tile.getNeighborTiles();
+	    //try all the possible neighboring tiles for the
+	    //next filter, if any work return true
+	    boolean found = false;
+	    //try the middle tiles first
+	    for (int i = 0; i < neighbors.size(); i++) 
+		if (!((RawTile)neighbors.get(i)).hasIODevice() &&
+		    getLayout((FilterTraceNode)filter.getNext(), 
+			      (RawTile)neighbors.get(i), layout)) {
+		    found = true;
+		    break;
+		}
+	    //try border tiles
+	    for (int i = 0; !found && i < neighbors.size(); i++) 
+		if (((RawTile)neighbors.get(i)).hasIODevice() &&
+		    getLayout((FilterTraceNode)filter.getNext(), 
+			      (RawTile)neighbors.get(i), layout)) {
+		    found = true;
+		    break;
+		}
+	    //nothing found return false
+	    if (!found) {
+		System.out.println("       (Cannot find anything downstream)");
+		return false;
+	    }
 	    
 	}
 	

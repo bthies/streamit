@@ -185,8 +185,10 @@ public class Trace
     {
 	TraceNode node = getHead().getNext();
 	int ret = 0;
-	while (node instanceof FilterTraceNode)
+	while (node instanceof FilterTraceNode) {
+	    node = node.getNext();
 	    ret++;
+	}
 	return ret;
     }
     

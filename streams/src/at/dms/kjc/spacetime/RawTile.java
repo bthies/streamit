@@ -47,7 +47,7 @@ public class RawTile extends ComputeNode {
 
     public boolean hasIODevice() 
     {
-	return (IODevices.length > 1);
+	return (IODevices.length >= 1);
     }
     
     public void addIODevice(IODevice io) 

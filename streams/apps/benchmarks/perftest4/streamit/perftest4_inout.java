@@ -1,22 +1,24 @@
 import streamit.*;
 class TestSource extends Filter{
+    int i;
     public void init() {
-	output = new Channel(Float.TYPE, 1650);
+	output = new Channel(Float.TYPE, 1);
+	i=0;
     }
     public void work() {
-	int i;
-	for (i = 0; i < 1650; i++) 
-	    output.pushFloat(0);
+        output.pushFloat(i++);
+	// pseudo-random input
+	if (i==10000) { i=0; }
     }
 }
-	    
+
 class NullSink extends Filter {
     public void init() {
-	input = new Channel(Short.TYPE, 1);
+	input = new Channel(Float.TYPE, 1);
     }
     public void work() {
-	//System.out.println(input.popShort());
-	input.popShort();
+	//System.out.println(input.popFloat());
+	input.popFloat();
     }
 }
 
@@ -27,7 +29,7 @@ class PerftestPipeline extends Pipeline {
     
     public void init(final float center_freq) {
 	add(new ComplexFIRFilter(33000000, 825, 400, center_freq, 2));
-	add(new QuadratureDemod(5, 0));
+	add(new QuadratureDemod(5, 1));
 	add(new RealFIRFilter(8000, 5, 4000, 20, 1));
     }
 }

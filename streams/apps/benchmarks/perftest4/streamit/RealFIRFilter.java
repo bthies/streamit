@@ -21,7 +21,7 @@ public class RealFIRFilter extends Filter {
 
     public void init(int sampleFreq, final int dec, float c, final int t, float g) {
         input = new Channel (Float.TYPE, dec, t);
-        output = new Channel (Short.TYPE, 1);
+        output = new Channel (Float.TYPE, 1);
 	
 	inSampFreq = sampleFreq;
 	numTaps = t;
@@ -73,6 +73,6 @@ public class RealFIRFilter extends Filter {
 	for (i = 0; i < numTaps - decimation; i++)
 	    sum += taps[i + decimation] + input.peekFloat(i);
 
-        output.pushShort((short)sum);
+        output.pushFloat(sum);
     }
 }

@@ -77,7 +77,9 @@ public class SIRRegSenderStatement extends JStatement {
 	if (p instanceof SLIRVisitor) {
 	    ((SLIRVisitor)p).visitRegSenderStatement(this, portal, latency);
 	} else {
-	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	    // otherwise, do nothing... this node appears in the body of
+	    // work functions, so a KjcVisitor might find it, but doesn't
+	    // have anything to do to it.
 	}
     }
 

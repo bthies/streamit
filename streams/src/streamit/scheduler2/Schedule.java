@@ -3,7 +3,7 @@ package streamit.scheduler;
 import streamit.misc.AssertedClass;
 import java.util.Vector;
 
-/* $Id: Schedule.java,v 1.6 2002-06-30 04:01:03 karczma Exp $ */
+/* $Id: Schedule.java,v 1.7 2002-12-02 17:29:24 karczma Exp $ */
 
 /**
  * <dl>
@@ -33,7 +33,7 @@ public class Schedule extends AssertedClass
     final private Object workFunc;
     
     /**
-     * Stream iterator corresponding to the work function of this schedule.
+     * Stream iterator corresponding to this schedule.
      */
     final private streamit.scheduler.iriter.Iterator workStream;
     
@@ -45,11 +45,11 @@ public class Schedule extends AssertedClass
     /**
      * Create a schedule that will be used with many sub-schedules.
      */
-    public Schedule ()
+    public Schedule (streamit.scheduler.iriter.Iterator stream)
     {
         subScheds = new Vector ();
         workFunc = null;
-        workStream = null;
+        workStream = stream;
     }
     
     /**
@@ -72,7 +72,7 @@ public class Schedule extends AssertedClass
      * in order, this is not a bottom schedule.
      * @return true if this Schedule is a bottom schedule
      */
-    public boolean isBottomSchedule () { return workStream != null; }
+    public boolean isBottomSchedule () { return subScheds == null; }
     
     /**
      * Get the number of phases in this schedule
@@ -124,14 +124,11 @@ public class Schedule extends AssertedClass
     }
 
     /**
-     * Returns the stream on which the work function will be called
-     * If the schedule isn't a bottom-level schedule, this
-     * function will ASSERT.
+     * Returns the stream to which this schedule phase corresponds.
      * @return schedule's stream
      */
-    public streamit.scheduler.iriter.Iterator getWorkStream()
+    public streamit.scheduler.iriter.Iterator getStream()
     {
-        ASSERT(isBottomSchedule ());
         return workStream;
     }
     

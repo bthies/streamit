@@ -19,7 +19,7 @@ import streamit.scheduler.iriter./*persistent.*/
 FeedbackLoopIter;
 import streamit.scheduler.Schedule;
 
-/* $Id: ScheduleBuffers.java,v 1.7 2002-10-01 00:01:08 karczma Exp $ */
+/* $Id: ScheduleBuffers.java,v 1.8 2002-12-02 17:29:24 karczma Exp $ */
 
 /**
  * This class uses a valid schedule and an iterator to determine 
@@ -434,10 +434,10 @@ public class ScheduleBuffers extends DestroyedClass
 
         void combineWith(BufferDelta other)
         {
-            bufferCurrent += other.getBufferDelta();
-
             bufferMax =
                 MAX(bufferMax, bufferCurrent + other.getBufferExpansion());
+
+            bufferCurrent += other.getBufferDelta();
         }
 
         public int getBufferDelta()
@@ -541,7 +541,7 @@ public class ScheduleBuffers extends DestroyedClass
                     Object workFunc = schedule.getWorkFunc();
                     Iterator workStream =
                         (Iterator) user2persistent.get(
-                            schedule.getWorkStream());
+                            schedule.getStream());
 
                     // figure out what object contributed this work function:
                     Pair workInfo = pairs.getPair(workFunc, workStream);
@@ -874,6 +874,7 @@ public class ScheduleBuffers extends DestroyedClass
             }
 
             // add deltas to itself schedule.getNumReps times
+            if (schedule.getNumReps () > 1)
             {
                 Map newDeltas = new HashMap();
                 newDeltas.put(null, new HashSet());

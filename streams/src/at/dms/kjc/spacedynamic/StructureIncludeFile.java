@@ -108,7 +108,7 @@ public class StructureIncludeFile
 	    for (int j = 0; j < current.getFields().length; j++) {
 		fw.write("\t//" + current.getFields()[j].getType() + "\n");
 		if (current.getFields()[j].getType().isArrayType()) {
-		    System.out.println(((CArrayType)current.getFields()[j].getType()).getDims());
+		    //System.out.println(((CArrayType)current.getFields()[j].getType()).getDims());
 		    //assert false;
 		}
 		else if (current.getFields()[j].getType().isClassType()) {

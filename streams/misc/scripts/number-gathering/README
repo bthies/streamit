@@ -1,4 +1,11 @@
+FarmLocal 
+---------
+
+This is a stripped-down version of FarmIt that runs on the local
+machine.  No problems with jobs left hanging, etc.
+
 FarmIt
+------
 
 A number gathering script that farms out compiles/runs on specified
 cagfarms and gathers all of the results into a one file that is in an

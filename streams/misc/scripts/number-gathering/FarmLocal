@@ -1,0 +1,145 @@
+#!/usr/local/bin/bash
+
+declare -i start_time
+start_time=$(date "+%s")
+
+print_usage() {
+    echo "usage:" 
+    echo -e "FarmHere [options] lower_tile_size upper_tile_size compiler_options benchmark_file outputfile bloodgraph_directory\n"
+}
+
+if [ -z "$STREAMIT_HOME" ]; then
+    echo '$STREAMIT_HOME must be defined'
+    exit 1
+fi
+
+# Set some defaults
+# The directory where we run the crap
+rootdir="/home/bits6/NO_BACKUP/$USER/results"
+
+#the tmp directory where we store the results before colascing
+tmpdir="/tmp/results$$"
+mkdir "$tmpdir"
+
+if [ ! -d "$rootdir" ]; then
+    echo "rootdir does not exist, create it!"
+    exit 1
+fi
+
+if [ $# -ne 6 ]; then
+    print_usage
+    exit 1
+fi
+
+#declare some integer variables for loops
+declare -i current low high
+#declare the array of benchmarks to run
+declare -a benchmarks
+
+#set the options
+options=$3
+
+#read the benchmarks file
+if [ ! -f "$4" ]; then
+   echo "benchmarks file does not exist"
+   exit 1
+fi
+
+#the outputfile
+outputfile=$5
+
+#the directory where we are storing the blood graphs
+if [ ! -d "$6" ]; then 
+    echo "bloodgraph directory does not exist"
+    exit 1
+fi
+bloodDir=$6
+
+current=0
+for i in $(cat $4); do
+    #This will expand environment variables.
+    i=$(eval echo $i)
+    if [ -f "$i" ]; then  
+	benchmarks[$current]=$i
+	current=$current+1 
+    else
+	echo -en "\033[1m\e[31;40mFile $i does not exist, skipping it.\033[0m\n"; tput sgr0
+    fi
+done
+
+#set up the configs array that holds the raw sizes we want to simulate
+current=0
+for ((low=$1;$low<=$2;low+=1)); do
+    configs[$current]=$low
+    current=$current+1
+done
+
+#make out a log directory for output of commands
+if [ ! -d "$rootdir/log" ]; then 
+    if ! mkdir "$rootdir/log"; then
+	echo "Could not create the log directory $rootdir/log"
+	exit 1
+    fi
+fi
+
+$1 is the number of tiles, $2 is the benchmark file
+issue_commands() {
+    local config
+    local benchmark
+
+    config=$1
+    benchmark=$2
+  
+    bench_file=${benchmark##/*/}
+    bench_name=${bench_file%.java}
+    my_host_name=`hostname`
+    working_dir="$rootdir/$my_host_name"
+    
+    # clear out the working directory
+    rm -rf "${working_dir}"
+    mkdir "${working_dir}"
+    #the command we want to execute on the remote machine
+    #copy the benchmark file
+    cp $benchmark $working_dir
+    #change to the working dir
+    cd $working_dir
+    #setup environment variables
+    #compile
+    echo -ne "\033[1m\e[32;40mCompiling/Running $bench_file (${config}x${config}) on $machine...\033[0m\n"; tput sgr0
+    java -Xmx1509M at.dms.kjc.Main -s -raw $config $options $bench_file > "$rootdir/log/${bench_name}-raw${config}${options// /}" 2>&1
+    echo "Done with execution, trying to make..." 
+    #run
+    gmake -f Makefile.streamit run > "$rootdir/log/${bench_name}-run-raw${config}${options// /}" 2>&1
+    # redirect output to log file
+    #ssh $current_machine "$command" &> /dev/null
+       
+    if [ -f "$working_dir/results.out" ]; then 
+	echo -ne "\033[1m\e[32;40mResults copied for $bench_file (${config}x${config}) on $machine.\033[0m\n"; tput sgr0
+	#copy the results.out file to the results directory...
+	cp "$working_dir/results.out" "${tmpdir}/${bench_name}-raw${config}${options// /}"
+	cp "$working_dir/bloodgraph.ppm" "${bloodDir}/bloodgraph_${bench_name}-raw${config}${options// /}"
+    else
+	echo -en "\033[1m\e[31;40mNo results.out generated for $bench_file (${config}x${config}) on $machine.\033[0m\n"; tput sgr0
+    fi
+}
+
+echo Using temp directory "$tmpdir"
+
+#the start of the fun!!!
+for benchmark in "${benchmarks[@]}"; do
+     for config in "${configs[@]}"; do
+	issue_commands $config $benchmark
+     done
+done
+
+#call condense
+echo -en "\033[1m\e[32;40mCondensing the various numbers into $outputfile...\033[0m\n"; tput sgr0
+$STREAMIT_HOME/misc/scripts/number-gathering/condense -i "$tmpdir" -o "$outputfile"
+
+#remove the tmpdir
+rm -rf "$tmpdir"
+
+end_time=$(date "+%s")
+
+echo -en "\033[1m\e[32;40mFinished ($((end_time-start_time)) seconds).\033[0m\n"; tput sgr0
+

@@ -38,6 +38,11 @@ public class NumberGathering extends at.dms.util.Utils
 
     public static boolean doit(FlatNode top) 
     {
+	// reset variables since we might be called multiple times
+	printsPerSteady = 0;
+	skipPrints = 0;
+	totalPrintsPerSteady = 0;
+	
 	//find the sinks and make sure they are synchronized
 	HashSet sinks = Sink.getSinks(top);
 	//there could be multiple sinks, find one that works

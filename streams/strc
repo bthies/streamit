@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.21 2003-10-13 15:00:38 thies Exp $
+# $Id: strc,v 1.22 2003-10-13 16:07:31 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -330,14 +330,14 @@ sub old_to_c
       {
 	my $target = change_extension($fns->[0], "java", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
-	my $result = call("$java $xmx at.dms.kjc.Main -s $kjcopts " .
+	my $result = call("$java $xmx at.dms.kjc.Main --streamit $kjcopts " .
 			  "$jfiles > $target");
 	return undef if $result != 0;
 	return [$target];
       }
     else
       {
-	my $result = call("$java $xmx at.dms.kjc.Main -s $kjcopts $jfiles");
+	my $result = call("$java $xmx at.dms.kjc.Main --streamit $kjcopts $jfiles");
 	return undef if $result != 0;
 	return ["tile0.c"] if $opts{standalone};
 	return [];
@@ -360,7 +360,7 @@ sub new_to_c
       }
     else
       {
-	call("$java $xmx at.dms.kjc.Main -s $kjcopts $sfiles");
+	call("$java $xmx at.dms.kjc.Main --streamit $kjcopts $sfiles");
 	return [];
       }
   }
@@ -412,46 +412,46 @@ sub get_kjc_opts
       ($kjcopts .= " --outputs " . $opts{iterations});
     if (exists $opts{partition})
       {
-	$opts{partition} eq 'dp' && ($kjcopts .= " -y");
-	$opts{partition} eq 'greedy' && ($kjcopts .= " -a");
-	$opts{partition} eq 'ilp' && ($kjcopts .= " -A");
+	$opts{partition} eq 'dp' && ($kjcopts .= " --partition_dp");
+	$opts{partition} eq 'greedy' && ($kjcopts .= " --partition_greedy");
+	$opts{partition} eq 'ilp' && ($kjcopts .= " --partition_ilp");
       }
-    $opts{altcodegen} && ($kjcopts .= " -z");
-    $opts{atlas} && ($kjcopts .= " -E");
-    $opts{'clone-with-serialization'} && ($kjcopts .= " -K");
+    $opts{altcodegen} && ($kjcopts .= " --altcodegen");
+    $opts{atlas} && ($kjcopts .= " --atlas");
+    $opts{'clone-with-serialization'} && ($kjcopts .= " --clone_with_serialization");
     $opts{debug} && ($kjcopts .= " --debug");
-    $opts{decoupled} && ($kjcopts .= " -X");
-    $opts{dpscaling} && ($kjcopts .= " -Y");
-    $opts{frequencyreplacement} && ($kjcopts .= " -F");
+    $opts{decoupled} && ($kjcopts .= " --decoupled");
+    $opts{dpscaling} && ($kjcopts .= " --dpscaling");
+    $opts{frequencyreplacement} && ($kjcopts .= " --frequencyreplacement");
     $opts{fission} && ($kjcopts .= " --fission " . $opts{fission});
-    $opts{fusion} && ($kjcopts .= " -o");
-    $opts{linearpartition} && ($kjcopts .= " -B");
-    $opts{linearreplacement} && ($kjcopts .= " -I");
-    $opts{linearreplacement2} && ($kjcopts .= " -Z");
-    $opts{linearreplacement3} && ($kjcopts .= " -R");
-    $opts{'magic-net'} && ($kjcopts .= " -M");
-    $opts{noanneal} && ($kjcopts .= " -W");
-    $opts{nofieldprop} && ($kjcopts .= " -L");
-    $opts{nolinearcollapse} && ($kjcopts .= " -H");
-    $opts{numbers} && ($kjcopts .= " -N" . $opts{numbers});
-    $opts{poptopeek} && ($kjcopts .= " -P");
-    $opts{'print-partitioned-source'} && ($kjcopts .= " -c");
-    $opts{ptraccess} && ($kjcopts .= " -Q");
-    $opts{ratematch} && ($kjcopts .= " -x");
-    $opts{rawcol} && ($kjcopts .= " -q ". $opts{rawcol});
-    $opts{standalone} && ($kjcopts .= " -U");
-    $opts{removeglobals} && ($kjcopts .= " -G");
-    $opts{simplesjfusion} && ($kjcopts .= " -S");
-    $opts{simulatework} && ($kjcopts .= " -T");
-    $opts{sjtopipe} && ($kjcopts .= " -J");
-    $opts{stats} && ($kjcopts .= " -.");
-    $opts{sync} && ($kjcopts .= " -k");
-    defined $opts{unroll} && ($kjcopts .= " -u " . $opts{unroll});
-    $opts{viram} && ($kjcopts .= " -V");
-    $opts{cluster} && ($kjcopts .= " -cluster");
-    $opts{destroyfieldarray} && ($kjcopts .= " -destroyfieldarray");
-    $opts{wbs} && ($kjcopts .= " -wbs");
-    $opts{spacetime} && ($kjcopts .= " -spacetime");
+    $opts{fusion} && ($kjcopts .= " --fusion");
+    $opts{linearpartition} && ($kjcopts .= " --linearpartition");
+    $opts{linearreplacement} && ($kjcopts .= " --linearreplacement");
+    $opts{linearreplacement2} && ($kjcopts .= " --linearreplacement2");
+    $opts{linearreplacement3} && ($kjcopts .= " --linearreplacement3");
+    $opts{'magic-net'} && ($kjcopts .= " --magic_net");
+    $opts{noanneal} && ($kjcopts .= " --noanneal");
+    $opts{nofieldprop} && ($kjcopts .= " --nofieldprop");
+    $opts{nolinearcollapse} && ($kjcopts .= " --nolinearcollapse");
+    $opts{numbers} && ($kjcopts .= " --numbers" . $opts{numbers});
+    $opts{poptopeek} && ($kjcopts .= " --poptopeek");
+    $opts{'print-partitioned-source'} && ($kjcopts .= " --print_partitioned_source");
+    $opts{ptraccess} && ($kjcopts .= " --ptraccess");
+    $opts{ratematch} && ($kjcopts .= " --ratematch");
+    $opts{rawcol} && ($kjcopts .= " --rawcol ". $opts{rawcol});
+    $opts{standalone} && ($kjcopts .= " --standalone");
+    $opts{removeglobals} && ($kjcopts .= " --removeglobals");
+    $opts{simplesjfusion} && ($kjcopts .= " --simplesjfusion");
+    $opts{simulatework} && ($kjcopts .= " --simulatework");
+    $opts{sjtopipe} && ($kjcopts .= " --sjtopipe");
+    $opts{stats} && ($kjcopts .= " --stats");
+    $opts{sync} && ($kjcopts .= " --sync");
+    defined $opts{unroll} && ($kjcopts .= " --unroll " . $opts{unroll});
+    $opts{viram} && ($kjcopts .= " --viram");
+    $opts{cluster} && ($kjcopts .= " --cluster");
+    $opts{destroyfieldarray} && ($kjcopts .= " --destroyfieldarray");
+    $opts{wbs} && ($kjcopts .= " --wbs");
+    $opts{spacetime} && ($kjcopts .= " --spacetime");
     return $kjcopts;
 }
 

@@ -7,51 +7,6 @@ import at.dms.kjc.sir.lowering.partition.*;
 
 public class RefactorSplitJoin {
 
-    public static SIRSplitJoin addHierarchicalChildren2(SIRSplitJoin sj, PartitionGroup partition) {
-	int[] oldSplit=sj.getSplitter().getWeights();
-	int[] oldJoin=sj.getJoiner().getWeights();
-	JExpression[] newSplit=new JExpression[partition.size()];
-	JExpression[] newJoin=new JExpression[partition.size()];
-	SIRSplitJoin newSplitJoin=new SIRSplitJoin();
-	newSplitJoin.setParent(sj.getParent());
-	newSplitJoin.setIdent(sj.getIdent());
-	newSplitJoin.setFields(sj.getFields());
-	newSplitJoin.setMethods(sj.getMethods());
-	for(int i=0,j=0;i<partition.size();i++) {
-	    int incr=partition.get(i);
-	    if(incr==1) {
-		newSplitJoin.add(sj.get(j));
-		newSplit[i]=new JIntLiteral(oldSplit[j]);
-		newJoin[i]=new JIntLiteral(oldJoin[j]);
-	    } else {
-		int sumSplit=0;
-		int sumJoin=0;
-		JExpression[] childSplit=new JExpression[incr];
-		JExpression[] childJoin=new JExpression[incr];
-		SIRSplitJoin childSplitJoin=new SIRSplitJoin();
-		for(int k=incr,l=j,m=0;k>0;k--,l++,m++) {
-		    sumSplit+=oldSplit[l];
-		    sumJoin+=oldJoin[l];
-		    childSplit[m]=new JIntLiteral(oldSplit[l]);
-		    childJoin[m]=new JIntLiteral(oldJoin[l]);
-		    childSplitJoin.add(sj.get(l));
-		}
-		newSplit[i]=new JIntLiteral(sumSplit);
-		newJoin[i]=new JIntLiteral(sumJoin);
-		childSplitJoin.setSplitter(SIRSplitter.create(childSplitJoin,sj.getSplitter().getType(),childSplit));
-		childSplitJoin.setJoiner(SIRJoiner.create(childSplitJoin,sj.getJoiner().getType(),childJoin));
-		newSplitJoin.add(childSplitJoin);
-	    }
-	    j+=incr;
-	}
-	newSplitJoin.setSplitter(SIRSplitter.create(newSplitJoin,sj.getSplitter().getType(),newSplit));
-	newSplitJoin.setJoiner(SIRJoiner.create(newSplitJoin,sj.getJoiner().getType(),newJoin));
-	// replace in parent
-	sj.getParent().replace(sj,newSplitJoin);
-
-    return newSplitJoin;
-}
-
     /**
      * Given a splitjoin <sj> and a partitioning <partition> of its
      * children, returns a new splitjoin in which all the elements of

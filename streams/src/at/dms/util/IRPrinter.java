@@ -401,7 +401,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
             parameters[i].accept(this);
         attrEnd();
         attrList("throws", exceptions);
-        body.accept(this);
+        if (body != null)
+            body.accept(this);
         blockEnd();
     }
     

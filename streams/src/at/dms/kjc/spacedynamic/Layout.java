@@ -56,7 +56,7 @@ public class Layout extends at.dms.util.Utils implements
     public static double ROUTER_WEIGHT = 0.5;
     //scaling factor for the memory cost of the layout (for tiles that allocate more 
     //than the dcache size
-    public static double MEMORY_SCALE = 0.2;
+    public static double MEMORY_SCALE = 1.0;
 
     //simualted annealing constants
     public static int MINTEMPITERATIONS = 200;

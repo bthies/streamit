@@ -96,9 +96,9 @@ public class GPAboutDialog extends JDialog {
 		credits.setOpaque(false);
 		credits.setText(
 				"The StreamIt GraphEditor would not be possible without\n"
-			+ "the assistance of the following groups:\n\n"
+			+ "the assistance of : \n\n"
 			+ "* The StreamIt Group at the Computer Science and Artificial\n" 			+ " Intelligence Laboratory.\n"
-			+ "* IBM Eclipse (www.eclipse.org)\n");
+			+ "* IBM Eclipse (www.eclipse.org)\n" 		 	+ "* JGraph\n");
 		credits.setCaretPosition(0);
 		credits.setEditable(false);
 	}

@@ -48,7 +48,6 @@ import org.jgraph.graph.GraphModel;
 import org.jgraph.graph.GraphUndoManager;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
-
 import streamit.eclipse.grapheditor.editor.pad.actions.FileSave;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 import streamit.eclipse.grapheditor.editor.utils.Utilities;
@@ -128,12 +127,6 @@ public class GPDocument
 	 */
 	protected GraphUndoManager graphUndoManager;
 
-	/** The graphUndoManager handler for the current document.
-	 * Each document has his own handler.
-	 * So you can make an graphUndoManager seperate for each document.
-	 *
-	 */
-	protected UndoHandler undoHandler;
 
 	/** On the fly layout
 	 *
@@ -196,6 +189,8 @@ public class GPDocument
 	
 	protected File fileF;
 	
+	public TreePanel treePanel;
+	
 
 	/** Static initializer.
 	 *  Initializes some static variables.
@@ -224,7 +219,7 @@ public class GPDocument
 		this.graphpad = graphpad;
 		this.graphModelProvider = graphModelProvider;
 
-		undoHandler = new UndoHandler(this, true);
+
 		this.graphUndoManager = undo == null ? createGraphUndoManager() : undo;
 
 		setBorder(BorderFactory.createEtchedBorder());
@@ -235,8 +230,7 @@ public class GPDocument
 		touch = new Touch(graph);
 		registerListeners(graph);
 
-		// Add this as a listener for undoable edits.
-		graph.getModel().addUndoableEditListener(undoHandler);
+
 	
 		Component comp = this.createCenterComponent();
 		this.add(comp);
@@ -272,7 +266,6 @@ public class GPDocument
 		this.graphModelProvider = graphModelProvider;
 		this.graphStruct = graphStruct;
 
-		undoHandler = new UndoHandler(this, true);
 		this.graphUndoManager = undo == null ? createGraphUndoManager() : undo;
 
 		setBorder(BorderFactory.createEtchedBorder());
@@ -283,10 +276,7 @@ public class GPDocument
 		touch = new Touch(graph);
 		registerListeners(graph);
 
-		// Add this as a listener for undoable edits.
-		graph.getModel().addUndoableEditListener(undoHandler);
-		
-
+	
 		Component comp = this.createCenterComponent();
 		this.add(comp);
 
@@ -324,13 +314,17 @@ public class GPDocument
 	 */
 	protected Component createCenterComponent() {
 		Component mainPane = createScrollPane();
-		libraryPanel = createLibrary();
-		//libraryPanel.setVisible(false);
+
+	//	libraryPanel = createLibrary();
+		treePanel = new TreePanel();
+
+		
 		JPanel overviewPane = GPOverviewPanel.createOverviewPanel(getGraph(), this);
 		JSplitPane librarySplit = new GPSplitPane(
 			JSplitPane.VERTICAL_SPLIT,
 			overviewPane,
-			libraryPanel
+			treePanel
+
 		);
 		librarySplit.setName("DocumentLibrary");
 		//librarySplit.setDividerLocation(80);
@@ -346,6 +340,7 @@ public class GPDocument
 		if (!libraryExpanded)
 			splitPane.setDividerLocation(0.0d);
 			*/
+
 		return splitPane;
 	}
 
@@ -360,8 +355,6 @@ public class GPDocument
 			} else {
 				port.setScrollMode(JViewport.BLIT_SCROLL_MODE);
 			}
-			// deprecated
-			// port.setBackingStoreEnabled(bs.booleanValue());
 		} catch (MissingResourceException mre) {
 			// just use the viewport default
 		}
@@ -812,9 +805,11 @@ public class GPDocument
 			return true;
 	}
 
-	public GPLibraryPanel getLibraryPanel() {
-		return libraryPanel;
+
+	public TreePanel getTreePanel() {
+		return treePanel;
 	}
+
 
 	/** This will change the source of the actionevent to graph.
 	 * */

@@ -58,14 +58,15 @@ import org.jgraph.graph.GraphModel;
 import org.jgraph.graph.PortView;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
-import streamit.eclipse.grapheditor.editor.controllers.GEFeedbackLoopController;
+import streamit.eclipse.grapheditor.editor.controllers.Controller;
 import streamit.eclipse.grapheditor.editor.controllers.GEFilterController;
 import streamit.eclipse.grapheditor.editor.controllers.GEJoinerController;
-import streamit.eclipse.grapheditor.editor.controllers.GEPipelineController;
-import streamit.eclipse.grapheditor.editor.controllers.GESplitJoinController;
 import streamit.eclipse.grapheditor.editor.controllers.GESplitterController;
 import streamit.eclipse.grapheditor.editor.controllers.StreamTypeDialog;
+import streamit.eclipse.grapheditor.editor.pad.actions.EditUpdateHierarchy;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
+import streamit.eclipse.grapheditor.editor.utils.Utilities;
+import streamit.eclipse.grapheditor.graph.ErrorCode;
 import streamit.eclipse.grapheditor.graph.GEStreamNode;
 import streamit.eclipse.grapheditor.graph.NodeCreator;
 import streamit.eclipse.grapheditor.graph.NodeTemplateGenerator;
@@ -93,12 +94,9 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 	protected transient Color defaultBorderColor = Color.black;
 
 	protected transient JToggleButton buttonSelect = new JToggleButton();
-	protected transient JToggleButton buttonRectangle = new JToggleButton();
 	protected transient JToggleButton buttonFilter = new JToggleButton();
 	protected transient JToggleButton buttonSplitter = new JToggleButton();
 	protected transient JToggleButton buttonJoiner = new JToggleButton();
-	protected transient JToggleButton buttonSplitJoin = new JToggleButton();
-	protected transient JToggleButton buttonFeedbackLoop = new JToggleButton();
 	
 	protected transient JToggleButton buttonNode = new JToggleButton();
 	protected transient JToggleButton buttonEdge = new JToggleButton();
@@ -117,12 +115,9 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 		this.graphpad = graphpad;
 		ButtonGroup grp = new ButtonGroup();
 		grp.add(buttonSelect);
-		grp.add(buttonRectangle);
 		grp.add(buttonFilter);
 		grp.add(buttonSplitter);
 		grp.add(buttonJoiner);
-		grp.add(buttonSplitJoin);
-		grp.add(buttonFeedbackLoop);
 		grp.add(buttonNode);
 		grp.add(buttonEdge);
 		grp.add(buttonZoomArea);
@@ -417,125 +412,52 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 				// FIX: Set ResizeAction to null!
 			} 
 			
-			else if (buttonRectangle.isSelected())
+			/** Case when adding a GEPhasedFilter, a GEJoiner or a GESplitter in the GraphEditor */
+			else if ((buttonFilter.isSelected()) || (buttonJoiner.isSelected()) || (buttonSplitter.isSelected())) 
 			{
-				GEPipelineController pipelineController = new GEPipelineController();
-				if (pipelineController.configure(graphpad.getCurrentDocument()))
+				Controller _control = null;
+				/** Create a GEPhasedFilter */
+				if (buttonFilter.isSelected())
 				{
-			
-					Properties pipelineProperties = pipelineController.getConfiguration();
-					NodeCreator.nodeCreate(pipelineProperties,
-											graphpad.getCurrentDocument().getGraph(),
-											bounds,
-											graphpad.getCurrentDocument().getGraphStructure());
-					String template = NodeTemplateGenerator.createTemplateCode(pipelineProperties);
-					writeTemplateCodeToFile(template);
+					_control = new GEFilterController();
 				}
-				else 
+				/** Create a GEJoiner */
+				else if (buttonJoiner.isSelected())
 				{
-					graphpad.getCurrentGraph().getModel().insert(null,null,null,null,null);	
-				}				
-			}
-			else if (buttonFilter.isSelected())
-			{
-				GEFilterController filterController = new GEFilterController();
-				if (filterController.configure(graphpad.getCurrentDocument()))
-				{
-			
-					Properties filterProperties = filterController.getConfiguration();
-					NodeCreator.nodeCreate(filterProperties,
-											graphpad.getCurrentDocument().getGraph(),
-											bounds,
-											graphpad.getCurrentDocument().getGraphStructure());
-					String template = NodeTemplateGenerator.createTemplateCode(filterProperties);
-					writeTemplateCodeToFile(template);
+					_control = new GEJoinerController();				
 				}
-				else 
+				/** Create a GESplitter */
+				else if (buttonSplitter.isSelected())
 				{
-					graphpad.getCurrentGraph().getModel().insert(null,null,null,null,null);	
+					_control = new GESplitterController();
 				}
-				
-			}
-			else if (buttonSplitter.isSelected()) 
-			{
-				GESplitterController splitterController = new GESplitterController();
-				if (splitterController.configure(graphpad.getCurrentDocument()))
+				/** If cancel was not clicked on the properties dialog, then
+				 * set the properties and create the type of node created.
+				 */
+				if (_control.configure(graphpad.getCurrentDocument()))
 				{
-			
-					Properties splitterProperties = splitterController.getConfiguration();
-					NodeCreator.nodeCreate(splitterProperties,
-											graphpad.getCurrentDocument().getGraph(),
-											bounds,
-											graphpad.getCurrentDocument().getGraphStructure());
-					String template = NodeTemplateGenerator.createTemplateCode(splitterProperties);
-					writeTemplateCodeToFile(template);
-				}
-				else 
-				{
-					graphpad.getCurrentGraph().getModel().insert(null,null,null,null,null);	
-				}
-				
-				//graphpad.getCurrentGraph().startEditingAtCell(cell);
-			} 
-			else if (buttonJoiner.isSelected())
-			{
-				GEJoinerController joinerController = new GEJoinerController();
-				if (joinerController.configure(graphpad.getCurrentDocument()))
-				{
-			
-					Properties joinerProperties = joinerController.getConfiguration();
-					NodeCreator.nodeCreate(joinerProperties,
-											graphpad.getCurrentDocument().getGraph(),
-											bounds,
-											graphpad.getCurrentDocument().getGraphStructure());
-					String template = NodeTemplateGenerator.createTemplateCode(joinerProperties);
-					writeTemplateCodeToFile(template);
-				}
-				else 
-				{
-					graphpad.getCurrentGraph().getModel().insert(null,null,null,null,null);	
-				}				
-			}
-			else if (buttonSplitJoin.isSelected())
-			{
-				
-				GESplitJoinController SplitJoinController = new GESplitJoinController();
-				if (SplitJoinController.configure(graphpad.getCurrentDocument()))
-				{
-			
-					Properties splitJoinProperties = SplitJoinController.getConfiguration();
-					NodeCreator.nodeCreate(splitJoinProperties,
-											graphpad.getCurrentDocument().getGraph(),
-											bounds,
-											graphpad.getCurrentDocument().getGraphStructure());
-					String template = NodeTemplateGenerator.createTemplateCode(splitJoinProperties);
-					writeTemplateCodeToFile(template);
-				}
-				else 
-				{
-					graphpad.getCurrentGraph().getModel().insert(null,null,null,null,null);	
-				}		
-			}
-			else if (buttonFeedbackLoop.isSelected())
-			{
-				GEFeedbackLoopController feedbackloopController = new GEFeedbackLoopController();
-				if (feedbackloopController.configure(graphpad.getCurrentDocument()))
-				{
-			
-					Properties feedbackloopProperties = feedbackloopController.getConfiguration();
-					NodeCreator.nodeCreate(feedbackloopProperties,
-											graphpad.getCurrentDocument().getGraph(),
-											bounds,
-											graphpad.getCurrentDocument().getGraphStructure());
-					String template = NodeTemplateGenerator.createTemplateCode(feedbackloopProperties);
-					writeTemplateCodeToFile(template);
-				}
-				else 
-				{
-					graphpad.getCurrentGraph().getModel().insert(null,null,null,null,null);	
-				}						
-			}
 	
+					Properties _controlProperties = _control.getConfiguration();
+					NodeCreator.nodeCreate(_controlProperties,
+											graphpad.getCurrentDocument().getGraph(),
+											bounds,
+											graphpad.getCurrentDocument().getGraphStructure());
+					
+					/** Update the hierarchy panel */
+					EditUpdateHierarchy ac = (EditUpdateHierarchy) graphpad.getCurrentActionMap().
+																get(Utilities.getClassNameWithoutPackage(EditUpdateHierarchy.class));
+					ac.actionPerformed(null);
+					
+					/** Write the template code for the newly created node in the source code */
+					String template = NodeTemplateGenerator.createTemplateCode(_controlProperties);
+					writeTemplateCodeToFile(template);
+				}
+				else 
+				{
+					graphpad.getCurrentGraph().getModel().insert(null,null,null,null,null);
+				}		
+				//graphpad.getCurrentGraph().startEditingAtCell(cell);
+			}			
 			else if (buttonNode.isSelected()) 
 			{
 				Frame f = JOptionPane.getFrameForComponent(graphpad);
@@ -556,10 +478,10 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 										   graphpad.getCurrentDocument().getGraphStructure());
 					
 					String template = NodeTemplateGenerator.createTemplateCode(newNodeProperties);
-					writeTemplateCodeToFile(template);
-					
+					writeTemplateCodeToFile(template);		
 				}									
 			} 
+			/** Create a connection between two nodes */
 			else if (buttonEdge.isSelected()) 
 			{
 				Point p = graphpad.getCurrentGraph().fromScreen(new Point(start));
@@ -587,9 +509,19 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 					{
 						relativePos = RelativePosition.BOTH_PRESENT;						
 					}
-		
-					if (!(graphpad.getCurrentDocument().getGraphStructure().connect(nodeStart,nodeEnd, relativePos)))
+					
+					/** Connect the selected nodes */
+					int connectErrorCode = graphpad.getCurrentDocument().getGraphStructure().connect(nodeStart,nodeEnd, relativePos); 
+					if (connectErrorCode == 0)
 					{
+						/** Update the hierarchy panel */
+						EditUpdateHierarchy ac = (EditUpdateHierarchy) graphpad.getCurrentActionMap().
+																						get(Utilities.getClassNameWithoutPackage(EditUpdateHierarchy.class));
+						ac.actionPerformed(null);
+					}
+					else
+					{
+						ErrorCode.handleErrorCode(connectErrorCode);
 						graphpad.getCurrentGraph().getModel().insert(null,null,null,null,null);				
 					}
 				}
@@ -1180,21 +1112,6 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 		return buttonJoiner;
 	}
 
-	/**
-	 * Returns the buttonSplitJoin.
-	 * @return JToggleButton
-	 */
-	public JToggleButton getButtonSplitJoin() {
-		return buttonSplitJoin;
-	}
-
-	/**
-	 * Returns the buttonFeedbackLoop.
-	 * @return JToggleButton
-	 */
-	public JToggleButton getButtonFeedbackLoop() {
-		return buttonFeedbackLoop;
-	}
 	
 	/**
 	 * Returns the buttonNode.
@@ -1202,14 +1119,6 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 	 */
 	public JToggleButton getButtonNode() {
 		return buttonNode;
-	}
-
-	/**
-	 * Returns the buttonRectangle.
-	 * @return JToggleButton
-	 */
-	public JToggleButton getButtonRectangle() {
-		return buttonRectangle;
 	}
 
 	/**

@@ -18,7 +18,6 @@ import java.util.ListIterator;
  * don't get confused.
  */
 public class FuseAll implements StreamVisitor {
-
     private FuseAll() {}
 
     /**
@@ -27,9 +26,13 @@ public class FuseAll implements StreamVisitor {
     public static void fuse(SIRStream str) {
 	// try fusing toplevel separately since noone contains it
 	FuseAll fuseAll = new FuseAll();
-	fuseAll.fuseChild(str);
-	IterFactory.createIter(str).accept(fuseAll);
-	fuseAll.fuseChild(str);
+	boolean hasFused = true;
+	while (hasFused) {
+	    try {
+		IterFactory.createIter(str).accept(fuseAll);
+		hasFused = false;
+	    } catch (SuccessfulFuseException e) {}
+	}
     }
 
     /**
@@ -48,19 +51,16 @@ public class FuseAll implements StreamVisitor {
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
 				 SIRPipelineIter iter) {
-	fuseChildren(self);
     }
 
     /* pre-visit a splitjoin */
     public void preVisitSplitJoin(SIRSplitJoin self,
 				  SIRSplitJoinIter iter) {
-	fuseChildren(self);
     }
 
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
 				     SIRFeedbackLoopIter iter) {
-	fuseChildren(self);
     }
 
     /**
@@ -70,32 +70,34 @@ public class FuseAll implements StreamVisitor {
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
 				  SIRPipelineIter iter) {
-	fuseChildren(self);
+	int elim = FusePipe.fuse(self);
+	if (elim > 0) {
+	    throw new SuccessfulFuseException();
+	}
     }
 
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
 				   SIRSplitJoinIter iter) {
-	fuseChildren(self);
+	SIRStream result = FuseSplit.fuse(self);
+	if (result!=self) {
+	    throw new SuccessfulFuseException();
+	}
     }
 
     /* post-visit a feedbackloop */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
 				      SIRFeedbackLoopIter iter) {
-	fuseChildren(self);
     }
+}
 
-    private void fuseChildren(SIRContainer str) {
-	for (int i=0; i<str.size(); i++) {
-	    fuseChild((SIROperator)str.get(i));
-	}
-    }
-
-    private void fuseChild(SIROperator child) {
-	if (child instanceof SIRPipeline) {
-	    FusePipe.fuse((SIRPipeline)child);
-	} else if (child instanceof SIRSplitJoin) {
-	    FuseSplit.fuse((SIRSplitJoin)child);
-	}
-    }
+/**
+ * This exists only for the sake of efficiency, to do a long jump back
+ * up to the top of the fusion loop.  For some reason we only get
+ * maximal fusion if we always consider fusing things from the very
+ * top; fusing within the visitor doesn't quite do the right thing.
+ */
+class SuccessfulFuseException extends RuntimeException {
+    public SuccessfulFuseException() { super(); }
+    public SuccessfulFuseException(String str) { super(str); }
 }

@@ -64,7 +64,7 @@ public class SwitchScheduleNode
 	}
 	System.out.println("=====");
     }
-    
+    /* no longer needed
     private static String getHeading (FlatNode from, FlatNode to, boolean send) 
     {
 	StringBuffer buf = new StringBuffer();
@@ -102,5 +102,6 @@ public class SwitchScheduleNode
 	    buf.append("i");
 	return buf.toString();
     }
+    */
 }
 

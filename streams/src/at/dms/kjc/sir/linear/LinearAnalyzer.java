@@ -5,6 +5,8 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.sir.linear.transform.*;
+import at.dms.kjc.sir.lowering.*;
+import at.dms.util.SIRPrinter;
 import at.dms.kjc.iterator.*;
 
 
@@ -14,7 +16,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.21 2003-04-01 00:11:04 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.22 2003-04-03 09:38:29 thies Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from streams to linear representations. never would have guessed that, would you? **/
@@ -118,6 +120,39 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	return lfa;
     }
     
+    /**
+     * Returns a filter that is a clone of <self> but has all
+     * unrolling (and other pre-partitioning processing) done on
+     * it.
+     */
+    private static SIRFilter getUnrolledFilter(SIRFilter self) {
+	SIRFilter result;
+	if (KjcOptions.unroll>=100000) {
+	    // this means that <self> was already unrolled enough
+	    result = self;
+	} else {
+	    result = (SIRFilter)ObjectDeepCloner.deepCopy(self);
+	    // set all loops to be unrolled again
+	    IterFactory.createIter(result).accept(new EmptyStreamVisitor() {
+		    public void preVisitStream(SIRStream self, SIRIterator iter) {
+			for (int i=0; i<self.getMethods().length; i++) {
+			    self.getMethods()[i].accept(new SLIREmptyVisitor() {
+				    public void visitForStatement(JForStatement self, JStatement init, JExpression cond,
+								  JStatement incr, JStatement body) {
+					self.setUnrolled(false);
+				    }
+				});
+			}
+		    }
+		});
+	    // now do unrolling
+	    int origUnroll = KjcOptions.unroll;
+	    KjcOptions.unroll = 100000;
+	    Flattener.flattenBeforePartition(result);
+	    KjcOptions.unroll = origUnroll;
+	}
+	return result;
+    }
 
     /////////////////////////////////////
     ///////////////////// Visitor methods
@@ -130,7 +165,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	if (streamsToLinearRepresentation.containsKey(self) || nonLinearStreams.contains(self)) {
 	    return;
 	}
-
+	
 	this.filtersSeen++;
 	LinearPrinter.println("Visiting " + "(" + self + ")");
 
@@ -152,12 +187,15 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	LinearFilterVisitor theVisitor = new LinearFilterVisitor(self.getIdent(),
 								 peekRate, pushRate, popRate);
 	
+	// if we haven't unrolled this node yet, then do it here, by cloning
+	SIRFilter unrolledSelf = getUnrolledFilter(self);
+
 	// pump the visitor through the work function
 	// (we might need to send it thought the init function as well so that
 	//  we can determine the initial values of fields. However, I think that
 	//  field prop is supposed to take care of this.)
 	try {
-	    self.getWork().accept(theVisitor);
+	    unrolledSelf.getWork().accept(theVisitor);
 	} catch (NonLinearException e) {
 	    LinearPrinter.println("  caught a non-linear exception -- eg the filter is non linear.");
 	}

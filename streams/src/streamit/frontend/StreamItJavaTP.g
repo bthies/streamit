@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.9 2002-07-15 19:58:26 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.10 2002-07-15 21:10:52 dmaze Exp $
  */
 
 header {
@@ -535,6 +535,15 @@ variable_decl returns [String t]
 			(init_value=variable_init)?
 		)
 		{
+			// Possibly overwrite init_value.
+			if (type.isComplex() || (type instanceof TypeStruct))
+				init_value = "= new " + n2j.convertType(type) + "()";
+			if (type instanceof TypeArray)
+			{
+				TypeArray ta = (TypeArray)type;
+				init_value = "= new " + n2j.convertType(ta.getBase()) +
+					"[" + ta.getLength().accept(n2j) + "]";
+				}
 			t = n2j.convertType(type) + " " + name.getText () +
 				" " + init_value;
 			symTab.register(name.getText(), type);

@@ -20,10 +20,9 @@ public class Operator extends DestroyedClass
         initParams = new ParameterContainer ("int").add ("n", n);
     }
 
-    public Operator(int n1, int n2)
+    public Operator (int x, int y)
     {
-        initParams = new ParameterContainer ("int").add ("n1", n1)
-	    .add ("n2", n2);
+        initParams = new ParameterContainer ("int-int").add ("x", x).add ("y", y);
     }
 
     public Operator(float f)
@@ -43,23 +42,28 @@ public class Operator extends DestroyedClass
 
     // INIT FUNCTIONS ---------------------------------------------------------------------
 
-    // initializatoin functions, to be over-ridden
-    public void init() { ASSERT (false); }
+    void invalidInitError ()
+    {
+        ERROR ("You didn't provide a valid init function.\nPerhaps you're passing parameters that don't have a valid prototype yet?\nCheck streams/docs/implementation-notes/library-init-functions.txt for instructions on adding new signatures to init functions.");
+    }
 
     // initializatoin functions, to be over-ridden
-    public void init(int n) { ASSERT (false); }
+    public void init() { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
-    public void init(int n1, int n2) { ASSERT (false); }
+    public void init(int n) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
-    public void init(float f) { ASSERT (false); }
+    public void init(int x, int y) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
-    public void init(String str) {ASSERT (false); }
+    public void init(float f) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
-    public void init(ParameterContainer params) {ASSERT (false); }
+    public void init(String str) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(ParameterContainer params) { invalidInitError (); }
 
     // initIO initializes all input/output channels
     // as required
@@ -256,11 +260,16 @@ public class Operator extends DestroyedClass
 
         initIO ();
 
-        if (initParams.getParamName ().equals("")) init ();
-        if (initParams.getParamName ().equals("int")) init (initParams.getIntParam ("n"));
-        if (initParams.getParamName ().equals("float")) init (initParams.getFloatParam ("f"));
-        if (initParams.getParamName ().equals("String")) init (initParams.getStringParam ("str"));
+        if (initParams.getParamName ().equals("int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y")); else
+        if (initParams.getParamName ().equals("")) init (); else
+        if (initParams.getParamName ().equals("int")) init (initParams.getIntParam ("n")); else
+        if (initParams.getParamName ().equals("float")) init (initParams.getFloatParam ("f")); else
+        if (initParams.getParamName ().equals("String")) init (initParams.getStringParam ("str")); else
         if (initParams.getParamName ().equals("ParameterContainer")) init ((ParameterContainer) initParams.getObjParam ("params"));
+        else {
+            // labels don't match - print an error
+            ERROR ("You didn't provide a correct if-else statement in setupOperator.\nPlease read streams/docs/implementation-notes/library-init-functions.txt for instructions.");
+        }
 
         connectGraph ();
         initialized = true;

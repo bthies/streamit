@@ -402,9 +402,11 @@ float->float filter LinearInterpolator(int interp) {
 float->float filter Decimator(int decim) {
 
     work push 1 pop decim {
-      push(pop());
-      for(int goal=decim-1; goal>0; goal--)
-        pop();
+	push(pop());
+	//for(int goal=decim-1; goal>0; goal--)
+	//    pop();
+	for (int goal = 0; goal < decim - 1; goal++) 
+	    pop();
     }
 }
 

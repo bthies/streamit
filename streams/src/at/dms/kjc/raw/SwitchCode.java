@@ -94,9 +94,16 @@ public class SwitchCode extends at.dms.util.Utils
                 if (big3init != null)
                     getRepetitionCounts(big3init, fw);
 		toASM(initCode, "i", big3init, fw);
+
 		//loop label
-		if (big3work != null)
+		if (big3work != null) {
+		    System.out.println("Compression for : " + tile);
+		    for (int i = 0; i < big3work.length; i++) {
+			System.out.println(big3work[i].toString());
+		    }
 		    getRepetitionCounts(big3work, fw);
+		}
+		
 		fw.write("sw_loop:\n");
 		//print the steady state switch code
 		if (RawBackend.simulator.steadySchedules.get(tile) != null)
@@ -192,23 +199,6 @@ public class SwitchCode extends at.dms.util.Utils
 	}
     }
     
-    //class used to encapsulate a sequence: the starting line and the repetition count
-    static class Repetition 
-    {
-	public Set lines;
-	public int repetitions;
-	public int length;
-	public Repetition(int l, int r) 
-	{
-            lines = new HashSet();
-            lines.add(new Integer(l));
-	    repetitions = r;
-	    // length = len;
-	}
-        public void addLine(int l) { lines.add(new Integer(l)); }
-        public boolean hasLine(int l) { return lines.contains(new Integer(l)); }
-    }
-    
     private static int getCodeLength(String str) 
     {
 	StringTokenizer t = new StringTokenizer(str, "\n");
@@ -264,7 +254,7 @@ public class SwitchCode extends at.dms.util.Utils
             }
 	    if (repetitions > threeBiggest[i].repetitions) {
                 // shuffle the remainder down:
-                for (int j = i + 1; j < 3; j++)
+                for (int j = threeBiggest.length - 1 ; j > i; j--)
                     threeBiggest[j] = threeBiggest[j-1];
                 // add the new one:
 		threeBiggest[i] = new Repetition(line, repetitions);
@@ -410,4 +400,29 @@ public class SwitchCode extends at.dms.util.Utils
 
 	return buf.toString();
     }
+}
+
+ //class used to encapsulate a sequence: the starting line and the repetition count
+class Repetition 
+{
+    public Set lines;
+    public int repetitions;
+    public Repetition(int l, int r) 
+    {
+	lines = new HashSet();
+	lines.add(new Integer(l));
+	repetitions = r;
+    }
+    public void addLine(int l) { lines.add(new Integer(l)); }
+    public boolean hasLine(int l) { return lines.contains(new Integer(l)); }
+    
+    public String toString() 
+    {
+	String ret = "reps: " + repetitions + " Lines: ";
+	Iterator it = lines.iterator();
+	while (it.hasNext()) 
+	    ret = ret + " " + ((Integer)it.next()).toString();
+	return ret;
+    }
+    
 }

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.2 2003-09-30 15:53:05 dmaze Exp $
+# $Id: strc,v 1.3 2003-09-30 18:36:15 dmaze Exp $
 #
 
 use strict;
@@ -382,7 +382,7 @@ sub get_kjc_opts
     $opts{sjtopipe} && ($kjcopts .= " -J");
     $opts{stats} && ($kjcopts .= " -.");
     $opts{sync} && ($kjcopts .= " -k");
-    $opts{unroll} && ($kjcopts .= " -u " . $opts{unroll});
+    defined $opts{unroll} && ($kjcopts .= " -u " . $opts{unroll});
     $opts{viram} && ($kjcopts .= " -V");
     $opts{cluster} && ($kjcopts .= " -cluster");
     $opts{destroyfieldarray} && ($kjcopts .= " -destroyfieldarray");

@@ -120,6 +120,8 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
      * Returns estimate of work in <filter>
      */
     public static int getWork(SIRFilter filter) {
+        if (!filter.needsWork ())
+		return 0;
 	WorkVisitor visitor = new WorkVisitor();
 	filter.getWork().accept(visitor);
 	return visitor.work;

@@ -1,7 +1,7 @@
 /*
  * GetExprType.java: get the type of an expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: GetExprType.java,v 1.3 2002-07-16 18:15:59 dmaze Exp $
+ * $Id: GetExprType.java,v 1.4 2002-09-06 16:07:36 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -11,7 +11,7 @@ package streamit.frontend.nodes;
  * with a symbol table to help resolve the types of variables.  All of the
  * visitor methods return Types.
  */
-public class GetExprType implements FEVisitor
+public class GetExprType extends FENullVisitor
 {
     private SymbolTable symTab;
     private StreamType streamType;

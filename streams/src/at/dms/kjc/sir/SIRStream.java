@@ -27,12 +27,6 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      */
     protected JMethodDeclaration work;
     /**
-     * The initial work function.  This is the instance of the work
-     * function that is run the first time, and called from init.  Can
-     * be null for any SIRStream (is fabricated during lowering).
-     */
-    protected JMethodDeclaration initWork;
-    /**
      * The name of the class in the StreamIt source file corresponding
      * to this stream.
      */
@@ -105,21 +99,6 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
 	return this.work;
     }
 
-    /**
-     * Gets the initial work function.
-     */
-    public JMethodDeclaration getInitWork() {
-	return this.initWork;
-    }
-
-    /**
-     * Sets the initial work function of this.
-     */
-    public void setInitWork (JMethodDeclaration newWork) {
-	addReplacementMethod(newWork, this.initWork);
-	this.initWork = newWork;
-    }
-    
     /*
      * Set the methods member variable 
      */
@@ -179,7 +158,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * all methods.)
      */
     protected void addReplacementMethod(JMethodDeclaration newMethod,
-				      JMethodDeclaration origMethod) {
+					JMethodDeclaration origMethod) {
 	// check if <origMethod> is null
 	if (origMethod==null) {
 	    // if yes, then just add <newMethod>

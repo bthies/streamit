@@ -48,9 +48,12 @@ public class SIRFilter extends SIRStream implements Cloneable {
 	this.peek = peek;
 	this.pop = pop;
 	this.push = push;
-	this.work = work;
 	this.inputType = inputType;
 	this.outputType = outputType;
+	// make this call to ensure that <work> is in <methods> array
+	if (work!=null) {
+	    setWork(work);
+	}
     }
 
     /**
@@ -132,6 +135,18 @@ public class SIRFilter extends SIRStream implements Cloneable {
     }
     public void setPush(JExpression p) {
 	this.push = p;
+    }
+
+    public void setPeek(int p) {
+	this.peek = new JIntLiteral(p);
+    }
+
+    public void setPush(int p) {
+	this.push = new JIntLiteral(p);
+    }
+
+    public void setPop(int p) {
+	this.pop = new JIntLiteral(p);
     }
 
     public JExpression getPush() {

@@ -49,13 +49,14 @@ public class TraceExtractor {
 		    //node=getInNode(outNodes,inNodes,filter);
 		    UnflatEdge[] unflatEdges=filter.in;
 		    Edge[] inEdges=new Edge[unflatEdges.length];
+		    node=new InputTraceNode(filter.inWeights,inEdges);
 		    for(int i=0;i<unflatEdges.length;i++) {
 			UnflatEdge unflatEdge=unflatEdges[i];
 			Edge edge=(Edge)edges.get(unflatEdge);
 			assert edge!=null:"Edge Null";
+			edge.setDest((InputTraceNode)node);
 			inEdges[i]=edge;
 		    }
-		    node=new InputTraceNode(filter.inWeights,inEdges);
 		    trace=new Trace((InputTraceNode)node);
 		    if(content.isLinear()) {
 			FilterContent[] linearStuff=LinearFission.fiss(content,content.getArray().length);

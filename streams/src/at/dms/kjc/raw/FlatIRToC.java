@@ -1056,51 +1056,42 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     public void visitPrintStatement(SIRPrintStatement self,
                                     JExpression exp)
     {
-	print("//Print Statement");
-	return;
-	/*
-	  CType type = exp.getType();
+	CType type = exp.getType();
 	  
-	  if (type.equals(CStdType.Boolean))
-	  {
-	  print("printf(\"%s\\n\", ");
-	  exp.accept(this);
-	  print(" ? \"true\" : \"false\");");
-	  }
-	  else if (type.equals(CStdType.Byte) ||
-	type.equals(CStdType.Integer) ||
-	type.equals(CStdType.Short))
-        {
-	print("printf(\"%d\\n\", ");
-	exp.accept(this);
-	print(");");
-        }
-        else if (type.equals(CStdType.Char))
-        {
-	print("printf(\"%c\\n\", ");
-	exp.accept(this);
-	print(");");
-        }
-        else if (type.equals(CStdType.Float) ||
-	type.equals(CStdType.Double))
-        {
-	print("printf(\"%f\\n\", ");
-	exp.accept(this);
-	print(");");
-        }
+	if (type.equals(CStdType.Boolean))
+	    {
+		Utils.fail("Cannot print a boolean");
+	    }
+	else if (type.equals(CStdType.Byte) ||
+		 type.equals(CStdType.Integer) ||
+		 type.equals(CStdType.Short))
+	    {
+		print("print_int(");
+		exp.accept(this);
+		print(");");
+	    }
+	else if (type.equals(CStdType.Char))
+	    {
+		print("print_int(");
+		exp.accept(this);
+		print(");");
+	    }
+	else if (type.equals(CStdType.Float))
+	    {
+		print("print_float(");
+		exp.accept(this);
+		print(");");
+	    }
         else if (type.equals(CStdType.Long))
-        {
-	print("printf(\"%ld\\n\", ");
-	exp.accept(this);
-	print(");");
-        }
-        else
-        {
-	print("printf(\"(unprintable type)\\n\", ");
-	exp.accept(this);
-	print(");");
-        }
-	*/
+	    {
+		print("print_int(");
+		exp.accept(this);
+		print(");");
+	    }
+       else
+	    {
+		Utils.fail("Unprintable Type");
+	    }
     }
     
     public void visitPushExpression(SIRPushExpression self,

@@ -2,6 +2,8 @@ package at.dms.kjc.raw;
 
 import java.util.Vector;
 import at.dms.kjc.sir.lowering.Namer;
+import at.dms.util.Utils;
+
 
 /**
  * This class represents a node in the switch schedule.
@@ -37,6 +39,25 @@ public class SwitchScheduleNode
 	return (FlatNode)destinations.get(i);
     }
     
+    //print the assembly code, send is true if this is a schedule for sending
+    public String toAssembly(FlatNode node, boolean send) {
+	StringBuffer buf = new StringBuffer();
+	buf.append("\tnop\troute ");
+	for (int i = 0; i < destinations.size(); i++) {
+	    if (send)
+		buf.append("$csto->" + 
+			   getHeading(node, (FlatNode)destinations.get(i), send) + 
+			   ",");
+	    else {
+		buf.append(getHeading(node, (FlatNode)destinations.get(i), send) + 
+			   "-> $csti, ");
+	    }
+	}
+	//erase the trailing ,
+	buf.setCharAt(buf.length() - 1, '\n');
+	return buf.toString();
+    }
+    
     public void printMe() {
 	for (int i = 0; i < destinations.size(); i++) {
 	    FlatNode node = (FlatNode)destinations.get(i);
@@ -46,5 +67,27 @@ public class SwitchScheduleNode
 	System.out.println("=====");
     }
     
+    private static String getHeading (FlatNode from, FlatNode to, boolean send) 
+    {
+	StringBuffer buf = new StringBuffer();
+	int toTile = Layout.getTile(to.contents);
+	int fromTile = Layout.getTile(from.contents);
+	if (fromTile - 4 == toTile)
+	    buf.append("$cN");
+	if (fromTile -1 == toTile) 
+	    buf.append("$cW");
+	if (fromTile +1 == toTile)
+	    buf.append("$cE");
+	if (fromTile +4 == toTile)
+	    buf.append("$cS");
+	if (buf.toString().equals(""))
+	    Utils.fail("Nodes not directly connected");
+	//sending
+	if (send)
+	    buf.append("o");
+	else
+	    buf.append("i");
+	return buf.toString();
+    }
 }
 

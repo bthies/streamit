@@ -18,8 +18,7 @@ CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/cplex/cplex.jar
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/library/java
 
 # the current version of starsearch we're using
-export STARSEARCH_HOME=/home/bits7/NO_BACKUP/streamit/starsearch/
-export TOPDIR=${STARSEARCH_HOME}
+export TOPDIR=${STREAMIT_HOME}/misc/raw
 
 # the path to ATLAS
 export ATLAS_HOME=/home/bits7/NO_BACKUP/streamit/ATLAS

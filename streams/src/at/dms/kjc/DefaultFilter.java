@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: DefaultFilter.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: DefaultFilter.java,v 1.2 2003-05-16 02:04:17 thies Exp $
  */
 
 package at.dms.kjc;
@@ -24,7 +24,7 @@ import at.dms.compiler.CWarning;
 
 /**
  * This is the default warning filter
- * public class MyWarningFilter implements at.dms.kjc.DefaultFilter {
+ * public class MyWarningFilter implements at.dms.kjc.DefaultFilter
  *
  *  // ----------------------------------------------------------------------
  *  // FILTER
@@ -37,19 +37,6 @@ import at.dms.compiler.CWarning;
  *  *
  *  * This filter accepts unused catch parameters if they are prefixed with an underscore
  *  *
- * public int filter(CWarning warning) {
- *    if (warning.hasDescription(KjcMessages.UNUSED_CATCH_PARAMETER)) {
- *      if (!warning.getParams()[0].toString().startsWith("_")) {
- *	// catch (Exception unusedParam) {...
- *	return FLT_FORCE;
- *      } else {
- *	// catch (Exception _unusedParam) {...
- *	return FLT_REJECT;
- *      }
- *    }
- *
- *    return FLT_ACCEPT;
- *  }
  */
 public class DefaultFilter implements at.dms.compiler.WarningFilter {
 

@@ -23,6 +23,14 @@ import java.util.*;
 
 public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 {
+    /**
+     * The clone generator looks at this array to see which fields it
+     * shouldn't clone.
+     */
+    public static final String[] DO_NOT_CLONE_THESE_FIELDS = {
+        "trash"
+    };
+
     /* The entire application */
     private JCompilationUnit[] application;
 

@@ -40,27 +40,94 @@ class dcalc extends StreamIt {
 
     public void init() {
 	add(new Sourcer(Q*N+W-1,r));
-	add(new AddAHL(W,Q,N,K,h,C));
-	add(new AhrL(Q*N+W-1,K*N));
+	add(new AddAHLAhA(W,Q,N,K,h,C));
+	add(new AhrdAhA(Q*N+W-1,K*N));
+	//	add(new LrL(K*N));
+	//      add(new backs(K*N));
+	add(new Ahrchold(K*N));
 	add(new LrL(K*N));
 	add(new backs(K*N));
-	add(new SinkD(K*N));	
+	add(new SinkD(K*N));
          }
 
-class AddAHL extends SplitJoin{// calculates the matrix AH (row oriented?) and L and adds them to the tape
-    public AddAHL(int W,int Q,int N, int K, float[][] h, float[][] C   ) {super (W,Q,N,K,h,C);}
+class AddAHLAhA extends SplitJoin{// calculates the matrix AH (row oriented?) and L and adds them to the tape, plus a copy of AhA
+    public AddAHLAhA(int W,int Q,int N, int K, float[][] h, float[][] C   ) {super (W,Q,N,K,h,C);}
     public void init(int W,int Q,int N, int K, float[][] h, float [][] C) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(Q*N+W-1,0));
 	add (new FloatIdentity());
 	add (new SourceAHL(W,Q,N,K,h,C));
-	setJoiner(WEIGHTED_ROUND_ROBIN(Q*N+W-1,K*N*(Q*N+W-1)+(K*N)*(K*N+1)/2));
+	setJoiner(WEIGHTED_ROUND_ROBIN(Q*N+W-1,K*N*(Q*N+W-1)+(K*N)*(K*N+1)));
     }
 
 }
 
 
-class AhrL extends SplitJoin{// calculates Ahr and duplicates L
-    public AhrL( int M,int N) {super (M,N);}
+class AhrL1 extends SplitJoin{// calculates Ahr and duplicates L and passes  Ahr,L (2 of them) to the next level 
+    public AhrL1( int M,int N) {super (M,N);}
+    public void init(int M,int N) {
+	setSplitter(WEIGHTED_ROUND_ROBIN(M*(N+1),N*(N+1)/2));
+	add (new multvectdoub(M,N));
+	add (new vectdouble(N*(N+1)/2));
+	setJoiner(WEIGHTED_ROUND_ROBIN(2*N,N*(N+1)));
+    }
+
+}
+
+
+class multvectdoub extends Pipeline{// duplicates a vector and makes a copy
+    public multvectdoub( int M,int N) {super (M,N);}
+    public void init(int M, int N) {
+	add (new multvect(M,N));
+	add (new vectdouble(N));
+    }
+
+}
+
+class dsolve extends Pipeline { //input to this pipeline is Ahr(N),L(N*N) and the output is d
+    public dsolve(int N) {super(N);}
+    public void init(int N){
+	add (new LrL(N));
+	add (new backs(N));
+    }
+}
+	
+
+
+class Ahrd extends Pipeline{// the input is Ar, L , the output is Ahr,d,AhA 
+    public Ahrd( int M,int N) {super (M,N);}
+    public void init(int M,int N) {
+	add (new AhrL1(M,N));
+	add (new split_ahrd(N));
+      }
+
+}
+
+
+
+class split_ahrd extends SplitJoin{//In:2* Ahr(N)+ 2 * L(N*(N+1)/2)  
+    public split_ahrd( int N) {super (N);}
+    public void init(int N) {
+	setSplitter(WEIGHTED_ROUND_ROBIN(N,N*(N+1)+N));
+	add (new FloatIdentity());
+	add (new dsolve(N));
+	setJoiner(WEIGHTED_ROUND_ROBIN(N,N));
+    }
+
+}
+
+class AhrdAhA extends SplitJoin{// the input is r, L,AhA, the output is Ahr,d,AhA 
+    public AhrdAhA( int M,int N) {super (M,N);}
+    public void init(int M,int N) {
+	setSplitter(WEIGHTED_ROUND_ROBIN(M*(N+1)+N*(N+1)/2,N*(N+1)/2));
+	add (new Ahrd(M,N));
+	add (new FloatIdentity());                
+	setJoiner(WEIGHTED_ROUND_ROBIN(2*N,N*(N+1)/2));
+    }
+
+}
+
+class AhrL2 extends SplitJoin{// calculates Ahr and duplicates L, suitable for use in the second stage
+    public AhrL2( int M,int N) {super (M,N);}
     public void init(int M,int N) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(M*(N+1),N*(N+1)/2));
 	add (new multvect(M,N));
@@ -146,16 +213,131 @@ class SinkD extends Filter{
 	    
     }
 }
-		    
-		
+
+class error_est extends Filter{ // this class estimates the error in signal detection
+
+    int N;
+    float[] Ahr,d;
+    float sigma=0;
+	
+    public error_est(int N) {super(N);}
+    public void init(int N){
+	setInput(Float.TYPE);
+	setOutput(Float.TYPE);
+	this.N=N;
+	setPop(2*N);
+	setPush(1);
+	Ahr=new float[N];
+	d= new float[N];
+
+    }
+    public void work() {
+
+	for (int i=0; i< N;i++)
+	    Ahr[i]=input.popFloat();
+	for (int i=0; i <N; i++)
+	    d[i]=input.popFloat();
+	for (int i=0; i <N ; i++)
+	    sigma+=(d[i]-Ahr[i])*(d[i]-Ahr[i]);
+	output.pushFloat(sigma);
+	
+	    
+	    
+    }
 }
 
 
+class choldsigma extends Filter // this Filter performs the cholesky decomposition through 
+   {
+    int    N; //  the dimension of AhA
+    float[][]  A; // A is the input matrix 
+    
+    float[]  p; // p is the out put elements on the diagonal
+    float    sum; // sum will be used as a buffer
+       float    sigma;
+public choldsigma(int N){ super (N);}
+          public void init (int N) {
+	      input = new Channel(Float.TYPE, N*(N+1)/2+1);
+	      output = new Channel(Float.TYPE, N*(N+1)/2);
+          A= new float[N][N];
+          p=new float[N];
+	  this.N=N;
+	  
+             
+          } 
+ 
+
+public void work() {
+    float sum; // sum serves as a buffer
+    sigma=input.popFloat();
+  for (int i=0; i<N;i++)
+      {  
+      for (int j=0; j<=i ; j++)
+      A[i][j]=input.popFloat(); 
+
+      }
+  
+  for (int i=0; i <N ; i++) { 
+      for (int j=i; j<N ; j++) {
+	  sum=A[j][i];
+	  for (int k=i-1 ; k>=0; k--) sum-=A[k][i]*A[k][j];
+      if ( i==j)
+	  {
+	      p[i]=(float)Math.sqrt(sum+sigma);
+	      output.pushFloat(p[i]);
+	      }
+      else
+	  {
+	      A[i][j]=sum/p[i];
+	      output.pushFloat(A[i][j]);
+          }
+      } }
+	     
+}
+	    
+}		
+
+
+
+class  Ahrchold extends SplitJoin{// copies Ahr to its out put and performes the compensated cholesky decomp with Ahr,d,AHA
+    public Ahrchold( int N) {super (N);}
+    public void init(int N) {
+	setSplitter(WEIGHTED_ROUND_ROBIN(N,2*N+N*(N+1)/2));
+	add (new FloatIdentity());     
+	add (new Lest(N));
+	setJoiner(WEIGHTED_ROUND_ROBIN(N,N*(N+1)));
+    }
+
+}
+
+class Lest extends Pipeline{//  this pipeline estimates the error and then performes the cholskey decomp
+    public Lest( int N) {super (N);}
+    public void init(int N) {
+	add (new error_split(N));     
+	add (new choldsigma(N));
+	add (new vectdouble(N));
+    }
+
+}
+
+
+class error_split extends SplitJoin{// performs error estimation for the first 2*N elements and copies the AhA
+    public error_split( int N) {super (N);}
+    public void init(int N) {
+	setSplitter(WEIGHTED_ROUND_ROBIN(2*N,N*(N+1)/2));
+	add (new error_est(N));     
+	add (new FloatIdentity());
+	setJoiner(WEIGHTED_ROUND_ROBIN(1,N*(N+1)/2));
+    }
+
+}
+
+    
 
 
 
 
-
+}
 
 
 

@@ -21,20 +21,34 @@ import streamit.io.*;
 	    setSplitter(DUPLICATE());
 	    add (new FloatIdentity());
 	    add (new GenL(M,N));
-	    setJoiner(WEIGHTED_ROUND_ROBIN(M*N,N*(N+1)/2));
+	    setJoiner(WEIGHTED_ROUND_ROBIN(M*N,N*(N+1)));
 	    }
     }
 
-    class GenL extends Pipeline{// the input is matrix A (row oriented), the output is L
+    class GenL extends Pipeline{// the input is matrix A (row oriented), the output is L and AhA ( which will be used in the dext stage
 
 	public GenL (int M, int N) {super (M,N);}
 	
 	public void init(int M,int N) {
 	    add (new RowCol(M,N));
 	    add (new SelfProd(M,N));
-	    add (new chold(N));
+	    add (new choldAhA(N));
+
+	    //	    add (new chold(N));
 	}
     }
+
+class choldAhA extends SplitJoin{// the input is AhA, the output is cholskey decomposition, N is the dim of Aha
+
+    public choldAhA(int N) {super(N);}
+
+    public void init(int N){
+        setSplitter(DUPLICATE());
+	add (new chold(N));
+	add (new FloatIdentity());
+	setJoiner(WEIGHTED_ROUND_ROBIN(N*(N+1)/2,N*(N+1)/2));
+    }
+}
 	    
 
 /*

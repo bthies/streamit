@@ -4,7 +4,7 @@ import streamit.io.*;
 
 class chold extends Filter // this Filter performs the cholesky decomposition through 
    {
-    int    M,N; //  the dimension of A
+    int    N; //  the dimension of AhA
     float[][]  A; // A is the input matrix 
     
     float[]  p; // p is the out put elements on the diagonal
@@ -49,6 +49,8 @@ public void work() {
 
 
 }
+
+
 
 
 

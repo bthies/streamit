@@ -1,11 +1,11 @@
-FFTLEN = 16
+FFTLEN = 28
 IN_FILE = short_step.wav
 OUT_FILE = short_step_out.wav
 OPTIONS = -s 2.0
 
 # makefile to create a uniprocessor version of vocoder
 all:
-	gcc -lc -lm conv.c  dft.c  main_uni.c modifytime.c pitch.c unwrap.c util.c wave.c -o vocoder
+	gcc -O3 -lc -lm conv.c  dft.c  main_uni.c modifytime.c pitch.c unwrap.c util.c wave.c -o vocoder
 	time ./vocoder $(IN_FILE) $(OUT_FILE) $(FFTLEN) $(OPTIONS)
 
 clean:

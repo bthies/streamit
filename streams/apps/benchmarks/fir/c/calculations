@@ -1,6 +1,46 @@
 7/30/02 -- AAL 
 Ripped out the stuff in fmref to fmref_raw to make it only output at the end.
 
+first  iteration done at 0x000001e70 (7792 cycles)
+second iteration done at 0x000002916 (10518 cycles) (delta=2726)
+third  iteration done at 0x0000033bc (13244 cycles) (delta=2726)
+
+
+==> iter takes 2726/2726 cycles (average = 2726)
+
+since we are producing something every iteration which corresponds to 6 streamit
+outputs, we are therefore producing 6 outputs  
+every 2726 cycles, normalized to 10^5 cycles, 6*(100000/2726) = 293.47029
+
+flops reported are 516 flops, which is (516/2726) * 250 = 47.322084 MFLOPS
+
+workCount = 121560 / 124672 = 0.9750385
+workCount = 43359 / 43616   = 0.99410767
+workCount = 43359 / 43616   = 0.99410767
+
+
+
+Uniprocessor (7/30/2002):
+(Xenon 2.2 GHz, 512MB cache)
+100 million iterations (1 outputs/iteration)
+99.9% utilization
+runtime for 10^8 iterations = 10.20 seconds
+
+We want cycles/iteration:
+10^8 iterations/ 10.20 sec * 
+1 outputs/1 iteration *
+1 second /2.2x10^9 cycles
+* 10^5 cycles 
+
+= 445.6328 outputs/10^5 cycles
+
+
+
+
+
+
+------------------------------------
+---- Old stuff without -O3 flag ----
 first  iteration done at 0x0000044b7 (17591 cycles)
 second iteration done at 0x000005ef7 (24311 cycles) (delta=6720)
 third  iteration done at 0x000007937 (31031 cycles) (delta=6720)

@@ -6,4 +6,6 @@ all:
 	# copy foo 10 times into foo.l
 	(cat bin/foo bin/foo bin/foo bin/foo bin/foo bin/foo bin/foo bin/foo bin/foo bin/foo > bin/foo.l)
 	# toast that sucker
-	time bin/toast bin/foo.l
+	bin/toast bin/foo.l
+	# time the decode, as appropriate
+	(cd bin; time untoast foo.l.gsm)

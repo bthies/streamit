@@ -1,4 +1,4 @@
 all:
-	gcc -lm nokia_uni.c -o nokia_uni
+	gcc -O3 -lm nokia_uni.c -o nokia_uni
 	time nokia_uni
 	rm ./nokia_uni

@@ -1,4 +1,4 @@
 # compile and time the uniprocessor version of bitonic sort
 all:
-	gcc -lm bitonic_uni.c -o bitonic_uni
+	gcc -O3 -lm bitonic_uni.c -o bitonic_uni
 	time ./bitonic_uni

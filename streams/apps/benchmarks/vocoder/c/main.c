@@ -44,7 +44,7 @@ void vocoder (float *data, int fftlen, int SampleNum, char Command, float Parame
 
   //  printf("Command = %c, Parame = %f\n ",Command, Parameter); 
 #ifdef RAW 
-  raw_test_pass_reg(4);
+  print_int(4);
 #endif //RAW
   LastSample = (Complex *) malloc (fftlen2*sizeof(Complex));
   
@@ -73,12 +73,12 @@ void vocoder (float *data, int fftlen, int SampleNum, char Command, float Parame
 #endif
 
 #ifdef RAW 
-  raw_test_pass_reg(5);
+  print_int(5);
 #endif //RAW
       dftrec = DFT (data, SampleNum, &DataIdx, Buf, BUFSIZE, fftlen, LastSample, BufCount);
       datalen = DataIdx - LastDataIdx; 
 #ifdef RAW 
-  raw_test_pass_reg(6);
+  print_int(6);
 #endif //RAW
       dft = AddCosWin ( dftrec, fftlen, datalen);
       free(dftrec);
@@ -105,11 +105,11 @@ void vocoder (float *data, int fftlen, int SampleNum, char Command, float Parame
       */
 
 #ifdef RAW 
-  raw_test_pass_reg(7);
+  print_int(7);
 #endif //RAW
       Rectangular2Polar ( dft, magnitude, phase, fftnum*datalen);
 #ifdef RAW 
-  raw_test_pass_reg(71);
+  print_int(71);
 #endif //RAW
       //SaveData(phase, datalen*fftnum, "pha0.dat");
       if (Command != 'f' ) 
@@ -120,11 +120,11 @@ void vocoder (float *data, int fftlen, int SampleNum, char Command, float Parame
       switch (Command) {
       case 's' :
 #ifdef RAW 
-  raw_test_pass_reg(8);
+  print_int(8);
 #endif //RAW
  Recon = speedup ( magnitude, phase, fftnum, fftlen, &datalen, Parameter, BufCount, LastMag, LastPha, DownSampleFlag); 
 #ifdef RAW 
-  raw_test_pass_reg(81);
+  print_int(81);
 #endif //RAW
 
 break;
@@ -135,14 +135,14 @@ break;
       };
 
 #ifdef RAW 
-  raw_test_pass_reg(9);
+  print_int(9);
 #endif //RAW
       free(dft);
 #ifndef RAW
       if (Recon)
 	WriteWaveFile(Recon, datalen, Hdr, fout);
 #else
-      raw_test_pass_reg(0xdeadcafe);
+      print_int(0xdeadcafe);
       if (Recon) {
 	int i=0;
 /*  	for(i = 0; i < datalen; i++)  */
@@ -158,7 +158,7 @@ break;
 
       BufCount ++;
 #ifdef RAW 
-  raw_test_pass_reg(10);
+  print_int(10);
 #endif //RAW
       datalen = DataIdx - LastDataIdx; 
       for (i = 0 ; i < fftnum; i++)
@@ -173,7 +173,7 @@ break;
     }
 
 #ifdef RAW 
-  raw_test_pass_reg(11);
+  print_int(11);
 #endif //RAW
 /*    free(LastSample); */
   return;
@@ -225,11 +225,11 @@ int  main(argc, argv)
   data = ReadWaveFile(&WavHdr,  &SampleNum, fsrc);
   fclose(fsrc);
 #else
-  raw_test_pass_reg(0);
+  print_int(0);
 /*    print_int(0); //DEBUG! */
   SampleNum = RUN_SIZE;
   data = GenerateData(SampleNum); 
-  raw_test_pass_reg(1);
+  print_int(1);
 /*    print_int(1); //DEBUG! */
 #endif //RAW
 
@@ -243,7 +243,7 @@ int  main(argc, argv)
 #ifndef RAW
   sscanf((char *)(argv[3]), "%d", &fftlen);
 #else
-  fftlen = 128;
+  fftlen = 28;
 #endif //RAW
 
   /*argument 4: downsample flag */
@@ -271,7 +271,7 @@ int  main(argc, argv)
     else TimeRatio = 0;
 #else
   TimeRatio = 0;
-  raw_test_pass_reg(2);
+  print_int(2);
 /*    print_int(2); */
 #endif //RAW
 
@@ -299,7 +299,7 @@ int  main(argc, argv)
   vocoder (data, fftlen, SampleNum, Command, TimeRatio, &WavHdr, DownSampleFlag, fout);
 
 #ifdef RAW
-  raw_test_pass_reg(100);
+  print_int(100);
 #endif //RAW
   CleanSpeed();
   CleanConv();
@@ -318,7 +318,7 @@ int  main(argc, argv)
 
   printf ( "Total Running Time = %f\n", difftime(t2, t1));
 #else
-  raw_test_pass_reg(-1);
+  print_int(-1);
 #endif
 
   return 0;

@@ -2,11 +2,11 @@
 # version of fft.
 #
 
-LIMIT = TRUE
+LIMIT = TRUE  
 SIM-CYCLES = 5000000
-SIM-COMMAND = count_FLOPS(17591); count_FLOPS(6720); count_FLOPS(6720);
+SIM-COMMAND = sv(7792); sv(2726); sv(2726);
 
-
+RGCCFLAGS += -O3
 
 BTL-MACHINE-FILE = fileio.bc
 

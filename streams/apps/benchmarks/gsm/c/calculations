@@ -1,17 +1,19 @@
 7/26/02 -- AAL 
-We time the gsm app for uniprocessor c code by "toasting" the 10 copies of the bin/foo file, thereby producing foo.l.gsm. foo.l.gsm is 2890800 bytes large, meaning that 2890800/2 = 1445400 "shorts" were produced. Since the streamit version produces the 16 bit "short" outputs, we will normalize the c program to do the same thing.
+We time the gsm app for uniprocessor c code by "toasting" the 10 copies of the bin/foo file, thereby producing foo.l.gsm. then we untoast (eg decode as the streamit gsm decoder does) foo.l.gsm producing 
+28032000 bytes of data, meaning that 28032000/2 = 14016000 "shorts" were produced. Since the streamit version produces the 16 bit "short" outputs, we will normalize the c program to do the same thing. Thanks to Michael for catching
+that I was running gsm in the reverse direction (eg timing encoding, not decoding)
 
 
 Uniprocessor (7/29/2002):
 (Xenon 2.2 GHz, 512MB cache)
-1 iteration (1445400 outputs/iteration)
+1 iteration (14016000 outputs/iteration)
 99.9% utilization (which is actually what it read, even though I am also suspicious given the disk accesses of the program)
-runtime for 10^7 iterations = 8.47 seconds
+runtime for above scenario iterations = 4.065 seconds
 
 We want cycles/iteration:
-1 iterations/8.47 sec * 
-1445400 outputs/1 iteration
+1 iterations/4.065 sec * 
+14016000 outputs/1 iteration
 1 second /2.2x10^9 cycles
 * 10^5 cycles 
 
-= 7.7567887 outputs/10^5 cycles
+= 156.72593 outputs/10^5 cycles

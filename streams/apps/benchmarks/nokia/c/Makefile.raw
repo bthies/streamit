@@ -11,6 +11,8 @@ BTL-MACHINE-FILE = fileio.bc
 ROOT = test
 TILES = 00
 
+RGCCFLAGS += -O3
+
 include $(TOPDIR)/Makefile.include
 
 ifndef TOPDIR
@@ -21,6 +23,7 @@ OBJECT_FILES_00 = nokia_raw.o
 
 
 include $(COMMONDIR)/Makefile.all
+
 
 BTL-ARGS += -host
 SPEC-IMEM-SIZE = -imem_size 131072

@@ -1,6 +1,43 @@
 7/30/02 -- AAL 
 changed it only to print once at the end of sorting things twice -- because the cycle iteration count was too low otherwise.
 
+
+
+first  iteration done at 0x00000706b (28779 cycles)
+second iteration done at 0x00000df3e (57150 cycles) (delta=28371)
+third  iteration done at 0x000014e11 (85521 cycles) (delta=28371)
+
+
+==> iter takes 28371/28371 cycles (average = 28371)
+
+
+since we are producing a bitonic sort of 32 elements 2 times per printing "done", we are producing  
+64 outputs every 28371 cycles, so normalized to 10^5 cycles, 64*(100000/28371) = 225.58246
+
+No FLOPS because this is an integer app.
+
+workCount = 459030 / 460464 = 0.99688575
+workCount = 452953 / 453936 = 0.9978279
+workCount = 452953 / 453936 = 0.9978279
+
+
+
+Uniprocessor (7/30/2002):
+(Xenon 2.2 GHz, 512MB cache)
+10 million iterations (64 outputs/iteration)
+99.9% utilization
+runtime for 10^7 iterations = 121.61 seconds
+
+We want cycles/iteration:
+10^7 iterations/ 121.61 sec * 
+64 outputs/1 iteration
+1 second /2.2x10^9 cycles
+* 10^5 cycles 
+= 239.21478 outputs/10^5 cycles
+
+
+----- Old calculations without -O3 ------
+
 first  iteration done at 0x000010e51 (69201 cycles)
 second iteration done at 0x000021b08 (137992 cycles) (delta=68791)
 third  iteration done at 0x0000327bf (206783 cycles) (delta=68791)

@@ -16,6 +16,7 @@ import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import java.util.Hashtable;
+import java.util.Vector;
 
 import at.dms.kjc.raw.*;
 
@@ -163,17 +164,17 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
 
+	selfID = NodeEnumerator.getSIROperatorId(self); // needed by the class
+
 	HashSet sendsCreditsTo = LatencyConstraints.getOutgoingConstraints(self);
 	boolean restrictedExecution = LatencyConstraints.isRestricted(self); 
 	boolean sendsCredits = (sendsCreditsTo.size() > 0);
 
-	selfID = NodeEnumerator.getSIROperatorId(self);
-
 	SIRPortal outgoing[] = SIRPortal.getPortalsWithSender(self);
 	SIRPortal incoming[] = SIRPortal.getPortalsWithReceiver(self);
-
-	HashSet sends_to = new HashSet();
-	HashSet receives_from = new HashSet();
+	
+	Vector sends_to = new Vector();
+	Vector receives_from = new Vector();
 
 	for (int t = 0; t < outgoing.length; t++) {
 	    SIRStream[] receivers = outgoing[t].getReceivers();
@@ -181,248 +182,26 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		sends_to.add(receivers[i]);
 	    }
 	}
-
+	
 	for (int t = 0; t < incoming.length; t++) {
 	    SIRPortalSender[] senders = incoming[t].getSenders();
 	    for (int i = 0; i < senders.length; i++) {
 		receives_from.add(senders[i].getStream());
 	    }
 	}
-
-	/*
-	{
-	    Iterator i = sends_to.iterator();
-	    while (i.hasNext()) {
-		print("// sends to "+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"\n");
-	    }
-	}
-
-	{
-	    Iterator i = receives_from.iterator();
-	    while (i.hasNext()) {
-		print("// receives from "+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"\n");
-	    }
-	}
-        
-	print("\n");
-	*/
 	
-	//System.out.print("filter.equals(self): "+(filter.equals(self))+"\n");
+	ClusterCodeGenerator gen = new ClusterCodeGenerator(self, self.getFields());
 
-	//Entry point of the visitor
+	Vector pre = gen.generatePreamble();
 
-	print("#include <stdlib.h>\n");
-	print("#include <unistd.h>\n");
-	print("#include <math.h>\n\n");	
-
-	//if there are structures in the code, include
-	//the structure definition header files
-	
-	//if (RawBackend.structures.length > 0) 
-	//    print("#include \"structs.h\"\n");
-
-	p.print("#include <init_instance.h>\n");
-	p.print("#include <mysocket.h>\n");
-	p.print("#include <peek_stream.h>\n");
-	p.print("#include <data_consumer.h>\n");
-	p.print("#include <data_producer.h>\n");
-	p.print("#include <object_write_buffer.h>\n");
-	p.print("#include <save_state.h>\n");
-	p.print("#include <sdep.h>\n");
-	p.print("#include <message.h>\n");
-	p.print("#include <timer.h>\n");
-	p.print("#include <thread_info.h>\n");
-
-	p.print("\n");
-
-	p.print("extern int __number_of_iterations;\n");
-	p.print("message *__msg_stack_"+selfID+";\n");
-	p.print("int __counter_"+selfID+" = 0;\n");
-	p.print("int __steady_"+selfID+" = 0;\n");
-	p.print("int __tmp_"+selfID+" = 0;\n");
-	p.print("int __tmp2_"+selfID+" = 0;\n");
-	p.print("int *__state_flag_"+selfID+" = NULL;\n");
-	p.print("thread_info *__thread_"+selfID+" = NULL;\n");
-
-	if (restrictedExecution) {
-	    p.print("int __credit_"+selfID+" = 0;\n");
-	}
-
-	{
-	    Iterator i = sends_to.iterator();
-	    while (i.hasNext()) {
-		print("sdep *sdep_"+selfID+"_"+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+";\n");
-	    }
-	}
-
-	//////////////////////////////////////////////
-	// Declare Filter Fields
-
-
-	//Visit fields declared in the filter class
-	
-	int filed_size = 0;
-
-	JFieldDeclaration[] fields = self.getFields();
-	for (int i = 0; i < fields.length; i++) {
-	   fields[i].accept(this);
-	   filed_size += byteSize(fields[i].getType()); 
-	}
-
-	print("\n");
-
-	//////////////////////////////////////////////
-	// Declare Socket Variables
-
-
-	//declare input/output socket variables
-	NetStream in = RegisterStreams.getFilterInStream(self);
-	NetStream out = RegisterStreams.getFilterOutStream(self);
-
-	if (in != null) {	    
-	    print("data_consumer __consumer_"+in.getSource()+"_"+in.getDest()+";\n");
-	    print("peek_stream<"+self.getInputType().toString()+"> *"+in.name()+"in;\n");
-	}
-
-	if (out != null) {	    
-	    print("data_producer __producer_"+out.getSource()+"_"+out.getDest()+";\n");
-	    //print("mysocket *"+out.name()+"out;\n");
-	}
-
-	{
-	    Iterator i = sends_to.iterator();
-	    while (i.hasNext()) {
-		print("mysocket *__msg_sock_"+selfID+"_"+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"out;\n");
-	    }
-	}
-
-	{
-	    Iterator i = receives_from.iterator();
-	    while (i.hasNext()) {
-		print("mysocket *__msg_sock_"+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"_"+selfID+"in;\n");
-	    }
+	for (int i = 0; i < pre.size(); i++) {
+	    print(pre.elementAt(i).toString());
 	}
 
 
-
-	//////////////////////////////////////////////
-	// Serialize Functions
-
-	print("\n");
-
-	print("void __write_thread__"+selfID+"(object_write_buffer *buf) {\n");
-
-	if (in != null) {
-	    print("  "+in.consumer_name()+".write_object(buf);\n"); // save consumer
-	    print("  "+in.name()+"in->write_object(buf);\n");       // save peek buffer
-	}
-
-	for (int i = 0; i < fields.length; i++) {
-
-	    CType type = fields[i].getType();
-	    String ident = fields[i].getVariable().getIdent();
-
-	    print("  buf->write(&"+ident+"__"+selfID+", sizeof("+type+"));\n");
-	}
-
-	if (out != null) {
-	    print("  "+out.producer_name()+".write_object(buf);\n"); // save producer
-	}
-
-	print("}\n");
-
-	print("\n");	
-
-
-
-	print("void __read_thread__"+selfID+"(object_write_buffer *buf) {\n");
-
-	if (in != null) {
-	    print("  "+in.consumer_name()+".read_object(buf);\n"); // read consumer
-	    print("  "+in.name()+"in->read_object(buf);\n");       // read peek buffer
-	}
-
-	for (int i = 0; i < fields.length; i++) {
-
-	    CType type = fields[i].getType();
-	    String ident = fields[i].getVariable().getIdent();
-
-	    print("  buf->read(&"+ident+"__"+selfID+", sizeof("+type+"));\n");
-	}
-
-	if (out != null) {
-	    print("  "+out.producer_name()+".read_object(buf);\n"); // read producer
-	}
-
-	print("}\n");
-
-	print("\n");	
-
-
-
-	//////////////////////////////////////////////
-	// thread info
-
-	print("void check_status_during_io__"+selfID+"();\n");
-
-	print("\n");	
-
-	print("thread_info *__get_thread_info_"+selfID+"() {\n");
-
-	print("  if (__thread_"+selfID+" != NULL) return __thread_"+selfID+";\n");
-	print("  __thread_"+selfID+" = new thread_info("+selfID+", check_status_during_io__"+selfID+");\n");
-
-	if (in != null) {
-	    print("  __thread_"+selfID+"->add_incoming_data_connection(new connection_info("+in.getSource()+","+in.getDest()+",&__consumer_"+in.getSource()+"_"+in.getDest()+"));\n");
-	}
-
-	if (out != null) {
-	    print("  __thread_"+selfID+"->add_outgoing_data_connection(new connection_info("+out.getSource()+","+out.getDest()+",&__producer_"+out.getSource()+"_"+out.getDest()+"));\n");
-	}
-	
-	print("  return __thread_"+selfID+";\n");
-	print("}\n");
-	
-
-
-	//////////////////////////////////////////////
-	// Declare_Sockets Method
-
-
-	print("\nvoid __declare_sockets_"+selfID+"() {\n");
-
-	if (in != null) {
-	    print("  init_instance::add_incoming("+in.getSource()+","+in.getDest()+", DATA_SOCKET);\n");
-	}
-
-	if (out != null) {
-	    print("  init_instance::add_outgoing("+out.getSource()+","+out.getDest()+", DATA_SOCKET);\n");
-	}
-
-
-	{
-	    Iterator i = sends_to.iterator();
-	    while (i.hasNext()) {
-		int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("  init_instance::add_outgoing("+selfID+","+dst+",MESSAGE_SOCKET);\n");
-	    }
-	}
-
-	{
-	    Iterator i = receives_from.iterator();
-	    while (i.hasNext()) {
-		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("  init_instance::add_incoming("+src+","+selfID+",MESSAGE_SOCKET);\n");
-	    }
-	}
-
-
-	print("}\n");
-
-
-	//////////////////////////////////////////////
-	// Method Declarations
-
+	//  +=============================+
+	//  | Method Declarations         |
+	//  +=============================+
 
 	JMethodDeclaration work = self.getWork();
 
@@ -440,36 +219,18 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	print("\n");
 
+	//  +=============================+
+	//  | Method Bodies               |
+	//  +=============================+
 
-	//////////////////////////////////////////////
-	// Method Bodies
-
-
-	//now print the functions with body
 	declOnly = false;
 	for (int i =0; i < methods.length; i++) {
 	    if (!methods[i].equals(work)) methods[i].accept(this);
 	}
 
-	//////////////////////////////////////////////
-	// Check Status
-
-	print("\ninline void check_status__"+selfID+"() {\n");
-
-	print("  check_thread_status(__state_flag_"+selfID+", __thread_"+selfID+");\n");
-	print("}\n");
-
-	//////////////////////////////////////////////
-	// Check Status During IO
-
-	print("\nvoid check_status_during_io__"+selfID+"() {\n");
-
-	print("  check_thread_status_during_io(__state_flag_"+selfID+", __thread_"+selfID+");\n");
-	print("}\n");
-
-
-	//////////////////////////////////////////////
-	// Check Messages
+	//  +=============================+
+	//  | Check Messages              |
+	//  +=============================+
 
 	print("\nvoid check_messages__"+selfID+"() {\n");
 
@@ -567,8 +328,9 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	print("}\n");
 	
-	//////////////////////////////////////////////
-	// Handle Message Method
+	//  +=============================+
+	//  | Handle Message              |
+	//  +=============================+
 
 	
 	print("\nvoid handle_message__"+selfID+"(mysocket *sock) {\n");
@@ -651,8 +413,9 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("}\n");
 
 	
-	//////////////////////////////////////////////
-	// Send Credits Method
+	//  +=============================+
+	//  | Send Credits                |
+	//  +=============================+
 
 
 	Iterator constrIter;
@@ -735,139 +498,17 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	print("}\n");
 
-	//////////////////////////////////////////////
-	// The Run Method
+	//  +=============================+
+	//  | Run Method                  |
+	//  +=============================+
 
 
-	//now the run function
-	print("\nvoid run_"+selfID+"(int *state_ptr) {\n");
+	Vector run = gen.generateRunFunction(filter.getInit().getName()+"__"+selfID, ClusterExecutionCode.rawMain+"__"+selfID);
 
-	print("  int i;\n");
-	print("  __state_flag_"+selfID+" = state_ptr;\n");
-
-	if (in != null) {
-
-	    print("  __consumer_"+in.getSource()+"_"+in.getDest()+".set_socket(new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET),check_status_during_io__"+selfID+"));\n");
-	    
-	    print("  "+in.name()+"in = new peek_stream<"+self.getInputType().toString()+">(&__consumer_"+in.getSource()+"_"+in.getDest()+");\n");
+	for (int i = 0; i < run.size(); i++) {
+	    print(run.elementAt(i).toString());
 	}
 
-	if (out != null) {
-
-
-	    print("  __producer_"+out.getSource()+"_"+out.getDest()+".set_socket(new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET),check_status_during_io__"+selfID+"));\n");
-	    
-	}
-
-	{
-	    Iterator i = sends_to.iterator();
-	    while (i.hasNext()) {
-		int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("  __msg_sock_"+selfID+"_"+dst+"out = new mysocket(init_instance::get_outgoing_socket("+selfID+","+dst+",MESSAGE_SOCKET));\n");
-	    }
-	}
-
-	{
-	    Iterator i = receives_from.iterator();
-	    while (i.hasNext()) {
-		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("  __msg_sock_"+src+"_"+selfID+"in = new mysocket(init_instance::get_incoming_socket("+src+","+selfID+",MESSAGE_SOCKET));\n");
-	    }
-	}
-
-	{
-	    Iterator i = sends_to.iterator();
-	    while (i.hasNext()) {
-
-		SIRFilter sender = (SIRFilter)NodeEnumerator.getOperator(selfID);
-  		SIRFilter receiver = (SIRFilter)i.next();
-
-		int fromID = selfID;
-		int toID = NodeEnumerator.getSIROperatorId(receiver);
-
-		boolean downstream = LatencyConstraints.isMessageDirectionDownstream(sender, receiver);
-
-		print("\n  //SDEP from: "+fromID+" to: "+toID+";\n");
-
-
-		streamit.scheduler2.constrained.Scheduler cscheduler =
-		    new streamit.scheduler2.constrained.Scheduler(ClusterBackend.topStreamIter);
-		
-		streamit.scheduler2.iriter.Iterator firstIter = 
-		    IterFactory.createFactory().createIter(sender);
-		streamit.scheduler2.iriter.Iterator lastIter = 
-		    IterFactory.createFactory().createIter(receiver);	
-		
-		streamit.scheduler2.SDEPData sdep = null;
-
-		if (downstream) {
-		    print("  //message sent downstream;\n");
-
-		    try {
-			sdep = cscheduler.computeSDEP(firstIter, lastIter);
-		    } catch (streamit.scheduler2.constrained.NoPathException ex) {
-		    }
-
-		} else {
-		    print("  //message sent upstream;\n");
-
-
-		    try {
-			sdep = cscheduler.computeSDEP(lastIter, firstIter);
-		    } catch (streamit.scheduler2.constrained.NoPathException ex) {
-		    }
-		    
-		}
-		
-		int srcInit = sdep.getNumSrcInitPhases();
-		int srcSteady = sdep.getNumSrcSteadyPhases();
-		
-		int dstInit = sdep.getNumDstInitPhases();
-		int dstSteady = sdep.getNumDstSteadyPhases();
-		
-		String sdepname = "sdep_"+fromID+"_"+toID;
-		
-		print("  "+sdepname+" = new sdep("+
-		      srcInit+","+dstInit+","+
-		      srcSteady+","+dstSteady+");\n");
-		
-		for (int y = 0; y < dstInit + dstSteady + 1; y++) {
-		    print("  "+sdepname+"->setDst2SrcDependency("+y+","+sdep.getSrcPhase4DstPhase(y)+");\n");
-		}
-	    }
-	}
-	
-	print("  "+filter.getInit().getName()+"__"+selfID+"();");
-	print("  save_state::load_state("+selfID+", &__steady_"+selfID+", __read_thread__"+selfID+");\n");
-	print("\n  "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
-	
-	/*
-	print("  "+self.getInit().getName()+"__"+selfID+"();\n");
-
-	if (out == null) print("  timer t;\n");
-	if (out == null) print("  t.start();\n");
-	
-	print("  for (i = 0; i < __number_of_iterations; i++) { \n");
-
-	{
-	    Iterator i = receives_from.iterator();
-	    while (i.hasNext()) {
-		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("    if (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n      handle_message_"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n    }\n");
-	    }
-	}
-
-	
-	print("    "+self.getWork().getName()+"__"+selfID+"();\n");
-	print("  } \n");
-
-	if (out == null) print("  t.stop();\n");
-	if (out == null) print("  t.output(stderr);\n");
-
-	*/
-
-	print("  sleep(3); // so that sockets dont get closed\n");
-	print("}\n");
        
 	createFile(selfID);
     }
@@ -2189,7 +1830,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     {
 
 	NetStream in = RegisterStreams.getFilterInStream(filter);
-	print(in.name()+"in->peek(");
+	print(in.name()+"in.peek(");
 	num.accept(this);
 	print(")");
 
@@ -2201,7 +1842,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     {
 
 	NetStream in = RegisterStreams.getFilterInStream(filter);
-	print(in.name()+"in->pop()");
+	print(in.name()+"in.pop()");
 
 	//Utils.fail("FlatIRToCluster should see no pop expressions");
     }

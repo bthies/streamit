@@ -36,13 +36,17 @@ class RegTest:
         print
     
     def whyDied(self, result):
-        if (os.WIFSIGNALED(result)):
-            why = "with signal %d" % os.WTERMSIG(result)
-            # It seems odd that there isn't a macro for this...
-            if (result & 0x80 != 0):
+        # This is a little odd.  Ideally, we'd use things like
+        # os.WIFSIGNALED to see what the exit status actually is.
+        # But it looks like what Python thinks wait() and system()
+        # return is different from what wait(2) documents.  Uh.
+        if (result & 0xFF00):
+            status = result >> 8
+            why = "with signal %d" % (status & 0x7F)
+            if ((status & 0x80) != 0):
                 why = why + (" (core dumped)")
         else:
-            why = "with status %d" % os.WEXITSTATUS(result)
+            why = "with status %d" % (result & 0xFF)
         return why
 
     def test(self):

@@ -1,7 +1,7 @@
 /*
  * InitFunction.java: container class to represent an init function
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: InitFunction.java,v 1.5 2002-07-22 19:54:01 dmaze Exp $
+ * $Id: InitFunction.java,v 1.6 2002-07-22 20:02:44 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -37,13 +37,15 @@ public class InitFunction
         }
         if (fields != null)
         {
-            Iterator iter = params.iterator();
+            Iterator iter = fields.iterator();
             while (iter.hasNext())
             {
                 VariableDeclaration param = (VariableDeclaration)iter.next();
-                if (!(param.type instanceof TypePrimitive))
-                paramAssigns += getIndent(indent+1) + "this." + param.name +
-                    " = " + n2j.makeConstructor(param.type) + ";\n";
+                if (param.type.isComplex() ||
+                    !(param.type instanceof TypePrimitive))
+                    paramAssigns += getIndent(indent+1) + "this." +
+                        param.name + " = " +
+                        n2j.makeConstructor(param.type) + ";\n";
             }
         }
         t += ") ";

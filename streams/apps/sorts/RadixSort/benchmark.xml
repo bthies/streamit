@@ -8,7 +8,8 @@
   <reference>http://www.jimloy.com/computer/radix.htm</reference>
   <implementations>  
     <impl lang="StreamIt">
-      <file>RadixSort.str</file>
+      <file class="source">RadixSort.str</file>
+      <file class="output">RadixSort.out</file>
     </impl>   
   </implementations>
 </benchmark>

@@ -7,7 +7,8 @@
   </description>
   <implementations>  
     <impl lang="StreamIt">
-      <file>BatcherSort.str</file>
+      <file class="source">BatcherSort.str</file>
+      <file class="output">BatcherSort.out</file>
     </impl>
   </implementations>
 </benchmark>

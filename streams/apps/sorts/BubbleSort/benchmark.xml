@@ -9,7 +9,8 @@
   <reference>http://linux.wku.edu/~lamonml/algor/sort/bubble.html</reference>
   <implementations>  
     <impl lang="StreamIt">
-      <file>BubbleSort.str</file>
+      <file class="source">BubbleSort.str</file>
+      <file class="output">BubbleSort.out</file>
     </impl>   
   </implementations>
 </benchmark>

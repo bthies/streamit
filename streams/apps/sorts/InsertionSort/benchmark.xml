@@ -9,7 +9,8 @@
   </description>
   <implementations>  
     <impl lang="StreamIt">
-      <file>InsertionSort.str</file>
+      <file class="source">InsertionSort.str</file>
+      <file class="output">InsertionSort.out</file>
     </impl>   
   </implementations>
 </benchmark>

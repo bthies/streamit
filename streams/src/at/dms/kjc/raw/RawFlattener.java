@@ -61,21 +61,27 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	for (Iterator it = SIRMap.entrySet().iterator(); it.hasNext(); ) {
 	    Map.Entry entry = (Map.Entry)it.next();
 	    if (entry.getKey() instanceof SIRFilter  &&
-		!(entry.getKey() instanceof SIRIdentity) ) {
+		!(entry.getKey() instanceof SIRIdentity)) {
 		// always count filter
 		count++;
 	    } else if (entry.getKey() instanceof SIRJoiner) {
-		// count a joiner if none of its outgoing edges is to
-		// another joiner
-		FlatNode[] edges = ((FlatNode)entry.getValue()).edges;
-		int increment = 1;
-		for (int i=0; i<edges.length; i++) {
-		    if (edges[i]!=null &&
-			edges[i].contents instanceof SIRJoiner) {
-			increment = 0;
+		if(StreamItOptions.sync)
+		    //Sync removal should give an accurate count of joiners
+		    //(Adjacent Joiners Coalesced)
+		    count++;
+		else {
+		    // count a joiner if none of its outgoing edges is to
+		    // another joiner
+		    FlatNode[] edges = ((FlatNode)entry.getValue()).edges;
+		    int increment = 1;
+		    for (int i=0; i<edges.length; i++) {
+			if (edges[i]!=null &&
+			    edges[i].contents instanceof SIRJoiner) {
+			    increment = 0;
+			}
 		    }
+		    count += increment;
 		}
-		count += increment;
 	    } 
 	}
 	return count;
@@ -233,9 +239,10 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 		    splitterNode.ways=tempEdges.length;
 		    for(int i=0;i<tempEdges.length;i++)
 			tempEdges[i].incoming[0]=splitterNode;
-		
-		//Joiner-Splitter Destruction
+		    
+		    //Joiner-Splitter Destruction
 		    if(adjacentJoin.contents instanceof SIRJoiner) {
+			SIRMap.remove(adjacentJoin.contents); //Unneeded
 			int[] inWeights=adjacentJoin.incomingWeights;
 			int[] outWeights=splitterNode.weights;
 			FlatNode[] inEdges=adjacentJoin.incoming;
@@ -377,9 +384,11 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 				((FlatNode)curEdges.get(0)).edges=new FlatNode[]{out};
 				out.incoming[0]=(FlatNode)curEdges.get(0);
 			    } else {
-				FlatNode newJoin=new FlatNode(SIRJoiner.createWeightedRR(null,new JExpression[0]));
+				SIRJoiner newContents=SIRJoiner.createWeightedRR(null,new JExpression[0]);
+				FlatNode newJoin=new FlatNode(newContents);
 				newJoin.oldContents=adjacentJoin.contents;
 				((SIRJoiner)newJoin.contents).oldSumWeights=((SIRJoiner)adjacentJoin.contents).oldSumWeights;
+				SIRMap.put(newContents,newJoin); //To be counted correctly
 				newJoin.inputs=curWeights.size();
 				newJoin.ways=1;
 				int[] joinWeights=new int[curWeights.size()];
@@ -428,7 +437,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 			}
 		    }
 		}
-	    
+		
 		//Coalesce Joiners
 		if((((SIRJoiner)joinerNode.contents).getType()==SIRJoinType.ROUND_ROBIN)||
 		   (((SIRJoiner)joinerNode.contents).getType()==SIRJoinType.WEIGHTED_RR)) {
@@ -442,6 +451,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 			if((childNode.contents instanceof SIRJoiner)&&
 			   ((((SIRJoiner)childNode.contents).getType()==SIRJoinType.ROUND_ROBIN)||
 			    (((SIRJoiner)childNode.contents).getType()==SIRJoinType.WEIGHTED_RR))) {
+			    SIRMap.remove(childNode.contents); //Unneeded
 			    int off=0;
 			    int sum=0;
 			    int target=joinerNode.incomingWeights[i];

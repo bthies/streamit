@@ -128,7 +128,7 @@ public class Channel extends DestroyedClass
     }
 
     // push a short
-    public void pushChar(short s)
+    public void pushShort(short s)
     {
         ASSERT (type == Short.TYPE);
 

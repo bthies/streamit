@@ -1276,8 +1276,11 @@ public class Propagator extends SLIRReplacingVisitor {
 				// jasper's code and trying to be
 				// careful not to change semantics
 				// that were there
-				Utils.assert(left.getType() instanceof CArrayType);
-				type = ((CArrayType)left.getType()).getBaseType();
+				if (left.getType() instanceof CArrayType) {
+				    type = ((CArrayType)left.getType()).getBaseType();
+				} else {
+				    type = left.getType();
+				}
 			    }
 			}
 			if (type!=null) {

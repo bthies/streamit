@@ -317,6 +317,32 @@ abstract class DPConfigContainer extends DPConfig {
 	// otherwise, if <tileLimit> is 1, then just sum the work
 	// of our components
 	if (tileLimit==1) {
+	    // see if we have a message receiver in this record.  If
+	    // we do and it isn't the only filter in the record, then
+	    // return infinite cost, as message receivers have a lot
+	    // of communication overhead and deserve their own tile.
+	    PartitionRecord rec = new PartitionRecord();
+	    for (int y=y1; y<=y2; y++) {
+		for (int x=x1; x<=Math.min(x2,width[y]-1); x++) {
+		    IterFactory.createFactory().createIter(childConfig(x,y).getStream()).accept(new RecordingStreamVisitor(rec, partitioner.getWorkEstimate()));
+		}
+	    }
+	    int numFilters = 0;
+	    boolean messageReceivers = false;
+	    for (int i=0; i<rec.size(); i++) {
+		if (rec.get(i) instanceof SIRFilter) {
+		    SIRFilter filter = (SIRFilter)rec.get(i);
+		    numFilters++;
+		    SIRPortal[] portal = SIRPortal.getPortalsWithReceiver(filter);
+		    if (portal.length>=1) {
+			messageReceivers = true;
+		    }
+		}
+	    }
+	    if (messageReceivers && numFilters>1) {
+		return new DPCost(Integer.MAX_VALUE/2, Integer.MAX_VALUE/2);
+	    }
+
 	    // we could divide the rectangle into 4 pieces to promote
 	    // caching of the sum.  however, this makes it complicated
 	    // when you're taking into account horizontal fusion

@@ -37,27 +37,12 @@ What needs to be done:
 EXPLICIT GUIDE TO GETTING PPM FILE FROM STREAMIT FILE
 -----------------------------------------------------
 
-Here's how to take the output of RayTracer_works and conver to a PPM
-file (viewable with xv).
-
-Do, for example,
+Just do:
 
 java RayTracer_works -i 1024 > out.ppm
 
-Then replace the FOO at the beggining with this text:
+If you do more iterations, you will have repeats in the header.
 
-----
-P6
-32 32
-255
+(We should replace the header with a prework function once this is
+supported in the frontend/compiler.)
 
-----
-
-(Do not include the ---.  They are used above to indicate that a blank
-line needs to come between 255 and the data.)
-
-These lines mean:
-
-P6 - Version 6 of PPM (?)
-32 32 - size of the grid
-255 - number of colors

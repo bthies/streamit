@@ -41,7 +41,7 @@ class RaySource extends Filter
     r.o = new Vector3();
     r.d = new Vector3();
     if (i == j && j == 0) {
-      System.out.println("FOOOO!");
+      System.out.println("P6\n32 32\n255\n");
     }
     r.o.x = 0;
     r.o.y = 0;

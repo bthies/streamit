@@ -39,12 +39,13 @@ public class SIRSchedule  {
 	    op1 = op1.getParent();
 	}
 	if (op2 instanceof SIRSplitter || op2 instanceof SIRJoiner) {
-	    op2 = op1.getParent();
+	    op2 = op2.getParent();
 	}
 	// create iterators
 	SIRIterator iter1 = IterFactory.createIter((SIRStream)op1);
 	SIRIterator iter2 = IterFactory.createIter((SIRStream)op2);
 	// call scheduler
+	//System.err.println("Looking for schedule between " + op1 + " and " + op2);
 	return buffers.getBufferSizeBetween(iter1, iter2);
     }
 

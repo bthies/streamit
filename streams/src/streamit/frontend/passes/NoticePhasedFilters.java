@@ -1,7 +1,7 @@
 /*
  * NoticePhasedFilters.java: convert filters to phased ones where appropriate
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NoticePhasedFilters.java,v 1.1 2003-01-09 22:41:08 dmaze Exp $
+ * $Id: NoticePhasedFilters.java,v 1.2 2003-01-09 22:47:33 dmaze Exp $
  */
 
 package streamit.frontend.passes;
@@ -20,10 +20,8 @@ public class NoticePhasedFilters extends FEReplacer
 {
     public Object visitStreamSpec(StreamSpec spec)
     {
-        System.out.println(spec.getName());
         if (spec.getType() != StreamSpec.STREAM_FILTER)
             return spec;
-        System.out.println("  is a filter");
 
         // Find the work function.  There should be exactly one;
         // count on StreamSpec to DTRT.

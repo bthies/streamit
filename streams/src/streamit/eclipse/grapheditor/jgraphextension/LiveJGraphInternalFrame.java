@@ -12,7 +12,10 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentAdapter;
 import javax.swing.event.InternalFrameEvent;
 import javax.swing.event.InternalFrameAdapter;
+import java.awt.Component;
+import java.awt.Container;
 
+import java.beans.PropertyVetoException;
 import com.jgraph.JGraph;
 import com.jgraph.graph.*;
 import javax.swing.JFrame;
@@ -52,9 +55,9 @@ public class LiveJGraphInternalFrame extends JInternalFrame
   		this._jgraph = jgraph;
     	this.setResizable(true);
     	this.setFrameIcon(null);
-    	this.setClosable(false);
-    	this.setDefaultCloseOperation(JInternalFrame.DISPOSE_ON_CLOSE);
-		
+    	this.setClosable(true);
+    	//this.setDefaultCloseOperation(JInternalFrame.DISPOSE_ON_CLOSE);
+		this.setDefaultCloseOperation(JInternalFrame.HIDE_ON_CLOSE);
 		
 		
 		/*
@@ -75,8 +78,10 @@ public class LiveJGraphInternalFrame extends JInternalFrame
   		this.setTitle(name);
   	
     	JPanel mainPanel = new JPanel(new BorderLayout());
+	    
 	    JScrollPane sp = new JScrollPane(_jgraph);
     	mainPanel.add(sp,BorderLayout.CENTER);
+    	
     	this.addComponentListener(new FrameComponentListener());
     	this.addInternalFrameListener(new FrameSelectionListener());
     	this.addMouseListener(new JGraphMouseAdapter(this._jgraph));
@@ -85,7 +90,7 @@ public class LiveJGraphInternalFrame extends JInternalFrame
 	   
     	this.pack();
     	this.setSize(320,320);
-    	this.setVisible(true);
+    	//this.setVisible(true);
   	}
 
 	/**
@@ -136,6 +141,8 @@ public class LiveJGraphInternalFrame extends JInternalFrame
   	
   	public JDesktopPane getDesktopPane()
   	{
+  		
+  		
   		return this.desktopPane;
   	}
   
@@ -160,6 +167,26 @@ public class LiveJGraphInternalFrame extends JInternalFrame
 		{
 			JInternalFrame intFrame = ife.getInternalFrame();
 	  		System.out.println("*********&&&&&&&&&&&&&&***********The Frame has been activated " +ife.getInternalFrame().toString());
+		/*
+			Component [] comps = ((Container) getParent()).getContentPane().getComponents();
+			for (int i=0; i< comps.length; i++)
+			{
+				if ((comps[i] instanceof JInternalFrame) && (comps[i] != intFrame))
+				{
+					System.out.println("Found a JInternalFrame to deactivate");
+					try
+					{
+						((JInternalFrame) comps[i]).setSelected(false);
+					}
+					catch(PropertyVetoException e)
+					{
+						System.out.println(" Exception"); 
+					}
+				}
+  			
+			}	
+			*/
+	  	
 		}
 
 		public void internalFrameDeactivated(InternalFrameEvent ife)
@@ -182,12 +209,13 @@ public class LiveJGraphInternalFrame extends JInternalFrame
 		LiveJGraphInternalFrame frame = (LiveJGraphInternalFrame)ce.getComponent();
 		
 		System.out.println("Setting the bounds");
-		GraphConstants.setBounds(atts,frame.getBounds());
-		
+		// GraphConstants.setBounds(atts,frame.getBounds());
+		GraphConstants.setBounds(frame.getGraphCell().getAttributes(), frame.getBounds());
 		
 		System.out.println("Putting the attributes into the map");
-		map.put(frame.getGraphCell(), atts);
 		
+		//map.put(frame.getGraphCell(), atts);
+		map.put(frame.getGraphCell(), frame.getGraphCell().getAttributes());
 		
 		if  (model !=null)
 		{

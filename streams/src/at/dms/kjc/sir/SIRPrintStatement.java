@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: SIRPrintStatement.java,v 1.5 2001-10-30 19:58:43 thies Exp $
+ * $Id: SIRPrintStatement.java,v 1.6 2003-02-05 00:16:18 mgordon Exp $
  */
 
 package at.dms.kjc.sir;
@@ -56,6 +56,10 @@ public class SIRPrintStatement extends JStatement {
 	this.arg =null;
     }
 
+
+    public JExpression getArg() {
+	return this.arg;
+    }
 
     public void setArg(JExpression a) {
 	this.arg = a;

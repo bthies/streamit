@@ -3,8 +3,8 @@ float->float filter CombineDFT(int n)
     float wn_r, wn_i;
 
     init {
-	  wn_r = (float)cos(2 * 3.141592654 / n);
-	  wn_i = (float)sin(2 * 3.141592654 / n);
+	  wn_r = (float) cos(2 * pi / n);
+	  wn_i = (float) sin(2 * pi / n);
     }
 
     work push 2*n pop 2*n {
@@ -89,30 +89,29 @@ float->float pipeline FFT_Kernel(int n)
  }
 
 
+// we  need this  now  since  the cluster  backend  doesn't deal  with
+// identities
+float->float filter Float_Identity 
+{ 
+    work pop 1 push 1 {
+	  push(pop());
+    }
+}
+
+
 void->float filter Read_From_AtoD(int N) 
 {
-    work pop 0 push 2*N {
-	  push(0.0);
-	  push(0.0);
-	  push(1.0);
-	  push(0.0);
-	  
-	  for(int i = 0; i < 2 * (N - 2); i++) {
-		push(0.0);
+    work pop 0 push N {
+	  for(int i = 1; i <= N; i++) {
+		push((float) pow((float) sin(i * pi / N), 2.0));
 	  }
     }
 }
 
 
-float->float filter RFtoIF(int N, float _start_freq)
+float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
 {
-    // CONSTANTS {
-    float CARRIER_FREQ = 1.0;
-    float MIN_FREQ     = 1.0;
-    int   MAX_WEIGHTS  = (int) (CARRIER_FREQ / MIN_FREQ * N);
-    // } CONSTANTS
-
-    float[MAX_WEIGHTS] weights;
+    float[N] weights;
     int  size, count;
 
     init {
@@ -129,69 +128,74 @@ float->float filter RFtoIF(int N, float _start_freq)
 
     handler set_frequency(float _freq) {
 	  count  = 0;
-	  size   = (int) (CARRIER_FREQ / _freq * N);
+	  size   = (int) ((_start_freq / _freq) * N);
 	  for (int i = 0; i < size; i++) {
-		weights[i] = sin (i * pi / size);
+		weights[i] = (float) sin(i * pi / size);
 	  }
     }
 }
 
 
-float->float splitjoin Check_Freq_Hop(int N, portal<RFtoIF> port) 
+float->float splitjoin Check_Freq_Hop(int N, float start_freq, int channels, float channel_bandwidth, float hop_threshold, portal<RFtoIF> port) 
 {
-    // CONSTANTS {
-    float FREQ_HOP_THRESHOLD = 1.0;
-    int   MAX_FREQS          = 1; 
-    float [MAX_FREQS] FREQS;
-    for (int i = 0; i < MAX_FREQS; i++) {
-	  FREQS[i] = i * 1.0;
+    float [channels] hops;
+    for (int i = 0; i < channels; i++) {
+	  hops[i] = start_freq + (i * channel_bandwidth);
     }
-    // } CONSTANTS
+    
+    int k = 0;
 
+    // of N incoming values,  one of the data items in
+    // [N/2 - 2, N/2 + 2] may indicate a frequency hop
+    // ? why this arrangement
+    // ? why push the hop-indicator through; what does it mean to a downstream filter
     split roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
-    int k=0;
     for (int i = 1; i < 6; i++) {
 	  if ((i == 2) || (i == 4)) {
 		for (int j = 0; j < 2; j++) {
 		    add float->float filter {
 			  work pop 1 push 1 {
 				float val = pop();
-				if (val >= FREQ_HOP_THRESHOLD) {
-				    port.set_frequency(FREQS[k]) [4 : 6];
+				if (val > hop_threshold) {
+				    port.set_frequency(hops[k]) [4 : 6];
 				}
 				push(val);
 			  }
 		    }
 		}
 		k++;
-		if (k >= MAX_FREQS) k = 0;
+		if (k >= channels) k = 0;
 	  }
 	  else {
-		add FloatIdentity();
+		add Float_Identity();
 	  }
     }
     join roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
 }
 
-// we need this now since the cluster backend doesn't deal with identities
-float->float filter FloatIdentity { work pop 1 push 1 {push(pop());}}
 
 void->void pipeline FHR
 {
     // CONSTANTS {
-    int N          = 32;
-    int START_FREQ = 1;
+    int   N             = 32;
+    // will operate in the 2.402GHz to 2.481 GHz range
+    // with 79 channels each with 1MHz bandwidth 
+    float START_FREQ    = 2402000000;
+    int   CHANNELS      = 79; 
+    float CHANNEL_BAND  = 1000000;
+    // 
+    float HOP_THRESHOLD = 30.0;
     // } CONSTANTS
 
     portal <RFtoIF> port;
 
     add Read_From_AtoD(N);
 
-    add RFtoIF(N, START_FREQ) to port;
+    add RFtoIF(N, START_FREQ, START_FREQ) to port;
 
     add FFT_Kernel(N);
 
-    add Check_Freq_Hop(N, port);
+    add Check_Freq_Hop(N, START_FREQ, CHANNELS, CHANNEL_BAND, HOP_THRESHOLD, port);
 
     add float->void filter {
 	  work push 0 pop 1 {

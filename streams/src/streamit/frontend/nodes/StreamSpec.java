@@ -1,7 +1,7 @@
 /*
  * StreamSpec.java: specification of a named or anonymous stream
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamSpec.java,v 1.1 2002-09-04 15:12:57 dmaze Exp $
+ * $Id: StreamSpec.java,v 1.2 2002-09-04 21:03:10 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -22,7 +22,7 @@ import java.util.ArrayList;
  * in which case the compiler will need to determine the stream type
  * on its own.
  */
-public class StreamSpec /* extends FENode?  Maybe not... */
+public class StreamSpec extends FENode
 {
     private int type;
     private StreamType st;
@@ -41,7 +41,7 @@ public class StreamSpec /* extends FENode?  Maybe not... */
     public StreamSpec(FEContext context, int type, StreamType st,
                       String name, List params, List vars, List funcs)
     {
-        // super(context);
+        super(context);
         this.type = type;
         this.st = st;
         this.name = name;
@@ -96,5 +96,12 @@ public class StreamSpec /* extends FENode?  Maybe not... */
     public List getFuncs()
     {
         return funcs;
+    }
+
+    /** Accept a front-end visitor. */
+    public Object accept(FEVisitor v)
+    {
+        // return v.visitStreamSpec(this);
+        return null;
     }
 }

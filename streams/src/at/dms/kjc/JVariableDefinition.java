@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JVariableDefinition.java,v 1.11 2005-01-23 00:33:01 thies Exp $
+ * $Id: JVariableDefinition.java,v 1.12 2005-04-05 07:06:53 thies Exp $
  */
 
 package at.dms.kjc;
@@ -148,6 +148,26 @@ public class JVariableDefinition extends JLocalVariable {
       if (expr instanceof JArrayInitializer) {
 	check(context, type.isArrayType(), KjcMessages.ARRAY_INIT_NOARRAY, type);
 	((JArrayInitializer)expr).setType((CArrayType)type);
+      } else {
+	  // first see if RHS has array initializer
+	  final boolean[] hasArray = { false };
+	  expr.accept(new KjcEmptyVisitor() {
+		  public void visitArrayInitializer(JArrayInitializer self,
+						    JExpression[] elems) {
+		      hasArray[0] = true;
+		  }
+	      });
+	  // if there is an array, call check and set type
+	  if (hasArray[0]) {
+	      check(context, type.isArrayType(), KjcMessages.ARRAY_INIT_NOARRAY, type);
+	      final CArrayType myType = (CArrayType)type;
+	      expr.accept(new KjcEmptyVisitor() {
+		      public void visitArrayInitializer(JArrayInitializer self,
+							JExpression[] elems) {
+			  self.setType(myType);
+		      }
+		  });
+	  }
       }
 
       CExpressionContext	expressionContext = new CExpressionContext(context);

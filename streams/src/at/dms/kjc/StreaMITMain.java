@@ -85,7 +85,7 @@ public class StreaMITMain {
             if (KjcOptions.spacetime) {
                 backendClass = "at.dms.kjc.spacetime.SpaceTimeBackend";
             } if (KjcOptions.spacedynamic) {
-		backendClass = "at.dms.kjc.spacedynamic.RawBackend";
+		backendClass = "at.dms.kjc.spacedynamic.SpaceDynamicBackend";
 	    } else {
                 backendClass = "at.dms.kjc.raw.RawBackend";
             }

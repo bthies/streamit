@@ -25,6 +25,7 @@ protected:
   int id;
 public :
   virtual void work(int i) {
+
     for (int n = 0; n < i; n++) {
       float t;
       t = inputRead(0);

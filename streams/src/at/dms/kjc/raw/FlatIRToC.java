@@ -35,8 +35,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	FlatIRToC toC = new FlatIRToC();
 	
         ((SIRFilter)node.contents).accept(toC);
-	
-
     }
     
     public void visitFilter(SIRFilter self,

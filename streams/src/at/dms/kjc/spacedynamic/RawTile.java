@@ -45,6 +45,18 @@ public class RawTile extends ComputeNode {
     }
 
 
+    /** return the shortest number of hops to the edge of the chip
+	don't count the src or dest, only count intermediate hops, 
+	so tile on the border return 0 **/
+    public int hopsToEdge() 
+    {
+	int ydist = Math.min(Y, (rawChip.getYSize() - 1) - Y);
+	int xdist = Math.min(X, (rawChip.getXSize() - 1) - X);
+			     
+	return Math.min(ydist, xdist);
+    }
+    
+
     public int getTileNumber() {
 	return tileNumber;
     }

@@ -20,8 +20,7 @@ import java.util.Iterator;
  * namer has been run and that the stream graph has been partitioned.
  */
 public class Layout extends at.dms.util.Utils implements 
-						  StreamGraphVisitor, FlatVisitor {
-    
+						  StreamGraphVisitor, FlatVisitor {    
     public Router router;
     
     /** SIRStream -> RawTile **/
@@ -395,6 +394,7 @@ public class Layout extends at.dms.util.Utils implements
 	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
 	    double dynamicCost = 0.0;
 	    double staticCost = 0.0;
+	    double memoryCost = 0.0;
 	    
 	    //right now we assume all layouts are legal from dynamic perspective
 	    dynamicCost = getDynamicCost(ssg, dynTilesUsed);
@@ -406,13 +406,50 @@ public class Layout extends at.dms.util.Utils implements
 		    System.out.println("Static route of SSG crosses another SSG!");
 		return -1.0;
 	    }
-	    cost += dynamicCost + staticCost;
+	    
+	    memoryCost = getMemoryCost(ssg);
+
+	    cost += dynamicCost + staticCost + memoryCost;
 	}
 	
 	return cost;
     }
     
     
+    private double getMemoryCost(StaticStreamGraph ssg) 
+    {
+	int memReq = 0;
+	double memCost = 0.0;
+	    
+	//for now assume only sinks of the entire application use lots of memory
+	if (ssg.getOutputs().length != 0)
+	    return 0.0;
+	
+	Iterator nodes = ssg.getFlatNodes().iterator();
+	while (nodes.hasNext()) {
+	    FlatNode node = (FlatNode)nodes.next();
+	    //we only care about the sink filter for the sink ssg's
+	    if (node.edges.length != 0 || getTile(node) == null)
+		continue;
+
+	    memReq = 60000;
+	    
+	    //if we cannot fit in the cache then, calculate
+	    //how long it takes to get to the nearest side of the chip
+	    //and add this for each word that does not fit in the cache...
+	    if (memReq > RawChip.dCacheSizeWords) {
+		RawTile tile = getTile(node);
+		
+		memCost += (memReq - RawChip.dCacheSizeWords) * tile.hopsToEdge();
+	    }
+	    
+	    //	    System.out.println(" *** Memory req of " + node + ": " + memCost);
+	}
+	
+	return memCost;
+    }
+    
+
     /** get the cost of the static communication of this ssg and also
 	determine if the communication is legal, it does not cross paths with 
 	other SSGs, usedTiles holds tiles that have been used by previous SSGs **/
@@ -481,8 +518,8 @@ public class Layout extends at.dms.util.Utils implements
 		//check if we cannot find a route from src to dst that does not go 
 		//thru another ssg
 		if (route.length == 0) {
-		    System.out.println("Cannot find route from src to dst within SSG " + 
-		    		       src + "(" + srcTile + ") -> " + dst + "(" + dstTile + ")");
+		    //System.out.println("Cannot find route from src to dst within SSG " + 
+		    //		       src + "(" + srcTile + ") -> " + dst + "(" + dstTile + ")");
 		    //cost += 1E5;
 		    return -1.0;
 		}
@@ -555,9 +592,9 @@ public class Layout extends at.dms.util.Utils implements
 		    items = ssg.getMult(src, false) * push;
 		}
 
+		items *= Util.getTypeSize(Util.getOutputType(src));
 		//calculate communication cost of this node and add it to the cost sum
-		cost += (/*(items * hops) + */(items * Util.getTypeSize(Util.getOutputType(src)) *
-					   numAssigned));
+		cost += ((items * hops) + 10 * (items * numAssigned));
 	    }   
 	}
 	SpaceDynamicBackend.addAll(usedTiles, tiles);
@@ -608,7 +645,7 @@ public class Layout extends at.dms.util.Utils implements
 		usedTiles.add(tile);
 	    }
 	}
-	return cost;
+	return 5 * cost;
     }
     
     

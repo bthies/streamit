@@ -597,12 +597,26 @@ public abstract class Filter extends Stream
         {
             if (inType != null)
             {
-                input = new Channel(inType);
+		// if only one steady phase, pass the rates to the
+		// Channel (for Eclipse debugger to find it there).
+		if (initPhases.size()==0 && steadyPhases.size()==1) {
+		    PhaseInfo pi = (PhaseInfo)steadyPhases.get(0);
+		    input = new Channel(inType, pi.o, pi.e);
+		} else {
+		    input = new Channel(inType);
+		}
             }
 
             if (outType != null)
             {
-                output = new Channel(outType);
+		// if only one steady phase, pass the rates to the
+		// Channel (for Eclipse debugger to find it there).
+		if (initPhases.size()==0 && steadyPhases.size()==1) {
+		    PhaseInfo pi = (PhaseInfo)steadyPhases.get(0);
+		    output = new Channel(outType, pi.u);
+		} else {
+		    output = new Channel(outType);
+		}
             }
         }
 

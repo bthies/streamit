@@ -17,7 +17,7 @@ import java.util.List;
  * inside the anonymous stream) corresponds to a local.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FindFreeVariables.java,v 1.2 2003-07-30 18:09:23 dmaze Exp $
+ * @version $Id: FindFreeVariables.java,v 1.3 2003-07-31 20:27:44 dmaze Exp $
  */
 public class FindFreeVariables extends SymbolTableVisitor
 {
@@ -92,9 +92,13 @@ public class FindFreeVariables extends SymbolTableVisitor
                 {
                     FEContext context = ((FENode)result).getContext();
                     Statement decl =
-                        new StmtVarDecl(context, type, wrapped,
+                        new StmtVarDecl(context, type, wrapped, null);
+                    Statement assn =
+                        new StmtAssign(context,
+                                       new ExprVar(context, wrapped),
                                         new ExprVar(context, name));
                     addStatement(decl);
+                    addStatement(assn);
                     symtab.registerVar(wrapped, type, decl,
                                        SymbolTable.KIND_LOCAL);
                 }

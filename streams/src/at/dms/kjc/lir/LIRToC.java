@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.9 2001-10-09 18:21:00 dmaze Exp $
+ * $Id: LIRToC.java,v 1.10 2001-10-10 14:03:42 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1584,6 +1584,26 @@ public class LIRToC
     }
     
     /**
+     * Visits a joiner-setting node.
+     */
+    public void visitSetJoiner(LIRSetJoiner self,
+                               JExpression streamContext,
+                               SIRJoinType type,
+                               int ways,
+                               int[] weights)
+    {
+        print("set_joiner(");
+        streamContext.accept(this);
+        print(", " + type + ", " + String.valueOf(ways));
+        if (weights != null)
+        {
+            for (int i = 0; i < weights.length; i++)
+                print(", " + String.valueOf(weights[i]));
+        }
+        print(");");
+    }
+
+    /**
      * Visits a peek-rate-setting node.
      */
     public void visitSetPeek(LIRSetPeek self,
@@ -1617,6 +1637,26 @@ public class LIRToC
         print("set_push(");
         streamContext.accept(this);
         print(", " + push + ");");
+    }
+
+    /**
+     * Visits a splitter-setting node.
+     */
+    public void visitSetSplitter(LIRSetSplitter self,
+                                 JExpression streamContext,
+                                 SIRSplitType type,
+                                 int ways,
+                                 int[] weights)
+    {
+        print("set_splitter(");
+        streamContext.accept(this);
+        print(", " + type + ", " + String.valueOf(ways));
+        if (weights != null)
+        {
+            for (int i = 0; i < weights.length; i++)
+                print(", " + String.valueOf(weights[i]));
+        }
+        print(");");
     }
 
     /**

@@ -1627,6 +1627,29 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	blockEnd();
     }
 
+    /**
+     * Visits a joiner-setting node.
+     */
+    public void visitSetJoiner(LIRSetJoiner self,
+                            JExpression streamContext,
+                            SIRJoinType type,
+                            int ways,
+                            int[] weights) {
+        blockStart("LIRSetJoiner");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
+        attrPrint("type", type.toString());
+        attrPrint("ways", String.valueOf(ways));
+        if (weights != null)
+        {
+            attrStart("weights");
+            for (int i = 0; i < ways; i++)
+                printData(String.valueOf(weights[i]));
+            attrEnd();
+        }
+        blockEnd();
+    }
     
     /**
      * Visits a peek-rate-setting node.
@@ -1672,6 +1695,30 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	blockEnd();
     }
 
+    /**
+     * Visits a splitter-setting node.
+     */
+    public void visitSetSplitter(LIRSetSplitter self,
+                                 JExpression streamContext,
+                                 SIRSplitType type,
+                                 int ways,
+                                 int[] weights) {
+        blockStart("LIRSetSplitter");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
+        attrPrint("type", type.toString());
+        attrPrint("ways", String.valueOf(ways));
+        if (weights != null)
+        {
+            attrStart("weights");
+            for (int i = 0; i < ways; i++)
+                printData(String.valueOf(weights[i]));
+            attrEnd();
+        }
+        blockEnd();
+    }
+    
 
     /**
      * Visits a stream-type-setting node.

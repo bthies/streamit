@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.8 2001-10-03 18:04:42 thies Exp $
+ * $Id: SLIRVisitor.java,v 1.9 2001-10-10 14:03:39 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -132,6 +132,15 @@ public interface SLIRVisitor extends KjcVisitor
     void visitSetEncode(LIRSetEncode self,
                         JExpression streamContext,
                         LIRFunctionPointer fp);
+
+    /**
+     * Visits a joiner-setting node.
+     */
+    void visitSetJoiner(LIRSetJoiner self,
+                        JExpression streamContext,
+                        SIRJoinType type,
+                        int ways,
+                        int[] weights);
     
     /**
      * Visits a peek-rate-setting node.
@@ -154,6 +163,15 @@ public interface SLIRVisitor extends KjcVisitor
                       JExpression streamContext,
                       int push);
 
+    /**
+     * Visits a splitter-setting node.
+     */
+    void visitSetSplitter(LIRSetSplitter self,
+                          JExpression streamContext,
+                          SIRSplitType type,
+                          int ways,
+                          int[] weights);
+    
     /**
      * Visits a stream-type-setting node.
      */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSourceClass.java,v 1.3 2002-09-20 17:48:11 thies Exp $
+ * $Id: CSourceClass.java,v 1.4 2003-05-16 01:52:34 thies Exp $
  */
 
 package at.dms.kjc;
@@ -115,7 +115,7 @@ public class CSourceClass extends CClass {
   /**
    * add synthetic parameters to method call
    */
-  public void genOuterSyntheticParams(CodeSequence code) {//, boolean qualified) {
+  public void genOuterSyntheticParams(CodeSequence code) {//, boolean qualified)
 //     if (isNested() && !isStatic() && hasOuterThis() && !qualified) {
 //       code.plantLoadThis();
 //     }

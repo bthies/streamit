@@ -574,7 +574,7 @@ class Propagator extends EmptyAttributeVisitor {
 /**
  * This class unrolls loops where it can.
  */
-class Unroller extends EmptyAttributeVisitor {
+class Unroller extends ReplacingVisitor {
     /**
      * Map of known constants (JLocalVariable -> JLiteral)
      */
@@ -595,111 +595,8 @@ class Unroller extends EmptyAttributeVisitor {
 	this.hasUnrolled = false;
     }
 
-    // ----------------------------------------------------------------------
-    // SUPPORT FOR UNROLL METHODS - just plug in their results
-    // ----------------------------------------------------------------------
-
     /**
-     * prints a labeled statement
-     */
-    public Object visitLabeledStatement(JLabeledStatement self,
-					String label,
-					JStatement stmt) {
-	JStatement newStmt = (JStatement)stmt.accept(this);
-	if (newStmt!=null && newStmt!=stmt) {
-	    self.setBody(newStmt);
-	}
-	return self;
-    }
-
-    /**
-     * prints a if statement
-     */
-    public Object visitIfStatement(JIfStatement self,
-				   JExpression cond,
-				   JStatement thenClause,
-				   JStatement elseClause) {
-	cond.accept(this);
-	JStatement newThen = (JStatement)thenClause.accept(this);
-	if (newThen!=null && newThen!=thenClause) {
-	    self.setThenClause(newThen);
-	}
-	if (elseClause != null) {
-	    JStatement newElse = (JStatement)elseClause.accept(this);
-	    if (newElse!=null && newElse!=elseClause) {
-		self.setElseClause(newElse);
-	    }
-	}
-	return self;
-    }
-
-    /**
-     * prints a compound statement
-     */
-    public Object visitCompoundStatement(JCompoundStatement self,
-					 JStatement[] body) {
-	for (int i = 0; i < body.length; i++) {
-	    JStatement newBody = (JStatement)body[i].accept(this);
-	    if (newBody!=null && newBody!=body[i]) {
-		body[i] = newBody;
-	    }
-	}
-	return self;
-    }
-
-    /**
-     * prints a do statement
-     */
-    public Object visitDoStatement(JDoStatement self,
-				   JExpression cond,
-				   JStatement body) {
-	JStatement newBody = (JStatement)body.accept(this);
-	if (newBody!=null && newBody!=body) {
-	    self.setBody(newBody);
-	}
-	cond.accept(this);
-	return self;
-    }
-
-    /**
-     * prints an expression statement
-     */
-    public Object visitBlockStatement(JBlock self,
-				      JavaStyleComment[] comments) {
-	for (ListIterator it = self.getStatementIterator(); it.hasNext(); ) {
-	    JStatement oldBody = (JStatement)it.next();
-	    JStatement newBody = (JStatement)oldBody.accept(this);
-	    if (newBody!=null && newBody!=oldBody) {
-		it.set(newBody);
-	    }
-	}
-	return self;
-    }
-
-    /**
-     * prints an array length expression
-     */
-    public Object visitSwitchGroup(JSwitchGroup self,
-				   JSwitchLabel[] labels,
-				   JStatement[] stmts) {
-	for (int i = 0; i < labels.length; i++) {
-	    labels[i].accept(this);
-	}
-	for (int i = 0; i < stmts.length; i++) {
-	    JStatement newStmt = (JStatement)stmts[i].accept(this);
-	    if (newStmt!=null && newStmt!=stmts[i]) {
-		stmts[i] = newStmt;
-	    }
-	}
-	return self;
-    }
-
-    // ----------------------------------------------------------------------
-    // ACTUAL UNROLL METHODS
-    // ----------------------------------------------------------------------
-
-    /**
-     * visits a for statement
+     * Overload the for-statement visit.
      */
     public Object visitForStatement(JForStatement self,
 				    JStatement init,

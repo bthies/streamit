@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage{doublespace}
 \usepackage{fullpage}
+\usepackage{epsfig}
 
 \title{HDTV Encoder/Decoder writeup/description}
 \author{Andrew Lamb}
@@ -12,33 +13,188 @@
 \newpage
 
 \section{Introduction/Overview}
+This article presents a partial implementation in StreamIT of the HDTV standard 
+for transmitting digital television signals as described in 
+the ASTC Standard\cite{atsc:a53b}.
 
-\section{HDTV Encoder}
+
+
+
+\section{Background on Encoding/Decoding}
+
 \subsection{Data Randomizer}
 
-\subsection{Reed-Solomon Encoder}
+\subsection{Reed-Solomon Codes}
 
-\subsection{Data Interleaver (Convolutional Interleaving)}
+\subsection{Data Interleaving (Convolutional Interleaving)}
 
-\subsection{Trellis Encoder}
+\subsection{Trellis Coder}
+\begin{figure}
+\center
+\epsfxsize=5.5in
+\epsfbox{images/trellis-encoder.eps}
+\caption{8VSB trellis encoder, precoder, and symbol mapper.}
+\label{fig:trellis-system}
+\end{figure}
+
+Trellis coding (also known as convolution coding) 
+is a method of encoding where the value of a single input 
+bit affects the value of several output bits. The encoders
+keep state and use that state to generate the output of the 
+encoder. 
+
+A particular trellis code is 
+specified by at least three paramters. The first, the rate, is typically expressed as
+a fraction n/k. n data bits are provided to the convolution encoder and k bits are produced,
+where n>= k. The second, the reach K, is the number of output bits that the
+each input bit affects (eg the amount of memory that is in the system). 
+The third, is a set of generator polynomials which specify the system connections.
+For more information see \cite{fleming:tutorial}.
+
+Figure~\ref{fig:trellis-system} shows the trellis encoder used for the HDTV system. 
+The total trellis encoder is actually a rate 2/3 (2 input bits, 3 output bits) 
+encoder which combines a precoder (1/1) and an ``Optimal 4 bit 
+Ungerboeck code,'' (1/2).
+
+Each three bit 'symbol' produced by the trellis coder is then mapped to a value
+that is transmitted over the transmission medium (cable or satellite) to 
+a HDTV receiver. 
+
+The combination of the precoder and Ungerboeck coder followed by the symbol mapper
+have several desirable properties for error correction. I do not have sufficient
+theoritcal background to explain exactly what the properties are, or why they are good,
+so you will have to take it on faith as have I.
+
+
 \subsubsection{Precoding}
+\begin{figure}
+\center
+\epsfxsize=3.5in
+\epsfbox{images/precoder.eps}
+\caption{8VSB precoder}
+\label{fig:precoder}
+\end{figure}
+
+\begin{table}
+\center
+\begin{tabular}{c|c|c}
+input(x2) & output(y2) & state  \\
+\hline
+0 & 0 & 0 \\
+1 & 1 & 0 \\
+1 & 0 & 1 \\
+0 & 0 & 0 \\
+1 & 1 & 0 \\
+0 & 1 & 1 \\
+1 & 0 & 1 \\
+1 & 1 & 0 \\
+1 & 0 & 1 \\
+0 & 0 & 0 \\
+\end{tabular}
+\caption{Example of precoding 01101011110:}
+\label{tbl:precoding_example}
+\end{table}
+
+A precoder is a simple circuit which XORs the current input with the previous
+output to get the current output. Figure~\ref{fig:precoder} is a diagram of the
+precoder used in the HDTV encoding pipeline. Table~\ref{tbl:precoding_example} 
+contains a worked out example of the input, output, and state of the precoder
+for coding the data \texttt{01101011110}.
+
+
+\begin{figure}
+\center
+\epsfxsize=3.5in
+\epsfbox{images/de-precoder.eps}
+\caption{8VSB de-precoder}
+\label{fig:deprecoder}
+\end{figure}
+
+\begin{table}
+\center
+\begin{tabular}{c|c|c}
+input(y2) & output(x2) & state  \\
+\hline
+0 & 0 & 0 \\
+1 & 1 & 0 \\
+0 & 1 & 1 \\
+0 & 0 & 0 \\
+1 & 1 & 0 \\
+1 & 0 & 1 \\
+0 & 1 & 1 \\
+1 & 1 & 0 \\
+0 & 1 & 1 \\
+0 & 0 & 0 \\
+\end{tabular}
+\caption{Example of de-precoding 0100110100:}
+\label{tbl:de_precoding_example}
+\end{table}
+
+To decode the precoded data, we simply reverse the process. It might be the case that 
+the Viterbi algorithm should be applied to recover the input sequence, and we will
+look into it. Figure~\ref{fig:deprecoder} is a schematic of the de precoder that was
+implemented, and Table~\ref{tbl:de_precoding_example} contains a worked out example 
+for the data \texttt{0100110100}.
+
+
 \subsubsection{"Optimal 4 state Ungerboeck code"}
+The internal Ungerboeck trellis encoder used in the HDTV encoder is
+a 1/2 trellis code with a reach of 3. 
+
+\begin{table}
+\center
+\begin{tabular}{c|c|c}
+input & state   & output  \\
+      & (s0,s1) & (z1,z0) \\
+\hline
+0 & 00 & 00 \\
+1 & 01 & 10 \\
+1 & 11 & 11 \\
+0 & 11 & 01 \\
+1 & 10 & 11 \\
+0 & 01 & 00 \\
+1 & 11 & 11 \\
+1 & 10 & 11 \\
+1 & 00 & 10 \\
+0 & 00 & 00 \\
+\end{tabular}
+\caption{Example of encoding 0110101110 with an Ungerboeck code.}
+\label{tbl:ungerboeck_example}
+\end{table}
+
+Decoding a bit stream that has been encoded with a trellis encoder is usually
+done using the Virterbi decoding algorithm. The Virterbi decoding algorithm
+is a well known algorithm in communication coding which uses a dynamic programming
+approach to determine the sent signal. Chip Fleming has a great 
+tutorial\cite{fleming:tutorial} which contains a walk through of the implementation
+of a trellis encoder and a Viterbi decoder for a slightly different 1/2 trellis code. 
 
 
-\section{HDTV Decoder}
-\subsection{Trellis Decoder}
-\subsubsection{Pre decoder}
-\subsubsection{Viterbi Algorithm}
 
-
-\subsection{Data De-Interleaving}
-
-
-\subsection{Reed-Solomon Decoder}
+\begin{figure}
+\center
+\epsfxsize=5.5in
+\epsfbox{images/trellis-state-transition.eps}
+\caption{Trellis Encoder State transition diagram.}
+\label{fig:trellis-state-diagram}
+\end{figure}
 
 
 
-\section{StreamIT Implemenation}
+\section{StreamIT Implementation}
+
+
+
+\begin{small}
+\begin{singlespace}
+\bibliographystyle{abbrv}
+\bibliography{references}
+\end{singlespace}
+\end{small}
+
+
 
 
 \end{document}
+
+

@@ -31,7 +31,7 @@ my $i;
 # for various FIR lengths
 my @fir_lengths;
 #for ($i=1; $i<32; $i*=sqrt(2)) {
-for ($i=1; $i<128; $i++) {
+for ($i=1; $i<64; $i++) {
     push(@fir_lengths, int($i));
 }
 
@@ -45,12 +45,14 @@ foreach $firLength (@fir_lengths) {
 	$normal_fadds, $normal_fmuls) = do_test(".", $PROGRAM_NAME, 
 						"$STANDARD_OPTIONS",
 						"normal($firLength)");
+    print "\n";
 
     # compile with frequency replacement
     my ($freq_outputs, $freq_flops, 
 	$freq_fadds, $freq_fmuls) = do_test(".", $PROGRAM_NAME, 
 						"$STANDARD_OPTIONS $FREQ_OPTIONS",
 						"freq  ($firLength)");
+    print "\n";
 
     push(@result_lines, 
 	 "$PROGRAM_NAME\t$firLength\t".
@@ -60,10 +62,7 @@ foreach $firLength (@fir_lengths) {
 
 
 # now, when we are done with all of the tests, write out the results to a tsv file.
-print "writing tsv";
-open (RFILE, ">$RESULTS_FILENAME");
-print RFILE join("\n", @result_lines);
-close RFILE;
+save_tsv($RESULTS_FILENAME, "fir frequency scaling data", @result_lines);
 print "done\n";
 
 

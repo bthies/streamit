@@ -31,11 +31,11 @@ if (@ARGV) {
     @programs = split("\n", read_file(shift(@ARGV)));
 } else {
     @programs = (
-		 #".:Test:1000",
-		 #".:FIRProgram",
-		 ".:SamplingRateConverter",
-		 ".:FilterBank",
-		 ".:TargetDetect",
+		 #".:Test",
+		 ".:FIRProgram",
+		 #".:SamplingRateConverter",
+		 #".:FilterBank",
+		 #".:TargetDetect",
 		 #".:LinkedFMTest",
 		 #".:CoarseSerializedBeamFormer",
 		 #".:OneBitDToA",
@@ -54,7 +54,7 @@ push(@result_lines,
      "linear flops\tlinear fadds\tlinear fmuls\tlinear outputs\t" .
      "freq 3 flops\tfreq 3 fadds\tfreq 3 fmuls\tfreq 3 outputs\t" .
      "both flops\tboth fadds\tboth fmuls\tboth outputs\t" .
-     "redund flops\tredund fadds\tredund fmuls\tredund outputs\t");
+     "linpart flops\tlinpart fadds\tlinpart fmuls\tlinpart outputs\t");
 
 # determine the next available results directory (eg results0, results1, etc.)
 my $results_dir_num = 0;
@@ -105,24 +105,20 @@ foreach $current_program (@programs) {
 					    "$base_filename(both)");
     print "\n";
 
-    # now, run with redundant elimination
-#    my ($redund_outputs, $redund_flops, 
-#	$redund_fadds, $redund_fmuls) = do_test($path, $base_filename, 
-#						"--debug --unroll 100000 --redundantreplacement",
-#						"$base_filename(redund)");
-#    print "\n";
-
-# fake this part for now. Otherwise it takes too long to run these tests"
-my ($redund_outputs, $redund_flops, $redund_fadds, $redund_fmuls,
-    $redund_time_1, $redund_time_2, $redund_time_3) = (0,0,0,0,0,0,0);
-
+    # now, run with linear partitioning
+    my ($linpart_outputs, $linpart_flops, 
+	$linpart_fadds, $linpart_fmuls) = do_test($path, $base_filename, 
+						  "--debug --unroll 100000 --linearpartition",
+						  "$base_filename(linpart)");
+    print "\n";
+    
 
     my $new_data_line = ("$base_filename\t".
 			 "$normal_flops\t$normal_fadds\t$normal_fmuls\t$normal_outputs\t" .
 			 "$linear_flops\t$linear_fadds\t$linear_fmuls\t$linear_outputs\t" .
 			 "$freq3_flops\t$freq3_fadds\t$freq3_fmuls\t$freq3_outputs\t" .
 			 "$both_flops\t$both_fadds\t$both_fmuls\t$both_outputs\t" .
-			 "$redund_flops\t$redund_fadds\t$redund_fmuls\t$redund_outputs\t");
+			 "$linpart_flops\t$linpart_fadds\t$linpart_fmuls\t$linpart_outputs\t");
     # send intermediary results to andrew
     open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"results line mail: ($path,$base_filename)\"");
     print MHMAIL $new_data_line;

@@ -16,7 +16,8 @@ benchmarks: FIRProgram.java \
 	    Test.java \
 	    CoarseSerializedBeamFormer.java \
 	    LinkedFMTest.java \
-	    OneBitDToA.java
+	    OneBitDToA.java \
+            ChannelVocoder.java
 
 
 
@@ -36,15 +37,9 @@ $(FM-HOME)/LinkedFMTest.java:
 %.java: %.str lib/*.str
 	$(FRONTEND) lib/*.str $< > $@
 
-test: Test.java
-	$(COMPILER) Test.java > Test-normal.c
-	$(COMPILER)  --unroll 10000 --frequencyreplacement Test.java > Test-freq.c
-	$(SL) Test-normal.c -o Test-normal.exe
-	$(SL) Test-freq.c -o Test-freq.exe
-
 clean:
 	make -C $(BEAMFORMER-HOME) clean
-	rm -f *.dot *.ps *.c *.exe *.class *.output
+	rm -f *.dot *.ps *.c *.exe *.class *.output *.data
 	rm -f dynamorio.log* countflops.log
 	rm -f Test.java BF*.java
 	rm -f FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java 
@@ -83,7 +78,6 @@ redundant-beamformer: benchmarks
 	./parse_redundant_output.pl redundant/beam.output
 
 
-test-current: OneBitDToA.java
-	jikes OneBitDToA.java
-	#$(COMPILER) OneBitDToA.java > OneBitDToA.c
-	java OneBitDToA -i 1000 > output.tsv
+test: ChannelVocoder.java
+	jikes ChannelVocoder.java
+	java ChannelVocoder -i 10

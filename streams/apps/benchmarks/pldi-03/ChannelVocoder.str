@@ -1,0 +1,96 @@
+/** 
+ * This is a channel vocoder as described in 6.555 Lab 2.
+ * It's salient features are a filterbank each of which
+ * contains a decimator after a bandpass filter. 
+ * 
+ * Sampling Rate is 8000 Hz. 
+ * First the signal is conditioned using a lowpass filter with
+ * cutoff at 5000 Hz. Then the signal is "center clipped" which
+ * basically means that very high and very low values are removed.
+ *
+ * Then, the signal is sent both to a pitch detector and to a 
+ * filter bank with 200 Hz wide windows (18 overall)
+ * 
+ * Thus, each output is the combination of 18 band envelope values
+ * from the filter bank and a single pitch detector value. This
+ * value is either the pitch if the sound was voiced or 0 if the
+ * sound was unvoiced.
+ **/
+void->void pipeline ChannelVocoder {
+
+  add DataSource();
+  add MainSplitjoin();
+  add FloatPrinter();
+}
+
+/** This class is just a wrapper so that we don't have anonymous inner classes. **/
+float->float splitjoin MainSplitjoin {
+  int FS = 8000; // Sampling Rate
+  int decimation_factor = 10; // decimation factor
+  split duplicate;
+  add PitchDetector();
+  add VocoderFilterBank(decimation_factor);
+  join roundrobin;
+}
+
+
+
+void->float filter DataSource() {
+  int SIZE = 11;
+  int index;
+  float[SIZE] x;
+
+
+  init {
+    index = 0;
+    x[0] = 0.70867825;
+    x[1] = 0.9750938;
+    x[2] = 0.009129746;
+    x[3] = 0.28532153;
+    x[4] = 0.42127264;
+    x[5] = 0.95795095;
+    x[6] = 0.68976873;
+    x[7] = 0.99901736;
+    x[8] = 0.8581795;
+    x[9] = 0.9863592;
+    x[10] = 0.909825;
+  }
+
+  
+  work push 1 {
+    push(x[index]);
+    index = (index+1)%SIZE;
+  }
+}
+
+/** 
+ * evenutally, this will be a pitch detector. Now it is just squares
+ * the input so that it doesn't get identified as a 
+ * linear filter.
+ **/
+float->float filter PitchDetector() {
+  work push 1 pop 1 {
+    float t = pop();
+    push (t*t);
+  }
+}
+  
+/** The channel vocoder filterbank. **/
+float->float splitjoin VocoderFilterBank(int decimation) {
+  int NUM = 18;
+  split duplicate;
+  for (int i=0; i<NUM; i++) {
+    add FilterDecimate(i, decimation);
+  }
+  join roundrobin;
+}
+
+
+/** 
+ * A channel of the vocoder filter bank -- has a 
+ * band pass filter centered at i*200 Hz followed
+ * by a decimator with decimation rate of decimation.
+ **/
+float->float pipeline FilterDecimate(int i, int decimation) {
+  add Identity<float>;
+}

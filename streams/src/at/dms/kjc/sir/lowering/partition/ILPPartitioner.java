@@ -465,12 +465,26 @@ class CalcPartitions {
     }
 
     /**
+     * Index of z_min for node n.
+     */
+    private int zMin(int n) {
+	return dNum(nodes.size()-1, numTiles) + n;
+    }
+
+    /**
+     * Index of z_max for node n.
+     */
+    private int zMax(int n) { 
+	return zMin(nodes.size()) + n;
+    }
+
+    /**
      * Returns an array holding the values of the variables in the
      * optimum of the partitioning problem.
      */
     private double[] calcSolution() {
 	// make the linear program...
-	int numVars = dNum(nodes.size()-1, numTiles);
+	int numVars = zMax(nodes.size());
 	// this is a *conservative* estimate of the number of
 	// constraints, derived from the paper
 	int numConstraints = 1 + (int)(8.25 * numTiles * nodes.size()) + 2*numTiles + nodes.size();
@@ -509,9 +523,16 @@ class CalcPartitions {
 	constrainZeroOneVars(lp);
 	constrainOneTilePerNode(lp);
 	constrainWMax(lp);
-	constrainConnectedPartitions(lp);
+	//constrainConnectedPartitions(lp);
 	constrainHierarchicalPartitions(lp);
 	constrainSeparateJoiners(lp);
+
+	// constriants for the sake of speeding up the solution
+	// process
+	/*
+	constrainLinearOrder(lp);
+	constrainSymmetry(lp);
+	*/
     }
 
     private void constrainZeroOneVars(LinearProgram lp) {
@@ -646,6 +667,185 @@ class CalcPartitions {
 		    addNotEqualImplication(lp, pNum(lastLoop,t), pNum(join-1,t), pNum(join,t));
 		}
 	    }
+	}
+    }
+
+    /**
+     * Constrain the partition numbers to be assigned in order of the
+     * nodes array, just to constrain the search space.
+     */
+    private void constrainLinearOrder(LinearProgram lp) {
+	double[] con;
+	// constrain the forward-looking direction -----------------
+	// constrain first node to be on first partition
+	con = lp.getEmptyConstraint();
+	con[pNum(1, 0)] = 1;
+	lp.addConstraintEQ(con, 1);
+	// constrain other nodes to be in increasing order
+	for (int i=1; i<nodes.size()-2; i++) {
+	    for (int j=0; j<numTiles-1; j++) {
+		con = lp.getEmptyConstraint();
+		con[pNum(i, j)] = -1;
+		con[pNum(i+1, j)] = 1;
+		con[pNum(i+1, j+1)] = 1;
+		lp.addConstraintGE(con, 0);
+	    }
+	}
+
+	// constrain the backward-looking direction -----------------
+	// constrain last node to be on last partition
+	/* don't do this because it disallows having < 16 partitions
+	con = lp.getEmptyConstraint();
+	con[pNum(nodes.size()-2, numTiles-1)] = 1;
+	lp.addConstraintEQ(con, 1);
+	 */
+	// constrain other nodes to be in increasing order
+	for (int i=2; i<nodes.size(); i++) {
+	    for (int j=1; j<numTiles; j++) {
+		con = lp.getEmptyConstraint();
+		con[pNum(i, j)] = -1;
+		con[pNum(i-1, j)] = 1;
+		con[pNum(i-1, j-1)] = 1;
+		lp.addConstraintGE(con, 0);
+	    }
+	}
+
+	// further constrain that we can't wrap-around to have the end
+	// tile next to the beginning tile.  that means that you can
+	// NOT have P(i, MAX) and P(i+1, 0) both equal to 1.  So the
+	// sum must be less than or equal to 1.
+	for (int i=1; i<nodes.size()-2; i++) {
+	    con = lp.getEmptyConstraint();
+	    con[pNum(i, numTiles-1)] = -1;
+	    con[pNum(i+1, 0)] = -1;
+	    lp.addConstraintGE(con, -1);
+	}
+    }
+
+    /**
+     * Returns whether or not <str1> and <str2> are equivalent for the
+     * purposes of constraining symmetrical partitioning in them.
+     */
+    private boolean equivStructure(SIRStream str1, SIRStream str2) {
+	// get starting positions
+	int first1 = ((Integer)first.get(str1)).intValue();
+	int first2 = ((Integer)first.get(str2)).intValue();
+	// get sizes
+	int size1 =  ((Integer)last.get(str1)).intValue() - first1;
+	int size2 = ((Integer)last.get(str2)).intValue() - first2;
+	if (size1 != size2) {
+	    return false;
+	}
+
+	// compare work in streams
+	for (int i=0; i<size1; i++) {
+	    Object o1 = nodes.get(first1+i);
+	    Object o2 = nodes.get(first2+i);
+	    // compare types
+	    if (o1 instanceof SIRFilter && o2 instanceof SIRFilter) {
+		int work1 = work.getWork((SIRFilter)o1);
+		int work2 = work.getWork((SIRFilter)o2);
+		if (work1!=work2) {
+		    System.err.println("  failed because " + o1 + " has work " + work1 + 
+				       " but " + o2 + " has work " + work2);
+		    return false;
+		}
+	    } else if (o1 instanceof SIRJoiner &&  o2 instanceof SIRJoiner) {
+		continue;
+	    } else {
+		return false;
+	    }
+	}
+
+	return true;
+    }
+
+    private void constrainSymmetry(LinearProgram lp) {
+	// need to find parallel streams with same amount of work.
+	// start by looking for splitjoins, then compare adjacent
+	// children.
+	for (Iterator it = first.keySet().iterator(); it.hasNext(); ) {
+	    SIRStream str = (SIRStream)it.next();
+	    // ignore filters
+	    if (str instanceof SIRSplitJoin) {
+		SIRSplitJoin sj = (SIRSplitJoin)str;
+		// look for pairwise adjacent children that are the
+		// same.  keep track if they're all the same also.
+		boolean allEquiv = true;
+		for (int i=0; i<sj.size()-1; i++) {
+		    SIRStream child1 = sj.get(i);
+		    SIRStream child2 = sj.get(i+1);
+		    if (equivStructure(child1, child2)) {
+			constrainSymmetricalChildren(lp, child1, child2);
+		    } else {
+			allEquiv = false;
+		    }
+		}
+		// if all were equivalent, then constrain an even
+		// split between them
+		if (allEquiv) {
+		    constrainEvenSplit(sj, lp);
+		}
+	    }
+	}
+    }
+
+    private void constrainEvenSplit(SIRSplitJoin sj, LinearProgram lp) {
+	System.err.println("Constraining even split in " + sj.getName() + ".");
+	// for each tile, constrain the sum of that tile over the
+	// children of <sj> to be less than and greater than zMin and
+	// zMax, respectively.  Note that zMin and zMax (local to this
+	// constraint) are indexed by last(sj).  (Shouldn't be
+	// first(sj) since this could cause collisions.)
+	int z = ((Integer)last.get(sj)).intValue();
+	// constrain bounds of zmin and zmax
+	for (int i=0; i<numTiles; i++) {
+	    double[] con1 = lp.getEmptyConstraint();
+	    double[] con2 = lp.getEmptyConstraint();
+	    for (int j=0; j<sj.size(); j++) {
+		int childIndex = ((Integer)last.get(sj.get(j))).intValue();
+		// constrain zmin
+		con1[pNum(childIndex, i)] = 1;
+		// constrain zmax
+		con2[pNum(childIndex, i)] = -1;
+	    }
+	    con1[zMin(z)] = -1;
+	    con2[zMax(z)] = 1;
+	    lp.addConstraintGE(con1, 0);
+	    lp.addConstraintGE(con2, 0);
+	}
+	// constrain zmax - zmin <= 1
+	double[] con = lp.getEmptyConstraint();
+	con[zMin(z)] = 1;
+	con[zMax(z)] = -1;
+	lp.addConstraintGE(con, -1);
+    }
+
+    private void constrainSymmetricalChildren(LinearProgram lp, SIRStream child1, SIRStream child2) {
+	System.err.println("Detected symmetry between " + child1.getName() + " and " + child2.getName());
+	// get beginning index
+	int first1 = ((Integer)first.get(child1)).intValue();
+	int first2 = ((Integer)first.get(child2)).intValue();
+	// get size
+	int size =  ((Integer)last.get(child1)).intValue() - first1;
+
+	// for all pairs of internal nodes in <child1> and <child2>
+	for (int i=0; i<size-1; i++) {
+	    double[] con = lp.getEmptyConstraint();
+	    // f_L[first2+i+1],L[first2+i] = f_L[first1+i+1],L[first1+i]
+	    // f_L[first2+i+1],L[first2+i] - f_L[first1+i+1],L[first1+i] = 0
+	    // which means
+	    //    sum_j=1^num_t j * P(first2+i+1,j)                    (1)
+	    //  + sum_j=1^num_t j * P(first1+i,j)                      (2)
+	    //  - sum_j=1^num_t j * P(first2+i,j)                      (3)
+	    //  - sum_j=1^num_t j * P(first1+i+1,j) >= 0               (4)
+	    for (int j=0; j<numTiles; j++) {
+		con[pNum(first2+i+1,j)] = j;
+		con[pNum(first1+i,j)] = j;
+		con[pNum(first2+i,j)] = -j;
+		con[pNum(first1+i+1,j)] = -j;
+	    }
+	    lp.addConstraintEQ(con, 0);
 	}
     }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.4 2002-10-07 09:01:51 thies Exp $
+ * $Id: KjcOptions.opt,v 1.5 2002-10-28 02:40:42 aalamb Exp $
  */
 
 prefix Kjc
@@ -200,6 +200,12 @@ longname		"linearreplacement"
 	type		boolean
 	default		"false"
 	help		"Perform linear transformations based on linear analysis."
+
+longname		"frequencyreplacement"
+	shortcut	"F"
+	type		boolean
+	default		"false"
+	help		"convert convolution sums to frequency domain."
 
 longname		"poptopeek"
 	shortcut	"P"

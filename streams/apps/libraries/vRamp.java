@@ -17,7 +17,7 @@ import streamit.*;
 /**
  * Class vRamp
  *
- * Implements a Ramp Function given, start, stride and num-elems 
+ * Implements a Ramp Function given, start, stride and num-elems
  */
 
 class vRamp extends Filter {
@@ -28,29 +28,32 @@ class vRamp extends Filter {
 
     public vRamp (int numStart, int numStride, int numElems)
     {
-	super ();
-	numberOfElems = numElems;
-	start = numStart;
-	stride = numStride;
-	
+        super ();
     }
 
     Channel output = new Channel (Float.TYPE, numberOfElems);
 
     public void initIO ()
     {
-	streamOutput = output;
+        streamOutput = output;
+    }
+
+    public void init (int numStart, int numStride, int numElems)
+    {
+        numberOfElems = numElems;
+        start = numStart;
+        stride = numStride;
     }
 
 
     public void work() {
-	int currVal;
-	currVal = start;
+        int currVal;
+        currVal = start;
 
-	for (int i=0; i<numberOfElems; i++) {
-	    output.pushFloat(currVal);
-	    currVal += stride;
-	}
+        for (int i=0; i<numberOfElems; i++) {
+            output.pushFloat(currVal);
+            currVal += stride;
+        }
 
     }
 }

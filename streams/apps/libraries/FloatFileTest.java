@@ -4,23 +4,23 @@
 
 import streamit.*;
 
-public class FloatFileTest extends Stream
+public class FloatFileTest extends StreamIt
 {
     static public void main(String[] t)
     {
         FloatFileTest test = new FloatFileTest();
         test.run();
     }
-    
+
     public void init()
     {
-	add(new FloatFileReader("floats5000"));
-	//add(new LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps));
-	add(new FloatFileWriter("filteroutput"));
+        add(new FloatFileReader("floats5000"));
+        //add(new LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps));
+        add(new FloatFileWriter("filteroutput"));
     }
 }
 
-        
+
 
 
 

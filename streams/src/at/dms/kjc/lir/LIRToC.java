@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.70 2002-07-20 15:38:02 dmaze Exp $
+ * $Id: LIRToC.java,v 1.71 2002-07-22 18:48:37 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -950,9 +950,9 @@ public class LIRToC
                                     JExpression prefix) {
         if (prefix != null) {
             prefix.accept(this);
-            print(".this");
+            print(".data");
         } else {
-            print("this");
+            print("data");
         }
     }
 

@@ -463,6 +463,9 @@ class Propagator extends SLIRReplacingVisitor {
         if (from instanceof JIntLiteral && to instanceof JFloatLiteral)
             return new JFloatLiteral(from.getTokenReference(),
                                      from.intValue());
+        if (from instanceof JIntLiteral && to instanceof JDoubleLiteral)
+            return new JDoubleLiteral(from.getTokenReference(),
+				      from.intValue());
         return from;
     }
 

@@ -97,7 +97,7 @@ foreach $current_size (@sizes) {
     my $new_data_line = 	     ("$base_filename\t".
 				      "$normal_flops\t$normal_fadds\t$normal_fmuls\t$normal_outputs\t" .
 				      "$linear_flops\t$linear_fadds\t$linear_fmuls\t$linear_outputs\t");   
-    open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"results mail: ($path,$base_filename)\"");
+    open (MHMAIL, "|mhmail \$USER\@cag.lcs.mit.edu -s \"results mail: ($path,$base_filename)\"");
     print MHMAIL $new_data_line;
     close(MHMAIL);
     
@@ -119,7 +119,7 @@ print "(done)";
 
 
 print "(sending mail)";
-open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"Overall results mail\"");
+open (MHMAIL, "|mhmail \$USER\@cag.lcs.mit.edu -s \"Overall results mail\"");
 print MHMAIL join("\n", @result_lines);
 close(MHMAIL);
 print "(done)\n";

@@ -97,8 +97,8 @@ open (OUTFILE, ">$results_dir/$OUTPUT_FILENAME");
 print OUTFILE join("\n",@results);
 close(OUTFILE);
 
-# also for good measure, send andrew an email.
-open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"Work function measurements mail\"");
+# also for good measure, send an email.
+open (MHMAIL, "|mhmail \$USER\@cag.lcs.mit.edu -s \"Work function measurements mail\"");
 print MHMAIL join("\n",@results);
 close(MHMAIL);
 

@@ -282,7 +282,7 @@ sub save_tsv {
 
     # finally, send the email
     print "(sending mail)";
-    open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"$subject\"");
+    open (MHMAIL, "|mhmail \$USER\@cag.lcs.mit.edu -s \"$subject\"");
     print MHMAIL "auto sent by reaplib at " . `date`;
     print MHMAIL join("\n", @lines); 
     close(MHMAIL);

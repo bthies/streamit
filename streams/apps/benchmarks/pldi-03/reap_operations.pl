@@ -120,7 +120,7 @@ foreach $current_program (@programs) {
 			 "$both_flops\t$both_fadds\t$both_fmuls\t$both_outputs\t" .
 			 "$linpart_flops\t$linpart_fadds\t$linpart_fmuls\t$linpart_outputs\t");
     # send intermediary results to andrew
-    open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"results line mail: ($path,$base_filename)\"");
+    open (MHMAIL, "|mhmail \$USER\@cag.lcs.mit.edu -s \"results line mail: ($path,$base_filename)\"");
     print MHMAIL $new_data_line;
     close(MHMAIL);
 

@@ -37,6 +37,7 @@ public class Flattener {
 	// propagate constants and unroll loops
 	ConstantProp.propagateAndUnroll(str);
 	//FieldProp.doPropagate(str);
+	StreamItDot.printGraph(str, "orig.dot");
 
 	AdjustGranularity.doit(str, -1);
 

@@ -47,7 +47,10 @@ public class RawExecutionCode extends at.dms.util.Utils
     public static String steadySchedFunction = "__RAWSTEADYSCHED__";
     
     public static String receiveMethod = "static_receive_to_mem";
-    public static String structReceiveMethodPrefix = "__popPointer";
+    public static String structReceivePrefix = "__popPointer";
+    public static String structReceivePrefixStatic = structReceivePrefix + "Static";
+    public static String structReceivePrefixDynamic = structReceivePrefix + "Dynamic";
+
     public static String arrayReceiveMethod = "__array_receive__";
 
     public static String rawMain = "__RAWMAIN__";
@@ -1047,7 +1050,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    return arrayReceiveCode(filter,(CArrayType) type, localVariables);
 	}
 	else if (type.isClassType()) {
-	    receiveMethodName = structReceiveMethodPrefix  + type.toString();
+	    receiveMethodName = structReceivePrefixStatic + type.toString();
 	}
 
 	//create the array access expression to access the buffer 

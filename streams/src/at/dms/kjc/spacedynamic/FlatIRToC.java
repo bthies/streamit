@@ -39,7 +39,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
     //fields for all of the vars names we introduce in the c code
     private final String FLOAT_HEADER_WORD = "__FLOAT_HEADER_WORD__";
     private final String INT_HEADER_WORD = "__INT_HEADER_WORD__";
-    private final String DYNMSGHEADER = "__DYNMSGHEADER__";
+    public static final String DYNMSGHEADER = "__DYNMSGHEADER__";
 
     private static int filterID = 0;
     
@@ -50,7 +50,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
     /** true if the filter is the sink of a SSG, so it has dynamic output 
 	and must sent output over the dynamic network **/
     private boolean dynamicOutput = false;
+    private boolean dynamicInput = false;
     private StaticStreamGraph ssg;
+
 
     public static void generateCode(StaticStreamGraph SSG, FlatNode node)
     {
@@ -58,7 +60,8 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	toC.flatNode = node;
 	toC.ssg = SSG;
 	toC.layout = SSG.getStreamGraph().getLayout();
-	toC.dynamicOutput =  toC.ssg.isOutput(node);
+	toC.dynamicOutput = toC.ssg.isOutput(node);
+	toC.dynamicInput = toC.ssg.isInput(node);
     
 	//FieldInitMover.moveStreamInitialAssignments((SIRFilter)node.contents);
 	//FieldProp.doPropagate((SIRFilter)node.contents);
@@ -185,7 +188,8 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    print("register float " + Util.CGNIFPVAR + " asm(\"$cgni\");\n");
 	    print("register int " + Util.CGNOINTVAR + " asm(\"$cgno\");\n");
 	    print("register int " + Util.CGNIINTVAR + " asm(\"$cgni\");\n");
-	    print("unsigned " + DYNMSGHEADER + ";\n");
+	    //this is now in structs.h
+	    //print("unsigned " + DYNMSGHEADER + ";\n");
 	}
 	
     
@@ -211,11 +215,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    print("}\n\n");
 	}
 	
-	//if there are structures in the code, include
-	//the structure definition header files
-	if (SpaceDynamicBackend.structures.length > 0) {
-	    print("#include \"structs.h\"\n");
-	}
+
+	print("#include \"structs.h\"\n");
+
 
 	//print the extern for the function to init the 
 	//switch, do not do this if we are compiling for
@@ -269,7 +271,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
 		ssg.getStreamGraph().getParentSSG(flatNode).getNext(flatNode);
 	    
 	    if (downstream != null) {
-		print(" " + DYNMSGHEADER + " = construct_dyn_hdr(0, 1, 0, " +
+		int size = Util.getTypeSize(ssg.getOutputType(flatNode));
+
+		print(" " + DYNMSGHEADER + " = construct_dyn_hdr(0, " +
+		      size + ", 0, " +
 		      (layout.getTile(self)).getY() + ", " +
 		      (layout.getTile(self)).getX() + ", " + 
 		      (layout.getTile(downstream)).getY() + "," +
@@ -700,10 +705,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//generate the inline asm instruction to execute the 
 	//receive if this is a receive instruction
 	if (ident.equals(RawExecutionCode.receiveMethod)) {
-	    print(Util.networkReceivePrefix());
+	    print(Util.networkReceivePrefix(dynamicInput));
 	    visitArgs(args,0);
 	    print(Util.networkReceiveSuffix
-		  (Util.getBaseType(filter.getInputType())));
+		  (dynamicInput, Util.getBaseType(filter.getInputType())));
 	    return;  
 	}
 
@@ -731,7 +736,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//if this method we are calling is the call to a structure 
 	//receive method that takes a pointer, we have to add the 
 	//address of operator
-	if (ident.startsWith(RawExecutionCode.structReceiveMethodPrefix))
+	if (ident.startsWith(RawExecutionCode.structReceivePrefix))
 	    print("&");
 
         int i = 0;
@@ -894,13 +899,13 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    return;
 	}
 	
-	print(Util.staticNetworkSendPrefix(tapeType));
+	print(Util.networkSendPrefix(dynamicOutput, tapeType));
 	//if the type of the argument to the push statement does not 
 	//match the filter output type, print a cast.
 	if (tapeType != val.getType())
 	    print("(" + tapeType + ")");
 	val.accept(this);
-	print(Util.staticNetworkSendSuffix());
+	print(Util.networkSendSuffix(dynamicOutput));
     }
 
     
@@ -910,8 +915,15 @@ public class FlatIRToC extends ToC implements StreamVisitor
     {
 	//turn the push statement into a call of
 	//the structure's push method
-	assert !dynamicOutput : "pushing of non-scalars at SSG boundary not supported yet";
-	print("push" + tapeType + "(&");
+
+	print("push");
+	
+	if (dynamicOutput) 
+	    print("Dynamic");
+	else
+	    print("Static");
+
+	print(tapeType + "(&");
 	val.accept(this);
 	print(")");
     }
@@ -933,12 +945,12 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
 	    print("{\n");
-	    print(Util.staticNetworkSendPrefix(Util.getBaseType(tapeType)));
+	    print(Util.networkSendPrefix(dynamicOutput, Util.getBaseType(tapeType)));
 	    val.accept(this);
 	    for (int i = 0; i < dims.length; i++) {
 		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
 	    }
-	    print(Util.staticNetworkSendSuffix());
+	    print(Util.networkSendSuffix(dynamicOutput));
 	    print(";\n}\n");
 	} else {
 	    print("{");

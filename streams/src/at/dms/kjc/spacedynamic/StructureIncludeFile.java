@@ -40,10 +40,12 @@ public class StructureIncludeFile
     {
 	try {
 	    FileWriter fw = new FileWriter(dir + "/structs.h");
-
+	    fw.write("unsigned " + FlatIRToC.DYNMSGHEADER + ";\n");
 	    createStructureDefs(structs, fw);
-	    //if (!KjcOptions.standalone)
-	    //createPushPopFunctions(structs, fw);
+	    if (!KjcOptions.standalone) {
+		createPushPopFunctions(structs, fw, "Dynamic");
+		createPushPopFunctions(structs, fw, "Static");
+	    }
 	    fw.close();
 	}
 	catch (Exception e) {
@@ -70,23 +72,38 @@ public class StructureIncludeFile
 	    fw.write("} " + current.getIdent() + ";\n");
 	    //write the defs for the push/pop functions
 	    if (!KjcOptions.standalone){
-		fw.write("inline void push" + current.getIdent() + "(" + current.getIdent() +
-			 "*);\n");
-		fw.write("inline " + current.getIdent() + " pop" + current.getIdent() + "();\n");
-		fw.write("inline void " + RawExecutionCode.structReceiveMethodPrefix + 
-			 current.getIdent() + "(" + current.getIdent() + "*);\n\n");
+		String network;
+		for (int x = 0; x < 2; x++) {
+		    if (x == 0) network = "Dynamic";
+		    else network = "Static";
+		    
+		    fw.write("inline void push" + network + current.getIdent() + 
+			     "(" + current.getIdent() + "*);\n");
+		    fw.write("inline " + current.getIdent() + " pop" + network + 
+			     current.getIdent() + "();\n");
+		    fw.write("inline void " + RawExecutionCode.structReceivePrefix + network +
+			     current.getIdent() + "(" + current.getIdent() + "*);\n\n");
+		}
 	    }
 	}
     }
 
     private void createPushPopFunctions(SIRStructure[] structs,
-					FileWriter fw) throws Exception
+					FileWriter fw,
+					String network) throws Exception
     {
-	
+	assert network.equals("Static") || network.equals("Dynamic");
+	//which network we are using
+	boolean dynamic = false;
+	if (network.equals("Dynamic"))
+	    dynamic = true;
+
 	//create the pop functions
 	for (int i = 0; i < structs.length; i++) {
 	    SIRStructure current = structs[i];
-	    fw.write("inline " + current.getIdent() + " pop" + current.getIdent() + "() {\n");
+
+	    fw.write("inline " + current.getIdent() + " pop" + network + 
+		     current.getIdent() + "() {\n");
 	    fw.write("\t" + current.getIdent() + " temp;\n");
 	    for (int j = 0; j < current.getFields().length; j++) {
 		fw.write("\t//" + current.getFields()[j].getType() + "\n");
@@ -100,16 +117,16 @@ public class StructureIncludeFile
 			     " = pop" + current.getFields()[j].getType() + "();\n");
 		}
 		else {
-		    fw.write("\t" + Util.networkReceivePrefix());
+		    fw.write("\t" + Util.networkReceivePrefix(dynamic));
 		    fw.write("temp." + current.getFields()[j].getVariable().getIdent());
-		    fw.write(Util.networkReceiveSuffix(current.getFields()[j].getType()) + "\n");
+		    fw.write(Util.networkReceiveSuffix(dynamic, current.getFields()[j].getType()) + "\n");
 		}
 	    }
 	    fw.write("\treturn temp;\n}\n");
 
 	    //create the pop functions that take a pointer argument
 	    //these are more efficent, we use these when we can
-	    fw.write("inline void " + RawExecutionCode.structReceiveMethodPrefix + 
+	    fw.write("inline void " + RawExecutionCode.structReceivePrefix + network + 
 		     current.getIdent() + "(" + 
 		     current.getIdent() + "* temp) {\n");
 	    for (int j = 0; j < current.getFields().length; j++) {
@@ -118,23 +135,29 @@ public class StructureIncludeFile
 		}
 		else if (current.getFields()[j].getType().isClassType()) {
 		    //if this is struct field, call the struct's popPointer method
-		    fw.write("\t" + RawExecutionCode.structReceiveMethodPrefix + 
+		    fw.write("\t" + RawExecutionCode.structReceivePrefix + 
 			     current.getFields()[j].getType() +
 			     "(&temp->" + current.getFields()[j].getVariable().getIdent() +
 			     ");\n");
 		}
 		else {
-		    fw.write("\t" + Util.networkReceivePrefix());
+		    fw.write("\t" + Util.networkReceivePrefix(dynamic));
 		    fw.write("temp->" + current.getFields()[j].getVariable().getIdent());
-		    fw.write(Util.networkReceiveSuffix(current.getFields()[j].getType()) + "\n");
+		    fw.write(Util.networkReceiveSuffix(dynamic, current.getFields()[j].getType()) + "\n");
 		}
 	    }
 	    fw.write("}\n");
 	    
 	    //create the push functions
 	    
-	    fw.write("inline void push" + current.getIdent() + "(" + current.getIdent() +
+	    fw.write("inline void push" + network + current.getIdent() + "(" + current.getIdent() +
 		     "* temp) {\n");
+	    
+	    if (network.equals("Dynamic")) {
+		//we must generate the header for the dynamic network send...
+		fw.write(Util.CGNOINTVAR + " = " + FlatIRToC.DYNMSGHEADER + ";\n");
+	    }
+
 	    for (int j = 0; j < current.getFields().length; j++) {
 		//if this field is a struct type, use its method to push the field
 		if (current.getFields()[j].getType().isArrayType()) {
@@ -142,13 +165,13 @@ public class StructureIncludeFile
 		    assert false;
 		}
 		else if (current.getFields()[j].getType().isClassType()) {
-		    fw.write("push" + current.getFields()[j].getType() + "(&temp->" +
+		    fw.write("push" + network + current.getFields()[j].getType() + "(&temp->" +
 			     current.getFields()[j].getVariable().getIdent() + ");\n");
 		}
 		else {
-		    fw.write("\t" + Util.staticNetworkSendPrefix(current.getFields()[j].getType()));
+		    fw.write("\t" + Util.networkSendPrefix(dynamic, current.getFields()[j].getType()));
 		    fw.write("temp->" + current.getFields()[j].getVariable().getIdent());
-		    fw.write(Util.staticNetworkSendSuffix() + ";\n");
+		    fw.write(Util.networkSendSuffix(dynamic) + ";\n");
 		}
 	    }
 	    fw.write("}\n");

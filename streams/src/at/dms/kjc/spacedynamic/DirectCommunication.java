@@ -68,6 +68,10 @@ public class DirectCommunication extends at.dms.util.Utils
 	    return false;
 	if (PushBeforePop.check(filter.getWork()))
 	    return false;
+
+	/* I don't think that these checks are necessary,
+    ****** confirm!!!! *******
+
 	//must popping a scalar
 	if (filter.getInputType().isClassType() ||
 	    filter.getInputType().isArrayType())
@@ -76,6 +80,7 @@ public class DirectCommunication extends at.dms.util.Utils
 	if (filter.getOutputType().isClassType() ||
 	    filter.getOutputType().isArrayType())
 	    return false;
+	*/
 	//all tests pass
 	return true;
     }
@@ -189,7 +194,8 @@ public class DirectCommunication extends at.dms.util.Utils
 			{left};
 		
 		    return new JMethodCallExpression(null, new JThisExpression(null), 
-						     RawExecutionCode.structReceiveMethodPrefix + 
+						     RawExecutionCode.structReceivePrefix + 
+						     (dynamic ? "Dynamic" : "Static") + 
 						     pop.getType(),
 						     arg);
 		} 
@@ -224,54 +230,24 @@ public class DirectCommunication extends at.dms.util.Utils
 		return null;
 	    }
 	    else {
-		//I am keeping it the was it is because we should use static_receive
-		//instead of receiving to memory as in the code in Util
-		if (KjcOptions.altcodegen || KjcOptions.decoupled) 
-		    return altCodeGen(self);
-		else
-		    return normalCodeGen(self);
+		//direct communcation is only generated if the input/output types are scalar
+		if (self.getType().isFloatingPoint())
+		    return 
+			new JLocalVariableExpression
+			(null,
+			 new JGeneratedLocalVariable(null, 0, 
+						     CStdType.Float, 
+						     dynamic ? Util.CGNIFPVAR : Util.CSTIFPVAR,
+						     null));
+		else 
+		    return 
+			new JLocalVariableExpression
+			(null,
+			 new JGeneratedLocalVariable(null, 0, 
+						     CStdType.Integer,
+						     dynamic ? Util.CGNIINTVAR : Util.CSTIINTVAR,
+						     null));
 	    }
-	}
-    
-    
-	private Object altCodeGen(SIRPopExpression self) {
-	    //direct communcation is only generated if the input/output types are scalar
-	    if (self.getType().isFloatingPoint())
-		return 
-		    new JLocalVariableExpression
-		    (null,
-		     new JGeneratedLocalVariable(null, 0, 
-						 CStdType.Float, 
-						 dynamic ? Util.CGNIFPVAR : Util.CSTIFPVAR,
-						 null));
-	    else 
-		return 
-		    new JLocalVariableExpression
-		    (null,
-		     new JGeneratedLocalVariable(null, 0, 
-						 CStdType.Integer,
-						 dynamic ? Util.CGNIINTVAR : Util.CSTIINTVAR,
-						 null));
-	}
-    
-	private Object normalCodeGen(SIRPopExpression self) {
-	    String floatSuffix;
-	
-	    floatSuffix = "";
-
-	    //append the _f if this pop expression pops floats
-	    if (self.getType().isFloatingPoint())
-		floatSuffix = "_f";
-	
-	    //create the method call for static_receive()
-	    JMethodCallExpression static_receive = 
-		new JMethodCallExpression(null, new JThisExpression(null),
-					  "static_receive" + floatSuffix, 
-					  new JExpression[0]);
-	    //store the type in a var that I added to methoddeclaration
-	    static_receive.setTapeType(self.getType());
-	
-	    return static_receive;
 	}
 
 	public Object visitPeekExpression(SIRPeekExpression oldSelf,

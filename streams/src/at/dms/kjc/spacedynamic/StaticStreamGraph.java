@@ -40,6 +40,9 @@ public class StaticStreamGraph
     private FlatNode[] inputs;
     private FlatNode[] outputs;
 
+    //the output type of the ssg output
+    private CType[] outputTypes;
+
     private SIRStream topLevelSIR;
     private FlatNode topLevel;
     private GraphFlattener graphFlattener;
@@ -89,6 +92,8 @@ public class StaticStreamGraph
 	flatNodes = new LinkedList();
 	outputs = new FlatNode[0];
 	inputs = new FlatNode[0];
+	outputTypes = new CType[0];
+	
 	// a static stream graph always starts with a splitter, we
 	//remove it later if ways == 1
 	this.topLevel = 
@@ -101,7 +106,7 @@ public class StaticStreamGraph
     /** add a source node to this SSG and add it to the toplevel **/
     public void addTopLevelFlatNode(FlatNode node) 
     {
-	System.out.println("AddTopLevelNode " + node + " to " + id) ;
+	//System.out.println("AddTopLevelNode " + node + " to " + id) ;
 	assert node.isFilter();
 	SIRFilter filter = (SIRFilter)node.contents;
 	//checks on the filter
@@ -253,9 +258,7 @@ public class StaticStreamGraph
 	    FlatNode source = (FlatNode)nextsIt.next();
 	    FlatNode dest = (FlatNode)nexts.get(source);
 	    assert dest != null;
-	    
-	    System.out.println(dest);
-	    
+	    //System.out.println(dest);
 	    streamGraph.getParentSSG(dest).addPrev(dest, source);
 	}
 	
@@ -349,6 +352,12 @@ public class StaticStreamGraph
 	}
 	assert false : node + " not an output";
 	return -1;
+    }
+    
+
+    public CType getOutputType(FlatNode node) 
+    {
+	return outputTypes[getOutputNum(node)];
     }
     
 
@@ -584,7 +593,14 @@ public class StaticStreamGraph
 	for (int i = 0; i < oldOutputs.length; i++)
 	    outputs[i] = oldOutputs[i];
 	outputs[outputs.length - 1] = node;
-            
+	
+	//create a new output type array...
+	CType[] oldOutputTypes = outputTypes;
+	outputTypes = new CType[oldOutputTypes.length + 1];
+	for (int i = 0; i < oldOutputTypes.length; i++) 
+	    outputTypes[i] = oldOutputTypes[i];
+	outputTypes[outputTypes.length - 1] = Util.getOutputType(node);
+
 	nexts.put(node, next);
     }
     

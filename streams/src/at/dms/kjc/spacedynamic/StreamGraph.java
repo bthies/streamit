@@ -188,7 +188,7 @@ public class StreamGraph
     
     private void cutGraph(FlatNode upstream, FlatNode downstream) 
     {
-	System.out.println("*** Cut Graph ***");
+	//System.out.println("*** Cut Graph ***");
 	assert upstream.isFilter() && downstream.isFilter();
 	SIRFilter upFilter = (SIRFilter)upstream.contents;
 	SIRFilter downFilter = (SIRFilter)downstream.contents;

@@ -47,6 +47,8 @@ public class SpaceDynamicBackend {
 
 	structures = structs;
 	
+	assert structures.length > 0 : "The Space Dynamic backend assumes that at least one struct is defined";
+
 	int rawRows = -1;
 	int rawColumns = -1;
 

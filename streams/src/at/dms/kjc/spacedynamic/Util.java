@@ -122,6 +122,17 @@ public class Util extends at.dms.util.Utils {
 	return 0;
     }
 
+    public static int getTypeSize(SIRStructure struct) 
+    {
+	int sum = 0;
+
+	for (int i = 0; i < struct.getFields().length; i++) {
+	    sum += getTypeSize(struct.getFields()[i].getType());
+	}
+	return sum;
+    }
+    
+
     public static CType getJoinerType(FlatNode joiner) 
     {
 	boolean found;
@@ -187,61 +198,51 @@ public class Util extends at.dms.util.Utils {
 	return ret;
     }
 
-    public static String networkReceivePrefix() {
-	if(KjcOptions.altcodegen || KjcOptions.decoupled || KjcOptions.dynamicnet)  
-	    return "";
-	else 
-	    //return "/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (";
-	    return "/* receive */ asm volatile (\"move %0, $csti\" : \"=r\" (";
+    public static String networkReceivePrefix(boolean dynamic) {
+	assert KjcOptions.altcodegen;
+	return "";
     }
 
-    public static String networkReceiveSuffix(CType tapeType) {
-	if (KjcOptions.altcodegen || KjcOptions.decoupled) {
+    public static String networkReceiveSuffix(boolean dynamic, CType tapeType) {
+	assert KjcOptions.altcodegen;
+	if (dynamic) {
+	    if (tapeType.isFloatingPoint())
+		return "= " + CGNIFPVAR + ";";
+	    else
+		return "= " + CGNIINTVAR + ";";    
+	}
+	else {
 	    if (tapeType.isFloatingPoint())
 		return "= " + CSTIFPVAR + ";";
 	    else
 		return "= " + CSTIINTVAR + ";";
 	}
-	else if (KjcOptions.dynamicnet) {
-	    if (tapeType.isFloatingPoint())
-		return "= " + CGNIFPVAR + ";";
-	    else
-		return "= " + CGNIINTVAR + ";";
-	}
-	else 
-	    return "));";
     }
+    
 
-    public static String staticNetworkSendPrefix(CType tapeType) {
+    public static String networkSendPrefix(boolean dynamic, CType tapeType) {
+	assert KjcOptions.altcodegen;
 	StringBuffer buf = new StringBuffer();
-	
-	if (KjcOptions.altcodegen || KjcOptions.decoupled) {
+	if (dynamic) {
+	    if (tapeType.isFloatingPoint())
+		buf.append(CGNOFPVAR);
+	    else
+		buf.append(CGNOINTVAR);
+	}
+	else {
 	    if (tapeType.isFloatingPoint())
 		buf.append(CSTOFPVAR);
 	    else
 		buf.append(CSTOINTVAR);
-	    //temporary fix for type changing filters
-	    buf.append(" = (" + tapeType + ")");
 	} 
-	else {
-	    buf.append("(");
-	    if (SpaceDynamicBackend.FILTER_DEBUG_MODE)
-		buf.append("static_send_print");
-	    else
-		buf.append("static_send");
-	    buf.append("(");    
-	    //temporary fix for type changing filters
-	    //commented out by MGordon 9/24, this should not longer be necessary
-	    //buf.append("(" + tapeType + ")");
-	}
+
+	buf.append(" = (" + tapeType + ")");
 	return buf.toString();
     }
 
-    public static String staticNetworkSendSuffix() {
-	if (KjcOptions.altcodegen || KjcOptions.decoupled) 
-	    return "";
-	else 
-	    return "))";
+    public static String networkSendSuffix(boolean dynamic) {
+	assert KjcOptions.altcodegen;
+	return "";
     }
 
     //return the FlatNodes that are directly downstream of the 

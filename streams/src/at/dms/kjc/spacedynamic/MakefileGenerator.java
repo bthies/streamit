@@ -56,12 +56,17 @@ public class MakefileGenerator
 	    */
 	    
 	    if (!IMEMEstimation.TESTING_IMEM) {
-		//fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
-		fw.write("BTL-DEVICES += -dram_freq 100\n");
-		fw.write("ATTRIBUTES += HWIC\n");
+		//old settings
+		//fw.write("BTL-DEVICES += -dram_freq 100\n");
+		//turn off hardware icaching for now
+		//fw.write("ATTRIBUTES += HWIC\n");
 		//add some other stuff
-		fw.write("MEMORY_LAYOUT=LEFT_RIGHT_SIDES\n");
-		fw.write("BTL-DEVICES += -enable_all_sides_for_dram -dram lhs\n");
+		//fw.write("MEMORY_LAYOUT=LEFT_RIGHT_SIDES\n");
+		//fw.write("BTL-DEVICES += -enable_all_sides_for_dram -dram lhs\n");
+		
+		fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
+		fw.write("MEMORY_LAYOUT=FOUR_SIDES\n");
+		fw.write("BTL-DEVICES += -dram_streaming -dram lhs -enable_all_sides_for_dram -dram ths -dram bhs \n");
 	    }
 	    
 	    //if we are generating number gathering code, 

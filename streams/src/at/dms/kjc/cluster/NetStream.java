@@ -27,6 +27,13 @@ public class NetStream {
 	return type;
     }
 
+    public String getTypeToC() {
+	if (type.toString().compareTo("int") == 0) return "int";
+	if (type.toString().compareTo("float") == 0) return "float";
+	if (type.toString().compareTo("boolean") == 0) return "bool";
+	return type.toString();
+    } 
+
     public String name() {
 	return new String("__stream_"+source+"_"+dest);	
     }

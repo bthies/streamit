@@ -10,7 +10,7 @@ import at.dms.kjc.iterator.*;
 
 /**
  * RedundantReplacer.
- * $Id: LinearRedundancyReplacer.java,v 1.5 2003-03-05 21:09:04 aalamb Exp $
+ * $Id: LinearRedundancyReplacer.java,v 1.6 2003-03-08 21:14:45 aalamb Exp $
  **/
 public class LinearRedundancyReplacer extends LinearReplacer implements Constants{
     /** The prefix to use to name fields. **/
@@ -266,16 +266,20 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	    while(tupleIter.hasNext()) {
 		LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
 		// basically, we want to store data for each use, 1-->maxUse
-		for (int use = 1; use<(tupleData.getMaxUse(t)+1); use++) {
-		    JExpression fieldAccessExpr = makeFieldAccessExpression(tupleData.getName(t));
-		    JExpression arrayIndex = new JIntLiteral(use);
-		    JExpression arrayAccessExpression = new JArrayAccessExpression(null,
-										   fieldAccessExpr,
-										   arrayIndex);
+		// which corresponds to what the value would have been on
+		// prior executions.
+		int maxUse = tupleData.getMaxUse(t);
+		for (int use = 1; use<(maxUse+1); use++) {
+		    String fieldName = tupleData.getName(t);
+		    JExpression arrayAccessExpression = makeArrayFieldAccessExpr(fieldName,use);
+		    
 		    // generate the appropriate computation expression
+		    // eg the computation that would have been calculated use executions
+		    // before
 		    LinearComputationTuple effectiveTuple;
-		    effectiveTuple = new LinearComputationTuple(t.getPosition() -
-								(use * linearRep.getPopCount()),
+		    int pop = linearRep.getPopCount();
+		    effectiveTuple = new LinearComputationTuple((t.getPosition() -
+								 pop * use),
 								t.getCoefficient());
 		    JExpression computationExpression = makeTupleComputation(effectiveTuple);
 
@@ -319,6 +323,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	// that we need to compute. We will then process the list to generate
 	// the appropriate push expression
 	FilterMatrix A = linearRep.getA();
+	FilterVector b = linearRep.getb();
 	for (int currentCol = A.getCols()-1; currentCol >= 0; currentCol--) {
 	    List termList = new LinkedList();
 	    for (int currentRow = 0; currentRow< A.getRows(); currentRow++) {
@@ -328,6 +333,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 		// stick this term in the front of the list
 		termList.add(0,t);
 	    }
+
 	    // now, we want to go through each term that we need to make and
 	    // generate the appropriate calculation -- either field access
 	    // or computation, depending on if the tuple is in the 
@@ -340,14 +346,28 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 		JExpression termExpr = null;
 		if (tupleData.compMap.containsKey(t)) {
 		    termExpr = makeTupleAccess(t,tupleData);
-		} else {
+		// otherwise, if this is a non zero coefficient
+		} else if (!t.getCoefficient().equals(ComplexNumber.ZERO)){
 		    termExpr = makeTupleComputation(t); // make a straightup computation
 		}
 		// if the term is not null, add it to the term list
+		// (it is null if the coefficient is zero)
 		if (termExpr != null) {
 		    expressionList.add(termExpr);
 		}
 	    }
+
+	    // if the current linear rep has a constant component,
+	    // add a term for that as well.
+	    ComplexNumber constantOffset = b.getElement(currentCol);
+	    if (!constantOffset.equals(ComplexNumber.ZERO)) {
+		// bomb ye olde error if we hit a complex value
+		if (!constantOffset.isReal()) {
+		    throw new RuntimeException("Complex valued offsets are not supported.");
+		}
+		expressionList.add(new JFloatLiteral(null, (float)constantOffset.getReal()));
+	    }
+
 	    // now, we need to combine all of the terms in the term expr list into
 	    // a single push statement. (assuming of course, that there are terms in the expr list.
 	    if (expressionList.size() > 0) {
@@ -378,7 +398,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	Iterator reusedIter = tupleData.reused.iterator();
 	while(reusedIter.hasNext()) {
 	    LinearComputationTuple t = (LinearComputationTuple)reusedIter.next();
-	    body.addStatement(makeIndexUpdateStatement(t,tupleData));
+	    makeIndexUpdateStatement(body, t, tupleData);
 	}
 
 	// and as a final nudge to correctness, put in the appropriate number
@@ -452,15 +472,36 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 
     /**
      * Creates an index increment of the form
-     * tuple_index = (tuple_index + 1) % maxUse(tuple)
+     * tuple_index = tuple_index - 1;
+     * if (tuple_index < 0) {
+     *  tuple_inded = maxUse(tuple);
+     * }
      **/
-    public JStatement makeIndexUpdateStatement(LinearComputationTuple t, RedundancyReplacerData tupleData) {
+    public void makeIndexUpdateStatement(JBlock body,
+					 LinearComputationTuple t,
+					 RedundancyReplacerData tupleData) {
+	/* make the tuple_index field */
 	JExpression indexExpr = makeFieldAccessExpression(tupleData.getName(t)+INDEX_POSTFIX);
-	JExpression addExpr   = new JAddExpression(null, indexExpr, new JIntLiteral(1));
-	JExpression maxUseExpr= new JIntLiteral(tupleData.getMaxUse(t) + 1);
-	JExpression modExpr   = new JModuloExpression(null, addExpr, maxUseExpr);
-	JExpression assignExpr= new JAssignmentExpression(null, indexExpr, modExpr);
-	return new JExpressionStatement(null, assignExpr, null);
+	JExpression minusExpr = new JMinusExpression(null, indexExpr, new JIntLiteral(1));
+	
+	/** make the decrement expression */
+	JExpression decExpr   = new JAssignmentExpression(null, indexExpr, minusExpr);
+	JStatement  decStmt   = new JExpressionStatement(null, decExpr, null);
+	
+	// make the if statement (if index<0) {index = maxUseExpr;}
+	JExpression condExpr   = new JRelationalExpression(null, OPE_LT, indexExpr, new JIntLiteral(0));
+	JExpression maxUseExpr = new JIntLiteral(tupleData.getMaxUse(t));
+	JExpression resetExpr  = new JAssignmentExpression(null, indexExpr, maxUseExpr);
+	JStatement  resetStmt  = new JExpressionStatement(null, resetExpr, null);
+	JStatement  emptyStmt  = new JEmptyStatement(null, null);
+	JStatement ifStmt      = new JIfStatement(null,      /* token ref */
+						  condExpr,  /* condition */
+						  resetStmt, /* if clause */
+						  emptyStmt, /* else clause */
+						  null);     /* comments */
+	
+	body.addStatement(decStmt);
+	body.addStatement(ifStmt);
     }
 	
 				       

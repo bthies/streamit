@@ -47,7 +47,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			    JMethodDeclaration work,
 			    CType inputType, CType outputType) 
     {
-	
+	print("#include \"raw.h\"\n");
+
 	//Visit fields declared in the filter class
 	for (int i = 0; i < fields.length; i++)
 	   fields[i].accept(this);
@@ -60,6 +61,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	declOnly = false;
 	for (int i =0; i < methods.length; i++)
 	    methods[i].accept(this);	
+	
+	print("int main() {\n");
+	print("  init();\n");
+	print("  while(1) {\n");
+	print("     work();\n");
+	print("  }\n");
+	print("}");
 	
 	System.out.println("====  Code for " + Namer.getName(self));
 	System.out.println(str.toString());
@@ -806,7 +814,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         } else {
 	    print("(");
             left.accept(this);
-            print("->" + ident);
+            print(ident);
 	    print(")");
         }
     }
@@ -1046,7 +1054,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                     CType tapeType,
                                     JExpression val)
     {
-        print("(PUSH(");
+        print("(static_send(");
         val.accept(this);
         print("))");
     }

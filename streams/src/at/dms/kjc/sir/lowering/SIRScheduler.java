@@ -252,12 +252,14 @@ public class SIRScheduler {
 
 	// go through parents from top to bottom, building up the
 	// field access expression.
-	for (int i=parents.length-1; i>=0; i--) {
+	for (int i=parents.length-1; i>=-1; i--) {
 	    // get the child of interest (either the next parent,
 	    // or <str>)
-	    SIROperator child = (i>0 ? parents[i-1] : str);
+	    SIROperator child = (i>=0 ? parents[i] : str);
 	    // get field name for child context
 	    String childName = child.getRelativeName();
+	    //System.err.println("relative name on child " + i + ": " +
+	    //	       childName);
 	    // build up cascaded field reference
 	    result = new JFieldAccessExpression(/* tokref */
 						null,

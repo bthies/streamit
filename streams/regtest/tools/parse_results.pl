@@ -14,7 +14,7 @@
 # Note: The contents of the error file are not acutally used at the present time. 
 #  error messages are parsed out of the log file instead.
 #
-# $Id: parse_results.pl,v 1.6 2002-08-15 21:10:06 aalamb Exp $
+# $Id: parse_results.pl,v 1.7 2002-12-20 18:39:36 aalamb Exp $
 
 use strict;
 
@@ -26,8 +26,6 @@ sub main {
     my $log_filename     = shift(@ARGV) || die ("No log filename supplied\n");
     my $error_filename   = shift(@ARGV) || die ("No error filename supplied\n");
     my $success_filename   = shift(@ARGV) || die ("No success filename supplied\n");
-    my $results_filename   = shift(@ARGV); # don't generate result summary if filename not supplied
-
 
     # read in the contents of the log, error, and success files
     my $log_contents     = read_file($log_filename);
@@ -40,13 +38,6 @@ sub main {
     generate_failure_report($log_contents, $error_contents, $success_contents);
 
     print "\n\n";
-
-    # Generate a report of the raw tests whose performance has changed since the last run
-    # if the results file is included
-    if ($results_filename) {
-	generate_performance_report($results_filename);
-    }
-
 
 }
 
@@ -74,7 +65,7 @@ sub generate_failure_report {
 
     # data structures for holding success/failures
     my %failed;    # keys=tests, values = options failed with
-    my %succeeded; # keys=tests, values = options failed with
+    my %succeeded; # keys=tests, values = options succeeded with
 
     # ---------- Parse Failures ------------
     # now, we should match all of the errors, to generate a report for each file
@@ -120,95 +111,6 @@ sub generate_failure_report {
 	}
     }
 }
-
-sub generate_performance_report {
-    my $results_filename = shift || die("no result filename passed");
-
-    print "Performance Numbers\n";
-    print "(Note: only numbers that have changed are shown)\n";
-    print "--------------------------------\n";
-
-    
-    # hashmap that maps filenames and options to results
-    my %results_hash;
-
-    # open the file and parse it line by line
-    open (FILE, "<$results_filename");
-
-    while (<FILE>) {
-	my $header = $_;   # first line
-	my $data = <FILE>; # second line
-	
-
-	# split up the header into date, filename and compiler options
-	my ($foo, $date, $filename, $options)      = split(/(.*?2002)\:(.*?)\((.*?)\)/, $header);
-	# split up the data into hex_pc, dec_pc, and last_line_compared
-	my ($bar, $hex_pc, $dec_pc, $last_line_compared) = split (/(.*?)\s(.*?)\s(.*?)\n/, $data);
-	
-	
-	#print "date: $date-->filename: $filename-->options:$options\n";
-	#print "hex: $hex_pc\ndecimal: $dec_pc\nlast line: $last_line_compared\n";
-
-	# make up a key with filename and options
-	my $key = $filename . "($options)";
-	
-	# add an entry to the results
-	$results_hash{$key} .= "$dec_pc-->$date-->$last_line_compared-->";
-    }
-    
-    # close the file
-    close(FILE);
-
-
-    # now, process out results: if we have more than one set of results 
-    # for any key, print out some output.
-    my $current_key;
-    foreach $current_key (sort keys %results_hash) {
-	print "$current_key:\n";
-	print "  Date                         (Cycles) / (lines) = cycles/line\n"; 
-	# each entry has pc, date, last line compared separated by -->
-	# so split on --> and use results
-	my @entries = split("-->", $results_hash{$current_key});
-
-	# go through the entries a first time. If the performance 
-	# has changed, then we print out all the data that we have
-	my $change_flag = 1;
-	# start up the pipeline
-	my $last_pc = shift(@entries);
-	my $last_date = shift(@entries);
-	my $last_last_line = shift(@entries);
-	while (@entries and ($change_flag == 1)) {
-	    my $current_pc = shift (@entries);
-	    my $current_date = shift (@entries);
-	    my $current_last_line = shift (@entries);
-
-	    my $current_tput = $current_pc / $current_last_line;
-	    my $last_tput    = $last_pc    / $last_last_line;
-	    if ($current_tput != $last_tput) {$change_flag = 0;}
-
-	    # copy over the current values into the old values
-	    $last_pc = $current_pc;
-	    $last_last_line = $current_last_line;
-	}
-
-	# if there was a change print out all the data
-	if ($change_flag == 0) {	    
-	    # split again
-	    @entries = split("-->", $results_hash{$current_key});	
-	    
-	    while (@entries) {
-		my $current_pc = shift (@entries);
-		my $current_date = shift (@entries);
-		my $current_last_line = shift (@entries);
-		my $current_tput = $current_pc / $current_last_line;
-		print("  $current_date ($current_pc) / ($current_last_line)" .
-		      "   =  $current_tput\n");
-	    }
-	}
-    }
-
-}
-
 
 
 # reads in a file and returns its contents as a scalar variable

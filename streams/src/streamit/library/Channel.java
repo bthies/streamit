@@ -127,6 +127,14 @@ public class Channel extends DestroyedClass
         enqueue (new Integer (i));
     }
 
+    // push a short
+    public void pushChar(short s)
+    {
+        ASSERT (type == Short.TYPE);
+
+        enqueue (new Short (s));
+    }
+
     // push a char
     public void pushChar(char c)
     {
@@ -183,6 +191,17 @@ public class Channel extends DestroyedClass
         return data.intValue ();
     }
 
+    // pop a short
+    public short popShort()
+    {
+        ASSERT (type == Short.TYPE);
+
+        Short s;
+        s = (Short) pop ();
+        ASSERT (s != null);
+
+        return s.shortValue ();
+    }
 
     // pop a char
     public char popChar()
@@ -254,6 +273,18 @@ public class Channel extends DestroyedClass
         ASSERT (data != null);
 
         return data.intValue ();
+    }
+
+    // peek at a short
+    public short peekShort (int index)
+    {
+        ASSERT (type == Short.TYPE);
+
+        Short data;
+        data = (Short) peek (index);
+        ASSERT (data != null);
+
+        return data.shortValue ();
     }
 
     // peek at a char

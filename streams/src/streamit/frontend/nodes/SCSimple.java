@@ -1,16 +1,14 @@
-/*
- * SCSimple.java: simple stream creator
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: SCSimple.java,v 1.3 2002-09-23 21:18:48 dmaze Exp $
- */
-
 package streamit.frontend.nodes;
 
 import java.util.List;
 
 /**
- * SCSimple is a stream creator that creates a stream given its name,
- * a possibly empty list of type parameters, and a parameter list.
+ * Stream creator that instantiates streams by name.  This creates a
+ * stream given its name, a possibly empty list of type parameters,
+ * and a parameter list.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: SCSimple.java,v 1.4 2003-07-07 15:48:18 dmaze Exp $
  */
 public class SCSimple extends StreamCreator
 {
@@ -18,10 +16,22 @@ public class SCSimple extends StreamCreator
     private List types;
     private List params;
     
-    /** Create a stream object given its name and a parameter list. */
-    public SCSimple(FEContext context, String name, List types, List params)
+    /**
+     * Create a stream object given its name and a parameter list.
+     *
+     * @param context  file and line number this object corresponds to
+     * @param name     name of the stream class to instantiate
+     * @param types    list of <code>Type</code> giving the parameterized
+     *                 type list for templated stream types
+     * @param params   list of <code>Expression</code> giving the
+     *                 parameter list for the stream
+     * @param portals  list of <code>Expression</code> giving the
+     *                 portals to register the new stream with
+     */
+    public SCSimple(FEContext context, String name, List types, List params,
+                    List portals)
     {
-        super(context);
+        super(context, portals);
         this.name = name;
         this.types = types;
         this.params = params;
@@ -34,13 +44,23 @@ public class SCSimple extends StreamCreator
         return name;
     }
 
-    /** Return the type parameter list of the stream. */
+    /**
+     * Return the type parameter list of the stream.  This parameter list
+     * is used by templated stream types, such as the built-in
+     * <code>Identity</code> stream.
+     *
+     * @returns  list of <code>Type</code>
+     */
     public List getTypes()
     {
         return types;
     }
     
-    /** Return the parameter list of the stream. */
+    /**
+     * Return the parameter list of the stream.
+     *
+     * @returns  list of <code>Expression</code>
+     */
     public List getParams()
     {
         return params;

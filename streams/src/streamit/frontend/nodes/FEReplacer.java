@@ -36,7 +36,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.24 2003-06-25 15:29:27 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.25 2003-07-07 15:48:18 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -268,7 +268,8 @@ public class FEReplacer implements FEVisitor
     {
         StreamSpec newSpec = (StreamSpec)creator.getSpec().accept(this);
         if (newSpec == creator.getSpec()) return creator;
-        return new SCAnon(creator.getContext(), newSpec);
+        return new SCAnon(creator.getContext(), newSpec,
+                          creator.getPortals());
     }
     
     public Object visitSCSimple(SCSimple creator) { return creator; }

@@ -1,38 +1,57 @@
-/*
- * SCAnon.java: stream creator for anonymous streams
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: SCAnon.java,v 1.3 2002-09-17 19:58:45 dmaze Exp $
- */
-
 package streamit.frontend.nodes;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
- * SCAnon is a stream creator for anonymous streams.  It has a StreamSpec
- * object which specifies which stream is being created.
+ * Stream creator for anonymous streams.  It has a
+ * <code>StreamSpec</code> object which completely specifies the new
+ * stream being created.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: SCAnon.java,v 1.4 2003-07-07 15:48:18 dmaze Exp $
  */
 public class SCAnon extends StreamCreator
 {
     private StreamSpec spec;
     
-    /** Creates a new anonymous stream given its specification. */
-    public SCAnon(FEContext context, StreamSpec spec)
+    /**
+     * Creates a new anonymous stream given its specification.
+     *
+     * @param context  file and line number this object corresponds to
+     * @param spec     contents of the anonymous stream
+     * @param portals  list of <code>Expression</code> giving the
+     *                 portals to register the new stream with
+     */
+    public SCAnon(FEContext context, StreamSpec spec, List portals)
     {
-        super(context);
+        super(context, portals);
         this.spec = spec;
     }
     
-    /** Creates a new anonymous stream given the type of stream
-     * and its init function. */
-    public SCAnon(FEContext context, int type, Statement init)
+    /**
+     * Creates a new anonymous stream given the type of stream and
+     * its init function.
+     *
+     * @param context  file and line number this object corresponds to
+     * @param type     type of stream, as one of the constants in
+     *                 <code>StreamSpec</code>
+     * @param init     contents of the stream's initialization code
+     * @param portals  list of <code>Expression</code> giving the
+     *                 portals to register the new stream with
+     */
+    public SCAnon(FEContext context, int type, Statement init, List portals)
     {
-        super(context);
+        super(context, portals);
         this.spec = new StreamSpec(context, type, null, null,
                                    Collections.EMPTY_LIST, init);
     }
     
-    /** Returns the stream specification this creates. */
+    /**
+     * Returns the stream specification this creates.
+     *
+     * @returns  specification of the child stream
+     */
     public StreamSpec getSpec()
     {
         return spec;

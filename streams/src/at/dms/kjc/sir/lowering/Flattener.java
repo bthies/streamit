@@ -1,6 +1,7 @@
 package at.dms.kjc.sir.lowering;
 
 import at.dms.kjc.sir.lowering.partition.*;
+import at.dms.kjc.sir.lowering.partition.linear.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.reordering.*;
@@ -81,8 +82,8 @@ public class Flattener {
 
 	if (KjcOptions.partition || KjcOptions.ilppartition || KjcOptions.dppartition) {
 	    System.err.print("Partitioning...");
-	    Partitioner.doit(str, 
-			     KjcOptions.raw * KjcOptions.raw);
+	    str = Partitioner.doit(str, 
+				   KjcOptions.raw * KjcOptions.raw);
 	    System.err.println("done.");
 	}
 
@@ -160,7 +161,7 @@ public class Flattener {
 	new VarDeclRaiser().raiseVars(str);
 	System.err.println("done.");
 
-	doLinearAnalysis(str);
+	str = doLinearAnalysis(str);
 
 	// if we have don't have a container, wrap it in a pipeline
 	// for the sake of SIRScheduler.
@@ -217,7 +218,10 @@ public class Flattener {
 	}
     }
 
-    public static void doLinearAnalysis(SIRStream str) {
+    /**
+     * Returns new value of <str>.
+     */
+    public static SIRStream doLinearAnalysis(SIRStream str) {
 
 	// if someone wants to run any of the linear tools/optimizations
 	// we need to run linear analysis first to extract the information
@@ -234,40 +238,47 @@ public class Flattener {
 	    LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug);
 	    System.err.println("done.");
 
+	    // now, print out the graph using the LinearPrinter which colors the graph
+	    // nodes based on their linearity.
+	    LinearDot.printGraph(str, "linear.dot", lfa);
+
+	    // if we are doing linear partitioning, it will take care
+	    // of linear and frequency replacement automatically
+	    if (KjcOptions.linearpartition) {
+		str = new LinearPartitioner(str, lfa).toplevel();
+	    } else { 
+		// otherwise, test for linear and frequency
+		// replacement separately...
+
+		// if we are supposed to transform the graph
+		// by replacing work functions with their linear forms, do so now 
+		if (KjcOptions.linearreplacement) {
+		    System.err.print("Running linear replacement... ");
+		    LinearDirectReplacer.doReplace(lfa, str);
+		    System.err.println("done.");
+		    // print out the stream graph after linear replacement
+		    LinearDot.printGraph(str, "linear-replace.dot", lfa);
+		}
+		
+		// and finally, if we want to run frequency analysis
+		// 0 means stupid implementation, 1 means nice implemenation
+		if (KjcOptions.frequencyreplacement != FrequencyReplacer.UNKNOWN) {
+		    int replacementType = KjcOptions.frequencyreplacement;
+		    System.err.print("Running " +
+				     "(" + FrequencyReplacer.getName(replacementType) + ")" +
+				     " frequency replacement...");
+		    FrequencyReplacer.doReplace(lfa, str, replacementType);
+		    System.err.println("done.");
+		    LinearDot.printGraph(str, ("linear-frequency"+replacementType+".dot"), lfa);
+		}
+	    }
+
 	    System.err.print("Running redundancy analysis... ");	    
 	    // now, run a redundancy analysis pass and print the results
 	    LinearRedundancyAnalyzer lra = new LinearRedundancyAnalyzer(lfa);
 	    System.err.println("done.");
-
-	    
-	    // now, print out the graph using the LinearPrinter which colors the graph
-	    // nodes based on their linearity.
-	    LinearDot.printGraph(str, "linear.dot", lfa);
-	    // and another for redundancy information
+	    // print dot graph for redundancy information
 	    LinearDot.printGraph(str, "linear-redundant.dot", lfa, lra);
-
-	    
-	    // if we are supposed to transform the graph
-	    // by replacing work functions with their linear forms, do so now 
-	    if (KjcOptions.linearreplacement) {
-		System.err.print("Running linear replacement... ");
-		LinearDirectReplacer.doReplace(lfa, str);
-		System.err.println("done.");
-		// print out the stream graph after linear replacement
-		LinearDot.printGraph(str, "linear-replace.dot", lfa);
-	    }
-
-	    // and finally, if we want to run frequency analysis
-	    // 0 means stupid implementation, 1 means nice implemenation
-	    if (KjcOptions.frequencyreplacement != FrequencyReplacer.UNKNOWN) {
-		int replacementType = KjcOptions.frequencyreplacement;
-		System.err.print("Running " +
-				 "(" + FrequencyReplacer.getName(replacementType) + ")" +
-				 " frequency replacement...");
-		FrequencyReplacer.doReplace(lfa, str, replacementType);
-		System.err.println("done.");
-		LinearDot.printGraph(str, ("linear-frequency"+replacementType+".dot"), lfa);
-	    }
 
 	    if (KjcOptions.redundantreplacement) {
 		// do the redundancy replacement
@@ -280,6 +291,7 @@ public class Flattener {
 	    
 
 	}
+	return str;
     }
     
 }

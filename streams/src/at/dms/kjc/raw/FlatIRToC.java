@@ -526,6 +526,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		print(((CArrayType)type).getBaseType() + " " +
 		      ident + "[" + ((JArrayInitializer)expr).getElems().length + "] = ");
 		expr.accept(this);
+		print(";");
 		return;
 	    }
 	}

@@ -1,6 +1,6 @@
 /**
  * Class which runs defines which tests are run using the nightly regtest.
- * $Id: TestNightly.java,v 1.8 2003-10-13 16:08:35 thies Exp $
+ * $Id: TestNightly.java,v 1.9 2003-10-13 16:44:34 thies Exp $
  **/
 package streamittest;
 
@@ -58,8 +58,7 @@ public class TestNightly extends TestCase {
 	// note : we only run with raw 4 and partition now.
 	
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.RAW[4] |
-				       CompilerInterface.PARTITION_DP));
+				       CompilerInterface.RAW[4]));
 
         // -O1
         allTests.addTest(makeTestSuite(CompilerInterface.NONE |

@@ -31,6 +31,7 @@ public class FirFilter extends Filter {
     }
 
     public void init(int numTaps) {
+	int i;
         input = new Channel (Float.TYPE, 1, 10);
         output = new Channel (Float.TYPE, 1);
         numberOfTaps = numTaps;
@@ -38,7 +39,7 @@ public class FirFilter extends Filter {
         //Build the FIR Coefficients
         //NEED TO DO THIS
         //XXXMJB
-	for (int i=0; i<numTaps; i++) {
+	for (i=0; i<numTaps; i++) {
 	    COEFF[i] = i;
 	}
     }
@@ -54,8 +55,9 @@ public class FirFilter extends Filter {
     */
 
     public void work() {
+	int i;
         float sum = 0;
-        for (int i=0; i<numberOfTaps; i++) {
+        for (i=0; i<numberOfTaps; i++) {
             sum += input.peekFloat(i)*COEFF[i];
         }
 

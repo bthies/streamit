@@ -30,29 +30,40 @@ class RegTest:
     def addSource(self, src):
         self.sources.append(src)
 
-    def runCommand(self, cmd):
+    class CommandFailedException(Exception):
+        def __init__(self, what, cmd, result):
+            self.what = what
+            self.cmd = cmd
+            self.result = result
+
+        def whyDied(self):
+            # This is a little odd.  Ideally, we'd use things like
+            # os.WIFSIGNALED to see what the exit status actually is.
+            # But it looks like what Python thinks wait() and system()
+            # return is different from what wait(2) documents.  Uh.
+            if (self.result & 0xFF00):
+                status = self.result >> 8
+                why = "with signal %d" % (status & 0x7F)
+                if ((status & 0x80) != 0):
+                    why = why + (" (core dumped)")
+            else:
+                why = "with status %d" % (result & 0xFF)
+            return why
+
+        def __str__(self):
+            return "%s failed %s" % (self.what, self.whyDied())
+
+    def runCommand(self, what, cmd):
         print cmd
-        return os.system(cmd)
+        result = os.system(cmd)
+        if (result != 0):
+            raise self.CommandFailedException(what, cmd, result)
 
     def report(self, msg):
         print
         print "*** " + msg
         print
     
-    def whyDied(self, result):
-        # This is a little odd.  Ideally, we'd use things like
-        # os.WIFSIGNALED to see what the exit status actually is.
-        # But it looks like what Python thinks wait() and system()
-        # return is different from what wait(2) documents.  Uh.
-        if (result & 0xFF00):
-            status = result >> 8
-            why = "with signal %d" % (status & 0x7F)
-            if ((status & 0x80) != 0):
-                why = why + (" (core dumped)")
-        else:
-            why = "with status %d" % (result & 0xFF)
-        return why
-
     def test(self):
         oldwd = os.getcwd()
         os.chdir(os.path.join(opts.root, self.directory))
@@ -61,46 +72,29 @@ class RegTest:
         return result
 
     def dotest(self):
-        if (self.make):
-            result = self.runCommand("make")
-            if (result != 0):
-                self.report("Precompilation failed " + self.whyDied(result))
-                return result
-        
-        result = self.runCommand("java at.dms.kjc.Main -s " +
-                                 string.join(self.sources) + " > reg-out.c")
-        if (result != 0):
-            self.report("StreamIt compilation failed " + self.whyDied(result))
-            return result
-
-        result = self.runCommand("gcc -o reg-out %s reg-out.c -lstreamit" %
-                                 opts.get_cflags())
-        if (result != 0):
-            self.report("gcc compilation failed " + self.whyDied(result))
-            return result
-
-        # Stop here if there was an explicit request to not run the test.
-        if (not opts.run):
-            return result
-
-        # Otherwise, at least run the test.
-        result = self.runCommand("./reg-out %s > reg-out.dat" % self.opts)
-        if (result != 0):
-            self.report("compiled binary failed " + self.whyDied(result))
-            return result
-
-        # Stop here if there isn't a reference file.
-        if (not self.output):
-            return result
-
-        # diff the actual results against the expected.
-        result = self.runCommand("cmp %s reg-out.dat" % self.output)
-        if (result != 0):
-            self.report("Comparing actual against expected output failed "
-                        + self.whyDied(result))
-            return result
-        
-        return result
+        try:
+            if (self.make):
+                self.runCommand("Precompilation", "make")
+            self.runCommand("StreamIt compilation",
+                            "java at.dms.kjc.Main -s %s > reg-out.c" %
+                            string.join(self.sources))
+            self.runCommand("gcc compilation",
+                            "gcc -o reg-out %s reg-out.c -lstreamit" %
+                            opts.get_cflags())
+            # Stop here if there was an explicit request to not run the test.
+            if (not opts.run): return 0
+            # Otherwise, at least run the test.
+            self.runCommand("Running compiled binary",
+                            "./reg-out %s > reg-out.dat" % self.opts)
+            # Stop here if there isn't a reference file.
+            if (not self.output): return 0
+            # diff the actual results against the expected.
+            self.runCommand("Comparing results",
+                            "cmp %s reg-out.dat" % self.output)
+            return 0
+        except self.CommandFailedException, e:
+            self.report(str(e))
+            return e.result
     
 class RegTestSet:
     def __init__(self):

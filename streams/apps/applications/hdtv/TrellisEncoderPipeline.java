@@ -1,6 +1,6 @@
 /** Trellis Interleave/Encoder pipeline **/
 
-import streamit.*;
+import streamit.library.*;
 class TrellisEncoderPipeline extends SplitJoin {
     // this is a consequence of encoding an 8 bit byte
     // with an 2/3 convolutional code, resulting in

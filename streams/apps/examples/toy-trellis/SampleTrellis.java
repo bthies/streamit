@@ -2,7 +2,7 @@
  * Trellis Encoder/Decoder system that encodes/decodes blocks of 8 bytes.
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class SampleTrellis extends StreamIt
 {

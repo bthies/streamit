@@ -1,9 +1,9 @@
 /*
  * HelloWorld6.java: Hello, World example
- * $Id: HelloSeparate.java,v 1.3 2002-06-12 07:06:56 thies Exp $
+ * $Id: HelloSeparate.java,v 1.4 2003-09-29 09:08:03 thies Exp $
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class HelloSeparate extends StreamIt
 {

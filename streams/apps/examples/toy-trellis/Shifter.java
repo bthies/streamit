@@ -4,7 +4,7 @@
  * basically, we shift out the bits (least sig first)
  * as integers into the output stream
  **/
-import streamit.*;
+import streamit.library.*;
 
 class Shifter extends Filter
 {

@@ -7,9 +7,9 @@
  *   - J. Wong
  */
 
-import streamit.*;
+import streamit.library.*;
 import java.lang.*;
-import streamit.io.*;
+import streamit.library.io.*;
 import java.io.*;
 
 /*

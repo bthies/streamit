@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 /** Character Unit delay **/
 class Delay_N extends Filter {

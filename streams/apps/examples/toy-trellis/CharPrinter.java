@@ -2,7 +2,7 @@
  * Outputs data to stdout
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class CharPrinter extends Filter
 {

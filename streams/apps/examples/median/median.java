@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 class Expander extends Filter {
     int M, K;

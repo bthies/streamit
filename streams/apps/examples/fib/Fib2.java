@@ -1,9 +1,9 @@
 /* -*- Java -*-
  * Fib.str: Fibonacci number example
- * $Id: Fib2.java,v 1.14 2002-06-12 07:06:45 thies Exp $
+ * $Id: Fib2.java,v 1.15 2003-09-29 09:07:04 thies Exp $
  */
 
-import streamit.*;
+import streamit.library.*;
 
 public class Fib2 extends StreamIt
 {

@@ -11,7 +11,7 @@
  * See the HDTV writeup for a more detailed description
  * and example worked through
  **/
-import streamit.*;
+import streamit.library.*;
 
 class UngerboeckDecoder extends Filter
 {

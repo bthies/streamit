@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 /** Input sink for the stream graph containers **/
 public class InputSink extends Filter {

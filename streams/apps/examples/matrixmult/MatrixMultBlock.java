@@ -1,11 +1,11 @@
-import streamit.StreamIt;
-import streamit.Pipeline;
-import streamit.SplitJoin;
-import streamit.Filter;
-import streamit.Channel;
-import streamit.Identity;
+import streamit.library.StreamIt;
+import streamit.library.Pipeline;
+import streamit.library.SplitJoin;
+import streamit.library.Filter;
+import streamit.library.Channel;
+import streamit.library.Identity;
 
-/* $Id: MatrixMultBlock.java,v 1.6 2002-11-07 16:11:36 dmaze Exp $ */
+/* $Id: MatrixMultBlock.java,v 1.7 2003-09-29 09:07:14 thies Exp $ */
 
 public class MatrixMultBlock extends StreamIt
 {

@@ -4,7 +4,7 @@
  * the airwaves. Therefore it takes in 3 "bits"
  * and produces one "symbol" as output. LSB is brought in first.
  **/
-import streamit.*;
+import streamit.library.*;
 
 class SymbolMapper extends Filter {
     int[] map;

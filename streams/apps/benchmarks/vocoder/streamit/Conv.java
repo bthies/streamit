@@ -1,5 +1,5 @@
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 class FIRSmoothingFilter extends Filter {
 //    final float cosWin[] = { 0.25f, 0.5f, 0.75f, 1.0f, 0.75f, 0.5f, 0.25f};

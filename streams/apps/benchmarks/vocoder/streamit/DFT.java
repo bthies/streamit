@@ -1,5 +1,5 @@
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 /** DFTFilter expects that the first DFTLen numbers will all be 0.
  * Thus it can skip the initial calculation, and immediately enter the

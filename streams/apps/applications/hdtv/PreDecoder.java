@@ -13,7 +13,7 @@
  * This filter, as with the others in the encoding process,
  * takes integers as inputs, but treats them as though they were bits.
  **/
-import streamit.*;
+import streamit.library.*;
 
 class PreDecoder extends Filter {
     int state = 0; // start with state 0

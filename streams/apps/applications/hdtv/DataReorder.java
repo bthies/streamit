@@ -32,7 +32,7 @@
  * [4 5 6 7 8 9 10 11 0 1 2 3 ]
  **/
 
-import streamit.*;
+import streamit.library.*;
 
 class DataReorder extends Filter {
     static final int BYTES = 12;

@@ -1,10 +1,10 @@
-import streamit.StreamIt;
-import streamit.Pipeline;
-import streamit.SplitJoin;
-import streamit.Filter;
-import streamit.Channel;
-import streamit.Identity;
-import streamit.io.FileWriter;
+import streamit.library.StreamIt;
+import streamit.library.Pipeline;
+import streamit.library.SplitJoin;
+import streamit.library.Filter;
+import streamit.library.Channel;
+import streamit.library.Identity;
+import streamit.library.io.FileWriter;
 
 public class MatrixMult extends StreamIt
 {

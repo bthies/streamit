@@ -1,5 +1,5 @@
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 class source extends Filter {
     int N, pos;

@@ -1,5 +1,5 @@
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 /** Linear Interpolater just takes two neighbouring points and creates
  * <interp - 1> points linearly between the two **/

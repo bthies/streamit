@@ -4,7 +4,7 @@ the init function requires the value for float[N_ch] b,float[N_bm] d,a vectors, 
 
 */
 
-import streamit.*;
+import streamit.library.*;
 
 class AdapBeam extends Filter {//
     Complex [][] V; // the steering matrix

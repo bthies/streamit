@@ -11,7 +11,7 @@
  * www.cs.berkeley.edu/~demmel/cs267-1995/lecture24/lecture24.html
  */ 
 
-import streamit.*; 
+import streamit.library.*; 
 import java.lang.*; 
 import java.util.*; 
 

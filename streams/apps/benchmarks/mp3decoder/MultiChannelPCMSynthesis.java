@@ -1,5 +1,5 @@
-import streamit.SplitJoin;
-import streamit.Pipeline;
+import streamit.library.SplitJoin;
+import streamit.library.Pipeline;
 
 public class MultiChannelPCMSynthesis extends Pipeline
 {

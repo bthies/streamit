@@ -8,7 +8,7 @@
 
  */
 
-import streamit.*;
+import streamit.library.*;
 
 public class HelloWorld5 extends SplitJoin {
 

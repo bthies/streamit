@@ -4,7 +4,7 @@
  * This file tests that the field declaration and initializations
  * in PipeLines, Splitters and Joiners, and RoundRobin work correctly
  **/
-import streamit.*;
+import streamit.library.*;
 
 class FieldInit4 extends StreamIt {
   static public void main (String [] t)

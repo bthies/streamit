@@ -1,7 +1,7 @@
 /*
  * Data source for Reed-Solomon encoder/decoder example.
  */
-import streamit.*;
+import streamit.library.*;
 
 class DataSource extends Filter
 {

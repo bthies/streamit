@@ -1,10 +1,10 @@
 /*
  * Flybit.java: an interesting piece of the Butterfly example
  * (to demonstrate split/joins)
- * $Id: Flybit.java,v 1.10 2002-07-11 16:51:05 thies Exp $
+ * $Id: Flybit.java,v 1.11 2003-09-29 09:07:53 thies Exp $
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class IntSource extends Filter
 {

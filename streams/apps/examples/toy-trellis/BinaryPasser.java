@@ -3,7 +3,7 @@
  * and passes them through the pipe
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class BinaryPasser extends Filter
 {

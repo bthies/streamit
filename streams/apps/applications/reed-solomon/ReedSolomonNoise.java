@@ -3,9 +3,9 @@
  * encoding/decoding demo program
  *
  * Andrew Lamb aalamb@mit.edu 6/17/2002
- * $Id: ReedSolomonNoise.java,v 1.2 2002-06-18 19:56:03 aalamb Exp $
+ * $Id: ReedSolomonNoise.java,v 1.3 2003-09-29 09:06:13 thies Exp $
  **/
-import streamit.*;
+import streamit.library.*;
 
 class ReedSolomonNoise extends Filter {
     // locations of the noise to be added, NOISELOC[i] =n means

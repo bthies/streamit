@@ -11,8 +11,8 @@
 
 
 
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 public class FileTest extends StreamIt {
     

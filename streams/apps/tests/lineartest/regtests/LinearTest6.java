@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 /**
  * Simple streamit program to test doing confluence operators in if statements

@@ -4,7 +4,7 @@
  * 
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class TrellisEncoder extends Filter
 {

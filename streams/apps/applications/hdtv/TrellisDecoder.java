@@ -6,7 +6,7 @@
  * http://www.atsc.org/standards/a_53b.pdf
  **/
 
-import streamit.*;
+import streamit.library.*;
 
 class TrellisDecoder extends SplitJoin {
         public void init() {

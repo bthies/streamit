@@ -1,5 +1,5 @@
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 class DelMat extends SplitJoin {// genrates the proper delays for the convolution of C and h
    

@@ -7,7 +7,7 @@
  *   fns. Then test if you sync-removal combines those init fns properly. 
  */ 
 
-import streamit.*;
+import streamit.library.*;
 
 class Source extends Filter {
     int i;

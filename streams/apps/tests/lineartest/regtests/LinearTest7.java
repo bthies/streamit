@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 /**
  * Simple StreamIt application that contains some linear filters

@@ -2,7 +2,7 @@
  * Creates frames of data for the trellis encoder/decoder to work
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class FrameMaker extends Filter
 {

@@ -1,7 +1,7 @@
-import streamit.Filter;
-import streamit.Pipeline;
-import streamit.SplitJoin;
-import streamit.Channel;
+import streamit.library.Filter;
+import streamit.library.Pipeline;
+import streamit.library.SplitJoin;
+import streamit.library.Channel;
 
 public class PCMSynthesis extends Pipeline
 {

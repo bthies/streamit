@@ -2,11 +2,11 @@
  * Test for decoding mp3 files
  */
 
-import streamit.StreamIt;
-import streamit.io.FileReader;
-import streamit.io.FileWriter;
-import streamit.Filter;
-import streamit.Channel;
+import streamit.library.StreamIt;
+import streamit.library.io.FileReader;
+import streamit.library.io.FileWriter;
+import streamit.library.Filter;
+import streamit.library.Channel;
 
 public class MP3Simple extends StreamIt
 {

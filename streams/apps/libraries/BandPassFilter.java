@@ -13,7 +13,7 @@
  */
 
 import java.lang.Math.*;
-import streamit.*;
+import streamit.library.*;
 
 /**
  * A local subtractor class.  It subtracts two floats.  It has input = 2 and

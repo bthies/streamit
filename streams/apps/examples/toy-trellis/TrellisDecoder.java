@@ -27,7 +27,7 @@
  * in the minimum path that leads to s at time (t-1) 
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class TrellisDecoder extends Filter
 {

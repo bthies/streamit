@@ -2,7 +2,7 @@
  * First cut of Darpa PCA Comparison in StreamIt.
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class TestSource extends Filter{
     int c;

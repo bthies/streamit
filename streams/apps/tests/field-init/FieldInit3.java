@@ -2,7 +2,7 @@
  * Simple StreamIT program with automatic initialization
  * of field members (these are moved to the init function by the compiler);
  **/
-import streamit.*;
+import streamit.library.*;
 
 class FieldInit3 extends StreamIt {
   static public void main (String [] t)

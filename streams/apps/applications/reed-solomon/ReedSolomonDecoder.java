@@ -5,7 +5,7 @@
  *
  * Andrew Lamb aalamb@mit.edu 6/17/2002
  **/
-import streamit.*;
+import streamit.library.*;
 
 class ReedSolomonDecoder extends Filter {
 

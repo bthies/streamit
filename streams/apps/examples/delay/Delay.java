@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 class Delay extends FeedbackLoop {
 

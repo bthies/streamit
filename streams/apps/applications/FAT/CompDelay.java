@@ -1,6 +1,6 @@
 /* This is the comlex delay class, this generates a delay in a complex stream. This structure will be later used
 to generate a FIR filter */
-import streamit.*;
+import streamit.library.*;
 
 class CompDelay extends FeedbackLoop {
 

@@ -1,7 +1,7 @@
 /**
  * Convolutionally Interleaves data.
  **/
-import streamit.*;
+import streamit.library.*;
 
 public class ConvolutionalDeinterleaver extends SplitJoin {
     /** Creates a convolutional encoder with width size. **/

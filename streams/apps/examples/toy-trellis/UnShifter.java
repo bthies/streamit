@@ -4,7 +4,7 @@
  * basically, we shift in 8 bits (least sig first)
  * as integers and output a char
  **/
-import streamit.*;
+import streamit.library.*;
 
 class UnShifter extends Filter
 {

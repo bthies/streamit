@@ -12,7 +12,7 @@
  *  without express or implied warranty.
  */
 
-import streamit.*;
+import streamit.library.*;
 
 /**
  * Class FirFilter

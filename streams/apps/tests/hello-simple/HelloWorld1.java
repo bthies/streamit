@@ -4,7 +4,7 @@
   character at a time and prints it to the screen.
  */
 
-import streamit.*;
+import streamit.library.*;
 
 public class HelloWorld1 extends StreamIt
 {

@@ -2,8 +2,8 @@
  * Test for testing LowPassFilter with float files
  */
 
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 public class FMTest extends StreamIt
 {

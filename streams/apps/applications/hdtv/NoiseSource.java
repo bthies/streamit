@@ -4,7 +4,7 @@
  * encode pipeline before the symbol mapper.
  **/
 
-import streamit.*;
+import streamit.library.*;
 
 class NoiseSource extends Filter {
     int currentCount; // keep track of what element we have seen

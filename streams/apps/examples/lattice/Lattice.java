@@ -1,5 +1,5 @@
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 class LatDel extends SplitJoin {// this generates the delays in the lattice structure
   

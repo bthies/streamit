@@ -2,7 +2,7 @@
  * Data source for trellis encoder example
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class DataSource extends Filter
 {

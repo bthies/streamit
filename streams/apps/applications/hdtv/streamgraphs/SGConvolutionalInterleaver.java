@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 public class SGConvolutionalInterleaver extends StreamIt 
 {

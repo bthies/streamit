@@ -2,9 +2,9 @@
  * Simple application used for regression testing of
  * field propagation. This one uses final fields that are not static
  * and assigns them values in the init function.
- * $Id: FieldPropTest2.java,v 1.1 2002-06-18 19:55:47 aalamb Exp $
+ * $Id: FieldPropTest2.java,v 1.2 2003-09-29 09:07:47 thies Exp $
  **/
-import streamit.*;
+import streamit.library.*;
 
 class FieldPropTest2 extends StreamIt {
   static public void main (String [] t)

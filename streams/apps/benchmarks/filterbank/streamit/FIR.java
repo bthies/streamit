@@ -15,7 +15,7 @@
 
 // This is the complete FIR pipeline
 
-import streamit.*;
+import streamit.library.*;
 
 /**
  * Class FirFilter

@@ -2,8 +2,8 @@
  *
  * This is the main file for the phase VOice enCODER.
  **/
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 class VocodeSystem extends SplitJoin
 {

@@ -3,7 +3,7 @@
  * application might be able to take a trace from the
  * airwaves and output an MPEG2 video stream.
  **/
-import streamit.*;
+import streamit.library.*;
 
 public class HDTV extends StreamIt 
 {

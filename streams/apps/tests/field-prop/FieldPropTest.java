@@ -1,9 +1,9 @@
 /**
  * Simple application used for regression testing of
  * field propagation.
- * $Id: FieldPropTest.java,v 1.2 2002-06-18 19:55:47 aalamb Exp $
+ * $Id: FieldPropTest.java,v 1.3 2003-09-29 09:07:47 thies Exp $
  **/
-import streamit.*;
+import streamit.library.*;
 
 class FieldPropTest extends StreamIt {
   static public void main (String [] t)

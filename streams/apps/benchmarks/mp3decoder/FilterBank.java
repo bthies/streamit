@@ -1,7 +1,7 @@
-import streamit.Pipeline;
-import streamit.SplitJoin;
-import streamit.Filter;
-import streamit.Channel;
+import streamit.library.Pipeline;
+import streamit.library.SplitJoin;
+import streamit.library.Filter;
+import streamit.library.Channel;
 
 class FloatIdentity extends Filter
 {

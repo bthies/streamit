@@ -1,5 +1,5 @@
 /* This is the comlex FIR class, this genereates an FIR filter for a complex stream.*/
-import streamit.*;
+import streamit.library.*;
 class FIRcomp extends Pipeline {// this uses a combination of the delay funcation and FirConv to obtain an FIR structure
     public FIRcomp(int N, Complex[] h) {super(N,h);}
     public void init(int N, Complex[] h){

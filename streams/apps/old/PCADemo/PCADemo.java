@@ -2,7 +2,7 @@
  * First cut of Darpa PCA Demo in StreamIt.
  */
 
-import streamit.*;
+import streamit.library.*;
 
 
 public class PCADemo extends StreamIt

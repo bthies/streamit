@@ -11,7 +11,7 @@
 
  */
 
-import streamit.*;
+import streamit.library.*;
 
 public class HelloWorld4 extends Stream {
 

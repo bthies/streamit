@@ -16,7 +16,7 @@
  * Here is an online reference: http://www.iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/bitonicen.htm 
  */ 
 
-import streamit.*; 
+import streamit.library.*; 
 
 
 /**

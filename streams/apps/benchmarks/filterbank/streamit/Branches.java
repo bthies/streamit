@@ -15,8 +15,8 @@
 
 // This is the complete Filter Bank Split Join Structure
 
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 /**
  * Class Branches

@@ -1,10 +1,10 @@
 /*
  * UpDownOld.java: old-syntax updown
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: UpDownOld.java,v 1.1 2003-07-23 19:33:29 dmaze Exp $
+ * $Id: UpDownOld.java,v 1.2 2003-09-29 09:07:22 thies Exp $
  */
 
-import streamit.*;
+import streamit.library.*;
 
 interface CounterInterface
 {

@@ -5,8 +5,8 @@
  * output starting at N/2 of this.
  */
 
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 public class FIRfine extends StreamIt
 {

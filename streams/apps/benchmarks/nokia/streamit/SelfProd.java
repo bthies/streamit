@@ -1,5 +1,5 @@
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 class SelfProd extends Filter // this Filter mutiplies a matrix by its conjugate , M is the number of rows, N is the number columns, elements of the A are read column by column
 {

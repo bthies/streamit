@@ -13,7 +13,7 @@
  */
 
 import java.lang.Math.*;
-import streamit.*;
+import streamit.library.*;
 
 /**
  * A local adder class.  It adds four floats.  It has input = 4 and

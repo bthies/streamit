@@ -1,5 +1,5 @@
-import streamit.Filter;
-import streamit.Channel;
+import streamit.library.Filter;
+import streamit.library.Channel;
 import javazoom.jl.player.Player;
 import javazoom.jl.player.JavaSoundAudioDevice;
 

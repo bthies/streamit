@@ -10,11 +10,11 @@
  */
 
 
-import streamit.*;
+import streamit.library.*;
 import java.lang.*;
 
 import java.lang.reflect.*;
-import streamit.io.*;
+import streamit.library.io.*;
         
 class RPEDecodeFilter extends Filter 
 {
@@ -869,7 +869,7 @@ public class StGsmDecoder extends StreamIt
 	this.add(new ShortTermSynth());
 	this.add(new PostProcessingFilter());
 	//this.add(new ShortPrinter());
-	this.add(new streamit.io.FileWriter("BinaryDecoderOutput1", Short.TYPE));	
+	this.add(new FileWriter("BinaryDecoderOutput1", Short.TYPE));	
     }
 }
  

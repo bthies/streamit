@@ -1,6 +1,6 @@
 /* This is the subband analysis block, the input is a N_ch*N_rg*N_pri block, the output is a data cube of size N_ch*N_srg*N_pri,that has been multiplied by e^(j....) and then lowpass filtered, a down sapmling is done to make it of the size N_srg*N_dn=N_rg */
 
-import streamit.*;
+import streamit.library.*;
 class ElAnal extends SplitJoin {// this SplitJoin gets as its input the elements of different subbbands and pushes them through RnAnal
     public ElAnal(int N_ch,int N_pri,int N_rg,int N_dn,int N_lp,Complex W, Complex[] h){super (N_ch,N_pri,N_rg,N_dn,N_lp,W,h);}
     public void init(int N_ch,int N_pri,int N_rg,int N_dn,int N_lp,Complex W,Complex[] h) {

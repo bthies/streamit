@@ -15,7 +15,7 @@
 
 // Together with a delay this creats an FIR 
 
-import streamit.*;
+import streamit.library.*;
 
 /**
  * Class FirFilter

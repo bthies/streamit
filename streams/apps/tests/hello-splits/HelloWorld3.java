@@ -12,7 +12,7 @@
 
  */
 
-import streamit.*;
+import streamit.library.*;
 
 public class HelloWorld3 extends StreamIt
 {

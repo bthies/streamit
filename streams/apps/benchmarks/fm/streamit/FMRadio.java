@@ -2,7 +2,7 @@
  * Early attempt at an FM Radio... probably junk
  */
 
-import streamit.*;
+import streamit.library.*;
 
 public class FMRadio extends Pipeline
 {

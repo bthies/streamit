@@ -3,7 +3,7 @@
  * HDTV implementation.
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class ReedSolomonDemo extends StreamIt
 {

@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 public class SimpleSplit extends StreamIt {
     public static void main(String args[]) {

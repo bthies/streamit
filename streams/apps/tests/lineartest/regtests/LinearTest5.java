@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 /**
  * Simple streamit program to test linear filters. This test

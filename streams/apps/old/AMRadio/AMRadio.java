@@ -2,7 +2,7 @@
  * Early attempt at an AM Radio... probably junk
  */
 
-import streamit.*;
+import streamit.library.*;
 
 public class AMRadio extends Stream
 {

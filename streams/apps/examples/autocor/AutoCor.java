@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 /* n is the dataSize. nlags is the # of dot-products to be done.
  * eg. (n, nlags) can be (32,8) or (512,32) ...

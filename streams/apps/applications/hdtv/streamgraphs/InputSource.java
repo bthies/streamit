@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 /** Input source for the stream graph containers **/
 public class InputSource extends Filter {

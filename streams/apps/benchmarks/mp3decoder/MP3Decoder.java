@@ -2,8 +2,8 @@
  * Test for decoding mp3 files
  */
 
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.Header;

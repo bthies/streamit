@@ -2,7 +2,7 @@
  * VectAdd.java - a very simple program -> add two vectors (C[] = A[] + B[])  
  */ 
 
-import streamit.*; 
+import streamit.library.*; 
 
 
 /**

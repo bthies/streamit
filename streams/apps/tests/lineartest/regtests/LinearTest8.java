@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 /**
  * Simple streamit application that tests using arrays of floats as intermediaries

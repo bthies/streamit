@@ -5,7 +5,7 @@
  * input arrays (A[] and B[]) reside.    
  */ 
 
-import streamit.*; 
+import streamit.library.*; 
 
 
 /**

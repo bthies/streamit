@@ -10,7 +10,7 @@
  * -Andrew Lamb aalamb@mit.edu 7/15/2002
  **/
 
-import streamit.*;
+import streamit.library.*;
 public class ReedSolomonDecoder extends Filter {
     public static final int N = 207; // total number of bytes output
     public static final int K = 187; // total data bytes (note that N - K = T = number of ECC bytes = 20 in our example) 

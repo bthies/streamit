@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 class RateDoubler extends Filter {
     public void init() {
 	input = new Channel(Integer.TYPE, 1);

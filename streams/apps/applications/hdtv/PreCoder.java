@@ -14,7 +14,7 @@
  **/
 
 
-import streamit.*;
+import streamit.library.*;
 
 class PreCoder extends Filter {
     /** last input that we saw **/

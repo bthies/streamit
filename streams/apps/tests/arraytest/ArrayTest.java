@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 /**
  * this should print 1.0, 2.0, 3.0 ...

@@ -13,7 +13,7 @@
  */
 
 import java.lang.Math.*;
-import streamit.*;
+import streamit.library.*;
 
 /**
  * Class LowPassFilter

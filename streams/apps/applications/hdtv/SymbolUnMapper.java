@@ -1,7 +1,7 @@
 /**
  * Symbol Decoder -- maps a symbol to a sequence of 3 bits.
  **/
-import streamit.*;
+import streamit.library.*;
 
 class SymbolUnMapper extends Filter {
     public void init() {

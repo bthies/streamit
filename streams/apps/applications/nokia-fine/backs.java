@@ -1,5 +1,5 @@
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 class backs extends Filter // this Filter performs back substition LTd=y. 
    {

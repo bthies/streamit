@@ -1,5 +1,5 @@
 
-import streamit.*;
+import streamit.library.*;
 class ArrayTest2 extends StreamIt
 {
     static public void main (String [] t)

@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 class TestSource extends Filter{
     public void init() {
 	output = new Channel(Float.TYPE, 1650);

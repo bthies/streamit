@@ -4,7 +4,7 @@
  * zeros or ones.
  **/
 
-import streamit.*;
+import streamit.library.*;
 
 class NoiseSource extends Filter {
     int flipTimes;

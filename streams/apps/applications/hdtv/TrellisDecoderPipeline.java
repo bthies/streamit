@@ -1,5 +1,5 @@
 /** Trellis Decoder/Deinterleaver pipeline **/
-import streamit.*;
+import streamit.library.*;
 class TrellisDecoderPipeline extends SplitJoin {
     // this is a consequence of encoding an 8 bit byte
     // with an 2/3 convolutional code, resulting in

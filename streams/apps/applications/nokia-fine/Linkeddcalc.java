@@ -1,4 +1,4 @@
-import streamit.*; import streamit.io.*; import java.lang.Math;
+import streamit.library.*; import streamit.library.io.*; import java.lang.Math;
 /**
  * Simple parameterized delay filter.
  **/

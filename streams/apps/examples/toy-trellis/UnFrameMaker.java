@@ -2,7 +2,7 @@
  * Strips out the zero bytes that are pushed into the stream
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class UnFrameMaker extends Filter
 {

@@ -1,5 +1,5 @@
-import streamit.Filter;
-import streamit.Channel;
+import streamit.library.Filter;
+import streamit.library.Channel;
 
 public class Antialias extends Filter
 {

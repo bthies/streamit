@@ -2,7 +2,7 @@
  * Simple trellis encoder/decoder system.
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class ToyTrellis extends StreamIt
 {

@@ -6,7 +6,7 @@ the init function requires the value for float[N_pc] , the values for the steeri
 
 */
 
-import streamit.*;
+import streamit.library.*;
 
 class STAP extends Filter {//
 

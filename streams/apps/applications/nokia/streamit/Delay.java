@@ -1,7 +1,7 @@
 /**
  * Simple parameterized delay filter.
  **/
-import streamit.*;
+import streamit.library.*;
 
 public class Delay extends Pipeline {
     public Delay(int delay) {

@@ -4,7 +4,7 @@
  * In digital systems, this is also a shift register
  * (MSB is shifted in first).
  **/
-import streamit.*;
+import streamit.library.*;
 
 class UnBitifier extends Filter {
     public void init() {

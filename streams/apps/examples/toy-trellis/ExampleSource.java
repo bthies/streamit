@@ -3,7 +3,7 @@
  * http://pw1.netcom.com/~chip.f/viterbi/algrthms.html
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class ExampleSource extends Filter
 {

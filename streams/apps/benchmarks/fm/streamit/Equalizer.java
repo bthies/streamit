@@ -13,7 +13,7 @@
  */
 
 import java.lang.Math.*;
-import streamit.*;
+import streamit.library.*;
 
 /*
  * Software equalizer.  This version uses n+1 low-pass filters directly,

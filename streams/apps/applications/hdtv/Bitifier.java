@@ -4,7 +4,7 @@
  * In digital systems, this is known as a shift register
  * (MSB is shifted out first).
  **/
-import streamit.*;
+import streamit.library.*;
 
 class Bitifier extends Filter {
     public void init() {

@@ -1,5 +1,5 @@
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 class RowCol extends SplitJoin       // this Filter converts the elements of an m by n matrix from row by row format to column by column format
 {

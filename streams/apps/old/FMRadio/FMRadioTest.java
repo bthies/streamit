@@ -2,7 +2,7 @@
  * Test for testing LowPassFilter with float files
  */
 
-import streamit.*;
+import streamit.library.*;
 
 public class FMRadioTest extends StreamIt
 {

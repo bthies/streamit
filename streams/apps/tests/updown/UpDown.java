@@ -1,9 +1,9 @@
 /*
  * UpDown.java: a counter that counts between 0 and 10, and back
- * $Id: UpDown.java,v 1.9 2002-06-12 07:07:10 thies Exp $
+ * $Id: UpDown.java,v 1.10 2003-09-29 09:08:25 thies Exp $
  */
 
-import streamit.*;
+import streamit.library.*;
 
 interface UpDownMsg
 {

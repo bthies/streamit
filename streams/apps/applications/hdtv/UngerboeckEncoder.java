@@ -14,7 +14,7 @@
  * output: z2,z1,z0 (to the symbol mapper)
  */
 
-import streamit.*;
+import streamit.library.*;
 
 class UngerboeckEncoder extends Filter
 {

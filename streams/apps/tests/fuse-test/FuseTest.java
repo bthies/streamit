@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 public class FuseTest extends StreamIt {
     static public void main(String[] args) {

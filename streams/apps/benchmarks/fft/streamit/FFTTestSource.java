@@ -1,4 +1,4 @@
-import streamit.*;
+import streamit.library.*;
 
 /**
  * Outputs a value of 1 at position 1, and 0 at all other positions.

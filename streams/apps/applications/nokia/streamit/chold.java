@@ -1,6 +1,6 @@
 
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 class chold extends Filter // this Filter performs the cholesky decomposition through 
    {

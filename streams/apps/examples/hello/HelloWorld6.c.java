@@ -1,9 +1,9 @@
 /*
  * HelloWorld6.c: semi-translated (out of Kopi) "Hello World"
- * $Id: HelloWorld6.c.java,v 1.2 2001-09-26 17:35:09 karczma Exp $
+ * $Id: HelloWorld6.c.java,v 1.3 2003-09-29 09:07:09 thies Exp $
  */
 
-import streamit.internal.*;
+import streamit.library.internal.*;
 
 class StreamitGenerated
 {

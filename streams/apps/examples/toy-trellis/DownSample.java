@@ -3,7 +3,7 @@
  * a stream by a factor of two. Throws error messages when there is an
  * two subsequent data items are not sequential.
  **/
-import streamit.*;
+import streamit.library.*;
 
 class DownSample extends Filter {
     public void init() {

@@ -1,5 +1,5 @@
-import streamit.*;
-import streamit.io.*;
+import streamit.library.*;
+import streamit.library.io.*;
 
 class MagnitudeStuff extends Pipeline implements Constants {
   public void init(final int DFTLen, final int newLen, final float speed) {

@@ -1,12 +1,7 @@
-/*
- * DoComplexProp.java: perform constant propagation on function bodies
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.14 2003-05-28 18:47:42 dmaze Exp $
- */
-
 package streamit.frontend.tojava;
 
 import streamit.frontend.nodes.*;
+import streamit.frontend.passes.SymbolTableVisitor;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -15,14 +10,15 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * DoComplexProp does all of the work required to convert complex
- * expressions to real ones in front-end code.  It builds up symbol
- * tables for variables, and then runs VarToComplex to replace
- * references to complex variables with complex expressions referencing
- * the fields of the variables.  ComplexProp is then run to cause an
- * expression to be either purely real or be an ExprComplex at the
- * top level.  Finally, this pass inserts statements as necessary to
- * cause all statements to deal with purely real values.
+ * Perform constant propagation on function bodies.  This class does
+ * all of the work required to convert complex expressions to real
+ * ones in front-end code.  It builds up symbol tables for variables,
+ * and then runs VarToComplex to replace references to complex
+ * variables with complex expressions referencing the fields of the
+ * variables.  ComplexProp is then run to cause an expression to be
+ * either purely real or be an ExprComplex at the top level.  Finally,
+ * this pass inserts statements as necessary to cause all statements
+ * to deal with purely real values.
  *
  * Things this is known to punt on:
  * -- Complex parameters to function calls not handled directly
@@ -30,69 +26,26 @@ import java.util.ArrayList;
  * -- Initialized complex variables should have their value separated
  *    out.
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: DoComplexProp.java,v 1.15 2003-06-30 20:50:25 dmaze Exp $
  */
-public class DoComplexProp extends FEReplacer
+public class DoComplexProp extends SymbolTableVisitor
 {
-    private StreamType streamType;
-    private LinkedList oldStreamTypes;
-    private SymbolTable symTab;
-    private GetExprType getExprType;
-    private VarToComplex varToComplex;
     private ComplexProp cplxProp;
     private TempVarGen varGen;
     
     public DoComplexProp(TempVarGen varGen)
     {
-        streamType = null;
-        oldStreamTypes = new LinkedList();
-        symTab = null;
-        varToComplex = null;
+        super(null, null);
         cplxProp = new ComplexProp();
         this.varGen = varGen;
-    }
-
-    private void pushSymTab()
-    {
-        symTab = new SymbolTable(symTab);
-        varToComplex = new VarToComplex(symTab, streamType);
-        getExprType = new GetExprType(symTab, streamType);
-    }
-    
-    private void popSymTab()
-    {
-        symTab = symTab.getParent();
-        varToComplex = new VarToComplex(symTab, streamType);
-        getExprType = new GetExprType(symTab, streamType);
-    }
-
-    private void paramListToSymTab(List params)
-    {
-        for (Iterator iter = params.iterator(); iter.hasNext(); )
-        {
-            Parameter param = (Parameter)iter.next();
-            symTab.registerVar(param.getName(), param.getType());
-        }
-    }
-
-    private void pushStreamType(StreamType st)
-    {
-        oldStreamTypes.addFirst(streamType);
-        streamType = st;
-        varToComplex = new VarToComplex(symTab, streamType);
-        getExprType = new GetExprType(symTab, streamType);
-    }
-    
-    private void popStreamType()
-    {
-        streamType = (StreamType)oldStreamTypes.removeFirst();
-        varToComplex = new VarToComplex(symTab, streamType);
-        getExprType = new GetExprType(symTab, streamType);
     }
 
     private Expression doExprProp(Expression expr)
     {
         expr = (Expression)expr.accept(this);
-        expr = (Expression)expr.accept(varToComplex);
+        expr = (Expression)expr.accept(new VarToComplex(symtab, streamType));
         expr = (Expression)expr.accept(cplxProp);
         return expr;
     }
@@ -117,7 +70,7 @@ public class DoComplexProp extends FEReplacer
         Expression exprVar = new ExprVar(expr.getContext(), tempVar);
         Type type = new TypePrimitive(TypePrimitive.TYPE_COMPLEX);
         addStatement(new StmtVarDecl(expr.getContext(), type, tempVar, null));
-        symTab.registerVar(tempVar, type);
+        symtab.registerVar(tempVar, type);
         addStatement(new StmtAssign(expr.getContext(),
                                     new ExprField(expr.getContext(),
                                                   exprVar, "real"),
@@ -138,9 +91,9 @@ public class DoComplexProp extends FEReplacer
     {
         String tempVar = varGen.varName(varGen.nextVar(null));
         Expression exprVar = new ExprVar(expr.getContext(), tempVar);
-        Type type = (Type)expr.accept(getExprType);
+        Type type = getType(expr);
         addStatement(new StmtVarDecl(expr.getContext(), type, tempVar, expr));
-        symTab.registerVar(tempVar, type);
+        symtab.registerVar(tempVar, type);
         return exprVar;
     }
 
@@ -169,34 +122,6 @@ public class DoComplexProp extends FEReplacer
         return x;
     }
 
-    public Object visitFieldDecl(FieldDecl field)
-    {
-        for (int i = 0; i < field.getNumFields(); i++)
-            symTab.registerVar(field.getName(i), field.getType(i), field,
-                               SymbolTable.KIND_FIELD);
-        return field;
-    }
-
-    public Object visitFunction(Function func)
-    {
-        symTab.registerFn(func);
-        pushSymTab();
-        paramListToSymTab(func.getParams());
-        Object result = super.visitFunction(func);
-        popSymTab();
-        return result;
-    }
-
-    public Object visitFuncWork(FuncWork func)
-    {
-        symTab.registerFn(func);
-        pushSymTab();
-        paramListToSymTab(func.getParams());
-        Object result = super.visitFuncWork(func);
-        popSymTab();
-        return result;
-    }
-
     public Object visitStmtAssign(StmtAssign stmt)
     {
         Expression lhs = stmt.getLHS();
@@ -214,8 +139,7 @@ public class DoComplexProp extends FEReplacer
                                         cplx.getImag()));
             return null;
         }
-        else if (((Type)lhs.accept(getExprType)).isComplex() &&
-                 !((Type)rhs.accept(getExprType)).isComplex())
+        else if (getType(lhs).isComplex() && !(getType(rhs).isComplex()))
         {
             addStatement(new StmtAssign(stmt.getContext(),
                                         new ExprField(lhs.getContext(),
@@ -232,14 +156,6 @@ public class DoComplexProp extends FEReplacer
             return new StmtAssign(stmt.getContext(), lhs, rhs);
         else
             return stmt;
-    }
-
-    public Object visitStmtBlock(StmtBlock block)
-    {
-        pushSymTab();
-        Statement result = (Statement)super.visitStmtBlock(block);
-        popSymTab();
-        return result;
     }
 
     public Object visitStmtEnqueue(StmtEnqueue stmt)
@@ -297,7 +213,6 @@ public class DoComplexProp extends FEReplacer
             String name = stmt.getName(i);
             Type type = stmt.getType(i);
             Expression init = stmt.getInit(i);
-            symTab.registerVar(name, type, stmt, SymbolTable.KIND_LOCAL);
 
             // If this is uninitialized, or the type isn't complex,
             // go on with our lives.
@@ -329,7 +244,7 @@ public class DoComplexProp extends FEReplacer
                 continue;
             }
             // Maybe the right-hand side isn't complex at all.
-            if (!((Type)init.accept(getExprType)).isComplex())
+            if (!(getType(init).isComplex()))
             {
                 addStatement(new StmtVarDecl(ctx, type, name, null));
                 addStatement(new StmtAssign(ctx,
@@ -353,19 +268,5 @@ public class DoComplexProp extends FEReplacer
         if (newTypes.isEmpty())
             return null;
         return new StmtVarDecl(ctx, newTypes, newNames, newInits);
-    }
-
-    public Object visitStreamSpec(StreamSpec spec)
-    {
-        pushSymTab();
-        pushStreamType(spec.getStreamType());
-        paramListToSymTab(spec.getParams());
-        
-        Object result = super.visitStreamSpec(spec);
-
-        popStreamType();
-        popSymTab();
-
-        return result;
     }
 }

@@ -56,7 +56,7 @@ public class FilterTraceNode extends TraceNode
 	return filter;
     }
     public String toString() {
-	return filter.toString();
+	return filter.toString() + "[" + x + ", " + y + "]";
     }
     
     public boolean isFileInput()

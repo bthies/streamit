@@ -439,4 +439,10 @@ public class SpaceTimeBackend
 	    BCFile.generate(rawChip);
 	}
     }
+
+    public static void println(String s) 
+    {
+	if (KjcOptions.debug) 
+	    System.out.println(s);
+    }
 }

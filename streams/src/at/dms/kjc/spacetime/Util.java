@@ -264,5 +264,19 @@ public class Util {
 	}
     }
 
-    
+    public static Iterator traceNodeTraversal(LinkedList traceTraversal) 
+    {
+	LinkedList trav = new LinkedList();
+	ListIterator traces = traceTraversal.listIterator();
+
+	while(traces.hasNext()) {
+	    Trace trace = (Trace)traces.next();
+	    TraceNode traceNode = trace.getHead();
+	    while (traceNode != null) {
+		trav.add(traceNode);
+		traceNode = traceNode.getNext();	
+	    }
+	}
+	return trav.listIterator();
+    }
 }

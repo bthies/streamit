@@ -30,13 +30,13 @@ public class OffChipBuffer
     
     protected OffChipBuffer(TraceNode source, TraceNode dest)
     {
-	assert source != null && dest != null : 
-	    "source or dest cannot be null for an off chip buffer";
+	assert source != null || dest != null : 
+	    "Invalid buffer: " + source + "->" + dest;
 
 	if ((source.isFilterTrace() && !dest.isOutputTrace()) ||
 	    (source.isOutputTrace() && !dest.isInputTrace()) ||
 	    (source.isInputTrace() && !dest.isFilterTrace()))
-	    Utils.fail("invalid buffer type");
+	    Utils.fail("Invalid Buffer: " + source + "->" + dest);
 	
 	this.source = source;
 	this.dest = dest;
@@ -83,8 +83,10 @@ public class OffChipBuffer
 	else if (source.isOutputTrace() && dest.isInputTrace()) {
 	    //if this buffer is redundant, return the upstream buffer
 	    //it may be a buffer with no input so call getNonRedundant on that shit
-	    if (redundant())
-		return OffChipBuffer.getBuffer(source, source.getPrevious()).getNonRedundant();
+	    if (redundant()) {
+		return OffChipBuffer.getBuffer(source.getPrevious(), source).getNonRedundant();
+	    }
+	    
 	    return this;
 	}
 	else { //(source.isFilterTrace() && dest.isOutputTrace())
@@ -254,5 +256,11 @@ public class OffChipBuffer
 	    "owner not set yet";
 	return dram.getNeighboringTile();
     }
+
+    public String toString() 
+    {
+	return source + "->" + dest + "[" + dram + "]";
+    }
+    
 }
 

@@ -25,61 +25,79 @@ public class BufferDRAMAssignment
      **/
     public static void run(LinkedList steadyList, RawChip chip) 
     {
-	ListIterator steadyTrav = steadyList.listIterator();
 	//first go thru the traversal and assign
 	//input->filter and filter->output buffers to drams 
 	//based on jasper's placement
-	while(steadyTrav.hasNext()) {
-	    Trace trace = (Trace)steadyTrav.next();
-	    TraceNode traceNode = trace.getHead();
-	    while (traceNode != null) {
-		//assign the buffer between inputtracenode and the filter
-		//to a dram
-		if (traceNode.isInputTrace()) 
-		    inputFilterAssignment((InputTraceNode)traceNode, chip);
-		//assign the buffer between the output trace node and the filter
-		if (traceNode.isOutputTrace())
+	Iterator traceNodeTrav = Util.traceNodeTraversal(steadyList);
+	while(traceNodeTrav.hasNext()) {
+	    TraceNode traceNode = (TraceNode)traceNodeTrav.next();
+	    //assign the buffer between inputtracenode and the filter
+	    //to a dram
+	    if (traceNode.isInputTrace()) 
+		inputFilterAssignment((InputTraceNode)traceNode, chip);
+	    //assign the buffer between the output trace node and the filter
+	    if (traceNode.isOutputTrace())
 		    filterOutputAssignment((OutputTraceNode)traceNode, chip);
-		traceNode = traceNode.getNext();
-	    }
+	    traceNode = traceNode.getNext();
+	}
+
+	//assign all the outputnodes with one output first
+	traceNodeTrav = Util.traceNodeTraversal(steadyList);
+	while(traceNodeTrav.hasNext()) {
+	    TraceNode traceNode = (TraceNode)traceNodeTrav.next();
 	    
+	    if (traceNode.isOutputTrace() &&
+		((OutputTraceNode)traceNode).oneOutput()) {
+		performAssignment((OutputTraceNode)traceNode, chip);
+	    }
 	}
 	
 	//cycle thru the steady state trav...
 	//when we hit an output trace node
 	//assign its output buffers to
-	steadyTrav = steadyList.listIterator();
-	while(steadyTrav.hasNext()) {
-	    Trace trace = (Trace)steadyTrav.next();
-	    TraceNode traceNode = trace.getHead();
-	    while (traceNode != null) {
-		//for each output trace node get assign
-		//its output buffers to ports
-		//based on the ordering given by assignment order
-		//assign buffers in descending order of items sent to 
-		//the buffer	
-		if (traceNode.isOutputTrace()) {
-		    //get the assignment for each input trace node
-		    HashMap ass = assignment((OutputTraceNode)traceNode, chip);
-		    System.out.println(traceNode + " outputs = " + 
-				       ((OutputTraceNode)traceNode).getWeights().length);
-		    Iterator inputTs = ass.keySet().iterator();
-
-		    //commit the assignment
-		    while (inputTs.hasNext()) {
-			InputTraceNode inputT = (InputTraceNode)inputTs.next();
-			System.out.println("Assigning (" + (OutputTraceNode)traceNode + "->" + 
-					   inputT + ") to " + ass.get(inputT));
-			
-			OffChipBuffer.getBuffer((OutputTraceNode)traceNode,
-						inputT).setDRAM((StreamingDram)ass.get(inputT));
-		    }
-		}
-		traceNode = traceNode.getNext();
+	traceNodeTrav = Util.traceNodeTraversal(steadyList);
+	while(traceNodeTrav.hasNext()) {
+	    TraceNode traceNode = (TraceNode)traceNodeTrav.next();
+	    //for each output trace node get assign
+	    //its output buffers to ports
+	    //based on the ordering given by assignment order
+	    //assign buffers in descending order of items sent to 
+	    //the buffer	
+	    
+	    //do not assign one output outputTracenodes
+	    //perform assign will not assign anything that has 
+	    //an assignment already
+	    if (traceNode.isOutputTrace()) {
+		performAssignment((OutputTraceNode)traceNode, chip);
 	    }
+	}
+	
+    }
+    
+    //get the assignment and set the assignment in OffChipBuffer
+    //perform assign will not assign anything that has 
+    //an assignment already
+    private static void performAssignment(OutputTraceNode traceNode, RawChip chip) 
+    {
+	//get the assignment for each input trace node
+	HashMap ass = assignment((OutputTraceNode)traceNode, chip);
+	Iterator inputTs = ass.keySet().iterator();
+	
+	//commit the assignment
+	while (inputTs.hasNext()) {
+	    InputTraceNode inputT = (InputTraceNode)inputTs.next();
+	    //if already assigned do nothing
+	    if (OffChipBuffer.getBuffer(traceNode, inputT).isAssigned())
+		continue;
+	    SpaceTimeBackend.println("Assigning (" + (OutputTraceNode)traceNode + "->" + 
+				     inputT + ") to " + ass.get(inputT));
+	    
+	    OffChipBuffer.getBuffer((OutputTraceNode)traceNode,
+				    inputT).setDRAM((StreamingDram)ass.get(inputT));
 	}
     }
     
+   
     private static void inputFilterAssignment(InputTraceNode input, RawChip chip) 
     {
 	//don't assign this to a dram if there are no inputs
@@ -96,6 +114,8 @@ public class BufferDRAMAssignment
 	    index = rand.nextInt(tile.getIODevices().length);
 	}
 	//assign the buffer to the dram
+	SpaceTimeBackend.println("Assigning (" + input + "->" + 
+			   input.getNext() + " to " + tile.getIODevices()[index] + ")");
 	OffChipBuffer.getBuffer(input, input.getNext()).setDRAM((StreamingDram)tile.getIODevices()[index]);
     }
 
@@ -111,6 +131,8 @@ public class BufferDRAMAssignment
 	    index = rand.nextInt(tile.getIODevices().length);
 	}
 	//assign the buffer to the dram
+	SpaceTimeBackend.println("Assigning (" + output.getPrevious() + "->" + 
+			   output + " to " + tile.getIODevices()[index] + ")");
 	OffChipBuffer.getBuffer(output.getPrevious(), output).setDRAM((StreamingDram)tile.getIODevices()[index]);	
     }
     
@@ -127,23 +149,59 @@ public class BufferDRAMAssignment
     {
 	HashMap assign = new HashMap();
 	Iterator inputTs = output.getSortedOutputs().iterator();
+	//the input traces that have more than one input 
+	//and were not initially assigned
+	HashSet needToAssign = new HashSet();
 	HashSet unassignedPorts = new HashSet();
+
+	//if this outputtracenode has one output try to assign it 
+	//to the same dram as its previous buffer
+	if (output.oneOutput()) {
+	    StreamingDram wanted = OffChipBuffer.getBuffer(output.getPrevious(),
+							   output).getDRAM();
+	    //if the dram is not being used by another buffer connected to 
+	    //the input trace, then assign it, otherwise let the below crap
+	    //handle it.
+	    if (!assignedInputDRAMs(output.getDests()[0][0]).contains(wanted))
+		assign.put(output.getDests()[0][0], wanted);
+	}
+
 	//populate the unassigned ports set
 	for (int i = 0; i < chip.getDevices().length; i++) 
 	    unassignedPorts.add(chip.getDevices()[i]);
-	
-	while (inputTs.hasNext()) {
-	    System.out.println("Input");
-	    
-	    //make sure we have enough ports for the outputs
 
+	//try to assign input trace nodes with one input 
+	//first to make them redundant
+	while (inputTs.hasNext()) {
+	    InputTraceNode inputT = (InputTraceNode)inputTs.next();
+	    if (inputT.oneInput()) {
+		StreamingDram wanted =
+		    OffChipBuffer.getBuffer(inputT, inputT.getNext()).getDRAM();
+		if (unassignedPorts.contains(wanted)) {
+		    unassignedPorts.remove(wanted);
+		    assign.put(inputT, wanted);
+		}
+		else //we could not assign it, the port was already assigned to a one input
+		    needToAssign.add(inputT);
+	    }
+	    else {
+		//otherwise we need to assign it below
+		needToAssign.add(inputT);
+	    }
+	    
+	}
+	//assign the rest
+	needToAssign.iterator();
+	while (inputTs.hasNext()) {
 	    InputTraceNode inputT = (InputTraceNode)inputTs.next();
 	    //now assign the buffer to the first available port that show up 
 	    //in the iterator
 	    Iterator portOrder = assignmentOrder(output, inputT, chip);
 	    boolean assigned = false;
+	    //SpaceTimeBackend.println("Assigning " + output + "->" + inputT + ": ");
 	    while (portOrder.hasNext()) {
 		StreamingDram current = ((PortDistance)portOrder.next()).dest;
+		//SpaceTimeBackend.println("  Trying " + current);
 		//assign the current dram to this input trace node
 		//and exit the inner loop if the port has not 
 		//been used by this output trace and the corresponding input trace
@@ -152,6 +210,7 @@ public class BufferDRAMAssignment
 		    unassignedPorts.remove(current);
 		    assign.put(inputT, current);
 		    assigned = true;
+		    //SpaceTimeBackend.println("  Assigned to " + current);
 		    break;
 		}
 	    }
@@ -221,7 +280,13 @@ public class BufferDRAMAssignment
 						    output).getDRAM();
 	StreamingDram dst = OffChipBuffer.getBuffer(input, 
 						    input.getNext()).getDRAM();
+	//	System.out.println("Order for: " + OffChipBuffer.getBuffer(output,input) + ", " +
+	//		   src + " to " + dst);
 	for (int i = 0; i < chip.getDevices().length; i++) {
+	    //  System.out.println("  " + (StreamingDram)chip.getDevices()[i] + " = " + 
+	    //		       (Router.distance(src, chip.getDevices()[i]) + 
+	    //			Router.distance(chip.getDevices()[i], dst)));
+	    
 	    sorted.add(new PortDistance((StreamingDram)chip.getDevices()[i],
 					Router.distance(src, chip.getDevices()[i]) + 
 					Router.distance(chip.getDevices()[i], dst)));
@@ -235,26 +300,36 @@ class PortDistance implements Comparable
 {
     public StreamingDram dest;
     public int distance;
+    //put this crap in so it sorts correctly with duplicate distances...
+    private static int index;
+    public int id;
 
     public PortDistance(StreamingDram dst, int dist) 
     {
 	this.dest = dst;
 	this.distance = dist;
+	id = index++;
     }
     
 
     public boolean equals(PortDistance pd)
     {
-	return (this.distance == pd.distance);
+	return (this.distance == pd.distance &&
+		dest == pd.dest);
     }
     
     public int compareTo(Object pd) 
     {
 	assert pd instanceof PortDistance;
 	PortDistance portd = (PortDistance)pd;
-	if (portd.distance == this.distance)
-	    return 0;
-	if (portd.distance > this.distance)
+	if (portd.distance == this.distance) {
+	    if (dest == portd.dest)
+		return 0;
+	    if (id < portd.id)
+		return -1;
+	    return 1;
+	}
+	if (this.distance < portd.distance)
 	    return -1;
 	else
 	    return 1;

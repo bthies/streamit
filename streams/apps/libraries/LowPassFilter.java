@@ -21,20 +21,16 @@ import streamit.*;
  * Implements a Low Pass FIR Filter
  */
 
-class LowPassFilter extends Filter {
+public class LowPassFilter extends Filter {
 
     int numberOfTaps;
     float COEFF[]; 
     float cutoffFreq, samplingRate;
+    int mDecimation;
 
     public LowPassFilter(float sampleRate, float cutFreq, int numTaps)
     {
-	super();
-	//all frequencies are in hz
-	samplingRate = sampleRate;
-	cutoffFreq = cutFreq;
-	numberOfTaps = numTaps;
-	COEFF = new float[numTaps];
+	super(sampleRate, cutFreq, numTaps);
     }
 
     Channel input = new Channel (Float.TYPE, 1);
@@ -47,8 +43,14 @@ class LowPassFilter extends Filter {
     }
 
 
-    public void init()
+    public void init(float sampleRate, float cutFreq, int numTaps)
     {
+	//all frequencies are in hz
+	samplingRate = sampleRate;
+	cutoffFreq = cutFreq;
+	numberOfTaps = numTaps;
+	COEFF = new float[numTaps];
+
 	float pi = (float)java.lang.Math.PI;
 	//build the taps, and call super.init(taps[])
 	float temptaps[] = new float[numberOfTaps];
@@ -102,6 +104,8 @@ class LowPassFilter extends Filter {
 	}
 
 	input.popFloat();
+	//for(int i=0;i<mDecimation;i++)
+	//    input.popFloat();
 	output.pushFloat(sum);
     }
 }

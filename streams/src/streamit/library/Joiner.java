@@ -9,7 +9,6 @@ import java.util.*;
 public class Joiner extends Operator
 {
     List srcs = new ArrayList ();
-    int inputIndex = 0;
 
     public Channel streamInput [] = null;
     public Channel streamOutput = null;

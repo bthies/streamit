@@ -2,6 +2,7 @@ package streamit;
 
 import java.util.*;
 import java.lang.reflect.*;
+import java.math.BigInteger;
 
 import streamit.scheduler.*;
 
@@ -267,4 +268,32 @@ public class SplitJoin extends Stream
         return splitJoin;
     }
 
+    void setupBufferLengths (Schedule schedule)
+    {
+        ListIterator iter;
+        iter = childrenStreams.listIterator ();
+
+        // go through all the children
+        while (iter.hasNext ())
+        {
+            Stream child = (Stream) iter.next ();
+            ASSERT (child);
+
+            child.setupBufferLengths (schedule);
+
+            // init the split channel
+            {
+                BigInteger splitBufferSize = schedule.getBufferSizeBetween (splitter, child);
+                ASSERT (splitBufferSize);
+                child.getInputChannel ().setChannelSize (splitBufferSize.intValue ());
+            }
+
+            // init the join channel
+            {
+                BigInteger joinBufferSize = schedule.getBufferSizeBetween (child, joiner);
+                ASSERT (joinBufferSize);
+                child.getOutputChannel ().setChannelSize (joinBufferSize.intValue ());
+            }
+        }
+    }
 }

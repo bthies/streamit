@@ -13,9 +13,9 @@ public abstract class Filter extends Stream
 
     public Filter(float x, float y, float z, int a, float b)
     {
-	super(x,y,z,a,b);
+        super(x,y,z,a,b);
     }
-    
+
     public Filter()
     {
         super();
@@ -27,7 +27,7 @@ public abstract class Filter extends Stream
     }
 
     public Filter(int n1, int n2) {
-	super(n1, n2);
+        super(n1, n2);
     }
 
     public Filter(float f)
@@ -101,5 +101,10 @@ public abstract class Filter extends Stream
         self.setProduction (pushCount);
         self.setConsumption (popCount);
         return self;
+    }
+
+    void setupBufferLengths (Schedule schedule)
+    {
+        // this function doesn't need to do anything
     }
 }

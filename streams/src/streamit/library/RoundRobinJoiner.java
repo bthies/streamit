@@ -12,10 +12,12 @@ public class RoundRobinJoiner extends Joiner {
 
     public void work ()
     {
-        ASSERT (streamInput [inputIndex]);
-
-        passOneData (streamInput [inputIndex], streamOutput);
-        inputIndex = (inputIndex + 1) % srcs.size ();
+        int inputIndex;
+        for (inputIndex = 0; inputIndex < srcs.size (); inputIndex++)
+        {
+            ASSERT (streamInput [inputIndex]);
+            passOneData (streamInput [inputIndex], streamOutput);
+        }
     }
 
     // ----------------------------------------------------------------

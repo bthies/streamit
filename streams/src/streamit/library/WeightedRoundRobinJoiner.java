@@ -6,7 +6,6 @@ import java.util.*;
 
 public class WeightedRoundRobinJoiner extends Joiner {
     List srcsWeight = new ArrayList ();
-    int inputCount = 0;
 
     void addWeight (Integer weight)
     {
@@ -30,14 +29,17 @@ public class WeightedRoundRobinJoiner extends Joiner {
 
     public void work ()
     {
-        while (inputCount == ((Integer)srcsWeight.get (inputIndex)).intValue ())
-        {
-            inputCount = 0;
-            inputIndex = (inputIndex + 1) % srcs.size ();
-        }
+        ASSERT (srcsWeight.size () == srcs.size ());
 
-        passOneData (streamInput [inputIndex], streamOutput);
-        inputCount++;
+        int inputIndex;
+        for (inputIndex = 0; inputIndex < srcs.size (); inputIndex++)
+        {
+            int inputCount;
+            for (inputCount = ((Integer)srcsWeight.get (inputIndex)).intValue (); inputCount > 0 ; inputCount--)
+            {
+                passOneData (streamInput [inputIndex], streamOutput);
+            }
+        }
     }
 
     // ----------------------------------------------------------------

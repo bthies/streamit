@@ -36,6 +36,11 @@ public abstract class Scheduler extends DestroyedClass
     public abstract Schedule computeSchedule ();
 
     /**
+     * Get a computed schedule.
+     */
+    public abstract Schedule getSchedule ();
+
+    /**
      * Construct a new filter object
      */
     public SchedFilter newSchedFilter (Object stream, int push, int pop, int peek)

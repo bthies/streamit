@@ -251,5 +251,42 @@ public class FeedbackLoop extends Stream
 
         return stream;
     }
+
+    void setupBufferLengths (Schedule schedule)
+    {
+        // some of these asserts are restrictions on functionality
+        // of this function and not on what a correct streamit structure would
+        // be
+        ASSERT (body != null);
+        ASSERT (loop != null);
+        ASSERT (joiner != null);
+        ASSERT (splitter != null);
+
+        // just go through and init the bloody buffers
+
+        // start with getting body and loop to initialize their interal buffers
+        body.setupBufferLengths (schedule);
+        loop.setupBufferLengths (schedule);
+
+        // now setup the buffer sizes:
+
+        // between joiner and body
+        joiner.getIOField ("streamOutput", 0).makePassThrough ();
+        body.getInputChannel ().setChannelSize (schedule.getBufferSizeBetween (joiner, body).intValue ());
+
+        // between body and splitter
+        splitter.getIOField ("streamInput", 0).setChannelSize (schedule.getBufferSizeBetween (body, splitter).intValue ());
+        body.getOutputChannel ().makePassThrough ();
+
+        // between splitter and loop
+        loop.getInputChannel ().setChannelSize (schedule.getBufferSizeBetween (splitter, loop).intValue ());
+
+        // between loop and joiner
+        loop.getOutputChannel ().setChannelSize (schedule.getBufferSizeBetween (loop, joiner).intValue ());
+
+        // make sure that the input/output channels push data through right away:
+        if (getInputChannel () != null) getInputChannel ().makePassThrough ();
+        if (getOutputChannel () != null) splitter.getIOField ("streamOutput", 0).makePassThrough ();
+    }
 }
 

@@ -16,6 +16,9 @@ public class Channel extends DestroyedClass
     Integer popPushCount = null;
     Integer peekCount = null;
 
+    int maxSize = -1;
+    boolean passThrough = false;
+
     // the channel should be constructed with a 0-length array
     // indicating the type that will be held in this channel.
     void setupChannel (Class channelType)
@@ -64,6 +67,10 @@ public class Channel extends DestroyedClass
         {
             ASSERT (source != null);
 
+            // if I need to get data from my source I better not be a scheduled
+            // buffer.
+            ASSERT (maxSize == -1);
+
             source.work ();
         }
     }
@@ -83,6 +90,11 @@ public class Channel extends DestroyedClass
                 source.addFullChannel (this);
             declaredFull = true;
         }
+
+        // make sure that the channel isn't overflowing
+        ASSERT (queue.size () <= maxSize || maxSize == -1);
+
+        if (passThrough) sink.work ();
     }
 
     private Object dequeue ()
@@ -347,4 +359,17 @@ public class Channel extends DestroyedClass
 
     void setSource (Operator _source) { source = _source; }
     void setSink (Operator _sink) { sink = _sink; }
+
+    void setChannelSize (int size)
+    {
+        ASSERT (size > 0);
+
+        maxSize = size;
+        ASSERT (queue.size () <= maxSize);
+    }
+
+    void makePassThrough ()
+    {
+        passThrough = true;
+    }
 }

@@ -9,7 +9,6 @@ import java.util.*;
 public class Splitter extends Operator
 {
     List dest = new ArrayList ();
-    int outputIndex = 0;
     public Channel streamInput = null;
     public Channel streamOutput [] = null;
 

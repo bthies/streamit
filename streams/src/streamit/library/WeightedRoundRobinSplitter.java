@@ -7,7 +7,6 @@ import java.util.*;
 public class WeightedRoundRobinSplitter extends Splitter
 {
     List destWeight = new ArrayList ();
-    int outputCount = 0;
 
     void addWeight (Integer weight)
     {
@@ -33,14 +32,15 @@ public class WeightedRoundRobinSplitter extends Splitter
     {
         ASSERT (destWeight.size () == dest.size ());
 
-        while (outputCount == ((Integer)destWeight.get (outputIndex)).intValue ())
+        int outputIndex;
+        for (outputIndex = 0; outputIndex < dest.size (); outputIndex++)
         {
-            outputCount = 0;
-            outputIndex = (outputIndex + 1) % dest.size ();
+            int outputCount;
+            for (outputCount = ((Integer)destWeight.get (outputIndex)).intValue (); outputCount > 0 ; outputCount--)
+            {
+                passOneData (streamInput, streamOutput [outputIndex]);
+            }
         }
-
-        passOneData (streamInput, streamOutput [outputIndex]);
-        outputCount++;
     }
 
     // ----------------------------------------------------------------

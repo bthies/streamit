@@ -39,11 +39,6 @@ class VectSource extends Filter
     output = new Channel(Integer.TYPE, 1); 
     this.N = N; 
     this.idx = 0;
-  
-    //this.Z = new int[N]; 
-    //for (int i=0; i<N; i++) 
-    //  this.Z[i] = Z[i]; 
- 
     this.Z = Z; 
   } 
   public void work() 
@@ -59,9 +54,6 @@ class VectSource extends Filter
  */ 
 class TwoVectSource extends SplitJoin 
 { 
-  /* the input vectors */  
-    //int A[], B[]; 
-
   public TwoVectSource(int N) 
   { 
     super(N); 
@@ -69,7 +61,7 @@ class TwoVectSource extends SplitJoin
   public void init(final int N) 
   { 
     /* set up the input vectors */ 
-      int A[], B[]; 
+    int A[], B[]; 
     A = new int[N]; 
     B = new int[N]; 
     for (int i=0; i<N; i++) 
@@ -112,7 +104,7 @@ class VectAdd extends StreamIt
   }  
   public void init() 
   { 
-    final int N =  10; 
+    final int N = 10;  
 
     this.add(new TwoVectSource(N)); 
     this.add(new VectAddKernel()); 

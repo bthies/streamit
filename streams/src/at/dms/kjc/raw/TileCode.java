@@ -26,6 +26,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     public static HashSet realTiles;
     public static HashSet tiles;
 
+    public static final String ARRAY_INDEX = "__ARRAY_INDEX__";
+
     public static void generateCode(FlatNode topLevel) 
     {
 	//create a set containing all the coordinates of all
@@ -96,21 +98,28 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 
     private static String createJoinerWork(FlatNode joiner) 
     {
-	boolean fp = false;
 	StringBuffer ret = new StringBuffer();
 	int buffersize = nextPow2((Integer)SimulationCounter.maxJoinerBufferSize.get(joiner),
 				  joiner);
 	//get the type, since this joiner is guaranteed to be connected to a filter
-	CType ctype = getJoinerType(joiner);  //??
-	if (ctype.equals(CStdType.Float))
-	    fp = true;
-	String type = ctype.toString(); 	
+	CType type = Util.getBaseType(Util.getJoinerType(joiner));  //??
+	
 	ret.append("#define __BUFSIZE__ " + buffersize + "\n");
 	ret.append("#define __MINUSONE__ " + (buffersize - 1) + "\n\n");
 	
 	ret.append("void work() { \n");
 	//print the temp for the for loop
 	ret.append("  int rep;\n");
+	//print the index vars if the type is an array type
+	if (Util.getJoinerType(joiner).isArrayType()) {
+	    String dims[] = 
+		Util.makeString(((CArrayType)Util.getJoinerType(joiner)).getDims());
+	    ret.append("  int ");
+	    for (int i = 0; i < dims.length -1; i++)
+		ret.append(ARRAY_INDEX + i + ", ");
+	    ret.append(ARRAY_INDEX + (dims.length -1) + ";\n");
+	}
+
 	HashSet buffers = (HashSet)JoinerSimulator.buffers.get(joiner);
 	Iterator bufIt = buffers.iterator();
 	//print all the var definitions
@@ -118,12 +127,19 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    String current = (String)bufIt.next();
 	    ret.append("int __first" + current + " = 0;\n");
 	    ret.append("int __last" + current + " = 0;\n");
-	    ret.append(type + " __buffer" + current + "[__BUFSIZE__];\n");
+	    ret.append(type + " __buffer" + current + "[__BUFSIZE__]");
+	    if (Util.getJoinerType(joiner).isArrayType()) {
+		String dims[] = 
+		    Util.makeString(((CArrayType)Util.getJoinerType(joiner)).getDims());
+		for (int i = 0; i < dims.length; i++)
+		    ret.append("[" + dims[i] + "]");
+	    }
+	    ret.append(";\n");
 	}
 
-	printSchedule((JoinerScheduleNode)Simulator.initJoinerCode.get(joiner), ret, fp);
+	printSchedule(joiner, (JoinerScheduleNode)Simulator.initJoinerCode.get(joiner), ret);
 	ret.append("while(1) {\n");
-	printSchedule((JoinerScheduleNode)Simulator.steadyJoinerCode.get(joiner), ret, fp);
+	printSchedule(joiner, (JoinerScheduleNode)Simulator.steadyJoinerCode.get(joiner), ret);
 	ret.append("}}\n");
 
 	return ret.toString();
@@ -132,7 +148,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     /**
      * Prints the schedule to <ret> for node list starting at <first>.
      */
-    private static void printSchedule(JoinerScheduleNode first, StringBuffer ret, boolean fp) {
+    private static void printSchedule(FlatNode joiner, JoinerScheduleNode first, StringBuffer ret) {
 	// get the array of the schedule
 	JoinerScheduleNode[] nodes = JoinerScheduleNode.toArray(first);
 	//	System.out.println("Joiner sched size " + nodes.length);
@@ -178,7 +194,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		    // if we've't exhausted the possibility of finding
 		    // loops, then make a single statement
 		    if (ahead >= MAX_LOOKAHEAD) {
-			ret.append(nodes[pos].getC(fp));
+			ret.append(nodes[pos].getC(Util.getJoinerType(joiner)));
 			pos++;
 		    }
 		} else {
@@ -190,7 +206,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		    ret.append("for (rep = 0; rep < " + reps + "; rep++) {\n");
 		    // add the component code
 		    for (int i=0; i<ahead; i++) {
-			ret.append(nodes[pos+i].getC(fp));
+			ret.append(nodes[pos+i].getC(Util.getJoinerType(joiner)));
 		    }
 		    ret.append("}\n");
 		    // increment the position
@@ -207,16 +223,16 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     /**
      * Appends schedule for <node> to <ret>, only compressing single lines that are repeated.
      */
-    private static void oldPrintSchedule(JoinerScheduleNode node, StringBuffer ret, boolean fp) {
+    private static void oldPrintSchedule(FlatNode joiner, JoinerScheduleNode node, StringBuffer ret, boolean fp) {
 	while (node != null) {
 	    int repeat = 1;
-	    String code = node.getC(fp);
+	    String code = node.getC(Util.getJoinerType(joiner));
 	    node = node.next;
 	    //look for repeats
 	    while (true) {
 		if (node == null)
 		    break;
-		if (node.getC(fp).equals(code)) {
+		if (node.getC(Util.getJoinerType(joiner)).equals(code)) {
 		    node = node.next;
 		    repeat++;
 		}
@@ -232,27 +248,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	}
     }
     
-    private static CType getJoinerType(FlatNode joiner) 
-    {
-	boolean found;
-	//search backward until we find the first filter
-	while (!(joiner == null || joiner.contents instanceof SIRFilter)) {
-	    found = false;
-	    for (int i = 0; i < joiner.inputs; i++) {
-		if (joiner.incoming[i] != null) {
-		    joiner = joiner.incoming[i];
-		    found = true;
-		}
-	    }
-	    if (!found)
-		Utils.fail("cannot find any upstream filter from " + joiner.contents.getName());
-	}
-	if (joiner != null) 
-	    return ((SIRFilter)joiner.contents).getOutputType();
-	else 
-	    return CStdType.Null;
-    }
-    
+   
 
     private static int nextPow2(Integer i, FlatNode node) 
     {

@@ -1,5 +1,7 @@
 package at.dms.kjc.raw;
 
+import at.dms.kjc.*;
+
 public class JoinerScheduleNode 
 {
     public static final int FIRE = 0;
@@ -34,29 +36,53 @@ public class JoinerScheduleNode
 
     //print the c code for this node
     //fp is true if this is floating point code
-    public String getC(boolean fp) {
+    public String getC(CType ctype) {
 	StringBuffer ret = new StringBuffer();
+	StringBuffer arrayAccess = new StringBuffer();
+	boolean fp = ctype.equals(CStdType.Float);
+	String dims[] = null; 
 	
+	if (ctype.isArrayType()) {
+	    dims = Util.makeString(((CArrayType)ctype).getDims());
+	    fp = ((CArrayType)ctype).getBaseType().equals(CStdType.Float);
+	}
+	
+	if (ctype.isArrayType()) {
+	    //code to loop thru all of the array elements
+	    for (int i = 0; i < dims.length; i++) {
+		ret.append("for (" + TileCode.ARRAY_INDEX + i + " = 0; " +
+			   TileCode.ARRAY_INDEX + i + " < " + dims[i] + "; " + 
+			   TileCode.ARRAY_INDEX + i + "++)\n");
+	    }
+	    //the code for the indexed access to the array
+	    if (ctype.isArrayType()) {
+		for (int i = 0; i < dims.length; i++) {
+		    arrayAccess.append("[" + TileCode.ARRAY_INDEX + i + "]");
+		}
+	    }
+	}
 	if (type == FIRE) {
 	    ret.append("static_send(__buffer" + buffer +
-		       "[__first" + buffer + "++]);\n");
+		       "[__first" + buffer + "++]");
+	    ret.append(arrayAccess);
+	    ret.append(");\n");
 	    ret.append("__first" + buffer + " = __first" + buffer + " & __MINUSONE__;\n");
-	    //	    ret.append("if (first" + buffer + " >= BUFSIZE) first" + 
-	    //	       buffer + " = 0;\n");
-	    // ret.append("if (first" + buffer + " == last" + 
-	    //       buffer + ") print_int(2000);\n");
 	    
 	}
 	else if (type == RECEIVE) { //receive
-	    ret.append("__buffer" + buffer + "[__last" + buffer + "++] = static_receive");
+	    ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
+	    ret.append(arrayAccess);
+	    ret.append("= static_receive");
 	    if (fp)
 		ret.append("_f");
 	    ret.append("();\n");
 	    ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
-	    //ret.append("if (last" + buffer + " >= BUFSIZE) last" + buffer + " = 0;\n");
+	    
 	}
 	else if (type == INITPATH){
-	    ret.append("__buffer" + buffer + "[__last" + buffer + "++] = initPath(" + 
+	    ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
+	    ret.append(arrayAccess);
+	    ret.append("= initPath(" + 
 		       initPathIndex + ");\n");
 	    ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
 	}

@@ -413,7 +413,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    }
 	    //sqrt(calculate steadyStateExcutions * hops * pushed)
 	    int hops = route.length -2;
-	    int items;
+	    int items = 0;
+	    	    
 	    //case 1:
 	    //if sending thru a splitter 
 	    if (node.edges[0].contents instanceof SIRSplitter) {
@@ -446,11 +447,12 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		items = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() *
 		    push;
 	    }
-	    sum += /*((int))Math.sqrt*/(items * hops) + items * Math.pow(numAssigned * 2.0, 3.0);
+	    sum += (items * hops) + items * Math.pow(numAssigned * 2.0, 3.0);
 	}
-    return sum;
+	return sum;
     }
-
+    
+    
     
     //return true if the perturbation is accepted
     private static boolean perturbConfiguration(double T) throws Exception

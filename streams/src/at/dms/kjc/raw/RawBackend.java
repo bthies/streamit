@@ -26,6 +26,7 @@ public class RawBackend {
 			interfaceTables) {
 	System.out.println("Entry to RAW Backend");
 
+	//this must be run now, FlatIRToC relies on it!!!
 	Renamer.renameAll(str);
 	
 	// move field initializations into init function

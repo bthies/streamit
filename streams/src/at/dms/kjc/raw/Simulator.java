@@ -247,7 +247,11 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		next.put(hops[hops.length - 1], new HashSet());
 	    ((HashSet)next.get(hops[hops.length - 1])).add(hops[hops.length -1]);
 	}
-	asm(Layout.getTile(fire), prev, next);
+	
+	//create the appropriate amount of rou
+	int elements = getTypeSize(Util.getOutputType(fire));
+	for (int i = 0; i < elements; i++)
+	    asm(Layout.getTile(fire), prev, next);
     }
     
     private void asm(Coordinate fire, HashMap previous, HashMap next) 
@@ -664,5 +668,27 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	System.out.println();
 	
     }
-       
+
+    /*
+      for a given CType return the size (number of elements that need to be sent
+      when routing).
+    */
+    public static int getTypeSize(CType type) {
+
+	if (!(type.isArrayType() || type.isClassType()))
+	    return 1;
+	
+	if (type instanceof CArrayType) {
+	    int elements = 1;
+	    int dims[] = Util.makeInt(((CArrayType)type).getDims());
+	    
+	    for (int i = 0; i < dims.length; i++) 
+		elements *= dims[i];
+
+	    return elements;
+	}
+	
+	System.out.println("should not be here");
+	return 1;
+    }
 }

@@ -15,21 +15,6 @@ class LrL extends SplitJoin{// performes the forward substitution
 
 
 class dcalc extends StreamIt {
-    /*int K=10;
-      int N=20;
-      int Q=2;
-      int W=2;
-      float[][] h=
-      {
-      {1,3},
-      {2,5}
-      };
-      float[][] C=
-      {
-      {1,0},
-      {1,2}
-      };
-      float[] r= {1,2,3,4,5};*/
     
     /**
      * If you want to test just this class, then uncomment this
@@ -60,31 +45,18 @@ class dcalc extends StreamIt {
 	h=new float[W][K];
 	C=new float[Q][K];
 	r=new float[N*Q+W-1];
-	h[0][0]=1;
-	h[0][1]=3;
-	h[1][0]=2;
-	h[1][1]=5;
-	C[0][0]=1;
-	C[0][1]=0;
-	C[1][0]=1;
-	C[1][1]=2;
 	
 	for (int i=0;i<N*Q+W-1;i++)
 	    r[i]=i;
 
-	//float sum=0;	
 
 	for (int i=0;i<K;i++) {
-	    //sum+=1;
-	    //sum=sum/;
 
 	    for (int j=0;j<Q;j++){
-		//sum+=1;
 		C[j][i]=i*Q+j+1+i*j;
 	    }
 
 	    for (int j=0;j<W;j++){
-		//sum++;
 		h[j][i]=1+i+j+j*j/(i+1);
 	    }
 	}

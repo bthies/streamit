@@ -140,7 +140,7 @@ public class FEIRToSIR implements FEVisitor {
 
     private void setStreamFields(SIRStream stream, List vars)
     {
-        JFieldDeclaration[] fields = new JFieldDeclaration[1];
+        JFieldDeclaration[] fields = new JFieldDeclaration[0];
         List fieldList = new ArrayList();
         for (Iterator iter = vars.iterator(); iter.hasNext(); )
         {

@@ -96,13 +96,13 @@ public class ConstantProp {
 	}
 	// propagate to peek expression
 	JExpression newPeek = (JExpression)filter.getPeek().accept(propagator);
-	if (newPeek!=null && newPeek!=filter.getPop()) {
-	    filter.setPop(newPeek);
+	if (newPeek!=null && newPeek!=filter.getPeek()) {
+	    filter.setPeek(newPeek);
 	}
 	// propagate to push expression
-	JExpression newPush = (JExpression)filter.getPop().accept(propagator);
-	if (newPush!=null && newPush!=filter.getPop()) {
-	    filter.setPop(newPush);
+	JExpression newPush = (JExpression)filter.getPush().accept(propagator);
+	if (newPush!=null && newPush!=filter.getPush()) {
+	    filter.setPush(newPush);
 	}
     }
 

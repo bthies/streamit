@@ -30,7 +30,8 @@ public class StreaMITMain {
 	//using the raw backend to generate uniprocessor code
 	//so set the number of tiles to 1 and 
 	//turn partitioning on...
-	if (KjcOptions.standalone || KjcOptions.rstream) {
+	//make sure that cluster option has not been turned on
+	if ((KjcOptions.standalone || KjcOptions.rstream) && KjcOptions.cluster == -1) {
 	    KjcOptions.raw = 1;
 	    KjcOptions.partition_dp = true;
 	}

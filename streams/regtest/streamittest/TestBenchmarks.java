@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.23 2003-06-26 20:59:15 thies Exp $
+ * $Id: TestBenchmarks.java,v 1.24 2003-07-11 14:25:03 dmaze Exp $
  **/
 package streamittest;
 
@@ -33,11 +33,7 @@ public class TestBenchmarks extends StreamITTestCase {
 
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
-        // compiler runs out of memory on any RAW configuration
-        if (!flagsContainRaw(flags) ||
-            flagsContainFusion(flags)) {
-	    suite.addTest(new TestBenchmarks("testBitonicSortRecursive", flags));
-        }
+        suite.addTest(new TestBenchmarks("testBitonicSortRecursive", flags));
 	suite.addTest(new TestBenchmarks("testBitonicSort", flags));
 	// can't fit on raw 8 without partition
 	if (!flagsContainRaw(flags) || 
@@ -51,7 +47,9 @@ public class TestBenchmarks extends StreamITTestCase {
         suite.addTest(new TestBenchmarks("testFft", flags));
         suite.addTest(new TestBenchmarks("testFilterbank", flags));
         suite.addTest(new TestBenchmarks("testFm", flags));
-        suite.addTest(new TestBenchmarks("testGsm", flags));
+        // has a feedback loop, doesn't fuse:
+        if (!flagsContainFusion(flags))
+            suite.addTest(new TestBenchmarks("testGsm", flags));
         suite.addTest(new TestBenchmarks("testNokia", flags));
         suite.addTest(new TestBenchmarks("testMatMulBlock", flags));
         suite.addTest(new TestBenchmarks("testCFAR", flags));

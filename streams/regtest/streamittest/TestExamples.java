@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.27 2003-03-21 17:09:36 thies Exp $
+ * $Id: TestExamples.java,v 1.28 2003-07-11 14:25:03 dmaze Exp $
  **/
 package streamittest;
 
@@ -39,7 +39,9 @@ public class TestExamples extends StreamITTestCase {
      * (most of) the examples in the docs/examples/hand directory.
      **/
     public static Test suite(int flags) {
-	TestSuite suite = new TestSuite();
+        CompilerInterface cif =
+            CompilerInterface.createCompilerInterface(flags);
+	TestSuite suite = new TestSuite("Examples " + cif.getOptionsString());
 	
 	// can't fit on raw 4 or 8 without partition
 	if (!flagsContainRaw(flags) || 
@@ -57,9 +59,16 @@ public class TestExamples extends StreamITTestCase {
 	// contains mutually recursive definitions, and is only in new syntax
 	//suite.addTest(new TestExamples("testChol", flags)); 
 
-	suite.addTest(new TestExamples("testFib", flags));
-	suite.addTest(new TestExamples("testFib2", flags));
-	suite.addTest(new TestExamples("testFile", flags));
+        // things that don't fuse:
+        if (!flagsContainFusion(flags))
+        {
+            // feedback loop
+            suite.addTest(new TestExamples("testFib", flags));
+            suite.addTest(new TestExamples("testFib2", flags));
+            // file reader
+            suite.addTest(new TestExamples("testFile", flags));
+        }
+        
 	suite.addTest(new TestExamples("testHello", flags));
 
 	// test only 8 tile since code size is a problem otherwise

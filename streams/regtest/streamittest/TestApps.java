@@ -1,6 +1,6 @@
 /**
  * Test the programs in the apps/applications directory
- * $Id: TestApps.java,v 1.11 2003-02-03 20:50:09 aalamb Exp $
+ * $Id: TestApps.java,v 1.12 2003-07-11 14:25:03 dmaze Exp $
  **/
 package streamittest;
 
@@ -35,16 +35,17 @@ public class TestApps extends StreamITTestCase {
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
 	
-	suite.addTest(new TestApps("testCrc", flags));
+        // this one doesn't fuse to a single tile:
+        if (!flagsContainFusion(flags))
+            suite.addTest(new TestApps("testCrc", flags));
 	
-	// this one doesn't fit on raw 8 without partitioning
-	if (((flags & CompilerInterface.RAW[8]) == CompilerInterface.RAW[8]) &&
-	    (!((flags & CompilerInterface.PARTITION) == CompilerInterface.PARTITION))) {
-	    // don't add it to the regtest.
-	} else {
-	    // otherwise, we are good to go
+	// this one doesn't fit on raw 8 without partitioning,
+        // and doesn't fuse (it has a filereader).
+        if (!flagsContainFusion(flags) &&
+            (!flagsContainRaw(8, flags) ||
+             flagsContainPartition(flags)))
 	    suite.addTest(new TestApps("testMP3Simple", flags));
-	}
+
 	suite.addTest(new TestApps("testNokiaFine", flags));
 	
 	return suite;

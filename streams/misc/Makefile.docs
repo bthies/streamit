@@ -1,0 +1,68 @@
+#
+# Makefile.docs: makefile fragment for building documentation
+# $Id: Makefile.docs,v 1.1 2003-09-26 15:53:42 dmaze Exp $
+#
+
+# Include this from a Makefile that builds documentation.
+# Define DOCS as the basenames of .tex files that are to be
+# generated, and have the all: target depend on docs.
+
+include $(STREAMIT_HOME)/misc/Makefile.vars
+
+DVI := $(DOCS:%=%.dvi)
+PS := $(DOCS:%=%.ps)
+PDF := $(DOCS:%=%.pdf)
+HTML := $(DOCS:%=%.html)
+TEXT := $(DOCS:%=%.txt)
+# RERUN := "(There were undefined references|Rerun to get (cross-references|the bars) right)"
+RERUN := "Rerun to get (cross-references|the bars) right"
+RERUNBIB := "No file.*\.bbl|Citation.*undefined"
+
+docs: $(DVI) $(PS) $(PDF) $(HTML) $(TEXT)
+
+%.pdf: %.ps
+	$(PS2PDF) $< $@
+
+%.ps: %.dvi
+	$(DVIPS) -P cmz -o $@ $<
+
+# NB: the GNU make docs say that only the first pattern rule found is used.
+# So give every possible combination of LaTeX, METAPOST, and BibTeX.
+%.dvi %.aux %.log: %.tex %.mp %.bib
+	$(MPOST) $*
+	$(LATEX) $*
+	if egrep -q $(RERUNBIB) $*.log; then $(BIBTEX) $*; $(LATEX) $*; fi
+	while egrep -q $(RERUN) $*.log; do $(LATEX) $*; done
+
+%.dvi %.aux %.log: %.tex %.mp
+	$(MPOST) $*
+	$(LATEX) $*
+	while egrep -q $(RERUN) $*.log; do $(LATEX) $*; done
+
+%.dvi %.aux %.log: %.tex %.bib
+	$(LATEX) $*
+	if egrep -q $(RERUNBIB) $*.log; then $(BIBTEX) $*; $(LATEX) $*; fi
+	while egrep -q $(RERUN) $*.log; do $(LATEX) $*; done
+
+%.dvi %.aux %.log: %.tex
+	$(LATEX) $*
+	while egrep -q $(RERUN) $*.log; do $(LATEX) $*; done
+
+%.html: %.tex %.hva
+	$(HEVEA) -nosymb $*.hva $*.tex
+	if [ -f $*.image.tex ]; then $(IMAGEN) -png $*; fi
+	$(HEVEA) -nosymb $*.hva $*.tex
+
+# If there's no HeVeA magic file, we might be able to live without.
+%.html: %.tex
+	$(HEVEA) -nosymb $*.tex
+	if [ -f $*.image.tex ]; then $(IMAGEN) -png $*; fi
+	$(HEVEA) -nosymb $*.tex
+
+%.txt: %.html
+	$(PERL) $(STREAMIT_HOME)/misc/htmlformat.pl $< > $@
+
+clean::
+	rm -f $(DVI) $(PS) $(PDF) $(HTML) $(TEXT)
+	rm -f *~ *.aux *.log *.bbl *.blg *.toc *.haux *.htoc *.png
+	rm -f *.out *.image.tex *.[0-9]

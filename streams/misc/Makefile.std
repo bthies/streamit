@@ -1,17 +1,4 @@
-# C compiler
-ifneq ($(strip $(CC)),)
-CC = gcc
-endif
-
-# C++ compiler
-ifneq ($(strip $(CXX)),)
-CXX = g++
-endif
-
-# java compiler
-ifneq ($(strip $(JAVAC)),)
-JAVAC = jikes
-endif
+include $(STREAMIT_HOME)/misc/Makefile.vars
 
 # java dependencies creation
 ifeq ($(strip $(JAVAC)),jikes)
@@ -35,12 +22,12 @@ JAVA_SRCS_CLEAN = $(filter %.java.clean, $(JAVA_TARGET:%.class=%.java.clean))
 %.java : %.opt
 	@rm -f $*.java
 	cd $(dir $<) && \
-	java at.dms.compiler.tools.optgen.Main $(notdir $<)
+	$(JAVA) at.dms.compiler.tools.optgen.Main $(notdir $<)
 
 %.java : %.g
 	@rm -f $*.java
 	cd $(dir $<) && \
-	java antlr.Tool $(notdir $<)
+	$(JAVA) antlr.Tool $(notdir $<)
 
 %.o : %.c 
 	@rm -f $*.o
@@ -95,7 +82,7 @@ ifneq ($(MAKECMDGOALS),clean)
 %.u : %.java
 	@# generating .u files
 	jikes +M -nowarn $(JAVAC_DEPS_OPT) $(JAVA_OPT) $*.java
-	
+
 %.java.deps : %.u
 	@rm -f $*.java.deps
 	@# append dependecies from all sources to $*.class
@@ -133,9 +120,9 @@ ifeq ($(MAKECMDGOALS),clean)
 	@touch $*.u
 
 java_class_compile :
-	
+
 endif
-	
+
 
 ifeq (,$(CLEAN_RULE))
 CLEAN_RULE = defined
@@ -151,7 +138,7 @@ generic_clean: java_deps_clean
 
 depend:
 	rm -f Makefile.deps
-	make Makefile.deps
+	$(MAKE) Makefile.deps
 
 include Makefile.deps
 

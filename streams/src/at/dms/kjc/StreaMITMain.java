@@ -28,10 +28,7 @@ public class StreaMITMain {
 		stream = top;
 	}
 
-	if (stream == null) {
-	    System.err.println("No Top-Level Stream defined!");
-	    System.exit(-1);
-	}
+	SemanticChecker.doCheck(stream);
 	
 	if (StreamItOptions.rawRows != -1) {
 	    System.out.println("*/");

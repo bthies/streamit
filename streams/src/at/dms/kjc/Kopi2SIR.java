@@ -1677,7 +1677,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    if (args.length > 1)
 		at.dms.util.Utils.fail(printLine(self) + 
 				       "Too many args to setDelay");
-	    int delay  = ((JIntLiteral)args[0].accept(this)).intValue();
+	    JExpression delay  = (JExpression)args[0].accept(this);
 	    ((SIRFeedbackLoop)parentStream).setDelay(delay);
 	    //reset currentMethod on all returns
 	    currentMethod = parentMethod;

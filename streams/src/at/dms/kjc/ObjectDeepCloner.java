@@ -302,7 +302,6 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 				     JFieldDeclaration[] fields,
 				     JMethodDeclaration[] methods,
 				     JMethodDeclaration init,
-				     int delay,
 				     JMethodDeclaration initPath) {
 	// record this container as one that should be cloned
 	toBeCloned.add(self);
@@ -344,7 +343,6 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 				      JFieldDeclaration[] fields,
 				      JMethodDeclaration[] methods,
 				      JMethodDeclaration init,
-				      int delay,
 				      JMethodDeclaration initPath) {
     }
     

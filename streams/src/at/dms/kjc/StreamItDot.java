@@ -297,7 +297,6 @@ public class StreamItDot implements AttributeStreamVisitor
                                     JFieldDeclaration[] fields,
                                     JMethodDeclaration[] methods,
                                     JMethodDeclaration init,
-                                    int delay,
                                     JMethodDeclaration initPath)
     {
 	// check the parent relationship
@@ -318,7 +317,7 @@ public class StreamItDot implements AttributeStreamVisitor
         np = (NamePair)self.getBody().accept(this);
         printEdge(joinName, np.first);
         printEdge(np.last, splitName);
-        np = (NamePair)self.getLoop().accept(this);
+	np = (NamePair)self.getLoop().accept(this);
         printEdge(splitName, np.first);
         printEdge(np.last, joinName);
 

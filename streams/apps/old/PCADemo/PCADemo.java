@@ -16,24 +16,24 @@ public class PCADemo extends StreamIt
   public void init()
   {
     System.out.println("Running the PCA Demo...");
-    int numChannels           = 48;
-    int numSamples            = 4096;
-    int numBeams              = 16;
-    int numCoarseFilterTaps   = 16;
-    int numFineFilterTaps     = 64;
-    int coarseDecimationRatio = 2;
-    int fineDecimationRatio   = 2;
-    int numSegments           = 1;
-    int numPostDec1           = numSamples/coarseDecimationRatio;
-    int numPostDec2           = numPostDec1/fineDecimationRatio;
-    int mfSize                = numSegments*numPostDec2;
-    int pulseSize             = numPostDec2/2;
-    int predecPulseSize       = pulseSize*coarseDecimationRatio*fineDecimationRatio;
-    int targetBeam            = numBeams/4;
-    int targetSample          = numSamples/4;
-    int targetSamplePostdec   = 1 + targetSample/coarseDecimationRatio/fineDecimationRatio;
-    float dOverLambda         = 0.5f;
-    float cfarThreshold       = 0.95f*dOverLambda*numChannels*(0.5f*pulseSize);
+    final int numChannels           = 48;
+    final int numSamples            = 4096;
+    final int numBeams              = 16;
+    final int numCoarseFilterTaps   = 16;
+    final int numFineFilterTaps     = 64;
+    final int coarseDecimationRatio = 2;
+    final int fineDecimationRatio   = 2;
+    final int numSegments           = 1;
+    final int numPostDec1           = numSamples/coarseDecimationRatio;
+    final int numPostDec2           = numPostDec1/fineDecimationRatio;
+    final int mfSize                = numSegments*numPostDec2;
+    final int pulseSize             = numPostDec2/2;
+    final int predecPulseSize       = pulseSize*coarseDecimationRatio*fineDecimationRatio;
+    final int targetBeam            = numBeams/4;
+    final int targetSample          = numSamples/4;
+    final int targetSamplePostdec   = 1 + targetSample/coarseDecimationRatio/fineDecimationRatio;
+    final float dOverLambda         = 0.5f;
+    final float cfarThreshold       = 0.95f*dOverLambda*numChannels*(0.5f*pulseSize);
 
     add(new DataSource(numChannels, numSamples, numBeams,
 		       targetBeam, targetSample, predecPulseSize));

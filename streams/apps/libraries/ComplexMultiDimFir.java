@@ -55,7 +55,7 @@ public class ComplexMultiDimFir extends Filter
     }
     COEFF[0] = 1;
 
-    input = new Channel (Float.TYPE, 2*decimationRatio);
+    input = new Channel (Float.TYPE, 2*decRatio);
     output = new Channel (Float.TYPE, 2);
   }
 

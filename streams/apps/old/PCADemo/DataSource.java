@@ -47,8 +47,8 @@ class DataSource extends Filter
     numberOfSamples    = nSamples;
     targetBeam         = tarBeam;
     targetSample       = tarSample;
-    predecPulseSize    = predecPulseSize;
-    steeringVectors    = new float [numberOfBeams*numberOfChannels*2];
+    this.predecPulseSize    = predecPulseSize;
+    steeringVectors    = new float [nBeams*nChannels*2];
     predecPulseShape   = new float [predecPulseSize*2];
 
     output = new Channel (Float.TYPE, nChannels*nSamples*2);

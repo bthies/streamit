@@ -63,10 +63,10 @@ test-apps: compile
 	$(TESTER) streamittest.TestApps
 # run example tests
 test-examples: compile
-	$(TESTER) streamittest.TestExamples
+	$(TESTER) streamittest.TestOnlyExamples
 # run benchmark tests
 test-benchmarks: compile
-	$(TESTER) streamittest.TestBenchmarks
+	$(TESTER) streamittest.TestOnlyBenchmarks
 
 
 #checkin tests

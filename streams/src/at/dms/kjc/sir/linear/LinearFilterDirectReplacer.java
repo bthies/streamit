@@ -20,7 +20,7 @@ import at.dms.compiler.*;
  * }
  * </pre>
  * <p>
- * $Id: LinearFilterDirectReplacer.java,v 1.4 2002-09-13 18:06:56 aalamb Exp $
+ * $Id: LinearFilterDirectReplacer.java,v 1.5 2002-09-26 18:22:26 aalamb Exp $
  **/
 public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Constants{
     LinearAnalyzer linearityInformation;
@@ -44,9 +44,6 @@ public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Co
 	    if (!(self.getPop() instanceof JIntLiteral)) {
 		throw new RuntimeException("Non integer literal pop count!!!");
 	    }
-	    System.out.println("Creating direct linear implementation of " +
-			       self.getIdent() +
-			       "(" + self.getName() + ")");
 	    // create a new work function that calculates the linear representation directly
 	    JMethodDeclaration newWork = makeDirectImplementation(linearityInformation.getLinearRepresentation(self),
 								  self.getInputType(),
@@ -140,10 +137,6 @@ public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Co
 	    // a note about indexes: the matrix [[0] [1] [2]] implies peek(0)*2 + peek(1)*1 + peek(2)*0.
 	    for (int j = 0; j < peekCount; j++) {
 		int currentPeekIndex = peekCount - 1 - j;
-		System.out.println("peekCount: " + peekCount);
-		System.out.println("pushCount: " + pushCount);
-		System.out.println("currentPeekIndex: " + currentPeekIndex);
-		System.out.println("currentPushIndex: " + currentPushIndex);
 		ComplexNumber currentWeight = representation.getA().getElement(currentPeekIndex,
 									       currentPushIndex);
 		// if we have a non real number, bomb Mr. Exception
@@ -152,31 +145,53 @@ public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Co
 					       "numbers is not yet implemented.");
 		}
 
-		// if we have a non zero weight...
-		if (!(currentWeight.equals(ComplexNumber.ZERO))) {
-		    // make an integer IR node for the current weight
-		    JDoubleLiteral weightNode = new JDoubleLiteral(null, currentWeight.getReal());
+		// if we have a non zero weight, add a weight*peek node
+		if (currentWeight.equals(ComplexNumber.ZERO)) {
+		    // do nothing for a zero weight
+		} else {
 		    // make an integer IR node for the appropriate peek index (peek (0) corresponds to
 		    // to the array row of  at peekSize-1
 		    JIntLiteral peekOffsetNode = new JIntLiteral(j);
 		    // make a peek expression with the appropriate index
 		    SIRPeekExpression peekNode = new SIRPeekExpression(peekOffsetNode, inputType);
-		    // make a JMultExpression with weight*peekExpression
-		    JMultExpression multNode = new JMultExpression(null,        // tokenReference
-								   weightNode,  // left
-								   peekNode);   // right
-		    combinationExpressions.add(multNode);
+
+		    // IR node for the expression (either peek, or weight*peek)
+		    JExpression exprNode;
+		    // If we have a one, no need to do a multiply
+		    if (currentWeight.equals(ComplexNumber.ONE)) {
+			exprNode = peekNode;
+		    } else {
+			// make literal weight (special case if the weight is an integer)
+			JLiteral weightNode;
+			if (currentWeight.isRealInteger()) {
+			    weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
+			} else {
+			    weightNode = new JDoubleLiteral(null, currentWeight.getReal());
+			}
+			// make a JMultExpression with weight*peekExpression
+			exprNode = new JMultExpression(null,        // tokenReference
+						       weightNode,  // left
+						       peekNode);   // right
+		    }
+		    // add in the new expression node
+		    combinationExpressions.add(exprNode);
 		}
 	    }
-
+	    
+	    for (int q=0; q<combinationExpressions.size(); q++) {
+		LinearPrinter.println("comb expr: " +
+				      combinationExpressions.get(q));
+	    }
+	    
 	    // now, we need to create the appropriate constant to represent the offset
 	    ComplexNumber currentOffset = representation.getb().getElement(currentPushIndex);
 	    if (!currentOffset.isReal()) {throw new RuntimeException("Non real complex number in offset vector");}
-	    JDoubleLiteral offsetNode = new JDoubleLiteral(null, currentOffset.getReal());
-	    
-	    for (int q=0; q<combinationExpressions.size(); q++) {
-		System.out.println("comb expr: " +
-				   combinationExpressions.get(q));
+	    JLiteral offsetNode;
+	    // make the offset node for integers, and others
+	    if (currentOffset.isRealInteger()) {
+		offsetNode = new JIntLiteral(null, (int)currentOffset.getReal());
+	    } else {
+		offsetNode = new JDoubleLiteral(null, currentOffset.getReal());
 	    }
 	    
 	    // now we have all of the combination nodes and the offset node.
@@ -203,9 +218,7 @@ public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Co
 						      pushArgument); // right (use the previous expression)
 		}
 	    }
-
-	    System.out.println("Add expression: " + pushArgument);
-	    
+	    	    	    
 	    // now, armed with the appropriate push argument, we can
 	    // simply generate the appropriate push expression and stick it in our list.
 	    SIRPushExpression pushExpr = new SIRPushExpression(pushArgument, // arg

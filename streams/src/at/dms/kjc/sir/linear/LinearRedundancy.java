@@ -3,12 +3,13 @@ package at.dms.kjc.sir.linear;
 import java.util.*;
 
 /**
- * A LinearRedundancy represents the redundant computations
- * that occur across filter invocations (and any other information
- * that is necessary to reduce computation.) Specifically, we keep a
+ * LinearRedundancy contains information about  redundant computations
+ * that occur across filter invocations. LinearRedundancy is probably a
+ * misnomer as this class merely contains information that lets us
+ * identify redundant computation. Specifically, we keep a
  * mapping between a computation tuple (eg [input,coefficient]) and
- * "use" which is definied as the number of firings after the current
- * one that the tuple is used.
+ * "uses." A use of a computation tuple is definied as the number
+ * subsequenct work function after the current one that the tuple is re used.
  **/
 public class LinearRedundancy {
     /**

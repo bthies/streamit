@@ -27,7 +27,7 @@ public class RawBackend {
 
 	// move field initializations into init function
 	System.out.print("Moving initializers into init functions... ");
-	FieldProp.moveStreamInitialAssignments(str);
+	FieldInitMover.moveStreamInitialAssignments(str);
 	System.out.println("done.");
 	
 	// propagate constants and unroll loop
@@ -71,6 +71,7 @@ public class RawBackend {
 
 	str.getInit().accept(new VarDeclRaiser()); 
 
+	new VarDeclRaiser().raiseVars(str);
        	System.out.println("Flattener Begin...");
 	RawFlattener rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("flatgraph.dot");

@@ -220,7 +220,7 @@ public class SchedSplitJoin extends SchedStream
                     } else {
                         // no
                         // the splitter better not consume any data either
-                        ASSERT (joinIn == 0);
+                        ASSERT (joinIn == 0, "Child " + child + " (splitWeight " + childRate + ") does not produce data, but splitter consumes " + joinIn + " data");
                     }
                 }
 
@@ -229,7 +229,8 @@ public class SchedSplitJoin extends SchedStream
                 {
                     // I better have the rate here, or the child
                     // neither produces nor consumes any data!
-                    ASSERT (newChildRate != null);
+                    ASSERT (newChildRate != null, "Child " + child 
+			    + " neither produces nor consumes any data!");
 
                     // set the rate
                     childrenRates.set (index, newChildRate);

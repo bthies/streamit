@@ -558,10 +558,15 @@ public class Unroller extends SLIRReplacingVisitor {
 	    JRelationalExpression condExpr = (JRelationalExpression)cond;
 	    int relation=condExpr.getOper();
 	    var=((JLocalVariableExpression)condExpr.getLeft()).getVariable();
-	    if(init instanceof JExpressionListStatement) {
-		JAssignmentExpression initExpr 
-		    = (JAssignmentExpression)
-		    ((JExpressionListStatement)init).getExpression(0);
+	    if(init instanceof JExpressionListStatement || init instanceof JExpressionStatement) {
+		JAssignmentExpression initExpr;
+		if (init instanceof JExpressionListStatement) {
+		    initExpr = (JAssignmentExpression)
+			((JExpressionListStatement)init).getExpression(0);
+
+		} else {
+		    initExpr = (JAssignmentExpression)((JExpressionStatement)init).getExpression();
+		}
 		if(((JLocalVariableExpression)initExpr.getLeft()).getVariable()==var)
 		    initVal 
 			= ((JIntLiteral)initExpr.getRight()).intValue();
@@ -626,24 +631,29 @@ public class Unroller extends SLIRReplacingVisitor {
 		} else if(expr instanceof JMultExpression) {
 		    oper=OPE_STAR;
 		    if(expr.getLeft() instanceof JLocalVariableExpression) {
-			if(!((JLocalVariableExpression)expr.getLeft()).equals(incrVar))
+			if(!((JLocalVariableExpression)expr.getLeft()).equals(incrVar)) {
 			    return null;
+			}
 			incrVal=((JIntLiteral)expr.getRight()).intValue();
 		    } else if(expr.getRight() instanceof JLocalVariableExpression) {
-			if(!((JLocalVariableExpression)expr.getRight()).equals(incrVar))
+			if(!((JLocalVariableExpression)expr.getRight()).equals(incrVar)) {
 			    return null;
+			}
 			incrVal=((JIntLiteral)expr.getLeft()).intValue();
-		    } else 
+		    } else {
 			return null;
+		    }
 		} else if(expr instanceof JAddExpression) {
 		    oper=OPE_PLUS;
 		    if(expr.getLeft() instanceof JLocalVariableExpression) {
-			if(!((JLocalVariableExpression)expr.getLeft()).equals(incrVar))
+			if(!((JLocalVariableExpression)expr.getLeft()).equals(incrVar)) {
 			    return null;
+			}
 			incrVal=((JIntLiteral)expr.getRight()).intValue();
 		    } else if(expr.getRight() instanceof JLocalVariableExpression) {
-			if(!((JLocalVariableExpression)expr.getRight()).equals(incrVar))
+			if(!((JLocalVariableExpression)expr.getRight()).equals(incrVar)) {
 			    return null;
+			}
 			incrVal=((JIntLiteral)expr.getLeft()).intValue();
 		    } else 
 			return null;
@@ -654,8 +664,9 @@ public class Unroller extends SLIRReplacingVisitor {
 		    }
 		    incrVal=((JIntLiteral)expr.getRight()).intValue();
 		    oper=OPE_MINUS;
-		} else
+		} else {
 		    return null;
+		}
 	    } else if (incrExpr instanceof JPrefixExpression)
 		{
 		    JPrefixExpression pfx = (JPrefixExpression)incrExpr;
@@ -670,18 +681,21 @@ public class Unroller extends SLIRReplacingVisitor {
 		    incrVal = 1;
 		    incrVar = (JLocalVariableExpression)pfx.getExpr();
 		}
-	    else
+	    else {
 		return null;
+	    }
 	    
 	    // make sure the variable is the same
-	    if (var != incrVar.getVariable())
+	    if (var != incrVar.getVariable()) {
 		return null;
+	    }
 
 	    //Not have to worry about weird cases
-	    if(incrVal==0)
+	    if(incrVal==0) {
 		return null;
-	    else if(((oper==OPE_STAR)||(oper==OPE_SLASH))&&incrVal<2)
+	    } else if(((oper==OPE_STAR)||(oper==OPE_SLASH))&&incrVal<2) {
 		return null;
+	    }
 	    
 	    //Normalize + and -
 	    if((oper==OPE_PLUS)&&(incrVal<0)) {
@@ -695,8 +709,9 @@ public class Unroller extends SLIRReplacingVisitor {
 	    //Check to make sure we are incrementing to a ceiling
 	    //or decrementing to a floor
 	    if((((oper==OPE_PLUS)||(oper==OPE_STAR)||(oper==OPE_POSTINC)||(oper==OPE_PREINC))&&((relation==OPE_GE)||(relation==OPE_GT)))||
-	       (((oper==OPE_MINUS)||(oper==OPE_SLASH)||(oper==OPE_POSTDEC)||(oper==OPE_PREDEC))&&((relation==OPE_LE)||(relation==OPE_LT))))
+	       (((oper==OPE_MINUS)||(oper==OPE_SLASH)||(oper==OPE_POSTDEC)||(oper==OPE_PREDEC))&&((relation==OPE_LE)||(relation==OPE_LT)))) {
 		return null;
+	    }
 
 	    // return result
 	    return new UnrollInfo(var, initVal, finalVal, oper, incrVal);

@@ -23,6 +23,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     /* coordinate -> flatnode */
     private static HashMap tileAssignment;
     private static HashSet assigned;
+    //set of all the identity filters not mapped to tiles
+    public static HashSet identities;
     private static Coordinate[][] coordinates;
     private static BufferedReader inputBuffer;
     private static Random random;
@@ -67,6 +69,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	SIRassignment = new HashMap();
 	tileAssignment = new HashMap();
 	assigned = new HashSet();
+	identities = new HashSet();
 
 	top.accept(new Layout(), new HashSet(), false);
 	
@@ -721,8 +724,12 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     public void visitNode(FlatNode node) 
     {
 	if (node.contents instanceof SIRFilter &&
-	   ! (FileVisitor.fileNodes.contains(node)) &&
-	    ! (node.contents instanceof SIRIdentity)) {
+	    ! (FileVisitor.fileNodes.contains(node))) {
+	    //do not map identities, but add them to the identities set
+	    if (node.contents instanceof SIRIdentity) {
+		identities.add(node);
+		return;
+	    }
 	    assigned.add(node);
 	    return;
 	}

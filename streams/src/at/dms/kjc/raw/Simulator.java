@@ -327,9 +327,6 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     //consume the data and return the number of items produced
     private int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
-	if (!Layout.isAssigned(fire))
-	    Utils.fail("");
-	
 	if (fire.contents instanceof SIRFilter) {
 	    //System.out.println("Firing " + fire.contents.getName());
 	    //decrement the schedule execution counter
@@ -447,9 +444,9 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	//add to its buffer and
 	//create a list and add it
 	if (node.contents instanceof SIRFilter) {
-	    if (!Layout.isAssigned(node)) {
+	    if (Layout.identities.contains(node)) {
 		return getDestinationHelper(node.edges[0], counters,
-				      joinerBuffer, node);
+					    joinerBuffer, node);
 	    }
 	    counters.incrementBufferCount(node);
 	    LinkedList list = new LinkedList();
@@ -572,7 +569,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     {
 	if (node == null)
 	    return false;
-	if (!Layout.isAssigned(node))
+	if (Layout.identities.contains(node))
 	    return false;
 
 	if (node.contents instanceof SIRFilter) {

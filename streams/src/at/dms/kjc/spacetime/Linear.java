@@ -121,7 +121,7 @@ public class Linear extends RawExecutionCode implements Constants {
 		if(begin)
 		    return regs[regs.length-1];
 		else
-		    return "$csti";
+		    return "$csti2";
 	    else
 		popNum--;
 	else if(!src&&elem==popCount-1&&popNum==idx.length-1)

@@ -17,7 +17,7 @@ import java.util.*;
  * int i;
  * i = 5;
  * </pre>
- * $Id: FieldInitMover.java,v 1.1 2002-06-21 20:01:26 aalamb Exp $
+ * $Id: FieldInitMover.java,v 1.2 2002-06-25 20:46:25 aalamb Exp $
  **/
 public class FieldInitMover extends EmptyStreamVisitor{
 
@@ -54,7 +54,7 @@ public class FieldInitMover extends EmptyStreamVisitor{
 			// if this field declaration has an initial value,
 			// make an assignment expression to stick in the
 			// init function
-			System.out.println("Initial expression for field: " + expr);
+			//System.out.println("Initial expression for field: " + expr);
 			if (expr != null) {
 			    // build up the this.field = initalValue expression
 			    

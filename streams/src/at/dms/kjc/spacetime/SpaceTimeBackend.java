@@ -74,11 +74,12 @@ public class SpaceTimeBackend
 	ListIterator initTrav = TraceTraversal.getTraversal(init).listIterator();    
 	ListIterator steadyTrav = TraceTraversal.getTraversal(steady).listIterator();
 
-	//create the raw execution code for the initialization phase
-	Rawify.run(initTrav, rawChip, true);
-	EndInitState(rawChip);
-	//create the raw execution code for the steady-state
+	//create the raw execution code and switch code for the initialization phase
+	Rawify.run(initTrav, rawChip, true); 
+	//create the raw execution code and switch for the steady-state
 	Rawify.run(initTrav, rawChip, false);
+	//generate the switch code assembly files...
+	GenerateSwitchCode.run(rawChip);
     }
 }
 

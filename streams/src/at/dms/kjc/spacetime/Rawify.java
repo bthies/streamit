@@ -37,7 +37,8 @@ public class Rawify
 	//generate code need in between init and steady
 	if (init) 
 	    EndInitialization(rawChip);
-
+	else 
+	    EndSteadyState(rawChip);
     }
 
     private static void createSwitchCode(FilterTraceNode node, Trace parent,
@@ -63,7 +64,7 @@ public class Rawify
 		    ins.addRoute(rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(), 
 						 ((FilterTraceNode)node.getPrevious()).getY()),
 				 tile);
-		    tile.getSwitchCode().appendIns(ins);
+		    tile.getSwitchCode().appendIns(ins, init);
 		}
 	    }
 	    //append the send code
@@ -79,7 +80,7 @@ public class Rawify
 		    ins.addRoute(tile, rawChip.getTile(((FilterTraceNode)node.getNext()).getX(), 
 						       ((FilterTraceNode)node.getNext()).getY()));
 		    //append the instruction
-		    tile.getSwitchCode().appendIns(ins);
+		    tile.getSwitchCode().appendIns(ins, init);
 		}	
 	    }
 	    
@@ -115,8 +116,11 @@ public class Rawify
 
     private static void EndInitialization(RawChip rawChip) 
     {
-	
     }
     
+    private static void EndSteadyState(RawChip rawChip) 
+    {
+	
+    }
 }
 

@@ -21,6 +21,22 @@ class Propagator extends SLIRReplacingVisitor {
     private Hashtable constants;
 
     /**
+     * Map of constants added (JLocalVariable -> JLiteral)
+     */
+    private Hashtable added;
+
+    /**
+     * Map of constants removed (JLocalVariable -> JLiteral)
+     */
+    private Hashtable removed;
+
+    /**
+     * Determines whether this instance of Propagator writes
+     * actual changes or not
+     */
+    private boolean write;
+
+    /**
      * Creates one of these given that <constants> maps
      * JLocalVariables to JLiterals for the scope that we'll be
      * visiting.
@@ -28,6 +44,17 @@ class Propagator extends SLIRReplacingVisitor {
     public Propagator(Hashtable constants) {
 	super();
 	this.constants = constants;
+	added=new Hashtable();
+	removed=new Hashtable();
+	write=true;
+    }
+    
+    public Propagator(Hashtable constants,boolean write) {
+	super();
+	this.constants = constants;
+	added=new Hashtable();
+	removed=new Hashtable();
+	this.write=write;
     }
     
     // ----------------------------------------------------------------------
@@ -61,11 +88,12 @@ class Propagator extends SLIRReplacingVisitor {
 	    JExpression newExp = (JExpression)expr.accept(this);
 	    // if we have a constant AND it's a final variable...
 	    if (newExp.isConstant() && CModifier.contains(modifiers,
-							  ACC_FINAL)) {
+				      ACC_FINAL)) {
 		// reset the value
 		self.setExpression(newExp);
 		// remember the value for the duration of our visiting
 		constants.put(self, newExp);
+		added.put(self,newExp);
 	    }
 	}
 	return self;
@@ -138,29 +166,51 @@ class Propagator extends SLIRReplacingVisitor {
 				    JExpression cond,
 				    JStatement incr,
 				    JStatement body) {
-	// cond should never be a constant, or else we have an
-	// infinite or empty loop.  Thus I won't check for it... 
-	// recurse into init
-	JStatement newInit = (JStatement)init.accept(this);
-	if (newInit!=null && newInit!=init) {
-	    self.setInit(newInit);
-	}
-
-	// recurse into incr
-	JStatement newIncr = (JStatement)incr.accept(this);
-	if (newIncr!=null && newIncr!=incr) {
-	    self.setIncr(newIncr);
-	}
-
-	JExpression newExp = (JExpression)cond.accept(this);
-	if (newExp!=null && newExp!=cond) {
-	    self.setCond(newExp);
-	}
-
-	// recurse into body
-	JStatement newBody = (JStatement)body.accept(this);
-	if (newBody!=null && newBody!=body) {
-	    self.setBody(newBody);
+	//Saving constants to restore them after loop analyzed
+	//Hashtable saveConstants=(Hashtable)constants.clone();
+	//Recurse first to see if variables are assigned in the loop
+	if(!write) {
+	    init.accept(this);
+	    incr.accept(this);
+	    cond.accept(this);
+	    body.accept(this);
+	} else {
+	    Propagator newProp=new Propagator((Hashtable)constants.clone(),false);
+	    init.accept(newProp);
+	    incr.accept(newProp);
+	    cond.accept(newProp);
+	    body.accept(newProp);
+	    Enumeration remove=newProp.removed.keys();
+	    while(remove.hasMoreElements()) {
+		JLocalVariable var=(JLocalVariable)remove.nextElement();
+		constants.remove(var);
+		removed.put(var,Boolean.TRUE);
+	    }
+	    // cond should never be a constant, or else we have an
+	    // infinite or empty loop.  Thus I won't check for it... 
+	    // recurse into init
+	    JStatement newInit = (JStatement)init.accept(this);
+	    if (newInit!=null && newInit!=init) {
+		self.setInit(newInit);
+	    }
+	    
+	    // recurse into incr
+	    JStatement newIncr = (JStatement)incr.accept(this);
+	    if (newIncr!=null && newIncr!=incr) {
+		self.setIncr(newIncr);
+	    }
+	    
+	    JExpression newExp = (JExpression)cond.accept(this);
+	    if (newExp!=null && newExp!=cond) {
+		self.setCond(newExp);
+	    }
+	    
+	    // recurse into body
+	    JStatement newBody = (JStatement)body.accept(this);
+	    if (newBody!=null && newBody!=body) {
+		self.setBody(newBody);
+	    }
+	    //constants=saveConstants;
 	}
 	return self;
     }
@@ -210,9 +260,11 @@ class Propagator extends SLIRReplacingVisitor {
 					int oper,
 					JExpression expr) {
 	//System.out.println("Operand: "+expr);
-	if(expr instanceof JLocalVariableExpression)
-	    constants.remove(((JLocalVariableExpression)expr).getVariable());
-	else
+	if(expr instanceof JLocalVariableExpression) {
+	    JLocalVariable var=((JLocalVariableExpression)expr).getVariable();
+	    constants.remove(var);
+	    removed.put(var,Boolean.TRUE);
+	} else
 	    System.err.println("WARNING: Postfix of nonvariable: "+expr);
 	return self;
     }
@@ -220,9 +272,11 @@ class Propagator extends SLIRReplacingVisitor {
     public Object visitPrefixExpression(JPrefixExpression self,
 					int oper,
 					JExpression expr) {
-	if(expr instanceof JLocalVariableExpression)
-	    constants.remove(((JLocalVariableExpression)expr).getVariable());
-	else
+	if(expr instanceof JLocalVariableExpression) {
+	    JLocalVariable var=((JLocalVariableExpression)expr).getVariable();
+	    constants.remove(var);
+	    removed.put(var,Boolean.TRUE);
+	} else
 	    System.err.println("WARNING: Postfix of nonvariable: "+expr);
 	return self;
     }
@@ -231,9 +285,11 @@ class Propagator extends SLIRReplacingVisitor {
 						    int oper,
 						    JExpression left,
 						    JExpression right) {
-	if(left instanceof JLocalVariableExpression)
-	    constants.remove(((JLocalVariableExpression)left).getVariable());
-	else
+	if(left instanceof JLocalVariableExpression) {
+	    JLocalVariable var=((JLocalVariableExpression)left).getVariable();
+	    constants.remove(var);
+	    removed.put(var,Boolean.TRUE);
+	} else
 	    System.err.println("WARNING: Compound Assignment of nonvariable: "+left);
 	JExpression newRight = (JExpression)right.accept(this);
 	if (newRight.isConstant())
@@ -256,8 +312,11 @@ class Propagator extends SLIRReplacingVisitor {
 	    //if(left instanceof JLocalVariableExpression)
 	    //constants.put(((JLocalVariableExpression)left).getVariable(),newRight);
         } else
-	    if(left instanceof JLocalVariableExpression)
-		constants.remove(((JLocalVariableExpression)left).getVariable());
+	    if(left instanceof JLocalVariableExpression) {
+		JLocalVariable var=((JLocalVariableExpression)left).getVariable();
+		constants.remove(var);
+		removed.put(var,Boolean.TRUE);
+	    }
         return self;
     }
 
@@ -269,7 +328,7 @@ class Propagator extends SLIRReplacingVisitor {
     {
 	JExpression newExp = (JExpression)expr.accept(this);
 	if (newExp.isConstant()) {
-	    return new JIntLiteral(newExp.intValue()+1);
+	    return new JIntLiteral(newExp.intValue());
 	    } else {
 	    return self;
 	}
@@ -298,7 +357,7 @@ class Propagator extends SLIRReplacingVisitor {
     {
 	JExpression newExp = (JExpression)expr.accept(this);
 	if (newExp.isConstant()) {
-	    return new JIntLiteral(newExp.intValue()-1);
+	    return new JIntLiteral(newExp.intValue()*-1);
 	} else {
 	    return self;
 	}
@@ -401,12 +460,13 @@ class Propagator extends SLIRReplacingVisitor {
 					       String ident) {
 	// if we know the value of the variable, return a literal.
 	// otherwise, just return self
-	Object constant = constants.get(self.getVariable());
-	if (constant!=null) {
-	    return constant;
-	} else {
-	    return self;
+	if(write) {
+	    Object constant = constants.get(self.getVariable());
+	    if (constant!=null) {
+		return constant;
+	    }
 	}
+	return self;
     }
 
     /**
@@ -588,9 +648,11 @@ class Propagator extends SLIRReplacingVisitor {
 					     JExpression prefix,
 					     JExpression accessor) {
 	prefix.accept(this);
-	JExpression newExp = (JExpression)accessor.accept(this);
-	if (newExp.isConstant()) {
-	    self.setAccessor(newExp);
+	if(write) {
+	    JExpression newExp = (JExpression)accessor.accept(this);
+	    if (newExp.isConstant()) {
+		self.setAccessor(newExp);
+	    }
 	}
 	return self;
     }

@@ -72,6 +72,24 @@ public class Pipeline extends Stream
 		     int i4, 
 		     int i5, 
 		     int i6, 
+		     int i7, 
+		     float f) {
+	super(i1, i2, i3, i4, i5, i6, i7, f);
+    }
+
+    public Pipeline (int n1, int n2, int n3,
+		   int n4, int n5, int n6, int n7, int n8, 
+		   int n9, int n10, float f)
+    {
+        super (n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, f);
+    }
+
+    public Pipeline( int i1, 
+		     int i2, 
+		     int i3, 
+		     int i4, 
+		     int i5, 
+		     int i6, 
 		     float f) {
 	super(i1, i2, i3, i4, i5, i6, f);
     }

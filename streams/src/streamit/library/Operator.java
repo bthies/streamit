@@ -49,6 +49,24 @@ public class Operator extends DestroyedClass
             .add("a3", a3);
     }
 
+    public Operator (int i1, int i2, int i3,
+		   int i4, int i5, int i6, int i7, int i8, 
+		   int i9, int i10, float f)
+    {
+        initParams = new ParameterContainer ("int-int-int-int-int-int-int-int-int-int-float")
+            .add("i1", i1)
+            .add("i2", i2)
+            .add("i3", i3)
+            .add("i4", i4)
+            .add("i5", i5)
+            .add("i6", i6)
+            .add("i7", i7)
+            .add("i8", i8)
+            .add("i9", i9)
+            .add("i10", i10)
+            .add("f", f);
+    }
+
     public Operator(int a, int b, float c, int d, float e)
     {
         initParams = new ParameterContainer ("int-int-float-int-float")
@@ -140,6 +158,12 @@ public class Operator extends DestroyedClass
         initParams = new ParameterContainer ("int-int-int-int-int-int").add ("x", x).add ("y", y).add("z", z).add ("a", a).add ("b", b).add("c", c);
     }
 
+    public Operator (int x, int y, int z,
+                     int a, int b, int c, int d, float f)
+    {
+        initParams = new ParameterContainer ("int-int-int-int-int-int-int-float").add ("x", x).add ("y", y).add("z", z).add ("a", a).add ("b", b).add("c", c).add("d",d).add("f",f);
+    }
+
     public Operator(float f)
     {
         initParams = new ParameterContainer ("float").add ("f", f);
@@ -208,6 +232,13 @@ public class Operator extends DestroyedClass
 
     // initializatoin functions, to be over-ridden
     public void init(int a, int b, int c, float d, int e) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(int a, int b, int c, int d, int e, int f, int g, float h){ invalidInitError (); }
+
+    public void init (int n1, int n2, int n3,
+		   int n4, int n5, int n6, int n7, int n8, 
+	int n9, int n10, float f) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
     public void init(float x, float y, int z, int a) { invalidInitError (); }
@@ -553,6 +584,16 @@ public class Operator extends DestroyedClass
                   initParams.getIntParam("i6"),
                   initParams.getFloatParam("f"));
 	else
+        if(initParams.getParamName().equals("int-int-int-int-int-int-int-float"))
+            init (initParams.getIntParam("x"),
+                  initParams.getIntParam("y"),
+                  initParams.getIntParam("z"),
+                  initParams.getIntParam("a"),
+                  initParams.getIntParam("b"),
+                  initParams.getIntParam("c"),
+                  initParams.getIntParam("d"),
+                  initParams.getFloatParam("f"));
+	else
         if(initParams.getParamName().equals("int-int-int-int-int-int-int-int-int-float"))
             init (initParams.getIntParam("i1"),
                   initParams.getIntParam("i2"),
@@ -563,6 +604,19 @@ public class Operator extends DestroyedClass
                   initParams.getIntParam("i7"),
                   initParams.getIntParam("i8"),
                   initParams.getIntParam("i9"),
+                  initParams.getFloatParam("f"));
+	else
+        if(initParams.getParamName().equals("int-int-int-int-int-int-int-int-int-int-float"))
+            init (initParams.getIntParam("i1"),
+                  initParams.getIntParam("i2"),
+                  initParams.getIntParam("i3"),
+                  initParams.getIntParam("i4"),
+                  initParams.getIntParam("i5"),
+                  initParams.getIntParam("i6"),
+                  initParams.getIntParam("i7"),
+                  initParams.getIntParam("i8"),
+                  initParams.getIntParam("i9"),
+                  initParams.getIntParam("i10"),
                   initParams.getFloatParam("f"));
         else
         if(initParams.getParamName().equals("float-float-float-int"))

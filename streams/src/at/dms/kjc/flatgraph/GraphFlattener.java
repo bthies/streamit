@@ -50,8 +50,6 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	    ((FlatNode)it.next()).swapSplitterEdges();
 	    
 	}
-	//dump the flatgraph of the application
-	dumpGraph("flatgraph.dot");
     }
 
     /**
@@ -60,7 +58,6 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
      * whose output is not connected to another joiner.
      */
     public int getNumTiles() {
-	//	dumpGraph("crash.dot");
 	int count = 0;
 	for (Iterator it = SIRMap.entrySet().iterator(); it.hasNext(); ) {
 	    Map.Entry entry = (Map.Entry)it.next();
@@ -745,7 +742,10 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	return node;
     }
 
-    /* creates the dot file representing the flattened graph */
+    /** 
+     * creates the dot file representing the flattened graph 
+     * must be called after createExecutionCounts in RawBackend.
+     */
     public void dumpGraph(String filename) 
     {
 	buf = new StringBuffer();
@@ -776,10 +776,14 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	    assert buf!=null;
 
 	    buf.append(node.getName() + "[ label = \"" +
-		       node.getName() + 
-		       " peek: " + filter.getPeekInt() + 
+		       node.getName() + "\\n");
+	    buf.append("init Mult: " + RawBackend.getMult(node, true) + 
+		       " steady Mult: " + RawBackend.getMult(node, false));
+	    buf.append("\\n");
+	    buf.append(" peek: " + filter.getPeekInt() + 
 		       " pop: " + filter.getPopInt() + 
 		       " push: " + filter.getPushInt());
+	    buf.append("\\n");
 	    if (node.contents instanceof SIRTwoStageFilter) {
 		SIRTwoStageFilter two = (SIRTwoStageFilter)node.contents;
 		buf.append(" initPeek: " + two.getInitPeek() + 

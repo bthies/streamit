@@ -106,7 +106,7 @@ public class SIRBuilder {
 	JStatement[] work2body = { 
 	    new SIRPrintStatement(
 				  null,
-				  new SIRPopExpression(/* tokref */ null),
+				  new SIRPopExpression(),
 				  null) };
 	
 	JBlock work2block = new JBlock(/* tokref   */ null,

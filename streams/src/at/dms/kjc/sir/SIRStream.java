@@ -60,6 +60,40 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     }
 
     /**
+     * Adds <f> to the fields of this.  Does not check
+     * for duplicates.
+     */
+    public void addFields (JFieldDeclaration[] f) {
+	JFieldDeclaration[] newFields = 
+	    new JFieldDeclaration[fields.length + f.length];
+	for (int i=0; i<fields.length; i++) {
+	    newFields[i] = fields[i];
+	}
+	for (int i=0; i<f.length; i++) {
+	    newFields[fields.length+i] = f[i];
+	}
+	this.fields = newFields;
+    }
+
+    /**
+     * Adds <m> to the methods of this.  Does not check for
+     * duplicates. 
+     */
+    public void addMethods (JMethodDeclaration[] m) {
+	JMethodDeclaration[] newMethods = 
+	    new JMethodDeclaration[methods.length + m.length];
+	for (int i=0; i<methods.length; i++) {
+	    System.err.println("adding (old) method " + methods[i].getName() + " to " + this);
+	    newMethods[i] = methods[i];
+	}
+	for (int i=0; i<m.length; i++) {
+	    System.err.println("adding (new) method " + m[i].getName() + " to " + this);
+	    newMethods[methods.length+i] = m[i];
+	}
+	this.methods = newMethods;
+    }
+
+    /**
      * Gets the field decl's of this stream.
      */
     public JFieldDeclaration[] getFields() {
@@ -145,6 +179,15 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      */
     public void setInit(JMethodDeclaration newInit) {
 	addReplacementMethod(newInit, this.init);
+	this.init = newInit;
+    }
+
+    /**
+     * sets the init function WITHOUT eliminating the old one in the
+     * methods array.  Usually you want to use the plain setInit
+     * unless you're fusing.
+     */
+    public void setInitWithoutReplacement(JMethodDeclaration newInit) {
 	this.init = newInit;
     }
 

@@ -131,7 +131,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	    Hashtable saveConstants=cloneTable(constants);
 	    JExpression newExp = (JExpression)cond.accept(this);
 	    // reset if we found a constant
-	    if (newExp.isConstant()) {
+	    if (newExp!=cond) {
 		self.setCondition(newExp);
 	    }
 	    body.accept(this);
@@ -152,8 +152,8 @@ public class Propagator extends SLIRReplacingVisitor {
 	if (expr != null) {
 	    JExpression newExp = (JExpression)expr.accept(this);
 	    // if we have a constant AND it's a final variable...
-	    if (newExp.isConstant() /*&& CModifier.contains(modifiers,
-				      ACC_FINAL)*/) {
+	    if (newExp!=expr) /*&& CModifier.contains(modifiers,
+				      ACC_FINAL)*/ {
 		// reset the value
 		if(write)
 		    self.setExpression(newExp);
@@ -205,7 +205,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	} else {
 	    JExpression newExp = (JExpression)expr.accept(this);
 	    // reset if constant
-	    if (newExp.isConstant()) {
+	    if (newExp!=expr) {
 		self.setExpression(newExp);
 	    }
 	    Propagator[] propagators=new Propagator[body.length];
@@ -262,7 +262,7 @@ public class Propagator extends SLIRReplacingVisitor {
 				       JExpression expr) {
 	if (expr != null) {
 	    JExpression newExp = (JExpression)expr.accept(this);
-	    if (write&&newExp.isConstant()) {
+	    if (write&&(expr!=newExp)) {
 		self.setExpression(newExp);
 	    }
 	}
@@ -452,7 +452,7 @@ public class Propagator extends SLIRReplacingVisitor {
     public Object visitExpressionStatement(JExpressionStatement self,
 					   JExpression expr) {
 	JExpression newExp = (JExpression)expr.accept(this);
-	if (write&&newExp.isConstant()) {
+	if (write&&(newExp!=expr)) {
 	    self.setExpression(newExp);
 	}
 	return self;
@@ -466,7 +466,7 @@ public class Propagator extends SLIRReplacingVisitor {
 				   JStatement body) {
 	body.accept(this);
 	JExpression newExp = (JExpression)cond.accept(this);
-	if (write&&newExp.isConstant()) {
+	if (write&&(newExp!=cond)) {
 	    self.setCondition(newExp);
 	}
 	return self;
@@ -567,7 +567,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	} //else
 	//System.err.println("WARNING: Compound Assignment of nonvariable: "+left);
 	JExpression newRight = (JExpression)right.accept(this);
-	if (write&&newRight.isConstant()) {
+	if (write&&(newRight!=right)) {
             self.setRight(newRight);
 	}
 	return self;
@@ -597,8 +597,9 @@ public class Propagator extends SLIRReplacingVisitor {
     {
         left.accept(this);
         JExpression newRight = (JExpression)right.accept(this);
-	if(write&&(newRight!=null))
+	if(write&&(newRight!=null)) {
 	    self.setRight(newRight);
+	}
 	/*if(left instanceof JFieldAccessExpression) {
 	    JLocalVariable var=null;
 	    Object val=null;
@@ -748,7 +749,10 @@ public class Propagator extends SLIRReplacingVisitor {
 	JExpression newExp = (JExpression)expr.accept(this);
 	if (newExp.isConstant()) {
 	    return new JIntLiteral(newExp.intValue());
-	    } else {
+	} else {
+	    if (write&&(newExp!=expr)) {
+		self.setExpr(newExp);
+	    }
 	    return self;
 	}
     }
@@ -768,8 +772,12 @@ public class Propagator extends SLIRReplacingVisitor {
 	    return newExp;
 	    //} else {
 	    //return doPromote(expr,expr.convertType(type));
+	} else {
+	    if (write&&(newExp!=expr)) {
+		self.setExpr(newExp);
+	    }
+	    return self;
 	}
-	return self;
     }
 
     /**
@@ -798,6 +806,9 @@ public class Propagator extends SLIRReplacingVisitor {
 	if (newExp.isConstant()) {
 	    return new JIntLiteral(~newExp.intValue());
 	} else {
+	    if (write&&(expr!=newExp)) {
+		self.setExpr(newExp);
+	    }
 	    return self;
 	}
     }
@@ -811,14 +822,17 @@ public class Propagator extends SLIRReplacingVisitor {
 	JExpression newExp = (JExpression)expr.accept(this);
 	if (newExp.isConstant()) {
 	    return new JBooleanLiteral(null, !newExp.booleanValue());
-	} else if(newExp instanceof JRelationalExpression) {
+	} 
+	if(newExp instanceof JRelationalExpression) {
 	    JRelationalExpression neg=((JRelationalExpression)newExp).complement();
-	    if(neg!=null)
+	    if(neg!=null) {
 		return neg;
-	    else
-		return self;
-	} else
-	    return self;
+	    }
+	}
+	if (write&&(expr!=newExp)) {
+	    self.setExpr(newExp);
+	}
+	return self;
     }
 
     /**
@@ -845,6 +859,12 @@ public class Propagator extends SLIRReplacingVisitor {
 		throw new InconsistencyException();
 	    }
 	} else {
+	    if (write&&(left!=newLeft)) {
+		self.setLeft(newLeft);
+	    } 
+	    if (write&&(right!=newRight)) {
+		self.setRight(newRight);
+	    }
 	    return self;
 	}
     }
@@ -855,7 +875,7 @@ public class Propagator extends SLIRReplacingVisitor {
     public Object visitParenthesedExpression(JParenthesedExpression self,
 					     JExpression expr) {
 	JExpression newExp = (JExpression)expr.accept(this);
-	if (write&&newExp.isConstant()) {
+	if (write&&(newExp!=expr)) {
 	    self.setExpression(newExp);
 	}
 	return self;
@@ -872,7 +892,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	for (int i = 0; i < dims.length; i++) {
 	    if (dims[i] != null) {
 		JExpression newExp = (JExpression)dims[i].accept(this);
-		if (newExp.isConstant()) {
+		if (newExp!=dims[i]) {
 		    dims[i] = newExp;
 		}
 	    }
@@ -910,10 +930,10 @@ public class Propagator extends SLIRReplacingVisitor {
 	JExpression newLeft = (JExpression) left.accept(this);
 	JExpression newRight = (JExpression) right.accept(this);
 	if(write) {
-	    if (newLeft.isConstant()) {
+	    if (newLeft!=left) {
 		self.setLeft(newLeft);
 	    }
-	    if (newRight.isConstant()) {
+	    if (newRight!=right) {
 		self.setRight(newRight);
 	    }
 	    // return the evaluated relational expression if both sides are constant
@@ -935,10 +955,10 @@ public class Propagator extends SLIRReplacingVisitor {
 	JExpression newLeft = (JExpression)left.accept(this);
 	JExpression newRight = (JExpression)right.accept(this);
 	if(write) {
-	    if (newLeft.isConstant()) {
+	    if (newLeft!=left) {
 		self.setLeft(newLeft);
 	    }
-	    if (newRight.isConstant()) {
+	    if (newRight!=right) {
 		self.setRight(newRight);
 	    }
 	}
@@ -1009,15 +1029,15 @@ public class Propagator extends SLIRReplacingVisitor {
         newRight = doPromote(newRight, newLeft);
 	// set any constants that we have (just to save at runtime)
 	if(write) {
-	    if (newLeft.isConstant()) {
+	    if (newLeft!=left) {
 		self.setLeft(newLeft);
 	    }
-	    if (newRight.isConstant()) {
+	    if (newRight!=right) {
 		self.setRight(newRight);
 	    }
 	}
 	// do constant-prop if we have both as constants
-	if (write&&newLeft.isConstant() && newRight.isConstant()) {
+	if (newLeft.isConstant() && newRight.isConstant()) {
 	    return self.constantFolding();
 	} else {
 	    // otherwise, return self
@@ -1039,15 +1059,15 @@ public class Propagator extends SLIRReplacingVisitor {
         newRight = doPromote(newRight, newLeft);
 	// set any constants that we have (just to save at runtime)
 	if(write) {
-	    if (newLeft.isConstant()) {
+	    if (newLeft!=left) {
 		self.setLeft(newLeft);
 	    }
-	    if (newRight.isConstant()) {
+	    if (newRight!=right) {
 		self.setRight(newRight);
 	    }
 	}
 	// do constant-prop if we have both as constants
-	if (write&&newLeft.isConstant() && newRight.isConstant()) {
+	if (newLeft.isConstant() && newRight.isConstant()) {
 	    return self.constantFolding();
 	} else {
 	    // otherwise, return self
@@ -1329,7 +1349,7 @@ public class Propagator extends SLIRReplacingVisitor {
 				   JExpression expr) {
 	if (expr != null) {
 	    JExpression newExp = (JExpression)expr.accept(this);
-	    if (newExp.isConstant()) {
+	    if (newExp!=expr) {
 		self.setExpression(newExp);
 	    }
 	}
@@ -1343,7 +1363,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	if (args != null) {
 	    for (int i = 0; i < args.length; i++) {
 		JExpression newExp = (JExpression)args[i].accept(this);
-		if (newExp.isConstant()) {
+		if (newExp!=args[i]) {
 		    args[i] = newExp;
 		}
 	    }

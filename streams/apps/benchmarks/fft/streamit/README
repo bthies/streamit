@@ -1,0 +1,10 @@
+FFT.java - fine-grained decimation-in-time implementation with inputs in bit-reversed order and outputs in natural order  
+FFT_inlined.java - inlined syntax version of FFT.java 
+
+FFT3.java - fine-grained decimation-in-time implementation with outputs in bit-reversed order and inputs in natural order 
+            (More detailed implementation since it handles real/imag parts and roots of unity weights properly) 
+fftref/ - contains C equivalent of FFT3.java (reference implementation) 
+
+
+FFT2.java - coarse-grained alternate implementation 
+ 

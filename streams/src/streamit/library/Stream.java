@@ -1,4 +1,4 @@
-package streamit;
+package streamit.library;
 
 import java.util.*;
 import streamit.scheduler2.iriter.Iterator;
@@ -581,7 +581,7 @@ public abstract class Stream extends Operator
         // setup the scheduler
         if (scheduledRun)
         {
-            Iterator selfIter = new streamit.iriter.Iterator(this);
+            Iterator selfIter = new streamit.library.iriter.Iterator(this);
             streamit.scheduler2.Scheduler scheduler =
                 new streamit.scheduler2.minlatency.Scheduler(selfIter);
 

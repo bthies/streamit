@@ -1,4 +1,4 @@
-package streamit;
+package streamit.library;
 
 /**
  * A work function called in a phased filter's work function.  This has

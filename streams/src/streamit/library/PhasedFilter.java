@@ -1,4 +1,4 @@
-package streamit;
+package streamit.library;
 
 import streamit.scheduler2.ScheduleBuffers;
 

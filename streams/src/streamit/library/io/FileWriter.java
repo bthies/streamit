@@ -1,7 +1,7 @@
-package streamit.io;
+package streamit.library.io;
 
-import streamit.Filter;
-import streamit.Channel;
+import streamit.library.Filter;
+import streamit.library.Channel;
 
 import java.io.*;
 

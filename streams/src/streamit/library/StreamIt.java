@@ -1,4 +1,4 @@
-package streamit;
+package streamit.library;
 
 /**
  * This class is for backwards compatibility only -- it indicates that

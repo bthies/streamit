@@ -1,6 +1,6 @@
-package streamit.iriter;
+package streamit.library.iriter;
 
-import streamit.Pipeline;
+import streamit.library.Pipeline;
 
 public class PipelineIter
     extends streamit.misc.DestroyedClass

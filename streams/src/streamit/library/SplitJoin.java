@@ -1,8 +1,8 @@
-package streamit;
+package streamit.library;
 
 import java.util.*;
 import streamit.scheduler2.Scheduler;
-import streamit.iriter.Iterator;
+import streamit.library.iriter.Iterator;
 
 // creates a split/join
 public class SplitJoin extends Stream

@@ -1,8 +1,8 @@
-package streamit.iriter;
+package streamit.library.iriter;
 
-import streamit.FeedbackLoop;
-import streamit.NullSplitter;
-import streamit.NullJoiner;
+import streamit.library.FeedbackLoop;
+import streamit.library.NullSplitter;
+import streamit.library.NullJoiner;
 
 public class FeedbackLoopIter
     extends streamit.misc.DestroyedClass

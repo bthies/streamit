@@ -1,6 +1,6 @@
-package streamit.iriter;
+package streamit.library.iriter;
 
-import streamit.Filter;
+import streamit.library.Filter;
 
 public class FilterIter
     extends streamit.misc.DestroyedClass

@@ -1,10 +1,10 @@
-package streamit.iriter;
+package streamit.library.iriter;
 
-import streamit.FeedbackLoop;
-import streamit.Filter;
-import streamit.Pipeline;
-import streamit.SplitJoin;
-import streamit.Stream;
+import streamit.library.FeedbackLoop;
+import streamit.library.Filter;
+import streamit.library.Pipeline;
+import streamit.library.SplitJoin;
+import streamit.library.Stream;
 
 public class Iterator implements streamit.scheduler2.iriter.Iterator
 {
@@ -25,28 +25,28 @@ public class Iterator implements streamit.scheduler2.iriter.Iterator
     public streamit.scheduler2.iriter.FilterIter isFilter()
     {
         if (stream instanceof Filter)
-            return new streamit.iriter.FilterIter((Filter) stream);
+            return new streamit.library.iriter.FilterIter((Filter) stream);
         return null;
     }
 
     public streamit.scheduler2.iriter.PipelineIter isPipeline()
     {
         if (stream instanceof Pipeline)
-            return new streamit.iriter.PipelineIter((Pipeline) stream);
+            return new streamit.library.iriter.PipelineIter((Pipeline) stream);
         return null;
     }
 
     public streamit.scheduler2.iriter.SplitJoinIter isSplitJoin()
     {
         if (stream instanceof SplitJoin)
-            return new streamit.iriter.SplitJoinIter((SplitJoin) stream);
+            return new streamit.library.iriter.SplitJoinIter((SplitJoin) stream);
         return null;
     }
 
     public streamit.scheduler2.iriter.FeedbackLoopIter isFeedbackLoop()
     {
         if (stream instanceof FeedbackLoop)
-            return new streamit.iriter.FeedbackLoopIter((FeedbackLoop) stream);
+            return new streamit.library.iriter.FeedbackLoopIter((FeedbackLoop) stream);
         return null;
     }
     

@@ -1,4 +1,4 @@
-package streamit;
+package streamit.library;
 
 /**
  * This class indicates that a stream is a toplevel structure that can

@@ -1,4 +1,4 @@
-package streamit;
+package streamit.library;
 
 import java.util.*;
 // 1 input, many output

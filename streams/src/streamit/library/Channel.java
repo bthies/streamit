@@ -1,6 +1,6 @@
 // a channel is an I/O FIFO queue to go between filters
 
-package streamit;
+package streamit.library;
 
 import java.util.*;
 

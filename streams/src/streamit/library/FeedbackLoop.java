@@ -1,7 +1,7 @@
-package streamit;
+package streamit.library;
 
 import streamit.scheduler2.Scheduler;
-import streamit.iriter.Iterator;
+import streamit.library.iriter.Iterator;
 import java.util.List;
 
 // the feedback loop

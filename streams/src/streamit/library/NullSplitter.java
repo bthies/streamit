@@ -1,4 +1,4 @@
-package streamit;
+package streamit.library;
 
 public class NullSplitter extends Splitter
 {

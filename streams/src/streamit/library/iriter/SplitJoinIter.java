@@ -1,8 +1,8 @@
-package streamit.iriter;
+package streamit.library.iriter;
 
-import streamit.SplitJoin;
-import streamit.NullSplitter;
-import streamit.NullJoiner;
+import streamit.library.SplitJoin;
+import streamit.library.NullSplitter;
+import streamit.library.NullJoiner;
 
 public class SplitJoinIter
     extends streamit.misc.DestroyedClass

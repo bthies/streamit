@@ -1,4 +1,4 @@
-package streamit;
+package streamit.library;
 
 import java.lang.reflect.*;
 import java.util.*;

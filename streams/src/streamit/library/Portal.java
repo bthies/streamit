@@ -1,4 +1,4 @@
-package streamit;
+package streamit.library;
 
 /**
  * A portal that messages can be sent to.  This class is not currently
@@ -8,7 +8,7 @@ package streamit;
  * whose name ends in "Portal" should be defined; that class is the portal
  * object.  Receiver objects should also implement the interface.
  *
- * @version $Id: Portal.java,v 1.2 2003-07-24 19:12:44 dmaze Exp $
+ * @version $Id: Portal.java,v 1.3 2003-09-29 09:19:00 thies Exp $
  */
 public class Portal
 {

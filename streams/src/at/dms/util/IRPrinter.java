@@ -81,8 +81,10 @@ public class IRPrinter extends Utils implements SLIRVisitor
         try
         {
             p.newLine();
-            for (i = 0; i < indent; i++)
+            for (i = 0; i < indent; i++) {
                 p.write(' ');
+	    }
+	    p.flush();
         }
         catch (IOException e)
         {
@@ -112,6 +114,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
         try
         {
             p.write(data);
+	    p.flush();
         }
         catch (IOException e)
         {
@@ -130,6 +133,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
         try
         {
             p.write(data);
+	    p.flush();
         }
         catch (IOException e)
         {

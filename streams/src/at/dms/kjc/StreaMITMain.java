@@ -11,11 +11,6 @@ import at.dms.kjc.raw.*;
 public class StreaMITMain {
     
     /**
-     * For now, we just need one memoizer, so let's just keep it here.
-     */
-    public static final Memoizer memoizer = Memoizer.create();
-    
-    /**
      * Prints out C code for the program being compiled.
      */
     public static void compile(JCompilationUnit[] app) {

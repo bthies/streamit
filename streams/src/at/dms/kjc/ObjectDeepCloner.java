@@ -46,6 +46,38 @@ public class ObjectDeepCloner
     }
 
     /**
+     * Deep copy a stream container, except do not clone any of its
+     * child streams.  This means that the LIST of children is copied,
+     * but the children themselves are not duplicated.  Splitters and
+     * joiners are not considered as children - only SIRStreams.  If
+     * <oldObj> is not an SIRContainer, then this has the same effect
+     * as deepCopy.  
+     *
+     * This is only intended for use from the iterator package, and
+     * should not be called from within the IR.
+     */
+    static public Object shallowCopy(SIROperator oldObj) {
+	// only do something different for containers
+	if (!(oldObj instanceof SIRContainer)) {
+	    return deepCopy(oldObj);
+	} 
+	SIRContainer parent = (SIRContainer)oldObj;
+	// set the list of what we should clone
+	CloningVisitor visitor = new CloningVisitor();
+	parent.accept(visitor);
+	toBeCloned = visitor.getToBeCloned();
+	// subtract the list of <parent>'s children from the
+	// toBeCloned list.
+	for (ListIterator it=parent.getChildren().listIterator(); it.hasNext(); ) {
+	    Object o = it.next();
+	    if (toBeCloned.contains(o)) {
+		toBeCloned.remove(o);
+	    }
+	}
+	return doCopy(parent);
+    }
+
+    /**
      * Deep copy a KJC structure.
      */
     static public Object deepCopy(JPhylum oldObj) {

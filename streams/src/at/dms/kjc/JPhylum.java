@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPhylum.java,v 1.4 2002-05-06 18:30:08 thies Exp $
+ * $Id: JPhylum.java,v 1.5 2002-06-25 08:07:19 thies Exp $
  */
 
 package at.dms.kjc;
@@ -25,6 +25,7 @@ import at.dms.compiler.PositionedError;
 import at.dms.compiler.TokenReference;
 import at.dms.util.MessageDescription;
 import at.dms.util.Utils;
+import at.dms.kjc.iterator.*;
 
 /**
  * This class represents the root class for all elements of the parsing tree
@@ -63,7 +64,7 @@ public abstract class JPhylum extends at.dms.compiler.Phylum implements Constant
   // ----------------------------------------------------------------------
 
     public void assertMutable() {
-	Utils.assert(!StreaMITMain.memoizer.isFinalized(this), 
+	Utils.assert(!IterFactory.isFinalized(this), 
 		     "A mutability check failed.");
     }
 

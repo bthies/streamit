@@ -65,7 +65,7 @@ public class LowPassFilter extends Filter {
                 for(i=0;i<numberOfTaps;i++)
                     {
                         temptaps[i] = (float)(0.54 - 0.46*java.lang.Math.cos((2*pi)*(i/m)));
-                        tapTotal += temptaps[i];
+                        tapTotal = tapTotal + temptaps[i];
                     }
 
                 //normalize all the taps to a sum of 1

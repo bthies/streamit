@@ -10,6 +10,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.lir.*;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -118,8 +119,17 @@ public class FusePipe {
      * <filters>.
      */
     private static SIRFilter fuse(List filters) {
+	// construct a dummy result to be filled in later.  This is
+	// necessary because in the process of patching the parent
+	// init function, we need to know about the new target.  Not a
+	// perfect solution.
+	SIRFilter result = new SIRFilter();
+
 	// rename the components of the filters
-        new RenameAll().renameFilters(filters);
+	RenameAll renamer = new RenameAll();
+	for (ListIterator it=filters.listIterator(); it.hasNext(); ) {
+	    renamer.renameFilterContents((SIRFilter)it.next());
+	}
 
 	// construct set of filter info
 	List filterInfo = makeFilterInfo(filters);
@@ -131,10 +141,12 @@ public class FusePipe {
 	JMethodDeclaration steadyWork =  makeWork(filterInfo, false);
 
 	// make the fused init functions
-	JMethodDeclaration init = makeInitFunction(filterInfo, initWork);
+	JMethodDeclaration init = makeInitFunction(filterInfo, 
+						   initWork, 
+						   result);
 
 	// fuse all other fields and methods
-	SIRFilter result = makeFused(filterInfo, init, initWork, steadyWork);
+	makeFused(filterInfo, init, initWork, steadyWork, result);
 	
 	// return result
 	return result;
@@ -151,6 +163,11 @@ public class FusePipe {
 	// get the schedules
 	List initSched = schedule.getInitSchedule();
 	List steadySched = schedule.getSteadySchedule();
+
+	// DEBUGGING OUTPUT
+	SIRScheduler.printSchedule(initSched, "initialization");
+	SIRScheduler.printSchedule(steadySched, "steady state");
+
 	// for each filter...
 	ListIterator it = filterList.listIterator();
 	for (int i=0; it.hasNext(); i++) {
@@ -171,11 +188,24 @@ public class FusePipe {
 								 null);
 	    
 	    // number of executions (num[0] is init, num[1] is steady)
-	    int[] num = { ((SchedRepSchedule)initSched.get(i)).
-			  getTotalExecutions().intValue(),
-			  ((SchedRepSchedule)steadySched.get(i)).
-			  getTotalExecutions().intValue() };
-
+	    int[] num = new int[2];
+	    // for now, guard against empty/incomplete schedules
+	    // by assuming a count of zero.  Talk to Michal about
+	    // have entries of zero-weight in schedule?  FIXME.
+	    if (initSched.size()>i) {
+		num[0] = ((SchedRepSchedule)initSched.get(i)).
+		    getTotalExecutions().intValue();
+	    } else {
+		num[0] = 0;
+	    }
+	    // do the same for the steady schedule
+	    if (steadySched.size()>i) {
+		num[1] = ((SchedRepSchedule)steadySched.get(i)).
+		    getTotalExecutions().intValue();
+	    } else {
+		num[1] = 0;
+	    }
+	    
 	    // get ready to make rest of phase-specific info
 	    JVariableDefinition popBuffer[] = new JVariableDefinition[2];
 	    JVariableDefinition popCounter[] = new JVariableDefinition[2];
@@ -262,7 +292,11 @@ public class FusePipe {
 	    filter.getPeekInt() - filter.getPopInt();
 	// make an initializer to make a buffer of extent <lookedAt>
 	JExpression[] dims = { new JIntLiteral(null, lookedAt) };
-	JArrayInitializer initializer = new JArrayInitializer(null, dims);
+	JExpression initializer = 
+	    new JNewArrayExpression(null,
+				    filter.getInputType(),
+				    dims,
+				    null);
 	// make a buffer for all the items looked at in a round
 	return new JVariableDefinition(null,
 				       at.dms.kjc.Constants.ACC_FINAL,
@@ -319,9 +353,10 @@ public class FusePipe {
 		JVariableDefinition local = 
 		    (JVariableDefinition)loc.next();
 		// add variable declaration for local
-		statements.add(new JVariableDeclarationStatement(null, 
-								 local, 
-								 null));
+		statements.
+		    addStatement(new JVariableDeclarationStatement(null, 
+								   local, 
+								   null));
 	    }
 	}
     }
@@ -340,6 +375,12 @@ public class FusePipe {
 	    FilterInfo next = (FilterInfo)filterInfo.get(i);
 	    PhaseInfo curPhase = init ? cur.init : cur.steady;
 	    PhaseInfo nextPhase = init ? next.init : next.steady;
+
+	    // if the current filter doesn't execute at all, continue
+	    // (FIXME this is part of some kind of special case for 
+	    // filters that don't execute at all in a schedule, I think.)
+	    if (curPhase.num==0) { continue; }
+
 	    // if in the steady-state phase, restore the peek values
 	    if (!init) {
 		statements.addStatement(makePeekRestore(cur, curPhase));
@@ -503,12 +544,14 @@ public class FusePipe {
     private static JForStatement makeForLoop(JStatement body,
 					     JLocalVariable var,
 					     JExpression count) {
-	// make init statement - assign zero to <var>
-	JExpression initExpr =
+	// make init statement - assign zero to <var>.  We need to use
+	// an expression list statement to follow the convention of
+	// other for loops and to get the codegen right.
+	JExpression initExpr[] = {
 	    new JAssignmentExpression(null,
 				      new JLocalVariableExpression(null, var),
-				      new JIntLiteral(0));
-	JStatement init = new JExpressionStatement(null, initExpr, null);
+				      new JIntLiteral(0)) };
+	JStatement init = new JExpressionListStatement(null, initExpr, null);
 	// make conditional - test if <var> less than <count>
 	JExpression cond = 
 	    new JRelationalExpression(null,
@@ -528,17 +571,19 @@ public class FusePipe {
     /**
      * Returns an init function that is the combinatio of those in
      * <filterInfo> and includes a call to <initWork>.  Also patches
-     * the parent's init function to call the new one.
+     * the parent's init function to call the new one, given that
+     * <result> will be the resulting fused filter.
      */
     private static 
 	JMethodDeclaration makeInitFunction(List filterInfo,
-					    JMethodDeclaration initWork) {
+					    JMethodDeclaration initWork,
+					    SIRFilter result) {
 	// get init function of parent
 	JMethodDeclaration parentInit = 
 	    ((FilterInfo)filterInfo.get(0)).filter.getParent().getInit();
 	
 	// make an init function builder out of <filterList>
-	InitFuser initFuser = new InitFuser(filterInfo);
+	InitFuser initFuser = new InitFuser(filterInfo, result);
 	
 	// traverse <parentInit> with initFuser
 	parentInit.accept(initFuser);
@@ -609,11 +654,14 @@ public class FusePipe {
 	return name.toString();
     }
 
-    private static SIRFilter makeFused(List filterInfo, 
-				       JMethodDeclaration init, 
-				       JMethodDeclaration initWork, 
-				       JMethodDeclaration steadyWork) {
-
+    /**
+     * Mutates <result> to be the final, fused filter.
+     */
+    private static void makeFused(List filterInfo, 
+				  JMethodDeclaration init, 
+				  JMethodDeclaration initWork, 
+				  JMethodDeclaration steadyWork,
+				  SIRFilter result) {
 	// get the first and last filters' info
 	FilterInfo first = (FilterInfo)filterInfo.get(0);
 	FilterInfo last = (FilterInfo)filterInfo.get(filterInfo.size()-1);
@@ -626,23 +674,21 @@ public class FusePipe {
 	    (last.init.num + last.steady.num) * last.filter.getPushInt();
 
 	// make a new filter to represent the fused combo
-	SIRFilter result = 
-	    new SIRFilter(first.filter.getParent(),
-			  getFusedName(filterInfo),
-			  getFields(filterInfo),
-			  getMethods(filterInfo, init, initWork, steadyWork),
-			  new JIntLiteral(peekCount), 
-			  new JIntLiteral(popCount),
-			  new JIntLiteral(pushCount),
-			  steadyWork,
-			  first.filter.getInputType(),
-			  last.filter.getOutputType());
+	result.copyState(new SIRFilter(first.filter.getParent(),
+				       getFusedName(filterInfo),
+				       getFields(filterInfo),
+				       getMethods(filterInfo, 
+						  init, initWork, steadyWork),
+				       new JIntLiteral(peekCount), 
+				       new JIntLiteral(popCount),
+				       new JIntLiteral(pushCount),
+				       steadyWork,
+				       first.filter.getInputType(),
+				       last.filter.getOutputType()));
 
 	// set init functions and work functions of fused filter
 	result.setInit(init);
 	result.setWork(steadyWork);
-
-	return result;
     }
 				
 }
@@ -869,15 +915,26 @@ class InitFuser extends SLIRReplacingVisitor {
     private List fusedArgs;
 
     /**
+     * What will be filled in to be the final, fused filter.
+     */
+    private SIRFilter fusedFilter;
+
+    /**
      * Cached copy of the method decl for the init function.
      */
     private JMethodDeclaration initFunction;
 
-    public InitFuser(List filterInfo) {
+    /**
+     * <fusedFilter> represents what -will- be the result of the
+     * fusion.  It has been allocated, but is not filled in with
+     * correct values yet.
+     */
+    public InitFuser(List filterInfo, SIRFilter fusedFilter) {
 	this.filterInfo = filterInfo;
 	this.fusedBlock = new JBlock(null, new JStatement[0], null);
 	this.fusedParam = new LinkedList();
 	this.fusedArgs = new LinkedList();
+	this.fusedFilter = fusedFilter;
     }
 
     /**
@@ -938,9 +995,8 @@ class InitFuser extends SLIRReplacingVisitor {
 	fusedBlock.addStatement(new JExpressionStatement(
               null,
 	      new JMethodCallExpression(null,
-					null,
-					LoweringConstants.
-					getInitName(info.filter),
+					new JThisExpression(null),
+					info.filter.getInit().getName(),
 					newArgs), null));
     }
 
@@ -948,21 +1004,13 @@ class InitFuser extends SLIRReplacingVisitor {
      * Fabricates a call to this init function.
      */
     private JStatement makeInitCall(List filterInfo) {
-	return new JExpressionStatement(
-	      null,
-	      new JMethodCallExpression(/* tokref */
-					null,
-					/* prefix */
-					null,
-					/* ident */
-					LoweringConstants.
-					getMethodName(FusePipe.
-						      getFusedName(filterInfo),
-						      "init"),
-					/* args */
-					(JExpression[])
-					fusedArgs.toArray(new JExpression[0])),
-					null);
+	return new SIRInitStatement(null, 
+				    null, 
+				    /* args */
+				    (JExpression[])
+				    fusedArgs.toArray(new JExpression[0]),
+				    /* target */
+				    fusedFilter);
     }
 
     /**
@@ -977,7 +1025,7 @@ class InitFuser extends SLIRReplacingVisitor {
 	    // calculate dimensions of the buffer
 	    JExpression[] dims = { new JIntLiteral(null, 
 						   info.filter.getPeekInt() -
-						   info.filter.getPopInt()-1)};
+						   info.filter.getPopInt())};
 	    // add a statement initializeing the peek buffer
 	    fusedBlock.addStatementFirst(new JExpressionStatement(null,
 	      new JAssignmentExpression(
@@ -986,7 +1034,10 @@ class InitFuser extends SLIRReplacingVisitor {
 					     new JThisExpression(null),
 					     info.peekBuffer.
 					     getVariable().getIdent()),
-		  new JArrayInitializer(null, dims)), null));
+		  new JNewArrayExpression(null,
+					  info.filter.getInputType(),
+					  dims,
+					  null)), null));
 	}
 	// now we can make the init function
 	this.initFunction = new JMethodDeclaration(null,

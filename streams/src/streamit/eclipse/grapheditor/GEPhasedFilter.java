@@ -1,14 +1,10 @@
 /*
  * Created on Jun 20, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
  */
 package grapheditor;
 
 import java.io.*;
 import java.util.*;
-import grapheditor.jgraphextension.*;
 import com.jgraph.graph.*;
 import java.awt.Color;
 import javax.swing.BorderFactory; 
@@ -20,9 +16,20 @@ import com.jgraph.JGraph;
  */
 public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	
+	/**
+	 * The initial work functions of the GEPhasedFilter.
+	 */
 	private ArrayList initWorkFunctions;
+	
+	/**
+	 * The work functions of the GEPhasedFilter.
+	 */
 	private ArrayList workFunctions;
 
+	/**
+	 * GEPhasedFilter constructor.
+	 * @param name The name of this GEPhasedFilter.
+	 */
 	public GEPhasedFilter(String name)
 	{
 		super(GEType.PHASED_FILTER, name);
@@ -76,31 +83,41 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	 * Returns the number of work functions
 	 */
 	public int getNumberOfWFs()
-		{
-			return this.workFunctions.size();
-		}
+	{
+		return this.workFunctions.size();
+	}
 	
 	/**
-	 * Contructs the filter and returns itself since Filters have no children.
+	 * Get the string representation of the GEWorkFunction at index.
+	 * @return The string representation of the GEWorkFunction
+	 * @param index The index of the GEWorkFunction that will be returned as a String.
+	 */
+	public String getWFAsString(int index)
+	{
+		GEWorkFunction wf = this.getWorkFunction(index);
+		String strWF = "<BR>Push = " + wf.getPushValue() + 
+					   "<BR>Pop = " + wf.getPopValue() + 
+					   "<BR>Peek = " + wf.getPeekValue();
+		return strWF;
+	}
+	
+	
+	/**
+	 * Contructs the filter and returns <this>.
+	 * @return <this>
 	 */
 	public GEStreamNode construct(GraphStructure graphStruct)
 	{
 		System.out.println("Constructing the filter " +this.getName());
 		
-		
 		if (this.getNumberOfWFs() > 0) 
 		{
-			GEWorkFunction wf = this.getWorkFunction(0);
-			
-			this.setInfo("<HTML><H5>"+ this.getName() +"<BR>Push = " + wf.getPushValue() + 
-														  "<BR>Pop = " + wf.getPopValue() + 
-														  "<BR>Peek = " + wf.getPeekValue() + 
-														  "</H5></HTML>");
-			this.setUserObject(this.getInfo());
+			this.setInfo(this.getWFAsString(0));
+			this.setUserObject(this.getInfoLabel());
 		}
 		else
 		{
-			this.setUserObject("<HTML><H5>"+ this.getName() + "</H5></HTML>");
+			this.setUserObject(this.getNameLabel());
 		}
 		 
 		(graphStruct.getAttributes()).put(this, this.attributes);
@@ -125,7 +142,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	}
 	
 	/**
-	 * Draw this filter.
+	 * Draw this GEPhasedFilter.
 	 */
 	public void draw()
 	{
@@ -133,12 +150,17 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		// TO BE ADDED
 	}
 
+	/**
+	 * Expand or collapse the GEPhasedFilter depending on wheter it was already 
+	 * collapsed or expanded. 
+	 * @param jgraph The JGraph that will be modified to allow the expanding/collapsing.
+	 */
 	public void collapseExpand(JGraph jgraph)
 	{
 		if (this.isInfoDisplayed)
 		{
 			Map change = GraphConstants.createMap();
-			GraphConstants.setValue(change, "<HTML><H5>"+this.getName()+"</H5></HTML>");
+			GraphConstants.setValue(change, this.getNameLabel());
 			Map nest = new Hashtable ();
 			nest.put(this, change);
 			jgraph.getModel().edit(nest, null, null, null);
@@ -148,7 +170,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		else
 		{
 			Map change = GraphConstants.createMap();
-			GraphConstants.setValue(change, this.getInfo());
+			GraphConstants.setValue(change, this.getInfoLabel());
 			Map nest = new Hashtable ();
 			nest.put(this, change);
 			jgraph.getModel().edit(nest, null, null, null);
@@ -157,6 +179,5 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		}
 		System.out.println("The user object is " +this.getUserObject().toString());
 		System.out.println(jgraph.convertValueToString(this)); 
-				
 	}
 }

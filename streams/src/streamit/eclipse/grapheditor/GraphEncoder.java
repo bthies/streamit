@@ -5,14 +5,16 @@ import at.dms.kjc.*;
 import java.io.*;
 import java.util.*;
 
-
- 
-
+/**
+ * GraphEncoder "visits" the nodes SIRStream structures in order to build a GraphStructure
+ * representation of the StreamIt program. 
+ * @author jcarlos
+ */
 public class GraphEncoder implements AttributeStreamVisitor {
  
     //May Want outputStream or stdout. Not sure
     private PrintStream outputStream;
-    private GraphStructure graph;
+    public static GraphStructure graph;
 
     public GraphEncoder() 
     {
@@ -55,23 +57,15 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			 	  
 		}
 		System.out.println("#########################################################");
-		graph.constructGraph();
+		//graph.constructGraph();
 	
 		System.out.println("End of Test");
 		/* 
 		 * DEBUGGING CODE END
 		 * *********************************************************** */
-		 
-
-
-
-
 
 	}
 			
-		 
-		 	 
-		 
 		 
     /**
      * Visit a SIRStructure

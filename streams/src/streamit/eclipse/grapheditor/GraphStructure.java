@@ -6,17 +6,13 @@ package grapheditor;
 
 import java.util.*;
 import java.io.*;
-
 import java.awt.*;
-
-//import com.sun.rsasign.t;
 import com.jgraph.graph.*;
 import com.jgraph.JGraph;
-import com.jgraph.layout.*;
-
-import javax.swing.*;
 import grapheditor.jgraphextension.*;
 
+import javax.swing.JScrollPane;
+//import com.sun.rsasign.t;
 
 /**
  * Graph data structure that has GEStreamNode objects as its nodes. 
@@ -38,6 +34,8 @@ public class GraphStructure implements Serializable{
 	
 	public GraphEditorFrame editorFrame; 
 	public LiveJGraphInternalFrame internalFrame;
+	
+	public JScrollPane panel;
 	
 	
 	// The toplevel GEStreamNode. Typically it should be a GEPipeline object.  
@@ -107,7 +105,9 @@ public class GraphStructure implements Serializable{
 	 */
 	public void constructGraph()
 	{
+			System.out.println("Entered constructGraph");
 			editorFrame = new GraphEditorFrame();
+			System.out.println("Finished creating editorFrame");
 			this.topLevel.construct(this);
 			model.insert(cells.toArray(), globalAttributes, cs, null, null);
 
@@ -121,6 +121,20 @@ public class GraphStructure implements Serializable{
 			frame.setVisible(true);
 			*/
 	}
+	
+	public void constructGraph(JScrollPane pane)
+	{
+		System.out.println("Entered constructGraph");
+		this.panel = pane;
+		System.out.println("Finished creating editorFrame");
+		this.topLevel.construct(this);
+		model.insert(cells.toArray(), globalAttributes, cs, null, null);
+		
+		
+		
+	}
+	
+	
 	
 	/** 
 	 * Sets the toplevel node to <strNode>
@@ -159,46 +173,34 @@ public class GraphStructure implements Serializable{
 	{
 		Rectangle rect =  new Rectangle(x, y, width, height);
 		/*
-		if (node.getType() == GEType.PHASED_FILTER)
-		{
-			System.out.println("################################## setting COORDS for FILTER");
-			y+=500;
-			
+		if (node.getType() == GEType.PHASED_FILTER) {
+			y+=500;	
 			rect.y = y;
 		}
-		else if (node.getType() == GEType.SPLIT_JOIN)
-		{
-			System.out.println("################################## setting COORDS for SplitJoin");
+		else if (node.getType() == GEType.SPLIT_JOIN) {
 			x+= 600;
 			rect.x = x;
 		}
-		else
-		{		
-			if (node.getEncapsulatingNode() != null)
-			{
-			
+		else {		
+			if (node.getEncapsulatingNode() != null) {
 				if ((node.getEncapsulatingNode().getType() == GEType.SPLIT_JOIN) && 
 			    	(node.getType() != GEType.JOINER) && 
 			    	(node.getType() != GEType.SPLITTER))  
 				{
 					x += 100;
 				}
-				else if (node.getType() == GEType.JOINER)
-				{
+				else if (node.getType() == GEType.JOINER) {
 					rect.height = 400;
 					rect.width = 400;
 					y += 120;
 					rect.y = y;
 					y += 120;
 				}
-				
-				else
-				{
+				else {
 					y += 120;
 				}
 			}
-			else
-			{
+			else {
 				y += 120;
 			}
 		}

@@ -1,8 +1,5 @@
 /*
  * Created on Jun 24, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
  */
 package grapheditor;
 import java.io.*;
@@ -10,18 +7,39 @@ import com.jgraph.JGraph;
 
 
 /**
+ * GEFeedbackLoop is the graph internal representation of  a feedback loop.
  * @author jcarlos
- *
- * To change the template for this generated type comment go to
- * Window>Preferences>Java>Code Generation>Code and Comments
  */
 public class GEFeedbackLoop extends GEStreamNode implements Serializable{
+	
+	/**
+	 * The splitter belonging to this feedback loop.
+	 */
 	private GESplitter splitter;
+	
+	/**
+	 * The joiner belonging to this feedback loop.
+	 */
 	private GEJoiner joiner;
+	
+	/**
+	 * The body of the feedback loop.
+	 */
 	private GEStreamNode body;
+	
+	/**
+	 * The loop part of the feedback loop.
+	 */
 	private GEStreamNode loop;
 	
-	
+	/**
+	 * GEFeedbackLoop constructor.
+	 * @param name The name of the GEFeedbackLoop.
+	 * @param split The GESplitter that corresponds to this GEFeedbackLoop.
+	 * @param join The GEJoiner that corresponds to this GEFeedbackLoop.
+	 * @param body The GEStreamNode that represents the body of theGEFeedbackLoop.
+	 * @param loop The GEStreamNode that represents the body of the GEFeedbackLoop.
+	 */
 	public GEFeedbackLoop(String name, GESplitter split, GEJoiner join, GEStreamNode body, GEStreamNode loop)
 	{
 		super(GEType.FEEDBACK_LOOP, name);
@@ -32,7 +50,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	}
 	
 	/**
-	 * Get the splitter part of this
+	 * Get the splitter part of this.
 	 * @return GESplitter corresponding to this GEFeedbackLoop.
 	 */
 	public GESplitter getSplitter()
@@ -41,7 +59,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	}
 	
 	/**
-	 * Get the joiner part of this
+	 * Get the joiner part of this.
 	 * @return GESJoiner corresponding to this GEFeedbackLoop.
 	 */
 	public GEJoiner getJoiner()
@@ -50,7 +68,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	}	
 	
 	/**
-	 * Get the body of this 
+	 * Get the body of this.
 	 * @return GEStreamNode that is the body of GEFeedbackLoop.
 	 */
 	public GEStreamNode getBody()
@@ -59,7 +77,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	}
 	
 	/**
-	 * Get the loop of this
+	 * Get the loop of this.
 	 * @return GEStreamNode that is the loop of GEFeedbackLoop.
 	 */
 	public GEStreamNode getLoop()
@@ -69,7 +87,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	
 	
 	/**
-	 * Draw this Pipeline
+	 * Draw this GEFeedbackLoop.
   	 */	
 	public void draw()
 	{
@@ -102,6 +120,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 		
 		return splitter;
 	}
+	
 	public void collapseExpand(JGraph jgraph){};
 	
 }

@@ -8,6 +8,43 @@ package grapheditor;
    import org.eclipse.jface.viewers.ISelection;
    import org.eclipse.swt.widgets.Shell;
 
+/*
+ * 
+ * <extension point = "org.eclipse.ui.actionSets">
+           <actionSet
+               id="grapheditor.HelloWorldActionSet"
+               label="Hello World"
+               visible="true"
+               description="The action set for the Eclipse Hello World example">
+               <menu
+                   id="grapheditor.HelloWorldMenu"
+                   label="Samples">
+                   <separator name="samples"/>
+               </menu>
+               <action id="grapheditor.actions.HelloWorldAction"
+                   menubarPath="grapheditor.HelloWorldMenu/samples"
+                   toolbarPath="Normal"
+                   label="Hello World"
+                   tooltip="Press to see a message"
+                   icon="icons/helloworld.gif"
+                   class="grapheditor.HelloWorldAction"/>
+           </actionSet>
+       </extension>
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ */	
+	
+	
 	
 
    /** HelloWorldAction is a simple example of using an

@@ -1,16 +1,11 @@
 /*
  * Created on Jun 23, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
  */
 package grapheditor;
 
 import java.io.*;
-
 import com.jgraph.graph.*;
 import com.jgraph.JGraph;
-
 import java.awt.Color;
 import javax.swing.BorderFactory; 
 
@@ -21,13 +16,20 @@ import javax.swing.BorderFactory;
  */
 public class GESplitter extends GEStreamNode implements Serializable{
 	
-	private String label;
+	/**
+	 * The weights corresponding to the splitter.
+	 */
 	private int[] weights;
 
-	public GESplitter(String label,int[] weights)
+	/**
+	 * GESplitter constructor.
+	 * @param name The name of the GESplitter.
+	 * @param weights The weights of the GESplitter.
+	 */
+	public GESplitter(String name,int[] weights)
 	{
-		super(GEType.SPLITTER , label);
-		this.label = label;
+		super(GEType.SPLITTER , name);
+		this.name = name;
 		this.weights = weights;
 	}
 	
@@ -41,11 +43,36 @@ public class GESplitter extends GEStreamNode implements Serializable{
 	}
 
 	/**
-	 * Contructs the Splitter 
+	 * Get the weight as a string of the form: "(weight1, weight2, weight3,... , weightN)".
+	 * @return String representation of the weights of the GESplitter.
+	 */
+	public String getWeightsAsString()
+	{
+		String strWeight = "(";
+		for(int i = 0; i < this.weights.length; i++)
+		{
+			if (i != 0)
+			{
+				strWeight += ", ";
+			}
+			strWeight += this.weights[i];
+		
+		}
+		
+		strWeight += ")";
+		return strWeight;
+	}
+
+	/**
+	 * Construct the GESplitter and return <this>. 
+	 * @return <this>.
 	 */
 	public GEStreamNode construct(GraphStructure graphStruct)
 	{
 		System.out.println("Constructing the Splitter " +this.getName());
+		
+		this.setInfo(this.getWeightsAsString());
+		this.setUserObject(this.getInfoLabel());
 		
 		(graphStruct.getAttributes()).put(this, this.attributes);
 		GraphConstants.setAutoSize(this.attributes, true);

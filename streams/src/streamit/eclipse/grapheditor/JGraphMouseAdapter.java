@@ -6,7 +6,10 @@ package grapheditor;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.Point;
 import com.jgraph.JGraph;
+import com.jgraph.graph.CellView;
+
 import com.jgraph.graph.GraphConstants;
 import java.util.Map;
 import java.util.Hashtable;
@@ -28,6 +31,7 @@ public class JGraphMouseAdapter extends MouseAdapter {
    
 	public void mousePressed(MouseEvent e)
 	{
+		
 		if (e.getSource() instanceof LiveJGraphInternalFrame)
 		{
 			System.out.println("The source of the mouse event  is FRAME");
@@ -74,12 +78,14 @@ public class JGraphMouseAdapter extends MouseAdapter {
 					System.out.println("The user object is " +node.getUserObject().toString());
 					System.out.println(jgraph.convertValueToString(node)); 
 					*/
-				}
-				
-				
-				
-				
+				}		
 			}
-		}	
+			
+			
+		}
+
+		
+		
+			
 	}
 }

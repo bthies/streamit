@@ -107,13 +107,16 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		
 		//frame.addInternalFrameListener(_fsl);
 		//frame.addComponentListener(_fcl);
-		 
 		// must change this so that frame is not equal to null.This fix does not make it work as well as with the split join, should look at splitjoin to see what is missing, could be the line that is just above insertcells
 		
 		if (graphStruct.getTopLevel() == this)
 		{
 			frame.setVisible(true);
-			graphStruct.editorFrame.getDesktopPane().add(frame);
+			//graphStruct.editorFrame.getDesktopPane().add(frame);
+			
+			graphStruct.panel.getViewport().setView(frame);
+			//graphStruct.panel.add(frame);
+			
 		}
 		else
 		{
@@ -127,10 +130,12 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		} 
 		catch(Exception pve) {}
 		
-		
+		/*
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		manager.arrange();
 		manager.setFrameSize(frame);
+	 	*/
+	 	
 	 	
 		//frame.setSize(algorithm.max.x + 10, ((algorithm.max.y + ((algorithm.spacing.y * (this.getSuccesors().size()-1)) / 2)))) ; 
 		
@@ -150,7 +155,7 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 	/**
 	 * Expand or collapse the GEStreamNode structure depending on wheter it was already 
 	 * collapsed or expanded. 
-	 * @param jgraph 
+	 * @param jgraph The JGraph that will be modified to allow the expanding/collapsing.
 	 */
 	public void collapseExpand(JGraph jgraph)
 	{

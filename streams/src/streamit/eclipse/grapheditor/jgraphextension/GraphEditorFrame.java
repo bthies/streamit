@@ -35,7 +35,7 @@ public class GraphEditorFrame extends JFrame {
   public GraphEditorFrame()
   {
     super("Graph Editor");
-    
+    System.out.println("Entered GraphEditor Frame");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     _fsl = new FrameSelectionListener();
     _fcl = new FrameComponentListener();
@@ -54,34 +54,18 @@ public class GraphEditorFrame extends JFrame {
 
      JGraph graphComp = new JGraph(_graph);
 
-
     _canvas.add(graphComp,BorderLayout.CENTER);
     _desktopPane.add(_canvas,JLayeredPane.FRAME_CONTENT_LAYER);
     mainPanel.add(_desktopPane,BorderLayout.CENTER);
     getContentPane().add(mainPanel);
-    
-    
-    
-    JMenuBar menuBar = new JMenuBar();
-    JMenu menu = new JMenu("File");
-    JMenuItem menuItem = new JMenuItem("Exit");
-    menuItem.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e)
-      {
-        System.exit(0);
-      }
-      });
-    menu.add(menuItem);
-    menuBar.add(menu);
-    menu = new JMenu("Components");
-    menu.add(arifa);
-    menu.add(_apifa);
-    menu.add(_acifa);
-    menuBar.add(menu);
-    setJMenuBar(menuBar);
+ 
+    System.out.println("Packing");
     pack();
-    setSize(500,700);
+    System.out.println("Finished packing, about to set size");
+    setSize(300,400);
+    System.out.println("Setting visible");
     setVisible(true);
+	
   }
  
 	public JDesktopPane getDesktopPane()

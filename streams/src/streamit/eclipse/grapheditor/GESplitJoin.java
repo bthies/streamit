@@ -12,7 +12,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 
 /**
- * The GESplitJoin is the graph internal representation of  a splitjoin. It is composed 
+ * GESplitJoin is the graph internal representation of  a splitjoin. It is composed 
  * of a splitter, a joiner, and the children of the splitter which in turn are also the 
  * parents of the joiner.
  * @author jcarlos
@@ -101,8 +101,10 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 					
 		DefaultGraphModel model = new DefaultGraphModel();
 		this.localGraphStruct.setGraphModel(model);
-		this.localGraphStruct.setJGraph(new JGraph(model));
-				
+		JGraph jgraph = new JGraph(model);
+		jgraph.addMouseListener(new JGraphMouseAdapter(jgraph));
+		this.localGraphStruct.setJGraph(jgraph);
+							
 		frame = new LiveJGraphInternalFrame(this.localGraphStruct.getJGraph());
 		this.localGraphStruct.internalFrame = frame;
 		
@@ -160,9 +162,10 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		} 
 		catch(Exception pve) {}
 		
+		/*
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		manager.arrange();
-		
+		*/
 		return this;
 	}
 	
@@ -194,7 +197,6 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	 */	
 	public void collapseExpand(JGraph jgraph)
 	{
-		// draw shrunk version
 		if(this.isInfoDisplayed)
 		{		
 			Rectangle rect = GraphConstants.getBounds(this.attributes);

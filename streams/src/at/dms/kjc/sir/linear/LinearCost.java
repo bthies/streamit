@@ -89,7 +89,7 @@ public class LinearCost {
     public long getDirectCost() {
 	// add the push count now to estimate copying overhead, even
 	// if you're not adding/multiplying.
-	return SCALE_FACTOR * (100l + 2l*cols + (3l*(long)multiplyCount) + ((long)addCount));
+	return SCALE_FACTOR * (185l + 2l*cols + (3l*(long)multiplyCount) + ((long)addCount));
     }
 
     /**
@@ -112,15 +112,15 @@ public class LinearCost {
 	// okay.  this works by taking the fft cost, adding 1 as a
 	// constant overhead per node, adding a small percentage of
 	// the rows cost to indicate copying overhead (if you don't
-	// divide by 100, then this completely dominates and will
+	// divide by 185, then this completely dominates and will
 	// distort the partitioning), then multiply by popcount since
 	// the node has to be repeated, redundantly, if some of its
 	// outputs are useless.
-	double nodeCost = ((double)SCALE_FACTOR) * (getFrequencyComputationCost() + 100.0 + ((float)(2*cols))) * ((double)Math.max(popCount,1));
+	double nodeCost = ((double)SCALE_FACTOR) * (getFrequencyComputationCost() + 185.0 + ((float)(2*cols))) * ((double)Math.max(popCount,1));
 	// just count the pushing since popping is almost free, all at
 	// once.  count it twice since you have to read it and write
 	// it.
-	long decimatorCost = SCALE_FACTOR * (popCount > 1 ? 100 + 4 * cols : 0);
+	long decimatorCost = SCALE_FACTOR * (popCount > 1 ? 185 + 4 * cols : 0);
 	if (LinearPartitioner.DEBUG) { System.err.println("Returning linear cost of " + ((long)nodeCost + decimatorCost) + " with: \n"
 							  + "  frequencyComputationCost=" + getFrequencyComputationCost() + "\n"
 							  + "  nodeCost=" + nodeCost + "\n"

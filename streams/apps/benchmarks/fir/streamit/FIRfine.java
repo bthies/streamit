@@ -1,8 +1,5 @@
-import streamit.StreamIt;
-import streamit.Pipeline;
-import streamit.SplitJoin;
-import streamit.Filter;
-import streamit.Channel;
+import streamit.*;
+import streamit.io.*;
 
 public class FIRfine extends StreamIt
 {
@@ -14,8 +11,9 @@ public class FIRfine extends StreamIt
     public void init ()
     {
         add (new FloatSource (10000));
-        add (new FIR (64));
-	add (new FloatPrinter (10000));
+        add (new FIR (128));
+	add (new FileWriter("output.dat", Float.TYPE));
+	//add (new FloatPrinter (10000));
     }
 }
 
@@ -35,8 +33,8 @@ class FIR extends Pipeline
 		    this.output = new Channel(Float.TYPE, 2);
 		}
 		public void work() {
-		    this.output.pushFloat(this.input.popFloat());
 		    this.output.pushFloat(0);
+		    this.output.pushFloat(this.input.popFloat());
 		}
 	    });
 	for(i=0; i<N; i++)
@@ -47,8 +45,8 @@ class FIR extends Pipeline
 		    this.output = new Channel(Float.TYPE, 1);
 		}
 		public void work() {
-		    this.input.popFloat();
 		    this.output.pushFloat(this.input.popFloat());
+		    this.input.popFloat();
 		}
 	    });
     }
@@ -62,18 +60,22 @@ class SingleMultiply extends Filter
     }
 
     float W;
+    float last;
     public void init(final int i) {
-	W = 2*i*i/((float)i+1);
-	this.input = new Channel(Float.TYPE, 2, 2);
-	this.output = new Channel(Float.TYPE, 2);
+	last = 0;
+	W = 2*i*i/(i+1);
+	this.input = new Channel(Float.TYPE, 12);
+	this.output = new Channel(Float.TYPE, 12);
     }
     
     public void work() {
-	float c, s; 
-	c = this.input.popFloat();
+	for (int i=0; i<6;i++) {
+	float s; 
 	s = this.input.popFloat();
-	this.output.pushFloat(c);
-	this.output.pushFloat(s+c*W);
+	this.output.pushFloat(s+last*W);
+	this.output.pushFloat(last);
+	last = this.input.popFloat();
+	}
     }
 }
 
@@ -121,16 +123,3 @@ class FloatPrinter extends Filter
     }
 }
 
-class FloatIdentity extends Filter
-{
-    public void init ()
-    {
-        input = new Channel (Float.TYPE, 1);
-        output = new Channel (Float.TYPE, 1);
-    }
-    public void work ()
-    {
-        float i = input.popFloat ();
-        output.pushFloat (i);
-    }
-}

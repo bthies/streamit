@@ -4,7 +4,7 @@ IMPORTS   = 	"import streamit.*; \
 	         import streamit.io.*; \
 		 import java.lang.Math;"
 
-LIB_FILES =	../delay/Delay.java \
+LIB_FILES =	../../examples/delay/Delay.java \
 		AdapTest.java \
 		forw.java \
 		multvect.java \

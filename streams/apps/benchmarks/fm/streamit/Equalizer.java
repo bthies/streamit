@@ -23,7 +23,8 @@ class FloatAdder extends Filter
 {
     public void init ()
     {
-        input = new Channel (Float.TYPE, 4, 4);
+        // input = new Channel (Float.TYPE, 4, 4);
+        input = new Channel (Float.TYPE, 2, 2);
         output = new Channel (Float.TYPE, 1);
     }
 

@@ -50,6 +50,10 @@ public class StatelessDuplicate {
      * Checks whether or not <filter> can be fissed.
      */
     public static boolean isFissable(SIRFilter filter) {
+	//do not fiss sinks
+	if (filter.getPushInt() == 0)
+	    return false;
+
 	// check that it is stateless
 	if (!isStateless(filter)) {
 	    return false;

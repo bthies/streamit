@@ -1270,6 +1270,16 @@ new JEmptyStatement(null, null);
 					      bufferAccess);
 	}
 	
+	public Object visitDynamicToken(SIRDynamicToken self) {
+	    Utils.fail("Dynamic rates not yet supported in cluster backend.");
+	    return null;
+	}
+	
+	public Object visitRangeExpression(SIRRangeExpression self) {
+	    Utils.fail("Dynamic rates not yet supported in cluster backend.");
+	    return null;
+	}
+	
 	//convert peek exps into:
 	// (recvBuffer[(recvBufferIndex + (arg) + 1) mod recvBufferSize])
 	public Object visitPeekExpression(SIRPeekExpression oldSelf,

@@ -113,6 +113,11 @@ public class ClusterBackend implements FlatVisitor {
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
 
+	if (Flattener.hasDynamicRates(str)) {
+	    System.err.println("Failure: Dynamic rates are not yet supported in the cluster backend.");
+	    System.exit(1);
+	}
+
 	//SIRPrinter printer1 = new SIRPrinter();
 	//str.accept(printer1);
 	//printer1.close();
@@ -155,7 +160,7 @@ public class ClusterBackend implements FlatVisitor {
 	// Increasing filter Multiplicity
 	if ( doCacheOptimization ) {
 	    IncreaseFilterMult.inc(str, 1, code_cache);
-	}
+	    //}
 
 	/* for cluster backend, fusion means to fuse segments on same cluster
 	if (KjcOptions.fusion) {

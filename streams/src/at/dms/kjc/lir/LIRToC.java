@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.94 2004-10-15 01:08:07 thies Exp $
+ * $Id: LIRToC.java,v 1.95 2005-02-17 00:08:48 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1825,6 +1825,14 @@ public class LIRToC
                     params[i].accept(this);
                 }
         print(");");
+    }
+
+    public void visitRangeExpression(SIRRangeExpression self) {
+	assert false : "Do not yet support dynamic rates in uniprocessor backend.";
+    }
+
+    public void visitDynamicToken(SIRDynamicToken self) {
+	assert false : "Do not yet support dynamic rates in uniprocessor backend.";
     }
 
     public void visitPeekExpression(SIRPeekExpression self,

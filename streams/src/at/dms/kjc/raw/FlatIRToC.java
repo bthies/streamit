@@ -721,6 +721,14 @@ public class FlatIRToC extends ToC implements StreamVisitor
         print(")");
     }
 
+    public void visitDynamicToken(SIRDynamicToken self) {
+	Utils.fail("Dynamic rates not yet supported in cluster backend.");
+    }
+
+    public void visitRangeExpression(SIRRangeExpression self) {
+	Utils.fail("Dynamic rates not yet supported in cluster backend.");
+    }
+
     public void visitPeekExpression(SIRPeekExpression self,
                                     CType tapeType,
                                     JExpression num)

@@ -82,6 +82,11 @@ public class RawBackend {
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
 
+	if (Flattener.hasDynamicRates(str)) {
+	    System.err.println("Failure: Dynamic rates are not yet supported in the Raw backend.");
+	    System.exit(1);
+	}
+
 	//SIRPrinter printer1 = new SIRPrinter();
 	//str.accept(printer1);
 	//printer1.close();

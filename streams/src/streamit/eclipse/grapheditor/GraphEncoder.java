@@ -65,16 +65,28 @@ public class GraphEncoder implements AttributeStreamVisitor {
 
     //END ADDED
 
+    public GraphEncoder() 
+    {
+	this.nodesList = new ArrayList();
+	
+	//Feel free to add arguments and call it correctly
+	//Setup an output stream to output to here
+	//For now we are using System.out
+	//Later we can change to outputting to file perhaps
+	
+	this.outputStream = System.out;
+    }
+    
     public GraphEncoder(PrintStream outputStream) 
     {
-		this.nodesList = new ArrayList();
+	this.nodesList = new ArrayList();
 	
-		//Feel free to add arguments and call it correctly
-		//Setup an output stream to output to here
-		//For now we are using System.out
-		//Later we can change to outputting to file perhaps
+	//Feel free to add arguments and call it correctly
+	//Setup an output stream to output to here
+	//For now we are using System.out
+	//Later we can change to outputting to file perhaps
 	
-		this.outputStream = System.out;
+	this.outputStream = outputStream;
     }
     
 	/**

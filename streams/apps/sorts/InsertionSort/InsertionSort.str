@@ -1,0 +1,87 @@
+/** This InsertionSort is based off of the Diminishing Increment Sort
+ * in Knuth "Sorting and Searching" 5.2.1.  The algorithm is very
+ * similar to basic insertion sort (where the data item currently
+ * processed is merged into an already sorted list), except that it
+ * tries to make larger jumps, so that less reordering of the data is
+ * needed.  With START of 1, this algorithm degenerates to insertion
+ * sort.
+ **/
+void->void pipeline InsertionSort {
+  int SIZE = 16;
+  int START = SIZE/2;
+  add IntSource(SIZE);
+  add JumpSortPipe(SIZE, START);
+  add IntPrinter();
+}
+
+void->int filter IntSource(int SIZE) {
+  int [SIZE]data;
+  int index = 0;
+  init {
+    data[0] = 503; data[1] = 087; data[2] = 512;
+    data[3] = 061; data[4] = 908; data[5] = 170;
+    data[6] = 897; data[7] = 275; data[8] = 653;
+    data[9] = 426; data[10] = 154; data[11] = 509;
+    data[12] = 612; data[13] = 677; data[14] = 765;
+    data[15] = 703;
+  }
+
+  work push 1 {
+    push(data[index++]);
+    if (index == SIZE)
+      index = 0;
+  }
+}
+
+/** Pipeline of log2(START) JumpSorts.  Final JumpSort should always
+ * be 1
+ **/
+int->int pipeline JumpSortPipe(int SIZE, int START) {
+  for(int i=START; i >= 1; i = i/2) {
+    add JumpSort(SIZE, i);
+  }
+}
+
+/** Instead of comparing direct neighbours for insertion sort, compare
+ * neighbours of distance START away.  This leads to longer jumps, and
+ * hopefully less jumps overall
+ **/
+int->int filter JumpSort(int SIZE, int START) {
+  work push SIZE pop SIZE {
+    int temp;
+    int [SIZE]ordering;
+    int keep = 1;
+    for(int i=0; i < SIZE; i++) {
+      ordering[i] = pop();
+    }
+    for(int j=START; j < SIZE; j++) {
+      int current = ordering[j];
+      int i;
+      keep = 1;
+      for(i = j - START; i >= 0 && (keep == 1); i = i - START) {
+	if (ordering[i] <= current) {
+	  keep = 0;
+	  i = i + START;
+	} else {
+	  ordering[i + START] = ordering[i];
+	}
+      }
+      ordering[i + START] = current;
+    }
+    for(int i=0; i < SIZE; i++) {
+      push(ordering[i]);
+    }
+  }
+}
+
+int->int filter IntIdentity() {
+  work push 1 pop 1 {
+    push(pop());
+  }
+}
+
+int->void filter IntPrinter() {
+  work pop 1 {
+    print(pop());
+  }
+}

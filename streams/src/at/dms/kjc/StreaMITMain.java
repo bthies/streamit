@@ -52,19 +52,19 @@ public class StreaMITMain {
 	} else if (KjcOptions.raw != -1) {
 	    System.out.println("*/");
 	    
-	    if(KjcOptions.spacetime) {
+	    if (KjcOptions.spacetime) {
 		SpaceTimeBackend.run(stream, 
 				     k2s.getInterfaces(),
 				     k2s.getInterfaceTables(),
 				     k2s.getStructures());
 	    }
-	    
+	    else {
 	    /* Compiling for raw */
 	    RawBackend.run(stream, 
 			   k2s.getInterfaces(),
 			   k2s.getInterfaceTables(),
 			   k2s.getStructures());
-	    
+	    }
 	}
 	else if (KjcOptions.cluster) {
 	    System.out.println("*/");

@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.20 2003-05-13 22:42:57 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.21 2003-05-15 20:53:45 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -330,7 +330,7 @@ public class FEReplacer implements FEVisitor
     {
         Expression newExpr = doExpression(stmt.getExpression());
         if (newExpr == stmt.getExpression()) return stmt;
-        return new StmtEnqueue(stmt.getContext(), newExpr);
+        return new StmtExpr(stmt.getContext(), newExpr);
     }
 
     public Object visitStmtFor(StmtFor stmt)

@@ -71,7 +71,7 @@ public class ClusterBackend implements FlatVisitor {
 	StructureIncludeFile.doit(structures);
 
 	// set number of columns/rows
-	//RawBackend.rawRows = KjcOptions.raw;
+ 	//RawBackend.rawRows = KjcOptions.raw;
 	//if(KjcOptions.rawcol>-1)
 	//    RawBackend.rawColumns = KjcOptions.rawcol;
 	//else
@@ -152,7 +152,7 @@ public class ClusterBackend implements FlatVisitor {
 	// optionally print a version of the source code that we're
 	// sending to the scheduler
 	if (KjcOptions.print_partitioned_source) {
-	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createIter(str));
+	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createIter(str)); 
 	}
 
 	//run constrained scheduler
@@ -175,8 +175,6 @@ public class ClusterBackend implements FlatVisitor {
 	    IterFactory.createIter(first);
 	streamit.scheduler2.iriter.Iterator lastIter = 
 	    IterFactory.createIter(last);	
-
-	
 
 	streamit.scheduler2.SDEPData sdep;
 
@@ -205,7 +203,7 @@ public class ClusterBackend implements FlatVisitor {
 
 	}
 
-	//DoSchedules.findSchedules(topStreamIter, firstIter, str);
+	DoSchedules.findSchedules(topStreamIter, firstIter, str);
 
        	System.out.println(" done.");
 
@@ -239,49 +237,7 @@ public class ClusterBackend implements FlatVisitor {
 
 	SIRPortal portals[] = SIRPortal.getPortals();
 
-	System.out.println("Number of portals is: "+portals.length);
-
-	for (int t = 0; t < portals.length; t++) {
-	    
-	    SIRPortalSender senders[] = portals[t].getSenders();
-	    SIRStream receivers[] = portals[t].getReceivers();
-
-	    System.out.println("\n    Portal: "+portals[t]);
-
-	    for (int i = 0; i < senders.length; i++) {
-		SIRStream sender = senders[i].getStream();
-
-		try {
-
-		    int id = NodeEnumerator.getSIROperatorId(sender);
-		    System.out.println("        sender: ("+sender+") ID:"+id+"\n"+
-				   "            with latency: ("+senders[i].getLatency()+")");
-
-		} catch (Exception ex) {
-
-		    System.out.println("        sender: ("+sender+") ID: NOT FOUND\n"+
-				   "            with latency: ("+senders[i].getLatency()+")");
-
-		    
-		}
-	    }
-
-	    for (int i = 0; i < receivers.length; i++) {
-		SIRStream receiver = receivers[i];
-		
-		try {
-
-		    int id = NodeEnumerator.getSIROperatorId(receiver);
-		    System.out.println("        receiver: ("+receivers[i]+") ID:"+id);
-		} catch (Exception ex) {
-
-		    System.out.println("        receiver: ("+receivers[i]+") ID: NOT FOUND");
-		    
-		}
-	    }
-
-	    System.out.println();
-	}
+	LatencyConstraints.detectConstraints(topStreamIter, portals);
 	
 	/// end output portals
 

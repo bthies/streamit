@@ -805,8 +805,9 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 							  null));
 	    return block;
 	}
-	
 
+	block.addStatement(new JExpressionStatement(null, new JMethodCallExpression(null, "send_credits", new JExpression[0]), null));
+	
 	JVariableDefinition var = 
 	    new JVariableDefinition(null, 0, (CType)CStdType.Integer, 
 				    "__counter_"+nodeID, 

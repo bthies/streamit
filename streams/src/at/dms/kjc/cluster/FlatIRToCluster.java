@@ -153,6 +153,10 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
 
+	HashSet sendsCreditsTo = LatencyConstraints.getOutgoingConstraints(self);
+	boolean restrictedExecution = LatencyConstraints.isRestricted(self); 
+	boolean sendsCredits = (sendsCreditsTo.size() > 0);
+
 	selfID = NodeEnumerator.getSIROperatorId(self);
 
 	SIRPortal outgoing[] = SIRPortal.getPortalsWithSender(self);
@@ -218,7 +222,11 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	p.print("extern int __number_of_iterations;\n");
 	p.print("message *__msg_stack_"+selfID+";\n");
-	p.print("int __counter_"+selfID+";\n");
+	p.print("int __counter_"+selfID+" = 0;\n");
+
+	if (restrictedExecution) {
+	    p.print("int __credit_"+selfID+" = 0;\n");
+	}
 
 	{
 	    Iterator i = sends_to.iterator();
@@ -320,6 +328,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	print("\nvoid check_messages__"+selfID+"();\n");
 	print("\nvoid handle_message__"+selfID+"(mysocket *sock);\n");
+	print("\nvoid send_credits__"+selfID+"();\n");
 
 	print("\n");
 
@@ -340,6 +349,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("\nvoid check_messages__"+selfID+"() {\n");
 
 	print("  message *msg;\n");
+
 	print("  for (msg = __msg_stack_"+selfID+"; msg != NULL; msg = msg->next) {\n");
 	print("    if (msg->execute_at == __counter_"+selfID+") {\n");
 
@@ -401,15 +411,25 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	}
 
 	print("    }\n");
-	print("  }\n");
+	print("  } // for \n");
+
+	
+	if (restrictedExecution) {
+	    print("  while (__credit_"+selfID+" <= __counter_"+selfID+") {\n");
+	}
 	
 	{
 	    Iterator i = receives_from.iterator();
 	    while (i.hasNext()) {
 		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("  if (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n    handle_message__"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n  }\n");
+		print("  if (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n    handle_message__"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n  } // if\n");
 	    }
 	}
+
+	if (restrictedExecution) {
+	    print("  } // while \n");
+	}
+
 
 	print("}\n");
 	
@@ -419,6 +439,14 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	
 	print("\nvoid handle_message__"+selfID+"(mysocket *sock) {\n");
 	print("  int size = sock->read_int();\n");
+	
+	if (restrictedExecution) {
+	    print("  if (size == -1) { // a credit message received\n");
+	    print("    __credit_"+selfID+" = sock->read_int();\n");
+	    print("    return;\n");
+	    print("  };\n");
+	}
+
 	print("  int index = sock->read_int();\n");
 	print("  int iteration = sock->read_int();\n");
 	print("  printf(\"Message receieved! thread: "+selfID+", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
@@ -485,6 +513,69 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		}
 	    }
 	}
+
+	print("}\n");
+
+	
+	//////////////////////////////////////////////
+	// Send Credits Method
+
+
+	Iterator constrIter;
+	constrIter = sendsCreditsTo.iterator();
+	while (constrIter.hasNext()) {
+	    LatencyConstraint constraint = (LatencyConstraint)constrIter.next();
+	    int receiver = NodeEnumerator.getSIROperatorId(constraint.getReceiver());
+
+	    int sourcePhase = constraint.getSourceSteadyExec();
+
+	    print("int __init_"+selfID+"_"+receiver+" = "+constraint.getSourceInit()+";\n");
+	    print("int __source_phase_"+selfID+"_"+receiver+" = "+sourcePhase+";\n");
+	    print("int __dest_phase_"+selfID+"_"+receiver+" = "+constraint.getDestSteadyExec()+";\n");
+	    print("int __current_"+selfID+"_"+receiver+" = 0;\n");
+	    print("int __dest_offset_"+selfID+"_"+receiver+" = 0;\n");
+
+
+	    print("int __dependency_"+selfID+"_"+receiver+"[] = {");
+
+	    int y;
+	    
+	    for (y = 0; y < sourcePhase - 1; y++) {
+		print(constraint.getDependencyData(y)+",");
+	    }
+
+	    print(constraint.getDependencyData(y)+"};\n");
+
+	    print("\n");
+	}
+	
+	print("\nvoid send_credits__"+selfID+"() {\n");
+
+	print("  int tmp;\n");
+
+	//HashSet sendsCreditsTo = LatencyConstraints.getOutgoingConstraints(self);
+	//boolean restrictedExecution = LatencyConstraints.isRestricted(self); 
+	//boolean sendsCredits;
+
+	constrIter = sendsCreditsTo.iterator();
+	while (constrIter.hasNext()) {
+	    LatencyConstraint constraint = (LatencyConstraint)constrIter.next();
+	    int receiver = NodeEnumerator.getSIROperatorId(constraint.getReceiver());
+
+	    print("  if (__counter_"+selfID+" > __init_"+selfID+"_"+receiver+") {\n");
+	    print("    tmp = __dependency_"+selfID+"_"+receiver+"[__current_"+selfID+"_"+receiver+"];\n");
+
+	    print("    if (tmp > 0) {\n");
+
+
+	    print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(-1);\n");
+	    print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(tmp + __dest_offset_"+selfID+"_"+receiver+");\n");
+	    print("    }\n");
+	    print("    __current_"+selfID+"_"+receiver+" = (__current_"+selfID+"_"+receiver+" + 1) % __source_phase_"+selfID+"_"+receiver+";\n");
+	    print("    if (__current_"+selfID+"_"+receiver+" == 0) __dest_offset_"+selfID+"_"+receiver+" += __dest_phase_"+selfID+"_"+receiver+";\n");
+	    print("  }\n");   
+	}
+
 
 	print("}\n");
 

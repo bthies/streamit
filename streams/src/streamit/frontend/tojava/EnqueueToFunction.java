@@ -13,7 +13,7 @@ import streamit.frontend.nodes.*;
  *
  * @see     streamit.frontend.TranslateEnqueue
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: EnqueueToFunction.java,v 1.1 2003-09-02 19:12:09 dmaze Exp $
+ * @version $Id: EnqueueToFunction.java,v 1.2 2003-09-09 17:11:00 dmaze Exp $
  */
 public class EnqueueToFunction extends FEReplacer
 {
@@ -23,7 +23,11 @@ public class EnqueueToFunction extends FEReplacer
     public Object visitStreamSpec(StreamSpec ss)
     {
         Type lastEnqType = enqType;
-        enqType = ss.getStreamType().getLoop();
+        // NB: feedback loops should always have stream types,
+        // from AssignLoopTypes pass.  Non-feedback loops might
+        // not, but they also shouldn't have enqueue statements.
+        if (ss.getStreamType() != null)
+            enqType = ss.getStreamType().getLoop();
         
         Object result = super.visitStreamSpec(ss);
         

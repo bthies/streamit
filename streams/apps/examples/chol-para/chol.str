@@ -1,0 +1,125 @@
+
+
+void->void pipeline chol() {
+    int N=2;
+    add sourcer(N);
+    add rchol(N);
+    add sink(N);
+}
+
+
+
+
+
+/* 
+performs the cholesky decomposition on a an N by N matrix where input elements are arranged column by column with no redundancy , such that there are only N(N+1)/2 elements 
+This is a recursive implementaion
+
+*/
+
+float->float pipeline rchol( int N) {
+    add divises(N); // this filter does the divisions corresponding to the first column
+    add updates(N); // this filter performes the updates corresponding to the first column
+    if (N>1)
+	add break(N);   // this splitjoin takes apart the first column and performes the chol(N-1) on the resulting matrix it is where the actual recursion occurs.
+}
+
+
+
+
+
+
+float->float splitjoin break(int N) {
+    split roundrobin(N,N*(N-1)/2);
+    add identity(Float.TYPE);
+    add rchol(N-1);
+    join roundrobin(N,(N*(N-1)/2));
+
+
+}
+
+
+// performs the first column divisions
+
+float->float filter divises(int N) {
+    init {}
+
+    work push (N*(N+1)/2) pop N*(N+1)/2  {
+	float temp1;
+	temp1=pop();
+	temp1=sqrt(temp1);
+	push(temp1);
+
+	for(int i=1; i<N; i++)
+	    push(pop()/temp1);
+
+	for(int i=0; i < N*(N-1)/2; i++)
+	    push(pop());
+
+    }
+}
+
+//updates the rest of the structure
+
+float->float filter updates(int N) { 
+
+    init{}
+
+    work pop N*(N+1)/2 push N*(N+1)/2 {
+	float[N] temp;
+
+	for (int i=0; i<N; i++){
+	    temp[i]=pop();
+	    push(temp[i]);
+	}
+
+	for (int i=1; i <N; i++)
+	    for (int j=i; j<N;j++)
+		push(pop()-temp[i]*temp[j]);
+
+    }
+}
+
+
+
+// this is a source for generating a positive difinte matrix
+
+
+void->float filter source(int N) {
+    init{}
+
+    work pop 0 push N*(N+1)/2 {
+	for (int i=0; i < N; i++){
+	    push( (i+1)*(i+1)*100);
+	    for (int j=i+1; j<N;j++)
+		push( i*j);
+	}
+    }
+}
+
+//prints the results:
+
+float->void filter sink (int N) {
+    init{}
+
+    work pop N*(N+1)/2 push 0 {
+	for (int i=0;i<N;i++)
+	    for (int j=i;j<N;j++)
+		{
+		    print("col: ");
+		    print(i);
+		    print("  row: ");
+		    print(j);
+		    print(" = ");
+		    println(pop());
+		}
+    }
+}
+
+    
+
+	
+    
+
+
+

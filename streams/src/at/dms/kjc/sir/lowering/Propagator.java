@@ -47,7 +47,7 @@ class Propagator extends SLIRReplacingVisitor {
 	body.accept(this);
 	return self;
     }
-
+    
     /**
      * Visits a variable declaration statement
      */
@@ -59,8 +59,8 @@ class Propagator extends SLIRReplacingVisitor {
 	if (expr != null) {
 	    JExpression newExp = (JExpression)expr.accept(this);
 	    // if we have a constant AND it's a final variable...
-	    if (newExp.isConstant() && CModifier.contains(modifiers,
-							  ACC_FINAL)) {
+	    if (newExp.isConstant() /*&& CModifier.contains(modifiers,
+				      ACC_FINAL)*/) {
 		// reset the value
 		self.setExpression(newExp);
 		// remember the value for the duration of our visiting
@@ -171,7 +171,50 @@ class Propagator extends SLIRReplacingVisitor {
     // ----------------------------------------------------------------------
     // EXPRESSION
     // ----------------------------------------------------------------------
+    
+    /*public Object visitPeekExpression(SIRPeekExpression self,
+		emacs=)		      CType oldTapeType,
+				      JExpression oldArg) {
+	JExpression newArg=(JExpression)oldArg.accept(this);
+	if(newArg.isConstant()) {
+	    self.setArg(newArg);
+	}
+	return self;
+	}*/
 
+    
+    public Object visitPostfixExpression(JPostfixExpression self,
+					int oper,
+					JExpression expr) {
+	//System.out.println("Operand: "+expr);
+	if(expr instanceof JLocalVariableExpression)
+	    constants.remove(((JLocalVariableExpression)expr).getVariable());
+	else
+	    System.err.println("WARNING: Postfix of nonvariable: "+expr);
+	return self;
+    }
+    
+    public Object visitPrefixExpression(JPrefixExpression self,
+					int oper,
+					JExpression expr) {
+	if(expr instanceof JLocalVariableExpression)
+	    constants.remove(((JLocalVariableExpression)expr).getVariable());
+	else
+	    System.err.println("WARNING: Postfix of nonvariable: "+expr);
+	return self;
+    }
+
+    public Object visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
+						    int oper,
+						    JExpression left,
+						    JExpression right) {
+	if(left instanceof JLocalVariableExpression)
+	    constants.remove(((JLocalVariableExpression)left).getVariable());
+	else
+	    System.err.println("WARNING: Compound Assignment of nonvariable: "+left);
+	return self;
+    }
+    
     /**
      * Visits an assignment expression
      */
@@ -183,7 +226,12 @@ class Propagator extends SLIRReplacingVisitor {
         JExpression newRight = (JExpression)right.accept(this);
         if (newRight.isConstant()) {
             self.setRight(newRight);
-        }
+	    //System.out.println("Assign: "+left+" "+newRight);
+	    //if(left instanceof JLocalVariableExpression)
+	    //constants.put(((JLocalVariableExpression)left).getVariable(),newRight);
+        } else
+	    if(left instanceof JLocalVariableExpression)
+		constants.remove(((JLocalVariableExpression)left).getVariable());
         return self;
     }
 
@@ -196,7 +244,7 @@ class Propagator extends SLIRReplacingVisitor {
 	JExpression newExp = (JExpression)expr.accept(this);
 	if (newExp.isConstant()) {
 	    return new JIntLiteral(newExp.intValue()+1);
-	} else {
+	    } else {
 	    return self;
 	}
     }

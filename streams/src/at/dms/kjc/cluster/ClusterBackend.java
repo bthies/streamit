@@ -162,6 +162,7 @@ public class ClusterBackend implements FlatVisitor {
 	//topStreamIter = IterFactory.createFactory().createIter(str);
 	topStreamIter = IterFactory.createFineGrainedFactory().createIter(str);
 	new streamit.scheduler2.print.PrintGraph().printProgram(topStreamIter);
+	//new streamit.scheduler2.print.PrintProgram().printProgram(topStreamIter);
 
 	streamit.scheduler2.constrained.Scheduler cscheduler =
 	    new streamit.scheduler2.constrained.Scheduler(topStreamIter);

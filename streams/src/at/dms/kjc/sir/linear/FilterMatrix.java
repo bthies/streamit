@@ -19,7 +19,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.12 2002-09-26 17:06:30 aalamb Exp $
+ * $Id: FilterMatrix.java,v 1.13 2002-11-19 19:55:45 aalamb Exp $
  **/
 
 public class FilterMatrix {
@@ -44,10 +44,10 @@ public class FilterMatrix {
 	// initialize all to 0 
 	for (int i=0; i<rows; i++) {
 	    for (int j=0; j<cols; j++) {
-		this.internalMatrix[i][j] = new ComplexNumber(0,0);
+		this.internalMatrix[i][j] = ComplexNumber.ZERO;
 	    }
 	}
-	checkRep();
+	//checkRep();
     }
 
 
@@ -56,7 +56,7 @@ public class FilterMatrix {
      * and bombs an exception if the value is out of range.
      **/
     public ComplexNumber getElement(int row, int col) {
-	checkRep();
+	//checkRep();
 	// do bounds checking
 	validateBounds(row,col);
 	// actually give back the value
@@ -67,14 +67,14 @@ public class FilterMatrix {
      * Accessor: Return the number of rows in this matrix.
      **/
     public int getRows() {
-	checkRep();
+	//checkRep();
 	return this.internalSizeRows;
     }
     /**
      * Accessor: Return the number of columns in this matrix.
      **/
     public int getCols() {
-	checkRep();
+	//checkRep();
 	return this.internalSizeCols;
     }
 
@@ -90,7 +90,7 @@ public class FilterMatrix {
 	// finally, set the value correctly
 	this.internalMatrix[row][col] = value;
 	// make sure that we haven't foobared the rep
-	checkRep();
+	//checkRep();
     }
 
     /** convenience method -- automatically creates an entry with the specified real number **/
@@ -125,7 +125,7 @@ public class FilterMatrix {
 
     /** Return a copy of this FilterMatrix. **/
     public FilterMatrix copy() {
-	checkRep();
+	//checkRep();
 	FilterMatrix copyMatrix = new FilterMatrix(this.internalSizeRows,
 						   this.internalSizeCols);
 
@@ -342,7 +342,7 @@ public class FilterMatrix {
 	    }
 	}
 	// make sure that we haven't screwed things up.
-	checkRep();
+	//checkRep();
     }
     
 
@@ -371,7 +371,7 @@ public class FilterMatrix {
 
     /** Pretty Print our matrix **/
     public String toString() {
-	checkRep();
+	//checkRep();
 	String returnString = "[";
 	// for each row
 	for (int i=0; i<internalSizeRows; i++) {

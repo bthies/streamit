@@ -6,6 +6,8 @@ import at.dms.kjc.sir.lowering.*;
 import at.dms.util.Utils;
 import java.io.*;
 import java.util.List;
+import java.util.*;
+import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -17,54 +19,79 @@ import java.util.Iterator;
  */
 public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
-    private static HashMap assignment;
+    private static HashMap SIRassignment;
+    /* coordinate -> flatnode */
+    private static HashMap tileAssignment;
+    private static HashSet assigned;
     private static Coordinate[][] coordinates;
-    private BufferedReader inputBuffer;
+    private static BufferedReader inputBuffer;
+    private static Random random;
+    private static FlatNode toplevel;
     /* hashset of Flatnodes representing all the joiners
        that are mapped to tiles */
     public static HashSet joiners;
     
+    public static int MINTEMPITERATIONS = 50000;
+    public static int MAXTEMPITERATIONS = 50000;
+    public static int ANNEALITERATIONS = 100;
+    public static double TFACTR = 0.9;
+    
     public Layout() 
     {
-	inputBuffer = new BufferedReader(new InputStreamReader(System.in));
 	joiners = new HashSet();
     }
     
-    public static void handAssign(FlatNode node) 
+    private static void init(FlatNode top) 
     {
-	//create the array of tile objects so that we can use them 
-	//in hashmaps
+	toplevel = top;
 	coordinates  =
 	    new Coordinate[StreamItOptions.rawRows][StreamItOptions.rawColumns];
 	for (int row = 0; row < StreamItOptions.rawRows; row++)
 	    for (int column = 0; column < StreamItOptions.rawColumns; column++)
 		coordinates[row][column] = new Coordinate(row, column);
-		
-	assignment = new HashMap();
 	
-	System.out.println("Enter desired tile for each filter...");
-	// assign raw tiles to filters
-	node.accept(new Layout(), new HashSet(), false);
+	SIRassignment = new HashMap();
+	tileAssignment = new HashMap();
+	assigned = new HashSet();
+
+	top.accept(new Layout(), new HashSet(), false);
+	
     }
+    
+   
     /**
      * Returns the tile number assignment for <str>, or null if none has been assigned.
      */
     public static Coordinate getTile(SIROperator str) 
     {
-	if (assignment == null) return null;
-	return (Coordinate)assignment.get(str);
+	if (SIRassignment == null) return null;
+	return (Coordinate)SIRassignment.get(str);
     }
     
     public static Coordinate getTile(FlatNode str) 
     {
-	if (assignment == null) return null;
-	return (Coordinate)assignment.get(str.contents);
+	if (SIRassignment == null){
+	    return null;
+	}
+	Coordinate ret = (Coordinate)SIRassignment.get(str.contents);
+	return ret;
     }
 
     public static Coordinate getTile(int row, int column) 
     {
 	return coordinates[row][column];
     }
+
+    public static Coordinate getTile(int tileNumber) 
+    {
+	if (!(tileNumber / StreamItOptions.rawColumns < StreamItOptions.rawRows))
+	    Utils.fail("tile number too high");
+	
+	return coordinates[tileNumber / StreamItOptions.rawColumns]
+	    [tileNumber % StreamItOptions.rawColumns];
+    }
+    
+	      
     
     public static String getDirection(Coordinate from,
 				      Coordinate to) {
@@ -94,6 +121,11 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	return "";
     }
 
+    public static int getTileNumber(FlatNode node)
+    {
+	return getTileNumber(getTile(node));
+    }	
+	
     public static int getTileNumber(Coordinate tile)
     {
 	int row = tile.getRow();
@@ -105,9 +137,418 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     {
 	return getTileNumber(getTile(str));
     }	
-	
+    
+    public static FlatNode getNode(Coordinate coord) 
+    {
+	return (FlatNode)tileAssignment.get(coord);
+    }
+    
+    
+    private static void assign(Coordinate coord, FlatNode node) 
+    {
+	if (node == null) {
+	    tileAssignment.remove(coord);
+	    return;
+	}
+	tileAssignment.put(coord, node);
+	SIRassignment.put(node.contents, coord);
+    }
 
-    private void handAssignNode(FlatNode node) 
+    private static void assign(HashMap sir, HashMap tile, Coordinate coord, FlatNode node) 
+    {
+	if (node == null) {
+	    tile.remove(coord);
+	    return;
+	}
+	tile.put(coord, node);
+	sir.put(node.contents, coord);
+    }
+    
+
+    public static void simAnnealAssign(FlatNode node) 
+    {
+	System.out.println("Simulated Annealing Assignment");
+	int nsucc, j;
+	//number of paths tried at a temp
+	int nover = 100 * StreamItOptions.rawRows * StreamItOptions.rawColumns;
+	//max number of sucessful path lengths before continuing
+	int nlimit = 10 * StreamItOptions.rawRows * StreamItOptions.rawColumns;
+	int cost = 0;
+	double t = 0.5;
+	
+	init(node);
+	random = new Random(17);
+	//random placement
+	randomPlacement();
+	System.out.println("Initial Cost: " + placementCost(toplevel));
+	for (j = 0; j < ANNEALITERATIONS; j++) {
+	    nsucc = 0;
+	    for (int k = 0; k < nover; k++) {
+		if (perturbConfiguration(t)) {
+		    nsucc++;
+		}
+		if (nsucc >= nlimit) break;
+		if (placementCost(toplevel) == 0)
+		    break;
+	    }
+	    t *= TFACTR;
+	    if (nsucc == 0) break;
+	    if (placementCost(toplevel) == 0)
+		    break;
+	}
+	System.out.println("Final Cost: " + placementCost(toplevel) + " in  " + j + " iterations.");
+	dumpLayout();
+    }
+    
+		    
+  
+    public static void simAnnealAssignElliot(FlatNode node) 
+    {
+	double T, Tf;
+	HashMap sirBest, tileBest;
+	int bestCost;
+
+	init(node);
+	random = new Random(17);
+	randomPlacement();
+	System.out.println("Initial placement cost: " + placementCost(toplevel));
+	//clone the random placement
+
+	HashMap sir  = (HashMap)SIRassignment.clone();
+	HashMap tile = (HashMap)tileAssignment.clone();
+	T = annealMaxTemp();
+
+	//reset the initial random placement
+	SIRassignment  = sir;
+	tileAssignment = tile;
+	Tf = annealMinTemp();
+
+	//reset the initial random placement
+	SIRassignment  = sir;
+	tileAssignment = tile;
+
+	int i, bestIter = 0;
+      
+	bestCost = placementCost(toplevel);
+	int cost = bestCost;
+	sirBest = (HashMap)SIRassignment.clone();
+	tileBest = (HashMap)tileAssignment.clone();
+
+	for (i = 0; i < ANNEALITERATIONS; i++) {
+	    perturbConfiguration(T);
+	    T = .999 * T;
+	    if (T <= Tf) break;
+	    cost = placementCost(toplevel);
+	    if (cost < bestCost) {
+		bestIter = i;
+		sirBest = (HashMap)SIRassignment.clone();
+		tileBest = (HashMap)tileAssignment.clone();
+		bestCost = cost;
+	    }
+	    if (cost == 0)
+		break;
+	}
+	if (cost > bestCost) {
+	    SIRassignment = sirBest;
+	    tileAssignment = tileBest;
+	}
+	else
+	    bestIter = i;
+	System.out.println("Final placement cost: " + placementCost(toplevel) +
+			   " " + bestIter);
+	dumpLayout();
+    }
+   
+    private static double annealMaxTemp() 
+    {
+	double T = 1.0;
+	int total = 0, accepted = 0;
+	HashMap sirInit  = (HashMap)SIRassignment.clone();
+	HashMap tileInit = (HashMap)tileAssignment.clone();
+	
+	for (int i = 0; i < MAXTEMPITERATIONS; i++) {
+	    T = 2.0 * T;
+	    //c_old <- c_init
+	    SIRassignment = sirInit;
+	    tileAssignment = tileInit;
+	    if (perturbConfiguration(T))
+		accepted ++;
+	    total++;
+	    if (((double)accepted) / ((double)total) > .999)
+		break;
+	}
+	//c_old <- c_init
+	SIRassignment = sirInit;
+	tileAssignment = tileInit;
+	return T;
+    }
+    
+    private static double annealMinTemp () 
+    {
+	double T = 1.0;
+	int total = 0, accepted = 0;
+	HashMap sirInit  = (HashMap)SIRassignment.clone();
+	HashMap tileInit = (HashMap)tileAssignment.clone();
+	
+	for (int i = 0; i < MINTEMPITERATIONS; i++) {
+	    T = 0.5 * T;
+	    //c_old <- c_init
+	    SIRassignment = sirInit;
+	    tileAssignment = tileInit;
+	    if (perturbConfiguration(T))
+		accepted ++;
+	    total++;
+	    if (((double)accepted) / ((double)total) < .001)
+		break;
+	}
+	//c_old <- c_init
+	SIRassignment = sirInit;
+	tileAssignment = tileInit;
+	return T;
+    }
+    
+
+    private static void randomPlacement() 
+    {
+	Iterator nodes = assigned.iterator();
+	int tile = 0;
+	while(nodes.hasNext()) {
+	    FlatNode node = (FlatNode)nodes.next();
+	    assign(getTile(tile), node);
+	    tile++;
+	}
+    }
+    
+    private static int placementCost(FlatNode node) 
+    {
+	//get all placed downstream nodes
+	Iterator downstream = getDownStream(node).iterator();
+	HashSet routers = new HashSet();
+	int sum = 0;
+	while (downstream.hasNext()) {
+	    FlatNode dest = (FlatNode)downstream.next();
+	    sum += placementCost(dest);
+	    Coordinate[] route = (Coordinate[])Router.getRoute(node, dest).toArray(new Coordinate[1]);
+	    //find the number assigned on the path
+	    double numAssigned = 0.0;
+	    for (int i = 1; i < route.length - 1; i++) {
+		if (getNode(route[i]) != null) 
+		    numAssigned += 2.0;
+		else {
+		    //router tile
+		    if (routers.contains(route[i]))
+			numAssigned += 0.5;
+		    routers.add(route[i]);
+		}
+	    }
+	    //sqrt(calculate steadyStateExcutions * hops * pushed)
+	    int hops = route.length -2;
+	    int items;
+	    //if joiner then number of executions of source * push of source
+	    //if splitter then number of executions of dest * pop of dest
+	    if (node.edges[0].contents instanceof SIRSplitter) {
+		items = ((Integer)RawBackend.steadyExecutionCounts.get(dest)).intValue() *
+		    ((SIRFilter)dest.contents).getPopInt();
+	    }
+	    else {
+		//check if the source is a joiner if so push = 1
+		int push;
+		if (node.contents instanceof SIRJoiner)
+		    push = 1;
+		else 
+		    push = ((SIRFilter)node.contents).getPushInt();
+		items = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() *
+		    push;
+	    }
+	    //  System.out.println("Items, hops  " + Namer.getName(node.contents) + ": " + items);
+	    sum += /*((int)Math.sqrt*/(items * hops) + items * Math.pow(numAssigned * 2.0, 3.0);
+	}
+	//System.out.println("Cost for node " + Namer.getName(node.contents) + ": " + sum);
+	
+	return sum;
+    }
+    
+    //return true if the perturbation is accepted
+    private static boolean perturbConfiguration(double T) 
+    {
+	int first;
+	int second;
+	
+	int e_old = placementCost(toplevel);
+	
+	//find 2 suitable nodes to swap
+	while (true) {
+	    first = getRandom();
+	    second = getRandom();
+	
+	    if (first == second)
+		continue;
+	    if ((getNode(getTile(first)) == null) &&
+		(getNode(getTile(second)) == null))
+		continue;
+	    break;
+	}
+	
+	FlatNode firstNode = getNode(getTile(first));
+	FlatNode secondNode = getNode(getTile(second));
+	//perform swap
+	assign(getTile(first), secondNode);
+	assign(getTile(second), firstNode);
+	
+	//DECIDE if we should keep the change
+	int e_new = placementCost(toplevel);
+	double P = 1.0;
+	double R = random.nextDouble();
+
+	if (e_new >= e_old)
+	    P = Math.exp((((double)e_old) - ((double)e_new)) / T);
+	if (R < P)
+	    return true;
+	else {
+	    //reject configuration
+	    assign(getTile(second), secondNode);
+	    assign(getTile(first), firstNode);
+	    return false;
+	}
+    }
+    
+    //    private static double maxTemp(
+
+    
+    private static int getRandom() 
+    {
+	return random.nextInt(StreamItOptions.rawRows*
+			      StreamItOptions.rawColumns);
+    }
+    
+    public static void dumpLayout() {
+	StringBuffer buf = new StringBuffer();
+	
+	buf.append("digraph Layout {\n");
+	buf.append("size = \"8, 10.5\"");
+	buf.append("node [shape=box];\nedge[arrowhead=dot, style=dotted]\n");
+	for (int i = 0; i < StreamItOptions.rawRows; i++) {
+	    buf.append("{rank = same;");
+	    for (int j = 0; j < StreamItOptions.rawColumns; j++) {
+		buf.append("tile" + getTileNumber(getTile(i, j)) + ";");
+	    }
+	    buf.append("}\n");
+	}
+	for (int i = 0; i < StreamItOptions.rawRows; i++) {
+	    for (int j = 0; j < StreamItOptions.rawColumns; j++) {
+		Iterator neighbors = getNeighbors(getTile(i, j)).iterator();
+		while (neighbors.hasNext()) {
+		    Coordinate n = (Coordinate)neighbors.next();
+		    buf.append("tile" + getTileNumber(getTile(i,j)) + " -> tile" +
+			       getTileNumber(n) + " [weight = 10000];\n");
+		}
+	    }
+	}
+	buf.append("edge[color = red,arrowhead = normal, style = bold];\n");
+	Iterator it = tileAssignment.values().iterator();
+	while(it.hasNext()) {
+	     FlatNode node = (FlatNode) it.next();
+	     buf.append("tile" +   getTileNumber(node) + "[label=\"" + 
+			Namer.getName(node.contents) + "\"];\n");
+	     
+	     //we only map joiners and filters to tiles and they each have
+	     //only one output
+	     Iterator downstream = getDownStream(node).iterator();
+	     while(downstream.hasNext()) {
+		 FlatNode n = (FlatNode)downstream.next();
+		 buf.append("tile" + getTileNumber(node) + 
+			    " -> tile" +
+			    getTileNumber(n) + " [weight = 1];\n");
+	     }
+	     
+	}
+	buf.append("}\n");
+	
+	try {
+	    FileWriter fw = new FileWriter("layout.dot");
+	    fw.write(buf.toString());
+	    fw.close();
+	}
+	catch (Exception e) {
+	    System.err.println("Could not print layout");
+	}
+    }
+
+    private static HashSet getDownStream(FlatNode node) 
+    {
+	if (node == null)
+	    return new HashSet();
+	HashSet ret = new HashSet();
+	for (int i = 0; i < node.ways; i++) {
+	    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
+	}
+	return ret;
+    }
+    
+
+    private static HashSet getDownStreamHelper(FlatNode node) {
+	if (node == null)
+	    return new HashSet();
+	
+	if (node.contents instanceof SIRFilter) {
+	    HashSet ret = new HashSet();
+	    ret.add(node);
+	    return ret;
+	}
+	else if (node.contents instanceof SIRJoiner) {
+	    if (joiners.contains(node)) {
+		HashSet ret = new HashSet();
+		ret.add(node);
+		return ret;
+	    }	
+	    else return getDownStreamHelper(node.edges[0]);
+	}
+	else {
+	    //SIRSplitter
+	    HashSet ret = new HashSet();
+	    for (int i = 0; i < node.ways; i++) {
+		RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
+	    }
+	    return ret;
+	}
+    }
+    
+	    
+    //but not north neighbor or west
+    private static List getNeighbors(Coordinate coord) 
+    {
+	int row = coord.getRow();
+	int column = coord.getColumn();
+	LinkedList neighbors = new LinkedList();
+	
+	//get east west neighbor
+	//if (column - 1 >= 0)
+	//    neighbors.add(getTile(row, column - 1));
+	if (column + 1 < StreamItOptions.rawColumns) 
+	    neighbors.add(getTile(row, column + 1));	
+	
+	//if (row - 1 >= 0)
+	//    neighbors.add(getTile(row - 1, column));
+	if (row + 1 < StreamItOptions.rawRows) 
+	    neighbors.add(getTile(row + 1, column));
+
+	return neighbors;
+    }
+    
+    public static void handAssign(FlatNode node) 
+    {
+	init(node);
+	System.out.println("Enter desired tile for each filter...");
+	inputBuffer = new BufferedReader(new InputStreamReader(System.in));
+	Iterator keys = assigned.iterator();
+	while (keys.hasNext()) {
+	    handAssignNode((FlatNode)keys.next());
+	}
+	System.out.println("Final Cost: " + placementCost(toplevel));
+	dumpLayout();
+    }
+
+    private static void handAssignNode(FlatNode node) 
     {
 	//Assign a filter, joiner to a tile 
 	//perform some error checking.
@@ -138,16 +579,20 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    continue;
 		}
 		//check if this tile has been already assigned
-		Iterator it = assignment.values().iterator();
+		Iterator it = SIRassignment.values().iterator();
+		boolean alreadyAssigned = false;
 		while(it.hasNext()) {
 		    Coordinate current = (Coordinate)it.next();
 		    if (current.getRow() == row.intValue() &&
-			current.getColumn() == column.intValue())
+			current.getColumn() == column.intValue()){
+			alreadyAssigned = true;
 			System.err.println("Tile Already Assigned: Try Again.");
-		    continue;
+			break;
+		    }
 		}
-		
-		assignment.put(node.contents, coordinates[row.intValue()][column.intValue()]);
+		if (alreadyAssigned)
+		    continue;
+		assign(getTile(row.intValue(), column.intValue()), node);
 		return;
 	    }
 	    catch (Exception e) {
@@ -156,16 +601,17 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	}
     }
     
+
     public void visitNode(FlatNode node) 
     {
 	if (node.contents instanceof SIRFilter) {
-	    handAssignNode(node);
+	    assigned.add(node);
 	    return;
 	}
 	if (node.contents instanceof SIRJoiner) {
 	    if (!(node.edges[0].contents instanceof SIRJoiner)) {
 		joiners.add(node);
-		handAssignNode(node);
+		assigned.add(node);
 		return;
 	    }
 	}

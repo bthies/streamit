@@ -9,9 +9,12 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.lir.*;
 import java.util.*;
-
+import at.dms.util.Utils;
 
 public class RawBackend {
+    //given a flatnode map to the execution count
+    public static HashMap initExecutionCounts;
+    public static HashMap steadyExecutionCounts;
 
     public static void run(SIRStream str,
 			JInterfaceDeclaration[] 
@@ -75,10 +78,13 @@ public class RawBackend {
 	RawFlattener.flatten(str);
 	RawFlattener.dumpGraph();
 	System.out.println("Flattener End.");
+	//create the execution counts for other passes
+	createExecutionCounts(RawFlattener.top);
+
 	// layout the components (assign filters to tiles)
-	System.out.println("Hand Assign Begin...");
-	Layout.handAssign(RawFlattener.top);
-	System.out.println("Hand Assign End.");
+	Layout.simAnnealAssign(RawFlattener.top);
+	//Layout.handAssign(RawFlattener.top);
+	System.out.println("Assign End.");
 	//Generate the switch code
 	System.out.println("Switch Code Begin...");
 	SwitchCode.generate(RawFlattener.top);
@@ -95,6 +101,9 @@ public class RawBackend {
 	System.exit(0);
     }
 
+    
+
+
     //helper function to add everything in a collection to the set
     public static void addAll(HashSet set, Collection c) 
     {
@@ -103,5 +112,58 @@ public class RawBackend {
 	    set.add(it.next());
 	}
     }
+   
+    private static void createExecutionCounts(FlatNode top) 
+    {
+
+	Schedule schedule = SIRScheduler.getSchedule(getTopMostParent(top));
+
+	initExecutionCounts = new HashMap();
+	steadyExecutionCounts = new HashMap();
+
+	fillExecutionCounts(schedule.getInitSchedule(),
+			      initExecutionCounts);
+	fillExecutionCounts(schedule.getSteadySchedule(), 
+			      steadyExecutionCounts);
+    }
+
     
+    //simple helper function to find the topmost pipeline
+    private static SIRStream getTopMostParent(FlatNode node) 
+    {
+	SIRContainer[] parents = node.contents.getParents();
+	return parents[parents.length -1];
+    }
+    
+    //creates execution counts of filters in graph (flatnode maps count)
+    private static void fillExecutionCounts(Object schedObject, HashMap counts) 
+    {
+	if (schedObject instanceof List) {
+	    //visit all of the elements
+	    for (ListIterator it = ((List)schedObject).listIterator();
+		 it.hasNext(); ) {
+		fillExecutionCounts(it.next(), counts);
+	    }
+	} else if (schedObject instanceof SchedRepSchedule) {
+    	    // get the schedRep
+	    SchedRepSchedule rep = (SchedRepSchedule)schedObject;
+	    ///===========================================BIG INT?????
+	    for(int i = 0; i < rep.getTotalExecutions().intValue(); i++)
+		fillExecutionCounts(rep.getOriginalSchedule(), counts);
+	} else {
+	    //do not count splitter
+	    if (schedObject instanceof SIRSplitter)
+		return;
+	    //add one to the count for this node
+	    FlatNode fnode = FlatNode.getFlatNode((SIROperator)schedObject);
+	    if (!counts.containsKey(fnode))
+		counts.put(fnode, new Integer(1));
+	    else {
+		//add one to counter
+		int old = ((Integer)counts.get(fnode)).intValue();
+		counts.put(fnode, new Integer(old + 1));
+	    }
+	    
+	}
+    }
 }

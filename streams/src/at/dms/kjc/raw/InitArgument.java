@@ -3,6 +3,7 @@ package at.dms.kjc.raw;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
+import at.dms.util.*;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Iterator;
@@ -19,12 +20,17 @@ public class InitArgument extends SLIREmptyVisitor
 {
     private static StringBuffer buf;
     private static SIRFilter targetFilter;
+    private static boolean found;
     
     public static String getInitArguments(SIRFilter tar) 
     {
 	buf = new StringBuffer();
+	found = false;
 	targetFilter = tar;
 	tar.getParent().getInit().accept(new InitArgument());
+	if (!found) {
+	    Utils.fail("init args not found");
+	}
 	return buf.toString();
     }
     
@@ -32,6 +38,7 @@ public class InitArgument extends SLIREmptyVisitor
 				   JExpression[] args,
 				   SIRStream target) {
 	if (target == targetFilter) {
+	    found = true;
 	    for (int i = 0; i < args.length; i++) {
 		 FlatIRToC ftoc = new FlatIRToC();
 		 args[i].accept(ftoc);
@@ -40,5 +47,7 @@ public class InitArgument extends SLIREmptyVisitor
 	     if (buf.length() > 0)
 		 buf.setCharAt(buf.length() - 1, ' ');
 	}
+	else 
+	    super.visitInitStatement(self, args, target);
     }
 }

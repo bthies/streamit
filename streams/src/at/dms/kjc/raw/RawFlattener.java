@@ -88,6 +88,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	buf = new StringBuffer();
 	
 	buf.append("digraph Flattend {\n");
+	buf.append("size = \"8, 10.5\";");
 	top.accept(new RawFlattener(), new HashSet(), true);
 	buf.append("}\n");
 	try {

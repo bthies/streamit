@@ -43,31 +43,19 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     {
 	System.out.println("Simulator Running...");
 	
-	Schedule schedule = SIRScheduler.getSchedule(getTopMostParent(top));
-
-	HashMap initExecutionCounts = new HashMap();
-	HashMap steadyExecutionCounts = new HashMap();
-	
 	initJoinerCode = new HashMap();
         steadyJoinerCode = new HashMap();
-	
+
 	//generate the joiner schedule
 	JoinerSimulator.createJoinerSchedules(top);
 	
-	//get the schedule for the graph
-	//first find the top most pipeline	
-	createExecutionCounts(schedule.getInitSchedule(),
-			      initExecutionCounts);
-	createExecutionCounts(schedule.getSteadySchedule(), 
-			      steadyExecutionCounts);
-
 	SimulationCounter counters = 
 	    new SimulationCounter(JoinerSimulator.schedules);
 
 	joinerCode = initJoinerCode;
-	initSchedules = (new Simulator(top)).go(initExecutionCounts, counters);
+	initSchedules = (new Simulator(top)).go(RawBackend.initExecutionCounts, counters);
 	joinerCode = steadyJoinerCode;
-	steadySchedules = (new Simulator(top)).go(steadyExecutionCounts, counters);
+	steadySchedules = (new Simulator(top)).go(RawBackend.steadyExecutionCounts, counters);
     }
     
    
@@ -85,53 +73,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     }
 
 
-    //creates execution counts of filters in graph (flatnode maps count)
-    private static void createExecutionCounts(Object schedObject, HashMap counts) 
-    {
-	if (schedObject instanceof List) {
-	    //visit all of the elements
-	    for (ListIterator it = ((List)schedObject).listIterator();
-		 it.hasNext(); ) {
-		createExecutionCounts(it.next(), counts);
-	    }
-	} else if (schedObject instanceof SchedRepSchedule) {
-    	    // get the schedRep
-	    SchedRepSchedule rep = (SchedRepSchedule)schedObject;
-	    ///===========================================BIG INT?????
-	    for(int i = 0; i < rep.getTotalExecutions().intValue(); i++)
-		createExecutionCounts(rep.getOriginalSchedule(), counts);
-	} else {
-	    //do not count splitter and joiners
-	    if (schedObject instanceof SIRSplitter || 
-		schedObject instanceof SIRJoiner)
-		return;
-	    
-	    // hit a filter
-	    if (!(schedObject instanceof SIRFilter)) {
-		System.out.println(schedObject);
-		Utils.fail("non-filter encountered in scheduler");
-	    }
-	    //add one to the count for this node
-	    FlatNode fnode = FlatNode.getFlatNode((SIROperator)schedObject);
-	    if (!counts.containsKey(fnode))
-		counts.put(fnode, new Integer(1));
-	    else {
-		//add one to counter
-		int old = ((Integer)counts.get(fnode)).intValue();
-		counts.put(fnode, new Integer(old + 1));
-	    }
-	    
-	}
-    }
-	
-
-    //simple helper function to find the topmost pipeline
-    private static SIRStream getTopMostParent(FlatNode node) 
-    {
-	SIRContainer[] parents = node.contents.getParents();
-	return parents[parents.length -1];
-    }
-    
+ 
     /* the main simulation method */
     private HashMap go(HashMap counts, SimulationCounter counters) 
     {
@@ -153,7 +95,6 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		items = ((SIRFilter)fire.contents).getPushInt();
 	    
 	    for (int i = 0; i < items; i++) {
-		
 		//get the destinations of this item
 		//could be multiple dests with duplicate splitters
 		//a filter always has one outgoing arc, so sent to way 0
@@ -185,7 +126,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
  	    Coordinate[] hops = 
  		(Coordinate[])Router.getRoute(fire, dest).toArray(new Coordinate[0]);
 	    //add to fire's next
-	    if (!next.containsKey(fire)) 
+	    if (!next.containsKey(Layout.getTile(fire))) 
 		next.put(Layout.getTile(fire), new HashSet());
 	    ((HashSet)next.get(Layout.getTile(fire))).add(hops[1]);
 	    //add to all other previous, next

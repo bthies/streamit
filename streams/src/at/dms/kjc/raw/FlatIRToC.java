@@ -82,9 +82,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			    JMethodDeclaration init,
 			    JMethodDeclaration work,
 			    CType inputType, CType outputType) {
-	System.out.println(Namer.getName(self));
+	//System.out.println(Namer.getName(self));
 	//Entry point of the visitor
-	print("#include <raw.h>\n\n");
+	print("#include <raw.h>\n");
+	print("#include <math.h>\n\n");
 	
 	//print the extern for the function to init the 
 	//switch
@@ -718,7 +719,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                         JExpression[] dims,
                                         JArrayInitializer init)
     {
-        print("malloc(");
+        print("(" + type + "*) malloc(");
         dims[0].accept(this);
         print(" * sizeof(");
         print(type);

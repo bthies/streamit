@@ -3,7 +3,7 @@
 The StreamIt Source Tree
 ========================
 
-$Id: README.source,v 1.4 2003-09-29 21:01:44 thies Exp $
+$Id: README.source,v 1.5 2003-10-24 19:31:48 thies Exp $
 
 Directory Layout
 ----------------
@@ -27,10 +27,9 @@ Compilation with the new syntax begins with the front-end.  Currently
 there is only a converter to the old syntax, which is invoked via the
 class streamit.frontend.ToJava (under src/streamit/frontend).
 
-The old-syntax compiler is entirely contained under src/kopi.
-Directories here correspond to sub-packages of at.dms; for example,
-source files for classes in at.dms.kjc are in src/at/dms/kjc.  The
-main entry point to Kopi is in at.dms.kjc.Main, which calls
+The old-syntax compiler is entirely contained under src/at/dms/, where
+it is built on top of the Kopi Java compiler.  The main entry point to
+Kopi is in at.dms.kjc.Main, which calls
 at.dms.kjc.StreaMITMain.compile() after parsing the old-syntax file.
 
 The Kopi front-end will generate a series of JClassDeclarations.

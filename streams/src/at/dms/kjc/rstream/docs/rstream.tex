@@ -1,0 +1,1237 @@
+\documentclass[10pt, letterpaper, onecolumn]{article}
+
+\usepackage{fullpage}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{epsfig}
+\usepackage{subfigure}
+\usepackage{moreverb}
+
+\title{StreamIt Frontend}
+\author{Michael Gordon}
+
+\begin{document}
+
+\newcommand{\mt}[1]{\mbox{\it #1}}
+
+\date{}
+\maketitle
+
+
+\section{Introduction}
+The purpose of the StreamIt frontend for the R-Stream compiler is to
+translate StreamIt code into a form that can be inputted to the
+R-Stream compiler.  The StreamIt frontend is built on top of the
+existing StreamIt compiler developed at MIT
+\cite{streamit-asplos}. For an introduction to StreamIt see
+\cite{streamitspec}.
+
+\section{Installation}
+One can remotely check-out the StreamIt source tree by issuing the
+following command:
+
+\medskip
+{\tt \$ cvs -d :pserver:anonymous@cag.lcs.mit.edu:/projects/raw/pub-cvsroot co
+streams}
+\medskip
+
+This will create a {\tt streams} directory under the current working
+directory.  Now we have to set some environment variables to use the
+StreamIt compiler.  First off, we need to set the environment variable
+{\tt \$JAVA\_HOME} to point to the root directory of a Java 1.4.x
+runtime installation.  Next, we need to set {\tt \$STREAMIT\_HOME} to
+point to the {\tt streams} directory of the StreamIt source tree.
+These should be set in {\tt .profile}, {\tt .bashrc}, or {\tt
+.cshrc} file, depending on which shell we use.  Type '{\tt echo
+\$SHELL}'; if it prints something ending in 'bash', add this text to
+the {\tt .bashrc} file:
+
+\medskip
+  {\tt export JAVA\_HOME=/usr/java/j2sdk1.4.2\_02 \# or elsewhere}
+
+  {\tt export STREAMIT\_HOME=\$HOME/streams \# or elsewhere}
+
+  {\tt . \$STREAMIT\_HOME/include/dot-bashrc}
+\medskip
+
+
+If instead it prints something ending in 'tcsh', put this text in
+{\tt .cshrc}:
+
+\medskip
+  {\tt setenv JAVA\_HOME /usr/java/j2sdk1.4.2\_02 \# or elsewhere}
+
+  {\tt setenv STREAMIT\_HOME \$\{HOME\}/streams \# or elsewhere}
+
+  {\tt source \{\$STREAMIT\_HOME\}/include/dot-cshrc}
+\medskip
+
+Finally, the StreamIt compiler requires the Antlr Parser
+Generator\cite{antlr}.  We need to edit either the {\tt
+\{\$STREAMIT\_HOME\}/include/dot-cshrc} or the {\tt
+\$STREAMIT\_HOME/include/dot-bashrc} so that our classpath references
+a valid {\tt antlr.jar} class archive.  Find the line that adds {\tt
+antlr.jar} to our classpath in the configuration file and edit the
+location to point to the location of {\tt antlr.jar} on the system.
+On fiji.reservoir.com, you can find {\tt antlr.jar} located at {\tt
+/usr/share/java/antlr.jar}.
+
+Having edited your dotfiles, either reload them or log out and log in
+again.  Now we should be ready to build the compiler.
+
+\medskip
+{\tt \$ cd \$STREAMT\_HOME/src}
+
+{\tt \$ make}
+\medskip
+
+If there are no errors, we are ready to run the R-Stream Frontend.
+
+\section{Running}
+Once the StreamIt compiler is properly installed, one can run the R-Stream's
+StreamIt frontend by invoking the StreamIt compiler with the -R (or
+--rstream) option:  
+
+\medskip
+{\tt \$ strc -R} {\it \{other\_options\}} {\tt file.str} {\it \{file2.str ... \}}
+\medskip
+
+This will place the R-Stream code in a file called {\tt str.c} in the
+current working directory.  Additionally, the {\tt structs.h} file
+includes any structure definitions of the application.  By default the
+frontend will not generate {\tt doloop}s; if we would desire to
+generate {\tt doloop}s, use the {\tt --doloops} options.  The frontend
+will not use abstract array syntax and semantics (instead it defaults
+to using C arrays).  To use abstract arrays, provide the {\tt
+--absarray} option.
+
+
+
+\section{Overall Organization}
+In this section we will describe the overall organization of the
+StreamIt source tree and the location of the R-Stream frontend within
+the tree.  Once the reader has checked out a version of the StreamIt
+source tree, she will see the following directories under the toplevel
+{\tt streams} directory:
+
+\begin{itemize}
+\item {\tt 3rdparty} - Tools and classes developed outside of MIT that
+  are used by the StreamIt Compiler.
+\item {\tt apps} -  See Section \ref{apps}.
+\item {\tt include} - Configuration scripts and Raw results gathering
+  infrastructure.
+\item {\tt library} - The Java library implementation of StreamIt
+  including the scheduler. 
+\item {\tt src} - The source code for the StreamIt compiler.
+\end{itemize}
+
+\subsection{apps}
+\label{apps}
+The {\tt apps} directory stores StreamIt applications,
+benchmarks, tests, and examples.  A good place to start looking for
+benchmarks is the {\tt streams/apps/benchmarks/micro04/} directory.
+We will list some applications that may interest the reader, please
+see the documentation in the application's directory for further
+information:
+
+\begin{itemize}
+\item {\tt
+streams/apps/applications/GMTI} - A
+StreamIt implementation of GMTI.
+\item {\tt
+streams/apps/applications/FAT-new} -
+Feature-Aided Tracking, implemented in the version 2.0 syntax.
+\end{itemize}
+
+The benchmarks used in \cite{streamit-asplos} are located in {\tt
+streams/apps/benchmarks/}.
+
+\subsection{R-Stream Frontend}
+The R-Stream frontend is located in {\tt
+streams/src/at/dms/kjc/rstream},
+with some helper classes located in {\tt
+streams/src/at/dms/kjc/common}.
+The entry point to the R-Stream Frontend is {\tt StrToRStream.java}.
+Overall, the R-Stream frontend proper is almost 10K lines of Java code.
+The frontend is organized as follows:
+
+\begin{itemize}
+\item CheckForMethodCalls -  Given an entry point for a visitor on the java
+IR, check if anything under it has a method call.
+\item ConvertArrayInitializers - Converts array initializers to a bunch of
+assignment statements (see Section \ref{array}). 
+\item ConvertChannelExprs - Convert the communication expressions of a
+filter (push, pop, peek) into buffer accesses (see Section \ref{convertchannel}). 
+\item ConvertChannelExprsMIV  - Try to convert the communication expressions
+of a filter (push, pop, and peek) into buffer accesses that are
+indexed by a linear function of the expression's enclosing loop
+induction variables (MIVs) (see Section \ref{miv}). 
+\item ConvertFileFilters - Visits the stream graph and converts all
+SIRFileReaders and SIRFileWriters to normal (non-predefined) filters
+with explicit calls to fopen in the init and {\tt fscanf} or {\tt
+fprintf} in the work function.
+\item FFSNoPeekBuffer -  Creates imperative SIR code to implement
+  StreamIt's filter abstraction, does not use a separate peek buffer
+  (see Section \ref{filter}).
+\item FileReader \& File\_Writer  - SIRFilters to implement the file
+  reading and file writing as normal (non-predefined) filters in the
+  SIR graph.
+\item FilterFusionState - Abstract class that represents a filter
+flatnode's fusion state that is shared over the different filter code
+generation schemes.
+\item FlatIRToRs - Converts the Stream IR (which references the Kopi
+Java IR) to R-Stream (or C) code and dumps it to a file, str.c (see
+Section \ref{rstreamcode}).
+\item FusionState - Abstract class represents the shared state
+necessary for each FlatNode in the application to be converted to
+imperative SIR code by GenerateCCode.
+\item GenerateCCode - The driver that generates the R-Stream code for the
+  application (see Section \ref{codegen}).
+\item IDDoLoops - Identifies java-style for loops that can be
+converted to fortran-style do loops (see Section \ref{doloop}).
+\item JDoLoopStatement - An SIR node representing a do loop in the IR.
+\item JoinerFusionState - Represent the state and conversion necessary
+to convert a joiner FlatNode into imperative SIR code so it can be
+added to the application's SIR code (see Section \ref{joiner}).
+\item NewArrayExprs - Finds the (or creates a) corresponding new array
+expression for each array declared (see Section \ref{array}).
+\item RemoveDeadDoLoops - Traverses the IR looking for do loops that
+will never execute or will execute exactly once.
+\item SplitterFusionState - Represent the state and conversion
+necessary to convert a splitter FlatNode into imperative SIR code so
+it can be added to the application's SIR code (see Section \ref{splitter}).
+\item StrToRStream - The main driver for the R-Stream code generator.
+\item StructureIncludeFile - Generates the R-Stream struct definition for any
+structures used in the StreamIt code.
+\item UseDefInfo - Computes very conservative use/def information for
+  locals.
+\item Util - Various helper functions used by muliple passes.
+\end{itemize}
+
+Please see the javadocs and code comments for additional information.
+
+\section{The StreamIt Frontend}
+In this section I will briefly describe the passes that comprise the
+frontend of the StreamIt compiler.  
+\begin{itemize}
+\item When compiled, the StreamIt application is first converted to
+  legal Java code referencing the Java library implementation of
+  StreamIt.  This is done so that we can remain compatible with the Java
+  library implementation of StreamIt that maintains a
+  semantically correct implementation of the StreamIt language.  At this
+  stage various syntax and semantic checks are performed.
+\item The Java code is parsed and converted into the Kopi
+  intermediate representation by the open-source Kopi compiler.
+\item The StreamIt IR (SIR) representation is then constructed from
+  the Kopi IR.  The SIR has explicit IR nodes for the streaming
+  constructs and expressions of StreamIt and is built on top of 
+  Kopi's IR. To construct the SIR, we visit the parse tree constructed
+  by Kopi, building the SIR in the process.  The SIR constructs for
+  method, statements, and expressions inherit heavily from Kopi IR.
+\item At this stage we construct the StreamIt graph (or stream graph)
+  of the application by propagating constants and symbolically
+  executing the {\tt init()} of containers (splitjoin, pipeline,
+  feedbackloop).  We clone all filters and containers so that each
+  separate reference to a stream\footnote{In this paper the term {\it
+  stream} denotes any single input / single output block in a stream
+  graph.}  in the StreamIt graph references a distinct object.  We
+  rename all the members (functions and variables) of each filter so
+  that each is unique across all filters of the application.
+\end{itemize}
+At this point we have a structured, hierarchical stream graph
+representing the StreamIt application. We are now ready to pass this
+graph along to the R-Stream backend of the StreamIt compiler.
+
+The passes that comprise the R-Stream backend are the discussion the
+remaining sections.  They include: $(i)$ translation to flat graph, $(ii)$
+SIR code generation including identifying {\tt doloop}s, converting java
+arrays to abstract arrays, imperative code creation from flat nodes,
+and running standard optimization passes (DCE, constant propagation)
+on {\tt work}, and $(iii)$ translation of the SIR to R-Stream (or C) code.
+
+\section{Example}
+\label{example}
+In this section we will provide a brief example of the translation
+from StreamIt code to R-Stream code as performed by the frontend.
+Given the StreamIt code in Figure \ref{fig:example}, we will
+illuminate some of the steps involved in the translation.  First the
+application is expanded into the complete structured stream graph
+shown in Figure \ref{fig:structured}, note the parameterized {\tt add}
+call in the toplevel pipeline of the application in Figure
+\ref{fig:example}.  Next, the structured stream graph is flattened.
+The flattened graph is shown in Figure \ref{fig:flatgraph}, the
+variable names for the buffers representing the channels are shown in
+this figure.
+
+\begin{figure}[t]
+\scriptsize
+\begin{verbatimtab}[4]
+void->void pipeline RStreamEx {
+    add Source();
+    add splitjoin {
+	split roundrobin(1, 2);
+	for (int i = 0; i < 2; i++)
+	    add LowPassFilter(i + 2, i);
+	join roundrobin(1, 1);
+    }
+    add Sink();
+}
+
+float->float filter LowPassFilter(int taps, int decimation) {
+  float[taps] coeff;
+  init {
+    //calculate coeffs
+  }
+  work pop 1+decimation push 1 peek taps {
+    float sum = 0;
+    for (int i = 0; i < taps; i++)
+      sum += peek(i) * coeff[i];
+    push(sum);
+    for (int i=0; i<decimation; i++)
+      pop();
+    pop();
+  }
+}
+
+void->float filter Source() 
+{
+  float x = 0;
+  
+  work push 1 {
+    push(x++);
+  }
+}
+
+float->void filter Sink() 
+{
+  work pop 1 {
+    print(pop());
+  }
+}
+\end{verbatimtab}
+\caption{\protect\small An example StreamIt application.
+\protect\label{fig:example}}
+\end{figure}
+
+\begin{figure}
+\centering
+\psfig{figure=before-partition.ps,width=3.2in}
+\caption{Structured StreamIt graph of toy example.
+\label{fig:structured}}
+\end{figure}
+
+\begin{figure}
+\centering
+\psfig{figure=flatgraph.ps,width=4.0in}
+\caption{Flattened stream graph of toy example.  The labels on the
+  arcs present the weight on the outgoing channel for splitters and
+  filters or the weight on the incoming channel for joiners.  Following
+  this, in parentheses we give the buffer variable name in the R-Stream code.
+\label{fig:flatgraph}}
+\end{figure}
+
+The final R-Stream code is shown in Section \ref{ccode}.  The reader
+should note the organization of the application.  The entire
+application is contained inside the {\tt main()}, if the application
+included any helper functions, they would be defined outside of {\tt
+  main()}.  Inside of {\tt main()}, we first have the definition of
+any field variables of filters (in this case, {\tt  coeff\_\_6\_\_46},
+{\tt coeff\_\_6\_\_29}, and {\tt x\_\_0\_\_23}).  Then we have the definitions
+of the buffer variables that represent the channels connecting nodes of
+the flattened stream graph.  Next, although not listed, we have the 
+{\tt init()} calls of filters, these function calls are inlined.
+Then we have the initialization schedule.  In this case, {\tt Source}
+fires 3 times and the round-robin splitter completes its cycle once.
+The final step is the steady-state of the application.  This is nested
+inside of an infinite {\tt while} loop.  Also note that:
+
+\begin{itemize}
+\item All traces of the hierarchy of the original program are removed.
+\item All {\tt for} loops have been converted to {doloop}s.
+\item All buffer accesses are MIV expressions of enclosing induction
+  variables.
+\item The {\tt pop} statements that perform the decimation in the
+  LowPassFilter are still translated even though they do not
+  accomplish anything.  In the original code these {\tt pop} statement
+  did not assign their result.  Hopefully dead-code elimination will
+  remove these statements.
+\end{itemize}
+
+\section{Translation to Flat Graph}
+We now begin a more detailed description of the R-Stream backend of
+the StreamIt compiler.  The first pass in the backend converts the
+predefined file input and output filters into ``normal'' filters that
+are defined by the compiler to read and write {\em ascii} elements,
+one per line for both floating-point values and integer values.  Next,
+we convert the structured, hierarchical stream graph constructed by
+the StreamIt frontend into a flat, unstructured graph.  This is done
+so that the connections between filters become explicit and so that we
+do not have to rely on the hierarchy to visit the graph.
+
+The flat representation is light-weight and it references the StreamIt
+graph nodes for filter, splitter, and joiner.  Only nodes representing
+filters, splitters, and joiners are present.  A filter flat node is
+single input / single output, it includes an {\tt init()} called once
+before the initialization stage commences and a {\tt work()} that
+defines the atomic execution step of the filter in the initialization
+and steady-state stages.  A joiner flat node is multiple input /
+single output with the order of the outputted items given by the
+round-robin weights the joiner node assigns to its incoming channels.
+A splitter flat node is single input / multiple output and can either
+duplicate each incoming item across its output or send the items along
+based on the round-robin weights it assigns to its outgoing channels.
+
+The compiler produces a dot graph representation of the flat graph in
+a file called {\tt flatgraph.dot} in the working directory.
+
+\section{Overview of Code Generation}
+\label{codegen}
+Now begins the code generation phase of the compiler.  First we dump
+any structure definitions of the application to the structure
+include file ({\tt structs.h}).  Then we move on to generating
+imperative SIR code for each node of the flattened stream graph. 
+
+To generate imperative SIR code, we visit the flat graph, in
+data-flow order, generating the code as we visit each node.  We visit
+the entire flat graph twice, once for the initialization stage and
+once for the steady-state stage.  Before we add a filter's {\tt work()}
+to the code store for the current stage, we run standard optimization
+such as DCE and constant propagation on it.
+
+The resulting code is organized as follows. As we alluded to in
+Section \ref{example}, almost the entire application is nested under
+{\tt main()}.  Only helper function defined by filters will appear
+outside of {\tt main()}.  Inside of {\tt main()} we have the following
+sequence of events:
+\begin{enumerate}
+\item Definitions for any fields defined by the filters of the
+  application.  These variables are persistent across firings of the
+  filter's {\tt work()}.
+\item Definitions for the buffer variables that pass data between
+  nodes of the stream graph.
+\item A block containing the inlined {\tt init()} calls of the filters
+  in the application.  Also, any items enqueued on the delay path of
+  feedbackloops are injected into the buffer in this block.
+\item The initialization schedule of the stream graph.  
+\item The steady-state schedule of the stream graph nested inside of a
+  {\tt while} loop.
+\end{enumerate}
+
+In each stage, nodes are ordered according the data-flow dependencies
+of the stream graph and each node is nested inside of a {\tt doloop}
+with trip count equal to the multiplicity of the node in the current
+stage.  Each stage also includes definitions of any buffer index
+variables, and {\tt doloop} counters.  We inline each {\tt work()}
+separately for each stage.  
+
+In the translation to imperative code, the nodes of the stream graph
+communicate with their neighbors by accessing buffers (abstract
+arrays).  If node $A$ is directly upstream of node $B$ in a stream
+graph, the {\tt push}s in $A$ are translated into assignments to a buffer
+that is shared between $A$ and $B$.  All {\tt pop} and {\tt peek}
+expressions are translated to reads from this buffer.  This buffer is
+only accessed in $A$ and $B$; it is declared as a local to {\tt
+  main()}.  
+
+\subsection{Remaining Items}
+It is beyond the scope of this document to include a detailed
+discussion of scheduling, but due to presence of the {\tt peek}
+expression, a separate initialization schedule is needed.  This
+schedule ensures that for each peeking filter (where $peek > pop$),
+there are at least $peek - pop$ items in the incoming buffer of the
+filter before the steady-state schedule begins to fire.  
+
+For each buffer we introduce, there may be a number of items that
+are still live on the buffer after both the producing filter and the
+consuming filter have fired.  For the remainder of this discussion,
+let us call the number of items that remain on a channel after the
+initialization schedule has completed {\it remaining}.  Note that this
+number also equals the number of items remaining on each buffer after
+a complete execution of the steady-state because, by definition, the
+steady-state schedule must leave the number of items on the buffers
+unchanged (or else it would not be periodic).  Furthermore, in this
+translation we are calculating a single-appearance schedule, so that
+after a filter fires, there will remain exactly {\it remaining} items
+on its input buffer that were not consumed.  The calculation of 
+remaining for the incoming buffers of filters, joiners, and splitters,
+is given below.
+
+In general, to correctly handle the remaining items, we must ensure
+that:
+\begin{itemize}
+\item after a node fires in the initialization state or the
+  steady-state, it must copy the items that were not consumed
+  (remaining) on each {\it input} buffer from the end of the buffer to the
+  beginning of the buffer.  This is to avoid circular buffers.
+\item when a node is pushing (writing) items to its outgoing buffer(s)
+  in the steady-state, it must write items starting at an index equal
+  to the number of remaining items for this buffer.  This is achieved
+  (in the non-MIV case) by initializing the push buffer index to be
+  equal to remaining (of the output buffer) at the beginning of each
+  steady-state execution (see Section \ref{convertchannel}).
+\end{itemize}
+
+The above two points will be explicitly shown in the sections
+describing filter, joiner, and splitter code generation.  We have
+tried to maintain a casual level of mathematical rigorousness, but the
+reader will find certain variables and functions under-specified for
+sake of brevity.   
+
+In the Sections \ref{filter}, \ref{splitter}, and \ref{joiner} we will
+give the equations that calculate the items appended to each buffer,
+the remaining items, and the buffer sizes.  In the below, the reader
+can think of a node as {\it owning} its {\it incoming} buffer(s).  Each
+node calculates remaining and the buffer size for its {\it incoming}
+buffers.
+
+\section{Identify Do Loops in Application}
+\label{doloop}
+Before we add a filter's {\tt work()} to the code store for the
+current stage, we attempt to convert all of its {\tt for} loops to
+{\tt doloop}s.  A {\tt for} loop will be converted to a {\tt doloop}
+if all the of the following are satisfied:
+
+\begin{enumerate}
+\item There is exactly one variable initialized in the initialization
+  expression of the {\tt for} loop.  In the remainder, we will call
+  this variable the {\it induction} variable.
+\item The induction variable is not used outside the scope of the
+  loop.
+\item The induction variable is not assigned in the loop.
+\item The induction variable appears in the lhs or the rhs of the 
+  condition of the loop.  The condition is a binary conditional
+  expression (either $>$, $<$, $\ge$, or $\le$).
+\item The increment expression consists only of an assignment to the
+  induction variable through either a binary equals (=) expression, a
+  prefix or postfix expression, or a compound assignment expression
+  (such as +=).
+\item Furthermore, the conditional and the increment expression must
+  be side-effect free and none of the expressions in each can be
+  assigned to in the loop body.  
+\end{enumerate}
+
+The analysis does not extend past function call boundaries.  Any
+function call in the initialization, condition, or increment will
+cause the conversion of the loop to fail.
+
+\section{Abstract Array Conversion}
+\label{array}
+Conversion from Java arrays to abstract array has proved to be hairy.
+The main problem is that abstract arrays couple definition and
+declaration.  Java arrays do not have this restriction and furthermore
+they may never have their {\it own} definition.  So, for each array
+variable we attempt to find a corresponding definition (in the form of
+a {\tt new} array expression), either by finding a {\tt new} array
+expression that was assigned to it or by piecing together a {\tt new}
+array expression from assignments in the code.  Because of this,
+currently only arrays with compile-time constant bounds are supported.
+But this is not a problem, all existing StreamIt applications, tests,
+or examples are supported.
+
+\subsection{Array Initializers}
+Currently, abstract array initializers are not supported by the
+R-Stream compiler.  So, any Java array initializers (remember we
+convert the StreamIt application into Java code) have to be converted
+to assignment statements.  The translation only correctly
+supports array initializers composed entirely of constants.  For an
+array that is a field of a filter, we generate a series of assignment
+statements and place the block at the beginning of {\tt main()}.  For
+an array that is a local of a filter, we generate a series of
+assignment expressions and place the block at the beginning of the work
+function of the filter.  This conversion can be removed as soon as the
+R-Stream compiler supports abstract array initializers.
+ 
+\section{Filter Translation}
+\label{filter}
+In this section we will discuss imperative code generation  of a
+ filter, including the conversion of the channel expressions into
+ buffer accesses.
+
+Given a filter with the following properties:
+
+\begin{itemize}
+\item $\mt{push}$, $\mt{peek}$, and $\mt{pop}$ equal to the push,
+  peek, and pop rate of the filter, respectively.
+\item Incoming channel $I$ and incoming buffer $incoming$.
+\item Outgoing channel $O$ and outgoing buffer $outgoing$.
+\item Let $M_{\mt{init}}$ be the multiplicity in the initialization
+  stage and let $M_{\mt{steady}}$ be the multiplicity in the
+  steady-state stage.
+\end{itemize}
+
+The number of items appended to the output channel, $O$, by the filter for
+stage $X$ is equal to the push rate multiplied by the multiplicity of
+the filter in $X$:
+
+\begin{displaymath}
+\mt{pushed}_O(X) \equiv M_X * \mt{push}
+\end{displaymath} 
+
+The number of items remaining on $I$ after the initialization
+stage, $\mt{Rin}_I$, is equal to the number of items the upstream node
+produces minus the number of items this filter consumes (both in the
+initialization stage).
+
+\begin{displaymath}
+  \mt{Rin}_I = \mt{pushed}_I(\mt{init}) - (M_{\mt{init}} * \mt{pop})
+\end{displaymath}
+
+The incoming buffer size is equal to the maximum multiplicity of the
+filter across the initialization and the steady-state multiplied by
+the pop rate, plus the remaining:
+
+\begin{displaymath}
+\mt{BufSize}_{\mt{incoming}} \equiv (\max(M_{\mt{init}}, M_{\mt{steady}}) * \mt{pop}) + \mt{Rin}_I
+\end{displaymath}
+
+For each stage we clone and inline the {\tt work()}.  The cloned {\tt
+work()} is nested inside of a loop whose trip count is equal to the
+multiplicity of the filter in the current stage.  This leads to a
+separate {\tt work()} block for the initialization stage and for the
+steady-state stage.  Before the {\tt work()} is inlined we convert all
+the communication expressions into buffer accesses.  This is the topic
+of the next two sub-sections. The code generated for a filter is given
+in Algorithm \ref{filtercode}.  Note that all the {\tt for} loops in this
+algorithm are in actuality {\tt doloop}s.
+
+
+
+\begin{algorithm}
+\caption{Code Generated for a Filter with Multiplicity $M$}
+\label{filtercode}
+\begin{algorithmic}
+\FOR {$m = 0$ to $m < M$ step $1$}
+\STATE {\it // code for work}
+\ENDFOR
+\STATE {\it // move the remaining items to the beginning of the
+  incoming buffer}
+\FOR {$k = 0$ to $k < \mt{Rin}_I$ step $1$}
+\STATE ${incoming}[k] = {incoming}[k + (M * \mt{pop})]$
+\ENDFOR 
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{MIV Translation of Channel Expressions}
+\label{miv}
+Our goal in this project is to facilitate effective analysis of the
+generated code by the R-Stream compiler.  We do not want to obfuscate
+the parallelism inherent to a StreamIt application.  The only
+dependencies that exist between different filter loop nests are
+carried through the buffer variables.  So we must require that the
+buffer index expressions are able to be effectively analyzed by the
+R-Stream compiler.
+
+Recognizing the that current version of StreamIt is highly static, we
+have devised an algorithm to convert channel expressions into buffer
+accesses indexed by coupled MIV expressions of enclosing {\tt doloop}
+induction variables.  There exists much research into the analysis of
+index expressions of this kind.  It is the author's hope that these
+index expressions can be effectively analyzed by the R-Stream
+compiler.  In this section we will present an algorithm that will
+perform this translation, taking advantage of the static nature of the
+current version of StreamIt.  We will present the conversion for {\tt
+  peek} and {\tt pop} expressions.  The conversion for {\tt push}
+expressions is similar.
+
+The following are requirements on the filter's work function necessary
+to convert {\tt peek} and {\tt pop} into buffer accesses indexed by
+MIV expressions:
+\begin{itemize}
+\item {\tt pop} statements can only appear inside {\it analyzable control-flow}.
+  We define analyzable control-flow as either an {\tt if-then-else}
+  statement or a {\tt doloop} statement with a trip count that can be
+  resolved at compile-time.
+\item For an {\tt if-then-else} statement, the number of dynamically
+  executed {\tt pop} expressions on the {\tt then} branch must equal
+  the number of dynamically executed {\tt pop} expressions on the {\tt
+  else} branch.  In the absence of an {\tt else}, the number of
+  dynamically executed {\tt pop} expressions on the {\tt then} must be
+  zero.
+\end{itemize}
+
+The conversion algorithm works in two stages.  For simplicity assume
+that each {\tt doloop} initializes it's induction variable to 0 and has
+an increment value equal to 1.  In summary, we translate each {\tt
+peek} and {\tt pop} expression into a buffer access whose index calculates the
+number of {\tt pop} expressions we have executed so far.  
+
+In the first stage we calculate the following:
+\begin{itemize}
+\item For each {\tt doloop} we calculate the number of dynamically
+  executed {\tt pop} expressions that execute in one iteration of the
+  loop, including nested loops.  We call this quantity
+  $\mt{loopPop}_d$ for some {\tt doloop} $d$.
+\item For each {\tt peek} and {\tt pop} expression, $p$, we calculate
+  the number of dynamically executed {\tt pop} expressions that have
+  executed prior to $p$ on an iteration of the top-level (outermost)
+  loop, call this quantity $\mt{tlPop}_p$.  This quantity records the
+  number of {\tt pop} expressions executed in loops that have
+  completed ($p$ is not in their scope) plus the number of {\tt pop}
+  expressions that have executed before $p$ during the current
+  iteration of any loop in which $p$ is enclosed.
+\item For each {\tt doloop} statement, {\tt peek} expression, and {\tt
+  pop} expression, we record the lexically enclosing doloop, call this
+  property $\mt{encLoop}_s$ for some {\tt doloop} statement, {\tt
+  peek} expression, or {\tt pop} expression $s$.
+\end{itemize}
+
+To calculate the above values, we visit the SIR parse tree of the
+filter's work function in lexical order, starting the visit at the
+outermost {\tt doloop} placed around the statements of the work
+function by the compiler.  This {\tt doloop} executes the statements
+of the work function $M$ times, where $M$ is the multiplicity of the
+stage we are currently executing (either initialization or
+steady-state), we call this {\tt doloop} the top-level {\tt doloop}
+and it is present in each filter's work function (see Algorithm
+\ref{filtercode}).
+
+As we visit the parse tree, we update the following quantities:
+$(i)$ $\mt{curLoopPop}$, the number of {\tt pop}s we have seen so far
+in the loop we are currently nested inside of $(ii)$ $\mt{curTLPop}$,
+the overall number of {\tt pop}s we have seen so far $(iii)$
+$\mt{loop}$, the current loop we are visiting.  They are updated as
+follows.
+
+When we visit a {\tt doloop}, $d$, with trip count $T_d$, we perform
+the following:
+\begin{enumerate} 
+\item Visit the init, cond, and incr values of the {\tt doloop}.
+\item Set $\mt{encLoop}_d = \mt{loop}$.
+\item Save $\mt{loop}$ to $\mt{oldLoop}$ and set $\mt{loop} = d$.
+\item Save $\mt{curLoopPop}$ to $\mt{oldLoopPop}$ and set $\mt{curLoopPop} = 0$.
+\item Save $\mt{curTLPop}$ to $\mt{oldTLPop}$.
+\item Visit the body.
+\item Set $\mt{loopPop}_d = \mt{curLoopPop}$.
+\item Set $\mt{curTLPop} = \mt{oldTLPop} + (T_d * \mt{curLoopPop})$.
+\item Set $\mt{curLoopPop} = \mt{oldLoopPop} + (T_d * \mt{curLoopPop})$.
+\end{enumerate}
+Note that each time we exit out of a loop, $\mt{curLoopPop}$ and
+$\mt{curTLPop}$ are updated to include all the {\tt pop} expressions
+that are dynamically executed by the loop.
+
+When we visit a {\tt pop} expression, $p$, we perform the following:
+\begin{enumerate}
+\item Set $\mt{encLoop}_p = \mt{loop}$.
+\item Set $\mt{tlPop}_p = \mt{curTLPop}$.
+\item Set $\mt{curTLPop} = \mt{curTLPop} + 1$.
+\item Set $\mt{curLoopPop} = \mt{curLoopPop} + 1$.
+\end{enumerate}
+
+When we visit a {\tt peek} expression, $p$, we perform the following:
+\begin{enumerate}
+\item Set $\mt{encLoop}_p = \mt{loop}$.
+\item Set $\mt{tlPop}_p = \mt{curTLPop}$.
+\end{enumerate}
+
+After the first phase of the algorithm is completed, we visit the
+parse tree again, replacing each {\tt peek(i)} expression, $p$, by the
+expression:
+
+\begin{displaymath}
+\mt{incoming}[((I_{d_1} * \mt{loopPop}_{d_1})) + ... + 
+(I_{d_n} * \mt{loopPop}_{d_n}) + \mt{tlPop}_p + i]
+\end{displaymath}
+
+
+for all {\tt doloop}s $d_1$,...,$d_n$ lexically enclosing $p$ where
+$I_{d_1}$,...,$I_{d_n}$ are the induction variables of the loops,
+respectively, and where $\mt{incoming}$ is the incoming buffer of the
+filter.  The term inside the parenthetical calculates all the {\tt
+pop} expressions that have executing on previous iterations on the
+enclosing loops of $p$ and $\mt{tlPop}_p$ adds all {\tt pop}
+expressions that have executed on the current iteration of all
+enclosing loops.
+
+Each {\tt pop} expression, $p$, is replaced by the following:
+
+\begin{displaymath}
+\mt{incoming}[(I_{d_1} * \mt{loopPop}_{d_1}) + ... + 
+(I_{d_n} * \mt{loopPop}_{d_n}) + \mt{tlPop}_p]
+\end{displaymath}
+
+for all {\tt doloop}s $d_1$,...,$d_n$ lexically enclosing the
+expression where $I_{d_1}$,...,$I_{d_n}$ are the induction variables of
+the loops, respectively, and where $\mt{incoming}$ is the incoming buffer
+of the filter.  
+
+The conversion of {\tt push} expressions to array accesses indexed by MIVs
+is similar to the above {\tt peek}/{\tt pop} conversion. 
+
+\subsection{Translation of Channel Expression}
+\label{convertchannel}
+If we cannot convert all incoming and outgoing buffer accesses to
+MIV expressions by the algorithm given in Section \ref{miv}, then we fall back
+on a scheme that uses incrementing index variables.  Assuming
+$incoming$ is the incoming buffer of the filter, with
+$\mt{index}_i$ as its index variable, and $\mt{outgoing}$ is the
+outgoing buffer of the filter, with $\mt{index}_o$ as its index
+variable, and $\mt{Rout}$ is the remaining for the output buffer:
+
+\begin{itemize}
+\item {\tt pop()} is translated into ${incoming}[++\mt{index}_i]$.
+\item {\tt peek(x)} is translated into: ${incoming}[x + \mt{index}_i]$.
+\item {\tt push(val)} is translated into: ${outgoing}[++\mt{index}_o]
+  = \mt{val}$.
+\end{itemize}
+
+Before the initialization stage $\mt{index}_i$ is set to $-1$ and
+$\mt{index}_o$ is set to $-1$.  Before each execution of the
+steady-state schedule $\mt{index}_i$ is set to $-1$ and
+$\mt{index}_o$ is set to $\mt{Rout} - 1$ where $\mt{Rout}$ equals the
+number of items remaining on the filter's output channel immediately after execution of
+initialization stage.
+
+\section{Splitter Translation}
+\label{splitter}
+\subsection{Duplicate Splitters}
+In this section we will describe code generation for duplicate
+splitters.  
+
+Given a {\it duplicate splitter} with:
+\begin{itemize}
+\item incoming channel $I$ and incoming buffer ${incoming}$,
+\item $n$ output channels $O_0$,...,$O_{n-1}$,
+\item $n$ output buffers ${outgoing}_0$,...,${outgoing}_{n-1}$ for
+  $O_0$,...,$O_{n-1}$, respectively,
+\item $Rin$ equal to the number of remaining items on the incoming
+  buffer after the initialization stage.
+\item ${Rout}_0$,...,${Rout}_{n-1}$ equal to the number of items remaining
+  on the output channel $O_0$,...,$O_{n-1}$ after the initialization
+  stage if we are in the steady-state, respectively, or
+  ${Rout}_0$,...,${Rout}_{n-1}$ equal to $0$ if we are in the
+  initialization stage. 
+\item Let $M_{\mt{init}}$ be the multiplicity in the initialization
+  stage and let $M_{\mt{steady}}$ be the multiplicity in the
+  steady-state stage.
+\end{itemize}
+
+For each output channel $O_i$, where $0 \le i < n$, the splitter appends
+$M$ items on the buffer during the execution of a schedule, $S$, where $M_S$
+is the multiplicity of the splitter in the schedule.
+
+\begin{displaymath}
+\mt{pushed}_{O_i}(S) \equiv M
+\end{displaymath}
+
+Remaining, $\mt{Rin}_I$ for input the single input channel $I$ is the number
+of items produced by the upstream node during the initialization
+schedule minus the number of items this splitter consumes:
+
+\begin{displaymath}
+\mt{Rin}_I = \mt{pushed}_I(\mt{init}) - M
+\end{displaymath}
+
+The incoming buffer size for a duplicate splitter is the maximum of
+its initialization multiplicity and its steady-state multiplicity plus
+the remaining items:
+
+\begin{displaymath}
+\mt{BufSize}_{\mt{incoming}} \equiv \max(M_{\mt{init}}, M_{\mt{steady}}) + Rin_I
+\end{displaymath}
+
+We generate the imperative code shown in Algorithm \ref{dupsplitcode}
+for duplicate splitters.
+
+\begin{algorithm}
+\caption{Code Generated for a Duplicate Splitter with Multiplicity $M$}
+\label{dupsplitcode}
+\begin{algorithmic}
+\STATE {\it //perform the duplication}
+\FOR {$m = 0$ to $m < M$ step $1$}
+\STATE ${outgoing}_0[m + {Rout}_0] = {incoming}[m]$
+\STATE ...
+\STATE ${outgoing}_{n-1}[m + {Rout}_{n-1}] = {incoming}[m]$
+\ENDFOR
+\STATE {\it // move the remaining items to the beginning of the
+  incoming buffer}
+\FOR {$k = 0$ to $k < {Rin}$ step $1$}
+\STATE ${incoming}[k] = {incoming}[k + M]$
+\ENDFOR 
+\end{algorithmic}
+\end{algorithm}
+
+Many duplicate splitters become superfluous in this code generation scheme
+if each of the downstream parallel nodes simply use the splitter's
+incoming buffer as their own incoming buffer.  This is the case when
+the following are true of the duplicate splitter:
+\begin{itemize}
+\item ${Rin} = 0$, and
+\item $Rout_i = 0$ for $i = 0$,...,$n-1$.
+\end{itemize}
+
+\subsection{Round-Robin Splitters}
+
+Given a {\it round-robin splitter} with:
+
+\begin{itemize}
+\item Incoming channel $I$ and incoming buffer ${incoming}$,
+\item $n$ output channels $O_0$,...,$O_{n-1}$,
+\item $n$ output buffers ${outgoing}_0$,...,${outgoing}_{n-1}$ for
+  $O_0$,...,$O_{n-1}$, respectively,
+\item round-robin weights $W_0$, ..., $W_{n-1}$ for output channels
+  $O_0$,...,$O_{n-1}$, respectively,
+\item $Rin$ equal to the number of remaining items on the incoming
+  buffer after the initialization stage.
+\item ${Rout}_0$,...,${Rout}_{n-1}$ equal the number of items remaining
+  on the output channel $O_0$,...,$O_{n-1}$ after the initialization
+  stage if we are in the steady-state, respectively, or
+  ${Rout}_0$,...,${Rout}_{n-1}$ equal to $0$ if we are in the
+  initialization stage. 
+\item Let $M_{\mt{init}}$ be the multiplicity in the initialization
+  stage and let $M_{\mt{steady}}$ be the multiplicity in the
+  steady-state stage.
+\end{itemize}
+
+Define:
+\begin{itemize}
+\item $W_{tot}$ to be the sum of all the weights of the splitter,
+\item for each output channel $q$ define $P_q$ to be the sum of
+  $W_0$,...,$W_{q-1}$ (defined to be $0$ for $P_0$), 
+\end{itemize}
+
+For each output buffer $O_i$, $0 \le i < n$ the splitter appends $M$ times $W_i$
+items on the buffer during the execution of a schedule, $S$, where $M_S$
+is the multiplicity of the splitter in the schedule.
+
+\begin{displaymath}
+\mt{pushed}_{O_i}(S) \equiv M_S * W_{i}
+\end{displaymath}
+
+$\mt{Rin}_I$ for the single input channel $I$ is the number
+of items produced by the upstream node during the initialization
+schedule minus the number of items this splitter consumes:
+
+\begin{displaymath}
+\mt{Rin}_I = \mt{pushed}_i(\mt{init}) - (M * W_{tot})
+\end{displaymath}
+
+The incoming buffer size for a round-robin splitter is the maximum of
+the it's initialization multiplicity and it's steady-state
+multiplicity plus multipled by its weight total, plus the remaining items:
+
+\begin{displaymath}
+\mt{BufSize}_{\mt{incoming}} \equiv (\max(M_{\mt{init}}, M_{\mt{steady}}) * W_{tot}) + Rin
+\end{displaymath}
+
+Algorithm \ref{rrsplitcode} gives the code produced to perform the distribution
+of items.
+
+\begin{algorithm}
+\caption{Code Generated for a Round-Robin Splitter with Multiplicity $M$}
+\label{rrsplitcode}
+\begin{algorithmic}
+\STATE {\it //perform the distribution of items}
+\FOR {$m = 0$ to $m < M$ step $1$}
+\FOR {$j_0 = 0$ to $j_0 < W_0$ step $1$}
+\STATE ${outgoing}_0[j_0 + {Rout}_0 + (m * W_0)] = {incoming}[(m *
+  W_{tot}) + P_0 + j_0]$
+\ENDFOR
+\STATE ...
+\FOR {$j_{n-1} = 0$ to $j_{n-1} < W_{n-1}$ step $1$}
+\STATE ${outgoing}_{n-1}[j_{n-1} + {Rout}_{n-1} + (m * W_{n-1})] = {incoming}[(m *
+  W_{tot}) + P_{n-1} + j_{n-1}]$
+\ENDFOR
+\ENDFOR
+\STATE {\it // move the remaining items to the beginning of the
+  incoming buffer}
+\FOR {$k = 0$ to $k < {Rin}$ step $1$}
+\STATE ${incoming}[k] = {incoming}[k + (M * W_{tot})]$
+\ENDFOR 
+\end{algorithmic}
+\end{algorithm}
+
+
+\section{Joiner Translation}
+\label{joiner}
+Given a joiner with:
+\begin{itemize}
+\item outgoing channel $O$ and outgoing buffer, $outgoing$,
+\item $n$ input channels, $I_0$,...,$I_{n-1}$,
+\item round-robin weights $W_0$,...,$W_{n-1}$ for input channels
+ $I_0$,...,$I_{n-1}$, respectively,
+\item incoming buffers ${incoming}_0$,...,${incoming}_{n-1}$ for
+  $I_0$,...,$I_{n-1}$,
+\item Let $M_{\mt{init}}$ be the multiplicity in the initialization
+  stage and let $M_{\mt{steady}}$ be the multiplicity in the
+  steady-state stage.
+\item ${Rin}_0$,...,${Rin}_{n-1}$ equal the number of items remaining
+  on the input channel $I_0$,...,$I_{n-1}$ after the initialization
+  stage, respectively,
+\item ${Rout}$ equal to the number of items remaining on the outgoing
+  channel after initialization if we are in the steady-state state or
+  ${Rout}$ equal to $0$ if we are in the initialization stage.
+\end{itemize}
+
+Define:
+\begin{itemize}
+\item $W_{tot}$ to be the sum of all the weights of the joiner,
+\item for each incoming channel $i$ define $P_i$ to be the sum of
+  $W_0$,...,$W_{i-1}$ (defined to be $0$ for $P_0$),
+\end{itemize}
+
+For the single output channel $O$, the joiner appends $M$ times $W_{tot}$
+items on the buffer during the execution of a schedule, $S$, where $M$
+is the multiplicity of the joiner in the schedule.
+
+\begin{displaymath}
+\mt{pushed}_O(S) \equiv M * W_{tot}
+\end{displaymath}
+
+$\mt{Rin}_i$, the number of items remaining on each input channel
+$I_i$, where $0 \le i < n$, is the number of items produced by
+the upstream node connected to $I_i$ during the initialization
+schedule minus the number of items this joiner consumes from that
+channel:
+
+\begin{displaymath}
+\mt{Rin}_i = \mt{pushed}_i(\mt{init}) - (M * W_{i})
+\end{displaymath}
+
+The incoming buffer size $\mt{BufSize}_i$, for input channel, $I_i$,
+is the maximum of it's initialization multiplicity and it's
+steady-state multiplicity multiplied by the weight on $I_i$, plus the
+remaining items:
+
+\begin{displaymath}
+\mt{BufSize}_{\mt{incoming}} \equiv (\max(M_{\mt{init}}, M_{\mt{steady}}) * W_{i}) + \mt{Rin}_i
+\end{displaymath}
+
+
+Algorithm \ref{rrjoiner} gives code produced to perform the joining of the input
+channels.
+
+\begin{algorithm}
+\label{rrjoiner}
+\caption{Code Generated for a Round-Robin Joiner with Multiplicity $M$}
+\begin{algorithmic}
+\STATE {\it // perform the joining into a single outgoing buffer}
+\FOR {$m = 0$ to $M$ step $1$}  
+\FOR {$j_0 = 0$ to $W_0$ step $1$}
+\STATE $outgoing[(m * W_{tot}) + P_0 + j_0 + \mt{Rout}] =
+       {incoming}_0[(m * W_0) + j_0]$
+\ENDFOR
+\STATE ...
+\FOR {$j_{n-1} = 0$ to $W_{n-1}$ step $1$}
+\STATE $outgoing[(m * W_{tot}) + P_{n-1} + j_{n-1} + \mt{Rout}] =
+       {incoming}_{n-1}[(m * W_{n-1}) + j_{n-1}]$
+\ENDFOR
+\ENDFOR
+\STATE {\it // move the remaining items to the beginning of the incoming buffers}
+\FOR {$k_0 = 0$ to $k_0 < {Rin}_0$ step 1}
+\STATE ${incoming}_0[k_0] = {incoming}_0[k_0 + (M * W_0)]$
+\ENDFOR
+\STATE ...
+\FOR {$k_{n-1} = 0$ to $k_{n-1} < {Rin}_{n-1}$ step 1}
+\STATE ${incoming}_{n-1}[k_{n-1}] = {incoming}_{n-1}[k_{n-1} + (M * W_{n-1})]$
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\section{FeedbackLoop Translation}
+Feedbackloops do not appear in the flattened stream graph.  They are
+translated into a joiner, a body stream, a splitter, and a loop
+stream.  As mentioned, the values enqueued by the feedbackloop on the
+delay channel are injected into the buffer representing the delay path
+to the joiner before the initialization schedule commences.  The delay
+value has to be accounted for in the calculation of remaining values
+and buffer-sizes for the joiner of a feedbackloop.  This was not
+explicitly accounted for in Section \ref{joiner} to limit
+complexity. Also, feedbackloops introduce cycles in the dependencies
+of the stream graph.  These dependencies must be explicitly broken
+when constructing a legal data-flow order traversal of the stream
+graph.  StreamIt's structure makes this a manageable task.
+
+\section{Generation of R-Stream Code}
+\label{rstreamcode}
+The final stage of the frontend converts the generated imperative SIR
+code to R-Stream code.  Briefly, we visit the parse tree of the generated
+imperative SIR code and produce a string containing the R-Stream equivalent
+for each structure, which is appended to the string representing the
+application.  This string is then written to a file, obviously, no
+further passes are run on the string.
+
+
+
+\section{Extensions}
+The R-Stream backend can also generate legal C code (i.e. C arrays for
+abstract arrays and {\tt for} loops instead of {\tt doloop}s.
+
+\section{Missing Features and Limitations}
+\begin{itemize}
+\item Arrays over channels broken when generating legal C code
+  (non-abstract arrays).
+\item All array dimensions must be compile time constant.
+\item StreamIt's messaging features not supported.
+\end{itemize}
+
+\section{Evaluation}
+Forthcoming...
+
+\section{R-Stream Code for Toy Example}
+\label{ccode}
+\scriptsize
+\begin{verbatimtab}[4]
+int main() {
+  float coeff__6__46[[]] =  absarray1(3);
+  float coeff__6__29[[]] =  absarray1(2);
+  float x__0__23 = 0.0f;
+  float __INTER_BUFFER_5[[]] =  absarray1(2);
+  float __INTER_BUFFER__3_1[[]] =  absarray1(1);
+  float __INTER_BUFFER__3_0[[]] =  absarray1(1);
+  float __INTER_BUFFER_4[[]] =  absarray1(4);
+  float __INTER_BUFFER_2[[]] =  absarray1(2);
+  float __INTER_BUFFER_1[[]] =  absarray1(3);
+  { 
+/* init function calls omitted for brevity */
+  }
+  { 
+/*SIR: Init Schedule*/
+    int rr_1_1 = 0;
+    int rr_1_0 = 0;
+    int rr_1 = 0;
+    int work_0 = 0;
+/*SIRFilter name=Source__3__26_10*/
+    doloop (int work_0 = 0; 3; 1) 
+      {
+        (__INTER_BUFFER_1[[work_0]] = x__0__23);
+        (x__0__23 = (x__0__23 + ((float)1.0)));
+      }
+    
+/*SIRSplitter:WEIGHTED_ROUND_ROBIN_Splitter_14*/
+    doloop (int rr_1 = 0; 1; 1) 
+      {
+        doloop (int rr_1_0 = 0; 1; 1) 
+          (__INTER_BUFFER_2[[((rr_1 * 1) + rr_1_0)]] = 
+	   __INTER_BUFFER_1[[((rr_1 * 3) + (0 + rr_1_0))]]);
+
+        doloop (int rr_1_1 = 0; 2; 1) 
+          (__INTER_BUFFER_4[[((rr_1 * 2) + rr_1_1)]] = 
+	   __INTER_BUFFER_1[[((rr_1 * 3) + (1 + rr_1_1))]]);
+
+      }
+
+  }
+
+  while (1) {
+/*SIR: Steady-State Schedule*/
+    int work_5 = 0;
+    int joiner_3_1 = 0;
+    int joiner_3_0 = 0;
+    int joiner_3 = 0;
+    int remain_4 = 0;
+    int work_4 = 0;
+    int remain_2 = 0;
+    int work_2 = 0;
+    int rr_1_1 = 0;
+    int rr_1_0 = 0;
+    int rr_1 = 0;
+    int work_0 = 0;
+/*SIRFilter name=Source__3__26_10*/
+    doloop (int work_0 = 0; 3; 1) 
+      {
+        (__INTER_BUFFER_1[[work_0]] = x__0__23);
+        (x__0__23 = (x__0__23 + ((float)1.0)));
+      }
+    
+/*SIRSplitter:WEIGHTED_ROUND_ROBIN_Splitter_14*/
+    doloop (int rr_1 = 0; 1; 1) 
+      {
+        doloop (int rr_1_0 = 0; 1; 1) 
+          (__INTER_BUFFER_2[[(((rr_1 * 1) + rr_1_0) + 1)]] = 
+	   __INTER_BUFFER_1[[((rr_1 * 3) + (0 + rr_1_0))]]);
+
+        doloop (int rr_1_1 = 0; 2; 1) 
+          (__INTER_BUFFER_4[[(((rr_1 * 2) + rr_1_1) + 2)]] = 
+	   __INTER_BUFFER_1[[((rr_1 * 3) + (1 + rr_1_1))]]);
+
+      }
+    
+/*SIRFilter name=LowPassFilter__18__39_11*/
+    doloop (int work_2 = 0; 1; 1) 
+      {
+        float sum__9__32 = 0.0f;
+        float __sa0__12__33 = 0.0f;
+
+        float __sa1__14__35 = 0.0f;
+
+        float __sa2__10__37 = 0.0f;
+        (sum__9__32 = ((float)0.0));
+        doloop (int i__11__34 = 0; 2; 1) 
+          {
+            (__sa0__12__33 =
+	     __INTER_BUFFER_2[[(i__11__34 + work_2)]]);
+            (sum__9__32 = 
+	     (sum__9__32 + (__sa0__12__33 * coeff__6__29[[i__11__34]])));
+          }
+
+        (__INTER_BUFFER__3_0[[work_2]] = sum__9__32);
+        (__sa2__10__37 = __INTER_BUFFER_2[[work_2]]);
+      }
+
+    doloop (int remain_2 = 0; 1; 1) 
+      (__INTER_BUFFER_2[[remain_2]] = 
+       __INTER_BUFFER_2[[(remain_2 + 1)]]);
+    
+/*SIRFilter name=LowPassFilter__18__56_12*/
+    doloop (int work_4 = 0; 1; 1) 
+      {
+        float sum__9__49 = 0.0f;
+        float __sa0__12__50 = 0.0f;
+
+        float __sa1__14__52 = 0.0f;
+
+        float __sa2__10__54 = 0.0f;
+        (sum__9__49 = ((float)0.0));
+        doloop (int i__11__51 = 0; 3; 1) 
+          {
+            (__sa0__12__50 = 
+	     __INTER_BUFFER_4[[(i__11__51 + (work_4 * 2))]]);
+            (sum__9__49 = 
+	     (sum__9__49 + (__sa0__12__50 * coeff__6__46[[i__11__51]])));
+          }
+
+        (__INTER_BUFFER__3_1[[work_4]] = sum__9__49);
+        doloop (int i__13__53 = 0; 1; 1) {
+	  (__sa1__14__52 = 
+	   __INTER_BUFFER_4[[(i__13__53 + (work_4 * 2))]]);
+	}
+        (__sa2__10__54 = __INTER_BUFFER_4[[((work_4 * 2) + 1)]]);
+      }
+
+    doloop (int remain_4 = 0; 2; 1) 
+      (__INTER_BUFFER_4[[remain_4]] = __INTER_BUFFER_4[[(remain_4 + 2)]]);
+    
+/*SIRJoiner:WEIGHTED_ROUND_ROBIN_Joiner_15*/
+    doloop (int joiner_3 = 0; 1; 1) 
+      {
+        doloop (int joiner_3_0 = 0; 1; 1) 
+          (__INTER_BUFFER_5[[((joiner_3 * 2) + (0 + joiner_3_0))]] = 
+	   __INTER_BUFFER__3_0[[((1 * joiner_3) + joiner_3_0)]]);
+
+        doloop (int joiner_3_1 = 0; 1; 1) 
+          (__INTER_BUFFER_5[[((joiner_3 * 2) + (1 + joiner_3_1))]] = 
+	   __INTER_BUFFER__3_1[[((1 * joiner_3) + joiner_3_1)]]);
+
+      }
+    
+/*SIRFilter name=Sink__22__43_13*/
+    doloop (int work_5 = 0; 2; 1) 
+      {
+        float __sa3__21__42 = 0.0f;
+        (__sa3__21__42 = __INTER_BUFFER_5[[work_5]]);
+        printf("%f\n", __sa3__21__42);
+      }
+
+  }
+  return 0;
+}
+
+\end{verbatimtab}
+
+
+{\small
+\bibliographystyle{abbrv}
+\bibliography{references}
+}
+
+\end{document}

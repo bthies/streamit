@@ -304,6 +304,7 @@ fn dev_gather_numbers_calc(printServiceStruct)
 	  
 	  //quit after quitAfter executions
 	  if (steadyStateExecutions > quitAfter + 1) {
+	    
 	    fprintf(outputFile, "\nSummmary:\n");
 	    fprintf(outputFile, "Steady State Executions: %d\n", quitAfter);
 	    fprintf(outputFile, "Total Cycles: %d\n", totalCycles);
@@ -317,6 +318,17 @@ fn dev_gather_numbers_calc(printServiceStruct)
 	    fprintf(outputFile, "  for *assigned* tiles in the configuration.\n");
 	    fprintf(outputFile, "  The denominator is the total number of cycles\n");
 	    fprintf(outputFile, "  for all the tiles in the streamit configuration.\n");
+	    
+	    //print the numbers in a nicer format for automatic
+	    //extracting
+	    fprintf(outputFile,
+		    "\n# format: tiles in config:tiles assigned: cycles/steady: thruput:MFLOPS:workcount:workcount\n");
+	    fprintf(outputFile, "%d;%d;%d;%d;%d;%d;%d\n",
+		    gStreamItTiles, gStreamItTilesUsed, totalCycles/quitAfter,
+		    (100000/((totalCycles/quitAfter)/printsPerSteady)),
+		    (250*totalFLOPS)/totalCycles,
+		    (totalWorkCount - ((gNumProc - gStreamItTilesUsed) * totalCycles)),
+		    gStreamItTiles*totalCycles);
 	    //this should exit!!!!!
 	    gInterrupted = 1;
 	    //this will exit the thread
@@ -385,26 +397,3 @@ fn __clock_handler_workcount(hms) {
       gWorkCount++; 
   }
 }
-
-
-///* fn generateUtilization(cycles) { */
-///*   local i, j; */
-///*   local workCount = 0; */
-  
-///*   printf("cycles %d\n", cycles);  */
-
-///*   for (i = 0; i < cycles; ++i) */
-///*   { */
-///*     printf("do_step0\n");  */
-///*     do_step(simInfo,1); */
-///*     printf("do_step1\n");  */
-    
-///*     for (j = 0; j < gNumProc; ++j) */
-/*     { */
-/*          local status = Proc_GetStallReason(Machine_GetProc(machine,j)); */
-/* 	 if (status == 0) */
-/*            workCount++; */
-/*     } */
-/*   } */
-/*   return workCount; */
-/* } */

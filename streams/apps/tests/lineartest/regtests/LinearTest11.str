@@ -50,6 +50,9 @@ float->float filter LinearFilter1(int numPeeks, int numPushes) {
       }
       push(sum);
     }
+    for (int i=0; i<numPeeks; i++) {
+      pop();
+    }
   }
 }
 
@@ -85,6 +88,9 @@ float->float filter ParamIdentity(int size) {
   work peek size pop size push size {
     for (int i=0; i<size; i++) {
       push(peek(i));
+    }
+    for (int i=0; i<size; i++) {
+      pop();
     }
   }
 }

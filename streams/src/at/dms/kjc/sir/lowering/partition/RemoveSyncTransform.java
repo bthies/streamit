@@ -27,6 +27,6 @@ public final class RemoveSyncTransform extends IdempotentTransform {
     }
 
     public String toString() {
-	return "Remove matching sync transform.";
+	return "Remove matching sync transform, #" + id;
     }
 }

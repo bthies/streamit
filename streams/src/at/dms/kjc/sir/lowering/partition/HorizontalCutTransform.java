@@ -56,6 +56,6 @@ public final class HorizontalCutTransform extends IdempotentTransform {
     }
 
     public String toString() {
-	return "Horizontal Cut transform (pos = " + cutPos + ")";
+	return "Horizontal Cut transform, #" + id + " (pos = " + cutPos + ")";
     }
 }

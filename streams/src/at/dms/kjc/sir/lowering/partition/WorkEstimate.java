@@ -180,7 +180,6 @@ public class WorkEstimate {
     private void doit(SIRStream str) {
 	// get execution counts for filters in <str>
 	HashMap executionCounts = SIRScheduler.getExecutionCounts(str)[1];
-
 	// for each filter, build a work count
 	for (Iterator it = executionCounts.keySet().iterator();
 	     it.hasNext(); ){
@@ -656,13 +655,11 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
 					  JExpression left,
 					  JExpression right) {
 	// try to leave out const prop remnants
-	/*
 	if (!(left instanceof JLocalVariableExpression &&
 	      ((JLocalVariableExpression)left).getVariable().getIdent().indexOf(Propagator.TEMP_VARIABLE_BASE)!=-1)) {
 	    super.visitAssignmentExpression(self, left, right);
 	    work += ASSIGN;
 	}
-	*/
 	work += ASSIGN;
     }
 

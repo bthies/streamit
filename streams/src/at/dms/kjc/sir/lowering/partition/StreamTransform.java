@@ -23,11 +23,19 @@ public abstract class StreamTransform {
      * the result of this transform, AFTER it is performed.
      */
     private List succ;
-
+    /**
+     * Identifier for this transform.
+     */
+    protected int id;    
+    /**
+     * Max identifier;
+     */
+    private static int maxId = 0;
 
     protected StreamTransform() {
 	this.pred = new LinkedList();
 	this.succ = new LinkedList();
+	this.id = maxId++;
     }
 
     protected abstract SIRStream doMyTransform(SIRStream str);
@@ -155,7 +163,7 @@ public abstract class StreamTransform {
 	    for (int i=0; i<tabs; i++) {
 		System.err.print("  ");
 	    }
-	    System.err.println("  - Preds: (" + pred.size() + ")");
+	    System.err.println((tabs+"").charAt(0) + " - Preds: (" + pred.size() + ")");
 	    for (int i=0; i<pred.size(); i++) {
 		((StreamTransform)pred.get(i)).printHierarchy(tabs+1);
 	    }
@@ -163,12 +171,12 @@ public abstract class StreamTransform {
 	for (int i=0; i<tabs; i++) {
 	    System.err.print("  ");
 	}
-	System.err.println((tabs+"").charAt(0) + " - " + this);
+	System.err.println((tabs+"").charAt(0) + " - NODE: " + this);
 	if (succ.size()>0) {
 	    for (int i=0; i<tabs; i++) {
 		System.err.print("  ");
 	    }
-	    System.err.println("  - Succs: (" + succ.size() + ")");
+	    System.err.println((tabs+"") + " - Succs: (" + succ.size() + ")");
 	    for (int i=0; i<succ.size(); i++) {
 		((StreamTransform)succ.get(i)).printHierarchy(tabs+1);
 	    }	

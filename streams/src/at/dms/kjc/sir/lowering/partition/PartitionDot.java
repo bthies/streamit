@@ -112,12 +112,12 @@ public class PartitionDot extends StreamItDot {
 	if (partitions.containsKey(self)) {
 	    String tile = "" + partitions.get(self);
 	    return "subgraph cluster_" + getName() + " {" + 
-		"\n label=\"" + self.getIdent() + "\\n tile=" + tile + "\";\n";
+		"\n label=\"" + self.getName() + "\\n tile=" + tile + "\";\n";
 	} else {
 	    // return no label for containers spread over multiple
 	    // tiles
 	    return "subgraph cluster_" + getName() + " {" + 
-		"\n label=\"" + self.getIdent() + "\";\n";
+		"\n label=\"" + self.getName() + "\";\n";
 	}
     }
 

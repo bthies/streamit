@@ -18,9 +18,7 @@ public class Partitioner {
     public static SIRStream doit(SIRStream str, int target) {
 	// Lift filters out of pipelines if they're the only thing in
 	// the pipe
-	System.err.print("Lifting filters... ");
 	Lifter.lift(str);
-	System.err.println("done.");
 
 	// make work estimate
 	WorkEstimate work = WorkEstimate.getWorkEstimate(str);
@@ -28,9 +26,8 @@ public class Partitioner {
 	work.getSortedFilterWork().writeToFile("work-before.txt");
 
 	// detect number of tiles we have
-	System.err.print("count tiles... ");
 	int count = new RawFlattener(str).getNumTiles();
-	System.err.println("found "+count+" tiles.");
+	System.err.println("  Found "+count+" tiles.");
 
 	// for statistics gathering
 	if (KjcOptions.dpscaling) {

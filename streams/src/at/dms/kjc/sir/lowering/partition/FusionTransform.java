@@ -95,7 +95,7 @@ public final class FusionTransform extends StreamTransform {
     }
 
     public String toString() {
-	return "Fusion transform (" + partitions.size() + " components)";
+	return "Fusion transform, #" + id + " (Will fuse into " + (partitions.size()-1) + " components)";
     }
 
 }

@@ -39,7 +39,7 @@ public final class FreqReplaceTransform extends StreamTransform {
     }
 
     public String toString() {
-	return "FreqReplace Transform";
+	return "FreqReplace Transform, #" + id;
     }
 
 }

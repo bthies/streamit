@@ -640,11 +640,12 @@ public class RefactorSplitJoin {
             sj.getJoiner().getType() != SIRJoinType.WEIGHTED_RR) {
             return false;
 	}
-	int[] splitWeights = sj.getSplitter().getWeights();
-        int[] joinWeights = sj.getJoiner().getWeights();
-        
+
         // Whee.  Let's look at sj's children:
         for (int index = 0; index < sj.size(); index++) {
+	    int splitWeight = sj.getSplitter().getWeight(index);
+	    int joinWeight = sj.getJoiner().getWeight(index);
+        
             SIRStream child = sj.get(index);
             // To continue, child must be a splitjoin with a round-robin
             if (!(child instanceof SIRSplitJoin))
@@ -657,7 +658,7 @@ public class RefactorSplitJoin {
             // splitter and joiner weights
 	    int inCount = sjChild.getSplitter().getSumOfWeights();
             int outCount = sjChild.getJoiner().getSumOfWeights();
-            if (inCount != splitWeights[index] || outCount != joinWeights[index])
+            if (inCount != splitWeight || outCount != joinWeight)
                 continue;
 
             // Okay, we can raise the child.  This involves setting

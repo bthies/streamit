@@ -26,6 +26,6 @@ public final class IdentityTransform extends IdempotentTransform {
     }
 
     public String toString() {
-	return "Identity Transform";
+	return "Identity Transform, #" + id;
     }
 }

@@ -39,6 +39,6 @@ public class FissionTransform extends StreamTransform {
     }
 
     public String toString() {
-	return "Fission transform (" + reps + " ways)";
+	return "Fission transform, #" + id + " (" + reps + " ways)";
     }
 }

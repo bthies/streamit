@@ -58,7 +58,7 @@ public final class LinearReplaceTransform extends StreamTransform {
     }
 
     public String toString() {
-	return "LinearReplace Transform";
+	return "LinearReplace Transform, #" + id;
     }
 
 }

@@ -46,6 +46,6 @@ public final class VerticalCutTransform extends IdempotentTransform {
     }
 
     public String toString() {
-	return "Vertical Cut transform (pos = " + cutPos + ")";
+	return "Vertical Cut transform, #" + id + " (pos = " + cutPos + ")";
     }
 }

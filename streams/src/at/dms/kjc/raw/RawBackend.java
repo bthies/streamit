@@ -117,7 +117,7 @@ public class RawBackend {
 	createExecutionCounts(str, rawFlattener);
 
 	//see if we can remove any joiners
-	JoinerRemoval.run(rawFlattener.top);
+	//JoinerRemoval.run(rawFlattener.top);
 
 	// layout the components (assign filters to tiles)	
 	Layout.simAnnealAssign(rawFlattener.top);
@@ -131,7 +131,11 @@ public class RawBackend {
 	SwitchCode.generate(rawFlattener.top);
 	//	SwitchCode.dumpCode();
 	System.out.println("Switch Code End.");
-
+	
+	//Generate number gathering simulator code
+	if (KjcOptions.numbers)
+	    NumberGathering.doit(rawFlattener.top);
+	
 	//Generate the tile code
 	//run the specific class depending
 	//on if pops have been removed

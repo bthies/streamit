@@ -1185,14 +1185,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    if (KjcOptions.ptraccess) {
 		
 		//HACK FOR THE ICSA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//the receive buffer ptr to help stupid GCC
+		//turn all array access into access of a pointer pointing to the array
 		print(ident + "_Alloc");
 				
 		//print the dims of the array
 		stackAllocateArray(ident);
-				
-		//HACK FOR THE ISCA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//the receive buffer ptr to help stupid GCC
+
+		//print the pointer def and the assignment to the array
 		print(";\n");
 		print(baseType + " *" + ident + " = " + ident + "_Alloc");
 	    }

@@ -19,13 +19,12 @@ public class FilterContent {
     private String name;
     private SIRWorkFunction[] init,steady;
     private CType inputType,outputType;
-    private int initMult, steadyMult;//, primePump;
+    private int initMult, steadyMult;
     private JMethodDeclaration[] methods;
     private List paramList;
     private JMethodDeclaration initFunction;
     private boolean is2stage;
     private JFieldDeclaration[] fields;
-    //private LinearFilterRepresentation linear;
     //LinearRepresentation
     private double[] array;
     private double constant;
@@ -36,18 +35,6 @@ public class FilterContent {
     private int pos;
     private int total;
 
-    /*public FilterContent(String name,SIRWorkFunction[] init,SIRWorkFunction[] work,CType inputType,CType outputType,int initMult,int steadyMult,JMethodDeclaration[] methods,List paramList) {
-      this.name=name;
-      this.init=init;
-      this.work=work;
-      this.inputType=inputType;
-      this.outputType=outputType;
-      this.initMult=initMult;
-      this.steadyMult=steadyMult;
-      this.methods=methods;
-      this.paramList=paramList;
-      }*/
-    
     public FilterContent(FilterContent content) {
 	name=content.name;
 	init=content.init;
@@ -56,7 +43,6 @@ public class FilterContent {
 	outputType=content.outputType;
 	initMult=content.initMult;
 	steadyMult=content.steadyMult;
-	//primePump=content.primePump;
 	methods=content.methods;
 	paramList=content.paramList;
 	initFunction=content.initFunction;
@@ -110,40 +96,23 @@ public class FilterContent {
 	    end=true;
 	    pos=0;
 	    total=1;
-	    methods=filter.getMethods(); //Keep nonlinear rep
-	    steady=filter.getPhases(); //Keep nonlinear rep
-	    fields=filter.getFields();
-	    paramList = filter.getParams();
-	    initFunction=filter.getInit();
-	    init=filter.getInitPhases();
+	    //methods=filter.getMethods(); //Keep nonlinear rep
+	    //steady=filter.getPhases(); //Keep nonlinear rep
+	    //fields=filter.getFields(); //Keep nonlinear rep
+	    //paramList = filter.getParams(); //Keep nonlinear rep
+	    //initFunction=filter.getInit(); //Keep nonlinear rep
+	    //init=filter.getInitPhases(); //Keep nonlinear rep
 	} else {
 	    linear=false;
 	    init=filter.getInitPhases();
 	    steady=filter.getPhases();
-	    /*int[] ans=(int[])execCounts[0].get(filter);
-	      if(ans!=null)
-	      initMult=ans[0];
-	      ans=(int[])execCounts[1].get(filter);
-	      if(ans!=null)
-	      steadyMult=ans[0];
-	    */
 	    methods=filter.getMethods();
 	    fields = filter.getFields();
 	    paramList=filter.getParams();
 	    initFunction = filter.getInit();
 	    is2stage = steady.length > 1;
-	    //if(lfa!=null)
-	    //linear=lfa.getLinearRepresentation(filter);
 	}
     }
-    
-    //public FilterContent(String name,double[] array,double constant) {
-    //}
-    
-    /*public LinearFilterRepresentation getLinear() {
-	//return linear;
-	return null;
-	}*/
     
     public boolean isLinear() {
 	return linear;
@@ -205,32 +174,16 @@ public class FilterContent {
 	return popCount;
     }
 
-    /*public void setLinear(LinearFilterRepresentation linear) {
-      this.linear=linear;
-      }*/
-
-    public void setPrimePump(int pp) 
-    {
-	//primePump = pp;
-	throw new RuntimeException("Deprecated");
-    }
-    
-    /*public int getPrimePump() 
-      {
-      return primePump;
-      }*/
-
     public boolean isTwoStage() 
     {
 	return is2stage;
     }
     
     public String toString() {
-	//return String.valueOf(System.identityHashCode(this));
 	if(array==null)
 	    return name;
 	else {
-	    if(false)
+	    if(true)
 		return name+" ["+array.length+","+popCount+"]";
 	    else {
 		StringBuffer out=new StringBuffer(name);

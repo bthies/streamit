@@ -18,8 +18,10 @@ public class LinearFission {
 	//System.out.println("REALNUM: "+realNum);
 	content.setTotal(num);
 	FilterContent[] out=new FilterContent[realNum];
-	for(int i=0;i<realNum;i++)
+	for(int i=0;i<realNum;i++) {
 	    out[i]=new FilterContent(content);
+	    
+	}
 	double[] temp=new double[len];
 	if(realNum>1) {
 	    System.arraycopy(array,0,temp,0,len);

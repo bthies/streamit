@@ -937,7 +937,7 @@ public class Rawify
 					       FilterInfo filterInfo, boolean init, boolean primePump, 
 					       RawTile tile, RawChip rawChip) {*/
     private static void createLinearSwitchCode(FilterTraceNode node,boolean init,boolean primePump,int mult,RawTile tile,RawChip rawChip) {
-	System.err.println("Creating switchcode linear: "+node);
+	System.err.println("Creating switchcode linear: "+node+" "+mult+" "+init+" "+primePump);
 	ComputeNode sourceNode = null;
 
 	//int mult;
@@ -1018,10 +1018,10 @@ public class Rawify
 	final int numPop = peek/pop;
 	final boolean begin=content.getBegin();
 	final boolean end=content.getEnd();
-	System.out.println("SRC: "+src);
-	System.out.println("DEST: "+dest);
+	//System.out.println("SRC: "+src);
+	//System.out.println("DEST: "+dest);
 	SwitchCodeStore code = tile.getSwitchCode();
-	System.err.println("Getting HERE!");
+	//System.err.println("Getting HERE!");
 	code.appendIns(new MoveIns(SwitchReg.R3,SwitchIPort.CSTO),init||primePump);
 	code.appendIns(new Comment("HERE!"),init||primePump);
 	boolean first=true;
@@ -1324,7 +1324,7 @@ public class Rawify
 	else 
 	    mult = filterInfo.steadyMult;
 
-	if(linear) { //Linear switch code
+	if(!(init||primePump||!linear)) { //Linear switch code in steadystate
 	    createLinearSwitchCode(node,init,primePump,mult,tile,rawChip);
 	    sentItems+=mult;
 	} else if (SWITCH_COMP && mult > SC_THRESHOLD && !init) {
@@ -1370,6 +1370,8 @@ public class Rawify
 	//now we must take care of the remaining items on the input tape 
 	//after the initialization phase if the upstream filter produces more than
 	//we consume in init
+	if(init)
+	    System.out.println("REMAINING ITEMS: "+filterInfo.remaining);
 	if (init && filterInfo.remaining > 0) {
 	    appendReceiveInstructions(node, 
 				      filterInfo.remaining * Util.getTypeSize(node.getFilter().getInputType()),
@@ -1397,10 +1399,10 @@ public class Rawify
 	if (primePump && filterInfo.push > 0 && 
 	    filterInfo.primePumpItemsNotConsumed() / filterInfo.push > 0) {
 	    int ppSteadyMult = (filterInfo.primePumpItemsNotConsumed() / filterInfo.push);
-	    if(linear) //Linear switch code
-		createLinearSwitchCode(node,init,primePump,ppSteadyMult,tile,rawChip);
+	    //if(linear) //Linear switch code
+	    //createLinearSwitchCode(node,init,primePump,ppSteadyMult,tile,rawChip);
 	    //make sure mult > SC_THRESHOLD because we need to send the const above
-	    else if (SWITCH_COMP && mult > SC_THRESHOLD && ppSteadyMult > 1) {
+	    if (SWITCH_COMP && mult > SC_THRESHOLD && ppSteadyMult > 1) {
 		//add the label
 		Label label = new Label();
 		tile.getSwitchCode().appendIns(label, (init || primePump));	

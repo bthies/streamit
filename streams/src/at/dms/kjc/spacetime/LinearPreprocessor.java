@@ -22,26 +22,26 @@ public class LinearPreprocessor extends EmptyStreamVisitor {
 	if(linRep!=null) { //If linear
 	    System.out.println("Found Linear Filter: "+self);
 	    //Create new filter and copy state
-	    SIRTwoStageFilter newFilter=new SIRTwoStageFilter();
-	    newFilter.copyState(self);
+	    //SIRTwoStageFilter newFilter=new SIRTwoStageFilter();
+	    //newFilter.copyState(self);
 	    //Replace old filter
-	    SIRContainer parent=self.getParent();
-	    parent.set(parent.indexOf(self),newFilter);
+	    //SIRContainer parent=self.getParent();
+	    //parent.set(parent.indexOf(self),newFilter);
 	    //Update linear analyzer
-	    lfa.addLinearRepresentation(newFilter,linRep);
-	    lfa.removeLinearRepresentation(self);
+	    //lfa.addLinearRepresentation(newFilter,linRep);
+	    //lfa.removeLinearRepresentation(self);
 	    //Set initWork peek,pop,push amount
-	    SIRWorkFunction init=newFilter.getInitPhases()[0];
+	    //SIRWorkFunction init=newFilter.getInitPhases()[0];
 	    SIRWorkFunction steady=self.getPhases()[0];
 	    int peek=steady.getPeekInt();
 	    int pop=steady.getPopInt();
-	    int push=steady.getPushInt();
+	    //int push=steady.getPushInt();
 	    int diff=peek-pop;
-	    init.setPeek(2*diff);
-	    init.setPop(diff);
-	    init.setPush((peek/pop-1)*push);
-	    System.out.println("Steady: "+steady.getPeek()+" "+steady.getPop()+" "+steady.getPush());
-	    System.out.println("Init: "+init.getPeek()+" "+init.getPop()+" "+init.getPush());
+	    steady.setPeek(2*diff);
+	    //init.setPop(diff);
+	    //init.setPush((peek/pop-1)*push);
+	    //System.out.println("Steady: "+steady.getPeek()+" "+steady.getPop()+" "+steady.getPush());
+	    //System.out.println("Init: "+init.getPeek()+" "+init.getPop()+" "+init.getPush());
 	}
     }
 }

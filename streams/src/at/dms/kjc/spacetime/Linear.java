@@ -43,7 +43,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	pos=content.getPos();
 	idx=new int[num];
 	for(int i=0,j=0;j<num;i+=popCount,j++) {
-	    System.err.println("Adding idx: "+i);
+	    //System.err.println("Adding idx: "+i);
 	    idx[j]=i;
 	}
 	uin=guin++;
@@ -105,7 +105,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	int times=0;
 	int[] oldIdx=new int[4];
 	int[] oldPop=new int[4];
-	System.out.println("Times: "+mult+" "+popCount+" "+idx.length);
+	//System.out.println("Times: "+mult+" "+popCount+" "+idx.length);
 	for(int turn=0;turn<pos+1;turn++) { //Synch up linear tiles
 	    for(int i=0;i<mult;i++)
 		for(int j=0;j<popCount;j++)
@@ -144,7 +144,7 @@ public class Linear extends RawExecutionCode implements Constants {
 		popNum--;
 	else if(!src&&elem==popCount-1&&popNum==idx.length-1)
 	    return "$csto";
-	System.out.println("Array: "+array.length+" "+popNum+" "+regs.length);
+	//System.out.println("Array: "+array.length+" "+popNum+" "+regs.length);
 	return regs[array.length+popNum];
     }
     
@@ -160,7 +160,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	    if(rem>=4)
 		rem-=4;
 	}
-	System.out.println("MULTIPLE: "+num+" "+i);
+	//System.out.println("MULTIPLE: "+num+" "+i);
 	return i;
     }
 

@@ -51,8 +51,7 @@ public interface StreamVisitor {
 			  SIRStream parent,
 			  JFieldDeclaration[] fields,
 			  JMethodDeclaration[] methods,
-			  JMethodDeclaration init,
-			  List elements);
+			  JMethodDeclaration init);
 
     /* pre-visit a splitjoin */
     void preVisitSplitJoin(SIRSplitJoin self,
@@ -79,8 +78,7 @@ public interface StreamVisitor {
 			   SIRStream parent,
 			   JFieldDeclaration[] fields,
 			   JMethodDeclaration[] methods,
-			   JMethodDeclaration init,
-			   List elements);
+			   JMethodDeclaration init);
 
     /* post-visit a splitjoin */
     void postVisitSplitJoin(SIRSplitJoin self,

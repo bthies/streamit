@@ -48,8 +48,8 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 			   JMethodDeclaration[] methods) {
 	super(parent, ident, fields, methods);
 	// need this to populate the children list
-	children.add(null);
-	children.add(null);
+	add(null);
+	add(null);
     }
 
     /**
@@ -58,8 +58,8 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     public SIRFeedbackLoop() {
 	super();
 	// need this to populate the children list
-	children.add(null);
-	children.add(null);
+	add(null);
+	add(null);
     }
     
     /**
@@ -225,7 +225,7 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
      **/
     public void setBody(SIRStream body) 
     {
-	children.set(BODY, body);
+	myChildren().set(BODY, body);
 	body.setParent(this);
     }
     /**
@@ -233,7 +233,7 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
      **/
     public void setLoop(SIRStream loop) 
     {
-	children.set(LOOP, loop);;
+	myChildren().set(LOOP, loop);;
 	loop.setParent(this);
     }
     /**
@@ -285,14 +285,14 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
      * Returns body of this.
      */
     public SIRStream getBody() {
-	return (SIRStream)children.get(BODY);
+	return (SIRStream)myChildren().get(BODY);
     }
     
     /**
      * Returns loop of this.
      */
     public SIRStream getLoop() {
-	return (SIRStream)children.get(LOOP);
+	return (SIRStream)myChildren().get(LOOP);
     }
     
     /**

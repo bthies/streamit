@@ -42,8 +42,7 @@ public interface AttributeStreamVisitor {
 			 SIRStream parent,
 			 JFieldDeclaration[] fields,
 			 JMethodDeclaration[] methods,
-			 JMethodDeclaration init,
-			 List elements);
+			 JMethodDeclaration init);
 
     /* pre-visit a splitjoin */
     Object visitSplitJoin(SIRSplitJoin self,
@@ -51,7 +50,6 @@ public interface AttributeStreamVisitor {
 			  JFieldDeclaration[] fields,
 			  JMethodDeclaration[] methods,
 			  JMethodDeclaration init,
-			  List elements,
 			  SIRSplitter splitter,
 			  SIRJoiner joiner);
 

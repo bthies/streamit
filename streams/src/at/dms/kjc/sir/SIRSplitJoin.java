@@ -33,27 +33,6 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Whether or not <str> is an immediate child of this.
-     */
-    public boolean contains(SIROperator str) {
-	return children.contains(str);
-    }
-
-    /**
-     * returns i'th child of this.
-     */
-    public SIRStream get(int i) {
-	return (SIRStream)children.get(i);
-    }
-    
-    /**
-     * returns the number of parallel streams in this.
-     */
-    public int size() {
-	return children.size();
-    }
-    
-    /**
      * sets the splitter for this SplitJoin
      */
     public void setSplitter(SIRSplitter s) 
@@ -94,8 +73,8 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     public CType getOutputType() {
 	// first look for a non-null type (since some of them might
 	// not be feeding into the joiner)
-	for (int i=0; i<children.size(); i++) {
-	    CType type = ((SIRStream)children.get(i)).getOutputType();
+	for (int i=0; i<size(); i++) {
+	    CType type = get(i).getOutputType();
 	    if (type!=CStdType.Null) {
 		return type;
 	    }
@@ -110,8 +89,8 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     public CType getInputType() {
 	// first look for a non-null type (since some of them might
 	// not be reading in from the splitter)
-	for (int i=0; i<children.size(); i++) {
-	    CType type = ((SIRStream)children.get(i)).getInputType();
+	for (int i=0; i<size(); i++) {
+	    CType type = get(i).getInputType();
 	    if (type!=CStdType.Null) {
 		return type;
 	    }
@@ -125,19 +104,33 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      * Add a stream to the SplitJoin, and set <str>'s parent field to this.
      */
     public void add(SIRStream str) {
-	children.add(str);
+	super.add(str);
 	str.setParent(this);
     }
     
     /**
+     * Sets the parallel streams in this, and resets the count on the
+     * splitters and joiners, if they depended on the number of
+     * <children> before.
+     */
+    public void setParallelStreams(LinkedList children) {
+	// reset children
+	clear();
+	for (int i=0; i<children.size(); i++) {
+	    add((SIRStream)children.get(i));
+	}
+	rescale();
+    }
+
+    /**
      * See documentation in SIRContainer.
      */
     public void replace(SIRStream oldStr, SIRStream newStr) {
-	int index = children.indexOf(oldStr);
+	int index = myChildren().indexOf(oldStr);
 	Utils.assert(index!=-1,
 		     "Trying to replace with bad parameters, since " + this
 		     + " doesn't contain " + oldStr);
-	children.set(index, newStr);
+	myChildren().set(index, newStr);
 	// set parent of <newStr> to be this
 	newStr.setParent(this);
     }
@@ -154,7 +147,7 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      * <child>, or null if <child> is not a child of this.
      */
     public String getChildName(SIROperator str) {
-	int index = children.indexOf(str);
+	int index = myChildren().indexOf(str);
 	if (index>=0) {
 	    // return stream index if it's a stream
 	    return "stream" + (index+1);
@@ -176,12 +169,10 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      * splitter and joiner.
      */
     public List getChildren() {
-	// build result
-	LinkedList result = new LinkedList();
-	// add the children: the component streams, plus the
-	// splitter and joiner
-	result.add(splitter);
-	result.addAll(children);
+	// build result from child streams
+	List result = super.getChildren();
+	// add splitter and joiner
+	result.add(0, splitter);
 	result.add(joiner);
 	// return result
 	return result;
@@ -191,27 +182,13 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      * Returns a list of the parallel streams in this.
      */
     public List getParallelStreams() {
-	return (List)children.clone();
-    }
-
-    /**
-     * Sets the parallel streams in this, and resets the count on the
-     * splitters and joiners, if they depended on the number of
-     * <children> before.
-     */
-    public void setParallelStreams(LinkedList children) {
-	// reset children
-	this.children.clear();
-	for (int i=0; i<children.size(); i++) {
-	    add((SIRStream)children.get(i));
-	}
-	this.rescale();
+	return super.getChildren();
     }
 
     // reset splits and joins to have right number of children.
     public void rescale() {
-	this.splitter.rescale(children.size());
-	this.joiner.rescale(children.size());
+	this.splitter.rescale(size());
+	this.joiner.rescale(size());
     }
 
     /**
@@ -223,11 +200,11 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 	// construct result
 	LinkedList result = new LinkedList();
 	// go through list of children
-	for (int i=0; i<children.size()-1; i++) {
+	for (int i=0; i<size()-1; i++) {
 	    // make an entry from splitter to each stream
-	    SIROperator[] entry1 = { splitter, (SIROperator)children.get(i) };
+	    SIROperator[] entry1 = { splitter, get(i) };
 	    // make an entry from each stream to splitter
-	    SIROperator[] entry2 = { (SIROperator)children.get(i), joiner };
+	    SIROperator[] entry2 = { get(i), joiner };
 	    // add entries
 	    result.add(entry1);
 	    result.add(entry2);
@@ -247,8 +224,8 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 			    init);
 	/* visit components */
 	splitter.accept(v);
-	for (int i=0; i<children.size(); i++) {
-	    ((SIRStream)children.get(i)).accept(v);
+	for (int i=0; i<size(); i++) {
+	    get(i).accept(v);
 	}
 	joiner.accept(v);
 	v.postVisitSplitJoin(this,
@@ -267,7 +244,6 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 				fields,
 				methods,
 				init,
-				children,
 				splitter,
 				joiner);
     }

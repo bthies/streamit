@@ -1,6 +1,6 @@
 # -*-Makefile-*-
 # this performs linking, packaging, symbol creation for a one-tile
-# version of fft.
+# version of vocoder.
 #
 
 include $(TOPDIR)/Makefile.include

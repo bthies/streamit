@@ -201,7 +201,10 @@ float *GenerateData(int length) {
 }
 #endif //RAW
 
-int  main(argc, argv)
+
+
+
+int  doCalculation(argc, argv)
      int argc;
      char *argv[]; 
      /* Usage: vocoder infile outfile fftlen */
@@ -316,10 +319,21 @@ int  main(argc, argv)
 #ifndef RAW
   t2 = time(NULL);
 
-  printf ( "Total Running Time = %f\n", difftime(t2, t1));
+  // printf ( "Total Running Time = %f\n", difftime(t2, t1));
 #else
   raw_test_pass_reg(-1);
 #endif
 
   return 0;
 }
+
+
+int main(argc, argv) {
+  int i;
+  for (i=0; i<10000; i++) {
+    doCalculation(argc,argv);
+  }
+  return 0;
+}
+
+  

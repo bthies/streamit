@@ -174,23 +174,31 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
      */
     private SIRFilter theFilter;
 
-    private WorkVisitor() {
+    private WorkVisitor(SIRFilter theFilter) {
 	this.work = 0;
+	this.theFilter = theFilter;
     }
 
     /**
-     * Returns estimate of work in <filter>
+     * Returns estimate of work function in <filter>
      */
     public static int getWork(SIRFilter filter) {
-        if (!filter.needsWork ())
+        if (!filter.needsWork ()) {
 		return 0;
-	WorkVisitor visitor = new WorkVisitor();
-	if (filter.getWork()==null) {
+	} else 	if (filter.getWork()==null) {
 	    System.err.println("this filter has null work function: " + filter);
 	    return 0;
+	} else {
+	    return getWork(filter, filter.getWork());
 	}
-        visitor.theFilter = filter;
-	filter.getWork().accept(visitor);
+    }
+
+    /**
+     * Returns estimate of work in <node> of <filter>.
+     */
+    private static int getWork(SIRFilter filter, JPhylum node) {
+	WorkVisitor visitor = new WorkVisitor(filter);
+	node.accept(visitor);
 	return visitor.work;
     }
 
@@ -304,8 +312,21 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
 				 JExpression cond,
 				 JStatement thenClause,
 				 JStatement elseClause) {
-	super.visitIfStatement(self, cond, thenClause, elseClause);
-	work += IF;
+
+	// always count the work in the conditional
+	cond.accept(this);
+
+	// get the work in the then and else clauses and average
+	// them...
+	int thenWork = WorkVisitor.getWork(theFilter, thenClause);
+	int elseWork;
+	if (elseClause != null) {
+	    elseWork = WorkVisitor.getWork(theFilter, elseClause);
+	} else {
+	    elseWork = 0;
+	}
+
+	work += IF + (thenWork + elseWork) / 2;
     }
 
     /**

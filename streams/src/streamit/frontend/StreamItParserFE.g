@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.22 2002-12-09 17:43:09 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.23 2003-01-09 19:39:55 dmaze Exp $
  */
 
 header {
@@ -112,16 +112,18 @@ work_decl returns [FuncWork f]
 {	f = null;
 	Expression pop = null, peek = null, push = null;
 	Statement s; FEContext c = null; String name = null;
+	int type = 0;
 }
-	:	(	tw:TK_work { c = getContext(tw); }
-		|	tp:TK_phase id:ID { c = getContext(tp); name = id.getText(); }
+	:	(	tw:TK_work { c = getContext(tw); type = Function.FUNC_WORK; }
+		|	tp:TK_phase id:ID { c = getContext(tp); name = id.getText();
+			                    type = Function.FUNC_PHASE;}
 		)
 		(	TK_push push=right_expr
 		|	TK_pop pop=right_expr
 		|	TK_peek peek=right_expr
 		)*
 		s=block
-		{ f = new FuncWork(c, name, s, peek, pop, push); }
+		{ f = new FuncWork(c, type, name, s, peek, pop, push); }
 	;
 
 init_decl returns [Function f] { Statement s; f = null; }

@@ -99,7 +99,15 @@ public class RenameAll extends SLIRReplacingVisitor
         // and work functions.
         JMethodDeclaration oldInit = str.getInit();
         JMethodDeclaration oldWork = str.getWork();
-        JMethodDeclaration newInit = null, newWork = null;
+
+	// also for twostagefilters... this is messy and should be
+	// made more general somehow (just wait for general phased filters.)
+	JMethodDeclaration oldInitWork = null;
+	if (str instanceof SIRTwoStageFilter) {
+	    oldInitWork = ((SIRTwoStageFilter)str).getInitWork();
+	}
+
+        JMethodDeclaration newInit = null, newWork = null, newInitWork = null;
         JMethodDeclaration[] newMethods =
             new JMethodDeclaration[str.getMethods().length];
         for (int i = 0; i < str.getMethods().length; i++)
@@ -109,20 +117,40 @@ public class RenameAll extends SLIRReplacingVisitor
                 (JMethodDeclaration)oldMeth.accept(this);
             if (oldInit == oldMeth) newInit = newMeth;
             if (oldWork == oldMeth) newWork = newMeth;
+            if (oldInitWork == oldMeth) newInitWork = newMeth;
             newMethods[i] = newMeth;
         }
 
-        SIRFilter nf = new SIRFilter(str.getParent(),
-                                     newName(str.getIdent()),
-                                     newFields,
-                                     newMethods,
-                                     str.getPeek(),
-                                     str.getPop(),
-                                     str.getPush(),
-                                     newWork,
-                                     str.getInputType(),
-                                     str.getOutputType());
-
+	SIRFilter nf;
+	if (str instanceof SIRTwoStageFilter) {
+	    SIRTwoStageFilter two = (SIRTwoStageFilter)str;
+	    nf = new SIRTwoStageFilter(two.getParent(),
+				       newName(two.getIdent()),
+				       newFields,
+				       newMethods,
+				       two.getPeek(),
+				       two.getPop(),
+				       two.getPush(),
+				       newWork,
+				       two.getInitPeek(),
+				       two.getInitPop(),
+				       two.getInitPush(),
+				       newInitWork,
+				       two.getInputType(),
+				       two.getOutputType());
+	} else {
+	    nf = new SIRFilter(str.getParent(),
+					 newName(str.getIdent()),
+					 newFields,
+					 newMethods,
+					 str.getPeek(),
+					 str.getPop(),
+					 str.getPush(),
+					 newWork,
+					 str.getInputType(),
+					 str.getOutputType());
+	}
+	    
 	// replace any init call to <str> in the parent with an init
 	// call to <nf> -- DON'T DO THIS since it messes up mutation case.
 	// replaceParentInit(str, nf);

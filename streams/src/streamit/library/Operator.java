@@ -50,6 +50,9 @@ public class Operator extends DestroyedClass
     public void init(int n) { ASSERT (false); }
 
     // initializatoin functions, to be over-ridden
+    public void init(int n1, int n2) { ASSERT (false); }
+
+    // initializatoin functions, to be over-ridden
     public void init(float f) { ASSERT (false); }
 
     // initializatoin functions, to be over-ridden

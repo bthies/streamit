@@ -15,7 +15,7 @@ public forw(int N, float[][] L){ super (N,L);}
           setOutput(Float.TYPE);
           setPush(N); 
           setPop(N);
-
+          y=new float[N];
 	  this.L=L;
           this.N=N;
           
@@ -27,7 +27,7 @@ public void work() {
       {
 	  sum= input.popFloat();
 	      for (int j=0; j<i ; j++)
-		  sum -= L[i][j]*y[i];
+		  sum -= L[i][j]*y[j];
 	  y[i]=sum/L[i][i];
           output.pushFloat(y[i]);
       }

@@ -6,7 +6,7 @@ class AdapTest extends StreamIt {
     int N=3;
     int W=2;
     int Q=3;
-    int R=(N*Q+W-1);
+    int R=Q*N+W-1;
     
     static public void main (String[] t)
     
@@ -26,7 +26,8 @@ class AdapTest extends StreamIt {
 	add(new GenA(W,Q,N,K,C));
         add(new RowCol(N*Q+W-1,N*K));
         //add(new extFilt(2,10,B));
-        add(new SelfProd(R,K*N)); 
+        add(new SelfProd(R,K*N));
+        add(new chold(K*N));
 	add(new Sink());
     }
 
@@ -54,17 +55,17 @@ class Sink extends Filter{
     float A[][];
     public void init(){
 	setInput(Float.TYPE);
-	setPop(R*(R+1)/2);
+	setPop(K*N*(K*N+1)/2);
 	//setPop(10);
 	A = new float[R][R];
      }
     public void work() {
 
-	for (int j=0; j<R;j++)
+	for (int j=0; j<K*N;j++)
 	    for (int i=0; i<= j;i++)
 		A[i][j]=input.popFloat();
-	for (int i=0; i< R;i++)
-	    {for (int j=0;j<R;j++)
+	for (int i=0; i< K*N;i++)
+	    {for (int j=0;j<K*N;j++)
 		System.out.println(A[j][i]);
 	    System.out.println("col finished");
 	    System.out.println(i);

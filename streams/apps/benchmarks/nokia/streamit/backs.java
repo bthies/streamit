@@ -17,7 +17,8 @@ public backs(int N, float[][] LT){ super (N,LT);}
           setOutput(Float.TYPE);
           setPush(N); 
           setPop(N);
-
+          y=new float[N];
+	  d=new float[N];
 	  this.LT=LT;
           this.N=N;
           } 

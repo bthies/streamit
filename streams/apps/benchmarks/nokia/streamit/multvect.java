@@ -15,7 +15,7 @@ public multvect(int N, float[][] AH){ super (N,AH);}
           setOutput(Float.TYPE);
           setPush(N); 
           setPop(N);
-
+          r=new float[N];
 	  this.AH=AH;
           this.N=N;
           } 

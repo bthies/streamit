@@ -1,10 +1,12 @@
+
 import streamit.*;
 import streamit.io.*;
 
 class chold extends Filter // this Filter performs the cholesky decomposition through 
    {
-    int    N; //  the dimension of A
+    int    M,N; //  the dimension of A
     float[][]  A; // A is the input matrix 
+    
     float[]  p; // p is the out put elements on the diagonal
     float    sum; // sum will be used as a buffer         
 public chold(int N){ super (N);}
@@ -13,9 +15,10 @@ public chold(int N){ super (N);}
           setOutput(Float.TYPE);
           setPush(N*(N+1)/2); 
           setPop(N*(N+1)/2);
-          
-          this.N=N;
-          
+          A= new float[N][N];
+          p=new float[N];
+	  this.N=N;
+             
           } 
  
 

@@ -1,7 +1,7 @@
 /*
  * DoComplexProp.java: perform constant propagation on function bodies
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.5 2002-09-18 17:01:14 dmaze Exp $
+ * $Id: DoComplexProp.java,v 1.6 2002-09-18 17:33:02 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -25,9 +25,10 @@ import java.util.ArrayList;
  * cause all statements to deal with purely real values.
  *
  * Things this is known to punt on:
- * -- Some things (parameters to function calls, enqueue(), push(), 
- *    return) need to be actual variables rather than complex
- *    expressions.  Generate temporary variables for these if needed.
+ * -- Complex parameters to function calls not handled directly
+ *    by ComplexProp need to be temporary variables.
+ * -- Initialized complex variables should have their value separated
+ *    out.
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  */
 public class DoComplexProp extends FEReplacer
@@ -93,6 +94,38 @@ public class DoComplexProp extends FEReplacer
         expr = (Expression)expr.accept(varToComplex);
         expr = (Expression)expr.accept(cplxProp);
         return expr;
+    }
+
+    /**
+     * Create an initialized temporary variable to handle a
+     * complex expression.  If expr is an ExprComplex, uses addStatement()
+     * to add statements to declare a new temporary variable and
+     * separately initialize its real and complex parts, and return
+     * an ExprVar corresponding to the temporary.  Otherwise, return
+     * expr.
+     */
+    private Expression makeComplexTemporary(Expression expr)
+    {
+        if (!(expr instanceof ExprComplex))
+            return expr;
+        ExprComplex cplx = (ExprComplex)expr;
+        // This code path almost certainly isn't going to follow
+        // the path tojava.TempVarGen was written for, so we can
+        // ignore the type parameter.
+        String tempVar = varGen.varName(varGen.nextVar(null));
+        Expression exprVar = new ExprVar(expr.getContext(), tempVar);
+        Type type = new TypePrimitive(TypePrimitive.TYPE_COMPLEX);
+        addStatement(new StmtVarDecl(expr.getContext(), type, tempVar, null));
+        symTab.register(tempVar, type);
+        addStatement(new StmtAssign(expr.getContext(),
+                                    new ExprField(expr.getContext(),
+                                                  exprVar, "real"),
+                                    cplx.getReal()));
+        addStatement(new StmtAssign(expr.getContext(),
+                                    new ExprField(expr.getContext(),
+                                                  exprVar, "imag"),
+                                    cplx.getImag()));
+        return exprVar;
     }
 
     protected Expression doExpression(Expression expr)
@@ -163,6 +196,14 @@ public class DoComplexProp extends FEReplacer
         return result;
     }
 
+    public Object visitStmtEnqueue(StmtEnqueue stmt)
+    {
+        Expression value = stmt.getValue();
+        value = doExprProp(value);
+        value = makeComplexTemporary(value);
+        return new StmtEnqueue(stmt.getContext(), value);
+    }
+
     public Object visitStmtExpr(StmtExpr stmt)
     {
         Expression newExpr = doExprProp(stmt.getExpression());
@@ -176,6 +217,23 @@ public class DoComplexProp extends FEReplacer
         if (newExpr == stmt.getExpression())
             return stmt;
         return new StmtExpr(stmt.getContext(), newExpr);
+    }
+
+    public Object visitStmtPush(StmtPush stmt)
+    {
+        Expression value = stmt.getValue();
+        value = doExprProp(value);
+        value = makeComplexTemporary(value);
+        return new StmtPush(stmt.getContext(), value);
+    }
+
+    public Object visitStmtReturn(StmtReturn stmt)
+    {
+        Expression value = stmt.getValue();
+        if (value == null) return stmt;
+        value = doExprProp(value);
+        value = makeComplexTemporary(value);
+        return new StmtReturn(stmt.getContext(), value);
     }
 
     public Object visitStmtVarDecl(StmtVarDecl stmt)

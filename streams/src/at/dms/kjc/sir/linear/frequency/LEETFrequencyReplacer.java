@@ -18,7 +18,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.17 2003-04-18 22:32:25 thies Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.18 2003-04-19 00:18:07 thies Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -80,12 +80,15 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	}
 
 	LinearFilterRepresentation linearRep = lfa.getLinearRepresentation(str);
-	/* if this filter doesn't have a pop of one, we abort. **/
+	/* if this filter doesn't have a pop of one, we abort. 
+	   -- NOT ANYMORE, we now try to support this. --bft
+	**
 	if (linearRep.getPopCount() != 1) {
 	    LinearPrinter.println("  aborting -- filter is not FIR (pop = " +
 				  linearRep.getPopCount() + ")"); 
 	    return false;
 	}	
+	*/
 
 	/* if there is not a real valued FIR (all coefficients are real), we are done. */
 	if (!linearRep.isPurelyReal()) {
@@ -210,11 +213,11 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	
 	LinearPrinter.println("  creating new two stage filter...");
 	// Create a new filter that contains all of the new pieces that we have built
-	SIRTwoStageFilter freqFilter;
+	SIRStream replacement;
 	/* Note, we need to have initPeek-initPop == peek-Pop for some scheduling reason
 	 * so therefore, we set the peek rate of the work function to be N+2(x-1) even though
 	 * it really only needs to be N+x-1.*/
-	freqFilter = new SIRTwoStageFilter(self.getParent(),              /* parent */
+	replacement = new SIRTwoStageFilter(self.getParent(),              /* parent */
 					   "TwoStageFreq"+self.getIdent(),/* ident */
 					   newFields,                     /* fields */
 					   new JMethodDeclaration[0],     /* methods Note:
@@ -236,22 +239,73 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 					   self.getInputType(),           /* input type */
 					   self.getOutputType());         /* output type */
 	// need to explicitly set the init function
-	freqFilter.setInit(freqInit);
+	replacement.setInit(freqInit);
+
+	// if we have a pop rate greater than one, then put a decimator next to <replacement>
+	if (linearRep.getPopCount()>1) {
+	    SIRPipeline wrapper = new SIRPipeline(self.getParent(), replacement.getIdent()+"_dec_wrap");
+	    wrapper.setInit(SIRStream.makeEmptyInit());
+	    wrapper.add(replacement);
+	    wrapper.add(makeDecimatorForFrequencyNode(linearRep.getPushCount(), linearRep.getPopCount(), replacement.getOutputType()));
+	    // now remember this new wrapper as our replacement instead of the original
+	    replacement = wrapper;
+	}
 
 	// do unrolling on the new filter.  (Unrolling is part of
 	// filter loweing; will get field propagation and stuff node
 	// optimization, etc., as added bonus.)
-	Flattener.lowerFilterContents(freqFilter, false);
+	Flattener.lowerFilterContents(replacement, false);
 	
 	// now replace the current filter (self) with the frequency version
-	self.getParent().replace(self, freqFilter);
+	self.getParent().replace(self, replacement);
 	
 	LinearPrinter.println("  done replacing.");
 	
 	// return true since we replaced something
 	return true;
     }
-    
+
+    /**
+     * Returns a filter that has this behavior:
+     *   for (int i=0; i<freqPush; i++) { push(pop()) }
+     *   for (int i=0; i<freqPush; i++) { for (int j=0;j<freqPop-1; j++) { pop() } }
+     *
+     * Will return a filter with a null parent.  This is intended to
+     * follow a frequency node that has a pop rate more than one; the
+     * freqPush and freqPop refers to the push and pop rates of the
+     * frequency node.
+     */
+    public static SIRFilter makeDecimatorForFrequencyNode(int freqPush, int freqPop, CType type) {
+	// make work function
+	// work function
+	JStatement body[] = { Utils.makeForLoop(new JExpressionStatement(null, new SIRPushExpression(new SIRPopExpression(type), type), null), freqPush),
+			      Utils.makeForLoop(Utils.makeForLoop(new JExpressionStatement(null, new SIRPopExpression(type), null), freqPop-1), freqPush) };
+	
+	JMethodDeclaration work =  new JMethodDeclaration( /* tokref     */ null,
+							   /* modifiers  */ at.dms.kjc.
+							   Constants.ACC_PUBLIC,
+							   /* returntype */ CStdType.Void,
+							   /* identifier */ "work",
+							   /* parameters */ JFormalParameter.EMPTY,
+							   /* exceptions */ CClassType.EMPTY,
+							   /* body       */ new JBlock(null, body, null),
+							   /* javadoc    */ null,
+							   /* comments   */ null);
+
+	// make filter
+	SIRFilter result = new SIRFilter(null,
+					 "__Decimator",
+					 JFieldDeclaration.EMPTY(),
+					 JMethodDeclaration.EMPTY(),
+					 // peek, pop, push
+					 new JIntLiteral(freqPop), new JIntLiteral(freqPop), new JIntLiteral(1),
+					 work,
+					 type,
+					 type);
+	result.setInit(SIRStream.makeEmptyInit());
+	return result;
+    }
+
     /**
      * create the field that we are going to put the filter's freqenucy response in.
      * the field is an array of floats, and we will have one array for the real part of the

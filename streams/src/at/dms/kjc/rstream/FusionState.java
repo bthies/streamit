@@ -55,8 +55,13 @@ public abstract class FusionState
     public static FusionState getFusionState(FlatNode node) 
     {
 	if (!fusionState.containsKey(node)) {
-	    if (node.isFilter())
-		fusionState.put(node, new FilterFusionState(node));
+	    if (node.isFilter()) {
+		if (StrToRStream.HEADER_FOOTER_PEEK_RESTORE)
+		    fusionState.put(node, new FFSPeekBuffer(node));
+		else
+		    fusionState.put(node, new FFSNoPeekBuffer(node));
+	    }
+	    
 	    else if (node.isJoiner())
 		fusionState.put(node, new JoinerFusionState(node));
 	    else if (node.isSplitter())

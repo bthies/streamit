@@ -118,6 +118,73 @@ public class Util extends at.dms.util.Utils {
     {
 	return at.dms.kjc.raw.Util.getOutputType(node);
     }
+    
+    public static String JPhylumToC(JPhylum top) 
+    {
+	 FlatIRToRS toC = new FlatIRToRS();
+	 top.accept(toC);
+	 return toC.getString();
+    }
+    
+
+    public static JExpression newIntAddExpr(JExpression left,
+					    JExpression right) 
+    {
+	if (left instanceof JIntLiteral &&
+	    right instanceof JIntLiteral)
+	    return new JIntLiteral(((JIntLiteral)left).intValue() +
+				   ((JIntLiteral)right).intValue());
+
+	if ((left instanceof JIntLiteral &&
+	     ((JIntLiteral)left).intValue() == 0))
+	    return (JExpression)ObjectDeepCloner.deepCopy(right);
+	
+	if ((right instanceof JIntLiteral &&
+	     ((JIntLiteral)right).intValue() == 0))
+	    return (JExpression)ObjectDeepCloner.deepCopy(left);
+	
+	return new JAddExpression(null,
+				  left, right);
+    }
+
+    public static JExpression newIntMultExpr(JExpression left, 
+					     JExpression right) 
+    {
+	if (left instanceof JIntLiteral &&
+	    right instanceof JIntLiteral)
+	    return new JIntLiteral(((JIntLiteral)left).intValue() *
+				   ((JIntLiteral)right).intValue());
+	
+	if ((left instanceof JIntLiteral &&
+	     ((JIntLiteral)left).intValue() == 0) ||
+	    (right instanceof JIntLiteral &&
+	     ((JIntLiteral)right).intValue() == 0))
+	    return new JIntLiteral(0);
+
+	if ((left instanceof JIntLiteral &&
+	     ((JIntLiteral)left).intValue() == 1))
+	    return (JExpression)ObjectDeepCloner.deepCopy(right);
+	
+	if ((right instanceof JIntLiteral &&
+	     ((JIntLiteral)right).intValue() == 1))
+	    return (JExpression)ObjectDeepCloner.deepCopy(left);
+	
+	return new JMultExpression(null,
+				  left, right);
+    }
+    
+    public static boolean isIntZero(JExpression exp) 
+    {
+	return ((Utils.passThruParens(exp) instanceof JIntLiteral) &&
+		((JIntLiteral)Utils.passThruParens(exp)).intValue() == 0);
+    }
+
+    public static boolean isIntOne(JExpression exp) 
+    {
+	return ((Utils.passThruParens(exp) instanceof JIntLiteral) &&
+		((JIntLiteral)Utils.passThruParens(exp)).intValue() == 1);
+    }
+    
 }
 
 

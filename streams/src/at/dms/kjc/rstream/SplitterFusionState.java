@@ -26,8 +26,8 @@ public class SplitterFusionState extends FusionState
 
 	necessary = setNecessary();
 	
-	//if (!necessary)
-	    //System.out.println("** Found unnecessary splitter");
+	if (!necessary)
+	    System.out.println("** Found unnecessary splitter");
 
 	bufferVar = new JVariableDefinition[1];
 	bufferVarInit = new JVariableDefinition[1];
@@ -151,7 +151,7 @@ public class SplitterFusionState extends FusionState
 	
 	//add the block to do the data reordering
 	if (node.isDuplicateSplitter()) {
-	    //enclosingBlock.addStatement(getDuplicateCode(enclosingBlock, mult, isInit));
+	    enclosingBlock.addStatement(getDuplicateCode(enclosingBlock, mult, isInit));
 	}
 	else {
 	    enclosingBlock.addStatement(getRRCode(enclosingBlock, mult, isInit));

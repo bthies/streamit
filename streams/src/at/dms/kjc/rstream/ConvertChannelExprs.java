@@ -29,6 +29,7 @@ public class ConvertChannelExprs extends SLIRReplacingVisitor {
     private JLocalVariable pushBuffer;
     private JLocalVariable pushCounter;
 
+   
     public ConvertChannelExprs(FilterFusionState current, boolean init)
 	//JLocalVariable popBuffer, JLocalVariable popCounter,
 	//		       JLocalVariable pushBuffer, JLocalVariable pushCounter) 
@@ -52,6 +53,7 @@ public class ConvertChannelExprs extends SLIRReplacingVisitor {
 	this.popCounter = current.getPopCounterVar();
 	
     }
+    
     
     public Object visitPopExpression(SIRPopExpression self,
 				     CType tapeType) {
@@ -116,8 +118,7 @@ public class ConvertChannelExprs extends SLIRReplacingVisitor {
 				  new JLocalVariableExpression(null,
 							       pushCounter));
 	// return a new array assignment to the right spot
-	return new JAssignmentExpression(
-					 null,
+	return new JAssignmentExpression(null,
 					 new JArrayAccessExpression(null, lhs, rhs),
 					 self.getArg());
     }

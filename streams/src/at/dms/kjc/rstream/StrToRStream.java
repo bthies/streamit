@@ -31,7 +31,19 @@ import at.dms.util.Utils;
  */
 public class StrToRStream {
     /** if true generate do loops when identified **/
-    public static final boolean GENERATE_DO_LOOPS = false;
+    public static final boolean GENERATE_DO_LOOPS = true;
+    /** look for do loops in the filter's code **/
+    public static final boolean CONVERT_FOR_TO_DO_LOOPS = true;
+
+    
+    /** if true, generate a separate peek buffer for peeking filters
+     * before execution, restore the peek buffer to the pop buffer,
+     * after execution, backup the non-pop'ed items to the peek buffer
+     * If false, just move the un-pop'ed items from the end of the pop buffer
+     * to the beginning after the filter executes
+     **/
+    public static final boolean HEADER_FOOTER_PEEK_RESTORE = false;
+
     /** The execution counts from the scheduler: [0] init, [1] steady **/
     public static HashMap[] executionCounts;
     

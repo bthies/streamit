@@ -167,6 +167,7 @@ public class GenerateCCode
 
 	while (traversal.hasNext()) {
 	    FlatNode node = (FlatNode)traversal.next();
+	    System.out.println("Generating Code for  " + node.contents);
 	    generateCode(node, isInit);
 
 	}
@@ -349,7 +350,7 @@ public class GenerateCCode
 	arrayInits.convertFilter(filter);
 
 	//find all do loops, 
-	if (StrToRStream.GENERATE_DO_LOOPS)
+	if (StrToRStream.CONVERT_FOR_TO_DO_LOOPS)
 	    IDDoLoops.doit(filter);
 	//remove unnecessary do loops
 	//RemoveDeadDoLoops.doit(node, toC.doloops);

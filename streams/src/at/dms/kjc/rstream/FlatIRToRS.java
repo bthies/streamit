@@ -347,6 +347,8 @@ public class FlatIRToRS extends ToC
 	print("; ");
 	self.getIncrValue().accept(this);
 	print(") ");
+
+	
 	
 	newLine();
         pos += TAB_SIZE;

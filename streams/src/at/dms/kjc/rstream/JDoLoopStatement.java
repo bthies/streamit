@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoLoopStatement.java,v 1.2 2004-08-18 14:37:40 mgordon Exp $
+ * $Id: JDoLoopStatement.java,v 1.3 2004-08-19 19:29:00 mgordon Exp $
  */
 
 package at.dms.kjc.rstream;
@@ -54,7 +54,7 @@ public class JDoLoopStatement extends JForStatement
 					     null),
 	      new JRelationalExpression(null,
 					Constants.OPE_LT,
-					new JLocalVariableExpression(null, induction),
+new JLocalVariableExpression(null, induction),
 					condVal),
 	      new JExpressionStatement(null,
 				       new JCompoundAssignmentExpression
@@ -162,7 +162,7 @@ public class JDoLoopStatement extends JForStatement
 	cond = ((JIntLiteral)Util.passThruParens(condValue)).intValue();
 	incr = ((JIntLiteral)Util.passThruParens(incrValue)).intValue();
 	
-	int tripCount = (int)java.lang.Math.round((((double)(cond  - init) / (double)incr)) + 0.5);
+	int tripCount = (int)java.lang.Math.round((((double)(cond  - init) / (double)incr)));
 	
 	assert tripCount >= 0;
 	

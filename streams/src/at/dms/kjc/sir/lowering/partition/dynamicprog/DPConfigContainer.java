@@ -64,10 +64,27 @@ abstract class DPConfigContainer extends DPConfig {
 	}
 	// for simplicity, allocate the bounding box for A
 	this.A = new int[maxWidth][maxWidth][height][height][partitioner.getNumTiles()+1][2];
+	initA();
 	this.uniform = new boolean[height];
 	initUniform();
 	//maxAlias();
 	initWidth();
+    }
+
+    private void initA() {
+	for (int i1=0; i1<A.length; i1++) {
+	    for (int i2=0; i2<A[0].length; i2++) {
+		for (int i3=0; i3<A[0][0].length; i3++) {
+		    for (int i4=0; i4<A[0][0][0].length; i4++) {
+			for (int i5=0; i5<A[0][0][0][0].length; i5++) {
+			    for (int i6=0; i6<2; i6++) {
+				A[i1][i2][i3][i4][i5][i6] = -1;
+			    }
+			}
+		    }
+		}
+	    }
+	}
     }
 
     private void initWidth() {
@@ -303,7 +320,8 @@ abstract class DPConfigContainer extends DPConfig {
 
 	// otherwise, we're going to try making a cut... but first see
 	// if there will be any tiles left after accounting for the joiner
-	int tilesAvail = tileLimit - (1-nextToJoiner);
+	boolean needsJoiner = (x2>x1) && (nextToJoiner!=1);
+	int tilesAvail = needsJoiner ? tileLimit - 1 : tileLimit;
 	// if there is only one tile available, then recurse
 	Utils.assert(tilesAvail>0);
 	Utils.assert(tileLimit>1);
@@ -493,7 +511,8 @@ abstract class DPConfigContainer extends DPConfig {
 
 	// otherwise, we're going to try making a cut... but first see
 	// if there will be any tiles left after accounting for the joiner
-	int tilesAvail = tileLimit - (1-nextToJoiner);
+	boolean needsJoiner = (x2>x1) && (nextToJoiner!=1);
+	int tilesAvail = needsJoiner ? tileLimit - 1 : tileLimit;
 	// if there is only one tile available, then recurse
 	Utils.assert(tilesAvail>0);
 	Utils.assert(tileLimit>1);
@@ -551,6 +570,8 @@ abstract class DPConfigContainer extends DPConfig {
 		int cost = Math.max(getWithFusionOverhead(x1, x2, y1, yPivot, tPivot, 0, tileLimit),
 				    getWithFusionOverhead(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner, tileLimit));
 		if (cost==A[x1][x2][y1][y2][tileLimit][nextToJoiner]) {
+		    //System.err.println("splitting range " + y1 + "-" + y2 + " into " + y1 + "-" + yPivot + "(" + getWithFusionOverhead(x1, x2, y1, yPivot, tPivot, 0, tileLimit) + ")" + 
+		    //	       " and " + (yPivot+1) + "-" + y2 + "(" + getWithFusionOverhead(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner, tileLimit) + ")");
 		    // there's a division at this <yPivot>.  We'll
 		    // return result of a horizontal cut.
 		    int[] arr = { 1 + (yPivot-y1), y2-yPivot };

@@ -155,6 +155,7 @@ class WorkEstimate {
 	    if (obj instanceof SIRFilter) {
 		int count = ((int[])executionCounts.get(obj))[0];
 		int work = WorkVisitor.getWork((SIRFilter)obj);
+		//System.out.println("Work:"+obj+" "+count+" "+work);
 		workMap.put(obj, new WorkInfo(count*work));
 		toplevelWork += count*work;
 	    }
@@ -251,8 +252,8 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
     public void visitWhileStatement(JWhileStatement self,
 				    JExpression cond,
 				    JStatement body) {
-	System.err.println("WARNING:  Estimating work in loop, assume N=" +
-			   LOOP_COUNT);
+	//System.err.println("WARNING:  Estimating work in loop, assume N=" +
+	//LOOP_COUNT);
 	int oldWork = work;
 	super.visitWhileStatement(self, cond, body);
 	int newWork = work;

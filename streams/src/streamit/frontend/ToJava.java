@@ -15,7 +15,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.35 2003-07-09 15:54:48 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.36 2003-07-09 19:26:17 dmaze Exp $
  */
 public class ToJava
 {
@@ -139,6 +139,7 @@ public class ToJava
          * "this", which doesn't exist. */
         TempVarGen varGen = new TempVarGen();
         prog = (Program)prog.accept(new MakeBodiesBlocks());
+        prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new DisambiguateUnaries(varGen));
         prog = (Program)prog.accept(new NoRefTypes());
         prog = (Program)prog.accept(new RenameBitVars());
@@ -146,6 +147,7 @@ public class ToJava
         if (!libraryFormat)
             prog = (Program)prog.accept(new NoticePhasedFilters());
         prog = (Program)prog.accept(new DoComplexProp(varGen));
+        prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new TranslateEnqueue());
         prog = (Program)prog.accept(new InsertIODecls(libraryFormat));
         prog = (Program)prog.accept(new InsertInitConstructors(varGen));

@@ -72,6 +72,7 @@ public class ClusterBackend implements FlatVisitor {
 
 	System.out.println("Entry to Cluster Backend");
 	System.out.println("  --cluster parameter is: "+KjcOptions.cluster);
+	System.out.println("  peekratio is: "+KjcOptions.peekratio);
 	System.out.println("  rename1 is: "+KjcOptions.rename1);
 	System.out.println("  rename2 is: "+KjcOptions.rename2);
 

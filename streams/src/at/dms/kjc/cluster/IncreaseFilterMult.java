@@ -170,10 +170,14 @@ class IncreaseFilterMult implements StreamVisitor {
 	// make sure that filter's pop rate is at least 25% of
 	// of what it peeks beyond consumed items.
 
-	while (pop * mult * 4 < extra) { 
-	    mult = mult + 1;
+	if (KjcOptions.peekratio == -1) { 
+	    return 1; 
+	} else {
+	    while (pop * mult * KjcOptions.peekratio < extra) { 
+		mult = mult + 1;
+	    }
 	}
-		
+
 	return mult;
     }
     

@@ -128,6 +128,10 @@ public class CodeEstimate extends SLIREmptyVisitor {
 		}
 	    }
 	}
+
+	code_size += ARRAY_ACCESS * 2 * (filter.getPeekInt() - 
+					 filter.getPopInt());
+
     }
 
 

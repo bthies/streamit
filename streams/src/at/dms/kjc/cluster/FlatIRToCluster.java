@@ -395,7 +395,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("  int i;\n");
 
 	if (in != null) {
-	    print("  "+in.name()+"in = new peek_stream<int>(new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+")));\n");
+	    print("  "+in.name()+"in = new peek_stream<"+self.getInputType().toString()+">(new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+")));\n");
 	}
 
 	if (out != null) {
@@ -1101,7 +1101,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	  if (init != null) {
 	  init.accept(this);
 	  }*/
-	print("calloc(");
+	print("("+ type +"*) calloc(");
         dims[0].accept(this);
         print(", sizeof(");
         print(type);

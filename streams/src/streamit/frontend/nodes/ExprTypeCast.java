@@ -22,7 +22,7 @@ package streamit.frontend.nodes;
  * being cast to.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ExprTypeCast.java,v 1.2 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: ExprTypeCast.java,v 1.3 2004-01-16 20:28:24 dmaze Exp $
  */
 public class ExprTypeCast extends Expression
 {
@@ -71,6 +71,28 @@ public class ExprTypeCast extends Expression
     public Object accept(FEVisitor v)
     {
         return v.visitExprTypeCast(this);
+    }
+
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof ExprTypeCast))
+            return false;
+        ExprTypeCast etc = (ExprTypeCast)other;
+        if (!(type.equals(etc.type)))
+            return false;
+        if (!(expr.equals(etc.expr)))
+            return false;
+        return true;
+    }
+    
+    public int hashCode()
+    {
+        return type.hashCode() ^ expr.hashCode();
+    }
+    
+    public String toString()
+    {
+        return "((" + type + ")" + expr + ")";
     }
 }
 

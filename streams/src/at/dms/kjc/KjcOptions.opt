@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.8 2002-11-11 03:45:56 thies Exp $
+ * $Id: KjcOptions.opt,v 1.9 2002-11-12 20:04:16 mgordon Exp $
  */
 
 prefix Kjc
@@ -231,6 +231,12 @@ longname		"poptopeek"
 	type		boolean
 	default		"false"
 	help		"Convert all Pop expressions into Peek expressions."
+
+longname		"ptraccess"
+	shortcut	"Q"
+	type		boolean
+	default		"false"
+	help		"For filters needing a buffer on Raw, access the buffer thru a pointer (needed for some GCC optimization."
 
 longname		"viram"
 	shortcut	"V"

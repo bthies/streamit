@@ -184,13 +184,13 @@ public class MakefileGenerator
 	
 	
 	fw.write
-            ("global gFLOPS = 0;\n" +
+            ("global gAUTOFLOPS = 0;\n" +
              "fn __clock_handler(hms)\n" +
              "{\n" +
              "  local i;\n" +
              "  for (i = 0; i < gNumProc; i++)\n" +
              "  {\n" +
-             "    gFLOPS += imem_instr_is_fpu(get_imem_instr(i, get_pc_for_proc(i)));\n" +
+             "    gAUTOFLOPS += imem_instr_is_fpu(get_imem_instr(i, get_pc_for_proc(i)));\n" +
              "  }\n" +
              "}\n" +
              "\n" +
@@ -198,10 +198,10 @@ public class MakefileGenerator
              "\n" +
              "fn count_FLOPS(steps)\n" +
              "{\n" +
-             "  gFLOPS = 0;\n" +
+             "  gAUTOFLOPS = 0;\n" +
              "  step(steps);\n" +
              "  printf(\"// **** count_FLOPS: %4d FLOPS, %4d mFLOPS\n\",\n" +
-             "         gFLOPS, (250*gFLOPS)/steps);\n" +
+             "         gAUTOFLOPS, (250*gAUTOFLOPS)/steps);\n" +
              "}\n" +
              "\n");
 	

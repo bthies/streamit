@@ -21,6 +21,11 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * The init function.
      */
     protected JMethodDeclaration init;
+    /**
+     * The work function.  Must be non-null for filters, but may be null
+     * for SIRContainers.
+     */
+    protected JMethodDeclaration work;
 
     /*
      * Don't set the init function upon instantation since the lowering
@@ -45,6 +50,21 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      */
     public void setFields (JFieldDeclaration[] f) {
 	this.fields = f;
+    }
+
+    /**
+     * Sets the work function.
+     */
+    public void setWork (JMethodDeclaration w) {
+	this.work = w;
+	addMethod(w);
+    }
+
+    /**
+     * Gets the work function.
+     */
+    public JMethodDeclaration getWork () {
+	return this.work;
     }
 
     /*

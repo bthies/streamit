@@ -33,8 +33,18 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 	SIRPipeline p = new SIRPipeline(this.parent, this.fields,
 					this.methods);
 	p.setInit(this.init);
-	for(int i = 0; i < elements.size(); i++) 
-	    p.add((SIRStream)this.elements.get(i));
+	for(int i = 0; i < elements.size(); i++) {
+	    // get child
+	    SIRStream child = (SIRStream)this.elements.get(i);
+	    // clone child
+	    SIRStream childClone = (SIRStream)child; //.clone();
+	    // set child's parent to <p>
+	    //childClone.setParent(p);
+	    // add it to <p>'s elements
+	    p.add(childClone);
+	}
+	System.err.println("cloning " + this + " into " + p);
+	new RuntimeException().printStackTrace();
 	return p;
     }
     

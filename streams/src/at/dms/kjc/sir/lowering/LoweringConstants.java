@@ -150,7 +150,7 @@ public class LoweringConstants {
   /**
    * Returns the name of the flattened work function for <str>.
    */
-  public static String getWorkName(SIRStream str) {
+  public static String getWorkName(SIRFilter str) {
     return getMethodName(str.getName(), "work");
   }
 

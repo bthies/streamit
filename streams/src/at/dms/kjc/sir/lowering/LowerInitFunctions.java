@@ -251,12 +251,11 @@ public class LowerInitFunctions implements StreamVisitor {
 					  self.getStreamType()));
 
 	// set work function, if there is one
-	if (self.hasMethod(LoweringConstants.getWorkName(self))) {
+	if (self.getWork()!=null) {
 	    prologue.add(new LIRSetWork(LoweringConstants.
 					getStreamContext(),
 					new LIRFunctionPointer(
-					   LoweringConstants.
-					   getWorkName(self))));
+					   self.getWork().getName())));
 	}
 
 	// register children

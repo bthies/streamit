@@ -63,8 +63,8 @@ public class SIRScheduler {
 	// make work function implementing the schedule
 	JMethodDeclaration work = makeWork(schedule.getSchedule(), 
 					   toplevel);
-	// add <work> to <toplevel>
-	toplevel.addMethod(work);
+	// set <work> as the work function of <toplevel>
+	toplevel.setWork(work);
 	// return schedule for future reference
 	return schedule;
     }
@@ -258,8 +258,8 @@ public class SIRScheduler {
 	    SIROperator child = (i>=0 ? parents[i] : str);
 	    // get field name for child context
 	    String childName = child.getRelativeName();
-	    //System.err.println("relative name on child " + i + ": " +
-	    //	       childName);
+	    System.err.println("relative name on child " + i + ": " +
+	    	       childName);
 	    // build up cascaded field reference
 	    result = new JFieldAccessExpression(/* tokref */
 						null,

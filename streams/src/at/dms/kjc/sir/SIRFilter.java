@@ -23,10 +23,6 @@ public class SIRFilter extends SIRStream implements Cloneable {
      */
     private int push;
     /**
-     * The work function.
-     */
-    private JMethodDeclaration work;
-    /**
      * The input and output types.  That is, the type of the items on
      * the input and output channels, respectively.
      */
@@ -118,13 +114,6 @@ public class SIRFilter extends SIRStream implements Cloneable {
     }
     public void setPush(int p) {
 	this.push = p;
-    }
-    public void setWork (JMethodDeclaration w) {
-	this.work = w;
-	addMethod(w);
-    }
-    public JMethodDeclaration getWork () {
-	return this.work;
     }
     public void setInputType(CType t){
 	this.inputType = t;

@@ -1,0 +1,24 @@
+<benchmark>
+  <name>fib</name>
+  <desc>Fibonacci number generators</desc>
+  <description>
+StreamIt programs to generate Fibonacci numbers.  In general, these
+work by pushing previous values around a feedback loop, so they can be
+calculated.
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="StreamIt">
+      <desc>Basic implementation</desc>
+      <file>Fib.str</file>
+    </impl>
+    <impl lang="StreamIt">
+      <desc>As before, but with a top-level feedback loop</desc>
+      <file>FibFeed.str</file>
+    </impl>
+    <impl lang="StreamIt">
+      <desc>With a round-robin splitter and no peeking</desc>
+      <file>Fib2.str</file>
+    </impl>
+  </implementations>
+</benchmark>

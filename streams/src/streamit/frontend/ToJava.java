@@ -15,7 +15,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.36 2003-07-09 19:26:17 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.37 2003-07-09 20:23:24 dmaze Exp $
  */
 public class ToJava
 {
@@ -62,6 +62,32 @@ public class ToJava
     }
 
     /**
+     * Generate a Program object that includes built-in structures
+     * and streams with code, but no user code.
+     *
+     * @returns a StreamIt program containing only built-in code
+     */
+    public static Program emptyProgram()
+    {
+        List streams = new java.util.ArrayList();
+        List structs = new java.util.ArrayList();
+        
+        // Complex structure type:
+        List fields = new java.util.ArrayList();
+        List ftypes = new java.util.ArrayList();
+        Type doubletype = new TypePrimitive(TypePrimitive.TYPE_DOUBLE);
+        fields.add("real");
+        ftypes.add(doubletype);
+        fields.add("imag");
+        ftypes.add(doubletype);
+        TypeStruct complexStruct =
+            new TypeStruct(null, "Complex", fields, ftypes);
+        structs.add(complexStruct);
+        
+        return new Program(null, streams, structs);
+    }
+
+    /**
      * Read, parse, and combine all of the StreamIt code in a list of
      * files.  Reads each of the files in <code>inputFiles</code> in
      * turn and runs <code>streamit.frontend.StreamItParserFE</code>
@@ -87,7 +113,7 @@ public class ToJava
                antlr.RecognitionException, 
                antlr.TokenStreamException
     {
-        Program prog = null;
+        Program prog = emptyProgram();
         for (Iterator iter = inputFiles.iterator(); iter.hasNext(); )
         {
             String fileName = (String)iter.next();
@@ -97,9 +123,7 @@ public class ToJava
             StreamItParserFE parser = new StreamItParserFE(lexer);
             parser.setFilename(fileName);
             Program pprog = parser.program();
-            if (prog == null)
-                prog = pprog;
-            else if (pprog != null)
+            if (pprog != null)
             {
                 List newStreams, newStructs;
                 newStreams = new java.util.ArrayList();
@@ -195,13 +219,6 @@ public class ToJava
             else
                 outWriter = new OutputStreamWriter(System.out);
             outWriter.write("import streamit.*;\n");
-
-            /* Might want to check whether this is actually necessary;
-             * there have been complaints before. */
-            outWriter.write("class Complex extends Structure {\n" +
-                            "  public float real;\n" +
-                            "  public float imag;\n" +
-                            "}\n");
 
             String javaOut = (String)prog.accept(new NodesToJava(null));
             outWriter.write(javaOut);

@@ -277,7 +277,7 @@ public class FusePipe {
 	    JVariableDefinition peekBufferVar = 
 		new JVariableDefinition(null,
 					at.dms.kjc.Constants.ACC_FINAL,
-					new CArrayType(voidToInt(filter.
+					new CArrayType(Utils.voidToInt(filter.
 						       getInputType()), 
 						       1 /* dimension */ ),
 					PEEK_BUFFER_NAME + "_" + i,
@@ -439,13 +439,13 @@ public class FusePipe {
 	JExpression[] dims = { new JIntLiteral(null, lookedAt) };
 	JExpression initializer = 
 	    new JNewArrayExpression(null,
-				    voidToInt(filter.getInputType()),
+				    Utils.voidToInt(filter.getInputType()),
 				    dims,
 				    null);
 	// make a buffer for all the items looked at in a round
 	return new JVariableDefinition(null,
 				       at.dms.kjc.Constants.ACC_FINAL,
-				       new CArrayType(voidToInt(filter.
+				       new CArrayType(Utils.voidToInt(filter.
 						      getInputType()), 
 						      1 /* dimension */ ),
 				       POP_BUFFER_NAME + "_" + pos,
@@ -907,9 +907,9 @@ public class FusePipe {
 				   new JIntLiteral(steadyPop),
 				   new JIntLiteral(steadyPush),
 				   steadyWork,
-				   voidToInt(first.filter.
+				   Utils.voidToInt(first.filter.
 					     getInputType()),
-				   voidToInt(last.filter.
+				   Utils.voidToInt(last.filter.
 					     getOutputType()));
 	} else {
 	    // calculate the peek, pop, and push count for the fused
@@ -935,9 +935,9 @@ public class FusePipe {
 					   initPop,
 					   initPush,
 					   initWork,
-					   voidToInt(first.filter.
+					   Utils.voidToInt(first.filter.
 						     getInputType()),
-					   voidToInt(last.filter.
+					   Utils.voidToInt(last.filter.
 						     getOutputType()));
 	}
 	
@@ -945,16 +945,6 @@ public class FusePipe {
 	result.setInit(init);
 	return result;
     }
-
-    /**
-     * If <type> is void, then return <int> type; otherwise return
-     * <type>.  This is a hack to get around the disallowance of void
-     * arrays in C--should fix this better post-asplos.
-     */
-    protected static CType voidToInt(CType type) {
-	return type==CStdType.Void ? CStdType.Integer : type;
-    }
-
 }
     
 /**
@@ -1281,7 +1271,7 @@ class InitFuser {
 					     info.peekBuffer.
 					     getVariable().getIdent()),
 		  new JNewArrayExpression(null,
-					  FusePipe.voidToInt(info.filter.
+					  Utils.voidToInt(info.filter.
 					  getInputType()),
 					  dims,
 					  null)), null));

@@ -25,7 +25,11 @@ public class FuseAll implements StreamVisitor {
      * Fuse everything we can in <str>
      */
     public static void fuse(SIRStream str) {
-	IterFactory.createIter(str).accept(new FuseAll());
+	// try fusing toplevel separately since noone contains it
+	FuseAll fuseAll = new FuseAll();
+	fuseAll.fuseChild(str);
+	IterFactory.createIter(str).accept(fuseAll);
+	fuseAll.fuseChild(str);
     }
 
     /**
@@ -82,13 +86,16 @@ public class FuseAll implements StreamVisitor {
     }
 
     private void fuseChildren(SIRContainer str) {
-	for (ListIterator it = str.getChildren().listIterator(); it.hasNext(); ) {
-	    SIROperator child = (SIROperator)it.next();
-	    if (child instanceof SIRPipeline) {
-		FusePipe.fuse((SIRPipeline)child);
-	    } else if (child instanceof SIRSplitJoin) {
-		FuseSplit.fuse((SIRSplitJoin)child);
-	    }
+	for (int i=0; i<str.size(); i++) {
+	    fuseChild((SIROperator)str.get(i));
+	}
+    }
+
+    private void fuseChild(SIROperator child) {
+	if (child instanceof SIRPipeline) {
+	    FusePipe.fuse((SIRPipeline)child);
+	} else if (child instanceof SIRSplitJoin) {
+	    FuseSplit.fuse((SIRSplitJoin)child);
 	}
     }
 }

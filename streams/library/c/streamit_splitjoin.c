@@ -166,6 +166,9 @@ void run_splitter(stream_context *c)
     
     switch(c->type_data.splitjoin_data.splitter.type)
     {
+    case NULL_SJ:
+      // do nothing
+      break;
     case DUPLICATE:
         /* Read one item and distribute it. */
         INCR_TAPE_READ(input_tape, input_tape->data_size);
@@ -361,6 +364,9 @@ void run_joiner(stream_context *c)
 
   switch (c->type_data.splitjoin_data.joiner.type)
   {
+  case NULL_SJ:
+    // do nothing
+    break;
   case ROUND_ROBIN:
     for (slot = 0; slot < c->type_data.splitjoin_data.joiner.fan; slot++)
     {

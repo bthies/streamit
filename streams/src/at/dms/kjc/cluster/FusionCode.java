@@ -419,33 +419,59 @@ class FusionCode {
 			p.print("    #endif\n");
 		    }
 		    
-		    //String work_n = get_work_n_function(oper);
-
 		    p.print("    "+get_work_function(oper)+"("+steady_int+"*__MULT);");
-
-		    //p.print("    for (int i=0; i<("+steady_int+"*__MULT); i++) { "+get_work_function(oper)+"(); }");
 		}
-
-		//p.print("    "+get_loop(steady_int * 100, get_work_function(oper)+"();"));
-		/*
-		if (oper instanceof SIRFilter && ph > 0) {		
-
-		    p.print("    "+get_loop(steady_int, "__update_pop_buf__"+id+"(); "+get_work_function(oper)+"();"));
-		} else {
-
-		    p.print("    "+get_loop(steady_int, get_work_function(oper)+"();"));
-		}
-		*/
 
 		p.println();
-
 	    }
-
-	    //p.println();
-	    //p.print("  }\n");
 	}
 	
 	p.print("  }\n");
+
+
+
+	p.print("  for (int n = 0; n < (__max_iteration % __MULT); n++) {\n");
+
+	for (int ph = 0; ph < n_phases; ph++) {
+	
+	    HashSet phase = d_sched.getAllOperatorsInPhase(ph);
+	    Iterator iter = phase.iterator();
+
+	    while (iter.hasNext()) {
+		SIROperator oper = (SIROperator)iter.next();
+		int id = NodeEnumerator.getSIROperatorId(oper);
+		FlatNode node = NodeEnumerator.getFlatNode(id);
+
+		Integer init = (Integer)ClusterBackend.initExecutionCounts.get(node);
+		int init_int = 0;
+		if (init != null) init_int = (init).intValue();
+
+		Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(node);
+		int steady_int = 0;
+		if (steady != null) steady_int = (steady).intValue();
+
+		if (steady_int > 0) {
+
+		    Vector out = RegisterStreams.getNodeOutStreams(oper);
+		    for (int i = 0; i < out.size(); i++) {
+			NetStream s = (NetStream)out.elementAt(i);
+			int _s = s.getSource();
+			int _d = s.getDest();
+			p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+			p.print("    HEAD_"+_s+"_"+_d+" = 0; TAIL_"+_s+"_"+_d+" = 0;\n");
+			p.print("    #endif\n");
+		    }
+		    
+		    p.print("    "+get_work_function(oper)+"("+steady_int+");");
+		}
+
+		p.println();
+	    }
+	}
+	
+	p.print("  }\n");
+
+
 	p.print("}");
 	p.println();
 

@@ -99,7 +99,7 @@ float->float filter Float_Identity
 }
 
 
-void->float filter Read_From_AtoD(int N) 
+void->float filter Read_From_AtoD(int N)
 {
     work pop 0 push N {
 	  for(int i = 1; i <= N; i++) {
@@ -115,7 +115,7 @@ float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
     int  size, count;
 
     init {
-	  set_frequency(_start_freq);
+	  set_frequency(_current_freq);
     }
     
     work peek 1 pop 1 push 1 {
@@ -136,41 +136,104 @@ float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
 }
 
 
-float->float splitjoin Check_Freq_Hop(int N, float start_freq, int channels, float channel_bandwidth, float hop_threshold, portal<RFtoIF> port) 
+float->float filter Magnitude()
 {
-    float [channels] hops;
-    for (int i = 0; i < channels; i++) {
-	  hops[i] = start_freq + (i * channel_bandwidth);
+    work pop 2 push 1 {
+	  float f1 = pop();
+	  float f2 = pop();
+	  push (mag(f1, f2));
     }
-    
-    int k = 0;
 
+    float mag(float real, float imag) {
+	  return (float) sqrt(real*real + imag*imag);
+    }
+}
+
+
+float->float filter Inject_Hop(int N, float hop_threshold)
+{
+    int[4] hops;
+    int    hop_index;
+
+    init {
+	  hops[0]   =  N / 4 - 2;
+	  hops[1]   =  N / 4 - 1;
+	  hops[2]   =  N / 2;
+	  hops[3]   =  N / 2 + 1;
+	  hop_index = 0;
+    }
+
+    work pop N push N {
+	  for(int i = 1; i <= hops[hop_index]; i++) {
+		push(pop());
+	  }
+
+	  push(2 * hop_threshold);
+	  pop();
+
+	  for (int i = hops[hop_index] + 2; i <= N; i++) {
+		push(pop());
+	  }
+
+	  hop_index++;
+	  if (hop_index >= 4) hop_index = 0;
+    }
+}
+
+
+float->float splitjoin Check_Freq_Hop(int N, float start_freq, int channels, float channel_bandwidth, float hop_threshold, 
+						  portal<RFtoIF> port0, portal<RFtoIF> port1, portal<RFtoIF> port2, portal<RFtoIF> port3)
+{
     // of N incoming values,  one of the data items in
     // [N/2 - 2, N/2 + 2] may indicate a frequency hop
     // ? why this arrangement
     // ? why push the hop-indicator through; what does it mean to a downstream filter
     split roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
-    for (int i = 1; i < 6; i++) {
-	  if ((i == 2) || (i == 4)) {
-		for (int j = 0; j < 2; j++) {
-		    add float->float filter {
-			  work pop 1 push 1 {
-				float val = pop();
-				if (val > hop_threshold) {
-				    port.set_frequency(hops[k]) [4 : 6];
-				}
-				push(val);
-			  }
+    for (int i = 1; i < 8; i++) {
+	  add float->float filter {
+		int frequency_index;
+		float [channels] hops;
+		
+		init {
+		    frequency_index = 0;
+		    for (int i = 0; i < channels; i++) {
+			  hops[i] = start_freq + (i * channel_bandwidth);
 		    }
 		}
-		k++;
-		if (k >= channels) k = 0;
-	  }
-	  else {
-		add Float_Identity();
+		work pop 1 push 1 {
+		    float val = pop();
+		    if (val > hop_threshold) {
+			  if (i == 2) {
+				port0.set_frequency(hops[frequency_index++]) [4 : 6];
+				if (frequency_index >= channels) frequency_index = 0;
+			  }
+			  else if (i == 3) {
+				port1.set_frequency(hops[frequency_index++]) [4 : 6];
+				if (frequency_index >= channels) frequency_index = 0;
+			  }
+			  else if (i == 5) {
+				port2.set_frequency(hops[frequency_index++]) [4 : 6];
+				if (frequency_index >= channels) frequency_index = 0;
+			  }
+			  else if (i == 6) {
+				port3.set_frequency(hops[frequency_index++]) [4 : 6];
+				if (frequency_index >= channels) frequency_index = 0;
+			  }
+		    }
+		    push(val);
+		}
 	  }
     }
     join roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
+}
+
+
+float->void filter __Output_Filter__
+{
+    work peek 1 pop 1 push 0 {
+	  print(peek(0));
+	  pop();
+    }
 }
 
 
@@ -184,22 +247,39 @@ void->void pipeline FHR
     int   CHANNELS      = 79; 
     float CHANNEL_BAND  = 1000000;
     // 
-    float HOP_THRESHOLD = 30.0;
+    float HOP_THRESHOLD = 9000000000;
     // } CONSTANTS
 
-    portal <RFtoIF> port;
+    portal <RFtoIF> port0;
+    portal <RFtoIF> port1;
+    portal <RFtoIF> port2;
+    portal <RFtoIF> port3;
 
     add Read_From_AtoD(N);
 
-    add RFtoIF(N, START_FREQ, START_FREQ) to port;
+    add RFtoIF(N, START_FREQ, START_FREQ) to port0;
 
     add FFT_Kernel(N);
 
-    add Check_Freq_Hop(N, START_FREQ, CHANNELS, CHANNEL_BAND, HOP_THRESHOLD, port);
+    add Magnitude();
 
-    add float->void filter {
-	  work push 0 pop 1 {
-		print(pop());
+    add Inject_Hop(N, HOP_THRESHOLD);
+    
+    add Check_Freq_Hop(N, START_FREQ, CHANNELS, CHANNEL_BAND, HOP_THRESHOLD, port0, port1, port2, port3);
+
+    add __Output_Filter__();
+}
+
+
+float->float filter Print(int N)
+{
+    work peek N pop N push N {
+	  print("---------------------------");
+	  for (int i = 0; i < N; i++) {
+		print(peek(0));
+		push(pop());
 	  }
+	  print("---------------------------");
     }
 }
+

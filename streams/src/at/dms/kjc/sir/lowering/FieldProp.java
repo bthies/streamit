@@ -1,0 +1,305 @@
+package at.dms.kjc.sir.lowering;
+
+import at.dms.kjc.*;
+import at.dms.kjc.sir.*;
+
+import java.util.*;
+
+/**
+ * This class propagates constant assignments to field variables from
+ * the init function into other functions.
+ */
+public class FieldProp
+{
+    /** Maps field names to JExpression values. */
+    private HashMap fields;
+    /** List of field names that can't be propagated. */
+    private HashSet nofields;
+    /** Maps field names to JExpression arrays.  If a particular array
+        element is null, that field isn't a constant (or hasn't been
+        determined yet). */
+    private HashMap arrays;
+    /** Maps field names to boolean arrays to track array elements that
+        can't be propagated.  If the array element is true, that element
+        can't be propagated; if it's false, it can. */
+    private HashMap noarrays;
+    
+    private FieldProp()
+    {
+        fields = new HashMap();
+        nofields = new HashSet();
+        arrays = new HashMap();
+        noarrays = new HashMap();
+    }
+    
+    /**
+     * Performs a depth-first traversal of an SIRStream tree, and
+     * calls propagate() on any SIRSplitJoins as a post-pass.
+     */
+    public static SIRStream doPropagate(SIRStream str)
+    {
+        // First, visit children (if any).
+        if (str instanceof SIRFeedbackLoop)
+        {
+            SIRFeedbackLoop fl = (SIRFeedbackLoop)str;
+            doPropagate(fl.getBody());
+            doPropagate(fl.getLoop());
+        }
+        if (str instanceof SIRPipeline)
+        {
+            SIRPipeline pl = (SIRPipeline)str;
+            Iterator iter = pl.getChildren().iterator();
+            while (iter.hasNext())
+            {
+                SIRStream child = (SIRStream)iter.next();
+                doPropagate(child);
+            }
+        }
+        if (str instanceof SIRSplitJoin)
+        {
+            SIRSplitJoin sj = (SIRSplitJoin)str;
+            Iterator iter = sj.getParallelStreams().iterator();
+            while (iter.hasNext())
+            {
+                SIRStream child = (SIRStream)iter.next();
+                doPropagate(child);
+            }
+        }
+        
+        // Having recursed, do the flattening, if it's appropriate.
+        if (str instanceof SIRFilter)
+            new FieldProp().propagate((SIRFilter)str);
+        
+        // All done, return the object.
+        return str;
+    }
+    
+    /**
+     * Does the actual work on <filter>.
+     */
+    private void propagate(SIRFilter filter)
+    {
+        findCandidates(filter);
+        doPropagation(filter);
+    }
+
+    /** Helper function to determine if a field has been invalidated. */
+    private boolean isFieldInvalidated(String name)
+    {
+        return nofields.contains(name);
+    }
+
+    /** Helper function to determine if an array slot has been invalidated. */
+    private boolean isArrayInvalidated(String name, int slot)
+    {
+        if (isFieldInvalidated(name)) return true;
+        boolean[] bary = (boolean[])noarrays.get(name);
+        if (bary == null)
+            return false;
+        return bary[slot];
+    }
+
+    /** Helper function to invalidate a particular field. */
+    private void invalidateField(String name)
+    {
+        nofields.add(name);
+        fields.remove(name);
+    }
+
+    /** Helper function to invalidate a particular array slot.
+        This requires that the array have already been noticed. */
+    private void invalidateArray(String name, int slot)
+    {
+        // Stop early if the field has already been invalidated.
+        if (isFieldInvalidated(name)) return;
+        boolean[] bary = (boolean[])noarrays.get(name);
+        JExpression[] exprs = (JExpression[])arrays.get(name);
+        if (bary == null)
+        {
+            bary = new boolean[exprs.length];
+            noarrays.put(name, bary);
+        }
+        bary[slot] = true;
+        exprs[slot] = null;
+    }
+
+    /** Helper function to determine if a field can be propagated. */
+    private boolean canFieldPropagate(String name)
+    {
+        if (isFieldInvalidated(name)) return false;
+        if (!fields.containsKey(name)) return false;
+        return true;
+    }
+
+    /** Helper function to determine if an array slot can be propagated. */
+    private boolean canArrayPropagate(String name, int slot)
+    {
+        if (isFieldInvalidated(name)) return false;
+        if (isArrayInvalidated(name, slot)) return false;
+        JExpression[] exprs = (JExpression[])arrays.get(name);
+        if (exprs == null) return false;
+        if (exprs[slot] == null) return false;
+        return true;
+    }   
+
+    /** Helper function returning the constant value of a field. */
+    private JExpression propagatedField(String name)
+    {
+        return (JExpression)fields.get(name);
+    }
+    
+    /** Helper function returning the constant value of an array slot. */
+    private JExpression propagatedArray(String name, int slot)
+    {
+        JExpression[] exprs = (JExpression[])arrays.get(name);
+        return exprs[slot];
+    }
+
+    /** Notice that a field variable has a constant assignment. */
+    private void noticeFieldAssignment(String name, JExpression value)
+    {
+        // If the field has already been invalidated, stop now.
+        if (isFieldInvalidated(name)) return;
+        // If the field has a value, invalidate it.
+        if (canFieldPropagate(name))
+        {
+            invalidateField(name);
+            return;
+        }
+        // Otherwise, add the name/value pair to the hash table.
+        fields.put(name, value);
+    }
+
+    /** Notice that an array slot has a constant assignment. */
+    private void noticeArrayAssignment(String name, int slot,
+                                       JExpression value)
+    {
+        // Same as before...
+        if (isArrayInvalidated(name, slot)) return;
+        if (canArrayPropagate(name, slot))
+        {
+            invalidateArray(name, slot);
+            return;
+        }
+        // Okay, populate the array slot.  The expression array
+        // needs to already exist.
+        JExpression[] exprs = (JExpression[])arrays.get(name);
+        exprs[slot] = value;
+    }
+
+    /** Notice that an array exists with a fixed size. */
+    private void noticeArrayCreation(String name, int size)
+    {
+        // Punt if the field has been invalidated, or if the array
+        // entry already exists.
+        if (isFieldInvalidated(name)) return;
+        if (arrays.containsKey(name)) return;
+        JExpression[] exprs = new JExpression[size];
+        arrays.put(name, exprs);
+    }
+
+    /** Look for candidate fields in a filter. */
+    private void findCandidates(SIRFilter filter)
+    {
+        JMethodDeclaration[] meths = filter.getMethods();
+        for (int i = 0; i < meths.length; i++)
+        {
+            meths[i].accept(new SLIREmptyVisitor() {
+                    public void visitAssignmentExpression
+                        (JAssignmentExpression self,
+                         JExpression left,
+                         JExpression right)
+                    {
+                        super.visitAssignmentExpression(self, left, right);
+                        if (left instanceof JFieldAccessExpression)
+                        {
+                            JFieldAccessExpression fae =
+                                (JFieldAccessExpression)left;
+                            String name = fae.getIdent();
+                            // Look inside of fae; the left-hand side should
+                            // be this.
+                            if (!(fae.getPrefix() instanceof JThisExpression))
+                                return;
+                            // Okay; what's the right hand side?  Notice
+                            // if it's a literal or (new type[]); invalidate
+                            // otherwise.
+                            if (right instanceof JLiteral)
+                                noticeFieldAssignment(name, right);
+                            else if (right instanceof JNewArrayExpression)
+                            {
+                                JNewArrayExpression nae =
+                                    (JNewArrayExpression)right;
+                                JExpression[] dims = nae.getDims();
+                                if (dims.length == 1 &&
+                                    dims[0] instanceof JIntLiteral)
+                                {
+                                    noticeArrayCreation
+                                        (name,
+                                         ((JIntLiteral)dims[0]).intValue());
+                                }
+                                else
+                                    invalidateField(name);
+                            }
+                            else
+                                invalidateField(name);
+                        }
+                    }
+                    public void visitCompoundAssignmentExpression
+                        (JCompoundAssignmentExpression self,
+                         int oper,
+                         JExpression left,
+                         JExpression right)
+                    {
+                        super.visitCompoundAssignmentExpression
+                            (self, oper, left, right);
+                        // Instant death.
+                        if (left instanceof JFieldAccessExpression)
+                        {
+                            JFieldAccessExpression fae = 
+                                (JFieldAccessExpression)left;
+                            String name = fae.getIdent();
+                            if (!(fae.getPrefix() instanceof JThisExpression))
+                                return;
+                            invalidateField(name);
+                        }
+                    }
+                });
+        }
+    }
+
+    /** Replace previously-notice candidate fields. */
+    private void doPropagation(SIRFilter filter)
+    {
+        JMethodDeclaration[] meths = filter.getMethods();
+        for (int i = 0; i < meths.length; i++)
+        {
+            meths[i].accept(new SLIRReplacingVisitor() {
+                    public Object visitAssignmentExpression
+                        (JAssignmentExpression self,
+                         JExpression left,
+                         JExpression right)
+                    {
+                        // Don't visit the left-hand side of the
+                        // expression.
+                        return new JAssignmentExpression
+                            (self.getTokenReference(),
+                             left,
+                             (JExpression)right.accept(this));
+                    }
+                    
+                    public Object visitFieldExpression
+                        (JFieldAccessExpression self,
+                         JExpression left,
+                         String ident)
+                    {
+                        Object orig =
+                            super.visitFieldExpression(self, left, ident);
+                        if (canFieldPropagate(ident))
+                            return propagatedField(ident);
+                        else
+                            return orig;
+                    }
+                });
+        }
+    }
+}

@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.20 2002-11-14 04:14:07 mgordon Exp $
+ * $Id: FieldProp.java,v 1.21 2003-01-21 21:33:02 dmaze Exp $
  */
 public class FieldProp implements Constants
 {
@@ -73,11 +73,11 @@ public class FieldProp implements Constants
 	FieldProp lastProp=new FieldProp();
 
         // Having recursed, do the flattening, if it's appropriate.
-        if (str instanceof SIRFilter)
+        if (str instanceof SIRFilter || str instanceof SIRPhasedFilter)
         {
             // Run propagate twice, just to be sure.
-            new FieldProp().propagate((SIRFilter)str);
-            new FieldProp().propagate((SIRFilter)str);
+            new FieldProp().propagate(str);
+            new FieldProp().propagate(str);
             // Run the unroller...
             Unroller unroller;
             for (int i = 0; i < str.getMethods().length; i++) {
@@ -87,7 +87,7 @@ public class FieldProp implements Constants
 		} while(unroller.hasUnrolled());
 	    }
             // Then try to propagatate again.
-            lastProp.propagate((SIRFilter)str);
+            lastProp.propagate(str);
         }
 
 	//Remove uninvalidated fields
@@ -109,7 +109,7 @@ public class FieldProp implements Constants
     /**
      * Does the actual work on <filter>.
      */
-    private void propagate(SIRFilter filter)
+    private void propagate(SIRStream filter)
     {
         findCandidates(filter);
 
@@ -281,7 +281,7 @@ public class FieldProp implements Constants
     }
 
     /** Look for candidate fields in a filter. */
-    private void findCandidates(SIRFilter filter)
+    private void findCandidates(SIRStream filter)
     {
         JFieldDeclaration[] fields = filter.getFields();
         for (int i = 0; i < fields.length; i++)
@@ -405,7 +405,7 @@ public class FieldProp implements Constants
     }
 
     /** Replace previously-notice candidate fields. */
-    private void doPropagation(SIRFilter filter)
+    private void doPropagation(SIRStream filter)
     {
         JMethodDeclaration[] meths = filter.getMethods();
         for (int i = 0; i < meths.length; i++)

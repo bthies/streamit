@@ -2,6 +2,8 @@
 STREAMIT-COMPILER = java -Xmx512M at.dms.kjc.Main -s 
 # command to compile uniprocessor streamit programs
 UNI-COMPILER      = gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c 
+# front end for converting new syntax to java
+NEW-FRONTEND = java streamit.frontend.ToJava
 
 # options to use for linear analysis
 ANALYSIS-OPTIONS  = --constprop --linearanalysis --debug 
@@ -11,6 +13,9 @@ TRANSFORMATION-OPTIONS =  --constprop --linearanalysis --linearreplacement
 # regression testing perl script
 LINEAR-REG-TEST = linear_regtest.pl
 
+# current test
+CURRENT-TEST = regtests/LinearTest10
+
 all: clean java-compile uni-compile raw-compile
 
 
@@ -18,14 +23,15 @@ linear-compile:
 	jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/*.java
 
 
-test-current: linear-compile
+test-current-old: linear-compile
 	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS) test/simple.java > test/simple.c
 	$(UNI-COMPILER) test/simple.c -o test/simple.exe
 	$(STREAMIT-COMPILER) $(TRANSFORMATION-OPTIONS) test/simple.java > test/simple-linear.c
 	$(UNI-COMPILER) test/simple-linear.c -o test/simple-linear.exe
 
-test-current-old: linear-compile
-	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS) regtests/LinearTest8$(SOURCE-EXT) > current.output
+test-current: linear-compile
+	$(NEW-FRONTEND) < $(CURRENT-TEST).str > $(CURRENT-TEST).java
+	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS) $(CURRENT-TEST).java > current.output
 	./parse_linear_output.pl current.output
 
 

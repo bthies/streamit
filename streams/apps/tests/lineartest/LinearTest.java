@@ -23,7 +23,7 @@ public class LinearTest extends StreamIt {
  * Single, monotonically increasing source of floating point numbers.
  **/
 class Source extends Filter {
-    float INCREMENT = (float).01;
+    float INCREMENT = .01f;
     float currentValue = 0;
     public void init() {
 	output = new Channel(Float.TYPE, 1);
@@ -70,24 +70,12 @@ class FloatFilter extends Filter {
 	output = new Channel(Float.TYPE, 3);
     }
     public void work() {
-	// should result in 3rd col: [1,1,1] + 0
-	output.pushFloat(input.peekFloat(0) +
-			 input.peekFloat(1) +
-			 input.peekFloat(2));
-
-	// should result in 2nd col: [3,2,10] + 6
-	output.pushFloat(1 +
-			 2*input.peekFloat(1) +
-			 input.peekFloat(2)*3 +
-			 5 +
-			 2*input.peekFloat(0)*5);
-
-	// should result in 1st col: [0,0,0] + -11	
-	output.pushFloat(-11);
-
-	// pop off the values from the input tape
-	input.popFloat();
-	input.popFloat();
-	input.popFloat();
+	float t1 = input.popFloat();
+	float t2 = input.popFloat();
+	float t3 = input.popFloat();
+	output.pushFloat(t1+t2+t3);
+	output.pushFloat(0);
+	output.pushFloat(0);
+	
     }
 }

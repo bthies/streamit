@@ -13,11 +13,19 @@ sub main {
     my $filename = shift(@ARGV) || die("usage: parse_linear_output.pl filename");
 
     # read in the contents to a scalar
-    my $contents = read_file($filename);
+    my $output_contents = read_file($filename);
 
-    # do a pattern match to extract the matrix/vector pairs
-    $_ = $contents; 
-    my @contents = m/Linear filter found: .*?name=(.*?) (.*?)\n-->Matrix:\n(.*?)-->Constant Vector:\n(.*?]]\n)/sig;
+    my @filter_contents;
+    my @pipeline_contents;
+
+    # do a pattern match to extract the matrix/vector pairs for filters
+    @filter_contents = $output_contents =~ m/Linear filter found: .*?name=(.*?) (.*?)\n-->Matrix:\n(.*?)-->Constant Vector:\n(.*?]]\n)/sig;
+
+    @pipeline_contents = $output_contents =~ m/Linear pipeline found: .*?name=(.*?) (.*?)\n-->Matrix:\n(.*?)-->Constant Vector:\n(.*?]]\n)/sig;
+
+    # combine the set of contents together
+    my @contents = (@filter_contents, @pipeline_contents);
+
 
     my %data;
     while(@contents) {

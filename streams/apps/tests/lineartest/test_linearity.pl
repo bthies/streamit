@@ -38,8 +38,10 @@ my @files = (
 	     "$benchmark_path/gsm/streamit/Gsm.java",
 	     "$benchmark_path/nokia/streamit/Linkeddcalc.java",
 	     "$benchmark_path/vocoder/streamit/*.java",
+
 	     "$benchmark_path/beamformer/streamit/BeamFormer.java",
-	 
+	     "$benchmark_path/beamformer/streamit/BeamFormer_old.java",
+	     "$benchmark_path/beamformer/streamit/BeamFormer_nested2.java",
 
 	     "$applications_path/crc/CrcEncoder32Test.java",
 	     "$applications_path/DCT/DCT.java",

@@ -15,7 +15,7 @@ import at.dms.kjc.sir.lowering.*;
 import java.util.Hashtable;
 
 public class RawExecutionCode extends at.dms.util.Utils 
-    implements FlatVisitor 
+    implements FlatVisitor, Constants
 {
     /*** fields for the var names we introduce ***/
     public static String recvBuffer = "__RECVBUFFER__";
@@ -32,7 +32,7 @@ public class RawExecutionCode extends at.dms.util.Utils
     public static String ARRAY_COPY = "__ARRAY_COPY__";
 
     public static String rawMain = "__RAWMAIN__";
-    
+    public static String receiveMethod = "static_receive_to_mem";
     
     public static void doit(FlatNode top) 
     {
@@ -206,6 +206,15 @@ public class RawExecutionCode extends at.dms.util.Utils
 	
 	JBlock statements = new JBlock(null, new JStatement[0], null);
 	
+	//create the params list, for some reason 
+	//calling toArray() on the list breaks a later pass
+	List paramList = filter.getParams();
+	JExpression[] paramArray;
+	if (paramList == null || paramList.size() == 0)
+	    paramArray = new JExpression[0];
+	else
+	    paramArray = (JExpression[])paramList.toArray(new JExpression[0]);
+	
 	//add the call to the init function
 	statements.addStatement
 	    (new 
@@ -214,8 +223,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 				  (null,
 				   new JThisExpression(null),
 				   filter.getInit().getName(),
-				   (JExpression[])filter.getParams().
-				   toArray(new JExpression[1])),
+				   paramArray),
 				  null));
 	
 	//add the call to initWork
@@ -224,9 +232,12 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    JBlock body = 
 		(JBlock)ObjectDeepCloner.deepCopy
 		(two.getInitWork().getBody());
-	    
+
+	    //add the code to receive the items into the buffer
 	    statements.addStatement(recExeCode(two.getInitPeek(),
-						   body));			
+						   receiveCode(filter)));
+	    //now inline the init work body
+	    statements.addStatement(body);
 	}
 	
 	//add the code to collect enough data necessary to fire the 
@@ -255,8 +266,8 @@ public class RawExecutionCode extends at.dms.util.Utils
     }
 
     //return a list of  statements to receive <rec> items and then inline the
-    //JBlock
-    JStatement recExeCode(int rec, JBlock block) 
+    //<block>
+    JStatement recExeCode(int rec, JStatement block) 
     {
 	//generate the receive code
 	if (rec > 0) {
@@ -270,6 +281,66 @@ public class RawExecutionCode extends at.dms.util.Utils
     }
 
 
+    //returns the code to receive one item into the buffer
+    //uses the correct variables
+    JStatement receiveCode(SIRFilter filter) {
+	JBlock statements = new JBlock(null, new JStatement[0], null);
+	
+	if (filter.getInputType().isArrayType()) {
+	    //NOT IMPLEMENTED YET      !!!!!!!!!!!!!!!!!!!!!!!!!!!
+	    return null;
+	}
+	else if (filter.getInputType().isClassType()) {
+	    //NOT IMPLEMENTED YET      !!!!!!!!!!!!!!!!!!!!!!!!!!!
+	    return null;
+	    
+	} 
+	else {
+	    //we want to create a statement of the form:
+	    //static_receive_to_mem((void*)&(recvBuffer[(++recvIndex) &
+	    //                                          recvBufferSize]));
+
+	    //the cast to (void*) and the '&' are added by the FlatIRToC pass
+
+	     //create the increment of the index var
+	    JPrefixExpression bufferIncrement = 
+		new JPrefixExpression(null, 
+				      OPE_PREINC,
+				      new JFieldAccessExpression
+				      (null, 
+				       new JThisExpression(null),
+				       RawExecutionCode.recvIndex));
+	    //create the modulo expression
+	    JModuloExpression indexMod = 
+		new JModuloExpression(null, bufferIncrement, 
+				  new JFieldAccessExpression
+				  (null,
+				   new JThisExpression(null),
+				   RawExecutionCode.recvBufferSize));
+	    //create the array access expression
+	    JArrayAccessExpression bufferAccess = 
+		new JArrayAccessExpression(null,
+					   new JFieldAccessExpression
+					   (null,
+					    new JThisExpression(null),
+					    RawExecutionCode.recvBuffer),
+					   indexMod);
+	    
+	    JExpression[] arg = 
+		{new JParenthesedExpression(null,
+					    bufferAccess)};
+	    
+	    //create the method call expression
+	    JMethodCallExpression exp =
+		new JMethodCallExpression(null, null,
+					  receiveMethod,
+					  arg);
+
+	    //return the method call
+	    return new JExpressionStatement(null, exp, null);
+	}
+    }
+    
     /**
      * Returns a for loop that uses field <var> to count
      * <count> times with the body of the loop being <body>.  If count

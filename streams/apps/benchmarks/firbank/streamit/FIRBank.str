@@ -25,19 +25,19 @@ void->void pipeline FIRBankRowMajor {
 
 float->float splitjoin Transpose(int M, int N) {
     split roundrobin;
-    for (int i=0; i<N; i++) {
-	add Identity<float>;
+    for (int i = 0; i < N; i++) {
+	  add Identity<float>;
     }
     join roundrobin(M);
 }
 
 float->float filter Expand(int N, int B) {
     work pop N push 2*B {
-	for (int i=0; i<N; i++) {
+	for (int i = 0; i < N; i++) {
 	    push(pop()); // real
 	    push(0.0);   // imag
 	}
-	for (int i=N; i<B; i++) {
+	for (int i = N; i < B; i++) {
 	    push(0.0);  // real
 	    push(0.0);  // imag
 	}
@@ -46,11 +46,11 @@ float->float filter Expand(int N, int B) {
 
 float->float filter Contract(int N, int B) {
     work pop 2*B push N {
-	for (int i=0; i<N; i++) {
+	for (int i = 0; i < N; i++) {
 	    push(pop()); // real
 	    pop();       // imag
 	}
-	for (int i=N; i<B; i++) {
+	for (int i = N; i < B; i++) {
 	    pop();       // real
 	    pop();       // imag
 	}
@@ -66,8 +66,8 @@ float->void filter Printer {
 float->float filter Multiply(int M, int B) {
 
     work pop 2*B*M push 2*B*M { 
-	for (int i=0; i<M; i++) {
-	    for (int j=0; j<B; j++) {
+	for (int i = 0; i < M; i++) {
+	    for (int j = 0; j < B; j++) {
 		// get in1
 		float real1 = pop();
 		float imag1 = pop();
@@ -82018,35 +82018,24 @@ float->float filter CombineDFT(int n) {
   }
 
   work push 2*n pop 2*n {
-        int i;
         float w_r = 1;
         float w_i = 0;
-	float[2*n] results;
+	  float[2*n] results;
 
-        for (i = 0; i < n; i += 2)
-        {
-	    // this is a temporary work-around since there seems to be
-	    // a bug in field prop that does not propagate nWay into the
-	    // array references.  --BFT 9/10/02
-	    
-	    //int tempN = nWay;
-	    //Fixed --jasperln
-            
-            // removed nWay, just using n  --sitij 9/26/03
-
-	    float y0_r = peek(i);
+        for (int i = 0; i < n; i += 2) {
+		float y0_r = peek(i);
             float y0_i = peek(i+1);
             
-	    float y1_r = peek(n + i);
+		float y1_r = peek(n + i);
             float y1_i = peek(n + i + 1);
-
+		
             float y1w_r = y1_r * w_r - y1_i * w_i;
             float y1w_i = y1_r * w_i + y1_i * w_r;
-
+		
             results[i] = y0_r + y1w_r;
             results[i + 1] = y0_i + y1w_i;
-
-	    results[n + i] = y0_r - y1w_r;
+		
+		results[n + i] = y0_r - y1w_r;
             results[n + i + 1] = y0_i - y1w_i;
 
             float w_r_next = w_r * wn_r - w_i * wn_i;
@@ -82055,13 +82044,11 @@ float->float filter CombineDFT(int n) {
             w_i = w_i_next;
         }
 
-        for (i = 0; i < 2 * n; i++)
-        {
+        for (int i = 0; i < 2 * n; i++) {
             pop();
             push(results[i]);
         }
-    }
-
+  }
 }
 
 
@@ -82074,21 +82061,19 @@ float->float filter FFTReorderSimple(int n) {
   }
 
   work push 2*n pop 2*n {
-        int i;
-        
-        for (i = 0; i < totalData; i+=4)
+        for (int i = 0; i < totalData; i+=4)
         {
             push(peek(i));
             push(peek(i+1));
         }
         
-        for (i = 2; i < totalData; i+=4)
+        for (int i = 2; i < totalData; i+=4)
         {
             push(peek(i));
             push(peek(i+1));
         }
         
-        for (i=0;i<n;i++)
+        for (int i = 0; i < n; i++)
         {
             pop();
             pop();
@@ -82099,7 +82084,7 @@ float->float filter FFTReorderSimple(int n) {
 
 float->float pipeline FFTReorder(int n) {
 
-  for(int i=1; i<(n/2); i*= 2)
+  for (int i = 1; i< (n/2); i *= 2)
     add FFTReorderSimple(n/i);
 
 }
@@ -82107,13 +82092,13 @@ float->float pipeline FFTReorder(int n) {
 
 float->float pipeline FFTKernel1(int n) {
 
-  if(n>2) {
-    add splitjoin {
-      split roundrobin(2);
-      add FFTKernel1(n/2);
-      add FFTKernel1(n/2);
-      join roundrobin(n);
-    }
+  if (n>2) {
+	add splitjoin {
+	    split roundrobin(2);
+	    add FFTKernel1(n/2);
+	    add FFTKernel1(n/2);
+	    join roundrobin(n);
+	}
   }
   add CombineDFT(n);
 }
@@ -82121,7 +82106,7 @@ float->float pipeline FFTKernel1(int n) {
 
 float->float pipeline FFTKernel2(int n) {
     add FFTReorder(n);
-    for(int j=2; j<=n; j*=2)
+    for (int j = 2; j <= n; j *= 2)
         add CombineDFT(j);
 }
 

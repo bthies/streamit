@@ -86,10 +86,18 @@ global steadyStateExecutions = 0;
 global outputFile;
 global currentSkipped = 0;
 global gWorkCount = 0;
-global totalWorkCount = 0;
+global gWorkCountTotal = 0;
+global gFpuCount = 0;
+global gMemCount = 0;
+global gBrCount = 0;
+global gAdminCount = 0;
+global gAluCount = 0;
 
-
-global totalFLOPS = 0;
+global gFpuCountTotal = 0;
+global gMemCountTotal = 0;
+global gBrCountTotal = 0;
+global gAdminCountTotal = 0;
+global gAluCountTotal = 0;
 global totalCycles = 0;
 
 fn dev_gather_numbers_init(fileName, ioPort)
@@ -132,7 +140,8 @@ fn dev_gather_numbers_init(fileName, ioPort)
   }
   
   //register the workcount event
-  EventManager_RegisterHandler("issued_instruction", "__instr_handler_workcount");
+  EventManager_RegisterHandler("issued_instruction", "__event_instr_count");
+
   return 1;
 }
 
@@ -310,10 +319,22 @@ fn dev_gather_numbers_calc(printServiceStruct)
 	    fprintf(outputFile, "Total Cycles: %d\n", totalCycles);
 	    fprintf(outputFile, "Avg Cycles per Steady-State: %d\n", totalCycles/quitAfter);
 	    fprintf(outputFile, "Thruput per 10^5: %d\n", (100000/((totalCycles/quitAfter)/printsPerSteady)));
-	    fprintf(outputFile, "Avg MFLOPS: %d\n", (250*totalFLOPS)/totalCycles);
+	    fprintf(outputFile, "Total Non-Blocked Cycles: %d\n\n", 
+		    (gWorkCountTotal - ((gNumProc - gStreamItTilesUsed) * totalCycles)));
+	    
+	    //we need to account for the unused tiles, should show up as jump instructions
+	    fprintf(outputFile, "Instruction Mix:\n");
+	    fprintf(outputFile, "FPU: %d\n", gFpuCountTotal);
+	    fprintf(outputFile, "MEM: %d\n", gMemCountTotal);
+	    fprintf(outputFile, "BRANCH: %d\n", gBrCountTotal - 
+		    ((gNumProc - gStreamItTilesUsed) * totalCycles));
+	    fprintf(outputFile, "ADMIN: %d\n", gAdminCountTotal);
+	    fprintf(outputFile, "ALU: %d\n\n", gAluCountTotal);
+
 	    fprintf(outputFile, "workCount* = %d / %d\n", 
-		    (totalWorkCount - ((gNumProc - gStreamItTilesUsed) * totalCycles)),
+		    (gWorkCountTotal - ((gNumProc - gStreamItTilesUsed) * totalCycles)),
 		    gStreamItTiles*totalCycles);
+	    fprintf(outputFile, "Avg MFLOPS: %d\n", (250*gFpuCountTotal)/totalCycles);	   
 	    fprintf(outputFile, "* Note: the numerator is the total non-blocked cycles\n");
 	    fprintf(outputFile, "  for *assigned* tiles in the configuration.\n");
 	    fprintf(outputFile, "  The denominator is the total number of cycles\n");
@@ -322,12 +343,17 @@ fn dev_gather_numbers_calc(printServiceStruct)
 	    //print the numbers in a nicer format for automatic
 	    //extracting
 	    fprintf(outputFile,
-		    "\n# format: tiles in config:tiles assigned: cycles/steady: thruput:MFLOPS:workcount:workcount\n");
-	    fprintf(outputFile, "%d;%d;%d;%d;%d;%d;%d\n",
+		    "\n# format: tiles in config:tiles assigned:cycles/steady:thruput:MFLOPS:");
+	    fprintf(outputFile, 
+		    "instr issued:fpu:mem:branch:admin:alu:max instr issued:\n");
+	    fprintf(outputFile, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\n",
 		    gStreamItTiles, gStreamItTilesUsed, totalCycles/quitAfter,
 		    (100000/((totalCycles/quitAfter)/printsPerSteady)),
-		    (250*totalFLOPS)/totalCycles,
-		    (totalWorkCount - ((gNumProc - gStreamItTilesUsed) * totalCycles)),
+		    (250*gFpuCountTotal)/totalCycles,
+		    (gWorkCountTotal - ((gNumProc - gStreamItTilesUsed) * totalCycles)),
+		    gFpuCountTotal, gMemCountTotal, 
+		    gBrCountTotal - ((gNumProc - gStreamItTilesUsed) * totalCycles),
+		    gAdminCountTotal, gAluCountTotal, 
 		    gStreamItTiles*totalCycles);
 	    //this should exit!!!!!
 	    gInterrupted = 1;
@@ -337,16 +363,26 @@ fn dev_gather_numbers_calc(printServiceStruct)
 	  //print the stats
 	  if (steadyStateExecutions > 1) {
 	    local dif = time_lo - lastSteadyStartCycle; 
-	    totalFLOPS += gAUTOFLOPS;
-	    totalCycles += dif;
-	    totalWorkCount += gWorkCount;
 	    
-	    fprintf(outputFile, "%d %d %d\n", dif, (250*gAUTOFLOPS)/dif, gWorkCount);
+	    totalCycles += dif;
+	    gWorkCountTotal += gWorkCount;
+
+	    gFpuCountTotal += gFpuCount;
+	    gMemCountTotal += gMemCount;
+	    gBrCountTotal += gBrCount;
+	    gAdminCountTotal += gAdminCount;
+	    gAluCountTotal += gAluCount;
+	    
+	    fprintf(outputFile, "%d %d %d\n", dif, (250*gFpuCount)/dif, gWorkCount);
 	  }	  
 	  //set the last steady state time
 	  lastSteadyStartCycle = time_lo;
 	  //reset the flops count and workCount
-	  gAUTOFLOPS = 0;
+	  gFpuCount = 0;
+	  gMemCount = 0;
+	  gBrCount = 0;
+	  gAdminCount = 0;
+	  gAluCount = 0;
 	  gWorkCount = 0;
 	}
 
@@ -389,6 +425,35 @@ fn dev_gather_numbers_calc(printServiceStruct)
   }
 }
 
-fn __instr_handler_workcount(hms) {
-  AtomicIncrement(&gWorkCount); 
+fn __event_instr_count(hms)
+{
+  local instrWord = hms.instrWord;
+
+  AtomicIncrement(&gWorkCount);
+
+  if (InstrWord_IsFPU(instrWord))
+  {
+    AtomicIncrement(&gFpuCount);
+  }
+
+  else if (InstrWord_IsCacheMissOp(instrWord))
+  {
+    AtomicIncrement(&gMemCount);
+  }
+
+  else if (InstrWord_CanMispredict(instrWord) ||
+	   InstrWord_IsDirectJump(instrWord))
+  {
+    AtomicIncrement(&gBrCount);
+  }
+
+  else if (InstrWord_IsAdmin(instrWord))
+  {
+    AtomicIncrement(&gAdminCount);
+  }
+
+  else
+  {
+    AtomicIncrement(&gAluCount);
+  }
 }

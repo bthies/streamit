@@ -12,7 +12,7 @@ import at.dms.kjc.sir.statespace.*;
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.
  * 
- * $Id: LinearTransformPipeline.java,v 1.7 2004-03-03 21:01:47 sitij Exp $
+ * $Id: LinearTransformPipeline.java,v 1.8 2004-03-05 23:25:33 sitij Exp $
  **/
 
 public class LinearTransformPipeline extends LinearTransform {
@@ -145,8 +145,6 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 
 		    n = n-1;
 
-		    //LinearPrinter.println("VALUES:" + n + " " + newPush1 + " " + newPop2 + " " + newPeek2);
-
 		    int removeVars = newPeek2 - newPop2;
 		    int extraVars = newPush1*n;
 		    int newVar2Total = state2 - removeVars + extraVars;
@@ -183,53 +181,14 @@ We know that extraVars >= newPeek2-newPop2, so we are adding states. Thus we mus
 
 		    if(extraVars > removeVars) {
 
-			LinearPrinter.println("A2init-old" + A2.toString());
-			LinearPrinter.println("B2init-old" + B2.toString());
-			
-			FilterMatrix tempA2, tempB2, tempC2, tempD2;
-			
-			tempA2 = new FilterMatrix(newVar2Total,newVar2Total);
-			tempA2.copyRowsAndColsAt(extraVars,extraVars,A2,removeVars,removeVars,state2-removeVars,state2-removeVars);
-			tempA2.copyRowsAndColsAt(extraVars,0,A2,removeVars,0,state2-removeVars,removeVars);
-			tempA2.copyRowsAndColsAt(extraVars,removeVars,B2,removeVars,0,state2-removeVars,extraVars-removeVars);
+			LinearFilterRepresentation newRep2;
+			newRep2 = rep2Expanded.changePeek(newPop2 + extraVars);
 
-			tempB2 = new FilterMatrix(newVar2Total,newPop2);
-			tempB2.copyRowsAndColsAt(extraVars,0,B2,removeVars,extraVars-removeVars,state2-removeVars,removeVars);
-
-			for(int i=0; i<extraVars; i++)
-			    tempB2.setElement(i,i,ComplexNumber.ONE);
-
-			
-			//LinearPrinter.println("A2init-new" + tempA2.toString());
-			//LinearPrinter.println("B2init-new" + tempB2.toString());
-
-
-			tempC2 = new FilterMatrix(newPush2,newVar2Total);
-			tempC2.copyColumnsAt(extraVars,C2,removeVars,state2-removeVars);
-			tempC2.copyColumnsAt(0,C2,0,removeVars);
-			tempC2.copyColumnsAt(removeVars,D2,0,extraVars-removeVars);
-			
-			tempD2 = new FilterMatrix(newPush2,newPop2);
-			tempD2.copyColumnsAt(0,D2,extraVars-removeVars,removeVars);
-
-
-
-
-			//LinearPrinter.println("A2:" + tempA2.toString());
-			//LinearPrinter.println("B2:" + tempB2.toString());
-			//LinearPrinter.println("C2:" + tempC2.toString());
-			//LinearPrinter.println("D2:" + tempD2.toString());
-
-
-
-			FilterVector init2_temp = new FilterVector(newVar2Total);
-			init2_temp.copyAt(0,extraVars-removeVars,init2);
-			
-			A2 = tempA2;
-			B2 = tempB2;
-			C2 = tempC2;
-			D2 = tempD2;
-			init2 = init2_temp;
+			A2 = newRep2.getA();
+			B2 = newRep2.getB();
+			C2 = newRep2.getC();
+			D2 = newRep2.getD();
+			init2 = newRep2.getInit();
 			
 			state2 = newVar2Total;
 		    

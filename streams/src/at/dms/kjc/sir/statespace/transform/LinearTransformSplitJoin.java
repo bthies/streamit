@@ -15,7 +15,7 @@ import java.util.*;
  * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
  * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformSplitJoin.java,v 1.2 2004-02-13 17:05:56 thies Exp $
+ * $Id: LinearTransformSplitJoin.java,v 1.3 2004-03-05 23:25:33 sitij Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;
@@ -49,10 +49,7 @@ public class LinearTransformSplitJoin extends LinearTransform{
      * order.
      **/
     public LinearFilterRepresentation transform() throws NoTransformPossibleException {
-	at.dms.util.Utils.fail("Not implemented yet.");
-	return null;
-    }
-	/*
+	
 	int filterCount = linearRepresentations.length;
 	LinearPrinter.println(" preparing to combine splitjoin of " +
 			      filterCount +
@@ -65,14 +62,27 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	
 	// do the expansion of each of the linear reps.
 	LinearFilterRepresentation[] expandedReps = new LinearFilterRepresentation[filterCount];
-	int totalCols = 0; // totalCols keeps track of the total number of columns in the expanded reps
-	
+	int totalOutputs = 0;
+	int totalStates = 0;
+	int totalInputs = this.filterExpansionFactors[0].pop;
+	int peekVal = this.filterExpansionFactors[0].peek;
+	int currPeek;
+	int factor;
+	LinearFilterRepresentation tempRep;
+
 	for (int i=0; i<filterCount; i++) {
 	    LinearPrinter.println("  expanding filter with " + this.filterExpansionFactors[i]);
-	    expandedReps[i] = this.linearRepresentations[i].expand(this.filterExpansionFactors[i].peek,
-								   this.filterExpansionFactors[i].pop,
-								   this.filterExpansionFactors[i].push);
-	    totalCols += expandedReps[i].getPushCount();
+	    factor = this.filterExpansionFactors[i].pop / this.linearRepresentations[i].getPopCount(); 
+	    tempRep = this.linearRepresentations[i].expand(factor);
+	    currPeek = tempRep.getPeekCount();
+
+	    if(peekVal > currPeek)
+		expandedReps[i] = tempRep.changePeek(peekVal);
+	    else
+		expandedReps[i] = tempRep;
+
+	    totalOutputs += expandedReps[i].getPushCount();
+	    totalStates += expandedReps[i].getStateCount();
 	}
 
 	// figure how how many columns the "stride" is (eg the sum of the weights)
@@ -81,47 +91,69 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	    strideLength += this.roundRobinJoinerWeights[i];
 	}
 
-	// now, create a new matrix and vector that have the appropriate size:
-	// cols = the sum of the number of columns in the expanded representations
-	// rows = (all expanded matrices have the same number of rows)
-	FilterMatrix expandedA = new FilterMatrix(expandedReps[0].getPeekCount(), totalCols);
-	FilterVector expandedb = new FilterVector(totalCols);
+	// now, create new matrices that have the appropriate size:
 
-	// just do a little paranoia check and ensure that all of the peek counts are the same
+	FilterMatrix expandedA = new FilterMatrix(totalStates, totalStates);
+	FilterMatrix expandedB = new FilterMatrix(totalStates, totalInputs);
+	FilterMatrix expandedC = new FilterMatrix(totalOutputs, totalStates);
+	FilterMatrix expandedD = new FilterMatrix(totalOutputs, totalInputs);
+	FilterVector expandedInit = new FilterVector(totalStates);
+
+	// just do a little paranoia check and ensure that all of the pop counts are the same
+
 	for (int i=0; i<filterCount; i++) {
-	    if (expandedA.getRows() != expandedReps[i].getPeekCount()) {
-		throw new RuntimeException("inconsistency -- expanded reps don't all have the same peek!");
+	    if (expandedB.getCols() != expandedReps[i].getPopCount()) {
+		throw new RuntimeException("inconsistency -- expanded reps don't all have the same pop!");
 	    }
 	}
 	
-	// now, copy the cols of the matrices (and vectors) into the expanded versions
-	// for each expanded matrix, copy joinWeight[i] cols into the new matrix and vector
-	// at an offset that makes the output work out correctly.
-	// See paper (http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf) Figure 9
-	// start copying the cols of the right most filter at the appropriate start offset
+	// now, copy the rows of the matrices into the expanded versions
+	// for each expanded matrix, copy joinWeight[i] rows into the new matrix
+
 	int startOffset = 0;
-	for (int i=(filterCount-1); i>=0; i--) { // iterate through filters from right to left
-	    // figure out how many groups of joinWeight cols that we have
+	int stateOffset = 0;
+	for (int i=0; i<filterCount; i++) {
+
+	    int currStateValue = expandedReps[i].getStateCount();
+
+	    // put the filter's state update matrices in the expanded state update matrices
+
+	    expandedInit.copyAt(0, stateOffset, expandedReps[i].getInit());
+
+	    expandedA.copyAt(stateOffset, stateOffset, expandedReps[i].getA());
+	    expandedB.copyAt(stateOffset, 0, expandedReps[i].getB());
+
+ 
+	    // figure out how many groups of joinWeight rows that we have
 	    int numGroups = expandedReps[i].getPushCount() / this.roundRobinJoinerWeights[i]; // total # of groups
 	    LinearPrinter.println("  number of groups for filter " + i + " is " + numGroups);
 	    // copy the groups from left (in groups of this.roundRobinJoinerWeights) into the new matrix
 	    for (int j=0; j<numGroups; j++) {
 		LinearPrinter.println("  doing group : " + j + " of filter " + i);
 		LinearPrinter.println("  combination weight: " + this.roundRobinJoinerWeights[i]);
-		// figure out offset into expanded A to copy the columns
+
+		// figure out offset into expanded A to copy the rows
+
 		int currentOffset = startOffset + j*strideLength;
+
 		// the offset into the current source matrix is (size-j-1)*joinWeights[i]
-		// the number of columns that we are copying is combination weights[i]
-		expandedA.copyColumnsAt(currentOffset, expandedReps[i].getA(),
+		// the number of rows that we are copying is combination weights[i]
+
+		expandedC.copyRowsAndColsAt(currentOffset, stateOffset, expandedReps[i].getC(),
+					j*this.roundRobinJoinerWeights[i], 0,
+					this.roundRobinJoinerWeights[i], currStateValue);
+
+
+		expandedD.copyRowsAt(currentOffset, expandedReps[i].getD(),
 					j*this.roundRobinJoinerWeights[i],
 					this.roundRobinJoinerWeights[i]);
-		expandedb.copyColumnsAt(currentOffset, expandedReps[i].get(),
-					j*this.roundRobinJoinerWeights[i],
-					this.roundRobinJoinerWeights[i]);
+
+	
 					
 	    }
 	    // update start of the offset for the next expanded rep. 
 	    startOffset += this.roundRobinJoinerWeights[i];
+	    stateOffset += currStateValue;
 	}
 
 	// calculate what the new pop rate is (it needs to the the same for all expanded filters)
@@ -135,10 +167,10 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	}
 
 	// now, return a new LinearRepresentation that represents the transformed
-	// splitjoin with the new A and b, along with the new pop count.
-	return new LinearFilterRepresentation(expandedA, expandedb, newPopCount);
+	// splitjoin with the new matrices, along with the new init vector and peek count.
+	return new LinearFilterRepresentation(expandedA,expandedB,expandedC,expandedD,expandedInit,peekVal);
     }
-	*/
+	
 
     /**
      * Utility method.

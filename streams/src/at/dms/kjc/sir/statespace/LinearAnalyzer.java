@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.5 2004-03-03 20:41:50 sitij Exp $
+ * $Id: LinearAnalyzer.java,v 1.6 2004-03-05 23:25:21 sitij Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -655,30 +655,29 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// child would have gotten in the original splitter (eg splitWeights[childPos])
 	// which implies the new matrix has vSum rows and splitWeights[childPos] cols
 
-	FilterMatrix newA = new FilterMatrix(vTot, splitWeights[childPos]);
-	FilterVector newb = new FilterVector(vTot);
+	int outputs = splitWeights[childPos];
 
-	// determine the number of rows between the bottom and the start of the decimator's ones
+	FilterMatrix newA = new FilterMatrix(1,1);
+	FilterMatrix newB = new FilterMatrix(1,vTot);
+	
+	FilterMatrix newC = new FilterMatrix(outputs,1);
+	FilterMatrix newD = new FilterMatrix(outputs, vTot);
+	FilterVector newInit = new FilterVector(1);
+
+	// determine the number of rows between the top and the start of the decimator's ones
 	int vSum_k1 = 0;
-	for (int i=0; i<=childPos; i++) {
+	for (int i=0; i<childPos; i++) {
 	    vSum_k1 += splitWeights[i];
 	}
 
-	// set the splitWeights[childPos] rows of ones
-	for (int i=0; i<splitWeights[childPos]; i++) { // row = vTot-vSum_k1, col=i
-	    newA.setElement(vTot - vSum_k1 + i, i, ComplexNumber.ONE);
+	// set the output rows of ones
+	for (int i=0; i<outputs; i++) { // row = i, col = vSum_k1 + i
+	    newD.setElement(i, vSum_k1 + i, ComplexNumber.ONE);
 	}
 
 
-	/************************* need to CHANGE! **************************/
-
 	// make a new decimator rep out of the new A and b
-	//	return new LinearFilterRepresentation(newA, newb, vTot); // pop==peek
-
-	return null;
-
-
-	/**********************************************************************/
+	return new LinearFilterRepresentation(newA, newB, newC, newD, newInit, vTot); // pop==peek
 
     }
     

@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * This class also holds initial matrices initA, initB that are to be used to 
  * update the state exactly ONCE (for a prework function).
  *
- * $Id: LinearFilterRepresentation.java,v 1.7 2004-03-02 23:24:05 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.8 2004-03-05 23:25:21 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -190,8 +190,7 @@ public class LinearFilterRepresentation {
     /**
      * Returns true if at least one constant component is non-zero.
      **/
-    
-    
+        
     public boolean hasConstantComponent() {
 	/*
         int index = A.zeroRow();
@@ -205,6 +204,68 @@ public class LinearFilterRepresentation {
 	return false;
     }
     
+
+    /**
+     * Changes the peek value of this linear Representation (to a greater value)
+     **/
+
+    public LinearFilterRepresentation changePeek(int newPeek) {
+
+	int oldPeek = this.peekCount;
+
+	if(oldPeek >= newPeek)
+	    throw new IllegalArgumentException("need param newPeek(" + newPeek + ") to be < oldPeek(" + oldPeek + ")"); 
+
+	int pushCount = this.getPushCount();
+	int popCount = this.getPopCount();
+	int oldStateCount = this.getStateCount();
+	int removeVars = oldPeek - popCount;
+	int addVars = newPeek - popCount;
+	int newStateCount = oldStateCount - removeVars + addVars;
+
+	FilterMatrix A, B, C, D;
+	FilterMatrix newA, newB, newC, newD;
+			
+	A = this.getA();
+	B = this.getB();
+	C = this.getC();
+	D = this.getD();
+
+	newA = new FilterMatrix(newStateCount,newStateCount);
+	newA.copyRowsAndColsAt(addVars,addVars,A,removeVars,removeVars,oldStateCount-removeVars,oldStateCount-removeVars);
+	newA.copyRowsAndColsAt(addVars,0,A,removeVars,0,oldStateCount-removeVars,removeVars);
+	newA.copyRowsAndColsAt(addVars,removeVars,B,removeVars,0,oldStateCount-removeVars,addVars-removeVars);
+	
+	newB = new FilterMatrix(newStateCount,popCount);
+	newB.copyRowsAndColsAt(addVars,0,B,removeVars,addVars-removeVars,oldStateCount-removeVars,removeVars);
+
+	for(int i=0; i<addVars; i++)
+	    newB.setElement(i,i,ComplexNumber.ONE);
+			
+	//LinearPrinter.println("A2init-new" + tempA2.toString());
+	//LinearPrinter.println("B2init-new" + tempB2.toString());
+
+	
+	newC = new FilterMatrix(pushCount,newStateCount);
+	newC.copyColumnsAt(addVars,C,removeVars,oldStateCount-removeVars);
+	newC.copyColumnsAt(0,C,0,removeVars);
+	newC.copyColumnsAt(removeVars,D,0,addVars-removeVars);
+			
+	newD = new FilterMatrix(pushCount,popCount);
+	newD.copyColumnsAt(0,D,addVars-removeVars,removeVars);
+
+	FilterVector init = this.getInit();
+	FilterVector newInit = new FilterVector(newStateCount);
+	newInit.copyAt(0,addVars-removeVars,init);
+			
+	LinearFilterRepresentation newRep; 
+	newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newInit,newPeek);
+
+	return newRep;
+
+    }
+
+
 
     /**
      * Expands this linear representation by factor 
@@ -436,14 +497,22 @@ public class LinearFilterRepresentation {
 	// initial vector is the same
 	FilterVector newInitVec = (FilterVector)this.getInit().copy();
 
-	// prework matrices are IRRELEVANT
-	FilterMatrix newPreWorkA = this.getPreWorkA();
-	FilterMatrix newPreWorkB = this.getPreWorkB();
-
 	// create a new Linear rep for the expanded filter
 	LinearFilterRepresentation newRep;
-	newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreWorkA,newPreWorkB,newInitVec);
+
+	if(this.preworkNeeded()) {
+
+	    FilterMatrix newPreWorkA = this.getPreWorkA();
+	    FilterMatrix newPreWorkB = this.getPreWorkB();
+
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreWorkA,newPreWorkB,newInitVec);
+	
+	}
+	else
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newInitVec, newB.getCols());
+		
 	return newRep;
+	
     }
 
 

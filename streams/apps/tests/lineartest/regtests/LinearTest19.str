@@ -1,0 +1,51 @@
+/** 
+ * Test out combining pipelines of FIR filters.
+ **/
+void->void pipeline SimpleStreamItProgram {
+  add FloatSource();
+  add FIRPipeline();
+  add FloatSink();
+}
+
+void->float filter FloatSource {
+  float x;
+  init {
+    x = 0;
+  }
+  work push 1 {
+    push(x);
+    x = x + 1;
+  }
+}
+
+float->void filter FloatSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+/** A linear pipeline of FIR filters that you can test combining FIR filters with. **/
+float->float pipeline FIRPipeline {
+  add MockFIRFilter(3, 1);
+  add MockFIRFilter(2, 4);
+}
+
+/** This is a mock up of an FIR filter. N is where the counting starts from **/
+float->float filter MockFIRFilter(int size, int N) {
+  float[size] weights;
+  init {
+    for (int i=0; i<size; i++) {
+      weights[i] = N + i;
+    }
+  }
+
+  work pop 1 peek size push 1 {
+    float sum = 0;
+    /** do the MAC like normal **/
+    for (int i=0; i<size; i++) {
+      sum = sum + (peek(i) * weights[i]);
+    }
+    push(sum);
+    pop();
+  }
+}

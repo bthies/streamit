@@ -232,17 +232,26 @@ public class Rawify
 	    SpaceTimeBackend.println("Generate the DRAM read command for " + srcBuffer);
 	    int readWords = iterations * typeSize * 
 		input.getWeight(input.getSources()[i]);
-	    srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, stage,
+	    if (srcBuffer.getDest() instanceof OutputTraceNode &&
+		((OutputTraceNode)srcBuffer.getDest()).isFileReader())
+		srcBuffer.getOwner().getComputeCode().addFileCommand(true, init || primepump,
+								 readWords, srcBuffer);
+	    else 
+		srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, stage,
 								 Util.cacheLineDiv(readWords * 4), 
 								 srcBuffer, true);
 	}
 
 	//generate the command to write to the dest of the input trace node
 	OffChipBuffer destBuffer = IntraTraceBuffer.getBuffer(input, filter);
-	int writeBytes = items * typeSize * 4;
-	writeBytes = Util.cacheLineDiv(writeBytes);
-	destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage,
-							      writeBytes, destBuffer, false);
+	int writeWords = items * typeSize;
+	if (input.isFileWriter() && OffChipBuffer.unnecessary(input))
+	    destBuffer.getOwner().getComputeCode().addFileCommand(false, init || primepump,
+								  writeWords, destBuffer);
+	else						      
+	    destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage,
+								  Util.cacheLineDiv(writeWords * 4), 
+								  destBuffer, false);
     }
 
     private static void outputDRAMCommands(OutputTraceNode output, boolean init, boolean primepump)
@@ -273,7 +282,7 @@ public class Rawify
 				     srcBuffer.getOwner() + (primepump ? "(primepump)" : ""));
 	    //in the primepump stage a real output trace always reads from the init buffers
 	    //never use stage 2 for reads
-	    if (output.isFileReader())
+	    if (output.isFileReader() && OffChipBuffer.unnecessary(output))
 		srcBuffer.getOwner().getComputeCode().addFileCommand(true, init || primepump, 
 								     readWords,
 								     srcBuffer);
@@ -300,7 +309,8 @@ public class Rawify
 		writeWords *= edge.primePumpInitItems();
 	    //make write bytes cache line div
 	    if (writeWords > 0) {
-		if (destBuffer.getEdge().getDest().isFileWriter())
+		if (destBuffer.getEdge().getDest().isFileWriter() && 
+		    OffChipBuffer.unnecessary(destBuffer.getEdge().getDest()))
 		    destBuffer.getOwner().getComputeCode().addFileCommand(false, init || primepump,
 									  writeWords,
 									  destBuffer);
@@ -317,7 +327,8 @@ public class Rawify
 		    (edge.primePumpItems() - edge.primePumpInitItems());
 		//generate the dram command in stage 2 (init schedule, with steady buffers...)
 		if (writeWords > 0) {
-		    if (destBuffer.getEdge().getDest().isFileWriter())
+		    if (destBuffer.getEdge().getDest().isFileWriter()  && 
+			OffChipBuffer.unnecessary(destBuffer.getEdge().getDest()))
 			destBuffer.getOwner().getComputeCode().addFileCommand(false, init || primepump,
 									      writeWords,
 									      destBuffer);
@@ -530,7 +541,7 @@ public class Rawify
 	//because transfers must be cache line size divisible...
 	//generate dummy values to fill the cache line!
 	if ((items * typeSize) % RawChip.cacheLineWords != 0 &&
-	    !traceNode.isFileWriter()) {
+	    !(traceNode.isFileWriter() && OffChipBuffer.unnecessary(traceNode))) {
 	    int dummy = RawChip.cacheLineWords - ((items * typeSize) % RawChip.cacheLineWords);
 	    SwitchCodeStore.dummyOutgoing(dest[0], dummy, init || primepump);
 	}
@@ -540,7 +551,8 @@ public class Rawify
 	    int remainder =
 		((iterations * typeSize * 
 		 traceNode.getWeight(edge)) % RawChip.cacheLineWords);
-	    if (remainder > 0 && !edge.getSrc().isFileReader())
+	    if (remainder > 0 && !(edge.getSrc().isFileReader() && 
+				   OffChipBuffer.unnecessary(edge.getSrc())))
 		SwitchCodeStore.disregardIncoming(InterTraceBuffer.getBuffer(edge).getDRAM(),
 						  RawChip.cacheLineWords - remainder, 
 						  init || primepump);
@@ -612,7 +624,7 @@ public class Rawify
 	int mod = 
 		(((iterations + ppSteadyIt) * traceNode.totalWeights() * typeSize) % RawChip.cacheLineWords);
 	//don't cache align file readers
-	if (mod > 0 && !traceNode.isFileReader()) {
+	if (mod > 0 && !(traceNode.isFileReader() && OffChipBuffer.unnecessary(traceNode))) {
 	    int remainder = RawChip.cacheLineWords - mod;
 	    //System.out.println("Remainder for disregarding input on split trace: " + remainder);
 	    SwitchCodeStore.disregardIncoming(sourcePort, remainder, init || primepump);
@@ -660,7 +672,8 @@ public class Rawify
 		int remainder = ((typeSize * iterations * traceNode.getWeight(edge)) %
 				 RawChip.cacheLineWords);
 		//don't fill cache line for files
-		if (remainder > 0 && !edge.getDest().isFileWriter())
+		if (remainder > 0 && !(edge.getDest().isFileWriter() && 
+				       OffChipBuffer.unnecessary(edge.getDest())))
 		    SwitchCodeStore.dummyOutgoing(InterTraceBuffer.getBuffer(edge).getDRAM(),
 						  RawChip.cacheLineWords - remainder, 
 						  init || primepump);
@@ -986,7 +999,15 @@ public class Rawify
 	
 	//don't cache align the dest if the true dest is a file writer
 	boolean cacheAlignDest = true; 
-	assert false;
+	if (node.getNext() instanceof OutputTraceNode) {
+	    OutputTraceNode output = (OutputTraceNode)node.getNext();
+	    if (output.oneOutput() && 
+		output.getSingleEdge().getDest().isFileWriter() &&
+		OffChipBuffer.unnecessary(output.getSingleEdge().getDest()))
+		cacheAlignDest = false;
+	}
+	
+
       
 	if (primePump)
 	    mult = filterInfo.primePump - (filterInfo.push == 0 ? 0 :

@@ -16,7 +16,7 @@ import at.dms.util.*;
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;,
  *          David Ziegler &lt;dziegler@cag.lcs.mit.edu&gt;
- * @version $Id: ToKopi.java,v 1.5 2003-07-16 12:48:57 dmaze Exp $
+ * @version $Id: ToKopi.java,v 1.6 2003-07-25 20:00:21 dmaze Exp $
  */
 public class ToKopi
 {
@@ -113,10 +113,8 @@ public class ToKopi
 
         prog = lowerIRToJava(prog);
 
+        System.out.println("/*");
         SIRStream s = (SIRStream) prog.accept(new FEIRToSIR());
-        SIRPrinter sirPrinter = new SIRPrinter();
-        IterFactory.createIter(s).accept(sirPrinter);
-        sirPrinter.close();
         Flattener.flatten(s, new JInterfaceDeclaration[0],
                           new SIRInterfaceTable[0], new SIRStructure[0]);
     }

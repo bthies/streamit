@@ -1674,7 +1674,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitStringLiteral(String value)
     {
         blockStart("StringLiteral");
-	return value;
+	return new JStringLiteral(null, value);
     }
 
     /**
@@ -1683,7 +1683,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitNullLiteral()
     {
         blockStart("NullLiteral");
-	return null;
+	return new JNullLiteral(null);
     }
 
     /*-------------------------------------------------------------------------

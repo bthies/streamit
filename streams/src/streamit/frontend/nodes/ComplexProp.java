@@ -1,7 +1,7 @@
 /*
  * ComplexProp.java: cause complex values to bubble upwards
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ComplexProp.java,v 1.9 2002-08-20 20:04:28 dmaze Exp $
+ * $Id: ComplexProp.java,v 1.10 2002-10-04 02:18:28 dmaze Exp $
  */
 
 // Does this actually belong here?  If we evolve more front-end passes,
@@ -271,24 +271,27 @@ public class ComplexProp extends FEReplacer
         
         // Lots of special cases here.  We care about a function if
         // it matches the conditions in isEligibleFunCall().
-        if (isEligibleFunCall(exp, params, "abs"))
+        if (isEligibleFunCall(exp, params, "abs", 1))
             return fcAbs(exp, (ExprComplex)params.get(0));
-        if (isEligibleFunCall(exp, params, "arg"))
+        if (isEligibleFunCall(exp, params, "arg", 1))
             return fcArg(exp, (ExprComplex)params.get(0));
-        if (isEligibleFunCall(exp, params, "exp"))
+        if (isEligibleFunCall(exp, params, "exp", 1))
             return fcExp(exp, (ExprComplex)params.get(0));
-        if (isEligibleFunCall(exp, params, "log"))
+        if (isEligibleFunCall(exp, params, "log", 1))
             return fcLog(exp, (ExprComplex)params.get(0));
-        if (isEligibleFunCall(exp, params, "sin"))
+        if (isEligibleFunCall(exp, params, "sin", 1))
             return fcSin(exp, (ExprComplex)params.get(0));
-        if (isEligibleFunCall(exp, params, "cos"))
+        if (isEligibleFunCall(exp, params, "cos", 1))
             return fcCos(exp, (ExprComplex)params.get(0));
+	if (isEligibleFunCall(exp, params, "pow", 2))
+	    return fcPow(exp, (Expression)params.get(0),
+			 (Expression)params.get(1));
 
         // sqrt() is special; sqrt() of a real can return a complex
         // answer if its argument is negative, but we don't always
         // want sqrt() to return complex.  So have sqrt(complex)
         // return complex, and csqrt(anything) also return complex.
-        if (isEligibleFunCall(exp, params, "sqrt"))
+        if (isEligibleFunCall(exp, params, "sqrt", 1))
             return fcSqrt(exp, (ExprComplex)params.get(0));
         if (exp.getName().equals("csqrt"))
             return fcCSqrt(exp, (Expression)params.get(0));
@@ -296,20 +299,24 @@ public class ComplexProp extends FEReplacer
         return new ExprFunCall(exp.getContext(), exp.getName(), params);
     }
 
-    private boolean isEligibleFunCall(ExprFunCall exp, List params, String fn)
+    private boolean isEligibleFunCall(ExprFunCall exp, List params, String fn,
+				      int nParams)
     {
         // A function call is eligible if:
         // -- Its name is exactly fn;
-        // -- It has exactly one parameter;
-        // -- That parameter is complex.
+        // -- It has exactly nParams parameters;
+        // -- Any parameter is complex.
         if (!(exp.getName().equals(fn)))
             return false;
-        if (params.size() != 1)
+        if (params.size() != nParams)
             return false;
-        Expression param = (Expression)params.get(0);
-        if (!(param instanceof ExprComplex))
-            return false;
-        return true;
+	for (Iterator iter = params.iterator(); iter.hasNext(); )
+	{
+	    Expression param = (Expression)iter.next();
+	    if (param instanceof ExprComplex)
+		return true;
+	}
+        return false;
     }
 
     public Expression fcAbs(ExprFunCall fc, ExprComplex param)
@@ -426,6 +433,45 @@ public class ComplexProp extends FEReplacer
                                          ExprBinary.BINOP_MUL, iMag, sinA);
         
         return new ExprComplex(fc.getContext(), real, imag);
+    }
+
+    public Expression fcPow(ExprFunCall fc, Expression base, Expression exp)
+    {
+	// Go to polar form.  Then base=C*e(a+bi); we just add exp to the
+	// exponent.
+	Expression absBase = base;
+	Expression argBase = new ExprConstInt(base.getContext(), 0);
+	if (base instanceof ExprComplex)
+	{
+	    absBase = new ExprFunCall(base.getContext(), "abs", base);
+	    absBase = (Expression)absBase.accept(this);
+	    argBase = new ExprFunCall(base.getContext(), "arg", base);
+	    argBase = (Expression)argBase.accept(this);
+	}
+	
+	Expression newExp = new ExprBinary(base.getContext(),
+					   ExprBinary.BINOP_ADD,
+					   argBase, exp);
+	Expression real = new ExprFunCall(base.getContext(), "cos", newExp);
+	real = new ExprBinary(real.getContext(), ExprBinary.BINOP_MUL,
+			      real, absBase);
+	Expression imag = new ExprFunCall(base.getContext(), "sin", newExp);
+	imag = new ExprBinary(imag.getContext(), ExprBinary.BINOP_MUL,
+			      imag, absBase);
+	// Now, this is actually a little tricky: if newExp is complex
+	// (meaning that exp is complex), then real and imag will both
+	// also be complex.  So create the variable (real + i*imag):
+	imag = new ExprBinary(imag.getContext(), ExprBinary.BINOP_MUL,
+			      imag, new ExprComplex(imag.getContext(),
+						    new ExprConstInt(imag.getContext(),
+								     0),
+						    new ExprConstInt(imag.getContext(),
+								     1)));
+	Expression result = new ExprBinary(base.getContext(),
+					   ExprBinary.BINOP_ADD, real, imag);
+	// And run ComplexProp on this.
+	result = (Expression)result.accept(this);
+	return result;
     }
 
     public Expression fcSqrt(ExprFunCall fc, ExprComplex param)

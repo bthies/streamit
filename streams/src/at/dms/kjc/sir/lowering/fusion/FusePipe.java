@@ -160,7 +160,7 @@ public class FusePipe {
 	// necessary because in the process of patching the parent
 	// init function, we need to know about the new target.  Not a
 	// perfect solution.
-	SIRFilter result = new SIRFilter();
+	SIRFilter result = new SIRTwoStageFilter();
 
 	// rename the components of the filters
 	RenameAll renamer = new RenameAll();
@@ -720,35 +720,48 @@ public class FusePipe {
 	FilterInfo first = (FilterInfo)filterInfo.get(0);
 	FilterInfo last = (FilterInfo)filterInfo.get(filterInfo.size()-1);
 
-	// calculate the peek, pop, and push count of the fused filter
-	int popCount = 
-	    (first.init.num + first.steady.num) * first.filter.getPopInt();
-	int peekCount = 
-	    (first.filter.getPeekInt() - first.filter.getPopInt()) + popCount;
-	int pushCount = 
-	    (last.init.num + last.steady.num) * last.filter.getPushInt();
+	// calculate the peek, pop, and push count for the fused
+	// filter in the INITIAL state
+	int initPop = first.init.num * first.filter.getPopInt();
+	int initPeek =
+	    (first.filter.getPeekInt() - first.filter.getPopInt()) + initPop;
+	int initPush = last.init.num * last.filter.getPushInt();
 
-	System.out.println(" Fused filter peek = " + peekCount);
-	System.out.println("              pop  = " + popCount);
-	System.out.println("              push = " + pushCount);
+	// calculate the peek, pop, and push count for the fused
+	// filter in the STEADY state
+	int steadyPop = first.steady.num * first.filter.getPopInt();
+	int steadyPeek = 
+	    (first.filter.getPeekInt() - first.filter.getPopInt()) + steadyPop;
+	int steadyPush = last.steady.num * last.filter.getPushInt();
+
+	System.out.println(" Fused filter init peek   = " + initPeek);
+	System.out.println("              init pop    = " + initPop);
+	System.out.println("              init push   = " + initPush);
+	System.out.println("              steady peek = " + steadyPeek);
+	System.out.println("              steady pop  = " + steadyPop);
+	System.out.println("              steady push = " + steadyPush);
 
 	// make a new filter to represent the fused combo
-	result.copyState(new SIRFilter(first.filter.getParent(),
-				       getFusedName(filterInfo),
-				       getFields(filterInfo),
-				       getMethods(filterInfo, 
-						  init, initWork, steadyWork),
-				       new JIntLiteral(peekCount), 
-				       new JIntLiteral(popCount),
-				       new JIntLiteral(pushCount),
-				       steadyWork,
-				       first.filter.getInputType(),
-				       last.filter.getOutputType()));
-
+	result.copyState(new SIRTwoStageFilter(first.filter.getParent(),
+					       getFusedName(filterInfo),
+					       getFields(filterInfo),
+					       getMethods(filterInfo, 
+							  init, 
+							  initWork, 
+							  steadyWork),
+					       new JIntLiteral(steadyPeek), 
+					       new JIntLiteral(steadyPop),
+					       new JIntLiteral(steadyPush),
+					       steadyWork,
+					       initPeek,
+					       initPop,
+					       initPush,
+					       initWork,
+					       first.filter.getInputType(),
+					       last.filter.getOutputType()));
+	
 	// set init functions and work functions of fused filter
 	result.setInit(init);
-	result.setWork(steadyWork);
-	result.setInitWork(initWork);
     }
 				
 }
@@ -1110,13 +1123,6 @@ class InitFuser extends SLIRReplacingVisitor {
 					  dims,
 					  null)), null));
 	}
-	// add call to initWork function
-	JExpression call = 
-	    new JMethodCallExpression(null,
-				      new JThisExpression(null),
-				      initWork.getName(),
-				      JExpression.EMPTY);
-	fusedBlock.addStatement(new JExpressionStatement(null, call, null));
 	// now we can make the init function
 	this.initFunction = new JMethodDeclaration(null,
 				      at.dms.kjc.Constants.ACC_PUBLIC,

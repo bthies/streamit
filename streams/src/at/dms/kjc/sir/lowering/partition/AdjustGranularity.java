@@ -55,10 +55,106 @@ public class AdjustGranularity {
 	    doBeam16_2(str);
 	} else if (app.equals("beam3")) {
 	    doBeam16_3(str);
+	} else if (app.equals("beam4")) {
+	    doBeam16_4(str);
+	} else if (app.equals("bb1")) {
+	    doBigBeam1(str, 2);
+	} else if (app.equals("bb2")) {
+	    doBigBeam2(str);
+	} else if (app.equals("bb3")) {
+	    doBigBeam1(str, 3);
 	} else {
 	    Utils.fail("no custom procedure for app \"" + app + "\" on " +
 		       "granularity of " + num + ".");
 	}
+    }
+
+    private static void doBigBeam1(SIRStream _str, int numSplits) {
+	SIRPipeline str = (SIRPipeline)_str;	
+
+	StreamItDot.printGraph(str, "unbalanced.dot");
+	System.err.println("Working on the big beamform...");
+
+	FuseAll.fuse(str);
+
+	// fuse hierarchical splitjoins
+	for (int k=0; k<numSplits; k++) {
+	    SIRSplitJoin sj = (SIRSplitJoin)str.get(k);
+	    for (int i=0; i<sj.size(); i++) {
+		SIRSplitJoin toFuse = (SIRSplitJoin)((SIRPipeline)(sj.get(i))).get(0);
+	        SIRStream result = FuseSplit.fuse(toFuse);
+		if (result==toFuse) {
+		    System.err.println("Rejected for fusion: " + toFuse);
+		}
+		FusePipe.fuse((SIRPipeline)sj.get(i));
+	    }
+	}
+	
+	/*
+	FuseSplit.fuse((SIRSplitJoin)str.get(1));
+	StreamItDot.printGraph(str, "1.dot");
+	FuseSplit.fuse((SIRSplitJoin)str.get(3));
+	FusePipe.fuse((SIRFilter)str.get(3),
+		      (SIRFilter)str.get(4));
+	*/
+
+	//ConstantProp.propagateAndUnroll(str);
+	//FieldProp.doPropagate(str);
+
+	StreamItDot.printGraph(str, "balanced.dot");
+	Namer.assignNames(str);
+    }
+
+    private static void doBigBeam2(SIRStream _str) {
+	SIRPipeline str = (SIRPipeline)_str;	
+
+	StreamItDot.printGraph(str, "unbalanced.dot");
+	System.err.println("Working on big beamform #2...");
+
+	FuseAll.fuse(str);
+
+	StreamItDot.printGraph(str, "1.dot");
+
+	// fuse hierarchical splitjoins
+	/*
+	for (int k=1; k<2; k++) {
+	    SIRSplitJoin sj = (SIRSplitJoin)str.get(k);
+	    for (int i=0; i<sj.size(); i++) {
+		SIRSplitJoin toFuse = (SIRSplitJoin)((SIRPipeline)(sj.get(i))).get(0);
+	        SIRStream result = FuseSplit.fuse(toFuse);
+		if (result==toFuse) {
+		    System.err.println("Rejected for fusion: " + toFuse);
+		}
+		// (2) for second one, fuse resulting pipeline
+		if (k==1) { 
+		    FusePipe.fuse((SIRPipeline)sj.get(i));
+		}
+	    }
+	}
+	
+	// (2) fuse third sj and pipe
+	FuseSplit.fuse((SIRSplitJoin)str.get(2));
+	FusePipe.fuse((SIRFilter)str.get(2),
+		      (SIRFilter)str.get(3));
+	*/
+
+	SIRSplitJoin split1 = (SIRSplitJoin)str.get(1);
+	SIRSplitJoin split2 = (SIRSplitJoin)str.get(3);
+	SIRSplitJoin split3 = (SIRSplitJoin)str.get(5);
+
+	FuseSplit.fuse(split1);
+	FuseSplit.fuse(split2);
+	FuseSplit.fuse(split3);
+	/*
+	FusePipe.fuse((SIRFilter)str.get(3),
+		      (SIRFilter)str.get(4));
+	*/
+
+	//ConstantProp.propagateAndUnroll(str);
+	//FieldProp.doPropagate(str);
+
+	StreamItDot.printGraph(str, "balanced.dot");
+	Namer.assignNames(str);
     }
 
     private static void doBeam16_2(SIRStream str) {
@@ -132,15 +228,15 @@ public class AdjustGranularity {
 	// fuse the beamfirfilters
 	for (int i=0; i<2; i++) {
 	    SIRFilter f1 = (SIRFilter) 
-		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(0) ).get(i) ).get(0);
-	    SIRFilter f2 = (SIRFilter) 
 		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(0) ).get(i) ).get(1);
+	    SIRFilter f2 = (SIRFilter) 
+		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(0) ).get(i) ).get(2);
 	    FusePipe.fuse(f1, f2);
+	    /*
 	    // get the fused guy
 	    SIRFilter fused = (SIRFilter) 
 		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(0) ).get(i) ).get(0);
 	    // fizz him twice 
-	    /*
 	    StatelessDuplicate.doit(fused, 2);
 	    */
 	}
@@ -150,6 +246,83 @@ public class AdjustGranularity {
 	    SIRFilter f1 = (SIRFilter) 
 		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(1) ).get(i) ).get(0);
 	    SIRFilter f2 = (SIRFilter) 
+		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(1) ).get(i) ).get(3);
+	    FusePipe.fuse(f1, f2);
+	    StreamItDot.printGraph(str, (i)+".dot");
+	    SIRTwoStageFilter fused = (SIRTwoStageFilter)
+		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(1) ).get(i) ).get(0);
+	    System.err.println("trying to fiss: " + fused + " " + fused.getName());
+	    System.err.println("the downstream fused filter has\n  pop=" + (fused.getPopInt())
+			       + "\n  peek=" + (fused.getPeekInt())
+			       + "\n  push=" + (fused.getPushInt()) 
+			       + "\n  initPop=" + (fused.getInitPop()) 
+			       + "\n  initPeek=" + (fused.getInitPeek()) 
+			       + "\n  initPush=" + (fused.getInitPush()));
+	    //fizz twice
+	    StatelessDuplicate.doit(fused, 5);
+	}
+
+	StreamItDot.printGraph(str, "balanced.dot");
+
+	ConstantProp.propagateAndUnroll(str);
+	//FieldProp.doPropagate(str);
+
+	Namer.assignNames(str);
+	/*
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("after-adjust.dot");
+	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+	*/
+	//	WorkEstimate.getWorkEstimate(str).printWork();
+    }
+
+    private static void doBeam16_4(SIRStream str) {
+	RawFlattener rawFlattener;
+
+	StreamItDot.printGraph(str, "unbalanced.dot");
+
+	System.err.println("Working on Beamformer...");
+
+	/*
+	FieldProp.doPropagate(str);
+	ConstantProp.propagateAndUnroll(str);
+
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("before-adjust.dot");
+	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+	*/
+
+	WorkEstimate.getWorkEstimate(str).printWork();
+
+	// fuse the top splitjoin
+	for (int i=0; i<2; i++) {
+	    SIRFilter f1 = (SIRFilter) 
+		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(0) ).get(i) ).get(0);
+	    SIRFilter f2 = (SIRFilter) 
+		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(0) ).get(i) ).get(2);
+	    FusePipe.fuse(f1, f2);
+	    Lifter.eliminatePipe((SIRPipeline)((SIRSplitJoin) ((SIRPipeline)str).get(0) ).get(i));
+	}
+
+	// fuse the splitjoin
+	FuseSplit.fuse((SIRSplitJoin)((SIRPipeline)str).get(0));
+
+	SIRFilter f1 = (SIRFilter)((SIRPipeline)str).get(0);
+	SIRFilter f2 = (SIRFilter)((SIRPipeline)str).get(1);
+	FusePipe.fuse(f1, f2);
+
+	// split it
+	StatelessDuplicate.doit((SIRFilter)((SIRPipeline)str).get(0), 3);
+
+	StreamItDot.printGraph(str, "balanced0.dot");
+
+	// fuse downstream sj
+	for (int i=0; i<2; i++) {
+	    f1 = (SIRFilter) 
+		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(1) ).get(i) ).get(0);
+	    f2 = (SIRFilter) 
 		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(1) ).get(i) ).get(3);
 	    FusePipe.fuse(f1, f2);
 	    StreamItDot.printGraph(str, (i)+".dot");
@@ -207,23 +380,19 @@ public class AdjustGranularity {
 	SIRFilter f2 = (SIRFilter) ((SIRPipeline)str).get(1);
 	FusePipe.fuse(f1, f2);
 
-	// fuse the first inputgenerate 
-
 	// fuse the beamfirfilter
-	/*
-	  for (int i=0; i<2; i++) {
-	  SIRFilter f1 = (SIRFilter) 
-	  ((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(0) ).get(i) ).get(0);
-	  SIRFilter f2 = (SIRFilter) 
-	  ((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(0) ).get(i) ).get(1);
-	  FusePipe.fuse(f1, f2);
-	  // get the fused guy
-	  SIRFilter fused = (SIRFilter) 
-	  ((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(0) ).get(i) ).get(0);
+	for (int i=0; i<2; i++) {
+	    f1 = (SIRFilter) 
+		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(1) ).get(i) ).get(0);
+	     f2 = (SIRFilter) 
+		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(1) ).get(i) ).get(1);
+	    FusePipe.fuse(f1, f2);
+	    // get the fused guy
+	    SIRFilter fused = (SIRFilter) 
+		((SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(1) ).get(i) ).get(0);
 	  // fizz him twice 
 	  StatelessDuplicate.doit(fused, 2);
 	}
-	*/
 
 	// fuse downstream sj
 	for (int i=0; i<2; i++) {
@@ -441,6 +610,86 @@ public class AdjustGranularity {
 	*/
     }
 
+    private static void doFM16_2(SIRStream str) {
+	RawFlattener rawFlattener;
+
+	System.err.println("Working on FM 16...");
+	/*
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("before-adjust.dot");
+	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+	WorkEstimate.getWorkEstimate(str).printWork();
+	*/
+	StreamItDot.printGraph(str, "before.dot");
+
+	// fizzzzz the low-pass filter
+	SIRFilter lowPass = (SIRFilter)Namer.getStream("LowPassFilter_2_1");
+	StatelessDuplicate.doit(lowPass, 2);
+	// constant-prop through new filters
+	ConstantProp.propagateAndUnroll(lowPass.getParent());
+	FieldProp.doPropagate((lowPass.getParent()));
+
+	// fuse the last three filters
+	SIRFilter adder = (SIRFilter)Namer.getStream("FloatSubtract_2_3_2");
+	SIRFilter printer = (SIRFilter)Namer.getStream("FloatAdder_2_3_3");
+	//	SIRFilter printer = (SIRFilter)Namer.getStream("FloatPrinter_2_3_4");
+	FusePipe.fuse(adder, printer);
+
+	/*
+	// fuse the splitjoin in each stream
+	SIRSplitJoin split1 = (SIRSplitJoin)Namer.getStream("BandPassSplitJoin_2_3_1_2_1");
+	SIRSplitJoin split2 = (SIRSplitJoin)Namer.getStream("BandPassSplitJoin_2_3_1_3_1");
+	SIRPipeline pipe1 = (SIRPipeline)split1.getParent();
+	SIRPipeline pipe2 = (SIRPipeline)split2.getParent();
+
+	// fuse the splits
+	FuseSplit.fuse(split1);
+	FuseSplit.fuse(split2);
+	
+	// fuse the results
+	FusePipe.fuse(pipe1);
+	FusePipe.fuse(pipe2);
+
+	// then fizz it three times
+	StatelessDuplicate.doit((SIRFilter)pipe1.get(0), 3);
+	StatelessDuplicate.doit((SIRFilter)pipe2.get(0), 3);
+	*/
+
+	/* this fizzes the lpf's 2 ways each *
+	   StatelessDuplicate.doit((SIRFilter)Namer.getStream("LowPassFilter_2_3_1_2_1_2"), 2);
+	   StatelessDuplicate.doit((SIRFilter)Namer.getStream("LowPassFilter_2_3_1_2_1_3"), 2);
+	   StatelessDuplicate.doit((SIRFilter)Namer.getStream("LowPassFilter_2_3_1_3_1_2"), 2);
+	   StatelessDuplicate.doit((SIRFilter)Namer.getStream("LowPassFilter_2_3_1_3_1_3"), 2);
+	   /**/
+	
+	ConstantProp.propagateAndUnroll(str);
+	FieldProp.doPropagate(str);	
+	/*
+	ConstantProp.propagateAndUnroll(pipe2);
+	FieldProp.doPropagate(pipe2);
+	*/
+
+	Namer.assignNames(str);
+
+	StreamItDot.printGraph(str, "after.dot");
+
+	/*
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("after-adjust.dot");
+	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+	WorkEstimate.getWorkEstimate(str).printWork();
+	*/
+
+	/*
+	System.out.println("Here's the new IR: ");
+	SIRPrinter printer1 = new SIRPrinter();
+	str.accept(printer1);
+	printer1.close();
+	*/
+    }
+
     private static void doFFT1(SIRStream str) {
 	RawFlattener rawFlattener;
 
@@ -567,67 +816,4 @@ public class AdjustGranularity {
 	StreamItDot.printGraph(str, "after.dot");
     }
     */
-
-    private static void doFM16_2(SIRStream str) {
-	RawFlattener rawFlattener;
-
-	System.err.println("Working on FM 16...");
-	rawFlattener = new RawFlattener(str);
-	rawFlattener.dumpGraph("before-adjust.dot");
-	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
-			   " tiles");
-	WorkEstimate.getWorkEstimate(str).printWork();
-
-	StreamItDot.printGraph(str, "1.dot");
-
-	//	FieldProp.doPropagate(str);
-
-	//	FuseSplit.doFlatten(str);
-	// get the inner splitjoin and fuse its pipes
-	SIRSplitJoin split = (SIRSplitJoin)Namer.getStream("EqualizerSplitJoin_2_3_1");
-	//FuseAll.fuse(split);
-
-	//now fizz each side of the split-join by 3
-	//StatelessDuplicate.doit((SIRFilter)split.get(0),3);
-	//StatelessDuplicate.doit((SIRFilter)split.get(1),3);
-	// constant-prop through new filters
-	ConstantProp.propagateAndUnroll(split);
-	//	FieldProp.doPropagate(split);
-
-	// fuse the second two filters
-	SIRPipeline pipe = (SIRPipeline)((SIRPipeline)str).get(1);
-	/*
-	System.err.println("Trying to fuse " + pipe.get(0) + " " + 
-			   ((SIRStream)pipe.get(0)).getName() + " and " + pipe.get(1) +
-			   " " + ((SIRStream)pipe.get(1)).getName());
-	FusePipe.fuse((SIRFilter)pipe.get(0),
-		      (SIRFilter)pipe.get(1));
-	*/
-
-	// fizzzzz the lpf 3 ways
-	//StatelessDuplicate.doit((SIRFilter)pipe.get(0), 3);
-	// constant-prop through new filters
-	//ConstantProp.propagateAndUnroll(pipe);
-	//FieldProp.doPropagate(str);
-
-	// fuse the last three filters
-	/*
-	SIRFilter adder = (SIRFilter)Namer.getStream("FloatSubtract_2_3_2");
-	SIRFilter printer = (SIRFilter)Namer.getStream("FloatPrinter_2_3_4");
-	FusePipe.fuse(adder, printer);
-	*/
-
-	//	Namer.assignNames(str);
-	rawFlattener = new RawFlattener(str);
-	rawFlattener.dumpGraph("after-adjust.dot");
-	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
-			   " tiles");
-	WorkEstimate.getWorkEstimate(str).printWork();
-
-	System.out.println("Here's the new IR: ");
-	SIRPrinter printer1 = new SIRPrinter();
-	str.accept(printer1);
-	printer1.close();
-    }
-
 }

@@ -1,0 +1,606 @@
+// performes the forward substitution 
+float->float splitjoin LrL(int N) {
+
+  split roundrobin(N+N*(N+1)/2,N*(N+1)/2);
+  add forw(N);
+  add Identity<float>;
+  join roundrobin(N,N*(N+1)/2);
+}
+
+
+// calculates the matrix AH (row oriented?) and L and adds them to the tape, plus a copy of AhA
+void->float pipeline AddAHLAhA(int W,int Q,int N, int K, float[W][K] h, float[Q][K] C) {
+
+	add SourceAHL(W,Q,N,K,h,C);
+}
+
+
+
+void->float pipeline SourceAHL(int W, int Q, int N, int K, float[W][K] h, float[Q][K] C) {
+
+  add Sourceh(W,K,h);
+  add GenA(W,Q,N,K,C);
+  add AandL(Q*N+W-1,K*N);
+}
+
+
+float->float splitjoin AandL(int M, int N) {
+
+  split duplicate();
+  add Identity<float>;
+  add GenL(M,N);
+  join roundrobin(M*N,N*(N+1));
+
+}
+
+// the input is matrix A (row oriented), the output is L and AhA ( which will be used in the dext stage)
+float->float pipeline GenL(int M, int N) {
+
+  add RowCol(M,N);
+  add SelfProd(M,N);
+  add choldAha(N);
+}
+
+
+// the input is AhA, the output is cholskey decomposition, N is the dim of Aha
+float->float splitjoin choldAha(int N) {
+
+  split duplicate();
+  add chold(N);
+  add Identity<float>;
+  join roundrobin(N*(N+1)/2,N*(N+1)/2);
+}
+
+
+void->float filter Sourceh(int W, int K, float[W][K] d) {
+
+  work push K*W pop 0 {
+
+    for(int i=0; i<K; i++)
+      for(int j=0; j<W; j++)
+        push(d[j][i]);
+  }
+} 
+
+
+// this Filter performs the cholesky decomposition through
+
+float->float filter chold(int N) {
+
+  work push N*(N+1)/2 pop N*(N+1)/2 {
+
+    float[N][N] A;
+    float[N] p;
+    float sum; // sum serves as a buffer
+
+    for (int i=0; i<N;i++)
+	{  
+	    for (int j=0; j<=i ; j++)
+		A[i][j]=pop(); 
+
+	}
+
+    for (int i=0; i <N ; i++) { 
+	for (int j=i; j<N ; j++) {
+	    sum=A[j][i];
+	    for (int k=i-1 ; k>=0; k--) sum-=A[k][i]*A[k][j];
+	    if ( i==j)
+		{
+		    p[i]=(float)sqrt(sum);
+		    push(p[i]);
+		}
+	    else
+		{
+		    A[i][j]=sum/p[i];
+		    push(A[i][j]);
+		}
+	} 
+    }
+
+  }    
+}
+
+
+// generates the proper delays for the convolution of C and h
+float->float splitjoin DelMat(int Q, int N) {
+
+  split duplicate();
+  add Identity<float>;
+  for(int i=1; i<N; i++)
+    add DelayPipeline(i*Q);
+  join roundrobin();
+}
+
+
+// generates the matrix consisting of the convolution of h and c. reads h column wise as in [1]
+float->float splitjoin ConvMat(int K, int W, int Q, int N, float[Q][K] C) {
+
+  float[Q] Crow;
+
+  split roundrobin(W);
+  for(int i=0; i<K; i++) {
+    for(int j=0; j<Q; j++)
+      Crow[j] = C[j][i];
+
+    add extFilt(W,W+N*Q-1,Q,Crow);
+  }
+  join roundrobin(W+N*Q-1);
+}
+
+
+// connects the ConvMat to DelMat
+float->float splitjoin SplitMat(int W,int Q,int K, int N){
+
+  split roundrobin(N*Q+W-1);
+  for (int i=0;i<K;i++){
+    add DelMat(Q,N);
+  }
+  join roundrobin(N);    
+}
+
+
+// adds (M-L)zeros to a sequence of length L to make it have the right size
+float->float splitjoin AddZeroEnd(int L, int M){
+
+  split roundrobin(L,0);
+  add Identity<float>;
+  add ZeroGen();
+  join roundrobin(L,M-L);
+}
+
+
+// adds M zeros to the begining of a sequence of length L to make it have the right size
+float->float splitjoin AddZeroBeg(int M, int L) {
+
+  split roundrobin(0,L);
+  add ZeroGen();
+  add Identity<float>;
+  join roundrobin(M,L);
+}
+
+
+// this filter just generates a sequence of zeros
+void->float filter ZeroGen {
+ 
+  work push 1 pop 0 {
+    push(0.0);
+  }
+}
+
+
+// this filter performs the convolution of L  and then extends the sequence
+float->float pipeline extFilt(int W, int M, int Q, float[Q] impulse) {
+ 
+  add AddZeroBeg(Q-1,W);
+  add FirFilter(Q,impulse);
+  add AddZeroEnd(W+Q-1,M);
+}
+
+
+// the whole matrix A generator, the input is columnwise and the output is rowwise
+float->float pipeline GenA(int W,int Q, int N, int K, float[Q][K] C) {
+ 
+  add ConvMat(K,W,Q,N,C);
+  add SplitMat(W,Q,K,N);    
+}
+
+
+// this Filter performs back substition LTd=y. 
+float->float filter backs(int N){ 
+   
+ 
+    float[N][N]  LT; // L is the input matrix 
+    float[N]  d; // d is the output result
+    float[N]  y; //     
+   
+// we do not need to store the vector y, we need to read y in the backward direction, that is we have to read y[n-1] first and then proceed to y[0]
+    float    sum ; //this will be used as a buffer variable
+
+  work push N pop N+N*(N+1)/2 {
+    
+    for (int i=0; i<N ; i++)
+      y[i] = pop();
+
+    for (int i=0; i<N;i++)
+      for (int j=i; j<N;j++)
+        LT[i][j]=pop();
+    
+
+    for (int i=N-1; i>=0;i--)
+      {
+	  sum=y[i];
+	      for (int j=i+1; j<N ; j++)
+		  sum -= LT[i][j]*y[j];
+	      y[i]=sum/LT[i][i];
+          push(y[i]);
+      }
+  }
+}
+
+
+float->float pipeline DelayPipeline(int delay) {
+
+  for(int i=0; i<delay; i++)
+    add Delay();
+}
+
+
+/** Character Unit delay **/
+float->float filter Delay() {
+
+  float state;
+
+  init {
+    state = 0.0;
+  }
+
+  work push 1 pop 1 {
+
+    push(state);
+    state = pop();
+  }
+}
+
+
+float->float filter FirFilter(int N, float[N] COEFF) {
+
+
+  work push 1 pop 1 peek N {
+    float sum = 0;
+    for (int i=0; i<N ; i++)
+      sum+=peek(i)*COEFF[N-1-i];
+    pop();
+    push(sum);
+  }
+}
+
+
+float->float filter forw(int N) {
+
+  float[N][N] L;  // L is the input matrix 
+  float[N] y; // y is the output result
+       // we do not need to store the vector b
+  float sum;  //this will be used as a buffer variable
+
+  work push N pop N+N*(N+1)/2 {
+
+       for (int i=0; i <N; i++) {
+	   y[i]=pop();
+       }
+	
+    for( int i=0; i <N; i++)
+	for (int j=i; j<N; j++){
+      	    L[j][i]=pop();
+	}
+    
+  for (int i=0; i<N;i++)
+      {
+	  
+	  sum= y[i];
+	      for (int j=0; j<i ; j++)
+		  sum -= L[i][j]*y[j];
+	      y[i]=sum/L[i][i];
+          push(y[i]);
+      }
+  }
+}
+
+
+float->float filter multvect(int M, int N) // this Filter performs b=AHr
+{
+
+
+  work push N pop M+N*M {
+    float[M]  r;
+    float[N][M] AH;
+    float sum;
+
+    for (int i=0; i<M ; i++)
+	r[i]=pop();
+    for (int i=0; i<M;i++)
+	for (int j=0; j<N;j++)
+	    AH[j][i]=pop();
+    for (int i=0; i<N;i++)
+      {
+	  sum=0.0;
+	      for (int j=0; j<M ; j++)
+		  sum += AH[i][j]*r[j];
+          push(sum);
+      }
+  }
+}
+
+// this Filter converts the elements of an m by n matrix from row by row format to column by column format
+float->float splitjoin RowCol(int M, int N) {
+
+  split roundrobin();
+  for(int i=0; i<N; i++) 
+     add Identity<float>;
+  join roundrobin(M);
+}
+
+
+
+// this Filter mutiplies a matrix by its conjugate , M is the number of rows, N is the number columns, elements of the A are read column by column
+float->float filter SelfProd(int M, int N) {
+
+ work push N*(N+1)/2 pop N*M {
+	float[M][N] A;
+
+	for (int i=0; i<N;i++)
+	    {
+		for (int j=0; j<M;j++)
+		    A[j][i]=pop();
+		
+		for (int k=0; k<=i ; k++)
+		    {
+			float prod=0;
+			for(int j=0; j<M; j++)
+			    {
+				prod=prod+ A[j][i]*A[j][k] ;
+			    }
+			push(prod); 
+		    }
+	    }
+    }
+}
+
+
+// duplicates a vector
+float->float splitjoin vectdouble(int M) {
+
+  split duplicate();
+  add Identity<float>;
+  add Identity<float>;
+  join roundrobin(M);
+}
+
+
+float->float splitjoin sourcerSplit(int M, int end, int left) {
+
+  split roundrobin(0,left-M);
+  add Sourcer(M);
+  add Identity<float>;
+  join roundrobin(M,left-M);
+}
+
+
+// duplicates a vector and makes a copy
+float->float pipeline multvectdoub(int M,int N,int end,int left)  {
+
+  add sourcerSplit(M,end,left);
+  add multvect(M,N);
+  add vectdouble(N);
+}
+
+
+//calculates Ahr and duplicates L and passes Ahr,L(2 of them) to the next level
+float->float splitjoin AhrL1(int M,int N,int end) {
+
+  split roundrobin(M*(N+1)-M,N*(N+1)/2);
+  add multvectdoub(M,N,end,M*(N+1));
+  add vectdouble(N*(N+1)/2);
+  join roundrobin(2*N,N*(N+1));
+}
+
+
+//input to this pipeline is Ahr(N),L(N*N) and the output is d
+float->float pipeline dsolve(int N) { 
+ 
+  add LrL(N);
+  add backs(N);
+}
+
+//In:2* Ahr(N)+ 2 * L(N*(N+1)/2)
+float->float splitjoin split_ahrd(int N) {
+
+  split roundrobin(N,N*(N+1)+N);
+  add vectdouble(N);
+  add dsolve(N);
+  join roundrobin(2*N,N);
+}
+
+
+// the input is Ar, L , the output is Ahr,d,AhA 
+float->float pipeline Ahrd(int M, int N, int end) {
+
+  add AhrL1(M,N,end);
+  add split_ahrd(N);
+}
+
+
+// the input is r, L,AhA, the output is Ahr,d,AhA
+float->float splitjoin AhrdAhA(int M,int N,int end) {
+
+  split roundrobin(M*(N+1)+N*(N+1)/2-M,N*(N+1)/2);
+  add Ahrd(M,N,end);
+  add Identity<float>;                
+  join roundrobin(3*N,N*(N+1)/2);
+}
+
+
+// calculates Ahr and duplicates L, suitable for use in the second stage
+float->float splitjoin AhrL2(int M, int N) {
+
+  split roundrobin(M*(N+1),N*(N+1)/2);
+  add multvect(M,N);
+  add vectdouble(N*(N+1)/2);
+  join roundrobin(N,N*(N+1));
+}
+
+
+void->float filter Sourcer(int N) {
+
+  float[6] r;
+
+  init{
+	 r[0]=1;
+	 r[1]=2;
+	 r[2]=3;
+	 r[3]=4;
+	 r[4]=5;
+	 r[5]=6;
+  }
+
+  work push N pop 0 {
+    for(int i=0; i<N; i++)
+      push(r[i]);
+  }
+}
+
+
+float->void filter SinkD(int N) {
+
+  work push 0 pop N {
+
+    for(int i=0; i<N; i++)
+      print(pop());
+  }
+}
+
+
+// this class estimates the error in signal detection
+float->float filter error_est(int N) {
+
+  float[N] Ahr,d;
+ 
+  work push 1 pop(2*N) {
+
+    float sigma=0;	
+	  for (int i=0; i< N;i++){
+	      Ahr[i]=pop();
+	      // System.out.println(Ahr[i]);
+	  }
+	  for (int i=N-1; i >=0; i--){
+	      d[i]=pop();
+	      //   System.out.println(d[i]);
+	  }
+	 for (int i=0; i <N ; i++)
+	     sigma+=(d[i]-Ahr[i])*(d[i]-Ahr[i]);
+	 push(sigma);
+
+     }  
+}
+
+
+// this Filter performs the cholesky decomposition through 
+float->float filter choldsigma(int N) {
+
+  float[N][N] A;
+  float[N] p;
+  float sum;
+  float sigma;
+
+  work push N*(N+1)/2 pop 1+N*(N+1)/2 {
+
+float sum; // sum serves as a buffer
+	sigma=pop();
+	for (int i=0; i<N;i++)
+	    {  
+		for (int j=0; j<=i ; j++)
+		    A[i][j]=pop(); 
+		
+	    }
+	
+	for (int i=0; i <N ; i++) { 
+	    for (int j=i; j<N ; j++) {
+		sum=A[j][i];
+		for (int k=i-1 ; k>=0; k--) sum-=A[k][i]*A[k][j];
+		if ( i==j)
+		    {
+			p[i]=(float)sqrt(sum+sigma/N);
+			push(p[i]);
+		    }
+		else
+		    {
+			A[i][j]=sum/p[i];
+			push(A[i][j]);
+		    }
+	    }
+	}	
+    }
+}
+
+
+float->float splitjoin error_split(int N) {
+
+  split roundrobin(2*N,N*(N+1)/2);
+  add error_est(N);
+  add Identity<float>;
+  join roundrobin(1,N*(N+1)/2);
+}
+
+
+//  this pipeline estimates the error and then performes the cholskey decomp
+float->float pipeline Lest(int N) {
+
+  add error_split(N);
+  add choldsigma(N);
+  add vectdouble(N*(N+1)/2);
+}
+
+
+// copies Ahr to its out put and performes the compensated cholesky decomp with Ahr,d,AHA
+
+float->float splitjoin Ahrchold(int N) {
+
+  split roundrobin(N,2*N+N*(N+1)/2);
+  add Identity<float>;     
+  add Lest(N);
+  join roundrobin(N,N*(N+1));
+}
+
+
+
+
+void->void pipeline dcalc {
+
+	int K;
+	int N;
+	int Q;
+	int W;
+	float[2][2] h;
+	float[2][2] C;
+	float[6] r;
+    	K=2;
+	N=2;
+	Q=2;
+	W=2;
+	
+	h[0][0]=1;
+	h[0][1]=3;
+	h[1][0]=2;
+	h[1][1]=5;
+	C[0][0]=1;
+	C[0][1]=0;
+	C[1][0]=1;
+	C[1][1]=2;
+	r[0]=1;
+	r[1]=2;
+	r[2]=3;
+	r[3]=4;
+	r[4]=5;
+	r[5]=6;
+
+
+    
+
+	
+	//add(new Sourcer(Q*N+W-1,r));
+	//	add(new AddAHLAhA(W,Q,N,K,h,C));
+
+	add SourceAHL(W,Q,N,K,h,C);
+	add AhrdAhA(Q*N+W-1,K*N,K*N*(Q*N+W-1)+(K*N)*(K*N+1));
+       	//      add(new LrL(K*N));
+	//      add(new backs(K*N));
+	add Ahrchold(K*N);
+	add LrL(K*N);
+	add backs(K*N);
+	add SinkD(K*N);
+	//add(new FileWriter("out",Float.TYPE));
+}
+
+
+
+
+

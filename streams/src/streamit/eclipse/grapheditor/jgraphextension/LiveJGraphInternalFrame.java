@@ -10,6 +10,8 @@ import javax.swing.JInternalFrame;
 import java.util.HashMap;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentAdapter;
+import javax.swing.event.InternalFrameEvent;
+import javax.swing.event.InternalFrameAdapter;
 
 import com.jgraph.JGraph;
 import com.jgraph.graph.*;
@@ -53,6 +55,8 @@ public class LiveJGraphInternalFrame extends JInternalFrame
     	this.setClosable(false);
     	this.setDefaultCloseOperation(JInternalFrame.DISPOSE_ON_CLOSE);
 		
+		
+		
 		/*
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		JScrollPane sp = new JScrollPane(_jgraph);
@@ -74,6 +78,9 @@ public class LiveJGraphInternalFrame extends JInternalFrame
 	    JScrollPane sp = new JScrollPane(_jgraph);
     	mainPanel.add(sp,BorderLayout.CENTER);
     	this.addComponentListener(new FrameComponentListener());
+    	this.addInternalFrameListener(new FrameSelectionListener());
+    	this.addMouseListener(new JGraphMouseAdapter(this._jgraph));
+    	
 	    this.getContentPane().add(mainPanel);
 	   
     	this.pack();
@@ -147,6 +154,23 @@ public class LiveJGraphInternalFrame extends JInternalFrame
 	  }
 	}
 */
+
+	private class FrameSelectionListener extends InternalFrameAdapter {
+		public void internalFrameActivated(InternalFrameEvent ife)
+		{
+			JInternalFrame intFrame = ife.getInternalFrame();
+	  		System.out.println("*********&&&&&&&&&&&&&&***********The Frame has been activated " +ife.getInternalFrame().toString());
+		}
+
+		public void internalFrameDeactivated(InternalFrameEvent ife)
+		{
+			JInternalFrame intFrame = ife.getInternalFrame();
+	  		System.out.println("************&&&&&&&&&&&&**********The frame has been deactivated " + ife.getInternalFrame().toString());
+		}
+  }
+
+
+
 	private class FrameComponentListener extends ComponentAdapter {
 	  public void componentResized(ComponentEvent ce)
 	  {

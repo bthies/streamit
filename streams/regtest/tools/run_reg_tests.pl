@@ -7,7 +7,7 @@
 # Usage: run_reg_test.pl -- runs all of the regtests  (eg make test-all)
 #        run_reg_test.pl nightly -- runs nightly regtests (eg make test-nightly)
 #
-# $Id: run_reg_tests.pl,v 1.12 2003-03-07 23:55:56 aalamb Exp $
+# $Id: run_reg_tests.pl,v 1.13 2003-03-31 21:50:22 dmaze Exp $
 
 use strict;
 
@@ -27,6 +27,8 @@ $ENV{"AUTOMATIC_TEST"}="true";
 $ENV{"TOPDIR"}="/home/bits6/NO_BACKUP/streamit/starsearch";
 # Root location to store the reg test working files
 my $REGTEST_ROOT = "/home/bits7/NO_BACKUP/streamit/regtest_working";
+# Root location to store RT output
+my $RT_ROOT = "/projects/streamit/www/rt";
 
 
 # Start the actual work. If the first command line arg is "nightly" 
@@ -137,6 +139,8 @@ print MHMAIL $apps_executed;
 #send the email.
 close(MHMAIL);
 
+# generate RT-compatible output too
+saved_execute("$streamit_home/regtest/tools/html_results.pl $streamit_home $REG_LOG $REG_ERR $SUCCESS $RT_ROOT/Summary $RT_ROOT/listing.html");
 
 
 

@@ -13,10 +13,12 @@ import java.io.*;
 
 public class MakefileGenerator 
 {
+    public static final String MAKEFILE_NAME = "Makefile.streamit";
     public static void createMakefile() 
     {
 	try {
-	    FileWriter fw = new FileWriter("Makefile");
+	    //FileWriter fw = new FileWriter("Makefile");
+	    FileWriter fw = new FileWriter(MAKEFILE_NAME);
 	    //create a set of all the tiles with code
 	    HashSet tiles = new HashSet();
 	    tiles.addAll(TileCode.realTiles);

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNewArrayExpression.java,v 1.3 2001-11-10 21:40:35 thies Exp $
+ * $Id: JNewArrayExpression.java,v 1.4 2001-11-15 18:43:57 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -68,6 +68,13 @@ public class JNewArrayExpression extends JExpression {
    */
   public CType getType() {
     return type;
+  }
+
+  /**
+   * Find the dimensions of this expression
+   */
+  public JExpression[] getDims() {
+    return dims;
   }
 
   // ----------------------------------------------------------------------

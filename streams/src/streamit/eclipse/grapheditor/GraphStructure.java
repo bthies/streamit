@@ -3,9 +3,6 @@ package grapheditor;
 import java.util.*;
 import java.io.*;
 
-import com.sun.rsasign.t;
-
-
 /*
  * Created on Jun 18, 2003
  *

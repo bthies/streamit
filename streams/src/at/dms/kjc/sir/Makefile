@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.21 2002-02-22 13:24:18 thies Exp $
+## $Id: Makefile,v 1.22 2002-02-27 23:18:24 thies Exp $
 ##
 
 TOPDIR =	../..
@@ -75,7 +75,8 @@ JAVAFILES +=	StreamVisitor \
 		lowering/fusion/FusePipe \
 		lowering/fusion/FuseAll \
 		lowering/RenameAll \
-		lowering/LowerWorkFunctions
+		lowering/LowerWorkFunctions \
+		lowering/Unroller
 
 MESSAGES =	../KjcMessages
 

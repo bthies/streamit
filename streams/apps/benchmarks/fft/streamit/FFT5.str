@@ -1,0 +1,141 @@
+void->complex filter source() {
+  work push 8{	    
+    complex t;
+    t.imag = 0;
+    t.real = 0.9501; push(t);
+    t.real = 0.2311; push(t); 
+    t.real = 0.6068; push(t);
+    t.real = 0.4860; push(t);
+    t.real = 0.8913; push(t);
+    t.real = 0.7621; push(t);
+    t.real = 0.4565; push(t);
+    t.real = 0.0185; push(t); 
+
+  }
+}
+
+//////////////////////////////////
+/* The following recursive pipeline serves to bitreverse
+/* every N-inputs.
+//////////////////////////////////
+
+complex->complex pipeline bitreverse(int N) {
+  if(N == 1) { 
+     add Identity<complex>;
+  }
+  else {
+    add splitjoin { 
+      split roundrobin;
+      add bitreverse(N/2);
+      add bitreverse(N/2);
+      join roundrobin(N/2);
+    }
+  }
+}
+
+float->void filter sink {
+  work pop 1 {
+    print(pop());
+  }
+}
+
+///////////////////////////////////////
+/* Basic butterfly structure in FFT 
+///////////////////////////////////////
+
+complex->complex filter butterfly(int r, int num) {
+  work pop 2 peek 2 push 2 {
+    //exponential weights for butterfly 
+    complex WN1; complex WN2;
+    WN1.real = cos(-2*pi*r/num);
+    WN1.imag = sin(-2*pi*r/num);
+    WN2.real = cos(-2*pi*(r+num/2)/num);
+    WN2.imag = sin(-2*pi*(r+num/2)/num);
+    complex one = pop();
+    complex two = pop();
+
+    push(one+two*WN1);
+    push(one+two*WN2);
+  }
+}
+    
+////////////////////////////////////////////////
+/* Creates the sth stage of the FFT's log(N) stages
+////////////////////////////////////////////////
+
+complex->complex pipeline FFTstage(int N, int s) {
+  int num = 1;
+  for(int i=0;i<s;i++) num*=2;
+  if(num == N) {
+    add splitFinal(N);
+  }
+  else {    
+    add split1(N, num);
+  }
+}
+
+
+////////////////////////////////////////
+/* The following 3 splitX splitjoins are helper functions
+/* for FFTstage
+////////////////////////////////////////
+
+complex->complex splitjoin split1(int N, int num) {  
+  split roundrobin(num);
+    for(int i=1; i<=N/num; i++) {
+      add split2(i,num);
+    }
+    join roundrobin(num);
+}
+
+complex->complex splitjoin split2(int i, int num) {
+  split roundrobin(1);
+        for(int j=0;j<num/2;j++) {
+          add butterfly(j , num);
+        }
+  join roundrobin(1);
+}
+
+complex->complex splitjoin splitFinal(int N) {
+  split roundrobin(1);
+  for(int i=0;i<N/2;i++) add butterfly(i,N);
+  join roundrobin(1);
+}
+
+///////////////////////////////////
+/* Calculates magnitude of complex stream
+///////////////////////////////////
+
+complex->float filter magnitude() {
+  work pop 1 peek 1 push 1 {
+    complex c = pop();
+    push(sqrt(c.real*c.real+c.imag*c.imag));
+  }
+}
+
+complex->complex pipeline FFTKernel(int N) {
+  add bitreverse(8);
+  for(int i=1;i<4;i++) add FFTstage(8,i);
+}  
+void->void pipeline FFT {
+  add source();
+  add FFTKernel(8);
+  add magnitude();
+  add sink();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

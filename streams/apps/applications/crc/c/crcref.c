@@ -1,7 +1,7 @@
 /*
  * crcref.c: reference implementation of 32-bit CRC
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: crcref.c,v 1.3 2002-05-08 17:58:29 dmaze Exp $
+ * $Id: crcref.c,v 1.4 2003-01-25 06:57:55 thies Exp $
  */
 
 #ifdef raw
@@ -44,11 +44,6 @@ int main(int argc, char **argv)
 
 void begin(void)
 {
-#ifndef raw
-  FILE *fp;
-  fp = fopen("bleh", "w");
-#endif
-
   /* Main loop: */
   while (numiters == -1 || numiters-- > 0)
   {
@@ -57,12 +52,9 @@ void begin(void)
 #ifdef raw
     print_int(out);
 #else
-    fwrite(&out, sizeof(out), 1, fp);
+    printf("%d\n", out);
 #endif
   }
-#ifndef raw
-  fclose(fp);
-#endif
 }
 
 int getInput(void)

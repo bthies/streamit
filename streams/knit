@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.31 2003-05-28 21:15:52 thies Exp $
+# $Id: knit,v 1.32 2003-07-01 22:22:50 janiss Exp $
 #
 
 use strict;
@@ -38,7 +38,7 @@ if ($opts{'library'}) {
     exit(0);
 }
 $fns = old_to_c($fns);
-c_to_out($fns, $opts{output}) unless $opts{raw};
+c_to_out($fns, $opts{output}) unless ($opts{raw} || $opts{cluster});
 exit(0);
 
 sub usage
@@ -55,6 +55,7 @@ Options:
   --java              Input file is "old" syntax (in Java)
   --output filename   Write a binary to filename
   --raw n             Compile for RAW, with an n-by-n grid
+  --cluster           Compile for a networked cluster
 * --viram, -V         Compile for VIRAM, a vector uniprocessor
   --verbose           Print commands as they are executed
   --library           Run in the Java library instead of compiling
@@ -176,7 +177,8 @@ sub get_options
 	       "stats",
 	       "sync|k",
 	       "unroll|u=i",
-	       "viram|V");
+	       "viram|V",
+	       "cluster");
   }
 
 sub call
@@ -221,7 +223,7 @@ sub old_to_c
     my $kjcopts = get_kjc_opts();
     my $java = "java -Xmx" . $opts{memory};
     my $jfiles = join(' ', @$fns);
-    if (!$opts{raw})
+    if (!$opts{raw} && !$opts{cluster})
       {
 	my $target = change_extension($fns->[0], "java", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
@@ -305,6 +307,7 @@ sub get_kjc_opts
     $opts{sync} && ($kjcopts .= " -k");
     $opts{unroll} && ($kjcopts .= " -u " . $opts{unroll});
     $opts{viram} && ($kjcopts .= " -V");
+    $opts{cluster} && ($kjcopts .= " -cluster");
     return $kjcopts;
 }
 

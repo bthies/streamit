@@ -69,6 +69,13 @@ public class ComputeCodeStore {
 	addMethod(rawMain);
     }
 
+    public void addFileCommand(boolean read, int stage, int words,
+			       OffChipBuffer buffer) 
+    {
+	
+    }
+    
+
     //add a dram command to the compute code at the current time
     //if read is false, then it is a write
     //stage 0 = init, 1 = primepump init buffers, 2 = primepump steady buffers

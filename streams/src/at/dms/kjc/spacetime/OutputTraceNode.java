@@ -224,6 +224,16 @@ public class OutputTraceNode extends TraceNode
 	return getPrevFilter().getFilter() instanceof FileInputContent;
     }
 
+    public boolean hasFileOutput() 
+    {
+	Iterator dests = getDestSet().iterator();
+	while (dests.hasNext()) {
+	    if (((Edge)dests.next()).getDest().isFileWriter())
+		return true;
+	}
+	return false;
+    }
+    
     /*
     public int itemsReceived(boolean init, boolean primepump) 
     {

@@ -150,4 +150,13 @@ public class InputTraceNode extends TraceNode
     {
 	return getNextFilter().getFilter() instanceof FileOutputContent;
     }
+
+    public boolean hasFileInput() 
+    {
+	for (int i = 0; i < sources.length; i++) {
+	    if (sources[i].getSrc().isFileReader())
+		return true;
+	}
+	return false;
+    }
 }

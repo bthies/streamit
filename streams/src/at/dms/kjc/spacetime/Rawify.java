@@ -69,12 +69,16 @@ public class Rawify
 		else if (traceNode.isInputTrace() && !KjcOptions.magicdram) {
 		    assert StreamingDram.differentDRAMs((InputTraceNode)traceNode) :
 			"inputs for a single InputTraceNode coming from same DRAM";
+		    handleFileInput((InputTraceNode)traceNode, init, false, 
+					rawChip);
 		    //create the switch code to perform the joining
 		    joinInputTrace((InputTraceNode)traceNode, init, false);
 		    //generate the dram command to execute the joining
 		    generateInputDRAMCommands((InputTraceNode)traceNode, init, false);
 		    //now create the primepump code
 		    if (init) {
+			handleFileInput((InputTraceNode)traceNode, false, true, 
+					rawChip);
 			joinInputTrace((InputTraceNode)traceNode, false, true);
 			generateInputDRAMCommands((InputTraceNode)traceNode, false, true);
 		    }
@@ -82,12 +86,16 @@ public class Rawify
 		else if (traceNode.isOutputTrace() && !KjcOptions.magicdram) {
 		    assert StreamingDram.differentDRAMs((OutputTraceNode)traceNode) :
 			"outputs for a single OutputTraceNode going to same DRAM";
+		    handleFileOutput((OutputTraceNode)traceNode, init, false,
+				     rawChip);
 		    //create the switch code to perform the splitting
 		    splitOutputTrace((OutputTraceNode)traceNode, init, false);
 		    //generate the DRAM command
 		    outputDRAMCommands((OutputTraceNode)traceNode, init, false);
 		    //now create the primepump code
 		    if (init) {
+			handleFileOutput((OutputTraceNode)traceNode, false, true,
+					 rawChip);
 			splitOutputTrace((OutputTraceNode)traceNode, false, true);
 			outputDRAMCommands((OutputTraceNode)traceNode, false, true);
 		    }
@@ -99,6 +107,23 @@ public class Rawify
 	}
 	
     }
+
+    private static void handleFileInput(InputTraceNode input, boolean init, boolean primepump, 
+					RawChip chip)
+    {
+	//if there are no files, do nothing
+	if (!input.hasFileInput())
+	    return;
+    }
+    
+    private static void handleFileOutput(OutputTraceNode output, boolean init, boolean primepump, 
+					RawChip chip)
+    {
+	//if there are no files, do nothing
+	if (!output.hasFileOutput())
+	    return;
+    }
+    
 
     private static void generateInputDRAMCommands(InputTraceNode input, boolean init, boolean primepump) 
     {

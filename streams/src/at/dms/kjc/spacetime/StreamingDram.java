@@ -12,12 +12,8 @@ public class StreamingDram extends IODevice
     private Address lb;
     private Address index;
     private static Address size;
-    //true if file reader, set by rawify
-    private boolean fileReader;
-    //true if file write, set by rawify
-    private boolean fileWriter;
-    private String fileToRead;
-    private String fileToWrite;
+    private FileState fileReader;
+    private FileState fileWriter;
     
 
     public static void setSize(RawChip chip)
@@ -30,6 +26,8 @@ public class StreamingDram extends IODevice
     {
 	super(chip, port);
 	getNeighboringTile().addIODevice(this);
+	fileReader = null;
+	fileWriter = null;
     }
 
     public static StreamingDram getStrDram(Address addr, RawChip chip) 
@@ -269,35 +267,33 @@ public class StreamingDram extends IODevice
 
     public void setFileReader(String file) 
     {
-	assert !fileReader : this.toString() + " already reads a file";
-	fileReader = true;
-	fileToRead = file;
+	assert fileReader == null: this.toString() + " already reads a file";
+	fileReader = new FileState(true, this, file);
     }
 
     public void setFileWriter(String file) 
     {
-	assert !fileWriter : this.toString() + " already writes a file";
-	fileWriter = true;
-	fileToWrite = file;
+	assert fileWriter == null: this.toString() + " already writes a file";
+	fileWriter = new FileState(false, this, file);
     }
     
-    public boolean isFileReader() 
+    public FileState getFileReader() 
     {
 	return fileReader;
     }
     
-    public boolean isFileWriter() 
+    public FileState getFileWriter() 
     {
 	return fileWriter;
     }
-    
-    public String getFileToWrite() 
+
+    public boolean isFileReader() 
     {
-	return fileToWrite;
+	return (fileReader != null);
     }
     
-    public String getFileToRead() 
+    public boolean isFileWriter() 
     {
-	return fileToRead;
+	return (fileWriter != null);
     }
 }

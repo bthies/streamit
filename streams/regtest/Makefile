@@ -3,6 +3,9 @@ JAVA    = java -classpath $(CP) -Dstreamit_home=$(STREAMIT_HOME)
 TEXTTEST= $(JAVA) junit.textui.TestRunner
 GUITEST = $(JAVA) junit.swingui.TestRunner
 COMPILER= jikes -classpath $(CP)
+
+# use to determine which tester gets used
+#TESTER  = $(GUITEST)
 TESTER  = $(TEXTTEST)
 
 all: compile all-tests
@@ -10,10 +13,12 @@ all: compile all-tests
 all-tests: compile
 	$(TESTER) streamittest.TestAll
 
+app-tests: compile
+	$(TESTER) streamittest.TestApps
+
 compile:
 	$(COMPILER) streamittest/*.java
 
 clean:
 	rm -rf streamittest/*.class
-	rm -rf after.dot
-	rm -rf before.dot
+	rm -rf *.dot

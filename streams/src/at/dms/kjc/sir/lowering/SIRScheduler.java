@@ -146,18 +146,14 @@ public class SIRScheduler {
 	    return ((SIRFilter)schedObject).getWork();
 	} else if (schedObject==null) {
 	    // fail
-	    Utils.fail("SIRScheduler found a null component in the schedule " +
-		       "returned from the scheduling library.  The library " + 
-		       "is only supposed to return Lists and SIRFilters.");
+	    Utils.fail("SIRScheduler expected List or SIRFilter but found " +
+		       schedObject);
 	    // return value doesn't matter
 	    return null;
 	} else {
-	    // othwerise, fail
-	    Utils.fail("SIRScheduler found a component of type " + 
-		       schedObject.getClass() +
-		       " in the schedule " +
-		       "returned from the scheduling library.  The library " + 
-		       "is only supposed to return Lists and SIRFilters.");
+	    // otherwise, fail
+	    Utils.fail("SIRScheduler expected List or SIRFilter but found " +
+		       schedObject.getClass());
 	    // return value doesn't matter
 	    return null;
 	}
@@ -286,8 +282,10 @@ public class SIRScheduler {
      */
     private JExpression makeWorkArgument(Object schedObject,
 					 SIRStream toplevel) {
-	if (schedObject instanceof List) {
-	    // make arg for list -- just the current context
+	if (schedObject instanceof List || schedObject instanceof SIRPipeline) {
+	    // make arg for list -- just the current context.  the SIRPipeline
+	    // case is when we're scheduling the toplevel init function; an
+	    // SIRPipeline shouldn't appear in the schedule from the scheduler
 	    return LoweringConstants.getDataField();
 	} else if (schedObject instanceof SIRFilter) {
 	    // make arg for filter node

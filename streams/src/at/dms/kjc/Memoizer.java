@@ -73,6 +73,7 @@ public class Memoizer {
      */
     public boolean isFinalized(Object o) {
 	return finalized.contains(o);
+
     }
 
     /*******************************************************************/

@@ -81,9 +81,12 @@ public class TraceIRtoC extends SLIREmptyVisitor
 
 	//generate the methods
 	declOnly = false;
-	for (int i = 0; i < tile.getComputeCode().getMethods().length; i++)
-	    tile.getComputeCode().getMethods()[i].accept(this);
-	
+	JMethodDeclaration mainMethod=tile.getComputeCode().getMainFunction();
+	for (int i = 0; i < tile.getComputeCode().getMethods().length; i++) {
+	    JMethodDeclaration method=tile.getComputeCode().getMethods()[i];
+	    if(method!=mainMethod) //Manually inline main method so inline asm labels don't repeat
+		method.accept(this);
+	}
 	//generate the entry function for the simulator
 	print("void begin(void) {\n");
 	//if we are using the magic network, 
@@ -97,7 +100,8 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    //print("  raw_init2();\n");
 	}
 	
-	print(tile.getComputeCode().getMainFunction().getName() + "();\n");
+	//print(tile.getComputeCode().getMainFunction().getName() + "();\n");
+	mainMethod.getBody().accept(this); //Inline Main method
 	print("};\n");
     }
 	
@@ -1799,14 +1803,19 @@ public class TraceIRtoC extends SLIREmptyVisitor
     /**
      * prints InlineAssembly code
      */
-    public void visitInlineAssembly(InlineAssembly self,String[] asm) {
+    public void visitInlineAssembly(InlineAssembly self,String[] asm,String[] input) {
 	System.err.println("VISITING: "+asm);
 	print("asm volatile(\"");
 	if(asm.length>0)
 	    print(asm[0]);
 	for(int i=1;i<asm.length;i++)
 	    print("\\n\\t"+asm[i]);
-	print("\"::);");
+	print("\"::");
+	if(input.length>0)
+	    print(input[0]);
+	for(int i=1;i<input.length;i++)
+	    print(","+input[i]);
+	print(");");
     }
 
     // ----------------------------------------------------------------------

@@ -1,33 +1,136 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
+import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.flatgraph2.*;
+import at.dms.compiler.PositionedError;
 
 //If filter is linear
 
 public class Linear extends RawExecutionCode implements Constants {
-    //private static JMethodDeclaration emptyInit=new JMethodDeclaration(null,0,CStdType.Void,"emptyInit",new JFormalParameter[0],new CClassType[0],new JBlock(null,new JStatement[0],null),null,null);
-    private static JMethodDeclaration[] emptyMethods=new JMethodDeclaration[0];
-    private static JFieldDeclaration[] emptyFields=new JFieldDeclaration[0];
-
+    private static final JMethodDeclaration linearInit=new JMethodDeclaration(null,0,CStdType.Void,"linearInit",new JFormalParameter[0],new CClassType[0],new JBlock(null,new JStatement[]{new InlineAssembly("mtsri BR_INCR,1")},null),null,null);
+    private static final JMethodDeclaration[] emptyMethods=new JMethodDeclaration[0];
+    //private static final JFieldDeclaration[] emptyFields=new JFieldDeclaration[0];
+    private static final String WEIGHT_PREFIX="w_";
+    private static final String CONSTANT_PREFIX="w_c_";
+    private static final String LABEL_PREFIX="lin_";
+    private static final String[] tempRegs=new String[]{"$1","$2","$3","$4"};
+    private static final String[] regs=new String[]{"$5","$6","$7","$8","$9","$10","$11","$12","$13","$14","$15","$16","$17","$18","$19","$20","$21","$22","$23","$28","$30","$31"};
+    private static long guin=0;
+    private double[] array;
+    private boolean begin;
+    private double constant;
+    private int popCount;
+    private int[] idx;
+    private long uin;
+    
     public Linear(FilterInfo filterInfo) {
 	super(filterInfo);
 	System.out.println("Generating code for " + filterInfo.filter + " using Linear.");
-    }
-
-    public JBlock getSteadyBlock() {
-	JStatement[] body=new JStatement[1];
-	InlineAssembly inline=new InlineAssembly();
-	body[0]=inline;
-	inline.add("#FOO");
-	inline.add("#BAR");
-	return new JBlock(null,body,null);
+	FilterContent content=filterInfo.filter;
+	array=content.getArray();
+	begin=true;
+	constant=content.getConstant();
+	popCount=content.getPopCount();
+	int num=array.length/popCount;
+	idx=new int[num];
+	for(int i=0,j=0;j<num;i+=popCount,j++) {
+	    System.err.println("Adding idx: "+i);
+	    idx[j]=i;
+	}
+	uin=guin++;
     }
     
+    public JBlock getSteadyBlock() {
+	InlineAssembly inline=new InlineAssembly();
+	JStatement[] body=new JStatement[]{inline};
+	inline.add(".set noat");
+	for(int i=0;i<array.length;i++) {
+	    inline.add("lw "+regs[i]+", %"+i);
+	    inline.addInput("\"m\"("+getWeight(i)+")");
+	}
+	if(begin) {
+	    inline.add("lw "+regs[regs.length-1]+", %"+array.length);
+	    inline.addInput("\"m\"("+getConstant()+")");
+	}
+	for(int i=0;i<idx.length-1;i++)
+	    for(int k=0;k<popCount;k++)
+		for(int j=i;j>=0;j--) {
+		    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
+		    inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
+		}
+	inline.add(getLabel()+": #LOOP");
+	final int mult=getMult(array.length);
+	int times=0;
+	int[] oldIdx=new int[4];
+	int[] oldPop=new int[4];
+	for(int i=0;i<mult;i++)
+	    for(int j=0;j<popCount;j++)
+		for(int k=idx.length-1;k>=0;k--) {
+		    int offset=idx[k]+j;
+		    inline.add("mul.s "+tempRegs[times]+",\\t$csti,\\t"+regs[offset]);
+		    oldIdx[times]=k;
+		    oldPop[times]=j;
+		    times++;
+		    if(times==4) {
+			times=0;
+			for(int l=0;l<4;l++) {
+			    int popNum=oldIdx[l];
+			    int elem=oldPop[l];
+			    inline.add("add.s "+getInterReg(false,popNum,elem)+",\\t"+getInterReg(true,popNum,elem)+",\\t"+tempRegs[l]);
+			}
+		    }
+		}
+	inline.add("j "+getLabel());
+	inline.add(".set at");
+	return new JBlock(null,body,null);
+    }
+
+    private String getInterReg(boolean src,int popNum,int elem) {
+	if(src&&elem==0)
+	    if(popNum==0)
+		if(begin)
+		    return regs[regs.length-1];
+		else
+		    return "$csti";
+	    else
+		popNum--;
+	else if(!src&&elem==popCount-1&&popNum==idx.length-1)
+	    return "$csto";
+	return regs[array.length+popNum];
+    }
+    
+    private int getMult(int num) {
+	int mod=num%4;
+	if(mod==0)
+	    return 1;
+	int i=1;
+	int rem=mod;
+	while(rem!=0) {
+	    i++;
+	    rem+=mod;
+	    if(rem>=4)
+		rem-=4;
+	}
+	System.out.println("MULTIPLE: "+i);
+	return i;
+    }
+
+    private String getWeight(int i) {
+	return WEIGHT_PREFIX+uin+"_"+i;
+    }
+
+    private String getConstant() {
+	return CONSTANT_PREFIX+uin;
+    }
+
+    private String getLabel() {
+	return LABEL_PREFIX+uin;
+    }
+
     public JMethodDeclaration getInitStageMethod() {
-	//return emptyInit;
-	return null;
+	return linearInit;
     }
     
     public JMethodDeclaration[] getHelperMethods() {
@@ -35,6 +138,20 @@ public class Linear extends RawExecutionCode implements Constants {
     }
 
     public JFieldDeclaration[] getVarDecls() {
-	return emptyFields;
+	JFieldDeclaration[] fields=new JFieldDeclaration[array.length+1];
+	for(int i=0;i<array.length;i++)
+	    try {
+		fields[i]=new JFieldDeclaration(null,new JVariableDefinition(null,0,CStdType.Float,getWeight(i),new JFloatLiteral(null,Float.toString((float)array[array.length-i-1]))),null,null);
+	    } catch(PositionedError e) {
+		Utils.fail("Couldn't convert weight "+i+": "+array[i]);
+	    }
+	try {
+	    fields[array.length]=new JFieldDeclaration(null,new JVariableDefinition(null,0,CStdType.Float,getConstant(),new JFloatLiteral(null,Float.toString((float)constant))),null,null);
+	} catch(PositionedError e) {
+	    Utils.fail("Couldn't convert constant: "+constant);
+	}
+	return fields;
     }
 }
+
+

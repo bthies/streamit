@@ -11,14 +11,14 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.3 2003-07-09 14:28:53 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.4 2003-07-09 15:29:21 dmaze Exp $
  */
 public class SemanticChecker
 {
     /**
      * Check a StreamIt program for semantic correctness.  This
-     * returns <code>false</code> and prints diagnostics to
-     * standard error if errors are detected.
+     * returns <code>false</code> and prints diagnostics to standard
+     * error if errors are detected.
      *
      * @param prog  parsed program object to check
      * @returns     <code>true</code> if no errors are detected
@@ -29,6 +29,7 @@ public class SemanticChecker
         Map streamNames = checker.checkStreamNames(prog);
         checker.checkDupFieldNames(prog, streamNames);
         checker.checkStatementPlacement(prog);
+        checker.checkIORates(prog);
         return checker.good;
     }
     
@@ -52,8 +53,8 @@ public class SemanticChecker
     }
 
     /**
-     * Checks that the provided program does not have duplicate
-     * names of structures or streams.
+     * Checks that the provided program does not have duplicate names
+     * of structures or streams.
      *
      * @param prog  parsed program object to check
      * @returns a map from structure names to <code>FEContext</code>
@@ -90,11 +91,10 @@ public class SemanticChecker
     }
 
     /**
-     * Checks that no structures have duplicated field names.
-     * In particular, a field in a structure or filter can't
-     * have the same name as another field in the same
-     * structure or filter, and can't have the same name
-     * as a stream or structure.
+     * Checks that no structures have duplicated field names.  In
+     * particular, a field in a structure or filter can't have the
+     * same name as another field in the same structure or filter, and
+     * can't have the same name as a stream or structure.
      *
      * @param prog  parsed program object to check
      * @param streamNames  map from top-level stream and structure
@@ -183,11 +183,11 @@ public class SemanticChecker
     }
 
     /**
-     * Checks that statements exist in valid contexts for the
-     * type of statement.  This checks that add, split, join,
-     * loop, and body statements are only in appropriate
-     * initialization code, and that push, pop, peek, and keep
-     * statements are only in appropriate work function code.
+     * Checks that statements exist in valid contexts for the type of
+     * statement.  This checks that add, split, join, loop, and body
+     * statements are only in appropriate initialization code, and
+     * that push, pop, peek, and keep statements are only in
+     * appropriate work function code.
      *
      * @param prog  parsed program object to check
      */
@@ -328,6 +328,143 @@ public class SemanticChecker
                                "split statement only allowed " +
                                "in splitjoin/feedbackloop");
                     return super.visitStmtSplit(stmt);
+                }
+            });
+    }
+
+    /**
+     * Checks that work and phase function I/O rates are valid for
+     * their stream types, and that push, pop, and peek statements are
+     * used correctly.  A statement can has a pop or peek rate of 0
+     * (or null) iff its input type is void, and a push rate of 0 (or
+     * null) iff its output type is void; in these cases, the
+     * corresponding statement or expression may not appear in the
+     * work function code.
+     *
+     * @param prog  parsed program object to check
+     */
+    public void checkIORates(Program prog)
+    {
+        // Similarly, implement as a visitor; there's still the
+        // recursion issue.
+        prog.accept(new FEReplacer() {
+                private boolean canPop, canPush;
+                private boolean hasPop, hasPush;
+                private StreamSpec spec;
+                
+                public Object visitStreamSpec(StreamSpec ss)
+                {
+                    // We want to save the spec so we can look at its
+                    // stream type.  But we only care within the
+                    // context of work functions in filters, which
+                    // can't have recursive stream definitions.  So
+                    // unless something really broken is going on,
+                    // we'll never visit a stream spec, visit
+                    // something else, and then come back to visit a
+                    // work function in the original spec; thus,
+                    // there's no particular reason to save the old
+                    // spec.
+                    spec = ss;
+                    return super.visitStreamSpec(ss);
+                }
+
+                public Object visitFuncWork(FuncWork func)
+                {
+                    // These can't be nested, which simplifies life.
+                    // In fact, there are really two things we care
+                    // about: if popping/peeking is allowed, and if
+                    // pushing is allowed.  Decide these based on
+                    // the declared I/O rates.
+                    canPop = canPushOrPop(func.getPopRate());
+                    canPush = canPushOrPop(func.getPushRate());
+                    boolean canPeek = canPushOrPop(func.getPeekRate());
+                    // (But note that we can still peek up to the pop
+                    // rate even if no peek rate is declared; thus,
+                    // this is used only to determine if a function
+                    // is peeking without popping.)
+
+                    // If this is a work or prework function,
+                    // rather than a phase function, then
+                    // it's possible to have neither push nor
+                    // pop rates even with non-void types.
+                    boolean isPhase = (func.getCls() == Function.FUNC_PHASE);
+                    boolean phased = (!canPop) && (!canPeek) && (!isPhase);
+                    
+                    // Check for consistency with the stream type.
+                    StreamType st = spec.getStreamType();
+
+                    if (typeIsVoid(st.getIn()) && canPop)
+                        report(func,
+                               "filter declared void input type, but " +
+                               "non-zero pop rate");
+                    if (!typeIsVoid(st.getIn()) && !canPop && !phased)
+                        report(func,
+                               "filter declared non-void input type, but "+
+                               "has zero pop rate");
+                    if (typeIsVoid(st.getOut()) && canPush)
+                        report(func,
+                               "filter declared void output type, but " +
+                               "non-zero push rate");
+                    if (!typeIsVoid(st.getOut()) && !canPush && !phased)
+                        report(func,
+                               "filter declared non-void output type, but " +
+                               "has zero push rate");
+                    // If this isn't a phase function, and it has a
+                    // peek rate, then it must have a pop rate.
+                    if (!isPhase && !canPop && canPeek)
+                        report(func,
+                               "filter declared a peek rate but not a " +
+                               "pop rate");
+                    
+                    return super.visitFuncWork(func);
+                    // To consider: check that, if the function has
+                    // a push rate, then at least one push happens.
+                    // Don't need this for popping since we have
+                    // the implicit pop rule.
+                }
+
+                private boolean canPushOrPop(Expression expr)
+                {
+                    if (expr == null) return false;
+                    if (!(expr instanceof ExprConstInt)) return true;
+                    ExprConstInt eci = (ExprConstInt)expr;
+                    if (eci.getVal() == 0) return false;
+                    return true;
+                }
+
+                private boolean typeIsVoid(Type type)
+                {
+                    if (!(type instanceof TypePrimitive)) return false;
+                    TypePrimitive tp = (TypePrimitive)type;
+                    if (tp.getType() == tp.TYPE_VOID) return true;
+                    return false;
+                }
+
+                public Object visitExprPeek(ExprPeek expr)
+                {
+                    if (!canPop)
+                        report(expr,
+                               "peeking not allowed in functions with " +
+                               "zero pop rate");
+                    return super.visitExprPeek(expr);
+                }
+
+                public Object visitExprPop(ExprPop expr)
+                {
+                    if (!canPop)
+                        report(expr,
+                               "popping not allowed in functions with " +
+                               "zero pop rate");
+                    return super.visitExprPop(expr);
+                }
+
+                public Object visitStmtPush(StmtPush stmt)
+                {
+                    if (!canPush)
+                        report(stmt,
+                               "pushing not allowed in functions with " +
+                               "zero push rate");
+                    return super.visitStmtPush(stmt);
                 }
             });
     }

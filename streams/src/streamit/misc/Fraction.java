@@ -1,4 +1,4 @@
-package streamit.scheduler;
+package streamit.misc;
 
 import java.util.StringTokenizer;
 import java.math.BigInteger;

@@ -3,7 +3,8 @@ package streamit.scheduler;
 import java.util.*;
 import java.math.BigInteger;
 import java.io.PrintStream;
-import streamit.scheduler.*;
+
+import streamit.misc.Fraction;
 
 public class SchedSplitJoin extends SchedStream
 {

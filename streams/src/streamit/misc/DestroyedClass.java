@@ -9,7 +9,7 @@ package streamit.misc;
 import java.lang.*;
 import java.lang.reflect.*;
 
-public class DestroyedClass extends AssertedClass
+public class DestroyedClass extends Misc
 {
     private boolean Destroyed = false;
     private static Class DestroyedClass;
@@ -32,7 +32,7 @@ public class DestroyedClass extends AssertedClass
 
     // The finalizer checks that the class has already been Destroyed,
     // and if not, it Destroys it
-    protected void finalize ()
+    final protected void finalize ()
     {
         if (!Destroyed) Destroy ();
         Destroyed = true;

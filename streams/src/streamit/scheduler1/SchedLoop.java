@@ -2,6 +2,7 @@ package streamit.scheduler;
 
 import java.math.BigInteger;
 import java.io.PrintStream;
+import streamit.misc.Fraction;
 
 public class SchedLoop extends SchedStream
 {

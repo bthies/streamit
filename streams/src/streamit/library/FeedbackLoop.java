@@ -53,10 +53,16 @@ public class FeedbackLoop extends Stream
         this.loop = loop;
     }
 
-    // initialize the loop - push index-th element into the feedback loop channel
-    public void initPath (int index, Channel path)
+    /**
+     * initialize the loop - push index-th element into the feedback loop channel.
+     * these initPath functions are implemented for many different types that
+     * one can use - if you're missing yours, implement it!
+     */
+
+    public int initPathInt (int index)
     {
         ASSERT (false);
+        return 0;
     }
 
     // not used here!
@@ -150,7 +156,15 @@ public class FeedbackLoop extends Stream
             Channel feedbackChannel = loop.getIOField ("streamOutput");
             for (int index = 0; index < delay; index++)
             {
-                initPath (index, feedbackChannel);
+                Class type = feedbackChannel.getType ();
+                if (type == Integer.TYPE)
+                {
+                    feedbackChannel.pushInt (initPathInt (index));
+                } else {
+                    // There should be another type implemented - check
+                    // what type is and add an appropriate if-else statement
+                    ASSERT (false);
+                }
             }
         }
     }

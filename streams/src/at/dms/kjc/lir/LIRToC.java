@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.39 2001-10-31 21:25:38 dmaze Exp $
+ * $Id: LIRToC.java,v 1.40 2001-10-31 21:56:11 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -246,6 +246,9 @@ public class LIRToC
         print("interface_table " + vardef.getIdent() + " = ");
         self.accept(this);
         print(";");
+        // While we're at it, save the variable definition in the
+        // interface table structure.
+        self.setVarDecl(vardef);
     }
 
     /**
@@ -1603,28 +1606,12 @@ public class LIRToC
 					  SIRStream receiver, 
 					  JMethodDeclaration[] methods)
     {
-        /* Create a local block to declare a static virtual-method table
-         * in. */
-        print("{");
-        pos += TAB_SIZE;
-        newLine();
-        print("static message_fn vtbl[] = { ");
-        boolean first = true;
-        for (int i = 0; i < methods.length; i++)
-        {
-            if (!first) print(", ");
-            first = false;
-            print(methods[i].getName());
-        }
-        print("};");
-        newLine();
         print("register_receiver(");
         portal.accept(this);
-        print(", data->context, vtbl, LATENCY_BEST_EFFORT);");
+        print(", data->context, ");
+        print(self.getItable().getVarDecl().getIdent());
+        print(", LATENCY_BEST_EFFORT);");
         // (But shouldn't there be a latency field in here?)
-        pos -= TAB_SIZE;
-        newLine();
-        print("}");
     }
     
     public void visitRegSenderStatement(SIRRegSenderStatement self,

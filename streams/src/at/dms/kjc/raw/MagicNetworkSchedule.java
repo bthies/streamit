@@ -103,7 +103,7 @@ public class MagicNetworkSchedule
     {
 	fw.write("global tile" + tileNum + op + ";\n");
 	fw.write("fn create_schedule_" + op + "_" + tileNum + "() {\n");
-	fw.write("local temp, i;\n");
+	fw.write("local temp, i, rep;\n");
 	fw.write("local start_of_steady;\n");
 
     }
@@ -222,21 +222,69 @@ public class MagicNetworkSchedule
 	}
 	
 	//steady schedule
-	Iterator it = steady.listIterator(0);
-	while(it.hasNext()) {
-	    generateMagicRoute(it.next(), fw);
-	    //fw.write("temp.magic = " + routesString(it.next()) + ";\n");
-	    if (it.hasNext()) {
+	int index = 0, reps;
+	while(index < steady.size()) {
+	    reps = getReps(index, steady);
+	    if (reps > 1) {
+		fw.write ("for (rep = 0; rep < " + reps + "; rep++) {\n");
+	    }
+	    generateMagicRoute(steady.get(index), fw);	    
+	    //don't create a new sched object if we are 
+	    //at the end of the schedule
+	    if (index < steady.size() - 1) {
 		fw.write("temp.next = hms_new();\n");
 		fw.write("temp = temp.next;\n");
 	    }
-	    else
-		fw.write("temp.next = start_of_steady;\n");
+	    if (reps > 1)
+		fw.write ("}\n");
+	    //increment the index
+	    index += reps;
 	}
+	fw.write("temp.next = start_of_steady;\n");
 	fw.write("}\n");
 	fw.close();
     }
     
+    private static int getReps(int index, LinkedList sched) 
+    {
+	//if we are at the last element return 1
+	if (index >= sched.size() - 1)
+	    return 1;
+	//a repetition should not end at the end of the schedule
+	Object current = sched.get(index);
+	int reps = 1;
+	for (int i = index + 1; i < sched.size() - 1; i++) {
+	    //if they are both lists, check the list elements
+	    if (current instanceof List &&
+		sched.get(i) instanceof List &&
+		listEqual((List)current, (List)sched.get(i))) {
+		reps++;
+	    }
+	    else if (current instanceof Coordinate &&
+		     sched.get(i) instanceof Coordinate &&
+		     current == sched.get(i)) {
+		reps++;
+	    }
+	    else {
+		break;
+	    }
+	}
+	if (reps == 0) 
+	    Utils.fail("Reps must be greater than 1");
+	return reps;
+    }
+    
+    private static boolean listEqual(List one, List two) 
+    {
+	if (one.size() != two.size())
+	    return false;
+	for (int i = 0; i < one.size(); i++) {
+	    if (one.get(i) != two.get(i))
+		return false;
+	}
+	return true;
+    }
+
     private static String toHex2(int i) 
     {
 	if (i > 255)

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.1 2003-03-10 16:57:33 dmaze Exp $
+# $Id: release.sh,v 1.2 2003-03-10 17:13:35 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -17,16 +17,22 @@ mkdir $WORKING
 SRCDIR=$WORKING/streamit-$VERSION
 SRCTAR=$SRCDIR.tar
 
+# Helper function to add a list of directories to $DIRS
+builddirs() {
+  PREFIX="$1"; shift
+  while test -n "$1"; do DIRS="$DIRS $PREFIX/$1"; shift; done
+}
+
 # Get a checked-out copy of the source tree.
-mkdir $SRCDIR
-mkdir $SRCDIR/apps
-mkdir $SRCDIR/docs
-for d in compiler library apps/examples apps/libraries apps/sorts \
-    docs/cookbook docs/implementation-notes docs/manual \
-    docs/runtime-interface docs/semantics docs/syntax include misc
-do
-    cvs export -r $TAG -d $SRCDIR/$d streams/$d
-done
+mkdir $WORKING/streams
+DIRS="streams/knit streams/README.source"
+builddirs streams compiler library include misc
+builddirs streams/apps examples libraries sorts
+builddirs streams/docs cookbook implementation-notes manual runtime-interface
+builddirs streams/docs semantics syntax
+
+cvs export -r $TAG -d $WORKING $DIRS
+mv $WORKING/streams $SRCDIR
 
 # Build the source tarball:
 cvs export -r $TAG -d $SRCDIR streams/docs/release
@@ -34,9 +40,8 @@ tar cf $SRCTAR -C $WORKING streamit-$VERSION
 
 # Now do a reference build.
 CLASSPATH=${ANTLRJAR:?}
-export CLASSPATH
 STREAMIT_HOME=$SRCDIR
-export STREAMIT_HOME
+export CLASSPATH STREAMIT_HOME
 . $STREAMIT_HOME/include/dot-bashrc
 make -C $SRCDIR/compiler jar
 

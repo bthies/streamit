@@ -41,7 +41,7 @@ class RegTest:
         return result
 
     def dotest(self):
-        result = self.runCommand("java -classic at.dms.kjc.Main -s " +
+        result = self.runCommand("java at.dms.kjc.Main -s " +
                                  string.join(self.sources) + " > reg-out.c")
         if (result != 0):
             self.report("StreamIt compilation failed")
@@ -144,7 +144,7 @@ class Options:
         self.checkout = 0
         self.build = 0
         self.test = 1
-        self.control = 'control'
+        self.control = os.path.join(streamit, 'regtest/control')
         self.cases = []
 
     def get_options(self, args):

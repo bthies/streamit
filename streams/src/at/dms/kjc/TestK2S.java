@@ -135,7 +135,7 @@ public class TestK2S extends Main
 	    {
 		SIRPrinter sirPrinter = new SIRPrinter();
 		//Return topLevel for each tree
-		IterFactory.createIter(topLevel[count]).accept(sirPrinter);
+		IterFactory.createFactory().createIter(topLevel[count]).accept(sirPrinter);
 		sirPrinter.close();
 	    }
 

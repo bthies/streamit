@@ -87,7 +87,7 @@ public class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 				   SIRStream target) {
 	super.visitInitStatement(self, target);
 	// also recurse into the stream target
-	IterFactory.createIter(target).accept(this);
+	IterFactory.createFactory().createIter(target).accept(this);
     }
 
     /**

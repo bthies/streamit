@@ -30,7 +30,7 @@ public class AutoCloner {
     static public Object deepCopy(SIRStream oldObj) {
 	// set the list of what we should clone
 	CloningVisitor visitor = new CloningVisitor();
-	IterFactory.createIter(oldObj).accept(visitor);
+	IterFactory.createFactory().createIter(oldObj).accept(visitor);
 
 	toBeCloned = visitor.getToBeCloned();
 	registry = new HashMap();

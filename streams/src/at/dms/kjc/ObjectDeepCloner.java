@@ -47,7 +47,7 @@ public class ObjectDeepCloner
 	} else {
 	    // set the list of what we should clone
 	    CloningVisitor visitor = new CloningVisitor();
-	    IterFactory.createIter(oldObj).accept(visitor);
+	    IterFactory.createFactory().createIter(oldObj).accept(visitor);
 	    toBeCloned = visitor.getToBeCloned();
 	    return doCopy(oldObj);
 	}
@@ -116,7 +116,7 @@ public class ObjectDeepCloner
      SIRContainer parent = (SIRContainer)oldObj;
      // set the list of what we should clone
      CloningVisitor visitor = new CloningVisitor();
-     IterFactory.createIter(parent).accept(visitor);
+     IterFactory.createFactory().createIter(parent).accept(visitor);
      toBeCloned = visitor.getToBeCloned();
      // subtract the list of <parent>'s children from the
      // toBeCloned list.

@@ -72,6 +72,7 @@
       dir="compiler/at/dms/kjc">
       <arg value="KjcMessages.msg"/>
     </java>
+  </target>
   <target name="kjc-source" depends="kjc-options"/>
   <target name="kopi-clean">
     <delete quiet="true">
@@ -111,11 +112,8 @@
   
   <!-- TOP-LEVEL RULES. -->
   <target name="build" depends="compiler"
-    description="Build the StreamIt compiler, front-end, and libraries">
-  </target>
-
+    description="Build the StreamIt compiler, front-end, and libraries"/>
   <target name="clean"
     depends="class-clean,frontend-clean,cruft-clean,kopi-clean"
-    description="Remove all Java class files">
-  </target>
+    description="Remove all Java class files"/>
 </project>

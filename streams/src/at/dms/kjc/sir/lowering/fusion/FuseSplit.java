@@ -61,7 +61,7 @@ public class FuseSplit {
 	if (!isFusable(sj)) {
 	    return sj;
 	} else {
-	    System.err.println("Fusing " + (sj.size()) + " SplitJoin filters!"); 
+	    System.err.println("Fusing " + (sj.size()) + " SplitJoin filters into " + partition.length + " filters..."); 
 	}
 	{ //Quick check
 	    int sum=0;

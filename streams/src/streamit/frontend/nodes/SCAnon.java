@@ -1,10 +1,12 @@
 /*
  * SCAnon.java: stream creator for anonymous streams
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: SCAnon.java,v 1.2 2002-09-06 16:28:43 dmaze Exp $
+ * $Id: SCAnon.java,v 1.3 2002-09-17 19:58:45 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
+
+import java.util.Collections;
 
 /**
  * SCAnon is a stream creator for anonymous streams.  It has a StreamSpec
@@ -26,7 +28,8 @@ public class SCAnon extends StreamCreator
     public SCAnon(FEContext context, int type, Statement init)
     {
         super(context);
-        this.spec = new StreamSpec(context, type, null, null, init);
+        this.spec = new StreamSpec(context, type, null, null,
+                                   Collections.EMPTY_LIST, init);
     }
     
     /** Returns the stream specification this creates. */

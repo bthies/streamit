@@ -1,7 +1,7 @@
 /*
  * StreamSpec.java: specification of a named or anonymous stream
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamSpec.java,v 1.4 2002-09-06 16:28:43 dmaze Exp $
+ * $Id: StreamSpec.java,v 1.5 2002-09-17 19:58:45 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -54,10 +54,9 @@ public class StreamSpec extends FENode
      * of its init function.  Useful for composite streams that have
      * no other functions. */
     public StreamSpec(FEContext context, int type, StreamType st,
-                      String name, Statement init)
+                      String name, List params, Statement init)
     {
-        this(context, type, null, name, Collections.EMPTY_LIST,
-             Collections.EMPTY_LIST,
+        this(context, type, null, name, Collections.EMPTY_LIST, params,
              Collections.singletonList(Function.newInit(init.getContext(),
                                                         init)));
     }

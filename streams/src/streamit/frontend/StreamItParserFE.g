@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.6 2002-09-11 19:47:32 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.7 2002-09-17 19:58:41 dmaze Exp $
  */
 
 header {
@@ -97,7 +97,8 @@ struct_stream_decl[StreamType st] returns [StreamSpec ss]
 		id:ID
 		(params=param_decl_list)?
 		body=block
-		{ ss = new StreamSpec(st.getContext(), type, st, id.getText(), body); }
+		{ ss = new StreamSpec(st.getContext(), type, st, id.getText(),
+				params, body); }
 	;
 
 work_decl returns [FuncWork f]

@@ -171,6 +171,13 @@ public class Unroller extends SLIRReplacingVisitor {
 	    currentModified.put(info.var,Boolean.TRUE);
 	    // do unrolling
 	    return doUnroll(info, self);
+	} else if(canUnroll(info,currentModified)) {
+	    // Set modified
+	    saveModified.putAll(currentModified);
+	    currentModified=saveModified;
+	    currentModified.put(info.var,Boolean.TRUE);
+	    // do unrolling
+	    return doPartialUnroll(info, self);
 	}
 	saveModified.putAll(currentModified);
 	currentModified=saveModified;
@@ -204,6 +211,17 @@ public class Unroller extends SLIRReplacingVisitor {
 	// and only unroll if it is within our max unroll range
 	int count = getNumExecutions(info);
 	return count <= KjcOptions.unroll;
+    }
+
+    /**
+     * Failing shouldUnroll (completely) this determines if the loop can
+     * be unrolled partially
+     */
+    private boolean canUnroll(UnrollInfo info, Hashtable currentModified) {
+	if (info==null || currentModified.containsKey(info.var)) {
+	    return false;
+	}
+	return true;
     }
 
     /**
@@ -284,6 +302,41 @@ public class Unroller extends SLIRReplacingVisitor {
 			  null);
     }
     
+    /**
+     * Repeats body KjcOptions.unroll times and adds post loop guard
+     */
+    private JBlock doPartialUnroll(UnrollInfo info, JForStatement self) {
+	int numExec=getNumExecutions(info);
+	//int numLoops=numExec/KjcOptions.unroll;
+	int remain=numExec%KjcOptions.unroll;
+	JStatement[] newBody=new JStatement[2*KjcOptions.unroll];
+	if(newBody.length>=2) {
+	    newBody[0]=self.getBody();
+	    newBody[1]=self.getIncrement();
+	}
+	for(int i=2;i<2*KjcOptions.unroll;i++) {
+	    JStatement cloneBody=(JStatement)ObjectDeepCloner.deepCopy(self.getBody());
+	    JStatement cloneIncr=(JStatement)ObjectDeepCloner.deepCopy(makeIncr(info,1));
+	    newBody[i]=cloneBody;
+	    i++;
+	    newBody[i]=cloneIncr;
+	}
+	JBlock body=new JBlock(null,newBody,null);
+	JStatement[] newStatements=new JStatement[2*remain+2];
+	newStatements[0]=self.getInit();
+	for(int i=1;i<2*remain+1;i++) {
+	    JStatement cloneBody=(JStatement)ObjectDeepCloner.deepCopy(self.getBody());
+	    JStatement cloneIncr=(JStatement)ObjectDeepCloner.deepCopy(makeIncr(info,1));
+	    newStatements[i]=cloneBody;
+	    i++;
+	    newStatements[i]=cloneIncr;
+	}
+	newStatements[newStatements.length-1]=new JForStatement(null,new JEmptyStatement(null,null),self.getCondition(),new JEmptyStatement(null,null),body,null);
+	return new JBlock(null,
+			  newStatements,
+			  null);
+    }
+    
     private static boolean done(int counter, UnrollInfo info) {
 	switch(info.oper) {
 	case OPE_PLUS: 
@@ -325,6 +378,33 @@ public class Unroller extends SLIRReplacingVisitor {
 	    Utils.fail("Can only unroll add/sub/mul/div increments for now.");
 	    // dummy value
 	    return 0;
+	}
+    }
+
+    private static JStatement makeIncr(UnrollInfo info,int num) {
+	JLocalVariableExpression var=new JLocalVariableExpression(null,info.var);
+	JIntLiteral numLit=new JIntLiteral(null,num);
+	JAssignmentExpression incr=new JAssignmentExpression(null,var,null);
+	switch(info.oper) {
+	case OPE_PLUS: 
+        case OPE_POSTINC:
+        case OPE_PREINC:
+	    incr.setRight(new JAddExpression(null,var,numLit));
+	    return new JExpressionStatement(null,incr,null);
+	case OPE_MINUS:
+        case OPE_POSTDEC:
+        case OPE_PREDEC:
+	    incr.setRight(new JMinusExpression(null,var,numLit));
+	    return new JExpressionStatement(null,incr,null);
+	case OPE_STAR: 
+	    incr.setRight(new JMultExpression(null,var,numLit));
+	    return new JExpressionStatement(null,incr,null);
+	case OPE_SLASH:
+	    incr.setRight(new JDivideExpression(null,var,numLit));
+	    return new JExpressionStatement(null,incr,null);
+	default: 
+	    Utils.fail("Can only unroll add/sub/mul/div increments for now.");
+	    return new JExpressionStatement(null,incr,null);
 	}
     }
     

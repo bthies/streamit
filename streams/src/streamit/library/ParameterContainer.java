@@ -82,12 +82,9 @@ public class ParameterContainer extends AssertedClass
 
 	Object getObject ()
         {
-            ASSERT (primitive);
-            
-            Object objectData = data;
-            ASSERT (objectData != null);
-            
-            return objectData;
+            ASSERT (!primitive);
+
+            return data;            
         }
 
         boolean getBool ()

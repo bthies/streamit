@@ -11,7 +11,8 @@
   <reference>(none)</reference>
   <implementations>
     <impl lang="StreamIt" dir="streamit">
-      <file>VocoderTopLevel.str</file>
+      <file class="source">VocoderTopLevel.str</file>
+      <file class="output">LinkedVocoderToplevel.out</file>
     </impl>
   </implementations>
 </benchmark>

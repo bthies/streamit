@@ -12,7 +12,8 @@ again to get the final result matrix.
       <file>matmul-block.c</file>
     </impl>
     <impl lang="StreamIt" dir="streamit">
-      <file>MatrixMultBlock.str</file>
+      <file class="source">MatrixMultBlock.str</file>
+      <file class="output">MatrixMultBlock.out</file>
     </impl>
   </implementations>
 </benchmark>

@@ -13,7 +13,8 @@ performed, followed by an upsample, delay, and filter.
       <file>FilterBank.cpp</file>
     </impl>
     <impl lang="StreamIt" dir="streamit">
-      <file>FilterBankNew.str</file>
+      <file class="source">FilterBankNew.str</file>
+      <file class="output">FilterBankNew.out</file>
     </impl>
   </implementations>
 </benchmark>

@@ -2,16 +2,32 @@
 
 package streamit;
 
+import java.util.*;
+
 public class Channel extends DestroyedClass 
 {
     Class type;
-    Operator source, sink;
+    Operator source = null, sink = null;
+    
+    LinkedList queue;
     
     // the channel should be constructed with a 0-length array
     // indicating the type that will be held in this channel.
     public Channel(Object dataObject) 
     {
-        type = dataObject.getClass ();
+        ASSERT (dataObject.getClass ().isArray ());
+        type = dataObject.getClass ().getComponentType ();
+        queue = new LinkedList ();
+    }
+    
+    void EnsureData ()
+    {
+        while (queue.isEmpty ())
+        {
+            ASSERT (source != null);
+            
+            source.Work ();
+        }
     }
 
     // PUSH OPERATIONS ----------------------------------------------
@@ -23,7 +39,12 @@ public class Channel extends DestroyedClass
     public void PushInt(int i) {}
 
     // push a char
-    public void PushChar(char c) {}
+    public void PushChar(char c)
+    {
+        ASSERT (type.isPrimitive ());
+        
+        queue.addFirst (new Character  (c));
+    }
 
     // push a double
     public void PushDouble(double d) {}
@@ -40,7 +61,18 @@ public class Channel extends DestroyedClass
     public int PopInt() { return 0; }
 
     // pop a char
-    public char PopChar() { return 'x'; }
+    public char PopChar()
+    {
+        ASSERT (type.isPrimitive ());
+        
+        EnsureData ();
+        
+        Character c;
+        c = (Character) queue.removeLast ();
+        ASSERT (c != null);
+        
+        return c.charValue ();
+    }
 
     // pop a double
     public double PopDouble() { return 0; }

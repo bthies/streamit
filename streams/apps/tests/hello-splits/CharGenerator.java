@@ -27,6 +27,11 @@ public class CharGenerator extends Filter {
     {
         output.PushChar(message.charAt(i));
         i++;
+        if (message.length () == i) 
+        {
+            i = 0;
+            output.PushChar ('\n');
+        }
     }
 
 }

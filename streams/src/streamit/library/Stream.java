@@ -87,6 +87,10 @@ public class Stream extends Operator {
         ConnectGraph ();
         
         // execute the stream here
+        while (true)
+        {
+            RunSinks ();
+        }
     }
 
     // ------------------------------------------------------------------
@@ -153,9 +157,11 @@ public class Stream extends Operator {
                         currentSourceChannel.GetType ().getName ().equals (currentDestChannel.GetType ().getName ()));
                 
                 // now copy the currentInput into the currentOutput
-                if (currentDestChannel != null)
+                if (currentSourceChannel != null)
                 {
                     sink.SetIOField ("input", currentSourceChannel);
+                    
+                    ASSERT (sink.GetIOField ("input") == currentSourceChannel);
                     
                     // tell the channels what their sources and sinks are:
                     if (currentSourceChannel.GetSource () == null)
@@ -169,12 +175,19 @@ public class Stream extends Operator {
                 // and setup for the next iteration
                 source = sink;
                 currentSourceChannel = source.GetIOField ("output");
+                
+                // if the current Operator is a sink, add it 
+                // to the list:
+                if (currentSourceChannel == null)
+                {
+                    sink.AddSink ();
+                }
             }
             
             if (currentSourceChannel != null)
             {
                 // get the next stream:
-                Channel currentDestChannel = GetIOField ("output");
+                Channel currentDestChannel = GetIOField ("input");
                 
                 // make sure that the channels use the same data types
                 ASSERT (currentDestChannel != null);

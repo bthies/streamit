@@ -5,22 +5,22 @@ public abstract class Filter extends Stream
 {
     public Filter() 
     {
-	super();
+        super();
     }
 
     public Filter(int i) 
     {
-	super(i);
+        super(i);
     }
 
     public Filter(String str) 
     {
-	super(str);
+        super(str);
     }
 
     public Filter(Stream str) 
     {
-	super(str);
+        super(str);
     }
 
     // Add was present in Operator, but is not defined in Filter anymore

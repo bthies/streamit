@@ -1,0 +1,58 @@
+\begin{figure}
+\center
+\epsfxsize=2.5in
+\epsfbox{images/precoder.eps}
+\epsfxsize=2.5in
+\epsfbox{images/de-precoder.eps}
+\caption{8VSB precoder(left) and de-precoder(right)}
+\label{fig:precoder-deprecoder}
+\end{figure}
+
+\begin{table}
+\center
+\begin{tabular}{c|c|c}
+input(x2) & output(y2) & state  \\
+\hline
+0 & 0 & 0 \\
+1 & 1 & 0 \\
+1 & 0 & 1 \\
+0 & 0 & 0 \\
+1 & 1 & 0 \\
+0 & 1 & 1 \\
+1 & 0 & 1 \\
+1 & 1 & 0 \\
+1 & 0 & 1 \\
+0 & 0 & 0 \\
+\end{tabular}
+
+\begin{tabular}{c|c|c}
+input(y2) & output(x2) & state  \\
+\hline
+0 & 0 & 0 \\
+1 & 1 & 0 \\
+0 & 1 & 1 \\
+0 & 0 & 0 \\
+1 & 1 & 0 \\
+1 & 0 & 1 \\
+0 & 1 & 1 \\
+1 & 1 & 0 \\
+0 & 1 & 1 \\
+0 & 0 & 0 \\
+\end{tabular}
+\caption{Example of encoding(above) and de-precoding(below) when the input is 0110101110.}
+\label{tbl:precoding_example}
+\end{table}
+
+A precoder is a simple circuit which XORs the current input with the previous
+output to get the current output. Table~\ref{tbl:precoding_example} 
+contains a worked out example of the input, output, and state of the precoder
+for coding the data \texttt{01101011110}.
+
+\begin{table}
+\center
+\end{table}
+
+To decode the precoded data, we simply reverse the process. It might be the case that 
+the Viterbi algorithm should be applied to recover the input sequence, and we will
+look into it. Table~\ref{tbl:precoding_example} contains a worked out example of
+decoding the data \texttt{0100110100}.

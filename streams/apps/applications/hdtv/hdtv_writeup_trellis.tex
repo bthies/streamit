@@ -1,0 +1,76 @@
+
+\begin{figure}
+\center
+\epsfxsize=5.5in
+\epsfbox{images/trellis-encoder.eps}
+\caption{8VSB trellis encoder, precoder, and symbol mapper.}
+\label{fig:trellis-system}
+\end{figure}
+
+Trellis coding (also known as convolution coding) 
+is a method of encoding where the value of a single input 
+bit affects the value of several output bits. The encoders
+keep state and use that state to generate the output of the 
+encoder. 
+
+A particular trellis code is 
+specified by at least three paramters. The first, the rate, is typically expressed as
+a fraction n/k. n data bits are provided to the convolution encoder and k bits are produced,
+where n>= k. The second, the reach K, is the number of output bits that the
+each input bit affects (eg the amount of memory that is in the system). 
+The third, is a set of generator polynomials which specify the system connections.
+For more information see \cite{fleming:tutorial}.
+
+Figure~\ref{fig:trellis-system} shows the trellis encoder used for the HDTV system. 
+The total trellis encoder is actually a rate 2/3 (2 input bits, 3 output bits) 
+encoder which combines a precoder (1/1) and an ``Optimal 4 bit 
+Ungerboeck code,'' (1/2).
+
+Each three bit 'symbol' produced by the trellis coder is then mapped to a value
+that is transmitted over the transmission medium (cable or satellite) to 
+a HDTV receiver. 
+
+The combination of the precoder and Ungerboeck coder followed by the symbol mapper
+have several desirable properties for error correction. I do not have sufficient
+theoritcal background to explain exactly what the properties are, or why they are good,
+so you will have to take it on faith as have I.
+
+
+
+
+
+
+
+
+\subsection{Multiple Trellis Encoders and Interleaving}
+
+\begin{figure}
+\center
+
+\epsfxsize=4.0in
+\epsfbox{images/multiple-trellis.eps}
+\caption{Schematic showing how multiple tellis encoders are used in both the encode and decode pipeline.}
+\label{fig:multiple-trellis}
+
+
+\epsfxsize=4.0in
+\epsfbox{images/trellis-interleaving.eps}
+\caption{Data reordering from the trellis encoders}
+\label{fig:trellis-interleaving}
+
+
+\epsfxsize=6.0in
+\epsfbox{streamgraphs/SGTrellisEncoderPipeline.eps}
+\epsfxsize=6.0in
+\epsfbox{streamgraphs/SGTrellisDecoderPipeline.eps}
+\caption{Stream Graphs of the complete Trellis Encoder block (left) and Trellis Decoder block(right)}
+\label{fig:sg-trellis-pipeline}
+
+\end{figure}
+
+
+
+
+The trellis encoding is done by 12 encoders in parallel shown in
+Figure~\ref{fig:trellis-interleaving}. The
+order in which 

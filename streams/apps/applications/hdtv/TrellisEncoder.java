@@ -10,7 +10,6 @@
  * Standard A53 revision b, which can be found at:
  * http://www.atsc.org/standards/a_53b.pdf
  */
-
 import streamit.*;
 
 class TrellisEncoder extends SplitJoin {

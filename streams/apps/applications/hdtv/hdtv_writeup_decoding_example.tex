@@ -223,7 +223,7 @@ $(1) 01\rightarrow11 (11)$ & $ham(11, 11) = 0$ & $c[01][0] + 0 = 2 + 0 = 2$ &   
 \center
 \epsfxsize=5.5in
 \epsfbox{images/trellis-decode-traceback.eps}
-\caption{Traceback of decode path. We choose to start at state 11 at time=10 \
+\caption{Traceback of decode path. We choose to start at state 00 at time=10 \
          because it has the least accumulated error. Following the arrows backwards through \
 	 the predecessor state table yields the same path that the encoder went through.}
 \label{fig:decode_traceback}
@@ -234,6 +234,7 @@ $(1) 01\rightarrow11 (11)$ & $ham(11, 11) = 0$ & $c[01][0] + 0 = 2 + 0 = 2$ &   
 \begin{table}
 \center
 \textbf{Accumulated Errors ($c[state,time]$)}
+
 \begin{tabular}{c|c|c|c|c|c|c|c|c|c|c|c}
 state/time & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 \\
 \hline
@@ -248,6 +249,7 @@ state/time & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 \\
 \end{tabular}
 
 \textbf{Previous State History}
+
 \begin{tabular}{c|c|c|c|c|c|c|c|c|c|c|c}
 state/time & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 \\
 \hline

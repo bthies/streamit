@@ -1,0 +1,39 @@
+\begin{figure}
+\center
+\epsfxsize=5.5in
+\epsfbox{images/convolution-interleaver.eps}
+\caption{8VSB convolutional interleaver and associated de-interleaver.}
+\label{fig:convolution-interleaver}
+\end{figure}
+
+Convolutional Interleaving is a way of interleaving data that apparently makes
+it rather immune to noise. All of the delay blocks in Figure~\ref{fig:convolution-interleaver}
+are initialized to 0. All references to convolutional interleaving that I could find
+on the internet were either too vague (eg descriptions of what particular ASIC designs did
+or only vaguely described the encoder. I could not find a reference to what a decoder looked 
+like. I sat down and sketeched out the diagram with the appropriate delay blocks, and I soon 
+saw that it is obvious once you see what the interleaver is doing what the deinterleaver should
+be doing. I decided that since I didn't see it immediately when first presented with a
+diagram of a convolution encoder other readers might not either.
+
+Therefore, Figure~\ref{fig:convolution-interleaver} shows an example of a convolutional
+interleaver with 5 paths. For the encoder, at each each time step the switch goes to the
+next position and gets the next byte of data. In exactly the same manner, the output
+switch advances one tick each time step and after grabbing data from that delay block.
+The Ds are delay blocks, and not registers. In particular, they actually delay the signal
+rather than gating their input at each clock cycle.
+
+The deinterleaver part of Figure~\ref{fig:convolution-interleaver} shows how the 
+original signal is recovered from the interleaved version. 
+
+\begin{figure}
+\center
+\epsfxsize=3.0in
+\epsfbox{streamgraphs/SGConvolutionalInterleaver.eps}
+\epsfxsize=3.0in
+\epsfbox{streamgraphs/SGConvolutionalDeinterleaver.eps}
+\caption{Stream graph of the Convoltional Interleaver(left) and Deinterleaver(right).}
+\label{fig:sg-convolution-interleave}
+\end{figure}
+
+

@@ -19,6 +19,7 @@ all: clean java uni raw
 
 clean:
 	rm -rf *.class *~
+	rm -rf streamgraphs/*.class streamgraphs/*~
 	rm -rf *.dot *.ps *.c *.o *.s
 	rm -rf *.lnk *.exe *.rexe *.out
 	rm -rf Makefile.streamit
@@ -31,6 +32,8 @@ clean:
 	rm -rf texput.log
 	rm -rf hdtv-stream-graph.*;
 	rm -rf images/hdtv-stream-graph.*;
+	rm -rf streamgraphs/*.eps
+	rm -rf images/*.tiff
 
 java-compile: 
 	jikes HDTV.java
@@ -50,24 +53,6 @@ raw-compile:
 	$(COMPILER) --raw 8 -partition $(SOURCES)
 raw: raw-compile
 	make -f Makefile.streamit run
-
-stream-graph-generate: java-compile
-	java HDTV -norun -printgraph > hdtv.dot
-	dot -Tps hdtv.dot > hdtv-stream-graph.ps
-stream-graph: stream-graph-generate
-	gv hdtv-stream-graph.ps
-
-doc: stream-graph-generate
-	ps2epsi hdtv-stream-graph.ps hdtv-stream-graph.eps
-	cp hdtv-stream-graph.eps images
-	latex hdtv_writeup.tex
-	bibtex hdtv_writeup
-	latex hdtv_writeup.tex
-	latex hdtv_writeup.tex
-	dvips hdtv_writeup.dvi -o hdtv_writeup.ps
-	gv hdtv_writeup.ps
-
-
 
 link:
 	# put all the libraries in one file
@@ -90,3 +75,29 @@ link:
 	rm -f ${MAIN_FILE}.tmp ${MAIN_FILE}.1.tmp
 	# compile
 	#javac Linked${MAIN_FILE}
+
+
+# convert all of the eps files we have in the images directory to tiff files
+tiff-files:
+	./images/convert_to_tiff.pl
+
+stream-graphs: hdtv-stream-graph individual-stream-graphs
+
+individual-stream-graphs:
+	./make_stream_graphs.pl
+
+hdtv-stream-graph: java-compile
+	java HDTV -norun -printgraph > hdtv.dot
+	dot -Tps hdtv.dot > hdtv-stream-graph.ps
+	ps2epsi hdtv-stream-graph.ps hdtv-stream-graph.eps
+	cp hdtv-stream-graph.eps images
+
+latex: 
+	latex hdtv_writeup.tex
+	bibtex hdtv_writeup
+	latex hdtv_writeup.tex
+	latex hdtv_writeup.tex
+	dvips hdtv_writeup.dvi -o hdtv_writeup.ps
+	gv hdtv_writeup.ps
+
+doc: stream-graphs latex

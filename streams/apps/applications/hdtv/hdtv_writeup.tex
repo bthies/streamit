@@ -1,6 +1,6 @@
 \documentclass{article}
 %\usepackage{doublespace}
-%\usepackage{fullpage}
+\usepackage{fullpage}
 %\usepackage{lscape}
 \usepackage{epsfig}
 
@@ -14,383 +14,78 @@
 \newpage
 
 \section{Introduction/Overview}
+
 This article presents a partial implementation in StreamIT of the HDTV standard 
 for transmitting digital television signals as described in 
-the ASTC Standard\cite{atsc:a53b}.
+ASTC Standard A53\cite{atsc:a53b}. 
 
-\section{Background on Encoding/Decoding}
+\subsection{StreamIT}
+StreamII is a novel language for representing streaming applications. Streaming applications 
+are applications that operate on a (potentially) infinite amount of data. Examples of 
+streaming applications include media processing (audio, video), digital communicaton
+(cell phones, wireless networking), digital signal processing, and any other 
+application that needs to operate on a large amount of streaming data.
 
-\subsection{Data Randomizer}
-
-\subsection{Reed-Solomon Codes}
-
-\subsection{Data Interleaving (Convolutional Interleaving)}
+\subsection{HDTV}
 \begin{figure}
 \center
 \epsfxsize=5.5in
-\epsfbox{images/convolution-interleaver.eps}
-\caption{8VSB convolutional interleaver and associated de-interleaver.}
-\label{fig:convolution-interleaver}
-\end{figure}
-
-Convolutional Interleaving is a way of interleaving data that apparently makes
-it rather immune to noise. All of the delay blocks in Figure~\ref{fig:convolution-interleaver}
-are initialized to 0. All references to convolutional interleaving that I could find
-on the internet were either too vague (eg descriptions of what particular ASIC designs did
-or only vaguely described the encoder. I could not find a reference to what a decoder looked 
-like. I sat down and sketeched out the diagram with the appropriate delay blocks, and I soon 
-saw that it is obvious once you see what the interleaver is doing what the deinterleaver should
-be doing. I decided that since I didn't see it immediately when first presented with a
-diagram of a convolution encoder other readers might not either.
-
-Therefore, Figure~\ref{fig:convolution-interleaver} shows an example of a convolutional
-interleaver with 5 paths. For the encoder, at each each time step the switch goes to the
-next position and gets the next byte of data. In exactly the same manner, the output
-switch advances one tick each time step and after grabbing data from that delay block.
-The Ds are delay blocks, and not registers. In particular, they actually delay the signal
-rather than gating their input at each clock cycle.
-
-The deinterleaver part of Figure~\ref{fig:convolution-interleaver} shows how the 
-original signal is recovered from the interleaved version. 
-
-
-
-
-
-\subsection{Trellis Coder}
-\begin{figure}
-\center
-\epsfxsize=5.5in
-\epsfbox{images/trellis-encoder.eps}
-\caption{8VSB trellis encoder, precoder, and symbol mapper.}
-\label{fig:trellis-system}
-\end{figure}
-
-Trellis coding (also known as convolution coding) 
-is a method of encoding where the value of a single input 
-bit affects the value of several output bits. The encoders
-keep state and use that state to generate the output of the 
-encoder. 
-
-A particular trellis code is 
-specified by at least three paramters. The first, the rate, is typically expressed as
-a fraction n/k. n data bits are provided to the convolution encoder and k bits are produced,
-where n>= k. The second, the reach K, is the number of output bits that the
-each input bit affects (eg the amount of memory that is in the system). 
-The third, is a set of generator polynomials which specify the system connections.
-For more information see \cite{fleming:tutorial}.
-
-Figure~\ref{fig:trellis-system} shows the trellis encoder used for the HDTV system. 
-The total trellis encoder is actually a rate 2/3 (2 input bits, 3 output bits) 
-encoder which combines a precoder (1/1) and an ``Optimal 4 bit 
-Ungerboeck code,'' (1/2).
-
-Each three bit 'symbol' produced by the trellis coder is then mapped to a value
-that is transmitted over the transmission medium (cable or satellite) to 
-a HDTV receiver. 
-
-The combination of the precoder and Ungerboeck coder followed by the symbol mapper
-have several desirable properties for error correction. I do not have sufficient
-theoritcal background to explain exactly what the properties are, or why they are good,
-so you will have to take it on faith as have I.
-
-
-\subsection{Precoding}
-\begin{figure}
-\center
-\epsfxsize=3.5in
-\epsfbox{images/precoder.eps}
-\caption{8VSB precoder}
-\label{fig:precoder}
-\end{figure}
-
-\begin{table}
-\center
-	\begin{tabular}{c|c|c}
-input(x2) & output(y2) & state  \\
-\hline
-0 & 0 & 0 \\
-1 & 1 & 0 \\
-1 & 0 & 1 \\
-0 & 0 & 0 \\
-1 & 1 & 0 \\
-0 & 1 & 1 \\
-1 & 0 & 1 \\
-1 & 1 & 0 \\
-1 & 0 & 1 \\
-0 & 0 & 0 \\
-\end{tabular}
-\caption{Example of precoding 01101011110:}
-\label{tbl:precoding_example}
-\end{table}
-
-A precoder is a simple circuit which XORs the current input with the previous
-output to get the current output. Figure~\ref{fig:precoder} is a diagram of the
-precoder used in the HDTV encoding pipeline. Table~\ref{tbl:precoding_example} 
-contains a worked out example of the input, output, and state of the precoder
-for coding the data \texttt{01101011110}.
-
-
-\begin{figure}
-\center
-\epsfxsize=3.5in
-\epsfbox{images/de-precoder.eps}
-\caption{8VSB de-precoder}
-\label{fig:deprecoder}
-\end{figure}
-
-\begin{table}
-\center
-\begin{tabular}{c|c|c}
-input(y2) & output(x2) & state  \\
-\hline
-0 & 0 & 0 \\
-1 & 1 & 0 \\
-0 & 1 & 1 \\
-0 & 0 & 0 \\
-1 & 1 & 0 \\
-1 & 0 & 1 \\
-0 & 1 & 1 \\
-1 & 1 & 0 \\
-0 & 1 & 1 \\
-0 & 0 & 0 \\
-\end{tabular}
-\caption{Example of de-precoding 0100110100:}
-\label{tbl:de_precoding_example}
-\end{table}
-
-To decode the precoded data, we simply reverse the process. It might be the case that 
-the Viterbi algorithm should be applied to recover the input sequence, and we will
-look into it. Figure~\ref{fig:deprecoder} is a schematic of the de precoder that was
-implemented, and Table~\ref{tbl:de_precoding_example} contains a worked out example 
-for the data \texttt{0100110100}.
-
-
-\subsection{``Optimal 4 state Ungerboeck code''}
-
-\subsubsection{Encoder}
-
-\begin{figure}
-\center
-\epsfxsize=3.5in
-\epsfbox{images/ungerboeck.eps}
-\caption{Optimal 4 state Ungerboeck Encoder}
-\label{fig:ungerboeck}
+\epsfbox{images/transmission-model.eps}
+\caption{Transmission model for HDTV. ATSC A53b only describes channel coding, which is the part of the HDTV system that this document pertains to. Source: ATSC Standard A53b\cite{atsc:a53b}.}
+\label{fig:hdtv-system}
 \end{figure}
 
 \begin{figure}
 \center
-\epsfxsize=3.5in
-\epsfbox{images/trellis-state-transition.eps}
-\caption{Trellis Encoder State transition diagram.}
-\label{fig:trellis-state-diagram}
+\epsfxsize=6.0in
+\epsfbox{images/hdtv-encoder-pipeline.eps}
+\epsfxsize=6.0in
+\epsfbox{images/hdtv-decoder-pipeline.eps}
+
+\caption{Encoder(left) and Decoder(right) Pipelines for HDTV. Blue squares represent implemented components in StreamIT.}
+\label{fig:hdtv-pipeline}
 \end{figure}
 
-The internal Ungerboeck encoder used in the HDTV encoder is
-a 1/2 convolution code with a reach of 3. Figure~\ref{fig:ungerboeck}
-shows a schematic diagram of an Ungerboeck encoder. For each input bit
-that appears at the input Y1, two output bits are produces at Z1 and Z0.
-The internal D (delay) blocks are registers which each hold state, marked
-S0 and S1. We can also think about the encoder as a finite state machine.
-Figure~\ref{fig:trellis-state-diagram} is a fsm representation of the ungerboeck
-encoder used in HDTV. Note that the initial state is 00, corresponding to 
-both registers in Figure~\ref{fig:ungerboeck} being set to zero.
+The system model for HDTV is 
+shown in Figure~\ref{fig:hdtv-system}. The A53 standard describes
+the service multiplex and transport, otherwise known as the channel coding.
+ATSC Standard A52\cite{atsc:a52a} specifies the audio coding and the ISO  
+standard for MEPG-2\cite{iso:13818-1}\cite{iso:13818-2} specifies the video coding.
 
-\begin{figure}
-\center
-\epsfxsize=5.5in
-\epsfbox{images/trellis-blank.eps}
-\caption{Trellis diagram for the 4 state Ungerboeck Code}
-\label{fig:trellis-blank}
-\end{figure}
+Since StreamIT is currently limited to static rate applications (the rate that data 
+moves through the system can not be data dependent), compression schemes (like MPEG-2)
+can not currently be implemented. Therefore, we will focus our attention in this paper on
+a partial implementation of the HDTV channel coder and decoder. 
 
-The reason that convolution codes are often called trellis codes is shown by 
-Figure~\ref{fig:trellis-example}. The x axis represents time (discrete points)
-and the y axis represents the possible states of the encoder. The solid lines
-represent state transitions for an input of 0. The dashed lines represent
-state transitions for an input of 1. As the input
-data is encoded, a path is traced through the trellis. Each input sequence maps 
-to exactly one path and each path maps exactly to one input sequence. It
-is also important to note that each state only has 
+HDTV lies squarely in the domain of communication theory, which a typical programmer does
+not have an indepth knowledge of. Since there seemed to be a dearth of explanations and tutorials
+on the web that explain not only the HDTV system in terms of atomic communication systems
+building blocks but also expalins those building blocks. 
 
-\begin{figure}
-\center
-\epsfxsize=5.5in
-\epsfbox{images/trellis-example.eps}
-\caption{Path traced through the trellis for input sequence 01101011110}
-\label{fig:trellis-example}
-\end{figure}
+Figure~\ref{hdtv-pipeline} shows the internal structure of the HDTV channel coder, and 
+internal structure of the decoder on the left and right respectively. We did not 
+have any input/output traces to work with, we had to implement the encoder pieces as well so 
+that we could verify that our decoder worked. 
 
-\begin{table}
-\center
-\begin{tabular}{c|c|c}
-input & state   & output  \\
-      & (s0,s1) & (z1,z0) \\
-\hline
-0 & 00 & 00 \\
-1 & 01 & 10 \\
-1 & 11 & 11 \\
-0 & 11 & 01 \\
-1 & 10 & 11 \\
-0 & 01 & 00 \\
-1 & 11 & 11 \\
-1 & 10 & 11 \\
-1 & 00 & 10 \\
-0 & 00 & 00 \\
-\end{tabular}
-\caption{Example of encoding 0110101110 with an Ungerboeck code.}
-\label{tbl:ungerboeck_example}
-\end{table}
-
-Table~\ref{tbl:ungerboeck_example} works out an example of encoding 
-the data \texttt{0110101110} with our encoder,
-and Figure~\ref{fig:trellis-example} shows the corresponding path through
-the trellis. The grey states correspond to the state of the encoder 
-at that time. 
-
-\subsubsection{Decoding}
-
-Decoding a bit stream that has been encoded with a convolution code is usually
-done using the Virterbi decoding algorithm. The Virterbi decoding algorithm
-is a well known algorithm in communication coding which is used in CDMA cellphones
-and satellite receivers among other things. The Viterbi algorithm uses a dynamic programming
-approach to determine the most likely signal sent given a recieved (possibly corrupted) signal. 
-Chip Fleming has a great tutorial\cite{fleming:tutorial} which contains a walk 
-through of the implementation of a trellis encoder and a Viterbi decoder 
-for a slightly different 1/2 trellis code. His tutorial was the inspiration for this document.
-
-Since each input bit in a convolution code affects several output bits
-the Viterbi decoding algorithm reads in several input symbols in order to determine
-several output symbols (eg it processes several symbols at a timie). In the
-signal processing literature (reference?) it appears that one can get most
-of the error correcting advantages of the convolution code by processing 7K input symbols
-(where K is the reach of the code as described above). 5K symbols also yields
-acceptable results.
-
-Since each input sequence maps to a particular path through the trellis,
-The main idea of the Vertibi decoding algorithm is to determine the most
-likely path throught the trellis given the received symbols. The straightforward
-approach would be to examine \textbf{all} possible paths through the trellis, and
-choose the path's whose output is closest to the received symbols. The
-straightforward approach is rediculously computationally intensive, 
-and totally uncecessary. The Viterbi algorithm (named after Andrew Viterbi, a founder of Qualcomm)
-uses a dynamic programming aproach to trace out the paths of the encoder's state. 
-
-We will perform 7K steps in each iteration of the algorithm. 
-At each step, we read 7K 2-bit symbol
-from the input and we output 7K 1-bit symbols at the output. 
-We are tasked with filling out a table: each element in the table, $c[s,t]$, 
-represents the accumulated error if the encoder were in state s at time t. 
-Accumulated error is definied as hamming distance
-(or euclidian distance) of received symbol to the expected symbol.
-
-Our problem: we are sitting at the decoder, and we receive symbol $R_t$ at time $t$. We want to fill in 
-$c[s,t*]$ for all possible states $\mathcal{S}$ (the Ungerboeck encoder we have 4 states).
-
-Algorithm:
-\begin{enumerate}
-\item For each received Symbol $R_t$ at time $t$
-	\begin{enumerate}
-	\item Compute $c[s,t] \forall s \in \mathcal{S}$ (eg compute the entries
- 	       of c[s,t] for each of the possible 4 states.)
-	\item Remember which predecessor state was used to compute each $c[s,t]$ in
-	       a predecessor table.
-	\end{enumerate}
-\item Reconstruct the path through the trellis with c and the predecessor states.
-	\begin{enumerate}
-	\item find $s^*$ such that $c[s^*,7K]$ is minimum. (eg at the end of the trellis, 
-	       after we have looked at all input symbols, choose the state we would 
-	       be in at the last time. 
-	\item We then use the predecessor table to walk back through the trellis
-	       along the path which yields the least possible error (which we have 
-	       been calculating along the way.
-	\item Once we have recovered our most likely path, we can recreate the
-	       input sequence that was most likely sent.
-	\end{enumerate} 
-\end{enumerate}
-
-Determining $c[s,t]$ for all possible states (in 1(a) above) is not obvious.
-The algorithm to determine it is explained below.  
-
-\begin{enumerate}
-\item For each received symbol $R_t$ received at time $t$ we compute 
-       $c[s,t] \forall s \in \mathcal{S}$ by using the entries of $c$ for 
-       the previous time (eg $c[s,t-1]$).
-	\begin{enumerate}
-	\item For each $s \in \mathcal{S}$
-		\begin{enumerate}
-		\item Let $q^0$ and $q^1$ be the two possible previous states
-		       that lead to $s$. $q^0\rightarrow s$ when an input of 0
-		       was received, and $q^1\rightarrow s$ when an input of 1 
-		       was received. These transitions produce symbols $R^0$ and $R^1$
-		       respectively.
-		\item Let $e^0$ be the hamming distance between $R_t$ and $R^0$ (eg the hamming
-		       distance between the received symbol and the expected symbol if the input was 0). 
-		       Similarly, let $e^1$ be the hamming distance between $R_t$ and $R^1$.
-		\item Now, calculate $c[s,t] = min(c[q^0,t-1] + e^0, c[q^1,t-1] + e^1)$
-		\item And remember which state ($q^0$ or $q^1$) was a predecessor state to s in the 
-		       predecessor table.
-		\end{enumerate}
-	\end{enumerate}
-\end{enumerate}
-
-Since that discussion was filled with lots of math and symbols, 
-lets make the algorithm concrete with a worked through example.
-
-\input{hdtv_writeup_decoding_example}
+\section{Data Randomizer}
+To Be Done.
 
 
-\subsection{Multiple Trellis Encoders and Interleaving}
-
-\begin{figure}
-\center
-\epsfxsize=5.5in
-\epsfbox{images/multiple-trellis.eps}
-\caption{}
-\label{fig:multiple-trellis}
-\end{figure}
-
-\begin{figure}
-\center
-\epsfxsize=5.5in
-\epsfbox{images/trellis-interleaving.eps}
-\caption{Data reordering from the trellis encoders}
-\label{fig:trellis-interleaving}
-\end{figure}
+\section{Reed-Solomon Codes}
+\input{hdtv_writeup_rs.tex}
 
 
-The trellis encoding is done by 12 encoders in parallel shown in
-Figure~\ref{fig:trellis-interleaving}. The
-order in which 
+\section{Data Interleaving (Convolutional Interleaving)}
+\input{hdtv_writeup_conv_interleaver.tex}
 
+\section{Trellis Coder}
+\input{hdtv_writeup_trellis.tex}
 
+\section{Precoding}
+\input{hdtv_writeup_precode.tex}
 
-
-
-
-\section{StreamIT Implementation}
-
-
-\subsection{Trellis Encoder/Decoder Implementation}
-
-\subsubsection{Ungerboeck Decoder Implementation}
-Each table is two dimensional: states and time. Each unit of time corresponds to
-receiving 1 symbol (so in this case receiving 2 bits). Each cell represents something
-for a particular state at a particular time. The algorithm fills up both tables as
-time progresses. When the tables are full, it traces back through the table and finds the
-path that results in the fewest errors occuring.
-
-The error metric that is used can either be hamming distance or euclidian distance (basically
-hamming distance squared).
-
-The first table keeps track of accumulated errors. accumulated\_error[s,t] is the hamming distance
-between the output that the current min path to state s at time t would generate and the
-symbols that have been received. 
-
-The second table keeps track of the previous states, so that the min path
-can be reconstructed. predecessor\_states[s,t] represents the state s' of the encoder
-in the minimum path that leads to s at time (t-1) 
-
+\section{``Optimal 4 state Ungerboeck code''}
+\input{hdtv_writeup_ungerboeck.tex}
 
 
 
@@ -407,7 +102,7 @@ in the minimum path that leads to s at time (t-1)
 %\begin{landscape}
 \begin{figure}
 \center
-\epsfxsize=8in
+\epsfxsize=5.5in
 \epsfbox{images/hdtv-stream-graph.eps}
 \caption{Stream Graph of the HDTV application.}
 \label{fig:hdtv-stream-graph}

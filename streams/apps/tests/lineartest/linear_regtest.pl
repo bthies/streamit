@@ -11,7 +11,8 @@ my @tests = ("regtests/LinearTest1",
 	     "regtests/LinearTest2",
 	     "regtests/LinearTest3",
 	     "regtests/LinearTest4",
-	     "regtests/LinearTest5",);
+	     "regtests/LinearTest5",
+	     "regtests/LinearTest6",);
 
 my $current_test;
 foreach $current_test (@tests) {

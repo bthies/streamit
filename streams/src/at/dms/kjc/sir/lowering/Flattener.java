@@ -15,7 +15,14 @@ public class Flattener {
     public static JClassDeclaration flatten(SIRStream str) {
 	// name the components
 	Namer.assignNames(str);
-	// structure 
+	// make single structure
+	
+	// scheduling!
+	//   - arrange calls to work functions according to michal
+	// add hooks to init functions
+	//   - subcalls to init
+	//   - peek/pop/push etc.
+	return null;
     }
     
 }

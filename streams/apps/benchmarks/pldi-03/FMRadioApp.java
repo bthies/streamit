@@ -292,9 +292,12 @@ class FMRadio extends Pipeline
 	final int numberOfTaps = 64;
 	final float maxAmplitude = 27000;
 	final float bandwidth = 10000;
-	//decimate 4 samples after outputting 1 (eg factor of 5).
-        add(new LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps));
-	add(new Decimator(5));
+	add(new Pipeline() {
+		public void init() {
+		    add(new LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps));
+		    add(new Decimator(5));
+		}
+	    });
 	add(new FMDemodulator(samplingRate, maxAmplitude, bandwidth));
 	add(new Equalizer(samplingRate));
     }

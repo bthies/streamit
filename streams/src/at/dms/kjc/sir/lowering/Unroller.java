@@ -101,6 +101,8 @@ class Unroller extends SLIRReplacingVisitor {
     private int incrementCounter(int counter, UnrollInfo info) {
 	switch(info.oper) {
 	case OPE_PLUS: 
+        case OPE_POSTINC:
+        case OPE_PREINC:
 	    return counter + info.incrVal;
 	case OPE_STAR: 
 	    return counter * info.incrVal;
@@ -158,18 +160,39 @@ class Unroller extends SLIRReplacingVisitor {
 	    int finalVal = ((JIntLiteral)condExpr.getRight()).intValue();
 
 	    // inspect increment...
-	    JCompoundAssignmentExpression incrExpr
-		= (JCompoundAssignmentExpression)
-		((JExpressionListStatement)incr).getExpression(0);
-	    // make sure the variable is the same
-	    if (var != 
-		((JLocalVariableExpression)incrExpr.getLeft()).getVariable()) {
-		return null;
-	    }
-	    // get the operation
-	    int oper = incrExpr.getOperation();
-	    // get the increment amount
-	    int incrVal = ((JIntLiteral)incrExpr.getRight()).intValue();
+            int incrVal, oper;
+            JLocalVariableExpression incrVar;
+            JExpression incrExpr =
+                ((JExpressionListStatement)incr).getExpression(0);
+            if (incrExpr instanceof JCompoundAssignmentExpression)
+            {
+                JCompoundAssignmentExpression cae =
+                    (JCompoundAssignmentExpression)incrExpr;
+                oper = cae.getOperation();
+                incrVal = ((JIntLiteral)cae.getRight()).intValue();
+                incrVar =
+                    (JLocalVariableExpression)cae.getLeft();
+            }
+            else if (incrExpr instanceof JPrefixExpression)
+            {
+                JPrefixExpression pfx = (JPrefixExpression)incrExpr;
+                oper = pfx.getOper();
+                incrVal = 1;
+                incrVar = (JLocalVariableExpression)pfx.getExpr();
+            }
+            else if (incrExpr instanceof JPostfixExpression)
+            {
+                JPostfixExpression pfx = (JPostfixExpression)incrExpr;
+                oper = pfx.getOper();
+                incrVal = 1;
+                incrVar = (JLocalVariableExpression)pfx.getExpr();
+            }
+            else
+                return null;
+            
+            // make sure the variable is the same
+            if (var != incrVar.getVariable())
+                return null;
 	    
 	    // return result
 	    return new UnrollInfo(var, initVal, finalVal, oper, incrVal);
@@ -192,6 +215,8 @@ class Unroller extends SLIRReplacingVisitor {
     private int calcUnrollFactor(UnrollInfo info) {
 	switch(info.oper) {
 	case OPE_PLUS: 
+        case OPE_POSTINC:
+        case OPE_PREINC:
 	    return (info.finalVal-info.initVal)/info.incrVal;
 	case OPE_STAR: 
 	    // simulate execution of multiplication

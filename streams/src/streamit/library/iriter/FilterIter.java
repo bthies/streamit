@@ -12,6 +12,11 @@ public class FilterIter
     }
 
     Filter filter;
+    
+    public Object getObject ()
+    {
+        return filter;
+    }
 
     public int getNumInitStages ()
     {

@@ -15,6 +15,11 @@ public class FeedbackLoopIter
 
     FeedbackLoop feedback;
     
+    public Object getObject ()
+    {
+        return feedback;
+    }
+    
     public streamit.scheduler.iriter.Iterator getBody ()
     {
         return new Iterator (feedback.getBody ());

@@ -14,6 +14,11 @@ public class Iterator implements streamit.scheduler.iriter.Iterator
     }
 
     Stream stream;
+    
+    public Object getObject ()
+    {
+        return stream;
+    }
 
     // members of streamit.scheduler.iriter.Iterator
 

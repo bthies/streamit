@@ -13,6 +13,11 @@ public class PipelineIter
 
     Pipeline pipeline;
     
+    public Object getObject ()
+    {
+        return pipeline;
+    }
+    
     public int getNumChildren ()
     {
         return pipeline.getNumChildren ();

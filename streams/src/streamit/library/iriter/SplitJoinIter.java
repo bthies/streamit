@@ -15,6 +15,11 @@ public class SplitJoinIter
 
     SplitJoin splitjoin;
     
+    public Object getObject ()
+    {
+        return splitjoin;
+    }
+    
     public int getNumChildren ()
     {
         return splitjoin.getNumChildren ();

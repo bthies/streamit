@@ -164,32 +164,14 @@ public class OffChipBuffer
 	}
     }
     
-    
-    public void setOwner(RawTile tile) 
-    {
-	this.owner = tile;
-	tile.addBuffer(this);
-    }
-
+    /**
+     * return the neighboring tile of the dram this buffer is assigned to
+     **/
     public RawTile getOwner() 
     {
-	assert (owner != null) : 
+	assert (dram != null) : 
 	    "owner not set yet";
-	return owner;
-    }
-
-    public void addUser(RawTile tile) 
-    {
-	//don't add owner to the user list
-	if (tile == owner)
-	    return;
-	
-	users.add(tile);
-    }
-    
-    public RawTile[] getUsers() 
-    {
-	return (RawTile[])users.toArray(new RawTile[0]);
+	return dram.getNeighboringTile();
     }
 }
 

@@ -137,7 +137,7 @@ public class Trace
     }
 
     public String toString() {
-	return "Trace:"+head.getNext();
+	return "Trace: "+head + "->" + head.getNext() + "->...";
     }
 
     public boolean depends(Trace trace) {

@@ -409,10 +409,9 @@ public class SpaceTimeBackend
 	if(true&&REAL) {
 	    //mgordon's stuff
 	    System.out.println("Building Trace Traversal");
-	    LinkedList initList = TraceTraversal.getTraversal(traceForrest);
-	    LinkedList steadyList = TraceTraversal.getTraversal(traceForrest);
-	    
-		
+	    //LinkedList initList = TraceTraversal.getTraversal(traces);
+	    List initList = Arrays.asList(traces);
+	    List steadyList = TraceTraversal.getTraversal(traceForrest);
 	    //assign the buffers not assigned by Jasp to drams
 	    BufferDRAMAssignment.run(steadyList, rawChip);
 	    //communicate the addresses for the off-chip buffers
@@ -424,11 +423,12 @@ public class SpaceTimeBackend
 	    }
 	    //create the raw execution code and switch code for the initialization phase
 	    System.out.println("Creating Initialization Stage");
-	    Rawify.run(initList.listIterator(), rawChip, true); 
+	    Rawify.run(initList.iterator(), rawChip, true); 
 	    //create the raw execution code and switch for the steady-state
 	    System.out.println("Creating Steady-State Stage");
-	    Rawify.run(steadyList.listIterator(), rawChip, false);
-	    TraceDotGraph.dumpGraph(steadyList, "tracegraph.dot");
+	    Rawify.run(steadyList.iterator(), rawChip, false);
+	    TraceDotGraph.dumpGraph(initList, "inittraces.dot");
+	    TraceDotGraph.dumpGraph(steadyList, "steadyforrest.dot");
 	    //generate the switch code assembly files...
 	    GenerateSwitchCode.run(rawChip);
 	    //generate the compute code from the SIR

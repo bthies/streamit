@@ -14,7 +14,7 @@ import at.dms.kjc.flatgraph2.*;
  **/
 public class Rawify
 {
-    public static void run(ListIterator traces, RawChip rawChip,
+    public static void run(Iterator traces, RawChip rawChip,
 			   boolean init) 
     {
 	//iterate over the traces in the given order and generate the 
@@ -437,8 +437,6 @@ public class Rawify
 		    for (int d = 0; d < dests.length; d++) 
 			dests[d] = OffChipBuffer.getBuffer(traceNode, 
 							   traceNode.getDests()[j][d]).getDRAM();
-		    System.out.println("  Sending item from " + sourcePort + " to " + dests[0]);
-		    
 		    for (int q = 0; q < typeSize; q++)
 			SwitchCodeStore.generateSwitchCode(sourcePort, 
 							   dests, stage);

@@ -264,7 +264,7 @@ public class Util {
 	}
     }
 
-    public static Iterator traceNodeTraversal(LinkedList traceTraversal) 
+    public static Iterator traceNodeTraversal(List traceTraversal) 
     {
 	LinkedList trav = new LinkedList();
 	ListIterator traces = traceTraversal.listIterator();

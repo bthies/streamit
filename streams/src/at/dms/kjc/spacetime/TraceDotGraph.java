@@ -5,12 +5,13 @@ import at.dms.kjc.*;
 import at.dms.kjc.flatgraph2.*;
 import java.io.FileWriter;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Iterator;
 
 
 public class TraceDotGraph 
 {
-    public static void dumpGraph(LinkedList steadyTrav, String fileName) 
+    public static void dumpGraph(List steadyTrav, String fileName) 
     {
 	try {
 	    FileWriter fw = new FileWriter(fileName);
@@ -36,7 +37,7 @@ public class TraceDotGraph
 		if (buffer.redundant())
 		    fw.write("\", style=dashed");
 		else
-		    fw.write(buffer.getSize() + "\", style=bold");
+		    fw.write(buffer.getSize() + "(" + buffer.getIdent() + ")\", style=bold");
 		fw.write("];\n");
 	    }
 	    fw.write("}\n");

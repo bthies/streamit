@@ -13,11 +13,13 @@ public class TraceTraversal
     {
 	LinkedList traversal = new LinkedList();
 	
+
 	//printForrest(forrest);
 
 	//we'll do one forrest at a time for now
 	for (int i = 0; i < forrest.length; i++) {
-	    System.out.println("Traversal for Forest " + i);
+	    SpaceTimeBackend.println("Traversal for Forest " + i);
+	    SpaceTimeBackend.println(" Head of traversal " + forrest[i]);
 	    HashSet visited = new HashSet();
 	    Vector queue = new Vector();
 	    Trace trace;

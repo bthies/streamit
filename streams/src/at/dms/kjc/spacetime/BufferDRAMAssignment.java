@@ -6,6 +6,7 @@ import java.util.TreeSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.Random;
 
@@ -23,7 +24,7 @@ public class BufferDRAMAssignment
     /** 
      * Assign the buffers to ports
      **/
-    public static void run(LinkedList steadyList, RawChip chip) 
+    public static void run(List steadyList, RawChip chip) 
     {
 	//first go thru the traversal and assign
 	//input->filter and filter->output buffers to drams 

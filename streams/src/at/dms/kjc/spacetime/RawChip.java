@@ -98,10 +98,10 @@ public class RawChip {
 	    else
 		Utils.fail("calling getDirection on non-neighbors");
 	}
-	System.out.println(from);
-	System.out.println(((MagicDram)to).getPort());
-	System.out.println("[" + from.getX() + ", " + from.getY() + "] -> [" +
-			   to.getX() + ", " + to.getY() + "]");
+	//System.out.println(from);
+	//System.out.println(((MagicDram)to).getPort());
+	//System.out.println("[" + from.getX() + ", " + from.getY() + "] -> [" +
+	//to.getX() + ", " + to.getY() + "]");
 	
 	Utils.fail("calling getDirection on non-neighbors");
 	return "";

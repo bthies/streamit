@@ -19,7 +19,7 @@ import streamit.scheduler2.iriter./*persistent.*/
 FeedbackLoopIter;
 import streamit.scheduler2.Schedule;
 
-/* $Id: ScheduleBuffers.java,v 1.10 2003-04-04 01:31:29 karczma Exp $ */
+/* $Id: ScheduleBuffers.java,v 1.11 2003-04-06 22:51:24 karczma Exp $ */
 
 /**
  * This class uses a valid schedule and an iterator to determine 
@@ -891,6 +891,8 @@ public class ScheduleBuffers extends DestroyedClass
 
                 deltas = newDeltas;
             }
+
+            phase2deltaMap.put(schedule, deltas);
 
         }
 

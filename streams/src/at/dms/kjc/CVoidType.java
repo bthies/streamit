@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CVoidType.java,v 1.2 2001-10-22 22:01:24 mgordon Exp $
+ * $Id: CVoidType.java,v 1.3 2002-09-11 17:25:02 aalamb Exp $
  */
 
 package at.dms.kjc;
@@ -27,7 +27,7 @@ import at.dms.util.SimpleStringBuffer;
  * This class represents java and kopi numericals types
  * Such as byte, short, int, long, float, double
  */
-final class CVoidType extends CType {
+final public class CVoidType extends CType {
 
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
@@ -36,7 +36,7 @@ final class CVoidType extends CType {
   /**
    * Constructor
    */
-  protected CVoidType() {
+  public CVoidType() {
     super(TID_VOID);
   }
 

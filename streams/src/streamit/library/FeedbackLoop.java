@@ -25,6 +25,7 @@ public class FeedbackLoop extends Stream
 {
     Joiner joiner;
     Splitter splitter;
+    SplitJoin.SplitJoinType splitType, joinType;
     List enqueued = new java.util.ArrayList();
     int delay;
     Stream body, loop;
@@ -360,6 +361,7 @@ public class FeedbackLoop extends Stream
     {
         assert joiner == null && type != null;
         joiner = type.getJoiner ();
+	joinType = type;
     }
 
     // specifies the body of the feedback loop
@@ -374,6 +376,7 @@ public class FeedbackLoop extends Stream
     {
         assert splitter == null && type != null;
         splitter = type.getSplitter ();
+	splitType = type;
     }
 
     // specifies the feedback path stream

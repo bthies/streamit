@@ -13,8 +13,8 @@ import at.dms.kjc.sir.*;
  * It also adds linear redundancy information
  **/
 public class LinearDot extends StreamItDot {
-    private LinearAnalyzer linearData;
-    private LinearRedundancyAnalyzer linearRedundancy;
+    LinearAnalyzer linearData;
+    LinearRedundancyAnalyzer linearRedundancy;
 
     /**
      * Make a LinearDot printer that prints out the dot graph using information

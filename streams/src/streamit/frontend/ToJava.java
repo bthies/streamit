@@ -3,6 +3,8 @@ import java.io.DataInputStream;
 import antlr.BaseAST;
 import java.util.List;
 import java.util.ArrayList;
+import streamit.frontend.nodes.*;
+import streamit.frontend.tojava.*;
 
 class ToJava
 {
@@ -126,6 +128,20 @@ class ToJava
 
     public void runNew()
     {
+        StreamItParserFE parser = null;
+        Program prog = null;
+        try
+        {
+            StreamItLex lexer = new StreamItLex(new DataInputStream(System.in));
+            parser = new StreamItParserFE(lexer);
+            prog = parser.program();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace(System.err);
+            return;
+        }
+        System.out.println((String)prog.accept(new NodesToJava(null)));
     }
 
     public static void main(String[] args)

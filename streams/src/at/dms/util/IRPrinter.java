@@ -1615,12 +1615,14 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visit a feedback loop delay node.
      */
     public void visitSetDelay(LIRSetDelay self,
+                              JExpression data,
                               JExpression streamContext,
                               int delay,
                               CType type,
                               LIRFunctionPointer fp)
     {
         blockStart("LIRSetDelay");
+        attrPrint("data", data);
         attrPrint("streamContext", streamContext);
         attrPrint("delay", String.valueOf(delay));
         attrPrint("type", type.toString());

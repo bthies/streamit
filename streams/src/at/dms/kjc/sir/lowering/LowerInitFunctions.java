@@ -208,8 +208,10 @@ public class LowerInitFunctions implements StreamVisitor {
                                      int delay,
                                      JMethodDeclaration initPath,
                                      JMethodDeclaration init) {
-        JExpression parentContext = LoweringConstants.getStreamContext();
-        init.addStatement(new LIRSetDelay(parentContext,
+        JExpression data = LoweringConstants.getDataField();
+        JExpression context = LoweringConstants.getStreamContext();
+        init.addStatement(new LIRSetDelay(data,
+                                          context,
                                           delay,
                                           str.getInputType(),
                                           new LIRFunctionPointer(initPath)));

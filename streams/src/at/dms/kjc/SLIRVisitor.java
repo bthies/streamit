@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.12 2001-10-24 20:34:36 dmaze Exp $
+ * $Id: SLIRVisitor.java,v 1.13 2001-10-25 14:42:07 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -130,6 +130,7 @@ public interface SLIRVisitor extends KjcVisitor
      * Visits a feedback loop delay node.
      */
     void visitSetDelay(LIRSetDelay self,
+                       JExpression data,
                        JExpression streamContext,
                        int delay,
                        CType type,

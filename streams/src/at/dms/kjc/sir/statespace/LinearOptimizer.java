@@ -67,7 +67,6 @@ public class LinearOptimizer {
 	if((!orig.getD().isZero())&&doStoreInputs) {	   
 	    orig = orig.changeStoredInputs(orig.getStoredInputCount() + orig.getPopCount());
 	}
-	LinearPrinter.println("Added input states: \n" + orig);
 
 	outputs = orig.getPushCount();
 	inputs = orig.getPopCount();
@@ -135,7 +134,7 @@ public class LinearOptimizer {
 	LinearPrinter.println("After state reduction, before min param: \n" + totalMatrix + "\n" + initVec);
 	
 	// minimally parametrize the system
-		
+			
 	    minParametrize(true);      // put in reachable canonical form
 	    cleanAll();
 	    
@@ -158,8 +157,8 @@ public class LinearOptimizer {
 		LinearPrinter.println("Reachable rep is better");
 		return tempReachableRep;
 	    }
-	  
-	    //                return extractRep();
+		  
+	    //                    return extractRep();
     }
 
 
@@ -632,8 +631,8 @@ public class LinearOptimizer {
 	int currCol = 0;
 	int currStage = 0;
 	int searchRow, max_index;
-	boolean found;
-	double temp_val, max_val;
+	boolean found, firstTime;
+	double temp_val, max_val, remove_val;
 	ComplexNumber tempComplex;
 
 	while((currRow < states)&&(currStage < inputs)) {
@@ -654,17 +653,15 @@ public class LinearOptimizer {
 		}
 	    }
 	    swap(currRow,max_index);
-	    if(totalMatrix.getElement(currRow,states+currStage).equals(ComplexNumber.ZERO))
-		found = false;
-	    else
+	    if(Math.abs(totalMatrix.getElement(currRow,states+currStage).getReal()) > ComplexNumber.MAX_PRECISION_BUFFER)
 		found = true;
+	    else
+		found = false;
 
 	    
 	    if(found) { 
 
-		temp_val = totalMatrix.getElement(currRow,states+currStage).getReal();
-		scale(currRow,1.0/temp_val,normal);
-	    
+		temp_val = totalMatrix.getElement(currRow,states+currStage).getReal();	    
 		// make all entries above and below it to zero
 		for(int i=0; i<states; i++) { 
 		    if(i!=currRow) {
@@ -673,13 +670,14 @@ public class LinearOptimizer {
 			    // do NOT do row operations with values too close to MAX_PRECISION
 			    // therefore, we will use MAX_PRECISION_BUFFER, which is greater	     
 			    if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
-				addMultiple(currRow,i,-tempComplex.getReal(),normal);
+				addMultiple(currRow,i,-tempComplex.getReal()/temp_val,normal);
 				// set the value to be exactly zero (in case it is very small but non-zero)
 				totalMatrix.setElement(i,states+currStage,ComplexNumber.ZERO);
 			    }
 			}
 		    }
 		}
+		scale(currRow,1.0/temp_val,normal);
 	    }
 
 	    currRow++;
@@ -687,7 +685,7 @@ public class LinearOptimizer {
 
 	    // now go diagonally down from the next row
 
-	    while(found && (currRow < states) & (currCol < states)) {
+	    while(found && (currRow < states) && (currCol < states)) {
 
 		found = false;
 		searchRow = currRow;
@@ -705,33 +703,47 @@ public class LinearOptimizer {
 		}
 		swap(currRow,max_index);
 		LinearPrinter.println("BIGGEST VALUE: " + totalMatrix.getElement(currRow,currCol).getReal());
-		if(totalMatrix.getElement(currRow,currCol).equals(ComplexNumber.ZERO))
-		    found = false;
-		else
+		if(Math.abs(totalMatrix.getElement(currRow,currCol).getReal()) > ComplexNumber.MAX_PRECISION_BUFFER)
 		    found = true;
+		else
+		    found = false;
 
+		firstTime = true;
 
 		if(found) {
 		    
 		    temp_val = totalMatrix.getElement(currRow,currCol).getReal(); 
 		    
-		    scale(currRow,1.0/temp_val,normal);
-		    
 		    // make all entries above and below it to zero
-		    for(int i=0; i<states; i++) { 
+		    for(int i=0; i<states; i++) {
+			/*
+			if((i==currRow)&&firstTime) {
+			    if((totalMatrix.getElement(states,currRow-1).getReal() > ComplexNumber.MAX_PRECISION_BUFFER)&&
+			       (totalMatrix.getElement(states,currRow).getReal()>ComplexNumber.MAX_PRECISION_BUFFER)) {
+
+				remove_val = totalMatrix.getElement(states,currRow-1).getReal()/totalMatrix.getElement(states,currRow).getReal();
+				addMultiple(currRow-1,currRow,remove_val,normal);
+				firstTime = false;
+			    }
+			    
+			}
+			*/
 			if(i!=currRow) {
 			    tempComplex = totalMatrix.getElement(i,currCol);
-			    if(!tempComplex.equals(ComplexNumber.ZERO))
+			    if(!tempComplex.equals(ComplexNumber.ZERO)) {
 				// do NOT do row operations with values too close to MAX_PRECISION
 				// therefore, we will use MAX_PRECISION_BUFFER, which is greater
 				if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
-				    addMultiple(currRow,i,-tempComplex.getReal(),normal);	
+				    LinearPrinter.println("GETTING RID OF: " + totalMatrix.getElement(i,currCol).getReal());
+				    addMultiple(currRow,i,-tempComplex.getReal()/temp_val,normal);	
 				    LinearPrinter.println("VALUE: " + totalMatrix.getElement(i,currCol).getReal());
 				    // set the value to be exactly zero (in case it is very small but non-zero)
 				    totalMatrix.setElement(i,currCol,ComplexNumber.ZERO);	       
 				}
+			    }
 			}
 		    }
+		    scale(currRow,1.0/temp_val,normal);
 		    currRow++;
 		}
 

@@ -95,7 +95,10 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
                 numExecutionsForInit.put (child, new Integer (numItersInit));
 
                 // and figure out how many data this particular child
-                // needs to initialize the pipeline
+                // needs to initialize the pipeline;  that is:
+                //  + number of iters * consumption to fill up the pipeline
+                //  + number of data needed to initialize this particular child
+                //  + (peek - pop)
                 consumedByPrev = numItersInit * child.getConsumption () +
                                  (child.getPeekConsumption () - child.getConsumption ()) +
                                  child.getInitDataCount ();

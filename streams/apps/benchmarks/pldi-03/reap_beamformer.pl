@@ -1,9 +1,13 @@
 #!/usr/local/bin/perl
-
-# this program executes the specified programs
-# Using the following options:
-# constprop and unroll 10000
-# Alone, with linearreplacement, with frequencyreplacement and with both
+#
+# This script is a modification of reap_freq.pl
+# Its intended use is to gather numbers for the various
+# sized beamformers (now that this is practical in a realistic time
+# frame) and so we can graph the results.
+#
+# First, this script generates various sized beamformers. Then the 
+# script compiles it with no linear optimizations, and then with
+# linear replacement.
 #
 # Then the script executes the program using a dynamo-rio program(module?)
 # which counts the number of flops, fadds and fmuls that occur 
@@ -12,9 +16,6 @@
 # This is the latest reincarnation of a continually mutating script
 # to gather numbers for linear analysis and replacement.
 #
-# If a filename is passed as an argument, this script will use that as
-# the input file specifying which programs to run. If no argument is passed,
-# this script just uses the default one.
 
 use strict;
 
@@ -36,95 +37,76 @@ my $NUM_ITERS = 10000;
 
 # format for script programs is 
 #directory:filename:max size for frequency
-my @programs;
-# if we have a filename, read it in and use that, otherwise use
-if (@ARGV) {
-    @programs = split("\n", read_file(shift(@ARGV)));
-} else {
-    @programs = (
-		 ".:FIRProgram",
-		 ".:SamplingRateConverter",
-		 ".:FilterBank",
-		 ".:TargetDetect",
-		 ".:FMRadioApp",
-		 ".:CoarseSerializedBeamFormer",
-		 #".:Test",
-		 );
+my @sizes;
+my ($i, $j);
+for ($i=12; $i<=12; $i+=1) {
+    for ($j=1; $j<=4; $j+=1) {
+	@sizes = (@sizes, "$i:$j");
+    }
 }
 
 
-
-
-# array to hold results
+# array to hold results for various sizes
 my @result_lines;
-# heading
+
+# heading line
 push(@result_lines, 
      "Program\t" .
      "normal flops\tnormal fadds\tnormal fmuls\tnormal outputs\t" .
-     "linear flops\tlinear fadds\tlinear fmuls\tlinear outputs\t" .
-     "freq 2 flops\tfreq 2 fadds\tfreq 2 fmuls\tfreq 2 outputs\t" .
-     "both flops\tboth fadds\tboth fmuls\tboth outputs\t");
+     "linear flops\tlinear fadds\tlinear fmuls\tlinear outputs\t");
 
 # determine the next available results directory (eg results0, results1, etc.)
 my $results_dir_num = 0;
-while (-e "/tmp/freqResults$results_dir_num") {$results_dir_num++;}
-my $results_dir = "/tmp/freqResults$results_dir_num";
+while (-e "/tmp/beamResults$results_dir_num") {$results_dir_num++;}
+my $results_dir = "/tmp/beamResults$results_dir_num";
 print `mkdir $results_dir`;
 
-my $current_program;
-foreach $current_program (@programs) {
+my $current_size;
+foreach $current_size (@sizes) {    
     #ignore blank lines
-   if (not $current_program) {next;}
-    # parse the input into path, program and max frequency size
-    my ($path, $base_filename) = split(":", $current_program);
+    if (not $current_size) {next;}
+    
+    # parse the number of chanels and beams
+    my ($channels,$beams) = split(":",$current_size);
+    # make a beamformer with the correct number of channels and beams
+    my $base_filename = make_beamformer($channels, $beams);
+    # set up path (for backwards compatibility with the rest of the script)
+    my $path = ".";
 
     # copy the input program into the new results dir
     print `cp $path/$base_filename.java $results_dir`;
-
+    
     # update the path
     $path = $results_dir;
     
     # compile normally without frequency replacement
-   my ($normal_outputs, $normal_flops, 
-       $normal_fadds, $normal_fmuls) = do_test($path, $base_filename,
-					       "--unroll 100000 --debug", 
-					       "$base_filename(normal)");
-   save_output($path, $base_filename, "normal");
+    my ($normal_outputs, $normal_flops, 
+	$normal_fadds, $normal_fmuls) = do_test($path, $base_filename,
+						"--unroll 100000 --debug", 
+						"$base_filename(normal)");
+    save_output($path, $base_filename, "normal");
+    
+    # compile with linear replacement
+    my ($linear_outputs, $linear_flops, 
+	$linear_fadds, $linear_fmuls) = do_test($path, $base_filename, 
+						"--unroll 100000 --debug --linearreplacement", 
+						"$base_filename(linear)");
+    save_output($path, $base_filename, "linear");
+   
+    # make a new line for the output file.
+    my $new_data_line = 	     ("$base_filename\t".
+				      "$normal_flops\t$normal_fadds\t$normal_fmuls\t$normal_outputs\t" .
+				      "$linear_flops\t$linear_fadds\t$linear_fmuls\t$linear_outputs\t");   
+    open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"results mail: ($path,$base_filename)\"");
+    print MHMAIL $new_data_line;
+    close(MHMAIL);
+    
+    push(@result_lines, $new_data_line);
 
-   # compile with linear replacement
-   my ($linear_outputs, $linear_flops, 
-       $linear_fadds, $linear_fmuls) = do_test($path, $base_filename, 
-					       "--unroll 100000 --debug --linearreplacement", 
-					       "$base_filename(linear)");
-   save_output($path, $base_filename, "linear");
-   
-
-   # now, do the compilation with (smart fftw) frequency replacement
-   my ($freq2_outputs, $freq2_flops, 
-       $freq2_fadds, $freq2_fmuls) = do_test($path, $base_filename, 
-					     "--unroll 100000 --debug --frequencyreplacement 2",
-					     "$base_filename(freq 1)");
-   save_output($path, $base_filename, "freq2");
-   
-   # now, run with both optimizations (fftw and linear)
-   my ($both_outputs, $both_flops, 
-       $both_fadds, $both_fmuls) = do_test($path, $base_filename, 
-					   "--unroll 100000 --debug --linearreplacement --frequencyreplacement 2",
-					   "$base_filename(both)");
-   save_output($path, $base_filename, "both");
-   
-   my $new_data_line = 	     ("$base_filename\t".
-			      "$normal_flops\t$normal_fadds\t$normal_fmuls\t$normal_outputs\t" .
-			      "$linear_flops\t$linear_fadds\t$linear_fmuls\t$linear_outputs\t" .
-			      "$freq2_flops\t$freq2_fadds\t$freq2_fmuls\t$freq2_outputs\t" .
-			      "$both_flops\t$both_fadds\t$both_fmuls\t$both_outputs\t");
-   
-   open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"results mail: ($path,$base_filename)\"");
-   print MHMAIL $new_data_line;
-   close(MHMAIL);
-   
-   push(@result_lines, $new_data_line);
-
+    # now, cleanup after the program (delete c, java and exe files)
+    print "(delete temp files)";
+    print `rm -f $path/*.java $path/*.c $path/*.exe`;
+    
 }
 
 
@@ -141,6 +123,40 @@ open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"Overall results mail\"");
 print MHMAIL join("\n", @result_lines);
 close(MHMAIL);
 print "(done)\n";
+
+
+
+#########
+# subroutine to to create a beamformer with the specified number of 
+# beams and channels. Resturns the filename of the created file.
+# Usage:
+# $new_filename = make_beamformer($channels, $beams);
+#########
+sub make_beamformer {
+    my $channels = shift || die ("no channels passed to make_beamformer");
+    my $beams    = shift || die ("no beams passed to make_beamformer");
+
+    # read in the templated beamformer
+    my $contents = read_file("CoarseSerializedBeamFormer.java");
+
+    # replace set the number of channels and beams appropiately
+    $contents =~ s/final int numChannels           = 12;/final int numChannels           = $channels ;/gi;
+    $contents =~ s/final int numBeams              = 4/final int numBeams              = $beams/gi;
+
+    # make the new filename
+    my $new_filename = "BF$channels" . "_$beams";
+    # replace CoarseSerializedBeamFormer with the new filename to stop java complaints.
+    $contents =~ s/CoarseSerializedBeamFormer/$new_filename/gi;
+    
+    # write the contents out to disk
+    write_file($contents, "$new_filename.java");
+
+    # and return the new filename
+    return $new_filename;
+    
+}
+
+
 
 
 #########

@@ -237,6 +237,7 @@ public class Flattener {
 	    // now, print out the graph using the LinearPrinter which colors the graph
 	    // nodes based on their linearity.
 	    LinearDot.printGraph(str, "linear.dot", lfa);
+	    LinearDotSimple.printGraph(str, "linear-simple.dot", lfa, null);
 
 	    // if we are doing linear partitioning, it will take care
 	    // of linear and frequency replacement automatically

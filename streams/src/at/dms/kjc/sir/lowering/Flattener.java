@@ -33,9 +33,11 @@ public class Flattener {
 	// propagate constants and unroll loops
 	ConstantProp.propagateAndUnroll(str);
 
+	/*
 	Fusion.fuse((SIRPipeline)str, 
 		    (SIRFilter)((SIRPipeline)str).get(0), 
 		    (SIRFilter)((SIRPipeline)str).get(1));
+	*/
 
 	// DEBUGGING PRINTING
 	System.out.println("-----------------------------------");

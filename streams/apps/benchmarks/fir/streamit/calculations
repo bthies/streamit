@@ -1,0 +1,19 @@
+7/30/02 -- AAL 
+
+
+first  iteration done at 0x0000000000018f2b (102187 cycles)
+second iteration done at 0x000000000001910d (102669 cycles) (delta=482)
+third  iteration done at 0x000000000001931d (103197 cycles) (delta=528)
+
+
+==> iter takes 482/528 cycles (average = 505)
+
+since we are producing a 6 element output vector, we are producing 
+6 outputs every 505 cycles, so normalized to 10^5 cycles, 6*(100000/505) = 1188.1188
+
+flops reported are 1728,1565 =  1646.5 flops, which is (1646.5/505) * 250 =  815.09901 MFLOPS
+
+
+workCount = 140394 / 224000 = 0.62675893
+workCount = 6606 / 7712 = 0.85658714
+workCount = 7283 / 8448 = 0.86209754

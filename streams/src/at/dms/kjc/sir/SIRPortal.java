@@ -14,7 +14,7 @@ import java.util.*;
 /**
  * This represents a stream portal used for messaging
  */
-public class SIRPortal extends JExpression {
+public class SIRPortal extends JLiteral /*JExpression*/ {
 
     protected static LinkedList portals = new LinkedList();
 
@@ -193,6 +193,11 @@ public class SIRPortal extends JExpression {
     public JExpression analyse(CExpressionContext context) throws PositionedError {
 	at.dms.util.Utils.fail("Analysis of custom nodes not supported yet.");
 	return this;
+    }
+
+    public boolean isConstant() 
+    {
+        return true;
     }
 
     public boolean isDefault() { 

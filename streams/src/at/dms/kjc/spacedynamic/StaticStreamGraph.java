@@ -605,6 +605,12 @@ public class StaticStreamGraph
 	return false;
     }
     
+    /** get the dynamic outputs of this ssg **/
+    public FlatNode[] getOutputs() 
+    {
+	return outputs;
+    }
+    
 
     public FlatNode getNext(FlatNode flatNode) {
 	assert flatNodes.contains(flatNode) :

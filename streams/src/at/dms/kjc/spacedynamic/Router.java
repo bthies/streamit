@@ -29,7 +29,7 @@ public class Router {
 	toCoord = layout.getTile(to);
 	
 	route.add(layout.getTile(from));
-
+	
 	if (fromCoord== null)
 	    System.out.println("From RawTile null");
 

@@ -33,6 +33,10 @@ public class Layout extends at.dms.util.Utils implements
     private  BufferedReader inputBuffer;
     private  Random random;
     
+    /** maps flatnode -> flatnode, of dynamic outputs to inputs in the 
+	stream graph **/
+    private HashMap dynamicComm;
+
     private StreamGraph streamGraph;
 
     /* hashset of Flatnodes representing all the joiners
@@ -80,6 +84,15 @@ public class Layout extends at.dms.util.Utils implements
 			       (rawChip.getYSize() * rawChip.getXSize()) +
 			       " tiles.");
 	    System.exit(-1);
+	}
+
+	//set up the dynamic connections of the entire stream graph
+	dynamicComm = new HashMap();
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+	    for (int j = 0; j < ssg.getOutputs().length; j++) {
+		dynamicComm.put(ssg.getOutputs()[j], ssg.getNext(ssg.getOutputs()[j]));
+	    }
 	}
     }
 
@@ -349,8 +362,34 @@ public class Layout extends at.dms.util.Utils implements
 		}
 	    }    
 	}
+	assert isDynamicallyLegal() : "Error in layout, dynamic routes cross";
 	dumpLayout("layout.dot");
     }
+
+    /** Make sure that routes over the dynamic network never cross! **/
+    private boolean isDynamicallyLegal() 
+    {
+	Iterator dynSrcs = dynamicComm.keySet().iterator();
+	//set of tiles used so far for routing over the dynamic network
+	HashSet usedTiles = new HashSet();
+
+	while (dynSrcs.hasNext()) {
+	    FlatNode src = (FlatNode)dynSrcs.next();
+	    FlatNode dst = (FlatNode)dynamicComm.get(src);
+
+	    List route = XYRouter.getRoute(getTile(src), getTile(dst));
+	    
+	    Iterator tiles = route.iterator();
+	    while (tiles.hasNext()) {
+		ComputeNode tile = (ComputeNode)tiles.next();
+		if (usedTiles.contains(tile))
+		    return false;
+		usedTiles.add(tile);
+	    }
+	}
+	return true;
+    }
+    
     
     //return true if the node should be assigned to a tile
     public static boolean assignNode(FlatNode node) 

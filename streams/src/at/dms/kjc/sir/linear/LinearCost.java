@@ -1,7 +1,5 @@
 package at.dms.kjc.sir.linear;
 
-import java.util.*;
-
 /**
  * This class represents the cost (variously defined) of computing
  * the value of a linear filter representation. Eg it represents

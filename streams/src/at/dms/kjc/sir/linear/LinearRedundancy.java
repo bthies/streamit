@@ -1,11 +1,6 @@
 package at.dms.kjc.sir.linear;
 
 import java.util.*;
-import at.dms.kjc.*;
-import at.dms.kjc.sir.*;
-//import at.dms.kjc.sir.linear.*;
-//import at.dms.kjc.sir.linear.transform.*;
-//import at.dms.kjc.iterator.*;
 
 /**
  * A LinearRedundancy represents the redundant computations
@@ -44,7 +39,7 @@ public class LinearRedundancy {
 	    int rowsUp = (currentExecution*lfr.getPopCount());
 	    for (int i=lfr.getPeekCount() - rowsUp - 1; i >=0; i--) {
 		for (int j=0; j<lfr.getPushCount(); j++) {
-		    // make the appropriate tuple
+		    // make the appropriate tuple 
 		    LinearComputationTuple tuple = new LinearComputationTuple(i+rowsUp, A.getElement(i,j));;
 		    addUse(tuple, currentExecution);
 		}

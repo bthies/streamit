@@ -1,7 +1,5 @@
 package at.dms.kjc.sir.linear;
 
-import java.util.*;
-
 /**
  * A LinearForm is the representation of a variable inside
  * the linear dataflow analysis. It is comprised of a vector and a value.
@@ -13,7 +11,7 @@ import java.util.*;
  * propage LinearForm information throughout the body of the filter and
  * hopefully construct a LinearFilterRepresentation from the filter.
  *
- * $Id: LinearForm.java,v 1.4 2002-08-30 20:13:25 aalamb Exp $
+ * $Id: LinearForm.java,v 1.5 2003-01-23 16:27:59 aalamb Exp $
  **/
 public class LinearForm {
     /** weights of inputs **/

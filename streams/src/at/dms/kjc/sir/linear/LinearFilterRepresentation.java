@@ -1,7 +1,5 @@
 package at.dms.kjc.sir.linear;
 
-import java.util.*;
-
 /**
  * A LinearFilterRepresentation represents the computations performed by a filter
  * on its input values as a matrix and a vector. The matrix represents
@@ -14,7 +12,7 @@ import java.util.*;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.16 2002-12-02 23:01:35 aalamb Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.17 2003-01-23 16:27:59 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/

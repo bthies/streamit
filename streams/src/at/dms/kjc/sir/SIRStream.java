@@ -115,6 +115,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * Gets the method decl's of this stream.
      */
     public JMethodDeclaration[] getMethods() {
+	checkRep();
 	return methods;
     }
 
@@ -338,6 +339,27 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
 	//did not hit a feedback loop 
 	return false;
     }
-	    
+
+    /**
+     * Checks representation of this.
+     */
+    private void checkRep() {
+	// check that <methods> containts init and work if we need it
+	// (and that it contains it just once.)
+	boolean foundInit = false;
+	boolean foundWork = false;
+	for (int i=0; i<methods.length; i++) {
+	    if (methods[i]==getInit()) {
+		Utils.assert(!foundInit);
+		foundInit = true;
+	    }
+	    if (methods[i]==getWork()) {
+		Utils.assert(!foundWork);
+		foundWork = true;
+	    }
+	}
+	Utils.assert(foundInit || !needsInit() || getInit()==null);
+	Utils.assert(foundWork || !needsWork() || getWork()==null);
+    }
 }
 

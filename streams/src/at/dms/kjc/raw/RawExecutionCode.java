@@ -81,48 +81,51 @@ public class RawExecutionCode extends at.dms.util.Utils
 	if (node.isFilter()){
 	    SIRFilter filter = (SIRFilter)node.contents;
 	    //Skip Identities now
-	    if(!(filter instanceof SIRIdentity)) {
-		System.out.print("Generating Raw Code: " + 
-				 node.contents.getName() + " ");
-	    
-		LocalVariables localVariables = new LocalVariables();
-	    
-		JBlock block = new JBlock(null, new JStatement[0], null);
-		calculateItems(filter);
+	    if(filter instanceof SIRIdentity ||
+	       filter instanceof SIRFileWriter ||
+	       filter instanceof SIRFileReader)
+		return;
 
-		if (isSimple(filter))
-		    System.out.print("(simple) ");
-		else if (noBuffer(filter))
-		    System.out.print("(no buffer) ");
-		else {
-		    if (remaining > 0)
-			System.out.print("(remaining) ");
-		    if (filter.getPeekInt() > filter.getPopInt())
-			System.out.print("(peeking)");
-
-		}
-		System.out.println();
+	    System.out.print("Generating Raw Code: " + 
+			     node.contents.getName() + " ");
+	    
+	    LocalVariables localVariables = new LocalVariables();
+	    
+	    JBlock block = new JBlock(null, new JStatement[0], null);
+	    calculateItems(filter);
+	    
+	    if (isSimple(filter))
+		System.out.print("(simple) ");
+	    else if (noBuffer(filter))
+		System.out.print("(no buffer) ");
+	    else {
+		if (remaining > 0)
+		    System.out.print("(remaining) ");
+		if (filter.getPeekInt() > filter.getPopInt())
+		    System.out.print("(peeking)");
 		
-		createLocalVariables(node, block, localVariables);
-		convertCommExps(filter, 
-				isSimple(filter),
-				localVariables);
+	    }
+	    System.out.println();
 	    
-		rawMainFunction(node, block, localVariables);
+	    createLocalVariables(node, block, localVariables);
+	    convertCommExps(filter, 
+			    isSimple(filter),
+			    localVariables);
+	    
+	    rawMainFunction(node, block, localVariables);
 	    
 	    //create the method and add it to the filter
-		JMethodDeclaration rawMainFunct = 
-		    new JMethodDeclaration(null, 
-					   at.dms.kjc.Constants.ACC_PUBLIC,
-					   CStdType.Void,
-					   rawMain,
-					   JFormalParameter.EMPTY,
-					   CClassType.EMPTY,
-					   block,
-					   null,
-					   null);
-		filter.addMethod(rawMainFunct);
-	    }
+	    JMethodDeclaration rawMainFunct = 
+		new JMethodDeclaration(null, 
+				       at.dms.kjc.Constants.ACC_PUBLIC,
+				       CStdType.Void,
+				       rawMain,
+				       JFormalParameter.EMPTY,
+				       CClassType.EMPTY,
+				       block,
+				       null,
+				       null);
+	    filter.addMethod(rawMainFunct);
 	}
     } 
 

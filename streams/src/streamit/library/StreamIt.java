@@ -320,11 +320,10 @@ public class StreamIt extends Pipeline
 
         // setup the scheduler
         if (printGraph)
-        {
-            // this is not implemented yet.  when I'm done with
-            // some certain amount of the scheduler, I can start
-            // using the iterators to do this properly.
-            ASSERT(false);
+        {   
+            ASSERT(false, 
+		   "Graph printing is not implemented yet.  When I'm done with a certain amount\n" + 
+		   "of the scheduler, I can start using the iterators to do this properly.");
         }
 
         if (!doRun)

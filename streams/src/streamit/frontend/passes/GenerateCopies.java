@@ -28,7 +28,7 @@ import java.util.Collections;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.6 2004-11-03 04:05:26 thies Exp $
+ * @version $Id: GenerateCopies.java,v 1.7 2004-11-03 06:32:53 thies Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -55,7 +55,7 @@ public class GenerateCopies extends SymbolTableVisitor
         if (type instanceof TypeArray)
             return true;
         if (type instanceof TypeStruct)
-            return true;
+            return structNeedsCopy((TypeStruct)type);
         if (type instanceof TypeStructRef)
             return true;
         if (type.isComplex())
@@ -63,6 +63,22 @@ public class GenerateCopies extends SymbolTableVisitor
         return false;
     }
 
+    /**
+     * Returns whether or not a given structure type needs to be
+     * copied.  A struct only needs to be copied if any of its
+     * sub-types need to be copied (otherwise it should be passed by
+     * value as a struct).  For example, if a member has an array
+     * type, it needs to be copied so it won't share that pointer.
+     */
+    private boolean structNeedsCopy(TypeStruct type) {
+	for (int i=0; i<type.getNumFields(); i++) {
+	    if (needsCopy(type.getType(type.getField(i)))) {
+		return true;
+	    }
+	}
+	return false;
+    }
+    
     /**
      * Checks if the result of the given expression can be implemented
      * as a reference in Java or elsewhere.

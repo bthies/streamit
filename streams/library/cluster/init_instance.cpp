@@ -20,14 +20,14 @@
 pthread_mutex_t init_instance::accept_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t init_instance::bind_lock = PTHREAD_MUTEX_INITIALIZER;
 
-vector<int_pair> init_instance::in_connections;
-vector<int_pair> init_instance::out_connections;
-vector<unsigned> init_instance::out_ip_addrs;
+vector<sock_dscr> init_instance::in_connections;
+vector<sock_dscr> init_instance::out_connections;
+//vector<unsigned> init_instance::out_ip_addrs;
 
-map<int_pair, bool> init_instance::in_done;
+map<sock_dscr, bool> init_instance::in_done;
 
-map<int_pair, int> init_instance::in_sockets;
-map<int_pair, int> init_instance::out_sockets;
+map<sock_dscr, int> init_instance::in_sockets;
+map<sock_dscr, int> init_instance::out_sockets;
 
 short init_instance::listen_port = 22222;
 
@@ -89,27 +89,40 @@ char* init_instance::get_node_name(int node) {
 }
 
 
-void init_instance::add_incoming(int from, int to) {
+void init_instance::add_incoming(int from, int to, int type) {
 
-  int_pair pair(from, to);
-  in_connections.push_back(pair);
+  sock_dscr sd(from, to, type);
+  in_connections.push_back(sd);
 }
 
 
-void init_instance::add_outgoing(int from, int to, unsigned to_ip_addr) {
+void init_instance::add_outgoing(int from, int to, int type) {
 
-  int_pair pair(from, to);
-  out_connections.push_back(pair);
-  out_ip_addrs.push_back(to_ip_addr);
+  //unsigned ip = lookup_ip(init_instance::get_node_name(to));
+  //add_outgoing(from, to, ip);
+
+  sock_dscr sd(from, to, type);
+  out_connections.push_back(sd);
+
+  //out_ip_addrs.push_back(to_ip_addr);
+
 }
+
+
+//void init_instance::add_outgoing(int from, int to, unsigned to_ip_addr) {
+//
+//  int_pair pair(from, to);
+//  out_connections.push_back(pair);
+//  out_ip_addrs.push_back(to_ip_addr);
+//}
 
 void init_instance::initialize_sockets() {
 
-  for (vector<int_pair>::iterator i = in_connections.begin(); i < in_connections.end(); ++i) {
+  for (vector<sock_dscr>::iterator i = in_connections.begin(); i < in_connections.end(); ++i) {
   
-    int_pair pair = *i;
+    sock_dscr sd = *i;
 
-    in_done[pair] = false;
+    in_done[sd] = false;
     
   } 
 
@@ -133,18 +146,19 @@ void init_instance::initialize_sockets() {
 
   int num = out_connections.size();
 
-  vector<int_pair>::iterator i1 = out_connections.begin();
-  vector<unsigned>::iterator i2 = out_ip_addrs.begin();
+  vector<sock_dscr>::iterator i1 = out_connections.begin();
+  //vector<unsigned>::iterator i2 = out_ip_addrs.begin();
 
   for (int t = 0; t < num; t++) {
   
-    int_pair pair = *i1;
-    unsigned ip_addr = *i2;
+    sock_dscr sd = *i1;
+    unsigned ip_addr = lookup_ip(init_instance::get_node_name(sd.to));
 
-    int data[2];
+    int data[3];
     
-    data[0] = pair.from;
-    data[1] = pair.to;
+    data[0] = sd.from;
+    data[1] = sd.to;
+    data[2] = sd.type;
 
     mysocket *sock = NULL;
 
@@ -159,17 +173,16 @@ void init_instance::initialize_sockets() {
 
     //printf("socket connected !!\n");
 
-    sock->write_chunk((char*)data, 8);
-    sock->read_chunk((char*)data, 8);
+    sock->write_chunk((char*)data, 12);
+    sock->read_chunk((char*)data, 12);
 
     //printf("socket done: recieved reply %d %d !!\n", data[0], data[1]);
 
-    out_sockets[pair] = sock->get_fd();
+    out_sockets[sd] = sock->get_fd();
 
     //printf("Out Socket Added from:%d to:%d socket:%d\n", pair.from, pair.to, sock->get_fd());
 
     ++i1;
-    ++i2;
 
   }
 
@@ -184,11 +197,11 @@ void init_instance::initialize_sockets() {
   
 }
 
-int init_instance::get_incoming_socket(int from , int to) {
+int init_instance::get_incoming_socket(int from, int to, int type) {
 
-  int_pair pair(from, to);
+  sock_dscr sd(from, to, type);
 
-  map<int_pair, int>::iterator i = in_sockets.find(pair);
+  map<sock_dscr, int>::iterator i = in_sockets.find(sd);
 
   if (i == in_sockets.end()) {
     return -1;
@@ -197,11 +210,11 @@ int init_instance::get_incoming_socket(int from , int to) {
   }
 }
 
-int init_instance::get_outgoing_socket(int from , int to) {
+int init_instance::get_outgoing_socket(int from , int to, int type) {
 
-  int_pair pair(from, to);
+  sock_dscr sd(from, to, type);
 
-  map<int_pair, int>::iterator i = out_sockets.find(pair);
+  map<sock_dscr, int>::iterator i = out_sockets.find(sd);
 
   if (i == out_sockets.end()) {
     return -1;
@@ -316,18 +329,18 @@ int init_instance::listen() {
 	
 	  mysocket socket(sock);
 
-	  int data[2];
+	  int data[3];
 
-	  socket.read_chunk((char*)data, 8);
-	  socket.write_chunk((char*)data, 8);
+	  socket.read_chunk((char*)data, 12);
+	  socket.write_chunk((char*)data, 12);
 
-	  int_pair pair(data[0], data[1]);
+	  sock_dscr sd(data[0], data[1], data[2]);
 
-	  map<int_pair, bool>::iterator i = in_done.find(pair);
+	  map<sock_dscr, bool>::iterator i = in_done.find(sd);
 
 	  if (i == in_done.end()) {
 	  
-	    printf("int pair not found!\n");
+	    printf("error: socket data is undefined! %d %d %d\n", data[0], data[1], data[2]);
 	    close(sock);
 	    
 	  } else {
@@ -335,15 +348,15 @@ int init_instance::listen() {
 	    if ((*i).second == false) {
 	  
 	      //printf("int pair FOUND!\n");
-	      in_done[pair] = true;
+	      in_done[sd] = true;
 
-	      in_sockets[pair] = sock;
+	      in_sockets[sd] = sock;
 	      //printf("In Socket Added from:%d to:%d socket:%d\n", pair.from, pair.to, sock);
 
 	      socks_accepted++;
 	    } else {
 
-	      printf("Warning! Int pair already seen!\n");
+	      printf("Warning! socket data already seen!\n");
 	      close(sock);
 	      
 	    }
@@ -366,7 +379,7 @@ int init_instance::listen() {
 
 void init_instance::close_sockets() {
 
-  map<int_pair, int>::iterator i;
+  map<sock_dscr, int>::iterator i;
 
   printf("Closing sockets...\n");
 

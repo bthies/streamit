@@ -1,0 +1,20 @@
+void->void pipeline FileTest {
+    add FileReader<float>("input0");
+    add Adder(1.0);
+    add FloatPrinter();
+}
+
+float->void filter FloatPrinter {
+    work pop 1 { print ( pop() ); }
+}
+
+float->float filter Adder(float i) {
+    float val;
+    init {
+	val = i;
+    }
+    
+    work pop 1 push 1 {
+	push(pop() + val);
+    }
+}

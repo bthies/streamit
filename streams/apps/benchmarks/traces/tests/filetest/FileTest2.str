@@ -1,0 +1,25 @@
+void->void pipeline FileTest2 {
+//    add FloatSource();
+    add FileReader<float>("input0");	
+    add Adder(1.0);
+    add FileWriter<float>("output0");
+}
+
+void->float filter FloatSource() {
+    float i = 0.0; 
+	
+    work push 1 {
+	push(i++);
+    }	
+}
+
+float->float filter Adder(float i) {
+    float val;
+    init {
+	val = i;
+    }
+    
+    work pop 1 push 1 {
+	push(pop() + val);
+    }
+}

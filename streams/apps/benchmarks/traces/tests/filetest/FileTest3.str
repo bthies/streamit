@@ -1,0 +1,43 @@
+void->void pipeline FileTest3 {
+  add IntSource;
+  add AdderSplit;
+//  add IntPrinter;
+}
+
+int->void splitjoin AdderSplit {
+    split roundrobin;
+    add pipeline {
+	add Adder(1);
+	add FileWriter<int>("output1");
+    }
+    add pipeline {
+	add Adder(2);
+	add FileWriter<int>("output2");
+    }
+    add pipeline {
+	add Adder(3);
+	add FileWriter<int>("output3");
+    }
+    join roundrobin(0, 0, 0);
+}
+
+
+int->int filter Adder(int i) {
+    int val;
+    init {
+	val = i;
+    }
+    
+    work pop 1 push 1 {
+	push(pop() + val);
+    }
+}
+
+void->int filter IntSource {
+  int x;
+  init { x = 0; }
+  work push 1 { push(x++); }
+}
+int->void filter IntPrinter {
+  work pop 1 { print(pop()); }
+}

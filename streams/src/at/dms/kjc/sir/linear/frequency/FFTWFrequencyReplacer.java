@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation
  * 
- * $Id: FFTWFrequencyReplacer.java,v 1.6 2002-11-11 16:44:17 aalamb Exp $
+ * $Id: FFTWFrequencyReplacer.java,v 1.7 2002-11-14 01:13:27 aalamb Exp $
  **/
 public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
@@ -24,9 +24,20 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
     /** the name of the buffer in which to place the input data. */
     public static final String INPUT_BUFFER_NAME = "timeBuffer";
 
-    /** If the makeNewWork function is making the init work function **/
+    /** Constants specifying if we are making the work or the init work function **/
     public static final int INITWORK = 1;
     public static final int WORK = 2;
+
+    /**
+     * flag to determine if we blindly replace all FIRs with frequency implementations or
+     * if we wait until the threshold is above the one defined.
+     **/
+    public static final boolean smartReplacement = true;
+    /** The minimum size FIR we will replace. 90 came from empirical measurements. **/
+    public static final int minFIRSize = 90;
+    /** We multiply the FIR size to get the target FFT size if it is not specified. **/
+    public static final int fftSizeFactor = 2;
+    
     
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
     LinearAnalyzer linearityInformation;
@@ -69,16 +80,34 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
      * sum with something that does a FFT, multiply, and then IFFT.
      */
     private void makeReplacement(SIRFilter self) {
+	LinearPrinter.println(" processing " + self.getIdent());
 	/* if we don't have a linear form for this stream, we are done. */
 	if(!this.linearityInformation.hasLinearRepresentation(self)) {
+	    LinearPrinter.println("  aborting -- not linear");
 	    return;
 	}
 
 	LinearFilterRepresentation linearRep = this.linearityInformation.getLinearRepresentation(self);
 	/* if there is not an FIR filter, we are done. */
 	if (!linearRep.isFIR()) {
+	    LinearPrinter.println("  aborting -- filter is not FIR"); 
 	    return;
 	}	
+
+	/** if we are doing smart replacment, don't do small FIRs. **/
+	if (this.smartReplacement && (linearRep.getPeekCount() < minFIRSize)) {
+ 	    LinearPrinter.println("  aborting -- fir size too small: " +
+				  linearRep.getPeekCount() + ". needs to be at least " +
+				  minFIRSize);
+	    return;
+	}
+
+	/** set the target FFT size appropriately if it hasn't already been set */
+	LinearPrinter.println("  old target N: " + this.targetNumberOfOutputs);
+	//if (this.targetNumberOfOutputs < 1) {
+	this.targetNumberOfOutputs = fftSizeFactor * linearRep.getPeekCount();
+	//}
+	LinearPrinter.println("  new target N: " + this.targetNumberOfOutputs);
 	
 	/* now is when we get to the fun part, we have a linear representation
 	 * that computes an FIR (ef pop 1, push 1, peek N) and we want to replace it with an FFT.
@@ -87,7 +116,7 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	int x = linearRep.getPeekCount();
 	int N = calculateN(this.targetNumberOfOutputs,x);
 	int filterSize = N+2*(x-1);
-	LinearPrinter.println(" creating frequency filter. (N=" + N +
+	LinearPrinter.println("  creating frequency filter. (N=" + N +
 			      ",x=" + x + ",size=" + filterSize + ")");
 	
 	/* make fields to hold the real and imaginary parts of the weights. */
@@ -116,9 +145,9 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 						  filterSize, x, N);
 	
 	
-	LinearPrinter.println(" done building new IR nodes for " + self);
+	LinearPrinter.println("  done building new IR nodes for " + self.getIdent());
 	
-	LinearPrinter.println(" creating new two stage filter...");
+	LinearPrinter.println("  creating new two stage filter...");
 	// Create a new filter that contains all of the new pieces that we have built
 	SIRTwoStageFilter freqFilter;
 	/* Note, we need to have initPeek-initPop == peek-Pop for some scheduling reason
@@ -128,12 +157,12 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 					   "TwoStageFreq" + self.getIdent(),/* ident */
 					   newFields,                     /* fields */
 					   new JMethodDeclaration[0],     /* methods -- init, work, and initWork are special*/
-					   new JIntLiteral(N+x-1 + x-1),  /* peek (w/ extra x-1 window...)*/
+					   new JIntLiteral(N+x-1),  /* peek (w/ extra x-1 window...)*/
 					   new JIntLiteral(N+x-1),        /* pop */
 					   new JIntLiteral(N+x-1),        /* push */
 					   freqWork,                      /* work */
 					   N+x-1,                         /* initPeek */
-					   N,                             /* initPop */
+					   N+x-1,                         /* initPop */
 					   N,                             /* initPush */
 					   freqInitWork,                  /* initWork */
 					   self.getInputType(),           /* input type */
@@ -144,7 +173,7 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	// now replace the current filter (self) with the frequency version
 	self.getParent().replace(self, freqFilter);
 	
-	LinearPrinter.println(" done replacing.");
+	LinearPrinter.println("  done replacing.");
 	
     }
     
@@ -279,6 +308,27 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	return new JExpressionStatement(null, assignExpr, new JavaStyleComment[0]);
     }
 
+    /** Creates an assignment expression of the form: f[index]=value; **/
+    public JStatement makeLocalArrayAssignment(JLocalVariable var, int index, float value) {
+	/* make the local variable expression to access var */
+	JLocalVariableExpression varExpr = new JLocalVariableExpression(null, var);
+	/* make the field access expression (eg this.field)*/
+	JArrayAccessExpression arrAccessExpr;
+	arrAccessExpr = new JArrayAccessExpression(null,                    /* token reference */
+						   varExpr,                 /* prefix */
+						   new JIntLiteral(index)); /* accessor */
+	/* the literal value to assign */
+	JFloatLiteral literalValue = new JFloatLiteral(null, value);
+	/* now, make the assignment expression */
+	JAssignmentExpression assignExpr;
+	assignExpr = new JAssignmentExpression(null,          /* token reference */
+					       arrAccessExpr, /* lhs */
+					       literalValue); /* rhs */
+	/* return an expression statement */
+	return new JExpressionStatement(null, assignExpr, new JavaStyleComment[0]);
+    }
+
+    
 
     /*
      * make both the work and the new work function.
@@ -331,6 +381,12 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	    /* note that currentAssignExpr is buff[i] = peek(i) */
 	    body.addStatement(new JExpressionStatement(null, currentAssignExpr, null));
 	}
+
+	/* add statements to set the rest of the input buffer (eg pad with zeros). */
+	for (int i=(N+x-1); i<(N+2*(x-1)); i++) {
+	    body.addStatement(makeLocalArrayAssignment(inputBuffer, i, 0.0f));
+	}
+
 	
 	/* stick in a call to the do_fast_convolution routine that gets linked in via the C library. */
 	// prep the args
@@ -377,16 +433,9 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	comment = makeComment("call to free the buffer space");
 	body.addStatement(new JExpressionStatement(null, freeCall, comment));
 	
-	/* stick in the appropriate number (N) of pop calls */
-	for (int i=0; i<N; i++) {
+	/* stick in the appropriate number (N+x-1) of pop calls */
+	for (int i=0; i<(N+x-1); i++) {
 	    body.addStatement(makePopStatement());
-	}
-
-	/* if this is the work function, we should also pup x-1 more items. to get a total pop count of N+x-1 */
-	if (functionType == WORK) {
-	    for (int i=0; i<(x-1); i++) {
-		body.addStatement(makePopStatement());
-	    }
 	}
 
 	/* figure out what the name of the function should be (work, or initWork) **/

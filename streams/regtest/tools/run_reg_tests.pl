@@ -4,7 +4,7 @@
 # in perl because I don't know how to use all of the crazy unix command
 # line utilities necessary to do this stuff.
 #
-# $Id: run_reg_tests.pl,v 1.8 2002-12-12 15:15:23 thies Exp $
+# $Id: run_reg_tests.pl,v 1.9 2002-12-19 15:35:24 aalamb Exp $
 
 use strict;
 
@@ -13,7 +13,7 @@ use strict;
 my $DEBUG = 0;
 
 # admin email addresses where we want the crazy emails to go (space separated)
-my $ADMINS = "aalamb\@mit.edu mgordon\@cag.lcs.mit.edu";
+my $ADMINS = "aalamb\@mit.edu";
 # user email addresses who want to get regtest-results
 my $USERS = "streamit-regtest\@cag.lcs.mit.edu nmani\@cag.lcs.mit.edu";
 
@@ -46,19 +46,13 @@ print MHMAIL saved_execute("cd $working_dir; cvs -d /projects/raw/cvsroot co str
 my $streamit_home = "$working_dir/streams";
 $ENV{"STREAMIT_HOME"} = "$streamit_home/";
 $ENV{"PATH"} = "/projects/raw/current/rawcc/compiler/bin:/usr/ccs/bin:/u/diego/bin/:$streamit_home:/usr/local/bin:/usr/uns/bin:/usr/bin/X11:/usr/ucb:/bin:/usr/bin:/usr/etc:/etc:/usr/games:";
-my $class_path = ".:/usr/local/jdk1.3/jre/lib/rt.jar:$streamit_home/compiler/kopi/3rdparty/JFlex/lib:$streamit_home/compiler/kopi/3rdparty/getopt:$streamit_home/compiler/kopi/classes/:$streamit_home/apps/libraries:$streamit_home/misc/java:$streamit_home/scheduler/:/usr/uns/java/antlr-2.7.1/:$streamit_home/compiler/frontend:$streamit_home/compiler/kopi/3rdparty/cplex/cplex.jar";
+my $class_path = ".:/usr/local/jdk1.3/jre/lib/rt.jar:$streamit_home/compiler:$streamit_home/compiler/kopi/3rdparty/cplex/cplex.jar:/usr/uns/java/antlr-2.7.1:$streamit_home/library/java";
 $ENV{"CLASSPATH"} = $class_path;
 $ENV{"CLASSROOT"} = "$streamit_home/compiler/kopi/classes";
 
 
 # try and compile the freshly checked out streams directory
-# note that this requires our rediculous build process of make/clean/compile three times
-print MHMAIL saved_execute("cd $working_dir/streams/compiler/kopi; make");
-print MHMAIL saved_execute("cd $working_dir/streams/compiler/kopi; ./clean");
-print MHMAIL saved_execute("cd $working_dir/streams/compiler/kopi; ./compile");
-print MHMAIL saved_execute("cd $working_dir/streams/compiler/kopi; make");
-print MHMAIL saved_execute("cd $working_dir/streams/compiler/kopi; ./clean");
-print MHMAIL saved_execute("cd $working_dir/streams/compiler/kopi; ./compile");
+print MHMAIL saved_execute("make -C $working_dir/streams/compiler");
 
 # now that we have compiled the compiler, set up the various files where we will direct the output
 # temporary file use to generate body of the messages

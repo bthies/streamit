@@ -1,7 +1,7 @@
 /*
  * DoComplexProp.java: perform constant propagation on function bodies
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.6 2002-09-18 17:33:02 dmaze Exp $
+ * $Id: DoComplexProp.java,v 1.7 2002-09-18 19:08:31 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -238,8 +238,48 @@ public class DoComplexProp extends FEReplacer
 
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
-        // Assume there's no init part for now.
+        // Go ahead and do propagation:
+        stmt = (StmtVarDecl)super.visitStmtVarDecl(stmt);
         symTab.register(stmt.getName(), stmt.getType());
+        // Now check to see if this is initialized,
+        if (stmt.getInit() == null) return stmt;
+        // and if so, if the type is complex,
+        if (!stmt.getType().isComplex()) return stmt;
+        // and if then, if the right-hand side is complex too,
+        Expression exprVar = new ExprVar(stmt.getContext(), stmt.getName());
+        if (stmt.getInit() instanceof ExprComplex)
+        {
+            // Right.  Create the separate initialization statements.
+            ExprComplex cplx = (ExprComplex)stmt.getInit();
+            addStatement(new StmtVarDecl(stmt.getContext(), stmt.getType(),
+                                         stmt.getName(), null));
+            addStatement(new StmtAssign(stmt.getContext(),
+                                        new ExprField(stmt.getContext(),
+                                                      exprVar, "real"),
+                                        cplx.getReal()));
+            addStatement(new StmtAssign(stmt.getContext(),
+                                        new ExprField(stmt.getContext(),
+                                                      exprVar, "imag"),
+                                        cplx.getImag()));
+            return null;
+        }
+        // or if the right-hand side isn't complex at all.
+        if (!((Type)stmt.getInit().accept(getExprType)).isComplex())
+        {
+            addStatement(new StmtVarDecl(stmt.getContext(), stmt.getType(),
+                                         stmt.getName(), null));
+            addStatement(new StmtAssign(stmt.getContext(),
+                                        new ExprField(stmt.getContext(),
+                                                      exprVar, "real"),
+                                        stmt.getInit()));
+            addStatement(new StmtAssign(stmt.getContext(),
+                                        new ExprField(stmt.getContext(),
+                                                      exprVar, "imag"),
+                                        new ExprConstInt(stmt.getContext(),
+                                                         0)));
+            return null;
+        }
+        // Otherwise, we have complex foo = (complex)bar(), which is fine.
         return stmt;
     }
 

@@ -5,7 +5,7 @@
 
 
 
-const int K=4;
+const int K=7;
 const int N=20;
 const int Q=15;
 const int W=7;
@@ -27,36 +27,27 @@ void Print2D(int m,int n, float Mat[n][n]);
 
 
 main() {
-//  	int K;
-//  	int N;
-//  	int Q;
-//  	int W;
-//  	K=2;
-//  	N=2;
-//  	Q=2;
-//  	W=2;
 	float h[W][K];
 	float C[Q][K];
 	float  r[Q*N+W-1];    
 	for (int i=0;i<N*Q+W-1;i++)
 	    r[i]=i;
 
-	float sum=0;	
 
+	
 	for (int i=0;i<K;i++) {
-	    sum+=1;
-	    //sum=sum/7;
 
 	    for (int j=0;j<Q;j++){
-		sum+=1;
-		C[j][i]=sum;
+		C[j][i]=i*Q+j+1+i*j;
 	    }
 
 	    for (int j=0;j<W;j++){
-		sum++;
-		h[j][i]=sum;
+		h[j][i]=1+i+j+j*j/(i+1);
 	    }
 	}
+
+
+	
 	Decode(C,h,r);
 
 

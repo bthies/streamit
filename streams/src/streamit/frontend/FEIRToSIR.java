@@ -12,10 +12,14 @@ public class FEIRToSIR implements FEVisitor, Constants {
   private Hashtable classTable;
     private Map cclassTable;
     private SymbolTable symtab;
+    private boolean wantSplitter;
+    private Program theProgram;
+    private Set searchList;
 
   public FEIRToSIR() {
     classTable = new Hashtable();
     cclassTable = new HashMap();
+    searchList = new HashSet();
   }
   
   public void debug(String s) {
@@ -47,6 +51,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
     List sirStructs;
     Iterator iter;
 
+    theProgram = p;
     parent = null;
 
     debug("In visitProgram\n");
@@ -60,11 +65,43 @@ public class FEIRToSIR implements FEVisitor, Constants {
     feirStreams = p.getStreams();
     sirStreams = new LinkedList();
     for (iter = feirStreams.iterator(); iter.hasNext(); ) {
-      sirStreams.add(((FENode) iter.next()).accept(this));
+        StreamSpec spec = (StreamSpec)iter.next();
+        if (!(classTable.containsKey(spec.getName())))
+            sirStreams.add(spec.accept(this));
     }
 
     return topLevel;
   }
+
+    private SIRStream findStream(String name)
+    {
+        // Have we already seen it?
+        if (classTable.containsKey(name))
+            return (SIRStream)classTable.get(name);
+        // Are we looking for it?
+        if (searchList.contains(name))
+            return new SIRRecursiveStub(name, null);
+            // !!! Need to resolve these later.
+        // Hmm.  Is it in the top-level Program?
+        for (Iterator iter = theProgram.getStreams().iterator();
+             iter.hasNext(); )
+        {
+            StreamSpec spec = (StreamSpec)iter.next();
+            if (spec.getName().equals(name))
+            {
+                searchList.add(name);
+                SIRStream oldParent = parent;
+                parent = null;
+                SIRStream result = (SIRStream)spec.accept(this);
+                // also adds to classTable
+                parent = oldParent;
+                searchList.remove(name);
+                return result;
+            }
+        }
+        // Eit.  We lose.
+        return null;
+    }
 
   public Object visitStreamSpec(StreamSpec spec) {
     SIRStream oldParent = parent;
@@ -528,7 +565,9 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
   public Object visitExprField(ExprField exp) {
     debug("In visitExprField\n");
+    System.err.println("  lhs: " + exp.getLeft());
     Type lhsType = getType(exp.getLeft());
+    System.err.println("  type: " + lhsType);
     // ASSERT: this is a structure type.
     TypeStruct ts = (TypeStruct)lhsType;
     CClass ccs = (CClass)cclassTable.get(ts.getName());
@@ -637,9 +676,9 @@ public class FEIRToSIR implements FEVisitor, Constants {
     for (Iterator iter = func.getParams().iterator(); iter.hasNext(); )
     {
         Parameter param = (Parameter)iter.next();
-        symtab.registerVar(param.getName(), param.getType(), param,
-                           SymbolTable.KIND_FUNC_PARAM);
         sirParams[i] = (JFormalParameter)visitParameter(param);
+        symtab.registerVar(param.getName(), param.getType(), sirParams[i],
+                           SymbolTable.KIND_FUNC_PARAM);
         i++;
     }
     JMethodDeclaration result =
@@ -684,11 +723,19 @@ public class FEIRToSIR implements FEVisitor, Constants {
     SIRSplitJoin result = new SIRSplitJoin((SIRContainer) parent, spec.getName());
     SIRStream oldParent = parent;
     CClass owner = null;
+    String name = spec.getName();
+    if (name == null)
+    {
+        // Anonymous stream.  The name can't actually be null, but ""
+        // is acceptable.  We also know the owner, it's our parent's
+        // cclass.
+        name = "";
+        owner = (CClass)cclassTable.get(parent.getIdent());
+    }
     CSourceClass cclass = new CSourceClass(owner, // owner
                                            contextToReference(spec),
                                            0, // modifiers
-                                           spec.getName(),
-                                           spec.getName(), // qualified
+                                           name, name, // qualified
                                            false); // deprecated
     Hashtable fields = new Hashtable();
 
@@ -719,7 +766,8 @@ public class FEIRToSIR implements FEVisitor, Constants {
                  null, // superclass
                  fields,
                  cmethods);
-    cclassTable.put(spec.getName(), cclass);
+    if (spec.getName() != null)
+        cclassTable.put(spec.getName(), cclass);
 
     parent = oldParent;
 
@@ -849,11 +897,6 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
   public Object visitSCSimple(SCSimple sc) {
     debug("In visitSCSimple\n");
-    if (! classTable.containsKey(sc.getName())) {
-      /* BUG: What to do if they give a bad name? */
-      debug("  Missing class in visitSCSimple\n");
-      return null;
-    }
     /* Translate the arguments */
     int i;
     List feirP = sc.getParams();
@@ -861,7 +904,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
     for (i = 0; i < feirP.size(); i++) {
       sirP.add(((Expression) feirP.get(i)).accept(this));
     }
-    SIRStream str = (SIRStream) classTable.get(sc.getName());
+    SIRStream str = findStream(sc.getName());
     if (parent instanceof SIRContainer) {
       ((SIRContainer) parent).add(str);
     }
@@ -870,12 +913,27 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
   public Object visitSJDuplicate(SJDuplicate sj) {
     debug("In visitSJDuplicate\n");
-    return SIRSplitter.create((SIRContainer) parent, SIRSplitType.DUPLICATE, 2);
+    if (wantSplitter)
+        return SIRSplitter.create((SIRContainer) parent,
+                                  SIRSplitType.DUPLICATE, 2);
+    else
+        // Not allowed.
+        return null;
   }
 
   public Object visitSJRoundRobin(SJRoundRobin sj) {
     debug("In visitSJRoundRobin\n");
-    return SIRSplitter.createUniformRR((SIRContainer) parent, (JExpression) sj.getWeight().accept(this));
+    Expression weight = sj.getWeight();
+    JExpression jweight;
+    // weight can be null; if so, it's really 1.
+    if (weight != null)
+        jweight = (JExpression)weight.accept(this);
+    else
+        jweight = new JIntLiteral(contextToReference(sj), 1);
+    if (wantSplitter)
+        return SIRSplitter.createUniformRR((SIRContainer) parent, jweight);
+    else
+        return SIRJoiner.createUniformRR((SIRContainer)parent, jweight);
   }
 
   public Object visitSJWeightedRR(SJWeightedRR sj) { 
@@ -888,7 +946,10 @@ public class FEIRToSIR implements FEVisitor, Constants {
       newWeights[i] = (JExpression) ((Expression) weights.get(i)).accept(this);
     }
 
-    return SIRSplitter.createWeightedRR((SIRContainer) parent, newWeights);
+    if (wantSplitter)
+        return SIRSplitter.createWeightedRR((SIRContainer) parent, newWeights);
+    else
+        return SIRJoiner.createWeightedRR((SIRContainer)parent, newWeights);
   }
 
   public Object visitStmtAdd(StmtAdd stmt) {
@@ -898,8 +959,9 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
   public Object visitStmtAssign(StmtAssign stmt) {
     debug("In visitStmtAssign\n");
+    JExpression expr;
     if (stmt.getOp() == 0) {
-      return new JAssignmentExpression(null,
+      expr = new JAssignmentExpression(null,
 				       (JExpression) stmt.getLHS().accept(this),
 				       (JExpression) stmt.getRHS().accept(this));
     } else {
@@ -920,11 +982,12 @@ public class FEIRToSIR implements FEVisitor, Constants {
 			    Constants.OPE_BAND, // BINOP_BAND
 			    Constants.OPE_BOR, // BINOP_BOR
 			    Constants.OPE_BXOR }; // BINOP_BXOR
-      return new JCompoundAssignmentExpression(null,
+      expr = new JCompoundAssignmentExpression(null,
 					       translation[stmt.getOp()],
 					       (JExpression) stmt.getLHS().accept(this),
 					       (JExpression) stmt.getRHS().accept(this));
     }
+    return new JExpressionStatement(contextToReference(stmt), expr, null);
   }
 
   public Object visitStmtBlock(StmtBlock stmt) {
@@ -1033,12 +1096,14 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
   public Object visitStmtJoin(StmtJoin stmt) {
     debug("In visitStmtJoin\n");
+    wantSplitter = false;
+    SIRJoiner joiner = (SIRJoiner)stmt.getJoiner().accept(this);
     if (parent instanceof SIRFeedbackLoop) {
-      ((SIRFeedbackLoop) parent).setJoiner((SIRJoiner) stmt.getJoiner().accept(this));
+        ((SIRFeedbackLoop) parent).setJoiner(joiner);
     } else if (parent instanceof SIRSplitJoin) {
-      ((SIRSplitJoin) parent).setJoiner((SIRJoiner) stmt.getJoiner().accept(this));
+        ((SIRSplitJoin) parent).setJoiner(joiner);
     }
-    return null;
+    return joiner;
   }
 
   public Object visitStmtLoop(StmtLoop stmt) {
@@ -1078,7 +1143,14 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
   public Object visitStmtSplit(StmtSplit stmt) {
     debug("In visitStmtSplit\n");
-    return stmt.getSplitter().accept(this);
+    wantSplitter = true;
+    SIRSplitter splitter = (SIRSplitter)stmt.getSplitter().accept(this);
+    if (parent instanceof SIRFeedbackLoop) {
+        ((SIRFeedbackLoop) parent).setSplitter(splitter);
+    } else if (parent instanceof SIRSplitJoin) {
+        ((SIRSplitJoin) parent).setSplitter(splitter);
+    }
+    return splitter;
   }
 
   public Object visitStmtVarDecl(StmtVarDecl stmt) {

@@ -418,8 +418,10 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		print("  __msg_sock_"+src+"_"+selfID+"in = new mysocket(init_instance::get_incoming_socket("+(-src-1)+","+(-selfID-1)+"));\n");
 	    }
 	}
-
-
+	
+	print("  "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
+	
+	/*
 	print("  "+self.getInit().getName()+"__"+selfID+"();\n");
 
 	if (out == null) print("  timer t;\n");
@@ -442,6 +444,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	if (out == null) print("  t.stop();\n");
 	if (out == null) print("  t.output(stderr);\n");
+
+	*/
 
 	print("  sleep(3); // so that sockets dont get closed\n");
 	print("}\n");
@@ -685,7 +689,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	else if (type.isFloatingPoint())
 	    print(" = 0.0f");
 
-        print(";\n");
+        print(";/* "+type+" */");
+        //print(";\n");
 
     }
 
@@ -773,7 +778,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
         print(" ");
         if (cond != null) {
             cond.accept(this);
-        }
+	}
 	//cond is an expression so print the ;
         print("; ");
 	if (incr != null) {
@@ -1194,9 +1199,16 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	//generate the inline asm instruction to execute the 
 	//receive if this is a receive instruction
 	if (ident.equals(RawExecutionCode.receiveMethod)) {
+
+	    //Do not generate this!
+	    
+	    /*
 	    print(Util.staticNetworkReceivePrefix());
 	    visitArgs(args,0);
 	    print(Util.staticNetworkReceiveSuffix(args[0].getType()));
+	    */
+
+
 	    return;  
 	}
 	
@@ -1382,7 +1394,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
                                           JExpression left,
                                           JExpression right) {
 
-	if (left.getType().toString().endsWith("Portal")) {
+	if (left.getType() != null && left.getType().toString().endsWith("Portal")) {
 	    print("/* void */");
 	    return;
 	}
@@ -2056,7 +2068,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
     // Special case for CTypes, to map some Java types to C types.
     protected void print(CType s) {
-	if (s instanceof CArrayType){
+	if (s instanceof CArrayType) {
             print(((CArrayType)s).getElementType());
             print("*");
         }
@@ -2072,7 +2084,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     protected void printLocalType(CType s) 
     {
 	if (s instanceof CArrayType){
-	    print(((CArrayType)s).getElementType());
+	    print(((CArrayType)s).getElementType()+"*");
 	}
         else if (s.getTypeID() == TID_BOOLEAN)
             print("int");

@@ -99,8 +99,8 @@ class Propagator extends SLIRReplacingVisitor {
 	    if (newExp.isConstant() /*&& CModifier.contains(modifiers,
 				      ACC_FINAL)*/) {
 		// reset the value
-		//if(write)
-		//self.setExpression(newExp);
+		if(write)
+		    self.setExpression(newExp);
 		// remember the value for the duration of our visiting
 		constants.put(self, newExp);
 		changed.put(self,Boolean.TRUE);
@@ -254,10 +254,12 @@ class Propagator extends SLIRReplacingVisitor {
 		self.setInit(newInit);
 	    }
 	    
+	    write=false;
 	    // recurse into incr
 	    JStatement newIncr = (JStatement)incr.accept(this);
 	    if (newIncr!=null && newIncr!=incr)
 		self.setIncr(newIncr);
+	    write=true;
 
 	    JExpression newExp = (JExpression)cond.accept(this);
 	    if (newExp!=null && newExp!=cond) {

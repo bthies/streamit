@@ -216,8 +216,9 @@ class Unroller extends SLIRReplacingVisitor {
      *  1. the initialization is an assignemnt of a constant to a variable
      *      - further, the variable is not declared in the initialization;
      *        it is only assigned to there (no "for (int i=...)")
+     *  Above should be fixed --jasperln
      *  2. the condition is a relational less-than test of the var and a const
-     *  3. the incr is addition or multiplication by a const. (use +=1, not ++)
+     *  3. the incr is addition or multiplication or div by a const. (use +=1, not ++)
      *  4. the variable is an integer
      *
      *  We do not check that the induction variable is unmodified in
@@ -277,7 +278,23 @@ class Unroller extends SLIRReplacingVisitor {
 		    incrVar =
 			(JLocalVariableExpression)cae.getLeft();
 		}
-	    else if (incrExpr instanceof JPrefixExpression)
+	    else if(incrExpr instanceof JAssignmentExpression){
+		JAssignmentExpression ae=(JAssignmentExpression)incrExpr;
+		//oper = ae.getOperation();
+		//incrVal=((JIntLiteral)ae.getRight()).intValue();
+		incrVar=(JLocalVariableExpression)ae.getLeft();
+		System.err.println("Right:"+ae.getRight());
+		JBinaryExpression expr=(JBinaryExpression)ae.getRight();
+		if(expr instanceof JDivideExpression) {
+		    if(!((JLocalVariableExpression)expr.getLeft()).equals(incrVar)) {
+			//System.err.println("Vars don't match!");
+			return null;
+		    }
+		    incrVal=((JIntLiteral)expr.getRight()).intValue();
+		    oper=OPE_SLASH;
+		} else
+		    return null;
+	    } else if (incrExpr instanceof JPrefixExpression)
 		{
 		    JPrefixExpression pfx = (JPrefixExpression)incrExpr;
 		    oper = pfx.getOper();
@@ -289,7 +306,7 @@ class Unroller extends SLIRReplacingVisitor {
 		    JPostfixExpression pfx = (JPostfixExpression)incrExpr;
 		    oper = pfx.getOper();
 		    incrVal = 1;
-			incrVar = (JLocalVariableExpression)pfx.getExpr();
+		    incrVar = (JLocalVariableExpression)pfx.getExpr();
 		}
 	    else
 		return null;
@@ -331,8 +348,17 @@ class Unroller extends SLIRReplacingVisitor {
 		count++;
 	    }
 	    return count;
+	case OPE_SLASH:
+	    // simulate execution of division
+	    int count2 = 0;
+	    int val2 = info.initVal;
+	    while (val2 > info.finalVal) {
+		val2 /= info.incrVal;
+		count2++;
+	    }
+	    return count2;
 	default: 
-	    Utils.fail("Can only unroll add/mul increments for now.");
+	    Utils.fail("Can only unroll add/mul/div increments for now.");
 	    // dummy value
 	    return 0;
 	}

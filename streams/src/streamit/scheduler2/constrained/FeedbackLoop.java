@@ -51,7 +51,7 @@ public class FeedbackLoop
             loop.initiateConstrained();
         }
 
-        // add body and nloop to the latency graph
+        // add body and loop to the latency graph
         {
             // first the body
             {
@@ -90,7 +90,12 @@ public class FeedbackLoop
                 topLoopNode.addDependency(topLoopEdge);
 
                 LatencyEdge bottomLoopEdge =
-                    new LatencyEdge(bottomLoopNode, 0, latencyJoiner, 1, 0);
+                    new LatencyEdge(
+                        bottomLoopNode,
+                        0,
+                        latencyJoiner,
+                        1,
+                        feedbackLoop.getDelaySize());
                 latencyJoiner.addDependency(bottomLoopEdge);
                 bottomLoopNode.addDependency(bottomLoopEdge);
             }

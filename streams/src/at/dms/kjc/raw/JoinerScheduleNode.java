@@ -27,8 +27,9 @@ public class JoinerScheduleNode
 	if (type == FIRE) {
 	    ret.append("static_send(buffer" + buffer +
 		       "[first" + buffer + "++]);\n");
-	    ret.append("if (first" + buffer + " >= BUFSIZE) first" + 
-		       buffer + " = 0;\n");
+	    ret.append("first" + buffer + " = first" + buffer + " & MINUSONE;\n");
+	    //	    ret.append("if (first" + buffer + " >= BUFSIZE) first" + 
+	    //	       buffer + " = 0;\n");
 	    // ret.append("if (first" + buffer + " == last" + 
 	    //       buffer + ") print_int(2000);\n");
 	    
@@ -38,7 +39,8 @@ public class JoinerScheduleNode
 	    if (fp)
 		ret.append("_f");
 	    ret.append("();\n");
-	    ret.append("if (last" + buffer + " >= BUFSIZE) last" + buffer + " = 0;\n");
+	    ret.append("last" + buffer + " = last" + buffer + " & MINUSONE;\n");
+	    //ret.append("if (last" + buffer + " >= BUFSIZE) last" + buffer + " = 0;\n");
 	}
 	return ret.toString();
     }

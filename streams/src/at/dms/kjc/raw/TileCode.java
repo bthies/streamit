@@ -117,7 +117,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	if (ctype.equals(CStdType.Float))
 	    fp = true;
 	String type = ctype.toString(); 	
-	ret.append("#define BUFSIZE " + buffersize + "\n\n");
+	ret.append("#define BUFSIZE " + buffersize + "\n");
+	ret.append("#define MINUSONE " + (buffersize - 1) + "\n\n");
 	
 	ret.append("void work() { \n");
 	//print the temp for the for loop

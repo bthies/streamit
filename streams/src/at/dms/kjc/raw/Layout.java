@@ -131,9 +131,14 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	
     public static int getTileNumber(Coordinate tile)
     {
+	//because the simulator only simulates 4x4 or 8x8 we
+	//have to translate the tile number according to these layouts
+	int columns = 4;
+	if (StreamItOptions.rawColumns > 4)
+	    columns = 8;
 	int row = tile.getRow();
 	int column = tile.getColumn();
-	return (row * StreamItOptions.rawRows) + column;
+	return (row * columns) + column;
     }
     
     public static int getTileNumber(SIROperator str)

@@ -30,6 +30,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     protected boolean			nl = true;
     public boolean                   declOnly = true;
     public SIRFilter               filter;
+    //true if we are using the second buffer management scheme 
+    //circular buffers with anding
+    public boolean circular;
 
     public static void generateCode(FlatNode node) 
     {
@@ -53,6 +56,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     
     public FlatIRToC(SIRFilter f) {
 	this.filter = f;
+	circular = false;
 	this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
     }
@@ -82,7 +86,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			    JMethodDeclaration init,
 			    JMethodDeclaration work,
 			    CType inputType, CType outputType) {
-	//System.out.println(Namer.getName(self));
+	if (self.getPeekInt() > 4 * self.getPopInt()) 
+	    circular = false;
+      
 	//Entry point of the visitor
 	print("#include <raw.h>\n");
 	print("#include <math.h>\n\n");
@@ -198,9 +204,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    //if it is print the work header and trailer
 	    if (filter != null) {
 		if (filter.getWork() == self) {
-		    printWorkHeader();
-		    body.accept(this);
-		    printWorkTrailer();
+		    if (circular) {
+			printCircularWorkHeader();
+			body.accept(this);
+			printCircularWorkTrailer();
+		    }
+		    else {
+			printWorkHeader();
+			body.accept(this);
+			printWorkTrailer();
+		    }
 		}
 		else 
 		    body.accept(this);
@@ -212,6 +225,89 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         }
         newLine();
     }
+
+    private int nextPow2(int i) {
+	String str = Integer.toBinaryString(i);
+	if  (str.indexOf('1') == -1)
+	    return 0;
+	int bit = str.length() - str.indexOf('1');
+	return (int)Math.pow(2, bit);
+    }
+
+    private void printCircularTwoStageInitWork() 
+    {
+	SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
+	int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
+	    two.getPeekInt();
+	buffersize = nextPow2(buffersize + 1);
+	print ("#define BUFFERSIZE " + buffersize + "\n");
+	print ("#define BITS " + (buffersize - 1) + "\n");
+	print(two.getInputType() + 
+		       " buffer[BUFFERSIZE];\n");
+	print(" for (i = 0; i < " + two.getInitPeek() + "; i++)\n");
+	print("   buffer[i] = ");
+	if (two.getInputType().equals(CStdType.Float))
+	    print("static_receive_f();\n");
+	else 
+	    print("static_receive();\n");
+	two.getInitWork().getBody().accept(this);
+	
+	//now 
+	 print("\n count = 0;\n");
+	 if (two.getInitPeek() != two.getInitPop()) {
+	     print(" for (i = count + 1 + " + (two.getInitPeek() - two.getInitPop()) + "; i < count + 1 + " +
+		   two.getInitPeek() +
+		   "; i++)\n");
+	     print("   buffer[i & BITS] = ");
+	     if (two.getInputType().equals(CStdType.Float)) 
+		 print("static_receive_f();\n");
+	     else
+		 print("static_receive();\n");
+	 }
+	 print(" count = -1;\n");
+    }
+    
+    private void printCircularWorkHeader() 
+    {
+	print("{\n");
+	if (filter.getPeekInt() > 0) {
+	    print("int i, count = -1;\n");
+	    if (filter instanceof SIRTwoStageFilter) 
+		printCircularTwoStageInitWork();
+	    else {
+		int buffersize = nextPow2(filter.getPeekInt());
+		print ("#define BUFFERSIZE " + buffersize + "\n");
+		print ("#define BITS " + (buffersize - 1) + "\n");
+		print(filter.getInputType() + 
+		       " buffer[BUFFERSIZE];\n");
+		print(" for (i = 0; i < " + filter.getPeekInt() + "; i++)\n");
+		print("   buffer[i] = ");
+		if (filter.getInputType().equals(CStdType.Float))
+		    print("static_receive_f();\n");
+		else 
+		    print("static_receive();\n");
+	    }
+	}
+	print(" while (1) {\n");
+    }
+    
+    private void printCircularWorkTrailer() 
+    {
+	
+	if (filter.getPeekInt() > 0) {
+	    print("count = count & BITS;\n");
+	    print(" for (i = count + 1 + " + (filter.getPeekInt() - filter.getPopInt()) + 
+		  "; i < count + 1 + " + filter.getPeekInt() + "; i++) \n");
+	    print("   buffer[i & BITS] = ");
+	    if (filter.getInputType().equals(CStdType.Float)) 
+		print("static_receive_f();\n");
+	    else
+		print("static_receive();\n");
+	    
+	}
+	print(" }\n}\n");
+    }
+    
 
     private void printTwoStageInitWork() 
     {
@@ -231,12 +327,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	
 	//now 
 	 print("\n count = 0;\n");
-	 if (two.getInitPeek() != two.getInitPop()) {
-	     print(" for (i = " + two.getInitPop() + "; i < " +
-		   two.getInitPeek() +
-		   "; i++)\n");
-	     print("   buffer[count++] = buffer[i];\n");
-	 }
+	 print(" for (i = " + two.getInitPop() + "; i < " +
+	       two.getInitPeek() +
+	       "; i++)\n");
+	 print("   buffer[count++] = buffer[i];\n");
 	 
 	 print(" for (i = count; i < " + two.getPeekInt() + "; i++) \n");
 	 print("   buffer[i] = ");
@@ -287,7 +381,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		print("static_receive();\n");
 	    print(" count = -1;\n");
 	}
-		print(" }\n}\n");
+	print(" }\n}\n");
     }
     
     // ----------------------------------------------------------------------
@@ -1112,7 +1206,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                     CType tapeType,
                                     JExpression num)
     {
-        print("(buffer[count + ");
+        print("(buffer[count + (");
         /*
 	  if (tapeType != null)
 	  print(tapeType);
@@ -1121,13 +1215,19 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	  print(", ");
 	*/
         num.accept(this);
-        print(" + 1])");
+        print(") + 1");
+	if (circular)
+	    print(" & BITS");
+	print("])");
     }
     
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-        print("(buffer[++count])");
+        print("(buffer[++count");
+	if (circular)
+	    print(" & BITS");
+	print("])");
     }
     
     public void visitPrintStatement(SIRPrintStatement self,

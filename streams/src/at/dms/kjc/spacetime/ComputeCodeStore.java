@@ -51,7 +51,15 @@ public class ComputeCodeStore {
 	//add the block for the init stage calls
 	initBlock = new JBlock(null, new JStatement[0], null);
 	rawMain.addStatement(initBlock);
-
+	/* 
+	//add the call to free the init buffers
+	rawMain.addStatement(new JExpressionStatement
+			     (null,
+			      new JMethodCallExpression(null, new JThisExpression(null),
+							CommunicateAddrs.freeFunctName,
+							new JExpression[0]),
+			      null));
+	*/
 	steadyIndex = 0;
 	//create the body of steady state loop
 	steadyLoop = new JBlock(null, new JStatement[0], null);
@@ -63,8 +71,9 @@ public class ComputeCodeStore {
 
     //add a dram command to the compute code at the current time
     //if read is false, then it is a write
-    //
-    public void addDRAMCommand(boolean read, boolean init, 
+    //if init is true use the init buffer and write to the init stage
+    //if primepump is true, write to the init stage
+    public void addDRAMCommand(boolean read, boolean init, boolean primepump,
 			       int bytes, OffChipBuffer buffer, boolean presynched) 
     {
 	parent.setComputes();
@@ -102,7 +111,7 @@ public class ComputeCodeStore {
 	
 	SpaceTimeBackend.println("Adding DRAM Command to " + parent + " " + buffer + " " + cacheLines);
 	//add the statements to the appropriate stage
-	if (init) {
+	if (init || primepump) {
 	    initBlock.addStatement(new JExpressionStatement(null, call, null));
 	    initBlock.addStatement(new JExpressionStatement(null, assExp, null));
 	}

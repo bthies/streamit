@@ -95,9 +95,11 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	}
 	
 	//print the method that sends/recvs block addresses
-	if (!KjcOptions.magicdram)
+	if (!KjcOptions.magicdram) {
 	    print(CommunicateAddrs.getFunction(tile));
-
+	    //print(CommunicateAddrs.getFreeFunction(tile));
+	}
+	
 	//generate the entry function for the simulator
 	print("void begin(void) {\n");
 	//if we are using the magic network, 

@@ -52,17 +52,10 @@ public class Rawify
 			if(filterInfo.isLinear())
 			    createSwitchCodeLinear(filterNode,
 						   trace,filterInfo,init,false,tile,rawChip,mult);
-			else if (filterInfo.isDirect())
+			else 
 			    createSwitchCode(filterNode, 
 					     trace, filterInfo, init, false, tile, rawChip, mult);
-			else
-			    createSwitchCodeBuffered(filterNode, 
-						     trace, filterInfo, init, tile, rawChip, mult);
-			//we must add some switch instructions to account for the fact
-			//that we must transfer cacheline sized chunks in the streaming dram
-			//do it for the init and the steady state, primepump is handled below
-			handleCacheLine(filterNode, init, false);
-			
+
 			//do every again for the primepump if it is the init stage and add the
 			//compute code for the init stage
 			if (init) {
@@ -70,9 +63,9 @@ public class Rawify
 			    generateFilterDRAMCommand(filterNode, filterInfo, tile, false, true);
 			    //create the prime pump stage switch code 
 			    //after the initialization switch code
-			    createPrimePumpSwitchCode(filterNode, 
-						      trace, filterInfo, false, tile, rawChip);
-			    handleCacheLine(filterNode, false, true);
+			    createSwitchCode(filterNode, 
+					     trace, filterInfo, false, true, tile, rawChip, 
+					     filterInfo.primePump);
 			    //generate the compute code for the trace and place it in
 			    //the tile			
 			    tile.getComputeCode().addTraceInit(filterInfo);
@@ -149,7 +142,7 @@ public class Rawify
 	    int readBytes = iterations * typeSize * 
 		input.getWeight(input.getSources()[i]) * 4;
 	    readBytes = Util.cacheLineDiv(readBytes);
-	    srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, init || primepump,
+	    srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, init || primepump, primepump,
 								 readBytes, srcBuffer, true);
 	}
 
@@ -157,7 +150,7 @@ public class Rawify
 	OffChipBuffer destBuffer = IntraTraceBuffer.getBuffer(input, filter);
 	int writeBytes = items * typeSize * 4;
 	writeBytes = Util.cacheLineDiv(writeBytes);
-	destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init || primepump, 
+	destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init || primepump, primepump, 
 							      writeBytes, destBuffer, true);
     }
 
@@ -173,7 +166,7 @@ public class Rawify
 	//calculate the number of items sent
 	int items = filterInfo.totalItemsSent(init, primepump), 
 	    iterations, typeSize;
-	//noting to do for this stage
+	//nothing to do for this stage
 	if (items == 0)
 	    return;
 
@@ -191,7 +184,7 @@ public class Rawify
 	readBytes = Util.cacheLineDiv(readBytes);
 	SpaceTimeBackend.println("Generating the read command for " + output + " on " +
 				 srcBuffer.getOwner());
-	srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, init || primepump,
+	srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, init || primepump, primepump, 
 							     readBytes, srcBuffer, true);
  
 	//generate the commands to write the o/i temp buffer dest
@@ -202,7 +195,7 @@ public class Rawify
 	    int writeBytes = iterations * typeSize *
 		output.getWeight(edge) * 4;
 	    writeBytes = Util.cacheLineDiv(writeBytes);
-	    destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init || primepump,
+	    destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init || primepump, primepump, 
 								  writeBytes, destBuffer, true);
 	}
     }
@@ -243,7 +236,7 @@ public class Rawify
 		Util.cacheLineDiv((items * Util.getTypeSize(filterNode.getFilter().getInputType())) *
 				  4);
 
-	    tile.getComputeCode().addDRAMCommand(true, init || primepump, bytes, buffer, true);
+	    tile.getComputeCode().addDRAMCommand(true, init || primepump, primepump, bytes, buffer, true);
 	} 
     }
 
@@ -263,18 +256,33 @@ public class Rawify
 	    
 	    //get the number of items sent
 	    int items = filterInfo.totalItemsSent(init, primepump);
-	    //return if there is nothing to send
-	    if (items == 0)
-		return;
+	    //if this is the primepump, subtract the primepump items not comsumed
+	    //in the primepump stage, they get transfered below
+	    if (primepump)
+		items -= filterInfo.primePumpItemsNotConsumed();
 
-	    int bytes = 
-		Util.cacheLineDiv((items * Util.getTypeSize(filterNode.getFilter().getOutputType())) *
-				  4);
-	    SpaceTimeBackend.println("Generating DRAM store command with " + items + " items, typesize " + 
+	    if (items > 0 ) {
+		int bytes = 
+		    Util.cacheLineDiv((items * Util.getTypeSize(filterNode.getFilter().getOutputType())) *
+				      4);
+		SpaceTimeBackend.println("Generating DRAM store command with " + items + " items, typesize " + 
+					 Util.getTypeSize(filterNode.getFilter().getOutputType()) + 
+					 " and " + bytes + " bytes");
+		tile.getComputeCode().addDRAMCommand(false, init || primepump, primepump, bytes, buffer, false);
+	    }
+	    
+	    if (primepump && filterInfo.primePumpItemsNotConsumed() > 0) {
+		int bytes = 
+		    Util.cacheLineDiv((filterInfo.primePumpItemsNotConsumed() * 
+				       Util.getTypeSize(filterNode.getFilter().getOutputType())) *
+				      4);
+		SpaceTimeBackend.println("Generating DRAM store command with " + filterInfo.primePumpItemsNotConsumed()
+					+ " items, typesize " + 
 				     Util.getTypeSize(filterNode.getFilter().getOutputType()) + 
-				     " and " + bytes + " bytes");
-	    //this commaGnd cannot be presynched
-	    tile.getComputeCode().addDRAMCommand(false, init || primepump, bytes, buffer, false);
+				     " and " + bytes + " bytes at end of primepipe");
+		tile.getComputeCode().addDRAMCommand(false, false, true, bytes, buffer, false);
+	    }
+	    
 	}
     }
     
@@ -410,71 +418,59 @@ public class Rawify
 	int items = filterInfo.totalItemsSent(init, primepump), 
 	    iterations, stage = 1, typeSize;
 	
-	//nothing to do in this stage!
-	if (items == 0)
-	    return;
-	
-	//the stage we are generating code for as used below for generateSwitchCode()
-	if (!init && !primepump) 
-	    stage = 2;
+	if (primepump)
+	    items -= filterInfo.primePumpItemsNotConsumed();
 
-	typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
+	if (items > 0) {
+	    //the stage we are generating code for as used below for generateSwitchCode()
+	    if (!init && !primepump) 
+		stage = 2;
 	    
-	//the numbers of times we should cycle thru this "splitter"
-	assert items % traceNode.totalWeights() == 0: 
-	    "weights on output trace node does not divide evenly with items sent";
-	iterations = items / traceNode.totalWeights();
-	
-	SpaceTimeBackend.println("Generating Switch Code for " + traceNode + " items " + items +
-				 " iterations " + iterations);
-
-	//is there a load immediate in the switch instruction set?!
-	//I guess not, if switch instruction memory is a problem
-	//this naive implementation will have to change
-	StreamingDram sourcePort = IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM();
-	for (int i = 0; i < iterations; i++) {
-	    for (int j = 0; j < traceNode.getWeights().length; j++) {
-		for (int k = 0; k < traceNode.getWeights()[j]; k++) {
-		    //generate the array of compute node dests
-		    ComputeNode dests[] = new ComputeNode[traceNode.getDests()[j].length];
-		    for (int d = 0; d < dests.length; d++) 
-			dests[d] = InterTraceBuffer.getBuffer(traceNode.getDests()[j][d]).getDRAM();
-		    for (int q = 0; q < typeSize; q++)
-			SwitchCodeStore.generateSwitchCode(sourcePort, 
-							   dests, stage);
+	    typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
+	    
+	    //the numbers of times we should cycle thru this "splitter"
+	    assert items % traceNode.totalWeights() == 0: 
+		"weights on output trace node does not divide evenly with items sent";
+	    iterations = items / traceNode.totalWeights();
+	    
+	    SpaceTimeBackend.println("Generating Switch Code for " + traceNode + " items " + items +
+				     " iterations " + iterations);
+	    
+	    //is there a load immediate in the switch instruction set?!
+	    //I guess not, if switch instruction memory is a problem
+	    //this naive implementation will have to change
+	    StreamingDram sourcePort = IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM();
+	    for (int i = 0; i < iterations; i++) {
+		for (int j = 0; j < traceNode.getWeights().length; j++) {
+		    for (int k = 0; k < traceNode.getWeights()[j]; k++) {
+			//generate the array of compute node dests
+			ComputeNode dests[] = new ComputeNode[traceNode.getDests()[j].length];
+			for (int d = 0; d < dests.length; d++) 
+			    dests[d] = InterTraceBuffer.getBuffer(traceNode.getDests()[j][d]).getDRAM();
+			for (int q = 0; q < typeSize; q++)
+			    SwitchCodeStore.generateSwitchCode(sourcePort, 
+							       dests, stage);
+		    }
 		}
 	    }
+	    //because transfers must be cache line size divisible...
+	    //disregard the dummy values coming out of the dram
+	    if ((items * typeSize) % RawChip.cacheLineWords != 0) {
+		int remainder = RawChip.cacheLineWords - (items * typeSize) % RawChip.cacheLineWords;
+		SwitchCodeStore.disregardIncoming(sourcePort, remainder, init || primepump);
+	    }
+	    //write dummy values into each temp buffer with a remainder
+	    Iterator it = traceNode.getDestSet().iterator();
+	    while (it.hasNext()) {
+		Edge edge = (Edge)it.next();
+		int remainder = RawChip.cacheLineWords - ((typeSize * iterations * traceNode.getWeight(edge)) %
+							  RawChip.cacheLineWords);
+		if (remainder > 0)
+		    SwitchCodeStore.dummyOutgoing(InterTraceBuffer.getBuffer(edge).getDRAM(),
+						  remainder, init || primepump);
+	    }   
 	}
-	//because transfers must be cache line size divisible...
-	//disregard the dummy values coming out of the dram
-	if ((items * typeSize) % RawChip.cacheLineWords != 0) {
-	    int remainder = RawChip.cacheLineWords - (items * typeSize) % RawChip.cacheLineWords;
-	    SwitchCodeStore.disregardIncoming(sourcePort, remainder, init || primepump);
-	}
-	//write dummy values into each temp buffer with a remainder
-	Iterator it = traceNode.getDestSet().iterator();
-	while (it.hasNext()) {
-	    Edge edge = (Edge)it.next();
-	    int remainder = RawChip.cacheLineWords - ((typeSize * iterations * traceNode.getWeight(edge)) %
-		RawChip.cacheLineWords);
-	    if (remainder > 0)
-		SwitchCodeStore.dummyOutgoing(InterTraceBuffer.getBuffer(edge).getDRAM(),
-					      remainder, init || primepump);
-	}   
     }
-    
-
-    
-    
-    private static void createPrimePumpSwitchCode(FilterTraceNode node, Trace parent,
-						  FilterInfo filterInfo,
-						  boolean init, RawTile tile, RawChip rawChip) 
-    {
-	//call create switch code with init false (not in init) and primepump true
-	createSwitchCode(node, parent, filterInfo, false, true, tile, rawChip, filterInfo.primePump);
-    }
-    
- 
     
     private static void createSwitchCodeLinear(FilterTraceNode node, Trace parent, 
 					       FilterInfo filterInfo, boolean init, boolean primePump, 
@@ -766,6 +762,8 @@ public class Rawify
 	ins.setProcessorIns(new JumpIns(label.getLabel()));
     }
 
+
+    //create the intra-trace filter switch code...
     private static void createSwitchCode(FilterTraceNode node, Trace parent, 
 					 FilterInfo filterInfo,
 					 boolean init, boolean primePump, RawTile tile,
@@ -777,15 +775,6 @@ public class Rawify
 	    //append the send code 
 	    createSendCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
 	}
-    }
-    
-    private static void createSwitchCodeBuffered(FilterTraceNode node, Trace parent, 
-						 FilterInfo filterInfo,
-						 boolean init, RawTile tile,
-						 RawChip rawChip, int mult) 
-    {
-	//create the switch code for each firing 
-	createSwitchCode(node, parent, filterInfo, init, false, tile, rawChip, mult);
 	
 	//now we must take care of the remaining items on the input tape 
 	//after the initialization phase if the upstream filter produces more than
@@ -795,10 +784,13 @@ public class Rawify
 				      filterInfo.remaining * Util.getTypeSize(node.getFilter().getInputType()),
 				      filterInfo, init, false, tile, rawChip);
 	}
+
+	//we must add some switch instructions to account for the fact
+	//that we must transfer cacheline sized chunks in the streaming dram
+	//do it for the init and the steady state, primepump 
+	handleCacheLine(node, init, primePump);
     }
-    
-    
-    
+        
     private static void createReceiveCode(int iteration, FilterTraceNode node, Trace parent, 
 				   FilterInfo filterInfo, boolean init, boolean primePump, RawTile tile,
 				   RawChip rawChip) 

@@ -4,6 +4,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.flatgraph2.FilterContent;
 import at.dms.util.Utils;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.HashMap;
 
 /** 
@@ -163,6 +164,28 @@ public class FilterInfo
  	    return true;
  	return false;
     }
+
+    //calculate the number of items produced in the primepump stage but
+    //consumed in the steady state of the down stream filters...
+    public int primePumpItemsNotConsumed() 
+    {
+	assert traceNode.getNext() instanceof OutputTraceNode :
+	    "Need to call primePumpItemsNotConsumed() on last filter of trace";
+	OutputTraceNode out = (OutputTraceNode)traceNode.getNext();
+	int itemsSent = primePump * push;
+	int itemsConsumed = 0;
+	    
+	Iterator it = out.getDestSet().iterator();
+	while (it.hasNext()) {
+	    Edge edge = (Edge)it.next();
+	    FilterInfo downstream = 
+		FilterInfo.getFilterInfo(((FilterTraceNode)edge.getDest().getNext()));
+	    itemsConsumed += (downstream.primePump * downstream.pop);
+	}
+	
+	return itemsSent - itemsConsumed;
+    }
+    
 
     //return the number of items produced in the init stage
     public int initItemsSent() 

@@ -7,9 +7,11 @@ import java.util.Random;
 public class CommunicateAddrs 
 {
     public static String functName = "__snd_rvc_addrs__";
+    public static String freeFunctName = "__free_init_bufs__";
     private static CommunicateAddrs commAddrs;
     private RawChip chip;
     private HashMap functions;
+    private HashMap freeFunctions;
     private HashMap fields;
     private static Random rand;
 
@@ -29,12 +31,14 @@ public class CommunicateAddrs
 	this.chip = chip;
 	fields = new HashMap();
 	functions = new HashMap();
+	freeFunctions = new HashMap();
 	
 	//add the StringBuffer for each tile
 	for (int x = 0; x < chip.getXSize(); x++) {
 	    for (int y = 0; y < chip.getYSize(); y++) {
 		RawTile tile = chip.getTile(x, y);
 		functions.put(tile, new StringBuffer());
+		freeFunctions.put(tile, new StringBuffer());
 		fields.put(tile, new StringBuffer());
 	    }
 	}
@@ -83,7 +87,6 @@ public class CommunicateAddrs
 	    ((StringBuffer)fields.get(allocatingTile)).append
 		(buffer.getType().toString() + "* " + 
 		 buffer.getIdent(false) + ";\n");
-	    
 
 	    //malloc the init buffer
 	    ((StringBuffer)functions.get(allocatingTile)).append
@@ -94,6 +97,9 @@ public class CommunicateAddrs
 	    ((StringBuffer)functions.get(allocatingTile)).append
 		("  " + buffer.getIdent(true) + " = ((u_int32_t)" + buffer.getIdent(true) +
 		 ") & 0xffffff00;\n");
+	    //generate the free statement for the free function
+	    ((StringBuffer)freeFunctions.get(allocatingTile)).append
+		("  free(" + buffer.getIdent(true) + ");\n");
 
 	    //malloc the steady buffer
 	    ((StringBuffer)functions.get(allocatingTile)).append
@@ -157,6 +163,19 @@ public class CommunicateAddrs
 	}
     }
     
+    public static String getFreeFunction(RawTile tile) 
+    {
+	StringBuffer buf = new StringBuffer();
+
+	//prepend the function name 
+	buf.append("\nvoid " + freeFunctName + "() {\n");
+	//append the closing } and 
+	buf.append((StringBuffer)commAddrs.freeFunctions.get(tile));
+	buf.append("}\n");
+	return buf.toString();
+    }
+    
+
     public static String getFunction(RawTile tile) 
     {
 	StringBuffer buf = new StringBuffer();

@@ -19,7 +19,7 @@ import at.dms.util.Utils;
  * 
  */
 
-public class RemoveDeadLoops extends SLIRReplacingVisitor implements FlatVisitor
+public class RemoveDeadDoLoops extends SLIRReplacingVisitor implements FlatVisitor
 {
     private HashMap doloops;
 
@@ -35,11 +35,11 @@ public class RemoveDeadLoops extends SLIRReplacingVisitor implements FlatVisitor
 
     public static void doit(FlatNode node, HashMap loops) 
     {
-	new RemoveDeadLoops(node, loops);
+	new RemoveDeadDoLoops(node, loops);
     }
     
     
-    private RemoveDeadLoops(FlatNode node, HashMap doloops) 
+    private RemoveDeadDoLoops(FlatNode node, HashMap doloops) 
     {
 	this.doloops = doloops;
 	node.accept(this, null, true);

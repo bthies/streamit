@@ -143,7 +143,8 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 
     /**
      * Returns a list of the children of this.  The children are
-     * stream objects that are contained within this.
+     * stream objects that are contained within this (including the
+     * splitter and joiner.
      */
     public List getChildren() {
 	// build result
@@ -155,6 +156,13 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 	result.add(joiner);
 	// return result
 	return result;
+    }
+
+    /**
+     * Returns a list of the parallel streams in this.
+     */
+    public List getParallelStreams() {
+	return (List)elements.clone();
     }
 
     /**

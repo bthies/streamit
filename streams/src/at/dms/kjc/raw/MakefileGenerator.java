@@ -89,8 +89,12 @@ public class MakefileGenerator
 	FileWriter fw = new FileWriter("fileio.bc");
 	
 	fw.write("include(\"<dev/basic.bc>\");\n");
-	fw.write("include(\"<dev/st_port_to_file.bc>\");\n");
+	
+	//create the function to write the data
+	fw.write("if (FindFunctionInSymbolHash(gSymbolTable, \"dev_data_transmitter_init\",3) == NULL)\ninclude(\"<dev/data_transmitter.bc>\");\n\nfn dev_st_port_to_file_size(filename, size, port)\n{\n  local receive_device_descriptor = hms_new();\n  // open the file\n  receive_device_descriptor.fileName = filename;\n  receive_device_descriptor.theFile = fopen(receive_device_descriptor.fileName,\"w\");\n  verify(receive_device_descriptor.theFile != NULL,\n         \"### Failed to open output file\");\n  receive_device_descriptor.calc =\n    & fn(this)\n  {\n    local theFile = this.theFile;\n    while (1)\n    {\n      local value = this.receive();\n      fwrite(&value, size, 1, theFile);\n      fflush(theFile);\n    }\n  };\n  return dev_data_transmitter_init(\"st_port_to_file\",\n                                      port,\n                                      0,\n                                      receive_device_descriptor);\n}");
+
 	fw.write("\n{\n");
+
 	//generate the code for the fileReaders
 	Iterator frs = FileVisitor.fileReaders.iterator();
 	while (frs.hasNext()) {
@@ -105,14 +109,37 @@ public class MakefileGenerator
 	while (fws.hasNext()) {
 	    FlatNode node = (FlatNode)fws.next();
 	    SIRFileWriter sfw = (SIRFileWriter)node.contents;
-	    fw.write("\tdev_st_port_to_file(\"" + sfw.getFileName() + "\", " + 
-		     getIOPort(Layout.getTile(node)) + 
+	    int size = getTypeSize(((SIRFileWriter)node.contents).getInputType());
+	    fw.write("\tdev_st_port_to_file_size(\"" + sfw.getFileName() + "\", " + 
+		     size + ", " + getIOPort(Layout.getTile(node)) + 
 		     ");\n");
 	}
 	fw.write("\n}\n");
 	fw.close();
     }
     
+    private static int getTypeSize(CType type) {
+	if (type.equals(CStdType.Boolean))
+	    return 1;
+	else if (type.equals(CStdType.Byte))
+	    return 1;
+	else if (type.equals(CStdType.Integer))
+	    return 4;
+	else if (type.equals(CStdType.Short))
+	    return 4;
+	else if (type.equals(CStdType.Char))
+	    return 1;
+	else if (type.equals(CStdType.Float))
+	    return 4;
+        else if (type.equals(CStdType.Long))
+	    return 4;
+       else
+	   {
+	       Utils.fail("Cannot write type to file: " + type);
+	   }
+	return 0;
+    }
+
     private static int getIOPort(Coordinate tile) 
     {
 	return StreamItOptions.rawColumns + 

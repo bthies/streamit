@@ -4,7 +4,7 @@
 # in perl because I don't know how to use all of the crazy unix command
 # line utilities necessary to do this stuff.
 #
-# $Id: run_reg_tests.pl,v 1.9 2002-12-19 15:35:24 aalamb Exp $
+# $Id: run_reg_tests.pl,v 1.10 2003-01-22 19:33:09 aalamb Exp $
 
 use strict;
 
@@ -25,7 +25,7 @@ $ENV{"TOPDIR"}="/home/bits6/NO_BACKUP/streamit/starsearch";
 
 
 # Root location to store the reg test working files
-my $REGTEST_ROOT = "/home/bits6/NO_BACKUP/streamit/regtest_working";
+my $REGTEST_ROOT = "/home/bits7/NO_BACKUP/streamit/regtest_working";
 
 # Get a time/date stamp without spaces,etc. for the directory name
 my $working_dir = "$REGTEST_ROOT/". get_clean_timedate_stamp();
@@ -46,7 +46,7 @@ print MHMAIL saved_execute("cd $working_dir; cvs -d /projects/raw/cvsroot co str
 my $streamit_home = "$working_dir/streams";
 $ENV{"STREAMIT_HOME"} = "$streamit_home/";
 $ENV{"PATH"} = "/projects/raw/current/rawcc/compiler/bin:/usr/ccs/bin:/u/diego/bin/:$streamit_home:/usr/local/bin:/usr/uns/bin:/usr/bin/X11:/usr/ucb:/bin:/usr/bin:/usr/etc:/etc:/usr/games:";
-my $class_path = ".:/usr/local/jdk1.3/jre/lib/rt.jar:$streamit_home/compiler:$streamit_home/compiler/kopi/3rdparty/cplex/cplex.jar:/usr/uns/java/antlr-2.7.1:$streamit_home/library/java";
+my $class_path = ".:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar:/u/thies/temp/antlr.jar:$streamit_home/compiler:$streamit_home/compiler/3rdparty:$streamit_home/compiler/3rdparty/cplex/cplex.jar:$streamit_home/library/java";
 $ENV{"CLASSPATH"} = $class_path;
 $ENV{"CLASSROOT"} = "$streamit_home/compiler/kopi/classes";
 

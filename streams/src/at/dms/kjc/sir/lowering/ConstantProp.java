@@ -43,8 +43,10 @@ public class ConstantProp {
 	    str.getInit().accept(new VarDeclRaiser());	
 	    // propagate constants within work function of <str>
 	    JMethodDeclaration work= str.getWork();
-	    if(work!=null)
+	    if(work!=null) {
 		work.accept(propagator);
+		work.accept(new VarDeclRaiser());
+	    }
 	    // propagate into fields of <str>
 	    propagateFields(propagator, str);
 	    // unroll loops within init function of <str>

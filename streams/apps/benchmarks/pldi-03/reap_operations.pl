@@ -36,7 +36,7 @@ if (@ARGV) {
 		 #".:SamplingRateConverter",
 		 #".:FilterBank",
 		 #".:TargetDetect",
-		 #".:LinkedFMTest",
+		 #".:FMRadio",
 		 #".:CoarseSerializedBeamFormer",
 		 #".:OneBitDToA",
 		 );

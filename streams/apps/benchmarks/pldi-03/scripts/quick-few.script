@@ -4,5 +4,5 @@ at:--unroll 100000 --linearreplacement3:TargetDetect
 at:--unroll 100000 --linearreplacement3:SamplingRateConverter
 at:--unroll 100000 --linearreplacement3:Oversampler
 at:--unroll 100000 --linearreplacement3:OneBitDToA
-at:--unroll 100000 --linearreplacement3:LinkedFMTest
+at:--unroll 100000 --linearreplacement3:FMRadio
 at:--unroll 100000 --linearreplacement3:FIRProgram

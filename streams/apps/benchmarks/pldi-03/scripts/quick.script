@@ -34,11 +34,11 @@ linear:--unroll 100000 --linearreplacement:OneBitDToA
 linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:OneBitDToA
 part:--unroll 100000 --linearpartition:OneBitDToA
 
-normal:--unroll 100000:LinkedFMTest
-freq:--unroll 100000 --frequencyreplacement:LinkedFMTest
-linear:--unroll 100000 --linearreplacement:LinkedFMTest
-linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:LinkedFMTest
-part:--unroll 100000 --linearpartition:LinkedFMTest
+normal:--unroll 100000:FMRadio
+freq:--unroll 100000 --frequencyreplacement:FMRadio
+linear:--unroll 100000 --linearreplacement:FMRadio
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:FMRadio
+part:--unroll 100000 --linearpartition:FMRadio
 
 normal:--unroll 100000:FIRProgram
 freq:--unroll 100000 --frequencyreplacement:FIRProgram

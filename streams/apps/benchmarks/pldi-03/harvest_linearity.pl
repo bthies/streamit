@@ -19,7 +19,7 @@ my @files = (
 	     #"SamplingRateConverter",
 	     #"FilterBank",
 	     #"TargetDetect",
-	     #"LinkedFMTest",
+	     #"FMRadio",
 	     "BF1_1",
 	     "BF1_2",
 	     "BF1_3",

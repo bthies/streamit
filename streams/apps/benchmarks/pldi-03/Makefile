@@ -28,7 +28,7 @@ benchmarks: FIRProgram.java \
 	    TimeTest.java \
 	    Test.java \
 	    CoarseSerializedBeamFormer.java \
-	    LinkedFMTest.java \
+	    FMRadio.java \
 	    OneBitDToA.java \
             ChannelVocoder.java \
 	    Oversampler.java
@@ -37,15 +37,10 @@ benchmarks: FIRProgram.java \
 
 
 # rule to make the beamformer application and copy it to this directory
-CoarseSerializedBeamFormer.java: $(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.java
-	cp $(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.java .
-$(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.java:
+CoarseSerializedBeamFormer.java: $(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.str
+	$(FRONTEND) $(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.str > $@
+$(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.str:
 	make -C $(BEAMFORMER-HOME)
-# rule to make the fm radio app and copy it to this directory
-LinkedFMTest.java: $(FM-HOME)/LinkedFMTest.java
-	cp $(FM-HOME)/LinkedFMTest.java .
-$(FM-HOME)/LinkedFMTest.java:
-	make -C $(FM-HOME)
 
 # rule to create java files from .str files
 %.java: %.str lib/*.str
@@ -57,7 +52,7 @@ clean:
 	rm -f dynamorio.log* countflops.log
 	rm -f Test.java BF*.java
 	rm -f FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java 
-	rm -f CoarseSerializedBeamFormer.java LinkedFMTest.java OneBitDToA.java
+	rm -f CoarseSerializedBeamFormer.java FMRadio.java OneBitDToA.java
 	rm -f ChannelVocoder.java
 	rm -rf streamgraphs scripts/overall.script
 
@@ -86,7 +81,7 @@ cpsg:
 	cp timing/FIRProgram-linear-linear-simple.dot $(SG-TARGET)
 	cp timing/SamplingRateConverter-linear-linear-simple.dot $(SG-TARGET)
 	cp timing/TargetDetect-linear-linear-simple.dot $(SG-TARGET)
-	cp timing/LinkedFMTest-linear-linear-simple.dot $(SG-TARGET)
+	cp timing/FMRadio-linear-linear-simple.dot $(SG-TARGET)
 	cp timing/CoarseSerializedBeamFormer-2linear-linear-simple.dot $(SG-TARGET)
 	cp timing/FilterBank-linear-linear-simple.dot $(SG-TARGET)
 	cp timing/ChannelVocoder-linear-linear-simple.dot $(SG-TARGET)

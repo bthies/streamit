@@ -12,7 +12,7 @@ my @benchmarks = ("FIRProgram",
 		  "SamplingRateConverter",
 		  "FilterBank",
 		  "TargetDetect",
-		  "LinkedFMTest",
+		  "FMRadio",
 		  "CoarseSerializedBeamFormer"
 		  );
 	

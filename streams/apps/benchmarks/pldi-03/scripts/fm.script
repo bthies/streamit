@@ -1,26 +1,26 @@
-normal::LinkedFMTest
-unroll:--unroll 100000:LinkedFMTest
+normal::FMRadio
+unroll:--unroll 100000:FMRadio
 
-linearnc:--unroll 10000 --linearreplacement --nolinearcollapse:LinkedFMTest
-linearnc2:--unroll 10000 --linearreplacement2 --nolinearcollapse:LinkedFMTest
-linearnc3:--unroll 10000 --linearreplacement3 --nolinearcollapse:LinkedFMTest
+linearnc:--unroll 10000 --linearreplacement --nolinearcollapse:FMRadio
+linearnc2:--unroll 10000 --linearreplacement2 --nolinearcollapse:FMRadio
+linearnc3:--unroll 10000 --linearreplacement3 --nolinearcollapse:FMRadio
 
-freqnc:--unroll 10000 --frequencyreplacement --nolinearcollapse:LinkedFMTest
-freq:--unroll 10000 --frequencyreplacement:LinkedFMTest
+freqnc:--unroll 10000 --frequencyreplacement --nolinearcollapse:FMRadio
+freq:--unroll 10000 --frequencyreplacement:FMRadio
 
-linear:--unroll 10000 --linearreplacement:LinkedFMTest
-linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:LinkedFMTest
+linear:--unroll 10000 --linearreplacement:FMRadio
+linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:FMRadio
 
-part:--unroll 10000 --linearpartition:LinkedFMTest
-partatlas:--unroll 10000 --linearpartition --atlas:LinkedFMTest
+part:--unroll 10000 --linearpartition:FMRadio
+partatlas:--unroll 10000 --linearpartition --atlas:FMRadio
 
-linear3:--unroll 100000 --linearreplacement3:LinkedFMTest
-linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:LinkedFMTest
+linear3:--unroll 100000 --linearreplacement3:FMRadio
+linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:FMRadio
 
-atlas:--unroll 100000 --atlas:LinkedFMTest
-atlasfreq:--unroll 100000 --atlas --frequencyreplacement:LinkedFMTest
+atlas:--unroll 100000 --atlas:FMRadio
+atlasfreq:--unroll 100000 --atlas --frequencyreplacement:FMRadio
 
-fusefreq:--fusion --unroll 10000 --frequencyreplacement:LinkedFMTest
-fuselinear:--fusion --unroll 10000 --linearreplacement:LinkedFMTest
-fuselinearfreq:--fusion --unroll 10000 --linearreplacement --frequencyreplacement:LinkedFMTest
-fusepart:--fusion --unroll 10000 --linearpartition:LinkedFMTest
+fusefreq:--fusion --unroll 10000 --frequencyreplacement:FMRadio
+fuselinear:--fusion --unroll 10000 --linearreplacement:FMRadio
+fuselinearfreq:--fusion --unroll 10000 --linearreplacement --frequencyreplacement:FMRadio
+fusepart:--fusion --unroll 10000 --linearpartition:FMRadio

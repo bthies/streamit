@@ -75,6 +75,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	inline=new InlineAssembly();
 	body[body.length-2]=inline;
 	inline.add("addiu "+loopReg+",\\t"+zeroReg+",\\t-"+filterInfo.steadyMult);
+	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+filterInfo.steadyMult);
 	//Start Template
 	inline=new InlineAssembly();
 	body[body.length-1]=inline;

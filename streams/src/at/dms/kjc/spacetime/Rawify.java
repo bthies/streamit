@@ -882,6 +882,7 @@ public class Rawify
 	System.out.println("DEST: "+dest);
 	SwitchCodeStore code = tile.getSwitchCode();
 	System.err.println("Getting HERE!");
+	code.appendIns(new MoveIns(SwitchReg.R3,SwitchIPort.CSTO),init||primePump);
 	code.appendIns(new Comment("HERE!"),init||primePump);
 	boolean first=true;
 	for(int i = 0; i<numPop-1; i++)
@@ -1128,7 +1129,9 @@ public class Rawify
 	  newIns.addRoute(SwitchIPort.CSTO,dest);
 	  code.appendIns(newIns,init||primePump);*/
 	//code.appendIns(new JumpIns(label.getLabel()),init||primePump);
-	ins.setProcessorIns(new JumpIns(label.getLabel()));
+	
+	//ins.setProcessorIns(new JumpIns(label.getLabel()));
+	ins.setProcessorIns(new BnezdIns(SwitchReg.R3,SwitchReg.R3,label.getLabel()));
 
 	//START Copy from Gordo
 	//now we must take care of the remaining items on the input tape 

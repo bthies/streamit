@@ -45,7 +45,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
     private Type getType(Expression expr)
     {
         // To think about: should we cache GetExprType objects?
-        return (Type)expr.accept(new GetExprType(symtab, null)); // streamType
+        return (Type)expr.accept(new GetExprType(symtab, null, new HashMap())); // streamType
     }
     private TokenReference contextToReference(FEContext ctx)
     {

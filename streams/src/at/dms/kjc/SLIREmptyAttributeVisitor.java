@@ -42,10 +42,9 @@ public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor
      * Visits an init statement.
      */
     public Object visitInitStatement(SIRInitStatement self,
-				   JExpression[] args,
 				   SIRStream target) {
-	for (int i=0; i<args.length; i++) {
-	    args[i].accept(this);
+	for (int i=0; i<self.getArgs().size(); i++) {
+	    ((JExpression)self.getArgs().get(i)).accept(this);
 	}
 	return self;
     }

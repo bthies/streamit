@@ -21,8 +21,7 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
      * Visits an init statement.
      */
     Object visitInitStatement(SIRInitStatement self,
-			    JExpression[] args,
-			    SIRStream target);
+			      SIRStream target);
 
     /**
      * Visits an interface table.

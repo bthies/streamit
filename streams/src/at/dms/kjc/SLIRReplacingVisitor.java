@@ -42,12 +42,12 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      * Visits an init statement.
      */
     public Object visitInitStatement(SIRInitStatement self,
-				     JExpression[] args,
 				     SIRStream target) {
-	for (int i=0; i<args.length; i++) {
-	    JExpression newExp = (JExpression)args[i].accept(this);
-	    if (newExp!=null && newExp!=args[i]) {
-		args[i] = newExp;
+	List args = self.getArgs();
+	for (int i=0; i<args.size(); i++) {
+	    JExpression newExp = (JExpression)((JExpression)args.get(i)).accept(this);
+	    if (newExp!=null && newExp!=args.get(i)) {
+		args.set(i, newExp);
 	    }
 	}
 	return self;

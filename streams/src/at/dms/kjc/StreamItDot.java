@@ -2,6 +2,7 @@ package at.dms.kjc;
 
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.*;
+import at.dms.util.*;
 import java.util.*;
 import java.io.*;
 
@@ -146,6 +147,9 @@ public class StreamItDot implements AttributeStreamVisitor
                               JMethodDeclaration work,
                               CType inputType, CType outputType)
     {
+	// check the parent relationship
+	Utils.assert(self.getParent()==parent);
+
         // Return a name pair with both ends pointing to this.
 	//        return new NamePair(makeLabelledNode(self.getRelativeName()));
 	String label = self.getIdent();
@@ -172,6 +176,9 @@ public class StreamItDot implements AttributeStreamVisitor
                                 SIRSplitType type,
                                 JExpression[] expWeights)
     {
+	// check the parent relationship
+	Utils.assert(self.getParent()==parent);
+
 	String label = type.toString();
 	// try to add weights to label
 	try {
@@ -195,6 +202,9 @@ public class StreamItDot implements AttributeStreamVisitor
                               SIRJoinType type,
                               JExpression[] expWeights)
     {
+	// check the parent relationship
+	Utils.assert(self.getParent()==parent);
+
 	String label = type.toString();
 	// try to add weights to label
 	try {
@@ -218,6 +228,9 @@ public class StreamItDot implements AttributeStreamVisitor
                                 JMethodDeclaration[] methods,
                                 JMethodDeclaration init)
     {
+	// check the parent relationship
+	Utils.assert(self.getParent()==parent);
+
         NamePair pair = new NamePair();
         
         // Print this within a subgraph.
@@ -249,6 +262,9 @@ public class StreamItDot implements AttributeStreamVisitor
                                  SIRSplitter splitter,
                                  SIRJoiner joiner)
     {
+	// check the parent relationship
+	Utils.assert(self.getParent()==parent);
+
         NamePair pair = new NamePair();
         
         // Create a subgraph again...
@@ -284,6 +300,9 @@ public class StreamItDot implements AttributeStreamVisitor
                                     int delay,
                                     JMethodDeclaration initPath)
     {
+	// check the parent relationship
+	Utils.assert(self.getParent()==parent);
+
         NamePair np;
         
         // Create a subgraph again...

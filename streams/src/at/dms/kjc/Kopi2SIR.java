@@ -894,10 +894,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		setBuiltinArgs(ST, ((JUnqualifiedInstanceCreation)retObj).
 				     getParams());
 		SIRInitStatement newSIRInit = 
-		    new SIRInitStatement(null, 
-					 null, 
-					 ((JUnqualifiedInstanceCreation)retObj).
-					 getParams(), 
+		    new SIRInitStatement(Arrays.asList(((JUnqualifiedInstanceCreation)retObj).
+					 getParams()),
 					 ST);
 		symbolTable.put(self, newSIRInit);
 		return null;
@@ -1356,7 +1354,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	      */
 	//The only time that we can use an Anonymous class is inside an add statement 
 	//which needs to be translated into an SIRInitStatement
-	SIRInitStatement sis = new SIRInitStatement(null, null, params, (SIRStream)SIROp);
+	SIRInitStatement sis = new SIRInitStatement(Arrays.asList(params), (SIRStream)SIROp);
 	return sis;
     }
 
@@ -1591,7 +1589,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    at.dms.util.Utils.fail(
 				   "Illegal Arg to Stream Add Construct");
 	
-	//now find the registration method
+	// now find the registration method
 	if (regMethod.equals("add")) {
 	    if (parentStream instanceof SIRPipeline){
 		((SIRPipeline)parentStream).add(newST);
@@ -1613,8 +1611,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	if (SIROp instanceof SIRInitStatement) 
 	    	    return (SIRInitStatement)SIROp;
 	else 
-	    return new SIRInitStatement(null, null, 
-					((JUnqualifiedInstanceCreation)SIROp).getParams(),
+	    return new SIRInitStatement(Arrays.asList(((JUnqualifiedInstanceCreation)SIROp).getParams()),
 					newST);
     }
     

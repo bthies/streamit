@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.7 2001-11-16 23:03:54 dmaze Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.8 2002-06-20 17:44:53 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,10 +29,9 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
      * Visits an init statement.
      */
     public void visitInitStatement(SIRInitStatement self,
-				   JExpression[] args,
 				   SIRStream target) {
-	for (int i=0; i<args.length; i++) {
-	    args[i].accept(this);
+	for (int i=0; i<self.getArgs().size(); i++) {
+	    ((JExpression)self.getArgs().get(i)).accept(this);
 	}
     }
 

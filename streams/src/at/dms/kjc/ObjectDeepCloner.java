@@ -192,9 +192,8 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
      * Visits an init statement (recurses into the target stream)
      */
     public void visitInitStatement(SIRInitStatement self,
-				   JExpression[] args,
 				   SIRStream target) {
-	super.visitInitStatement(self, args, target);
+	super.visitInitStatement(self, target);
 	// also recurse into the stream target
 	target.accept(this);
     }

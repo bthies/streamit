@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.23 2001-11-16 23:03:54 dmaze Exp $
+ * $Id: SLIRVisitor.java,v 1.24 2002-06-20 17:44:53 thies Exp $
  */
 
 package at.dms.kjc;
@@ -28,7 +28,6 @@ public interface SLIRVisitor extends KjcVisitor
      * Visits an init statement.
      */
     void visitInitStatement(SIRInitStatement self,
-			    JExpression[] args,
 			    SIRStream target);
 
     /* Visits an interface table.

@@ -22,27 +22,29 @@ void->void pipeline FilterBankNew
   float[N_ch][N_col] H;
   float[N_ch][N_col] F;
 
-  for (int i = 0; i < N_sim; i++)
-    r[i] = i+1;
-
   for (int i = 0; i < N_col; i++)
     for (int j = 0; j < N_ch; j++) {
       H[j][i] = i*N_col + j*N_ch + j + i + j + 1;
       F[j][i] = i*j + j*j + j + i;
     }
 
-  add source(N_sim, r);
+  add source();
   add FilterBank(N_samp, N_ch, N_col, H, F);
   add sink(N_sim);
 }
 
-void->float filter source(int N, float[N] r) {
-  int pos;
-  init { pos = 0; }
-  work push 1 {
-    push(r[pos++]);
-    if (pos >= N) pos = 0;
-  }
+void->float filter source() {
+    float max = 1000.0;	
+    float current = 0.0;
+
+    work push 1 pop 0 {
+	push(current);
+	if (current > max) {
+	    current = 0.0;
+	} else {
+	    current = current+1.0;
+	}
+    }
 }
 
 float->void filter sink(int N) {

@@ -131,6 +131,10 @@ public class ConstantProp {
 	if (newPush!=null && newPush!=filter.getPush()) {
 	    filter.setPush(newPush);
 	}
+	if (filter instanceof SIRPredefinedFilter) {
+	    // propagate predefined fields
+	    ((SIRPredefinedFilter)filter).propagatePredefinedFields(propagator);
+	}
     }
 
     /**
@@ -217,7 +221,13 @@ public class ConstantProp {
 	JFormalParameter[] parameters = initMethod.getParameters();
 	//System.err.println("Recursing into "+str+" "+args+" "+parameters.length);
 	// build new constants
-	int size=args.size();
+
+	// note, this is tricky!  for the case of predefined filters,
+	// the parameters might be shorter than the argument list.
+	// e.g, for filereaders, we passed the name of the file but
+	// the parameter does not appear in <init>.  so take the
+	// shorter list.
+	int size=parameters.length;
 	for (int i=0; i<size; i++) {
 	    //System.err.println("Arg "+i+"="+args.get(i));
 	    // if we are passing an arg to the init function...

@@ -39,19 +39,23 @@ public class ArrayInitExpander {
 		    JFieldDeclaration[] fields = self.getFields();
 		    for (int i=0; i<fields.length; i++) {
 			// try to expand each one
-			ArrayInitExpander.expandFieldDecl(fields[i]);
+			ArrayInitExpander.expand(fields[i]);
+		    }
+		    // in uniprocessor backend, some definitions might
+		    // be copied to init.
+		    if (self.getInit()!=null) {
+			ArrayInitExpander.expand(self.getInit());
 		    }
 		}
 	    });
     }
 
     /**
-     * Expands all array calls in <field>.
+     * Expands all array calls in <phylum>.
      */
-    private static void expandFieldDecl(JFieldDeclaration field) {
-	// translate all relevant method calls in initializer to
-	// static arrays
-	field.accept(new SLIRReplacingVisitor() {
+    private static void expand(JPhylum phylum) {
+	// translate all relevant method calls to static arrays
+	phylum.accept(new SLIRReplacingVisitor() {
 		public Object visitMethodCallExpression(JMethodCallExpression self,
 							JExpression prefix,
 							String ident,

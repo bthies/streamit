@@ -8,8 +8,18 @@ all:
 	# compile with jikes
 	jikes Gsm.java
 
+a.out: Gsm.java
+	# rename BinaryDecoder* to BinarySmallEndianDecoder
+	perl -pi -e 's/BinaryDecoder/BinarySmallEndianDecoder/g' Gsm.java
+	# compile to a.out
+	java at.dms.kjc.Main -s Gsm.java > out.c
+	gcc -lm -I ${STREAMIT_HOME}/library/c out.c ~/streams/library/c/*.c
+
+compile: all a.out
+
 clean:
 	rm -f *~
 	rm -f *.class
 	rm -f Gsm.java
 	rm -f BinaryDecoderOutput1
+	rm -f BinarySmallEndianDecoderOutput1

@@ -18,18 +18,18 @@ public class StreamItDot implements AttributeStreamVisitor
     /**
      * Inner class to represent dot graph components.
      */
-    class NamePair
+    public class NamePair
     {
         /** Name of the first node in an object. */
         String first;
         /** Name of the last node in an object. */
         String last;
         /** Create a new NamePair with both fields null. */
-        NamePair() { first = null; last = null; }
+        public NamePair() { first = null; last = null; }
         /** Create a new NamePair with both fields the same. */
-        NamePair(String s) { first = s; last = s; }
+        public NamePair(String s) { first = s; last = s; }
         /** Create a new NamePair with two different names. */
-        NamePair(String f, String l) { first = f; last = l; }
+        public NamePair(String f, String l) { first = f; last = l; }
     }
     
     private int lastNode;
@@ -89,7 +89,7 @@ public class StreamItDot implements AttributeStreamVisitor
 	}
     }
 
-    void print(String f) 
+    public void print(String f) 
     {
 	outputStream.print(f);
     }
@@ -108,7 +108,7 @@ public class StreamItDot implements AttributeStreamVisitor
         return name;
     }
 
-    String makeLabelledNode(String label)
+    public String makeLabelledNode(String label)
     {
         String name = getName();
         if (label == null) label = name;
@@ -124,7 +124,7 @@ public class StreamItDot implements AttributeStreamVisitor
         return name;
     }
 
-    String getName()
+    public String getName()
     {
         lastNode++;
         return "node" + lastNode;

@@ -428,7 +428,7 @@ class BeamFirFilter extends Filter
 		imagBuffer[i] = 0;
 	    }
 	} else if (count>inputLength) {
-	    System.out.println("ERROR:  don't expect count to exceed inputLength");
+	    System.out.println("ERROR:  dont expect count to exceed inputLength");
 	}
     }
 }
@@ -572,9 +572,12 @@ class Detector extends Filter
 	if(holdsTarget && targetSample == curSample)
 	    {
 		if( !(val >= thresh) ) {
-		    System.out.println("ERROR: Target not found in proper location on beam " + myBeam +
-				       "; the value was " + val + " which is less than thresh " +  
-				       thresh);
+		    System.out.println("ERROR: Target not found in proper location on beam ");
+		    System.out.println(myBeam);
+		    System.out.println("; the value was ");
+		    System.out.println(val);
+		    System.out.println(" which is less than thresh ");
+		    System.out.println(thresh);
 		} else {
 		    System.out.println("Found target.");
 		}

@@ -472,11 +472,15 @@ abstract class DPConfigContainer extends DPConfig {
 	// if we only have one tile left, return fusion transform with
 	// children fused first
 	if (tileLimit==1) {
-	    // fuse everything.  First make a wrapper so we have
-	    // something to return.
+	    // fuse everything.  
+
+	    //  This wrapper business is a mess.  Could probably be
+	    //  simplified -- just moving legacy code out of end of
+	    //  FuseAll, being sure to preserve functionality.
 	    SIRPipeline wrapper = SIRContainer.makeWrapper(str);
 	    wrapper.reclaimChildren();
-	    FuseAll.fuse(str);
+	    SIRPipeline wrapper2 = FuseAll.fuse(str);
+	    Lifter.eliminatePipe(wrapper2);
 	    Lifter.lift(wrapper);
 	    // make sure we've fused
 	    Utils.assert(wrapper.size()==1 && wrapper.get(0) instanceof SIRFilter, "Wrapper contains " + wrapper.size() + " entries, with get(0)==" + wrapper.get(0));

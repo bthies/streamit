@@ -51,6 +51,12 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 	return (Coordinate)assignment.get(str);
     }
     
+    public static Coordinate getTile(FlatNode str) 
+    {
+	if (assignment == null) return null;
+	return (Coordinate)assignment.get(str.contents);
+    }
+    
     
     /* visit a filter */
     public void visitFilter(SIRFilter self,
@@ -73,7 +79,7 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 		    System.err.println("Negative Value: Try again.");
 		    continue;
 		}
-		if (row.intValue() > (StreamItOptions.rawRow -1)) {
+		if (row.intValue() > (StreamItOptions.rawRows -1)) {
 		    System.err.println("Value Too Large: Try again.");
 		    continue;
 		}
@@ -84,7 +90,7 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 		    System.err.println("Negative Value: Try again.");
 		    continue;
 		}
-		if (column.intValue() > (StreamItOptions.rawColumn -1)) {
+		if (column.intValue() > (StreamItOptions.rawColumns -1)) {
 		    System.err.println("Value Too Large: Try again.");
 		    continue;
 		}

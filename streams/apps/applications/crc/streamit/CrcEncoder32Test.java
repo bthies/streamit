@@ -56,6 +56,19 @@ class EncoderInput
 
 }//class EncoderInput
 
+class IntIdentity extends Filter
+{
+    public void init()
+    {
+        input = new Channel(Integer.TYPE, 1);
+        output = new Channel(Integer.TYPE, 1);
+    }
+    public void work()
+    {
+        output.pushInt(input.popInt());
+    }
+}
+
 class AdditionFilter extends Filter
 {
     //inputs:
@@ -170,10 +183,11 @@ class ShiftRegisterFilter extends Filter
     
     public ShiftRegisterFilter(int number)
     {
-	mRegisterNumber = number;
+        super(number);
     }
-    public void init()
+    public void init(int number)
     {
+	mRegisterNumber = number;
 	mTerminationCounter = 0;
 	input = new Channel(Integer.TYPE, 2);
 	output = new Channel(Integer.TYPE, 2);
@@ -264,7 +278,7 @@ class CrcFeedbackLoop extends FeedbackLoop
 	this.setJoiner(WEIGHTED_ROUND_ROBIN (1, 1));  //sequence: inputdata, fbdata
 	this.setBody(new FeedbackBodyStream());
 	this.setSplitter(DUPLICATE ());
-	this.setLoop(new Identity(Integer.TYPE));
+	this.setLoop(new IntIdentity());
     }
 
     public int initPathInt(int index)
@@ -340,7 +354,7 @@ class FeedbackBodyStream extends Pipeline
 	//x^30
 	this.add(new ShiftRegisterFilter(31));
 	//x^31
-	this.add(new Identity(Integer.TYPE)); 
+	this.add(new IntIdentity()); 
 
 	//this.add(new ShiftRegisterFilter(3));
 	this.add(new FeedbackEndFilter());

@@ -40,6 +40,16 @@ public class ConstantProp {
 	    // unroll loops within init function of <str>
 	    unroller = new Unroller(constants);
 	    str.getInit().accept(unroller);
+	    // patch list of children for splitjoins and pipelines
+	    if (unroller.hasUnrolled()) {
+		if (str instanceof SIRPipeline) {
+		    ((SIRPipeline)str).setChildren(GetChildren.
+						   getChildren(str));
+		} else if (str instanceof SIRSplitJoin) {
+		    ((SIRSplitJoin)str).setParallelStreams(GetChildren.
+							   getChildren(str));
+		}
+	    }
 	    // iterate until nothing unrolls
 	} while (unroller.hasUnrolled());
 	// recurse into sub-streams
@@ -637,7 +647,6 @@ class Unroller extends EmptyAttributeVisitor {
 	for (int i=0; i<body.length; i++) {
 	    JStatement newBody = (JStatement)body[i].accept(this);
 	    if (newBody!=null && newBody!=body[i]) {
-		System.out.println("switching " + body[i] + " to " + newBody);
 		self.setStatement(i, newBody);
 	    }
 	}
@@ -846,6 +855,283 @@ class Unroller extends EmptyAttributeVisitor {
 	    this.incrVal = incrVal;
 	}
     }
+}
 
+/**
+ * This class is for rebuilding the list of children in a parent
+ * stream following unrolling that could have modified the stream
+ * structure.
+ */
+class GetChildren extends KjcEmptyVisitor implements SLIRVisitor {
+    /**
+     * List of children of parent stream.
+     */
+    private LinkedList children;
+    /**
+     * The parent stream.
+     */
+    private SIRStream parent;
+        
+    /**
+     * Makes a new one of these.
+     */
+    private GetChildren(SIRStream str) {
+	this.children = new LinkedList();
+	this.parent = str;
+    }
+
+    /**
+     * Re-inspects the init function of <str> to see who its children
+     * are.
+     */
+    public static LinkedList getChildren(SIRStream str) {
+	GetChildren gc = new GetChildren(str);
+	if (str.getInit()!=null) {
+	    str.getInit().accept(gc);
+	}
+	return gc.children;
+    }
+
+    /**
+     * Visits an init statement -- adds <target> to list of children.
+     */
+    public void visitInitStatement(SIRInitStatement self,
+				   JExpression[] args,
+				   SIRStream target) {
+	// remember <target> as a child
+	children.add(target);
+	// reset parent of <target> 
+	target.setParent((SIRContainer)parent);
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // DUMMY VISITING NODES ------------------------------------------------
+    ////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Visits a latency.
+     */
+    public void visitLatency(SIRLatency self) {}
+
+    /**
+     * Visits a max latency.
+     */
+    public void visitLatencyMax(SIRLatencyMax self) {}
+
+    /**
+     * Visits a latency range.
+     */
+    public void visitLatencyRange(SIRLatencyRange self) {}
+
+    /**
+     * Visits a latency set.
+     */
+    public void visitLatencySet(SIRLatencySet self) {}
+
+    public void visitCreatePortalExpression() {}
+
+    /**
+     * Visits a message statement.
+     */
+    public void visitMessageStatement(SIRMessageStatement self,
+				      JExpression portal,
+				      String iname,
+				      String ident,
+				      JExpression[] args,
+				      SIRLatency latency) {}
+
+    /**
+     * Visits a peek expression.
+     */
+    public void visitPeekExpression(SIRPeekExpression self,
+				    CType tapeType,
+				    JExpression arg) {}
+
+    /**
+     * Visits a pop expression.
+     */
+    public void visitPopExpression(SIRPopExpression self,
+				   CType tapeType) {}
+
+    /**
+     * Visits a print statement.
+     */
+    public void visitPrintStatement(SIRPrintStatement self,
+				    JExpression arg) {}
+
+    /**
+     * Visits a push expression.
+     */
+    public void visitPushExpression(SIRPushExpression self,
+				    CType tapeType,
+				    JExpression arg) {}
+
+    /**
+     * Visits a register-receiver statement.
+     */
+    public void visitRegReceiverStatement(SIRRegReceiverStatement self,
+					  JExpression portal,
+					  SIRStream receiver,
+					  JMethodDeclaration[] methods) {}
+
+    /**
+     * Visits a register-sender statement.
+     */
+    public void visitRegSenderStatement(SIRRegSenderStatement self,
+					String portal,
+					SIRLatency latency) {}
+
+    /**
+     * LIR NODES.
+     */
+
+    /**
+     * Visits a function pointer.
+     */
+    public void visitFunctionPointer(LIRFunctionPointer self,
+				     String name) {}
+    
+    /**
+     * Visits an LIR node.
+     */
+    public void visitNode(LIRNode self) {}
+
+    /**
+     * Visits a child registration node.
+     */
+    public void visitSetChild(LIRSetChild self,
+			      JExpression streamContext,
+			      String childType,
+			      String childName) {}
+    
+    /**
+     * Visits a decoder registration node.
+     */
+    public void visitSetDecode(LIRSetDecode self,
+			       JExpression streamContext,
+			       LIRFunctionPointer fp) {}
+
+    /**
+     * Visits a feedback loop delay node.
+     */
+    public void visitSetDelay(LIRSetDelay self,
+			      JExpression data,
+			      JExpression streamContext,
+			      int delay,
+			      CType type,
+			      LIRFunctionPointer fp) {}
+    
+    /**
+     * Visits an encoder registration node.
+     */
+    public void visitSetEncode(LIRSetEncode self,
+			       JExpression streamContext,
+			       LIRFunctionPointer fp) {}
+
+    /**
+     * Visits a joiner-setting node.
+     */
+    public void visitSetJoiner(LIRSetJoiner self,
+			       JExpression streamContext,
+			       SIRJoinType type,
+			       int ways,
+			       int[] weights) {}
+    
+    /**
+     * Visits a peek-rate-setting node.
+     */
+    public void visitSetPeek(LIRSetPeek self,
+			     JExpression streamContext,
+			     int peek) {}
+    
+    /**
+     * Visits a pop-rate-setting node.
+     */
+    public void visitSetPop(LIRSetPop self,
+			    JExpression streamContext,
+			    int pop) {}
+    
+    /**
+     * Visits a push-rate-setting node.
+     */
+    public void visitSetPush(LIRSetPush self,
+			     JExpression streamContext,
+			     int push) {}
+
+    /**
+     * Visits a splitter-setting node.
+     */
+    public void visitSetSplitter(LIRSetSplitter self,
+				 JExpression streamContext,
+				 SIRSplitType type,
+				 int ways,
+				 int[] weights) {}
+    
+    /**
+     * Visits a stream-type-setting node.
+     */
+    public void visitSetStreamType(LIRSetStreamType self,
+				   JExpression streamContext,
+				   LIRStreamType streamType) {}
+    
+    /**
+     * Visits a work-function-setting node.
+     */
+    public void visitSetWork(LIRSetWork self,
+			     JExpression streamContext,
+			     LIRFunctionPointer fn) {}
+
+    /**
+     * Visits a tape registerer.
+     */
+    public void visitSetTape(LIRSetTape self,
+			     JExpression streamContext,
+			     JExpression srcStruct,
+			     JExpression dstStruct,
+			     CType type,
+			     int size) {}
+
+    /**
+     * Visits a main function contents.
+     */
+    public void visitMainFunction(LIRMainFunction self,
+				  String typeName,
+				  LIRFunctionPointer init,
+				  List initStatements) {}
+
+
+    /**
+     * Visits a set body of feedback loop.
+     */
+    public void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
+				       JExpression streamContext,
+				       JExpression childContext,
+				       CType inputType,
+				       CType outputType,
+				       int inputSize,
+				       int outputSize) {}
+
+    /**
+     * Visits a set loop of feedback loop.
+     */
+    public void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
+				       JExpression streamContext,
+				       JExpression childContext,
+				       CType inputType,
+				       CType outputType,
+				       int inputSize,
+				       int outputSize) {}
+
+    /**
+     * Visits a set a parallel stream.
+     */
+    public void visitSetParallelStream(LIRSetParallelStream self,
+				       JExpression streamContext,
+				       JExpression childContext,
+				       int position,
+				       CType inputType,
+				       CType outputType,
+				       int inputSize,
+				       int outputSize) {}
 }
 

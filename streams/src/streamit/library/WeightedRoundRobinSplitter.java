@@ -38,7 +38,7 @@ public class WeightedRoundRobinSplitter extends Splitter
             outputIndex = (outputIndex + 1) % dest.size ();
         }
 
-        passOneData (input, output [outputIndex]);
+        passOneData (streamInput, streamOutput [outputIndex]);
         outputCount++;
     }
 

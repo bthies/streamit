@@ -10,8 +10,8 @@ public class Joiner extends Operator
     List srcs = new ArrayList ();
     int inputIndex = 0;
 
-    public Channel input [] = null;
-    public Channel output = null;
+    public Channel streamInput [] = null;
+    public Channel streamOutput = null;
 
     public void initIO () { }
     public void init () { }
@@ -32,7 +32,7 @@ public class Joiner extends Operator
         if (srcs.isEmpty ()) return;
 
         // yep, create an input array of appropriate size
-        input = new Channel [srcs.size ()];
+        streamInput = new Channel [srcs.size ()];
 
         // yep, go through my members and connect them all with
         // ChannelConnectFilter
@@ -52,20 +52,20 @@ public class Joiner extends Operator
                 // retrieve the output of this filter, which will be an
                 // input to this joiner
                 Channel channel = s.getIOField ("streamOutput");
-                input [inputIndx] = channel;
+                streamInput [inputIndx] = channel;
 
                 // if it is not a sink, make sure that it produces data
                 // of the same kind as everything else in this Joiner
                 if (channel != null)
                 {
                     // handle input channel
-                    if (output == null)
+                    if (streamOutput == null)
                     {
-                        output = new Channel (channel);
-                        output.setSource (this);
+                        streamOutput = new Channel (channel);
+                        streamOutput.setSource (this);
                     } else {
                         // check that the input types agree
-                        ASSERT (channel.getType ().getName ().equals (output.getType ().getName ()));
+                        ASSERT (channel.getType ().getName ().equals (streamOutput.getType ().getName ()));
                     }
 
                     // now connect the channel to me

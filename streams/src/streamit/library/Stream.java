@@ -73,6 +73,7 @@ public class Stream extends Operator
             ASSERT (stream);
 
             scheduler = new SimpleHierarchicalScheduler (stream);
+            scheduler.computeSchedule ();
         }
 
         ASSERT (streamInput == null);

@@ -54,7 +54,8 @@ public class Channel extends DestroyedClass
         queue = new LinkedList ();
 
         // copy pop/push/peek values
-        ASSERT (false);
+        popPushCount = original.popPushCount;
+        peekCount = original.peekCount;
     }
 
     void ensureData (int amount)

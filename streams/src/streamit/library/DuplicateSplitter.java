@@ -8,7 +8,7 @@ public class DuplicateSplitter extends Splitter
 {
     public void work ()
     {
-        duplicateOneData (input, output);
+        duplicateOneData (streamInput, streamOutput);
     }
 
     // ----------------------------------------------------------------

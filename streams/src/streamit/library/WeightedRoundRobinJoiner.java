@@ -35,7 +35,7 @@ public class WeightedRoundRobinJoiner extends Joiner {
             inputIndex = (inputIndex + 1) % srcs.size ();
         }
 
-        passOneData (input [inputIndex], output);
+        passOneData (streamInput [inputIndex], streamOutput);
         inputCount++;
     }
 

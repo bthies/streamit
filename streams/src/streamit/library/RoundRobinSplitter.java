@@ -9,9 +9,9 @@ public class RoundRobinSplitter extends Splitter
     public void work ()
     {
         ASSERT (dest.size () > 0);
-        ASSERT (output [outputIndex]);
+        ASSERT (streamOutput [outputIndex]);
 
-        passOneData (input, output [outputIndex]);
+        passOneData (streamInput, streamOutput [outputIndex]);
         outputIndex = (outputIndex + 1) % dest.size ();
     }
 

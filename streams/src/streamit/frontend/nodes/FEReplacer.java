@@ -1,9 +1,3 @@
-/*
- * FEReplacer.java: run through a front-end tree and replace nodes
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEReplacer.java,v 1.12 2003-01-10 18:22:01 dmaze Exp $
- */
-
 package streamit.frontend.nodes;
 
 import java.util.Iterator;
@@ -12,28 +6,36 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Replace nodes in a front-end tree.  This is a skeleton for writing
- * replacing passes, which implements FEVisitor.  On its own it does
- * nothing, but it is a convenice class for deriving your own
- * replacers from.  All of the member functions of FEReplacer return
- * objects of appropriate types (Expression subclasses return
- * Expressions; Statement subclasses return Statements; other objects
- * return their own types); an attempt is made to not create new
- * objects if they would be identical to the original objects.
+ * Replaces nodes in a front-end tree.  This is a skeleton for writing
+ * replacing passes, which implements <code>FEVisitor</code>.  On its
+ * own it does nothing, but it is a convenice class for deriving your
+ * own replacers from.  All of the member functions of
+ * <code>FEReplacer</code> return objects of appropriate types
+ * (<code>Expression</code> subclasses return
+ * <code>Expression</code>s; <code>Statement</code> subclasses return
+ * <code>Statement</code>s; other objects return their own types); an
+ * attempt is made to not create new objects if they would be
+ * identical to the original objects.
  *
- * For Statements, this class also keeps a list of statements in the
- * current block.  Calling the addStatement() method will add a
- * statement to the end of the list; a statement visitor can return
- * a statement, or can call addStatement() itself and return null.
- * Derived classes should take care to only call addStatement() for
- * statements inside a block; practically, this means that any pass
- * that adds or removes statements should be called after the
- * MakeBodiesBlocks pass.
+ * <p> For <code>Statement</code>s, this class also keeps a list of
+ * statements in the current block.  Calling the
+ * <code>addStatement</code> method will add a statement to the end of
+ * the list; a statement visitor can return a statement, or can call
+ * <code>addStatement</code> itself and return <code>null</code>.
+ * Derived classes should take care to only call
+ * <code>addStatement</code> for statements inside a block;
+ * practically, this means that any pass that adds or removes
+ * statements should be called after the <code>MakeBodiesBlocks</code>
+ * pass.
  *
- * Statements that visit Expressions call doExpression() to do
- * the actual visitation; by default, this accepts this on the
- * provided expression, but derived classes can override
- * doExpression() to perform some custom action.
+ * <p> <code>Statement</code>s that visit <code>Expression</code>s
+ * call <code>doExpression</code> to do the actual visitation; by
+ * default, this accepts <code>this</code> on the provided expression,
+ * but derived classes can override <code>doExpression</code> to
+ * perform some custom action.
+ * 
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: FEReplacer.java,v 1.13 2003-02-10 17:13:57 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -42,11 +44,29 @@ public class FEReplacer implements FEVisitor
     // visibility.
     private List newStatements;
 
+    /**
+     * Adds a statement to the list of statements that replace the
+     * current one.  This should be called inside a statement
+     * visitor (and possibly inside a recursively called
+     * expression visitor, but take care).  Statements added go
+     * after the statement returned by the visitor, if any.
+     * 
+     * @param stmt  The statement to add
+     */ 
     protected void addStatement(Statement stmt)
     {
         newStatements.add(stmt);
     }
 
+    /**
+     * Accept an arbitrary <code>Expression</code>.  This by default
+     * just asks <code>expr</code> to accept <code>this</code>, but if
+     * a derived class needs to do extra processing on every
+     * expression, it can override this method.
+     * 
+     * @param expr         Expression to visit
+     * @return Expression  Expression to replace <code>expr</code>
+     */
     protected Expression doExpression(Expression expr)
     {
         return (Expression)expr.accept(this);

@@ -242,7 +242,7 @@ public class StreamItDot implements AttributeStreamVisitor
     public Object visitWorkFunction(SIRWorkFunction self,
                                     JMethodDeclaration work)
     {
-	String label = self.getName();
+	String label = work.getName();
 	try {
 	    label += "\\npush=" + self.getPushInt();
 	    label += "\\npop=" + self.getPopInt();

@@ -1,8 +1,13 @@
 <benchmark>
   <name>mp3decoder</name>
-  <desc>MP3 decoder</desc>
+  <desc>Partial MP3 decoder</desc>
   <description>
-
+Partial decoder for MPEG 1/2 Layer 3 audio.  This performs the core
+computation necessary for audio decoding, including applying an
+antialiasing filter, an inverse DCT, and PCM synthesis.  This is not
+enough to decode an MP3 audio file, however; the front-end
+decompression stage is not static-rate and not directly expressible in
+StreamIt.
   </description>
   <reference>(none)</reference>
   <implementations>

@@ -6,6 +6,12 @@ import os.path
 dirs = []
 
 def main():
+    def splitall(path):
+        if path == '':
+            return []
+        (head, tail) = os.path.split(path)
+        return splitall(head) + [tail]
+    
     def visit(arg, dirname, names):
         global dirs
         # Update dirs:
@@ -14,10 +20,8 @@ def main():
         else:
             lastdir = ''
         prefix = os.path.commonprefix([lastdir, dirname])
-        preparts = os.path.split(prefix)
-        preparts = filter(lambda p: p != '', preparts)
-        dirparts = os.path.split(dirname)
-        dirparts = filter(lambda p: p != '', dirparts)
+        preparts = splitall(prefix)
+        dirparts = splitall(dirname)
         for (d,t) in dirs[len(preparts):]:
             if t:
                 print "</dir>"

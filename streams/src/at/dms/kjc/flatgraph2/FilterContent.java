@@ -84,27 +84,40 @@ public class FilterContent {
 	steadyMult=unflat.steadyMult;
 	array=unflat.array;
 	if(array!=null&&initMult<1) {
-	    linear=true;
-	    constant=unflat.constant;
-	    popCount=unflat.popCount;
-	    peek=array.length;
-	    int mod=array.length%popCount;
-	    if(mod!=0) {
-		final int len=array.length+popCount-mod;
-		double[] temp=new double[len];
-		System.arraycopy(array,0,temp,0,array.length);
-		array=temp;
+	    int reg=20-array.length/unflat.popCount-1;
+	    if(array.length<=reg) {
+		linear=true;
+		constant=unflat.constant;
+		popCount=unflat.popCount;
+		assert popCount>0:"SDFSDFSDF";
+		peek=array.length;
+		int mod=array.length%popCount;
+		if(mod!=0) {
+		    final int len=array.length+popCount-mod;
+		    double[] temp=new double[len];
+		    System.arraycopy(array,0,temp,0,array.length);
+		    array=temp;
+		}
+		begin=true;
+		end=true;
+		pos=0;
+		total=1;
+		//methods=filter.getMethods(); //Keep nonlinear rep
+		//steady=filter.getPhases(); //Keep nonlinear rep
+		//fields=filter.getFields(); //Keep nonlinear rep
+		//paramList = filter.getParams(); //Keep nonlinear rep
+		//initFunction=filter.getInit(); //Keep nonlinear rep
+		//init=filter.getInitPhases(); //Keep nonlinear rep
+	    } else {
+		linear=false;
+		init=filter.getInitPhases();
+		steady=filter.getPhases();
+		methods=filter.getMethods();
+		fields = filter.getFields();
+		paramList=filter.getParams();
+		initFunction = filter.getInit();
+		is2stage = steady.length > 1;
 	    }
-	    begin=true;
-	    end=true;
-	    pos=0;
-	    total=1;
-	    //methods=filter.getMethods(); //Keep nonlinear rep
-	    //steady=filter.getPhases(); //Keep nonlinear rep
-	    //fields=filter.getFields(); //Keep nonlinear rep
-	    //paramList = filter.getParams(); //Keep nonlinear rep
-	    //initFunction=filter.getInit(); //Keep nonlinear rep
-	    //init=filter.getInitPhases(); //Keep nonlinear rep
 	} else {
 	    linear=false;
 	    init=filter.getInitPhases();

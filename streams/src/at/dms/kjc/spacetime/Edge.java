@@ -109,7 +109,7 @@ public class Edge {
 	    ((double)src.getWeight(this) / src.totalWeights()));
 
 	assert (itemsSent == itemsReceived) :
-	    "Calculating steady state: items received != items send on buffer";
+	    "Calculating steady state: items received != items send on buffer "+itemsSent+" "+itemsReceived+" "+prev+" "+next;
 	
 	return itemsSent;
     }

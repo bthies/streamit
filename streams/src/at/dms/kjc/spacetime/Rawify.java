@@ -1613,7 +1613,27 @@ public class Rawify
 		System.out.println("GENERATING PRIMEPUMP: "+node+" "+mult);
 
 	if(!(init||primePump||!linear)) { //Linear switch code in steadystate
-	    createLinearSwitchCode(node,filterInfo,mult,tile,rawChip);
+	    /*if(primePump) {
+		int bufferSize;
+		FilterContent content=filterInfo.traceNode.getFilter();
+		final int pos=content.getPos();
+		final int peek=content.getPeek();
+		final int pop = content.getPopCount();
+		int index=content.getTotal()-pos-1;
+		if(index==0) //If first tile
+		    bufferSize=filterInfo.remaining;
+		else { //Find first tile
+		    TraceNode curNode=node;
+		    for(int i=index;i>0;i--)
+			curNode=curNode.getPrevious();
+		    FilterInfo parentInfo=FilterInfo.getFilterInfo((FilterTraceNode)curNode);
+		    bufferSize=parentInfo.remaining;
+		}
+		if(filterInfo.initMult>0)
+		    bufferSize+=peek-pop;
+		createInitLinearSwitchCode(node,filterInfo,mult,bufferSize,tile,rawChip);
+		} else*/
+		createLinearSwitchCode(node,filterInfo,mult,tile,rawChip);
 	    sentItems+=mult;
 	} else if (SWITCH_COMP && mult > SC_THRESHOLD && !init) {
 	    assert mult > 1;

@@ -274,6 +274,7 @@ public class FlattenGraph {
 		    filter.array=getArray(linrep,0);
 		    filter.constant=getConst(linrep,0);
 		    filter.popCount=linrep.getPopCount();
+		    assert filter.popCount>0:"SDSDFD";
 		} else {
 		    nodes.remove(filter);
 		    System.out.println("Splitting: "+filter);
@@ -299,6 +300,7 @@ public class FlattenGraph {
 			newFilt.array=getArray(linrep,j);
 			newFilt.constant=getConst(linrep,j);
 			newFilt.popCount=linrep.getPopCount();
+			assert newFilt.popCount>0:"SDSDFDsdfdsf";
 			nodes.put(newFilt,null);
 		    }
 		}

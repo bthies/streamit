@@ -67,7 +67,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	if(filterInfo.initMult>0)
 	    bufferSize+=peek-popCount;
 	//Can be made better
-	assert array.length<=regs.length-array.length/popCount-1:"Not enough registers for coefficients: ";
+	assert array.length<=regs.length-array.length/popCount-1:"Not enough registers for coefficients: "+array.length;
 	num=array.length/popCount;
 	System.out.println("POS: "+pos);
 	idx=new int[num];
@@ -449,7 +449,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	    int readIndex=0;
 	    int writeIndex=0;
 	    int bufferRemaining=buffer; //Use peek buffer while bufferRemaining>0 else use net
-	    assert mult<num:"Not handled yet";
+	    assert mult>=num:"Not handled yet: "+mult+" "+num;
 	    //preloop
 	    for(int i=0;i<num;i++)
 		for(int j=0;j<popCount;j++) {
@@ -601,4 +601,16 @@ public class Linear extends BufferedCommunication implements Constants {
 	return new JEmptyStatement(null,null);
 	//throw new AssertionError("Shouldn't be called");
     }
+
+    /*public JMethodDeclaration getPrimePumpMethod() {
+	JBlock block=getSlowExecute(filterInfo.primePump,bufferSize);
+	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+				      CStdType.Void,
+				      primePumpStage + uniqueID,
+				      JFormalParameter.EMPTY,
+				      CClassType.EMPTY,
+				      block,
+				      null,
+				      null); 
+				      }*/
 }

@@ -732,7 +732,7 @@ public class Propagator extends SLIRReplacingVisitor {
 		//if(propVar(right)) {
 		//if(newRight!=right) {
 		Object val=constants.get(((JLocalVariableExpression)newRight).getVariable());
-		if(val!=null) {
+		if(val!=null && val instanceof JLiteral) {
 		    constants.put(var,((JLiteral)val).convertType(var.getType(),null));
 		    //constants.put(((JLocalVariableExpression)newRight).getVariable(),newRight);
 		    added=true;

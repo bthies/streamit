@@ -101,7 +101,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    FlatNode node = (FlatNode)it.next();
 	    if (Layout.getTile(node) != null) {
 		if (((Integer)exeCounts.get(node)).intValue() != 0) {
-		    System.out.println(node.contents.getName() + " has " + 
+		    System.out.println(node.getName() + " has " + 
 				       exeCounts.get(node) + " executions remaining!!!!");
 		    bad = true;
 		}
@@ -675,7 +675,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    }
 	}
 	
-	Utils.fail("cannot find previous node in joiner list");
+	Utils.fail("cannot find previous node in joiner list:"+node+" "+previous);
 	return null;
     }
  

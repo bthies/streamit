@@ -19,6 +19,9 @@ public class RawBackend {
     public static HashMap initExecutionCounts;
     public static HashMap steadyExecutionCounts;
 
+    // get the execution counts from the scheduler
+    public static HashMap[] executionCounts;
+
     public static void run(SIRStream str,
 			JInterfaceDeclaration[] 
 			interfaces,
@@ -76,6 +79,7 @@ public class RawBackend {
 	StreamItDot.printGraph(str, "after.dot");
 
        	System.out.println("Flattener Begin...");
+	executionCounts = SIRScheduler.getExecutionCounts(str);
 	RawFlattener rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("flatgraph.dot");
 	System.out.println("Flattener End.");
@@ -117,9 +121,6 @@ public class RawBackend {
    
     private static void createExecutionCounts(SIRStream str,
 					      RawFlattener rawFlattener) {
-	// get the execution counts from the scheduler
-	HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
-
 	// make fresh hashmaps for results
 	HashMap[] result = { initExecutionCounts = new HashMap(), 
 			     steadyExecutionCounts = new HashMap()} ;
@@ -149,22 +150,60 @@ public class RawBackend {
 		}
 	    }
 	}
+	
+	//Schedule the new Identities and Splitters introduced by RawFlattener
+	for(int i=0;i<RawFlattener.needsToBeSched.size();i++) {
+	    FlatNode node=(FlatNode)RawFlattener.needsToBeSched.get(i);
+	    int initCount=-1;
+	    if(initExecutionCounts.get(node.incoming[0])!=null)
+		initCount=((Integer)initExecutionCounts.get(node.incoming[0])).intValue();
+	    if((initCount==-1)&&(executionCounts[0].get(node.incoming[0].contents)!=null))
+		initCount=((int[])executionCounts[0].get(node.incoming[0].contents))[0];
+	    int steadyCount=-1;
+	    if(steadyExecutionCounts.get(node.incoming[0])!=null)
+		steadyCount=((Integer)steadyExecutionCounts.get(node.incoming[0])).intValue();
+	    if((steadyCount==-1)&&(executionCounts[1].get(node.incoming[0].contents)!=null))
+		steadyCount=((int[])executionCounts[1].get(node.incoming[0].contents))[0];
+	    if(node.contents instanceof SIRIdentity) {
+		if(initCount>=0)
+		    initExecutionCounts.put(node,new Integer(initCount));
+		if(steadyCount>=0)
+		    steadyExecutionCounts.put(node,new Integer(steadyCount));
+	    } else if(node.contents instanceof SIRSplitter) {
+		int[] weights=node.weights;
+		FlatNode[] edges=node.edges;
+		int sum=0;
+		for(int j=0;j<weights.length;j++)
+		    sum+=weights[j];
+		for(int j=0;j<edges.length;j++) {
+		    if(initCount>=0)
+			initExecutionCounts.put(edges[j],new Integer((initCount*weights[j])/sum));
+		    if(steadyCount>=0)
+			steadyExecutionCounts.put(edges[j],new Integer((steadyCount*weights[j])/sum));
+		}
+	    } else if(node.contents instanceof SIRJoiner) {
+		FlatNode oldNode=rawFlattener.getFlatNode(node.contents);
+		if(executionCounts[0].get(node.oldContents)!=null)
+		    result[0].put(node,new Integer(((int[])executionCounts[0].get(node.oldContents))[0]));
+		if(executionCounts[1].get(node.oldContents)!=null)
+		    result[1].put(node,new Integer(((int[])executionCounts[1].get(node.oldContents))[0]));
+	    }
+	}
+	
 	//now, in the above calculation, an execution of a joiner node is 
 	//considered one cycle of all of its inputs.  For the remainder of the
 	//raw backend, I would like the execution of a joiner to be defined as
 	//the joiner passing one data item down stream
-	//to calculate this, simply multiple the execution count generated above
-	//by the sum of the incoming weights of the joiner
 	for (int i=0; i < 2; i++) {
 	    Iterator it = result[i].keySet().iterator();
 	    while(it.hasNext()){
 		FlatNode node = (FlatNode)it.next();
 		if (node.contents instanceof SIRJoiner) {
-		    int sum = 0;
-		    for (int j = 0; j < node.inputs; j++)
-			sum += node.incomingWeights[j];
 		    int oldVal = ((Integer)result[i].get(node)).intValue();
-		    result[i].put(node, new Integer(sum*oldVal));
+		    int cycles=oldVal*((SIRJoiner)node.contents).oldSumWeights;
+		    if((node.schedMult!=0)&&(node.schedDivider!=0))
+			cycles=(cycles*node.schedMult)/node.schedDivider;
+		    result[i].put(node, new Integer(cycles));
 		}
 	    }
 	}

@@ -8,5 +8,6 @@ public class StreamItOptions
     public static boolean partition = false;
     public static int rawRows = -1;
     public static int rawColumns = -1;
+    public static boolean sync = false;
     
 }

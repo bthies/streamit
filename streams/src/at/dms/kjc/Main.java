@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.8 2002-05-08 10:01:58 thies Exp $
+ * $Id: Main.java,v 1.9 2002-07-27 04:32:58 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -167,7 +167,8 @@ public class Main extends Compiler {
 	StreamItOptions.partition = options.partition;
 	StreamItOptions.constprop = options.constprop;
 	StreamItOptions.rawRows = StreamItOptions.rawColumns = options.raw;
-
+	StreamItOptions.sync = options.sync;
+	
 	StreaMITMain.compile(tree);
 	/*	
 		for (int count=0; count < tree.length; count++) {

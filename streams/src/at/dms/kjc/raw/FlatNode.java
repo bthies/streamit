@@ -24,8 +24,19 @@ public class FlatNode {
     public int inputs;
     public int ways;
         /* the current edges we are connecting, all edges before this are connected */
-    private int currentEdge;
-    private int currentIncoming;
+    public int currentEdge;
+    public int currentIncoming;
+
+    private HashMap identMap;
+    private static int nameInt=0;
+    
+    public int schedMult;
+    public int schedDivider;
+
+    private static int uin=0;
+    private int label;
+
+    public SIROperator oldContents;
 
     /* create a new node with <op> */
     public FlatNode(SIROperator op) 
@@ -56,8 +67,10 @@ public class FlatNode {
 	    weights = splitter.getWeights();
 	    inputs = 0;
 	}
+	identMap=new HashMap();
+	label=uin++;
     }
-    
+
     public void addEdges(FlatNode to) {
 	//do not connect to oneself
 	if (!(this.equals(to))) {
@@ -153,5 +166,33 @@ public class FlatNode {
 	    (incoming==null ? 1 : incoming.length);
     }
 
+    /**
+     * Now uses uin to implement deterministic hashcode system
+     * It has the added benefit that a FlatNode's identity
+     * isn't tied to it's inputs, ways, etc not changing
+     * ie now hashcode is synched with equals() and equality
+     * doesn't change just because ones ways, etc changes
+     */
+    /*public int hashCode() {
+      return hashCode;
+      }*/
+    
+    public String getName() {
+	//if((contents instanceof SIRIdentity)||(contents instanceof SIRJoiner)) {
+	    /*String out=(String)identMap.get(contents);
+	      if(out==null) {
+	      out=contents.getName()+"_"+(nameInt++);
+	      identMap.put(contents,out);
+	      return out;
+	      } else
+	      return out;*/
+	    return contents.getName()+"_"+label;
+	    //} else
+	    //return contents.getName();
+    }
+
+    public String toString() {
+	return "FlatNode:"+getName();
+    }
 }
 

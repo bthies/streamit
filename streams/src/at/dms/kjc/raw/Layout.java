@@ -428,7 +428,9 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    if (node.edges[0].contents instanceof SIRSplitter) {
 		//if the final dest is a filter then just get the execution count of the 
 		//dest filter * its pop rate
-		if (dest.contents instanceof SIRFilter) {
+		if(RawBackend.steadyExecutionCounts.get(dest)==null)
+		    items=1;
+		else if (dest.contents instanceof SIRFilter) {
 		    items = ((Integer)RawBackend.steadyExecutionCounts.get(dest)).intValue() *
 			((SIRFilter)dest.contents).getPopInt();
 		}
@@ -452,8 +454,11 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    push = 1;
 		else 
 		    push = ((SIRFilter)node.contents).getPushInt();
-		items = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() *
-		    push;
+		if(RawBackend.steadyExecutionCounts.get(node)==null)
+		    items=1;
+		else
+		    items = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() *
+			push;
 	    }
 	    sum += (items * hops) + (items * Util.getTypeSize(Util.getOutputType(node))) * 
 				     Math.pow(numAssigned * 2.0, 3.0);
@@ -549,7 +554,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    if (FileVisitor.fileNodes.contains(node))
 		continue;
 	    buf.append("tile" +   getTileNumber(node) + "[label=\"" + 
-			node.contents.getName() + "\"];\n");
+			node.getName() + "\"];\n");
 	     
 	     //we only map joiners and filters to tiles and they each have
 	     //only one output
@@ -676,7 +681,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		Integer row, column;
 		
 		//get row
-		System.out.print(node.contents.getName() + "\nRow: ");
+		System.out.print(node.getName() + "\nRow: ");
 		row = Integer.valueOf(inputBuffer.readLine());
 		if (row.intValue() < 0) {
 		    System.err.println("Negative Value: Try again.");

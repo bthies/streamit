@@ -63,11 +63,10 @@ public class Flattener {
 
 	AdjustGranularity.doit(str, -1);
 
-	if (StreamItOptions.partition) {
+	if (KjcOptions.partition) {
 	    System.err.println("Partitioning...");
 	    Partitioner.doit(str, 
-			     StreamItOptions.rawRows *
-			     StreamItOptions.rawColumns);
+			     KjcOptions.raw * KjcOptions.raw);
 	    System.err.println("...done with Partitioning.");
 	}
 
@@ -85,7 +84,7 @@ public class Flattener {
 	StatelessDuplicate.doit(toDuplicate, 2);
 	*/
 
-	if (StreamItOptions.fusion) {
+	if (KjcOptions.fusion) {
 	    System.err.println("Running FuseAll...");
 	    FuseAll.fuse(str);
 	    System.err.println("...done with Fuseall.");
@@ -107,7 +106,7 @@ public class Flattener {
 	System.err.println("done.");
 	
         // do constant propagation on fields
-        if (StreamItOptions.constprop) {
+        if (KjcOptions.constprop) {
 	    System.err.print("Propagating fields... ");
 	    FieldProp.doPropagate(str);
 	    System.err.println("done.");
@@ -125,7 +124,7 @@ public class Flattener {
 	printer1.close();
 	*/
 	
-	if (StreamItOptions.constprop) {
+	if (KjcOptions.constprop) {
 	    //Flatten Blocks
 	    System.err.print("Flattening blocks... ");
 	    new BlockFlattener().flattenBlocks(str);
@@ -145,12 +144,12 @@ public class Flattener {
 	System.err.println("done.");
 
 	// if someone wants to run linear analysis (or linear replacement)
-	if (StreamItOptions.linearanalysis || StreamItOptions.linearreplacement) {
+	if (KjcOptions.linearanalysis || KjcOptions.linearreplacement) {
 	    // pass the program (str) and whether or not we want
 	    // to do direct replacement code for the work functions
 	    // of linear filters.
 	    System.err.print("Running linear analysis... ");
-	    runLinearAnalysis(str, StreamItOptions.linearreplacement);
+	    runLinearAnalysis(str, KjcOptions.linearreplacement);
 	    System.err.println("done.");
 	}
 
@@ -194,7 +193,7 @@ public class Flattener {
 				  boolean transform) {
 	System.out.println("Running Linear Analysis");
 	// run the linear analysis and stores the information garnered in the lfa
-	LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, StreamItOptions.debug);
+	LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug);
 
 	// now, print out the graph using the LinearPrinter which colors the graph
 	// nodes based on their linearity.

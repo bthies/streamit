@@ -14,11 +14,6 @@ import at.dms.compiler.JavadocComment;
  */
 public class Unroller extends SLIRReplacingVisitor {
     /**
-     * The maximum loop size that this will unroll.  (It always
-     * unrolls loops surrounding add statements in init.)
-     */
-    private final static int MAX_UNROLL_FACTOR = 16;
-    /**
      * Map allowing the current block to access the modified
      * list of the current for loop
      */
@@ -208,7 +203,7 @@ public class Unroller extends SLIRReplacingVisitor {
 	// otherwise calculate how many times the loop will execute,
 	// and only unroll if it is within our max unroll range
 	int count = getNumExecutions(info);
-	return count <= MAX_UNROLL_FACTOR;
+	return count <= KjcOptions.unroll;
     }
 
     /**

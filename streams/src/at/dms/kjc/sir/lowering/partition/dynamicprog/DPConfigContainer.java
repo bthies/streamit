@@ -545,16 +545,16 @@ abstract class DPConfigContainer extends DPConfig {
 			}
 			*/
 
-			// Here we might have either a splitjoin
-			// or a pipeline.  If it's a splitjoin,
-			// then y1==y2 (by invariant of
-			// max. synchronized input) and we don't
-			// need the sync removal.  If it's a
-			// pipeline, only need sync removal if
-			// y1<y2, since otherwise lifter will
-			// handle it.
+			// Here we have a pipeline.  If y1==y2 then we
+			// don't need the sync removal, but we DO need
+			// an identity to unwrap the pipeline.  If
+			// y1<y2, need sync removal.
 			if (y1<y2) {
 			    StreamTransform newResult = new RemoveSyncTransform();
+			    newResult.addSucc(result);
+			    result = newResult;
+			} else {
+			    StreamTransform newResult = new IdentityTransform();
 			    newResult.addSucc(result);
 			    result = newResult;
 			}

@@ -52,4 +52,10 @@ public class FilterTraceNode extends TraceNode
     public int getSteadyMult() {
 	return filter.getSteadyMult();
     }
+
+    public String toString() {
+	return filter.toString();
+    }
 }
+
+

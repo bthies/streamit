@@ -45,6 +45,7 @@ public class TraceExtractor {
 		}
 		if(filter.out!=null&&filter.out.length>0) {
 		    OutputTraceNode outNode=new OutputTraceNode(filter.outWeights);
+		    node.setNext(outNode);
 		    outNodes.put(filter,outNode);
 		    for(int i=0;i<filter.out.length;i++) {
 			UnflatEdge[] inner=filter.out[i];
@@ -68,8 +69,9 @@ public class TraceExtractor {
 	    for(int j=0;j<dests.length;j++) {
 		UnflatEdge[] destFilters=outFilter.out[j];
 		InputTraceNode[] subDests=new InputTraceNode[destFilters.length];
-		for(int k=0;k<destFilters.length;k++)
-		    subDests[k]=(InputTraceNode)inNodes.get(destFilters[k]);
+		for(int k=0;k<destFilters.length;k++) {
+		    subDests[k]=(InputTraceNode)inNodes.get(destFilters[k].dest);
+		}
 		dests[j]=subDests;
 	    }
 	    outNode.setDests(dests);
@@ -99,14 +101,18 @@ public class TraceExtractor {
     public static void dumpGraph(Trace[] traces,String filename) {
 	StringBuffer buf=new StringBuffer();
 	buf.append("digraph Flattend {\n");
-	buf.append("size = \"8, 10.5\";");
+	buf.append("size = \"8, 10.5\";\n");
 	HashMap parent=new HashMap();
 	for(int i=0;i<traces.length;i++)
 	    parent.put(traces[i].getHead(),traces[i]);
 	for(int i=0;i<traces.length;i++) {
 	    Trace trace=traces[i];
-	    buf.append(trace+"[ label = \""+traceName(trace)+"\"];\n");
+	    buf.append(trace.hashCode()+" [ label = \""+traceName(trace)+"\" ];\n");
+	    Trace[] next=getNext(trace,parent);
+	    for(int j=0;j<next.length;j++)
+		buf.append(trace.hashCode()+" -> "+next[j].hashCode()+";\n");
 	}
+	buf.append("}\n");
 	try {
 	    FileWriter fw = new FileWriter(filename);
 	    fw.write(buf.toString());
@@ -118,13 +124,43 @@ public class TraceExtractor {
     }
 
     private static String traceName(Trace trace) {
-	StringBuffer out=new StringBuffer(trace.getHead().toString());
-	TraceNode node=trace.getHead().getNext();
-	while(node!=null&&node instanceof FilterTraceNode)
+	TraceNode node=trace.getHead();
+	if(node instanceof InputTraceNode)
+	    node=node.getNext();
+	StringBuffer out=new StringBuffer(node.toString());
+	node=node.getNext();
+	while(node!=null&&node instanceof FilterTraceNode) {
 	    out.append("\\n"+node.toString());
+	    node=node.getNext();
+	}
 	return out.toString();
     }
+
+    private static Trace[] getNext(Trace trace,HashMap parent) {
+	TraceNode node=trace.getHead();
+	if(node instanceof InputTraceNode)
+	    node=node.getNext();
+	while(node!=null&&node instanceof FilterTraceNode) {
+	    node=node.getNext();
+	}
+	if(node instanceof OutputTraceNode) {
+	    InputTraceNode[][] dests=((OutputTraceNode)node).getDests();
+	    LinkedList output=new LinkedList();
+	    for(int i=0;i<dests.length;i++) {
+		InputTraceNode[] inner=dests[i];
+		for(int j=0;j<inner.length;j++) {
+		    output.add(parent.get(inner[j]));
+		}
+	    }
+	    Trace[] out=new Trace[output.size()];
+	    output.toArray(out);
+	    return out;
+	}
+	return new Trace[0];
+    }
 }
+
+
 
 
 

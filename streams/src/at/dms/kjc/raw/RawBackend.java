@@ -86,6 +86,13 @@ public class RawBackend {
 	AdjustGranularity.doit(str, 
 			       RawBackend.rawRows * 
 			       RawBackend.rawColumns);
+
+	if (KjcOptions.ilppartition) {
+	    ILPPartitioner.doit(str, 
+				RawBackend.rawRows *
+				RawBackend.rawColumns);
+	    System.exit(0);
+	}
 	
 	if (KjcOptions.partition) {
 	    Partitioner.doit(str,

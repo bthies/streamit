@@ -27,8 +27,9 @@ import java.util.List;
  * portals that the newly created child is registered with.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StreamCreator.java,v 1.4 2003-10-09 19:51:00 dmaze Exp $
- * @see     streamit.frontend.nodes.SCAnon, streamit.frontend.nodes.SCSimple
+ * @version $Id: StreamCreator.java,v 1.5 2004-01-30 19:33:45 dmaze Exp $
+ * @see     streamit.frontend.nodes.SCAnon
+ * @see     streamit.frontend.nodes.SCSimple
  */
 public abstract class StreamCreator extends FENode
 {

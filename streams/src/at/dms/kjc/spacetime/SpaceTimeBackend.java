@@ -71,7 +71,7 @@ public class SpaceTimeBackend
 	}
 
 	Lifter.liftAggressiveSync(str);
-       	StreamItDot.printGraph(str, "before.dot");
+       	StreamItDot.printGraph(str, "before-partition.dot");
 
 	//	str = Partitioner.doit(str, 32);
 

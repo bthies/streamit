@@ -1,7 +1,7 @@
 /**
  * Runs the compiler on the all of the tests with no optimizations
  * turned on.
- * $Id: TestPartition.java,v 1.4 2003-01-26 22:04:41 thies Exp $
+ * $Id: TestPartition.java,v 1.5 2003-01-29 03:54:15 thies Exp $
  **/
 package streamittest;
 
@@ -18,11 +18,26 @@ public class TestPartition extends StreamITTestCase {
 	
 	int baseFlags = (CompilerInterface.NONE |
 			 CompilerInterface.UNROLL | 
-			 CompilerInterface.REMOVE_GLOBALS |
 			 CompilerInterface.NUMBERS);
 
-	int[] opts = { baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.DPSCALE,
-		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[2],
+	int[] opts1 = { baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.DPSCALE };
+
+	int[] opts2 = {baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[2],
+		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[3],
+		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[4],
+		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[5],
+		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[6],
+		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[7],
+		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[8],
+		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[2],
+		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[3],
+		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[4],
+		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[5],
+		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[6],
+		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[7],
+		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[8]};
+
+	int[] opts3 = {baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[2],
 		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[4],
 		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[6],
 		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[8],
@@ -31,28 +46,48 @@ public class TestPartition extends StreamITTestCase {
 		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[6],
 		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[8]};
 
-	for (int i=0; i<opts.length; i++) {
-	    suite.addTest(new TestBenchmarks("testFir", opts[i]));
-	    suite.addTest(new TestBenchmarks("testFm", opts[i]));
-	    suite.addTest(new TestBenchmarks("testBitonicSort", opts[i]));
-	    suite.addTest(new TestBenchmarks("testBeamFormer", opts[i]));
-	    suite.addTest(new TestBenchmarks("testFft", opts[i]));
-	    suite.addTest(new TestBenchmarks("testVocoder", opts[i]));
-	    suite.addTest(new TestBenchmarks("testFilterbank", opts[i]));
-	    suite.addTest(new TestBenchmarks("testNokia", opts[i]));
-	    suite.addTest(new TestBenchmarks("testMatMulBlock", opts[i]));
-	    suite.addTest(new TestBenchmarks("testCFAR", opts[i]));
-	    suite.addTest(new TestBenchmarks("testPerftest4", opts[i]));
-
-	    suite.addTest(new TestApps("testCrc", opts[i]));
-	    suite.addTest(new TestApps("testMP3Simple", opts[i]));
-	    suite.addTest(new TestApps("testNokiaFine", opts[i]));
-
-	    suite.addTest(new TestExamples("testMatrixMult", opts[i]));
-	    suite.addTest(new TestExamples("testMergeSort", opts[i]));
-	    suite.addTest(new TestExamples("testLattice", opts[i]));
+	// first get theoretical scaling results for everything
+	for (int i=0; i<opts1.length; i++) {
+	    addHighPriority(suite, opts1[i]);
+	    addLowPriority(suite, opts1[i]);
 	}
 	
-	return suite;	
+	// then fine-grained execution numbers for high priority stuff
+	for (int i=0; i<opts2.length; i++) {
+	    addHighPriority(suite, opts2[i]);
+	}
+
+	// then coarse numbers for low priority stuff
+	for (int i=0; i<opts3.length; i++) {
+	    addLowPriority(suite, opts3[i]);
+	}
+
+	return suite;
     }
+    
+    private static void addHighPriority(TestSuite suite, int opts) {
+	suite.addTest(new TestBenchmarks("testBeamFormer", opts));
+	suite.addTest(new TestBenchmarks("testBitonicSort", opts));
+	suite.addTest(new TestBenchmarks("testFir", opts));
+    }
+    
+    private static void addLowPriority(TestSuite suite, int opts) {
+	suite.addTest(new TestBenchmarks("testFm", opts));
+	suite.addTest(new TestBenchmarks("testFft", opts));
+	suite.addTest(new TestBenchmarks("testVocoder", opts));
+	suite.addTest(new TestBenchmarks("testFilterbank", opts));
+	suite.addTest(new TestBenchmarks("testNokia", opts));
+	suite.addTest(new TestBenchmarks("testMatMulBlock", opts));
+	suite.addTest(new TestBenchmarks("testCFAR", opts));
+	suite.addTest(new TestBenchmarks("testPerftest4", opts));
+	
+	suite.addTest(new TestApps("testCrc", opts));
+	suite.addTest(new TestApps("testMP3Simple", opts));
+	suite.addTest(new TestApps("testNokiaFine", opts));
+	
+	suite.addTest(new TestExamples("testMatrixMult", opts));
+	suite.addTest(new TestExamples("testMergeSort", opts));
+	suite.addTest(new TestExamples("testLattice", opts));	
+    }
+
 }

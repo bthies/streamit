@@ -38,17 +38,10 @@ class Merger extends Filter {
         }
 
         // merge remainder if one stream dries out
-        if (index1 < N) {
-            // then index1 <= N-2
-            for (int i=index1; i < N; i+=2) {
-                output.pushInt(input.peekInt(i));
-            }
-        } else {
-            // then index2 <= N-1
-            for (int i=index2; i < N; i+=2) {
-                output.pushInt(input.peekInt(i));
-            }
-        }
+	int leftover = index1 < N ? index1 : index2;
+	for (int i=leftover; i < N; i+=2) {
+	    output.pushInt(input.peekInt(i));
+	}
 
         // pop all the inputs
         for (int i=0; i<N; i++) {
@@ -133,8 +126,7 @@ class MergeSort extends StreamIt {
     public void init() {
         // we assume an input length that is a power of two
         final int NUM_INPUTS = 16;
-        // the number of times to run the input (this is the number of
-        // times we break up the input sequence--just a testing thing.)
+        // the number of times to break up the sequence (just for testing)
         final int MULT = 4;
 
         // add the input generator

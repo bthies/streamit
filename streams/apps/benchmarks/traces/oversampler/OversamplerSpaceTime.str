@@ -1,0 +1,138 @@
+/** 
+ * This app is intended to implement a one bit d to a oversampler. 
+ **/
+void->void pipeline OversamplerSpaceTime {
+    // the source of data (eventually, this should be an audio stream)
+    //add DataSource();
+    add FileReader<float>("input");
+    // go through the process of oversampling
+    add OverSampler();
+    //add DataSink();
+    add FileWriter<float>("output");
+}
+
+/** 
+ * This is a 16x oversampler -- eg it upsamples
+ * its input by a factor of 16. The 16 factor is
+ * achieved in four steps. In each step we upsample
+ * and then low pass filter with cutoff of pi/2. 
+ **/
+float->float pipeline OverSampler {
+  for (int i=0; i<4; i++) {
+    add Expander(2);
+    add LowPassFilter(2,pi/2,64);
+	//    add Printer();
+  }
+}
+
+float->float filter Printer() 
+{
+    work push 1 pop 1 {
+	float temp = pop();
+	println(temp);
+	push(temp);
+    }
+}
+
+
+/**
+ * Simple data source that outputs a combination of 
+ * three sine waves with a period of 100 samples.
+ **/
+void->float filter DataSource {
+  int SIZE = 100;
+  float[SIZE] data;
+  int index;
+  init {
+    // initialize the data array.
+    for (int i=0; i<SIZE; i++) {
+      float t = i;
+      data[i] = (sin((2*pi)*(t/SIZE)) + 
+		 sin((2*pi)*(1.7*t/SIZE) + (pi/3)) +
+		 sin((2*pi)*(2.1*t/SIZE) + (pi/5)));
+    }
+    index = 0;
+  }
+  work push 1 {
+    push(data[index]);
+    index = (index + 1)%SIZE;
+  }
+}
+
+/** Simple sink that prints out the data that it receives. **/
+float->void filter DataSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+/** Simple data selector filter (for filtering out multiplexed output for debugging) **/
+float->float filter DataSelector {
+  work pop 2 push 1 {
+    //push(pop());
+    pop();
+    push(pop());
+  }
+}
+
+/** 
+ * Simple FIR low pass filter with gain=g, wc=cutoffFreq(in radians) and N samples.
+ * Eg:
+ *                 ^ H(e^jw)
+ *                 |
+ *          ---------------
+ *          |      |      |
+ *          |      |      |
+ *    <-------------------------> w
+ *         -wc            wc
+ *
+ * This implementation is a FIR filter is a rectangularly windowed sinc function 
+ * (eg sin(x)/x), which is the optimal FIR low pass filter in 
+ * mean square error terms.
+ *
+ * Specifically, h[n] has N samples from n=0 to (N-1)
+ * such that h[n] = sin(cutoffFreq*pi*(n-N/2))/(pi*(n-N/2)).
+ * and the field h holds h[-n].
+ */
+float->float filter LowPassFilter(float g, float cutoffFreq, int N) {
+  float[N] h;
+
+  /* since the impulse response is symmetric, I don't worry about reversing h[n]. */
+  init {
+    int OFFSET = N/2;
+    for (int i=0; i<N; i++) {
+      int idx = i + 1;
+      // generate real part
+      if (idx == OFFSET) 
+	/* take care of div by 0 error (lim x->oo of sin(x)/x actually equals 1)*/
+	h[i] = g * cutoffFreq / pi; 
+      else 
+	h[i] = g * sin(cutoffFreq * (idx-OFFSET)) / (pi*(idx-OFFSET));
+    }
+  }
+
+  /* Implement the FIR filtering operation as the convolution sum. */
+  work peek N pop 1 push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) { 
+      sum += h[i]*peek(i);
+    }
+    push(sum);
+    pop();
+  }
+}
+
+/**
+ * This filter expands the input by a factor L. Eg in takes in one
+ * sample and outputs L samples. The first sample is the input
+ * and the rest of the samples are zeros. 
+ **/
+float->float filter Expander(int L) {
+  work peek 1 pop 1 push L {
+    push(pop());
+    for (int i=0; i<(L-1); i++) {
+      push(0);
+    }
+  }
+}
+    

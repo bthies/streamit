@@ -3,12 +3,12 @@
  **/
 void->void pipeline Oversampler {
     // the source of data (eventually, this should be an audio stream)
-    //add DataSource();
-    add FileReader<float>("input");
+    add DataSource();
+    //add FileReader<float>("input");
     // go through the process of oversampling
     add OverSampler();
-    //add DataSink();
-    add FileWriter<float>("output");
+    add DataSink();
+    //add FileWriter<float>("output");
 }
 
 /** 
@@ -21,13 +21,18 @@ float->float pipeline OverSampler {
   for (int i=0; i<4; i++) {
     add Expander(2);
     add LowPassFilter(2,pi/2,64);
+	//    add Printer();
   }
 }
 
-
-
-
-
+float->float filter Printer() 
+{
+    work push 1 pop 1 {
+	float temp = pop();
+	println(temp);
+	push(temp);
+    }
+}
 
 
 /**

@@ -36,36 +36,45 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
     public static void doit(FlatNode node) 
     {
 	System.out.println("Removing Dead Variables...");
-	new RemoveUnusedVars(node);
+	node.accept(new RemoveUnusedVars(), null, true);
     }
 
-    private RemoveUnusedVars(FlatNode node) 
+    private RemoveUnusedVars()
     {
 	varsUsed = null;
 	zeroDimArrays = new HashSet();
-	node.accept(this, null, true);
+    }
+
+    public static void doit(SIRFilter filter) 
+    {
+	System.out.println("Removing Dead Variables...");
+	(new RemoveUnusedVars()).visitFilter(filter);
     }
     
     public void visitNode(FlatNode node) 
     {
 	if (node.isFilter()) {
 	    SIRFilter filter = (SIRFilter)node.contents;
-	    
-	    varsUsed = VariablesUsed.getVars(node, true);
-
-
-	    for (int i = 0; i < filter.getMethods().length; i++) {
-		filter.getMethods()[i].accept(this);
-	    }
-	    
-	    //now check the fields
-	    Vector newFields = new Vector();
-	    for (int i = 0; i < filter.getFields().length; i++) {
-		if (varsUsed.contains(filter.getFields()[i].getVariable().getIdent())) 
-		    newFields.add(filter.getFields()[i]);
-	    }
-	    filter.setFields((JFieldDeclaration[])newFields.toArray(new JFieldDeclaration[0]));
+	    visitFilter(filter);
 	}
+    }
+    
+    public void visitFilter(SIRFilter filter)
+    {
+	varsUsed = VariablesUsed.getVars(filter, true);
+	
+	
+	for (int i = 0; i < filter.getMethods().length; i++) {
+	    filter.getMethods()[i].accept(this);
+	}
+	
+	//now check the fields
+	Vector newFields = new Vector();
+	for (int i = 0; i < filter.getFields().length; i++) {
+	    if (varsUsed.contains(filter.getFields()[i].getVariable().getIdent())) 
+		newFields.add(filter.getFields()[i]);
+	}
+	filter.setFields((JFieldDeclaration[])newFields.toArray(new JFieldDeclaration[0]));
     }
     
     public Object visitAssignmentExpression(JAssignmentExpression self,

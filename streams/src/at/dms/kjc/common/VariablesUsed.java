@@ -62,18 +62,24 @@ public class VariablesUsed extends SLIREmptyVisitor
      */
     public static HashSet getVars(FlatNode node, boolean countComplexAssignments)  
     {
+	if (node.isFilter()) {
+	    return getVars((SIRFilter)node.contents, countComplexAssignments);
+	}
+	
+	return new HashSet();
+    }
+    
+    public static HashSet getVars(SIRFilter filter, boolean countComplexAssignments)  
+    {
 	VariablesUsed used = new VariablesUsed(countComplexAssignments);
 	
-	if (node.isFilter()) {
-	    SIRFilter filter = (SIRFilter)node.contents;
-	    
-	    for (int i = 0; i < filter.getMethods().length; i++) {
-		filter.getMethods()[i].accept(used);
-	    }
-	    for (int i = 0; i < filter.getFields().length; i++) {
-		filter.getFields()[i].accept(used);
-	    }
+	for (int i = 0; i < filter.getMethods().length; i++) {
+	    filter.getMethods()[i].accept(used);
 	}
+	for (int i = 0; i < filter.getFields().length; i++) {
+	    filter.getFields()[i].accept(used);
+	}
+	
 	return used.vars;
     }
     

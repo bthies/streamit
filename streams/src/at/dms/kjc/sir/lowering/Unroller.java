@@ -224,6 +224,21 @@ public class Unroller extends SLIRReplacingVisitor {
 	  }
 	*/
 
+	// Unroll maximally for number gathering
+	if(KjcOptions.numbers>0) {
+	    final boolean[] hasPrint = { false };
+	    body.accept(new SLIREmptyVisitor() {
+		    public void visitPrintStatement(SIRPrintStatement self,
+						    JExpression arg) {
+			hasPrint[0]=true;
+			super.visitPrintStatement(self,arg);
+		    }
+		});
+	    if (hasPrint[0]) {
+		return true;
+	    }
+	}
+
 	// otherwise calculate how many times the loop will execute,
 	// and only unroll if it is within our max unroll range
 	int count = getNumExecutions(info);

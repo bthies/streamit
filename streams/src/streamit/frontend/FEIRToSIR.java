@@ -22,6 +22,11 @@ public class FEIRToSIR implements FEVisitor, Constants {
     System.err.print(s);
   }
   
+    private Type getType(Expression expr)
+    {
+        // To think about: should we cache GetExprType objects?
+        return (Type)expr.accept(new GetExprType(symtab, null)); // streamType
+    }
     private TokenReference contextToReference(FEContext ctx)
     {
         if (ctx != null)
@@ -163,7 +168,8 @@ public class FEIRToSIR implements FEVisitor, Constants {
     return result;
   }
 
-    private void setStreamFields(SIRStream stream, List vars)
+    private void setStreamFields(SIRStream stream, Hashtable cfields,
+                                 List vars)
     {
         JFieldDeclaration[] fields = new JFieldDeclaration[0];
         List fieldList = new ArrayList();
@@ -172,11 +178,34 @@ public class FEIRToSIR implements FEVisitor, Constants {
             FieldDecl decl = (FieldDecl)iter.next();
             fieldList.addAll(fieldDeclToJFieldDeclarations(decl));
             for (int i = 0; i < decl.getNumFields(); i++)
+            {
                 symtab.registerVar(decl.getName(i), decl.getType(i),
                                    decl, SymbolTable.KIND_FIELD);
+                // TODO: this is a mapping of name to CField,
+                // so create a CField here.
+                cfields.put(decl.getName(i),
+                            feirTypeToSirType(decl.getType(i)));
+            }
         }
         fields = (JFieldDeclaration[])fieldList.toArray(fields);
         stream.setFields(fields);
+    }
+
+    private CMethod jMethodToCMethod(JMethodDeclaration decl, CClass owner)
+    {
+        JFormalParameter[] jparams = decl.getParameters();
+        // cparams = map (lambda p: p.getType()) jparams;
+        CType[] cparams = new CType[jparams.length];
+        for (int i = 0; i < jparams.length; i++)
+            cparams[i] = jparams[i].getType();
+        return new CSourceMethod(owner,
+                                 ACC_PUBLIC, // modifiers
+                                 decl.getName(),
+                                 decl.getReturnType(),
+                                 cparams, // paramTypes,
+                                 CClassType.EMPTY, // exceptions
+                                 false, // deprecated
+                                 decl.getBody());
     }
 
   public SIRStream visitFilterSpec(StreamSpec spec) {
@@ -184,7 +213,14 @@ public class FEIRToSIR implements FEVisitor, Constants {
     List list;
     SIRFilter result = new SIRFilter();
     SIRStream oldParent = parent;
-
+    CClass owner = null;
+    CSourceClass cclass = new CSourceClass(owner, // owner
+                                           contextToReference(spec),
+                                           0, // modifiers
+                                           spec.getName(),
+                                           spec.getName(), // qualified
+                                           false); // deprecated
+    Hashtable fields = new Hashtable();
     parent = result;
     
     debug("In visitFilterSpec\n");
@@ -193,7 +229,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
     result.setInputType(feirTypeToSirType(spec.getStreamType().getIn()));
     result.setOutputType(feirTypeToSirType(spec.getStreamType().getOut()));
 
-    setStreamFields(result, spec.getVars());
+    setStreamFields(result, fields, spec.getVars());
 
     Function[] funcs = new Function[spec.getFuncs().size()];
     list = spec.getFuncs();
@@ -201,9 +237,12 @@ public class FEIRToSIR implements FEVisitor, Constants {
       funcs[i] = (Function) list.get(i);
     }
     JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
+    CMethod[] cmethods = new CMethod[funcs.length];
 
     for (i = 0; i < funcs.length; i++) {
       methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
+      cmethods[i] = jMethodToCMethod(methods[i], cclass);
+      // To consider: phase functions.  --dzm
       if (funcs[i].getCls() == Function.FUNC_WORK) {
 	result.setWork(methods[i]);
 	if (spec.getWorkFunc().getPopRate() != null) {
@@ -228,6 +267,12 @@ public class FEIRToSIR implements FEVisitor, Constants {
     }
     result.setMethods(methods);
 
+    cclass.close(CClassType.EMPTY, // interfaces
+                 null, // superclass
+                 fields,
+                 cmethods);
+    cclassTable.put(spec.getName(), cclass);
+
     parent = oldParent;
 
     return result;
@@ -238,12 +283,20 @@ public class FEIRToSIR implements FEVisitor, Constants {
     List list;
     SIRPipeline result = new SIRPipeline(spec.getName());
     SIRStream oldParent = parent;
+    CClass owner = null;
+    CSourceClass cclass = new CSourceClass(owner, // owner
+                                           contextToReference(spec),
+                                           0, // modifiers
+                                           spec.getName(),
+                                           spec.getName(), // qualified
+                                           false); // deprecated
+    Hashtable fields = new Hashtable();
 
     debug("In visitPipelineSpec\n");
 
     parent = result;
     
-    setStreamFields(result, spec.getVars());
+    setStreamFields(result, fields, spec.getVars());
 
     Function[] funcs = new Function[spec.getFuncs().size()];
     list = spec.getFuncs();
@@ -251,14 +304,22 @@ public class FEIRToSIR implements FEVisitor, Constants {
       funcs[i] = (Function) list.get(i);
     }
     JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
+    CMethod[] cmethods = new CMethod[funcs.length];
 
     for (i = 0; i < funcs.length; i++) {
       methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
+      cmethods[i] = jMethodToCMethod(methods[i], cclass);
       if (funcs[i].getCls() == Function.FUNC_INIT) {
 	result.setInit(methods[i]);
       }
     }
     result.setMethods(methods);
+
+    cclass.close(CClassType.EMPTY, // interfaces
+                 null, // superclass
+                 fields,
+                 cmethods);
+    cclassTable.put(spec.getName(), cclass);
 
     parent = oldParent;
 
@@ -467,11 +528,14 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
   public Object visitExprField(ExprField exp) {
     debug("In visitExprField\n");
+    Type lhsType = getType(exp.getLeft());
+    // ASSERT: this is a structure type.
+    TypeStruct ts = (TypeStruct)lhsType;
+    CClass ccs = (CClass)cclassTable.get(ts.getName());
+    CField cf = ccs.getField(exp.getName());
     return new JFieldAccessExpression(null,
 				      (JExpression) exp.getLeft().accept(this),
-				      exp.getName());
-    // TODO: need to add a CField parameter here, or else our code bombs
-    // out later.  --dzm
+				      exp.getName(), cf);
   }
 
   public Object visitExprFunCall(ExprFunCall exp) {
@@ -548,6 +612,15 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
   public Object visitExprVar(ExprVar exp) {
     debug("In visitExprVar\n");
+    int kind = symtab.lookupKind(exp.getName());
+    if (kind == SymbolTable.KIND_LOCAL || kind == SymbolTable.KIND_FUNC_PARAM)
+    {
+        JLocalVariable var =
+            (JLocalVariable)symtab.lookupOrigin(exp.getName());
+        return new JLocalVariableExpression(contextToReference(exp), var);
+    }
+    // TODO: attach a CField, assuming that what we have is in fact
+    // a field.
     return new JFieldAccessExpression(null,
 				      new JThisExpression(null, (CClass) null),
 				      exp.getName());
@@ -610,12 +683,20 @@ public class FEIRToSIR implements FEVisitor, Constants {
     List list;
     SIRSplitJoin result = new SIRSplitJoin((SIRContainer) parent, spec.getName());
     SIRStream oldParent = parent;
+    CClass owner = null;
+    CSourceClass cclass = new CSourceClass(owner, // owner
+                                           contextToReference(spec),
+                                           0, // modifiers
+                                           spec.getName(),
+                                           spec.getName(), // qualified
+                                           false); // deprecated
+    Hashtable fields = new Hashtable();
 
     debug("In visitSplitJoinSpec\n");
 
     parent = result;
     
-    setStreamFields(result, spec.getVars());
+    setStreamFields(result, fields, spec.getVars());
     
     Function[] funcs = new Function[spec.getFuncs().size()];
     list = spec.getFuncs();
@@ -623,14 +704,22 @@ public class FEIRToSIR implements FEVisitor, Constants {
       funcs[i] = (Function) list.get(i);
     }
     JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
+    CMethod[] cmethods = new CMethod[funcs.length];
 
     for (i = 0; i < funcs.length; i++) {
       methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
+      cmethods[i] = jMethodToCMethod(methods[i], cclass);
       if (funcs[i].getCls() == Function.FUNC_INIT) {
 	result.setInit(methods[i]);
       }
     }
     result.setMethods(methods);
+
+    cclass.close(CClassType.EMPTY, // interfaces
+                 null, // superclass
+                 fields,
+                 cmethods);
+    cclassTable.put(spec.getName(), cclass);
 
     parent = oldParent;
 
@@ -642,12 +731,20 @@ public class FEIRToSIR implements FEVisitor, Constants {
     List list;
     SIRFeedbackLoop result = new SIRFeedbackLoop((SIRContainer) parent, spec.getName());
     SIRStream oldParent = parent;
+    CClass owner = null;
+    CSourceClass cclass = new CSourceClass(owner, // owner
+                                           contextToReference(spec),
+                                           0, // modifiers
+                                           spec.getName(),
+                                           spec.getName(), // qualified
+                                           false); // deprecated
+    Hashtable fields = new Hashtable();
 
     debug("In visitFeedbackLoopSpec\n");
 
     parent = result;
 
-    setStreamFields(result, spec.getVars());
+    setStreamFields(result, fields, spec.getVars());
     
     Function[] funcs = new Function[spec.getFuncs().size()];
     list = spec.getFuncs();
@@ -655,14 +752,22 @@ public class FEIRToSIR implements FEVisitor, Constants {
       funcs[i] = (Function) list.get(i);
     }
     JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
+    CMethod[] cmethods = new CMethod[funcs.length];
 
     for (i = 0; i < funcs.length; i++) {
       methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
+      cmethods[i] = jMethodToCMethod(methods[i], cclass);
       if (funcs[i].getCls() == Function.FUNC_INIT) {
 	result.setInit(methods[i]);
       }
     }
     result.setMethods(methods);
+
+    cclass.close(CClassType.EMPTY, // interfaces
+                 null, // superclass
+                 fields,
+                 cmethods);
+    cclassTable.put(spec.getName(), cclass);
 
     parent = oldParent;
 
@@ -674,12 +779,20 @@ public class FEIRToSIR implements FEVisitor, Constants {
     List list;
     SIRPhasedFilter result = new SIRPhasedFilter(spec.getName());
     SIRStream oldParent = parent;
+    CClass owner = null;
+    CSourceClass cclass = new CSourceClass(owner, // owner
+                                           contextToReference(spec),
+                                           0, // modifiers
+                                           spec.getName(),
+                                           spec.getName(), // qualified
+                                           false); // deprecated
+    Hashtable fields = new Hashtable();
 
     debug("In visitPhasedFilterSpec\n");
 
     parent = result;
     
-    setStreamFields(result, spec.getVars());
+    setStreamFields(result, fields, spec.getVars());
     
     Function[] funcs = new Function[spec.getFuncs().size()];
     list = spec.getFuncs();
@@ -687,14 +800,22 @@ public class FEIRToSIR implements FEVisitor, Constants {
       funcs[i] = (Function) list.get(i);
     }
     JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
+    CMethod[] cmethods = new CMethod[funcs.length];
 
     for (i = 0; i < funcs.length; i++) {
       methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
+      cmethods[i] = jMethodToCMethod(methods[i], cclass);
       if (funcs[i].getCls() == Function.FUNC_INIT) {
 	result.setInit(methods[i]);
       }
     }
     result.setMethods(methods);
+
+    cclass.close(CClassType.EMPTY, // interfaces
+                 null, // superclass
+                 fields,
+                 cmethods);
+    cclassTable.put(spec.getName(), cclass);
 
     parent = oldParent;
 
@@ -971,11 +1092,17 @@ public class FEIRToSIR implements FEVisitor, Constants {
         JExpression jinit = null;
         if (init != null)
             jinit = (JExpression)init.accept(this);
-        defs.add(new JVariableDefinition(null,
-                                         at.dms.kjc.Constants.ACC_PUBLIC,
-                                         feirTypeToSirType(stmt.getType(i)),
-                                         stmt.getName(i),
-                                         jinit));
+        JVariableDefinition def =
+            new JVariableDefinition(null,
+                                    at.dms.kjc.Constants.ACC_PUBLIC,
+                                    feirTypeToSirType(stmt.getType(i)),
+                                    stmt.getName(i),
+                                    jinit);
+        defs.add(def);
+        // Repoint the "origin" in the symbol table at the variable
+        // definition.
+        symtab.registerVar(stmt.getName(i), stmt.getType(i), def,
+                           SymbolTable.KIND_LOCAL);
     }
     return new JVariableDeclarationStatement
         (null, // token reference

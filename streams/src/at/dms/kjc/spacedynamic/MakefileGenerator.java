@@ -265,7 +265,7 @@ public class MakefileGenerator
              "         gAUTOFLOPS, (250*gAUTOFLOPS)/steps);\n" +
              "}\n" +
              "\n");
-	/* not used anymore because we are outputing ascii
+	
         if (hasIO){
 	    // create preamble
 	    fw.write("if (FindFunctionInSymbolHash(gSymbolTable, \"dev_data_transmitter_init\",3) == NULL)\n");
@@ -304,7 +304,7 @@ public class MakefileGenerator
             fw.write("return dev_data_transmitter_init(\"st_port_to_file\", port,0,receive_device_descriptor);\n");
             fw.write("}");
 	}
-	*/
+	//
 	fw.write("\n{\n");	
 	
 	if (KjcOptions.magic_net)
@@ -316,29 +316,22 @@ public class MakefileGenerator
 	    if (frs.hasNext()) {
 		//include the file reader device
 		fw.write("\tlocal f_readerpath = malloc(strlen(streamit_home) + 30);\n");
-		fw.write("\tsprintf(f_readerpath, \"%s%s\", streamit_home, \"/include/from_file.bc\");\n");
+		fw.write("\tsprintf(f_readerpath, \"%s%s\", streamit_home, \"/include/from_file_raw.bc\");\n");
 		fw.write("\tinclude(f_readerpath);\n");
 	    }
 	    while (frs.hasNext()) {
 		FileReaderDevice dev  = (FileReaderDevice)frs.next();
-		fw.write("\tdev_from_file(\"" + dev.getFileName() +"\", " + 
-			 dev.getPort().getPortNumber() + ", " + 
-			 dev.getTypeCode() + ");\n");
+		fw.write("\tdev_from_file_raw(\"" + dev.getFileName() +
+			 "\", " + dev.getPort().getPortNumber() + ");\n");
 	    }
 	    //generate the code for the file writers
 	    Iterator fws = streamGraph.getFileState().getFileWriterDevs().iterator();
-	    if (fws.hasNext()) {
-		//include the file reader device
-		fw.write("\tlocal f_writerpath = malloc(strlen(streamit_home) + 30);\n");
-		fw.write("\tsprintf(f_writerpath, \"%s%s\", streamit_home, \"/include/to_file.bc\");\n");
-		fw.write("\tinclude(f_writerpath);\n");
-	    }
 	    while (fws.hasNext()) {
 		FileWriterDevice dev = (FileWriterDevice)fws.next();
 		int size = getTypeSize(dev.getType());
-		fw.write("\tdev_to_file(\"" + dev.getFileName() + "\", " + 
-			 dev.getPort().getPortNumber() + ", " +
-			 dev.getTypeCode() + ");\n");
+		fw.write("\tdev_st_port_to_file_size(\"" + dev.getFileName() +
+			 "\", " + size + ", " +
+			 dev.getPort().getPortNumber() + ");\n");
             }
 	}
 	

@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.7 2002-09-30 15:59:24 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.8 2002-09-30 21:22:11 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -39,7 +39,6 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// just check to see if the hash set has a mapping to something other than null.
 	return (this.filtersToLinearRepresentation.get(stream) != null);
     }
-
     /**
      * returns the mapping from stream to linear representation that we have. Returns
      * null if we do not have a mapping.
@@ -48,9 +47,30 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	checkRep();
 	return (LinearFilterRepresentation)this.filtersToLinearRepresentation.get(stream);
     }
-
-
-
+    
+    /** removes the specified SIRStream from the linear represention list. **/
+    public void removeLinearRepresentation(SIRStream stream) {
+	checkRep();
+	if (!this.hasLinearRepresentation(stream)) {
+	    throw new IllegalArgumentException("Don't know anything about " + stream);
+	}
+	this.filtersToLinearRepresentation.remove(stream);
+    }
+    /** adds a mapping from sir stream to linear filter rep. **/
+    public void addLinearRepresentation(SIRStream key, LinearFilterRepresentation rep) {
+	checkRep();
+	if ((key == null) || (rep == null)) {
+	    throw new IllegalArgumentException("null in add linear rep");
+	}
+	if (this.filtersToLinearRepresentation.containsKey(key)) {
+	    throw new IllegalArgumentException("tried to add key mapping.");
+	}
+	if (this.filtersToLinearRepresentation.containsValue(rep)) {
+	    throw new IllegalArgumentException("tried to add rep second time.");
+	}
+	this.filtersToLinearRepresentation.put(key,rep);
+	checkRep();
+    }
     
     /**
      * Main entry point -- searches the passed stream for

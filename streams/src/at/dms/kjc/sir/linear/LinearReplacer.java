@@ -19,8 +19,11 @@ import at.dms.compiler.*;
  *   push(3*peek(0) + 2*peek(1) + 1*peek(2) + 4);
  * }
  * </pre>
+ *
+ * It also can replace splitjoins and pipelines with linear representations
+ * with a single filter that computes the same function.
  * <p>
- * $Id: LinearReplacer.java,v 1.1 2002-09-30 15:59:24 aalamb Exp $
+ * $Id: LinearReplacer.java,v 1.2 2002-09-30 21:22:11 aalamb Exp $
  **/
 public class LinearReplacer extends EmptyStreamVisitor implements Constants{
     LinearAnalyzer linearityInformation;
@@ -31,30 +34,125 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
 	this.linearityInformation = lfa;
     }
 
-    public void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {}
-    public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter){}
-    public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter){}
-    public void preVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter){}
-    public void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter){}
-    public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter){}
-    public void visitFilter(SIRFilter self, SIRFilterIter iter){
-	// if we have a linear representation of this filter
-	if (linearityInformation.hasLinearRepresentation(self)) {
-	    // ensure that we have a literal for the number of pops that this filter does
-	    if (!(self.getPop() instanceof JIntLiteral)) {
-		throw new RuntimeException("Non integer literal pop count!!!");
-	    }
-	    // create a new work function that calculates the linear representation directly
-	    JMethodDeclaration newWork = makeDirectImplementation(linearityInformation.getLinearRepresentation(self),
-								  self.getInputType(),
-								  self.getOutputType(),
-								  ((JIntLiteral)self.getPop()).intValue());
-	    // set the work function of the filter to be the new work function we just made
-	    self.setWork(newWork);
+
+    public void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {makeReplacement(self, iter);}
+    public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter){makeReplacement(self, iter);}
+    public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter){makeReplacement(self, iter);}
+    public void visitFilter(SIRFilter self, SIRFilterIter iter){makeReplacement(self, iter);}
+
+    /**
+     * Visit a pipeline, splitjoin or filter, replacing them with a new filter
+     * that directly implements the linear representation that.
+     **/
+    private void makeReplacement(SIRStream self, SIRIterator iter) {
+	LinearPrinter.println("Creating linear replacement for " + self);
+	SIRContainer parent = self.getParent();
+	if (parent == null) {
+	    // we are done, this is the top level stream
+	    LinearPrinter.println(" aborting, top level stream: " + self);
+	    LinearPrinter.println(" stop.");
+	    return;
+	}
+	LinearPrinter.println(" parent: " + parent);
+	if (!this.linearityInformation.hasLinearRepresentation(self)) {
+	    LinearPrinter.println(" no linear information about: " + self);
+	    LinearPrinter.println(" stop.");
+	    return;
 	}
 	
+	// generate a new implementation as a single filter
+	LinearFilterRepresentation linearRep;
+	linearRep = this.linearityInformation.getLinearRepresentation(self);
+	SIRStream newImplementation;
+	newImplementation = makeEfficientImplementation(parent, self, linearRep);
+
+	// remove the mappings from all of the children of this stream in our linearity information
+	// first, we need to find them all, and then we need to remove them all
+	HashSet oldKeys = getAllChildren(self);
+	// now, remove the keys from the linear representation (self is also a "child")
+	Iterator keyIter = oldKeys.iterator();
+	while(keyIter.hasNext()) {
+	    SIRStream currentKid = (SIRStream)keyIter.next();
+	    LinearPrinter.println(" removing child: " + currentKid);
+	    this.linearityInformation.removeLinearRepresentation(currentKid);
+	}
+	// all done.
+
+	// do the acutal replacment of the current pipeline with the new implementation
+	parent.replace(self, newImplementation);
+	// add a mapping from the new filter to the old linear rep (because it still computes the same thing)
+	this.linearityInformation.addLinearRepresentation(newImplementation, linearRep); // add same old linear rep
     }
 
+    /**
+     * Creates a filter that has a work function that directly implements
+     * the linear representation that is passed in.<p>
+     *
+     * Eventually, this will determine (by some yet to be determined method) the
+     * most efficient implementation and then create an IR structure that implements
+     * that. For now, we always return the direct matrix multply implementation.
+     **/
+    private SIRStream makeEfficientImplementation(SIRContainer parent,
+							 SIRStream oldStream,
+							 LinearFilterRepresentation linearRep) {
+	// if we have a linear representation of this filter
+	if (!linearityInformation.hasLinearRepresentation(oldStream)) {
+	    throw new RuntimeException("no linear info");
+	}
+
+	// create a new work function that calculates the linear representation directly
+	JMethodDeclaration newWork = makeDirectWork(linearRep,
+						    oldStream.getInputType(),
+						    oldStream.getOutputType(),
+						    linearRep.getPopCount());
+	JMethodDeclaration newInit = makeEmptyInit();
+	
+	// create a new filter with the new work and init functions
+	
+	SIRFilter newFilter = new SIRFilter("Linear" + oldStream.getIdent());
+	newFilter.setParent(parent);
+	newFilter.setWork(newWork);
+	newFilter.setInit(newInit);
+	newFilter.setPeek(linearRep.getPeekCount());
+	newFilter.setPop (linearRep.getPopCount());
+	newFilter.setPush(linearRep.getPushCount());
+	newFilter.setInputType(oldStream.getInputType());
+	newFilter.setOutputType(oldStream.getOutputType());
+
+	LinearPrinter.println(" created new filter: " + newFilter);
+	return newFilter;
+    }
+
+
+    /**
+     * Gets all children of the specified stream.
+     **/
+    private HashSet getAllChildren(SIRStream self) {
+	// basically, push a new visitor through which keeps track of the
+	LinearChildCounter kidCounter = new LinearChildCounter();
+	// stuff the counter through the stream
+	IterFactory.createIter(self).accept(kidCounter);
+	return kidCounter.getKids();
+	
+    }
+    /** inner class to get a list of all the children streams. **/
+    class LinearChildCounter extends EmptyStreamVisitor {
+	HashSet kids = new HashSet();
+	public HashSet getKids() {return this.kids;}
+	public void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {kids.add(self);}
+	public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter){kids.add(self);}
+	public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter){kids.add(self);}
+	public void visitFilter(SIRFilter self, SIRFilterIter iter){kids.add(self);}
+    }
+
+    
+
+
+
+
+    
+
+    
 
     /**
      * Create a method that computes the function represented in the
@@ -72,10 +170,10 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
      * ...
      * </pre>
      **/
-    JMethodDeclaration makeDirectImplementation(LinearFilterRepresentation representation,
-						CType inputType,
-						CType outputType,
-						int popCount) {
+    JMethodDeclaration makeDirectWork(LinearFilterRepresentation representation,
+				      CType inputType,
+				      CType outputType,
+				      int popCount) {
 	// generate the push expressions that will make up the body of the
 	// new work method.
 	Vector pushStatements = makePushStatementVector(representation, inputType, outputType);
@@ -232,5 +330,18 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
 	return returnVector;
     }
     
+    /** creates an init function which does nothing. **/
+    private JMethodDeclaration makeEmptyInit() {
+	return new JMethodDeclaration(null, // token reference
+				      ACC_PUBLIC,//modifiers
+				      CStdType.Void, // returnType
+				      "init",
+				      new JFormalParameter[0], // params
+				      new CClassType[0], // exceptions
+				      new JBlock(), // body
+				      null, // javadoc
+				      new JavaStyleComment[0]); // comments
+    }
+
     
 }

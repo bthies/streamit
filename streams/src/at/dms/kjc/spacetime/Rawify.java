@@ -97,11 +97,11 @@ public class Rawify
 		    //create the switch code to perform the splitting
 		    splitOutputTrace((OutputTraceNode)traceNode, init, false);
 		    //generate the DRAM command
-		    generateOutputDRAMCommands((OutputTraceNode)traceNode, init, false);
+		    outputDRAMCommands((OutputTraceNode)traceNode, init, false);
 		    //now create the primepump code
 		    if (init) {
 			splitOutputTrace((OutputTraceNode)traceNode, false, true);
-			generateOutputDRAMCommands((OutputTraceNode)traceNode, false, true);
+			outputDRAMCommands((OutputTraceNode)traceNode, false, true);
 		    }
 		}
 		//get the next tracenode
@@ -154,7 +154,7 @@ public class Rawify
 							      writeBytes, destBuffer, true);
     }
 
-    private static void generateOutputDRAMCommands(OutputTraceNode output, boolean init, boolean primepump) 
+    private static void outputDRAMCommands(OutputTraceNode output, boolean init, boolean primepump) 
     {
 	FilterTraceNode filter = (FilterTraceNode)output.getPrevious();
 	//don't do anything for a redundant buffer
@@ -164,11 +164,26 @@ public class Rawify
 	
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
 	//calculate the number of items sent
-	int items = filterInfo.totalItemsSent(init, primepump), 
-	    iterations, typeSize;
-	//nothing to do for this stage
+	int items = filterInfo.totalItemsSent(init, primepump);
+	
+	if (primepump)
+	    items -= filterInfo.primePumpItemsNotConsumed();
+	
+	generateOutputDRAMCommands(output, init, primepump, filter, items);
+	//take care of the primepump items not consumed in the primepump stage
+	//place them in the steady buffer.
+	if (primepump)
+	    generateOutputDRAMCommands(output, init, primepump, filter, 
+				       filterInfo.primePumpItemsNotConsumed());
+    }
+    
+    private static void generateOutputDRAMCommands(OutputTraceNode output, boolean init, 
+					      boolean primepump, FilterTraceNode filter,
+					      int items)
+    {
 	if (items == 0)
 	    return;
+	int iterations, typeSize;
 
 	typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
 	

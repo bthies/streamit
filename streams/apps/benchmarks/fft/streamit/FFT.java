@@ -102,7 +102,7 @@ class FFTKernel extends Pipeline {
         this.add(new SplitJoin() {
                 public void init() {
                     this.setSplitter(WEIGHTED_ROUND_ROBIN((int)N/2, (int)N/2));
-                    for (int i=0; i<N; i++)
+                    for (int i=0; i<2; i++)
                         this.add(new SplitJoin() {
                                 public void init() {
                                     this.setSplitter(ROUND_ROBIN());

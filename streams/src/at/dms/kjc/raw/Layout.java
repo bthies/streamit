@@ -21,35 +21,51 @@ import java.util.Iterator;
  */
 public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
-    private static HashMap SIRassignment;
+    private  HashMap SIRassignment;
     /* coordinate -> flatnode */
-    private static HashMap tileAssignment;
-    private static HashSet assigned;
+    private  HashMap tileAssignment;
+    private  HashSet assigned;
     //set of all the identity filters not mapped to tiles
-    public static HashSet identities;
-    private static Coordinate[][] coordinates;
-    private static BufferedReader inputBuffer;
-    private static Random random;
-    private static FlatNode toplevel;
+    private   HashSet identities;
+    private  Coordinate[][] coordinates;
+    private  BufferedReader inputBuffer;
+    private  Random random;
+    private  FlatNode toplevel;
     /* hashset of Flatnodes representing all the joiners
        that are mapped to tiles */
-    public static HashSet joiners;
+    private  HashSet joiners;
     
-    public static int MINTEMPITERATIONS = 200;
+    public  static int MINTEMPITERATIONS = 200;
     public static int MAXTEMPITERATIONS = 200;
     public static int ANNEALITERATIONS = 10000;
     public static double TFACTR = 0.9;
 
-    private static FileWriter filew;
-        
+    private FileWriter filew;
+    
+    private static Layout layout;
+
     public Layout() 
     {
 	joiners = new HashSet();
     }
     
+
+    //returns the state of the layout
+    public static Layout getLayout() 
+    {
+	return layout;
+    }
+    
+    //sets the state of the layout
+    public static void setLayout(Layout lo) 
+    {
+	Layout.layout = lo;
+    }
+    
+
     private static void init(FlatNode top) 
     {
-	toplevel = top;
+	layout.toplevel = top;
 	int rows = RawBackend.rawRows;
 	int columns = RawBackend.rawColumns;
 		
@@ -62,24 +78,24 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    columns++;
 	}
 	
-	coordinates  =
+	layout.coordinates  =
 	    new Coordinate[rows][columns];
 	for (int row = 0; row < rows; row++)
 	    for (int column = 0; column < columns; column++)
-		coordinates[row][column] = new Coordinate(row, column);
+		layout.coordinates[row][column] = new Coordinate(row, column);
 	
-	SIRassignment = new HashMap();
-	tileAssignment = new HashMap();
-	assigned = new HashSet();
-	identities = new HashSet();
+	layout.SIRassignment = new HashMap();
+	layout.tileAssignment = new HashMap();
+	layout.assigned = new HashSet();
+	layout.identities = new HashSet();
 
 	top.accept(new Layout(), new HashSet(), false);
 	
-	System.out.println("Tiles assigned: " + assigned.size());
+	System.out.println("Tiles layout.assigned: " + layout.assigned.size());
 
-	if (assigned.size() > 
+	if (layout.assigned.size() > 
 	    (RawBackend.rawRows * RawBackend.rawColumns)) {
-	    System.err.println("\nLAYOUT ERROR: Need " + assigned.size() +
+	    System.err.println("\nLAYOUT ERROR: Need " + layout.assigned.size() +
 			       " tiles, have " + 
 			       (RawBackend.rawRows * RawBackend.rawColumns) +
 			       " tiles.");
@@ -87,39 +103,50 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	}
     }
 
-    public static int getTilesAssigned() {
-	return assigned.size();
+    public static  int getTilesAssigned() {
+	return layout.assigned.size();
     }
 
-    public static boolean isAssigned(FlatNode node) {
-	return assigned.contains(node);
+    public static  boolean isAssigned(FlatNode node) {
+	return layout.assigned.contains(node);
     }
     
     public static Set getTiles() {
-	return tileAssignment.keySet();
+	return layout.tileAssignment.keySet();
     }
+    
+    public static HashSet getJoiners() 
+    {
+	return layout.joiners;
+    }
+    
+    public static HashSet getIdentities() 
+    {
+	return layout.identities;
+    }
+    
 
     /**
-     * Returns the tile number assignment for <str>, or null if none has been assigned.
+     * Returns the tile number assignment for <str>, or null if none has been layout.assigned.
      */
     public static Coordinate getTile(SIROperator str) 
     {
-	if (SIRassignment == null) return null;
-	return (Coordinate)SIRassignment.get(str);
+	if (layout.SIRassignment == null) return null;
+	return (Coordinate)layout.SIRassignment.get(str);
     }
     
     public static Coordinate getTile(FlatNode str) 
     {
-	if (SIRassignment == null){
+	if (layout.SIRassignment == null){
 	    return null;
 	}
-	Coordinate ret = (Coordinate)SIRassignment.get(str.contents);
+	Coordinate ret = (Coordinate)layout.SIRassignment.get(str.contents);
 	return ret;
     }
 
     public static Coordinate getTile(int row, int column) 
     {
-	return coordinates[row][column];
+	return layout.coordinates[row][column];
     }
 
     public static Coordinate getTile(int tileNumber) 
@@ -127,7 +154,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	if (!(tileNumber / RawBackend.rawColumns < RawBackend.rawRows))
 	    Utils.fail("tile number too high");
 	
-	return coordinates[tileNumber / RawBackend.rawColumns]
+	return layout.coordinates[tileNumber / RawBackend.rawColumns]
 	    [tileNumber % RawBackend.rawColumns];
     }
 	    
@@ -197,18 +224,18 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     
     public static FlatNode getNode(Coordinate coord) 
     {
-	return (FlatNode)tileAssignment.get(coord);
+	return (FlatNode)layout.tileAssignment.get(coord);
     }
     
     
     private static void assign(Coordinate coord, FlatNode node) 
     {
 	if (node == null) {
-	    tileAssignment.remove(coord);
+	    layout.tileAssignment.remove(coord);
 	    return;
 	}
-	tileAssignment.put(coord, node);
-	SIRassignment.put(node.contents, coord);
+	layout.tileAssignment.put(coord, node);
+	layout.SIRassignment.put(node.contents, coord);
     }
 
     private static void assign(HashMap sir, HashMap tile, Coordinate coord, FlatNode node) 
@@ -224,6 +251,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
     public static void simAnnealAssign(FlatNode node) 
     {
+	layout = new Layout();
 	System.out.println("Simulated Annealing Assignment");
 	int nsucc =0, j = 0;
 	double currentCost = 0.0, minCost = 0.0;
@@ -232,10 +260,10 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
 	try {
 	    init(node);
-	    random = new Random(17);
+	    layout.random = new Random(17);
 	    //random placement
 	    randomPlacement();
-	    filew = new FileWriter("simanneal.out");
+	    layout.filew = new FileWriter("simanneal.out");
 	    int configuration = 0;
 
 	    currentCost = placementCost();
@@ -247,8 +275,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    }
 	    //as a little hack, we will cache the layout with the minimum cost
 	    //these two hashmaps store this layout
-	    HashMap sirMin = (HashMap)SIRassignment.clone();
-	    HashMap tileMin = (HashMap)tileAssignment.clone();
+	    HashMap sirMin = (HashMap)layout.SIRassignment.clone();
+	    HashMap tileMin = (HashMap)layout.tileAssignment.clone();
 	    minCost = currentCost;
 	    
 	    if (currentCost == 0.0) {
@@ -265,7 +293,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    nsucc = 0;
 		    for (k = 0; k < nover; k++) {
 			if (perturbConfiguration(t)) {
-			    filew.write(configuration++ + " " + placementCost() + "\n");
+			    layout.filew.write(configuration++ + " " + placementCost() + "\n");
 			    nsucc++;
 			}
 		
@@ -275,8 +303,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 			if (currentCost < minCost) {
 			    minCost = currentCost;
 			    //save the layout with the minimum cost
-		        sirMin = (HashMap)SIRassignment.clone();
-			tileMin = (HashMap)tileAssignment.clone();
+		        sirMin = (HashMap)layout.SIRassignment.clone();
+			tileMin = (HashMap)layout.tileAssignment.clone();
 			}
 			if (placementCost() == 0.0)
 			    break;
@@ -301,11 +329,11 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 			       " Min Cost : " + minCost + 
 			       " in  " + j + " iterations.");
 	    if (minCost < currentCost) {
-		SIRassignment = sirMin;
-		tileAssignment = tileMin;
+		layout.SIRassignment = sirMin;
+		layout.tileAssignment = tileMin;
 	    }
 	    
-	    filew.close();
+	    layout.filew.close();
 	}
 	catch (Exception e) {
 	    e.printStackTrace();
@@ -318,8 +346,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
      {
  	double T = 1.0;
  	int total = 0, accepted = 0;
- 	HashMap sirInit  = (HashMap)SIRassignment.clone();
- 	HashMap tileInit = (HashMap)tileAssignment.clone();
+ 	HashMap sirInit  = (HashMap)layout.SIRassignment.clone();
+ 	HashMap tileInit = (HashMap)layout.tileAssignment.clone();
 	
  	for (int i = 0; i < MAXTEMPITERATIONS; i++) {
  	    T = 2.0 * T;
@@ -327,8 +355,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    accepted = 0;
 	    for (int j = 0; j < 100; j++) {
 		//c_old <- c_init
-		SIRassignment = sirInit;
-		tileAssignment = tileInit;
+		layout.SIRassignment = sirInit;
+		layout.tileAssignment = tileInit;
 		if (perturbConfiguration(T))
 		    accepted ++;
 		total++;
@@ -337,8 +365,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
  		break;
  	}
  	//c_old <- c_init
- 	SIRassignment = sirInit;
- 	tileAssignment = tileInit;
+ 	layout.SIRassignment = sirInit;
+ 	layout.tileAssignment = tileInit;
  	return T;
      }
 
@@ -346,8 +374,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
      {
  	double T = 1.0;
  	int total = 0, accepted = 0;
- 	HashMap sirInit  = (HashMap)SIRassignment.clone();
- 	HashMap tileInit = (HashMap)tileAssignment.clone();
+ 	HashMap sirInit  = (HashMap)layout.SIRassignment.clone();
+ 	HashMap tileInit = (HashMap)layout.tileAssignment.clone();
 	
  	for (int i = 0; i < MINTEMPITERATIONS; i++) {
  	    T = 0.5 * T;
@@ -355,8 +383,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    accepted = 0;
 	    for (int j = 0; j < 100; j++) {
 		//c_old <- c_init
-		SIRassignment = sirInit;
-		tileAssignment = tileInit;
+		layout.SIRassignment = sirInit;
+		layout.tileAssignment = tileInit;
 		if (perturbConfiguration(T))
 		    accepted ++;
 		total++;
@@ -365,8 +393,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
  		break;
  	}
  	//c_old <- c_init
- 	SIRassignment = sirInit;
- 	tileAssignment = tileInit;
+ 	layout.SIRassignment = sirInit;
+ 	layout.tileAssignment = tileInit;
  	return T;
      }
 
@@ -385,18 +413,18 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    //assign the file streams to the added column starting at the top
 	    //row
 	    while (frs.hasNext()) {
-		assign(coordinates[row][RawBackend.rawColumns], 
+		assign(layout.coordinates[row][RawBackend.rawColumns], 
  		       (FlatNode)frs.next());
 		row++;
 	    }
 	    while (fws.hasNext()) {
-		assign(coordinates[row][RawBackend.rawColumns],
+		assign(layout.coordinates[row][RawBackend.rawColumns],
 		       (FlatNode)fws.next());
 		row++;
 	    }
 	}
-	//Iterator nodes = assigned.iterator();
-	ListIterator dfTraversal = DFTraversal.getDFTraversal(toplevel).listIterator(0);
+	//Iterator nodes = layout.assigned.iterator();
+	ListIterator dfTraversal = DFTraversal.getDFTraversal(layout.toplevel).listIterator(0);
 	int row = 0;
 	int column = 0;
 
@@ -406,7 +434,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    if (!dfTraversal.hasNext())
 			break;
 		    FlatNode node = (FlatNode)dfTraversal.next();
-		    if (!assigned.contains(node))
+		    if (!layout.assigned.contains(node))
 			continue;
 		    assign(getTile(row, column), node);
 		    column++;
@@ -417,7 +445,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    if (!dfTraversal.hasNext())
 			break; 
 		    FlatNode node = (FlatNode)dfTraversal.next();
-		    if (!assigned.contains(node))
+		    if (!layout.assigned.contains(node))
 			continue;
 		    assign(getTile(row, column), node); 
 		    column--;
@@ -433,7 +461,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     
     private static double placementCost() 
     {
-	HashSet nodes = (HashSet)assigned.clone();
+	HashSet nodes = (HashSet)layout.assigned.clone();
 	RawBackend.addAll(nodes, FileVisitor.fileReaders);
 	
 	Iterator nodesIt = nodes.iterator();
@@ -455,7 +483,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    FlatNode dest = (FlatNode)downstream.next();
 	    Coordinate[] route = 
 		(Coordinate[])Router.getRoute(node, dest).toArray(new Coordinate[1]);
-	    //find the number assigned on the path
+	    //find the number layout.assigned on the path
 	    double numAssigned = 0.0;
 	    for (int i = 1; i < route.length - 1; i++) {
 		if (getNode(route[i]) != null) 
@@ -544,7 +572,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	//DECIDE if we should keep the change
 	double e_new = placementCost();
 	double P = 1.0;
-	double R = random.nextDouble();
+	double R = layout.random.nextDouble();
 
 	if (e_new >= e_old)
 	    P = Math.exp((((double)e_old) - ((double)e_new)) / T);
@@ -566,7 +594,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     
     private static int getRandom() 
     {
-	return random.nextInt(RawBackend.rawRows*
+	return layout.random.nextInt(RawBackend.rawRows*
 			      RawBackend.rawColumns);
     }
     
@@ -594,7 +622,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    }
 	}
 	buf.append("edge[color = red,arrowhead = normal, arrowsize = 2.0, style = bold];\n");
-	Iterator it = tileAssignment.values().iterator();
+	Iterator it = layout.tileAssignment.values().iterator();
 	while(it.hasNext()) {
 	    FlatNode node = (FlatNode) it.next();
 	    if (FileVisitor.fileNodes.contains(node))
@@ -655,14 +683,14 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    return new HashSet();
 	
 	if (node.contents instanceof SIRFilter) {
-	    if (identities.contains(node))
+	    if (layout.identities.contains(node))
 		return getDownStreamHelper(node.edges[0]);
 	    HashSet ret = new HashSet();
 	    ret.add(node);
 	    return ret;
 	}
 	else if (node.contents instanceof SIRJoiner) {
-	    if (joiners.contains(node)) {
+	    if (layout.joiners.contains(node)) {
 		HashSet ret = new HashSet();
 		ret.add(node);
 		return ret;
@@ -716,10 +744,11 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     
     public static void handAssign(FlatNode node) 
     {
+	layout = new Layout();
 	init(node);
 	System.out.println("Enter desired tile for each filter...");
-	inputBuffer = new BufferedReader(new InputStreamReader(System.in));
-	Iterator keys = assigned.iterator();
+	layout.inputBuffer = new BufferedReader(new InputStreamReader(System.in));
+	Iterator keys = layout.assigned.iterator();
 	while (keys.hasNext()) {
 	    handAssignNode((FlatNode)keys.next());
 	}
@@ -737,7 +766,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		
 		//get row
 		System.out.print(node.getName() + "\nRow: ");
-		row = Integer.valueOf(inputBuffer.readLine());
+		row = Integer.valueOf(layout.inputBuffer.readLine());
 		if (row.intValue() < 0) {
 		    System.err.println("Negative Value: Try again.");
 		    continue;
@@ -748,7 +777,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		}
 		//get column
 		System.out.print("Column: ");
-		column = Integer.valueOf(inputBuffer.readLine());
+		column = Integer.valueOf(layout.inputBuffer.readLine());
 		if (column.intValue() < 0) {
 		    System.err.println("Negative Value: Try again.");
 		    continue;
@@ -757,8 +786,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    System.err.println("Value Too Large: Try again.");
 		    continue;
 		}
-		//check if this tile has been already assigned
-		Iterator it = SIRassignment.values().iterator();
+		//check if this tile has been already layout.assigned
+		Iterator it = layout.SIRassignment.values().iterator();
 		boolean alreadyAssigned = false;
 		while(it.hasNext()) {
 		    Coordinate current = (Coordinate)it.next();
@@ -785,12 +814,12 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     {
 	if (node.contents instanceof SIRFilter &&
 	    ! (FileVisitor.fileNodes.contains(node))) {
-	    //do not map identities, but add them to the identities set
+	    //do not map layout.identities, but add them to the layout.identities set
 	    if (node.contents instanceof SIRIdentity) {
-		identities.add(node);
+		layout.identities.add(node);
 		return;
 	    }
-	    assigned.add(node);
+	    layout.assigned.add(node);
 	    return;
 	}
 	if (node.contents instanceof SIRJoiner) {
@@ -802,8 +831,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		//do not assign the joiner if it is a null joiner
 		for (int i = 0; i < node.inputs;i++) {
 		    if (node.incomingWeights[i] != 0) {
-			joiners.add(node);
-			assigned.add(node);
+			layout.joiners.add(node);
+			layout.assigned.add(node);
 			return;
 		    }
 		} 

@@ -362,7 +362,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     {
 	//this is a mapped joiner, we do not want to generate code for
 	//joiners in the decoupled case
-	if (Layout.joiners.contains(node) && !KjcOptions.decoupled) {
+	if (Layout.getJoiners().contains(node) && !KjcOptions.decoupled) {
 	    realTiles.add(Layout.getTile(node.contents));
 	    joinerCode(node);
 	    //After done with node drops its contents for garbage collection

@@ -69,6 +69,8 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	//constant prop propagates the peek buffer index
 	new VarDeclRaiser().raiseVars(filter);
 
+	Layout oldLayout = Layout.getLayout();
+	
 	// layout the components (assign filters to tiles)	
 	Layout.simAnnealAssign(top);
 
@@ -135,6 +137,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	KjcOptions.decoupled = oldDecoupledValue;
 	KjcOptions.magic_net = oldMagicNetValue;
 	KjcOptions.ratematch = oldRateMatchValue;
+	Layout.setLayout(oldLayout);
 	return work;
     }
 

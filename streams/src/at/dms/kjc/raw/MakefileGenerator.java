@@ -127,7 +127,7 @@ public class MakefileGenerator
     
     //remove all tiles mapped to joiners from the coordinate hashset *tiles*
     private static void removeJoiners(HashSet tiles) {
-	Iterator it = Layout.joiners.iterator();
+	Iterator it = Layout.getJoiners().iterator();
 	while (it.hasNext()) {
 	    tiles.remove(Layout.getTile((FlatNode)it.next()));
 	}

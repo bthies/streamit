@@ -31,7 +31,7 @@ public class JoinerSimulator
 	schedules = new HashMap();
 	buffers = new HashMap();
 		
-	Iterator joiners = Layout.joiners.iterator();
+	Iterator joiners = Layout.getJoiners().iterator();
 	while (joiners.hasNext()) {
 	    FlatNode node = (FlatNode)joiners.next();
 	    current = node;

@@ -23,7 +23,6 @@ import at.dms.kjc.sir.lowering.partition.WorkEstimate;
  */
 public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 {
-    
     private HashMap switchSchedules;
     
     //the current joiner code we are working on (steady or init)
@@ -51,6 +50,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     //we added to it...FIFO
     private LinkedList pendingQueue;
     
+    private WorkEstimatesMap workEstimatesMap;
 
     public void simulate(FlatNode top) 
     {
@@ -70,6 +70,8 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 	HashMap initExecutionCounts = (HashMap)RawBackend.initExecutionCounts.clone();
 	HashMap steadyExecutionCounts = (HashMap)RawBackend.steadyExecutionCounts.clone();
 
+	//get the workestimates and put them in the hashmap
+	WorkEstimatesMap estimates = new WorkEstimatesMap(top);
 
 	joinerCode = initJoinerCode;
 	
@@ -78,7 +80,9 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 	
 	//the init simulation stays the same, based on a furthest downstream will fire
 	//one will notice all of the if (initSimulation) cases in the functions
-	initSchedules = (new WorkBasedSimulator(top, true)).goInit(initExecutionCounts, counters, null);
+	initSchedules = 
+	    (new WorkBasedSimulator(top, estimates, true)).
+	    goInit(initExecutionCounts, counters, null);
 	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");
 	
@@ -91,7 +95,9 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 
 	//now run the simulator based on the work estimation
 	joinerCode = steadyJoinerCode;
-	steadySchedules = (new WorkBasedSimulator(top, false)).go(steadyExecutionCounts, counters, null);
+	steadySchedules = 
+	    (new WorkBasedSimulator(top, estimates, false)).
+	    go(steadyExecutionCounts, counters, null);
 	testExecutionCounts(steadyExecutionCounts);
 	System.out.println("End of steady-state simulation");
     }
@@ -101,11 +107,12 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     }
     
 
-    private WorkBasedSimulator(FlatNode top, boolean init) 
+    private WorkBasedSimulator(FlatNode top, WorkEstimatesMap estimates, boolean init) 
     {
 	switchSchedules = new HashMap();
 	currentJoinerCode = new HashMap();
 	toplevel = top;
+	workEstimatesMap = estimates;
 	//find the bottom (last) filter, used later to decide
 	//execution order
 	bottom = null;
@@ -145,7 +152,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     private void callInitPaths(SimulationCounter counters) 
     {
 	//find all the joiners that are immediately contained in a FeedbackLoop
-	Iterator joiners = Layout.joiners.iterator();
+	Iterator joiners = Layout.getJoiners().iterator();
 	//clone the joiner schedules
 	
 	FlatNode joiner;
@@ -503,11 +510,9 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     //get the work estimation for a filter or joiner, a joiner defaults to 1 work cycle
     private int getWorkEstimate(FlatNode node)
     {
-	if (node.isFilter())
-	    return WorkEstimate.getWorkEstimate((SIRFilter)node.contents).getWork((SIRFilter)node.contents);
-	else if (node.isJoiner())
-	    return 1;
-	
+	if (node.isFilter() || node.isJoiner())
+	    return workEstimatesMap.getEstimate(node);
+
 	Utils.fail("Trying to get work estimation for non-filter/joiner");
 	return -1;
     }
@@ -570,6 +575,8 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 	while (destsIt.hasNext()) {
  	    FlatNode dest = (FlatNode)destsIt.next();
 	    //	    System.out.println("Dest: " + dest.getName());
+	    if (fire == null)
+		System.out.println("Yup Fire is null");
 	    if (dest == null) 
 		System.out.println("Yup dest is null");
  	    Coordinate[] hops = 
@@ -837,7 +844,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 	//add to its buffer and
 	//create a list and add it
 	if (node.contents instanceof SIRFilter) {
-	    if (Layout.identities.contains(node)) {
+	    if (Layout.getIdentities().contains(node)) {
 		return getDestinationHelper(node.edges[0], counters,
 					    joinerBuffer, node);
 	    }
@@ -852,8 +859,8 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 	else if (node.contents instanceof SIRJoiner) {
 	    //just pass thru joiners except the joiners that are the 
 	    //last joiner in a joiner group
-	    //this list is kept in the layout class
-	    if (Layout.joiners.contains(node)) {
+	    //this list is kept in the Layout class
+	    if (Layout.getJoiners().contains(node)) {
 
 		//move this stuff!!!
 		if (initSimulation) {
@@ -972,7 +979,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     {
 	if (node == null)
 	    return false;
-	if (Layout.identities.contains(node))
+	if (Layout.getIdentities().contains(node))
 	    return false;
 
 	if (node.contents instanceof SIRFilter) {
@@ -1002,7 +1009,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 	else if (node.contents instanceof SIRJoiner) {
 	    //first of all, a joiner can only fire it is the most downstream
 	    //joiner in a joiner group
-	    if (!Layout.joiners.contains(node))
+	    if (!Layout.getJoiners().contains(node))
 		return false;
 	    //determine if the joiner can receive and buffer data
 	    //this does not count as an execution of the joiner

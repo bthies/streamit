@@ -26,7 +26,10 @@ public class Router {
 	toCoord = Layout.getTile(to);
 	
 	route.add(Layout.getTile(from));
-	
+
+	if (fromCoord== null)
+	    System.out.println("From Coordinate null");
+
 	int row = fromCoord.getRow();
 	int column = fromCoord.getColumn();
 	//For now just route the packets in a stupid manner

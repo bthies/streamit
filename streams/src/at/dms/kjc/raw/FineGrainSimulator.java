@@ -125,7 +125,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     private void callInitPaths(SimulationCounter counters) 
     {
 	//find all the joiners that are immediately contained in a FeedbackLoop
-	Iterator joiners = Layout.joiners.iterator();
+	Iterator joiners = Layout.getJoiners().iterator();
 	//clone the joiner schedules
 	
 	FlatNode joiner;
@@ -528,7 +528,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	//add to its buffer and
 	//create a list and add it
 	if (node.contents instanceof SIRFilter) {
-	    if (Layout.identities.contains(node)) {
+	    if (Layout.getIdentities().contains(node)) {
 		return getDestinationHelper(node.edges[0], counters,
 					    joinerBuffer, node);
 	    }
@@ -541,7 +541,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    //just pass thru joiners except the joiners that are the 
 	    //last joiner in a joiner group
 	    //this list is kept in the layout class
-	    if (Layout.joiners.contains(node)) {
+	    if (Layout.getJoiners().contains(node)) {
 		joinerBuffer = joinerBuffer + getJoinerBuffer(node, previous);
 		counters.addJoinerReceiveBuffer(node, joinerBuffer);
 		counters.incrementBufferCount(node);
@@ -653,7 +653,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     {
 	if (node == null)
 	    return false;
-	if (Layout.identities.contains(node))
+	if (Layout.getIdentities().contains(node))
 	    return false;
 
 	if (node.contents instanceof SIRFilter) {
@@ -683,7 +683,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	else if (node.contents instanceof SIRJoiner) {
 	    //first of all, a joiner can only fire it is the most downstream
 	    //joiner in a joiner group
-	    if (!Layout.joiners.contains(node))
+	    if (!Layout.getJoiners().contains(node))
 		return false;
 	    //determine if the joiner can receive and buffer data
 	    //this does not count as an execution of the joiner

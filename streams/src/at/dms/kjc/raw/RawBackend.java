@@ -152,6 +152,10 @@ public class RawBackend {
 	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createIter(str));
 	}
 
+	//SIRPrinter printer1 = new SIRPrinter();
+	//IterFactory.createIter(str).accept(printer1);
+	//printer1.close();
+
        	System.out.println("Flattener Begin...");
 	executionCounts = SIRScheduler.getExecutionCounts(str);
 	PartitionDot.printScheduleGraph(str, "schedule.dot", executionCounts);
@@ -167,6 +171,7 @@ public class RawBackend {
 
 	// layout the components (assign filters to tiles)	
 	Layout.simAnnealAssign(graphFlattener.top);
+
 	//Layout.handAssign(graphFlattener.top);
 	
 	//Layout.handAssign(graphFlattener.top);
@@ -223,9 +228,7 @@ public class RawBackend {
 	TileCode.generateCode(graphFlattener.top);
 	System.out.println("Tile Code End.");
 
-	//	SIRPrinter printer1 = new SIRPrinter();
-	//IterFactory.createIter(str).accept(printer1);
-	//printer1.close();
+
 
 	//generate the makefiles
 	System.out.println("Creating Makefile.");

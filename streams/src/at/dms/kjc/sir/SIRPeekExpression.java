@@ -59,6 +59,7 @@ public class SIRPeekExpression extends JExpression {
      * @return the type of this expression
      */
     public CType getType() {
+	System.out.println("Tape Type: " + tapeType.toString());
         if (tapeType != null)
             return tapeType;
 	return CStdType.Void;

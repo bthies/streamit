@@ -50,7 +50,7 @@ public class SchedSplitJoin extends SchedStream
         // make sure that you have at most one NULL join and split
         // if both are NULL then the children are disjoint and the
         // scheduler won't be able to handle this anyway
-        ASSERT (joinType == null || (joinType.type != joinType.NULL || splitType.type != splitType.NULL));
+        ASSERT (joinType == null || (joinType.type != SchedJoinType.NULL || splitType.type != SchedSplitType.NULL));
     }
 
     public SchedSplitType getSplitType ()
@@ -67,7 +67,7 @@ public class SchedSplitJoin extends SchedStream
         // make sure that you have at most one NULL join and split
         // if both are NULL then the children are disjoint and the
         // scheduler won't be able to handle this anyway
-        ASSERT (splitType == null || (joinType.type != joinType.NULL || splitType.type != splitType.NULL));
+        ASSERT (splitType == null || (joinType.type != SchedJoinType.NULL || splitType.type != SchedSplitType.NULL));
     }
 
     public SchedJoinType getJoinType ()

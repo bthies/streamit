@@ -2,7 +2,6 @@ package streamit.scheduler1;
 
 import java.util.*;
 import java.io.PrintStream;
-import streamit.*;
 
 public abstract class Scheduler extends streamit.misc.DestroyedClass
 {

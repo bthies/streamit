@@ -1,8 +1,6 @@
 package streamit.scheduler1.simple;
 
 import streamit.scheduler1.*;
-import java.util.*;
-import java.math.BigInteger;
 
 public class SimpleHierarchicalScheduler extends Scheduler
 {

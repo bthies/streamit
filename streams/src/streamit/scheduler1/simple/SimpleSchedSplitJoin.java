@@ -1,7 +1,6 @@
 package streamit.scheduler1.simple;
 
 import streamit.scheduler1.SchedSplitJoin;
-import streamit.scheduler1.SchedStream;
 import streamit.scheduler1.simple.SimpleSchedStream;
 import streamit.scheduler1.SchedRepSchedule;
 

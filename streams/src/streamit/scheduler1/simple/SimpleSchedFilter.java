@@ -1,8 +1,6 @@
 package streamit.scheduler1.simple;
 
 import streamit.scheduler1.SchedFilter;
-import streamit.scheduler1.Scheduler;
-import java.math.BigInteger;
 
 public class SimpleSchedFilter extends SchedFilter implements SimpleSchedStream
 {

@@ -6,7 +6,6 @@
 
 package streamit.misc;
 
-import java.lang.*;
 import java.lang.reflect.*;
 
 public class DestroyedClass extends Misc

@@ -1,6 +1,5 @@
 package streamit.scheduler1;
 
-import streamit.*;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Iterator;

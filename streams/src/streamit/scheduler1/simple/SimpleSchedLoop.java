@@ -8,14 +8,12 @@ import streamit.scheduler1.SchedRepSchedule;
 
 import java.util.List;
 import java.util.LinkedList;
-import java.util.ListIterator;
 
 import java.math.BigInteger;
 
 // BUGBUG these are for my little hack of DecoderFeedback
 import streamit.scheduler1.SchedPipeline;
 import streamit.scheduler1.SchedSplitJoin;
-import streamit.scheduler1.SchedFilter;
 
 class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 {

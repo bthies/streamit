@@ -1,8 +1,6 @@
 package streamit.scheduler1;
 
-import java.util.*;
 import java.math.BigInteger;
-import streamit.*;
 
 public abstract class SchedStream extends SchedObject
 {

@@ -464,6 +464,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <mysocket.h>\n");
 	p.print("#include <node_server.h>\n");
 	p.print("#include <init_instance.h>\n");
+	p.print("#include <master_server.h>\n");
 	p.println();
 
 	p.print("int __number_of_iterations = 20;\n");
@@ -500,6 +501,18 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("int main(int argc, char **argv) {\n");
 
 	p.print("  master_pid = getpid();\n");
+
+	p.print("  if (argc > 1 && strcmp(argv[1], \"-console\") == 0) {\n");
+	p.print("    char line[256], tmp;\n");
+	p.print("    master_server *m = new master_server();\n");
+	p.print("    m->print_commands();\n");
+	p.print("    for (;;) {\n");
+	p.print("      printf(\"master> \");fflush(stdout);\n");
+	p.print("      line[0] = 0;\n");
+	p.print("      scanf(\"%[^\\n]\", line);scanf(\"%c\", &tmp);\n");
+	p.print("      m->process_command(line);\n");
+	p.print("    }\n");
+	p.print("  }\n");
 
 	p.print("  if (argc > 2 && strcmp(argv[1], \"-i\") == 0) {\n"); 
 	p.print("     int tmp;\n");

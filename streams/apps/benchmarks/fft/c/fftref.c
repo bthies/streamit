@@ -16,18 +16,19 @@
 
 /************************************************************************/
 
-void init_array(int n, double *A_re, double *A_im); 
-void compute_W(int n, double *W_re, double *W_im); 
-void output_array(int n, double *A_re, double *A_im); 
-void permute_bitrev(int n, double *A_re, double *A_im); 
+void init_array(float *A);
+void compute_W(float *W_re, float *W_im); 
+void output_array(float *A); 
+void permute_bitrev(float *A);
 int  bitrev(int inp, int numbits); 
 int  log_2(int n);  
-void fft(int n, double *A_re, double *A_im, double *W_re, double *W_im);
+void fft(float *A, float *W_re, float *W_im);
 void begin();
 
 /************************************************************************/
 
 static int n = 64;
+static int log2n = 6;
 static int numiters = -1;
 
 /* gets no. of points from the user, initialize the points and roots
@@ -56,35 +57,31 @@ int main(int argc, char **argv)
 void begin()
 {
   int i;
-  double *A_re, *A_im, *W_re, *W_im; 
-  
-  A_re = (double*)malloc(sizeof(double)*n); 
-  A_im = (double*)malloc(sizeof(double)*n); 
-  W_re = (double*)malloc(sizeof(double)*n/2); 
-  W_im = (double*)malloc(sizeof(double)*n/2); 
+  float *A, *W_re, *W_im; 
+
+  A = (float*)malloc(sizeof(float)*2*n);
+  W_re = (float*)malloc(sizeof(float)*n/2); 
+  W_im = (float*)malloc(sizeof(float)*n/2); 
   /* assert(A_re != NULL && A_im != NULL && W_re != NULL && W_im != NULL);  */
-  compute_W(n, W_re, W_im); 
+  compute_W(W_re, W_im); 
   
   while (numiters == -1 || numiters-- > 0) {
-    init_array(n, A_re, A_im); 
-    fft(n, A_re, A_im, W_re, W_im);
+    init_array(A); 
+    fft(A, W_re, W_im);
 #ifdef FFT2
-    permute_bitrev(n, A_re, A_im);        
+    permute_bitrev(A);
 #endif
-    output_array(n, A_re, A_im);  
+    output_array(A);
   }
-    
-  free(A_re); 
-  free(A_im); 
+
+  free(A);
   free(W_re); 
   free(W_im); 
-  exit(0);
-
 }
 
 
 /* initializes the array with some function of n */  
-void init_array(int n, double *A_re, double *A_im) 
+void init_array(float *A)
 {
   int NumPoints, i;
   NumPoints     = 0;
@@ -92,8 +89,8 @@ void init_array(int n, double *A_re, double *A_im)
   #ifdef COMMENT_ONLY 
   for(i=0; i < n*2 ; i+=2)
   {
-    A_re[NumPoints] = (double)input_buf[i];  
-    A_im[NumPoints] = (double)input_buf[i+1];  
+    A_re[NumPoints] = (float)input_buf[i];  
+    A_im[NumPoints] = (float)input_buf[i+1];  
     NumPoints++;
   }
   #endif 
@@ -102,17 +99,17 @@ void init_array(int n, double *A_re, double *A_im)
   {
       if (i==1) 
       {
-        A_re[i]=1.0; 
-        A_im[i]=0.0; 
+        A[2*i] = 1.0f;
+        A[2*i+1] = 0.0f;
       }  
       else
       {
-        A_re[i]=0.0; 
-        A_im[i]=0.0; 
+        A[2*i] = 0.0f;
+        A[2*i+1] = 0.0f;
       } 
       #ifdef COMMENT_ONLY 
-      A_re[i] = sin_lookup[i];  /* sin((double)i*2*M_PI/(double)n); */  
-      A_im[i] = sin_lookup[i];  /* sin((double)i*2*M_PI/(double)n); */  
+      A_re[i] = sin_lookup[i];  /* sin((float)i*2*M_PI/(float)n); */  
+      A_im[i] = sin_lookup[i];  /* sin((float)i*2*M_PI/(float)n); */  
       #endif 
   } 
   //A_re[255] = 1.0;  
@@ -126,16 +123,15 @@ void init_array(int n, double *A_re, double *A_im)
  *       done.  see that function for more details on why we treat 'i' as a
  *       (log2n-1) bit number.
  */
-void compute_W(int n, double *W_re, double *W_im)
+void compute_W(float *W_re, float *W_im)
 {
   int i, br;
-  int log2n = log_2(n);
 
   for (i=0; i<(n/2); i++)
   {
     br = bitrev(i,log2n-1); 
-    W_re[br] = cos(((double)i*2.0*M_PI)/((double)n));  
-    W_im[br] = sin(((double)i*2.0*M_PI)/((double)n));  
+    W_re[br] = cos(((float)i*2.0*M_PI)/((float)n));  
+    W_im[br] = sin(((float)i*2.0*M_PI)/((float)n));  
   }
   #ifdef COMMENT_ONLY 
   for (i=0;i<(n/2);i++)
@@ -148,26 +144,40 @@ void compute_W(int n, double *W_re, double *W_im)
 
 
 /* permutes the array using a bit-reversal permutation */ 
-void permute_bitrev(int n, double *A_re, double *A_im) 
+void permute_bitrev(float *A)
 { 
-  int i, bri, log2n;
-  double t_re, t_im;
-
-  log2n = log_2(n); 
+  int i, j, i2, bri;
+  float t_re, t_im;
+  static int* bitrev;
   
+  if (!bitrev)
+  {
+    bitrev = malloc(n * sizeof(int));
+    for (i = 0; i < n; i++)
+    {
+      i2 = i;
+      bri = 0;
+      for (j=0; j < log2n; j++)
+      {
+        bri = (bri << 1) | (i2 & 1);
+        i2 >>= 1;
+      }
+      bitrev[i] = bri;
+    }
+  }
+
   for (i=0; i<n; i++)
   {
-      bri = bitrev(i, log2n);
+    bri = bitrev[i];
+    /* skip already swapped elements */
+    if (bri <= i) continue;
 
-      /* skip already swapped elements */
-      if (bri <= i) continue;
-
-      t_re = A_re[i];
-      t_im = A_im[i];
-      A_re[i]= A_re[bri];
-      A_im[i]= A_im[bri];
-      A_re[bri]= t_re;
-      A_im[bri]= t_im;
+    t_re = A[2*i];
+    t_im = A[2*i+1];
+    A[2*i] = A[2*bri];
+    A[2*i+1] = A[2*bri+1];
+    A[2*bri] = t_re;
+    A[2*bri+1] = t_im;
   }  
 } 
 
@@ -211,9 +221,9 @@ int log_2(int n)
  *       - Also, look "Cormen Leicester Rivest [CLR] - Introduction to Algorithms" book for another variant of Iterative-FFT
  */
 
-void fft(int n, double *A_re, double *A_im, double *W_re, double *W_im) 
+void fft(float *A, float *W_re, float *W_im) 
 {
-  double w_re, w_im, u_re, u_im, t_re, t_im;
+  float w_re, w_im, u_re, u_im, t_re, t_im;
   int m, g, b;
   int i, mt, k;
 
@@ -243,32 +253,37 @@ void fft(int n, double *A_re, double *A_im, double *W_re, double *W_im)
       {
 
         /* t = w * A[b+mt] */
-        t_re = w_re * A_re[b+mt] - w_im * A_im[b+mt];
-        t_im = w_re * A_im[b+mt] + w_im * A_re[b+mt];
+        t_re = w_re * A[2*(b+mt)] - w_im * A[2*(b+mt)+1];
+        t_im = w_re * A[2*(b+mt)+1] + w_im * A[2*(b+mt)];
 
         /* u = A[b]; in[b] = u + t; in[b+mt] = u - t; */
-        u_re = A_re[b];
-        u_im = A_im[b];
-        A_re[b] = u_re + t_re;
-        A_im[b] = u_im + t_im;
-        A_re[b+mt] = u_re - t_re;
-        A_im[b+mt] = u_im - t_im;
+        u_re = A[2*b];
+        u_im = A[2*b+1];
+        A[2*b] = u_re + t_re;
+        A[2*b+1] = u_im + t_im;
+        A[2*(b+mt)] = u_re - t_re;
+        A[2*(b+mt)+1] = u_im - t_im;
       }
     }
   }
 }
 
-void output_array(int n, double *A_re, double *A_im) 
+void output_array(float *A)
 {
+#ifdef AVOID_PRINTF
+  volatile float result;
+#endif
   int i;
-  for (i = 0; i < n; i++)
+  for (i = 0; i < 2*n; i++)
   {
-#ifdef raw
-    print_float(A_re[i]);
-    print_float(A_im[i]);
+#ifdef AVOID_PRINTF
+    result = A[i];
 #else
-    printf("%f\n", A_re[i]);
-    printf("%f\n", A_im[i]);
+#ifdef raw
+    print_float(A[i]);
+#else
+    printf("%f\n", A[i]);
+#endif
 #endif
   }
 }

@@ -218,8 +218,7 @@ class error_est extends Filter{ // this class estimates the error in signal dete
 
     int N;
     float[] Ahr,d;
-    float sigma=0;
-	
+   
     public error_est(int N) {super(N);}
     public void init(int N){
 	this.N=N;
@@ -230,11 +229,15 @@ class error_est extends Filter{ // this class estimates the error in signal dete
 
     }
     public void work() {
-
-	for (int i=0; i< N;i++)
-	    Ahr[i]=input.popFloat();
-	for (int i=N-1; i >=0; i--)
-	    d[i]=input.popFloat();
+	 float sigma=0;	
+	 for (int i=0; i< N;i++){
+	     Ahr[i]=input.popFloat();
+	     // System.out.println(Ahr[i]);
+	 }
+	 for (int i=N-1; i >=0; i--){
+	     d[i]=input.popFloat();
+	     //   System.out.println(d[i]);
+	 }
 	for (int i=0; i <N ; i++)
 	    sigma+=(d[i]-Ahr[i])*(d[i]-Ahr[i]);
 	output.pushFloat(sigma);
@@ -312,8 +315,8 @@ class Lest extends Pipeline{//  this pipeline estimates the error and then perfo
     public Lest( int N) {super (N);}
     public void init(int N) {
 	add (new error_split(N));     
-	add (new choldsigma(N));
-	add (new vectdouble(N*(N+1)/2));
+	 add (new choldsigma(N));
+      	add (new vectdouble(N*(N+1)/2));
     }
 
 }

@@ -8,77 +8,14 @@ import java.util.*;
  * extended by LinearProgramSolver's that call printMPSToFile before
  * processing the MPS file with a 3rd-party package.
  */
-public class MPSWriter implements LinearProgram {
-    /**
-     * Number of variables.
-     */
-    protected int numVars;
-    /**
-     * Rows of Constraints.
-     */
-    private List constraints; 
-    /**
-     * The objective function.
-     */
-    private double[] obj;
-    /**
-     * An array indicating whether or not a given variable should be
-     * constrained to be zero-one.
-     */
-    private boolean[] boolVar;
-        
+public class MPSWriter extends SimpleLinearProgram {
+
     /**
      * Create one of these with <numVars> variables.
      */
     public MPSWriter(int numVars) {
-	this.numVars = numVars;
-	this.boolVar = new boolean[numVars];
-	this.constraints = new LinkedList();
+	super(numVars);
     }
-
-    /**
-     * Returns an array with a zero-entry for each variable in the
-     * linear program (which the client can then fill in with
-     * coefficients before checking in as a new constraint.)
-     */
-    public double[] getEmptyConstraint() {
-	return new double[numVars];
-    }
-
-    /**
-     * Sets the objective function to be <obj>.
-     */
-    public void setObjective(double[] obj) {
-	this.obj = obj;
-    }
-
-    /**
-     * Constrains the n'th variable of this to be a boolean variable
-     * (zero or one).
-     */
-    public void setBoolVar(int n) {
-	this.boolVar[n] = true;
-    }
-
-    /**
-     * Adds a greater-than-or-equal constraint between the variables
-     * with coefficients <constraint> and the right-hand-side <rhs>.
-     *
-     * That is, <constraint> <dot> <variables> >= <rhs>. 
-     */
-    public void addConstraintGE(double[] constraint, double rhs) {
-	constraints.add(new Constraint(ConstraintType.GE, constraint, rhs));
-    }
-
-    /**
-     * Adds an equality constraint between the variables with
-     * coefficients <constraint> and the right-hand-side <rhs>.
-     */
-    public void addConstraintEQ(double[] constraint, double rhs) {
-	constraints.add(new Constraint(ConstraintType.EQ, constraint, rhs));
-    }
-
-    /*******************************************************************/
 
     /**
      * Dumps a representation of this to <filename> in MPS format.
@@ -158,38 +95,20 @@ public class MPSWriter implements LinearProgram {
 	    }
 	}
 	// print bounds for boolean vars
-	/* -- not recognized by lp_solve
 	out.println("BOUNDS");
 	for (int i=0; i<numVars; i++) {
 	    if (boolVar[i]) {
-		out.println(" BV X" + i);
+		out.print(" BV ");
+		String boundName = "BNDSET";
+		out.print(boundName);
+		for (int k=boundName.length(); k<10; k++) {
+		    out.print(" ");
+		}
+		out.println("X" + i);
 	    }
 	}
-	*/
 	out.println("ENDATA");
     }
-}
-
-class Constraint {
-    public final ConstraintType type;
-    public final double[] lhs;
-    public final double rhs;
-
-    public Constraint(ConstraintType type, double[] lhs, double rhs) {
-	this.type = type;
-	this.rhs = rhs;
-	this.lhs = lhs;
-    }
-}
-
-class ConstraintType {
-    // for objective function only
-    public static final ConstraintType OBJ = new ConstraintType();
-    // for GE
-    public static final ConstraintType GE = new ConstraintType();
-    // for EQ
-    public static final ConstraintType EQ = new ConstraintType();
-    private ConstraintType() {}
 }
 
 /*  MPS FORMAT

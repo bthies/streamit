@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JRelationalExpression.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
+ * $Id: JRelationalExpression.java,v 1.3 2002-06-19 19:32:03 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -25,7 +25,7 @@ import at.dms.compiler.TokenReference;
 import at.dms.util.InconsistencyException;
 
 /**
- * This class implements '+ - * /' specific operations
+ * This class implements '< > <= >=' specific operations
  * Plus operand may be String, numbers
  */
 public class JRelationalExpression extends JBinaryExpression {
@@ -50,6 +50,10 @@ public class JRelationalExpression extends JBinaryExpression {
     super(where, left, right);
     this.oper = oper;
   }
+
+    public int getOper() {
+	return oper;
+    }
 
   // ----------------------------------------------------------------------
   // SEMANTIC ANALYSIS

@@ -83,7 +83,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	}
     }
 
-    public static void dumpGraph() 
+    public static void dumpGraph(String filename) 
     {
 	buf = new StringBuffer();
 	
@@ -92,7 +92,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	top.accept(new RawFlattener(), new HashSet(), true);
 	buf.append("}\n");
 	try {
-	    FileWriter fw = new FileWriter("flatgraph.dot");
+	    FileWriter fw = new FileWriter(filename);
 	    fw.write(buf.toString());
 	    fw.close();
 	}

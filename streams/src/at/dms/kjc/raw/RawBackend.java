@@ -7,6 +7,8 @@ import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.sir.lowering.fusion.*;
+import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.lir.*;
 import java.util.*;
 import at.dms.util.Utils;
@@ -76,7 +78,7 @@ public class RawBackend {
 
 	System.out.println("Flattener Begin...");
 	RawFlattener.flatten(str);
-	RawFlattener.dumpGraph();
+	RawFlattener.dumpGraph("flatgraph.dot");
 	System.out.println("Flattener End.");
 	//create the execution counts for other passes
 	createExecutionCounts(RawFlattener.top);
@@ -116,15 +118,18 @@ public class RawBackend {
     private static void createExecutionCounts(FlatNode top) 
     {
 
-	Schedule schedule = SIRScheduler.getSchedule(getTopMostParent(top));
+	SIRScheduler scheduler = new SIRScheduler();
+	Schedule schedule = scheduler.computeSchedule(getTopMostParent(top));
 
 	initExecutionCounts = new HashMap();
 	steadyExecutionCounts = new HashMap();
 
 	fillExecutionCounts(schedule.getInitSchedule(),
-			      initExecutionCounts);
+			    initExecutionCounts,
+			    scheduler);
 	fillExecutionCounts(schedule.getSteadySchedule(), 
-			      steadyExecutionCounts);
+			    steadyExecutionCounts,
+			    scheduler);
     }
 
     
@@ -136,20 +141,35 @@ public class RawBackend {
     }
     
     //creates execution counts of filters in graph (flatnode maps count)
-    private static void fillExecutionCounts(Object schedObject, HashMap counts) 
+    private static void fillExecutionCounts(Object schedObject, 
+					    HashMap counts,
+					    SIRScheduler scheduler) 
     {
 	if (schedObject instanceof List) {
-	    //visit all of the elements
-	    for (ListIterator it = ((List)schedObject).listIterator();
-		 it.hasNext(); ) {
-		fillExecutionCounts(it.next(), counts);
+	    // first see if we have a two-stage filter
+	    SIRTwoStageFilter twoStage = 
+		scheduler.getTwoStageFilter((List)schedObject);
+	    // if we found a two-stage filter, recurse on it instead
+	    // of the list elements.  (This is a HACK that should be
+	    // removed throughout the SIRScheduler, perhaps by
+	    // supporting two-stage filters in Karczma's scheduler.) --bft
+	    if (twoStage!=null) {
+		fillExecutionCounts(twoStage, counts, scheduler);
+	    } else {
+		// otherwise, visit all of the elements of the list
+		for (ListIterator it = ((List)schedObject).listIterator();
+		     it.hasNext(); ) {
+		    fillExecutionCounts(it.next(), counts, scheduler);
+		}
 	    }
 	} else if (schedObject instanceof SchedRepSchedule) {
     	    // get the schedRep
 	    SchedRepSchedule rep = (SchedRepSchedule)schedObject;
 	    ///===========================================BIG INT?????
 	    for(int i = 0; i < rep.getTotalExecutions().intValue(); i++)
-		fillExecutionCounts(rep.getOriginalSchedule(), counts);
+		fillExecutionCounts(rep.getOriginalSchedule(), 
+				    counts,
+				    scheduler);
 	} else {
 	    //do not count splitter
 	    if (schedObject instanceof SIRSplitter)

@@ -28,8 +28,15 @@ public class InitArgument extends SLIREmptyVisitor
 	found = false;
 	targetFilter = tar;
 	tar.getParent().getInit().accept(new InitArgument());
+	// make sure <tar>'s parent contains it
+	if (!tar.getParent().contains(tar)) {
+	    Utils.fail("This filter (visited through stream graph?) " + 
+		       "points to a parent that doesn't contain " +
+		       "it:\n  filter: " + tar + "\n  parent: " + 
+		       tar.getParent());
+	}
 	if (!found) {
-	    Utils.fail("init args not found");
+	    Utils.fail("init args not found for filter " + tar);
 	}
 	return buf.toString();
     }
@@ -37,6 +44,13 @@ public class InitArgument extends SLIREmptyVisitor
     public void visitInitStatement(SIRInitStatement self,
 				   JExpression[] args,
 				   SIRStream target) {
+	// make sure <target>'s parent contains it
+	if (!target.getParent().contains(target)) {
+	    Utils.fail("This filter (visited via SIRInitStatement descent) " + 
+		       "points to a parent that doesn't contain " +
+		       "it:\n  filter: " + target + "\n  parent: " + 
+		       target.getParent());
+	}
 	if (target == targetFilter) {
 	    found = true;
 	    for (int i = 0; i < args.length; i++) {

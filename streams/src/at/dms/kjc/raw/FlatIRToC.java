@@ -164,6 +164,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                        JFormalParameter[] parameters,
                                        CClassType[] exceptions,
                                        JBlock body) {
+	// !!! for now, don't generate code for initWork (TODO)
+	if (ident.endsWith("initWork")) { return; }
         newLine();
 	// print(CModifier.toString(modifiers));
 	print(returnType);
@@ -463,9 +465,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
             }
             expr[i].accept(this);
         }
-        if (forInit) {
-            print(";");
-        }
+	print(";");
     }
 
     /**

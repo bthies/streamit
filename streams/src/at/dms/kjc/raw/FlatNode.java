@@ -67,7 +67,7 @@ public class FlatNode {
     public static FlatNode getFlatNode(SIROperator key) {
 	FlatNode node = (FlatNode)SIRMap.get(key);
 	if (node == null)
-	    Utils.fail("Cannot Find FlatNode for given SIROperator");
+	    Utils.fail("Cannot Find FlatNode for SIROperator: " + key);
 	return node;
     }
 

@@ -73,6 +73,12 @@ public class LowerWorkFunctions implements StreamVisitor
 	if (!self.needsWork()) {
 	    return;
 	}
+        // dismantle arrays
+        for (int i = 0; i < self.getMethods().length; i++)
+        {
+            self.getMethods()[i].accept(new ArrayDestroyer());
+            self.getMethods()[i].accept(new VarDeclRaiser());
+        }
         // add entry/exit nodes to work function
         addEntryExit(self.getWork());
         // prune structure creation statements
@@ -83,12 +89,6 @@ public class LowerWorkFunctions implements StreamVisitor
 	    addEntryExit(((SIRTwoStageFilter)self).getInitWork());
             removeStructureNew(((SIRTwoStageFilter)self).getInitWork());
 	}
-        // dismantle arrays
-        for (int i = 0; i < self.getMethods().length; i++)
-        {
-            self.getMethods()[i].accept(new ArrayDestroyer());
-            self.getMethods()[i].accept(new VarDeclRaiser());
-        }
     }
 
     /* visit a phased filter */

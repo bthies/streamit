@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.40 2003-08-29 17:36:39 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.41 2003-10-01 18:19:20 dmaze Exp $
  */
 
 header {
@@ -514,11 +514,10 @@ incOrDec returns [Expression x] { x = null; }
 			{ x = new ExprUnary(getContext(d), ExprUnary.UNOP_PREDEC, x); }
 	;
 
-value_expr returns [Expression x] { x = null; }
-	:	x=minic_value_expr
-	|	m:MINUS x=minic_value_expr
-			{ x = new ExprUnary(getContext(m), ExprUnary.UNOP_NEG, x); }
-	|	x=streamit_value_expr
+value_expr returns [Expression x] { x = null; boolean neg = false; }
+	:	(m:MINUS { neg = true; })?
+		(x=minic_value_expr | x=streamit_value_expr)
+		{ if (neg) x = new ExprUnary(getContext(m), ExprUnary.UNOP_NEG, x); }
 	;
 
 streamit_value_expr returns [Expression x] { x = null; }

@@ -187,7 +187,7 @@ public class Flattener {
 	    // by replacing work functions with their linear forms, do so now 
 	    if (KjcOptions.linearreplacement) {
 		System.err.print("Running linear replacement... ");
-		LinearReplacer.doReplace(lfa, str);
+		LinearDirectReplacer.doReplace(lfa, str);
 		System.err.println("done.");
 		// print out the stream graph after linear replacement
 		LinearDot.printGraph(str, "linear-replace.dot", lfa);
@@ -208,7 +208,7 @@ public class Flattener {
 	    if (KjcOptions.redundantreplacement) {
 		// do the redundancy replacement
 		System.err.print("Running anti-redundant replacement...");
-		LinearRedundancyReplacer.doReplace(lra, str);
+		LinearRedundancyReplacer.doReplace(lfa, lra, str);
 		System.err.println("done.");
 	    }
 	    

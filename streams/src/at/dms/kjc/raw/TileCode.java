@@ -17,6 +17,10 @@ import java.io.*;
  * on the tile number assigned 
  */
 public class TileCode extends at.dms.util.Utils implements FlatVisitor {
+    // the max-ahead is the maximum number of lines that this will
+    // recognize as a pattern for folding into a loop
+    private static final int MAX_LOOKAHEAD = 20;
+
     //Hash set of tiles mapped to filters or joiners
     //all other tiles are routing tiles
     public static HashSet realTiles;
@@ -132,19 +136,103 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    ret.append("int last" + current + " = 0;\n");
 	    ret.append(type + " buffer" + current + "[BUFSIZE];\n");
 	}
-	//print the init schedule
-		
-	JoinerScheduleNode init = (JoinerScheduleNode)Simulator.initJoinerCode.get(joiner);
-	while (init != null) {
+
+	printSchedule((JoinerScheduleNode)Simulator.initJoinerCode.get(joiner), ret, fp);
+	ret.append("while(1) {\n");
+	printSchedule((JoinerScheduleNode)Simulator.steadyJoinerCode.get(joiner), ret, fp);
+	ret.append("}}\n");
+
+	return ret.toString();
+    }
+
+    /**
+     * Prints the schedule to <ret> for node list starting at <first>.
+     */
+    private static void printSchedule(JoinerScheduleNode first, StringBuffer ret, boolean fp) {
+	// get the array of the schedule
+	JoinerScheduleNode[] nodes = JoinerScheduleNode.toArray(first);
+	// pos is our location in <nodes>
+	int pos = 0;
+	// keep going 'til we've printed all the nodes
+	while (pos<nodes.length) {
+	    // ahead is our repetition-looking device
+	    int ahead=1;
+	    do {
+		while (ahead <= MAX_LOOKAHEAD &&
+		       pos+ahead < nodes.length &&
+		       !nodes[pos].equals(nodes[pos+ahead])) {
+		    ahead++;
+		}
+		// if we found a match, try to build on it.  <reps> denotes
+		// how many iterations of a loop we have.
+		int reps = 0;
+		if (ahead <= MAX_LOOKAHEAD &&
+		    pos+ahead < nodes.length &&
+		    nodes[pos].equals(nodes[pos+ahead])) {
+		    // see how many repetitions of the loop we can make...
+		    do {
+			int i;
+			for (i=pos+reps*ahead; i<pos+(reps+1)*ahead; i++) {
+			    // quit if we reach the end of the array
+			    if (i+ahead >= nodes.length) { break; }
+			    // quit if there's something non-matching
+			    if (!nodes[i].equals(nodes[i+ahead])) { break; }
+			}
+			// if we finished loop, increment <reps>; otherwise break
+			if (i==pos+(reps+1)*ahead) {
+			    reps++;
+			} else {
+			    break;
+			}
+		    } while (true);
+		}
+		// if reps is <= 1, it's not worth the loop, so just
+		// add the statement (or keep looking for loops) and
+		// continue
+		if (reps<=1) {
+		    // if we've't exhausted the possibility of finding
+		    // loops, then make a single statement
+		    if (ahead >= MAX_LOOKAHEAD) {
+			ret.append(nodes[pos].getC(fp));
+			pos++;
+		    }
+		} else {
+		    /*
+		    System.err.println("!!! Making a loop of reps=" + reps + " with " + ahead + 
+				       " instructions");
+		    */
+		    // otherwise, add a loop with the right number of elements
+		    ret.append("for (rep = 0; rep < " + reps + "; rep++) {\n");
+		    // add the component code
+		    for (int i=0; i<ahead; i++) {
+			ret.append(nodes[pos+i].getC(fp));
+		    }
+		    ret.append("}\n");
+		    // increment the position
+		    pos += reps*ahead;
+		    // quit looking for loops
+		    break;
+		}
+		// increment ahead so that we have a chance the next time through
+		ahead++;
+	    } while (ahead<=MAX_LOOKAHEAD);
+	} 
+    }
+
+    /**
+     * Appends schedule for <node> to <ret>, only compressing single lines that are repeated.
+     */
+    private static void oldPrintSchedule(JoinerScheduleNode node, StringBuffer ret, boolean fp) {
+	while (node != null) {
 	    int repeat = 1;
-	    String code = init.getC(fp);
-	    init = init.next;
+	    String code = node.getC(fp);
+	    node = node.next;
 	    //look for repeats
 	    while (true) {
-		if (init == null)
+		if (node == null)
 		    break;
-		if (init.getC(fp).equals(code)) {
-		    init = init.next;
+		if (node.getC(fp).equals(code)) {
+		    node = node.next;
 		    repeat++;
 		}
 		else 
@@ -157,34 +245,6 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		ret.append("}\n");
 	    
 	}
-	//print the steady state schedule
-	JoinerScheduleNode steady = (JoinerScheduleNode)Simulator.steadyJoinerCode.get(joiner);
-	ret.append("while(1) {\n");
-	while (steady != null) {
-	    int repeat = 1;
-	    String code = steady.getC(fp);
-	    steady = steady.next;
-	    //look for repeats
-	    while (true) {
-		if (steady == null)
-		    break;
-		if (steady.getC(fp).equals(code)) {
-		    steady = steady.next;
-		    repeat++;
-		}
-		else 
-		    break;
-	    }
-	    if (repeat > 1) 
-		ret.append("for (rep = 0; rep < " + repeat + "; rep++) {\n");
-	    ret.append(code);
-	    if (repeat > 1)
-		ret.append("}\n");
-
-	}
-	ret.append("}}\n");
-	return ret.toString();
-	
     }
     
     private static CType getJoinerType(FlatNode joiner) 
@@ -260,8 +320,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    realTiles.add(Layout.getTile(node.contents));
 	    joinerCode(node);
 	}
-	if (node.contents instanceof SIRFilter && 
-	    !(node.contents instanceof SIRFileReader)) {
+	if (node.contents instanceof SIRFilter) {
 	    realTiles.add(Layout.getTile(node.contents));
 	    FlatIRToC.generateCode(node);
 	}

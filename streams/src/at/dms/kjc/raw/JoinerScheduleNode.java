@@ -45,7 +45,37 @@ public class JoinerScheduleNode
 	return ret.toString();
     }
     
-		
+    /**
+     * Returns whether <other> has the same type and buffer name as
+     * this.
+     */
+    public boolean equals(JoinerScheduleNode other) {
+	return type==other.type && buffer.equals(other.buffer);
+    }
+
+    /**
+     * Traverses the list defined from <node> and returns an array of
+     * all elements reachable through the list.  result[0] is node,
+     * and result[result.length-1].next = null.
+     */
+    public static JoinerScheduleNode[] toArray(JoinerScheduleNode node) {
+	// figure that two traversals is cheaper than making a
+	// linkedlist and going to an array
+
+	// figure out how many elements in the list
+	int count = 0;
+	for (JoinerScheduleNode n=node; n!=null; n=n.next) {
+	    count++;
+	}
+
+	// make output array
+	JoinerScheduleNode[] result = new JoinerScheduleNode[count];
+	for (int i=0; i<count; i++) {
+	    result[i] = node;
+	    node = node.next;
+	}
+	return result;
+    }
     
     public void printMe() 
     {

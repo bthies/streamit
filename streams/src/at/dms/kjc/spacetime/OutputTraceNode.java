@@ -41,6 +41,12 @@ public class OutputTraceNode extends TraceNode
     public int[] getWeights() {
 	return weights;
     }
+
+    public boolean isFileInput() 
+    {
+	return ((FilterTraceNode)getPrevious()).isFileInput();
+    }
+    
     
     public InputTraceNode[][] getDests() {
 	return dests;

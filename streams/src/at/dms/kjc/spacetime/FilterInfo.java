@@ -60,7 +60,22 @@ public class FilterInfo
 	prePush = 0;
 	prePop = 0;
 	linear=filter.isLinear();
-	if(!linear) {
+	if(linear) {
+	    peek=filter.getArray().length;
+	    push=1;
+	    pop=filter.getPopCount();
+	}
+	else if (traceNode.isFileInput()) {
+	    push = 1;
+	    pop = 0;
+	    peek = 0;
+	}
+	else if (traceNode.isFileOutput()) {
+	    push = 0;
+	    pop = 1;
+	    peek = 0;
+	}
+	else {
 	    direct = DirectCommunication.testDC(this);
 	    push = filter.getPushInt();
 	    pop = filter.getPopInt();
@@ -69,11 +84,7 @@ public class FilterInfo
 		prePeek = filter.getInitPeek();
 		prePush = filter.getInitPush();
 		prePop = filter.getInitPop();
-	    }
-	} else {
-	    peek=filter.getArray().length;
-	    push=1;
-	    pop=filter.getPopCount();
+	    } 
 	}
 	calculateRemaining();
     }

@@ -6,7 +6,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.spacetime.switchIR.*;
 import at.dms.util.Utils;
 import java.util.LinkedList;
-import at.dms.kjc.flatgraph2.FilterContent;
+import at.dms.kjc.flatgraph2.*;
 
 /** This class will rawify the SIR code and it creates the 
  * switch code.  It does not rawify the compute code in place. 
@@ -27,48 +27,44 @@ public class Rawify
 	    TraceNode traceNode = trace.getHead();
 	    while (traceNode != null) {
 		System.out.println("Rawify: " + traceNode);
-		
 		//do the appropiate code generation
 		if (traceNode.isFilterTrace()) {
-		    RawTile tile = rawChip.getTile(((FilterTraceNode)traceNode).getX(), 
-						   ((FilterTraceNode)traceNode).getY());
-		    //create the filter info class
-		    FilterInfo filterInfo = FilterInfo.getFilterInfo((FilterTraceNode)traceNode);
-		    //switch code for the trace
-		    //generate switchcode based on the presence of buffering		    
-		    int mult = (init) ? filterInfo.initMult : filterInfo.steadyMult;
-		    
-		    if(filterInfo.isLinear())
-			createSwitchCodeLinear((FilterTraceNode)traceNode,
-					       trace,filterInfo,init,false,tile,rawChip,mult);
-		    else if (filterInfo.isDirect())
-			createSwitchCode((FilterTraceNode)traceNode, 
-					 trace, filterInfo, init, false, tile, rawChip, mult);
-		    else
-			createSwitchCodeBuffered((FilterTraceNode)traceNode, 
-				     trace, filterInfo, init, tile, rawChip, mult);
-		    //generate the compute code for the trace and place it in
-		    //the tile
-		    if (init) {
-			//create the prime pump stage switch code 
-			//after the initialization switch code
-			createPrimePumpSwitchCode((FilterTraceNode)traceNode, 
-				     trace, filterInfo, init, tile, rawChip);
-			tile.getComputeCode().addTraceInit(filterInfo);
+		    FilterTraceNode filterNode = (FilterTraceNode)traceNode;
+		    if (filterNode.isPredefined()) {
+			//predefined node, may have to do something
+			handlePredefined(filterNode, rawChip, init);
 		    }
-		    else
-			tile.getComputeCode().addTraceSteady(filterInfo);
+		    else {
+			RawTile tile = rawChip.getTile((filterNode).getX(), 
+						       (filterNode).getY());
+			//create the filter info class
+			FilterInfo filterInfo = FilterInfo.getFilterInfo(filterNode);
+			//switch code for the trace
+			//generate switchcode based on the presence of buffering		    
+			int mult = (init) ? filterInfo.initMult : filterInfo.steadyMult;
+			
+			if(filterInfo.isLinear())
+			    createSwitchCodeLinear(filterNode,
+						   trace,filterInfo,init,false,tile,rawChip,mult);
+			else if (filterInfo.isDirect())
+			    createSwitchCode(filterNode, 
+					     trace, filterInfo, init, false, tile, rawChip, mult);
+			else
+			    createSwitchCodeBuffered(filterNode, 
+						     trace, filterInfo, init, tile, rawChip, mult);
+			//generate the compute code for the trace and place it in
+			//the tile
+			if (init) {
+			    //create the prime pump stage switch code 
+			    //after the initialization switch code
+			    createPrimePumpSwitchCode(filterNode, 
+						      trace, filterInfo, init, tile, rawChip);
+			    tile.getComputeCode().addTraceInit(filterInfo);
+			}
+			else
+			    tile.getComputeCode().addTraceSteady(filterInfo);
+		    }
 		}
-		else if (traceNode instanceof EnterTraceNode) {
-		    if (init) 
-			openInputFile((EnterTraceNode)traceNode, rawChip);
-		}
-		else if (traceNode instanceof ExitTraceNode) {
-		    if (init)
-			openOutputFile((ExitTraceNode)traceNode, rawChip);
-		}
-		
-		
 		//get the next tracenode
 		traceNode = traceNode.getNext();
 	    }
@@ -77,25 +73,34 @@ public class Rawify
 	
     }
 
-    private static void openInputFile(EnterTraceNode enterNode, RawChip rawChip) 
+    private static void handlePredefined(FilterTraceNode predefined, RawChip rawChip, boolean init) 
     {
-	FilterTraceNode next = (FilterTraceNode)enterNode.getDests()[0][0].getNext();
-	if (!rawChip.getTile(next.getX(), next.getY()).hasIODevice()) 
-	    Utils.fail("Tile not connected to io device");
-	MagicDram dram = (MagicDram)rawChip.getTile(next.getX(), next.getY()).getIODevice();
-	dram.inputFiles.add(enterNode);
+	if (init) {
+	    //tell the magic dram that it should open the file and create vars for this file
+	    if (predefined.isFileInput()) {
+		//get the filter connected to this file output, just take the first one
+		//because they all should be mapped to the same tile
+		FilterTraceNode next = FilterInfo.getFilterInfo(predefined).getNextFilters()[0];
+		if (!rawChip.getTile(next.getX(), next.getY()).hasIODevice()) 
+		    Utils.fail("Tile not connected to io device");
+		MagicDram dram = (MagicDram)rawChip.getTile(next.getX(), next.getY()).getIODevice();
+		dram.inputFiles.add((FileInputContent)predefined.getFilter());
+	    }
+	    else if (predefined.isFileOutput()) {
+		//tell the magic dram that it should open the file and create vars for this file
+		
+		//get the filter connected to this file output, just take the first one
+		//because they all should be mapped to the same tile
+		FilterTraceNode prev = FilterInfo.getFilterInfo(predefined).getPreviousFilters()[0];
+		//find the iodevice
+		if (!rawChip.getTile(prev.getX(), prev.getY()).hasIODevice()) 
+		    Utils.fail("Tile not connected to io device");
+		//get the dram
+		MagicDram dram = (MagicDram)rawChip.getTile(prev.getX(), prev.getY()).getIODevice();
+		dram.outputFiles.add((FileOutputContent)predefined.getFilter());		
+	    }
+	}
     }
-    
-    private static void openOutputFile(ExitTraceNode exitNode, RawChip rawChip) 
-    {
-	FilterTraceNode prev = (FilterTraceNode)exitNode.getSources()[0].getPrevious();
-	if (!rawChip.getTile(prev.getX(), prev.getY()).hasIODevice()) 
-	    Utils.fail("Tile not connected to io device");
-	//get the dram
-	MagicDram dram = (MagicDram)rawChip.getTile(prev.getX(), prev.getY()).getIODevice();
-	dram.outputFiles.add(exitNode);
-    }
-    
     
     private static void createPrimePumpSwitchCode(FilterTraceNode node, Trace parent,
 						  FilterInfo filterInfo,

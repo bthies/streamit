@@ -1,6 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
+import at.dms.kjc.flatgraph2.*;
 
 public class MagicDramStore extends MagicDramInstruction 
 {
@@ -19,13 +20,13 @@ public class MagicDramStore extends MagicDramInstruction
 	//store
 	sb.append("while (switch_to_io_move(machine, port, &temp) == 0) yield;\n");
 	for (int i = 0; i < dests.length; i++) {
-	    if (dests[i] instanceof ExitTraceNode) {
-		ExitTraceNode exit = (ExitTraceNode)dests[i];
-		sb.append("\tfprintf(" + exit.getFileHandle() + ", \"%e\n\", temp);\n");
+	    if (dests[i].isFileOutput()) {
+		FileOutputContent out = (FileOutputContent)((FilterTraceNode)dests[i].getNext()).getFilter();
+		sb.append("\tfprintf(" + Util.getFileHandle(out) + ", \"%e\n\", temp);\n");
 		sb.append("\tprintf(\"[%d]: %e\n\", port, temp);\n");
-		sb.append("if (outputs_" + exit.getFileName() + 
-			 " != -1 && ++outputs_" + exit.getFileName() + " >= " + 
-			 exit.getOutputs() + ") quit_sim();\n");
+		sb.append("if (outputs_" + out.getFileName() + 
+			 " != -1 && ++outputs_" + out.getFileName() + " >= " + 
+			 out.getOutputs() + ") quit_sim();\n");
 	    }
 	    else {
 		sb.append("\t\t" + MagicDram.getBufferIdent(source, dests[i]) +

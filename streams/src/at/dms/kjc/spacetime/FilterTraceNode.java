@@ -1,7 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.sir.*;
-import at.dms.kjc.flatgraph2.FilterContent;
+import at.dms.kjc.flatgraph2.*;
 /** 
  *
  **/
@@ -11,9 +11,11 @@ public class FilterTraceNode extends TraceNode
     //private int initMult;
     //private int steadyMult;
     private int x, y;
+    private boolean predefined;
 
     public FilterTraceNode(FilterContent filter,
 			   /*int initMult, int steadyMult, */int x, int y) {
+	predefined = (filter instanceof PredefinedContent);
 	this.filter = filter;
 	//this.initMult = initMult;
 	//this.steadyMult = steadyMult;
@@ -22,9 +24,15 @@ public class FilterTraceNode extends TraceNode
     }
 
     public FilterTraceNode(FilterContent filter) {
+	predefined = (filter instanceof PredefinedContent);
 	this.filter=filter;
     }
     
+    public boolean isPredefined() 
+    {
+	return predefined;
+    }
+
     public void setX(int x) {
 	this.x = x;
     }
@@ -66,6 +74,17 @@ public class FilterTraceNode extends TraceNode
     public String toString() {
 	return filter.toString();
     }
+    
+    public boolean isFileInput()
+    {
+	return (filter instanceof FileInputContent);
+    }
+    
+    public boolean isFileOutput() 
+    {
+	return (filter instanceof FileOutputContent);
+    }
 }
+
 
 

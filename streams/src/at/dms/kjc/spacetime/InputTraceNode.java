@@ -38,6 +38,11 @@ public class InputTraceNode extends TraceNode
 	unique++;
     }
 
+    public boolean isFileOutput() 
+    {
+	return ((FilterTraceNode)getNext()).isFileOutput();
+    }
+
     public String getIdent() 
     {
 	return ident;

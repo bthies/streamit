@@ -1,6 +1,6 @@
 package at.dms.kjc.spacetime;
 
-import at.dms.kjc.flatgraph.FlatNode;
+import at.dms.kjc.flatgraph2.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
@@ -210,4 +210,15 @@ public class Util {
 			initBufferSize(in, out)) + 
 	    primePumpBufferSize(in, out);
     }
+    
+    public static String getFileHandle(FileInputContent in) 
+    {
+	return "file_" + in.getFileName();
+    }
+
+    public static String getFileHandle(FileOutputContent out) 
+    {
+	return "file_" + out.getFileName();
+    }
+    
 }

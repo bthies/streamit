@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import at.dms.kjc.flatgraph2.*;
 
 public class MagicDram extends IODevice
 {
@@ -13,9 +14,9 @@ public class MagicDram extends IODevice
     public LinkedList steadyInsList;
     public LinkedList initInsList;
     
-    //the entertracenodes of input files in the dram
+    //the FilterInputTraces of input files in the dram
     public HashSet inputFiles;
-    //the exittracenodes of outputs files in this dram
+    //the  FilterOutputTraces of files in this dram
     public HashSet outputFiles;
     
     //the names of the buffer indices
@@ -31,6 +32,8 @@ public class MagicDram extends IODevice
 	initInsList = new LinkedList();
 	indices = new HashSet();
 	buffers = new ArrayList();
+	inputFiles = new HashSet();
+	outputFiles = new HashSet();
     }
     
     public static void GenerateCode(RawChip chip)
@@ -51,15 +54,15 @@ public class MagicDram extends IODevice
 	    //write the global file handlers
 	    Iterator outfiles = outputFiles.iterator();
 	    while (outfiles.hasNext()) {
-		ExitTraceNode exit = (ExitTraceNode)outfiles.next();
-		fw.write("global " + exit.getFileHandle() + ";\n");
-		fw.write("global outputs_" + exit.getFileName() + " = 0;\n");
+		FileOutputContent out = (FileOutputContent)outfiles.next();
+		fw.write("global " + Util.getFileHandle(out) + ";\n");
+		fw.write("global outputs_" + out.getFileName() + " = 0;\n");
 	    }
 	    
 	    Iterator infiles = inputFiles.iterator();
 	    while (infiles.hasNext()) {
-		EnterTraceNode enter = (EnterTraceNode)infiles.next();
-		fw.write("global " + enter.getFileHandle() + ";\n");
+		FileInputContent in = (FileInputContent)infiles.next();
+		fw.write("global " + Util.getFileHandle(in) + ";\n");
 	    }
 	    
 	    fw.write("fn dev_magic_dram" + port + "_init(ioPort)\n");
@@ -69,22 +72,22 @@ public class MagicDram extends IODevice
 	    //open the input and output file(s)
 	    outfiles = outputFiles.iterator();
 	    while (outfiles.hasNext()) {
-		ExitTraceNode exit = (ExitTraceNode)outfiles.next();
-		fw.write(exit.getFileHandle() + " = fopen(" + exit.getFileName() +
+		FileOutputContent out = (FileOutputContent)outfiles.next();
+		fw.write(Util.getFileHandle(out) + " = fopen(" + out.getFileName() +
 			 ", \"w\");\n");
-		fw.write("if (file_" + exit.getFileName() + " == 0) {\n");
-		fw.write("\tprintf(\"Error opening file " + exit.getFileName() + "\")\n");
+		fw.write("if (file_" + out.getFileName() + " == 0) {\n");
+		fw.write("\tprintf(\"Error opening file " + out.getFileName() + "\")\n");
 		fw.write("\treturn 0;\n");
 		fw.write("}\n");
 	    }
 	    
 	    infiles = inputFiles.iterator();
 	    while (infiles.hasNext()) {
-		EnterTraceNode enter = (EnterTraceNode)infiles.next();
-		fw.write(enter.getFileHandle() + " = fopen(" + enter.getFileName() +
+		FileInputContent in = (FileInputContent)infiles.next();
+		fw.write(Util.getFileHandle(in) + " = fopen(" + in.getFileName() +
 			 ", \"r\");\n");
-		fw.write("if (file_" + enter.getFileName() + " == 0) {\n");
-		fw.write("\tprintf(\"Error reading from file " + enter.getFileName() + "\")\n");
+		fw.write("if (file_" + in.getFileName() + " == 0) {\n");
+		fw.write("\tprintf(\"Error reading from file " + in.getFileName() + "\")\n");
 		fw.write("\treturn 0;\n");
 		fw.write("}\n");
 	    }

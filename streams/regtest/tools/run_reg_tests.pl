@@ -7,7 +7,7 @@
 # Usage: run_reg_test.pl -- runs all of the regtests  (eg make test-all)
 #        run_reg_test.pl nightly -- runs nightly regtests (eg make test-nightly)
 #
-# $Id: run_reg_tests.pl,v 1.13 2003-03-31 21:50:22 dmaze Exp $
+# $Id: run_reg_tests.pl,v 1.14 2003-03-31 21:51:06 dmaze Exp $
 
 use strict;
 
@@ -140,7 +140,7 @@ print MHMAIL $apps_executed;
 close(MHMAIL);
 
 # generate RT-compatible output too
-saved_execute("$streamit_home/regtest/tools/html_results.pl $streamit_home $REG_LOG $REG_ERR $SUCCESS $RT_ROOT/Summary $RT_ROOT/listing.html");
+saved_execute("$streamit_home/regtest/tools/html_results.pl $streamit_home/ $REG_LOG $REG_ERR $SUCCESS $RT_ROOT/Summary $RT_ROOT/listing.html");
 
 
 

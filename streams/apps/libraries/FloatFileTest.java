@@ -15,7 +15,7 @@ public class FloatFileTest extends StreamIt
     public void init()
     {
         add(new FloatFileReader("floats5000"));
-        //add(new LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps));
+        add(new LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps,0));
         add(new FloatFileWriter("filteroutput"));
     }
 }

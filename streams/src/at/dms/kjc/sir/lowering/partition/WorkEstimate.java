@@ -61,13 +61,20 @@ public class WorkEstimate {
 		    // assume these are map.entry's
 		    int work1 = ((WorkInfo)map.get(o1)).getTotalWork();
 		    int work2 = ((WorkInfo)map.get(o2)).getTotalWork();
-		    if (o1==o2) {
+		    if(o1==o2)
 			return 0;
-		    } else if (work1 < work2) {
+		    else if (work1 < work2)
 			return -1;
-		    } else {
+		    else if (work1 > work2+200) //Within threshold considered the same
 			return 1;
+		    else if((o1 instanceof SIRContainer)&&(o2 instanceof SIRContainer)) {
+			int size1=((SIRContainer)o1).size();
+			int size2=((SIRContainer)o2).size();
+			//System.out.println("Comparing:"+size1+" "+size2);
+			if(size1>size2)
+			    return -1;
 		    }
+		    return 1;
 		}
 	    });
 	treeMap.putAll(map);
@@ -676,3 +683,6 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
     }
 
 }
+
+
+

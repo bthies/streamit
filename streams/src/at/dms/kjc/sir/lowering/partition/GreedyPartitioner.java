@@ -188,7 +188,7 @@ public class GreedyPartitioner {
 	    // get how many tiles we have
 	    RawFlattener flattener = new RawFlattener(str);
 	    count = flattener.getNumTiles();
-	    //System.out.println("Partitioner detects " + count + " tiles.");
+	    System.out.println("Partitioner detects " + count + " tiles.");
 	    if (count>target) {
 		//boolean tried=false;
 		// make a fresh work estimate
@@ -257,15 +257,44 @@ public class GreedyPartitioner {
 			    }
 			}
 		    } else if (cont instanceof SIRPipeline) {
-			/*
-			System.out.println("trying to fuse " + (count-target) + " from " 
-					   + cont.size() + "-long pipe " + ((SIRPipeline)cont).getName());
-			*/
-			int elim = FusePipe.fuse((SIRPipeline)cont, count-target);
+			//System.out.println("trying to fuse " + (count-target) + " from " 
+			//+ cont.size() + "-long pipe " + ((SIRPipeline)cont).getName());
+			int elim=0;
+			if(cont.size()<=2) {
+			    elim = FusePipe.fuse((SIRPipeline)cont, count-target);
+			    
+			    Lifter.eliminatePipe((SIRPipeline)cont);
+			} else {
+			    int best=Integer.MAX_VALUE;
+			    int index=0;
+			    SIRStream cur=cont.get(0);
+			    for(int j=0;j<cont.size()-1;j++) {
+				SIRStream next=cont.get(j+1);
+				if((cur instanceof SIRFilter)&&(next instanceof SIRFilter)) {
+				    int newWork=work.getWork((SIRFilter)cont.get(j))+work.getWork((SIRFilter)cont.get(j+1));
+				    if(newWork<best) {
+					best=newWork;
+					index=j;
+				    }
+				}
+				cur=next;
+			    }
+			    if(best!=Integer.MAX_VALUE) {
+				SIRPipeline temp=new SIRPipeline(cont,null);
+				temp.add(cont.get(index));
+				temp.add(cont.get(index+1));
+				elim = FusePipe.fuse((SIRPipeline)temp);
+			
+				cont.remove(index);
+				cont.remove(index);
+				cont.add(index,temp);
 
-			Lifter.eliminatePipe((SIRPipeline)cont);
+				Lifter.eliminatePipe((SIRPipeline)temp);
+			    }
+			}
 			// try lifting
 			if (elim!=0) {
+			    //System.out.println("FUSED: "+elim);
 			    aggressive=0;
 			    break;
 			}

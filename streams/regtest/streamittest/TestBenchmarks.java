@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.18 2002-12-04 05:40:39 thies Exp $
+ * $Id: TestBenchmarks.java,v 1.19 2002-12-12 16:08:46 aalamb Exp $
  **/
 package streamittest;
 
@@ -40,9 +40,9 @@ public class TestBenchmarks extends StreamITTestCase {
 	    suite.addTest(new TestBenchmarks("testBitonicSort", flags));
 	    suite.addTest(new TestBenchmarks("testFir", flags));
 	    suite.addTest(new TestBenchmarks("testVocoder", flags));
+	    suite.addTest(new TestBenchmarks("testBeamFormer", flags));
 	}
 	suite.addTest(new TestBenchmarks("testSimple", flags));
-        suite.addTest(new TestBenchmarks("testBeamFormer", flags));
         //suite.addTest(new TestBenchmarks("testFft", flags));
         suite.addTest(new TestBenchmarks("testFilterbank", flags));
         suite.addTest(new TestBenchmarks("testFm", flags));

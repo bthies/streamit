@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.48 2003-10-13 13:01:10 jasperln Exp $
+ * $Id: KjcOptions.opt,v 1.49 2003-10-13 16:08:47 thies Exp $
  */
 
 prefix Kjc
@@ -27,44 +27,37 @@ usage		"usage: at.dms.kjc.Main [option]* [--help] <java-files>"
 package at.dms.kjc
 
 longname		"beautify"
-	shortcut	"b"
 	type		boolean
 	default		"false"
 	help		"Beautifies the source code"
 
 longname		"help"
-	shortcut	"h"
 	type		boolean
 	default		"false"
 	help		"Provides help on using compiler"
 
 longname		"verbose"
-	shortcut	"v"
 	type		boolean
 	default		"false"
 	help		"Prints out information during compilation"
 
 longname		"java"
-	shortcut	"j"
 	type		boolean
 	default		"false"
 	help		"Generates java source code instead of class"
 
 longname		"encoding"
-	shortcut	"e"
 	type		String
 	default		"null"
 	requireArgument
 	help		"Sets the character encoding for the source file(s)."
 
 longname		"nowrite"
-	shortcut	"n"
 	type		boolean
 	default		"false"
 	help		"Only checks files, doesn't generate code"
 
 longname		"warning"
-	shortcut	"w"
 	type		int
 	default		"1"
 	optionalDefault	"2"
@@ -72,53 +65,45 @@ longname		"warning"
 	help		"Maximal level of warnings to be displayed"
 
 longname		"nowarn"
-	shortcut	"*"
 	type		boolean
 	default		"false"
 	help		"Not used, for compatibility purpose"
 
 longname		"multi"
-	shortcut	"m"
 	type		boolean
 	default		"false"
 	help		"Compiles in multi threads mode"
 
 longname		"deprecation"
-	shortcut	"D"
 	type		boolean
 	default		"false"
 	help		"Tests for deprecated members"
 
 longname		"proc"
-	shortcut	"p"
 	type		int
 	default		"2"
 	requireArgument
 	help		"Maximal number of threads to use"
 
 longname		"destination"
-	shortcut	"d"
 	type		String
 	default		"null"
 	requireArgument
 	help		"Writes files to destination"
 
 longname		"classpath"
-	shortcut	"C"
 	type		String
 	default		"null"
 	requireArgument
 	help		"Changes class path to classpath"
 
 longname		"lang"
-	shortcut	"l"
 	type		String
 	default		"1.1"
 	requireArgument
 	help		"Sets the source language (1.1, 1.2, kopi)"
 
 longname		"filter"
-	shortcut	"f"
 	type		String
 	default		"at.dms.kjc.DefaultFilter"
 	requireArgument
@@ -127,31 +112,26 @@ longname		"filter"
 // Begin StreamIt Options ----------------------------------------------
 
 longname		"stats"
-	shortcut	"."
 	type		boolean
 	default		"false"
 	help		"Gathers statistics for application characterization."
 
 longname		"print_partitioned_source"
-	shortcut	"c"
 	type		boolean
 	default		"false"
 	help		"Dumps StreamIt program that has same communication pattern as graph AFTER partitioning (for scheduler debugging)."
 
 longname		"debug"
-	shortcut	"g"
 	type		boolean
 	default		"false"
 	help		"Produces debug information (does nothing yet)"
 
 longname		"nofieldprop"
-	shortcut	"L"
 	type		boolean
 	default		"false"
 	help		"Turns on StreamIt Field Prop"
 
 longname		"fusion"
-	shortcut	"o"
 	type		boolean
 	default		"false"
 	help		"Perform maximal filter fusion"
@@ -163,104 +143,90 @@ longname		"unroll"
 	requireArgument
 	help		"Maximum number of loop iterations to unroll"
 
-longname		"partition"
-	shortcut	"a"
+longname		"partition_dp"
+	shortcut	"p"
 	type		boolean
 	default		"false"
-	help		"Automatically partition stream graph to fit on target"
+	help		"Use dynamic programming partitioner to fit stream graph to target"
 
-longname		"ilppartition"
-	shortcut	"A"
+longname		"partition_ilp"
 	type		boolean
 	default		"false"
-	help		"Use the ILP partitioner."
+	help		"Use ILP partitioner to fit stream graph to target."
 
-longname		"dppartition"
-	shortcut	"y"
+longname		"partition_greedy"
 	type		boolean
 	default		"false"
-	help		"Use the dynamic programming partitioner."
+	help		"Use greedy partitioner to fit stream graph to target."
 
 longname		"linearpartition"
-	shortcut	"B"
+	shortcut	"L"
 	type		boolean
 	default		"false"
 	help		"Use the dynamic programming partitioner for guiding linear transforms."
 
 longname		"dpscaling"
-	shortcut	"Y"
 	type		boolean
 	default		"false"
 	help		"Collect theoretical scaling statistics for dynamic programming partitioner."
 
 longname		"altcodegen"
-	shortcut	"z"
 	type		boolean
 	default		"false"
 	help		"Alternate raw communication code generation for Sam."
 
 longname		"decoupled"
-	shortcut	"X"
 	type		boolean
 	default		"false"
 	help		"Generated dummy communcation code for raw."
 
 longname		"sync"
-	shortcut	"k"
 	type		boolean
 	default		"false"
 	help		"Turn on sync removal"
 
 longname		"ratematch"
-	shortcut	"x"
 	type		boolean
 	default		"false"
 	help		"Turn on rate matching for Raw"
 
 longname		"simplesjfusion"
-	shortcut	"S"
 	type		boolean
 	default		"false"
 	help		"Revert to the old, simple SplitJoin fusion algorithm"
 
 longname		"noanneal"
-	shortcut	"W"
 	type		boolean
 	default		"false"
 	help		"Do not run simulated annealing for layout"
 
 longname		"linearanalysis"
-	shortcut	"i"
 	type		boolean
 	default		"false"
 	help		"Perform linear analysis"
 
 longname		"nolinearcollapse"
-	shortcut	"H"
 	type		boolean
 	default		"false"
 	help		"If linear analysis is on, do NOT collapse adjacent linear nodes into one.  Just replace individual filters."
 
 longname		"linearreplacement"
-	shortcut	"I"
+	shortcut	"l"
 	type		boolean
 	default		"false"
 	help		"Perform linear transformations based on linear analysis."
 
 longname		"linearreplacement2"
-	shortcut	"Z"
 	type		boolean
 	default		"false"
 	help		"Perform linear transformation using a level of indirection."
 
 longname		"linearreplacement3"
-	shortcut	"R"
 	type		boolean
 	default		"false"
 	help		"Perform linear transformation using diagonal replacement (for contiguous non-zero regions of matrix.)"
 
 longname		"atlas"
-	shortcut	"E"
 	type		boolean
 	default		"false"
 	help		"Perform linear transformation using ATLAS library for matrix multiplies."
@@ -269,40 +235,34 @@ longname		"frequencyreplacement"
 	shortcut	"F"
 	type		boolean
 	default		"false"
-	help		"Convert FIR filters to a frequency implementation."
+	help		"Convert linear filters to a frequency implementation."
 
 longname		"redundantreplacement"
-	shortcut	"t"
 	type		boolean
 	default		"false"
 	help		"Replace linear filters with linear filters that have no redundan_t_ computation.."
 
 longname 		"removeglobals"
-	shortcut	"G"
 	type		boolean
 	default		"false"
 	help		"While building the Raw main function inline all function calls, if possible, and convert all fields of a filter to locals"
 
 longname		"poptopeek"
-	shortcut	"P"
 	type		boolean
 	default		"false"
 	help		"Convert all Pop expressions into Peek expressions (for uniprocessor only, does nothing for raw)."
 
 longname		"ptraccess"
-	shortcut	"Q"
 	type		boolean
 	default		"false"
 	help		"For filters needing a buffer on Raw, access the buffer thru a pointer (needed for some GCC optimization."
 
 longname		"viram"
-	shortcut	"V"
 	type		boolean
 	default		"false"
 	help		"Compile for VIRAM, a vector uniprocessor"
 
 longname		"cluster"
-	shortcut	"#"
 	type		boolean
 	default		"false"
 	help		"Compile for a network cluster"
@@ -315,14 +275,13 @@ longname		"raw"
 	help		"Compile for RAW with a square layout, with <n> tiles per side"
 
 longname		"rawcol"
-	shortcut	"q"
+	shortcut	"c"
 	type		int
 	default		"-1"
 	requireArgument
 	help		"Sets the number of column of tiles. With this set raw specifies the number of rows."
 
 longname		"streamit"
-	shortcut	"s"
 	type		boolean
 	default		"false"
 	help		"Compile StreamIt code."
@@ -334,8 +293,8 @@ longname		"numbers"
 	requireArgument
 	help		"Attempt Generate Raw code that gathers performance numbers, with <n> steady state cycles."
 
-longname		"raw_uni"
-	shortcut	"U"
+longname		"standalone"
+	shortcut	"S"
 	type		boolean
 	default		"false"
 	help		"Use the Raw backend to produce uniprocessor C code."
@@ -347,19 +306,17 @@ longname		"magic_net"
 	help		"Generate Magic Network Code."
 
 longname		"sjtopipe"
-	shortcut	"J"
 	type		boolean
 	default		"false"
 	help		"Convert splitjoins to pipelines."
 
 longname		"simulatework"
-	shortcut	"T"
+	shortcut	"s"
 	type		boolean
 	default		"false"
 	help		"Uses simulator to measure work required by filters."
 
 longname		"clone_with_serialization"
-	shortcut	"K"
 	type		boolean
 	default		"false"
 	help		"Uses the OLD cloning method that relies on serialization."

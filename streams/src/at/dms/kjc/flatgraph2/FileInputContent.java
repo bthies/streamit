@@ -21,7 +21,7 @@ public class FileInputContent extends PredefinedContent {
 
     public FileInputContent(UnflatFilter unflat) {
 	super(unflat);
-	filename=((SIRFileWriter)unflat.filter).getFileName();
+	filename=((SIRFileReader)unflat.filter).getFileName();
     }
 
     public String getFileName() {

@@ -71,6 +71,9 @@ public class CommunicateAddrs
 		allocatingTile = dramTiles[rand.nextInt(dramTiles.length)];
 	    }
 	    
+	    //set the allocating tile to have compute code
+	    allocatingTile.setComputes();
+
 	    //allocate the buffer on the allocating tile
 	    ((StringBuffer)fields.get(allocatingTile)).append
 		(buffer.getType().toString() + " " + 
@@ -80,6 +83,9 @@ public class CommunicateAddrs
 	    //if allocator != neighbor, create declaration of 
 	    //pointer on neighbor and communicate the address
 	    if (allocatingTile != dram.getNeighboringTile()) {
+		dram.getNeighboringTile().setComputes();
+		SpaceTimeBackend.println("Need to communicate buffer address from " + 
+					 allocatingTile + " to " + dram.getNeighboringTile());
 		//generate the switch code to send the address
 		RawTile[] dest = {dram.getNeighboringTile()};
 		SwitchCodeStore.generateSwitchCode(allocatingTile, 
@@ -109,7 +115,7 @@ public class CommunicateAddrs
 	StringBuffer buf = new StringBuffer();
 
 	//prepend the function name 
-	buf.append("void " + functName + "() {\n");
+	buf.append("\nvoid " + functName + "() {\n");
 	//append the closing } and 
 	buf.append((StringBuffer)commAddrs.functions.get(tile));
 	buf.append("}\n");

@@ -31,7 +31,7 @@ import java.util.List;
  * type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NoRefTypes.java,v 1.6 2003-10-09 19:51:01 dmaze Exp $
+ * @version $Id: NoRefTypes.java,v 1.7 2004-05-01 01:22:17 thies Exp $
  */
 public class NoRefTypes extends FEReplacer
 {
@@ -40,6 +40,11 @@ public class NoRefTypes extends FEReplacer
 
     private Type remapType(Type type)
     {
+	if (type instanceof TypeArray) {
+	    TypeArray ta = (TypeArray)type;
+	    Type newBase = remapType(ta.getBase());
+	    type = new TypeArray(newBase, ta.getLength());
+	}
         if (type instanceof TypeStructRef)
         {
             TypeStructRef tsr = (TypeStructRef)type;

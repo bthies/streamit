@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldDeclaration.java,v 1.3 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JFieldDeclaration.java,v 1.4 2001-11-10 21:40:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -207,6 +207,13 @@ public class JFieldDeclaration extends JMemberDeclaration {
 			    variable.getIdent(),
 			    variable.getValue());
   }
+
+    /**
+     * Sets the initial value of this.
+     */
+    public void setValue(JExpression expr) {
+	variable.setValue(expr);
+    }
 
   /**
    * Generates a sequence of bytescodes

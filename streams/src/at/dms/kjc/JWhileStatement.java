@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JWhileStatement.java,v 1.3 2001-10-29 10:26:02 thies Exp $
+ * $Id: JWhileStatement.java,v 1.4 2001-11-10 21:40:35 thies Exp $
  */ 
 
 package at.dms.kjc;
@@ -162,6 +162,13 @@ public class JWhileStatement extends JLoopStatement {
      */
     public void setCondition(JExpression cond) {
 	this.cond = cond;
+    }
+
+    /**
+     * Sets the body of this.
+     */
+    public void setBody(JStatement body) {
+	this.body = body;
     }
 
   // ----------------------------------------------------------------------

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JThisExpression.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
+ * $Id: JThisExpression.java,v 1.3 2001-11-10 21:40:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -191,6 +191,13 @@ public class JThisExpression extends JExpression {
       code.plantLoadThis();
     }
   }
+
+    /**
+     * Sets the prefix of this.
+     */
+    public void setPrefix(JExpression prefix) {
+	this.prefix = prefix;
+    }
 
   // ----------------------------------------------------------------------
   // DATA MEMBERS

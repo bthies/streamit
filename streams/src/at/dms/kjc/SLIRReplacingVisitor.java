@@ -22,6 +22,7 @@ package at.dms.kjc;
 import java.util.List;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
+import at.dms.util.Utils;
 import java.util.ListIterator;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
@@ -100,10 +101,12 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
 				      String ident,
 				      JExpression[] args,
 				      SIRLatency latency) {
-	portal.accept(this);
-	for (int i=0; i<args.length; i++) {
-	    args[i].accept(this);
+	JExpression newExp = (JExpression)portal.accept(this);
+	if (newExp!=null && newExp!=portal) {
+	    self.setPortal(newExp);
 	}
+	
+	visitArgs(args);
 	latency.accept(this);
 	return self;
     }
@@ -114,7 +117,11 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     public Object visitPeekExpression(SIRPeekExpression self,
 				    CType tapeType,
 				    JExpression arg) {
-	arg.accept(this);
+	JExpression newExp = (JExpression)arg.accept(this);
+	if (newExp!=null && newExp!=arg) {
+	    self.setArg(newExp);
+	}
+	
 	return self;
     }
 
@@ -131,7 +138,11 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      */
     public Object visitPrintStatement(SIRPrintStatement self,
 				    JExpression arg) {
-	arg.accept(this);
+	JExpression newExp = (JExpression)arg.accept(this);
+	if (newExp!=null && newExp!=arg) {
+	    self.setArg(newExp);
+	}
+	
 	return self;
     }
 
@@ -141,7 +152,11 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     public Object visitPushExpression(SIRPushExpression self,
 				    CType tapeType,
 				    JExpression arg) {
-	arg.accept(this);
+	JExpression newExp = (JExpression)arg.accept(this);
+	if (newExp!=null && newExp!=arg) {
+	    self.setArg(newExp);
+	}
+	
 	return self;
     }
 
@@ -152,7 +167,11 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
 					  JExpression portal,
 					  SIRStream receiver,
 					  JMethodDeclaration[] methods) {
-	portal.accept(this);
+	JExpression newExp = (JExpression)portal.accept(this);
+	if (newExp!=null && newExp!=portal) {
+	    self.setPortal(newExp);
+	}
+	
 	return self;
     }
 
@@ -175,6 +194,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      */
     public Object visitFunctionPointer(LIRFunctionPointer self,
 				     String name) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	return self;
     }
     
@@ -182,6 +202,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      * Visits an LIR node.
      */
     public Object visitNode(LIRNode self) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	return self;
     }
 
@@ -189,9 +210,10 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      * Visits a child registration node.
      */
     public Object visitSetChild(LIRSetChild self,
-			      JExpression streamContext,
-			      String childType,
-			      String childName) {
+				JExpression streamContext,
+				String childType,
+				String childName) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	return self;
     }
@@ -201,6 +223,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      * Visits a file reader.
      */
     public Object visitFileReader(LIRFileReader self) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	self.getStreamContext().accept(this);
 	return self;
     }
@@ -209,6 +232,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      * Visits a file writer.
      */
     public Object visitFileWriter(LIRFileWriter self) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	self.getStreamContext().accept(this);
 	return self;
     }
@@ -219,6 +243,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     public Object visitSetDecode(LIRSetDecode self,
 			       JExpression streamContext,
 			       LIRFunctionPointer fp) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	fp.accept(this);
 	return self;
@@ -233,6 +258,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
 			      int delay,
 			      CType type,
 			      LIRFunctionPointer fp) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	data.accept(this);
 	streamContext.accept(this);
 	fp.accept(this);
@@ -245,6 +271,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     public Object visitSetEncode(LIRSetEncode self,
 			       JExpression streamContext,
 			       LIRFunctionPointer fp) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	fp.accept(this);
 	return self;
@@ -258,6 +285,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
 			       SIRJoinType type,
 			       int ways,
 			       int[] weights) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	return self;
     }
@@ -268,6 +296,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     public Object visitSetPeek(LIRSetPeek self,
 			     JExpression streamContext,
 			     int peek) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	return self;
     }
@@ -278,6 +307,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     public Object visitSetPop(LIRSetPop self,
 			    JExpression streamContext,
 			    int pop) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	return self;
     }
@@ -288,6 +318,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     public Object visitSetPush(LIRSetPush self,
 			     JExpression streamContext,
 			     int push) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	return self;
     }
@@ -300,6 +331,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
 				 SIRSplitType type,
 				 int ways,
 				 int[] weights) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	return self;
     }
@@ -310,6 +342,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     public Object visitSetStreamType(LIRSetStreamType self,
 				   JExpression streamContext,
 				   LIRStreamType streamType) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	return self;
     }
@@ -320,6 +353,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     public Object visitSetWork(LIRSetWork self,
 			     JExpression streamContext,
 			     LIRFunctionPointer fn) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	fn.accept(this);
 	return self;
@@ -334,6 +368,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
 			     JExpression dstStruct,
 			     CType type,
 			     int size) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	srcStruct.accept(this);
 	dstStruct.accept(this);
@@ -347,6 +382,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
 				  String typeName,
 				  LIRFunctionPointer init,
 				  List initStatements) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	init.accept(this);
 	for (ListIterator it = initStatements.listIterator(); it.hasNext(); ) {
 	    JStatement old = (JStatement)it.next();
@@ -369,6 +405,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
 				       CType outputType,
 				       int inputSize,
 				       int outputSize) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	childContext.accept(this);
 	return self;
@@ -385,6 +422,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
 				       CType outputType,
 				       int inputSize,
 				       int outputSize) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	childContext.accept(this);
 	return self;
@@ -401,6 +439,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
 				       CType outputType,
 				       int inputSize,
 				       int outputSize) {
+	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
 	streamContext.accept(this);
 	childContext.accept(this);
 	return self;

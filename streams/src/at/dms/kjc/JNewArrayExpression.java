@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNewArrayExpression.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
+ * $Id: JNewArrayExpression.java,v 1.3 2001-11-10 21:40:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -189,6 +189,13 @@ public class JNewArrayExpression extends JExpression {
       code.plantNewArrayInstruction(type.getElementType());
     }
   }
+
+    /**
+     * Sets init expression of this.
+     */
+    public void setInit(JArrayInitializer init) {
+	this.init = init;
+    }
 
   // ----------------------------------------------------------------------
   // DATA MEMBERS

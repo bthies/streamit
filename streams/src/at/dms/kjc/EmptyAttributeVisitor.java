@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: EmptyAttributeVisitor.java,v 1.6 2001-10-30 18:03:34 thies Exp $
+ * $Id: EmptyAttributeVisitor.java,v 1.7 2001-11-10 21:40:34 thies Exp $
  */
 
 package at.dms.kjc;
@@ -1016,7 +1016,7 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
 		args[i].accept(this);
 	    }
 	}
-	return null;
+	return args;
     }
 
     /**

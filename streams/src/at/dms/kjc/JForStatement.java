@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JForStatement.java,v 1.5 2001-10-30 18:03:34 thies Exp $
+ * $Id: JForStatement.java,v 1.6 2001-11-10 21:40:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -211,6 +211,13 @@ public class JForStatement extends JLoopStatement {
      */
     public void setInit(JStatement init) {
 	this.init = init;
+    }
+
+    /**
+     * Sets the condition of this.
+     */
+    public void setCond(JExpression cond) {
+	this.cond = cond;
     }
 
     /**

@@ -202,13 +202,20 @@ public class SIRJoiner extends SIROperator {
     public int[] getWeights() {
 	int[] result = new int[weights.length];
 	for (int i=0; i<weights.length; i++) {
-	    Utils.assert(weights[i] instanceof JIntLiteral,
-			 "Expecting JIntLiteral as weight to round-robin--" +
-			 "could have problems with constant prop (maybe " +
-			 "it hasn't been run yet) or orig program");
-	    result[i] = ((JIntLiteral)weights[i]).intValue();
+	    result[i] = getWeight(i);
 	}
 	return result;
+    }
+
+    /**
+     * Return int weight at position i.
+     */
+    public int getWeight(int i) {
+	Utils.assert(weights[i] instanceof JIntLiteral,
+		     "Expecting JIntLiteral as weight to round-robin--" +
+		     "could have problems with constant prop (maybe " +
+		     "it hasn't been run yet) or orig program");
+	return ((JIntLiteral)weights[i]).intValue();
     }
 }
 

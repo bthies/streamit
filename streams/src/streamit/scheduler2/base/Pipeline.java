@@ -3,7 +3,7 @@ package streamit.scheduler2.base;
 import streamit.scheduler2.iriter./*persistent.*/PipelineIter;
 import java.math.BigInteger;
 
-/* $Id: Pipeline.java,v 1.8 2003-01-24 16:46:51 thies Exp $ */
+/* $Id: Pipeline.java,v 1.9 2003-04-16 21:10:58 karczma Exp $ */
 
 /**
  * Computes some basic data for Pipelines.  
@@ -109,7 +109,7 @@ abstract public class Pipeline extends Stream
                 ASSERT(child);
 
                 childrenNumExecs[nChild] = outProduct;
-
+                
                 outProduct =
                     outProduct.multiply(
                         BigInteger.valueOf(child.getSteadyPush()));
@@ -166,6 +166,9 @@ abstract public class Pipeline extends Stream
                 childrenNumExecs[nChild] =
                     childrenNumExecs[nChild].divide(gcd);
 
+                // make sure that the child executes a positive
+                // number of times!
+                ASSERT(childrenNumExecs[nChild].signum() == 1);
             }
         }
 

@@ -7,7 +7,7 @@ Iterator;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: FeedbackLoop.java,v 1.10 2003-01-28 01:41:37 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.11 2003-04-16 21:10:57 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for FeedbackLoops.
@@ -184,6 +184,14 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
             loopNumExecs = loopFrac.getNumerator().intValue();
             joinNumRounds = joinFrac.getNumerator().intValue();
             splitNumRounds = splitFrac.getNumerator().intValue();
+
+            // make sure that both children, splitter and joiner will
+            // execute a positive # of times
+            ASSERT(bodyNumExecs > 0);
+            ASSERT(loopNumExecs > 0);
+            ASSERT(joinNumRounds > 0);
+            ASSERT(splitNumRounds > 0);
+            
         }
 
         // setup my variables that come from SchedStream:

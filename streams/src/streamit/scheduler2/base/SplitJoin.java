@@ -5,7 +5,7 @@ SplitJoinIter;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: SplitJoin.java,v 1.9 2002-12-02 23:54:07 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.10 2003-04-16 21:10:58 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for SplitJoins.
@@ -350,6 +350,10 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                         // set the rate
                         childrenNumExecs[nChild] =
                             newChildRate.getNumerator();
+
+                        // make sure that the child executes a positive
+                        // number of times!
+                        ASSERT(childrenNumExecs[nChild].signum() == 1);
                     }
                 }
             }

@@ -282,6 +282,9 @@ public class FuseSplit {
 	    // added buffer, since initPeek has to match a steady execution.  Think about this...
 	    peekSize += rate.initPeek;
 
+	    // go up to the next power of 2 so that mod is cheaper
+	    peekSize = Utils.nextPow2(peekSize);
+
 	    // the peek counter
 	    JFieldDeclaration peekRead = new JFieldDeclaration(null,
 							       new JVariableDefinition(null, 0, CStdType.Integer,
@@ -317,6 +320,8 @@ public class FuseSplit {
 	    if (filter instanceof SIRTwoStageFilter) {
 		pushSize += ((SIRTwoStageFilter)filter).getInitPush();
 	    }
+	    // round to next power of 2 for cheaper mod functions
+	    pushSize = Utils.nextPow2(pushSize);
 
 	    // the push read counter
 	    JFieldDeclaration pushRead = new JFieldDeclaration(null,

@@ -1,7 +1,7 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref.c,v 1.2 2002-05-07 22:56:38 dmaze Exp $
+ * $Id: fmref.c,v 1.3 2002-05-07 23:31:03 dmaze Exp $
  */
 
 #include <math.h>
@@ -14,7 +14,7 @@
 #define CUTOFF_FREQUENCY 108000000
 #define NUM_TAPS 100
 #define MAX_AMPLITUDE 27000.0
-#define BANDWIDTH 100000
+#define BANDWIDTH 10000
 #define DECIMATION 4
 /* Must be at least NUM_TAPS+1: */
 #define IN_BUFFER_LEN 128
@@ -171,11 +171,6 @@ void run_lpf(FloatBuffer *fbin, FloatBuffer *fbout, LPFData *data)
 {
   float sum = 0.0;
   int i = 0;
-
-  /* printf("run_lpf: input %p from %d to %d\n", fbin, fbin->rpos, fbin->rlen); */
-  /* printf("run_lpf: input from %d to %d\n", fbin->rpos, fbin->rlen); */
-  /* printf("  %d items; peek %d, pop %d\n", fbin->rlen - fbin->rpos,
-     data->taps, data->decimation+1); */
 
   for (i = 0; i < data->taps; i++)
     sum += fbin->buff[fbin->rpos + i] * data->coeff[i];

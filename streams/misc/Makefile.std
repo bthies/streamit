@@ -27,9 +27,20 @@ LINK_OPT += $(DEBUG_OPT) $(LINK_LIBS)
 JAVA_OPT += $(DEBUG_OPT) $(CLASSPATH_OPT)
 JAVA_SRCS_DEPS = $(filter %.java.deps, $(JAVA_TARGET:%.class=%.java.deps))
 
+#ifneq ($(MAKECMDGOALS),clean)
 # compile .java files
 %.class : %.java
 	$(JAVAC) $(JAVA_OPT) $<
+
+%.java : %.opt
+	@rm -f $*.java
+	cd $(dir $<) && \
+	java at.dms.compiler.tools.optgen.Main $(notdir $<)
+
+%.java : %.g
+	@rm -f $*.java
+	cd $(dir $<) && \
+	java antlr.Tool $(notdir $<)
 
 %.o : %.c 
 	@rm -f $*.o
@@ -43,16 +54,6 @@ JAVA_SRCS_DEPS = $(filter %.java.deps, $(JAVA_TARGET:%.class=%.java.deps))
 	@rm -f $*.o
 	$(CXX) -c $(CXX_OPT) $<
 
-%.java : %.opt
-	@rm -f $*.java
-	cd $(dir $<) && \
-	java at.dms.compiler.tools.optgen.Main $(notdir $<)
-
-%.java : %.g
-	@rm -f $*.java
-	cd $(dir $<) && \
-	java antlr.Tool $(notdir $<)
-
 all: $(C_TARGET) $(CXX_TARGET) $(JAVA_TARGET) java_class_compile Makefile.deps 
 
 commit: all
@@ -62,7 +63,7 @@ $(C_TARGET) : $(OBJ_FILES)
 	@rm -f $(TARGET)
 	$(CXX) -o $(TARGET) $(LINK_OPT) $(OBJ_FILES) $(LINK_LIBS) 
 
-Makefile.deps: $(MAKEFILE_DEPS) $(CXXSRCS) $(CSRCS) $(JAVA_SRCS) $(JAVA_SRCS_DEPS)
+Makefile.deps: $(CXXSRCS) $(CSRCS) $(JAVA_SRCS) $(JAVA_SRCS_DEPS)
 	@rm -f Makefile.deps
 	@echo > Makefile.deps
 ifneq ($(strip $(CXXSRCS)),)
@@ -91,36 +92,43 @@ endif
 
 
 # create .deps files from .java files
-%.java.deps : %.java
 ifneq ($(MAKECMDGOALS),clean)
-	@# if I'm not cleaning, try to generate proper .deps and .clean files:
-	@#
+# if I'm not cleaning, try to generate proper .deps and .clean files:
+%.u : %.java
+	@# generating .u files
 	jikes +M -nowarn $(JAVAC_DEPS_OPT) $(JAVA_OPT) $*.java
-	@rm -f $*.java.deps $*.java.clean
+	
+%.java.deps : %.u
+	@rm -f $*.java.deps
 	@# append dependecies from all sources to $*.class
 	@grep '.java$$' $*.u > $*.java.deps
 	@grep '.class$$' $*.u | sed 's/class$$/java/' | diff $*.java.deps - | grep \> | sed 's/> //' | sed 's/.java$$/.class/' >> $*.java.deps
 	@# append misc dependecies
 	@echo $*.class : $*.java.deps >> $*.java.deps
-	@echo java_deps_clean : $*.u $*.class $*.java.deps $*.java.clean > $*.java.clean
 	@# append dependecies for all .class files from their .java files
 	@cat $*.u | grep .java$$ | sed 's/\(.*\) : \(.*\).java$$/\2.class : \2.java/' >> $*.java.deps
 	@# append dependecies for all classes built to java_class_compile
 	@cat $*.u | grep .java$$ | sed 's/\(.*\) : \(.*\).java$$/java_class_compile : \2.class/' >> $*.java.deps
-	@# write dependecies from java_deps_clean to all generated .java.clean files
+
+%.java.clean : %.u
+	@echo java_deps_clean : $*.u $*.class $*.java.deps $*.java.clean > $*.java.clean
+	# write dependecies from java_deps_clean to all generated .java.clean files
 	@sed 's/.*\:/java_deps_clean :/;s/\.java$$/\.u/' $*.u >> $*.java.clean
+
 else
-	# I am cleaning - just touch the files (don't change them!)
-	touch $*.java.deps
-	touch $*.java.clean
+
+%.java.deps %.java.clean :
+	@# I am cleaning - just touch the files (don't change them!)
+	@touch $*.java.deps $*.java.clean
 	@echo java_deps_clean : $*.u $*.class $*.java.deps $*.java.clean >> $*.java.clean
+
 endif
 
 # If I'm cleaning, make sure that any .class files which aren't generated
 # will get generated:
 
 ifeq ($(MAKECMDGOALS),clean)
-%.class :
+%.class : 
 	@touch $*.class
 
 %.u :

@@ -119,7 +119,21 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 			   SIRStream parent,
 			   JFieldDeclaration[] fields,
 			   JMethodDeclaration[] methods,
-			   JMethodDeclaration init){}
+			   JMethodDeclaration init){
+	blockStart("SplitJoin");
+	attrStart("Parent");
+	if (parent == null)
+	    printData("null");
+	attrEnd();
+	attrStart("init");
+	init.accept(this);
+	attrEnd();
+	for (int i = 0; i < fields.length; i++)
+	    fields[i].accept(this);
+	for (int i = 0; i < methods.length; i++)
+	    methods[i].accept(this);
+	blockEnd();
+    }
 
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,

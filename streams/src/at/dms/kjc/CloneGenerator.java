@@ -580,7 +580,8 @@ public class CloneGenerator {
 	"at.dms.kjc.sir.SIRStream",
 	"at.dms.kjc.sir.SIRStructure",
 	"at.dms.kjc.sir.SIRTwoStageFilter",
-	"at.dms.kjc.sir.SIRWorkFunction"
-	//"at.dms.kjc.sir.StreamVisitor"  -- shouldn't have references to this
+	"at.dms.kjc.sir.SIRWorkFunction",
+	//"at.dms.kjc.sir.StreamVisitor"  -- shouldn't have references to this,
+	"at.dms.kjc.rstream.JDoLoopStatement"
     };
 }

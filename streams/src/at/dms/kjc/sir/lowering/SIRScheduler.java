@@ -62,6 +62,9 @@ public class SIRScheduler {
 	scheduler.useStream(schedStream);
 	// compute a schedule
 	Schedule schedule = (Schedule)scheduler.computeSchedule();
+	// print the schedules
+	printSchedule(schedule.getSteadySchedule(), "steady state");
+	printSchedule(schedule.getInitSchedule(), "initialization");
 	// make work function implementing the steady-state schedule
 	JMethodDeclaration steadyWork = makeWork(schedule.getSteadySchedule(), 
 						 toplevel);
@@ -76,6 +79,39 @@ public class SIRScheduler {
 	addMainFunction(toplevel, initWork);
 	// return schedule for future reference
 	return schedule;
+    }
+
+    /**
+     * Prints a schedule to the screen, with prefix label <label>
+     */
+    private void printSchedule(Object schedObject, String label) {
+	// print top-level label
+	System.out.println("---------------------------------");
+	System.out.println(label + "schedule: ");
+	// print the schedule
+	printSchedule(schedObject, 1);
+    }
+
+    /**
+     * Prints a sub-schedule with indentation <tabs>.
+     */
+    private void printSchedule(Object schedObject, int tabs) {
+	// print indentation
+	for (int i=0; i<tabs; i++) {
+	    System.out.print("  ");
+	}
+	// 
+	if (schedObject instanceof List) {
+	    // print out a list
+	    System.out.println("List " + schedObject.hashCode() + ":");
+	    for (ListIterator it = ((List)schedObject).listIterator();
+		 it.hasNext(); ) {
+		printSchedule(it.next(), tabs+1);
+	    }
+	} else {
+	    // print out an SIR component
+	    System.out.println(((SIROperator)schedObject).getName());
+	}
     }
 
     /**

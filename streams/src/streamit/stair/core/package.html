@@ -1,0 +1,29 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+  <head>
+    <title>Overview of streamit.stair.core</title>
+  </head>
+  <body>
+    <p>
+Core nodes for the STAIR intermediate representation.  This package
+defines a set of nodes that together make up the intermediate
+representation.  On their own, these classes are not enough to
+represent a program; code is specialized for a particular target
+machine, beginning with the STAIR VM.
+    </p>
+    <p>
+Fundamentally, a program in STAIR consists of a series of {@link
+streamit.stair.core.Instruction}s.  Each instruction has an {@link
+streamit.stair.core.Opcode}, along with lists of source and
+destination {@link streamit.stair.core.Operand}s.  The
+<code>Opcode</code> defines the instruction format and the valid
+operands.  Instructions are then grouped into {@link
+streamit.stair.core.Block}s, which along with {@link
+streamit.stair.core.ControlEdge}s make up a (possibly trivial)
+control-flow graph.  The code for a function or similar region is
+stored in a {@link streamit.stair.core.BlockContainer}.
+    </p>
+  </body>
+</html>

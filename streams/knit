@@ -2,11 +2,17 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.42 2003-09-22 19:16:52 dmaze Exp $
+# $Id: knit,v 1.43 2003-09-25 15:05:31 dmaze Exp $
 #
 
 use strict;
-use vars qw(%opts);
+use vars qw(%opts $java $javac $cc);
+
+# AUTOCONFISCATE $var = @VAR@;
+$java = "java";
+$javac = "javac";
+$cc = "gcc";
+# END AUTOCONFISCATE
 
 use Getopt::Long;
 Getopt::Long::Configure("bundling", "no_ignore_case");
@@ -255,7 +261,7 @@ sub new_to_old
     $target = $opts{output} . ".java" if $opts{output};
     my $libflag = "";
     $libflag = "--library" if $opts{library};
-    call("java streamit.frontend.ToJava --output $target $libflag " .
+    call("$java streamit.frontend.ToJava --output $target $libflag " .
 	 join(' ', @$fns));
     return [$target];
   }
@@ -265,18 +271,18 @@ sub old_to_c
     my ($fns) = @_;
     return [] if !@$fns;
     my $kjcopts = get_kjc_opts();
-    my $java = "java -Xmx" . $opts{memory};
+    my $xmx = "-Xmx" . $opts{memory};
     my $jfiles = join(' ', @$fns);
     if (!$opts{raw} && !$opts{cluster})
       {
 	my $target = change_extension($fns->[0], "java", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
-	call("$java -Xmx1700M at.dms.kjc.Main -s $kjcopts $jfiles > $target");
+	call("$java $xmx at.dms.kjc.Main -s $kjcopts $jfiles > $target");
 	return [$target];
       }
     else
       {
-	call("$java -Xmx1700M at.dms.kjc.Main -s $kjcopts $jfiles");
+	call("$java $xmx at.dms.kjc.Main -s $kjcopts $jfiles");
 	return [];
       }
   }
@@ -286,18 +292,18 @@ sub new_to_c
     my ($fns) = @_;
     return [] if !@$fns;
     my $kjcopts = get_kjc_opts();
-    my $java = "java -Xmx" . $opts{memory};
+    my $xmx = "-Xmx" . $opts{memory};
     my $sfiles = join(' ', @$fns);
     if (!$opts{raw} && !$opts{cluster})
       {
 	my $target = change_extension($fns->[0], "str", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
-	call("$java streamit.frontend.ToKopi $kjcopts $sfiles > $target");
+	call("$java $xmx streamit.frontend.ToKopi $kjcopts $sfiles > $target");
 	return [$target];
       }
     else
       {
-	call("$java $kjcopts $sfiles");
+	call("$java $xmx at.dms.kjc.Main -s $kjcopts $sfiles");
 	return [];
       }
   }
@@ -306,11 +312,12 @@ sub run_in_library
   {
     my ($fns) = @_;
     my @out = ();
-    foreach my $java (@$fns)
+    my $xmx = "-Xmx" . $opts{memory};
+    foreach my $jfile (@$fns)
       {
-	  my $class = remove_extension($java, "java");
-	  call("javac $java");
-	  call("java -Xmx1700M $class " . get_lib_opts());
+	  my $class = remove_extension($jfile, "java");
+	  call("$javac $jfile");
+	  call("$java $xmx $class " . get_lib_opts());
       }
   }
 
@@ -322,13 +329,13 @@ sub c_to_out
     my ($gcc, $libs);
     if ($opts{profile})
       {
-	$gcc = "gcc -pg -a";
+	$gcc = "$cc -pg -a";
 	$libs = "-nodefaultlibs -lstreamit_p -lsrfftw -lssftw -lm_p " .
 	  "-lc_p -lgcc";
       }
     else
       {
-	$gcc = "gcc";
+	$gcc = "$cc";
 	$libs = "-lstreamit -lsrfftw -lsfftw -lm";
       }
     call("$gcc -g -O2 $target -I$sh/library/c " . join(' ', @$fns) .

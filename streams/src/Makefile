@@ -71,6 +71,11 @@ JAVA_TARGET = \
   $(KOPI_TOOL_TARGET) \
   $(STREAMIT_LIBRARIES) \
   ../library/java/streamit/StreamIt.class \
+  ../library/java/streamit/StreamItFilter.class \
+  ../library/java/streamit/StreamItFeedbackLoop.class \
+  ../library/java/streamit/StreamItPhasedFilter.class \
+  ../library/java/streamit/StreamItPipeline.class \
+  ../library/java/streamit/StreamItSplitJoin.class \
   streamit/frontend/ToJava.class \
   streamit/frontend/ToKopi.class
 

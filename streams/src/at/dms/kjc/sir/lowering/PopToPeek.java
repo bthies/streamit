@@ -92,6 +92,25 @@ public class PopToPeek extends EmptyStreamVisitor implements Constants {
 							 inputTapeType);
 	    return peekExpr;
 	}
+
+	/** Visit a peek expression and change the index to be the current value+index. **/
+	public Object visitPeekExpression(SIRPeekExpression self, CType tapeType, JExpression arg) {
+	    // push ourselves through the current peek expression's argument
+	    JExpression visitedExpr = (JExpression)arg.accept(this);
+	    	    
+	    // assemble a new add expression with the visited expression
+	    // and the indexvar
+	    JExpression indexExpr = new JLocalVariableExpression(null, this.indexVariable);
+	    JExpression newExpr = new JAddExpression(null, // token reference
+						     visitedExpr, // left
+						     indexExpr); // right
+
+	    // change the peek expression's argument
+	    self.setArg(newExpr);
+	    // and we are done
+	    return self;
+	}
+          
 	
     }
     

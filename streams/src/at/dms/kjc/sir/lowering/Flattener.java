@@ -55,11 +55,13 @@ public class Flattener {
 	System.err.println("done.");
 
 	// Convert Peeks to Pops
-	//System.err.print("Converting pop to peek... ");
-	//PopToPeek.removeAllPops(str);
-	//ConstantProp.propagateAndUnroll(str);
-	//System.err.println("done.");
-
+	if (KjcOptions.poptopeek) {
+	    System.err.print("Converting pop to peek... ");
+	    PopToPeek.removeAllPops(str);
+	    ConstantProp.propagateAndUnroll(str);
+	    System.err.println("done.");
+	}
+	
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
 	INIT_STATEMENTS_RESOLVED = true;

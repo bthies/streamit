@@ -141,7 +141,8 @@ public class SJFlatten
         }
 
         // So at this point we have an eligible split/join; flatten it.
-        JMethodDeclaration newWork = getWorkFunction(sj, children, true);
+        JMethodDeclaration newWork =
+            getWorkFunction(sj, children, dupSplitter);
         JFieldDeclaration[] newFields = getFields(sj, children);
         JMethodDeclaration[] newMethods = getMethods(sj, children);
 

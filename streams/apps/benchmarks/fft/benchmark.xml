@@ -17,5 +17,8 @@ is implemented as a single StreamIt filter.
       <file>FFTTestSource.java</file>
       <file>FloatPrinter.java</file>
     </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <file>FFT.str</file>
+    </impl>
   </implementations>
 </benchmark>

@@ -5,7 +5,7 @@ import streamit.Filter;
 import streamit.Channel;
 import streamit.Identity;
 
-/* $Id: MatrixMultBlock.java,v 1.4 2002-07-28 20:51:05 karczma Exp $ */
+/* $Id: MatrixMultBlock.java,v 1.5 2002-07-28 22:08:25 jasperln Exp $ */
 
 public class MatrixMultBlock extends StreamIt
 {
@@ -54,11 +54,11 @@ class MatrixBlockMultiply extends Pipeline
         final int y1,
         final int blockDiv)
     {
-        ASSERT(x0 == y1);
-        ASSERT(x0 % blockDiv == 0);
-        ASSERT(y0 % blockDiv == 0);
-        ASSERT(x1 % blockDiv == 0);
-        ASSERT(y1 % blockDiv == 0);
+        //ASSERT(x0 == y1);
+        //ASSERT(x0 % blockDiv == 0);
+        //ASSERT(y0 % blockDiv == 0);
+        //ASSERT(x1 % blockDiv == 0);
+        //ASSERT(y1 % blockDiv == 0);
 
         // rearrange and duplicate the matrices as necessary:
         add(new SplitJoin()
@@ -260,7 +260,7 @@ class BlockMultiply extends Filter
         x1 = _x1;
         y1 = _y1;
         
-        ASSERT (_x0 == _y1);
+        //ASSERT (_x0 == _y1);
 
         input = new Channel(Float.TYPE, _x0 * _y0 + _x1 * _y1);
         output = new Channel(Float.TYPE, _y0 * _x1);

@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.2 2002-09-26 00:15:24 thies Exp $
+ * $Id: TestBenchmarks.java,v 1.3 2002-10-02 21:46:49 dmaze Exp $
  **/
 package streamittest;
 
@@ -24,12 +24,28 @@ public class TestBenchmarks extends StreamITTestCase {
 	}
     }
 
+    public TestBenchmarks(String name) {
+	this (name,
+              CompilerInterface.NONE |
+              CompilerInterface.RAW4 |
+              CompilerInterface.CONSTPROP |
+              CompilerInterface.PARTITION);
+    }
+
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
 	suite.addTest(new TestBenchmarks("testSimple", flags));
+        suite.addTest(new TestBenchmarks("testBeamFormer", flags));
+        suite.addTest(new TestBenchmarks("testBitonicSort", flags));
+        suite.addTest(new TestBenchmarks("testFft", flags));
+        suite.addTest(new TestBenchmarks("testFilterbank", flags));
+        suite.addTest(new TestBenchmarks("testFir", flags));
+        suite.addTest(new TestBenchmarks("testFm", flags));
+        suite.addTest(new TestBenchmarks("testGsm", flags));
+        suite.addTest(new TestBenchmarks("testNokia", flags));
+        suite.addTest(new TestBenchmarks("testVocoder", flags));
 	// can't fit on raw 4 without partition
 	if (!(flagsContainRaw4(flags) && !flagsContainPartition(flags))) {
-	    suite.addTest(new TestBenchmarks("testFm", flags));
 	}
 
 	
@@ -38,6 +54,43 @@ public class TestBenchmarks extends StreamITTestCase {
     
     public void testSimple() {
 	assertTrue("was true", true);
+    }
+
+    public void testBeamFormer() 
+    {
+        String root = BENCH_ROOT + "beamformer/streamit/";
+        doCompileTest(root, "BeamFormer.java");
+        doRunTest(root, "BeamFormer.java", 0, 4);
+    }
+
+    public void testBitonicSort() 
+    {
+        String root = BENCH_ROOT + "bitonic-sort/streamit/";
+        doCompileTest(root, "BitonicSort.java");
+        doRunTest(root, "BitonicSort.java", 0, 32);
+    }
+
+    public void testFft()
+    {
+        String root = BENCH_ROOT + "fft/streamit/";
+        doMake(root);
+        doCompileTest(root, "LinkedFFT2.java");
+        doRunTest(root, "LinkedFFT2.java", 0, 256);
+    }
+
+    public void testFilterbank()
+    {
+        String root = BENCH_ROOT + "filterbank/streamit/";
+        doMake(root);
+        doCompileTest(root, "LinkedFBtest.java");
+        doRunTest(root, "LinkedFBtest.java", 0, 256);
+    }
+
+    public void testFir()
+    {
+        String root = BENCH_ROOT + "fir/streamit/";
+        doCompileTest(root, "FIRfine.java");
+        doRunTest(root, "FIRfine.java", 0, 6);
     }
 
     public void testFm() {
@@ -57,5 +110,29 @@ public class TestBenchmarks extends StreamITTestCase {
 		      "LinkedFMTest.java",
 		      "LinkedFMTest.out");
     }
-    
+
+    public void testGsm() 
+    {
+        String root = BENCH_ROOT + "gsm/streamit/";
+        doMake(root);
+        doCompileTest(root, "Gsm.java");
+        doRunTest(root, "Gsm.java", 0, 20);
+    }
+
+    public void testNokia()
+    {
+        String root = BENCH_ROOT + "nokia/streamit/";
+        doMake(root);
+        doCompileTest(root, "Linkeddcalc.java");
+        doRunTest(root, "Linkeddcalc.java", 0, 4);
+    }
+
+    public void testVocoder()
+    {
+        String root = BENCH_ROOT + "vocoder/streamit";
+        doMake(root);
+        doCompileTest(root, "LinkedVocoder.java");
+        doRunTest(root, "LinkedVocoder", 0, 1);
+    }
 }
+

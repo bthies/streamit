@@ -177,7 +177,7 @@ public class MakefileGenerator
 	fw.write("global gStreamItTilesUsed = " + layout.getTilesAssigned() + ";\n");
 	fw.write("global gStreamItTiles = " + rawChip.getTotalTiles() +
 		 ";\n");
-	fw.write("global gMHz_streamit = 250;\n");
+	fw.write("global gMHz_streamit = 450;\n");
 	fw.write("global gStreamItUnrollFactor = " + KjcOptions.unroll + ";\n");
 	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");
 

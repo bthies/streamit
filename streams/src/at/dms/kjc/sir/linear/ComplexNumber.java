@@ -9,7 +9,7 @@ package at.dms.kjc.sir.linear;
  * Complex numbers are immutable -- eg their value can't change after
  * they are instantiated.
  *
- * $Id: ComplexNumber.java,v 1.8 2003-04-06 12:01:52 thies Exp $
+ * $Id: ComplexNumber.java,v 1.9 2003-04-11 19:54:04 aalamb Exp $
  **/
 public class ComplexNumber {
     private final double realPart;
@@ -113,17 +113,24 @@ public class ComplexNumber {
 	    return false;
 	}
 	ComplexNumber other = (ComplexNumber)o;
-	//return ((other.getReal() == this.getReal()) &&
-	//(other.getImaginary() == this.getImaginary()));
 
-	// we get into precision issues, so we ignore any differences after the 10th decimal place.
-	double realDiff = Math.abs(other.getReal() - this.getReal());
-	double imagDiff = Math.abs(other.getImaginary() - this.getImaginary());
-
-	return ((realDiff < MAX_PRECISION) &&
-		(imagDiff < MAX_PRECISION));	
+	return (doubleEquals(other.getReal(), this.getReal()) &&
+		doubleEquals(other.getImaginary(), this.getImaginary()));
     }
+	
+    // we get into precision issues, so we ignore any differences after the 10th decimal place.
+    //double realDiff = Math.abs(other.getReal() - this.getReal());
+    //double imagDiff = Math.abs(other.getImaginary() - this.getImaginary());
+    //return ((realDiff < MAX_PRECISION) &&
+    //		(imagDiff < MAX_PRECISION));	
+    //}
 
+    /** returns true if these two doubles are equal within a certain precision. **/
+    public static boolean doubleEquals(double d1, double d2) {
+	double diff = Math.abs(d1 - d2);
+	return (diff < MAX_PRECISION);
+    }
+    
     /** hashcode so that data structures work correctly **/
     public int hashCode() {
 	return 1;

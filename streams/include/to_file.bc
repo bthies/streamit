@@ -61,7 +61,6 @@ fn dev_to_file(filename, port, type)
 	//write to screen
 	printf("%s [%d]: ", filename, time_lo);
 	printf(format, value);
-	printf("\n");
       }
       else if (type == 1) {
 	//write to file
@@ -70,7 +69,6 @@ fn dev_to_file(filename, port, type)
 	//write to screen
 	printf("%s [%d]: ", filename, time_lo);
 	printf(format, double(value));
-	printf("\n");
       }
       else {
 	printf("Invalid format arg passed to dev_to_file\n");

@@ -53,7 +53,7 @@ fn dev_from_file(filename, port, type)
 //	printf("Invalid format arg passed to dev_from_file\n");
 //	exit(-1);
       //     }
-      printf("\n");
+//      printf("\n");
       this.send(value);
     }
 

@@ -14,6 +14,16 @@ import java.io.*;
  */
 public abstract class SIROperator extends Utils implements Finalizable {
     /**
+     * Keep a unique number for all SIROperators (for hashing,
+     * debugging, etc.)
+     */
+    private static int MAX_NUMBER = 0;
+    /**
+     * A unique number for each sir operator.
+     */
+    private final int myNumber;
+
+    /**
      * The stream structure containing this, or NULL if this is the
      * toplevel stream.
      */
@@ -24,10 +34,12 @@ public abstract class SIROperator extends Utils implements Finalizable {
      */
     protected SIROperator(SIRContainer parent) {
 	this.parent = parent;
+	this.myNumber = MAX_NUMBER++;
     }
 
     protected SIROperator() {
-	parent = null;
+	this.parent = null;
+	this.myNumber = MAX_NUMBER++;
     }
 
     /**
@@ -161,6 +173,10 @@ public abstract class SIROperator extends Utils implements Finalizable {
      */
     public SIRContainer getParent() {
 	return parent;
+    }
+
+    public int hashCode() {
+	return myNumber;
     }
     
     /**

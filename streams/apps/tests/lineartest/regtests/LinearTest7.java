@@ -32,6 +32,7 @@ public class LinearTest7 extends StreamIt {
 class Source extends Filter {
     float INCREMENT = (float).01;
     float currentValue = 0;
+    float MAX = 1;
     public void init() {
 	output = new Channel(Float.TYPE, 1);
 	this.currentValue = 0;
@@ -39,6 +40,9 @@ class Source extends Filter {
     public void work() {
 	output.pushFloat(this.currentValue);
 	this.currentValue += INCREMENT;
+	if (this.currentValue >= MAX) {
+	    this.currentValue = 0;
+	}
     }
 }
 

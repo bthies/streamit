@@ -3,6 +3,7 @@ package at.dms.kjc;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.lir.*;
+import at.dms.kjc.raw.*;
 
 /**
  * This provides the toplevel interface for StreaMIT.
@@ -26,19 +27,30 @@ public class StreaMITMain {
 	    System.err.println("No Top-Level Stream defined!");
 	    System.exit(-1);
 	}
-
-        JClassDeclaration flat = Flattener.flatten(stream, 
-						   k2s.getInterfaces(),
-						   k2s.getInterfaceTables());
-        System.out.println("*/");
-	System.out.println("#include \"streamit.h\"");
-	System.out.println("#include <stdio.h>");
-	System.out.println("#include <stdlib.h>");
-        System.out.println("#include <math.h>");
-        LIRToC l2c = new LIRToC();
-        flat.accept(l2c);
-        l2c.close();
-	System.out.println(l2c.getString());
+	
+	System.out.println("*/");
+	
+	if (StreamItOptions.raw) {
+	    /* Compiling for raw */
+	    RawBackend.run(stream, 
+			   k2s.getInterfaces(),
+			   k2s.getInterfaceTables());
+	    
+	}
+	else {
+	    /* Compiling for uniprocessor */
+	    JClassDeclaration flat = Flattener.flatten(stream, 
+						       k2s.getInterfaces(),
+						       k2s.getInterfaceTables());
+	
+	    System.out.println("#include \"streamit.h\"");
+	    System.out.println("#include <stdio.h>");
+	    System.out.println("#include <stdlib.h>");
+	    System.out.println("#include <math.h>");
+	    LIRToC l2c = new LIRToC();
+	    flat.accept(l2c);
+	    l2c.close();
+	    System.out.println(l2c.getString());
+	}
     }
-
 }

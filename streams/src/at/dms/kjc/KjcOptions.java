@@ -14,6 +14,7 @@ public class KjcOptions extends at.dms.util.Options {
 	this("Kjc");
     }
 
+    public boolean raw = false;
     public boolean constprop = false;
     public boolean unroll = false;
     public boolean fusion = false;
@@ -34,9 +35,11 @@ public class KjcOptions extends at.dms.util.Options {
     public boolean debug = false;
     public String lang = "1.1";
     public String filter = "at.dms.kjc.DefaultFilter";
-
+    
     public boolean processOption(int code, Getopt g) {
 	switch (code) {
+	case 'r':
+	    raw = !false; return true;
 	case 'c':
 	    constprop = !false; return true;
 	case 'u':
@@ -84,7 +87,7 @@ public class KjcOptions extends at.dms.util.Options {
 
     public String[] getOptions() {
 	String[]	parent = super.getOptions();
-	String[]	total = new String[parent.length + 16];
+	String[]	total = new String[parent.length + 20];
 	System.arraycopy(parent, 0, total, 0, parent.length);
 	total[parent.length + 0] = "  --beautify, -b:       Beautifies the source code [false]";
 	total[parent.length + 1] = "  --verbose, -v:        Prints out information during compilation [false]";
@@ -103,6 +106,11 @@ public class KjcOptions extends at.dms.util.Options {
 	total[parent.length + 14] = "  --lang, -l<String>:   Sets the source language (1.1, 1.2, kopi) [1.1]";
 	total[parent.length + 15] = "  --filter, -f<String>: Warning filter [at.dms.kjc.DefaultFilter]";
 	total[parent.length + 16] = "  --streamit, -s:       Turns on StreaMIT mode [false]";    
+	total[parent.length + 17] = "  --raw, -r:            Compile for RAW";
+	total[parent.length + 18] = "  --constprop, c:       Turns on StreamIt Constant Prop";
+	total[parent.length + 19] = "  --unroll, u:          StreamIt Unroll";
+	total[parent.length + 20] = "  --fusion, o:          Perform filter fusion";
+
 	return total;
     }
 
@@ -162,7 +170,7 @@ public class KjcOptions extends at.dms.util.Options {
 	new LongOpt("filter", LongOpt.REQUIRED_ARGUMENT, null, 'f'),
 	new LongOpt("constprop", LongOpt.NO_ARGUMENT, null, 'c'),
 	new LongOpt("unroll", LongOpt.NO_ARGUMENT, null, 'u'),
-	new LongOpt("fusion", LongOpt.NO_ARGUMENT, null, 'o')
-	
+	new LongOpt("fusion", LongOpt.NO_ARGUMENT, null, 'o'),
+	new LongOpt("raw", LongOpt.NO_ARGUMENT, null, 'r')
 	    };
 }

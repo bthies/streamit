@@ -46,7 +46,8 @@ public class StreaMITMain {
 	    /* Compiling for uniprocessor */
 	    JClassDeclaration flat = Flattener.flatten(stream, 
 						       k2s.getInterfaces(),
-						       k2s.getInterfaceTables());
+						       k2s.getInterfaceTables(),
+                                                       k2s.getStructures());
 	    System.out.println("*/");
 	
 	    System.out.println("#include \"streamit.h\"");

@@ -11,7 +11,7 @@ public class SIRBuilder {
     public static void main(String args[]) {
 	// work on hello6
 	SIRStream hello6 = buildHello6();
-	Flattener.flatten(hello6, null, null);
+	Flattener.flatten(hello6, null, null, null);
     }
 
     /**

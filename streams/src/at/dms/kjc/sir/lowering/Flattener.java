@@ -26,7 +26,8 @@ public class Flattener {
 					    JInterfaceDeclaration[] 
 					    interfaces,
 					    SIRInterfaceTable[]
-					    interfaceTables) {
+					    interfaceTables,
+                                            SIRStructure[] structs) {
 	// DEBUGGING PRINTING
 	System.out.println("--------- ON ENTRY TO FLATTENER ----------------");
 	SIRPrinter printer1 = new SIRPrinter();

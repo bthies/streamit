@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.48 2004-07-08 05:45:31 thies Exp $
+ * $Id: StreamItParserFE.g,v 1.49 2004-11-15 06:11:29 thies Exp $
  */
 
 header {
@@ -294,14 +294,22 @@ enqueue_statement returns [Statement s] { s = null; Expression x; }
 	: t:TK_enqueue x=right_expr { s = new StmtEnqueue(getContext(t), x); }
 	;
 
-data_type returns [Type t] { t = null; Expression x; }
+data_type returns [Type t] { t = null; Type primitive = null; Expression x; 
+    ArrayList lengths = new ArrayList(); }
 	:	(t=primitive_type | id:ID { t = new TypeStructRef(id.getText()); })
 		(	l:LSQUARE
-			(x=right_expr { t = new TypeArray(t, x); }
+			(x=right_expr { lengths.add(x); }
 			| { throw new SemanticException("missing array bounds in type declaration", getFilename(), l.getLine()); }
 			)
 			RSQUARE
-		)*
+		)* 
+        // want nesting of types with left-most type highest, even
+        // though parser gives right-most type at top of hierarchy
+        {
+            for (int i=lengths.size()-1; i>=0; i--) {
+                t = new TypeArray(t, (Expression)lengths.get(i));
+            }
+        }
 	|	TK_void { t = new TypePrimitive(TypePrimitive.TYPE_VOID); }
 	|	TK_portal LESS_THAN pn:ID MORE_THAN
 		{ t = new TypePortal(pn.getText()); }

@@ -21,18 +21,18 @@ public class TestLayout {
 	    //System.out.println("("+rows[idx]+","+cols[idx]+")");
 	}
 	for(int i=0;i<col;i++,idx++) {
-	    rows[i]=posX++;
-	    cols[i]=posY;
+	    rows[idx]=posX++;
+	    cols[idx]=posY;
 	    //System.out.println("("+rows[i]+","+cols[i]+")");
 	}
 	for(int i=0;i<row;i++,idx++) {
-	    rows[i]=posX;
-	    cols[i]=posY--;
+	    rows[idx]=posX;
+	    cols[idx]=posY--;
 	    //System.out.println("("+rows[i]+","+cols[i]+")");
 	}
 	for(int i=0;i<col;i++,idx++) {
-	    rows[i]=posX--;
-	    cols[i]=posY;
+	    rows[idx]=posX--;
+	    cols[idx]=posY;
 	    //System.out.println("("+rows[i]+","+cols[i]+")");
 	}
 	idx=0;
@@ -46,6 +46,7 @@ public class TestLayout {
 	    int curRow=rows[idx];
 	    int curCol=cols[idx];
 	    ((FilterTraceNode)filter).setXY(curRow,curCol);
+	    //System.out.println("Add Head: "+trace+" "+curRow+" "+curCol);
 	    sched.addHead(trace,curRow,curCol);
 	    idx++;
 	    if(idx==len)
@@ -56,6 +57,7 @@ public class TestLayout {
 		curRow=rows[idx];
 		curCol=cols[idx];
 		((FilterTraceNode)filter).setXY(curRow,curCol);
+		//System.out.println("Add: "+trace+" "+curRow+" "+curCol);
 		sched.add(trace,curRow,curCol);
 		idx++;
 		if(idx==len)

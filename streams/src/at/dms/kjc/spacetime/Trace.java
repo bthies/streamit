@@ -159,6 +159,7 @@ public class Trace
     }
 
     public void addDependency(Trace prev) {
+	assert prev!=this:"uhoh";
 	if(!dependsTemp.contains(prev))
 	    dependsTemp.add(prev);
 	if(!prev.edgesTemp.contains(this))

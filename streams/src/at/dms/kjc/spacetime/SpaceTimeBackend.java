@@ -396,6 +396,7 @@ public class SpaceTimeBackend
 		System.out.println(traces[i]);
 	    SpaceTimeSchedule sched=TestLayout.layout(traces,rawRows,rawColumns);
 	    traceForrest=Schedule2Dependencies.findDependencies(sched,traces,rawRows,rawColumns);
+	    System.out.println(traceForrest);
 	    SoftwarePipeline.pipeline(sched,traces);
 	    for(int i=0;i<traces.length;i++)
 		traces[i].doneDependencies();

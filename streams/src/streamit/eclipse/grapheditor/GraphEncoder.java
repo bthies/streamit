@@ -30,6 +30,20 @@ public class GraphEncoder implements AttributeStreamVisitor {
 	
     }
     
+    /**
+     * Main entry point from {@link at.dms.kjc.StreaMITMain}.
+     * Creates a new <code>GraphEncoder</code> object, and
+     * encodes <code>str</code> using it.
+     */
+    public static void run(SIRStream str,
+                           JInterfaceDeclaration[] interfaces,
+                           SIRInterfaceTable[] interfaceTables,
+                           SIRStructure[] structs)
+    {
+        System.err.println("Dumping graph..");
+        new GraphEncoder().encode(str);
+    }
+
     public GraphEncoder(PrintStream outputStream) 
     {
 		System.out.println("Created GraphEncoder that ouputs to outputStream");

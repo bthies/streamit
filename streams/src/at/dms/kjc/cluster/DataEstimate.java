@@ -54,6 +54,30 @@ class DataEstimate {
 
 class CodeEstimate extends SLIREmptyVisitor {
 
+    static int METHOD_CALL_EXPR = 16;
+    static int METHOD_CALL_PER_PARAM = 4;
+
+    static int FOR_EXPR = 6;
+
+    static int PEEK_EXPR = 14;
+    static int POP_EXPR = 20;
+    static int PUSH_EXPR = 57;
+    static int PRINT_EXPR = 10;
+
+    static int ARITH_INT = 4;
+    static int ARITH_FLOAT = 5;
+
+    static int UNARY_EXPR = 2;
+    static int PREFIX_EXPR = 4;
+    static int POSTFIX_EXPR = 4;
+
+    static int COND_EXPR = 8;
+
+    static int FIELD_EXPR = 4;
+    static int ARRAY_ACCESS = 10;
+
+    /// Also count Literals and Local Variables
+    
     public static int estimate(SIRFilter filter) {
 	CodeEstimate est = new CodeEstimate(filter);
 	est.visitFilter(filter);
@@ -117,50 +141,11 @@ class CodeEstimate extends SLIREmptyVisitor {
     }
 
 
-    public void visitMethodCallExpression(JMethodCallExpression self,
-                                          JExpression prefix,
-                                          String ident,
-                                          JExpression[] args) {
 
-	int old_level = for_loop_level;
-	
-	for_loop_level = 0;
-	super.visitMethodCallExpression(self, prefix, ident, args);
-	for_loop_level = old_level;
 
-	code_size += 16 + args.length * 4;
-	code_at_level[for_loop_level] += 16 + args.length * 4; 
-    
-	if (!methodsToVisit.containsKey(ident)) {
-	    methodsToVisit.put(ident, new Boolean(false));
-	}
-    }
 
-    public void visitForStatement(JForStatement self,
-                                  JStatement init,
-                                  JExpression cond,
-                                  JStatement incr,
-                                  JStatement body) {
-	
-	code_size += 6;
-	code_at_level[for_loop_level] += 6;
 
-	if (init != null) {
-	    init.accept(this);
-	}
-	if (cond != null) {
-	    cond.accept(this);
-	}
-	if (incr != null) {
-	    incr.accept(this);
-	}
 
-	for_loop_level++;
-	body.accept(this);
-	for_loop_level--;
-    }
-
-    
     public void visitVariableDefinition(JVariableDefinition self,
                                         int modifiers,
                                         CType type,
@@ -188,12 +173,65 @@ class CodeEstimate extends SLIREmptyVisitor {
 	
     }
 
+
+    
+
+
+
+
+
+
+    public void visitMethodCallExpression(JMethodCallExpression self,
+                                          JExpression prefix,
+                                          String ident,
+                                          JExpression[] args) {
+
+	int old_level = for_loop_level;
+	
+	for_loop_level = 0;
+	super.visitMethodCallExpression(self, prefix, ident, args);
+	for_loop_level = old_level;
+
+	code_size += METHOD_CALL_EXPR + METHOD_CALL_PER_PARAM * args.length;
+	code_at_level[for_loop_level] += METHOD_CALL_EXPR + METHOD_CALL_PER_PARAM * args.length; 
+    
+	if (!methodsToVisit.containsKey(ident)) {
+	    methodsToVisit.put(ident, new Boolean(false));
+	}
+    }
+
+    public void visitForStatement(JForStatement self,
+                                  JStatement init,
+                                  JExpression cond,
+                                  JStatement incr,
+                                  JStatement body) {
+	
+	code_size += FOR_EXPR;
+	code_at_level[for_loop_level] += FOR_EXPR;
+
+	if (init != null) {
+	    init.accept(this);
+	}
+	if (cond != null) {
+	    cond.accept(this);
+	}
+	if (incr != null) {
+	    incr.accept(this);
+	}
+
+	for_loop_level++;
+	body.accept(this);
+	for_loop_level--;
+    }
+
+    
+
     public void visitPeekExpression(SIRPeekExpression self,
 				    CType tapeType,
 				    JExpression arg) {
 	super.visitPeekExpression(self, tapeType, arg);
-	code_size += 14;
-	code_at_level[for_loop_level] += 14; 
+	code_size += PEEK_EXPR;
+	code_at_level[for_loop_level] += PEEK_EXPR; 
     }
 
     /**
@@ -202,8 +240,8 @@ class CodeEstimate extends SLIREmptyVisitor {
     public void visitPopExpression(SIRPopExpression self,
 				   CType tapeType) {
 	super.visitPopExpression(self, tapeType);
-	code_size += 20;
-	code_at_level[for_loop_level] += 20; 
+	code_size += POP_EXPR;
+	code_at_level[for_loop_level] += POP_EXPR; 
     }
 
     /**
@@ -212,8 +250,8 @@ class CodeEstimate extends SLIREmptyVisitor {
     public void visitPrintStatement(SIRPrintStatement self,
 				    JExpression arg) {
 	super.visitPrintStatement(self, arg);
-	code_size += 10;
-	code_at_level[for_loop_level] += 10; 
+	code_size += PRINT_EXPR;
+	code_at_level[for_loop_level] += PRINT_EXPR; 
     }
 
     /**
@@ -223,8 +261,8 @@ class CodeEstimate extends SLIREmptyVisitor {
 				    CType tapeType,
 				    JExpression arg) {
 	super.visitPushExpression(self, tapeType, arg);
-	code_size += 57;
-	code_at_level[for_loop_level] += 57; 
+	code_size += PUSH_EXPR;
+	code_at_level[for_loop_level] += PUSH_EXPR; 
     }
 
     /**
@@ -237,13 +275,13 @@ class CodeEstimate extends SLIREmptyVisitor {
 	if (expr.getType()==CStdType.Float ||
 	    expr.getType()==CStdType.Double) {
 	
-	    code_size += 5;
-	    code_at_level[for_loop_level] += 5; 
+	    code_size += ARITH_FLOAT;
+	    code_at_level[for_loop_level] += ARITH_FLOAT; 
 
 	} else {
 	    
-	    code_size += 4;
-	    code_at_level[for_loop_level] += 4; 	
+	    code_size += ARITH_INT;
+	    code_at_level[for_loop_level] += ARITH_INT; 	
 	}
     }
 
@@ -254,8 +292,8 @@ class CodeEstimate extends SLIREmptyVisitor {
     public void visitUnaryPlusExpression(JUnaryExpression self,
 					 JExpression expr) {
 	super.visitUnaryPlusExpression(self, expr);
-	code_size += 2;
-	code_at_level[for_loop_level] += 2; 
+	code_size += UNARY_EXPR;
+	code_at_level[for_loop_level] += UNARY_EXPR; 
     }
 
     /**
@@ -264,8 +302,8 @@ class CodeEstimate extends SLIREmptyVisitor {
     public void visitUnaryMinusExpression(JUnaryExpression self,
 					  JExpression expr) {
 	super.visitUnaryMinusExpression(self, expr);
-	code_size += 2;
-	code_at_level[for_loop_level] += 2; 
+	code_size += UNARY_EXPR;
+	code_at_level[for_loop_level] += UNARY_EXPR; 
 
     }
 
@@ -276,7 +314,8 @@ class CodeEstimate extends SLIREmptyVisitor {
 						 JExpression expr)
     {
 	super.visitBitwiseComplementExpression(self, expr);
-	countArithOp(expr);
+	code_size += UNARY_EXPR;
+	code_at_level[for_loop_level] += UNARY_EXPR; 
 
     }
 
@@ -287,31 +326,9 @@ class CodeEstimate extends SLIREmptyVisitor {
 						 JExpression expr)
     {
 	super.visitLogicalComplementExpression(self, expr);
-	countArithOp(expr);
+	code_size += UNARY_EXPR;
+	code_at_level[for_loop_level] += UNARY_EXPR; 
 
-    }
-
-    /**
-     * prints a shift expression
-     */
-    public void visitShiftExpression(JShiftExpression self,
-				     int oper,
-				     JExpression left,
-				     JExpression right) {
-	super.visitShiftExpression(self, oper, left, right);
-	countArithOp(self);
-
-    }
-
-    /**
-     * prints a shift expressiona
-     */
-    public void visitRelationalExpression(JRelationalExpression self,
-					  int oper,
-					  JExpression left,
-					  JExpression right) {
-	super.visitRelationalExpression(self, oper, left, right);
-	countArithOp(self);
     }
 
     /**
@@ -321,8 +338,8 @@ class CodeEstimate extends SLIREmptyVisitor {
 				      int oper,
 				      JExpression expr) {
 	super.visitPrefixExpression(self, oper, expr);
-	code_size += 4;
-	code_at_level[for_loop_level] += 4; 
+	code_size += PREFIX_EXPR;
+	code_at_level[for_loop_level] += PREFIX_EXPR; 
 
     }
 
@@ -333,20 +350,8 @@ class CodeEstimate extends SLIREmptyVisitor {
 				       int oper,
 				       JExpression expr) {
 	super.visitPostfixExpression(self, oper, expr);
-	code_size += 4;
-	code_at_level[for_loop_level] += 4; 
-
-    }
-
-    /**
-     * prints a name expression
-     */
-    public void visitNameExpression(JNameExpression self,
-				    JExpression prefix,
-				    String ident) {
-	super.visitNameExpression(self, prefix, ident);
-        //code_size += 3;
-	//code_at_level[for_loop_level] += 3; 
+	code_size += POSTFIX_EXPR;
+	code_at_level[for_loop_level] += POSTFIX_EXPR; 
 
     }
 
@@ -362,17 +367,6 @@ class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * prints an equality expression
-     */
-    public void visitEqualityExpression(JEqualityExpression self,
-					boolean equal,
-					JExpression left,
-					JExpression right) {
-	super.visitEqualityExpression(self, equal, left, right);
-	countArithOp(self);
-    }
-
-    /**
      * prints a conditional expression
      */
     public void visitConditionalExpression(JConditionalExpression self,
@@ -381,25 +375,8 @@ class CodeEstimate extends SLIREmptyVisitor {
 					   JExpression right) {
 	super.visitConditionalExpression(self, cond, left, right);
 
-	code_size += 8;
-	code_at_level[for_loop_level] += 8; 
-
-    }
-
-    /**
-     * prints a compound expression
-     */
-    public void visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
-						  int oper,
-						  JExpression left,
-						  JExpression right) {
-	super.visitCompoundAssignmentExpression(self, oper, left, right);
-
-	// no work count for assignments, as most arith ops, memory
-	// ops, etc., have a destination that takes care of the assign
-
-	//code_size += 2;
-	//code_at_level[for_loop_level] += 2; 
+	code_size += COND_EXPR;
+	code_at_level[for_loop_level] += COND_EXPR; 
 
     }
 
@@ -411,31 +388,8 @@ class CodeEstimate extends SLIREmptyVisitor {
 				     String ident) {
 	super.visitFieldExpression(self, left, ident);
 
-	code_size += 4;
-	code_at_level[for_loop_level] += 4; 
-    }
-
-    /**
-     * prints a compound assignment expression
-     */
-    public void visitBitwiseExpression(JBitwiseExpression self,
-				       int oper,
-				       JExpression left,
-				       JExpression right) {
-	super.visitBitwiseExpression(self, oper, left, right);
-	countArithOp(self);
-    }
-
-    /**
-     * prints an assignment expression
-     */
-    public void visitAssignmentExpression(JAssignmentExpression self,
-					  JExpression left,
-					  JExpression right) {
-	super.visitAssignmentExpression(self, left, right);
-
-	code_size += 4;
-	code_at_level[for_loop_level] += 4; 
+	code_size += FIELD_EXPR;
+	code_at_level[for_loop_level] += FIELD_EXPR; 
     }
 
     /**
@@ -448,8 +402,8 @@ class CodeEstimate extends SLIREmptyVisitor {
 	// the work estimate gets worse (e.g. for beamformer 4x4) if
 	// we include array expressions, oddly enough.
 
-	code_size += 10;
-	code_at_level[for_loop_level] += 10; 
+	code_size += ARRAY_ACCESS;
+	code_at_level[for_loop_level] += ARRAY_ACCESS; 
 
     }
 

@@ -30,9 +30,9 @@ public class TraceDotGraph
 		    if (node.isFilterTrace() && !node.getNext().isOutputTrace())
 			fw.write("  " + node.hashCode() + " -> " + node.getNext().hashCode() + ";\n");
 		    if (node.isInputTrace()) 
-			bufferArc(OffChipBuffer.getBuffer(node, node.getNext()), fw);
+			bufferArc(IntraTraceBuffer.getBuffer((InputTraceNode)node, (FilterTraceNode)node.getNext()), fw);
 		    if (node.isOutputTrace())
-			bufferArc(OffChipBuffer.getBuffer(node.getPrevious(), node), fw);
+			bufferArc(IntraTraceBuffer.getBuffer((FilterTraceNode)node.getPrevious(), (OutputTraceNode)node), fw);
 		    
 		    fw.write("  " + node.hashCode() + "[ label=\"" + node.toString());
 		    if (node.isFilterTrace()) {
@@ -55,8 +55,7 @@ public class TraceDotGraph
 	    Iterator buffers = OffChipBuffer.getBuffers().iterator();
 	    while (buffers.hasNext()) {
 		OffChipBuffer buffer = (OffChipBuffer)buffers.next();
-		if (buffer.getSource().isInputTrace() || 
-		    buffer.getDest().isOutputTrace())
+		if (buffer.isIntraTrace())
 		    continue;
 		bufferArc(buffer, fw);
 	    }

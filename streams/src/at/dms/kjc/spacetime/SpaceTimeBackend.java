@@ -411,6 +411,9 @@ public class SpaceTimeBackend
 	//executionCounts=null;
 	if(true&&REAL) {
 	    //mgordon's stuff
+	    assert !KjcOptions.magicdram : 
+		"Magic DRAM support is not working";
+	    
 	    System.out.println("Building Trace Traversal");
 	    //LinkedList initList = TraceTraversal.getTraversal(traces);
 	    List initList = Arrays.asList(traces);

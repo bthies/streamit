@@ -153,5 +153,16 @@ public abstract class OffChipBuffer
     {
 	return dest;
     }
+
+    public boolean isIntraTrace() 
+    {
+	return (this instanceof IntraTraceBuffer);
+    }
+    
+    public boolean isInterTrace() 
+    {
+	return (this instanceof InterTraceBuffer);
+    }
+    
 }
 

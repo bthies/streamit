@@ -124,7 +124,7 @@ public class Rawify
 	FilterTraceNode filter = (FilterTraceNode)input.getNext();
 
 	//don't do anything for redundant buffers
-	if (OffChipBuffer.getBuffer(input, filter).redundant())
+	if (IntraTraceBuffer.getBuffer(input, filter).redundant())
 	    return;
 
 	//number of total items that are being joined
@@ -143,8 +143,8 @@ public class Rawify
 	//for each input to the input trace node
 	for (int i = 0; i < input.getSources().length; i++) {
 	    //get the first non-redundant buffer
-	    OffChipBuffer srcBuffer = OffChipBuffer.getBuffer(input.getSources()[i], 
-							      input).getNonRedundant();
+	    OffChipBuffer srcBuffer = 
+		InterTraceBuffer.getBuffer(input.getSources()[i]).getNonRedundant();
 	    SpaceTimeBackend.println("Generate the DRAM read command for " + srcBuffer);
 	    int readBytes = iterations * typeSize * 
 		input.getWeight(input.getSources()[i]) * 4;
@@ -154,7 +154,7 @@ public class Rawify
 	}
 
 	//generate the command to write to the dest of the input trace node
-	OffChipBuffer destBuffer = OffChipBuffer.getBuffer(input, filter);
+	OffChipBuffer destBuffer = IntraTraceBuffer.getBuffer(input, filter);
 	int writeBytes = items * typeSize * 4;
 	writeBytes = Util.cacheLineDiv(writeBytes);
 	destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init || primepump, 
@@ -166,7 +166,7 @@ public class Rawify
 	FilterTraceNode filter = (FilterTraceNode)output.getPrevious();
 	//don't do anything for a redundant buffer
 	if (output.oneOutput() && 
-	    OffChipBuffer.getBuffer(output, output.getDests()[0][0]).redundant())
+	    InterTraceBuffer.getBuffer(output.getSingleEdge()).redundant())
 	    return;
 	
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
@@ -185,7 +185,7 @@ public class Rawify
 	iterations = items / output.totalWeights();
 	
 	//generate the command to read from the src of the output trace node
-	OffChipBuffer srcBuffer = OffChipBuffer.getBuffer(filter, output);
+	OffChipBuffer srcBuffer = IntraTraceBuffer.getBuffer(filter, output);
 	int readBytes = FilterInfo.getFilterInfo(filter).totalItemsSent(init, primepump) *
 	    Util.getTypeSize(filter.getFilter().getOutputType()) * 4;
 	readBytes = Util.cacheLineDiv(readBytes);
@@ -197,10 +197,10 @@ public class Rawify
 	//generate the commands to write the o/i temp buffer dest
 	Iterator dests = output.getDestSet().iterator();
 	while (dests.hasNext()){
-	    InputTraceNode input = (InputTraceNode)dests.next();
-	    OffChipBuffer destBuffer = OffChipBuffer.getBuffer(output, input);
+	    Edge edge = (Edge)dests.next();
+	    OffChipBuffer destBuffer = InterTraceBuffer.getBuffer(edge);
 	    int writeBytes = iterations * typeSize *
-		output.getWeight(input) * 4;
+		output.getWeight(edge) * 4;
 	    writeBytes = Util.cacheLineDiv(writeBytes);
 	    destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init || primepump,
 								  writeBytes, destBuffer, true);
@@ -225,8 +225,8 @@ public class Rawify
 	if (filterNode.getPrevious() != null &&
 	    filterNode.getPrevious().isInputTrace()) {
 	    //get this buffer or this first upstream non-redundant buffer
-	    OffChipBuffer buffer = OffChipBuffer.getBuffer(filterNode.getPrevious(),
-							   filterNode).getNonRedundant();
+	    OffChipBuffer buffer = IntraTraceBuffer.getBuffer((InputTraceNode)filterNode.getPrevious(),
+							      filterNode).getNonRedundant();
 	    
 	    if (buffer == null)		
 		return;
@@ -255,8 +255,9 @@ public class Rawify
 	if (filterNode.getNext() != null &&
 		 filterNode.getNext().isOutputTrace()) {
 	    //get this buffer or null if there are no outputs
-	    OffChipBuffer buffer = OffChipBuffer.getBuffer(filterNode,
-							   filterNode.getNext()).getNonRedundant();
+	    OffChipBuffer buffer =
+		IntraTraceBuffer.getBuffer(filterNode,
+					   (OutputTraceNode)filterNode.getNext()).getNonRedundant();
 	    if (buffer == null)
 		return;
 	    
@@ -306,7 +307,7 @@ public class Rawify
 	    int dummyItems = RawChip.cacheLineWords - ((items * typeSize) % RawChip.cacheLineWords);
 	    SpaceTimeBackend.println("Received items (" + (items * typeSize) + 
 				     ") not divisible by cache line, disregard " + dummyItems);
-	    SwitchCodeStore.disregardIncoming(OffChipBuffer.getBuffer(in, traceNode).getDRAM(),
+	    SwitchCodeStore.disregardIncoming(IntraTraceBuffer.getBuffer(in, traceNode).getDRAM(),
 					      dummyItems,
 					      init || primepump);
 	}
@@ -330,7 +331,7 @@ public class Rawify
 	    SpaceTimeBackend.println("Sent items (" + (items * typeSize) + 
 				     ") not divisible by cache line, add " + dummyItems);
 	    
-	    SwitchCodeStore.dummyOutgoing(OffChipBuffer.getBuffer(traceNode, out).getDRAM(),
+	    SwitchCodeStore.dummyOutgoing(IntraTraceBuffer.getBuffer(traceNode, out).getDRAM(),
 					  dummyItems,
 					  init || primepump);
 	}
@@ -342,7 +343,7 @@ public class Rawify
 	FilterTraceNode filter = (FilterTraceNode)traceNode.getNext();
 	
 	//do not generate the switch code if it is not necessary
-	if (!OffChipBuffer.necessary(traceNode))
+	if (OffChipBuffer.unnecessary(traceNode))
 	    return;
 	    
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
@@ -364,14 +365,14 @@ public class Rawify
 	    "weights on input trace node does not divide evenly with items received";
 	iterations = items / traceNode.totalWeights();
 	
-	StreamingDram[] dest = {OffChipBuffer.getBuffer(traceNode, filter).getDRAM()};
+	StreamingDram[] dest = {IntraTraceBuffer.getBuffer(traceNode, filter).getDRAM()};
 	
 	for (int i = 0; i < iterations; i++) {
 	    for (int j = 0; j < traceNode.getWeights().length; j++) {
+		//get the source buffer, pass thru redundant buffer(s)
+		StreamingDram source = 
+		    InterTraceBuffer.getBuffer(traceNode.getSources()[j]).getNonRedundant().getDRAM();
 		for (int k = 0; k < traceNode.getWeights()[j]; k++) {
-		    //get the source buffer, pass thru redundant buffer(s)
-		    StreamingDram source = OffChipBuffer.getBuffer(traceNode.getSources()[j],
-								   traceNode).getNonRedundant().getDRAM();
 		    for (int q = 0; q < typeSize; q++)
 			SwitchCodeStore.generateSwitchCode(source, dest, stage);
 		}
@@ -385,12 +386,12 @@ public class Rawify
 	}
 	//disregard remainder of inputs coming from temp offchip buffers
 	for (int i = 0; i < traceNode.getSources().length; i++) {
-	    OutputTraceNode source = traceNode.getSources()[i];
+	    Edge edge = traceNode.getSources()[i];
 	    int remainder = RawChip.cacheLineWords - 
 		((iterations * typeSize * 
-		 traceNode.getWeight(source)) % RawChip.cacheLineWords);
+		 traceNode.getWeight(edge)) % RawChip.cacheLineWords);
 	    if (remainder > 0)
-		SwitchCodeStore.disregardIncoming(OffChipBuffer.getBuffer(source, traceNode).getDRAM(),
+		SwitchCodeStore.disregardIncoming(InterTraceBuffer.getBuffer(edge).getDRAM(),
 						  remainder, init || primepump);
 	}
     }
@@ -399,7 +400,7 @@ public class Rawify
     {
 	FilterTraceNode filter = (FilterTraceNode)traceNode.getPrevious();
 	//check to see if the splitting is necessary
-	if (!OffChipBuffer.necessary(traceNode))
+	if (OffChipBuffer.unnecessary(traceNode))
 	    return;
 				    
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
@@ -428,15 +429,14 @@ public class Rawify
 	//is there a load immediate in the switch instruction set?!
 	//I guess not, if switch instruction memory is a problem
 	//this naive implementation will have to change
-	StreamingDram sourcePort = OffChipBuffer.getBuffer(filter, traceNode).getDRAM();
+	StreamingDram sourcePort = IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM();
 	for (int i = 0; i < iterations; i++) {
 	    for (int j = 0; j < traceNode.getWeights().length; j++) {
 		for (int k = 0; k < traceNode.getWeights()[j]; k++) {
 		    //generate the array of compute node dests
 		    ComputeNode dests[] = new ComputeNode[traceNode.getDests()[j].length];
 		    for (int d = 0; d < dests.length; d++) 
-			dests[d] = OffChipBuffer.getBuffer(traceNode, 
-							   traceNode.getDests()[j][d]).getDRAM();
+			dests[d] = InterTraceBuffer.getBuffer(traceNode.getDests()[j][d]).getDRAM();
 		    for (int q = 0; q < typeSize; q++)
 			SwitchCodeStore.generateSwitchCode(sourcePort, 
 							   dests, stage);
@@ -452,11 +452,11 @@ public class Rawify
 	//write dummy values into each temp buffer with a remainder
 	Iterator it = traceNode.getDestSet().iterator();
 	while (it.hasNext()) {
-	    InputTraceNode in = (InputTraceNode)it.next();
-	    int remainder = RawChip.cacheLineWords - ((typeSize * iterations * traceNode.getWeight(in)) %
+	    Edge edge = (Edge)it.next();
+	    int remainder = RawChip.cacheLineWords - ((typeSize * iterations * traceNode.getWeight(edge)) %
 		RawChip.cacheLineWords);
 	    if (remainder > 0)
-		SwitchCodeStore.dummyOutgoing(OffChipBuffer.getBuffer(traceNode, in).getDRAM(),
+		SwitchCodeStore.dummyOutgoing(InterTraceBuffer.getBuffer(edge).getDRAM(),
 					      remainder, init || primepump);
 	}   
     }
@@ -472,37 +472,7 @@ public class Rawify
 	createSwitchCode(node, parent, filterInfo, false, true, tile, rawChip, filterInfo.primePump);
     }
     
-    private static void createMagicDramLoad(InputTraceNode node, FilterTraceNode next,
-					    boolean init, RawChip rawChip) 
-    {
-	if (!rawChip.getTile(next.getX(), next.getY()).hasIODevice()) 
-	    Utils.fail("Tile not connected to io device");
-	
-	MagicDram dram = (MagicDram)rawChip.getTile(next.getX(), next.getY()).getIODevice();
-	
-	LinkedList insList = init ? dram.initInsList : dram.steadyInsList;
-	OutputTraceNode output = TraceBufferSchedule.getOutputBuffer(node);
-	insList.add(new MagicDramLoad(node, output));
-	dram.addBuffer(output, node);
-    }
-
-    /**
-     * Generate a single magic dram store instruction for this output trace node
-     **/
-    private static void createMagicDramStore(OutputTraceNode node, FilterTraceNode prev, 
-					     boolean init, RawChip rawChip)
-					      
-    {
-	if (!rawChip.getTile(prev.getX(), prev.getY()).hasIODevice()) 
-	    Utils.fail("Tile not connected to io device");
-	//get the dram
-	MagicDram dram = (MagicDram)rawChip.getTile(prev.getX(), prev.getY()).getIODevice();
-	//get the list we should add to
-	LinkedList insList = init ? dram.initInsList : dram.steadyInsList;
-	//add the instruction
-	insList.add(new MagicDramStore(node, 
-				       TraceBufferSchedule.getInputBuffers(node)));
-    }
+ 
     
     private static void createSwitchCodeLinear(FilterTraceNode node, Trace parent, 
 					       FilterInfo filterInfo, boolean init, boolean primePump, 
@@ -862,7 +832,9 @@ public class Rawify
 		tile.hasIODevice()) 
 		sourceNode = tile.getIODevice();
 	    else 
-		sourceNode = OffChipBuffer.getBuffer(node.getPrevious(), node).getNonRedundant().getDRAM();
+		sourceNode = 
+		    IntraTraceBuffer.getBuffer((InputTraceNode)node.getPrevious(), 
+					       node).getNonRedundant().getDRAM();
 	}
 	
 	for (int j = 0; j < itemsReceiving; j++) {
@@ -907,7 +879,9 @@ public class Rawify
 		node.getNext().isOutputTrace() && tile.hasIODevice())
 		destNode = tile.getIODevice();
 	    else {
-		destNode = OffChipBuffer.getBuffer(node, node.getNext()).getNonRedundant().getDRAM();
+		destNode = 
+		    IntraTraceBuffer.getBuffer(node, (OutputTraceNode)node.getNext()).
+		    getNonRedundant().getDRAM();
 	    }
 	    
 	}
@@ -959,5 +933,41 @@ public class Rawify
 	}
     }
     */
+
+   private static void createMagicDramLoad(InputTraceNode node, FilterTraceNode next,
+					    boolean init, RawChip rawChip) 
+    {
+	/*
+	if (!rawChip.getTile(next.getX(), next.getY()).hasIODevice()) 
+	    Utils.fail("Tile not connected to io device");
+	
+	MagicDram dram = (MagicDram)rawChip.getTile(next.getX(), next.getY()).getIODevice();
+	
+	LinkedList insList = init ? dram.initInsList : dram.steadyInsList;
+	OutputTraceNode output = TraceBufferSchedule.getOutputBuffer(node);
+	insList.add(new MagicDramLoad(node, output));
+	dram.addBuffer(output, node);
+	*/
+    }
+
+    /**
+     * Generate a single magic dram store instruction for this output trace node
+     **/
+    private static void createMagicDramStore(OutputTraceNode node, FilterTraceNode prev, 
+					     boolean init, RawChip rawChip)
+					      
+    {
+	/*
+	if (!rawChip.getTile(prev.getX(), prev.getY()).hasIODevice()) 
+	    Utils.fail("Tile not connected to io device");
+	//get the dram
+	MagicDram dram = (MagicDram)rawChip.getTile(prev.getX(), prev.getY()).getIODevice();
+	//get the list we should add to
+	LinkedList insList = init ? dram.initInsList : dram.steadyInsList;
+	//add the instruction
+	insList.add(new MagicDramStore(node, 
+				       TraceBufferSchedule.getInputBuffers(node)));
+	*/
+    }
 }
 

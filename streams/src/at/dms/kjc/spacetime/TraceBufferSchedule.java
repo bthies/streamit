@@ -34,7 +34,7 @@ public class TraceBufferSchedule
 	currentBuffer = 0;
     }
 
-    public static OutputTraceNode getOutputBuffer(InputTraceNode in) 
+    public static Edge getOutputBuffer(InputTraceNode in) 
     {
 	if (!nodes.containsKey(in))
 	    nodes.put(in, new TraceBufferSchedule(in));
@@ -42,14 +42,14 @@ public class TraceBufferSchedule
 	return ((TraceBufferSchedule)nodes.get(in)).updateInput();
     }
     
-    public static InputTraceNode[] getInputBuffers(OutputTraceNode out)
+    public static Edge[] getInputBuffers(OutputTraceNode out)
     {
 	if (!nodes.containsKey(out))
 	    nodes.put(out, new TraceBufferSchedule(out));
 	return ((TraceBufferSchedule)nodes.get(out)).updateOutput();
     }
 
-    private OutputTraceNode updateInput() {
+    private Edge updateInput() {
 	if (input == null)
 	    Utils.fail("Calling get outputbuffer illegally");
 
@@ -64,7 +64,7 @@ public class TraceBufferSchedule
 	return input.getSources()[currentBuffer];
     }
 
-    private InputTraceNode[] updateOutput() 
+    private Edge[] updateOutput() 
     {
 	if (output == null)
 	    Utils.fail("Calling getInputBuffer illegally");

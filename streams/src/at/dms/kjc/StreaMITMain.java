@@ -22,6 +22,14 @@ public class StreaMITMain {
 	    KjcOptions.raw = 1;
 	    KjcOptions.partition = true;
 	}
+
+	if (KjcOptions.altcodegen &&
+	    KjcOptions.decoupled)
+	    at.dms.util.Utils.fail("The options altcodegen and decoupled are mutually exclusive.");
+	    
+	if (KjcOptions.magic_net &&
+	    KjcOptions.decoupled)
+	    at.dms.util.Utils.fail("The options magic_net and decoupled are mutually exclusive.");
 	
 	System.out.println("/*");
 	Kopi2SIR k2s = new Kopi2SIR(app);
@@ -36,7 +44,7 @@ public class StreaMITMain {
 	
 	if (KjcOptions.raw != -1) {
 	    System.out.println("*/");
-	
+	    
 	    /* Compiling for raw */
 	    RawBackend.run(stream, 
 			   k2s.getInterfaces(),

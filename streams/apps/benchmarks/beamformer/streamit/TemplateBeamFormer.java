@@ -273,6 +273,7 @@ class BeamFirFilter extends Filter
     float[] real_weight;
     float[] imag_weight;
     int numTaps;
+    int numTapsMinusOne;
     int inputLength;
     int decimationRatio;
     float[] realBuffer;
@@ -290,6 +291,7 @@ class BeamFirFilter extends Filter
     { // BeamFirFilter::init()
 	int i;
 	numTaps = nt;
+	numTapsMinusOne = nt-1;
 	inputLength = inLength;
 	decimationRatio = decRatio;
 
@@ -353,33 +355,27 @@ class BeamFirFilter extends Filter
 	int modPos;
 
 	// pop a new item into the buffer
-	realBuffer[pos] = input.popFloat();
+	realBuffer[numTapsMinusOne - pos] = input.popFloat();
 	/*
 	  if (realBuffer[pos]>0) {
 	  System.err.println("popping >0 with pos=" + pos + " in " + this);
 	  }
 	*/
-	imagBuffer[pos] = input.popFloat();
+	imagBuffer[numTapsMinusOne - pos] = input.popFloat();
 
 	// calculate sum
-	modPos = pos;
+	modPos = numTapsMinusOne - pos;
 	for (i = 0; i < numTaps; i++) {
 	    real_curr += 
 		realBuffer[modPos] * real_weight[i] + imagBuffer[modPos] * imag_weight[i];
 	    imag_curr +=
 		imagBuffer[modPos] * real_weight[i] + realBuffer[modPos] * imag_weight[i];
 	    // adjust position in this round of summing.
-	    if (modPos==0) { 
-		modPos = numTaps;
-	    }
-	    modPos--;
+	    modPos = (modPos + 1) & numTapsMinusOne;
 	}
 	
 	// increment sum
-	pos++;
-	if (pos==numTaps) { 
-	    pos = 0;
-	}
+	pos = (pos + 1) & numTapsMinusOne;
 
 	// push output
 	output.pushFloat(real_curr);

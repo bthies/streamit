@@ -57,7 +57,7 @@ public class Router {
 		     column >= toCoord.getColumn(); column--)
 		    route.add(Layout.getTile(row, column));
 	}
-	printRoute(from, to, route);
+	//printRoute(from, to, route);
 	return route;
     }
     

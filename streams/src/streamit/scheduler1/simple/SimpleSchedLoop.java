@@ -80,7 +80,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 
                 int splitProduction = getLoopSplit ().getOutputWeight (1);
                 nInitRunSplit = (feedbackDataNeeded + splitProduction - 1) / splitProduction;
-                loopBuffer = BigInteger.valueOf (nInitRunSplit * splitProduction - feedbackDataNeeded);
+                loopBuffer = BigInteger.valueOf (nInitRunSplit * splitProduction - feedback.getInitDataConsumption ());
                 maxLoopBuffer = BigInteger.valueOf (nInitRunSplit * splitProduction);
                 initDataProduction = nInitRunSplit * getLoopSplit ().getOutputWeight (0);
             }
@@ -90,7 +90,8 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
                 int splitDataNeeded = getLoopFeedbackPath ().getConsumption () * nInitRunSplit;
                 int bodyProduction = body.getProduction ();
                 nInitRunBody = (splitDataNeeded + (bodyProduction - 1) - body.getInitDataProduction ()) / bodyProduction;
-                splitBuffer = BigInteger.valueOf (bodyProduction * nInitRunBody + body.getInitDataProduction ());
+                splitBuffer = BigInteger.valueOf (nInitRunBody * bodyProduction + body.getInitDataProduction ()
+                                                - nInitRunSplit * getLoopSplit ().getRoundConsumption ());
                 maxSplitBuffer = BigInteger.valueOf (nInitRunBody * bodyProduction + body.getInitDataProduction ());
             }
 
@@ -102,7 +103,9 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
                                    + nInitRunBody * body.getProduction ();
                 int joinProduction = getLoopJoin ().getRoundProduction ();
                 nInitRunJoin = (bodyDataNeeded + joinProduction - 1) / joinProduction;
-                bodyBuffer = BigInteger.valueOf (nInitRunJoin * joinProduction - bodyDataNeeded);
+                bodyBuffer = BigInteger.valueOf (nInitRunJoin * joinProduction
+                                               - body.getInitDataConsumption ()
+                                               - nInitRunBody * body.getConsumption ());
                 maxBodyBuffer = BigInteger.valueOf (nInitRunJoin * joinProduction);
                 initDataConsumption = nInitRunJoin * getLoopJoin ().getInputWeight (0);
             }
@@ -111,7 +114,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
             {
                 int loopInitProduction = feedback.getInitDataProduction ();
                 int joinConsumption = getLoopJoin ().getInputWeight (1);
-                joinBuffer = BigInteger.valueOf (getLoopDelay () - (nInitRunJoin * joinConsumption) + loopInitProduction);
+                joinBuffer = BigInteger.valueOf (getLoopDelay () + loopInitProduction - (nInitRunJoin * joinConsumption));
                 maxJoinBuffer = joinBuffer.max (BigInteger.valueOf (getLoopDelay ()));
 
                 // check if this is a legal schedule in the first place
@@ -200,7 +203,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 
             // attempt to push some data through the body of the loop:
             {
-                while (bodyBuffer.compareTo (BigInteger.valueOf (getLoopBody ().getConsumption ())) >= 0
+                while (bodyBuffer.compareTo (BigInteger.valueOf (getLoopBody ().getPeekConsumption ())) >= 0
                        && !bodyExecutions.equals (BigInteger.ZERO))
                 {
                     movedForward = true;
@@ -244,7 +247,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 
             // attempt to push some data through the feedback path of the loop:
             {
-                while (loopBuffer.compareTo (BigInteger.valueOf (getLoopFeedbackPath ().getConsumption ())) >= 0
+                while (loopBuffer.compareTo (BigInteger.valueOf (getLoopFeedbackPath ().getPeekConsumption ())) >= 0
                        && !loopExecutions.equals (BigInteger.ZERO))
                 {
                     movedForward = true;

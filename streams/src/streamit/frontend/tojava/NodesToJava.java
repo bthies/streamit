@@ -11,7 +11,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.70 2003-08-12 14:01:52 dmaze Exp $
+ * @version $Id: NodesToJava.java,v 1.71 2003-08-26 19:31:41 dmaze Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -957,11 +957,10 @@ public class NodesToJava implements FEVisitor
     
     public Object visitOther(FENode node)
     {
-        if (node instanceof StmtJavaConstructor)
+        if (node instanceof ExprJavaConstructor)
         {
-            StmtJavaConstructor jc = (StmtJavaConstructor)node;
-            return ((String)jc.getLHS().accept(this)) + " = " +
-                makeConstructor(jc.getType());
+            ExprJavaConstructor jc = (ExprJavaConstructor)node;
+            return makeConstructor(jc.getType());
         }
         if (node instanceof StmtIODecl)
         {

@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.14 2003-07-31 20:19:49 dmaze Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.15 2003-08-26 19:31:41 dmaze Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
@@ -53,7 +53,8 @@ public class InsertInitConstructors extends InitMunger
             return result;
 
         // No; generate the constructor.
-        result.add(new StmtJavaConstructor(ctx, name, type));
+        result.add(new StmtAssign(ctx, name,
+                                  new ExprJavaConstructor(ctx, type)));
 
         // Now, if this is a structure type, we might need to
         // recursively generate constructors for the structure

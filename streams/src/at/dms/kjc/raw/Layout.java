@@ -558,7 +558,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	     
 	     //we only map joiners and filters to tiles and they each have
 	     //only one output
-	     Iterator downstream = getDownStream(node).iterator();
+	     Iterator downstream = getDownStreamReal(node).iterator();
 	     int y=getTile(node).getRow();
 	     while(downstream.hasNext()) {
 		 FlatNode n = (FlatNode)downstream.next();
@@ -593,19 +593,30 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    return new HashSet();
 	HashSet ret = new HashSet();
 	for (int i = 0; i < node.ways; i++) {
-	    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
+	    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i],true));
+	}
+	return ret;
+    }
+
+    private static HashSet getDownStreamReal(FlatNode node) 
+    {
+	if (node == null)
+	    return new HashSet();
+	HashSet ret = new HashSet();
+	for (int i = 0; i < node.ways; i++) {
+	    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i],false));
 	}
 	return ret;
     }
     
 
-    private static HashSet getDownStreamHelper(FlatNode node) {
+    private static HashSet getDownStreamHelper(FlatNode node,boolean addZeros) {
 	if (node == null)
 	    return new HashSet();
 	
 	if (node.contents instanceof SIRFilter) {
 	    if (identities.contains(node))
-		return getDownStreamHelper(node.edges[0]);
+		return getDownStreamHelper(node.edges[0],addZeros);
 	    HashSet ret = new HashSet();
 	    ret.add(node);
 	    return ret;
@@ -616,7 +627,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		ret.add(node);
 		return ret;
 	    }	
-	    else return getDownStreamHelper(node.edges[0]);
+	    else return getDownStreamHelper(node.edges[0],addZeros);
 	}
 	else if (node.contents instanceof SIRSplitter) {
 	    HashSet ret = new HashSet();
@@ -632,8 +643,10 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    }
 	    */
 	    for (int i = 0; i < node.ways; i++) {
-		if(node.weights[i]!=0)
-		    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
+		if(addZeros||(node.weights[i]!=0))
+		    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i],addZeros));
+		else
+		    System.out.println("WARNING:"+node.edges[i]);
 	    }
 	    return ret;
 	}

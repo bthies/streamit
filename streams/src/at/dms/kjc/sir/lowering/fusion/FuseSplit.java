@@ -21,7 +21,8 @@ public class FuseSplit {
     /**
      * Performs a depth-first traversal of an SIRStream tree, and
      * calls flatten() on any SIRSplitJoins as a post-pass.
-     */
+     * COMMENTED OUT since total deep-fusion like this should
+     * be done from FuseAll now.
     public static SIRStream doFlatten(SIRStream str)
     {
         // First, visit children (if any).
@@ -66,6 +67,7 @@ public class FuseSplit {
         // All done, return the object.
         return str;
     }
+     */
     
     /**
      * Flattens a split/join, subject to the following constraints:
@@ -89,12 +91,9 @@ public class FuseSplit {
             if (!(str instanceof SIRFilter))
                 return sj;
             SIRFilter filter = (SIRFilter)str;
-	    // don't allow two-stage filters that peek, since we
-	    // aren't dealing with how to fuse their initWork
-	    // functions.
-            if (filter instanceof SIRTwoStageFilter &&
-		((SIRTwoStageFilter)filter).getInitPop() > 0) {
-//		filter.getPeekInt() > filter.getPopInt()) {
+	    // don't allow two-stage filters, since we aren't dealing
+	    // with how to fuse their initWork functions.
+            if (filter instanceof SIRTwoStageFilter) {
                 return sj;
 	    }
         }

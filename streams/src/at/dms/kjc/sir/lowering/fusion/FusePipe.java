@@ -160,10 +160,12 @@ public class FusePipe {
     private static boolean isFusable(SIRStream str) {
 	// don't allow two-stage filters that peek
 	if (str instanceof SIRTwoStageFilter) {
-	    SIRTwoStageFilter twoStage = (SIRTwoStageFilter)str;
+	    return false;
+	    /*
 	    if (twoStage.getInitPeek()-twoStage.getInitPop()>0) {
 		return false;
 	    }
+	    */
 	}
 	return (str instanceof SIRFilter) && ((SIRFilter)str).needsWork();
 	}
@@ -217,11 +219,6 @@ public class FusePipe {
 			   str + " " + str.getName());
 	    }
 	}
-	// construct a dummy result to be filled in later.  This is
-	// necessary because in the process of patching the parent
-	// init function, we need to know about the new target.  Not a
-	// perfect solution.
-	SIRFilter result = new SIRTwoStageFilter();
 
 	// rename the components of the filters
 	RenameAll renamer = new RenameAll();
@@ -239,12 +236,10 @@ public class FusePipe {
 	JMethodDeclaration steadyWork =  makeWork(filterInfo, false);
 
 	// make the fused init functions
-	InitFuser initFuser = makeInitFunction(filterInfo, 
-						   initWork, 
-						   result);
+	InitFuser initFuser = makeInitFunction(filterInfo);
 
 	// fuse all other fields and methods
-	makeFused(filterInfo, initFuser.getInitFunction(), initWork, steadyWork, result);
+	SIRFilter result = makeFused(filterInfo, initFuser.getInitFunction(), initWork, steadyWork);
 	
 	// insert the fused filter in the parent
 	replace((SIRPipeline)result.getParent(), filters,
@@ -311,7 +306,9 @@ public class FusePipe {
 	    }
 	    
 	    // calculate how much data we should buffer between the
-	    // i'th and (i-1)'th filter
+	    // i'th and (i-1)'th filter.  This part of the code is
+	    // ready for two stage filters even though they might not
+	    // be passed here yet.
 	    int peekBufferSize;
 	    if (i==0) {
 		// for the first filter, don't need any peek buffer
@@ -320,8 +317,26 @@ public class FusePipe {
 		// otherwise, need however many were left over during
 		// initialization between this filter and the last
 		FilterInfo last = (FilterInfo)result.get(result.size()-1);
-		peekBufferSize = last.init.num * last.filter.getPushInt()
-		    - num[0] * filter.getPopInt();
+		int lastProduce = 0;
+		// need to count first execution of a two-stage filter separately
+		if (last.filter instanceof SIRTwoStageFilter &&
+		    last.init.num > 0) {
+		    lastProduce = ((SIRTwoStageFilter)last.filter).getInitPush() + 
+			(last.init.num-1) * last.filter.getPushInt();
+		} else {
+		    lastProduce = last.init.num * last.filter.getPushInt();
+		}
+		int myConsume = 0;
+		if (filter instanceof SIRTwoStageFilter &&
+		    num[0] > 0) {
+		    myConsume = ((SIRTwoStageFilter)filter).getInitPop() + 
+			(num[0]-1) * filter.getPopInt();
+		} else {
+		    myConsume = num[0] * filter.getPopInt();
+		}
+		// the peek buffer is the difference between what the
+		// previous one produces and this one consumes
+		peekBufferSize = lastProduce - myConsume;
 	    }
 
 	    // get ready to make rest of phase-specific info
@@ -438,7 +453,9 @@ public class FusePipe {
     /**
      * Builds the initial work function for <filterList>, where <init>
      * indicates whether or not we're doing the initialization work
-     * function.
+     * function.  If in init mode and there are no statements in the
+     * work function, then it returns null instead (to indicate that
+     * initWork is not needed.)
      */
     private static JMethodDeclaration makeWork(List filterInfo, boolean init) {
 	// make a statement list for the init function
@@ -448,18 +465,25 @@ public class FusePipe {
 	makeWorkDecls(filterInfo, statements, init);
 
 	// add the work statements
+	int before = statements.size();
 	makeWorkBody(filterInfo, statements, init);
+	int after = statements.size();
 
-	// return result
-	return new JMethodDeclaration(null,
-				      at.dms.kjc.Constants.ACC_PUBLIC,
-				      CStdType.Void,
-				      init ? INIT_WORK_NAME : "work",
-				      JFormalParameter.EMPTY,
+	if (after-before==0 && init) {
+	    // return null to indicate empty initWork function
+	    return null;
+	} else {
+	    // return result
+	    return new JMethodDeclaration(null,
+					  at.dms.kjc.Constants.ACC_PUBLIC,
+					  CStdType.Void,
+					  init ? INIT_WORK_NAME : "work",
+					  JFormalParameter.EMPTY,
 				      CClassType.EMPTY,
-				      statements,
-				      null,
-				      null);
+					  statements,
+					  null,
+					  null);
+	}
     }
 
     /**
@@ -544,8 +568,10 @@ public class FusePipe {
 						    JIntLiteral(curPhase.num))
 					);
 	    }
-	    // get the postlude--copying state to the peek buffer
-	    statements.addStatement(makePeekBackup(cur, curPhase));
+	    // if there's any peek buffer, store items to it
+	    if (cur.peekBufferSize>0) {
+		statements.addStatement(makePeekBackup(cur, curPhase));
+	    }
 	}
     }
 
@@ -771,11 +797,9 @@ public class FusePipe {
      * <result> will be the resulting fused filter.
      */
     private static 
-	InitFuser makeInitFunction(List filterInfo,
-					    JMethodDeclaration initWork,
-					    SIRFilter result) {
+	InitFuser makeInitFunction(List filterInfo) {
 	// make an init function builder out of <filterList>
-	InitFuser initFuser = new InitFuser(filterInfo, initWork, result);
+	InitFuser initFuser = new InitFuser(filterInfo);
 	
 	// do the work on the parent
 	initFuser.doit((SIRPipeline)((FilterInfo)filterInfo.get(0)).filter.getParent());
@@ -815,7 +839,9 @@ public class FusePipe {
 	List result = new LinkedList();
 	// start with the methods that we were passed
 	result.add(init);
-	result.add(initWork);
+	if (initWork!=null) {
+	    result.add(initWork);
+	}
 	result.add(steadyWork);
 	// add methods from each filter that aren't work methods
 	for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
@@ -847,23 +873,15 @@ public class FusePipe {
     }
 
     /**
-     * Mutates <result> to be the final, fused filter.
+     * Returns the final, fused filter.
      */
-    private static void makeFused(List filterInfo, 
-				  JMethodDeclaration init, 
-				  JMethodDeclaration initWork, 
-				  JMethodDeclaration steadyWork,
-				  SIRFilter result) {
+    private static SIRFilter makeFused(List filterInfo, 
+				       JMethodDeclaration init, 
+				       JMethodDeclaration initWork, 
+				       JMethodDeclaration steadyWork) {
 	// get the first and last filters' info
 	FilterInfo first = (FilterInfo)filterInfo.get(0);
 	FilterInfo last = (FilterInfo)filterInfo.get(filterInfo.size()-1);
-
-	// calculate the peek, pop, and push count for the fused
-	// filter in the INITIAL state
-	int initPop = first.init.num * first.filter.getPopInt();
-	int initPeek =
-	    (first.filter.getPeekInt() - first.filter.getPopInt()) + initPop;
-	int initPush = last.init.num * last.filter.getPushInt();
 
 	// calculate the peek, pop, and push count for the fused
 	// filter in the STEADY state
@@ -872,38 +890,58 @@ public class FusePipe {
 	    (first.filter.getPeekInt() - first.filter.getPopInt()) + steadyPop;
 	int steadyPush = last.steady.num * last.filter.getPushInt();
 
-	/*
-	System.out.println(" Fused filter init peek   = " + initPeek);
-	System.out.println("              init pop    = " + initPop);
-	System.out.println("              init push   = " + initPush);
-	System.out.println("              steady peek = " + steadyPeek);
-	System.out.println("              steady pop  = " + steadyPop);
-	System.out.println("              steady push = " + steadyPush);
-	*/
-
-	// make a new filter to represent the fused combo
-	result.copyState(new SIRTwoStageFilter(first.filter.getParent(),
-					       getFusedName(filterInfo),
-					       getFields(filterInfo),
-					       getMethods(filterInfo, 
-							  init, 
-							  initWork, 
-							  steadyWork),
-					       new JIntLiteral(steadyPeek), 
-					       new JIntLiteral(steadyPop),
-					       new JIntLiteral(steadyPush),
-					       steadyWork,
-					       initPeek,
-					       initPop,
-					       initPush,
-					       initWork,
-					       voidToInt(first.filter.
-					       getInputType()),
-					       voidToInt(last.filter.
-					       getOutputType())));
+	SIRFilter result;
+	// if initWork is null, then we can get away with a filter for
+	// the fused result; otherwise we need a two-stage filter
+	if (initWork==null) {
+	    result = new SIRFilter(first.filter.getParent(),
+				   getFusedName(filterInfo),
+				   getFields(filterInfo),
+				   getMethods(filterInfo, 
+					      init, 
+					      initWork, 
+					      steadyWork),
+				   new JIntLiteral(steadyPeek), 
+				   new JIntLiteral(steadyPop),
+				   new JIntLiteral(steadyPush),
+				   steadyWork,
+				   voidToInt(first.filter.
+					     getInputType()),
+				   voidToInt(last.filter.
+					     getOutputType()));
+	} else {
+	    // calculate the peek, pop, and push count for the fused
+	    // filter in the INITIAL state
+	    int initPop = first.init.num * first.filter.getPopInt();
+	    int initPeek =
+		(first.filter.getPeekInt() - first.filter.getPopInt()) + initPop;
+	    int initPush = last.init.num * last.filter.getPushInt();
+	    
+	    // make a new filter to represent the fused combo
+	    result = new SIRTwoStageFilter(first.filter.getParent(),
+					   getFusedName(filterInfo),
+					   getFields(filterInfo),
+					   getMethods(filterInfo, 
+						      init, 
+						      initWork, 
+						      steadyWork),
+					   new JIntLiteral(steadyPeek), 
+					   new JIntLiteral(steadyPop),
+					   new JIntLiteral(steadyPush),
+					   steadyWork,
+					   initPeek,
+					   initPop,
+					   initPush,
+					   initWork,
+					   voidToInt(first.filter.
+						     getInputType()),
+					   voidToInt(last.filter.
+						     getOutputType()));
+	}
 	
-	// set init functions and work functions of fused filter
+	// set init function of fused filter
 	result.setInit(init);
+	return result;
     }
 
     /**
@@ -1151,19 +1189,9 @@ class InitFuser {
     private List fusedArgs;
 
     /**
-     * What will be filled in to be the final, fused filter.
-     */
-    private SIRFilter fusedFilter;
-
-    /**
      * Cached copy of the method decl for the init function.
      */
     private JMethodDeclaration initFunction;
-
-    /**
-     * The initWork function of the filter we're fusing.
-     */
-    private JMethodDeclaration initWork;
 
     /**
      * The number of filter's we've fused.
@@ -1175,12 +1203,8 @@ class InitFuser {
      * fusion.  It has been allocated, but is not filled in with
      * correct values yet.
      */
-    public InitFuser(List filterInfo, 
-		     JMethodDeclaration initWork,
-		     SIRFilter fusedFilter) {
+    public InitFuser(List filterInfo) {
 	this.filterInfo = filterInfo;
-	this.initWork = initWork;
-	this.fusedFilter = fusedFilter;
 	this.fusedBlock = new JBlock(null, new JStatement[0], null);
 	this.fusedParam = new LinkedList();
 	this.fusedArgs = new LinkedList();

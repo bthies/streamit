@@ -30,4 +30,9 @@ public class FuseAll extends EmptyStreamVisitor {
 				  SIRPipelineIter iter) {
 	FusePipe.fuse(self);
     }
+
+    public void postVisitSplitJoin(SIRSplitJoin self,
+				   SIRSplitJoinIter iter) {
+	FuseSplit.fuse(self);
+    }
 }

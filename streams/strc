@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.31 2003-10-31 19:07:28 thies Exp $
+# $Id: strc,v 1.32 2003-11-11 21:51:19 jasperln Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -194,6 +194,7 @@ sub get_options
 			    "fusion",
 			    "iterations|i=i",
 			    "library!",
+			    "linearanalysis",
 			    "linearpartition|L",
 			    "linearreplacement|l",
 			    "linearreplacement2",
@@ -422,6 +423,7 @@ sub get_kjc_opts
     $opts{frequencyreplacement} && ($kjcopts .= " --frequencyreplacement");
     $opts{fission} && ($kjcopts .= " --fission " . $opts{fission});
     $opts{fusion} && ($kjcopts .= " --fusion");
+    $opts{linearanalysis} && ($kjcopts .= " --linearanalysis");
     $opts{linearpartition} && ($kjcopts .= " --linearpartition");
     $opts{linearreplacement} && ($kjcopts .= " --linearreplacement");
     $opts{linearreplacement2} && ($kjcopts .= " --linearreplacement2");

@@ -29,7 +29,7 @@ public class LinearOptimizer {
 
     */
     public LinearOptimizer(LinearFilterRepresentation orig) {
-	
+	/*	
 	outputs = orig.getPushCount();
 	inputs = orig.getPopCount();
 	states = orig.getStateCount() + inputs;
@@ -61,9 +61,42 @@ public class LinearOptimizer {
 	    totalPreMatrix.copyAt(0,0, FilterMatrix.getIdentity(states-inputs));
 	    totalPreMatrix.copyAt(states-inputs,states, FilterMatrix.getIdentity(inputs));
 	    preNeeded = true;
+        }
+	*/
+
+	if(!orig.getD().isZero()) {	   
+	    orig.changeStoredInputs(orig.getStoredInputCount() + orig.getPopCount());
+	}
+
+	outputs = orig.getPushCount();
+	inputs = orig.getPopCount();
+	states = orig.getStateCount();
+	preNeeded = orig.preworkNeeded();
+
+	totalMatrix = new FilterMatrix(states+outputs,states+inputs);
+	totalMatrix.copyAt(0,0,orig.getA());
+	totalMatrix.copyAt(0,states,orig.getB());
+	totalMatrix.copyAt(states,0,orig.getC());
+	totalMatrix.copyAt(states,states,orig.getD());
+	D = new FilterMatrix(outputs,inputs);
+
+	initVec = new FilterVector(states);
+	initVec.copyAt(0,0,orig.getInit());
+	storedInputs = orig.getStoredInputCount();
+
+	if(preNeeded) {
+	    pre_inputs = orig.getPreWorkPopCount();
+	    totalPreMatrix = new FilterMatrix(states,states+pre_inputs);
+
+	    totalPreMatrix.copyAt(0,0,orig.getPreWorkA());
+	    totalPreMatrix.copyAt(0,states,orig.getPreWorkB());
 	}
     }
 
+    private void addInputs() {
+
+
+    }
 
     // main function that does all the optimizations
     public LinearFilterRepresentation optimize() {
@@ -76,35 +109,31 @@ public class LinearOptimizer {
 	transposeSystem();	
 	cleanAll();
 	LinearPrinter.println("got reduction up to value " + s1);	
-			
-	if(s1 >= 0) {
-	    // for now, leave at least 1 state
-	    s1 = Math.min(s1,states-2);
+
+	// for now, leave at least 1 state
+	s1 = Math.min(s1,states-2);			
+	if(s1 >= 0) {	   
 	    removeUnobservableStates(s1);
 	}
 	
-	LinearPrinter.println("After observable reduction, before reachable reduction: " + totalMatrix);	
-
+	LinearPrinter.println("After observable reduction, before reachable reduction: " + totalMatrix); 
 
 	// remove unreachable states 
 	s2 = reduceParameters(true);
 	cleanAll();
 	LinearPrinter.println("got reduction up to value " + s2); 
 
-
 	LinearPrinter.println("Before QR algorithm: " + totalMatrix);
 
-			
+	// for now, leave at least 1 state
+	s2 = Math.min(s2,states-2);			
 	if(s2 >= 0) {
-	    // for now, leave at least 1 state
-	    s2 = Math.min(s2,states-2);
 	    qr_Algorithm(s2); 
 	    cleanAll(); 
 	    zeroInitEntries(); 
 	    cleanAll(); 
 	    removeUnreachableStates(s2); 
-	}  
-		
+	}  		
 	cleanAll();
 
 	LinearPrinter.println("After state reduction, before min param: " + totalMatrix);
@@ -513,7 +542,7 @@ public class LinearOptimizer {
 	double temp, val, curr;
 	ComplexNumber tempComplex;
 
-	while(i > 0) {
+	while(i >= 0) {
 	    
 	    found = false;
 

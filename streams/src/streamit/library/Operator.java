@@ -398,6 +398,7 @@ public class Operator extends DestroyedClass
 
         if (initParams.getParamName ().equals("int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y")); else
         if (initParams.getParamName ().equals("int-int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y"), initParams.getIntParam ("z")); else
+        if (initParams.getParamName ().equals("float-float-float")) init (initParams.getFloatParam ("a"), initParams.getFloatParam ("b"), initParams.getFloatParam ("c")); else
         if (initParams.getParamName ().equals("")) init (); else
         if (initParams.getParamName ().equals("int")) init (initParams.getIntParam ("n")); else
         if (initParams.getParamName ().equals("float")) init (initParams.getFloatParam ("f")); else

@@ -292,14 +292,26 @@ public class SplitJoin extends Stream
             {
                 BigInteger splitBufferSize = schedule.getBufferSizeBetween (splitter, child);
                 ASSERT (splitBufferSize);
-                child.getInputChannel ().setChannelSize (splitBufferSize.intValue ());
+
+                // if the size of the buffer is zero, there is no corresponding
+                // channel, so don't try to set it.
+                if (splitBufferSize.signum () != 0)
+                {
+                    child.getInputChannel ().setChannelSize (splitBufferSize.intValue ());
+                }
             }
 
             // init the join channel
             {
                 BigInteger joinBufferSize = schedule.getBufferSizeBetween (child, joiner);
                 ASSERT (joinBufferSize);
-                child.getOutputChannel ().setChannelSize (joinBufferSize.intValue ());
+
+                // if the size of the buffer is zero, there is no corresponding
+                // channel, so don't try to set it.
+                if (joinBufferSize.signum () != 0)
+                {
+                    child.getOutputChannel ().setChannelSize (joinBufferSize.intValue ());
+                }
             }
         }
     }

@@ -12,6 +12,10 @@ import java.util.ListIterator;
 
 import java.math.BigInteger;
 
+// BUGBUG these are for my little hack of DecoderFeedback
+import streamit.scheduler.SchedPipeline;
+import streamit.scheduler.SchedSplitJoin;
+import streamit.scheduler.SchedFilter;
 
 class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 {
@@ -299,6 +303,8 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
             if (!movedForward)
             {
                 schedulingDifficulty ();
+                // BUGBUG remove this return - it's pretty useless and confusing!
+                return;
             }
         }
 
@@ -344,8 +350,44 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
         // get the name of the loop class - this will be useful
         // for debugging
         String className = getStreamObject ().getClass ().getName ();
+
+        // BUGBUG hack the DecoderFeedback with fine grained scheduling
+        if (className.equals ("DecoderFeedback")) { fakeDecoderFeedback (); return; }
+
         ERROR ("Couldn't schedule loop " + className + ".\n" +
                "This loop is not necessarily impossible to schedule, " +
                "but this scheduler isn't intelligent enough to do it");
+    }
+
+    void fakeDecoderFeedback ()
+    {
+        steadySchedule.clear ();
+
+        SchedJoinType myJoiner = getLoopJoin ();
+        SchedStream myBody = getLoopBody ();
+        SchedSplitType mySplitter = getLoopSplit ();
+
+        SchedPipeline myLoop = (SchedPipeline) getLoopFeedbackPath ();
+        SchedSplitJoin LTPSplitJoin = (SchedSplitJoin) myLoop.getChild (0);
+        SchedFilter LTPFilter = (SchedFilter) myLoop.getChild (1);
+
+        steadySchedule.add (LTPSplitJoin.getChild (0));
+
+        int x;
+        for (x = 0; x < 4; x++)
+        {
+            steadySchedule.add (myJoiner);
+            steadySchedule.add (myBody);
+            steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), mySplitter));
+            steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), LTPSplitJoin.getSplitType ()));
+            steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), LTPSplitJoin.getChild (1)));
+            steadySchedule.add (LTPSplitJoin.getJoinType ());
+            steadySchedule.add (LTPFilter);
+        }
+
+        scheduler.schedule.setBufferSize (myJoiner.getStreamObject (), myBody.getStreamObject (), BigInteger.valueOf (41));
+        scheduler.schedule.setBufferSize (myBody.getStreamObject (), mySplitter.getStreamObject (), BigInteger.valueOf (160));
+        scheduler.schedule.setBufferSize (mySplitter.getStreamObject (), myLoop.getStreamObject (), BigInteger.valueOf (160));
+        scheduler.schedule.setBufferSize (myLoop.getStreamObject (), myJoiner.getStreamObject (), BigInteger.valueOf (1));
     }
 }

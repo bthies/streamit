@@ -27,6 +27,15 @@ public class SchedPipeline extends SchedStream
         return allChildren;
     }
 
+    public SchedStream getChild (int nChild)
+    {
+        ASSERT (nChild < getChildren ().size ());
+        Object child = getChildren ().get (nChild);
+
+        ASSERT (child instanceof SchedStream);
+        return (SchedStream) child;
+    }
+
     public void computeSteadySchedule ()
     {
         // go through all the children and get them initialized

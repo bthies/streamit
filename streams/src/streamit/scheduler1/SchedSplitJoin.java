@@ -19,6 +19,15 @@ public class SchedSplitJoin extends SchedStream
         return allChildren;
     }
 
+    public SchedStream getChild (int nChild)
+    {
+        ASSERT (nChild < getChildren ().size ());
+        Object child = getChildren ().get (nChild);
+
+        ASSERT (child instanceof SchedStream);
+        return (SchedStream) child;
+    }
+
     public void addChild (SchedStream stream)
     {
         ASSERT (stream);

@@ -1,0 +1,23 @@
+//===========================================================================
+//
+//   FILE: FileTest.str:
+//   
+//   Author: Michael Gordon, converted by Kimberly Kuo
+//
+//   Function:  Simple i/o test
+//
+//===========================================================================
+
+void->void pipeline FileTest {
+    add void->float filter {
+        float x;
+	init {
+	    x = 0;
+	}
+	work push 1 {
+	    x = x + 2;
+	    push(x);
+	}
+    }
+    add FileWriter<float>("float.test");
+}

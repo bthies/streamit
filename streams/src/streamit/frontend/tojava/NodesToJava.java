@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.5 2002-07-15 20:02:44 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.6 2002-07-16 18:12:02 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -50,7 +50,68 @@ public class NodesToJava implements FEVisitor
         }
         return null;
     }
+
+    // Get a Java Class object corresponding to a type.
+    public static String typeToClass(Type t)
+    {
+        if (t instanceof TypePrimitive)
+        {
+            switch (((TypePrimitive)t).getType())
+            {
+            case TypePrimitive.TYPE_INT:
+                return "Integer.TYPE";
+            case TypePrimitive.TYPE_FLOAT:
+                return "Float.TYPE";
+            case TypePrimitive.TYPE_DOUBLE:
+                return "Double.TYPE";
+            }
+        }
+        else if (t instanceof TypeStruct)
+            return ((TypeStruct)t).getName() + ".class";
+        // Errp.
+        return null;
+    }
+
+    // Helpers to get function names for stream types.
+    public static String pushFunction(StreamType st)
+    {
+        return annotatedFunction("output.push", st.getOut());
+    }
     
+    public static String popFunction(StreamType st)
+    {
+        return annotatedFunction("input.pop", st.getIn());
+    }
+    
+    public static String peekFunction(StreamType st)
+    {
+        return annotatedFunction("input.peek", st.getIn());
+    }
+    
+    private static String annotatedFunction(String name, Type type)
+    {
+        String prefix = "", suffix = "";
+        // Check for known suffixes:
+        if (type instanceof TypePrimitive)
+        {
+            switch (((TypePrimitive)type).getType())
+            {
+            case TypePrimitive.TYPE_INT:
+                suffix = "Int";
+                break;
+            case TypePrimitive.TYPE_FLOAT:
+                suffix = "Float";
+                break;
+            case TypePrimitive.TYPE_DOUBLE:
+                suffix = "Double";
+                break;
+            }
+        }
+        if (type instanceof TypeStruct && name.startsWith("input"))
+            prefix = "(" + ((TypeStruct)type).getName() + ")";
+        return prefix + name + suffix;
+    }
+
     public Object visitExprArray(ExprArray exp)
     {
         String result = "";
@@ -146,12 +207,12 @@ public class NodesToJava implements FEVisitor
     public Object visitExprPeek(ExprPeek exp)
     {
         String result = (String)exp.getExpr().accept(this);
-        return st.peekFunction() + "(" + result + ")";
+        return peekFunction(st) + "(" + result + ")";
     }
     
     public Object visitExprPop(ExprPop exp)
     {
-        return st.popFunction() + "()";
+        return popFunction(st) + "()";
     }
 
     public Object visitExprTernary(ExprTernary exp)

@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.12 2002-07-16 15:26:00 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.13 2002-07-16 18:11:59 dmaze Exp $
  */
 
 header {
@@ -159,9 +159,12 @@ struct_stream_decl2[String superclass] returns [String t]
 	:
 		type=stream_type name:ID
 		{
-			// This is wrong; use new type scheme
-			if (type.fromType.equals("void") &&
-				type.toType.equals("void"))
+			if (type.getIn() instanceof TypePrimitive &&
+				((TypePrimitive)type.getIn()).getType() ==
+					TypePrimitive.TYPE_VOID &&
+				type.getOut() instanceof TypePrimitive &&
+				((TypePrimitive)type.getOut()).getType() ==
+					TypePrimitive.TYPE_VOID)
 				superclass = "StreamIt";
 			t += getIndent() + "class " + name.getText () +
 				" extends " + superclass + "\n" + "{\n";
@@ -206,11 +209,11 @@ struct_stream_decl2[String superclass] returns [String t]
 
 stream_type returns [StreamType type]
 {
-	type = new StreamType();
+	type = null;
 	Type ft, tt;
 }
 	: #(ARROW ft=data_type tt=data_type)
-		{ type.fromType = ft; type.toType = tt; }
+		{ type = new StreamType(ft, tt); }
 	;
 
 stream_param_list returns [List lst]
@@ -482,7 +485,7 @@ push_statement returns [String t] {t = null; Expression x; String v;}
 			result = Decomplexifier.decomplexify(x, varGen, n2j);
 			v = (String)result.exp.accept(n2j);
 			t = result.statements;
-			t += cur_type.pushFunction() + "(" + v + ")";
+			t += n2j.pushFunction(cur_type) + "(" + v + ")";
 		}
 	;
 

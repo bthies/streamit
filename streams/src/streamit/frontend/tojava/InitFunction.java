@@ -1,12 +1,16 @@
 /*
  * InitFunction.java: container class to represent an init function
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: InitFunction.java,v 1.2 2002-07-15 18:58:17 dmaze Exp $
+ * $Id: InitFunction.java,v 1.3 2002-07-16 18:12:02 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
-import java.util.List;
+
 import java.util.Iterator;
+import java.util.List;
+import streamit.frontend.nodes.StreamType;
+import streamit.frontend.nodes.Type;
+import streamit.frontend.nodes.TypePrimitive;
 
 public class InitFunction
 {
@@ -57,19 +61,25 @@ public class InitFunction
         
         // Generate the I/O declarations:
         String iodecls = "";
-        if (type != null && !type.fromType.equals("void"))
+        if (type != null &&
+            !(type.getIn() instanceof TypePrimitive &&
+              ((TypePrimitive)type.getIn()).getType() ==
+              TypePrimitive.TYPE_VOID))
         {
             iodecls += getIndent(indent + 1) + "input = new Channel(";
-            iodecls += type.typeToClass(type.fromType);
+            iodecls += n2j.typeToClass(type.getIn());
             iodecls += ", " + work.popRate;
             if (!work.peekRate.equals("0"))
                 iodecls += ", " + work.peekRate;
             iodecls += ");\n";
         }
-        if (type != null && !type.toType.equals("void"))
+        if (type != null &&
+            !(type.getOut() instanceof TypePrimitive &&
+              ((TypePrimitive)type.getOut()).getType() ==
+              TypePrimitive.TYPE_VOID))
         {
             iodecls += getIndent(indent + 1) + "output = new Channel(";
-            iodecls += type.typeToClass(type.toType);
+            iodecls += n2j.typeToClass(type.getOut());
             iodecls += ", " + work.pushRate;
             iodecls += ");\n";
         }

@@ -294,7 +294,8 @@ public class FineGrainSimulator extends Simulator
 	    if (dest == null) 
 		System.out.println("Yup dest is null");
  	    RawTile[] hops = 
- 		(RawTile[])Router.getRoute(ssg, fire, dest).toArray(new RawTile[0]);
+ 		(RawTile[])layout.router.
+		getRoute(ssg, layout.getTile(fire), layout.getTile(dest)).toArray(new RawTile[0]);
 	    //add to fire's next
 	    if (!next.containsKey(layout.getTile(fire))) 
 		next.put(layout.getTile(fire), new HashSet());

@@ -21,7 +21,9 @@ import java.util.Iterator;
  */
 public class Layout extends at.dms.util.Utils implements 
 						  StreamGraphVisitor, FlatVisitor {
-
+    
+    public Router router;
+    
     /** SIRStream -> RawTile **/
     private  HashMap SIRassignment;
     /* RawTile -> flatnode */
@@ -57,6 +59,8 @@ public class Layout extends at.dms.util.Utils implements
 	int rows = rawChip.getYSize();
 	int columns = rawChip.getXSize();
 	
+	router = new YXRouter();
+
 	if (streamGraph.getFileVisitor().foundReader || 
 	    streamGraph.getFileVisitor().foundWriter){
 	    assert false;
@@ -448,7 +452,7 @@ public class Layout extends at.dms.util.Utils implements
 		}
 		
 		RawTile[] route = 
-		    (RawTile[])Router.getRoute(ssg, src, dst).toArray(new RawTile[0]);
+		    (RawTile[])router.getRoute(ssg, getTile(src), getTile(dst)).toArray(new RawTile[0]);
 		
 		//find the cost of the route, penalize routes that go thru 
 		//tiles assigned to filters or joiners, reward routes that go thru 
@@ -542,7 +546,7 @@ public class Layout extends at.dms.util.Utils implements
 	    FlatNode src = ssg.getOutputs()[j];
 	    FlatNode dst = ssg.getNext(src);
 	    
-	    Iterator route = XYRouter.getRoute(getTile(src), getTile(dst)).iterator();
+	    Iterator route = XYRouter.getRoute(ssg, getTile(src), getTile(dst)).iterator();
 	    //System.out.print("Dynamic Route: ");
 
 	    //********* TURNS IN DYNAMIC NETWORK COST IN TERMS OF LATENCY ****//

@@ -26,7 +26,7 @@ public class SpaceDynamicBackend {
     public static RawChip rawChip;
 
     public static SIRStructure[] structures;
-    
+
     //if true have each filter print out each value it is pushing
     //onto its output tape
     public static boolean FILTER_DEBUG_MODE = false;

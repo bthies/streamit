@@ -10,7 +10,7 @@ public class XYRouter
 {
     /** return the route from src to dest (including both)
 	first x then y, this returns a list of compute nodes (tiles) **/
-    public static LinkedList getRoute(ComputeNode src, ComputeNode dst) 
+    public static LinkedList getRoute(StaticStreamGraph ssg, ComputeNode src, ComputeNode dst) 
     {
 	LinkedList route = new LinkedList();
 	RawChip chip = src.getRawChip();
@@ -56,9 +56,9 @@ public class XYRouter
 	return route;
     }
     
-    public static int distance(ComputeNode src, ComputeNode dst) 
+    public static int distance(StaticStreamGraph ssg, ComputeNode src, ComputeNode dst) 
     {  //return the manhattan distance for the simple router above
-	return getRoute(src, dst).size();
+	return getRoute(ssg, src, dst).size();
     }
     
 }

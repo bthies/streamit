@@ -1,0 +1,146 @@
+/*
+ *  Copyright 2002 Massachusetts Institute of Technology
+ *
+ *  Permission to use, copy, modify, distribute, and sell this software and its
+ *  documentation for any purpose is hereby granted without fee, provided that
+ *  the above copyright notice appear in all copies and that both that
+ *  copyright notice and this permission notice appear in supporting
+ *  documentation, and that the name of M.I.T. not be used in advertising or
+ *  publicity pertaining to distribution of the software without specific,
+ *  written prior permission.  M.I.T. makes no representations about the
+ *  suitability of this software for any purpose.  It is provided "as is"
+ *  without express or implied warranty.
+ */
+
+void->void pipeline FilterBankNew
+{
+  int N_sim = 1024 * 2;
+  int N_samp = 8;
+  int N_ch = N_samp;
+  int N_col = 32;
+  float[N_sim] r;
+  float[N_ch][N_col] H;
+  float[N_ch][N_col] F;
+
+  for (int i = 0; i < N_sim; i++)
+    r[i] = i+1;
+
+  for (int i = 0; i < N_col; i++)
+    for (int j = 0; j < N_ch; j++) {
+      H[j][i] = i*N_col + j*N_ch + j + i + j + 1;
+      F[j][i] = i*j + j*j + j + i;
+    }
+
+  add source(N_sim, r);
+  add FilterBank(N_samp, N_ch, N_col, H, F);
+  add sink(N_sim);
+}
+
+void->float filter source(int N, float[N] r) {
+  int pos;
+  init { pos = 0; }
+  work push 1 {
+    push(r[pos++]);
+    if (pos >= N) pos = 0;
+  }
+}
+
+float->void filter sink(int N) {
+  work pop 1 { print(pop()); }
+}
+
+float->float pipeline FilterBank(int N_samp, int N_ch, int N_col,
+				 float[N_ch][N_col] H,
+				 float[N_ch][N_col] F)
+{
+  add Branches(N_samp, N_ch, N_col, H, F);
+  add Combine(N_samp);
+}
+
+float->float splitjoin Branches(int N_samp, int N_rows, int N_col,
+			      float[N_rows][N_col] H,
+			      float[N_rows][N_col] F)
+{
+  split duplicate;
+  for (int i = 0; i < N_rows; i++)
+  {
+    float[N_col] H_ch;
+    float[N_col] F_ch;
+    for (int j = 0; j < N_col; j++)
+    {
+      H_ch[j] = H[i][j];
+      F_ch[j] = F[i][j];
+    }
+    add Bank(N_samp, N_col, H_ch, F_ch);
+  }
+  join roundrobin;
+}
+
+float->float pipeline Bank(int N, int L, float[L] H, float[L] F)
+{
+  add Delay_N(L-1);
+  add FirFilter(L, H);
+  add DownSamp(N);
+  add UpSamp(N);
+  add Delay_N(L-1);
+  add FirFilter(L, F);
+}
+
+float->float filter Delay_N(int N)
+{
+  float[N] state;
+  int place_holder;
+
+  init {
+    for (int i = 0; i < N; i++)
+      state[i] = 0;
+    place_holder = 0;
+  }
+
+  work pop 1 push 1 {
+    push(state[place_holder]);
+    state[place_holder] = pop();
+    place_holder++;
+    if (place_holder == N)
+      place_holder = 0;
+  }
+}
+
+float->float filter FirFilter(int N, float[N] COEFF)
+{
+  work pop 1 peek N push 1 {
+    float sum = 0;
+    for (int i = 0; i < N; i++)
+      sum += peek(i) * COEFF[N-1-i];
+    pop();
+    push(sum);
+  }
+}
+
+float->float filter DownSamp(int N)
+{
+  work pop N push 1 {
+    push(pop());
+    for (int i = 0; i < N-1; i++)
+      pop();
+  }
+}
+
+float->float filter UpSamp(int N)
+{
+  work pop 1 push N {
+    push(pop());
+    for (int i = 0; i < N-1; i++)
+      push(0);
+  }
+}
+
+float->float filter Combine(int N)
+{
+  work pop N push 1 {
+    float sum = 0;
+    for (int i = 0; i < N; i++)
+      sum += pop();
+    push(sum);
+  }
+}

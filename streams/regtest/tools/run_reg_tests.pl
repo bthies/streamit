@@ -7,7 +7,7 @@
 # Usage: run_reg_test.pl -- runs all of the regtests  (eg make test-all)
 #        run_reg_test.pl nightly -- runs nightly regtests (eg make test-nightly)
 #
-# $Id: run_reg_tests.pl,v 1.23 2003-10-17 08:01:24 jasperln Exp $
+# $Id: run_reg_tests.pl,v 1.24 2003-11-13 16:42:35 dmaze Exp $
 
 use strict;
 use POSIX qw(strftime);
@@ -112,9 +112,9 @@ close(MHMAIL);
 
 ## run the makefile which executes the regression test
 if ($DEBUG) {
-    `/usr/local/bin/make -C $streamit_home/regtest test-bed >& $REG_LOG`;
+    `make -C $streamit_home/regtest test-bed >& $REG_LOG`;
 } else {
-    `/usr/local/bin/make -C $streamit_home/regtest $CVS_TARGET >& $REG_LOG`;
+    `make -C $streamit_home/regtest $CVS_TARGET >& $REG_LOG`;
 }
 
 ## (date/time stamp the end of the run)

@@ -13,9 +13,5 @@ doing an elementwise add on the output.
       <desc>Generate two input vectors and add them</desc>
       <file>VectAdd.str</file>
     </impl>
-    <impl lang="StreamIt">
-      <desc>Same, but with different input generator</desc>
-      <file>VectAdd1.str</file>
-    </impl>
   </implementations>
 </benchmark>

@@ -22,7 +22,7 @@ import java.util.HashMap;
  *
  * @see     streamit.frontend.passes.SymbolTableVisitor
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTable.java,v 1.6 2003-04-15 20:07:45 dmaze Exp $
+ * @version $Id: SymbolTable.java,v 1.7 2003-04-15 20:48:54 dmaze Exp $
  */
 public class SymbolTable
 {
@@ -101,6 +101,18 @@ public class SymbolTable
         if (parent != null)
             return parent.lookupVarInfo(name);
         return null;
+    }
+
+    /**
+     * Check to see if a symbol exists.  Searches parent symbol tables.
+     *
+     * @param   name  name of the variable to search for
+     * @return  true if defined, false otherwise
+     */
+    public boolean hasVar(String name)
+    {
+        VarInfo info = lookupVarInfo(name);
+        return (info != null);
     }
 
     /**

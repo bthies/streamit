@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.io.*;
 import at.dms.compiler.*;
@@ -33,7 +34,10 @@ public class FlatIRToRS extends ToC implements StreamVisitor
     private HashMap doloops;
     /** the current filter we are visiting **/
     private SIRFilter filter;
-
+    /** comment me **/
+    private NewArrayExprs newArrayExprs;
+    /** comment me **/
+    private ConvertArrayInitializers arrayInits;
     
     /**
      * The entry method to this C conversion pass.  Given a flatnode containing
@@ -91,6 +95,10 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	     {
 	     }
 	*/
+	//remove unused variables...
+	RemoveUnusedVars.doit(node);
+	//remove array initializers and remember them for placement later...
+	toC.arrayInits = new ConvertArrayInitializers(node);
 	//find all do loops, 
 	toC.doloops = IDDoLoops.doit(node);
 	//now iterate over all the methods and generate the c code.
@@ -103,6 +111,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
 	doloops = new HashMap();
+	newArrayExprs = null;
     }
 
     
@@ -111,7 +120,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
 	doloops = new HashMap();
-
+	newArrayExprs = new NewArrayExprs(f);
     }
 
 
@@ -155,6 +164,8 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	}
 	
 	print("int main() {\n");
+	//generate array initializer blocks for fields...
+	printFieldArrayInits();
 	
 	//execute the main function
 	print(Names.main + "();\n");
@@ -166,6 +177,17 @@ public class FlatIRToRS extends ToC implements StreamVisitor
        
 	createFile();
     }
+
+    //iterate over all the assignment blocks that perform
+    //array initialization
+    private void printFieldArrayInits() 
+    {
+	Iterator blocks = arrayInits.fields.iterator();
+	while (blocks.hasNext()) {
+	    ((JBlock)blocks.next()).accept(this);
+	}
+    }
+    
 
     private void createFile() {
 	System.out.println("Code for application written to str.c");
@@ -180,13 +202,15 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	}
     }
 
+    //for now, just print all the common math functions as
+    //external functions
     protected void printExterns() 
     {
 	print("#define EXTERNC \n\n");
 	print("extern EXTERNC int printf(char[], ...);\n");
-	print("extern EXTERNC int fprintf(FILE*, char[], ...);\n");
+	print("extern EXTERNC int fprintf(int, char[], ...);\n");
 	print("extern EXTERNC int fopen(char[], char[]);\n");
-	print("extern EXTERNC int fscanf(FILE*, char[], ...);\n");
+	print("extern EXTERNC int fscanf(int, char[], ...);\n");
 	print("extern EXTERNC float acosf(float);\n"); 
 	print("extern EXTERNC float asinf(float);\n"); 
 	print("extern EXTERNC float atanf(float);\n"); 
@@ -211,18 +235,6 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	print("extern EXTERNC float tanf(float);\n");
 	     
     }
-
-    //stack allocate the array
-    protected void stackAllocateArray(String ident) {
-        //find the dimensions of the array!!
-        String dims[] =
-            ArrayDim.findDim(new FlatIRToRS(), filter.getFields(), method, ident);
-	
-        for (int i = 0; i < dims.length; i++)
-            print("[" + dims[i] + "]");
-        return;
-    }
-
     
     /**
      * prints an assignment expression
@@ -265,13 +277,39 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	}
 	*/
 	
+	//we have an array declaration
 	if (type.isArrayType()) {
-	    handleArrayDecl(ident, type);
-
-	    if (expr != null) {
-		print(" = ");
-		expr.accept(this);
+	    //print the declaration and get the number of dimensions
+	    int dim = handleArrayDecl(ident, type);
+	    //now, get the new array expression
+	    if (expr == null) { //if their isn't a new array expression in the declaration
+		//maybe it was assigned on later, so look for it in newArrayExprs
+		if (newArrayExprs.getNewArr(ident) != null) 
+		    expr = newArrayExprs.getNewArr(ident);
+		else {  //otherwise, this array was assinged another array,
+		    Object current = ident; //so look for that array's new array expression
+		    while (expr == null) {  //keep going until we find the new array expression
+			if (newArrayExprs.getNewArr(newArrayExprs.getArrAss(current)) != null)
+			    expr = newArrayExprs.getNewArr(newArrayExprs.getArrAss(current));
+			else 
+			    current = newArrayExprs.getArrAss(current);
+		    }
+		}
 	    }
+	    //make sure we found a new array expression
+	    if (expr instanceof JNewArrayExpression) {
+		//make sure the new array expression has the correct number of dims
+		assert dim == ((JNewArrayExpression)expr).getDims().length :
+		    "Array " + ident + " has underspecified NewArrayExpression";
+	    }
+	    else {
+		assert false : 
+		    "Trying to initialize array with something other than NewArrayExpression";
+	    }
+	    
+	    print(" = ");
+	    //visit the new array expression
+	    expr.accept(this);
 	}
 	else {
 	    print(type);
@@ -291,14 +329,19 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	print(";");
     }
 
-    //print an abstract array declaration
-    private void handleArrayDecl(String ident, CType type) 
+    /**
+     * print an abstract array declaration and return the number of dimensions
+     **/
+    private int handleArrayDecl(String ident, CType type) 
     {
 	
 	String brackets = "[[";
-	
+	int dim = 1;
+
 	CType currentType = ((CArrayType)type).getElementType();
+	//keep stripping off array types until we get a base type
 	while (currentType.isArrayType()) {
+	    dim++;
 	    brackets = brackets + ",";
 	    currentType = ((CArrayType)currentType).getElementType();
 	}
@@ -310,6 +353,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	print(" ");
 	print(ident);
 	print(brackets);
+	return dim;
     }
     
     /**
@@ -318,16 +362,45 @@ public class FlatIRToRS extends ToC implements StreamVisitor
     public void visitVariableDefinition(JVariableDefinition self,
                                         int modifiers,
                                         CType type,
-                                        String ident,                                        JExpression expr) {
-
+                                        String ident,
+                                        JExpression expr) {
+	
 	/*if (expr instanceof JArrayInitializer) {
 		declareInitializedArray(type, ident, expr);
 		return;
 		}*/
 	
+	//we have an array declaration
 	if (type.isArrayType()) {
-	    handleArrayDecl(ident, type);
-
+	    //print the declaration and get the number of dimensions
+	    int dim = handleArrayDecl(ident, type);
+	    //now, get the new array expression
+	    if (expr == null) {//if their isn't a new array expression in the declaration
+		//maybe it was assigned on later, so look for it in newArrayExprs
+		if (newArrayExprs.getNewArr(self) != null) 
+		    expr = newArrayExprs.getNewArr(self);
+		else { //otherwise, this array was assinged another array,
+		    Object current = self;//so look for that array's new array expression
+		    while (expr == null) { //keep going until we find the new array expression
+			if (newArrayExprs.getNewArr(newArrayExprs.getArrAss(current)) != null)
+			    expr = newArrayExprs.getNewArr(newArrayExprs.getArrAss(current));
+			else 
+			    current = newArrayExprs.getArrAss(current);
+		    }
+		}
+	    }
+	    //make sure we found a new array expression
+	    if (expr instanceof JNewArrayExpression) {
+		//make sure the new array expression has the correct number of dims
+		assert dim == ((JNewArrayExpression)expr).getDims().length :
+		    "Array " + ident + " has underspecified NewArrayExpression";
+	    }
+	    else {
+		assert false : 
+		    "Trying to initialize array with something other than a new array expression";
+	    }
+	    
+	    
 	    if (expr != null) {
 		print(" = ");
 		expr.accept(this);
@@ -350,7 +423,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	    }
 	    
 	}
-	print(";\n");
+	print(";");
     }
 
     /**
@@ -361,9 +434,11 @@ public class FlatIRToRS extends ToC implements StreamVisitor
                                         JExpression[] dims,
                                         JArrayInitializer init)
     {
+	//we should see no zero dimension arrays
 	assert dims.length > 0 : "Zero Dimension array" ;
+	//and no initializer
 	assert init == null : "Initializers of Abstract Arrays not supported in RStream yet";
-	
+	//print the absarray call with the dimensions...
 	print(" absarray" + dims.length + "(");
 	dims[0].accept(this);
 	for (int i = 1; i < dims.length; i++) {
@@ -418,6 +493,8 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	    self.getName().startsWith("init"))
 	    isInit = true;
 	
+	//place array initializers...
+	placeArrayInitializers(self);
 
         print(" ");
         if (body != null) 
@@ -429,6 +506,28 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	isInit = false;
 	method = null;
     }
+    
+    private void placeArrayInitializers(JMethodDeclaration meth) 
+    {
+	//do nothing if we have nothing to do
+	if (!arrayInits.locals.containsKey(meth))
+	    return;
+
+	//find the correct place to place the block by bypassing the 
+	//variable declaration
+	JStatement[] statements = meth.getBody().getStatementArray();
+	//the index where to place the initializers
+	int i;
+
+	for (i = 0; i < statements.length; i++) {
+	    if (!(statements[i] instanceof JVariableDeclarationStatement ||
+		  statements[i] instanceof JEmptyStatement))
+		break;
+	}
+	meth.getBody().addStatement(i, (JBlock)arrayInits.locals.get(meth));
+	
+    }
+    
 
     // ----------------------------------------------------------------------
     // STATEMENT
@@ -506,7 +605,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
     }
 
     /**
-     * prints an array length expression
+     * prints an array access expression
      */
     public void visitArrayAccessExpression(JArrayAccessExpression self,
                                            JExpression prefix,
@@ -515,6 +614,8 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	String access = "[[";
 	JExpression exp = prefix;
 	
+	//if this is a multidimensional access, convert to the 
+	//comma'ed form
 	while (exp instanceof JArrayAccessExpression) {
 	    JArrayAccessExpression arr = (JArrayAccessExpression)exp;
 	    FlatIRToRS toRS = new FlatIRToRS();
@@ -523,7 +624,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	    access = access + toRS.getString() + ", ";
 	    exp = arr.getPrefix();
 	}
-	
+	//visit the var access
 	exp.accept(this);
 	print(access);
 	accessor.accept(this);
@@ -722,5 +823,10 @@ public class FlatIRToRS extends ToC implements StreamVisitor
                                   SIRPhasedFilterIter iter) {
         // This is a stub; it'll get filled in once we figure out how phased
         // filters should actually work.
+    }
+
+    protected void stackAllocateArray(String str) 
+    {
+	assert false : "Should not be called";
     }
 }

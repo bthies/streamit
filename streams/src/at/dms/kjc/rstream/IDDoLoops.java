@@ -6,6 +6,7 @@ import at.dms.kjc.sir.*;
 import java.util.ListIterator;
 import at.dms.kjc.flatgraph.*;
 import java.util.HashSet;
+import java.util.Vector;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -20,10 +21,10 @@ import java.util.Iterator;
 
 public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constants
 {
-    //
     private int forLevel = 0;
     private HashMap varUses;
     private HashMap loops;
+    private HashSet inductionVars;
 
     /**
      * The entry point of this class, given a stream <top> and 
@@ -33,7 +34,6 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
      * @param top The top level of the application
      * @return Returns a hashmap of JForStatements -> DoLoopInfo
      */
-
     public static HashMap doit(FlatNode top)
     {
 	IDDoLoops doLoops = new IDDoLoops();
@@ -49,7 +49,6 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
      * @param node current flat node we are visiting
      *
      */
-
     public void visitNode(FlatNode node) 
     {
 	if (node.isFilter()) {
@@ -63,6 +62,27 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		    ((JStatement)it.next()).accept(this);
 		    assert this.forLevel == 0;
 		}
+		
+
+		//now go back thru the statements and delete the var defs
+		//for the induction variables
+		JStatement[] statements = methods[i].getBody().getStatementArray();
+		for (int k = 0; k < statements.length; k++) {
+		    if (!(statements[k] instanceof JEmptyStatement || 
+			  statements[k] instanceof JVariableDeclarationStatement))
+			break;
+		    
+		    if (statements[k] instanceof JVariableDeclarationStatement) {
+			JVariableDeclarationStatement varDecl = 
+			    (JVariableDeclarationStatement) statements[k];
+			Vector newVars = new Vector();
+			for (int j = 0; j < varDecl.getVars().length; j++) {
+			    if (!inductionVars.contains(varDecl.getVars()[j]))
+				newVars.add(varDecl.getVars()[j]);
+			}
+			varDecl.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
+		    }
+		}
 	    }
 	}
     }
@@ -72,6 +92,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
     {
 	forLevel = 0;
 	loops = new HashMap();
+	inductionVars = new HashSet();
     }
     
     
@@ -138,6 +159,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		    //everything passed add it to the hashmap
 		    //System.out.println("Identified Do loop...");
 		    loops.put(self, info);
+		    inductionVars.add(info.induction);
 		}
 	    }
 	}
@@ -462,8 +484,8 @@ class CheckLoopBody extends SLIREmptyVisitor
 	varsToCheck.add(info.induction);
 	//find all the vars to check if they are assigned,
 	//anything used in the cond init or incr...
-	StrToRStream.addAll(varsToCheck, VariablesUsed.getVars(info.cond));
-	StrToRStream.addAll(varsToCheck, VariablesUsed.getVars(info.incr));
+	StrToRStream.addAll(varsToCheck, VariablesDefUse.getVars(info.cond));
+	StrToRStream.addAll(varsToCheck, VariablesDefUse.getVars(info.incr));
 
 	Iterator it = varsToCheck.iterator();
 	while (it.hasNext()) {

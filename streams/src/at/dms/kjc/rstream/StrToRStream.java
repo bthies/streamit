@@ -69,10 +69,10 @@ public class StrToRStream {
 	RenameAll.renameAllFilters(str);
 	
 	// move field initializations into init function
-	System.out.print("Moving initializers into init functions... ");
+	//System.out.print("Moving initializers into init functions... ");
 	FieldInitMover.moveStreamInitialAssignments(str,
 						    FieldInitMover.IGNORE_ARRAY_INITIALIZERS);
-	System.out.println("done.");
+	//System.out.println("done.");
 	
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
@@ -91,6 +91,7 @@ public class StrToRStream {
 
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
+
 	// do constant propagation on fields
 	if (KjcOptions.nofieldprop) {
 	} else {
@@ -120,6 +121,10 @@ public class StrToRStream {
 	    SJToPipe.doit(str);
 	}
 
+	SIRPrinter printer1 = new SIRPrinter("entry.sir");
+	IterFactory.createFactory().createIter(str).accept(printer1);
+	printer1.close();
+
 	//Partition the Stream Graph, fuse it down to one tile
 	int count = new GraphFlattener(str).getNumTiles();
 	int numTiles = 1;
@@ -137,7 +142,7 @@ public class StrToRStream {
 
 	StreamItDot.printGraph(str, "after-partition.dot");
 
-	//SIRPrinter printer1 = new SIRPrinter("sir.out");
+	//	SIRPrinter printer1 = new SIRPrinter("partition.sir");
 	//IterFactory.createFactory().createIter(str).accept(printer1);
 	//printer1.close();
 	
@@ -149,16 +154,12 @@ public class StrToRStream {
 	//VarDecl Raise to move peek index up so
 	//constant prop propagates the peek buffer index
 	new VarDeclRaiser().raiseVars(str);
-	
+
 	// optionally print a version of the source code that we're
 	// sending to the scheduler
 	if (KjcOptions.print_partitioned_source) {
 	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createFactory().createIter(str));
 	}
-	
-	//SIRPrinter printer1 = new SIRPrinter();
-	//IterFactory.createFactory().createIter(str).accept(printer1);
-	//printer1.close();
 	
 	System.out.println("Flattener Begin...");
 	executionCounts = SIRScheduler.getExecutionCounts(str);
@@ -178,7 +179,10 @@ public class StrToRStream {
 	//VarDecl Raise to move array assignments down?
 	new VarDeclRaiser().raiseVars(str);
 
-	RemoveUnusedVars.doit(graphFlattener.top);
+	//SIRPrinter printer1 = new SIRPrinter("beforecodegen.sir");
+	//IterFactory.createFactory().createIter(str).accept(printer1);
+	//printer1.close();
+
 
 	FlatIRToRS.generateCode(graphFlattener.top);
 

@@ -12,128 +12,6 @@ import java.lang.*;
 import java.lang.reflect.*;
 import streamit.io.*;
         
-class DecoderInput
-{
-  //member variables!
-  public short[] mLarParameters = new short[8];
-  public short[] mLtpOffset = new short[4];
-  public short[] mLtpGain = new short[4];
-  public short[] mRpeGridPosition = new short[4];
-  public short[] mRpeMagnitude = new short[4];
-  public short[][] mSequence = new short[4][13];
-
-    /*
-  public short[] readFile() 
-  {
-    short[] input = new short[151840];
-    try
-    {
-	File f1 = new File("SpeechEncoderOutputBits1");
-	java.io.FileReader fr = new java.io.FileReader(f1);
-	BufferedReader br = new BufferedReader(fr);
-	//DataInputStream data = new DataInputStream(new FileInputStream(f1));
-	//read the sucker!
-	//boolean[] input = new boolean[4];
-	for(int i = 0; i < input.length; i++)
-	    {
-		String j = br.readLine();
-		
-		if (j.equals("1"))
-		    {
-			input[i] = 1;
-		    }
-		else
-		    { 
-			input[i] = 0;
-		    }		
-		
-	    }
-	br.close();
-    }
-    catch (IOException e)
-    {
-	System.out.println("Blah! IO error!");
-    }
-   
-    return input; 
-  }
-    */
-  public void getParameters(short[] input)
-  {
-    int input_index = 0;
-    int num_bits = 0;
-    for(int i = 0; i < 8; i++)
-      {
-	
-	switch(i)
-	  {
-	  case 0:
-	  case 1:      num_bits = 6;
-	    break;
-	  case 2:      
-	  case 3:      num_bits = 5;
-	    break;
-	  case 4:      
-	  case 5:      num_bits = 4;
-	    break;
-	  case 6:      
-	  case 7:      num_bits = 3;
-	    break;
-	  }
-	
-	  
-	mLarParameters[i] = 0;
-	for (int j = 0; j < num_bits; j++, input_index++)
-	  {
-	    mLarParameters[i] |= input[input_index] << (num_bits - 1 - i);
-	  }
-      }
-    
-    //Sub-frames 1 through 4!
-    for (int k = 0; k < 4; k++)
-      {
-	mLtpOffset[k] = 0;
-	for (int l = 0; l < 7; l++)
-	  {
-	    mLtpOffset[k] |= input[input_index] << (6 - l);
-	    input_index++;
-	  }
-	mLtpGain[k] = 0;
-	for (int l = 0; l < 2; l++)
-	  {
-	    mLtpGain[k] |= input[input_index] << (1 - l);
-	    input_index++;
-	  }
-	mRpeGridPosition[k] = 0;
-	for (int l = 0; l < 2; l++)
-	  {
-	    mRpeGridPosition[k] |= input[input_index] << (1 - l);
-	    input_index++;
-	  }
-	mRpeMagnitude[k] = 0;
-	for (int l = 0; l < 6; l++)
-	  {
-	    mRpeMagnitude[k] |= input[input_index] << (5 - l);
-	    input_index++;
-	  }
-	for(int l = 0; l < 13; l++)
-	  {
-	    mSequence[k][l] = 0;
-	    for (int m = 0; m < 3; m++)
-	      {
-		mSequence[k][l] |= input[input_index] << (2 - m);
-		input_index++;
-	      }
-	    
-	  }
-      }
-    //System.out.println(input_index);
-    //System.out.println(input.length - input_index);
-    
-  }
-}
-
-
 class Helper
 {
     static short shortify(int a)
@@ -353,7 +231,7 @@ class RPEDecodeFilter extends Filter
 	    }
 	for(short i = 0; i < 12; i++)
 	    {
-		System.out.println("accessing " + (mc+(3*i)));
+		//System.out.println("accessing " + (mc+(3*i)));
 		ep[mc + (3 * i)] = xmp[i];
 	    } 
 	//output the sucker!
@@ -792,11 +670,11 @@ class RPEInputFilter extends Filter
     short[] mdata;
     short[] single_frame;
     boolean donepushing;
-    DecoderInput mdecodefile;
+
+#include "DecoderInput.java"
     
     public void init()
     {
-	mdecodefile = new DecoderInput();
 	mdata = new short[151840];
 	single_frame = new short[260];
 	input = new Channel(Short.TYPE, 151840);
@@ -824,7 +702,7 @@ class RPEInputFilter extends Filter
 	      {
 		single_frame[k] = mdata[frame_index + k];
 	      }
-	    mdecodefile.getParameters(single_frame);
+	    getParameters(single_frame);
 	    frame_index += 260;
 	  
 	  
@@ -833,10 +711,10 @@ class RPEInputFilter extends Filter
 	    {
 		for (int a = 0; a < 13; a++)
 		{
-		    output.pushShort(mdecodefile.mSequence[i][a]);
+		    output.pushShort(mSequence[i][a]);
 		}
-		output.pushShort(mdecodefile.mRpeMagnitude[i]);
-		output.pushShort(mdecodefile.mRpeGridPosition[i]);
+		output.pushShort(mRpeMagnitude[i]);
+		output.pushShort(mRpeGridPosition[i]);
 	    }
 	    donepushing = true;
 	  }
@@ -849,11 +727,11 @@ class LARInputFilter extends Filter
     short[] mdata;
     short[] single_frame;
     boolean donepushing;
-    DecoderInput mdecodefile;
+
+#include "DecoderInput.java"
 
     public void init()
     {
-	mdecodefile = new DecoderInput();
 	mdata = new short[151840];
 	single_frame = new short[260];
 	input = new Channel(Short.TYPE, 151840);
@@ -879,14 +757,14 @@ class LARInputFilter extends Filter
 	      {
 		single_frame[k] = mdata[frame_index + k];
 	      }
-	    mdecodefile.getParameters(single_frame);
+	    getParameters(single_frame);
 	    frame_index += 260;
 	  
 	
 	    //now, push the stuff on!
 	    for (int i = 0; i < 8; i++)
 	    {
-		output.pushShort(mdecodefile.mLarParameters[i]);
+		output.pushShort(mLarParameters[i]);
 	    }
 	    donepushing = true;
 	  }
@@ -900,14 +778,13 @@ class LTPInputFilter extends Filter
     short[] mdata;
     short[] single_frame;
     boolean donepushing;
-    DecoderInput mdecodefile;
+
+#include "DecoderInput.java"
 
     public void init()
     {
-	mdecodefile = new DecoderInput();
 	mdata = new short[151840];
 	single_frame = new short[260];
-	mdecodefile = new DecoderInput();
 	input = new Channel(Short.TYPE, 151840);
 	output = new Channel(Short.TYPE, 8);
 	donepushing = false;
@@ -931,15 +808,15 @@ class LTPInputFilter extends Filter
 	      {
 		single_frame[k] = mdata[frame_index + k];
 	      }
-	    mdecodefile.getParameters(single_frame);
+	    getParameters(single_frame);
 	    frame_index += 260;
 	  	  
 	  
 	    //now, push the stuff on!
 	    for (int i = 0; i < 4; i++)
 	    {
-		output.pushShort(mdecodefile.mLtpGain[i]);
-		output.pushShort(mdecodefile.mLtpOffset[i]);
+		output.pushShort(mLtpGain[i]);
+		output.pushShort(mLtpOffset[i]);
 	    }
 	  }
 	donepushing = true;

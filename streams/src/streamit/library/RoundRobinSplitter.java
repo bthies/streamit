@@ -1,8 +1,5 @@
 package streamit;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
 public class RoundRobinSplitter extends Splitter
 {
     int weight;

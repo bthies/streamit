@@ -1,8 +1,5 @@
 package streamit;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
 public class NullJoiner extends Joiner
 {
     public void work ()

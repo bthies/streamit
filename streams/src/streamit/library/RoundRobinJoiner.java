@@ -1,9 +1,5 @@
 package streamit;
 
-import streamit.scheduler2.iriter.SplitJoinIter;
-import java.util.ArrayList;
-import java.util.Iterator;
-
 public class RoundRobinJoiner extends Joiner 
 {
     int weight;

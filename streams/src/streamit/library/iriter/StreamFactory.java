@@ -1,7 +1,5 @@
 package streamit.iriter;
 
-/* $Id: StreamFactory.java,v 1.12 2003-05-06 10:24:11 thies Exp $ */
-
 import streamit.misc.DestroyedClass;
 
 import streamit.scheduler2.iriter.Iterator;

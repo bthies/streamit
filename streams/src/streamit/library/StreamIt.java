@@ -66,6 +66,114 @@ public class StreamIt extends Pipeline
 
             return size;
         }
+
+        /*
+        
+        int index = sizeMap.size ();
+        
+        sizeMap.put(s,getInteger(index));
+        if (s instanceof Schedule)
+        {
+            Schedule sched = (Schedule) s;
+            ASSERT (sched.getNumReps() == 1);
+            if (sched.isBottomSchedule()) 
+            {
+                usefulSet.add (sched);
+                //System.out.print("X");
+        if (printsched) {
+            System.out.println ("$" + index + " = " + sched.getStream().getObject() + "." + sched.getWorkFunc());
+        }
+                if (top) totalSize++;
+                return;
+            }
+        
+            int size = 0;
+        
+            Integer lastIndx = null;
+            int nSched;
+            
+            boolean useful = false;
+            
+            HashMap pos2phase = new HashMap ();
+            
+            for (nSched = 0; nSched < sched.getNumPhases();nSched++)
+            {
+                Object next = sched.getSubSched (nSched);
+                computeSize (next, top && sched.getNumPhases () == 1);
+                
+                Integer pIdx = (Integer)sizeMap.get(next);
+                ASSERT (pIdx);
+                pos2phase.put(getInteger(nSched), pIdx);
+                
+                if (!useful && usefulSet.contains(next)) 
+                {
+                    useful = true;
+                    usefulSet.add (sched);
+                }
+            }
+            
+            {
+                Integer other = (Integer)sizeMap.get(pos2phase);
+                if (other != null)
+                {
+                    sizeMap.put (s,other);
+            if (printsched) {
+        	System.out.println ("$" + index + " = $" + other.intValue());
+            }
+                    return;
+                } else {
+                    sizeMap.put(pos2phase, getInteger (index));
+                }
+            }
+        
+        if (printsched) {
+        System.out.print ("$" + index + " = ");
+        }
+        
+            int reps = 0;
+            for (nSched = 0; useful && nSched < sched.getNumPhases(); nSched++)
+            {
+                Object next = sched.getSubSched (nSched);
+                
+                Integer nextIndx = (Integer) sizeMap.get(next);
+                
+                if (nextIndx != lastIndx && reps != 0)
+                {
+            if (printsched) {
+        	System.out.print ("{");
+        	if (reps > 1) System.out.print (reps + " ");
+        	System.out.print ("$" + lastIndx.intValue() + "}");
+            }
+                    reps = 0;
+                }
+                
+                if (lastIndx != nextIndx) 
+                {
+                    size++;
+                }
+                lastIndx = nextIndx;
+                
+                reps++;
+            }
+            
+            if (lastIndx != null)
+            {
+        if (printsched) {
+            System.out.print ("{");
+            if (reps > 1) System.out.print (reps + " ");
+            System.out.println ("$" + lastIndx.intValue() + "}");
+        }
+            } else {
+        if (printsched) {
+            System.out.println ("{}");
+        }
+            }
+            
+            
+            if (size > 1) 
+                totalSize += size;
+        }
+        */
     }
 
     void runSchedule(Object schedule, Object function)
@@ -259,8 +367,7 @@ public class StreamIt extends Pipeline
             // be done.
             System.out.println("phaseFrac = " + fracPhaseExec);
             Iterator selfIter = new streamit.iriter.Iterator(this);
-            streamit.scheduler2.base.StreamFactory factory =
-                new StreamFactory(fracPhaseExec);
+            streamit.scheduler2.base.StreamFactory factory = new StreamFactory(fracPhaseExec);
             StreamInterface selfStream = factory.newFrom(selfIter, null);
             selfStream.computeSchedule();
             Schedule initSched = selfStream.getInitSchedule();
@@ -311,17 +418,13 @@ public class StreamIt extends Pipeline
             int mlSize = totalSize;
             int mlBuffer = totalBuffer;
 
-            if (schedsingleapp)
-            {
+            if (schedsingleapp) {
                 totalSize = 0;
                 totalBuffer = 0;
                 selfIter = new streamit.iriter.Iterator(this);
-                factory =
-                    new streamit
-                        .scheduler2
-                        .singleappearance
-                        .StreamFactory();
-                selfStream = factory.newFrom(selfIter, null);
+                factory = new streamit.scheduler2.singleappearance.StreamFactory();
+                selfStream =
+                    factory.newFrom(selfIter, null);
                 selfStream.computeSchedule();
                 initSched = selfStream.getInitSchedule();
                 steadySched = selfStream.getSteadySchedule();
@@ -332,7 +435,8 @@ public class StreamIt extends Pipeline
 
                 setupBufferLengths(buffers);
 
-                opt = new ScheduleOptimizer(initSched, steadySched);
+                opt =
+                    new ScheduleOptimizer(initSched, steadySched);
                 steadySched = opt.getOptimizedSteadySched();
                 initSched = opt.getOptimizedInitSched();
 
@@ -362,22 +466,19 @@ public class StreamIt extends Pipeline
                 System.out.println("!nodex = " + selfStream.getNumNodes());
                 System.out.println(
                     "!node firings = " + selfStream.getNumNodeFirings());
-                if (schedsingleapp)
+                if (schedsingleapp) 
                 {
                     System.out.println("!sas sched size = " + sasSize);
                     System.out.println("!sas buff size = " + sasBuffer);
+                } else {
+                    System.out.println ("!");
+                    System.out.println ("!");
                 }
-                else
-                {
-                    System.out.println("!");
-                    System.out.println("!");
-                }
-
+                
                 System.out.println("!ml sched size = " + mlSize);
                 System.out.println("!ml buff size = " + mlBuffer);
-
             }
-
+            
             // run the init schedule:
             if (nIters != 0)
                 runSchedule(initSched, 1);

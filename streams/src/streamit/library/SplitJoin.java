@@ -1,8 +1,6 @@
 package streamit;
 
 import java.util.*;
-import java.lang.reflect.*;
-import java.math.BigInteger;
 import streamit.scheduler2.ScheduleBuffers;
 import streamit.iriter.Iterator;
 

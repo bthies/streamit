@@ -3,8 +3,6 @@ package streamit.io;
 import streamit.Filter;
 import streamit.Channel;
 
-import java.io.*;
-
 public class DataPrinter extends Filter
 {
     Class fileType;

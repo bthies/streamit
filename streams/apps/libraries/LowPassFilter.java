@@ -25,7 +25,7 @@ public class LowPassFilter extends Filter {
 
     int numberOfTaps;
     float COEFF[];
-    float cutoffFreq, samplingRate;
+    float cutoffFreq, samplingRate, tapTotal;
     int mDecimation;
 
     public LowPassFilter(float sampleRate, float cutFreq, int numTaps, int decimation)
@@ -35,15 +35,18 @@ public class LowPassFilter extends Filter {
 
     public void init(float sampleRate, float cutFreq, int numTaps, int decimation)
     {
+	float pi, m, w;
+	float temptaps[];
+	int i;
         samplingRate = sampleRate;
         cutoffFreq = cutFreq;
         numberOfTaps = numTaps;
 
-        float pi = (float)java.lang.Math.PI;
+        pi = (float)java.lang.Math.PI;
         //build the taps, and call super.init(taps[])
-        float temptaps[] = new float[numberOfTaps];
+        temptaps = new float[numberOfTaps];
 
-        float m = numberOfTaps -1;
+        m = numberOfTaps -1;
         //from Oppenheim and Schafer, m is the order of filter
 
 	mDecimation = decimation;
@@ -56,8 +59,7 @@ public class LowPassFilter extends Filter {
         if(cutoffFreq == 0.0)
             {
                 //Using a Hamming window for filter taps:
-                float tapTotal = 0;
-                int i;
+                tapTotal = 0;
 
                 for(i=0;i<numberOfTaps;i++)
                     {
@@ -76,8 +78,7 @@ public class LowPassFilter extends Filter {
             //has IR h[n] = sin(omega*n)/(n*pi)
             //reference: Oppenheim and Schafer
 
-            float w = (2*pi) * cutoffFreq/samplingRate;
-            int i;
+            w = (2*pi) * cutoffFreq/samplingRate;
 
             for(i=0;i<numberOfTaps;i++)
                 {

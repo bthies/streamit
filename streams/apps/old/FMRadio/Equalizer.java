@@ -37,6 +37,29 @@ class FloatAdder extends Filter
     }
 }
 
+class EqualizerSplitJoin extends SplitJoin {
+
+    public EqualizerSplitJoin(float rate)
+    {
+        super(rate);
+    }
+
+    public void init(final float rate)
+    {
+	final float mGain1 = 1;
+	final float mGain2 = 1;
+	final float mGain3 = 1;
+	final float mGain4 = 1;
+	
+	setSplitter(DUPLICATE());
+	add(new BandPassFilter(rate, 1250, 2500, 50, mGain1));
+	add(new BandPassFilter(rate, 2500, 5000, 50, mGain2));
+	add(new BandPassFilter(rate, 5000, 10000, 50, mGain3));
+	add(new BandPassFilter(rate, 10000, 20000, 50, mGain4));
+	setJoiner(ROUND_ROBIN());
+    }
+}
+
 /**
  * Class Equalizer
  *
@@ -45,35 +68,14 @@ class FloatAdder extends Filter
 
 public class Equalizer extends Pipeline {
 
-    float samplingRate;
-    float mGain1;
-    float mGain2;
-    float mGain3;
-    float mGain4;
-
     public Equalizer(float rate)
     {
         super(rate);
     }
 
-    public void init(final float rate)
+    public void init(float rate)
     {
-	samplingRate = rate;
-	mGain1 = 1;
-	mGain2 = 1;
-	mGain3 = 1;
-	mGain4 = 1;
-	
-	add(new SplitJoin(){
-		public void init(){
-		    setSplitter(DUPLICATE());
-		    add(new BandPassFilter(rate, 1250, 2500, 50, mGain1));
-		    add(new BandPassFilter(rate, 2500, 5000, 50, mGain2));
-		    add(new BandPassFilter(rate, 5000, 10000, 50, mGain3));
-		    add(new BandPassFilter(rate, 10000, 20000, 50, mGain4));
-		    setJoiner(ROUND_ROBIN());
-		}
-	    });
+	add(new EqualizerSplitJoin(rate));
 	add(new FloatAdder());
     }
 }

@@ -23,7 +23,7 @@ public class SpaceTimeBackend
     public static boolean FILTER_DEBUG_MODE = false;
     
     public static SIRStructure[] structures;
-    final private static boolean TEST_SOFT_PIPE=false; //Test Software Pipelining (only works when TEST_BEAMFORMER=false right now)
+    final private static boolean TEST_SOFT_PIPE=false; //Test Software Pipelining
     final private static boolean TEST_BEAMFORMER=false; //Test SplitJoins
     
     
@@ -120,9 +120,13 @@ public class SpaceTimeBackend
 		    int x=0;
 		    TraceNode node=trace.getTail().getPrevious();
 		    ((FilterTraceNode)node).setXY(x++,0);
+		    if(TEST_SOFT_PIPE)
+			((FilterTraceNode)node).getFilter().setPrimePump(1);
 		    node=node.getPrevious();
 		    while(node!=null&&node instanceof FilterTraceNode) {
 			((FilterTraceNode)node).setXY(x++,0);
+			if(TEST_SOFT_PIPE)
+			    ((FilterTraceNode)node).getFilter().setPrimePump(1);
 			node=node.getPrevious();
 		    }
 		} else if(trace.getHead() instanceof InputTraceNode) {
@@ -143,10 +147,16 @@ public class SpaceTimeBackend
 		    }
 		}
 	    }
-	    traces=new Trace[] {first};
+	    if(TEST_SOFT_PIPE)
+		traces=new Trace[] {second};
+	    else
+		traces=new Trace[] {first};
 	    //while(first.getEdges()[0]!=null)
 	    //first=first.getEdges()[0];
-	    firstLast.connect(second);
+	    if(TEST_SOFT_PIPE)
+		secondLast.connect(first);
+	    else
+		firstLast.connect(second);
 	    System.out.println("Traces Length: "+traces.length);
 	    System.out.println("Traces:");
 	    Trace trace=traces[0];
@@ -265,7 +275,7 @@ public class SpaceTimeBackend
 		    
 		}
 		
-	      //System.out.println(((Trace)traceList.get(i)).getHead());
+		//System.out.println(((Trace)traceList.get(i)).getHead());
 	    }
 	}
  

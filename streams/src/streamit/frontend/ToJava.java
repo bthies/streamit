@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
 import streamit.frontend.nodes.*;
+import streamit.frontend.passes.*;
 import streamit.frontend.tojava.*;
 
 class ToJava
@@ -107,6 +108,7 @@ class ToJava
                  * "this", which doesn't exist. */
                 TempVarGen varGen = new TempVarGen();
                 prog = (Program)prog.accept(new MakeBodiesBlocks());
+                prog = (Program)prog.accept(new NoticePhasedFilters());
                 prog = (Program)prog.accept(new DoComplexProp(varGen));
                 prog = (Program)prog.accept(new InsertIODecls());
                 prog = (Program)prog.accept(new InsertInitConstructors());

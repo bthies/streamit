@@ -3,9 +3,6 @@ package at.dms.kjc.sir.linear;
 import java.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-//import at.dms.kjc.sir.linear.*;
-//import at.dms.kjc.sir.linear.transform.*;
-//import at.dms.kjc.iterator.*;
 
 
 /**
@@ -29,6 +26,7 @@ public class LinearRedundancyAnalyzer {
 	Iterator filterIterator = la.getFilterIterator();
 	while(filterIterator.hasNext()) {
 	    SIRStream filter = (SIRStream)filterIterator.next();
+	    LinearPrinter.println("analyzing for redundancy : " + filter);
 	    LinearFilterRepresentation filterRep = la.getLinearRepresentation(filter);
 	    // make a new linear redundancy for this filter
 	    LinearRedundancy filterRedundancy = new LinearRedundancy(filterRep);
@@ -49,8 +47,8 @@ public class LinearRedundancyAnalyzer {
 	while(keyIter.hasNext()) {
 	    Object key = keyIter.next();
 	    Object val = this.filtersToRedundancy.get(key);
-	    returnString += "key: " + key + "\n";
-	    returnString += "val: " + val + "\n";
+	    returnString += key + "\n";
+	    returnString += val + "\n";
 	}
 	returnString += "end.";
 	return returnString;

@@ -1,0 +1,5 @@
+complex->complex splitjoin Comp_Rep.str(int N){
+    split duplicate(N);
+    add ComplexIdentity();
+    join roundrobin();
+}

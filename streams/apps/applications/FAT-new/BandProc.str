@@ -1,0 +1,16 @@
+/*this pipeline performs all the apps for one subband, it will be used in a bigger split join to complete all the blocks before the 
+*/
+
+ complex[N_ch][N_rg][N_pri]->complex[N_dop][N_srg][N_dop] pipeline BandProc (int N_ch,int N_rg,int N_pri,int N_bm,int N_dn,int N_dop, int N_lp, int N_lp2, int N_td,int N_pc,int N_ts,float alpha,complex w,int[] T_stap,float[] a, float[] b, float[] d,complex[] h_lp,complex[] h_td, complex[] h_pc,complex[] f_lp) {
+    int N_srg=(int) N_rg/N_dn;
+    N_stag=N_pri+1-N_dop;
+    w2=w;
+    w2.imag= -1*w2.imag;
+
+    add SubAnalysis(N_ch,N_rg,N_pri,N_dn,N_lp,N_td, w,  h_lp, h_td);
+    add AdapBeam( N_ch,N_bm,N_srg,N_pri,alpha, float[] a, float[] b, float[] d);
+    add Block45(N_bm,N_srg,N_pri,N_dop,int N_pc,complex[] h_pc);
+    add STAP(N_bm,N_srg,N_dop,N_stag,N_ts,T_stap);
+    add SubSynth(N_dop,int N_srg,int N_dop,N_dn,N_lp2, w2, f_lp);
+
+}    

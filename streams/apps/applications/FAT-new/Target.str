@@ -1,0 +1,217 @@
+/* this Filter performs the Target Detection which includes both the CFAR
+it takes a floating matrix of N_cnb*N_rg* N_dop and then compares each elements
+to its neighbours. only a local maxima is then detected as 
+*/
+
+import streamit.*;
+
+float[N_cnb][N_rg][N_dop]->float[N_cnb][N_rg][N_dop] filter Target(N_cnb,N_rg,N_dop) {//
+    init {} 
+    
+
+
+
+   
+    work push 1 pop 1{
+	float OutCube[N_cnb][N_rg][N_dop];
+	float InCube[N_cnb][N_rg][N_dop];
+	InCube=pop();
+
+	for (int i=0; i < N_bm; i++)
+	    for (int j=0; j < N_rg; j++)
+		for (int k=0; k < N_dop;k++)
+		    OutCube[i][j][k]=InCube[i][j][k];
+					
+
+	for (int i=0; i < N_bm; i++)
+	    for (int j=0; j < N_rg;j++)
+		for (int l=0; l < N_dop; l++)
+		    {
+			if (i >0) {
+			    if (InCube[i][j][k]<=InCube[i-1][j][k]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+		   
+			if (j >0) {
+			    if (InCube[i][j][k]<=InCube[i][j-1][k]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+		   
+			if (k >0) {
+			    if (InCube[i][j][k]<=InCube[i][j][k-1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+		   
+			if ((i >0) & (j>0))  {
+			    if (InCube[i][j][k]<=InCube[i-1][j-1][k]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+		   
+			if ((i >0) & (k>0)) {
+			    if (InCube[i][j][k]<=InCube[i-1][j][k-1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+		   
+			if ((j >0) & (k>0)) {
+			    if (InCube[i][j][k]<=InCube[i][j-1][k-1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+		   
+			if ((i >0) & (k>0) & (j>0)) {
+			    if (InCube[i][j][k]<=InCube[i-1][j-1][k-1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+		   
+		       if ((i < (N_bm-1)))  {
+			    if (InCube[i][j][k]<=InCube[i+1][j][k]) {
+				OutCube[i][j][k]=0;
+			    }
+		       }
+		   
+			if ((i < (N_bm -1))& (j>0)) {
+			    if (InCube[i][j][k]<=InCube[i+1][j-][k]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+		   
+			if ((i < (N_bm-1)) & (k>0) ) {
+			    if (InCube[i][j][k]<=InCube[i+1][j][k-1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+		   
+			if ( (i < (N_bm-1)) & (k >0) & (j>0)) {
+			    if (InCube[i][j][k]<=InCube[i+1][j-1][k-1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+			
+			if ( (i < (N_bm-1)) & (j<(N_rg-1)) ) {
+			    if (InCube[i][j][k]<=InCube[i+1][j+1][k]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+		    
+			if ( (i < (N_bm-1)) & (k < (N_dop-1))) {
+			    if (InCube[i][j][k]<=InCube[i+1][j][k+1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+			
+			if (k < (N_dop-1)  ) {
+			    if (InCube[i][j][k]<=InCube[i][j][k+1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+			    
+			if (j < (N_rg-1)) {
+			    if (InCube[i][j][k]<=InCube[i][j+1][k]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+			
+			if ((j < (N_rg-1)) & (k < (N_dop-1))) {
+			    if (InCube[i][j][k]<=InCube[i][j+1][k+1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+			
+			if ((i < (N_bm-1)) & (j< (N_rg-1)) & (k< (N_dop-1))) {
+			    if (InCube[i][j][k]<=InCube[i+1][j+1][k+1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+			
+			if ((i<(N_bm-1)) & (j < (N_rg-1)) & (k >0)  ) {
+			    if (InCube[i][j][k]<=InCube[i+1][j+1][k-1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+
+			if ((i<(N_bm-1)) & (j > 0) & (k >(N_dop-1))  ) {
+			    if (InCube[i][j][k]<=InCube[i+1][j-1][k+1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+			
+			if ( (j < (N_rg-1)) & (k >0)  ) {
+			    if (InCube[i][j][k]<=InCube[i][j+1][k-1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+
+			if ((j >0) & (k < (N_dop-1))  ) {
+			    if (InCube[i][j][k]<=InCube[i][j-1][k+1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+			
+			if ((i>0) & (j < (N_rg-1)) & (k >0)  ) {
+			    if (InCube[i][j][k]<=InCube[i-1][j+1][k-1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+			
+			if ((i>0) & (j < (N_rg-1)) & (k < (N_dop-1))  ) {
+			    if (InCube[i][j][k]<=InCube[i-1][j+1][k+1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+			
+			if ((i>0) & (j >0) & (k < (N_dop-1)) ) {
+			    if (InCube[i][j][k]<=InCube[i-1][j+1][k-1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+			
+			if ((i>0) & (j < (N_rg-1))) {
+			    if (InCube[i][j][k]<=InCube[i-1][j+1][k]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+			
+			if ((i>0)  & (k>(N_dop-1) )  ) {
+			    if (InCube[i][j][k]<=InCube[i-1][j][k+1]) {
+				OutCube[i][j][k]=0;
+			    }
+			}
+		    }
+			
+	
+       push(OutCube);
+    }
+			
+}
+	
+
+	
+
+
+	
+	
+	
+
+	
+	
+	
+	    
+
+
+	
+    
+	
+
+    
+
+
+
+
+
+

@@ -1,0 +1,13 @@
+complex[N_ch][N_rg][N_pri]->complex[N_dop][N_rg][N_dop] splitjoin WideBand(int N_sub,int N_ch,int N_rg,int N_pri,int N_bm,int N_dn,int N_dop, int N_fdn, int N_fup, int N_td,int N_pc,int N_ts,float alpha,int[] T_stap,float[] a, float[] b, float[] d,complex[] h_lp,complex[] h_td, complex[] h_pc,complex[] f_lp) {
+    complex w=e^(-2*3.1415926535i/N_sub);
+    complex W_n=1;
+    split duplicate;
+    for (int i=0; i < N_sub)
+	{
+	    add BandProc(N_ch,N_rg,N_pri,N_bm,N_dn,N_dop,N_fdn,N_fup,N_td,N_pc,N_ts,alpha,W_n,T_stap,a,b,d,h_lp,h_td,h_pc,f_lp);
+	    W_n=W_n*w;
+	}
+    join add;
+}
+	    
+		

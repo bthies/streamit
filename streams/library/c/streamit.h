@@ -71,6 +71,13 @@ typedef struct pipeline_type_data {
 typedef union stream_type_data {
   pipeline_type_data pipeline_data;
 } stream_type_data;
+typedef struct one_to_many {
+  splitjoin_type type;
+  int fan;
+  int *ratio;
+  int slots;
+  tape **tape, **tcache;
+} one_to_many;
 typedef struct stream_context {
   void *stream_data;
   stream_type type;
@@ -80,10 +87,7 @@ typedef struct stream_context {
   tape *input_tape;
   tape *output_tape;
   stream_type_data type_data;
-  int num_splits, num_joins;
-  splitjoin_type split_type, join_type;
-  int *split_ratio, *join_ratio;
-  tape **split_tape, **join_tape;
+  one_to_many splitter, joiner;
 } stream_context;
 stream_context *create_context(void *p);
 typedef struct portal {
@@ -109,6 +113,8 @@ void create_split_tape(stream_context *container, int slot,
 void create_join_tape(stream_context *src,
                       stream_context *container, int slot,
                       int data_size, int tape_length);
+void run_splitter(stream_context *c);
+void run_joiner(stream_context *c);
 portal *create_portal(void);
 void register_receiver(portal *p, stream_context *receiver,
                        interface_table *vtbl, latency *l);

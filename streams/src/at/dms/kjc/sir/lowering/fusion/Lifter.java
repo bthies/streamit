@@ -18,19 +18,27 @@ import java.util.ListIterator;
 
 public class Lifter implements StreamVisitor {
     /**
-     * Whether or not we're removing sync points.
+     * Constants for how much sync. to remove.
      */
-    private boolean removeSync;
+    private static final int SYNC_REMOVAL_NONE = 0;
+    private static final int SYNC_REMOVAL_NO_NEW_JOINERS = 1;
+    private static final int SYNC_REMOVAL_MAX_STRUCTURED = 2;
+    /**
+     * How much sync we're removing.
+     */
+    private int syncRemoval;
 
-    private Lifter(boolean removeSync) {
-	this.removeSync = removeSync;
+    private Lifter(int removeSync) {
+	this.syncRemoval = syncRemoval;
     }
 
     /**
-     * Lift everything we can in <str> and its children
+     * Lift everything we can in <str> and its children.  Do sync
+     * removal, but not any kind that will introduce new joiners into
+     * the graph.
      */
     public static void lift(SIRStream str) {
-	IterFactory.createIter(str).accept(new Lifter(true));
+	IterFactory.createIter(str).accept(new Lifter(SYNC_REMOVAL_NO_NEW_JOINERS));
     }
 
     /**
@@ -38,7 +46,15 @@ public class Lifter implements StreamVisitor {
      * points.
      */
     public static void liftPreservingSync(SIRStream str) {
-	IterFactory.createIter(str).accept(new Lifter(false));
+	IterFactory.createIter(str).accept(new Lifter(SYNC_REMOVAL_NONE));
+    }
+
+    /**
+     * Lift everything we can, using aggressive sync removal that
+     * could possibly add joiners to the graph.
+     */
+    public static void liftAggressiveSync(SIRStream str) {
+	IterFactory.createIter(str).accept(new Lifter(SYNC_REMOVAL_MAX_STRUCTURED));
     }
 
     /**
@@ -63,8 +79,10 @@ public class Lifter implements StreamVisitor {
     public void preVisitPipeline(SIRPipeline self,
 				 SIRPipelineIter iter) {
 	liftChildren(self);
-	if (removeSync) {
+	if (syncRemoval==SYNC_REMOVAL_NO_NEW_JOINERS) {
 	    RefactorSplitJoin.removeMatchingSyncPoints(self);
+	} else if (syncRemoval==SYNC_REMOVAL_MAX_STRUCTURED) {
+	    RefactorSplitJoin.removeSyncPoints(self);
 	}
     }
 
@@ -92,8 +110,10 @@ public class Lifter implements StreamVisitor {
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
 				  SIRPipelineIter iter) {
-	if (removeSync) {
+	if (syncRemoval==SYNC_REMOVAL_NO_NEW_JOINERS) {
 	    RefactorSplitJoin.removeMatchingSyncPoints(self);
+	} else if (syncRemoval==SYNC_REMOVAL_MAX_STRUCTURED) {
+	    RefactorSplitJoin.removeSyncPoints(self);
 	}
     }
 

@@ -9,7 +9,8 @@ data is fed through a large feedback loop to do the main decoding.
   </description>
   <implementations>
     <impl lang="StreamIt" dir="streamit">
-      <file>StGsmDecoder.str</file>
+      <make>Makefile</make>
+      <file>Gsm.str</file>
     </impl>
   </implementations>
 </benchmark>

@@ -23,7 +23,8 @@ causes the I/O rates of the filters to be much larger.
       <desc>Reference implementation, based on the StreamIt version.  Always serializes outputs and is fine-grained -- does not provide "coarse" option.</desc>
     </impl>
     <impl lang="StreamIt" dir="streamit">
-      <file>TemplateBeamFormer.str</file>
+      <make>Makefile</make>
+      <file>BeamFormer.str</file>
       <desc>StreamIt benchmark as described above.</desc>
     </impl>
   </implementations>

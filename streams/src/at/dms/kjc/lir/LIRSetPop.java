@@ -28,6 +28,6 @@ public class LIRSetPop extends LIRNode {
 
     public void accept(LIRVisitor v)
     {
-        v.visitSetPop(this, this.streamContext, this.pop);
+        v.visitSetPop(this, this.getStreamContext(), this.pop);
     }
 }

@@ -63,4 +63,11 @@ public class LIRNode extends JStatement {
     public void genCode(CodeSequence code) {
 	at.dms.util.Utils.fail("Codegen of LIR nodes not supported yet.");
     }
+
+    /**
+     * Returns the StreamContext associated with this node.
+     */
+    public JExpression getStreamContext() {
+        return streamContext;
+    }
 }

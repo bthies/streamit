@@ -29,7 +29,7 @@ public class LIRSetChild extends LIRNode {
     public void accept(LIRVisitor v)
     {
         v.visitSetChild(this,
-                        this.streamContext,
+                        this.getStreamContext(),
                         this.childContext);
     }
 }

@@ -29,6 +29,6 @@ public class LIRSetDecode extends LIRNode {
     }
 
     public void accept(LIRVisitor v) {
-        v.visitSetDecode(self, this.streamContext, this.decode);
+        v.visitSetDecode(this, this.getStreamContext(), this.decode);
     }
 }

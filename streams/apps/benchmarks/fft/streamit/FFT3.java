@@ -356,7 +356,6 @@ class FFT3 extends StreamIt
   } 
   /* Helper fn - treats inp as a numbits number and bitreverses it.
    * inp < 2^(numbits) for meaningful bit-reversal
-   */
   int bitrev(int inp, int numbits)
   {
     int i, rev=0;
@@ -367,6 +366,7 @@ class FFT3 extends StreamIt
     }
     return rev;
   }
+  */
 } 
 
 /************************************************************************************************************/ 

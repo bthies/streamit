@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.8 2002-07-11 13:51:12 aalamb Exp $
+ * $Id: TestExamples.java,v 1.9 2002-07-13 17:22:37 jasperln Exp $
  **/
 package streamittest;
 
@@ -86,6 +86,11 @@ public class TestExamples extends StreamITTestCase {
 	//suite.addTest(new TestExamples("testUpDown", flags));
 	//suite.addTest(new TestExamples("testVectAdd", flags));
 	suite.addTest(new TestExamples("testWeightedRR", flags));
+
+	// this one doesn't fit on any raw4
+	if (!flagsContainRaw4(flags)) {
+	    suite.addTest(new TestExamples("testNokiaFine", flags));
+	}
 	return suite;
     }
 
@@ -251,8 +256,9 @@ public class TestExamples extends StreamITTestCase {
 			       "WeightedRR.out");
     }
 
-    
-
-    
-
+    public void testNokiaFine() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "nokia-fine/",
+			       "*.java",
+			       "NokiaFine.out");
+    }
 }

@@ -44,7 +44,8 @@ public class Harness {
 	Process jProcess = Runtime.getRuntime().exec(cmdArray);
 	
 	// get hooks into the output and error streams
-	BufferedReader jOutStream = new BufferedReader(new InputStreamReader(jProcess.getInputStream()));
+	InputStreamReader outReader=new InputStreamReader(jProcess.getInputStream());
+	BufferedReader jOutStream = new BufferedReader(outReader);
 	BufferedReader jErrorStream =  new BufferedReader(new InputStreamReader(jProcess.getErrorStream()));
 
 	// wait for the process to be done
@@ -82,8 +83,15 @@ public class Harness {
 	// write out stdout there.
 	if (outStream != null) {
 	    // copy the data in the output stream to the file
-	    while(jOutStream.ready()) {
-		outStream.write(jOutStream.read());
+	    int i=0;
+	    while(i<10) {
+		i++;
+		while(jOutStream.ready()) {
+		    i=10;
+		    outStream.write(jOutStream.read());
+		}
+		if(i<10)
+		    Thread.currentThread().sleep(10);
 	    }
 	}
 	// if we get here, streamit compilation succeeded
@@ -101,10 +109,11 @@ public class Harness {
 	    ByteArrayOutputStream lsBuff = new ByteArrayOutputStream();
 	    executeNative(getLsCommandOpts(fileName), lsBuff);
 	    
+	    ResultPrinter.printError("LSBUFF "+lsBuff.size()+":"+lsBuff.toString());
+
 	    // parse ls output:
 	    StringTokenizer st = new StringTokenizer(lsBuff.toString(), // output from ls
 						     "\n"); // split on newline
-
 	    while(st.hasMoreTokens()) {
 		String currentToken = st.nextToken();
 		if (!currentToken.equals("")) {
@@ -127,7 +136,7 @@ public class Harness {
 	String[] args = new String[3];
 	args[0] = "bash";
 	args[1] = "-c";
-	args[2] = "ls " + path;
+	args[2] = "ls "+ path;
 	return args;
     }
 

@@ -70,7 +70,7 @@ public class SpaceTimeBackend
 	Lifter.liftAggressiveSync(str);
        	StreamItDot.printGraph(str, "before.dot");
 
-	//Jasperln's Stuff
+	//jasperln's Stuff
 	FlattenGraph.flattenGraph(str);
 	UnflatFilter[] topNodes=FlattenGraph.getTopLevelNodes();
 	System.out.println("Top Nodes:");

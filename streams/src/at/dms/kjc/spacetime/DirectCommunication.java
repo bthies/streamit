@@ -16,6 +16,7 @@ import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import java.util.Hashtable;
 import java.math.BigInteger;
+import at.dms.kjc.flatgraph2.FilterContent;
 
 //if 
 //not 2 stage
@@ -32,7 +33,7 @@ public class DirectCommunication extends at.dms.util.Utils
 
     public static boolean testDC(FilterInfo fi) 
     {
-	SIRFilter filter = fi.filter;
+	FilterContent filter = fi.filter;
 	
 	//runs some tests to see if we can 
 	//generate code direct commmunication code
@@ -71,7 +72,7 @@ public class DirectCommunication extends at.dms.util.Utils
     public JFieldDeclaration[] getVarDecls() 
     {
 	Vector decls = new Vector();
-	SIRFilter filter = filterInfo.filter;
+	FilterContent filter = filterInfo.filter;
 	
 	//index variable for certain for loops
 	JVariableDefinition exeIndexVar = 
@@ -103,7 +104,7 @@ public class DirectCommunication extends at.dms.util.Utils
     public JMethodDeclaration getInitStageMethod() 
     {
 	JBlock statements = new JBlock(null, new JStatement[0], null);
-	SIRFilter filter = filterInfo.filter;
+	FilterContent filter = filterInfo.filter;
 	
 	//create the call to the init function
 	
@@ -154,7 +155,7 @@ public class DirectCommunication extends at.dms.util.Utils
     public JMethodDeclaration getSteadyMethod() 
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
-	SIRFilter filter = filterInfo.filter;
+	FilterContent filter = filterInfo.filter;
 	
 	//inline the work function in a while loop
 	JBlock workBlock = 
@@ -189,7 +190,7 @@ public class DirectCommunication extends at.dms.util.Utils
     
     //generate the loop for the work function firings in the 
     //initialization schedule
-    JStatement generateInitWorkLoop(SIRFilter filter)
+    JStatement generateInitWorkLoop(FilterContent filter)
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
 

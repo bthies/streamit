@@ -17,6 +17,7 @@ import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import java.util.Hashtable;
 import java.math.BigInteger;
+import at.dms.kjc.flatgraph2.FilterContent;
 
 public class RawExecutionCode extends at.dms.util.Utils 
     implements Constants
@@ -117,7 +118,7 @@ public class RawExecutionCode extends at.dms.util.Utils
     public JFieldDeclaration[] getVarDecls() 
     {
 	Vector decls = new Vector();
-	SIRFilter filter = filterInfo.filter;
+	FilterContent filter = filterInfo.filter;
 	
 	//index variable for certain for loops
 	JVariableDefinition exeIndexVar = 
@@ -322,7 +323,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	for (int i = 0; i < filterInfo.filter.getMethods().length; i++) 
 	    if (!(filterInfo.filter.getMethods()[i].equals(filterInfo.filter.getWork()) ||
 		(filterInfo.isTwoStage() && 
-		 ((SIRTwoStageFilter)filterInfo.filter).getInitWork().
+		 filterInfo.filter.getInitWork().
 		 equals(filterInfo.filter.getMethods()[i]))))
 		methods.add(filterInfo.filter.getMethods()[i]);
 	
@@ -332,7 +333,7 @@ public class RawExecutionCode extends at.dms.util.Utils
     public JMethodDeclaration getInitStageMethod() 
     {
 	JBlock statements = new JBlock(null, new JStatement[0], null);
-	SIRFilter filter = filterInfo.filter;
+	FilterContent filter = filterInfo.filter;
 	
 	//create the call to the init function
 	
@@ -357,10 +358,10 @@ public class RawExecutionCode extends at.dms.util.Utils
 				  null));
 	//add the call to initWork
 	if (filterInfo.isTwoStage()) {
-	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
+	    //FilterContent two = filter;
 	    JBlock body = 
 		(JBlock)ObjectDeepCloner.deepCopy
-		(two.getInitWork().getBody());
+		(filter.getInitWork().getBody());
 
 	    //add the code to receive the items into the buffer
 	    statements.addStatement
@@ -430,7 +431,7 @@ public class RawExecutionCode extends at.dms.util.Utils
     public JMethodDeclaration getSteadyMethod() 
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
-	SIRFilter filter = filterInfo.filter;
+	FilterContent filter = filterInfo.filter;
 
 	//is we are rate matching generate the appropriate code
 	if (KjcOptions.ratematch) 
@@ -517,7 +518,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 
     //generate the loop for the work function firings in the 
     //initialization schedule
-    JStatement generateInitWorkLoop(SIRFilter filter, 
+    JStatement generateInitWorkLoop(FilterContent filter, 
 				    GeneratedVariables generatedVariables) 
     {
 	JStatement innerReceiveLoop = 
@@ -576,7 +577,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 			   new JIntLiteral(initFire - 1));
     }
 
-    JBlock generateRateMatchSteadyState(SIRFilter filter)
+    JBlock generateRateMatchSteadyState(FilterContent filter)
 				
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
@@ -700,7 +701,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 
     //returns the expression that will create the buffer array.  A JNewArrayExpression
     //with the proper type, dimensions, and size...
-    private JExpression bufferInitExp(SIRFilter filter, CType inputType,
+    private JExpression bufferInitExp(FilterContent filter, CType inputType,
 				      int buffersize) 
     {
 	//this is an array type
@@ -752,7 +753,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 
     
 
-    private JStatement receiveCode(SIRFilter filter, CType type, GeneratedVariables generatedVariables) {
+    private JStatement receiveCode(FilterContent filter, CType type, GeneratedVariables generatedVariables) {
 	if (noBuffer()) 
 	    return null;
 
@@ -845,7 +846,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 
      //return the buffer access expression for the receive code
     //depends if this is a simple filter
-    private JExpression bufferIndex(SIRFilter filter, 
+    private JExpression bufferIndex(FilterContent filter, 
 				    GeneratedVariables generatedVariables) 
     {
 	if (isSimple()) {

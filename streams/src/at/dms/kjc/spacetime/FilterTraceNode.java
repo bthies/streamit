@@ -1,22 +1,22 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.sir.*;
-
+import at.dms.kjc.flatgraph2.FilterContent;
 /** 
  *
  **/
 public class FilterTraceNode extends TraceNode
 {
-    private SIRFilter filter;
-    private int initMult;
-    private int steadyMult;
+    private FilterContent filter;
+    //private int initMult;
+    //private int steadyMult;
     private int x, y;
 
-    public FilterTraceNode(SIRFilter filter,
-			   int initMult, int steadyMult, int x, int y) {
+    public FilterTraceNode(FilterContent filter,
+			   /*int initMult, int steadyMult, */int x, int y) {
 	this.filter = filter;
-	this.initMult = initMult;
-	this.steadyMult = steadyMult;
+	//this.initMult = initMult;
+	//this.steadyMult = steadyMult;
 	this.x = x;
 	this.y = y;
     }
@@ -37,15 +37,15 @@ public class FilterTraceNode extends TraceNode
 	return y;
     }
 
-    public SIRFilter getFilter() {
+    public FilterContent getFilter() {
 	return filter;
     }
 
     public int getInitMult() {
-	return initMult;
+	return filter.getInitMult();
     }
-
+    
     public int getSteadyMult() {
-	return steadyMult;
+	return filter.getSteadyMult();
     }
 }

@@ -1,6 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.sir.*;
+import at.dms.kjc.flatgraph2.FilterContent;
 
 /** 
     A class to hold all the various information for a filter
@@ -19,7 +20,7 @@ public class FilterInfo
     public int peek;
 
     private FilterTraceNode traceNode;
-    public SIRFilter filter;
+    public FilterContent filter;
 
     public FilterInfo(FilterTraceNode traceNode)
     {
@@ -35,9 +36,12 @@ public class FilterInfo
 	peek = filter.getPeekInt();
 
 	if (isTwoStage()) {
-	    prePeek = ((SIRTwoStageFilter)filter).getInitPeek();
-	    prePush = ((SIRTwoStageFilter)filter).getInitPush();
-	    prePop = ((SIRTwoStageFilter)filter).getInitPop();
+	    /*prePeek = ((SIRTwoStageFilter)filter).getInitPeek();
+	      prePush = ((SIRTwoStageFilter)filter).getInitPush();
+	      prePop = ((SIRTwoStageFilter)filter).getInitPop();*/
+	    prePeek = filter.getInitPeek();
+	    prePush = filter.getInitPush();
+	    prePop = filter.getInitPop();
 	}
 	
 	
@@ -46,7 +50,8 @@ public class FilterInfo
 
     public boolean isTwoStage() 
     {
-	return (filter instanceof SIRTwoStageFilter);
+	//return (filter instanceof SIRTwoStageFilter);
+	return filter.getWorkList().length>1;
     }
 
     private int calculateRemaining() 
@@ -59,7 +64,8 @@ public class FilterInfo
 
 	//if this is not a twostage, fake it by adding to initFire,
 	//so we always think the preWork is called
-	if (!(filter instanceof SIRTwoStageFilter))
+	//if (!(filter instanceof SIRTwoStageFilter))
+	if(filter.getWorkList().length>1)
 	    initFire++;
 	
 	//the number of items produced by the upstream filter in
@@ -70,9 +76,12 @@ public class FilterInfo
 	    //calculate upstream items received during init  SPLITTER?
 	    upStreamItems = previous.getFilter().getPushInt() * 
 		previous.getInitMult();
-	    if (previous.getFilter() instanceof SIRTwoStageFilter) {
-		upStreamItems -= ((SIRTwoStageFilter)previous.getFilter()).getPushInt();
-		upStreamItems += ((SIRTwoStageFilter)previous.getFilter()).getInitPush();
+	    //if (previous.getFilter() instanceof SIRTwoStageFilter) {
+	    if (previous.getFilter().getWorkList().length>1) {
+		/*upStreamItems -= ((SIRTwoStageFilter)previous.getFilter()).getPushInt();
+		  upStreamItems += ((SIRTwoStageFilter)previous.getFilter()).getInitPush();*/
+		upStreamItems -= previous.getFilter().getPushInt();
+		upStreamItems += previous.getFilter().getInitPush();
 	    }
 	}
 	

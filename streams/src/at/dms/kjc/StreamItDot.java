@@ -134,7 +134,7 @@ public class StreamItDot implements AttributeStreamVisitor
     public Object visitStructure(SIRStructure self,
                                  JFieldDeclaration[] fields) 
     {
-        return new NamePair(makeLabelledNode(self.getIdent()));
+        return new NamePair(makeLabelledInvisNode(self.getIdent()));
     }
 
     /* visit a filter */
@@ -147,7 +147,7 @@ public class StreamItDot implements AttributeStreamVisitor
     {
         // Return a name pair with both ends pointing to this.
 	//        return new NamePair(makeLabelledNode(self.getRelativeName()));
-	String label = self.getIdent();
+	String label = self.getName();
 	try {
 	    label += "\\npush=" + self.getPushInt();
 	    label += "\\npop=" + self.getPopInt();

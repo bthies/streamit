@@ -10,9 +10,9 @@ public class SchedFilter extends SchedStream
     final List srcMsgs = new LinkedList ();
     final List dstMsgs = new LinkedList ();
 
-    void computeSchedule ()
+    void computeSteadySchedule ()
     {
         // initialize self
-        numExecutions = BigInteger.ONE;
+        setNumExecutions (BigInteger.ONE);
     }
 }

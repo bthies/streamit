@@ -3,7 +3,7 @@ package streamit.scheduler;
 import java.util.*;
 import streamit.*;
 
-public class Scheduler extends DestroyedClass
+public abstract class Scheduler extends DestroyedClass
 {
     class SchedBufferRestriction
     {
@@ -20,7 +20,14 @@ public class Scheduler extends DestroyedClass
     public Scheduler (SchedStream stream)
     {
         this.stream = stream;
-        this.stream.computeSchedule ();
+        this.stream.computeSteadySchedule ();
     }
+
+    /**
+     * This function computes some schedule.
+     * Every child class must implement its own scheduler
+     * and use it to compute the schedule.
+     */
+    public abstract Schedule computeSchedule ();
 }
 

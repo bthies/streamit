@@ -20,12 +20,12 @@ public class SchedLoop extends SchedStream
         this.delay = delay;
     }
 
-    void computeSchedule ()
+    void computeSteadySchedule ()
     {
         // first, initialize the children:
         {
-            if (body != null) body.computeSchedule ();
-            if (loop != null) loop.computeSchedule ();
+            if (body != null) body.computeSteadySchedule ();
+            if (loop != null) loop.computeSteadySchedule ();
             ASSERT (join != null && split != null);
         }
 
@@ -104,10 +104,10 @@ public class SchedLoop extends SchedStream
 
         // setup my variables that come from SchedStream:
         {
-            numExecutions = BigInteger.ONE;
+            setNumExecutions (BigInteger.ONE);
 
-            consumes = numJoinExecutions.intValue () * join.getInputWeight (0);
-            produces = numSplitExecutions.intValue () * split.getOutputWeight (0);
+            setConsumption (numJoinExecutions.intValue () * join.getInputWeight (0));
+            setProduction (numSplitExecutions.intValue () * split.getOutputWeight (0));
         }
 
         // done

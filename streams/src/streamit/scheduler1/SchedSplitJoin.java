@@ -6,6 +6,16 @@ import streamit.scheduler.*;
 
 public class SchedSplitJoin extends SchedStream
 {
+    final List allChildren = new LinkedList ();
+
+    public void addChild (SchedStream stream)
+    {
+        ASSERT (stream);
+        boolean result = allChildren.add (stream);
+
+        ASSERT (result);
+    }
+
     SchedSplitType splitType;
     SchedJoinType joinType;
 
@@ -21,7 +31,7 @@ public class SchedSplitJoin extends SchedStream
         joinType = type;
     }
 
-    void computeSchedule ()
+    void computeSteadySchedule ()
     {
         // first compute schedules for all my children:
         {
@@ -34,7 +44,7 @@ public class SchedSplitJoin extends SchedStream
                 ASSERT (child);
 
                 // get the child initialized
-                child.computeSchedule ();
+                child.computeSteadySchedule ();
             }
         }
 
@@ -151,10 +161,10 @@ public class SchedSplitJoin extends SchedStream
 
         // setup my variables that come from SchedStream:
         {
-            numExecutions = BigInteger.ONE;
+            setNumExecutions (BigInteger.ONE);
 
-            consumes = numSplitExecutions.intValue () * splitType.getRoundConsumption ();
-            produces = numJoinExecutions.intValue () * joinType.getRoundProduction ();
+            setConsumption (numSplitExecutions.intValue () * splitType.getRoundConsumption ());
+            setProduction (numJoinExecutions.intValue () * joinType.getRoundProduction ());
         }
 
         // done

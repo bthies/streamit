@@ -72,7 +72,7 @@ public class Stream extends Operator
             stream = (SchedStream) constructSchedule ();
             ASSERT (stream);
 
-            scheduler = new Scheduler (stream);
+            scheduler = new SimpleHierarchicalScheduler (stream);
         }
 
         ASSERT (streamInput == null);
@@ -188,7 +188,7 @@ public class Stream extends Operator
     SchedStream constructSchedule ()
     {
         // go through my children and dispatch on their
-        SchedStream stream = new SchedStream ();
+        SchedPipeline pipeline = new SchedPipeline ();
 
         ListIterator childIter;
         childIter = (ListIterator) streamElements.iterator ();
@@ -201,10 +201,10 @@ public class Stream extends Operator
 
             SchedStream childStream;
             childStream = child.constructSchedule ();
-            stream.addChild (childStream);
+            pipeline.addChild (childStream);
         }
 
-        return stream;
+        return pipeline;
     }
 
 }

@@ -55,6 +55,13 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     //Needed to pass info from assignment to visitNewArray
     JExpression lastLeft;
 
+    private static int byteSize(CType type) {
+	if (type instanceof CIntType) return 4;
+	if (type instanceof CFloatType) return 4;
+	if (type instanceof CDoubleType) return 8;
+	return 0;
+    }
+
     public static void generateCode(FlatNode node) 
     {
 	FlatIRToCluster toC = new FlatIRToCluster((SIRFilter)node.contents);
@@ -217,7 +224,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	p.print("#include <sdep.h>\n");
 	p.print("#include <message.h>\n");
 	p.print("#include <timer.h>\n");
-	p.print("#include <thread_list_element.h>\n");
+	p.print("#include <thread_info.h>\n");
 
 	p.print("\n");
 
@@ -242,12 +249,22 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 
 	//Visit fields declared in the filter class
+	
+	int filed_size = 0;
+
 	JFieldDeclaration[] fields = self.getFields();
-	for (int i = 0; i < fields.length; i++)
+	for (int i = 0; i < fields.length; i++) {
 	   fields[i].accept(this);
+	   filed_size += byteSize(fields[i].getType()); 
+	}
 
 	print("\n");
 
+	print("\n");
+	print("int get_serialize_size__"+selfID+"() {\n");
+	print("  return "+filed_size+";\n");
+	print("}\n");
+	print("\n");
 
 	//////////////////////////////////////////////
 	// Declare Socket Variables
@@ -278,6 +295,26 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		print("mysocket *__msg_sock_"+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"_"+selfID+"in;\n");
 	    }
 	}
+
+
+	//////////////////////////////////////////////
+	// thread info
+
+	print("\nthread_info *__get_thread_info_"+selfID+"() {\n");
+
+	print("  thread_info *info = new thread_info("+selfID+");\n");
+
+	if (in != null) {
+	    print("  info->add_incoming_data_connection("+in.getSource()+");\n");
+	}
+
+	if (out != null) {
+	    print("  info->add_outgoing_data_connection("+out.getDest()+");\n");
+	}
+	
+	print("  return info;\n");
+	print("}\n");
+	
 
 
 	//////////////////////////////////////////////
@@ -824,7 +861,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	else if (type.isFloatingPoint())
 	    print(" = 0.0f");
 
-        print(";/* "+type+" */");
+        print(";/* "+type+" size: "+byteSize(type)+" */");
     }
 
     /**

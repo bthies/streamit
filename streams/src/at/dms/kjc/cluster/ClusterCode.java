@@ -93,7 +93,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <init_instance.h>\n");
 	p.print("#include <mysocket.h>\n");
 	p.print("#include <peek_stream.h>\n");
-	p.print("#include <thread_list_element.h>\n");
+	p.print("#include <thread_info.h>\n");
 
 	p.print("\n");
 
@@ -117,6 +117,22 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("mysocket *"+((NetStream)out.elementAt(i)).name()+"out;\n");
 	}
 	
+
+	p.print("\n");
+	p.print("thread_info *__get_thread_info_"+thread_id+"() {\n");
+	p.print("  thread_info *info = new thread_info("+thread_id+");\n");
+
+	p.print("  info->add_incoming_data_connection("+in.getSource()+");\n");
+
+	for (int i = 0; i < out.size(); i++) {
+	    NetStream s = (NetStream)out.elementAt(i);		
+	    p.print("  info->add_outgoing_data_connection("+s.getDest()+");\n");
+	}
+	
+	p.print("  return info;\n");
+	p.print("}\n");
+
+
 	p.print("\n");
 	p.print("void __declare_sockets_"+thread_id+"() {\n");
 
@@ -247,7 +263,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <init_instance.h>\n");
 	p.print("#include <mysocket.h>\n");
 	p.print("#include <peek_stream.h>\n");
-	p.print("#include <thread_list_element.h>\n");
+	p.print("#include <thread_info.h>\n");
 
 	p.print("\n");
 
@@ -270,6 +286,23 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 
 	p.print("mysocket *"+out.name()+"out;\n");
+
+
+
+	p.print("\n");
+	p.print("thread_info *__get_thread_info_"+thread_id+"() {\n");
+	p.print("  thread_info *info = new thread_info("+thread_id+");\n");
+
+	for (int i = 0; i < in.size(); i++) {
+	    NetStream s = (NetStream)in.elementAt(i);	    
+	    p.print("  info->add_incoming_data_connection("+s.getSource()+");\n");    
+	}
+
+	p.print("  info->add_outgoing_data_connection("+out.getDest()+");\n");
+
+	
+	p.print("  return info;\n");
+	p.print("}\n");
 
 	
 	p.print("\n");
@@ -431,17 +464,17 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <mysocket.h>\n");
 	p.print("#include <node_server.h>\n");
 	p.print("#include <init_instance.h>\n");
-	p.print("#include <thread_list_element.h>\n");
 	p.println();
 
 	p.print("int __number_of_iterations = 20;\n");
-	p.print("thread_list_element *thread_list_top = NULL;\n");
+	p.print("vector <thread_info*> thread_list;\n");
 	p.print("int *current_thread_state_flag;\n");
 	p.println();
 
 	for (int i = 0; i < threadNumber; i++) {
 	    
 	    p.print("extern void __declare_sockets_"+i+"();\n");
+	    p.print("extern thread_info *__get_thread_info_"+i+"();\n");
 	    p.print("extern void run_"+i+"(int *state_ptr);\n");
 	    p.print("static void *run_thread_"+i+"(void *param) {\n");
 	    p.print("  run_"+i+"(current_thread_state_flag);\n");
@@ -497,15 +530,17 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("    *current_thread_state_flag = RUN_STATE; // RUN\n");
 	    p.print("    pthread_create(&id, NULL, run_thread_"+i+", (void*)\"thread"+i+"\");\n");
 
-	    p.print("    thread_list_top = new thread_list_element("+i+", id, current_thread_state_flag, thread_list_top);\n");
-	    
-	
+	    p.print("    thread_info *info = __get_thread_info_"+i+"();\n"); 
+	    p.print("    info->set_pthread(id);\n");
+	    p.print("    info->set_state_flag(current_thread_state_flag);\n");
+	    p.print("    thread_list.push_back(info);\n");
+
 	    p.print("  }\n");
 	}
 
 	p.print("\n  signal(3, sig_recv);\n\n");
 
-	p.print("  node_server *node = new node_server(thread_list_top);\n");
+	p.print("  node_server *node = new node_server(thread_list);\n");
 	p.print("  node->run_server();\n");
 
 	//p.print("  for (;;) {}\n");

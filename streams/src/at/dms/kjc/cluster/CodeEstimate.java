@@ -13,9 +13,9 @@ public class CodeEstimate extends SLIREmptyVisitor {
 
     static int FOR_EXPR = 6;
 
-    static int PEEK_EXPR = 14;
-    static int POP_EXPR = 20;
-    static int PUSH_EXPR = 57;
+    static int PEEK_EXPR = 10; // always an array reference (was:14)
+    static int POP_EXPR = 6; // takes small space if fused (was:20)
+    static int PUSH_EXPR = 6; // takse small space if fused (was:57)
     static int PRINT_EXPR = 10;
 
     static int ARITH_INT = 4;

@@ -17,6 +17,10 @@ import java.io.*;
 
 public class SwitchCode extends at.dms.util.Utils 
 {
+ // the max-ahead is the maximum number of lines that this will
+    // recognize as a pattern for folding into a loop
+    private static final int MAX_LOOKAHEAD = 10000;
+
 
     public static void generate(FlatNode top) 
     {
@@ -36,12 +40,13 @@ public class SwitchCode extends at.dms.util.Utils
 	RawBackend.addAll(tiles, Simulator.steadySchedules.keySet());
 	RawBackend.addAll(tiles, Layout.getTiles());
 
-	//do not generate switchcode for Tiles assigned to file readers
+	//do not generate switchcode for Tiles assigned to file readers/writers
 	//they are just dummy tiles
-	Iterator frs = FileReaderVisitor.fileReaders.iterator();
-	while (frs.hasNext()) {
-	    tiles.remove(Layout.getTile((FlatNode)frs.next()));
+	Iterator fs = FileVisitor.fileNodes.iterator();
+	while (fs.hasNext()) {
+	    tiles.remove(Layout.getTile((FlatNode)fs.next()));
 	}
+       
 	
 	Iterator tileIterator = tiles.iterator();
 			
@@ -92,12 +97,12 @@ public class SwitchCode extends at.dms.util.Utils
 		fw.write("\tj\tsw_loop\n\n");
 		fw.write(getTrailer(tile, threeBiggest));
 		fw.close();
-		if (threeBiggest != null) {
-		    System.out.print("Found Seqeunces of: " +
-				     threeBiggest[0].repetitions + " " + 
-				     threeBiggest[1].repetitions + " " + 
-				     threeBiggest[2].repetitions + "\n");
-		} 
+		/*if (threeBiggest != null) {
+		    		    System.out.print("Found Seqeunces of: " +
+				     threeBiggest[0].repetitions + " " + t" " + 
+				     threeBiggest[1].repetitions + " " + threeBiggest[1].length + " " + 
+				     threeBiggest[2].repetitions + " " + threeBiggest[2].length + "\n");
+				     } */
 
 		System.out.println("sw" + Layout.getTileNumber(tile) 
 				   + ".s written");
@@ -115,7 +120,7 @@ public class SwitchCode extends at.dms.util.Utils
     //dummy 
     private static void printIOStartUp(Coordinate tile, FileWriter fw) throws Exception 
     {
-	if (FileReaderVisitor.connectedToFR(tile))
+	if (FileVisitor.connectedToFR(tile))
 	    fw.write("\tnop\troute $csto->$cSo\n");
     }
     
@@ -184,10 +189,12 @@ public class SwitchCode extends at.dms.util.Utils
     {
 	public int line;
 	public int repetitions;
+	public int length;
 	public Repetition(int l, int r) 
 	{
 	    line = l;
 	    repetitions = r;
+	    // length = len;
 	}
     }
     
@@ -243,6 +250,90 @@ public class SwitchCode extends at.dms.util.Utils
 	}
 	return threeBiggest;
     }
+      
+   private static String[] getStringArray(StringTokenizer st) {
+	String[] ret = new String[st.countTokens()];
+	for (int i = 0; i < ret.length; i++)
+	    ret[i] = st.nextToken();
+	return ret;
+    }
+
+    /**
+     * Prints the schedule to <ret> for node list starting at <first>.
+     */
+    /*
+  private static Repetition[] threeBiggestRepetitions(String str) {
+      //(JoinerScheduleNode first, StringBuffer ret, boolean fp) {
+	String[] nodes = getStringArray(new  StringTokenizer(str, "\n"));
+	Repetition[] threeBiggest = new Repetition[3];
+	//force the repetition count to be > 1
+	for (int i = 0; i < 3; i++) 
+	    threeBiggest[i] = new Repetition(-1, 1, 1);
+
+	// pos is our location in <nodes>
+	int pos = 0;
+	// keep going 'til we've printed all the nodes
+	while (pos<nodes.length) {
+	    // ahead is our repetition-looking device
+	    int ahead=1;
+	    do {
+		while (ahead <= MAX_LOOKAHEAD &&
+		       pos+ahead < nodes.length &&
+		       !nodes[pos].equals(nodes[pos+ahead])) {
+		    ahead++;
+		}
+		// if we found a match, try to build on it.  <reps> denotes
+		// how many iterations of a loop we have.
+		int reps = 0;
+		if (ahead <= MAX_LOOKAHEAD &&
+		    pos+ahead < nodes.length &&
+		    nodes[pos].equals(nodes[pos+ahead])) {
+		    // see how many repetitions of the loop we can make...
+		    do {
+			int i;
+			for (i=pos+reps*ahead; i<pos+(reps+1)*ahead; i++) {
+			    // quit if we reach the end of the array
+			    if (i+ahead >= nodes.length) { break; }
+			    // quit if there's something non-matching
+			    if (!nodes[i].equals(nodes[i+ahead])) { break; }
+			}
+			// if we finished loop, increment <reps>; otherwise break
+			if (i==pos+(reps+1)*ahead) {
+			    reps++;
+			} else {
+			    break;
+			}
+		    } while (true);
+		}
+		// if reps is <= 1, it's not worth the loop, so just
+		// add the statement (or keep looking for loops) and
+		// continue
+		if (reps<=1) {
+		    // if we've't exhausted the possibility of finding
+		    // loops, then make a single statement
+		    if (ahead >= MAX_LOOKAHEAD) {
+			pos++;
+		    }
+		} else {
+		    //see if the repetition count is larger for the last sequence
+		    for (int i = 0; i < 3; i++) {
+			if (reps > threeBiggest[i].repetitions) {
+			    threeBiggest[i] = new Repetition(pos, ahead, reps); 
+			    break;
+			}
+		    }
+		    // increment the position
+		    pos += reps*ahead;
+		    // quit looking for loops
+		    break;
+		}
+		// increment ahead so that we have a chance the next time through
+		ahead++;
+	    } while (ahead<=MAX_LOOKAHEAD);
+	} 
+	return threeBiggest;
+    }
+    */
     
     private static String getHeader() 
     {
@@ -265,7 +356,7 @@ public class SwitchCode extends at.dms.util.Utils
 	buf.append("raw_init:\n");
 	buf.append("\tmtsri	SW_PC, %lo(sw_begin)\n");
 	buf.append("\tmtsri	SW_FREEZE, 0\n");
-	if (FileReaderVisitor.connectedToFR(tile))
+	if (FileVisitor.connectedToFR(tile))
 	    buf.append("\tori! $0, $0, 1\n");
 
 	if (compressMe != null) {

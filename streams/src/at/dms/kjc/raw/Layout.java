@@ -31,8 +31,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
        that are mapped to tiles */
     public static HashSet joiners;
     
-    public static int MINTEMPITERATIONS = 100;
-    public static int MAXTEMPITERATIONS = 100;
+    public static int MINTEMPITERATIONS = 200;
+    public static int MAXTEMPITERATIONS = 200;
     public static int ANNEALITERATIONS = 10000;
     public static double TFACTR = 0.9;
 
@@ -49,12 +49,12 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	int rows = StreamItOptions.rawRows;
 	int columns = StreamItOptions.rawColumns;
 		
-	//determine if there is a file reader in the graph
+	//determine if there is a file reader/writer in the graph
 	//call init() to traverse the graph 
-	// if there is create a new column to place the fileReader
+	// if there is create a new row to place the fileReader/writer
 	// it will become a bc file reading device
-	FileReaderVisitor.init(top);
-	if (FileReaderVisitor.foundReader){
+	FileVisitor.init(top);
+	if (FileVisitor.foundReader || FileVisitor.foundWriter){
 	    rows++;
 	}
 	
@@ -215,7 +215,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    random = new Random(17);
 	    //random placement
 	    randomPlacement();
-	    
+	       
 	    double t = annealMaxTemp(); 
 	     double tFinal = annealMinTemp();
 	     // System.out.println(t);
@@ -250,6 +250,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		lastCost = currentCost;
 		j++;
 	    }
+	    
 	    System.out.println("Final Cost: " + placementCost() + " in  " + j + " iterations.");
 	    //filew.close();
 	}
@@ -318,14 +319,25 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
     private static void randomPlacement() 
     {
-	//assign the fileReaders to the last row
-	if (FileReaderVisitor.foundReader) {
-	    Iterator frs = FileReaderVisitor.fileReaders.iterator();
+	//assign the fileReaders/writers to the last row
+	if (FileVisitor.foundReader || FileVisitor.foundWriter) {
+	    Iterator frs = FileVisitor.fileReaders.iterator();
+	    Iterator fws = FileVisitor.fileWriters.iterator();
 	    int column = 0;
+	    //check to see if there are less then
+	    //file readers/writers the number of columns
+	    if (FileVisitor.fileReaders.size() + 
+		FileVisitor.fileWriters.size() > StreamItOptions.rawColumns)
+		Utils.fail("Too many file readers/writers (must be less than columns.");
 	    while (frs.hasNext()) {
 		assign(coordinates[StreamItOptions.rawRows][column], 
 		       (FlatNode)frs.next());
 		column ++;
+	    }
+	    while (fws.hasNext()) {
+		assign(coordinates[StreamItOptions.rawRows][column],
+		       (FlatNode)fws.next());
+		column++;
 	    }
 	}
 	Iterator nodes = assigned.iterator();
@@ -340,7 +352,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     private static int placementCost() 
     {
 	HashSet nodes = (HashSet)assigned.clone();
-	RawBackend.addAll(nodes, FileReaderVisitor.fileReaders);
+	RawBackend.addAll(nodes, FileVisitor.fileReaders);
 	
 	Iterator nodesIt = nodes.iterator();
 	HashSet routers = new HashSet();
@@ -639,8 +651,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     public void visitNode(FlatNode node) 
     {
 	if (node.contents instanceof SIRFilter &&
-	    !(node.contents instanceof SIRFileReader)) {
-	    
+	    ! (FileVisitor.fileNodes.contains(node))) {
 	    assigned.add(node);
 	    return;
 	}

@@ -25,7 +25,7 @@ public class MakefileGenerator
 	    //remove the tiles assigned to FileReaders
 	    //do not generate switchcode for Tiles assigned to file readers
 	    //they are just dummy tiles
-	    Iterator frs = FileReaderVisitor.fileReaders.iterator();
+	    Iterator frs = FileVisitor.fileNodes.iterator();
 	    while (frs.hasNext()) {
 		tiles.remove(Layout.getTile((FlatNode)frs.next()));
 	    }
@@ -36,7 +36,7 @@ public class MakefileGenerator
 	    fw.write("SIM-CYCLES = 500000\n\n");
 	    fw.write("include $(STARSEARCH_HOME)/Makefile.include\n\n");
 	    fw.write("RGCCFLAGS += -O3\n\n");
-	    if (FileReaderVisitor.foundReader) {
+	    if (FileVisitor.foundReader || FileVisitor.foundWriter) {
 		fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");
 		createBCFile();
 	    }
@@ -88,7 +88,8 @@ public class MakefileGenerator
 	fw.write("include(\"<dev/basic.bc>\");\n");
 	fw.write("include(\"<dev/st_port_to_file.bc>\");\n");
 	fw.write("\n{\n");
-	Iterator frs = FileReaderVisitor.fileReaders.iterator();
+	//generate the code for the fileReaders
+	Iterator frs = FileVisitor.fileReaders.iterator();
 	while (frs.hasNext()) {
 	    FlatNode node = (FlatNode)frs.next();
 	    SIRFileReader fr = (SIRFileReader)node.contents;
@@ -96,7 +97,15 @@ public class MakefileGenerator
 		     getIOPort(Layout.getTile(node)) + 
 		     ", 1);\n");
 	}
-	
+	//generate the code for the file writers
+	Iterator fws = FileVisitor.fileWriters.iterator();
+	while (fws.hasNext()) {
+	    FlatNode node = (FlatNode)fws.next();
+	    SIRFileWriter sfw = (SIRFileWriter)node.contents;
+	    fw.write("\tdev_st_port_to_file(\"" + sfw.getFileName() + "\", " + 
+		     getIOPort(Layout.getTile(node)) + 
+		     ");\n");
+	}
 	fw.write("\n}\n");
 	fw.close();
     }

@@ -86,7 +86,7 @@ public class RawBackend {
 	//str.accept(printer1);
 	//printer1.close();
 
-	System.out.println("Flattener Begin...");
+       	System.out.println("Flattener Begin...");
 	RawFlattener rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("flatgraph.dot");
 	System.out.println("Flattener End.");
@@ -94,8 +94,10 @@ public class RawBackend {
 	createExecutionCounts(str, rawFlattener);
 
 	// layout the components (assign filters to tiles)
+	
 	Layout.simAnnealAssign(rawFlattener.top);
-	//Layout.handAssign(RawFlattener.top);
+	
+	//Layout.handAssign(rawFlattener.top);
 	System.out.println("Assign End.");
 	//Generate the switch code
 	System.out.println("Switch Code Begin...");

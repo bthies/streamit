@@ -1733,6 +1733,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			       JMethodDeclaration initPath)
     {
     }
-    
+
+   public void visitStructure (SIRStructure self, 
+				SIRStream parent, 
+				JFieldDeclaration[] fields) {
+    } 
     
 }

@@ -36,6 +36,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
      * whose output is not connected to another joiner.
      */
     public int getNumTiles() {
+	dumpGraph("crash.dot");
 	int count = 0;
 	for (Iterator it = SIRMap.entrySet().iterator(); it.hasNext(); ) {
 	    Map.Entry entry = (Map.Entry)it.next();
@@ -58,6 +59,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	}
 	return count;
     }
+    
     
     private void createGraph(SIROperator current) 
     {
@@ -135,6 +137,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	return node;
     }
 
+    /* creates the dot file representing the flattened graph */
     public void dumpGraph(String filename) 
     {
 	buf = new StringBuffer();
@@ -153,7 +156,8 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	}
 	
     }
-
+    
+    /* appends the dot file code representing the given node */
     public void visitNode(FlatNode node) 
     {
 	if (node.contents instanceof SIRFilter) {

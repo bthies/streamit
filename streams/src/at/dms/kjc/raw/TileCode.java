@@ -286,6 +286,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
         
     private static void noFilterCode(Coordinate tile) 
     {
+	//do not generate code for file manipulators
+	if (FileVisitor.fileNodes.contains(Layout.getNode(tile)))
+	    return;
+	
 	try {
 	    FileWriter fw = 
 		new FileWriter("tile" + Layout.getTileNumber(tile) 
@@ -323,7 +327,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    joinerCode(node);
 	}
 	if (node.contents instanceof SIRFilter) {
-	    if (FileReaderVisitor.fileReaders.contains(node))
+	    //do not generate code for the file manipulators
+	    if (FileVisitor.fileNodes.contains(node))
 		return;
 	    realTiles.add(Layout.getTile(node.contents));
 	    FlatIRToC.generateCode(node);

@@ -32,6 +32,8 @@ public class FilterContent {
     private int popCount;
     private boolean linear;
     private boolean begin;
+    private boolean end;
+    private int pos;
 
     /*public FilterContent(String name,SIRWorkFunction[] init,SIRWorkFunction[] work,CType inputType,CType outputType,int initMult,int steadyMult,JMethodDeclaration[] methods,List paramList) {
       this.name=name;
@@ -130,6 +132,26 @@ public class FilterContent {
 
     public void setBegin(boolean begin) {
 	this.begin=begin;
+    }
+
+    public boolean getBegin() {
+	return begin;
+    }
+
+    public void setEnd(boolean end) {
+	this.end=end;
+    }
+
+    public boolean getEnd() {
+	return end;
+    }
+
+    public void setPos(int pos) {
+	this.pos=pos;
+    }
+
+    public int getPos() {
+	return pos;
     }
 
     public double[] getArray() {

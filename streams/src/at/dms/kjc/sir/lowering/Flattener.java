@@ -173,6 +173,16 @@ public class Flattener {
 	// nodes based on their linearity.
 	LinearDot.printGraph(str, "linear.dot", lfa);
 
+	// if we are supposed to transform the graph
+	// by replacing work functions with their linear forms, do so now 
+	if (transform == true) {
+	    System.out.println("Running Linear Transformation");
+	    LinearFilterDirectReplacer replacer;
+	    // make a new replacer with the information contained in the analyzer
+	    replacer = new LinearFilterDirectReplacer(lfa);
+	    // pump the replacer through the stream graph.
+	    IterFactory.createIter(str).accept(replacer);
+	}
 	
     }
 

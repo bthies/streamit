@@ -487,8 +487,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    items = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() *
 			push;
 	    }
-	    sum += ((items * hops) + (items * Util.getTypeSize(Util.getOutputType(node))) * 
-		    Math.pow(numAssigned /** 2.0*/, 3.0));
+	    sum += ((items * hops) + (items * Util.getTypeSize(Util.getOutputType(node)) * 
+		    /*Math.pow(*/numAssigned /** 2.0, 3.0)*/ * 10.0));
 	}
 	return sum;
     }

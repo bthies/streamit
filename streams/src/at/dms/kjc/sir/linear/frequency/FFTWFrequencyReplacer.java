@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: FFTWFrequencyReplacer.java,v 1.11 2002-12-12 16:26:04 aalamb Exp $
+ * $Id: FFTWFrequencyReplacer.java,v 1.12 2003-02-28 22:35:07 aalamb Exp $
  **/
 public class FFTWFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
@@ -54,7 +54,7 @@ public class FFTWFrequencyReplacer extends FrequencyReplacer{
      * Does the actual work of replacing something that computes a convolution
      * sum with something that does a FFT, multiply, and then IFFT.
      */
-    private void makeReplacement(SIRFilter self) {
+    public void makeReplacement(SIRStream self) {
 	LinearPrinter.println(" processing " + self.getIdent());
 	/* if we don't have a linear form for this stream, we are done. */
 	if(!this.linearityInformation.hasLinearRepresentation(self)) {

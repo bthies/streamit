@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.8 2003-02-13 16:22:02 aalamb Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.9 2003-02-28 22:35:07 aalamb Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -64,17 +64,11 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	this.linearityInformation = lfa;
     }
 
-
-    public void preVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {}
-    public void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter){}
-    public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter){}
-    public void visitFilter(SIRFilter self, SIRFilterIter iter){makeReplacement(self);}
-
     /**
      * Does the actual work of replacing something that computes a convolution
      * sum with something that does a FFT, multiply, and then IFFT.
      */
-    private void makeReplacement(SIRFilter self) {
+    public void makeReplacement(SIRStream self) {
 	LinearPrinter.println(" processing " + self.getIdent());
 	/* if we don't have a linear form for this stream, we are done. */
 	if(!this.linearityInformation.hasLinearRepresentation(self)) {
@@ -245,22 +239,6 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     }
     
 
-
-    /* returns an array that is a field declaration for (newField)
-     * appended to the original field declarations. **/
-    public JFieldDeclaration[] appendFieldDeclaration(JFieldDeclaration[] originals,
-						      JVariableDefinition newField) {
-						     
-	/* really simple -- make a new array, copy the elements from the
-	 * old array and then stick in the new one. */
-	JFieldDeclaration[] returnFields = new JFieldDeclaration[originals.length+1];
-	for (int i=0; i<originals.length; i++) {
-	    returnFields[i] = originals[i];
-	}
-	/* now, stick in a new field declaration. */
-	returnFields[originals.length]   = new JFieldDeclaration(null, newField, null, null);
-	return returnFields;
-    }
 
     /**
      * Make an init function which assigns allocates space for the various fields

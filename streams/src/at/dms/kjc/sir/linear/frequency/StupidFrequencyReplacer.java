@@ -19,7 +19,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation
  * 
- * $Id: StupidFrequencyReplacer.java,v 1.2 2002-11-20 19:12:40 aalamb Exp $
+ * $Id: StupidFrequencyReplacer.java,v 1.3 2003-02-28 22:35:07 aalamb Exp $
  **/
 public class StupidFrequencyReplacer extends FrequencyReplacer {
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
@@ -52,7 +52,7 @@ public class StupidFrequencyReplacer extends FrequencyReplacer {
      * Does the actual work of replacing something that computes a convolution
      * sum with something that does a FFT, multiply, and then IFFT.
      */
-    private void makeReplacement(SIRFilter self) {
+    public void makeReplacement(SIRStream self) {
 	/* if we don't have a linear form for this stream, we are done. */
 	if(!this.linearityInformation.hasLinearRepresentation(self)) {
 	    return;
@@ -89,15 +89,18 @@ public class StupidFrequencyReplacer extends FrequencyReplacer {
 	
 	
 	LinearPrinter.println(" done building new IR nodes for " + self);
+
+	// casting goodness to compile. not an issue as this code is not live anymore
+	SIRFilter castSelf = (SIRFilter)self; 
 	
 	/* replace all of the pieces that we just built. */
-	self.setPeek(x+N-1);
-	self.setPop(N);
-	self.setPush(N);
-	self.setWork(freqWork);
-	self.setInit(freqInit);
-	self.setFields(newFields);
-	self.setIdent("Frequency" + self.getIdent());
+	castSelf.setPeek(x+N-1);
+	castSelf.setPop(N);
+	castSelf.setPush(N);
+	castSelf.setWork(freqWork);
+	castSelf.setInit(freqInit);
+	castSelf.setFields(newFields);
+	castSelf.setIdent("Frequency" + self.getIdent());
 	
 	LinearPrinter.println(" done replacing.");
 	

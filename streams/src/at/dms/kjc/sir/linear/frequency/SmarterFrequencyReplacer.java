@@ -18,7 +18,7 @@ import at.dms.compiler.*;
  *
  * This frequency replacer is used to generate the 
  * 
- * $Id: SmarterFrequencyReplacer.java,v 1.2 2002-11-20 19:12:40 aalamb Exp $
+ * $Id: SmarterFrequencyReplacer.java,v 1.3 2003-02-28 22:35:07 aalamb Exp $
  **/
 public class SmarterFrequencyReplacer extends FrequencyReplacer {
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
@@ -66,7 +66,7 @@ public class SmarterFrequencyReplacer extends FrequencyReplacer {
      * Does the actual work of replacing something that computes a convolution
      * sum with something that does a FFT, multiply, and then IFFT.
      */
-    private void makeReplacement(SIRFilter self) {
+    public void makeReplacement(SIRStream self) {
 	LinearPrinter.println(" processing " + self.getIdent());
 	/* if we don't have a linear form for this stream, we are done. */
 	if(!this.linearityInformation.hasLinearRepresentation(self)) {

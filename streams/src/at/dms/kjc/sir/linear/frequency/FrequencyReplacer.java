@@ -18,7 +18,7 @@ import at.dms.compiler.*;
  * 2 = fftw replacement (use FFTW to calculate FFT, take advantage of real input/output symmetries)<br>
  * 3 = leet multidimensional fftw replacement (FFTW and converts any filter with pop=1)<br>
  **/
-public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
+public abstract class FrequencyReplacer extends LinearReplacer implements Constants{
     public static final int UNKNOWN = -1;
     public static final int STUPID  =  0;
     public static final int SMARTER =  1;

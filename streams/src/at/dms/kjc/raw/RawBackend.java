@@ -56,7 +56,7 @@ public class RawBackend {
 	
 	if (StreamItOptions.fusion) {
 	    System.out.println("Running SJFusion...");
-	    str = SJFlatten.doFlatten(str);
+	    FuseAll.fuse(str);
 	    System.out.println("Done SJFusion...");
 	}
 	

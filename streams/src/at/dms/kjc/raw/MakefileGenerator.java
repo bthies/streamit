@@ -26,7 +26,7 @@ public class MakefileGenerator
 	    
 	    fw.write("#Makefile\n\n");
 	    fw.write("SIM-CYCLES = 500000\n\n");
-	    fw.write("include /u/mgordon/raw/starsearch/Makefile.include\n\n");
+	    fw.write("include /home/bits6/mgordon/starsearch/Makefile.include\n\n");
 	    fw.write("RGCCFLAGS += -O3\n\n");
 	    if (StreamItOptions.rawRows > 4)
 		fw.write("TILE_PATTERN=8x8\n\n");

@@ -120,7 +120,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	ret.append("#define BUFSIZE " + buffersize + "\n\n");
 	
 	ret.append("void work() { \n");
-		
+	//print the temp for the for loop
+	ret.append("  int rep;\n");
 	HashSet buffers = (HashSet)JoinerSimulator.buffers.get(joiner);
 	Iterator bufIt = buffers.iterator();
 	//print all the var definitions
@@ -134,15 +135,51 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		
 	JoinerScheduleNode init = (JoinerScheduleNode)Simulator.initJoinerCode.get(joiner);
 	while (init != null) {
-	    ret.append(init.getC(fp));
+	    int repeat = 1;
+	    String code = init.getC(fp);
 	    init = init.next;
+	    //look for repeats
+	    while (true) {
+		if (init == null)
+		    break;
+		if (init.getC(fp).equals(code)) {
+		    init = init.next;
+		    repeat++;
+		}
+		else 
+		    break;
+	    }
+	    if (repeat > 1) 
+		ret.append("for (rep = 0; rep < " + repeat + "; rep++) {\n");
+	    ret.append(code);
+	    if (repeat > 1)
+		ret.append("}\n");
+	    
 	}
 	//print the steady state schedule
 	JoinerScheduleNode steady = (JoinerScheduleNode)Simulator.steadyJoinerCode.get(joiner);
 	ret.append("while(1) {\n");
 	while (steady != null) {
-	    ret.append("  " + steady.getC(fp));
+	    int repeat = 1;
+	    String code = steady.getC(fp);
 	    steady = steady.next;
+	    //look for repeats
+	    while (true) {
+		if (steady == null)
+		    break;
+		if (steady.getC(fp).equals(code)) {
+		    steady = steady.next;
+		    repeat++;
+		}
+		else 
+		    break;
+	    }
+	    if (repeat > 1) 
+		ret.append("for (rep = 0; rep < " + repeat + "; rep++) {\n");
+	    ret.append(code);
+	    if (repeat > 1)
+		ret.append("}\n");
+
 	}
 	ret.append("}}\n");
 	return ret.toString();

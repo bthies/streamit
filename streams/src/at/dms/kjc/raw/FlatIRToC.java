@@ -109,6 +109,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("  " + init.getName() + "(");
 	print(InitArgument.getInitArguments(self));
 	print (");\n");
+	if (self instanceof SIRTwoStageFilter) 
+	    print("  " + ((SIRTwoStageFilter)self).getInitWork().getName() + "();\n");
 	print("  " + work.getName() + "();\n");
 	print("}\n");
 	

@@ -161,7 +161,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    switchSchedules.put(fire, new StringBuffer());
 	StringBuffer buf = (StringBuffer)switchSchedules.get(fire);
 	Iterator it = ((HashSet)next.get(fire)).iterator();
-	buf.append("\tnop\troute ");
+	buf.append("route ");
 	while (it.hasNext()) {
 	    Coordinate dest = (Coordinate)it.next();
 	    buf.append("$csto->" + "$c" + 
@@ -182,7 +182,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		switchSchedules.put(tile, new StringBuffer());
 	    buf = (StringBuffer)switchSchedules.get(tile);
 	    Coordinate prevTile = (Coordinate)previous.get(tile);
-	    buf.append("\tnop\troute ");
+	    buf.append("route ");
 	    Iterator nexts = ((HashSet)next.get(tile)).iterator();
 	    while(nexts.hasNext()) {
 		Coordinate nextTile = (Coordinate)nexts.next();
@@ -382,7 +382,6 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     private boolean canFire(FlatNode node, HashMap executionCounts, 
 			    SimulationCounter counters) 
     {
-	//the only thing that can fire is a filter
 	if (node.contents instanceof SIRFilter) {
 	    //check if this node has fired the number of times given by
 	    //the schedule

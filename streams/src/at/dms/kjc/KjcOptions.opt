@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.52 2003-11-20 07:48:58 jasperln Exp $
+ * $Id: KjcOptions.opt,v 1.53 2004-01-30 19:50:28 dmaze Exp $
  */
 
 prefix Kjc
@@ -368,3 +368,9 @@ longname		"magicdram"
 	type 		boolean
 	default		"false"
 	help		"For the SpaceTime RAW backend, use magic dram devices"
+
+longname		"backend"
+	type		String
+	default		"null"
+	requireArgument
+	help		"Class name of the StreamIt compiler backend to run."

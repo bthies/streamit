@@ -53,7 +53,10 @@ public class FuseSplit {
 
     //Uses partition to partion children according to <partition>
     public static SIRStream fuse(SIRSplitJoin sj, PartitionGroup partition) {
-	{//Quick check
+	{
+	    // clear possible wrapper pipelines in children
+	    Lifter.lift(sj);
+	    //Quick check
 	    Utils.assert(partition.getNumChildren()==sj.size(),
 			 "More children in partitioning than in splitjoin " + sj);
 	    for(int i=0;i<partition.size();i++) {
@@ -105,6 +108,8 @@ public class FuseSplit {
      * <sj> if it could fuse without creating fresh construct.
      */
     public static SIRStream fuse(SIRSplitJoin sj) {
+ 	// clear possible wrapper pipelines in children
+	Lifter.lift(sj);
 	// dispatch to simple fusion
 	SIRStream dispatchResult = dispatchToSimple(sj);
 	if (dispatchResult!=null) {

@@ -35,6 +35,12 @@ public class RemoveGlobals extends at.dms.util.Utils
     public void visitNode(FlatNode node) 
     {
 	if (node.isFilter()){
+	    //do nothing for these types of filters
+	    if(node.contents instanceof SIRIdentity ||
+	       node.contents instanceof SIRFileWriter ||
+	       node.contents instanceof SIRFileReader)
+		return;
+
 	    //reset the state
 	    doNotInline = new HashSet();
 	    functionsToKeep = new HashSet();
@@ -87,6 +93,8 @@ public class RemoveGlobals extends at.dms.util.Utils
 	//loop thru all helper methods and see if any has a
 	//call
 	
+	System.out.println(filter.getName());
+
 	JMethodDeclaration rawMain = RemoveGlobals.getRawMain(filter);
 	
 	for (int i = 0; i < methods.length; i++) {

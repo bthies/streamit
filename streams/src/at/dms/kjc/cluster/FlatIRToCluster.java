@@ -230,20 +230,33 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	NetStream in = RegisterStreams.getFilterInStream(self);
 	NetStream out = RegisterStreams.getFilterOutStream(self);
 
+	int out_pop_buffer_size = 10240;
+	int out_pop_num_iters = 0;
+	if (push_n != 0) out_pop_num_iters = out_pop_buffer_size / push_n;
+
+	if (out != null) {
+	    //print(output_type.toString()+" "+out.pop_buffer()+"["+push_n+"];\n");
+	    //print("int "+out.pop_index()+" = "+push_n+";\n");
+
+	    print(output_type.toString()+" "+out.pop_buffer()+"["+out_pop_buffer_size+"];\n");
+	    print("int "+out.pop_index()+" = "+(out_pop_num_iters*push_n)+";\n");
+	    
+	    print("\n");
+	}
+
 	if (in != null) {
 
-	    FlatNode tmp = NodeEnumerator.getFlatNode(in.getSource());
+	    FlatNode source_node = NodeEnumerator.getFlatNode(in.getSource());
 	    FlatNode my_node = NodeEnumerator.getFlatNode(selfID);
 
 	    String pop_expr = null;
 
-	    if (ClusterFusion.fusedWith(my_node).contains(tmp)) {
-		if (tmp.contents instanceof SIRJoiner) {
-		    pop_expr = "__joiner_"+in.getSource()+"_pop()";
-		    print("extern "+input_type.toString()+" __joiner_"+in.getSource()+"_pop();\n");
-		}
+	    FlatNode source_master = ClusterFusion.getLocalMaster(source_node);
+	    
+	    if (source_master != null && source_master.equals(my_node)) { 
+		pop_expr = in.pop_name();
 	    } else {
-		pop_expr = in.consumer_name()+".pop()";
+		pop_expr = in.consumer_name()+".pop";
 	    }
 
 	    print(input_type.toString()+" __pop_buf__"+selfID+"["+peek_n+"];\n");
@@ -256,7 +269,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		for (int y = 0; y < extra; y++) {
 		    int index = y + pop_n;
 		    
-		    print("  __pop_buf__"+selfID+"["+index+"] = "+pop_expr+";\n");
+		    print("  __pop_buf__"+selfID+"["+index+"] = "+pop_expr+"();\n");
 		}
 	    }
 	    print("}\n");
@@ -267,7 +280,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	    if (peek_n == pop_n) {
 		for (int y = 0; y < pop_n; y++) {
-		    print("  __pop_buf__"+selfID+"["+y+"] = "+pop_expr+";\n");
+		    print("  __pop_buf__"+selfID+"["+y+"] = "+pop_expr+"();\n");
 		}
 	    }
 
@@ -280,7 +293,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 		for (int y = 0; y < pop_n; y++) {
 		    int index = y + extra;
-		    print("  __pop_buf__"+selfID+"["+index+"] = "+pop_expr+";\n");
+		    print("  __pop_buf__"+selfID+"["+index+"] = "+pop_expr+"();\n");
 		}
 	    }
 
@@ -306,28 +319,64 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	if (out != null) {
 
-	    FlatNode tmp = NodeEnumerator.getFlatNode(out.getDest());
+	    FlatNode dst_node = NodeEnumerator.getFlatNode(out.getDest());
 	    FlatNode my_node = NodeEnumerator.getFlatNode(selfID);
 
 	    String push_expr = null;
 
-	    if (ClusterFusion.fusedWith(my_node).contains(tmp)) {
-		if (tmp.contents instanceof SIRSplitter) {
-		    push_expr = "__splitter_"+out.getDest()+"_push";		    
-		    print("extern void __splitter_"+out.getDest()+"_push("+output_type.toString()+" data);\n");
-		}
-	    } else {
-		push_expr = out.producer_name()+".push";
-	    }
+	    FlatNode dst_master = ClusterFusion.getLocalMaster(dst_node);
+	    FlatNode my_master = ClusterFusion.getLocalMaster(my_node);
 
 	    print("inline void __push__"+selfID+"("+output_type.toString()+" data) {\n");
-	    print("  "+push_expr+"(data);\n");
-	    print("}\n");
 
+	    if (dst_master != null && dst_master.equals(my_node)) {
+       		print("  "+out.push_name()+"(data);\n");		    
+	    } else if (my_master != null && my_master.equals(dst_node)) {
+		print("  "+out.pop_buffer()+"["+out.pop_index()+"++] = data;\n");
+	    } else {
+		print("  "+out.producer_name()+".push(data);\n");
+	    }
+
+	    print("}\n");
 
 	    print("\n");
 	}
 
+	if (in != null) {
+	    print("void "+in.push_name()+"("+input_type.toString()+" data) {}\n");
+	    print("\n");
+	}
+
+	if (out != null) {
+	    
+	    print("void "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
+
+	    print(output_type.toString()+" "+out.pop_name()+"() {\n");
+
+	    /*
+	    print("  if ("+out.pop_index()+" == "+push_n+") {\n");
+	    print("    int tmp = __number_of_iterations_"+selfID+";\n");
+	    print("    __number_of_iterations_"+selfID+" = 1;\n");
+	    print("    "+out.pop_index()+" = 0;\n");
+            print("    "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
+	    print("    __number_of_iterations_"+selfID+" = tmp - 1;\n");
+	    print("    "+out.pop_index()+" = 0;\n");
+	    */
+	    print("  if ("+out.pop_index()+" == "+(out_pop_num_iters*push_n)+") {\n");
+	    print("    int tmp = __number_of_iterations_"+selfID+";\n");
+	    print("    __number_of_iterations_"+selfID+" = "+out_pop_num_iters+";\n");
+	    print("    "+out.pop_index()+" = 0;\n");
+            print("    "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
+	    print("    __number_of_iterations_"+selfID+" = tmp - "+out_pop_num_iters+";\n");
+	    print("    "+out.pop_index()+" = 0;\n");
+
+	    print("  }\n");
+
+	    print("  return "+out.pop_buffer()+"["+out.pop_index()+"++];\n");
+	    
+	    print("}\n");
+	    print("\n");
+	}
 
 	//  +=============================+
 	//  | Method Declarations         |
@@ -356,7 +405,9 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	declOnly = false;
 	for (int i =0; i < methods.length; i++) {
-	    if (!methods[i].equals(work)) methods[i].accept(this);
+	    //if (!methods[i].equals(work)) methods[i].accept(this);
+
+	    methods[i].accept(this);
 	}
 
 	//  +=============================+

@@ -134,54 +134,134 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	int sum_of_weights = splitter.getSumOfWeights();
 
-	p.print(baseType.toString()+" __push_buffer_"+thread_id+"["+sum_of_weights+"];\n");
-	p.print("int __push_index_"+thread_id+" = 0;\n");
+	p.print(baseType.toString()+" "+in.push_buffer()+"["+sum_of_weights+"];\n");
+	p.print("int "+in.push_index()+" = 0;\n");
 	p.print("\n");
 
-	p.print("void __splitter_"+thread_id+"_push("+baseType.toString()+" data) {\n");
+	p.print("void "+in.push_name()+"("+baseType.toString()+" data) {\n");
 
 	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
 	    for (int i = 0; i < out.size(); i++) {
 		NetStream s = (NetStream)out.elementAt(i);		
-		p.print("  "+s.producer_name()+".push(data);\n");
+		FlatNode dest = NodeEnumerator.getFlatNode(s.getDest());
+
+		if (ClusterFusion.fusedWith(node).contains(dest)) {
+		    p.print("  "+s.push_name()+"(data);\n");
+		} else {
+		    p.print("  "+s.producer_name()+".push(data);\n");
+		}
 	    }	    
 	} else {
-	    p.print("  __push_buffer_"+thread_id+"[__push_index_"+thread_id+"++] = data;\n");
-	    p.print("  if (__push_index_"+thread_id+" == "+sum_of_weights+") {\n");
+	    p.print("  "+in.push_buffer()+"["+in.push_index()+"++] = data;\n");
+	    p.print("  if ("+in.push_index()+" == "+sum_of_weights+") {\n");
 	    int offs = 0;
 	    
 	    for (int i = 0; i < out.size(); i++) {
 		int num = splitter.getWeight(i);
 		NetStream s = (NetStream)out.elementAt(i);
-		p.print("    "+s.producer_name()+".push_items(&__push_buffer_"+thread_id+"["+offs+"], "+num+");\n");
+		FlatNode dest = NodeEnumerator.getFlatNode(s.getDest());
+
+		if (ClusterFusion.fusedWith(node).contains(dest)) {
+		    for (int y = 0; y < num; y++) {
+			p.print("  "+s.push_name()+"("+in.push_buffer()+"["+(offs+y)+"]);\n");
+		    }
+		} else {
+		    p.print("    "+s.producer_name()+".push_items(&"+in.push_buffer()+"["+offs+"], "+num+");\n");
+		}
 		offs += num;
 	    }
 
-	    p.print("    __push_index_"+thread_id+" = 0;\n");
+	    p.print("    "+in.push_index()+" = 0;\n");
 	    p.print("  }\n");
 	}
 	p.print("}\n");
 	p.print("\n");
 
 	//  +=============================+
+	//  | Splitter Pop                |
+	//  +=============================+
+
+	for (int ch = 0; ch < splitter.getWays(); ch++) {
+
+	    NetStream _out = (NetStream)out.elementAt(ch);
+	    int weight = splitter.getWeight(ch);
+
+	    p.print(baseType.toString()+" "+_out.pop_buffer()+"["+weight+"];\n");
+	    p.print("int "+_out.pop_index()+" = "+weight+";\n");
+	    p.print("\n");
+
+	    p.print(baseType.toString()+" "+_out.pop_name()+"() {\n");
+
+	    if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
+
+		p.print("    "+baseType.toString()+" tmp = "+in.consumer_name()+".pop();\n");
+		for (int y = 0; y < splitter.getWays(); y++) {
+		    if (y != ch) {
+			p.print("    "+((NetStream)out.elementAt(y)).producer_name()+".push(tmp);\n");
+		    }
+		}
+		p.print("    return tmp;\n");
+	    
+	    } else {
+
+		int sum = splitter.getSumOfWeights();
+		int offs = 0;
+		
+		p.print("  "+baseType.toString()+" tmp["+sum+"];\n");
+		p.print("  if ("+_out.pop_index()+" == "+splitter.getWeight(ch)+") {\n");
+	    
+		p.print("    "+in.consumer_name()+".pop_items(tmp, "+sum+");\n");
+		
+		for (int y = 0; y < out.size(); y++) {
+		    int num = splitter.getWeight(y);
+		    NetStream s = (NetStream)out.elementAt(y);
+		    if (y == ch) {
+			p.print("    memcpy(&tmp["+offs+"], "+_out.pop_buffer()+", "+num+" * sizeof("+baseType.toString()+"));\n");
+		    } else {
+			p.print("    "+s.producer_name()+".push_items(&tmp["+offs+"], "+num+");\n");
+		    }
+		    offs += num;
+		}
+
+		p.print("    "+_out.pop_index()+" = 0;\n");
+		p.print("  }\n");
+		p.print("  return "+_out.pop_buffer()+"["+_out.pop_index()+"++];\n");
+	    }
+
+	    p.print("}\n");
+	    p.print("\n");
+	}
+	
+
+	//  +=============================+
 	//  | Splitter Work               |
 	//  +=============================+
 
 	p.print("void __splitter_"+thread_id+"_work() {\n");
+	FlatNode source = NodeEnumerator.getFlatNode(in.getSource());
 
 	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
 
 	    p.print("  "+baseType.toString()+" tmp;\n");	
-	    p.print("  tmp = "+in.consumer_name()+".pop();\n");	    
+	    if (ClusterFusion.fusedWith(node).contains(source)) {
+		p.print("  tmp = "+in.pop_name()+"();\n");
+	    } else {	    
+		p.print("  tmp = "+in.consumer_name()+".pop();\n");	    
+	    }
 	    for (int i = 0; i < out.size(); i++) {
 		NetStream s = (NetStream)out.elementAt(i);		
 		p.print("  "+s.producer_name()+".push(tmp);\n");
 	    }
-
+	    
 	} else if (splitter.getType().equals(SIRSplitType.ROUND_ROBIN)) {
-	    	    
+	    
 	    p.print("  "+baseType.toString()+" tmp;\n");
 	    for (int i = 0; i < out.size(); i++) {
+		if (ClusterFusion.fusedWith(node).contains(source)) {
+		    p.print("  tmp = "+in.pop_name()+"();\n");
+		} else {	    
+		    p.print("  tmp = "+in.consumer_name()+".pop();\n");	    
+		}
 		p.print("  tmp = "+in.consumer_name()+".pop();\n");
 		NetStream s = (NetStream)out.elementAt(i);		
 		p.print("  "+s.producer_name()+".push(tmp);\n");
@@ -209,8 +289,15 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    int offs = 0;
 		
 	    p.print("  "+baseType.toString()+" tmp["+sum+"];\n");
-	    p.print("  "+in.consumer_name()+".pop_items(tmp, "+sum+");\n");
-		
+
+	    if (ClusterFusion.fusedWith(node).contains(source)) {
+		for (int y = 0; y < sum; y++) {
+		    p.print("  tmp["+y+"] = "+in.pop_name()+"();\n");
+		}
+	    } else {	    
+		p.print("  "+in.consumer_name()+".pop_items(tmp, "+sum+");\n");
+	    }
+
 	    for (int i = 0; i < out.size(); i++) {
 		int num = splitter.getWeight(i);
 		NetStream s = (NetStream)out.elementAt(i);		
@@ -365,24 +452,33 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	int sum_of_weights = joiner.getSumOfWeights();
 
-	p.print(baseType.toString()+" __pop_buffer_"+thread_id+"["+sum_of_weights+"];\n");
-	p.print("int __pop_index_"+thread_id+" = "+sum_of_weights+";\n");
+	p.print(baseType.toString()+" "+out.pop_buffer()+"["+sum_of_weights+"];\n");
+	p.print("int "+out.pop_index()+" = "+sum_of_weights+";\n");
 	p.print("\n");
 
-	p.print(baseType.toString()+" __joiner_"+thread_id+"_pop() {\n");
+	p.print(baseType.toString()+" "+out.pop_name()+"() {\n");
 
-	p.print("  if (__pop_index_"+thread_id+" == "+sum_of_weights+") {\n");
+	p.print("  if ("+out.pop_index()+" == "+sum_of_weights+") {\n");
 	int _offs = 0;
 	for (int i = 0; i < in.size(); i++) {
 	    int num = joiner.getWeight(i);
 	    NetStream s = (NetStream)in.elementAt(i);
-	    p.print("    "+s.consumer_name()+".pop_items(&__pop_buffer_"+thread_id+"["+_offs+"], "+num+");\n");
+	    FlatNode source = NodeEnumerator.getFlatNode(s.getSource());
+
+	    if (ClusterFusion.fusedWith(node).contains(source)) {
+		for (int y = 0; y < num; y++) {
+		    p.print("    "+out.pop_buffer()+"["+(_offs + y)+"] = "+s.pop_name()+"();\n");
+		}
+	    } else {
+		p.print("    "+s.consumer_name()+".pop_items(&"+out.pop_buffer()+"["+_offs+"], "+num+");\n");
+	    }
+
 	    _offs += num;
 	}
-	p.print("    __pop_index_"+thread_id+" = 0;\n");
+	p.print("    "+out.pop_index()+" = 0;\n");
 	p.print("  }\n");
 	
-	p.print("  return __pop_buffer_"+thread_id+"[__pop_index_"+thread_id+"++];\n");
+	p.print("  return "+out.pop_buffer()+"["+out.pop_index()+"++];\n");
 	p.print("}\n");
 	p.print("\n");
 
@@ -849,7 +945,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	*/
 
 	for (int i = 0; i < threadNumber; i++) {
-	    p.print(i+" "+"machine-"+getPartition(NodeEnumerator.getFlatNode(i))+"\n");
+	    p.print(i+" "+"machine-"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(i))+"\n");
 	}
 
 	try {
@@ -883,110 +979,6 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	catch (Exception e) {
 	    System.err.println("Unable to write cluster setup file");
 	}	
-    }
-
-    /**
-     * Returns partition that <thread> should execute on.
-     */
-    public static String getPartition(FlatNode node) {
-	SIROperator op = node.contents;
-	Integer partition = (Integer)partitionMap.get(op);
-
-	if (partition!=null) {
-	    // if we assigned it to a partition, then return it.  Add
-	    // 1 for sake of clusters that start with machine "1"
-	    // instead of "0".
-	    int val = (((Integer)partition).intValue()+1);
-	    return ""+val;
-	} else if (op instanceof SIRSplitter) {
-	    // note that splitters/joiners collapsed in a fused node
-	    // should have been assigned a partition by the
-	    // partitioner; the ones remaining are "border cases".
-	    if (node.incoming[0]==null) {
-		// if we hit the top (a null splitter), assign to partition 0
-		return "1";
-	    } else {
-
-		// integrate backward if reading from a filter
-		if (node.incoming[0] != null && node.incoming[0].contents instanceof SIRFilter) {
-		    String part = getPartition(node.incoming[0]);
-		    return part;
-		}
-
-		// integrate forwards to partition that is communicating
-		// most with this one.
-		SIRSplitter split = (SIRSplitter)op;
-		HashMap map = new HashMap(); // String partition->Integer sum
-		int[] weights = split.getWeights();
-		for (int i=0; i<weights.length; i++) {
-		    String part = getPartition(node.edges[i]);
-		    Integer _oldSum = (Integer)map.get(part);
-		    int oldSum = 0;
-		    if (_oldSum!=null) {
-			oldSum = _oldSum.intValue();
-		    }
-		    map.put(part.intern(), new Integer(oldSum+weights[i]));
-		}
-		
-		int max = -1;
-		String result = null;
-		Iterator it = map.keySet().iterator();
-		while (it.hasNext()) {
-		    String part = (String)it.next();
-		    int sum = ((Integer)map.get(part)).intValue();
-		    if (sum>max) {
-			max = sum;
-			result = part;
-		    }
-		}
-		assert result!=null;
-		return result;
-	    }
-	} else if (op instanceof SIRJoiner) {
-	    
-	    // integrate forward if writing to a filter
-	    if (node.edges[0] != null && node.edges[0].contents instanceof SIRFilter) {
-		String part = getPartition(node.edges[0]);
-		return part;
-	    }
-
-	    // integrate backwards to partition that is communicating
-	    // most with this one.
-	    SIRJoiner join = (SIRJoiner)op;
-	    HashMap map = new HashMap(); // String partition->Integer sum
-	    int[] weights = join.getWeights();
-	    for (int i=0; i<weights.length; i++) {
-		String part = getPartition(node.incoming[i]);
-		Integer _oldSum = (Integer)map.get(part);
-		int oldSum = 0;
-		if (_oldSum!=null) {
-		    oldSum = _oldSum.intValue();
-		}
-		map.put(part.intern(), new Integer(oldSum+weights[i]));
-	    }
-	    
-	    int max = -1;
-	    String result = null;
-	    Iterator it = map.keySet().iterator();
-	    while (it.hasNext()) {
-		String part = (String)it.next();
-		int sum = ((Integer)map.get(part)).intValue();
-		if (sum>max) {
-		    max = sum;
-		    result = part;
-		}
-	    }
-	    assert result!=null;
-	    return result;
-	} else if (op instanceof SIRIdentity) {
-	    // if we find identity that wasn't assigned, integrate it
-	    // into its destination (arbitrarily -- could just as well
-	    // be the source)
-	    return getPartition(node.edges[0]);
-	} else {
-	    Utils.fail("No partition was assigned to " + op + " of type " + op.getClass());
-	    return null;
-	}
     }
 }
 

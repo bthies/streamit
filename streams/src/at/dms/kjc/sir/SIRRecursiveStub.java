@@ -4,6 +4,7 @@ import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.*;
 import at.dms.util.Utils;
 import java.util.*;
+import streamit.frontend.FEIRToSIR;
 
 /**
  * This class represents a stub for something that was found to be
@@ -20,6 +21,11 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
      * A snapshot (clone) of Kopi2SIR when this class was encountered.
      */
     private Kopi2SIR kopi2SIR;
+    /**
+     * The front-end syntax converter that created this class.
+     */
+    private FEIRToSIR feir2sir;
+    
     /**
      * The expanded version of this.  Initially null, then memoized to
      * prevent duplicate expansions.
@@ -38,7 +44,18 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
 	      JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
 	this.className = className;
 	this.kopi2SIR = kopi2SIR;
+        this.feir2sir = null;
 	this.expanded = null;
+    }
+
+    public SIRRecursiveStub(String className, FEIRToSIR feir2sir) 
+    {
+        super(null, "RecursiveStub_for_" + className,
+              JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
+        this.className = className;
+        this.kopi2SIR = null;
+        this.feir2sir = feir2sir;
+        this.expanded = null;
     }
 
     /**
@@ -47,7 +64,10 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
      */
     public SIRStream expand() {
 	if (expanded==null) {
-	    expanded = (SIRStream)kopi2SIR.searchForOp(className);
+            if (kopi2SIR != null)
+                expanded = (SIRStream)kopi2SIR.searchForOp(className);
+            else
+                expanded = feir2sir.findStream(className);
 	}
 	return expanded;
     }
@@ -117,6 +137,7 @@ protected void deepCloneInto(at.dms.kjc.sir.SIRRecursiveStub other) {
   super.deepCloneInto(other);
   other.className = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.className);
   other.kopi2SIR = (at.dms.kjc.Kopi2SIR)at.dms.kjc.AutoCloner.cloneToplevel(this.kopi2SIR);
+  other.feir2sir = this.feir2sir;
   other.expanded = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.expanded);
 }
 

@@ -146,6 +146,13 @@ class ToJava
                 outWriter = new OutputStreamWriter(System.out);
             outWriter.write("import streamit.*;\n");
 
+            /* Might want to check whether this is actually necessary;
+             * there have been complaints before. */
+            outWriter.write("class Complex extends Structure {\n" +
+                            "  public float real;\n" +
+                            "  public float imag;\n" +
+                            "}\n");
+
             for (Iterator iter = inputFiles.iterator(); iter.hasNext(); )
             {
                 InputStream inStream = new FileInputStream((String)iter.next());
@@ -164,6 +171,7 @@ class ToJava
                 TempVarGen varGen = new TempVarGen();
                 prog = (Program)prog.accept(new MakeBodiesBlocks());
                 prog = (Program)prog.accept(new DoComplexProp(varGen));
+                prog = (Program)prog.accept(new InsertIODecls());
                 prog = (Program)prog.accept(new InsertInitConstructors());
                 prog = (Program)prog.accept(new MoveStreamParameters());
                 prog = (Program)prog.accept(new NameAnonymousFunctions());

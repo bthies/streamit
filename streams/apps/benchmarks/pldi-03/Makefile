@@ -15,6 +15,9 @@ SCRIPTS = scripts/fir.script \
 	  scripts/oversamp.script \
 	  scripts/onebit.script \
 	  scripts/bf.script \
+	  scripts/bf2.script \
+
+SG-TARGET = $(HOME)/streams/docs/pldi-03-linear/streamgraphs
 
 all: clean benchmarks
 
@@ -78,3 +81,14 @@ test: ChannelVocoder.java
 
 test-compile: ChannelVocoder.java
 	$(COMPILER) --linearanalysis --debug ChannelVocoder.java > ChannelVocoder.c
+
+cpsg:
+	cp timing/FIRProgram-linear-linear-simple.dot $(SG-TARGET)
+	cp timing/SamplingRateConverter-linear-linear-simple.dot $(SG-TARGET)
+	cp timing/TargetDetect-linear-linear-simple.dot $(SG-TARGET)
+	cp timing/LinkedFMTest-linear-linear-simple.dot $(SG-TARGET)
+	cp timing/CoarseSerializedBeamFormer-2linear-linear-simple.dot $(SG-TARGET)
+	cp timing/FilterBank-linear-linear-simple.dot $(SG-TARGET)
+	cp timing/ChannelVocoder-linear-linear-simple.dot $(SG-TARGET)
+	cp timing/Oversampler-linear-linear-simple.dot $(SG-TARGET)
+	cp timing/OneBitDToA-linear-linear-simple.dot $(SG-TARGET)

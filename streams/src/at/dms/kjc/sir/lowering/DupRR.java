@@ -136,12 +136,16 @@ public class DupRR
         ra.findDecls(newMethods);
         for (i = 0; i < newFields.length; i++)
             newFields[i] = (JFieldDeclaration)newFields[i].accept(ra);
-        for (i = 0; i < newMethods.length; i++)
+        for (i = 0; i < newMethods.length-2; i++)
             newMethods[i] = (JMethodDeclaration)newMethods[i].accept(ra);
         newWork = (JMethodDeclaration)newWork.accept(ra);
 
         // Get the init function now, using renamed names of things.
         JMethodDeclaration newInit = getInitFunction(sj, children, ra);
+
+        // Add the work and init functions to the list of methods.
+        newMethods[newMethods.length-2] = newWork;
+        newMethods[newMethods.length-1] = newInit;
 
         // Build the new filter.
         SIRFilter newFilter = new SIRFilter(sj.getParent(),
@@ -221,8 +225,10 @@ public class DupRR
             // Get the old statement list, and clone it.
             List old = filter.getWork().getStatements();
             List oldClone = (List)ObjectDeepCloner.deepCopy(old);
-            // Add these statements to the new body.
-            newStatements.addAllStatements(0, oldClone);
+            // Add a block containing these statements.
+            JStatement[] stmts = new JStatement[oldClone.size()];
+            stmts = (JStatement[])oldClone.toArray(stmts);
+            newStatements.addStatement(new JBlock(null, stmts, null));
         }
         
         // Replace every pop with a peek(0).
@@ -316,7 +322,8 @@ public class DupRR
         }
         
         // Now make the method array...
-        JMethodDeclaration[] newMethods = new JMethodDeclaration[numMethods];
+        // (Add 2, to leave room for work and init)
+        JMethodDeclaration[] newMethods = new JMethodDeclaration[numMethods+2];
         
         // ...and copy all of the methods in.
         numMethods = 0;

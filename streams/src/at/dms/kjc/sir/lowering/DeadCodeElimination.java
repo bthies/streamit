@@ -45,6 +45,7 @@ public class DeadCodeElimination {
 		    public void visitLocalVariableExpression(JLocalVariableExpression self,
 							     String ident) {
 			super.visitLocalVariableExpression(self, ident);
+			System.err.println("var used: " + ident);
 			varsUsed.add(self.getVariable());
 		    }
 		});
@@ -60,69 +61,48 @@ public class DeadCodeElimination {
 	    for (int j=0; j<2; j++) {
 		final boolean REMOVING = (j==1);
 		methods[i].accept(new SLIRReplacingVisitor() {
+
 			/**
-			 * visits a for statement.  Only recurse into body
-			 * (don't want to remove var decls from init, incr).
+			 * prints an assignment expression
 			 */
-			public Object visitForStatement(JForStatement self,
-							JStatement init,
-							JExpression cond,
-							JStatement incr,
-							JStatement body) {
-			    if (!REMOVING) {
-				return super.visitForStatement(self, init, cond, incr, body);
-			    } else {
-				// only remove in body
-				JStatement newBody = (JStatement)body.accept(this);
-				if (newBody!=null && newBody!=body) {
-				    self.setBody(newBody);
-				}
-				return self;
-			    }
-			}
-		    
-			/**
-			 * remove assignments to dead vars.
-			 */
-			public Object visitExpressionStatement(JExpressionStatement self,
-							       JExpression expr) {
-			    if (expr instanceof JAssignmentExpression) {
-				JAssignmentExpression assign = (JAssignmentExpression)expr;
-				final boolean assigningToDeadVar[] = new boolean[1];
-				final boolean assigningToLiveVar[] = new boolean[1];
-				final LinkedList dead = new LinkedList();
-				assign.getLeft().accept(new SLIREmptyVisitor() {
-					public void visitLocalVariableExpression(JLocalVariableExpression self,
-										 String ident) {
-					    if (!(varsUsed.contains(self.getVariable()))) {
-						assigningToDeadVar[0] = true;
-						dead.add(self.getVariable());
-					    } else {
-						assigningToLiveVar[0] = true;
-					    }
+			public Object visitAssignmentExpression(JAssignmentExpression self,
+								JExpression left,
+								JExpression right) {
+			    
+			    final boolean assigningToDeadVar[] = new boolean[1];
+			    final boolean assigningToLiveVar[] = new boolean[1];
+			    final LinkedList dead = new LinkedList();
+			    left.accept(new SLIREmptyVisitor() {
+				    public void visitLocalVariableExpression(JLocalVariableExpression self,
+									     String ident) {
+					if (!(varsUsed.contains(self.getVariable()))) {
+					    assigningToDeadVar[0] = true;
+					    dead.add(self.getVariable());
+					} else {
+					    assigningToLiveVar[0] = true;
 					}
-				    });
-				// don't currently support assigning to
-				// both live and dead var (could happen in
-				// nested assignments, etc.?)
-				if (assigningToDeadVar[0] && assigningToLiveVar[0]) {
-				    // mark dead as live
-				    varsUsed.addAll(dead);
-				    /*
-				      at.dms.util.Utils.fail("There is a nested assignment where one variable is\n" + 
-				      "live and one variable is dead; this is not currently\n" +
-				      "supported by DeadCodeElimination.");
-				    */
-				} else if (assigningToDeadVar[0] && REMOVING) {
-				    // replace with RHS instead of
-				    // empty statement since there
-				    // might be side effects on right
-				    // side (method calls, increments,
-				    // pop expressions, etc.)
-				    return new JExpressionStatement(null, assign.getRight(), null);
-				}
+				    }
+				});
+			    // don't currently support assigning to
+			    // both live and dead var (could happen in
+			    // nested assignments, etc.?)
+			    if (assigningToDeadVar[0] && assigningToLiveVar[0]) {
+				// mark dead as live
+				varsUsed.addAll(dead);
+				/*
+				  at.dms.util.Utils.fail("There is a nested assignment where one variable is\n" + 
+				  "live and one variable is dead; this is not currently\n" +
+				  "supported by DeadCodeElimination.");
+				*/
+			    } else if (assigningToDeadVar[0] && REMOVING) {
+				// replace with RHS instead of
+				// empty statement since there
+				// might be side effects on right
+				// side (method calls, increments,
+				// pop expressions, etc.)
+				return right;
 			    }
-			    return super.visitExpressionStatement(self, expr);
+			    return super.visitAssignmentExpression(self, left, right);
 			}
 		    });
 	    }

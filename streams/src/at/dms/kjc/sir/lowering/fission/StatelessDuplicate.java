@@ -54,6 +54,15 @@ public class StatelessDuplicate {
 	if (!isStateless(filter)) {
 	    return false;
 	}
+	
+	//Hack to prevent fissing file writers
+	if(filter.getIdent().startsWith("FileWriter"))
+	    return false;
+
+	//Don't fiss identities
+	if(filter instanceof SIRIdentity)
+	    return false;
+
 	// don't split a filter with a feedbackloop as a parent, just
 	// as a precaution, since feedbackloops are hard to schedule
 	// when stuff is blowing up in the body
@@ -70,6 +79,11 @@ public class StatelessDuplicate {
 		return false;
 	    }
 	}
+
+	//This seems to break fission too
+	if(filter.getPopInt()==0)
+	    return false;
+
 	return true;
     }
 

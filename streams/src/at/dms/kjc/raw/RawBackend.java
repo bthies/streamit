@@ -171,21 +171,26 @@ public class RawBackend {
 	for(int i=0;i<RawFlattener.needsToBeSched.size();i++) {
 	    FlatNode node=(FlatNode)RawFlattener.needsToBeSched.get(i);
 	    int initCount=-1;
-	    if(initExecutionCounts.get(node.incoming[0])!=null)
-		initCount=((Integer)initExecutionCounts.get(node.incoming[0])).intValue();
-	    if((initCount==-1)&&(executionCounts[0].get(node.incoming[0].contents)!=null))
-		initCount=((int[])executionCounts[0].get(node.incoming[0].contents))[0];
+	    if(node.incoming.length>0) {
+		if(initExecutionCounts.get(node.incoming[0])!=null)
+		    initCount=((Integer)initExecutionCounts.get(node.incoming[0])).intValue();
+		if((initCount==-1)&&(executionCounts[0].get(node.incoming[0].contents)!=null))
+		    initCount=((int[])executionCounts[0].get(node.incoming[0].contents))[0];
+	    }
 	    int steadyCount=-1;
-	    if(steadyExecutionCounts.get(node.incoming[0])!=null)
-		steadyCount=((Integer)steadyExecutionCounts.get(node.incoming[0])).intValue();
-	    if((steadyCount==-1)&&(executionCounts[1].get(node.incoming[0].contents)!=null))
-		steadyCount=((int[])executionCounts[1].get(node.incoming[0].contents))[0];
+	    if(node.incoming.length>0) {
+		if(steadyExecutionCounts.get(node.incoming[0])!=null)
+		    steadyCount=((Integer)steadyExecutionCounts.get(node.incoming[0])).intValue();
+		if((steadyCount==-1)&&(executionCounts[1].get(node.incoming[0].contents)!=null))
+		    steadyCount=((int[])executionCounts[1].get(node.incoming[0].contents))[0];
+	    }
 	    if(node.contents instanceof SIRIdentity) {
 		if(initCount>=0)
 		    initExecutionCounts.put(node,new Integer(initCount));
 		if(steadyCount>=0)
 		    steadyExecutionCounts.put(node,new Integer(steadyCount));
 	    } else if(node.contents instanceof SIRSplitter) {
+		//System.out.println("Splitter:"+node);
 		int[] weights=node.weights;
 		FlatNode[] edges=node.edges;
 		int sum=0;
@@ -197,6 +202,10 @@ public class RawBackend {
 		    if(steadyCount>=0)
 			steadyExecutionCounts.put(edges[j],new Integer((steadyCount*weights[j])/sum));
 		}
+		if(initCount>=0)
+		    result[0].put(node,new Integer(initCount));
+		if(steadyCount>=0)
+		    result[1].put(node,new Integer(steadyCount));
 	    } else if(node.contents instanceof SIRJoiner) {
 		FlatNode oldNode=rawFlattener.getFlatNode(node.contents);
 		if(executionCounts[0].get(node.oldContents)!=null)
@@ -227,6 +236,7 @@ public class RawBackend {
 			sum += node.weights[j];
 		    int oldVal = ((Integer)result[i].get(node)).intValue();
 		    result[i].put(node, new Integer(sum*oldVal));
+		    //System.out.println("SchedSplit:"+node+" "+i+" "+sum+" "+oldVal);
 		}
 	    }
 	}

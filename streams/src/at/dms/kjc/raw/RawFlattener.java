@@ -27,13 +27,14 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
     //maps sir operators to their corresponding flatnode
     private HashMap SIRMap;
 
-    public static LinkedList needsToBeSched=new LinkedList();;
+    public static LinkedList needsToBeSched=new LinkedList();
 
     /**
      * Creates a new flattener based on <toplevel>
      */
     public RawFlattener(SIROperator toplevel) 
     {
+	needsToBeSched=new LinkedList(); //Reset List
 	this.SIRMap = new HashMap();
 	feedbackSplitters = new HashSet();
 	unique_id = 0;
@@ -65,23 +66,15 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 		    count++;
 	    }
 	    else if (entry.getKey() instanceof SIRJoiner) {
-		if(StreamItOptions.sync)
-		    //Sync removal should give an accurate count of joiners
-		    //(Adjacent Joiners Coalesced)
-		    count++;
-		else {
-		    // count a joiner if none of its outgoing edges is to
-		    // another joiner
-		    FlatNode[] edges = ((FlatNode)entry.getValue()).edges;
-		    int increment = 1;
-		    for (int i=0; i<edges.length; i++) {
-			if (edges[i]!=null &&
-			    edges[i].contents instanceof SIRJoiner) {
-			    increment = 0;
-			}
+		FlatNode[] edges = ((FlatNode)entry.getValue()).edges;
+		int increment = 1;
+		for (int i=0; i<edges.length; i++) {
+		    if (edges[i]!=null &&
+			edges[i].contents instanceof SIRJoiner) {
+			increment = 0;
 		    }
-		    count += increment;
 		}
+		count += increment;
 	    } 
 	}
 	return count;
@@ -255,13 +248,13 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 			    inSum+=inWeights[i];
 			    //System.out.print(inWeights[i]+" ");
 			}
-			//System.out.println("]");
+			//System.out.println("] "+inWeights.length);
 			//System.out.print("[ ");
 			for(int i=0;i<outWeights.length;i++) {
 			    outSum+=outWeights[i];
 			    //System.out.print(outWeights[i]+" ");
 			}
-			//System.out.println("]");
+			//System.out.println("] "+outWeights.length);
 			int inTimes=1;
 			int outTimes=1;
 			int inTotal=inSum;
@@ -290,6 +283,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 				int target=outWeights[i];
 				FlatNode inEdge=inEdges[off];
 				FlatNode ident=new FlatNode(new SIRIdentity(null,"Ident",Util.getOutputType(inEdge)));
+				needsToBeSched.add(ident);
 				ident.inputs=1;
 				ident.ways=1;
 				ident.weights=new int[]{1};
@@ -336,6 +330,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 				    inEdge=inEdges[off];
 				    entry=(LinkedList)needSplit.get(inEdge);
 				    ident=new FlatNode(new SIRIdentity(null,"Ident",Util.getOutputType(inEdge)));
+				    needsToBeSched.add(ident);
 				    ident.inputs=1;
 				    ident.ways=1;
 				    ident.weights=new int[]{1};
@@ -394,11 +389,15 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 				newJoin.ways=1;
 				int[] joinWeights=new int[curWeights.size()];
 				int newSum=0;
+				//System.out.println(newJoin);
+				//System.out.print("[ ");
 				for(int j=0;j<joinWeights.length;j++) {
 				    int temp=((Integer)curWeights.get(j)).intValue();
+				    //System.out.print(((Integer)curWeights.get(j)).intValue()+" ");
 				    joinWeights[j]=temp;
 				    newSum+=temp;
 				}
+				//System.out.println("] "+curWeights.size());
 				newJoin.incomingWeights=joinWeights;
 				newJoin.weights=new int[]{1};
 				newJoin.incoming=(FlatNode[])curEdges.toArray(new FlatNode[0]);
@@ -431,6 +430,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 				    dummyEdges[offset]=(FlatNode)list.get(j+1);
 				    ((FlatNode)list.get(j+1)).incoming[0]=dummySplit;
 				}
+				needsToBeSched.add(dummySplit);
 				dummySplit.ways=size;
 				dummySplit.edges=dummyEdges;
 				dummySplit.weights=dummyWeights;
@@ -564,6 +564,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 			    edges=new LinkedList();
 			    FlatNode ident=new FlatNode(new SIRIdentity(null,"Ident",Util.getOutputType(node)));
 			    FlatNode split=new FlatNode(SIRSplitter.createWeightedRR(null,new JExpression[0]));
+			    //needsToBeSched.add(split);
 			    node.edges[0]=split;
 			    split.inputs=1;
 			    split.incoming=new FlatNode[]{node};
@@ -580,6 +581,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 			} else {
 			    FlatNode ident=new FlatNode(new SIRIdentity(null,"Ident",Util.getOutputType(node)));
 			    FlatNode split=(FlatNode)edges.get(0);
+			    //needsToBeSched.add(split);
 			    ident.inputs=1;
 			    ident.ways=1;
 			    ident.weights=new int[]{1};
@@ -646,6 +648,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	    createGraph(loop.getLoop());
 	    FlatNode.addEdges(currentNode, joinerNode);
 	    FlatNode ident=new FlatNode(new SIRIdentity(null,"Ident",Util.getOutputType(splitterNode.edges[0])));
+	    needsToBeSched.add(ident);
 	    FlatNode.addEdges(splitterNode, ident);
 	    currentNode = ident;
 	    

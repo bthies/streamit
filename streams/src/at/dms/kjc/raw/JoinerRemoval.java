@@ -53,6 +53,7 @@ public class JoinerRemoval implements FlatVisitor
 		    if (RawBackend.initExecutionCounts.get(node.incoming[i]) != null)
 			return;
 		    SIRFilter filter = (SIRFilter)node.incoming[i].contents;
+		    System.out.println(node.incoming[i]+"->"+node);
 		    int exe = ((Integer)RawBackend.steadyExecutionCounts.get(node.incoming[i])).intValue();
 		    int prod = exe * filter.getPushInt();
 		    if (exe != BlockExecutionCounts.getBlockCount(node.incoming[i]))

@@ -16,7 +16,7 @@ public class Partitioner {
     /**
      * The target number of tiles this partitioner is going for.
      */
-    private final int target;
+    private int target;
     
     //How many times to attempt fissing till use up all space
     private final int MAX_FISS_ITER=5;
@@ -63,9 +63,39 @@ public class Partitioner {
 		fuseAll();
 	} else {
 	    fuseAll();
+	    //fissAll();
 	}
+	
+	//Aggressive Fissing
+	//aggressiveFiss();
+
 	// dump the final graph
 	StreamItDot.printGraph(str, "after.dot");
+    }
+    
+    private void aggressiveFiss() {
+	// get work sorted by work
+	WorkList sorted=WorkEstimate.getWorkEstimate(str).getSortedFilterWork();
+	//System.out.println("Sorted:"+sorted);
+	//int lowestFissable=-1;
+	//Find smallest fissable filter
+	for(int i=sorted.size()-1;i>=0;i--) {
+	    SIRFilter filter=sorted.getFilter(i);
+	    if(StatelessDuplicate.isFissable(filter)) {
+		RawFlattener flattener = new RawFlattener(str);
+		int dec=tilesForFission(filter, flattener, 2);
+		target-=dec;
+		if(fuseAll()<=target) {
+		    if(StatelessDuplicate.isFissable(filter)) {
+			StatelessDuplicate.doit(filter, 2);
+			ConstantProp.propagateAndUnroll(filter.getParent());
+		    }
+		}
+		target+=dec;
+		break;
+	    }
+	}
+	//fuseAll();
     }
 
     /**
@@ -104,7 +134,7 @@ public class Partitioner {
 		}*/
 	}
     }
-
+    
     /**
      * Returns whether or not it's legal to fiss <candidates>
      */
@@ -125,7 +155,7 @@ public class Partitioner {
 	// return whether or not there's room for candidates
 	return (flattener.getNumTiles()+newTiles<=target);
     }
-
+    
     /**
      * Returns the number of NEW tiles that will be required under the
      * current configuration of <str> if <filter> is split into <ways>
@@ -163,12 +193,12 @@ public class Partitioner {
      * Do all the fusion we have to do until we're within our target
      * number of filters.
      */
-    private void fuseAll() {
+    private int fuseAll() {
 	// how many tiles we have occupied
 	int count = 0;
 	// whether or not we're done trying to fuse
 	boolean done = false;
-	boolean aggressive = false;
+	int aggressive=0;
 	do {
 	    // get how many tiles we have
 	    RawFlattener flattener = new RawFlattener(str);
@@ -176,53 +206,87 @@ public class Partitioner {
 	    System.out.println("Partitioner detects " + count + " tiles.");
 	    StreamItDot.printGraph(str, "during-fusion.dot");
 	    if (count>target) {
+		//boolean tried=false;
 		// get the containers in the order of work for filters
 		// immediately contained
 		StreamItDot.printGraph(str, "partition.dot");
 		WorkList list = WorkEstimate.getWorkEstimate(str).getSortedContainerWork();
+		//System.out.println(list);
 		// work up through this list until we fuse something
 		for (int i=0; i<list.size(); i++) {
 		    SIRContainer cont = list.getContainer(i);
 		    if (cont instanceof SIRSplitJoin) {
 			System.out.println("trying to fuse " + cont.size() + "-way split " + cont);
 			List children=cont.getChildren();
-			boolean attempt=false;
-			for(int j=0;j<children.size();j++) {
-			    SIROperator child=(SIROperator)children.get(j);
-			    if((!(child instanceof SIRSplitter))&&(!(child instanceof SIRJoiner))&&!(child instanceof SIRIdentity)) {
-				//System.out.println("FOUND:"+children.get(j));
-				attempt=true;
+			if(aggressive==0) {
+			    boolean attempt=true;
+			    for(int j=0;j<children.size();j++) {
+				SIROperator child=(SIROperator)children.get(j);
+				if((!(child instanceof SIRSplitter))&&(!(child instanceof SIRJoiner))&&(child instanceof SIRIdentity)) {
+				    //System.out.println("FOUND:"+children.get(j));
+				    attempt=false;
+				}
 			    }
-			} if(aggressive||attempt) {
+			    if(attempt) {
+				SIRStream newstr = FuseSplit.fuse((SIRSplitJoin)cont);
+				// if we fused something, quit loop
+				if (newstr!=cont) { 
+				    aggressive=0;
+				    //tried=true;
+				    break;
+				}
+			    } /*else
+				System.out.println("SplitJoin has Identity Child! Ignoring.");*/
+			} else if(aggressive==1) {
+			    boolean attempt=false;
+			    for(int j=0;j<children.size();j++) {
+				SIROperator child=(SIROperator)children.get(j);
+				if((!(child instanceof SIRSplitter))&&(!(child instanceof SIRJoiner))&&!(child instanceof SIRIdentity)) {
+				    //System.out.println("FOUND:"+children.get(j));
+				    attempt=true;
+				}
+			    }
+			    if(attempt) {
+				SIRStream newstr = FuseSplit.fuse((SIRSplitJoin)cont);
+				// if we fused something, quit loop
+				if (newstr!=cont) { 
+				    aggressive=0;
+				//tried=true;
+				    break;
+				}
+			    } /*else
+				System.out.println("SplitJoin has all Identity Children! Ignoring.");*/
+			} else {
 			    SIRStream newstr = FuseSplit.fuse((SIRSplitJoin)cont);
 			    // if we fused something, quit loop
 			    if (newstr!=cont) { 
-				aggressive=false;
+				aggressive=0;
+				//tried=true;
 				break;
 			    }
-			} else {
-			    System.out.println("Children All Identities! Ignoring.");
 			}
 		    } else if (cont instanceof SIRPipeline) {
 			System.out.println("trying to fuse " + (count-target) + " from " 
 					   + cont.size() + "-long pipe " + cont);
 			int num = FusePipe.fuse((SIRPipeline)cont, count-target);
-			if (num!=0) { break; }
+			if (num!=0) {
+			    aggressive=0;
+			    break;
+			}
 		    }
 		    // if we made it to the end of the last loop, then
 		    // we're done trying to fuse (we didn't reach target.)
 		    if (i==list.size()-1) { 
-			if(aggressive)
+			if(aggressive>=2)
 			    done=true;
 			else
-			    aggressive = true;
+			    //if(!tried)
+			    aggressive++;
 		    }
 		}
 	    }
 	} while (count>target && !done);
+	return count;
     }
-
 }
-
-
 

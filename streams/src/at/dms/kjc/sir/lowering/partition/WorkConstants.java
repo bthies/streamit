@@ -31,5 +31,5 @@ interface WorkConstants {
 
     // NEED TO VERIFY THE FOLLOWING
     int MEMORY_OP = 3;
-    int METHOD_CALL = 15;
+    int METHOD_CALL = 60;
 }

@@ -249,7 +249,6 @@ public class FusePipe {
 	    //Adding Decls
 	    //for(int i=statements.size()-1;i>=0;i--)
 	    //initWork.addStatementFirst(statements.getStatement(i));
-	    System.out.println("OldStuff:"+twostage.getInitPush()+" "+twostage.getInitPop()+" "+twostage.getInitPeek());
 	    if(makeWork(filterInfo, true)!=null)
 		Utils.fail("WARNING: InitWork Already Needed when fusing SIRTwoStageFilter");
 
@@ -986,8 +985,6 @@ public class FusePipe {
 		(first.filter.getPeekInt() - first.filter.getPopInt()) + initPop;
 	    int initPush = last.init.num * last.filter.getPushInt();
 	    
-	    System.out.println("New Stuff:"+initPush+" "+initPop+" "+initPeek);
-
 	    // make a new filter to represent the fused combo
 	    result = new SIRTwoStageFilter(first.filter.getParent(),
 					   getFusedName(filterInfo),

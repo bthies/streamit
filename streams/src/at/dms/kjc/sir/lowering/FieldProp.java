@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.17 2002-07-01 21:27:42 jasperln Exp $
+ * $Id: FieldProp.java,v 1.18 2002-07-31 04:38:39 jasperln Exp $
  */
 public class FieldProp implements Constants
 {
@@ -70,6 +70,8 @@ public class FieldProp implements Constants
             }
         }
         
+	FieldProp lastProp=new FieldProp();
+
         // Having recursed, do the flattening, if it's appropriate.
         if (str instanceof SIRFilter)
         {
@@ -85,8 +87,20 @@ public class FieldProp implements Constants
 		} while(unroller.hasUnrolled());
 	    }
             // Then try to propagatate again.
-            new FieldProp().propagate((SIRFilter)str);
+            lastProp.propagate((SIRFilter)str);
         }
+
+	//Remove uninvalidated fields
+	/*LinkedList okayFields=new LinkedList();
+	  JFieldDeclaration[] fields=str.getFields();
+	  for(int i=0;i<fields.length;i++) {
+	  JFieldDeclaration thisField=fields[i];
+	  if(lastProp.isFieldInvalidated(thisField.getVariable().getIdent()))
+	  okayFields.add(thisField);
+	  else
+	  System.out.println("Removing:"+thisField);		
+	  }
+	  str.setFields((JFieldDeclaration[])okayFields.toArray(new JFieldDeclaration[0]));*/
         
         // All done, return the object.
         return str;

@@ -364,7 +364,10 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
     private void countArithOp(JExpression expr) {
 	if (expr.getType()==CStdType.Float ||
 	    expr.getType()==CStdType.Double) {
-	    work += FLOAT_ARITH_OP;
+	    int add=FLOAT_ARITH_OP;
+	    if(expr instanceof JDivideExpression)
+		add*=16;
+	    work += add;
 	} else {
 	    work += INT_ARITH_OP;
 	}

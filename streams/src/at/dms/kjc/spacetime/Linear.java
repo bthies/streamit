@@ -35,6 +35,7 @@ public class Linear extends BufferedCommunication implements Constants {
     private long uin;
     private int pos;
     private int bufferSize;
+    private int index;
 
     public Linear(FilterInfo filterInfo) {
 	super(filterInfo);
@@ -50,7 +51,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	popCount=content.getPopCount();
 	peek=content.getPeek();
 	pos=content.getPos();
-	int index=content.getTotal()-pos-1;
+	index=content.getTotal()-pos-1;
 	if(index==0) //If first tile
 	    bufferSize=filterInfo.remaining;
 	else { //Find first tile
@@ -176,7 +177,9 @@ public class Linear extends BufferedCommunication implements Constants {
 	final int mult=getMult(array.length);
 	final int target=filterInfo.steadyMult-2-extra; //2 iterations start before innerloop
 	final int newSteadyMult=target/mult;
+	//final int newSteadyMult=1;
 	final int remainingExec=target-newSteadyMult*mult;
+	//final int remainingExec=1;
 	assert newSteadyMult>0:"SteadyMult on linear filter not high enough!";
 	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+newSteadyMult); //Send steadyMult to switch
 	//TODO: Save registers here
@@ -283,14 +286,76 @@ public class Linear extends BufferedCommunication implements Constants {
 		inline.add("bnea "+tempReg+",\\t"+zeroReg+",\\t"+getLabel());
 	}
 	//Remainder InnerLoop
-	inline=new InlineAssembly();
+	inline=new InlineAssembly("#BLAH");
 	body[body.length-2]=inline;
 	//Postloop
 	inline=new InlineAssembly();
 	body[body.length-1]=inline;
+	turns=index*num+extra;
+	System.out.println("TILE TURNS: "+turns);
+	/*if(begin) {
+	  inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
+	  inline.add("la "+tempReg+", %0");
+	  }*/
 	if(begin) {
+	    //System.out.println("EXTRA: "+bufferSize);
 	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
 	    inline.add("la "+tempReg+", %0");
+	    int index=0;
+	    int emptySpots=popCount*(turns+topPopNum)-bufferSize;
+	    //Order reversed
+	    for(int turn=0;turn<turns;turn++) //Last iteration may not be from buffer
+		for(int j=0;j<popCount;j++)
+		    if(emptySpots>0) {
+			for(int k=topPopNum;k>=0;k--) {
+			    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+			}
+			emptySpots--;
+		    } else {
+			//Read value from switch
+			//inline.add("lw!   "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+			inline.add("move  "+tempRegs[0]+",\\t$csti");
+			inline.add("sw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+			index+=4;
+			for(int k=topPopNum;k>=0;k--) {
+			    inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+			}
+		    }
+	    for(int i=0;i<=topPopNum;i++)
+		for(int j=0;j<popCount;j++)
+		    if(emptySpots>0) {
+			for(int k=topPopNum;k>=i;k--) {
+			    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+			}
+			emptySpots--;
+		    } else {
+			//Read value from switch
+			//inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+			inline.add("move  "+tempRegs[0]+",\\t$csti");
+			inline.add("sw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+			index+=4;
+			for(int k=topPopNum;k>=i;k--) {
+			    inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+			}
+		    }
+	} else {
+	    //Order reversed
+	    for(int turn=0;turn<turns;turn++)
+		for(int j=0;j<popCount;j++)
+		    for(int k=topPopNum;k>=0;k--) {
+			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		    }
+	    for(int i=0;i<=topPopNum;i++)
+		for(int j=0;j<popCount;j++)
+		    for(int k=topPopNum;k>=i;k--) {
+			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		    }
 	}
 	//TODO: Restore regs 
 	inline.add(".set at");

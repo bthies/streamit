@@ -141,4 +141,13 @@ public class SIRPeekExpression extends JExpression {
     public void genCode(CodeSequence code, boolean discardValue) {
 	at.dms.util.Utils.fail("Visitors to custom nodes not supported yet.");
     }
+
+    /**
+     * Generates a nice readable version of the PeekExpression.
+     **/
+    public String toString() {
+	return ("SIRPeekExpression[" +
+		this.arg + "]");
+    }
+		
 }

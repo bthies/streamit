@@ -24,6 +24,10 @@ public abstract class FrequencyReplacer extends LinearReplacer implements Consta
     public static final int SMARTER =  1;
     public static final int FFTW    =  2;
     public static final int LEET    =  3;
+    // maintain this field to point to the best out of the above
+    // options.  This will be used by default in some cases if no
+    // frequency level is specified.
+    public static final int BEST_AVAILABLE = 3;
     
     /**
      * start the process of replacement on str using the Linearity information in lfa.

@@ -73,7 +73,7 @@ public class CloneGenerator {
 	    // otherwise, should define contents of class
 	    sb.append("public Object deepClone() {\n");
 	    sb.append("  " + className + " other = new " + className + "();\n");
-	    sb.append("  AutoCloner.register(this, other);\n");
+	    sb.append("  at.dms.kjc.AutoCloner.register(this, other);\n");
 	    sb.append("  deepCloneInto(other);\n");
 	    sb.append("  return other;\n");
 	    sb.append("}\n");
@@ -121,7 +121,7 @@ public class CloneGenerator {
 		sb.append("  other." + name + " = this." + name + ";\n");
 	    } else {
 		// otherwise call toplevel cloning method
-		sb.append("  other." + name + " = (" + type.getName() + ")AutoCloner.cloneToplevel(this." + name + ");\n");
+		sb.append("  other." + name + " = (" + type.getName() + ")at.dms.kjc.AutoCloner.cloneToplevel(this." + name + ");\n");
 	    }
 	}
 	sb.append("}\n");

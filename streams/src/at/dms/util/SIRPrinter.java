@@ -155,8 +155,7 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 			  SIRStream parent,
 			  JFieldDeclaration[] fields,
 			  JMethodDeclaration[] methods,
-			  JMethodDeclaration init,
-			  List elements){
+			  JMethodDeclaration init){
 	blockStart("Pipeline");
 	attrStart("Parent");
 	if (parent == null)
@@ -221,8 +220,7 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 			   SIRStream parent,
 			   JFieldDeclaration[] fields,
 			   JMethodDeclaration[] methods,
-			   JMethodDeclaration init,
-			   List elements){}
+			   JMethodDeclaration init){}
 
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,

@@ -33,7 +33,7 @@ public class vRamp extends Filter {
 
     public void init (int numStart, int numStride, int numElems)
     {
-        output = new Channel (Float.TYPE, numberOfElems);
+        output = new Channel (Float.TYPE, numElems);
 
         numberOfElems = numElems;
         start = numStart;

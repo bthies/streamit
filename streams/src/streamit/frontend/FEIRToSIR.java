@@ -250,9 +250,7 @@ public class FEIRToSIR implements FEVisitor {
       case TypePrimitive.TYPE_DOUBLE:
 	return CStdType.Double;
       case TypePrimitive.TYPE_COMPLEX:
-	/* BUG: not sure what to do about this one... */
-	debug("  Unhandled complex\n");
-	return null;
+        return new CClassNameType("Complex");
       case TypePrimitive.TYPE_VOID:
 	return CStdType.Void;
       }
@@ -264,9 +262,9 @@ public class FEIRToSIR implements FEVisitor {
       return new CArrayType(feirTypeToSirType(ta.getBase()),
 			    1);
     } else if (type instanceof TypeStruct) {
-      return (CType) classTable.get(((TypeStruct) type).getName());
+        return new CClassNameType(((TypeStruct)type).getName());
     } else if (type instanceof TypeStructRef) {
-      return (CType) classTable.get(((TypeStructRef) type).getName());
+        return new CClassNameType(((TypeStructRef)type).getName());
     }
     /* This shouldn't happen */
     debug("  UNIMPLEMENTED - shouldn't happen\n");
@@ -847,7 +845,7 @@ public class FEIRToSIR implements FEVisitor {
     debug("In visitStmtIfThen\n");
     JStatement cons = null;
     if (stmt.getCons() != null) {
-      cons = (JStatement) stmt.getCond().accept(this);
+      cons = (JStatement) stmt.getCons().accept(this);
     }
     JStatement alt = null;
     if (stmt.getAlt() != null) {

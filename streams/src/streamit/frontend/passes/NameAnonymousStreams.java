@@ -34,7 +34,7 @@ import java.util.Set;
  * stream.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NameAnonymousStreams.java,v 1.2 2003-12-01 21:20:45 dmaze Exp $
+ * @version $Id: NameAnonymousStreams.java,v 1.3 2003-12-04 21:05:47 dmaze Exp $
  */
 public class NameAnonymousStreams extends SymbolTableVisitor
 {
@@ -90,7 +90,7 @@ public class NameAnonymousStreams extends SymbolTableVisitor
             });
 
         // Create a top-level StreamSpec for this.
-        String specName = "Anon_" + varGen.nextVar();
+        String specName = "AnonFilter" + varGen.nextVarNum();
         List formals = new java.util.ArrayList();
         List params = new java.util.ArrayList();
         for (Iterator iter = freeVars.iterator(); iter.hasNext(); )

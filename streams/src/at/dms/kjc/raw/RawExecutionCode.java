@@ -31,7 +31,9 @@ public class RawExecutionCode extends at.dms.util.Utils
     public static String ARRAY_INDEX = "__ARRAY_INDEX__";
     public static String ARRAY_COPY = "__ARRAY_COPY__";
 
-    public static String rawMain = "__RAWMAIN__";
+    public static String initSchedFunction = "__RAWINITSCHED__";
+    public static String steadySchedFunction = "__RAWSTEADYSCHED__";
+    
     public static String receiveMethod = "static_receive_to_mem";
 
     //These next fields are set by calculateItems()
@@ -55,7 +57,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    createFields(node);
 	    convertCommExps((SIRFilter)node.contents);
 	    calculateItems((SIRFilter)node.contents);
-	    createRawMainFunc(node);
+	    rawInitSchedFunction(node);
+	    rawSteadySchedFunction(node);
 	}
     } 
 
@@ -126,13 +129,18 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    upStreamItems += ((SIRTwoStageFilter)previous.contents).getInitPush();
 	}
 
-
 	//see my thesis for an explanation of this calculation
-	bottomPeek = Math.max(0, 
-			      peek - (prePeek - prePop));
+	if (initFire  - 1 > 0) {
+	    bottomPeek = Math.max(0, 
+				  peek - (prePeek - prePop));
+	}
+	else
+	    bottomPeek = 0;
 	
 	remaining = upStreamItems -
-	    (prePeek + bottomPeek + ((initFire - 2) * pop));
+	    (prePeek + 
+	     bottomPeek + 
+	     Math.max((initFire - 2), 0) * pop);
 	
     }
     
@@ -290,11 +298,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	}
     }
 
-    private void createRawMainFunc(FlatNode node) 
+    private void rawInitSchedFunction(FlatNode node) 
     {
-	//initializeFields();
-	//createInitializationCode();
-	//createSteadyStateCode();
 	SIRFilter filter = (SIRFilter)node.contents;
 	
 	JBlock statements = new JBlock(null, new JStatement[0], null);
@@ -336,30 +341,104 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    statements.addStatement(body);
 	}
 	
+	if (initFire - 1 > 0) {
 	//add the code to collect enough data necessary to fire the 
 	//work function for the first time
-	
-	//add the calls for the work function in the initialization stage
+	    
+	    if (bottomPeek > 0) {
+		statements.addStatement
+		    (makeForLoop(receiveCode(filter),
+				 exeIndex,
+				 new JIntLiteral(bottomPeek)));
+	    }
+	    
+	    //add the calls for the work function in the initialization stage
+	    statements.addStatement(generateInitWorkLoop(filter));
+	}
 
 	//add the code to collect all data produced by the upstream filter 
 	//but not consumed by this filter in the initialization stage
-
-	//add the call to the work function
-	statements.addStatement(generateSteadyStateLoop(filter));
-	
+	if (remaining > 0) {
+	   statements.addStatement
+		(makeForLoop(receiveCode(filter),
+			     exeIndex,
+			     new JIntLiteral(remaining))); 
+	}
 	//create the method and add it to the filter
-	JMethodDeclaration rawMainMethod = 
+	JMethodDeclaration rawInitSchedFunction = 
 	    new JMethodDeclaration(null, 
 				   at.dms.kjc.Constants.ACC_PUBLIC,
 				   CStdType.Void,
-				   rawMain,
+				   initSchedFunction,
 				   JFormalParameter.EMPTY,
 				   CClassType.EMPTY,
 				   statements,
 				   null,
 				   null);
-	filter.addMethod(rawMainMethod);
+	filter.addMethod(rawInitSchedFunction);
     }
+    
+    private void rawSteadySchedFunction(FlatNode node) 
+    {
+	SIRFilter filter = (SIRFilter)node.contents;
+	
+	JBlock statements = new JBlock(null, new JStatement[0], null);
+	//add the call to the work function
+	statements.addStatement(generateSteadyStateLoop(filter));
+	
+	//create the method and add it to the filter
+	JMethodDeclaration rawSteadySchedFunction = 
+	    new JMethodDeclaration(null, 
+				   at.dms.kjc.Constants.ACC_PUBLIC,
+				   CStdType.Void,
+				   steadySchedFunction,
+				   JFormalParameter.EMPTY,
+				   CClassType.EMPTY,
+				   statements,
+				   null,
+				   null);
+	filter.addMethod(rawSteadySchedFunction);
+    }
+
+    //generate the loop for the work function firings in the 
+    //initialization schedule
+    JStatement generateInitWorkLoop(SIRFilter filter) 
+    {
+	JStatement innerReceiveLoop = 
+	    makeForLoop(receiveCode(filter),
+			exeIndex1,
+			new JIntLiteral(filter.getPopInt()));
+	JExpression isFirst = 
+	    new JEqualityExpression(null,
+				    false,
+				    new JFieldAccessExpression
+				    (null, 
+				     new JThisExpression(null),
+				     exeIndex),
+				    new JIntLiteral(0));
+	JStatement ifStatement = 
+	    new JIfStatement(null,
+			     isFirst,
+			     innerReceiveLoop,
+			     null, 
+			     null);
+	
+	JBlock block = new JBlock(null, new JStatement[0], null);
+
+	//add the if statement
+	block.addStatement(ifStatement);
+	
+	//clone the work function and inline it
+	JBlock workBlock = 
+	    (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
+	block.addStatement(workBlock);
+	
+	//return the for loop that executes the block init - 1
+	//times
+	return makeForLoop(block, exeIndex, 
+			   new JIntLiteral(initFire - 1));
+    }
+    
 
     //generate the code for the steady state loop
     JStatement generateSteadyStateLoop(SIRFilter filter) 

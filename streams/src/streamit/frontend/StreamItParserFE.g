@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.9 2002-09-30 21:25:31 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.10 2002-09-30 21:55:47 dmaze Exp $
  */
 
 header {
@@ -246,7 +246,7 @@ block returns [Statement s] { s = null; List l = new ArrayList(); }
 minic_statement returns [Statement s]
 { s = null; Statement s1, s2; Expression x; }
 	:	s=block
-	|	(variable_decl) => s=variable_decl SEMI!
+	|	(data_type ID) => s=variable_decl SEMI!
 	|	(expr_statement) => s=expr_statement SEMI!
 	|	tb:TK_break SEMI { s = new StmtBreak(getContext(tb)); }
 	|	tc:TK_continue SEMI { s = new StmtContinue(getContext(tc)); }

@@ -1,0 +1,185 @@
+/**
+ * Target detection application. This app has several matched filters that
+ * run in parallel (in a plit join). The results 
+ * are then combined back into a single stream and a threshold detector 
+ * prints off the filters which detect targets.
+ **/
+
+void->void pipeline TargetDetect {
+    /* N is the length of the filters */
+    int N = 300;
+    //add TargetSource(N);
+    add FileReader<float>("input");
+    add TargetDetectSplitJoin(N,8);
+    /* there are four matched filters */
+    //add ThresholdDetectSplitJoin(4, 8);
+    //add FloatPrinter();
+    add FileWriter<float>("output");
+}
+
+float->float splitjoin TargetDetectSplitJoin(int N, float thresh) {
+  split duplicate;
+  add pipeline {
+    add MatchedFilterOne(N);
+    add ThresholdDetector(1,thresh);
+  };
+  add pipeline {
+    add MatchedFilterTwo(N);
+    add ThresholdDetector(2, thresh);
+  };
+  add pipeline {
+    add MatchedFilterThree(N);
+    add ThresholdDetector(3,thresh);
+  };
+  add pipeline {
+    add MatchedFilterFour(N);
+    add ThresholdDetector(4,thresh);
+  };
+  join roundrobin;
+}
+
+/* one target detector for the number of interleaved elements on the tape. */
+//float->float splitjoin ThresholdDetectSplitJoin(int num, float thresh) {
+//  split roundrobin;
+//  for (int i=0; i<num; i++) {
+//    add ThresholdDetector(i+1,thresh);
+//  }
+//  join roundrobin;
+//}
+
+/* a threshold detector. Prints its number when the input
+ * goes above the threshold.
+ */
+float->float filter ThresholdDetector(int number, float threshold) {
+  work pop 1 push 1 {
+    /* pop the input value off of the input stream. */
+    float t = pop();
+    /* do the threshold test -- if it is greater, then push out number, otherwise push 0 */
+    if (t > threshold) {
+      push(number);
+    } else {
+      push(0);
+    }
+  }
+}
+			     
+
+
+
+/* Target source -- this produces a 
+ * triangular target that is N samples long
+ * with a maximum amplitude of 1. The first sample
+ * of the target appears after N initial 0 samples
+ * and it is followed by 8*N 0 samples for a total
+ * of 10N samples.
+ */
+void->float filter TargetSource(int N) {
+  int currentPosition = 0;
+  work push 1 {
+    if (currentPosition < N) {
+      push(0);
+    } else if (currentPosition < (2*N)) {
+      float trianglePosition = currentPosition - N;
+      // figure out which side of the triangle we are on.
+      if (trianglePosition < (N/2)) {
+	push((trianglePosition * 2) / N);
+      } else {
+	push(2-((trianglePosition * 2)/ N));
+      }
+    } else {
+      push(0);
+    }
+    
+    // update the current position.
+    currentPosition = (currentPosition + 1)%(10*N);
+  }
+}
+
+
+
+/**
+ * Matched filter for a triangluar pulse, centered at 
+ * N/2, with max amplitude 1. Eg this is a very nice
+ * FIR filter.
+ **/
+float->float filter MatchedFilterOne(int N) {
+  float[N] h;
+  init {
+    for (int i=0; i<N; i++) {
+      float trianglePosition = i;
+      /* make the triangle */
+      h[i] = ((i < (N/2)) ? ((trianglePosition * 2) / N) : (2 - ((trianglePosition * 2) / N))) - 0.5;
+    }
+  }
+  work peek N pop 1 push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) {
+      sum += h[i]*peek(i);
+    }
+    push(sum);
+    pop();
+  }
+}
+	
+
+/* Matched filter for the curved bump of a sine wave from 0 to pi */
+float->float filter MatchedFilterTwo(int N) {
+  float[N] h;
+  init {
+    for (int i=0; i<N; i++) {
+      float pos = i;
+      /* make the sine (mean is zero) */
+      h[i] = (1/(2*pi)) * sin(pi * pos / N) - 1;
+    }
+  }
+  work peek N pop 1 push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) {
+      sum += h[i]*peek(i);
+    }
+    push(sum);
+    pop();
+  }
+}
+
+
+/* Matched filter for an entire period of a sine wave */
+float->float filter MatchedFilterThree(int N) {
+  float[N] h;
+  init {
+    for (int i=0; i<N; i++) {
+      float pos = i;
+      /* make the sine (mean is already 0) */
+      h[i] = (1/(2*pi)) * sin(2 * pi * pos / N);
+    }
+  }
+  work peek N pop 1 push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) {
+      sum += h[i]*peek(i);
+    }
+    push(sum);
+    pop();
+  }
+}
+
+
+/* Matched filter for a ramp */
+float->float filter MatchedFilterFour(int N) {
+  float[N] h;
+  init {
+    for (int i=0; i<N; i++) {
+      float pos = i;
+      /* make the ramp -- have to worry about time reversal */
+      h[(N-i)-1] = (0.5) * ((pos / N) - 0.5); 
+    }
+  }
+  work peek N pop 1 push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) {
+      sum += h[i]*peek(i);
+    }
+    push(sum);
+    pop();
+  }
+}

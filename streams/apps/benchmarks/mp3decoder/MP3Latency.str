@@ -66,7 +66,8 @@ float->float filter Antialias {
     }
 }
 
-
+// we need this now since the cluster backend doesn't deal with identities
+float->float filter FloatIdentity { work pop 1 push 1 {push(pop());}}
 
 float->float pipeline FilterBank() {
 
@@ -94,13 +95,13 @@ float->float pipeline FilterBank() {
     split roundrobin();
     for (int x = 0; x < 18; x++) {
       if (x % 2 == 0)
-        add Identity<float>;
+        add FloatIdentity();
       else {
 	add float->float pipeline {
  
           add float->float splitjoin {
             split roundrobin();
-            add Identity<float>;
+            add FloatIdentity();
             add float->float filter {
 
 	      work push 1 pop 1 {
@@ -1379,15 +1380,20 @@ float->float splitjoin MultiChannelPCMSynthesisInterval(int n) {
 
 void->void pipeline MP3Latency() {
     portal<LatencyTop> port;  
-    add FileReader<float>("/home/streamit/compiler-static/mp3//Blur.float.raw");
+    //add FileReader<float>("/home/streamit/compiler-static/mp3//Blur.float.raw");
     add LatencyTop() to port;
     add MultiChannelPCMSynthesis(2);
     add LatencyBot(port);
     add output_int();
 }
 
-float->float filter LatencyTop() {
-    work push 1 pop 1 { push(pop()); }
+void->float filter LatencyTop() {
+    float x = 0;
+    work push 1 { 
+	push(x); 
+	x = x+1; 
+	if (x>100) { x=0; }
+    }
     handler handleMessage() {}
 }
 

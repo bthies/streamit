@@ -1,7 +1,7 @@
 /*
  * ComplexProp.java: cause complex values to bubble upwards
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ComplexProp.java,v 1.4 2002-07-17 17:07:57 dmaze Exp $
+ * $Id: ComplexProp.java,v 1.5 2002-07-19 14:11:25 dmaze Exp $
  */
 
 // Does this actually belong here?  If we evolve more front-end passes,
@@ -272,6 +272,15 @@ public class ComplexProp extends FEReplacer
             return fcArg(exp, (ExprComplex)params.get(0));
         if (isEligibleFunCall(exp, params, "exp"))
             return fcExp(exp, (ExprComplex)params.get(0));
+
+        // sqrt() is special; sqrt() of a real can return a complex
+        // answer if its argument is negative, but we don't always
+        // want sqrt() to return complex.  So have sqrt(complex)
+        // return complex, and csqrt(anything) also return complex.
+        if (isEligibleFunCall(exp, params, "sqrt"))
+            return fcSqrt(exp, (ExprComplex)params.get(0));
+        if (exp.getName().equals("csqrt"))
+            return fcCSqrt(exp, (Expression)params.get(0));
         
         return new ExprFunCall(exp.getName(), params);
     }
@@ -325,5 +334,53 @@ public class ComplexProp extends FEReplacer
         Expression real = new ExprBinary(ExprBinary.BINOP_MUL, eToA, cosB);
         Expression imag = new ExprBinary(ExprBinary.BINOP_MUL, eToA, sinB);
         return new ExprComplex(real, imag);
+    }
+
+    public Expression fcSqrt(ExprFunCall fc, ExprComplex param)
+    {
+        // If we convert to polar form here, then one root is
+        // sqrt(|z|)cis(arg(z)/2).  It's probably more efficient to do
+        // a rectangular calculation, where the roots are
+        // sqrt((a+sqrt(|z|))/2)+i sqrt((-a+sqrt(|z|))/2), with the
+        // real and imaginary parts having the same sign if im(z) is
+        // positive and opposite signs if negative.  Set this up using
+        // a ternary conditional based on the sign of im(z).
+        Expression absZ = new ExprFunCall("abs", param);
+        absZ = (Expression)absZ.accept(this);
+        // NB: absZ is positive and real.
+        Expression sqrtAbsZ = new ExprFunCall("sqrt", absZ);
+        Expression a = param.getReal();
+        Expression minusA = new ExprUnary(ExprUnary.UNOP_NEG, a);
+
+        Expression real = new ExprBinary(ExprBinary.BINOP_ADD, a, sqrtAbsZ);
+        real = new ExprBinary(ExprBinary.BINOP_DIV, real, new ExprConstInt(2));
+        real = new ExprFunCall("sqrt", real);
+        
+        Expression imag = new ExprBinary(ExprBinary.BINOP_ADD, minusA, sqrtAbsZ);
+        imag = new ExprBinary(ExprBinary.BINOP_DIV, imag, new ExprConstInt(2));
+        imag = new ExprFunCall("sqrt", imag);
+        
+        // Need to include logic to test the sign of the imaginary
+        // part:
+        Expression minusReal = new ExprUnary(ExprUnary.UNOP_NEG, real);
+        Expression imagPos = new ExprBinary(ExprBinary.BINOP_GT,
+                                            param.getImag(),
+                                            new ExprConstInt(0));
+        real = new ExprTernary(ExprTernary.TEROP_COND,
+                               imagPos, real, minusReal);
+        
+        return new ExprComplex(real, imag);
+    }
+
+    public Expression fcCSqrt(ExprFunCall fc, Expression param)
+    {
+        // Cause param to become complex.  It's already been visited.
+        ExprComplex z;
+        
+        if (param instanceof ExprComplex)
+            z = (ExprComplex)param;
+        else
+            z = new ExprComplex(param, null);
+        return fcSqrt(fc, z);
     }
 }

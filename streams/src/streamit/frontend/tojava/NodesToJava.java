@@ -11,7 +11,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.72 2003-08-29 21:34:50 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.73 2003-09-02 19:09:38 dmaze Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -336,19 +336,21 @@ public class NodesToJava implements FEVisitor
         }
 	// look for print and println statements; assume everything
 	// else is a math function
-	else if (exp.getName().equals("print")) {
+	else if (name.equals("print")) {
 	    result = "System.out.println(";
-	} else if (exp.getName().equals("println")) {
+	} else if (name.equals("println")) {
 	    result = "System.out.println(";
-        } else if (exp.getName().equals("super")) {
+        } else if (name.equals("super")) {
             result = "super(";
-        } else if (exp.getName().equals("setDelay")) {
+        } else if (name.equals("setDelay")) {
             result = "setDelay(";
+        } else if (name.startsWith("enqueue")) {
+            result = name + "(";
 	} else {
 	    // Math.sqrt will return a double, but we're only supporting
 	    // float's now, so add a cast to float.  Not sure if this is
 	    // the right thing to do for all math functions in all cases?
-	    result = "(float)Math." + exp.getName() + "(";
+	    result = "(float)Math." + name + "(";
 	}
         boolean first = true;
         for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )

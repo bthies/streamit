@@ -1,11 +1,12 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.74 2002-09-26 00:13:41 thies Exp $
+ * $Id: LIRToC.java,v 1.75 2002-09-26 19:14:02 thies Exp $
  */
 
 package at.dms.kjc.lir;
 
 import java.io.StringWriter;
+import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.List;
@@ -29,16 +30,30 @@ public class LIRToC
     /**
      * construct a pretty printer object for java code
      */
-    public LIRToC() {
+    private LIRToC() {
         this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
+    }
+
+    /**
+     * Generates code for <flatClass> and sends to System.out.
+     */
+    public static void generateCode(JClassDeclaration flat) {
+	System.out.println("*/");	
+	System.out.println("#include \"streamit.h\"");
+	System.out.println("#include <stdio.h>");
+	System.out.println("#include <stdlib.h>");
+	System.out.println("#include <math.h>");
+	LIRToC l2c = new LIRToC(new TabbedPrintWriter(new PrintWriter(System.out)));
+	flat.accept(l2c);
+	l2c.close();
     }
 
     /**
      * construct a pretty printer object for java code
      * @param	fileName		the file into the code is generated
      */
-    public LIRToC(TabbedPrintWriter p) {
+    private LIRToC(TabbedPrintWriter p) {
         this.p = p;
         this.str = null;
         this.pos = 0;
@@ -116,12 +131,10 @@ public class LIRToC
                                       JFieldDeclaration[] fields,
                                       JMethodDeclaration[] methods,
                                       JTypeDeclaration[] decls) {
-        LIRToC that = new LIRToC();
+        LIRToC that = new LIRToC(this.p);
         that.className = ident;
         that.isStruct = ((modifiers & ACC_STATIC) == ACC_STATIC);
         that.visitClassBody(decls, fields, methods, body);
-    
-        print(that.getString());
     }
 
     /**
@@ -543,9 +556,10 @@ public class LIRToC
     {
 	JExpression[] dims = expr.getDims();
 	for (int i = 0 ; i < dims.length; i++) {
-	    LIRToC toC = new LIRToC();
+	    print("[");
+	    LIRToC toC = new LIRToC(this.p);
 	    dims[i].accept(toC);
-	    print("[" + toC.getString() + "]");
+	    print("]");
 	}
     }
     

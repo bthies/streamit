@@ -30,7 +30,7 @@ float->float pipeline RearrangeDuplicate(int x0, int y0, int x1, int y1) {
 float->float splitjoin Transpose(int x, int y) {
     split roundrobin;
     for (int i = 0; i < x; i++) add Identity<float>();
-    join roundrobin;    
+    join roundrobin(y);
 }
 
 float->float splitjoin MultiplyAccumulateParallel(int x, int n) {

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.15 2003-09-24 18:46:07 dmaze Exp $
+# $Id: release.sh,v 1.16 2003-09-29 01:50:09 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -98,7 +98,7 @@ rm -rf $BINDIR/include/dot-cshrc $BINDIR/misc/release.sh
 rm -rf $BINDIR/misc/get-antlr
 find $BINDIR/docs \( -name '*.hva' -o -name '*.tex' -o -name Makefile \
   -o -name '*.mp' \) -print0 | xargs -0 rm
-rm $BINDIR/docs/release/htmlformat.pl
+rm -f $BINDIR/misc/htmlformat.pl
 
 # Build the source tarball:
 cp -R $WORKING/streams $WORKING/streamit-src-$VERSION

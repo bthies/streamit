@@ -23,7 +23,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 
 	public GESplitJoin(GESplitter split, GEJoiner join)
 	{
-		super("SPLITJOIN", "");
+		super(GEType.SPLIT_JOIN , "");
 		this.splitter = split;
 		this.joiner = join;
 		this.setChildren(split.getChildren());
@@ -34,4 +34,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	{
 		this.children = children;
 	}
+	
+	public void draw(){};
+	public void construct(){};
 }

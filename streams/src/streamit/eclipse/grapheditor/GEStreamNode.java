@@ -12,17 +12,17 @@ import java.io.*;
  * GEStremaNode is the graph internal representation of a node. .
  * @author jcarlos
  */
-public class GEStreamNode implements Serializable{
+public abstract class GEStreamNode implements Serializable{
 	
 	protected ArrayList children;
 	protected String type;
-	protected String label;
+	protected String name;
 
-	public GEStreamNode(String type, String label)
+	public GEStreamNode(String type, String name)
 	{
 		this.type = type;
 		this.children = new ArrayList();
-		this.label = label;
+		this.name = name;
 	}
 
 	// Add the next child belonging to the stream node
@@ -36,5 +36,15 @@ public class GEStreamNode implements Serializable{
 	{
 		return this.children;
 	}
+
+	public String getName()
+	{
+		return this.name;
+	}
+
+	
+	abstract public void draw();
+	abstract public void construct();
+
 	
 }

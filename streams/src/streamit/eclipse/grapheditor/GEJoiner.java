@@ -1,8 +1,6 @@
 /*
  * Created on Jun 23, 2003
  *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
  */
 package grapheditor;
 import java.io.*;
@@ -21,9 +19,10 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 
 	public GEJoiner (String label, int[] weights)
 	{
-		super("JOINER", label);
+		super(GEType.JOINER, label);
 		this.label = label;
 		this.weights = weights;
 	}
-
+	public void draw(){};
+	public void construct(){};
 }

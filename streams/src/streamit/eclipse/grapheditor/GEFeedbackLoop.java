@@ -22,11 +22,14 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 	
 	public GEFeedbackLoop(GESplitter split, GEJoiner join, GEStreamNode body, GEStreamNode loop)
 	{
-		super("FEEDBACKLOOP", "");
+		super(GEType.FEEDBACK_LOOP, "");
 		this.splitter = split;
 		this.joiner = join;
 		this.body = body;
 		this.loop = loop;
 	}
-
+	
+	public void draw(){};
+	public void construct(){};
+	
 }

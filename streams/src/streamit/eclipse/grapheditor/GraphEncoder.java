@@ -13,6 +13,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 
     public GraphEncoder() 
     {
+    	System.out.println("Created GraphEncoder that ouputs to System.out");
 		this.graph = new GraphStructure();
 	
 		//Feel free to add arguments and call it correctly
@@ -25,69 +26,30 @@ public class GraphEncoder implements AttributeStreamVisitor {
     
     public GraphEncoder(PrintStream outputStream) 
     {
+		System.out.println("Created GraphEncoder that ouputs to outputStream");
 		this.graph = new GraphStructure();
 		this.outputStream = outputStream;
     }
     
-	/**
-	 * Creates graph structure for the program being compiled.
-	 */
-	public void compile(JCompilationUnit[] app) 
-	{
-		Kopi2SIR k2s = new Kopi2SIR(app);
-		SIRStream stream = null;
-		for (int i = 0; i < app.length; i++)
-		{
-			SIRStream top = (SIRStream)app[i].accept(k2s);
-			if (top != null)
-				stream = top;
-		}
-        
-		if (stream == null)
-		{
-			System.err.println("No top-level stream defined!");
-			System.exit(-1);
-		}
+	    
 
-		// Use the visitor.
-		stream.accept(this);
-	}
-    
-	/**
-	 * creates graph structure of <str> to System.out
-	 */
-	public static void printGraph(SIRStream str) 
+	public void encode(SIRStream str)
 	{
-		str.accept(new GraphEncoder(System.out));
+		// PENDING 
+		// ADD code to set str as the toplevel stream in the graph structure 		
+		str.accept(this);
 	}
 
-	/**
-	 * Creates grapg structure of <str> in <filename>
-	 */
-	public static void printGraph(SIRStream str, String filename) 
-	{
-		try 
-		{
-			FileOutputStream out = new FileOutputStream(filename);
-			GraphEncoder graphEnc = new GraphEncoder(new PrintStream(out));
-			str.accept(graphEnc);
-			out.flush();
-			out.close();
-		} 
-		catch (IOException e) 
-		{
-			e.printStackTrace();
-		}
-	}
-        
-   /*public void print(String f) {
-      outputStream.print(f);
-   }*/
     
     /* visit a structure */
     public Object visitStructure(SIRStructure self,
                                  JFieldDeclaration[] fields) {
-        return new GEStreamNode(self.getIdent(), "");
+   		//REMOVED TO COMPILE
+   		//
+   		//
+   		//
+        //return new GEStreamNode(self.getIdent(), "");
+        return null;
     }
     
     /* visit a filter */
@@ -98,14 +60,15 @@ public class GraphEncoder implements AttributeStreamVisitor {
                               JMethodDeclaration work,
                               CType inputType, CType outputType) 
    {
-                              	
-		GEPhasedFilter phFilter = new GEPhasedFilter();					
+
+		System.out.println("Entering visitFilter for filter " + self.getName());                              	
+		GEPhasedFilter phFilter = new GEPhasedFilter(self.getName());					
 		try 
 		{
 			SIRWorkFunction[] phases = self.getPhases();
 			for (int i = 0; i < phases.length; i++)
 			{
-				
+				 
 				
 				phFilter.addWorkFunction(new GEWorkFunction(work.getName(), 
 															phases[i].getPushInt(), 
@@ -121,13 +84,42 @@ public class GraphEncoder implements AttributeStreamVisitor {
 																 phases[i].getPushInt(), 
 																 phases[i].getPopInt(), 
 																 phases[i].getPeekInt()));
-			}							
+			}			
 		}
 		catch (Exception e) 
 		{
 			// if constants not resolved for the ints, will get an exception
+			System.out.println("Exception thrown " + e.toString());
 		}
-				
+		
+			
+			/* ***********************************************************
+			 * DEBUGGING CODE BEGIN
+			 */
+			for (int i = 0; i < phFilter.getNumberOfInitWFs() ; i++)
+			{
+				System.out.println("Init Function "+ i +" for Filter "+ phFilter.getName());
+				GEWorkFunction wf = (GEWorkFunction) phFilter.getInitWorkFunction(i);
+				System.out.println("\t label = " + wf.getName());
+				System.out.println("\t Push value = "+ wf.getPushValue());
+				System.out.println("\t Pop value = "+ wf.getPopValue());
+				System.out.println("\t Peek value = "+ wf.getPeekValue());
+
+			}
+		
+			for (int i = 0; i < phFilter.getNumberOfWFs() ; i++)
+			{
+				System.out.println("Work Function "+ i +" for Filter "+phFilter.getName());
+				GEWorkFunction wf = (GEWorkFunction) phFilter.getWorkFunction(i);
+				System.out.println("\t label = " + wf.getName());
+				System.out.println("\t Push value = "+ wf.getPushValue());
+				System.out.println("\t Pop value = "+ wf.getPopValue());
+				System.out.println("\t Peek value = "+ wf.getPeekValue());
+			}
+			/* 
+			 * DEBUGGING CODE END
+			 *********************************************************** */				
+					
 		return phFilter;             	
                               	    	
 		
@@ -143,8 +135,8 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                     SIRWorkFunction[] phases,
                                     CType inputType, CType outputType)
 	{
-     
-    	GEPhasedFilter phFilter = new GEPhasedFilter();
+		System.out.println("Entering visitPhasedFilter");
+    	GEPhasedFilter phFilter = new GEPhasedFilter(self.getName());
 		// Walk through each of the phases.
 		if (initPhases != null)
 		{
@@ -163,6 +155,33 @@ public class GraphEncoder implements AttributeStreamVisitor {
 	   		}
 		}        
 						
+		/* ***********************************************************
+		 * DEBUGGING CODE BEGIN
+		 */
+				for (int i = 0; i < phFilter.getNumberOfInitWFs() ; i++)
+				{
+					System.out.println("Init Function "+ i +" for Filter "+ phFilter.getName());
+					GEWorkFunction wf = (GEWorkFunction) phFilter.getInitWorkFunction(i);
+					System.out.println("\t label = " + wf.getName());
+					System.out.println("\t Push value = "+ wf.getPushValue());
+					System.out.println("\t Pop value = "+ wf.getPopValue());
+					System.out.println("\t Peek value = "+ wf.getPeekValue());
+			
+				}
+		
+				for (int i = 0; i < phFilter.getNumberOfWFs() ; i++)
+				{
+					System.out.println("Work Function "+ i +" for Filter "+phFilter.getName());
+					GEWorkFunction wf = (GEWorkFunction) phFilter.getWorkFunction(i);
+					System.out.println("\t label = " + wf.getName());
+					System.out.println("\t Push value = "+ wf.getPushValue());
+					System.out.println("\t Pop value = "+ wf.getPopValue());
+					System.out.println("\t Peek value = "+ wf.getPeekValue());
+				}
+		/* 
+		 * DEBUGGING CODE END
+		 *********************************************************** */				
+						
 		return phFilter;
 	
     }
@@ -172,6 +191,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                 SIRSplitType type,
                                 JExpression[] expWeights) 
 	{
+		System.out.println("Entering visitSplitter");
 		try 
 		{
 			return new GESplitter(type.toString(), self.getWeights());
@@ -187,6 +207,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
                               SIRJoinType type,
                               JExpression[] expWeights) 
     {
+		System.out.println("Entering visitJoiner");
 		try {
 			return new GEJoiner(type.toString(), self.getWeights());
 		}
@@ -199,6 +220,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
     public Object visitWorkFunction(SIRWorkFunction self,
                                     JMethodDeclaration work) 
     {
+		System.out.println("Entering visitWorkFunction");
 		try 
 		{
 			return new GEWorkFunction(work.getName(), self.getPushInt(), self.getPopInt(),self.getPeekInt());
@@ -217,8 +239,10 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                 JFieldDeclaration[] fields,
                                 JMethodDeclaration[] methods,
                                 JMethodDeclaration init) {                 	
+		
+		System.out.println("Entering visitPipeline "+ self.getName());
                                 	
-		GEPipeline pipeline = new GEPipeline();        
+		GEPipeline pipeline = new GEPipeline(self.getName());        
         
 		// Walk through each of the elements in the pipeline.
 		Iterator iter = self.getChildren().iterator();
@@ -232,6 +256,10 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		}
 		  
 		graph.addHierarchy(pipeline, pipeline.getChildren());
+		
+		
+		
+		
 		return pipeline;
     }
     
@@ -243,6 +271,8 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                  JMethodDeclaration init,
                                  SIRSplitter splitter,
                                  SIRJoiner joiner) {
+
+		System.out.println("Entering visitSplitJoin");
                                  	
 		// Visit the splitter and joiner 
 		GESplitter split = (GESplitter)splitter.accept(this);
@@ -278,6 +308,8 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                     JMethodDeclaration initPath) {
 										NamePair np;
     
+    	System.out.println("Entering visitFeedbackLoop");
+    	
 		// Visit the splitter and joiner.
 		GESplitter split = (GESplitter) self.getSplitter().accept(this);
 		GEJoiner join = (GEJoiner) self.getJoiner().accept(this);

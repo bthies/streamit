@@ -6,6 +6,7 @@
  */
 package grapheditor;
 import java.io.*;
+import java.util.*;
 
 /**
  * GEPipeline is the graph internal representation of a node. .
@@ -14,9 +15,22 @@ import java.io.*;
  */
 public class GEPipeline extends GEStreamNode implements Serializable{
 			
-	public GEPipeline()
+	public GEPipeline(String name)
 	{
-		super("PIPELINE", "");
+		super(GEType.PIPELINE, name);
 	}
 
+	public void draw(){};
+	public void construct()
+	{
+		ArrayList nodeList = (ArrayList) this.getChildren();
+		Iterator listIter =  nodeList.listIterator();
+		while(listIter.hasNext())
+		{
+			GEStreamNode strNode = (GEStreamNode) listIter.next();
+			strNode.construct();
+		}
+		this.draw();
+		
+	}
 }

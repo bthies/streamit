@@ -20,6 +20,9 @@ public class GESplitter extends GEStreamNode implements Serializable{
 
 	public GESplitter(String label,int[] weights)
 	{
-		super("SPLITTER", label);
+		super(GEType.SPLITTER , label);
 	}
+	
+	public void draw(){};
+	public void construct(){};
 }

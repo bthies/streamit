@@ -18,12 +18,13 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	private ArrayList initWorkFunctions;
 	private ArrayList workFunctions;
 
-	public GEPhasedFilter()
+	public GEPhasedFilter(String name)
 	{
-		super("PHASED_FILTER", "");
+		super(GEType.PHASED_FILTER, name);
 		initWorkFunctions = new ArrayList();
 		workFunctions = new ArrayList();
 	}
+	
 	
 	//	Returns true if wf was added to collection of init work functions
 	public boolean addInitWorkFunction(GEWorkFunction wf)
@@ -37,4 +38,30 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		return workFunctions.add(wf);
 	}
 	
+	// Returns the work function at the given index
+	public GEWorkFunction getWorkFunction(int index)
+	{
+		return (GEWorkFunction) workFunctions.get(index);
+	}
+	
+	// Return the init work function at the given index
+	public GEWorkFunction getInitWorkFunction(int index)
+	{
+		return (GEWorkFunction) initWorkFunctions.get(index);
+	}
+	
+	// Returns the number of init work functions
+	public int getNumberOfInitWFs()
+	{
+		return this.initWorkFunctions.size();
+	}
+	
+	//Returns the number of work functions
+	public int getNumberOfWFs()
+		{
+			return this.workFunctions.size();
+		}
+	
+	public void draw(){};
+	public void construct(){};
 }

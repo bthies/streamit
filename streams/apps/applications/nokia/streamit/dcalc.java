@@ -53,7 +53,7 @@ class dcalc extends StreamIt {
 	float[][] h;
 	float[][] C;
 	float[] r;
-    	K=4;
+    	K=7;
 	N=20;
 	Q=15;
 	W=7;
@@ -72,20 +72,20 @@ class dcalc extends StreamIt {
 	for (int i=0;i<N*Q+W-1;i++)
 	    r[i]=i;
 
-	float sum=0;	
+	//float sum=0;	
 
 	for (int i=0;i<K;i++) {
-	    sum+=1;
-	    //sum=sum/7;
+	    //sum+=1;
+	    //sum=sum/;
 
 	    for (int j=0;j<Q;j++){
-		sum+=1;
-		C[j][i]=sum;
+		//sum+=1;
+		C[j][i]=i*Q+j+1+i*j;
 	    }
 
 	    for (int j=0;j<W;j++){
-		sum++;
-		h[j][i]=sum;
+		//sum++;
+		h[j][i]=1+i+j+j*j/(i+1);
 	    }
 	}
 	

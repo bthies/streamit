@@ -1,12 +1,10 @@
 
 void->void pipeline FFT2SpaceTime() {
-    add FFTTestSource(64);
-    add FileWriter<float>("input");
-    //    add FileReader<float>("input");
-    // add FFTReorder(64);
-    //for(int j=2; j<=64; j*=2)
-    //	add CombineDFT(j);
-    //    add FileWriter<float>("output");
+    add FileReader<float>("input");
+    add FFTReorder(64);
+    for(int j=2; j<=64; j*=2)
+	add CombineDFT(j);
+     add FileWriter<float>("output");
 }
 
 

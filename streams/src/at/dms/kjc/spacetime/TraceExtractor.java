@@ -36,14 +36,18 @@ public class TraceExtractor {
 		    trace=new Trace(node);
 		}
 		traces.add(trace);
-		while(filter.out!=null&&filter.out.length==1&&filter.out[0].length==1) {
+		while(filter.out!=null&&filter.out.length==1&&filter.out[0].length==1&&filter.out[0][0].dest.in.length<2) {
 		    //System.err.println("Filter: "+filter);
 		    filter=filter.out[0][0].dest;
+		    //UnflatFilter dest=filter.out[0][0].dest;
+		    //if(dest.in.length<2) {
+		    //filter=dest;
 		    content=new FilterContent(filter.filter,execCounts);
 		    FilterTraceNode filterNode=new FilterTraceNode(content);
 		    node.setNext(filterNode);
 		    filterNode.setPrevious(node);
 		    node=filterNode;
+		    //}
 		}
 		if(filter.out!=null&&filter.out.length>0) {
 		    OutputTraceNode outNode=new OutputTraceNode(filter.outWeights);
@@ -149,11 +153,13 @@ public class TraceExtractor {
 	}
 	if(node instanceof OutputTraceNode) {
 	    InputTraceNode[][] dests=((OutputTraceNode)node).getDests();
-	    LinkedList output=new LinkedList();
+	    ArrayList output=new ArrayList();
 	    for(int i=0;i<dests.length;i++) {
 		InputTraceNode[] inner=dests[i];
 		for(int j=0;j<inner.length;j++) {
-		    output.add(parent.get(inner[j]));
+		    Object next=parent.get(inner[j]);
+		    if(!output.contains(next))
+			output.add(next);
 		}
 	    }
 	    Trace[] out=new Trace[output.size()];

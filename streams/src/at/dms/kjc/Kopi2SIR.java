@@ -151,26 +151,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     //when they are added, they will be cloned and any parameters that need to be set
     //will be set...
     private void initBuiltinFilters() {
-	SIRFileReader fr = new SIRFileReader(null,
-					     "FileReader",
-					     new JIntLiteral(null, 0),
-					     new JIntLiteral(null, 0),
-					     new JIntLiteral(null, 1),
-					     null, 
-					     "");
+	SIRFileReader fr = new SIRFileReader();
 	addVisitedOp("FileReader", fr);
 	
-	SIRFileWriter fw = new SIRFileWriter(null, 
-					     "FileWriter",
-					     new JIntLiteral(null, 1),
-					     new JIntLiteral(null, 1),
-					     new JIntLiteral(null, 0),
-					     null, 
-					     "");
+	SIRFileWriter fw = new SIRFileWriter();
 	addVisitedOp("FileWriter", fw);
 
-	SIRIdentity sirId = new SIRIdentity(null, "Identity",
-					    null);
+	SIRIdentity sirId = new SIRIdentity(null);
 	addVisitedOp("Identity", sirId);
     }	
 		     

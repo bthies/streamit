@@ -114,7 +114,7 @@ public class SpaceTimeBackend
 	    int curY=0;
 	    int forward=1;
 	    int downward=1;
-	    while(currentFilter!=null&&currentFilter.outWeights.length>0) {
+	    while(currentFilter!=null&&currentFilter.out!=null&&currentFilter.outWeights.length>0) {
 		currentFilter=currentFilter.out[0][0].dest;
 		if(currentFilter!=null) {
 		    content=new FilterContent(currentFilter.filter,executionCounts);
@@ -125,12 +125,15 @@ public class SpaceTimeBackend
 		    newNode.setPrevious(currentNode);
 		    currentNode=newNode;
 		    if(curX>=rawColumns-1&&forward>0) {
-			if(currentFilter.outWeights.length>0&&currentFilter.out[0][0].dest!=null) {
+			System.err.println(currentFilter);
+			System.err.println(currentFilter.outWeights);
+			System.err.println(currentFilter.out);
+			if(currentFilter.outWeights.length>0&&currentFilter.out!=null) {
 			    forward=-1;
 			    curY+=downward;
 			}
 		    } else if(curX<=0&&forward<0) {
-			if(currentFilter.outWeights.length>0&&currentFilter.out[0][0].dest!=null) {
+			if(currentFilter.outWeights.length>0&&currentFilter.out!=null) {
 			    forward=1;
 			    if(curY==0)
 				downward=1;
@@ -196,7 +199,7 @@ public class SpaceTimeBackend
 	//content=null;
 	//executionCounts=null;
 
-	/*Trace[] traceForrest = new Trace[1];
+	Trace[] traceForrest = new Trace[1];
 	traceForrest[0] = traces[0];
 
 	//mgordon's stuff
@@ -220,7 +223,7 @@ public class SpaceTimeBackend
 	    MagicDram.GenerateCode(rawChip);
 	}
 	Makefile.generate(rawChip);
-	BCFile.generate(rawChip);*/
+	BCFile.generate(rawChip);
     }
 }
 

@@ -1,7 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import java.util.*;
-//import java.io.FileWriter;
+import java.io.FileWriter;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import at.dms.kjc.flatgraph2.*;
@@ -95,6 +95,35 @@ public class TraceExtractor {
       output[i]=(OutputTraceNode)outNodes.get(in[i].src);
       return output;
       }*/
+
+    public static void dumpGraph(Trace[] traces,String filename) {
+	StringBuffer buf=new StringBuffer();
+	buf.append("digraph Flattend {\n");
+	buf.append("size = \"8, 10.5\";");
+	HashMap parent=new HashMap();
+	for(int i=0;i<traces.length;i++)
+	    parent.put(traces[i].getHead(),traces[i]);
+	for(int i=0;i<traces.length;i++) {
+	    Trace trace=traces[i];
+	    buf.append(trace+"[ label = \""+traceName(trace)+"\"];\n");
+	}
+	try {
+	    FileWriter fw = new FileWriter(filename);
+	    fw.write(buf.toString());
+	    fw.close();
+	}
+	catch (Exception e) {
+	    System.err.println("Could not print extracted traces");
+	}
+    }
+
+    private static String traceName(Trace trace) {
+	StringBuffer out=new StringBuffer(trace.getHead().toString());
+	TraceNode node=trace.getHead().getNext();
+	while(node!=null&&node instanceof FilterTraceNode)
+	    out.append("\\n"+node.toString());
+	return out.toString();
+    }
 }
 
 

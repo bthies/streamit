@@ -10,7 +10,7 @@ public class RawChip {
     private int gYSize;
     public static final int cacheLineBytes = 32;
     public static final int cacheLineWords = 8;
-    public static final int dCacheSizeWords = 2^16 / 4;
+    public static final int dCacheSizeBytes = 32768;
     
     public RawChip(int xSize, int ySize) {
 	gXSize = xSize;

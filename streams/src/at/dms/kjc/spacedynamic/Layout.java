@@ -13,7 +13,7 @@ import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-
+import at.dms.kjc.cluster.DataEstimate;
 
 /**
  *The Layout class generates mapping of filters to raw tiles.  It assumes that the Sis
@@ -31,6 +31,10 @@ public class Layout extends at.dms.util.Utils implements
     private  HashSet assigned;
     //set of all the identity filters not mapped to tiles
     private   HashSet identities;
+    /** map of flatNode -> Integer that stores the memory footprint of fields (in bytes) 
+	of the filter, used for memory cost analysis, it is populated in visitNode **/
+    private HashMap memoryFP;
+
     private  BufferedReader inputBuffer;
     private  Random random;
     
@@ -73,6 +77,8 @@ public class Layout extends at.dms.util.Utils implements
 	tileAssignment = new HashMap();
 	assigned = new HashSet();
 	identities = new HashSet();
+	memoryFP = new HashMap();
+	
 
 	//find out exactly what we should layout !!!
 	streamGraph.getTopLevel().accept(this, null, true);
@@ -421,26 +427,25 @@ public class Layout extends at.dms.util.Utils implements
 	int memReq = 0;
 	double memCost = 0.0;
 	    
-	//for now assume only sinks of the entire application use lots of memory
-	if (ssg.getOutputs().length != 0)
-	    return 0.0;
-	
 	Iterator nodes = ssg.getFlatNodes().iterator();
 	while (nodes.hasNext()) {
 	    FlatNode node = (FlatNode)nodes.next();
-	    //we only care about the sink filter for the sink ssg's
-	    if (node.edges.length != 0 || getTile(node) == null)
+	    //we only care about assigned filters
+	    if (!assigned.contains(node) || !node.isFilter())
 		continue;
-
-	    memReq = 60000;
 	    
+	    assert memoryFP.keySet().contains(node);
+	    memReq = ((Integer)memoryFP.get(node)).intValue();
+
 	    //if we cannot fit in the cache then, calculate
 	    //how long it takes to get to the nearest side of the chip
 	    //and add this for each word that does not fit in the cache...
-	    if (memReq > RawChip.dCacheSizeWords) {
+	    if (memReq > RawChip.dCacheSizeBytes) {
 		RawTile tile = getTile(node);
+		//System.out.println(node + " has memory fp of " + memReq + " > " + RawChip.dCacheSizeWords);
 		
-		memCost += (memReq - RawChip.dCacheSizeWords) * tile.hopsToEdge();
+		//divide by 4 because we send 4 bytes over the network at a time
+		memCost += ((memReq - RawChip.dCacheSizeBytes) / 4) * tile.hopsToEdge();
 	    }
 	    
 	    //	    System.out.println(" *** Memory req of " + node + ": " + memCost);
@@ -483,8 +488,8 @@ public class Layout extends at.dms.util.Utils implements
 	    //in a previous SSG
 	    if (usedTiles.contains(srcTile)) {
 		//System.out.println(srcTile);
-		return -1.0;
-		//cost += 1E5;
+		//return -1.0;
+		cost += 1E6;
 	    }
 	    
 	    //don't worry about nodes that aren't assigned tiles
@@ -508,8 +513,8 @@ public class Layout extends at.dms.util.Utils implements
 		//thru the tile assigned to the dst
 		if (usedTiles.contains(dstTile)) {
 		    //System.out.println(dstTile);
-		    //cost += 1E5;
-		    return -1.0;
+		    cost += 1E6;
+		    //return -1.0;
 		}
 		
 		RawTile[] route = 
@@ -520,8 +525,8 @@ public class Layout extends at.dms.util.Utils implements
 		if (route.length == 0) {
 		    //System.out.println("Cannot find route from src to dst within SSG " + 
 		    //		       src + "(" + srcTile + ") -> " + dst + "(" + dstTile + ")");
-		    //cost += 1E5;
-		    return -1.0;
+		    cost += 1E6;
+		    //return -1.0;
 		}
 		
 
@@ -533,8 +538,11 @@ public class Layout extends at.dms.util.Utils implements
 		for (int i = 1; i < route.length - 1; i++) {
 		    //make sure that this route does not pass thru any tiles assigned to other SSGs
 		    //otherwise we have a illegal layout!!!!
-		    if (usedTiles.contains(route[i]))
-			return -1.0;
+		    if (usedTiles.contains(route[i])) {
+			cost += 1E6;
+			//return -1.0;
+		    }
+		    
 		    //add this tile to the set of tiles used by this SSG
 		    tiles.add(route[i]);
 		    
@@ -610,7 +618,7 @@ public class Layout extends at.dms.util.Utils implements
 	for right now disregard the min, max, and average rate declarations
 
 	NOTE:  THIS FUNCTION DOES NOT CHECK FOR STARVATION OR DEADLOCK FROM
-	SHARING DYNAMIC LINKS.  WE SHOULD CHECK THAT TWO PARALLEL SECTION OF 
+	SHARING DYNAMIC LINKS.  WE SHOULD CHECK THAT TWO PARALLEL SECTIONs OF 
 	A STREAM GRAPH DO NOT SHARE A LINK.
     **/ 
     private double getDynamicCost(StaticStreamGraph ssg, HashSet usedTiles) 
@@ -675,7 +683,7 @@ public class Layout extends at.dms.util.Utils implements
 	}
 	return false;
     }
-
+    
 
     public void simAnnealAssign()
     {
@@ -960,8 +968,12 @@ public class Layout extends at.dms.util.Utils implements
     /** visit each flatnode and decide whether is should be assigned **/
     public void visitNode(FlatNode node) 
     {
-	if (node.contents instanceof SIRFilter &&
+	if (node.isFilter() &&
 	    ! (streamGraph.getFileVisitor().fileNodes.contains(node))) {
+	    //create an entry in the memory foot print map
+	    memoryFP.put(node, 
+			 new Integer(DataEstimate.computeFilterGlobalsSize(node.getFilter())));
+	    
 	    //do not map layout.identities, but add them to the layout.identities set
 	    if (node.contents instanceof SIRIdentity) {
 		identities.add(node);

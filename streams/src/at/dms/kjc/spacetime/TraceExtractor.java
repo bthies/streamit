@@ -213,9 +213,9 @@ public class TraceExtractor {
 	//if(node instanceof InputTraceNode)
 	//node=node.getNext();
 	StringBuffer out=null;
-	System.out.println(node);
-	System.out.println(node.getPrevious());
-	System.out.println(node.getNext());
+	//System.out.println(node);
+	//System.out.println(node.getPrevious());
+	//System.out.println(node.getNext());
 	if(((FilterTraceNode)node).getFilter().getArray()!=null)
 	    out=new StringBuffer("color=cornflowerblue, style=filled, label=\""+node.toString());
 	else

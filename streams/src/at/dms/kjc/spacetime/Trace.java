@@ -21,6 +21,7 @@ public class Trace
 	    this.edges = edges;
 
 	this.head = head;
+	head.setParent(this);
 
 	if (depends == null)
 	    this.depends = new Trace[0];
@@ -31,6 +32,7 @@ public class Trace
 
     public Trace(InputTraceNode head) {
 	this.head = head;
+	head.setParent(this);
 	depends = new Trace[0];
 	edges = new Trace[0];
 	len=-1;
@@ -40,6 +42,7 @@ public class Trace
 	if(!(node instanceof FilterTraceNode))
 	    Utils.fail("FilterTraceNode expected: "+node);
 	head = new InputTraceNode();
+	head.setParent(this);
 	head.setNext(node);
 	node.setPrevious(head);
 	depends = new Trace[0];
@@ -69,17 +72,20 @@ public class Trace
 	    end.setNext(tail);
 	    tail.setPrevious(end);
 	}
+	tail.setParent(this);
 	return size;
     }
     
     //finish() must have been called
     public int size() {
+	assert len>-1:"finish() was not called";
 	return len;
     }
 
     public void setHead(InputTraceNode node) 
     {
 	head = node;
+	node.setParent(this);
     }
     
     public TraceNode getHead() 
@@ -115,6 +121,10 @@ public class Trace
     public void connect(Trace target) {
 	edges=new Trace[]{target};
 	target.depends=new Trace[]{this};
+    }
+
+    public String toString() {
+	return "Trace:"+head.getNext();
     }
 }
 

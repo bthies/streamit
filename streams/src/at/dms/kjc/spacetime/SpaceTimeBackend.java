@@ -295,7 +295,8 @@ public class SpaceTimeBackend
 	    }
 	} else if(REAL) {
 	    traceGraph=TraceExtractor.extractTraces(topNodes,executionCounts,lfa);
-	    System.out.println("Traces: "+traceGraph.length);
+	    System.out.println("UnPrunnedTraces: "+traceGraph.length);
+	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
 	}
 	
 	/*System.gc();
@@ -326,10 +327,9 @@ public class SpaceTimeBackend
 	Trace[] traceForrest = new Trace[1];
 	//traceForrest[0] = traces[0];
 	if(false&&REAL) {
-	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
-	    System.out.println("TracesGraph: "+traceGraph.length);
-	    for(int i=0;i<traceGraph.length;i++)
-		System.out.println(traceGraph[i]);
+	    //System.out.println("TracesGraph: "+traceGraph.length);
+	    //for(int i=0;i<traceGraph.length;i++)
+	    //System.out.println(traceGraph[i]);
 	    traces=traceGraph;
 	    int index=0;
 	    traceForrest[0]=traceGraph[0];
@@ -378,6 +378,23 @@ public class SpaceTimeBackend
 		traces[i].setDepends(new Trace[]{traces[i-1]});
 	    }
 	    //System.out.println(traceList);
+	} else if(true&&REAL) {
+	    int len=traceGraph.length;
+	    int newLen=len;
+	    for(int i=0;i<len;i++)
+		if(((FilterTraceNode)traceGraph[i].getHead().getNext()).isPredefined())
+		    newLen--;
+	    traces=new Trace[newLen];
+	    int idx=0;
+	    for(int i=0;i<len;i++) {
+		Trace trace=traceGraph[i];
+		if(!((FilterTraceNode)trace.getHead().getNext()).isPredefined())
+		    traces[idx++]=trace;
+	    }
+	    System.out.println("Traces: "+traces.length);
+	    for(int i=0;i<traces.length;i++)
+		System.out.println(traces[i]);
+	    SpaceTimeSchedule sched=TestLayout.layout(traces,rawRows,rawColumns);
 	}
 	
 	//traceList=null;

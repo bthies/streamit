@@ -256,6 +256,29 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	
 	p.print("\n");
 
+
+
+	if (joiner.getParent() instanceof SIRFeedbackLoop) {
+
+	    p.print("//Feedback Loop Joiner\n");
+	    
+	    p.print("\nint __init_counter_"+thread_id+" = 0;\n");
+
+	    JMethodDeclaration initPath = ((SIRFeedbackLoop)joiner.getParent()).getInitPath();
+
+	    initPath.setName("__Init_Path_"+thread_id);
+
+	    FlatIRToCluster toC = new FlatIRToCluster();
+	    toC.declOnly = false;
+	    initPath.accept(toC);
+	    p.print(toC.getString());
+
+	    p.print("\n");
+	    
+	    //fw.write(createInitPath(joiner) + "\n");	    
+	}
+	
+
 	p.print("void __joiner_"+thread_id+"_work() {\n");
 
 	p.print("  "+baseType.toString()+" tmp;\n");
@@ -279,7 +302,20 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		int num = joiner.getWeight(i);
 
 		for (int ii = 0; ii < num; ii++) {
-		    p.print("  tmp = "+s.name()+"in->read_"+baseType.toString()+"();\n");
+
+		    if (i == 1 && joiner.getParent() instanceof SIRFeedbackLoop) {
+			int delay =  ((SIRFeedbackLoop)joiner.getParent()).getDelayInt();
+			p.print("  if (__init_counter_"+thread_id+" < "+delay+") {\n");
+			p.print("    tmp = __Init_Path_"+thread_id+"(__init_counter_"+thread_id+");\n");
+			p.print("    __init_counter_"+thread_id+"++;\n");
+			p.print("  } else\n");
+			p.print("    tmp = "+s.name()+"in->read_"+baseType.toString()+"();\n");
+			
+		    } else {
+
+			p.print("  tmp = "+s.name()+"in->read_"+baseType.toString()+"();\n");
+		    }
+
 		    p.print("  "+out.name()+"out->write_"+baseType.toString()+"(tmp);\n");
 		}
 

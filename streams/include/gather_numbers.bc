@@ -111,6 +111,8 @@ fn dev_gather_numbers_init(fileName, ioPort)
  
   //print some shit
   fprintf(outputFile, "Performance Results\n\n");
+  fprintf(outputFile, "Tiles in configuration: %d\n", gStreamItTiles);
+  fprintf(outputFile, "Tiles assigned (to filters or joiners): %d\n", gStreamItTilesUsed);
   fprintf(outputFile, "Run for %d steady state cycles.\n", quitAfter);
   fprintf(outputFile, "With %d items skipped for init.\n", skipPrints);
   fprintf(outputFile, "With %d items printed per steady state.\n\n", printsPerSteady);
@@ -308,7 +310,13 @@ fn dev_gather_numbers_calc(printServiceStruct)
 	    fprintf(outputFile, "Avg Cycles per Steady-State: %d\n", totalCycles/quitAfter);
 	    fprintf(outputFile, "Thruput per 10^5: %d\n", (100000/((totalCycles/quitAfter)/printsPerSteady)));
 	    fprintf(outputFile, "Avg MFLOPS: %d\n", (250*totalFLOPS)/totalCycles);
-	    fprintf(outputFile, "workCount = %d / %d\n", totalWorkCount, gNumProc*totalCycles);
+	    fprintf(outputFile, "workCount* = %d / %d\n", 
+		    (totalWorkCount - ((gNumProc - gStreamItTilesUsed) * totalCycles)),
+		    gStreamItTiles*totalCycles);
+	    fprintf(outputFile, "* Note: the numerator is the total non-blocked cycles\n");
+	    fprintf(outputFile, "  for *assigned* tiles in the configuration.\n");
+	    fprintf(outputFile, "  The denominator is the total number of cycles\n");
+	    fprintf(outputFile, "  for all the tiles in the streamit configuration.\n");
 	    //this should exit!!!!!
 	    gInterrupted = 1;
 	    //this will exit the thread

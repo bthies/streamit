@@ -6,8 +6,6 @@ import string
 import sys
 
 # Useful globals:
-streamit = os.environ['STREAMIT_HOME']
-libdir = os.path.join(streamit, 'library/c')
 
 class RegTest:
     def __init__(self):
@@ -35,7 +33,7 @@ class RegTest:
     
     def test(self):
         oldwd = os.getcwd()
-        os.chdir(os.path.join(streamit, self.directory))
+        os.chdir(os.path.join(opts.root, self.directory))
         result = self.dotest()
         os.chdir(oldwd)
         return result
@@ -47,8 +45,8 @@ class RegTest:
             self.report("StreamIt compilation failed")
             return result
 
-        result = self.runCommand("gcc -o reg-out -I" + libdir +
-                                 " -L" + libdir + " reg-out.c -lstreamit")
+        result = self.runCommand("gcc -o reg-out %s reg-out.c -lstreamit" %
+                                 opts.get_cflags())
         if (result != 0):
             self.report("gcc compilation failed")
             return result
@@ -144,15 +142,18 @@ class Options:
         self.checkout = 0
         self.build = 0
         self.test = 1
-        self.control = os.path.join(streamit, 'regtest/control')
         self.cases = []
+        self.cflags = '-g -O2'
+        self.set_root(os.environ['STREAMIT_HOME'])
 
     def get_options(self, args):
         optlist, args = getopt.getopt(args, '',
                                       ['checkout', 'nocheckout',
                                        'build', 'nobuild',
                                        'test', 'notest',
-                                       'control=', 'case='])
+                                       'root=', 'libdir=', 'control=',
+                                       'debug', 'profile', 'cflags=',
+                                       'case='])
         for (opt, val) in optlist:
             if opt == '--nocheckout':
                 self.checkout = 0
@@ -166,11 +167,29 @@ class Options:
                 self.test = 0
             if opt == '--test':
                 self.test = 1
+            if opt == '--root':
+                self.set_root(val)
+            if opt == '--libdir':
+                self.libdir = val
             if opt == '--control':
                 self.control = val
+            if opt == '--debug':
+                self.cflags = '-g'
+            if opt == '--profile':
+                self.cflags = '-g -pg -a'
+            if opt == '--cflags':
+                self.cflags = val
             if opt == '--case':
                 self.cases.append(val)
         return args
+
+    def set_root(self, root):
+        self.root = root
+        self.libdir = os.path.join(self.root, 'library/c')
+        self.control = os.path.join(self.root, 'regtest/control')
+
+    def get_cflags(self):
+        return "%s -I%s -L%s" % (self.cflags, self.libdir, self.libdir)
 
 opts = Options()
 args = opts.get_options(sys.argv[1:])

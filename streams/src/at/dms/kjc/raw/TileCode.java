@@ -260,7 +260,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    realTiles.add(Layout.getTile(node.contents));
 	    joinerCode(node);
 	}
-	if (node.contents instanceof SIRFilter) {
+	if (node.contents instanceof SIRFilter && 
+	    !(node.contents instanceof SIRFileReader)) {
 	    realTiles.add(Layout.getTile(node.contents));
 	    FlatIRToC.generateCode(node);
 	}

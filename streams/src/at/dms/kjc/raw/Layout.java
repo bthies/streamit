@@ -44,10 +44,22 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     private static void init(FlatNode top) 
     {
 	toplevel = top;
+	int rows = StreamItOptions.rawRows;
+	int columns = StreamItOptions.rawColumns;
+		
+	//determine if there is a file reader in the graph
+	//call init() to traverse the graph 
+	// if there is create a new column to place the fileReader
+	// it will become a bc file reading device
+	FileReaderVisitor.init(top);
+	if (FileReaderVisitor.foundReader){
+	    rows++;
+	}
+	
 	coordinates  =
-	    new Coordinate[StreamItOptions.rawRows][StreamItOptions.rawColumns];
-	for (int row = 0; row < StreamItOptions.rawRows; row++)
-	    for (int column = 0; column < StreamItOptions.rawColumns; column++)
+	    new Coordinate[rows][columns];
+	for (int row = 0; row < rows; row++)
+	    for (int column = 0; column < columns; column++)
 		coordinates[row][column] = new Coordinate(row, column);
 	
 	SIRassignment = new HashMap();
@@ -124,6 +136,20 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	return "";
     }
 
+    public static boolean areNeighbors(Coordinate tile1, Coordinate tile2) 
+    {
+	if (tile1 == tile2) 
+	    return false;
+	if (tile1.getRow() == tile2.getRow())
+	    if (Math.abs(tile1.getColumn() - tile2.getColumn()) == 1)
+		return true;
+	if (tile1.getColumn() == tile2.getColumn())
+	    if (Math.abs(tile1.getRow() - tile2.getRow()) == 1)
+		return true;
+	//not conntected
+	return false;
+    }
+    
     public static int getTileNumber(FlatNode node)
     {
 	return getTileNumber(getTile(node));
@@ -208,116 +234,18 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	dumpLayout();
     }
     
-		    
-  
-    public static void simAnnealAssignElliot(FlatNode node) 
-    {
-	double T, Tf;
-	HashMap sirBest, tileBest;
-	int bestCost;
-
-	init(node);
-	random = new Random(17);
-	randomPlacement();
-	System.out.println("Initial placement cost: " + placementCost());
-	//clone the random placement
-
-	HashMap sir  = (HashMap)SIRassignment.clone();
-	HashMap tile = (HashMap)tileAssignment.clone();
-	T = annealMaxTemp();
-
-	//reset the initial random placement
-	SIRassignment  = sir;
-	tileAssignment = tile;
-	Tf = annealMinTemp();
-
-	//reset the initial random placement
-	SIRassignment  = sir;
-	tileAssignment = tile;
-
-	int i, bestIter = 0;
-      
-	bestCost = placementCost();
-	int cost = bestCost;
-	sirBest = (HashMap)SIRassignment.clone();
-	tileBest = (HashMap)tileAssignment.clone();
-
-	for (i = 0; i < ANNEALITERATIONS; i++) {
-	    perturbConfiguration(T);
-	    T = .999 * T;
-	    if (T <= Tf) break;
-	    cost = placementCost();
-	    if (cost < bestCost) {
-		bestIter = i;
-		sirBest = (HashMap)SIRassignment.clone();
-		tileBest = (HashMap)tileAssignment.clone();
-		bestCost = cost;
-	    }
-	    if (cost == 0)
-		break;
-	}
-	if (cost > bestCost) {
-	    SIRassignment = sirBest;
-	    tileAssignment = tileBest;
-	}
-	else
-	    bestIter = i;
-	System.out.println("Final placement cost: " + placementCost() +
-			   " " + bestIter);
-	dumpLayout();
-    }
-   
-    private static double annealMaxTemp() 
-    {
-	double T = 1.0;
-	int total = 0, accepted = 0;
-	HashMap sirInit  = (HashMap)SIRassignment.clone();
-	HashMap tileInit = (HashMap)tileAssignment.clone();
-	
-	for (int i = 0; i < MAXTEMPITERATIONS; i++) {
-	    T = 2.0 * T;
-	    //c_old <- c_init
-	    SIRassignment = sirInit;
-	    tileAssignment = tileInit;
-	    if (perturbConfiguration(T))
-		accepted ++;
-	    total++;
-	    if (((double)accepted) / ((double)total) > .999)
-		break;
-	}
-	//c_old <- c_init
-	SIRassignment = sirInit;
-	tileAssignment = tileInit;
-	return T;
-    }
-    
-    private static double annealMinTemp () 
-    {
-	double T = 1.0;
-	int total = 0, accepted = 0;
-	HashMap sirInit  = (HashMap)SIRassignment.clone();
-	HashMap tileInit = (HashMap)tileAssignment.clone();
-	
-	for (int i = 0; i < MINTEMPITERATIONS; i++) {
-	    T = 0.5 * T;
-	    //c_old <- c_init
-	    SIRassignment = sirInit;
-	    tileAssignment = tileInit;
-	    if (perturbConfiguration(T))
-		accepted ++;
-	    total++;
-	    if (((double)accepted) / ((double)total) < .001)
-		break;
-	}
-	//c_old <- c_init
-	SIRassignment = sirInit;
-	tileAssignment = tileInit;
-	return T;
-    }
-    
-
     private static void randomPlacement() 
     {
+	//assign the fileReaders to the last row
+	if (FileReaderVisitor.foundReader) {
+	    Iterator frs = FileReaderVisitor.fileReaders.iterator();
+	    int column = 0;
+	    while (frs.hasNext()) {
+		assign(coordinates[StreamItOptions.rawRows][column], 
+		       (FlatNode)frs.next());
+		column ++;
+	    }
+	}
 	Iterator nodes = assigned.iterator();
 	int tile = 0;
 	while(nodes.hasNext()) {
@@ -329,11 +257,14 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     
     private static int placementCost() 
     {
-	Iterator nodes = assigned.iterator();
+	HashSet nodes = (HashSet)assigned.clone();
+	RawBackend.addAll(nodes, FileReaderVisitor.fileReaders);
+	
+	Iterator nodesIt = nodes.iterator();
 	HashSet routers = new HashSet();
 	int sum = 0;
-	while(nodes.hasNext()) {
-	    sum += placementCostHelper((FlatNode)nodes.next(), routers);
+	while(nodesIt.hasNext()) {
+	    sum += placementCostHelper((FlatNode)nodesIt.next(), routers);
 	}
 	return sum;
     }
@@ -345,7 +276,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	int sum = 0;
 	while (downstream.hasNext()) {
 	    FlatNode dest = (FlatNode)downstream.next();
-	    Coordinate[] route = (Coordinate[])Router.getRoute(node, dest).toArray(new Coordinate[1]);
+	    Coordinate[] route = 
+		(Coordinate[])Router.getRoute(node, dest).toArray(new Coordinate[1]);
 	    //find the number assigned on the path
 	    double numAssigned = 0.0;
 	    for (int i = 1; i < route.length - 1; i++) {
@@ -621,7 +553,9 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
     public void visitNode(FlatNode node) 
     {
-	if (node.contents instanceof SIRFilter) {
+	if (node.contents instanceof SIRFilter &&
+	    !(node.contents instanceof SIRFileReader)) {
+	    
 	    assigned.add(node);
 	    return;
 	}
@@ -633,4 +567,112 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    }
 	}
     }
-}  
+   
+}
+
+	
+//     public static void simAnnealAssignElliot(FlatNode node) 
+//     {
+// 	double T, Tf;
+// 	HashMap sirBest, tileBest;
+// 	int bestCost;
+
+// 	init(node);
+// 	random = new Random(17);
+// 	randomPlacement();
+// 	System.out.println("Initial placement cost: " + placementCost());
+// 	//clone the random placement
+
+// 	HashMap sir  = (HashMap)SIRassignment.clone();
+// 	HashMap tile = (HashMap)tileAssignment.clone();
+// 	T = annealMaxTemp();
+
+// 	//reset the initial random placement
+// 	SIRassignment  = sir;
+// 	tileAssignment = tile;
+// 	Tf = annealMinTemp();
+
+// 	//reset the initial random placement
+// 	SIRassignment  = sir;
+// 	tileAssignment = tile;
+
+// 	int i, bestIter = 0;
+      
+// 	bestCost = placementCost();
+// 	int cost = bestCost;
+// 	sirBest = (HashMap)SIRassignment.clone();
+// 	tileBest = (HashMap)tileAssignment.clone();
+
+// 	for (i = 0; i < ANNEALITERATIONS; i++) {
+// 	    perturbConfiguration(T);
+// 	    T = .999 * T;
+// 	    if (T <= Tf) break;
+// 	    cost = placementCost();
+// 	    if (cost < bestCost) {
+// 		bestIter = i;
+// 		sirBest = (HashMap)SIRassignment.clone();
+// 		tileBest = (HashMap)tileAssignment.clone();
+// 		bestCost = cost;
+// 	    }
+// 	    if (cost == 0)
+// 		break;
+// 	}
+// 	if (cost > bestCost) {
+// 	    SIRassignment = sirBest;
+// 	    tileAssignment = tileBest;
+// 	}
+// 	else
+// 	    bestIter = i;
+// 	System.out.println("Final placement cost: " + placementCost() +
+// 			   " " + bestIter);
+// 	dumpLayout();
+//     }
+   
+//     private static double annealMaxTemp() 
+//     {
+// 	double T = 1.0;
+// 	int total = 0, accepted = 0;
+// 	HashMap sirInit  = (HashMap)SIRassignment.clone();
+// 	HashMap tileInit = (HashMap)tileAssignment.clone();
+	
+// 	for (int i = 0; i < MAXTEMPITERATIONS; i++) {
+// 	    T = 2.0 * T;
+// 	    //c_old <- c_init
+// 	    SIRassignment = sirInit;
+// 	    tileAssignment = tileInit;
+// 	    if (perturbConfiguration(T))
+// 		accepted ++;
+// 	    total++;
+// 	    if (((double)accepted) / ((double)total) > .999)
+// 		break;
+// 	}
+// 	//c_old <- c_init
+// 	SIRassignment = sirInit;
+// 	tileAssignment = tileInit;
+// 	return T;
+//     }
+    
+//     private static double annealMinTemp () 
+//     {
+// 	double T = 1.0;
+// 	int total = 0, accepted = 0;
+// 	HashMap sirInit  = (HashMap)SIRassignment.clone();
+// 	HashMap tileInit = (HashMap)tileAssignment.clone();
+	
+// 	for (int i = 0; i < MINTEMPITERATIONS; i++) {
+// 	    T = 0.5 * T;
+// 	    //c_old <- c_init
+// 	    SIRassignment = sirInit;
+// 	    tileAssignment = tileInit;
+// 	    if (perturbConfiguration(T))
+// 		accepted ++;
+// 	    total++;
+// 	    if (((double)accepted) / ((double)total) < .001)
+// 		break;
+// 	}
+// 	//c_old <- c_init
+// 	SIRassignment = sirInit;
+// 	tileAssignment = tileInit;
+// 	return T;
+//     }
+    

@@ -36,6 +36,13 @@ public class SwitchCode extends at.dms.util.Utils
 	RawBackend.addAll(tiles, Simulator.steadySchedules.keySet());
 	RawBackend.addAll(tiles, Layout.getTiles());
 
+	//do not generate switchcode for Tiles assigned to file readers
+	//they are just dummy tiles
+	Iterator frs = FileReaderVisitor.fileReaders.iterator();
+	while (frs.hasNext()) {
+	    tiles.remove(Layout.getTile((FlatNode)frs.next()));
+	}
+	
 	Iterator tileIterator = tiles.iterator();
 			
 	//for each tiles dump the code
@@ -68,6 +75,9 @@ public class SwitchCode extends at.dms.util.Utils
 				   + ".s");
 		fw.write("#  Switch code\n");
 		fw.write(getHeader());
+		//if this tile is the north neighbor of a bc file i/o device
+		//we need to send a data word to it
+		printIOStartUp(tile, fw);
 		//print the code to get the repetition counts from the processor
 		if (threeBiggest != null)
 		    getRepetitionCounts(threeBiggest, fw);
@@ -80,13 +90,13 @@ public class SwitchCode extends at.dms.util.Utils
 		    toASM(steadyCode, threeBiggest, fw);
 		//print the jump ins
 		fw.write("\tj\tsw_loop\n\n");
-		fw.write(getTrailer(threeBiggest));
+		fw.write(getTrailer(tile, threeBiggest));
 		fw.close();
 		if (threeBiggest != null) {
 		    System.out.print("Found Seqeunces of: " +
 				     threeBiggest[0].repetitions + " " + 
-				     threeBiggest[0].repetitions + " " + 
-				     threeBiggest[0].repetitions + "\n");
+				     threeBiggest[1].repetitions + " " + 
+				     threeBiggest[3].repetitions + "\n");
 		} 
 
 		System.out.println("sw" + Layout.getTileNumber(tile) 
@@ -100,6 +110,16 @@ public class SwitchCode extends at.dms.util.Utils
 	    }
 	}
     }
+
+    //this this tile is the north neightbor of a bc file i/o device, we must send a
+    //dummy 
+    private static void printIOStartUp(Coordinate tile, FileWriter fw) throws Exception 
+    {
+	if (FileReaderVisitor.connectedToFR(tile))
+	    fw.write("\tnop\troute $csto->$cSo\n");
+    }
+    
+	   
 
     //receives the constants from the tile processor
     private static void getRepetitionCounts(Repetition[] compressMe, FileWriter fw) throws Exception
@@ -237,7 +257,7 @@ public class SwitchCode extends at.dms.util.Utils
 	return buf.toString();
     }
     
-    private static String getTrailer(Repetition[] compressMe) 
+    private static String getTrailer(Coordinate tile, Repetition[] compressMe) 
     {
 	StringBuffer buf = new StringBuffer();
 	
@@ -245,8 +265,10 @@ public class SwitchCode extends at.dms.util.Utils
 	buf.append("raw_init:\n");
 	buf.append("\tmtsri	SW_PC, %lo(sw_begin)\n");
 	buf.append("\tmtsri	SW_FREEZE, 0\n");
+	if (FileReaderVisitor.connectedToFR(tile))
+	    buf.append("\tori! $0, $0, 1\n");
+
 	if (compressMe != null) {
-	    
 	    for (int i = 0; i < compressMe.length; i++) {
 		//System.out.println("line: " + compressMe[i].line + " reps: " + compressMe[i].repetitions);
 		

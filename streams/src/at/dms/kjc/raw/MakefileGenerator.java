@@ -21,6 +21,14 @@ public class MakefileGenerator
 	    HashSet tiles = new HashSet();
 	    tiles.addAll(TileCode.realTiles);
 	    tiles.addAll(TileCode.tiles);
+	    
+	    //remove the tiles assigned to FileReaders
+	    //do not generate switchcode for Tiles assigned to file readers
+	    //they are just dummy tiles
+	    Iterator frs = FileReaderVisitor.fileReaders.iterator();
+	    while (frs.hasNext()) {
+		tiles.remove(Layout.getTile((FlatNode)frs.next()));
+	    }
 
 	    Iterator tilesIterator = tiles.iterator();
 	    
@@ -28,6 +36,10 @@ public class MakefileGenerator
 	    fw.write("SIM-CYCLES = 500000\n\n");
 	    fw.write("include /home/bits6/mgordon/starsearch/Makefile.include\n\n");
 	    fw.write("RGCCFLAGS += -O3\n\n");
+	    if (FileReaderVisitor.foundReader) {
+		fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");
+		createBCFile();
+	    }
 	    if (StreamItOptions.rawRows > 4)
 		fw.write("TILE_PATTERN=8x8\n\n");
 	    fw.write("TILES = ");
@@ -68,6 +80,34 @@ public class MakefileGenerator
 		e.printStackTrace();
 	    }
     }
+    
+    private static void createBCFile() throws Exception 
+    {
+	FileWriter fw = new FileWriter("fileio.bc");
+	
+	fw.write("include(\"<dev/basic.bc>\");\n");
+	fw.write("include(\"<dev/st_port_to_file.bc>\");\n");
+	fw.write("\n{\n");
+	Iterator frs = FileReaderVisitor.fileReaders.iterator();
+	while (frs.hasNext()) {
+	    FlatNode node = (FlatNode)frs.next();
+	    SIRFileReader fr = (SIRFileReader)node.contents;
+	    fw.write("\tdev_serial_rom_init(\"" + fr.getFileName() + "\", " + 
+		     getIOPort(Layout.getTile(node)) + 
+		     ", 1);\n");
+	}
+	
+	fw.write("\n}\n");
+	fw.close();
+    }
+    
+    private static int getIOPort(Coordinate tile) 
+    {
+	return StreamItOptions.rawColumns + StreamItOptions.rawRows + 
+	    (StreamItOptions.rawColumns - 1) - tile.getColumn();
+    }
+    
+
 }
 
 		

@@ -76,7 +76,8 @@ ifeq ($(CAG_BUILD),1)
 STREAMIT_BACKENDS += \
   at/dms/kjc/spacetime/SpaceTimeBackend.class \
   at/dms/kjc/cluster/ClusterBackend.class \
-  at/dms/kjc/sir/SIRToStreamIt.class 
+  at/dms/kjc/sir/SIRToStreamIt.class \
+  at/dms/kjc/spacedynamic/RawBackend.class
 endif
 
 JAVA_TARGET = \

@@ -17,3 +17,15 @@ workCount = 14354852 / 14652864 = 0.97966186
 workCount = 635369 / 650096 = 0.97734642
 workCount = 634319 / 648976 = 0.97741519
 
+Uniprocessor:
+(Xenon 2.2 GHz, 512MB cache)
+10 million iterations (outputs)
+99% utilization
+runtime for 10^7 iterations(outputs) = 94.11 seconds
+We want cycles/iteration:
+
+10^7 iterations/94.11 sec * 
+1 output/iteration*
+1 second/2.2x10^9 
+* 10^5 cycles
+= 4.8299379 Outputs / 10^5 cycles

@@ -52,10 +52,6 @@ my @tests = (
 	     "regtests/LinearTest35.str",
 	     );
 
-#@tests = (
-#	  "regtests/LinearTest10.str",
-#);
-
 
 my $current_test;
 foreach $current_test (@tests) {
@@ -96,15 +92,24 @@ foreach $current_test (@tests) {
 		"$base.java >& $base.freq.c");
     `$command`;
 
+    # now, compile the test one last time, with redundancy replacement enabled
+    $command = ("$S --redundantreplacement " .
+		"$base.java >& $base.redund.c");
+    `$command`;
+
+
+
     
     # now, compile the c to an exe for both the original, replaced, and freq programs
     `$SL $base.c -o $base.exe`;
     `$SL $base.replaced.c -o $base.replaced.exe `;
     `$SL $base.freq.c -o $base.freq.exe `;
+    `$SL $base.redund.c -o $base.redund.exe `;
     # execute both the original and the replaced program 100 iterations
     print `$base.exe -i 100 > $base.run`;
     print `$base.replaced.exe -i 100 > $base.replaced.run`;
     print `$base.freq.exe -i 100 > $base.freq.run`;
+    print `$base.redund.exe -i 100 > $base.redund.run`;
 
     # now, compare replacement to normal
     $result = `perl -I$CMP_PATH $CMP $base.run $base.replaced.run`;
@@ -118,6 +123,16 @@ foreach $current_test (@tests) {
 
     # now, compare frequency to normal
     $result = `perl -I$CMP_PATH $CMP $base.run $base.freq.run`;
+    chomp($result);
+    if ($result ne "") {
+	print "$base(freq):     failure\n";
+	print "  $result\n";
+    } else {
+	print "$base(freq):     success\n";
+    }
+
+    # now, compare redundancy to normal
+    $result = `perl -I$CMP_PATH $CMP $base.run $base.redund.run`;
     chomp($result);
     if ($result ne "") {
 	print "$base(freq):     failure\n";

@@ -14,6 +14,10 @@ FREQTRANS-OPTIONS =  --unroll 100000 --linearanalysis --frequencyreplacement 3 -
 # options to use for both transformations
 BOTH-OPTIONS      =  --unroll 100000 --linearanalysis --linearreplacement --frequencyreplacement 1 --debug
 
+# options to use for frquency transformation
+REDUNDANT-OPTIONS =  --unroll 100000 --linearanalysis --redundantreplacement --debug
+
+
 # regression testing perl script
 LINEAR-REG-TEST = linear_regtest.pl
 
@@ -21,16 +25,18 @@ LINEAR-REG-TEST = linear_regtest.pl
 COMPARE = perl -I$(STREAMIT_HOME)/regtest/tools $(STREAMIT_HOME)/regtest/tools/compare_uni.pl 
 
 # current test
-CURRENT-TEST = regtests/LinearTest32
+CURRENT-TEST = regtests/LinearTest17
 
 
 all: clean java-compile uni-compile raw-compile
 
 
-linear-compile:
+linear-compile-old:
 	jikes $(STREAMIT_HOME)/compiler/at/dms/kjc/sir/linear/*.java 
 	jikes $(STREAMIT_HOME)/compiler/at/dms/kjc/sir/linear/transform/*.java
 	jikes $(STREAMIT_HOME)/compiler/at/dms/kjc/sir/linear/frequency/*.java
+linear-compile:
+	make -C $(STREAMIT_HOME)/compiler
 library-compile:
 	make -C $(STREAMIT_HOME)/library/c
 
@@ -68,10 +74,21 @@ test-current: linear-compile
 	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS) $(CURRENT-TEST).java > current.output
 	./parse_linear_output.pl current.output
 
+
 test-current-redundant: linear-compile
 	$(NEW-FRONTEND) $(CURRENT-TEST).str > $(CURRENT-TEST).java
-	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS) $(CURRENT-TEST).java > current.output
-	./parse_redundant_output.pl current.output
+	$(STREAMIT-COMPILER) $(REDUNDANT-OPTIONS) $(CURRENT-TEST).java > test-redund.c
+	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS)  $(CURRENT-TEST).java > test-normal.c
+	$(UNI-COMPILER) test-redund.c -o test-redund.exe
+	$(UNI-COMPILER) test-normal.c -o test-normal.exe
+	./test-redund.exe -i 100 > redu.out
+	./test-normal.exe -i 100 > norm.out
+	./parse_redundant_output.pl test-redund.c
+	$(COMPARE) redu.out norm.out
+
+
+
+
 
 test-freq: linear-compile library-compile
 	sl test-freq.c -o test-freq.exe
@@ -89,7 +106,7 @@ clean:
 	rm -f *.dot *.dot.ps *.output
 	rm -f regtests/*.output regtests/*.parsed  regtests/*.dot
 	rm -f regtests/*~ regtests/*.exe regtests/*.run regtests/*.c
-	rm -f test-freq* test-normal* test-replace*
+	rm -f test-freq* test-normal* test-replace* test-redund.*
 	rm -f regtests/LinearTest9.java
 	rm -f regtests/LinearTest10.java regtests/LinearTest11.java regtests/LinearTest12.java regtests/LinearTest13.java 
 	rm -f regtests/LinearTest14.java regtests/LinearTest15.java regtests/LinearTest16.java regtests/LinearTest17.java 

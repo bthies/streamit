@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.13 2002-08-20 19:12:03 aalamb Exp $
+ * $Id: Main.java,v 1.14 2002-09-03 07:33:09 nmani Exp $
  */
 
 package at.dms.kjc;
@@ -172,6 +172,7 @@ public class Main extends Compiler {
 	StreamItOptions.ratematch = options.ratematch;
 	StreamItOptions.simplesjfusion = options.simplesjfusion;
 	StreamItOptions.linearanalysis = options.linearanalysis;
+	StreamItOptions.viram = options.viram;
 
 	StreaMITMain.compile(tree);
 	/*	

@@ -144,7 +144,7 @@ public class TraceExtractor {
 		UnflatEdge[] destFilters=outFilter.out[j];
 		Edge[] subDests=new Edge[destFilters.length];
 		for(int k=0;k<destFilters.length;k++) {
-		    subDests[k]=(Edge)inNodes.get(destFilters[k].dest);
+		    subDests[k]=new Edge(outNode,(InputTraceNode)inNodes.get(destFilters[k].dest));
 		}
 		dests[j]=subDests;
 	    }
@@ -157,16 +157,16 @@ public class TraceExtractor {
     
     private static InputTraceNode getInNode(HashMap outNodes,HashMap inNodes,UnflatFilter filter) {
 	UnflatEdge[] in=filter.in;
-	Edge[] inNode=new Edge[in.length];
+	OutputTraceNode[] inNode=new OutputTraceNode[in.length];
 	for(int i=0;i<in.length;i++)
-	    inNode[i]=(Edge)outNodes.get(in[i].src);
+	    inNode[i]=(OutputTraceNode)outNodes.get(in[i].src);
 	InputTraceNode output=null;
 	//if(filter.filter instanceof SIRFileWriter) {
 	//SIRFileWriter write=(SIRFileWriter)filter.filter;
 	//output=new ExitTraceNode(write.getFileName(),true,filter.inWeights,inNode);
 	//} else
 	output=new InputTraceNode(filter.inWeights,inNode);
-	inNodes.put(filter,inNode);
+	inNodes.put(filter,output);
 	return output;
     }
 

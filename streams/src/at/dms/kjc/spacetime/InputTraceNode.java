@@ -25,6 +25,20 @@ public class InputTraceNode extends TraceNode
 	unique++;
     }
 
+    public InputTraceNode(int[] weights,
+			  OutputTraceNode[] sources) {
+	//this.parent = parent;
+	if (weights.length != sources.length)
+	    Utils.fail("Add comment later");
+	//this.sources = sources;
+	this.sources=new Edge[sources.length];
+	for(int i=0;i<sources.length;i++)
+	    this.sources[i]=new Edge(sources[i],this);
+	this.weights=weights;
+	ident = "input" + unique;
+	unique++;
+    }
+
     public InputTraceNode(int[] weights) {
 	//this.parent = parent;
 	sources=EMPTY_SRCS;

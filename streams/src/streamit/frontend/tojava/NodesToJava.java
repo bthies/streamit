@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.11 2002-07-22 18:45:14 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.12 2002-07-22 19:05:39 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -51,6 +51,18 @@ public class NodesToJava implements FEVisitor
         return null;
     }
 
+    // Do the same conversion, but including array dimensions.
+    public String convertTypeFull(Type type)
+    {
+        if (type instanceof TypeArray)
+        {
+            TypeArray array = (TypeArray)type;
+            return convertTypeFull(array.getBase()) + "[" +
+                (String)array.getLength().accept(this) + "]";
+        }
+        return convertType(type);
+    }
+
     // Get a Java Class object corresponding to a type.
     public String typeToClass(Type t)
     {
@@ -71,9 +83,7 @@ public class NodesToJava implements FEVisitor
         else if (t instanceof TypeStruct)
             return ((TypeStruct)t).getName() + ".class";
         else if (t instanceof TypeArray)
-            return "(new " + convertType(((TypeArray)t).getBase()) +
-                "[" + (String)((TypeArray)t).getLength().accept(this) +
-                "]).getClass()";
+            return "(new " + convertTypeFull(t) + ").getClass()";
         // Errp.
         return null;
     }

@@ -8,6 +8,7 @@ import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.lir.*;
 
 import java.math.BigInteger;
@@ -187,23 +188,23 @@ public class FusePipe {
      * Fuses sections of <pipe> according to <partitions>, which
      * specifies the grouping sequence of who gets fused together.
      */
-    public static void fuse(SIRPipeline pipe, int[] partitions) {
+    public static void fuse(SIRPipeline pipe, PartitionGroup partitions) {
 	int pos = 0;
 	// keep track of the first and last element in each partition
-	SIRFilter[] first = new SIRFilter[partitions.length];
-	SIRFilter[] last = new SIRFilter[partitions.length];
-	for (int i=0; i<partitions.length; i++) {
+	SIRFilter[] first = new SIRFilter[partitions.size()];
+	SIRFilter[] last = new SIRFilter[partitions.size()];
+	for (int i=0; i<partitions.size(); i++) {
 	    // ignore 1-size partitions since they might not be filters
-	    if (partitions[i]!=1) {
+	    if (partitions.get(i)!=1) {
 		first[i] = (SIRFilter)pipe.get(pos);
-		last[i]  = (SIRFilter)pipe.get(pos+partitions[i]-1);
+		last[i]  = (SIRFilter)pipe.get(pos+partitions.get(i)-1);
 	    }
-	    pos+=partitions[i];
+	    pos+=partitions.get(i);
 	}
 	// do the fusion in sections
-	for (int i=0; i<partitions.length; i++) {
-	    // only need to fuse for partitions[i]>1
-	    if (partitions[i]!=1) {
+	for (int i=0; i<partitions.size(); i++) {
+	    // only need to fuse for partitions.get(i)>1
+	    if (partitions.get(i)!=1) {
 		Utils.assert(first[i].getParent()==pipe, "Parent/child inconsistency with parent=" 
 			     + first[i].getParent() + " and pipe=" + pipe + " and (first) child=" + first[i]);
 		Utils.assert(last[i].getParent()==pipe, "Parent/child inconsistency with parent=" 

@@ -5,6 +5,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
 import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.sir.lowering.partition.*;
 
 import java.util.*;
 
@@ -37,48 +38,44 @@ public class FuseSplit {
 	else if(sj.size()%2==0) {
 	    int half=sj.size()/2;
 	    int[] partition=new int[half];
-	    for(int i=0;i<half;i++)
+	    for (int i=0;i<half;i++) {
 		partition[i]=2;
-	    return fuse(sj,partition);
+	    }
+	    return fuse(sj, PartitionGroup.createFromArray(partition));
 	} else {
 	    int half=sj.size()/2;
 	    int[] partition=new int[half+1];
 	    for(int i=0;i<half;i++)
 		partition[i]=2;
 	    partition[half]=1;
-	    return fuse(sj,partition);
+	    return fuse(sj, PartitionGroup.createFromArray(partition));
 	}
     }
 
 
-    //Uses partition to partion children and fuses only the children corresponding non 1 elements of partition
-    //Sum of elements in partition should be number of children
-    public static SIRStream fuse(SIRSplitJoin sj,int[] partition) {
+    //Uses partition to partion children according to <group>
+    public static SIRStream fuse(SIRSplitJoin sj, PartitionGroup group) {
 	{//Quick check
-	    int sum=0;
-	    for(int i=0;i<partition.length;i++) {
-		// make sure there's at least one stream per partition
-		Utils.assert(partition[i]>0);
+	    Utils.assert(group.getNumChildren()==sj.size(),
+			 "More children in partitioning than in splitjoin " + sj);
+	    for(int i=0;i<group.size();i++) {
 		// if we're trying to fuse something that's not a filter, just return
-		if (partition[i]>1) {
-		    for (int j=sum; j<sum+partition[i]; j++) {
+		if (group.get(i)>1) {
+		    for (int j=group.getFirst(i); j<=group.getLast(i); j++) {
 			if (!(sj.get(j) instanceof SIRFilter)) {
 			    System.err.println("Tried to fuse non-filter in SJ; returning original SJ.");
 			    return sj;
 			}
 		    }
-		}		
-		sum+=partition[i];
-	    }
-	    if(sum!=sj.size()) {
-		Utils.fail("Illformated partition "+partition+" for SIRSplitJoin "+sj+" of size "+sj.size());
+		}
 	    }
 	}
 
-	if (partition.length==1) {
+	int numParts = group.size();
+	if (numParts==1) {
 	    // if fusing whole thing
 	    return fuse(sj);
-	} else if (partition.length==sj.size()) {
+	} else if (numParts==sj.size()) {
 	    // if not fusing at all
 	    return sj;
 	}
@@ -89,19 +86,19 @@ public class FuseSplit {
 	    return dispatchResult;
 	}
 	
-	System.err.println("Fusing " + (sj.size()) + " SplitJoin filters into " + partition.length + " filters..."); 
+	System.err.println("Fusing " + (sj.size()) + " SplitJoin filters into " + numParts + " filters..."); 
 
 	int[] oldSplit=sj.getSplitter().getWeights();
 	int[] oldJoin=sj.getJoiner().getWeights();
-	JExpression[] newSplit=new JExpression[partition.length];
-	JExpression[] newJoin=new JExpression[partition.length];
+	JExpression[] newSplit=new JExpression[numParts];
+	JExpression[] newJoin=new JExpression[numParts];
 	SIRSplitJoin newSplitJoin=new SIRSplitJoin();
 	newSplitJoin.setParent(sj.getParent());
 	newSplitJoin.setIdent(sj.getIdent());
 	newSplitJoin.setFields(sj.getFields());
 	newSplitJoin.setMethods(sj.getMethods());
-	for(int i=0,j=0;i<partition.length;i++) {
-	    int incr=partition[i];
+	for(int i=0,j=0;i<numParts;i++) {
+	    int incr=group.get(i);
 	    if(incr==1) {
 		newSplitJoin.add(sj.get(j));
 		newSplit[i]=new JIntLiteral(oldSplit[j]);

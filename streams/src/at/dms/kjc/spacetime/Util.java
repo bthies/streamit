@@ -53,4 +53,61 @@ public class Util {
 	}
 	return ret;
     }
+
+    public static int calculateRemaining(FilterTraceNode node, FilterTraceNode previous) 
+    {
+	SIRFilter filter = node.getFilter();
+	
+	int pop = filter.getPopInt();
+	int peek = filter.getPeekInt();
+	
+	//set up prePop, prePeek
+	int prePop = 0;
+	int prePeek = 0;
+	
+	if (filter instanceof SIRTwoStageFilter) {
+	    prePop = ((SIRTwoStageFilter)filter).getInitPop();
+	    prePeek = ((SIRTwoStageFilter)filter).getInitPeek();
+	}
+	
+	//the number of times this filter fires in the initialization
+	//schedule
+	int initFire = node.getInitMult();
+	
+	//if this is not a twostage, fake it by adding to initFire,
+	//so we always think the preWork is called
+	if (!(filter instanceof SIRTwoStageFilter))
+	    initFire++;
+	
+	//the number of items produced by the upstream filter in
+	//initialization
+	int upStreamItems = 0;
+	
+	if (previous != null) {
+	    //calculate upstream items received during init  FILL ME IN!!!
+	    upStreamItems = previous.getFilter().getPushInt() * 
+		previous.getInitMult();
+	    if (previous.getFilter() instanceof SIRTwoStageFilter) {
+		upStreamItems -= ((SIRTwoStageFilter)previous.getFilter()).getPushInt();
+		upStreamItems += ((SIRTwoStageFilter)previous.getFilter()).getInitPush();
+	    }
+	}
+	
+	int bottomPeek = 0, remaining = 0;
+
+	//see my thesis for an explanation of this calculation
+	if (initFire  - 1 > 0) {
+	    bottomPeek = Math.max(0, 
+				  peek - (prePeek - prePop));
+	}
+	else
+	    bottomPeek = 0;
+	
+	remaining = upStreamItems -
+	    (prePeek + 
+	     bottomPeek + 
+	     Math.max((initFire - 2), 0) * pop);
+	
+	return remaining;
+    }
 }

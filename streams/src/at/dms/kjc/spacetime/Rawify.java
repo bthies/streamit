@@ -85,6 +85,28 @@ public class Rawify
 	    }
 	    
 	}
+	
+	//now we must take care of the remaining items on the input tape 
+	//after the initialization phase if the upstream filter produces more than
+	//we consume in init
+	if (init) {
+	    if (node.getPrevious() instanceof FilterTraceNode) {		
+		int remaining = Util.calculateRemaining(node, (FilterTraceNode)node.getPrevious());
+		if (remaining > 0) {
+		    for (int i = 0; 
+			 i < remaining * Util.getTypeSize(node.getFilter().getInputType()); 
+			 i++) {
+			RouteIns ins = new RouteIns(tile);
+			//add the route from the source tile to this
+			//tile's compute processor
+			ins.addRoute(rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(), 
+						     ((FilterTraceNode)node.getPrevious()).getY()),
+				     tile);
+			tile.getSwitchCode().appendIns(ins, init);
+		    }   
+		}
+	    }
+	}
     }
     
     private static int itemsFiring(SIRFilter filter, int exeCount, boolean init) 

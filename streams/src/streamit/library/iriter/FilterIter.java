@@ -4,7 +4,7 @@ import streamit.Filter;
 
 public class FilterIter
     extends streamit.misc.DestroyedClass
-    implements streamit.scheduler.iriter.FilterIter
+    implements streamit.scheduler2.iriter.FilterIter
 {
     FilterIter(Filter _filter)
     {
@@ -18,7 +18,7 @@ public class FilterIter
         return filter;
     }
 
-    public streamit.scheduler.iriter.Iterator getUnspecializedIter()
+    public streamit.scheduler2.iriter.Iterator getUnspecializedIter()
     {
         return new Iterator(filter);
     }

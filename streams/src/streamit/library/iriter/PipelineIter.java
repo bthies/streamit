@@ -4,7 +4,7 @@ import streamit.Pipeline;
 
 public class PipelineIter
     extends streamit.misc.DestroyedClass
-    implements streamit.scheduler.iriter.PipelineIter
+    implements streamit.scheduler2.iriter.PipelineIter
 {
     PipelineIter(Pipeline _pipeline)
     {
@@ -18,7 +18,7 @@ public class PipelineIter
         return pipeline;
     }
     
-    public streamit.scheduler.iriter.Iterator getUnspecializedIter()
+    public streamit.scheduler2.iriter.Iterator getUnspecializedIter()
     {
         return new Iterator(pipeline);
     }
@@ -28,7 +28,7 @@ public class PipelineIter
         return pipeline.getNumChildren ();
     }
     
-    public streamit.scheduler.iriter.Iterator getChild (int n)
+    public streamit.scheduler2.iriter.Iterator getChild (int n)
     {
         return new Iterator (pipeline.getChildN (n));
     }

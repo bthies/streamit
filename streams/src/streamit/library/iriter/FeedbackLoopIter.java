@@ -6,7 +6,7 @@ import streamit.NullJoiner;
 
 public class FeedbackLoopIter
     extends streamit.misc.DestroyedClass
-    implements streamit.scheduler.iriter.FeedbackLoopIter
+    implements streamit.scheduler2.iriter.FeedbackLoopIter
 {
     FeedbackLoopIter (FeedbackLoop _feedback)
     {
@@ -20,7 +20,7 @@ public class FeedbackLoopIter
         return feedback;
     }
     
-    public streamit.scheduler.iriter.Iterator getUnspecializedIter()
+    public streamit.scheduler2.iriter.Iterator getUnspecializedIter()
     {
         return new Iterator(feedback);
     }
@@ -30,12 +30,12 @@ public class FeedbackLoopIter
         return feedback.getDelay();
     }
     
-    public streamit.scheduler.iriter.Iterator getBodyChild ()
+    public streamit.scheduler2.iriter.Iterator getBodyChild ()
     {
         return new Iterator (feedback.getBody ());
     }
 
-    public streamit.scheduler.iriter.Iterator getLoopChild ()
+    public streamit.scheduler2.iriter.Iterator getLoopChild ()
     {
         return new Iterator (feedback.getLoop ());
     }

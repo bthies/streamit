@@ -1,14 +1,14 @@
 package streamit.iriter;
 
-/* $Id: StreamFactory.java,v 1.6 2002-07-27 22:43:05 karczma Exp $ */
+/* $Id: StreamFactory.java,v 1.7 2002-12-03 22:04:54 thies Exp $ */
 
 import streamit.misc.DestroyedClass;
-import streamit.scheduler.iriter.Iterator;
-import streamit.scheduler.base.StreamInterface;
-import streamit.scheduler.minlatency.Filter;
-import streamit.scheduler.minlatency.Pipeline;
-import streamit.scheduler.minlatency.SplitJoin;
-import streamit.scheduler.minlatency.FeedbackLoop;
+import streamit.scheduler2.iriter.Iterator;
+import streamit.scheduler2.base.StreamInterface;
+import streamit.scheduler2.minlatency.Filter;
+import streamit.scheduler2.minlatency.Pipeline;
+import streamit.scheduler2.minlatency.SplitJoin;
+import streamit.scheduler2.minlatency.FeedbackLoop;
 
 /**
  * This class basically implements the StreamFactory interface.  In the 
@@ -18,7 +18,7 @@ import streamit.scheduler.minlatency.FeedbackLoop;
 
 public class StreamFactory
     extends DestroyedClass
-    implements streamit.scheduler.base.StreamFactory
+    implements streamit.scheduler2.base.StreamFactory
 {
     public StreamInterface newFrom(Iterator streamIter)
     {

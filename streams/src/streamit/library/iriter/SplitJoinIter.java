@@ -6,7 +6,7 @@ import streamit.NullJoiner;
 
 public class SplitJoinIter
     extends streamit.misc.DestroyedClass
-    implements streamit.scheduler.iriter.SplitJoinIter
+    implements streamit.scheduler2.iriter.SplitJoinIter
 {
     SplitJoinIter (SplitJoin _splitjoin)
     {
@@ -20,7 +20,7 @@ public class SplitJoinIter
         return splitjoin;
     }
     
-    public streamit.scheduler.iriter.Iterator getUnspecializedIter()
+    public streamit.scheduler2.iriter.Iterator getUnspecializedIter()
     {
         return new Iterator(splitjoin);
     }
@@ -30,7 +30,7 @@ public class SplitJoinIter
         return splitjoin.getNumChildren ();
     }
     
-    public streamit.scheduler.iriter.Iterator getChild (int n)
+    public streamit.scheduler2.iriter.Iterator getChild (int n)
     {
         return new Iterator (splitjoin.getChildN (n));
     }

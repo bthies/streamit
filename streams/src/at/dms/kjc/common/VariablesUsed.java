@@ -89,6 +89,10 @@ public class VariablesUsed extends SLIREmptyVisitor
                                      JExpression left,
 				     String ident) 
     {
+	if (!(left instanceof JThisExpression)) {
+	    left.accept(this);
+	    return;
+	}
 	vars.add(ident);
     }
 

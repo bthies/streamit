@@ -40,6 +40,10 @@ public class HasSideEffects extends SLIREmptyVisitor
 	return hse.sideEffect;
     }
     
+    public static boolean hasSideEffects(JStatement entry) 
+    {
+	return HasSideEffects.hasSideEffects(Utils.getExpression(entry));
+    }
 
     private HasSideEffects() 
     {

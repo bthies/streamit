@@ -72,21 +72,36 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
 					    JExpression left,
 					    JExpression right) {
 	//remove an assignment expression if it 
-	if (left instanceof JFieldAccessExpression) {
-	    if (!varsUsed.contains(((JFieldAccessExpression)left).getIdent()) &&
-		!HasSideEffects.hasSideEffects(right) &&
-		!HasSideEffects.hasSideEffects(left))
-		return null;
-	} else if (left instanceof JLocalVariableExpression) {
-	    if (!varsUsed.contains(((JLocalVariableExpression)left).getVariable()) &&
-		!HasSideEffects.hasSideEffects(right) &&
-		!HasSideEffects.hasSideEffects(left))
-		return null;
-	}
-	
+	if (!varsUsed.contains(getVariable(left)) &&
+	    !HasSideEffects.hasSideEffects(right) &&
+	    !HasSideEffects.hasSideEffects(left))
+	    return null;
+	    
 	return doBinaryExpression(self, left, right);
     }
 
+    public Object getVariable(Object access) 
+    {
+	if (access instanceof JFieldAccessExpression) {
+	    JFieldAccessExpression facc = (JFieldAccessExpression)access;
+	    if (facc.getPrefix() instanceof JThisExpression)
+		return facc.getIdent();
+	    else {
+		return getVariable(facc.getPrefix());
+	    }
+	}
+	else if (access instanceof JLocalVariableExpression) {
+	    return ((JLocalVariableExpression)access).getVariable();
+	}
+	else if (access instanceof JArrayAccessExpression) {
+	    return getVariable(((JArrayAccessExpression)access).getPrefix());
+	}
+	
+	assert false;
+	return null;
+    }
+    
+    
     /**
      * prints an expression statement
      */

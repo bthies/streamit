@@ -10,6 +10,10 @@ void data_consumer::write_object(object_write_buffer *buf) {
   buf->write_int(items_read);
 }
 
+void data_consumer::read_object(object_write_buffer *buf) {
+  items_read = buf->read_int();
+}
+
 
 mysocket *data_consumer::get_socket() {
   return socket;

@@ -10,6 +10,10 @@ void data_producer::write_object(object_write_buffer *buf) {
   buf->write_int(items_sent);
 }
 
+void data_producer::read_object(object_write_buffer *buf) {
+  items_sent = buf->read_int();
+}
+
 mysocket *data_producer::get_socket() {
   return socket;
 }

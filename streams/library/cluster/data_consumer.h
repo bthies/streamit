@@ -17,6 +17,7 @@ class data_consumer : public socket_holder, public serializable {
   data_consumer();
 
   virtual void write_object(object_write_buffer *);
+  virtual void read_object(object_write_buffer *);
 
   virtual mysocket *get_socket();
   virtual void set_socket(mysocket *);

@@ -8,6 +8,7 @@ class serializable {
  public:
   
   virtual void write_object(object_write_buffer *) = 0;
+  virtual void read_object(object_write_buffer *) = 0;
 
 };
 

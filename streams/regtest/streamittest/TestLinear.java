@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.15 2003-04-11 00:27:41 aalamb Exp $
+ * $Id: TestLinear.java,v 1.16 2003-04-12 17:51:21 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -44,8 +44,6 @@ public class TestLinear extends TestCase {
 	suite.addTest(new TestLinear("testFilterMatrixAddition"));
 	suite.addTest(new TestLinear("testFilterMatrixMultiplication"));
 
-	suite.addTest(new TestLinear("testFilterMatrixRealConstructor"));
-	
 	suite.addTest(new TestLinear("testFilterVector"));
 
 	suite.addTest(new TestLinear("testLinearForm"));
@@ -650,28 +648,6 @@ public class TestLinear extends TestCase {
 	// expect an exception when multiplying the other way
 	try {mat2.times(mat2);fail("bad dimens!");} catch (IllegalArgumentException e) {}
     }
-
-    /** Test the FilterMatrixReal class -- implements a matrix of only real numbers. **/
-    public void testFilterMatrixRealConstructor() {
-	FilterMatrix     mat1 = parseMatrix("[[1 2 3][4 5 6]]");
-	FilterMatrix     mat2 = parseMatrix("[[4 2 3][4 8 6]]");
-
-	// try and construct a real matrix from an entirely zero complex matrix
-	FilterMatrixReal matr = new FilterMatrixReal(new FilterMatrix(5,4));
-	// try and make a matrix where there is a complex number
-	FilterMatrix matcomplex = new FilterMatrix(2,2);
-	matcomplex.setElement(1,0,new ComplexNumber(1,2));
-	try {
-	    FilterMatrixReal foo = new FilterMatrixReal(matcomplex);
-	    fail("could make a real filter matrix from a non real filter matrix.");
-	} catch (Exception e) {} //expect an exception
-	
-	FilterMatrixReal mat1r = new FilterMatrixReal(mat1);
-	
-	//fail("not yet implemented");
-    }
-
-
     
     
     /** Test the FilterVector class. **/

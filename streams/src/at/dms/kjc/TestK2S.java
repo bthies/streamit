@@ -138,7 +138,16 @@ public class TestK2S extends Main
 	    }
 
 	sirPrinter.close();
+
+	System.out.println("---------------------------");
+	/*
+	sirPrinter = new SIRPrinter();
+	topLevel[0] = SIRBuilder.buildHello6();
+	topLevel[0].accept(sirPrinter);
+
+	sirPrinter.close();
 	
+	*/
 	/*	k2s = new Kopi2SIR();
 	
 	CSourceClass[] csc = getClasses();

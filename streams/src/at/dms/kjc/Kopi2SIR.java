@@ -42,7 +42,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
 
     private void blockStart(String str) {
-	System.out.println("attribute_visit" + str +"\n");
+	//System.out.println("attribute_visit" + str +"\n");
+    }
+
+    private void printMe(String str) {
+	//System.out.println(str);
     }
 
     
@@ -88,7 +92,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
    
     private JPhylum newSIRExp(JMethodCallExpression exp, JExpression[] args) {
 	JPhylum newExp = null;
-	System.out.println("In newSIRExp");
+	printMe("In newSIRExp");
 	if (args.length > 1)
 	    at.dms.util.Utils.fail("Too many args to SIR call.");
 	
@@ -124,6 +128,30 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    at.dms.util.Utils.fail("Unimplemented SIRStream (cannot register)");
     }
     
+    private void buildInit(SIRPipeline node) {
+	JStatement[] initStatements = new JStatement[node.size()];
+	for (int i = 0; i < node.size(); i++) {
+	    initStatements[i] = new SIRInitStatement(null, null, JExpression.EMPTY,
+						     node.get(i));
+	}
+	node.setInit(new JMethodDeclaration(null,
+					    at.dms.kjc.Constants.ACC_PUBLIC,
+					    CStdType.Void,
+					    "init",
+					    JFormalParameter.EMPTY,
+					    CClassType.EMPTY,
+					    new JBlock(null, initStatements, null),
+					    null,
+					    null));
+    }
+
+    private void postVisit(SIROperator current) {
+	if (current instanceof SIRStream)
+	    registerWithParent((SIRStream)current);
+	if (current instanceof SIRPipeline) 
+	    buildInit((SIRPipeline) current);
+    }
+
 
     public Object visitClassDeclaration(JClassDeclaration self,
                                       int modifiers,
@@ -136,15 +164,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
 	/* The current SIR Operator we are creating */
 	SIROperator current;
-	SIRPrinter sirPrinter = new SIRPrinter();
-
 	SIROperator oldParentOperator = parentOperator;
 	SIRStream oldParentStream = parentStream;
 
 	num++;
 
 	if (self.getSourceClass() != null)
-	    System.out.println("In " + 
+	    printMe("In " + 
 			       self.getSourceClass().getSuperClass().getIdent() + num);
 	
 	// create a new SIROperator
@@ -155,25 +181,24 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    topLevel = (SIRStream) current;
 	
 	if (current == null) 
-	    System.out.println("Null");
-	else
-	    current.accept(sirPrinter);
-	sirPrinter.close();
+	    printMe("Null");
 	
 	trash = visitClassBody(decls, methods, body);
 
 	/* add the current SIR OP to the parent */
 	
 	if (current == null) 
-	    System.out.println("Null");
+	    printMe("Null");
 	
-	System.out.println( "Out " + self.getSourceClass().getSuperClass().getIdent()
+	printMe( "Out " + self.getSourceClass().getSuperClass().getIdent()
 			    + num);
 
-	registerWithParent((SIRStream)current);
-
+	/* Perform any operations needed after the childern are visited */
+	postVisit(current);
+	
 	parentStream = oldParentStream;
 	parentOperator = oldParentOperator;
+	
 	return self;
     }
 
@@ -214,10 +239,26 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
 	for (int i = 0; i < decls.length ; i++)
             trash = decls[i].accept(this);
-	if (methods.length == 0)
-	    methods = JMethodDeclaration.EMPTY;
+	
+	/* Install Empty Init Method */
+	if (parentStream.getInit() == null && !(parentStream instanceof SIRPipeline)) {
+	    JStatement[] emptybody = new JStatement[0];
+	    JBlock emptyblock = new JBlock(null, emptybody, null);
+	    JMethodDeclaration emptyInit = new JMethodDeclaration(null,
+								  at.dms.kjc.
+								  Constants.ACC_PUBLIC,
+								  CStdType.Void,
+								  "init",
+								  JFormalParameter.EMPTY,
+								  CClassType.EMPTY,
+								  emptyblock,
+								  null, null);
+	    parentStream.setInit(emptyInit);
+	}
+	
+
         for (int i = 0; i < methods.length ; i++)
-            trash = methods[i].accept(this);
+            trash = methods[i].accept(this); 
         for (int i = 0; i < body.length ; i++)
             trash = body[i].accept(this);
 	return null;
@@ -235,7 +276,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                            JPhylum[] body,
                                            JMethodDeclaration[] methods)
     {
-	System.out.println("visitInnerClassDeclaration");
+	printMe("visitInnerClassDeclaration");
         trash = visitClassBody(decls, methods, body);
         return self;
     }
@@ -254,7 +295,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                       String ident,
                                       JExpression expr)
     {
-	System.out.println("FieldDeclaration " + ident);
+	printMe("FieldDeclaration " + ident);
 	/* Input declaration set the fields for the current
 	   stream */ 
 	if (ident.equals("input")) {
@@ -268,8 +309,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    else
 		at.dms.util.Utils.fail("Non-Supported Type for Filter Input");
 	    filter.setPop(((Integer)v.elementAt(1)).intValue());
-	    if (v.size() > 2)
+	    if (v.size() > 2) {
+		if (((Integer)v.elementAt(2)).intValue() < 
+		    ((Integer)v.elementAt(1)).intValue())
+		    at.dms.util.Utils.fail("Peeks less than Pops!");
 		filter.setPeek(((Integer)v.elementAt(2)).intValue());
+	    }
 	    else
 		filter.setPeek(((Integer)v.elementAt(1)).intValue());
 	    return self;
@@ -277,7 +322,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	
 	/* Output declaration set the fields for the current
 	   stream */ 
-	if (ident.equals("output")) {
+	else if (ident.equals("output")) {
 	    if (!(parentStream instanceof SIRFilter))
 		at.dms.util.Utils.fail("Output declaration on non-Filter");
 	    SIRFilter filter = (SIRFilter)parentStream;
@@ -291,7 +336,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		at.dms.util.Utils.fail("Non-Supported Type for Filter Output");
 	    return self;
 	}
-	    
+	else {   /*Normal field declaration, add this field */
+	    parentStream.addField(self);
+	}
+
 	if (expr != null) 
 	    trash = expr.accept(this);
 	return self;
@@ -308,14 +356,33 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                        CClassType[] exceptions,
                                        JBlock body)
     {
-        System.out.println("MethodDeclaration: " + ident);
+        printMe("MethodDeclaration: " + ident);
 	if (parameters.length == 0)
 	    parameters = JFormalParameter.EMPTY;
 	for (int i = 0; i < parameters.length; i++)
             trash = parameters[i].accept(this);
-	trash = body.accept(this);
+        
+	body = (JBlock)body.accept(this);
+	
 	if (exceptions.length == 0)
 	    exceptions = CClassType.EMPTY;
+
+	if (ident.equals("work")) {
+	    if (parentStream instanceof SIRFilter) {
+		((SIRFilter)parentStream).setWork(new JMethodDeclaration(null,
+									 modifiers,
+									 returnType,
+									 ident,
+									 parameters,
+									 exceptions,
+									 body,
+									 null,
+									 null));
+	    }
+	    else
+		at.dms.util.Utils.fail("Work Function Declared for Non-Filter");
+	}
+	
 	return self;
     }
     
@@ -380,8 +447,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                         String ident,
                                         JExpression expr)
     {
-        blockStart("VariableDefinition");
-	System.out.println("  Name: " + self.getIdent());
+        blockStart("VariableDefinition: " + self.getIdent());
 	if (expr != null) 
 	    trash = expr.accept(this);
         return self;
@@ -474,12 +540,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                          JExpression expr)
     {
         blockStart("ExpressionStatement");
+	
 	JPhylum attrib = (JPhylum)expr.accept(this);
+		
 	if (attrib instanceof JExpression)
 	    return new JExpressionStatement(null, (JExpression)attrib, null);
 	else 
 	    return attrib;
-	
     }
 
     /**
@@ -546,10 +613,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
        
 	blockStart("BlockStatement");
-        for (int i = 0; i < body.length; i++)
+        for (int i = 0; i < body.length; i++) {
 	    body[i] = (JStatement)body[i].accept(this);
-
-	return self;
+	}
+	return (new JBlock(null, body, null));
     }
 
     /**
@@ -716,7 +783,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	if (params.length == 0)
 	    params = JExpression.EMPTY;
 	for (int i = 0; i < decl.fields.length; i++) {
-	    System.out.println("   var: " + decl.fields[i].variable.getValue().getIdent());
+	    printMe("   var: " + decl.fields[i].variable.getValue().getIdent());
 	    trash = decl.fields[i].variable.accept(this); 
 	}
 	return self;
@@ -843,12 +910,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                           String ident,
                                           JExpression[] args)
     {
-	blockStart("MethodCallExpression");
-	System.out.println(" Method Name: " + self.getIdent());
+	blockStart("MethodCallExpression: " + self.getIdent());
         
 	if (isSIRExp(self)) {
-	    System.out.println("!!!SIR Expression " + 
-			       ident);
+	    printMe("SIR Expression " + ident);
 	    return newSIRExp(self, args);
 	}
 	else {             //Not an SIR call
@@ -1202,7 +1267,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                           JPhylum[] body,
                                           JMethodDeclaration[] methods)
     {
-	System.out.println("visitInterfaceDeclaration");
+	blockStart("visitInterfaceDeclaration");
 	/*visitClassBody(new JTypeDeclaration[0], methods, body);*/
 	at.dms.util.Utils.fail("Should be no interfaces!");
 	return self;

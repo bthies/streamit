@@ -887,7 +887,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    else if (getVisitedOp(type.toString()) != null) {
 		
 		SIRStream ST = (SIRStream)ObjectDeepCloner.
-		    deepCopy((SIROperator)getVisitedOp(type.toString()));
+		    deepCopy((SIRStream)getVisitedOp(type.toString()));
 		printMe("Adding " + ident + " to symbol table");
 		
 		//If this a builtin filter set its args

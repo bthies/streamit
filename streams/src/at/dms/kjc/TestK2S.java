@@ -18,6 +18,7 @@ import at.dms.util.MessageDescription;
 import at.dms.compiler.UnpositionedError;
 import at.dms.util.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.iterator.*;
 
 public class TestK2S extends Main
 {
@@ -134,7 +135,7 @@ public class TestK2S extends Main
 	    {
 		SIRPrinter sirPrinter = new SIRPrinter();
 		//Return topLevel for each tree
-		topLevel[count].accept(sirPrinter);
+		IterFactory.createIter(topLevel[count]).accept(sirPrinter);
 		sirPrinter.close();
 	    }
 

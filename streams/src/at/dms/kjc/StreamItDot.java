@@ -132,7 +132,6 @@ public class StreamItDot implements AttributeStreamVisitor
 
     /* visit a structure */
     public Object visitStructure(SIRStructure self,
-                                 SIRStream parent,
                                  JFieldDeclaration[] fields) 
     {
         return new NamePair(makeLabelledNode(self.getIdent()));
@@ -140,16 +139,12 @@ public class StreamItDot implements AttributeStreamVisitor
 
     /* visit a filter */
     public Object visitFilter(SIRFilter self,
-                              SIRStream parent,
                               JFieldDeclaration[] fields,
                               JMethodDeclaration[] methods,
                               JMethodDeclaration init,
                               JMethodDeclaration work,
                               CType inputType, CType outputType)
     {
-	// check the parent relationship
-	Utils.assert(self.getParent()==parent);
-
         // Return a name pair with both ends pointing to this.
 	//        return new NamePair(makeLabelledNode(self.getRelativeName()));
 	String label = self.getIdent();
@@ -172,13 +167,9 @@ public class StreamItDot implements AttributeStreamVisitor
     
     /* visit a splitter */
     public Object visitSplitter(SIRSplitter self,
-                                SIRStream parent,
                                 SIRSplitType type,
                                 JExpression[] expWeights)
     {
-	// check the parent relationship
-	Utils.assert(self.getParent()==parent);
-
 	String label = type.toString();
 	// try to add weights to label
 	try {
@@ -198,13 +189,9 @@ public class StreamItDot implements AttributeStreamVisitor
     
     /* visit a joiner */
     public Object visitJoiner(SIRJoiner self,
-                              SIRStream parent,
                               SIRJoinType type,
                               JExpression[] expWeights)
     {
-	// check the parent relationship
-	Utils.assert(self.getParent()==parent);
-
 	String label = type.toString();
 	// try to add weights to label
 	try {
@@ -223,14 +210,10 @@ public class StreamItDot implements AttributeStreamVisitor
     
     /* pre-visit a pipeline */
     public Object visitPipeline(SIRPipeline self,
-                                SIRStream parent,
                                 JFieldDeclaration[] fields,
                                 JMethodDeclaration[] methods,
                                 JMethodDeclaration init)
     {
-	// check the parent relationship
-	Utils.assert(self.getParent()==parent);
-
         NamePair pair = new NamePair();
         
         // Print this within a subgraph.
@@ -255,16 +238,12 @@ public class StreamItDot implements AttributeStreamVisitor
 
     /* pre-visit a splitjoin */
     public Object visitSplitJoin(SIRSplitJoin self,
-                                 SIRStream parent,
                                  JFieldDeclaration[] fields,
                                  JMethodDeclaration[] methods,
                                  JMethodDeclaration init,
                                  SIRSplitter splitter,
                                  SIRJoiner joiner)
     {
-	// check the parent relationship
-	Utils.assert(self.getParent()==parent);
-
         NamePair pair = new NamePair();
         
         // Create a subgraph again...
@@ -293,15 +272,11 @@ public class StreamItDot implements AttributeStreamVisitor
 
     /* pre-visit a feedbackloop */
     public Object visitFeedbackLoop(SIRFeedbackLoop self,
-                                    SIRStream parent,
                                     JFieldDeclaration[] fields,
                                     JMethodDeclaration[] methods,
                                     JMethodDeclaration init,
                                     JMethodDeclaration initPath)
     {
-	// check the parent relationship
-	Utils.assert(self.getParent()==parent);
-
         NamePair np;
         
         // Create a subgraph again...

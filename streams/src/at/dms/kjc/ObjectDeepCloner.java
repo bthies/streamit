@@ -12,6 +12,7 @@
 package at.dms.kjc;
 
 import at.dms.kjc.sir.*;
+import at.dms.kjc.iterator.*;
 import at.dms.util.*;
 import java.io.*;
 import java.util.*;
@@ -38,10 +39,10 @@ public class ObjectDeepCloner
     /**
      * Deep copy a stream structure.
      */
-    static public Object deepCopy(SIROperator oldObj) {
+    static public Object deepCopy(SIRStream oldObj) {
 	// set the list of what we should clone
 	CloningVisitor visitor = new CloningVisitor();
-	oldObj.accept(visitor);
+	IterFactory.createIter(oldObj).accept(visitor);
 	toBeCloned = visitor.getToBeCloned();
 	return doCopy(oldObj);
     }
@@ -57,7 +58,7 @@ public class ObjectDeepCloner
      * This is only intended for use from the iterator package, and
      * should not be called from within the IR.
      */
-    static public Object shallowCopy(SIROperator oldObj) {
+    static public Object shallowCopy(SIRStream oldObj) {
 	// only do something different for containers
 	if (!(oldObj instanceof SIRContainer)) {
 	    return deepCopy(oldObj);
@@ -65,7 +66,7 @@ public class ObjectDeepCloner
 	SIRContainer parent = (SIRContainer)oldObj;
 	// set the list of what we should clone
 	CloningVisitor visitor = new CloningVisitor();
-	parent.accept(visitor);
+	IterFactory.createIter(parent).accept(visitor);
 	toBeCloned = visitor.getToBeCloned();
 	// subtract the list of <parent>'s children from the
 	// toBeCloned list.
@@ -251,7 +252,7 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 				   SIRStream target) {
 	super.visitInitStatement(self, target);
 	// also recurse into the stream target
-	target.accept(this);
+	IterFactory.createIter(target).accept(this);
     }
 
     /**
@@ -276,101 +277,54 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 	}
     }
 	    
-    /* visit a structure */
-    public void visitStructure(SIRStructure self,
-                               SIRStream parent,
-                               JFieldDeclaration[] fields) {
-        visitStream(self);
-    }
-    
     /* visit a filter */
     public void visitFilter(SIRFilter self,
-			    SIRStream parent,
-			    JFieldDeclaration[] fields,
-			    JMethodDeclaration[] methods,
-			    JMethodDeclaration init,
-			    JMethodDeclaration work,
-			    CType inputType, CType outputType) {
+			    SIRFilterIter iter) {
 	// visit node
 	visitStream(self);
     }
   
-    /* visit a splitter */
-    public void visitSplitter(SIRSplitter self,
-			      SIRStream parent,
-			      SIRSplitType type,
-			      JExpression[] weights) {
-	// don't do anything since a filter isn't an sir stream
-    }
-	
-    /* visit a joiner -- don't do anything since a joiner isn't an
-     * SIRStream.  */
-    public void visitJoiner(SIRJoiner self,
-			    SIRStream parent,
-			    SIRJoinType type,
-			    JExpression[] weights) {
-	// don't do anything since a filter isn't an sir stream
-    }
-
     /**
      * PRE-VISITS 
      */
 	    
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
-				 SIRStream parent,
-				 JFieldDeclaration[] fields,
-				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init) {
+				 SIRPipelineIter iter) {
 	// record this container as one that should be cloned
 	toBeCloned.add(self);
 	// visit node
 	visitStream(self);
 	// visit children
 	for (int i=0; i<self.size(); i++) {
-	    self.get(i).accept(this);
+	    iter.get(i).accept(this);
 	}
     }
 
     /* pre-visit a splitjoin */
     public void preVisitSplitJoin(SIRSplitJoin self,
-				  SIRStream parent,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init) {
+				  SIRSplitJoinIter iter) {
 	// record this container as one that should be cloned
 	toBeCloned.add(self);
 	// visit node
 	visitStream(self);
-	// visit splitter
-	self.getSplitter().accept(this);
 	// visit children
 	for (int i=0; i<self.size(); i++) {
-	    ((SIRStream)self.get(i)).accept(this);
+	    iter.get(i).accept(this);
 	}
-	// visit joiner
-	self.getJoiner().accept(this);
     }
 
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRStream parent,
-				     JFieldDeclaration[] fields,
-				     JMethodDeclaration[] methods,
-				     JMethodDeclaration init,
-				     JMethodDeclaration initPath) {
+				     SIRFeedbackLoopIter iter) {
 	// record this container as one that should be cloned
 	toBeCloned.add(self);
 	// visit node
 	visitStream(self);
-	// visit joiner
-	self.getJoiner().accept(this);
 	// visit body stream
-	self.getBody().accept(this);
-	// visit splitter
-	self.getSplitter().accept(this);
+	iter.get(SIRFeedbackLoop.BODY).accept(this);
 	// visit loop stream
-	self.getLoop().accept(this);
+	iter.get(SIRFeedbackLoop.BODY).accept(this);
     }
 
     /**
@@ -379,28 +333,17 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 	    
     /* post-visit a pipeline -- do nothing, visit on way down */
     public void postVisitPipeline(SIRPipeline self,
-				  SIRStream parent,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init) {
+				  SIRPipelineIter iter) {
     }
 
     /* post-visit a splitjoin -- do nothing, visit on way down */
     public void postVisitSplitJoin(SIRSplitJoin self,
-				   SIRStream parent,
-				   JFieldDeclaration[] fields,
-				   JMethodDeclaration[] methods,
-				   JMethodDeclaration init) {
+				   SIRSplitJoinIter iter) {
     }
 
     /* post-visit a feedbackloop -- do nothing, visit on way down */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-				      SIRStream parent,
-				      JFieldDeclaration[] fields,
-				      JMethodDeclaration[] methods,
-				      JMethodDeclaration init,
-				      JMethodDeclaration initPath) {
+				      SIRFeedbackLoopIter iter) {
     }
-    
 }
 

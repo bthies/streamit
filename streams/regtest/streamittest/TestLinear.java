@@ -12,7 +12,7 @@ import java.util.*;
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.9 2002-09-23 21:28:06 aalamb Exp $
+ * $Id: TestLinear.java,v 1.10 2002-09-26 17:07:21 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -37,6 +37,7 @@ public class TestLinear extends TestCase {
 	suite.addTest(new TestLinear("testFilterMatrixCopy"));
 	suite.addTest(new TestLinear("testFilterMatrixCopyAt"));
 	suite.addTest(new TestLinear("testFilterMatrixCopyColumnsAt"));
+	suite.addTest(new TestLinear("testFilterMatrixCopyRowsAt"));
 	suite.addTest(new TestLinear("testFilterMatrixScale"));
 	suite.addTest(new TestLinear("testFilterMatrixParsing"));
 	suite.addTest(new TestLinear("testFilterMatrixAddition"));
@@ -478,6 +479,61 @@ public class TestLinear extends TestCase {
 	try{mat1.copyColumnsAt(0,source,0,1); fail();}catch(IllegalArgumentException e){} // srcSize is bad
 	source = parseMatrix("[[1][2][3][4][5]]");
 	try{mat1.copyColumnsAt(0,source,0,1); fail();}catch(IllegalArgumentException e){} // srcSize is bad
+    }
+
+    /** test the copyRowsAt method. **/
+    public void testFilterMatrixCopyRowsAt() {
+	FilterMatrix mat1 = parseMatrix("[[1 2 3][4 5 6][7 8 9]]");
+	FilterMatrix temp;
+	FilterMatrix source;
+
+	source = parseMatrix("[[10 11 12]]");
+	
+	temp = mat1.copy();
+	temp.copyRowsAt(0, source, 0, 1);
+	assertTrue(temp.equals(parseMatrix("[[10 11 12][4 5 6][7 8 9]]")));
+
+	temp = mat1.copy();
+	temp.copyRowsAt(1, source, 0, 1);
+	assertTrue(temp.equals(parseMatrix("[[1 2 3][10 11 12][7 8 9]]")));
+
+	temp = mat1.copy();
+	temp.copyRowsAt(2, source, 0, 1);
+	assertTrue(temp.equals(parseMatrix("[[1 2 3][4 5 6][10 11 12]]")));
+	
+	temp = mat1.copy();
+	temp.copyRowsAt(0, source, 0, 1);
+	temp.copyRowsAt(1, source, 0, 1);
+	assertTrue(temp.equals(parseMatrix("[[10 11 12][10 11 12][7 8 9]]")));	
+
+	FilterMatrix mat2 = parseMatrix("[[1][2][3]]");
+	source = parseMatrix("[[10]]");
+	temp = mat2.copy();
+	temp.copyRowsAt(0,source,0,1);
+	assertTrue(temp.equals(parseMatrix("[[10][2][3]]")));
+	temp.copyRowsAt(1,source,0,1);
+	assertTrue(temp.equals(parseMatrix("[[10][10][3]]")));
+	temp.copyRowsAt(2,source,0,1);
+	assertTrue(temp.equals(parseMatrix("[[10][10][10]]")));
+
+	temp = mat2.copy();
+	temp.copyRowsAt(1,source,0,1);	
+	assertTrue(temp.equals(parseMatrix("[[1][10][3]]")));
+
+	source = parseMatrix("[[10][11]]");
+	temp = mat2.copy();
+	temp.copyRowsAt(0,source,0,1);
+	assertTrue(temp.equals(parseMatrix("[[10][2][3]]")));	
+	temp = mat2.copy();
+	temp.copyRowsAt(0,source,0,2);
+	assertTrue(temp.equals(parseMatrix("[[10][11][3]]")));	
+	temp = mat2.copy();
+	temp.copyRowsAt(1,source,0,1);
+	assertTrue(temp.equals(parseMatrix("[[1][10][3]]")));	
+	temp = mat2.copy();
+	temp.copyRowsAt(1,source,0,2);
+	assertTrue(temp.equals(parseMatrix("[[1][10][11]]")));	
+	
     }
 
     

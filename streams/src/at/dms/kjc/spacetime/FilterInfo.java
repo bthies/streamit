@@ -223,5 +223,30 @@ public class FilterInfo
 	}
 	return upStreamItems;
     }
+
+    public int itemsFiring(int exeCount, boolean init) 
+    {
+	int items = push;
+	
+	if (init && exeCount == 0 && isTwoStage())
+	    items = prePush;
+	
+	return items;
+    }
     
+
+    public int itemsNeededToFire(int exeCount, boolean init) 
+    {
+	int items = pop;
+	
+	//if we and this is the first execution we need either peek or initPeek
+	if (init && exeCount == 0) {
+	    if (isTwoStage())
+		items = prePeek;
+	    else
+		items = peek;
+	}
+	
+	return items;
+    }
 }

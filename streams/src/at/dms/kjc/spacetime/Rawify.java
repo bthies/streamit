@@ -53,28 +53,12 @@ public class Rawify
 		    else
 			tile.getComputeCode().addTraceSteady(filterInfo);
 		}
-		else if (traceNode.isOutputTrace()) {
-                    if (KjcOptions.magicdram)
-                        createMagicDramOutput((OutputTraceNode)traceNode,
-                                              trace, init, rawChip);
-                }
-                else {
-                    //input trace
-                    if (KjcOptions.magicdram)
-                        createMagicDramInput((InputTraceNode)traceNode,
-                                             trace, init, rawChip);
-                }
-
+		
 		//get the next tracenode
 		traceNode = traceNode.getNext();
 	    }
 	}
 	
-	//generate code need in between init and steady
-	if (init) 
-	    EndInitialization(rawChip);
-	else 
-	    EndSteadyState(rawChip);
     }
 
     private static void createPrimePumpSwitchCode(FilterTraceNode node, Trace parent,
@@ -85,100 +69,37 @@ public class Rawify
 	createSwitchCode(node, parent, filterInfo, false, true, tile, rawChip, filterInfo.primePump);
     }
     
-    private static void createMagicDramInput(InputTraceNode node, Trace parent,
-					     boolean init, RawChip rawChip) 
+    private static void createMagicDramLoad(InputTraceNode node, FilterTraceNode next,
+					    boolean init, RawChip rawChip) 
     {
-	FilterTraceNode next = (FilterTraceNode)node.getNext();
-	FilterInfo filterInfo = FilterInfo.getFilterInfo(next);
-
 	if (!rawChip.getTile(next.getX(), next.getY()).hasIODevice()) 
 	    Utils.fail("Tile not connected to io device");
 	
 	MagicDram dram = (MagicDram)rawChip.getTile(next.getX(), next.getY()).getIODevice();
 	
 	LinkedList insList = init ? dram.initInsList : dram.steadyInsList;
-	//get the multiplicity based on the init variable
-	int mult = (init) ? next.getInitMult() : next.getSteadyMult();
-	
-	//generate the magic dram statements
-	//iterate over the number of firings 
-	for (int i = 0; i < mult; i++) {
-	    int itemsReceiving = itemsNeededToFire(filterInfo, i, init) *
-		Util.getTypeSize(next.getFilter().getInputType());
-	    //for each item generate an instruction
-	    for (int j = 0; j < itemsReceiving; j++) {
-		insList.add(new MagicDramLoad(node, 
-					      TraceBufferSchedule.getOutputBuffer(node)));
-	    }
-	}
-
-	//take care of the remaining items and the items generated in the
-	//primepump stage, same as above
-	if (init) {
-	    int items = filterInfo.remaining + 
-		(itemsNeededToFire(filterInfo, 1, !init) * filterInfo.primePump);
-	    
-	    for (int i = 0; 
-		 i < items * Util.getTypeSize(next.getFilter().getInputType()); 
-		 i++) {
-		insList.add(new MagicDramLoad(node, 
-					      TraceBufferSchedule.getOutputBuffer(node)));
-	    }
-	}
-	
-	//add the buffers to this drams list of buffer so that it knows
-	//to generate the malloc of the buffer and the associated indices
-	for (int i = 0; i < node.getSources().length; i++) {
-            dram.addBuffer(node.getSources()[i], node);
-        }
+	OutputTraceNode output = TraceBufferSchedule.getOutputBuffer(node);
+	insList.add(new MagicDramLoad(node, output));
+	dram.addBuffer(output, node);
 
     }
 
-    private static void createMagicDramOutput(OutputTraceNode node, Trace parent,
-					     boolean init, RawChip rawChip) 
-    {
-	FilterTraceNode prev = (FilterTraceNode)node.getPrevious();
-
-	
-	if (!rawChip.getTile(prev.getX(), prev.getY()).hasIODevice()) 
-	    Utils.fail("Tile not connected to io device");
-	
-	MagicDram dram = (MagicDram)rawChip.getTile(prev.getX(), prev.getY()).getIODevice();	
-	
-	LinkedList insList = init ? dram.initInsList : dram.steadyInsList;
-	//get the multiplicity based on the init variable
-	int mult = (init) ? prev.getInitMult() : prev.getSteadyMult();
-
-	//generate the individual store commands, store the total items
-	createMagicDramStores(node, prev, init, mult, insList);
-	
-	//generate the code for the primepump stage
-	if (init) 
-	    createMagicDramStores(node, prev, !init, prev.getPrimePumpMult(),
-				  dram.initInsList);
-	
-    }
-    
     /**
-     * Give the multiplicity and some other stuff, generate the store instructions for
-     * the dram.
+     * Generate a single magic dram store instruction for this output trace node
      **/
-    private static void createMagicDramStores(OutputTraceNode node, FilterTraceNode prev, 
-					      boolean init, int mult, LinkedList insList)
+    private static void createMagicDramStore(OutputTraceNode node, FilterTraceNode prev, 
+					     boolean init, RawChip rawChip)
 					      
     {
-	FilterInfo filterInfo = FilterInfo.getFilterInfo(prev);
-	//generate the magic dram statements
-	//iterate over the number of firings 
-	for (int i = 0; i < mult; i++) {
-	    //for each item generate an instruction
-	    int items = itemsFiring(filterInfo, i, init) * 
-		Util.getTypeSize(prev.getFilter().getOutputType());
-	    for (int j = 0; j < items; j++) {
-		insList.add(new MagicDramStore(node, 
-					       TraceBufferSchedule.getInputBuffers(node)));
-	    }
-	}
+	if (!rawChip.getTile(prev.getX(), prev.getY()).hasIODevice()) 
+	    Utils.fail("Tile not connected to io device");
+	//get the dram
+	MagicDram dram = (MagicDram)rawChip.getTile(prev.getX(), prev.getY()).getIODevice();
+	//get the list we should add to
+	LinkedList insList = init ? dram.initInsList : dram.steadyInsList;
+	//add the instruction
+	insList.add(new MagicDramStore(node, 
+				       TraceBufferSchedule.getInputBuffers(node)));
     }
     
 
@@ -238,25 +159,28 @@ public class Rawify
 	//now we must take care of the remaining items on the input tape 
 	//after the initialization phase if the upstream filter produces more than
 	//we consume in init
-	if (init) {
-	    if (node.getPrevious() != null &&
-		node.getPrevious().isFilterTrace()) {		
-		if (filterInfo.remaining > 0) {
-		    for (int i = 0; 
-			 i < filterInfo.remaining * Util.getTypeSize(node.getFilter().getInputType()); 
-			 i++) {
-			RouteIns ins = new RouteIns(tile);
-			//add the route from the source tile to this
-			//tile's compute processor
-			ins.addRoute(rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(), 
-						     ((FilterTraceNode)node.getPrevious()).getY()),
-				     tile);
-			tile.getSwitchCode().appendIns(ins, init);
-		    }   
+	if (init && filterInfo.remaining > 0) {
+	    for (int i = 0; 
+		 i < filterInfo.remaining * Util.getTypeSize(node.getFilter().getInputType()); 
+		 i++) {
+		if (node.getPrevious().isFilterTrace()) {
+		    RouteIns ins = new RouteIns(tile);
+		    //add the route from the source tile to this
+		    //tile's compute processor
+		    ins.addRoute(rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(), 
+						 ((FilterTraceNode)node.getPrevious()).getY()),
+				 tile);
+		    tile.getSwitchCode().appendIns(ins, init);
+		}   
+		else if (KjcOptions.magicdram) {
+		    InputTraceNode input = (InputTraceNode)node.getPrevious();
+		    createMagicDramLoad(input, node, init, rawChip);
 		}
 	    }
 	}
     }
+    
+    
     
     private static void createReceiveCode(int iteration, FilterTraceNode node, Trace parent, 
 				   FilterInfo filterInfo, boolean init, boolean primePump, RawTile tile,
@@ -265,7 +189,7 @@ public class Rawify
 	//if this is the init and it is the first time executing
 	//and a twostage filter, use initpop and multiply this
 	//by the size of the type it is receiving
-	int itemsReceiving = itemsNeededToFire(filterInfo, iteration, init) *
+	int itemsReceiving = filterInfo.itemsNeededToFire(iteration, init) *
 	    Util.getTypeSize(node.getFilter().getInputType());
 
 	//the source of the data, either a device or another raw tile
@@ -275,7 +199,8 @@ public class Rawify
 	    sourceNode = rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(), 
 					 ((FilterTraceNode)node.getPrevious()).getY());
 	else {
-	    if (KjcOptions.magicdram && node.getPrevious().isInputTrace() &&
+	    if (KjcOptions.magicdram && node.getPrevious() != null &&
+		node.getPrevious().isInputTrace() &&
 		tile.hasIODevice()) 
 		sourceNode = tile.getIODevice();
 	    else 
@@ -292,6 +217,12 @@ public class Rawify
 	    //for the primepump append to the end of the init stage
 	    //so set final arg to true if init or primepump
 	    tile.getSwitchCode().appendIns(ins, (init || primePump));
+	    //if we are receiving from an inputtracenode and 
+	    //magic dram is enabled, generate the magic dram load ins
+	    if (KjcOptions.magicdram && node.getPrevious() != null &&
+		node.getPrevious().isInputTrace())
+		createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+				    node, (init || primePump), rawChip);
 	}
     }
 
@@ -301,7 +232,7 @@ public class Rawify
     {
 	//get the items needed to fire and multiply it by the type 
 	//size
-	int items = itemsFiring(filterInfo, iteration, init) * 
+	int items = filterInfo.itemsFiring(iteration, init) * 
 	    Util.getTypeSize(node.getFilter().getOutputType());
 	
 	ComputeNode destNode = null;
@@ -310,8 +241,8 @@ public class Rawify
 	    destNode = rawChip.getTile(((FilterTraceNode)node.getNext()).getX(), 
 				       ((FilterTraceNode)node.getNext()).getY());
 	else {
-	    if (KjcOptions.magicdram && node.getNext().isOutputTrace() &&
-		tile.hasIODevice())
+	    if (KjcOptions.magicdram && node.getNext() != null &&
+		node.getNext().isOutputTrace() && tile.hasIODevice())
 		destNode = tile.getIODevice();
 	    else
 		return;
@@ -325,43 +256,16 @@ public class Rawify
 	    //for the primepump append to the end of the init stage
 	    //so set final arg to true if init or primepump
 	    tile.getSwitchCode().appendIns(ins, (init||primePump));
+	    //if we are connected to an output trace node and 
+	    //magicdram is enabled, create the magic dram store instuction
+	    if (KjcOptions.magicdram && node.getNext() != null &&
+		node.getNext().isOutputTrace())
+		createMagicDramStore((OutputTraceNode)node.getNext(), 
+				     node, (init || primePump), rawChip);
 	}	
     }
 
 
-    private static int itemsFiring(FilterInfo filterInfo, int exeCount, boolean init) 
-    {
-	int items = filterInfo.push;
-	
-	if (init && exeCount == 0 && (filterInfo.isTwoStage()))
-	    items = filterInfo.prePush;
-	
-	return items;
-    }
-    
 
-    private static int itemsNeededToFire(FilterInfo filterInfo, int exeCount, boolean init) 
-    {
-	int items = filterInfo.pop;
-	
-	//if we and this is the first execution we need either peek or initPeek
-	if (init && exeCount == 0) {
-	    if (filterInfo.isTwoStage())
-		items = filterInfo.prePeek;
-	    else
-		items = filterInfo.peek;
-	}
-	
-	return items;
-    }
-
-    private static void EndInitialization(RawChip rawChip) 
-    {
-    }
-    
-    private static void EndSteadyState(RawChip rawChip) 
-    {
-	
-    }
 }
 

@@ -34,7 +34,7 @@ public class Names
 
     public static String ARRAY_INDEX = "__ARRAY_INDEX__";
     public static String ARRAY_COPY = "__ARRAY_COPY__";
-
+    
     public static String initSchedFunction = "__RAWINITSCHED__";
     public static String steadySchedFunction = "__RAWSTEADYSCHED__";
     

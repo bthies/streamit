@@ -763,8 +763,12 @@ class Unroller extends SLIRReplacingVisitor {
 	    // return result
 	    return new UnrollInfo(var, initVal, finalVal, oper, incrVal);
 	} catch (ClassCastException e) {
-	    System.out.println("Didn't unroll because:");
-	    e.printStackTrace();
+	    // uncommment these lines if you want to trace a case of something
+	    // not unrolling ---
+	    /*
+	      System.out.println("Didn't unroll because:");
+	      e.printStackTrace();
+	    */
 	    // assume we failed 'cause assumptions violated -- return null
 	    return null;
 	}

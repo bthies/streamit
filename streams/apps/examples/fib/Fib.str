@@ -1,12 +1,10 @@
 void->void pipeline Fib {
-    add FeedbackLoop {
-	join RoundRobin(0, 1);
+    add feedbackloop {
+	join roundrobin(0, 1);
 	body PeekAdd();
-	split Duplicate();
-
-	for (int i=0; i<2; i++) {
-	  enqueue i;
-	}
+	split duplicate;
+	enqueue 0;
+	enqueue 1;
     }
     add IntPrinter();
 }

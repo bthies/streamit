@@ -169,11 +169,11 @@ void run_splitter(stream_context *c)
   {
   case DUPLICATE:
     /* Read one item and distribute it. */
-    INCR_TAPE_READ(input_tape);
+    INCR_TAPE_READ(input_tape, input_tape->data_size);
     for (slot = 0; slot < c->type_data.splitjoin_data.splitter.fan; slot++)
     {
       output_tape = c->type_data.splitjoin_data.splitter.tape[slot];
-      INCR_TAPE_WRITE(output_tape);
+      INCR_TAPE_WRITE(output_tape, output_tape->data_size);
       COPY_TAPE_ITEM(input_tape, output_tape);
     }
     break;
@@ -183,21 +183,24 @@ void run_splitter(stream_context *c)
     for (slot = 0; slot < c->type_data.splitjoin_data.splitter.fan; slot++)
     {
       output_tape = c->type_data.splitjoin_data.splitter.tape[slot];
-      INCR_TAPE_READ(input_tape);
-      INCR_TAPE_WRITE(output_tape);
+      INCR_TAPE_READ(input_tape, input_tape->data_size);
+      INCR_TAPE_WRITE(output_tape, output_tape->data_size);
       COPY_TAPE_ITEM(input_tape, output_tape);
     }
     break;    
       
   case WEIGHTED_ROUND_ROBIN:
+	{
+	int size = input_tape->data_size;
     /* Read enough items to make one loop around. */
     for (slot = 0; slot < c->type_data.splitjoin_data.splitter.slots; slot++)
     {
       output_tape = c->type_data.splitjoin_data.splitter.tcache[slot];
-      INCR_TAPE_READ(input_tape);
-      INCR_TAPE_WRITE(output_tape);
+      INCR_TAPE_READ(input_tape, size);
+      INCR_TAPE_WRITE(output_tape, size);
       COPY_TAPE_ITEM(input_tape, output_tape);
     }
+	}
     break;
     
   default:
@@ -227,8 +230,8 @@ void run_joiner(stream_context *c)
     for (slot = 0; slot < c->type_data.splitjoin_data.joiner.fan; slot++)
     {
       input_tape = c->type_data.splitjoin_data.joiner.tape[slot];
-      INCR_TAPE_READ(input_tape);
-      INCR_TAPE_WRITE(output_tape);
+      INCR_TAPE_READ(input_tape, input_tape->data_size);
+      INCR_TAPE_WRITE(output_tape, output_tape->data_size);
       COPY_TAPE_ITEM(input_tape, output_tape);
     }
     break;
@@ -237,8 +240,8 @@ void run_joiner(stream_context *c)
     for (slot = 0; slot < c->type_data.splitjoin_data.joiner.slots; slot++)
     {
       input_tape = c->type_data.splitjoin_data.joiner.tcache[slot];
-      INCR_TAPE_READ(input_tape);
-      INCR_TAPE_WRITE(output_tape);
+      INCR_TAPE_READ(input_tape, input_tape->data_size);
+      INCR_TAPE_WRITE(output_tape, output_tape->data_size);
       COPY_TAPE_ITEM(input_tape, output_tape);
     }
     break;

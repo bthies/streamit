@@ -30,8 +30,20 @@ tape *create_tape_internal(int data_size, int tape_length)
     // initialize the fields in the new tape
     new_tape->read_pos = 0;
     new_tape->write_pos = 0;
-    new_tape->tape_length = tape_length;
     new_tape->data_size = data_size;
+
+	// allocate the buffer and compute the mask
+	{
+		int totalSize = data_size * tape_length;
+
+		// make sure that totalSize is a pow of 2
+		assert (totalSize > 0 && (totalSize & (totalSize - 1)) == 0);
+
+		new_tape->mask = totalSize - 1;
+		new_tape->data = (char*)malloc (totalSize);
+		return new_tape;
+	}
+
     new_tape->data = malloc (data_size * tape_length);
     new_tape->mask = 0xd00d;
 

@@ -1,6 +1,6 @@
 /*
  * streamit_io.c: implementation of built-in IO filters
- * $Id: streamit_io.c,v 1.2 2001-11-07 17:42:45 dmaze Exp $
+ * $Id: streamit_io.c,v 1.3 2001-11-16 21:56:18 karczma Exp $
  */
 
 #include <stdlib.h>
@@ -41,7 +41,7 @@ void streamit_filereader_work(ContextContainer cc)
   fileio_data *frd = c->stream_data;
   
   /* Do the fread() directly on to the output tape. */
-  INCR_TAPE_WRITE(c->output_tape);
+  INCR_TAPE_WRITE(c->output_tape, c->output_tape->data_size);
   fread(WRITE_ADDR(c->output_tape), c->output_tape->data_size, 1, frd->fp);
 }
 
@@ -71,6 +71,6 @@ void streamit_filewriter_work(ContextContainer cc)
   fileio_data *frd = c->stream_data;
   
   /* Do the fwrite() directly from the input tape. */
-  INCR_TAPE_READ(c->input_tape);
+  INCR_TAPE_READ(c->input_tape, c->input_tape->data_size);
   fwrite(READ_ADDR(c->input_tape), c->input_tape->data_size, 1, frd->fp);
 }

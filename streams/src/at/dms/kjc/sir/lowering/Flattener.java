@@ -29,11 +29,14 @@ public class Flattener {
 					    interfaceTables,
                                             SIRStructure[] structs) {
 	// DEBUGGING PRINTING
-	System.out.println("--------- ON ENTRY TO FLATTENER ----------------");
+        System.out.println("--------- ON ENTRY TO FLATTENER ----------------");
 	SIRPrinter printer1 = new SIRPrinter();
 	str.accept(printer1);
 	printer1.close();
 
+	// move field initializations into init function
+	FieldProp.moveStreamInitialAssignments(str);
+	
 	// propagate constants and unroll loops
 	ConstantProp.propagateAndUnroll(str);
 	//FieldProp.doPropagate(str);

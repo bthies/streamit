@@ -8,6 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
+ * $Id: FieldProp.java,v 1.13 2002-06-19 21:27:31 aalamb Exp $
  */
 public class FieldProp implements Constants
 {
@@ -94,7 +95,20 @@ public class FieldProp implements Constants
     private void propagate(SIRFilter filter)
     {
         findCandidates(filter);
-        doPropagation(filter);
+
+	System.out.println("--------------------");
+	System.out.println("Candidates Fields : ");
+	Iterator keyIter = this.types.keySet().iterator();
+	while(keyIter.hasNext()) {
+	  Object f = keyIter.next();
+	  System.out.println("Field: " + f +
+			     "  " + this.types.get(f) +
+			     " --> " + this.fields.get(f));
+
+	  
+	}
+
+	doPropagation(filter);
     }
 
     /** Helper function to determine if a field has been invalidated. */
@@ -116,8 +130,9 @@ public class FieldProp implements Constants
     /** Helper function to invalidate a particular field. */
     private void invalidateField(String name)
     {
-        nofields.add(name);
-        fields.remove(name);
+      System.out.println("Invalidating field: " + name);
+      nofields.add(name);
+      fields.remove(name);
     }
 
     /** Helper function to invalidate a particular array slot.
@@ -258,7 +273,8 @@ public class FieldProp implements Constants
                                                       String ident,
                                                       JExpression expr)
                     {
-                        types.put(ident, type);
+		      // add entry to name->type mapping
+		      types.put(ident, type);
                     }
                 });
         }
@@ -520,4 +536,127 @@ public class FieldProp implements Constants
             });
         return yes;
     }
+
+
+
+
+
+
+
+
+
+  /**
+   * Converts joint field definition/assignment statements to a field decl
+   * and a corresponding field assignment statement in the init function. Eg
+   * <br>
+   * <pre>
+   * int i = 5;
+   * </pre>
+   * into <br>
+   * <pre>
+   * int i;
+   * i = 5;
+   * </pre>
+   **/
+  public static void moveStreamInitialAssignments(SIRStream str) {
+    //System.out.println("Type of the str passed to stream initial assignments: " +
+    //	       str.getClass().getName());
+    // First, visit children (if any).
+        if (str instanceof SIRFeedbackLoop)
+        {
+            SIRFeedbackLoop fl = (SIRFeedbackLoop)str;
+            moveStreamInitialAssignments(fl.getBody());
+            moveStreamInitialAssignments(fl.getLoop());
+        }
+        if (str instanceof SIRPipeline)
+        {
+            SIRPipeline pl = (SIRPipeline)str;
+            Iterator iter = pl.getChildren().iterator();
+            while (iter.hasNext())
+            {
+                SIRStream child = (SIRStream)iter.next();
+                moveStreamInitialAssignments(child);
+            }
+        }
+        if (str instanceof SIRSplitJoin)
+        {
+            SIRSplitJoin sj = (SIRSplitJoin)str;
+            Iterator iter = sj.getParallelStreams().iterator();
+            while (iter.hasNext())
+            {
+                SIRStream child = (SIRStream)iter.next();
+                moveStreamInitialAssignments(child);
+            }
+        }
+        
+        // Having recursed, move initial assignments for this filter 
+        if (str instanceof SIRFilter)
+	{
+	  SIRFilter sf = (SIRFilter) str;
+	  moveFilterInitialAssignments(sf);
+        }
+        
+        // All done
+        return;
+  }
+
+  
+  public static void moveFilterInitialAssignments(SIRFilter filter) {
+      // assignment statements that need to be added to the init function 
+    final Vector assignmentStatements = new Vector();
+    
+    for (int i=0; i<filter.getFields().length; i++) {
+      filter.getFields()[i].accept(new SLIRReplacingVisitor() {
+
+	  public Object visitFieldDeclaration(JFieldDeclaration self,
+				       int modifiers,
+				       CType type,
+				       String ident,
+				       JExpression expr)
+	  {
+	    // if this field declaration has an initial value,
+	    // make an assignment expression to stick in the
+	    // init function
+	    //System.out.println("Initial expression for field: " + expr);
+	    if (expr != null) {
+	      // build up the this.field = initalValue expression
+
+
+	      JThisExpression thisExpr = new JThisExpression (self.getTokenReference());
+	      JFieldAccessExpression fieldExpr;
+	      fieldExpr = new JFieldAccessExpression(self.getTokenReference(),
+						     thisExpr,
+						     ident);
+	      
+	      JAssignmentExpression assignExpr;
+	      assignExpr = new JAssignmentExpression(self.getTokenReference(),
+						     fieldExpr,
+						     expr);
+
+	      JExpressionStatement assignStmt;
+	      assignStmt = new JExpressionStatement(self.getTokenReference(),
+						    assignExpr,
+						    null);
+	      // add the new statement to the list of statements we are going to
+	      // add to the init function
+	      assignmentStatements.add(assignStmt);
+
+	      // mutate the field so that it has no initializer expression
+	      self.getVariable().setExpression(null);
+	    }
+
+	    
+	      return self;
+	  }	    
+	}); // end crazy anonymous class
+    } // end for loop
+    
+    // now, we have to add the initializing assignment statements
+    // to the beginning of the init function.
+        
+    filter.getInit().getBody().addAllStatements(0, assignmentStatements);
+    
+  }
+  
+
 }

@@ -187,7 +187,10 @@ public class FlatIRToRS extends ToC
 	while (currentType.isArrayType()) {
 	    dim++;
 	    brackets = brackets + 
-		(KjcOptions.absarray ? "," : "[]");
+		  // RMR { syntax change in rstream 2.1: multidimmensional arrays do not use commas
+		  // (KjcOptions.absarray ? "," : "*");
+		  (KjcOptions.absarray ? "]][[" : "[]");
+	        // } RMR
 	    currentType = ((CArrayType)currentType).getElementType();
 	}
 	
@@ -214,7 +217,10 @@ public class FlatIRToRS extends ToC
 	//keep stripping off array types until we get a base type
 	while (currentType.isArrayType()) {
 	    brackets = brackets + 
-		(KjcOptions.absarray ? "," : "*");
+		  // RMR { syntax change in rstream 2.1: multidimmensional arrays do not use commas
+		  // (KjcOptions.absarray ? "," : "*");
+		  (KjcOptions.absarray ? "]][[" : "*");
+	        // } RMR
 	    currentType = ((CArrayType)currentType).getElementType();
 	}
 	
@@ -343,7 +349,10 @@ public class FlatIRToRS extends ToC
 	    print("[[");
 	    dims[0].accept(this);
 	    for (int i = 1; i < dims.length; i++) {
-		print(", ");
+		  // RMR { syntax change in rstream 2.1: multidimmensional arrays do not use commas
+		  // print(", ");
+		  print("]][[");
+	        // } RMR
 		dims[i].accept(this);
 	    }
 	    print("]]");
@@ -583,7 +592,10 @@ public class FlatIRToRS extends ToC
 		FlatIRToRS toRS = new FlatIRToRS(newArrayExprs);
 		arr.getAccessor().accept(toRS);
 		
-		access = access + toRS.getString() + ", ";
+		// RMR { syntax change in rstream 2.1: multidimmensional arrays do not use commas
+		// access = access + toRS.getString() + ", ";
+		access = access + toRS.getString() + "]][[";
+		// } RMR
 		exp = arr.getPrefix();
 	    }
 	    //visit the var access

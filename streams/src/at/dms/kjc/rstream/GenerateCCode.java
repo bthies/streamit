@@ -386,10 +386,12 @@ public class GenerateCCode
 	StringBuffer buf = new StringBuffer();
 	
 	buf.append("#define EXTERNC \n\n");
+	// RMR { added 'const' to avoid prototype conflicts
 	buf.append("extern EXTERNC int printf(const char[], ...);\n");
-	buf.append("extern EXTERNC int fprintf(int, char[], ...);\n");
-	buf.append("extern EXTERNC int fopen(char[], char[]);\n");
-	buf.append("extern EXTERNC int fscanf(int, char[], ...);\n");
+	buf.append("extern EXTERNC int fprintf(int, const char[], ...);\n");
+	buf.append("extern EXTERNC int fopen(const char[], const char[]);\n");
+	buf.append("extern EXTERNC int fscanf(int, const char[], ...);\n");
+	// } RMR
 	buf.append("extern EXTERNC float acosf(float);\n"); 
 	buf.append("extern EXTERNC float asinf(float);\n"); 
 	buf.append("extern EXTERNC float atanf(float);\n"); 
@@ -567,8 +569,8 @@ public class GenerateCCode
     // RMR { allow command arguments and top level iteration counter
     private static String MAINMETHOD_ARGC    = "argc";
     private static String MAINMETHOD_ARGV    = "argv";
-    private static String MAINMETHOD_COUNTER = "iterationCounter";
-    private static String ARGHELPER_COUNTER  = "getIterationCounter";
+    private static String MAINMETHOD_COUNTER = "__iterationCounter";
+    private static String ARGHELPER_COUNTER  = "__getIterationCounter";
     // } RMR
 
     public static String MAINMETHOD = "main";

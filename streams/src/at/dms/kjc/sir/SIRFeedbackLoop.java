@@ -262,4 +262,11 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     public SIRSplitter getSplitter() {
 	return splitter;
     }
+
+    /**
+     * Returns the path-initialization function of this.
+     */
+    public JMethodDeclaration getInitPath() {
+        return initPath;
+    }
 }

@@ -9,7 +9,7 @@ extern int __out_data_buffer;
 
 data_producer::data_producer() {
   items_sent = 0;
-  data_buffer = (char*)malloc(2000);
+  data_buffer = (char*)malloc(16000);
   buf_offset = 0;
 }
 
@@ -24,6 +24,7 @@ void data_producer::read_object(object_write_buffer *buf) {
 void data_producer::write_chunk(void *data, int size, int nitems) {
 
   char *ptr = (char*)data;
+  int fits;
 
   if (__out_data_buffer == 0) {
 
@@ -32,7 +33,7 @@ void data_producer::write_chunk(void *data, int size, int nitems) {
   } else {
 
     while (buf_offset + size >= __out_data_buffer) {
-      int fits = __out_data_buffer - buf_offset;
+      fits = __out_data_buffer - buf_offset;
       memcpy(data_buffer + buf_offset, ptr, fits);
       sock->write_chunk((char*)data_buffer, __out_data_buffer);      
       buf_offset = 0;

@@ -15,10 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Parser.java,v 1.1 2002-12-11 23:53:17 karczma Exp $
+ * $Id: Parser.java,v 1.2 2002-12-11 23:56:07 karczma Exp $
  */
 
-package at.dms.compiler.tools.antlr.extra;
+package at.dms.compiler.antlr.extra;
 
 import java.util.Vector;
 
@@ -28,8 +28,8 @@ import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
 import at.dms.compiler.PositionedError;
 import at.dms.compiler.TokenReference;
-import at.dms.compiler.tools.antlr.runtime.LLkParser;
-import at.dms.compiler.tools.antlr.runtime.ParserException;
+import at.dms.compiler.antlr.runtime.LLkParser;
+import at.dms.compiler.antlr.runtime.ParserException;
 
 /**
  * This class describes the capabilities of parsers.

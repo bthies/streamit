@@ -20,7 +20,7 @@
 /* Boston, MA  02111-1307 USA
 /**************************************************************************/
 
-package gnu.getopt;
+package at.dms.compiler.getopt;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -541,7 +541,7 @@ protected String progname;
   * The localized strings are kept in a separate file
   */
 private ResourceBundle _messages = PropertyResourceBundle.getBundle(
-                           "gnu/getopt/MessagesBundle", Locale.getDefault());
+                           "at.dms.compiler.getopt/MessagesBundle", Locale.getDefault());
 
 /**************************************************************************/
 
@@ -619,7 +619,7 @@ Getopt(String progname, String[] argv, String optstring,
   else
     {
       posixly_correct = true;
-      _messages = PropertyResourceBundle.getBundle("gnu/getopt/MessagesBundle",
+      _messages = PropertyResourceBundle.getBundle("at.dms.compiler.getopt/MessagesBundle",
                                                    Locale.US);
     }
 

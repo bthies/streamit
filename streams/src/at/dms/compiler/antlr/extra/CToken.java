@@ -15,12 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CToken.java,v 1.1 2002-12-11 23:53:17 karczma Exp $
+ * $Id: CToken.java,v 1.2 2002-12-11 23:56:07 karczma Exp $
  */
 
-package at.dms.compiler.tools.antlr.extra;
+package at.dms.compiler.antlr.extra;
 
-import at.dms.compiler.tools.antlr.runtime.Token;
+import at.dms.compiler.antlr.runtime.Token;
 
 public final class CToken extends Token {
 

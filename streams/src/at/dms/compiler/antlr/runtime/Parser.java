@@ -15,10 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Parser.java,v 1.1 2002-12-11 23:53:27 karczma Exp $
+ * $Id: Parser.java,v 1.2 2002-12-11 23:56:11 karczma Exp $
  */
 
-package at.dms.compiler.tools.antlr.runtime;
+package at.dms.compiler.antlr.runtime;
 
 /**
  * A generic ANTLR parser (LL(k) for k>=1) containing a bunch of
@@ -48,10 +48,10 @@ package at.dms.compiler.tools.antlr.runtime;
  * <li>decreasing the guessing level.
  * </ol>
  *
- * @see at.dms.compiler.tools.antlr.runtime.Token
- * @see at.dms.compiler.tools.antlr.runtime.TokenBuffer
- * @see at.dms.compiler.tools.antlr.runtime.Tokenizer
- * @see at.dms.compiler.tools.antlr.runtime.LLkParser
+ * @see at.dms.compiler.antlr.runtime.Token
+ * @see at.dms.compiler.antlr.runtime.TokenBuffer
+ * @see at.dms.compiler.antlr.runtime.Tokenizer
+ * @see at.dms.compiler.antlr.runtime.LLkParser
  */
 
 import java.io.IOException;

@@ -19,7 +19,7 @@
 /* Boston, MA  02111-1307 USA
 /**************************************************************************/
 
-package gnu.getopt;
+package at.dms.compiler.getopt;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -101,7 +101,7 @@ protected int val;
   * Localized strings for error messages
   */
 private ResourceBundle _messages = PropertyResourceBundle.getBundle(
-                            "gnu/getopt/MessagesBundle", Locale.getDefault());
+                            "at.dms.compiler.getopt/MessagesBundle", Locale.getDefault());
 
 /**************************************************************************/
 

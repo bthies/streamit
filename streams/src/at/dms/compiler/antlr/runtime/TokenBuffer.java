@@ -15,10 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenBuffer.java,v 1.1 2002-12-11 23:53:27 karczma Exp $
+ * $Id: TokenBuffer.java,v 1.2 2002-12-11 23:56:11 karczma Exp $
  */
 
-package at.dms.compiler.tools.antlr.runtime;
+package at.dms.compiler.antlr.runtime;
 
 /**
  * A Stream of Token objects fed to the parser from a Tokenizer that can
@@ -31,8 +31,8 @@ package at.dms.compiler.tools.antlr.runtime;
  * token is not done by conume(), but deferred until needed by LA or LT.
  * <p>
  *
- * @see at.dms.compiler.tools.antlr.runtime.Token
- * @see at.dms.compiler.tools.antlr.runtime.TokenQueue
+ * @see at.dms.compiler.antlr.runtime.Token
+ * @see at.dms.compiler.antlr.runtime.TokenQueue
  */
 
 import java.io.IOException;

@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.8 2003-06-25 15:19:48 dmaze Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.9 2003-06-25 15:33:23 dmaze Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
@@ -106,5 +106,30 @@ public class InsertInitConstructors extends InitMunger
                               spec.getStreamType(), spec.getName(),
                               spec.getParams(), spec.getVars(),
                               newFuncs);
+    }
+
+    public Object visitStmtVarDecl(StmtVarDecl decl)
+    {
+        // We're not actually going to modify this declaration, but
+        // we may generate some additional statements (for constructors)
+        // that go after it.
+        addStatement(decl);
+        
+        // So, now go through the list of all the variables and add
+        // constructors as needed:
+        for (int i = 0; i < decl.getNumVars(); i++)
+        {
+            Type type = decl.getType(i);
+            if (needsConstructor(type))
+            {
+                FEContext ctx = decl.getContext();
+                Expression lhs = new ExprVar(ctx, decl.getName(i));
+                addStatements(stmtsForConstructor(ctx, lhs, type));
+            }
+        }
+
+        // We already added the statement, return null so there aren't
+        // duplicate declarations.
+        return null;
     }
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSourceClass.java,v 1.2 2002-06-14 14:13:05 jasperln Exp $
+ * $Id: CSourceClass.java,v 1.3 2002-09-20 17:48:11 thies Exp $
  */
 
 package at.dms.kjc;
@@ -158,22 +158,30 @@ public class CSourceClass extends CClass {
       field = (CSourceField)getField(name);
     }
 
-    if (constructor != null) {
+    // NOTE - major modification to work with StreamIt.  This could
+    // break Kopi as a Java compiler.  Here we register references to
+    // enclosing final locals even if there is not a constructor, so
+    // that you might not know the data layout.  Commented out version
+    // (original) appears below.
+
+    return new JCheckedExpression(ref, new JLocalVariableExpression(ref, var));
+
+    /*
+      if (constructor != null) {
       final	CSourceField	ffield = field;
       JGeneratedLocalVariable local = new JGeneratedLocalVariable(null, 0, var.getType(), var.getIdent(), null) {
-          
-	  /**
-	   * @return the local index in context variable table
-	   */
-	  public int getPosition() {
-	    return 1 /*this*/ + constructor.getParameters().length + (hasOuterThis() ? 1 : 0) + ffield.getPosition() - (getFieldCount() - countSyntheticsFields);
-	  }
-	};
-
+       
+      // @return the local index in context variable table
+      public int getPosition() {
+      return 1  + constructor.getParameters().length + (hasOuterThis() ? 1 : 0) + ffield.getPosition() - (getFieldCount() - countSyntheticsFields);
+      }
+      };
+      
       return new JCheckedExpression(ref, new JLocalVariableExpression(ref, local));
-    } else {
+      } else {
       return new JFieldAccessExpression(ref, new JThisExpression(ref, getCClass()), name);
-    }
+      }
+    */
   }
 
   /**

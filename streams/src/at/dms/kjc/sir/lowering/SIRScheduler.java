@@ -7,6 +7,7 @@ import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -18,20 +19,31 @@ import java.util.ListIterator;
 public class SIRScheduler {
 
     /**
+     * Maps Lists returned by the scheduler to work functions that can
+     * be called.
+     */
+    private static HashMap listToWork;
+
+    /**
      * Does the scheduling, adding a work function corresponding to
      * <toplevel> to <flatClass>.
      */
     public static Schedule schedule(SIRStream toplevel, 
 				    JClassDeclaration flatClass) {
+	// make a scheduler
+	Scheduler scheduler = new SimpleHierarchicalScheduler();
 	// get a representation of the stream structure
 	SchedStream schedStream 
-	    = (SchedStream)toplevel.accept(new SIRSchedBuilder());
-	// make a scheduler
-	Scheduler scheduler = new SimpleHierarchicalScheduler(schedStream);
+	    = (SchedStream)toplevel.accept(new SIRSchedBuilder(scheduler));
+	// set it to compute the schedule of <schedStream>
+	scheduler.useStream(schedStream);
 	// compute a schedule
 	Schedule schedule = (Schedule)scheduler.computeSchedule();
+	// make new mapping from schedule lists to work functions
+	listToWork = new HashMap();
 	// make work function implementing the schedule
-	JMethodDeclaration work = buildToplevelWork(schedule, toplevel);
+	JMethodDeclaration work = makeWork(schedule.getSchedule(), 
+					   toplevel);
 	// add <work> to <flatClass>
 	flatClass.addMethod(work);
 	// add <work> to <toplevel>
@@ -41,11 +53,49 @@ public class SIRScheduler {
     }
 
     /**
-     * Translates <schedule> into a work function for toplevel class <toplevel>
+     * Returns a work function for the scheduling object
+     * <schedObject>, which must be either a List (corresponding to a
+     * hierarchical scheduling unit) or an SIRFilter (corresponding to
+     * the base case, in which a filter's work function should be executed.)
      */
-    private static JMethodDeclaration buildToplevelWork(Schedule schedule,
-							SIRStream toplevel) {
-	JStatement[] statementList = buildAllFilterWork(toplevel, schedule);
+    private static JMethodDeclaration makeWork(Object schedObject,
+					       SIRStream toplevel) {
+	// see what kind of schedObject we have
+	if (schedObject instanceof List) {
+	    // if we have a list, process as hierarhical unit...
+	    List list = (List)schedObject;
+	    // see if we've already built a work function for <list>
+	    if (listToWork.containsKey(list)) {
+		// if so, return the work function
+		return (JMethodDeclaration)listToWork.get(list);
+	    } else {
+		// otherwise, compute the work function
+		JMethodDeclaration work = makeWorkForList(list, toplevel);
+		// and remember it for next time in the listToWork map
+		listToWork.put(list, work);
+		// return work
+		return work;
+	    }
+	} else if (schedObject instanceof SIRFilter) {
+	    // if we have a filter, just return filter's work function
+	    return ((SIRFilter)schedObject).getWork();
+	} else {
+	    // othwerise, fail
+	    Utils.fail("SIRScheduler expected List or SIRFilter, but found " + 
+		       schedObject.getClass());
+	    // return value doesn't matter
+	    return null;
+	}
+    }
+    
+    /**
+     * Given that <list> contains a set of scheduling objects under
+     * toplevel stream <toplevel>, returns a work function
+     * corresponding to <list>.  
+     */
+    private static JMethodDeclaration makeWorkForList(List list, 
+						      SIRStream toplevel) {
+	JStatement[] statementList = makeWorkStatements(list, toplevel);
 	// make block for statements
 	JBlock statementBlock = new JBlock(null, 
 					   statementList,
@@ -79,82 +129,106 @@ public class SIRScheduler {
 	// return result
 	return result;
     }
-    
+
     /**
      * Returns a list of statements corresponding to a sequence of
-     * calls to the filter work functions in <toplevel>.
+     * calls to the work functions corresponding to the elements of
+     * <list> with top-level stream <toplevel>
      */
-    private static JStatement[] buildAllFilterWork(SIRStream toplevel,
-						   Schedule schedule)
-    {
+    private static JStatement[] makeWorkStatements(List list, 
+						   SIRStream toplevel) {
 	// build the statements for <work> ...
 	List statementList = new LinkedList();
-	// get the list of filters to execute
-	List list = schedule.getSchedule();
 	// for each filter...
 	for (ListIterator it = list.listIterator(); it.hasNext(); ) {
 	    Object next = it.next();
-	    if (next instanceof List) {
-		Utils.fail("Hierarchical schedules not implemented yet--\n\t" +
-			  "would like to associate SIRPipeline w/ SchedPipe");
-	    }
-	    Utils.assert(next instanceof SIRFilter, 
-			 "Can only schedule filters for now, but got a" +
-			 next.getClass() + " instead.");
-	    SIRFilter filter = (SIRFilter)next;
+	    // get work function associated with <next>
+	    JMethodDeclaration work = makeWork(next, toplevel);
+	    // build the parameter to the work function, depending on
+	    // whether we're calling a filter work function or a
+	    // hierarchical list-work function
+	    JExpression[] arguments
+		= {makeWorkArgument(next, toplevel)} ;
 	    // get method call to work function of <filter>
-	    JMethodCallExpression filterWorkExpr = 
-		buildFilterWork(toplevel, filter);
+	    JMethodCallExpression workExpr = 
+		new JMethodCallExpression(/* tokref */
+					  null,
+					  /* prefix -- ok to be null? */
+					  null,
+					  /* ident */
+					  work.getName(),
+					  /* args */
+					  arguments);
 	    // make a statement from the call expression
-	    JExpressionStatement filterWorkStatement =
-		new JExpressionStatement(null, filterWorkExpr, null);
+	    JExpressionStatement workStatement =
+		new JExpressionStatement(null, workExpr, null);
 	    // add call to filter work to our statement list
-	    statementList.add(filterWorkStatement);
+	    statementList.add(workStatement);
 	}
 	// return list
 	return (JStatement[])statementList.toArray(new JStatement[0]);
     }
 
     /**
-     * Within class <toplevel>, adds a call to the work function of
-     * <filter> to <statementList>.
+     * Returns the proper argument to the work function for <schedObject>
+     * given toplevel stream <toplevel>.
      */
-    private static JMethodCallExpression buildFilterWork(SIRStream toplevel,
-							 SIRFilter filter) {
-	// for now, assume <toplevel> is a pipeline
-	Utils.assert((toplevel instanceof SIRPipeline),
-		     "Can only schedule SIRPipeline's for now.");
-	SIRPipeline pipe = (SIRPipeline)toplevel;
-	// build parameter to call as the child's context...
-	// get field name for <filter>'s context
-	String childName = 
-	    LoweringConstants.getChildName(pipe.indexOf(filter));
-	// build a reference to <childName> in context of <toplevel>.
-	// This assumes that the current function will have the
-	// current context named <data>, as a parameter.
-	JFieldAccessExpression[] childContext =
-	    {new JFieldAccessExpression(/* tokref */
-				       null,
-				       /* prefix */
-				       new JNameExpression(/* tokref */ 
-							   null,
-							   /* ident */
-							   LoweringConstants.
-							   STATE_PARAM_NAME),
-				       /* ident */
-				       childName)};
-	// construct call to work function of <filter>, with
-	// <childContext> as the argument
-	JMethodCallExpression filterWork = 
-	    new JMethodCallExpression(/* tokref */
-				      null,
-				      /* prefix -- ok to be null? */
-				      null,
-				      /* ident */
-				      LoweringConstants.getWorkName(filter),
-				      /* args */
-				      childContext);
-	return filterWork;
+    private static JExpression makeWorkArgument(Object schedObject,
+						SIRStream toplevel) {
+	if (schedObject instanceof List) {
+	    // make arg for list -- just the current context
+	    return LoweringConstants.getDataField();
+	} else if (schedObject instanceof SIRFilter) {
+	    // make arg for filter
+	    return makeFilterWorkArgument((SIRFilter)schedObject, 
+					  toplevel);
+	} else {
+	    // otherwise, fail
+	    Utils.fail("SIRScheduler expected List or SIRFilter but found" +
+		       schedObject.getClass());
+	    // return dummy value
+	    return null;
+	}
+    }
+
+    /**
+     * Returns an expression that returns the data structure
+     * corresponding to <filter>, tracing pointers from the data
+     * structure for <toplevel>.
+     */
+    private static JExpression makeFilterWorkArgument(SIRFilter filter,
+						      SIRStream toplevel) {
+
+	// get parents of <filter>
+	SIRStream parents[] = filter.getParents();
+
+	// construct result expression
+	JExpression result = LoweringConstants.getDataField();
+
+	// go through parents from top to bottom, building up the
+	// field access expression.
+	for (int i=parents.length-1; i>=0; i--) {
+	    if (parents[i] instanceof SIRPipeline) {
+		SIRPipeline pipe = (SIRPipeline)parents[i];
+		// get the child of interest (either the next parent,
+		// or <filter>
+		SIRStream child = (i>0 ? parents[i-1] : filter);
+		// get field name for child context
+		String childName = 
+		    LoweringConstants.getChildName(pipe.indexOf(child));
+		// build up cascaded field reference
+		result = new JFieldAccessExpression(/* tokref */
+						    null,
+						    /* prefix is previous ref*/
+						    result,
+						    /* ident */
+						    childName);
+	    } else {
+		Utils.fail("Only pipelines supported now.");
+	    }
+	}
+
+	return result;
     }
 }
 
@@ -163,6 +237,19 @@ public class SIRScheduler {
  * scheduler to use.
  */
 class SIRSchedBuilder implements AttributeStreamVisitor {
+
+    /**
+     * The scheduler that dictates construction of the representation
+     * of the stream graph.
+     */
+    private Scheduler scheduler;
+
+    /**
+     * Construct one of these with scheduler <scheduler>
+     */
+    public SIRSchedBuilder(Scheduler scheduler) {
+	this.scheduler = scheduler;
+    }
 
     /* visit a filter */
     public Object visitFilter(SIRFilter self,
@@ -174,7 +261,7 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 			      JMethodDeclaration work,
 			      CType inputType, CType outputType) {
 	// represent the filter
-	return new SchedFilter(self, push, pop, peek);
+	return scheduler.newSchedFilter(self, push, pop, peek);
     }
   
     /* pre-visit a pipeline */
@@ -185,7 +272,7 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 				JMethodDeclaration init,
 				List elements) {
 	// represent the pipeline
-	SchedPipeline sp = new SchedPipeline(self);
+	SchedPipeline sp = scheduler.newSchedPipeline(self);
 	// add children to pipeline
 	for (ListIterator it = elements.listIterator(); it.hasNext(); ) {
 	    // get child

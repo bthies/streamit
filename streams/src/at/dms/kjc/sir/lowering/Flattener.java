@@ -3,6 +3,7 @@ package at.dms.kjc.sir.lowering;
 import streamit.scheduler.*;
 
 import at.dms.util.IRPrinter;
+import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
@@ -17,6 +18,11 @@ public class Flattener {
      * Flattens <str> into a low IR representation.
      */
     public static JClassDeclaration flatten(SIRStream str) {
+	// DEBUGGING PRINTING
+	SIRPrinter printer1 = new SIRPrinter();
+	str.accept(printer1);
+	printer1.close();
+
 	// name the components
 	Namer.assignNames(str);
 	// make single structure
@@ -27,7 +33,7 @@ public class Flattener {
 	LowerInitFunctions.lower(str, schedule);
 	// add main function
 	addMainFunction(str, flatClass);
-	
+
 	// DEBUGGING PRINTING
 	IRPrinter printer = new IRPrinter();
 	flatClass.accept(printer);

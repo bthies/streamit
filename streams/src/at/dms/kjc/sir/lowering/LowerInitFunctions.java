@@ -51,19 +51,13 @@ public class LowerInitFunctions implements StreamVisitor {
 	for (; it.hasNext(); it.next());
 	for (; it.hasPrevious(); childCount--) {
 	    Object o = it.previous();
-	    if (o instanceof List) {
-		Utils.fail("No support for hierarchical streams yet");
-	    }
-	    Utils.assert(o instanceof SIRFilter, 
-			 "Can only lower filters for now, but got a " + 
-			 o.getClass() + " instead.");
-	    SIRFilter filter = (SIRFilter)o;
+	    SIRStream stream = (SIRStream)o;
 
 	    // register the child
 	    init.addStatementFirst(new LIRSetChild(LoweringConstants.
 						   getStreamContext(),
 						   /* child type */
-						   filter.getName(),
+						   stream.getName(),
 						   /* child name */
 						   LoweringConstants.
 						   getChildName(childCount)));
@@ -82,17 +76,16 @@ public class LowerInitFunctions implements StreamVisitor {
 	if (pipe.size()==0) {
 	    return;
 	}
-	// assume components are filters for now . . . 
-	// go through children of <pipe>, keeping track of filter1 and
-	// filter2, which have a tape between them
-	SIRFilter filter1, filter2;
-	// get filter1
-	filter1 = (SIRFilter)pipe.get(0);
+	// go through children of <pipe>, keeping track of stream1 and
+	// stream2, which have a tape between them
+	SIRStream stream1, stream2;
+	// get stream1
+	stream1 = (SIRStream)pipe.get(0);
 	// for all the pairs of children...
 	for (int i=1; i<pipe.size(); i++) {
-	    // get filter2
-	    filter2 = (SIRFilter)pipe.get(i);
-	    // declare a tape from filter1 to filter2
+	    // get stream2
+	    stream2 = (SIRStream)pipe.get(i);
+	    // declare a tape from stream1 to stream2
 	    init.addStatement(new LIRSetTape(LoweringConstants.
 					     getStreamContext(),
 					     /* stream struct 1 */
@@ -102,12 +95,12 @@ public class LowerInitFunctions implements StreamVisitor {
 					     LoweringConstants.
 					     getChildStruct(i), 
 					     /* type on tape */
-					     filter1.getOutputType(), 
+					     stream1.getOutputType(), 
 					     /* size of buffer */
-	   schedule.getBufferSizeBetween(filter1, filter2).intValue()
+	   schedule.getBufferSizeBetween(stream1, stream2).intValue()
 						  ));
-	    // re-assign filter1 for next step
-	    filter1 = filter2;
+	    // re-assign stream1 for next step
+	    stream1 = stream2;
 	}
     }
 

@@ -62,11 +62,18 @@ public class LoweringConstants {
 	return new JFieldAccessExpression(
 					  null,
 					  /* prefix */
-					  new JNameExpression(null, 
-							     null, 
-							     STATE_PARAM_NAME),
+					  getDataField(),
 					  /* ident */
 					  getChildName(n));
+    }
+
+    /**
+     * Returns a field access to the current stream structure.
+     */
+    public static JExpression getDataField() {
+	return new JNameExpression(null, 
+				   null, 
+				   STATE_PARAM_NAME);
     }
 
     /**
@@ -155,10 +162,7 @@ public class LoweringConstants {
 	return new JFieldAccessExpression(/* tokref */
 				       null,
 				       /* prefix */
-				       new JNameExpression(/* tokref */ 
-							   null,
-							   /* ident */
-							   STATE_PARAM_NAME),
+				       getDataField(),
 				       /* ident */
 				       CONTEXT_VAR_NAME);
     }

@@ -42,8 +42,9 @@ linear-compile:
 linear-test: linear-compile
 	$(STREAMIT-COMPILER) $(COMPILER-OPTIONS) $(SOURCE)
 
-linear-test-currnet: linear-compile
-	$(STREAMIT-COMPILER) $(COMPILER-OPTIONS) regtests/LinearTest2$(SOURCE-EXT)
+test-current: linear-compile
+	$(STREAMIT-COMPILER) $(COMPILER-OPTIONS) regtests/LinearTest2$(SOURCE-EXT) > current.output
+	./parse_linear_output.pl current.output
 
 
 linear-regtest: linear-compile
@@ -60,5 +61,6 @@ clean:
 	rm -f tile.*
 	rm -f fileio.bc kernel
 	rm -f *.dot
+	rm -f *.output
 	rm -f regtests/*.output
 	rm -f regtests/*.parsed

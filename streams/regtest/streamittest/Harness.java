@@ -10,6 +10,10 @@ import java.util.*;
  * runtime system.
  **/
 public class Harness {
+    /** The maximum time (in minutes) to execute a command **/
+    public static final long TIME_LIMIT = 10;
+    /** the path to the texec program to limit execution time **/
+    public static final String TEXEC = "regtest/tools/texec/texec"; 
     
     /**
      * Reads out the environment variable STREAMIT_HOME
@@ -41,7 +45,9 @@ public class Harness {
      * Writes standard output from program to outStream.
      **/
     public static boolean executeNative(String[] cmdArray, OutputStream outStream) throws Exception {
-
+	// add a hook to the command array that will limit the execution time
+	cmdArray = addTimeLimit(cmdArray);
+	
 	// start the process executing
 	Process jProcess = Runtime.getRuntime().exec(cmdArray);
 	
@@ -50,9 +56,9 @@ public class Harness {
 	BufferedReader jOutStream = new BufferedReader(outReader);
 	BufferedReader jErrorStream =  new BufferedReader(new InputStreamReader(jProcess.getErrorStream()));
 
-	// wait for the process to be done
+	// block until the child process is done (time limiting is done outside the JVM).
 	jProcess.waitFor();
-	
+
 	// if 0 is not returned, print stdout to result printer for debugging
 	if (jProcess.exitValue() != 0) {
 	    // print output from so that we know what is going on
@@ -100,6 +106,22 @@ public class Harness {
 	return true;
     }
 
+    /**
+     * Prepend the texec command to the command array to limit
+     * its execution time to TIME_LIMIT minutes.
+     **/
+    public static String[] addTimeLimit(String[] cmdArray) {
+	String[] newCmdArray = new String[cmdArray.length + 3];
+	newCmdArray[0] = getStreamITRoot() + TEXEC;
+	newCmdArray[1] = "-m";
+	newCmdArray[2] = "" + TIME_LIMIT;
+	for (int i=0; i<cmdArray.length; i++) {
+	    newCmdArray[i+3] = cmdArray[i];
+	}
+	return newCmdArray;
+    }
+
+    
     /**
      * Expand a filename with a wildcard in it to an array of file names.
      **/

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.1 2001-10-03 14:29:07 dmaze Exp $
+ * $Id: LIRToC.java,v 1.2 2001-10-03 17:32:38 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -9,7 +9,7 @@ import java.io.StringWriter;
 import java.util.StringTokenizer;
 import at.dms.util.InconsistencyException;
 
- import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import at.dms.compiler.*;
 
@@ -114,26 +114,6 @@ public class LIRToC
                                       JTypeDeclaration[] decls) {
         LIRToC that = new LIRToC();
         that.className = ident;
-        /*
-          that.newLine();
-          that.print(CModifier.toString(modifiers));
-          that.print("class " + ident);
-
-          if (superName != null) {
-          that.print(" extends " + superName.replace('/', '.'));
-          }
-
-          if (interfaces.length != 0) {
-          that.print(" implements ");
-          for (int i = 0; i < interfaces.length; i++) {
-          if (i != 0) {
-	  that.print(", ");
-          }
-          that.print(interfaces[i]);
-          }
-          }
-
-          that.print(" "); */
         that.visitClassBody(decls, fields, methods, body);
     
         print(that.getString());
@@ -148,9 +128,6 @@ public class LIRToC
                                JPhylum[] body) {
         for (int i = 0; i < decls.length ; i++) {
             decls[i].accept(this);
-        }
-        for (int i = 0; i < methods.length ; i++) {
-            methods[i].accept(this);
         }
         if (body != null) {
             for (int i = 0; i < body.length ; i++) {
@@ -177,6 +154,17 @@ public class LIRToC
         pos -= TAB_SIZE;
         newLine();
         print("} _" + className + ", *" + className + ";");
+
+        // Print function prototypes for each of the methods.
+        declOnly = true;
+        for (int i = 0; i < methods.length; i++) {
+            methods[i].accept(this);
+        }
+
+        declOnly = false;
+        for (int i = 0; i < methods.length ; i++) {
+            methods[i].accept(this);
+        }
     }
 
     /**
@@ -293,17 +281,9 @@ public class LIRToC
         // print(CModifier.toString(modifiers));
         print(returnType);
         print(" ");
-        if (className != null) print(className + "_");
         print(ident);
         print("(");
         int count = 0;
-
-        // Include an implicit this parameter if needed.
-        if ((modifiers & ACC_STATIC) == 0)
-        {
-            print(className + " this");
-            count++;
-        }
 
         for (int i = 0; i < parameters.length; i++) {
             if (count != 0) {
@@ -317,13 +297,10 @@ public class LIRToC
         }
         print(")");
 
-        for (int i = 0; i < exceptions.length; i++) {
-            if (i != 0) {
-                print(", ");
-            } else {
-                print(" throws ");
-            }
-            print(exceptions[i].toString());
+        if (declOnly)
+        {
+            print(";");
+            return;
         }
 
         print(" ");
@@ -1413,7 +1390,7 @@ public class LIRToC
                                     CType tapeType,
                                     JExpression num)
     {
-        print("PEEK(this->context, ");
+        print("PEEK(data->context, ");
         if (tapeType != null)
             print(tapeType);
         else
@@ -1426,7 +1403,7 @@ public class LIRToC
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-        print("POP(this->context, ");
+        print("POP(data->context, ");
         if (tapeType != null)
             print(tapeType);
         else
@@ -1448,7 +1425,7 @@ public class LIRToC
                                     CType tapeType,
                                     JExpression val)
     {
-        print("PUSH(this->context, ");
+        print("PUSH(data->context, ");
         if (tapeType != null)
             print(tapeType);
         else
@@ -1483,13 +1460,14 @@ public class LIRToC
                               String childName)
     {
         // Pay attention, three statements!
-        print(childName + " = malloc(sizeof(" + childType + "));");
+        print("data->" + childName + " = malloc(sizeof(" + childType + "));");
         newLine();
-        print(childName + "->context = create_context(" + childName + ");");
+        print("data->" + childName + "->context = " +
+              "create_context(data->" + childName + ");");
         newLine();
         print("register_child(");
         streamContext.accept(this);
-        print(", " + childName + "->context);");
+        print(", data->" + childName + "->context);");
     }
     
     public void visitSetTape(LIRSetTape self,
@@ -1578,7 +1556,7 @@ public class LIRToC
     {
         print("set_peek(");
         streamContext.accept(this);
-        print(", peek);");
+        print(", " + peek + ");");
     }
     
     /**
@@ -1590,7 +1568,7 @@ public class LIRToC
     {
         print("set_pop(");
         streamContext.accept(this);
-        print(", pop);");
+        print(", " + pop + ");");
     }
     
     /**
@@ -1602,7 +1580,7 @@ public class LIRToC
     {
         print("set_push(");
         streamContext.accept(this);
-        print(", push);");
+        print(", " + push + ");");
     }
 
     /**
@@ -1626,7 +1604,7 @@ public class LIRToC
     {
         print("set_work(");
         streamContext.accept(this);
-        print(", ");
+        print(", (work_fn)");
         fn.accept(this);
         print(");");
     }
@@ -1908,4 +1886,5 @@ public class LIRToC
     protected TabbedPrintWriter		p;
     protected StringWriter                str;
     protected boolean			nl = true;
+    protected boolean                   declOnly = false;
 }

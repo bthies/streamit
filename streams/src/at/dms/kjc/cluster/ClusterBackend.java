@@ -149,10 +149,10 @@ public class ClusterBackend implements FlatVisitor {
 	    if (!KjcOptions.partition_greedy && !KjcOptions.partition_greedier) {
 		KjcOptions.partition_dp = true;
 	    }
-	    str = Partitioner.doit(str, 0, threads, false);
+	    str = Partitioner.doit(str, 0, threads, false, true);
 	}
 	HashMap partitionMap = new HashMap();
-	str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false).calcPartitions(partitionMap);
+	str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, true).calcPartitions(partitionMap);
 	System.err.println("Done Partitioning...");
 
 	if (KjcOptions.sjtopipe) {

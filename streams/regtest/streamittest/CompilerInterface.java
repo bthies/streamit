@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.20 2003-03-31 16:25:03 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.21 2003-04-08 02:02:02 aalamb Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -35,6 +35,7 @@ public class CompilerInterface {
     public static final int NUMBERS            = 0x100000;
     public static final int REMOVE_GLOBALS     = 0x200000;
     public static final int DPSCALE            = 0x400000;
+    public static final int LINEARPARTITION    = 0x800000;
     
     // Options
     public static final String OPTION_STREAMIT           = "--streamit";
@@ -56,6 +57,8 @@ public class CompilerInterface {
     public static final String OPTION_NUMBERS            = "--numbers";
     public static final String OPTION_REMOVE_GLOBALS     = "--removeglobals";
     public static final String OPTION_DPSCALE            = "--dpscaling";
+
+    public static final String OPTION_LINEARPARTITION    = "--linearpartition";
 
     // number of steady-state executions to run program for if
     // gathering numbers from within the compiler
@@ -296,6 +299,12 @@ public class CompilerInterface {
 	// dynamic programming scaling output
 	if ((flags & DPSCALE) == DPSCALE) {
 	    options[numOptions] = OPTION_DPSCALE;
+	    numOptions++;
+	}
+
+	// linear partitioning
+	if ((flags & LINEARPARTITION) == LINEARPARTITION) {
+	    options[numOptions] = OPTION_LINEARPARTITION;
 	    numOptions++;
 	}
 

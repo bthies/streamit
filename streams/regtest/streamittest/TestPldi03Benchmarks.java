@@ -1,6 +1,6 @@
 /**
  * Interface for the PLDI 02 benchmarks in the 
- * $Id: TestPldi03Benchmarks.java,v 1.4 2003-03-31 16:25:03 aalamb Exp $
+ * $Id: TestPldi03Benchmarks.java,v 1.5 2003-04-08 02:02:02 aalamb Exp $
  **/
 package streamittest;
 
@@ -37,7 +37,10 @@ public class TestPldi03Benchmarks extends StreamITTestCase {
 	// frequency replacement
 	suite.addTest(TestPldi03Benchmarks.suite(CompilerInterface.NONE | CompilerInterface.DEBUG | CompilerInterface.UNROLL | CompilerInterface.FREQ_REPLACEMENT));
 	//redundancy replacement
-	suite.addTest(TestPldi03Benchmarks.suite(CompilerInterface.NONE | CompilerInterface.DEBUG | CompilerInterface.UNROLL | CompilerInterface.REDUND_REPLACEMENT));
+	//suite.addTest(TestPldi03Benchmarks.suite(CompilerInterface.NONE | CompilerInterface.DEBUG | CompilerInterface.UNROLL | CompilerInterface.REDUND_REPLACEMENT));
+	//linear partitioning
+	suite.addTest(TestPldi03Benchmarks.suite(CompilerInterface.NONE | CompilerInterface.DEBUG | CompilerInterface.UNROLL | CompilerInterface.LINEARPARTITION));
+
 	return suite;
     }
 
@@ -50,11 +53,12 @@ public class TestPldi03Benchmarks extends StreamITTestCase {
 	TestSuite suite = new TestSuite();
 	suite.addTest(new TestPldi03Benchmarks("testSimple", flags));
 	suite.addTest(new TestPldi03Benchmarks("testFIR", flags));
-	//suite.addTest(new TestPldi03Benchmarks("testTarget", flags));
-	//suite.addTest(new TestPldi03Benchmarks("testFilterBank", flags));
-	//suite.addTest(new TestPldi03Benchmarks("testSamplingRate", flags));
-	//suite.addTest(new TestPldi03Benchmarks("testFM", flags));	
+	suite.addTest(new TestPldi03Benchmarks("testTarget", flags));
+	suite.addTest(new TestPldi03Benchmarks("testFilterBank", flags));
+	suite.addTest(new TestPldi03Benchmarks("testSamplingRate", flags));
+	suite.addTest(new TestPldi03Benchmarks("testFM", flags));	
 	//suite.addTest(new TestPldi03Benchmarks("testBeamformer", flags));
+	suite.addTest(new TestPldi03Benchmarks("testOneBit", flags));	
 	return suite;
     }
 
@@ -116,6 +120,15 @@ public class TestPldi03Benchmarks extends StreamITTestCase {
         String root     = PLDI_ROOT;
 	String source   = "CoarseSerializedBeamFormer.java";
 	String expected = "CoarseSerializedBeamFormer.out";
+        doMake(root, "benchmarks");
+        doCompileRunVerifyTest(root, source, expected);
+    }
+
+    public void testOneBit()
+    {
+        String root     = PLDI_ROOT;
+	String source   = "OneBitDToA.java";
+	String expected = "OneBitDToA.out";
         doMake(root, "benchmarks");
         doCompileRunVerifyTest(root, source, expected);
     }

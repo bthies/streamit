@@ -415,13 +415,25 @@ public class Rawify
 				    
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
 	//calculate the number of items sent
-	int items = filterInfo.totalItemsSent(init, primepump), 
-	    iterations, stage = 1, typeSize;
+	int items = filterInfo.totalItemsSent(init, primepump);
 	
+	//subtract the items from the primepump that are not consumed
+	//they are handled below
 	if (primepump)
 	    items -= filterInfo.primePumpItemsNotConsumed();
-
+	
+	performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, items);
+	
+	if (primepump)
+	    performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, 
+				    filterInfo.primePumpItemsNotConsumed());
+    }
+    private static void performSplitOutputTrace(OutputTraceNode traceNode, FilterTraceNode filter,
+						FilterInfo filterInfo, boolean init, boolean primepump,
+						int items)
+    {
 	if (items > 0) {
+	    int iterations, stage = 1, typeSize;
 	    //the stage we are generating code for as used below for generateSwitchCode()
 	    if (!init && !primepump) 
 		stage = 2;

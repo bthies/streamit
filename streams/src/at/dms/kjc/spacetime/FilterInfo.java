@@ -183,6 +183,8 @@ public class FilterInfo
 	    itemsConsumed += (downstream.primePump * downstream.pop);
 	}
 	
+	assert ((itemsSent - itemsConsumed) % push == 0) :
+	    "primepump items not consumed is not multiple of push!";
 	return itemsSent - itemsConsumed;
     }
     

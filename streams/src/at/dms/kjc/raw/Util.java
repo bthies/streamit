@@ -36,7 +36,7 @@ public class Util extends at.dms.util.Utils {
     */
     public static int getCountPrev(HashMap counts, FlatNode prev, FlatNode node) 
     {
-	if (prev.contents instanceof SIRJoiner || prev.contents instanceof SIRJoiner)
+	if (!(prev.contents instanceof SIRSplitter))
 	    return getCount(counts, prev);
 	
 
@@ -52,7 +52,7 @@ public class Util extends at.dms.util.Utils {
 	    }
 	}
 	if (thisWeight == -1)
-	    Utils.fail("Splitter not connected to node");
+	    Utils.fail("Splitter not connected to node "+prev+"->"+node);
 	double rate = ((double)thisWeight) / ((double)sumWeights);
 	
 	return ((int)(rate * (double)getCount(counts, prev)));

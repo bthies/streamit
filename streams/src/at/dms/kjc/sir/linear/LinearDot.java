@@ -23,20 +23,20 @@ public class LinearDot extends StreamItDot {
 	this.linearData = anal;
     }
 
-    /** Create the dot code for a dark grey labeled node, with the specified label. **/
-    String makeDarkGreyLabelledNode(String label)
+    /** Create the dot code for a node with a constant component (red). **/
+    String makeConstantLabelledNode(String label)
     {
         String name = getName();
         if (label == null) label = name;
-        print(name + " [ color=slategrey, style=filled, label=\"" + label + "\" ]\n");
+        print(name + " [ color=palevioletred, style=filled, label=\"" + label + "\" ]\n");
         return name;
     }
-    /** Create the dot code for a light grey labeled node, with the specified label. **/
-    String makeLightGreyLabelledNode(String label)
+    /** Create the dot code for a node with no constant component (cornflower blue). **/
+    String makeNoConstantLabelledNode(String label)
     {
         String name = getName();
         if (label == null) label = name;
-        print(name + " [ color=lightgrey, style=filled, label=\"" + label + "\" ]\n");
+        print(name + " [ color=cornflowerblue, style=filled, label=\"" + label + "\" ]\n");
         return name;
     }
 
@@ -79,9 +79,9 @@ public class LinearDot extends StreamItDot {
 	    // component, make a light grey node if the linear rep has a constant
 	    // component.
 	    if (lfr.hasConstantComponent()) {
-		return new NamePair(makeDarkGreyLabelledNode(label));
+		return new NamePair(makeConstantLabelledNode(label));
 	    } else {
-		return new NamePair(makeLightGreyLabelledNode(label));
+		return new NamePair(makeNoConstantLabelledNode(label));
 	    }
 	} else {
 	    return new NamePair(makeLabelledNode(label));

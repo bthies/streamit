@@ -20,7 +20,7 @@ import at.dms.compiler.*;
  * }
  * </pre>
  * <p>
- * $Id: LinearFilterDirectReplacer.java,v 1.1 2002-09-11 17:04:43 aalamb Exp $
+ * $Id: LinearFilterDirectReplacer.java,v 1.2 2002-09-11 19:15:04 aalamb Exp $
  **/
 public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Constants{
     LinearFilterAnalyzer linearityInformation;
@@ -44,6 +44,9 @@ public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Co
 	    if (!(self.getPop() instanceof JIntLiteral)) {
 		throw new RuntimeException("Non integer literal pop count!!!");
 	    }
+	    System.out.println("Creating direct linear implementation of " +
+			       self.getIdent() +
+			       "(" + self.getName() + ")");
 	    // create a new work function that calculates the linear representation directly
 	    JMethodDeclaration newWork = makeDirectImplementation(linearityInformation.getLinearRepresentation(self),
 								  self.getInputType(),
@@ -99,7 +102,7 @@ public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Co
 
 	return new JMethodDeclaration(null, // tokenReference
 				      ACC_PUBLIC,//modifiers
-				      CType.parseSignature("void"), // returnType
+				      new CVoidType(), // returnType
 				      "work",
 				      new JFormalParameter[0], // params
 				      new CClassType[0], // exceptions
@@ -137,6 +140,10 @@ public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Co
 	    // a note about indexes: the matrix [[0] [1] [2]] implies peek(0)*2 + peek(1)*1 + peek(2)*0.
 	    for (int j = 0; j < peekCount; j++) {
 		int currentPeekIndex = peekCount - 1 - j;
+		System.out.println("peekCount: " + peekCount);
+		System.out.println("pushCount: " + pushCount);
+		System.out.println("currentPeekIndex: " + currentPeekIndex);
+		System.out.println("currentPushIndex: " + currentPushIndex);
 		ComplexNumber currentWeight = representation.getA().getElement(currentPeekIndex,
 									       currentPushIndex);
 		// if we have a non real number, bomb Mr. Exception
@@ -151,7 +158,7 @@ public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Co
 		    JDoubleLiteral weightNode = new JDoubleLiteral(null, currentWeight.getReal());
 		    // make an integer IR node for the appropriate peek index (peek (0) corresponds to
 		    // to the array row of  at peekSize-1
-		    JIntLiteral peekOffsetNode = new JIntLiteral(i);
+		    JIntLiteral peekOffsetNode = new JIntLiteral(j);
 		    // make a peek expression with the appropriate index
 		    SIRPeekExpression peekNode = new SIRPeekExpression(peekOffsetNode, inputType);
 		    // make a JMultExpression with weight*peekExpression
@@ -160,47 +167,54 @@ public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Co
 								   peekNode);   // right
 		    combinationExpressions.add(multNode);
 		}
-
-		// now, we need to create the appropriate constant to represent the offset
-		ComplexNumber currentOffset = representation.getb().getElement(currentPushIndex);
-		if (!currentOffset.isReal()) {throw new RuntimeException("Non real complex number in offset vector");}
-		JDoubleLiteral offsetNode = new JDoubleLiteral(null, currentOffset.getReal());
-		
-		// now we have all of the combination nodes and the offset node.
-		// What we want to do is to is to combine them all together using addition.
-		// To do this, we create an add expression tree expanding downward to the right as we go.
-		JExpression pushArgument;
-		// if no combination expressions, then the push arg is only the offset
-		if (combinationExpressions.size() == 0) {
-		    // if we have no combination expressions, it means we should simply output a zero
-		    pushArgument = offsetNode;
-		} else {
-		    // combination expressions need to be nested.
-		    // Start with the right most node
-		    int numCombos = combinationExpressions.size();
-		    pushArgument = new JAddExpression(null, // tokenReference
-						      ((JExpression)combinationExpressions.get(numCombos-1)), // left
-						      offsetNode); // right
-		    // now, for all of the other combinations, make new add nodes with the
-		    // comb. exprs as the left argument and the current add expr as the right
-		    // argument.
-		    for (int k=1; k<numCombos; k++) {
-			pushArgument = new JAddExpression(null, // tokenReference,
-							  ((JExpression)combinationExpressions.get(numCombos-k)), // left
-							  pushArgument); // right (use the previous expression)
-		    }
-		}
-
-		// now, armed with the appropriate push argument, we can
-		// simply generate the appropriate push expression and stick it in our list.
-		SIRPushExpression pushExpr = new SIRPushExpression(pushArgument, // arg
-								   outputType); // output tape type (eg push type)
-		// wrap the push expression in a expression statement
-		JExpressionStatement pushWrapper = new JExpressionStatement(null, // tokenReference
-									    pushExpr, // expr
-									    new JavaStyleComment[0]); // comments
-		returnVector.add(pushWrapper);
 	    }
+
+	    // now, we need to create the appropriate constant to represent the offset
+	    ComplexNumber currentOffset = representation.getb().getElement(currentPushIndex);
+	    if (!currentOffset.isReal()) {throw new RuntimeException("Non real complex number in offset vector");}
+	    JDoubleLiteral offsetNode = new JDoubleLiteral(null, currentOffset.getReal());
+	    
+	    for (int q=0; q<combinationExpressions.size(); q++) {
+		System.out.println("comb expr: " +
+				   combinationExpressions.get(q));
+	    }
+	    
+	    // now we have all of the combination nodes and the offset node.
+	    // What we want to do is to is to combine them all together using addition.
+	    // To do this, we create an add expression tree expanding downward to the right as we go.
+	    JExpression pushArgument;
+	    // if no combination expressions, then the push arg is only the offset
+	    if (combinationExpressions.size() == 0) {
+		// if we have no combination expressions, it means we should simply output a zero
+		pushArgument = offsetNode;
+	    } else {
+		// combination expressions need to be nested.
+		// Start with the right most node
+		int numCombos = combinationExpressions.size();
+		pushArgument = new JAddExpression(null, // tokenReference
+						  ((JExpression)combinationExpressions.get(numCombos-1)), // left
+						  offsetNode); // right
+		// now, for all of the other combinations, make new add nodes with the
+		// comb. exprs as the left argument and the current add expr as the right
+		// argument.
+		for (int k=2; k<=numCombos; k++) {
+		    pushArgument = new JAddExpression(null, // tokenReference,
+						      ((JExpression)combinationExpressions.get(numCombos-k)), // left
+						      pushArgument); // right (use the previous expression)
+		}
+	    }
+
+	    System.out.println("Add expression: " + pushArgument);
+	    
+	    // now, armed with the appropriate push argument, we can
+	    // simply generate the appropriate push expression and stick it in our list.
+	    SIRPushExpression pushExpr = new SIRPushExpression(pushArgument, // arg
+							       outputType); // output tape type (eg push type)
+	    // wrap the push expression in a expression statement
+	    JExpressionStatement pushWrapper = new JExpressionStatement(null, // tokenReference
+									pushExpr, // expr
+									new JavaStyleComment[0]); // comments
+	    returnVector.add(pushWrapper);
 	}
 	return returnVector;
     }

@@ -14,7 +14,7 @@ import java.util.*;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.
  *
- * $Id: LinearFilterRepresentation.java,v 1.3 2002-09-11 17:04:44 aalamb Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.4 2002-09-11 19:15:04 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -38,10 +38,10 @@ public class LinearFilterRepresentation {
     /** Get the b vector. **/
     public FilterVector getb() {return this.b;}
 
-    /** Get the peek count. (#cols of A) **/
-    public int getPeekCount() {return this.A.getCols();}
-    /** Get the push count. (#rows of A) **/
-    public int getPushCount() {return this.A.getRows();}
+    /** Get the peek count. (#rows of A) **/
+    public int getPeekCount() {return this.A.getRows();}
+    /** Get the push count. (#cols of A) **/
+    public int getPushCount() {return this.A.getCols();}
 
     /**
      * Returns true if at least one element of the constant vector b are zero.

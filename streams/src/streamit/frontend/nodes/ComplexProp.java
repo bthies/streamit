@@ -1,7 +1,7 @@
 /*
  * ComplexProp.java: cause complex values to bubble upwards
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ComplexProp.java,v 1.6 2002-07-19 14:39:26 dmaze Exp $
+ * $Id: ComplexProp.java,v 1.7 2002-07-19 14:41:34 dmaze Exp $
  */
 
 // Does this actually belong here?  If we evolve more front-end passes,
@@ -380,7 +380,7 @@ public class ComplexProp extends FEReplacer
         return new ExprComplex(real, imag);
     }
     
-    public Expression fcCos(ExprFunCall fc, ExprComplex(param)
+    public Expression fcCos(ExprFunCall fc, ExprComplex param)
     {
         // (e^(iz)+e^(-iz))/(2)
         // (e^-b+e^b)/2 cos a + i(e^-b-e^b)/2 sin a

@@ -259,6 +259,18 @@ class FeedbackEndFilter extends Filter
     }
 }//FeedbackEndFilter
 
+class IntPrinter extends Filter {
+    public void init()
+    {
+	input = new Channel(Integer.TYPE, 1);
+    }
+    
+    public void work()
+    {
+	System.out.println(input.popInt());
+    }
+}
+
 class CrcFeedbackLoop extends FeedbackLoop
 {
     public void init()
@@ -362,7 +374,7 @@ public class CrcEncoder32Test extends StreamIt
     {
 	this.add(new CrcInputFilter());
 	this.add(new CrcFeedbackLoop());
-	this.add(new streamit.io.FileWriter("bleh", Integer.TYPE));
+	this.add(new IntPrinter());
     }
 }//class CrcEncoder32Test
 

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.37 2003-10-15 18:59:01 dmaze Exp $
+ * $Id: TestExamples.java,v 1.38 2003-10-15 19:06:43 thies Exp $
  **/
 package streamittest;
 
@@ -42,14 +42,6 @@ public class TestExamples extends StreamITTestCase {
             CompilerInterface.createCompilerInterface(flags);
 	TestSuite suite = new TestSuite("Examples " + cif.getOptionsString());
 	
-	// can't fit on raw 4 or 8 without partition
-	if (!flagsContainRaw(flags) || 
-	    flagsContainPartition(flags) ||
-	    flagsContainFusion(flags)) {
-	    suite.addTest(new TestExamples("testFFT", flags));
-	    suite.addTest(new TestExamples("testFFT3", flags));
-	}
-
 	// overflows instruction memory on raw if there is fusion
 	if (!(flagsContainRaw(1, flags))) {
 	    suite.addTest(new TestExamples("testAutoCor", flags));
@@ -133,22 +125,6 @@ public class TestExamples extends StreamITTestCase {
 			       "chol.java",
 			       "chol.out",
 			       0, 5050);
-    }
-
-    public void testFFT() {
-        String root = EXAMPLE_ROOT + "fft/";
-        doSyntaxConvertTest(root, "FFT.str", "FFT.java");
-	doCompileRunVerifyTest(root,
-			       "FFT.java",
-			       "FFT.out",
-			       0, 32);
-    }
-
-    public void testFFT3() {
-	doCompileRunVerifyTest(EXAMPLE_ROOT + "fft/",
-			       "FFT3.java",
-			       "FFT3.out",
-			       0, 64);
     }
 
     public void testFib() {

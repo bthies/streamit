@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.45 2003-10-14 21:08:31 dmaze Exp $
+ * $Id: TestBenchmarks.java,v 1.46 2003-10-15 19:06:43 thies Exp $
  **/
 package streamittest;
 
@@ -44,7 +44,10 @@ public class TestBenchmarks extends StreamITTestCase {
 	    suite.addTest(new TestBenchmarks("testBeamFormer", flags));
 	}
 	suite.addTest(new TestBenchmarks("testSimple", flags));
-        suite.addTest(new TestBenchmarks("testFft", flags));
+        suite.addTest(new TestBenchmarks("testFFT2", flags));
+	suite.addTest(new TestBenchmarks("testFFT3", flags));
+	suite.addTest(new TestBenchmarks("testFFT4", flags));
+	suite.addTest(new TestBenchmarks("testFFT5", flags));
         suite.addTest(new TestBenchmarks("testFilterbank", flags));
         suite.addTest(new TestBenchmarks("testFm", flags));
         // has a feedback loop, doesn't fuse:
@@ -111,13 +114,38 @@ public class TestBenchmarks extends StreamITTestCase {
 	doCompareTest(root, "BitonicSortRecursive.java", "BitonicSort.out");
     }
 
-    public void testFft()
+    public void testFFT2()
     {
         String root = BENCH_ROOT + "fft/streamit/";
         doSyntaxConvertTest(root, "FFT2.str", "FFT2.java");
         doCompileTest(root, "FFT2.java");
         doRunTest(root, "FFT2.java", 0, 256);
         doCompareTest(root, "FFT2.java", "LinkedFFT2.out");
+    }
+
+    public void testFFT3() {
+	doCompileRunVerifyTest(BENCH_ROOT + "fft/streamit/",
+			       "FFT3.java",
+			       "FFT3.out",
+			       0, 64);
+    }
+
+    public void testFFT4() {
+        String root = BENCH_ROOT + "fft/streamit/";
+        doSyntaxConvertTest(root, "FFT4.str", "FFT4.java");
+	doCompileRunVerifyTest(root,
+			       "FFT4.java",
+			       "FFT4.out",
+			       0, 32);
+    }
+
+    public void testFFT5() {
+        String root = BENCH_ROOT + "fft/streamit/";
+        doSyntaxConvertTest(root, "FFT5.str", "FFT5.java");
+	doCompileRunVerifyTest(root,
+			       "FFT5.java",
+			       "FFT5.out",
+			       0, 16);
     }
 
     public void testFilterbank()

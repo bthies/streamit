@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.22 2002-09-26 00:15:24 thies Exp $
+ * $Id: TestExamples.java,v 1.23 2002-09-26 01:10:08 thies Exp $
  **/
 package streamittest;
 
@@ -42,7 +42,9 @@ public class TestExamples extends StreamITTestCase {
 	TestSuite suite = new TestSuite();
 	
 	// can't fit on raw 4 or 8 without partition
-	if (!(flagsContainRaw(flags) && !flagsContainPartition(flags))) {
+	if (!flagsContainRaw(flags) || 
+	    flagsContainPartition(flags) ||
+	    flagsContainFusion(flags)) {
 	    suite.addTest(new TestExamples("testFFT3", flags));
 	    suite.addTest(new TestExamples("testFFT_inlined", flags));
 	}

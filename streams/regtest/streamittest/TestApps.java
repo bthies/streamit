@@ -1,6 +1,6 @@
 /**
  * Test the programs in the apps/applications directory
- * $Id: TestApps.java,v 1.7 2002-08-09 21:00:48 aalamb Exp $
+ * $Id: TestApps.java,v 1.8 2002-09-26 01:10:08 thies Exp $
  **/
 package streamittest;
 
@@ -36,10 +36,7 @@ public class TestApps extends StreamITTestCase {
 	TestSuite suite = new TestSuite();
 
 	// this one doesn't fit on any raw4
-	if (!flagsContainRaw4(flags)) {
-	    suite.addTest(new TestApps("testNokiaFine", flags));
-	}
-	
+	suite.addTest(new TestApps("testNokiaFine", flags));
 
 	return suite;
     }

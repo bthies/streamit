@@ -4,11 +4,15 @@
 # in perl because I don't know how to use all of the crazy unix command
 # line utilities necessary to do this stuff.
 #
-# $Id: run_reg_tests.pl,v 1.3 2002-12-06 19:48:01 aalamb Exp $
+# $Id: run_reg_tests.pl,v 1.4 2002-12-09 22:00:56 aalamb Exp $
 
 use strict;
 
-#admin email addresses where we want the crazy emails to go (space separated)
+# debug flag -- if this flag is set, only the admins are emailed results 
+# and the test-bed command is run. 1 = true, 0= false
+my $DEBUG = 0;
+
+# admin email addresses where we want the crazy emails to go (space separated)
 my $ADMINS = "aalamb\@mit.edu";
 # user email addresses who want to get regtest-results
 my $USERS = "commit-stream\@cag.lcs.mit.edu nmani\@cag.lcs.mit.edu";
@@ -44,11 +48,11 @@ $ENV{"STREAMIT_HOME"} = "$streamit_home/";
 $ENV{"PATH"} = "/projects/raw/current/rawcc/compiler/bin:/usr/ccs/bin:/u/diego/bin/:$streamit_home:/usr/local/bin:/usr/uns/bin:/usr/bin/X11:/usr/ucb:/bin:/usr/bin:/usr/etc:/etc:/usr/games:";
 my $class_path = ".:/usr/local/jdk1.3/jre/lib/rt.jar:$streamit_home/compiler/kopi/3rdparty/JFlex/lib:$streamit_home/compiler/kopi/3rdparty/getopt:$streamit_home/compiler/kopi/classes/:$streamit_home/apps/libraries:$streamit_home/misc/java:$streamit_home/scheduler/:/usr/uns/java/antlr-2.7.1/:$streamit_home/compiler/frontend:$streamit_home/compiler/kopi/3rdparty/cplex/cplex.jar";
 $ENV{"CLASSPATH"} = $class_path;
-
+$ENV{"CLASSROOT"} = "$streamit_home/compiler/kopi/classes";
 
 
 # try and compile the freshly checked out streams directory
-# note that this requires our rediculous build process of make/clean/compile twice
+# note that this requires our rediculous build process of make/clean/compile three times
 print MHMAIL saved_execute("cd $working_dir/streams/compiler/kopi; make");
 print MHMAIL saved_execute("cd $working_dir/streams/compiler/kopi; ./clean");
 print MHMAIL saved_execute("cd $working_dir/streams/compiler/kopi; ./compile");
@@ -86,7 +90,11 @@ close(MHMAIL);
 `/bin/date >> $REG_LOG`;
 
 ## run the makefile which executes the regression test
-`/usr/local/bin/make -C $streamit_home/regtest test-all >& $REG_LOG`;
+if ($DEBUG) {
+    `/usr/local/bin/make -C $streamit_home/regtest test-bed >& $REG_LOG`;
+} else {
+    `/usr/local/bin/make -C $streamit_home/regtest test-all >& $REG_LOG`;
+}
 
 ## (date/time stamp the end of the run)
 `echo \"Regression Test Run Done\" >> $REG_LOG`;
@@ -100,8 +108,11 @@ close(MHMAIL);
 
 
 # open the mhmail program to print the execuative summary to
-open(MHMAIL, "|mhmail $USERS -s \"Streamit Regression Test Summary\"");
-#open(MHMAIL, "|mhmail $ADMINS -s \"Streamit Regression Test Summary\"");
+if ($DEBUG) {
+    open(MHMAIL, "|mhmail $ADMINS -s \"Streamit Regression Test Summary\"");
+} else {
+    open(MHMAIL, "|mhmail $USERS -s \"Streamit Regression Test Summary\"");
+}
 my $email_body = saved_execute("$streamit_home/regtest/tools/parse_results.pl $REG_LOG $REG_ERR $SUCCESS");
 print MHMAIL $email_body;
 print MHMAIL "\n-----------------\n";

@@ -254,6 +254,11 @@ public class SIRPortal extends JLiteral /*JExpression*/ {
 	}
     }
     
+    public String convertToString() {
+	// does not make sense for an sir portal
+	return "[SIRPortal]";
+    }
+
     //############################
     // end of JLiteral methods
 

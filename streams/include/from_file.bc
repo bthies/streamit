@@ -41,22 +41,11 @@ fn dev_from_file(filename, port, type)
     local ioPort = this.ioPort;
     local fileName = this.fileName;
     local value, i;
+    local r;
     
-    while(fscanf(theFile, format, &value) != 0) {
-//      printf("sending(%d) ", i);
-//      i += 1;
-//      if (type == 0)
-//	printf(format, value);
-//      else if (type == 1)
-//	printf(format, double(value));
-//     else {
-//	printf("Invalid format arg passed to dev_from_file\n");
-//	exit(-1);
-      //     }
-//      printf("\n");
-      this.send(value);
-    }
-
+   while(fscanf(theFile, format, &value) == 1) {
+     this.send(value);
+   }
     printf("** Input exhausted from %s (port %d)\n", fileName, ioPort);
     while (1) {
       //we are done, do nothing
@@ -66,6 +55,6 @@ fn dev_from_file(filename, port, type)
 
   return dev_data_transmitter_init("from_file",
 				   port,
-				   0, //don't wait for trigger
+				   1, // wait for trigger
 				   send_device_descriptor);
 }

@@ -15,10 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Compiler.java,v 1.1 2002-12-11 20:14:57 karczma Exp $
+ * $Id: Compiler.java,v 1.2 2002-12-11 20:17:41 karczma Exp $
  */
 
-package at.dms.compiler;
+package at.dms.compiler.tools.common;
 
 import java.io.File;
 import java.io.FileReader;
@@ -28,9 +28,9 @@ import java.io.PrintWriter;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
-import at.dms.util.Message;
-import at.dms.util.MessageDescription;
-import at.dms.util.Utils;
+import at.dms.compiler.tools.common.Message;
+import at.dms.compiler.tools.common.MessageDescription;
+import at.dms.compiler.tools.common.Utils;
 
 /**
  * This class defines the common behaviour of all KOPI compilers.

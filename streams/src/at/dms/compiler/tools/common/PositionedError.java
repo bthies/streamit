@@ -15,14 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: PositionedError.java,v 1.1 2002-12-11 20:14:58 karczma Exp $
+ * $Id: PositionedError.java,v 1.2 2002-12-11 20:17:41 karczma Exp $
  */
 
-package at.dms.compiler;
+package at.dms.compiler.tools.common;
 
-import at.dms.util.FormattedException;
-import at.dms.util.Message;
-import at.dms.util.MessageDescription;
+import at.dms.compiler.tools.common.FormattedException;
+import at.dms.compiler.tools.common.Message;
+import at.dms.compiler.tools.common.MessageDescription;
 
 /**
  * This class is the root class for all compiler errors with a reference

@@ -84,14 +84,14 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
     public void visitSplitter(SIRSplitter self,
 		       SIRStream parent,
 		       SIRSplitType type,
-		       int[] weights){
+		       JExpression[] weights){
 	
 	blockStart("Splitter");
 	attrPrint("Type", getSplitString(type));
 	attrStart("Weights");
 	if (weights != null)
 	    for (int i = 0; i < weights.length; i++)
-		attrPrint("weight: " ,(new Integer(weights[i])).toString());
+		weights[i].accept(this);
 	attrEnd();
 	blockEnd();
     }
@@ -100,13 +100,13 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
     public void visitJoiner(SIRJoiner self,
 		     SIRStream parent,
 		     SIRJoinType type,
-		     int[] weights){
+		     JExpression[] weights){
 	blockStart("Joiner");
 	attrPrint("Type", getJoinString(type));
 	attrStart("Weights");
 	if (weights != null)
 	    for (int i = 0; i < weights.length; i++)
-		attrPrint("weight: ", (new Integer(weights[i])).toString());
+		weights[i].accept(this);
 	attrEnd();
 	blockEnd();
     }

@@ -15,11 +15,12 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.4 2001-10-22 21:58:37 mgordon Exp $
+ * $Id: Utils.java,v 1.5 2001-10-29 16:10:26 thies Exp $
  */
 
 package at.dms.util;
 
+import at.dms.kjc.*;
 import java.lang.reflect.Array;
 import java.util.Vector;
 import java.util.List;
@@ -149,6 +150,20 @@ public abstract class Utils implements Serializable {
       int[] result = new int[n];
       for (int i=0; i<n; i++) {
 	  result[i] = val;
+      }
+      return result;
+  }
+
+  /**
+   * Returns a new array of length n with all values as JIntLiterals set to val
+   *
+   * @param	n		the desired number of elements in the array
+   * @param	val		the value of each element
+   */
+  public static JExpression[] initLiteralArray(int n, int val) {
+      JExpression[] result = new JExpression[n];
+      for (int i=0; i<n; i++) {
+	  result[i] = new JIntLiteral(val);
       }
       return result;
   }

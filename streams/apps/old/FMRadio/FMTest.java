@@ -3,9 +3,7 @@
  */
 
 import streamit.*;
-import java.lang.Math;
-import java.io.*;
-
+import streamit.io.*;
 
 public class FMTest extends StreamIt
 {
@@ -16,9 +14,9 @@ public class FMTest extends StreamIt
     
     public void init()
     {
-	add(new FloatFileReader("FmRadioIn200Float"));
+	add(new FileReader("FmRadioIn200Float", Float.TYPE));
 	add(new FMRadio());
-	add(new FloatFileWriter("radioOutput"));
+	add(new FileWriter("radioOutput", Float.TYPE));
     }
 }
 

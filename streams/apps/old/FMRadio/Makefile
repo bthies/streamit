@@ -1,11 +1,9 @@
 LIBRARIES = 	"../libraries"
 IMPORTS   = 	"import streamit.*; \
-		 import java.io.*;  \
+	         import streamit.io.*; \
 		 import java.lang.Math;"
 
-LIB_FILES = 	${LIBRARIES}/FloatFileReader.java \
-		${LIBRARIES}/FloatFileWriter.java \
-		${LIBRARIES}/LowPassFilter.java \
+LIB_FILES =	${LIBRARIES}/LowPassFilter.java \
 		${LIBRARIES}/BandPassFilter.java \
 		Equalizer.java \
 		FMDemodulator.java \

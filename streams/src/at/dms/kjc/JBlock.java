@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.12 2002-03-09 22:33:29 thies Exp $
+ * $Id: JBlock.java,v 1.13 2002-07-24 03:15:07 thies Exp $
  */
 
 package at.dms.kjc;
@@ -72,6 +72,13 @@ public class JBlock extends JStatement {
     super(where, comments);
     // make a copy of <body>
     this.body = new LinkedList(body);
+  }
+
+    /**
+     * Construct a new JBlock with no statements inside.
+     */
+    public JBlock() {
+	this(null, new LinkedList(), null);
   }
 
   // ----------------------------------------------------------------------

@@ -167,7 +167,11 @@ public class Propagator extends SLIRReplacingVisitor {
 	if (expr != null) {
 	    JExpression newExp = (JExpression)expr.accept(this);
 	    // if we have a constant AND it's a final variable...
-	    if (newExp!=expr) /*&& CModifier.contains(modifiers,
+	    if(newExp.isConstant()) {
+		constants.put(self,((JLiteral)newExp).convertType(self.getType(),null));
+		added=true;
+		changed.put(self,Boolean.TRUE);
+	    } else if (newExp!=expr) /*&& CModifier.contains(modifiers,
 				      ACC_FINAL)*/ {
 		// reset the value
 		if(write)

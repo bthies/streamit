@@ -329,7 +329,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		//DefaultGraphCell lastCell = null;
 		//
 	
-	/*	
+	
 		while (iter.hasNext())
 		{
 			SIROperator oper = (SIROperator)iter.next();
@@ -338,7 +338,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			GEStreamNode currNode = (GEStreamNode) oper.accept(this);
 			pipeline.addChild(currNode);
 			
-			
+			/*
 			DefaultGraphCell currCell = new DefaultGraphCell(self.getName());
 			Map cellAttrib = GraphConstants.createMap();
 			DefaultPort port = new DefaultPort();
@@ -346,6 +346,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			GraphConstants.setBorder(cellAttrib, BorderFactory.createRaisedBevelBorder());
 			GraphConstants.setBounds(cellAttrib, new Rectangle(100,100,100,100));
 			GraphConstants.setBackground(cellAttrib, Color.blue);
+			
 			
 			if (lastCell != null)
 			{
@@ -358,15 +359,15 @@ public class GraphEncoder implements AttributeStreamVisitor {
 	
 			
 			lastCell = currCell;
-	
-		
+			*/
+		}
 		  
 		graph.addHierarchy(pipeline, pipeline.getSuccesors());
 		
 		
 		/* ***********************************************************
 		 * DEBUGGING CODE BEGIN
-		
+		*/
 		System.out.println("The pipeline "+ pipeline.getName() + " has the following children");
 		ArrayList pipeChildren = pipeline.getSuccesors();
 		for (int i = 0; i < pipeChildren.size(); i++)
@@ -377,7 +378,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		 * DEBUGGING CODE END
 		*********************************************************** */		
 		
-		return null;
+		return pipeline;
     }
     
     /**

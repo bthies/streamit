@@ -108,7 +108,13 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 		for(int j=vars.length-1;j>=0;j--) {
 		    JVariableDefinition def=(JVariableDefinition)vars[j];
 		    JExpression val=def.getValue();
-		    if(val!=null && !(val instanceof JNewArrayExpression)) {
+		    // move array initializers up because they have to
+		    // stick with their declaration.  This might be
+		    // unsafe if the initializer references variables
+		    // that are defined above... we should really be
+		    // inserting new blocks instead of moving
+		    // statements up.
+		    if(val!=null && !(val instanceof JNewArrayExpression || val instanceof JArrayInitializer)) {
 			def.setValue(null);
 			TokenReference ref=((JVariableDeclarationStatement)newBody).getTokenReference();
 			JStatement state=new JExpressionStatement(ref,new JAssignmentExpression(ref,new JLocalVariableExpression(ref,def),val),null);

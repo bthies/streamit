@@ -34,6 +34,7 @@ public class FilterContent {
     private boolean begin;
     private boolean end;
     private int pos;
+    private int total;
 
     /*public FilterContent(String name,SIRWorkFunction[] init,SIRWorkFunction[] work,CType inputType,CType outputType,int initMult,int steadyMult,JMethodDeclaration[] methods,List paramList) {
       this.name=name;
@@ -68,6 +69,7 @@ public class FilterContent {
 	begin=content.begin;
 	end=content.end;
 	pos=content.pos;
+	total=1;
     }
 
     public FilterContent(SIRPhasedFilter filter) {
@@ -82,6 +84,7 @@ public class FilterContent {
 	initFunction = filter.getInit();
 	is2stage = steady.length > 1;
 	linear=false;
+	total=1;
     }
 
     public FilterContent(UnflatFilter unflat) {
@@ -106,6 +109,7 @@ public class FilterContent {
 	    begin=true;
 	    end=true;
 	    pos=0;
+	    total=1;
 	} else {
 	    linear=false;
 	    init=filter.getInitPhases();
@@ -173,6 +177,14 @@ public class FilterContent {
 
     public int getPos() {
 	return pos;
+    }
+
+    public void setTotal(int total) {
+	this.total=total;
+    }
+
+    public int getTotal() {
+	return total;
     }
 
     public double[] getArray() {

@@ -1,6 +1,6 @@
 /*
  * StreamItParser.g: A grammar for StreamIt
- * $Id: StreamItParser.g,v 1.13 2002-08-16 15:26:47 dmaze Exp $
+ * $Id: StreamItParser.g,v 1.14 2002-08-16 19:04:46 dmaze Exp $
  */
 
 header {
@@ -165,7 +165,8 @@ data_type
 	;
 
 primitive_type
-	:	TK_int
+	:	TK_bit
+	|	TK_int
 	|	TK_float
 	|	TK_double
 	|	TK_complex

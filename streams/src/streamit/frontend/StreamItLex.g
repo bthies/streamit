@@ -1,6 +1,6 @@
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.5 2002-08-15 19:21:02 dmaze Exp $
+ * $Id: StreamItLex.g,v 1.6 2002-08-16 19:04:46 dmaze Exp $
  */
 
 header {
@@ -34,7 +34,7 @@ tokens {
 	// Manipulating tapes:
 	"peek"; "pop"; "push";
 	// Basic types:
-	"float"; "int"; "void"; "double"; "complex";
+	"float"; "bit"; "int"; "void"; "double"; "complex";
 	// Complicated types:
 	"struct"; "template";
 	// Control flow:

@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.31 2002-08-16 16:01:57 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.32 2002-08-16 19:04:46 dmaze Exp $
  */
 
 header {
@@ -249,7 +249,8 @@ data_type returns [Type t] {t = null; Expression x;}
 	;
 
 primitive_type returns [Type t] {t = null;}
-	:	TK_int { t = new TypePrimitive(TypePrimitive.TYPE_INT); }
+	:	TK_bit { t = new TypePrimitive(TypePrimitive.TYPE_BIT); }
+	|	TK_int { t = new TypePrimitive(TypePrimitive.TYPE_INT); }
 	|	TK_float { t = new TypePrimitive(TypePrimitive.TYPE_FLOAT); }
 	|	TK_double { t = new TypePrimitive(TypePrimitive.TYPE_DOUBLE); }
 	// |	TK_char { t = "char"; } -- do we actually want this?  --dzm

@@ -12,7 +12,9 @@ public class FilterTraceNode extends TraceNode
     private int x, y;
 
     public FilterTraceNode(SIRFilter filter,
-			   int mult, int x, int y) {
+			   int mult, int x, int y,
+			   Trace parent) {
+	super(parent);
 	this.filter = filter;
 	multiplicity = mult;
 	this.x = x;

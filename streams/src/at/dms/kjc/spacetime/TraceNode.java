@@ -6,7 +6,12 @@ package at.dms.kjc.spacetime;
 abstract public class TraceNode  
 {
     private TraceNode next;
+    private Trace parent;
     
+    public TraceNode(Trace parent) {
+	this.parent = parent;
+    }
+
     public TraceNode getNext() {
 	return next;
     }

@@ -8,10 +8,12 @@ import at.dms.util.Utils;
 public class InputTraceNode extends TraceNode
 {
     private int[] weights;
-    private Trace[] sources;
+    private OutputTraceNode[] sources;
 
     public InputTraceNode(int[] weight,
-			  Trace[] sources) {
+			  OutputTraceNode[] sources,
+			  Trace parent) {
+	super(parent);
 	this.weights = weights;
 	this.sources = sources;
 	if (weight.length != sources.length)
@@ -22,7 +24,7 @@ public class InputTraceNode extends TraceNode
 	return weights;
     }
 
-    public Trace[] getSources() {
+    public OutputTraceNode[] getSources() {
 	return sources;
     }
 }

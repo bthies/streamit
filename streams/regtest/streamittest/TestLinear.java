@@ -1,13 +1,15 @@
 package streamittest;
 
 import junit.framework.*;
-import at.dms.kjc.linear.FilterMatrix;
-import at.dms.kjc.linear.ComplexNumber;
+import at.dms.kjc.sir.linear.ComplexNumber;
+import at.dms.kjc.sir.linear.FilterMatrix;
+import at.dms.kjc.sir.linear.FilterVector;
+
 
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.2 2002-08-12 19:07:57 aalamb Exp $
+ * $Id: TestLinear.java,v 1.3 2002-08-14 19:13:40 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -23,6 +25,8 @@ public class TestLinear extends TestCase {
 	suite.addTest(new TestLinear("testFilterMatrixConstructor"));
 	suite.addTest(new TestLinear("testFilterMatrixAccessor"));
 	suite.addTest(new TestLinear("testFilterMatrixModifier"));
+	suite.addTest(new TestLinear("testFilterVector"));
+	
 	
 	return suite;
     }
@@ -178,8 +182,47 @@ public class TestLinear extends TestCase {
 
     }
 	
+    /** Test the FilterVector class **/
+    public void testFilterVector() {
+	// there are fewer tests here because most of the functionality is inhereted from
+	// FilterMatrix
+	double D_INCREMENT = .1;
+	double D_MAX = 10;
+	int MAX = 10;
+	FilterVector fv;
+	
+	// make sure that we can create vectors and that all elts are 0
+	for (int i=1; i<=MAX; i++) {
+	    fv = new FilterVector(i);
+	    for (int a=0; a<i; a++) {
+		assertTrue("init to zero", ComplexNumber.ZERO.equals(fv.getElement(a)));
+	    }
+	}
+
+	// also, ensure that we can't use the two argument form of set element or get element
+	fv = new FilterVector(MAX);
+	try{fv.getElement(1,1);fail("used two arg form of get");} catch (RuntimeException e) {/*no prob*/}
+	try{fv.setElement(1,1,new ComplexNumber(1,2));fail("used two arg form of set");} catch (RuntimeException e) {/*no prob*/}
 
 
+	// do a little exercise in getting elements from the vector
+	for (int i=1; i<=MAX; i++) {
+	    fv = new FilterVector(i);
+	    // for each element in the vector
+	    for (int j=0; j<i; j++) {
+		// make a lot of complex numbers
+		for (double a=-D_MAX; a<D_MAX; a+=D_INCREMENT) {
+		    for (double b=-D_MAX; b<D_MAX; b+=D_INCREMENT) {
+			ComplexNumber cn = new ComplexNumber(a,b);
+			fv.setElement(j, cn);
+			// make sure that this element is the same
+			assertTrue("elt in vector is same",
+				   fv.getElement(j).equals(new ComplexNumber(a,b)));
+		    }
+		}
+	    }
+	}
+    }
 
 
     

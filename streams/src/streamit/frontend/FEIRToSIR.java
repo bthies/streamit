@@ -898,6 +898,13 @@ public class FEIRToSIR implements FEVisitor {
     }
   }
 
+    public Object visitStmtSendMessage(StmtSendMessage stmt) 
+    {
+        debug("In visitStmtSendMessage\n");
+        /* unimplemented */
+        return null;
+    }
+
   public Object visitStmtSplit(StmtSplit stmt) {
     debug("In visitStmtSplit\n");
     return stmt.getSplitter().accept(this);

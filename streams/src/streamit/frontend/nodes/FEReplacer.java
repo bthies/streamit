@@ -36,7 +36,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.25 2003-07-07 15:48:18 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.26 2003-07-07 18:59:49 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -428,6 +428,28 @@ public class FEReplacer implements FEVisitor
         return new StmtReturn(stmt.getContext(), newValue);
     }
     
+    public Object visitStmtSendMessage(StmtSendMessage stmt)
+    {
+        boolean hasChanged = false;
+        Expression newReceiver = (Expression)stmt.getReceiver().accept(this);
+        if (newReceiver != stmt.getReceiver()) hasChanged = true;
+        List newParams = new ArrayList();
+        for (Iterator iter = stmt.getParams().iterator(); iter.hasNext(); )
+        {
+            Expression param = (Expression)iter.next();
+            Expression newParam = doExpression(param);
+            newParams.add(newParam);
+            if (param != newParam) hasChanged = true;
+        }
+        Expression newMin = (Expression)stmt.getMinLatency().accept(this);
+        if (newMin != stmt.getMinLatency()) hasChanged = true;
+        Expression newMax = (Expression)stmt.getMaxLatency().accept(this);
+        if (newMax != stmt.getMaxLatency()) hasChanged = true;
+        if (!hasChanged) return stmt;
+        return new StmtSendMessage(stmt.getContext(), newReceiver,
+                                   stmt.getName(), newParams, newMin, newMax);
+    }
+
     public Object visitStmtSplit(StmtSplit stmt)
     {
         SplitterJoiner newSplitter =

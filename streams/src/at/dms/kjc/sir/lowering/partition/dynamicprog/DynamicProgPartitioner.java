@@ -20,7 +20,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
     /**
      * The maximum amount to fiss (before network takes over).
      */
-    static final int MAX_FISSION_FACTOR = 2;
+    static final int MAX_FISSION_FACTOR = 16; // 16 does best for single-filter FIR
     /**
      * The factor by which a filter's input or output rate should be
      * multiplied to estimate the horizontal fusion overhead.

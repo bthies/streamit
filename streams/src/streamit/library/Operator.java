@@ -447,6 +447,8 @@ public class Operator extends DestroyedClass
 
     public void init(float a, float b, float c, float d) { invalidInitError(); }
 
+    public void init(float a, float b, float c, int d, int e, int f) { invalidInitError(); }
+
     // initializatoin functions, to be over-ridden
     public void init(boolean b1) { invalidInitError (); }
 
@@ -853,6 +855,14 @@ public class Operator extends DestroyedClass
                   initParams.getIntParam("a"),
                   initParams.getIntParam("b"),
                   initParams.getIntParam("c"));
+        else
+        if(initParams.getParamName().equals("float-float-float-int-int-int"))
+            init (initParams.getFloatParam("a"),
+                  initParams. getFloatParam("b"),
+                  initParams.getFloatParam("c"),
+                  initParams.getIntParam("d"),
+                  initParams.getIntParam("e"),
+                  initParams.getIntParam("f"));
         else
         if(initParams.getParamName().equals("int-float"))
             init (initParams.getIntParam("a"),

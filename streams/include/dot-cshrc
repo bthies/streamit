@@ -38,3 +38,6 @@ if ($?TEXINPUTS) then
 else
   setenv TEXINPUTS ${STREAMIT_HOME}/include/tex:
 endif
+
+#include for Eclipse plugins
+setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/eclipse

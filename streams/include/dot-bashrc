@@ -40,4 +40,5 @@ fi
 # a blank entry as "the default path".)
 TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
 
-
+#include for Eclipse plugins
+CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/eclipse

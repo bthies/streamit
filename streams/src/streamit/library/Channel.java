@@ -12,52 +12,52 @@ public class Channel {
     // PUSH OPERATIONS ----------------------------------------------
 
     // push something of type <type>
-    public void push(Object o) {}
+    public void Push(Object o) {}
 
     // push an int
-    public void pushInt(int i) {}
+    public void PushInt(int i) {}
 
     // push a char
-    public void pushChar(char c) {}
+    public void PushChar(char c) {}
 
     // push a double
-    public void pushDouble(double d) {}
+    public void PushDouble(double d) {}
 
     // push a String
-    public void pushString(String str) {}
+    public void PushString(String str) {}
 
     // POP OPERATIONS ----------------------------------------------
 
     // pop something of type <type>
-    public Object pop() { return null; }
+    public Object Pop() { return null; }
 
     // pop an int
-    public int popInt() { return 0; }
+    public int PopInt() { return 0; }
 
     // pop a char
-    public char popChar() { return 'x'; }
+    public char PopChar() { return 'x'; }
 
     // pop a double
-    public double popDouble() { return 0; }
+    public double PopDouble() { return 0; }
 
     // pop a String
-    public String popString() { return null; }
+    public String PopString() { return null; }
 
     // PEEK OPERATIONS ----------------------------------------------
 
     // peek at something of type <type>
-    public Object peek(int index) { return null; }
+    public Object Peek(int index) { return null; }
 
     // peek at an int
-    public int peekInt(int index) { return 0; }
+    public int PeekInt(int index) { return 0; }
 
     // peek at a char
-    public char peekChar(int index) { return 'x'; }
+    public char PeekChar(int index) { return 'x'; }
 
     // peek at a double
-    public double peekDouble(int index) { return 0; }
+    public double PeekDouble(int index) { return 0; }
 
     // peek at a String
-    public String peekString(int index) { return null; }
+    public String PeekString(int index) { return null; }
 
 }

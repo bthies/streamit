@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.43 2003-10-14 07:32:13 thies Exp $
+ * $Id: TestBenchmarks.java,v 1.44 2003-10-14 20:59:42 dmaze Exp $
  **/
 package streamittest;
 
@@ -104,6 +104,8 @@ public class TestBenchmarks extends StreamITTestCase {
     {
         String root = BENCH_ROOT + "bitonic-sort/streamit/";
 	// recursive version
+        doSyntaxConvertTest(root, "BitonicSortRecursive.str",
+                            "BitonicSortRecursive.java");
         doCompileTest(root, "BitonicSortRecursive.java");
         doRunTest(root, "BitonicSortRecursive.java", 0, 32);
 	doCompareTest(root, "BitonicSortRecursive.java", "BitonicSort.out");

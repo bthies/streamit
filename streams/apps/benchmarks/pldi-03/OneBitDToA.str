@@ -6,10 +6,28 @@
  **/
 void->void pipeline OneBitDToA {
   add DataSource();
-  add QuantizerAndError();
-  add DataSelector();
+  add NoiseShaper();
   add DataSink();
 }
+
+/** 
+ * This is a first order noise shaper. It is build with a
+ * feedback loop. See Oppenheim, Shafer and Buck, 2nd ed.
+ * page 211 for a more detailed explaination.
+ **/
+float->float feedbackloop NoiseShaper {
+  join roundrobin(1,1);
+  body pipeline {
+    add AdderFilter();
+    add QuantizerAndError();
+  }
+  loop Delay();
+  split roundrobin(1,1);
+  enqueue(0);
+}
+
+
+
 
 
 /**
@@ -80,7 +98,7 @@ float->float filter QuantizerAndError {
 }
 
 /** Simple adder (add two sequential values on tape). **/
-float->float filter Adder {
+float->float filter AdderFilter {
   work pop 2 push 1 {
     push (pop() + pop());
   }

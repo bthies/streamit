@@ -63,6 +63,11 @@ public class AssertedClass
         ASSERT (false, this);
     }
 
+    public void ERROR (Throwable e)
+    {
+        SERROR (e);
+    }
+
     // static versions of asserts:
     public static void SASSERT(boolean condition)
     {
@@ -96,6 +101,13 @@ public class AssertedClass
     public static void SASSERT (Object cond)
     {
         ASSERT (cond != null, null);
+    }
+
+    public static void SERROR (Throwable e)
+    {
+        System.err.println ("An error has occured: " + e.toString ());
+        e.printStackTrace (System.err);
+        System.exit (1);
     }
 
     public static void SERROR (String error)

@@ -136,17 +136,8 @@ public class ClusterBackend implements FlatVisitor {
 	Optimizer.optimize(str); 
 	Estimator.estimate(str);
 
-	// Calculate SIRSchedule before increasing multiplicity
-	//StreamItDot.printGraph(str, "before-peekmult.dot");
-	exec_counts1 = SIRScheduler.getExecutionCounts(str);
-
 	Lifter.liftAggressiveSync(str);
 	//StreamItDot.printGraph(str, "before-partition.dot");
-
-	// Increasing filter Multiplicity
-	if ( doCacheOptimization ) {
-	    IncreaseFilterMult.inc(str, 1, code_cache);
-	}
 
 	// gather application-characterization statistics
 	if (KjcOptions.stats) {
@@ -155,6 +146,16 @@ public class ClusterBackend implements FlatVisitor {
 
 	str = Flattener.doLinearAnalysis(str);
 	str = Flattener.doStateSpaceAnalysis(str);
+
+
+	// Calculate SIRSchedule before increasing multiplicity
+	StreamItDot.printGraph(str, "before-peekmult.dot");
+	exec_counts1 = SIRScheduler.getExecutionCounts(str);
+
+	// Increasing filter Multiplicity
+	if ( doCacheOptimization ) {
+	    IncreaseFilterMult.inc(str, 1, code_cache);
+	}
 
 	/* for cluster backend, fusion means to fuse segments on same cluster
 	if (KjcOptions.fusion) {
@@ -187,7 +188,10 @@ public class ClusterBackend implements FlatVisitor {
 	}
 
 	// Calculate SIRSchedule after increasing multiplicity
+	StreamItDot.printGraph(str, "after-peekmult.dot");
 	exec_counts2 = SIRScheduler.getExecutionCounts(str);
+
+	//exec_counts2 = SIRScheduler.getExecutionCounts(str);
 
 	//find out how what is the schedule multiplicity due to
 	//peek scaling

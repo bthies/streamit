@@ -118,7 +118,7 @@ public class SchedLoop extends SchedStream
             // and now actually set the appropriate multipliers on body and loop
             // and split and join:
             if (body != null) body.setNumExecutions (bodyFrac.getNumerator ());
-            if (body != null) loop.setNumExecutions (bodyFrac.getNumerator ());
+            if (loop != null) loop.setNumExecutions (loopFrac.getNumerator ());
             numJoinExecutions = joinFrac.getNumerator ();
             numSplitExecutions = splitFrac.getNumerator ();
         }

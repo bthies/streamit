@@ -104,8 +104,10 @@ void set_from_canon(stream_context *c, streamit_handler f);
 void set_splitter(stream_context *c, splitjoin_type type, int n, ...);
 void set_joiner(stream_context *c, splitjoin_type type, int n, ...);
 void create_split_tape(stream_context *container, int slot,
+                       stream_context *dst,
                        int data_size, int tape_length);
-void create_join_tape(stream_context *container, int slot,
+void create_join_tape(stream_context *src,
+                      stream_context *container, int slot,
                       int data_size, int tape_length);
 portal *create_portal(void);
 void register_receiver(portal *p, stream_context *receiver,

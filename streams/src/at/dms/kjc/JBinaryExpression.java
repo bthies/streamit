@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBinaryExpression.java,v 1.4 2001-11-02 17:35:30 mgordon Exp $
+ * $Id: JBinaryExpression.java,v 1.5 2002-07-12 19:46:42 clleger Exp $
  */
 
 package at.dms.kjc;
@@ -88,6 +88,10 @@ public abstract class JBinaryExpression extends JExpression {
       //!!! CHECKME : optimize ???
       code.plantPopInstruction(CStdType.Boolean);
     }
+  }
+
+  public JExpression constantFolding() {
+    return this;
   }
 
   /**

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JConditionalOrExpression.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JConditionalOrExpression.java,v 1.3 2002-07-12 19:46:42 clleger Exp $
  */
 
 package at.dms.kjc;
@@ -74,6 +74,15 @@ public class JConditionalOrExpression extends JBinaryExpression {
     } else {
       return this;
     }
+  }
+
+  public JExpression constantFolding() {
+    if (left instanceof JBooleanLiteral && right instanceof JBooleanLiteral)
+      return new JBooleanLiteral(null,
+				 ((JBooleanLiteral) left).booleanValue() || 
+				 ((JBooleanLiteral) right).booleanValue());
+    else 
+      return super.constantFolding();
   }
 
   // ----------------------------------------------------------------------

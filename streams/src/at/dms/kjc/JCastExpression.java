@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCastExpression.java,v 1.3 2001-11-02 17:35:30 mgordon Exp $
+ * $Id: JCastExpression.java,v 1.4 2002-07-12 19:46:42 clleger Exp $
  */
 
 package at.dms.kjc;
@@ -108,6 +108,9 @@ public class JCastExpression extends JExpression {
     p.visitCastExpression(this, expr, dest);
   }
 
+  public String toString() {
+    return "JCastExpression: dest: " + dest + " expr: " + expr;
+  }
  /**
    * Accepts the specified attribute visitor
    * @param	p		the visitor

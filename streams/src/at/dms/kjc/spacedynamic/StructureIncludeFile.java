@@ -17,27 +17,38 @@ import at.dms.kjc.flatgraph.*;
 
 public class StructureIncludeFile
 {
+    private StreamGraph streamGraph;
+    private HashSet structSet;
+
     /**
      * Create structures include file in current directory.
      */
-    public static void doit(SIRStructure[] structs) 
+    public static void doit(SIRStructure[] structs, StreamGraph sg) 
     {
-	doit(structs, ".");
+	doit(structs, sg, ".");
     }
 
     /**
      * Create structures include file in directory <dir>.
      */
-    public static void doit(SIRStructure[] structs, String dir) 
+    public static void doit(SIRStructure[] structs, StreamGraph sg, String dir) 
     {
 	if (structs.length == 0) 
 	    return;
 	
-	new StructureIncludeFile(structs, dir);
+	new StructureIncludeFile(structs, sg, dir);
     }
 
-    public StructureIncludeFile(SIRStructure[] structs, String dir) 
+    public StructureIncludeFile(SIRStructure[] structs, StreamGraph sg, String dir) 
     {
+	this.streamGraph = sg;
+	structSet = new HashSet();
+	for (int i = 0; i < structs.length; i++)
+	    structSet.add(structs[i]);
+
+	//CClass[] passedStructs;
+	//passedStructs = (CClass[])getPassedStructs().toArray(new CClass[0]);
+
 	try {
 	    FileWriter fw = new FileWriter(dir + "/structs.h");
 	    fw.write("unsigned " + FlatIRToC.DYNMSGHEADER + ";\n");
@@ -178,4 +189,36 @@ public class StructureIncludeFile
 	}
     }
     
+    //iterator thru all the flat nodes and remember the structs that are passed over tapes
+    private Vector getPassedStructs() 
+    {
+	Vector passedStructs = new Vector();
+
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+	    
+	    Iterator flatNodes = ssg.getFlatNodes().iterator();
+	    while (flatNodes.hasNext()) {
+		FlatNode node = (FlatNode)flatNodes.next();
+		
+		if (node.isFilter()) {
+		    //if this is a struct then add it to the passed types set
+		    //System.out.println(node.getFilter().getInputType());
+		    //System.out.println(node.getFilter().getOutputType());
+		    if (node.getFilter().getOutputType().isClassType() &&
+			!passedStructs.contains(node.getFilter().getOutputType().getCClass())) {
+			passedStructs.add(node.getFilter().getOutputType().getCClass());
+			System.out.println(node.getFilter().getOutputType() + " is passed on the tape");
+		    }
+		    
+		    if (node.getFilter().getInputType().isClassType() &&
+			!passedStructs.contains(node.getFilter().getInputType().getCClass())) {
+			passedStructs.add(node.getFilter().getInputType().getCClass());
+			System.out.println(node.getFilter().getInputType() + " is passed on the tape");
+		    }
+		}
+	    }
+	}
+	return passedStructs;
+    }
 }

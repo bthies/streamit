@@ -319,7 +319,7 @@ public class SpaceDynamicBackend {
 		(streamGraph.getStaticSubGraphs()[i].getTopLevelSIR());
 	
 	//create the structure include file for the application
-	StructureIncludeFile.doit(structures);
+	StructureIncludeFile.doit(structures, streamGraph);
 
 	
 	System.out.println("Tile Code begin...");

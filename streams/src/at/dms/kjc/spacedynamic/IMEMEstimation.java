@@ -136,7 +136,7 @@ public class IMEMEstimation implements FlatVisitor
 	}
 	
 	// make structures header file in this directory
-	StructureIncludeFile.doit(SpaceDynamicBackend.structures, dir);
+	StructureIncludeFile.doit(SpaceDynamicBackend.structures, streamGraph, dir);
 
 	TileCode.generateCode(streamGraph);
 	MakefileGenerator.createMakefile(streamGraph);

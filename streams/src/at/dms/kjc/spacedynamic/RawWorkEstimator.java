@@ -92,7 +92,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	}
 	
 	// make structures header file in this directory
-	StructureIncludeFile.doit(SpaceDynamicBackend.structures, dir);
+	StructureIncludeFile.doit(SpaceDynamicBackend.structures, streamGraph, dir);
 
 	SIMULATING_WORK = true;
 	TileCode.generateCode(streamGraph);

@@ -25,7 +25,10 @@ LINKED_FILE =   Linked${MAIN_FILE};
 STREAMIT_MAKEFILE = Makefile.streamit 
 
 all: clean
-	javac *.java ../delay/Delay.java && cp ../delay/Delay*.class .
+	javac *.java ../../examples/delay/Delay.java && cp ../../examples/delay/Delay*.class .
+	@echo
+	@echo "Note:  You just made a version to run in the library.  To make a version"
+	@echo "       for StreamIt, type \"make link\" and then use Linkeddcalc.java"
 
 clean:
 	#remove liked file from dir

@@ -74,7 +74,9 @@ public class BCFile
 	    ("global gAUTOFLOPS = 0;\n" +
 	     "fn __event_fpu_count(hms)\n" +
 	     "{" +
-	     "\tif (imem_instr_is_fpu(hms.instrWord))\n" +
+	     "\tlocal instrDynamic = hms.instr_dynamic;\n" +
+	     "\tlocal instrWord = InstrDynamic_GetInstrWord(instrDynamic);\n" +
+	     "\tif (imem_instr_is_fpu(instrWord))\n" +
 	     "\t{\n" +
 	     "\t\tAtomicIncrement(&gAUTOFLOPS);\n" +
 	     "\t}\n" +

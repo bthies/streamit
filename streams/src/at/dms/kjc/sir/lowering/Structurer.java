@@ -49,10 +49,10 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     public static JClassDeclaration structure(SIROperator toplevel,
 					      JInterfaceDeclaration[] inners,
 					      SIRInterfaceTable[] tables,
-                                              SIRStructure[] structs) {
+                                              SIRStructure[] structures) {
 	Structurer structurer = new Structurer();
 	toplevel.accept(structurer);
-	return structurer.toFlatClass(inners, tables);
+	return structurer.toFlatClass(inners, tables, structures);
     }
 
     /**
@@ -60,9 +60,13 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      * that was traversed.
      */
     private JClassDeclaration toFlatClass(JInterfaceDeclaration[] inners,
-					  SIRInterfaceTable[] tables) {
+					  SIRInterfaceTable[] tables,
+                                          SIRStructure[] structures) {
 	// add <inners> to <structs>
 	structs.addAll(Arrays.asList(inners));
+        // Process structures
+        for (int i=0; i<structures.length; i++)
+            structures[i].accept(this);
 	// create a field declaration that is initialized to each interface
 	// table in <tables>
 	JFieldDeclaration[] fields = new JFieldDeclaration[tables.length];
@@ -311,14 +315,13 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
                                SIRStream parent,
                                JFieldDeclaration[] fields)
     {
-        System.err.println("visitStructure " + self.getName());
 	JClassDeclaration classDecl = 
 	    new JClassDeclaration(/* TokenReference where */
 				  null,
 				  /* int modifiers, */
 				  at.dms.kjc.Constants.ACC_PUBLIC,
 				  /* String ident,  */
-				  self.getName(),
+				  self.getIdent(),
 				  /* CClassType superClass, */
 				  CStdType.Object,
 				  /* CClassType[] interfaces, */

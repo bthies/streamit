@@ -46,10 +46,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     //and store the corresponding SIR object
     private Hashtable symbolTable;
 
+    //This vector store all the interface declarations for a toplevel prgm
+    private Vector interfaceList;
+
     //globals to store the split and join type so they can be set in the
     //post visit of the class declaration
     private SIRSplitType splitType;
     private SIRJoinType joinType;
+
+
 
     public Kopi2SIR() {
 	parentStream = null;
@@ -58,6 +63,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	currentMethod = null;
 	visitedSIROps = new Hashtable(100);
 	symbolTable = new Hashtable(300);
+	interfaceList = new Vector(100);
     }
 
     private void addVisitedOp(String className, SIROperator sirop) {
@@ -646,8 +652,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
         blockStart("VariableDeclarationStatement");
         
-	for (int i = 0; i < vars.length; i++)
+	for (int i = 0; i < vars.length; i++) {
             vars[i] = (JVariableDefinition)vars[i].accept(this);	
+	}
 	for (int i = 0; i < vars.length; i++)
 	    if (vars[i] != null)
 		return new JVariableDeclarationStatement(null, vars, null);
@@ -671,9 +678,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
 	//we are defining a new variable with a "new" in the code
  	if (expr instanceof JUnqualifiedInstanceCreation) {
+	    if (type.toString().endsWith("Portal")) {
+		//Portal Definition , SIRCreatePortal add to symbol Table
+		//make the SIRCreatePortal the new expression in the definition
+		SIRCreatePortal cp = new SIRCreatePortal();
+		return new JVariableDefinition(null, modifiers, type, ident, cp);
+	    }
 	    //If the class of this variable is in the SIR table then
 	    //we need to add this definition to the symbol table
-	    if (getVisitedOp(type.toString()) != null) {
+	    else if (getVisitedOp(type.toString()) != null) {
 		SIRStream ST = (SIRStream)ObjectDeepCloner.deepCopy(getVisitedOp(type.toString()));
 		printMe("Adding " + ident + " to symbol table");
 		
@@ -685,9 +698,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		symbolTable.put(self, newSIRInit);
 		return null;
 		//return new JVariableDefinition(null, modifiers, type, ident, expr);
-	    }
-	    else if (type.toString().endsWith("Portal")) {
-		//Portal Definition , SIRCreatePortal add to symbol Table
 	    }
 	    else 
 		at.dms.util.Utils.fail("Definition of Stream " + type.toString() + 
@@ -1200,6 +1210,98 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
 
 
+    private SIRMessageStatement createMessageStatement(JMethodCallExpression methCall,
+						       CType portal, 
+						       JExpression prefix, 
+						       JExpression[] args) {
+	//index of the method in the portal interface
+	int index = -1;
+	//Process the args
+	for (int i = 0; i < args.length; i++)
+	    args[i] = (JExpression) args[i].accept(this);
+
+	//Find the index of the method call
+	CClassType[] interfaces = 
+	    portal.getCClass().getInterfaces();
+	
+	if (interfaces.length > 1)
+	    at.dms.util.Utils.fail("A portal can only implement one interface at this time");
+	
+	//Get the portal methods of the portal Interface
+	CMethod[] portalMethods = interfaces[0].getCClass().getMethods();
+
+	for (int i = 0; i < portalMethods.length; i++) {
+	    if (portalMethods[i].getIdent().equals(methCall.getIdent())) {
+		index = i;
+		break;
+	    }
+	}
+	if (index == -1)  //cannot find method
+	    at.dms.util.Utils.fail("Cannot find portal method " + methCall.getIdent() + " in portal interface");
+	//Assuming all messages best effort
+	return new SIRMessageStatement(prefix, index, args, SIRLatency.BEST_EFFORT);
+    }
+		
+
+    //given a method call, a JLocalVariableExpression portal, and a stream, build the 
+    //SIRRegReceiveStatement
+    private SIRRegReceiverStatement createRegReceiver(JMethodCallExpression methCall,
+						      CType portal,
+						      JExpression prefix,
+						      SIRStream st) {
+	CMethod meth = methCall.getMethod();
+	//the index of the method in the interface
+	
+	//Extract the interface from the portal prefix variable
+	CClassType[] interfaces = 
+	    portal.getCClass().getInterfaces();
+	
+	if (interfaces.length > 1)
+	    at.dms.util.Utils.fail("A portal can only implement one interface at this time");
+	
+	//Get the portal methods of the portal Interface
+	CMethod[] portalMethods = interfaces[0].getCClass().getMethods();
+	
+	//get the CMethods from the stream class
+	JMethodDeclaration[] streamMethodDecs = st.getMethods();
+	
+	//Store the methods in the order of the interface
+	JMethodDeclaration[] matchedMethods = new JMethodDeclaration[portalMethods.length];
+	
+	//Build matchedMethods by iterating over all the methods in the portal interface
+	//and matching them with the methods of the stream class
+	for (int i = 0; i < portalMethods.length; i++) {
+	    JMethodDeclaration currentMethod = null;
+	    for (int j = 0; j < streamMethodDecs.length; j++) {
+		if (portalMethods[i].getIdent().equals(streamMethodDecs[j].getName())) {
+		    currentMethod = streamMethodDecs[j];
+		    break;
+		}
+	    }
+	    if (currentMethod == null)
+		at.dms.util.Utils.fail("Cannot find portal method in portal interface (RegReceiver)");
+	    matchedMethods[i] = currentMethod;
+	}
+	
+
+	return new SIRRegReceiverStatement(prefix,st, matchedMethods);
+    }
+
+
+	    	/*
+	//Find the method index 
+	for (int i = 0; i < methods.length; i++)
+	    if (methods[i].equals(meth)) {
+		index = i;
+		break;
+	    }
+	if (index == -1)
+	    at.dms.util.Utils.fail("Cannot find portal method in portal interface");
+	*/
+
+						      
+
+
     //This method creates an initStatement from the underlying arguments
     //to the function should be translated into an init statment
     //also, based on the String argument, it registers the SIROp
@@ -1262,11 +1364,28 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
         //Set currentMethod to this method, we are processing it!
 	currentMethod = self.getIdent();
 	
+	
 	if (isSIRExp(self)) {
 	    printMe("SIR Expression " + ident);
 	    //reset currentMethod on all returns
 	    currentMethod = parentMethod;
 	    return newSIRExp(self, args);
+	}
+	else if (ident.equals("regReceiver")) { 
+	    if (args.length > 1)
+		at.dms.util.Utils.fail("Exactly one arg to add() allowed");
+	    SIRStream st = ((SIRInitStatement)args[0].accept(this)).getTarget();
+	    currentMethod = parentMethod;
+	    //prefix can either be a field or a local var, extract type
+	    if (prefix instanceof JLocalVariableExpression)
+		return createRegReceiver(self, ((JLocalVariableExpression)prefix).getVariable().getType(),
+					 prefix, st);
+	    else if (prefix instanceof JFieldAccessExpression)
+		return createRegReceiver(self, ((JFieldAccessExpression)prefix).getType(),
+					 prefix, st);
+	    else
+		at.dms.util.Utils.fail("regReceiver all must have a portal prefix");
+	    return null;
 	}
 	else if (ident.equals("add")) {            //Handle an add call in a pipeline
 	    //Parent must be a pipeline
@@ -1335,6 +1454,24 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    //we want to ignore remove this method from the block
 	     return null;
 	}
+	//There are two cases for portal calls
+	//Message send to a portal using a local var to store the portal
+	//I think that this is the only case when prefix will not be null??? Keep the check any way
+	else if (prefix instanceof JLocalVariableExpression &&
+		 ((JLocalVariableExpression)prefix).getVariable().getType().toString().endsWith("Portal")) {
+	    //check if this is a regSender, if so ignore it
+	    if (ident.equals("regSender"))
+		return null;
+	    return createMessageStatement(self, ((JLocalVariableExpression)prefix).getVariable().getType(), 
+					  prefix, args);
+	}
+	//message send to portal using field as portal
+	else if (prefix instanceof JFieldAccessExpression &&
+		 ((JFieldAccessExpression)prefix).getType().toString().endsWith("Portal")) {
+	    if (ident.equals("regSender"))
+		return null;
+	    return createMessageStatement(self, ((JFieldAccessExpression)prefix).getType(), prefix, args);
+	}	    
       	else {             //Not an SIR call
 	    prefix = (JExpression)prefix.accept(this);
 	    for (int i = 0; i < args.length; i++)
@@ -1799,6 +1936,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
 
     /**
+     * Returns a vector of all the JInterfaceDeclarations for the
+     * toplevel stream
+     */
+    public JInterfaceDeclaration[] getInterfaces() {
+	JInterfaceDeclaration[] ret = (JInterfaceDeclaration[])interfaceList.toArray();
+	return ret;
+    }
+    
+
+    /**
      * visits an interface declaration
      */
       public Object visitInterfaceDeclaration(JInterfaceDeclaration self,
@@ -1809,6 +1956,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                           JMethodDeclaration[] methods)
     {
 	blockStart("visitInterfaceDeclaration");
+	interfaceList.add(self);
 	/*visitClassBody(new JTypeDeclaration[0], methods, body);*/
 	return self;
     }

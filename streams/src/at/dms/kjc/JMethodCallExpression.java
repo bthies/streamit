@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodCallExpression.java,v 1.3 2001-10-12 22:04:48 mgordon Exp $
+ * $Id: JMethodCallExpression.java,v 1.4 2001-10-26 00:51:35 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -247,6 +247,10 @@ public class JMethodCallExpression extends JExpression {
       code.plantPopInstruction(getType());
     }
   }
+
+    public CMethod getMethod() {
+	return method;
+    }
 
     public JExpression[] getArgs() {
 	return args;

@@ -82,7 +82,7 @@ public class StreamIt extends Pipeline
                 if (args [index].equals ("-i"))
                 {
                     index++;
-                    nIters = Integer.valueOf (args[index]);
+                    nIters = Integer.valueOf (args[index]).intValue ();
                 } else
                 if (args [index].equals ("-norun"))
                 {

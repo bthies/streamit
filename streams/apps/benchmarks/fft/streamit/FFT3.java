@@ -310,8 +310,6 @@ class FFT3 extends StreamIt
 {
     //int N; 
     //int logN; 
-  float W_re[]; 
-  float W_im[]; 
 
   public static void main(String args[]) 
   { 
@@ -322,18 +320,30 @@ class FFT3 extends StreamIt
     /* Make sure N is a power_of_2, N >= 4 and 2^logN = N */  
     final int N =  32; //16; 
     final int logN = 5; //4;   
+    float W_re[]; 
+    float W_im[]; 
+
 
     /* Initialize roots of unity array W[].   
      * W[] is bit-reversal permuted for easier access later -   
      * see the comment inside 'class ComputeStage' 
      */ 
-    W_re = new float[N/2]; 
-    W_im = new float[N/2]; 
-    for (int i=0; i<(N/2); i++) 
+    W_re = new float[16]; 
+    W_im = new float[16]; 
+    for (int i=0; i<16; i++) 
     {
-      int br = bitrev(i, logN-1);  
-      W_re[br] = (float) Math.cos(((double)i*2.0*Math.PI)/((double)N)); 
-      W_im[br] = (float) Math.sin(((double)i*2.0*Math.PI)/((double)N)); 
+	//int br = bitrev(i, logN-1);  
+	int br=0;
+	int j;
+	int temp;
+	temp=i;
+	for (j=0; j < 4; j++)
+	    {
+		br = (br << 1) | (temp & 1);
+		temp >>= 1;
+	    }
+	W_re[br] = (float) Math.cos(((double)i*2.0*Math.PI)/((double)N)); 
+	W_im[br] = (float) Math.sin(((double)i*2.0*Math.PI)/((double)N)); 
     }  
     //for (int i=0; i<(N/2); i++) 
     //  System.out.println("WW "+W_re[i]+" "+W_im[i]); 

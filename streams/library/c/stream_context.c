@@ -83,6 +83,7 @@ void set_stream_type(stream_context *c, stream_type type)
     case SPLIT_JOIN:
       break;
     case FEEDBACK_LOOP:
+      break;
     default:
         assert (0);
         break;
@@ -134,6 +135,7 @@ void register_child(stream_context *c, stream_context *child)
     case SPLIT_JOIN:
       break;
     case FEEDBACK_LOOP:
+      break;
     default:
         assert (0);
 

@@ -137,6 +137,7 @@ typedef struct tape {
 #define PEEK_DEFAULTB(type, n) PEEK_TAPE_LOCALB(__rd, __rp, __rm, type, n)
 #define VARS_DEFAULTB() void *__rd, *__wd; int __rp, __rm, __wp, __wm
 #define LOCALIZE_DEFAULTB(c) \
+  int __localize_defaultb_dummy = \
     (LOCALIZE_TAPE((c)->input_tape, __rd, __rp, __rm, \
                 (c)->output_tape, __wd, __wp, __wm))
 #define UNLOCALIZE_DEFAULTB(c) \

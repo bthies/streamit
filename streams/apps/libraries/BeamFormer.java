@@ -73,17 +73,10 @@ class BeamFormer extends Filter
       for (j = 0; i < numberOfSamples; i++)
       {
         float out = 0;
-
-        // numChannels is undefined.
-        // Please define it wherever it should be defined and uncomment
-        // the loop.
-        ASSERT (false);
-/*
-        for (k = 0; k < numChannels; i++)
+        for (k = 0; k < numOfChannels; i++)
         {
           out += inputData[i*numberOfChannels+k]*matrixB[k*numberOfSamples+j];
         }
-*/
         output.pushFloat(out);
       }
     }

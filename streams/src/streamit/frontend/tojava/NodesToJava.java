@@ -11,7 +11,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.69 2003-08-12 13:48:06 dmaze Exp $
+ * @version $Id: NodesToJava.java,v 1.70 2003-08-12 14:01:52 dmaze Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -486,18 +486,18 @@ public class NodesToJava implements FEVisitor
     {
         String result = "new " + creator.getName() + "(";
         boolean first = true;
-        for (Iterator iter = creator.getTypes().iterator(); iter.hasNext(); )
-        {
-            Type type = (Type)iter.next();
-            if (!first) result += ", ";
-            result += typeToClass(type);
-            first = false;
-        }
         for (Iterator iter = creator.getParams().iterator(); iter.hasNext(); )
         {
             Expression param = (Expression)iter.next();
             if (!first) result += ", ";
             result += (String)param.accept(this);
+            first = false;
+        }
+        for (Iterator iter = creator.getTypes().iterator(); iter.hasNext(); )
+        {
+            Type type = (Type)iter.next();
+            if (!first) result += ", ";
+            result += typeToClass(type);
             first = false;
         }
         result += ")";

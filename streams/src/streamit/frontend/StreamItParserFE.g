@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.14 2002-10-18 18:15:42 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.15 2002-11-06 22:01:43 dmaze Exp $
  */
 
 header {
@@ -349,16 +349,16 @@ ternaryExpr returns [Expression x] { x = null; Expression b, c; }
 
 logicOrExpr returns [Expression x] { x = null; Expression r; int o = 0; }
 	:	x=logicAndExpr
-		(LOGIC_OR r=logicOrExpr
+		(LOGIC_OR r=logicAndExpr
 			{ x = new ExprBinary(x.getContext(), ExprBinary.BINOP_OR, x, r); }
-		)?
+		)*
 	;
 
 logicAndExpr returns [Expression x] { x = null; Expression r; }
 	:	x=bitwiseExpr
-		(LOGIC_AND r=logicAndExpr
+		(LOGIC_AND r=bitwiseExpr
 			{ x = new ExprBinary(x.getContext(), ExprBinary.BINOP_AND, x, r); }
-		)?
+		)*
 	;
 
 bitwiseExpr returns [Expression x] { x = null; Expression r; int o = 0; }
@@ -367,9 +367,9 @@ bitwiseExpr returns [Expression x] { x = null; Expression r; int o = 0; }
 			| BITWISE_AND { o = ExprBinary.BINOP_BAND; }
 			| BITWISE_XOR { o = ExprBinary.BINOP_BXOR; }
 			)
-			r=bitwiseExpr
+			r=equalExpr
 			{ x = new ExprBinary(x.getContext(), o, x, r); }
-		)?
+		)*
 	;
 
 equalExpr returns [Expression x] { x = null; Expression r; int o = 0; }
@@ -377,9 +377,9 @@ equalExpr returns [Expression x] { x = null; Expression r; int o = 0; }
 		(	( EQUAL     { o = ExprBinary.BINOP_EQ; }
 			| NOT_EQUAL { o = ExprBinary.BINOP_NEQ; }
 			)
-			r = equalExpr
+			r = compareExpr
 			{ x = new ExprBinary(x.getContext(), o, x, r); }
-		)?
+		)*
 	;
 
 compareExpr returns [Expression x] { x = null; Expression r; int o = 0; }
@@ -389,9 +389,9 @@ compareExpr returns [Expression x] { x = null; Expression r; int o = 0; }
 			| MORE_THAN  { o = ExprBinary.BINOP_GT; }
 			| MORE_EQUAL { o = ExprBinary.BINOP_GE; }
 			)
-			r = compareExpr
+			r = addExpr
 			{ x = new ExprBinary(x.getContext(), o, x, r); }
-		)?
+		)*
 	;
 
 addExpr returns [Expression x] { x = null; Expression r; int o = 0; }
@@ -399,9 +399,9 @@ addExpr returns [Expression x] { x = null; Expression r; int o = 0; }
 		(	( PLUS  { o = ExprBinary.BINOP_ADD; }
 			| MINUS { o = ExprBinary.BINOP_SUB; }
 			)
-			r=addExpr
+			r=multExpr
 			{ x = new ExprBinary(x.getContext(), o, x, r); }
-		)?
+		)*
 	;
 
 multExpr returns [Expression x] { x = null; Expression r; int o = 0; }
@@ -410,9 +410,9 @@ multExpr returns [Expression x] { x = null; Expression r; int o = 0; }
 			| DIV  { o = ExprBinary.BINOP_DIV; }
 			| MOD  { o = ExprBinary.BINOP_MOD; }
 			)
-			r=multExpr
+			r=inc_dec_expr
 			{ x = new ExprBinary(x.getContext(), o, x, r); }
-		)?
+		)*
 	;
 
 inc_dec_expr returns [Expression x] { x = null; }

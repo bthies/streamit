@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.14 2003-09-04 19:03:49 dmaze Exp $
+# $Id: release.sh,v 1.15 2003-09-24 18:46:07 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -59,7 +59,7 @@ builddirs() {
 # Get a checked-out copy of the source tree.
 mkdir $WORKING/streams
 DIRS="streams/knit streams/README.source"
-builddirs streams compiler library include misc eclipse
+builddirs streams compiler library include misc
 builddirs streams/apps benchmarks examples libraries sorts
 builddirs streams/docs cookbook implementation-notes manual runtime-interface
 builddirs streams/docs release syntax
@@ -72,6 +72,12 @@ rm -rf $WORKING/streams/apps/benchmarks/cfar
 rm -rf $WORKING/streams/apps/benchmarks/gsm/c
 rm -rf $WORKING/streams/apps/benchmarks/nokia
 rm -rf $WORKING/streams/apps/benchmarks/perftest4
+
+# Some parts of the compiler aren't useful to release; trim those here.
+rm -rf $WORKING/streams/compiler/at/dms/kjc/cluster
+rm -rf $WORKING/streams/compiler/at/dms/kjc/flatgraph2
+rm -rf $WORKING/streams/compiler/at/dms/kjc/raw2
+rm -rf $WORKING/streams/compiler/at/dms/kjc/spacetime
 
 # Build interesting bits of the documentation; they go in both releases.
 for d in cookbook manual release syntax; do

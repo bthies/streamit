@@ -56,9 +56,17 @@ class FloatFileWriter extends Filter {
 
     public void work() {
 	try{
+	    //crude, but it'll do.
 	    c = input.popFloat();
-	    //this is WAY wrong... fix it later (the castinG)
-	    out.write((int)c);
+	    int d = Float.floatToIntBits(c);
+	    int out1 = (d&0xff000000)>>24;
+	    int out2 = (d&0x00ff0000)>>16;
+	    int out3 = (d&0x0000ff00)>>8;
+	    int out4 = (d&0x000000ff);
+	    out.write(out1);
+	    out.write(out2);
+	    out.write(out3);
+	    out.write(out4);
 	}
 	catch(IOException e)
 	    {

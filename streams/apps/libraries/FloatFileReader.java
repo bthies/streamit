@@ -25,7 +25,8 @@ class FloatFileReader extends Filter {
 
     File inputFile;
     FileReader in;
-    float c;
+    int c,d;
+
 
     public FloatFileReader (String input)
     {
@@ -52,14 +53,19 @@ class FloatFileReader extends Filter {
 
     public void work() {
 	try{
-	    if((c = in.read()) != -1)
-		{
-		    System.err.println(c);
-		    output.pushFloat(c);
+	    //each read only does 1 byte.... take in four, and meld em
+	    c = 0; //clear c
+	    for(int i = 0; i<4; i++)
+		if((d = in.read()) != -1)
+		    {
+			c += (d << ((3-i)<<3));
+		    }
+		else{
+		    //System.err.println("End of file reached.");
 		}
-	    else{
-		System.err.println("End of file reached.");
-	    }
+	    
+	    System.err.println(Float.intBitsToFloat(c));
+	    output.pushFloat(Float.intBitsToFloat(c));
 	}
 	catch(IOException e)
 	    {

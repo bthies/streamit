@@ -111,6 +111,15 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	return layout.assigned.contains(node);
     }
     
+    public static boolean isAssigned(Coordinate tile) 
+    {
+	assert layout.SIRassignment.values().contains(tile) == 
+	    layout.tileAssignment.keySet().contains(tile);
+	
+	return layout.tileAssignment.keySet().contains(tile);
+    }
+    
+
     public static Set getTiles() {
 	return layout.tileAssignment.keySet();
     }

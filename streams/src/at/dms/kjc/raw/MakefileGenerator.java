@@ -15,7 +15,9 @@ import java.io.*;
 public class MakefileGenerator 
 {
     public static final String MAKEFILE_NAME = "Makefile.streamit";
-    
+    //true if we want to use hardware icaching in the raw simulator
+    public static final boolean HWIC = true;
+
     public static void createMakefile() 
     {
 		
@@ -50,7 +52,7 @@ public class MakefileGenerator
 	    */
 	    
 	    //if (!IMEMEstimation.TESTING_IMEM) {
-	    if (false) {
+	    if (HWIC) {
 		//fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
 		fw.write("BTL-DEVICES += -dram_freq 100\n");
 		fw.write("ATTRIBUTES += HWIC\n");
@@ -212,14 +214,15 @@ public class MakefileGenerator
 
 	 //create the function to tell the simulator what tiles are mapped
 	fw.write("fn mapped_tile(tileNumber) {\n");
-	fw.write("if (");
+	fw.write("if (0 ");
 	Iterator tilesIterator = tiles.iterator();
 	//generate the if statement with all the tile numbers of mapped tiles
 	while (tilesIterator.hasNext()) {
-	    fw.write("tileNumber == " + 
-		     Layout.getTileNumber((Coordinate)tilesIterator.next()));
-	    if (tilesIterator.hasNext())
-		fw.write(" ||\n");
+	    Coordinate tile = (Coordinate)tilesIterator.next();
+	    if (Layout.isAssigned(tile)) {
+		fw.write("|| tileNumber == " + 
+			 Layout.getTileNumber(tile) + "\n");
+	    }
 	}
 	fw.write(") {return 1; }\n");
 	fw.write("return 0;\n");

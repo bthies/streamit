@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.6 2003-02-06 21:55:53 aalamb Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.7 2003-02-10 18:31:36 aalamb Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -94,8 +94,18 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	if (!linearRep.isPurelyReal()) {
 	    LinearPrinter.println("  aborting -- filter has non real coefficients."); 
 	    return;
-	}	
+	}
 
+	/** if this filter has a constant component (eg if it has a non zero "b") we abort.
+	    (Note, there is nothing saying that we can't perform the transform in this
+	    case, only that currently we don't have any examples of programs that use it
+	    so I am not going to bother implenting it. -- AAL**/
+	if (linearRep.hasConstantComponent()) {
+	    LinearPrinter.println("  aborting -- filter has non zero constant components.\n" +
+				  "ANDREW -- YOU ARE BEING LAZY. THIS IS NOT A HARD THING TO IMPLEMENT " +
+				  "SO DO IT!");
+	    return;
+	}
 	
 	/** if doing clever replacement, don't do small FIRs. **/
 	if (linearRep.getPeekCount() < minFIRSize) {
@@ -191,12 +201,19 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	 * so therefore, we set the peek rate of the work function to be N+2(x-1) even though
 	 * it really only needs to be N+x-1.*/
 	freqFilter = new SIRTwoStageFilter(self.getParent(),              /* parent */
-					   "TwoStageFreq" + self.getIdent(),/* ident */
+					   "TwoStageFreq"+self.getIdent(),/* ident */
 					   newFields,                     /* fields */
-					   new JMethodDeclaration[0],     /* methods -- init, work, and initWork are special*/
+					   new JMethodDeclaration[0],     /* methods Note:
+									     -- init, work, and
+									     initWork are special. */
 					   new JIntLiteral(N+x-1),        /* peek (w/ extra x-1 window...)*/
 					   new JIntLiteral(N+x-1),        /* pop */
-					   new JIntLiteral(N+x-1),        /* push */
+					   new JIntLiteral((N+x-1)*numWeightFields), /* push (note that the
+											push count needs to
+											be scaled by the
+											number of outputs
+											(because each FIR
+											filter outputs N+x-1 */
 					   freqWork,                      /* work */
 					   N+x-1,                         /* initPeek */
 					   N+x-1,                         /* initPop */

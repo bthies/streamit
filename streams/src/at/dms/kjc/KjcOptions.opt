@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.57 2004-06-25 19:33:23 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.58 2004-08-31 19:00:07 mgordon Exp $
  */
 
 prefix Kjc
@@ -407,3 +407,14 @@ longname 		"rstream"
 	type 		boolean
 	default		"false"
 	help		"Generate code for the RStream front-end."
+
+longname 		"doloops"
+	type		boolean
+	default		"false"
+	help		"Generate doloops for for loops where possible in the rstream backend."
+
+longname 		"absarray"
+	type		boolean
+	default		"false"
+	help		"Use abstract array syntax and semantics instead of C arrays."
+

@@ -10,6 +10,10 @@ import java.util.HashMap;
 
 public class DataEstimate {
 
+    // SIRFilter -> Integer (size of global fields)
+    private static HashMap saved_globals = new HashMap();
+    private static HashMap saved_locals = new HashMap();
+
     public static int getTypeSize(CType type) {
 
 	if (type.getTypeID() == CType.TID_VOID) return 0;
@@ -22,14 +26,29 @@ public class DataEstimate {
 	return 0;
     }
 
+
     public static int estimateDWS(SIROperator oper) {
 
+	int globals;
+	int locals;
+
 	if (oper instanceof SIRFilter) {
+	    
+	    // this should cause calculation only when method is first called during
+	    // code generation, on subsequent calls examine hashed values
+
 	    SIRFilter filter = (SIRFilter)oper;
-	    int globals = DataEstimate.filterGlobalsSize(filter);
-	    CodeEstimate est = new CodeEstimate(filter);
-	    est.visitFilter(filter);
-	    int locals = est.getLocalsSize();
+	    globals = DataEstimate.filterGlobalsSize(filter);
+
+	    if (saved_locals.containsKey(filter)) {
+		locals = ((Integer)saved_locals.get(filter)).intValue();
+	    } else {
+		CodeEstimate est = new CodeEstimate(filter);
+		est.visitFilter(filter);
+		locals = est.getLocalsSize();
+		saved_locals.put(filter, new Integer(locals));
+	    }
+
 	    return globals + locals;
 	}
 	
@@ -90,6 +109,10 @@ public class DataEstimate {
 
     public static int filterGlobalsSize(SIRFilter filter) {
 
+	if (saved_globals.containsKey(filter)) {
+	    return ((Integer)saved_globals.get(filter)).intValue();
+	}
+
     	JFieldDeclaration[] fields = filter.getFields();
 	int data_size = 0;
 
@@ -116,6 +139,8 @@ public class DataEstimate {
 	    data_size += size;
 	}    
 
+	saved_globals.put(filter, new Integer(data_size));
+	
 	return data_size;
     }
 }

@@ -1,0 +1,3 @@
+test:
+	gcc -lm unifft.c -o unifft
+	time ./unifft

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.13 2001-10-16 16:03:04 dmaze Exp $
+ * $Id: LIRToC.java,v 1.14 2001-10-16 15:27:23 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1709,7 +1709,24 @@ public class LIRToC
 				       CType outputType,
 				       int inputSize,
 				       int outputSize) {
-	at.dms.util.Utils.fail("not implemented");
+        /* Three things need to happen for feedback loop children:
+         * they need to be registered, their input tapes need
+         * to be created, and the output tapes need to be created.
+         * LIRSetChild deals with the registration, so we just need
+         * to take care of the tapes.  For a feedback loop body,
+         * we're looking at the output of the joiner and the
+         * input of the splitter. */
+        print("create_splitjoin_tape(");
+        streamContext.accept(this);
+        print(", JOINER, OUTPUT, 0, ");
+        childContext.accept(this);
+        print(", " + inputType + ", " + inputSize + ");");
+        newLine();
+        print("create_splitjoin_tape(");
+        streamContext.accept(this);
+        print(", SPLITTER, INPUT, 0, ");
+        childContext.accept(this);
+        print(", " + outputType + ", " + outputSize + ");");
     }
 
     /**
@@ -1722,7 +1739,20 @@ public class LIRToC
 				       CType outputType,
 				       int inputSize,
 				       int outputSize) {
-	at.dms.util.Utils.fail("not implemented");
+        /* The loop's output goes to input 1 of the joiner, and its
+         * input comes from output 1 of the splitter.  (input/output
+         * 0 are connected to the outside of the block.) */
+        print("create_splitjoin_tape(");
+        streamContext.accept(this);
+        print(", SPLITTER, OUTPUT, 1, ");
+        childContext.accept(this);
+        print(", " + inputType + ", " + inputSize + ");");
+        newLine();
+        print("create_splitjoin_tape(");
+        streamContext.accept(this);
+        print(", JOINER, INPUT, 1, ");
+        childContext.accept(this);
+        print(", " + outputType + ", " + outputSize + ");");
     }
 
     /**
@@ -1736,7 +1766,21 @@ public class LIRToC
 				       CType outputType,
 				       int inputSize,
 				       int outputSize) {
-	at.dms.util.Utils.fail("not implemented");
+        /* For  split/joins now.  Again, assume registration has
+         * already happened; we just need to connect tapes.
+         * Use the position'th slot on the splitter output and
+         * joiner input. */
+        print("create_splitjoin_tape(");
+        streamContext.accept(this);
+        print(", SPLITTER, OUTPUT, " + position + ", ");
+        childContext.accept(this);
+        print(", " + inputType + ", " + inputSize + ");");
+        newLine();
+        print("create_splitjoin_tape(");
+        streamContext.accept(this);
+        print(", JOINER, INPUT, " + position + ", ");
+        childContext.accept(this);
+        print(", " + outputType + ", " + outputSize + ");");
     }
 
 

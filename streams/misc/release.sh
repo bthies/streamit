@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.42 2003-10-17 21:54:10 thies Exp $
+# $Id: release.sh,v 1.43 2003-10-20 21:24:48 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -137,7 +137,7 @@ for d in cookbook release syntax; do
 done
 find $WORKING/streams/docs \( -name '*.aux' -o -name '*.log' \
   -o -name '*.toc' -o -name '*.[0-9]' \) -print0 | xargs -0 rm
-for f in COPYING COPYING.GPL INSTALL NEWS OPTIONS README REGTEST; do
+for f in COPYING COPYING.GPL INSTALL NEWS OPTIONS README; do
   mv $WORKING/streams/docs/release/$f $WORKING/streams
 done
 $WORKING/streams/misc/build-bench-doc

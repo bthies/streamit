@@ -1,0 +1,103 @@
+/** Test out combining splitjoins. **/
+void->void pipeline SimpleStreamItProgram {
+  add FloatSource();
+  add LinearSJ();
+  add LinearSJ2();
+  add LinearSJ3();
+  add NonLinearSJ();
+  add FloatSink();
+}
+
+void->float filter FloatSource {
+  float x;
+  init {
+    x = 0;
+  }
+  work push 1 {
+    push(x);
+    x = x + 1;
+  }
+}
+
+float->void filter FloatSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+/** A linear split join to test combination out on. **/
+float->float splitjoin LinearSJ {
+  split duplicate;
+  add FloatFilter1();
+  add FloatFilter2();
+  join roundrobin;
+}
+
+/** A linear split join to test combination out on. **/
+float->float splitjoin LinearSJ2 {
+  split duplicate;
+  add FloatFilter1();
+  add FloatFilter2();
+  add FloatFilter3();
+  join roundrobin;
+}
+/** A linear split join to test combination out on. **/
+float->float splitjoin LinearSJ3 {
+  split duplicate;
+  add FloatFilter1();
+  add FloatFilter2();
+  add FloatFilter3();
+  join roundrobin(4,4,4);
+}
+
+
+/** A non linear split join to make sure that we are sane **/
+float->float splitjoin NonLinearSJ {
+  split duplicate;
+  add FloatFilter1();
+  add FloatFilter2();
+  add NonLinearFilter();
+  join roundrobin;
+}
+
+
+
+
+/** filter that computes [[1 2][3 4]] **/
+float->float filter FloatFilter1 {
+  work pop 2 push 2 {
+    float t1 = pop();
+    float t2 = pop();
+    push(t2*2 + t1*4);
+    push(t2*1 + t1*3);
+  }
+}
+/** filter that computes [[5 6][7 8]] **/
+float->float filter FloatFilter2 {
+  work pop 2 push 2 {
+    float t1 = pop();
+    float t2 = pop();
+    push(t2*6 + t1*8);
+    push(t2*5 + t1*7);
+  }
+}
+/** filter that computes [[9 10][11 12]] **/
+float->float filter FloatFilter3 {
+  work pop 2 push 2 {
+    float t1 = pop();
+    float t2 = pop();
+    push(t2*10 + t1*12);
+    push(t2*9 + t1*11);
+  }
+}
+
+
+/** nonlinear filter **/
+float->float filter NonLinearFilter {
+  work pop 2 push 2 {
+    float t1 = pop();
+    float t2 = pop();
+    push (t1*t2);
+    push (t2*t1);
+  }
+}

@@ -1,0 +1,64 @@
+/** Test out combining splitjoins. **/
+void->void pipeline SimpleStreamItProgram {
+  add FloatSource();
+  add LinearSJ();
+  add LinearSJ2();
+  add FloatSink();
+}
+
+void->float filter FloatSource {
+  float x;
+  init {
+    x = 0;
+  }
+  work push 1 {
+    push(x);
+    x = x + 1;
+  }
+}
+
+float->void filter FloatSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+/** A linear split join to test combination with different round robin weightings. **/
+float->float splitjoin LinearSJ {
+  split duplicate;
+  add FloatFilter1();
+  add FloatFilter3();
+  join roundrobin(2,3);
+}
+
+/** A linear split join to test combination with different round robin weightings. **/
+float->float splitjoin LinearSJ2 {
+  split duplicate;
+  add FloatFilter1();
+  add FloatFilter3();
+  join roundrobin(4,6);
+}
+
+
+
+
+
+/** filter that computes [[1 2][3 4]] **/
+float->float filter FloatFilter1 {
+  work pop 2 push 2 {
+    float t1 = pop();
+    float t2 = pop();
+    push(t2*2 + t1*4);
+    push(t2*1 + t1*3);
+  }
+}
+/** filter that computes [[5 6 7] [8 9 10]] **/
+float->float filter FloatFilter3 {
+  work pop 2 push 3 {
+    float t1 = pop();
+    float t2 = pop();
+    push(t2*7 + t1*10);
+    push(t2*6 + t1*9);
+    push(t2*5 + t1*8);
+  }
+}

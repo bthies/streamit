@@ -2,7 +2,7 @@
 void->void pipeline SimpleStreamItProgram {
   add FloatSource();
   add LinearPipe();
-  //add LinearPipe();
+  add LinearPipe2();
   add FloatSink();
 }
 
@@ -25,9 +25,17 @@ float->void filter FloatSink {
 
 /** Pipeline of linear filters whose rates don't match. **/
 float->float pipeline LinearPipe {
+  add ParamIdentity(1);
   add LinearFilter1(4,4);
   add ParamIdentity(2);
 }
+
+/** pipeline with some filters that don't just do identity multiplications. **/
+float->float pipeline LinearPipe2 {
+  add LinearFilter1(3,2);
+  add LinearFilter2();
+}
+
 
 /** 
  * Simple filter that just computes a small matrix. 
@@ -44,6 +52,35 @@ float->float filter LinearFilter1(int numPeeks, int numPushes) {
     }
   }
 }
+
+/** 
+ * Another filter so that we can be sure that the matrix multiply is actually occuring
+ * (because we are multiplying by the identity matrix earlier in the pipeline.
+ **/
+float->float filter LinearFilter2 {
+  // calculates [[1 2][3 4][5 6]]
+  work push 2 pop 3 {
+    float t1 = pop();
+    float t2 = pop();
+    float t3 = pop();
+    push(2*t3 + 4*t2 + 6*t1);
+    push(1*t3 + 3*t2 + 5*t1);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Parameterized identity filter to test resizing filters in the pipeline. **/
 float->float filter ParamIdentity(int size) {
   work peek size pop size push size {
     for (int i=0; i<size; i++) {
@@ -51,3 +88,5 @@ float->float filter ParamIdentity(int size) {
     }
   }
 }
+
+

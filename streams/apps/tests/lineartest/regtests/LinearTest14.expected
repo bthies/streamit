@@ -1,0 +1,65 @@
+FloatFilter1_1.matrix
+[[1.0+0.0i 2.0+0.0i]
+ [3.0+0.0i 4.0+0.0i]]
+FloatFilter1_1.vector
+[[0.0+0.0i 0.0+0.0i]]
+FloatFilter1_2.matrix
+[[1.0+0.0i 2.0+0.0i]
+ [3.0+0.0i 4.0+0.0i]]
+FloatFilter1_2.vector
+[[0.0+0.0i 0.0+0.0i]]
+FloatFilter1_3.matrix
+[[1.0+0.0i 2.0+0.0i]
+ [3.0+0.0i 4.0+0.0i]]
+FloatFilter1_3.vector
+[[0.0+0.0i 0.0+0.0i]]
+FloatFilter1_4.matrix
+[[1.0+0.0i 2.0+0.0i]
+ [3.0+0.0i 4.0+0.0i]]
+FloatFilter1_4.vector
+[[0.0+0.0i 0.0+0.0i]]
+FloatFilter2_1.matrix
+[[5.0+0.0i 6.0+0.0i]
+ [7.0+0.0i 8.0+0.0i]]
+FloatFilter2_1.vector
+[[0.0+0.0i 0.0+0.0i]]
+FloatFilter2_2.matrix
+[[5.0+0.0i 6.0+0.0i]
+ [7.0+0.0i 8.0+0.0i]]
+FloatFilter2_2.vector
+[[0.0+0.0i 0.0+0.0i]]
+FloatFilter2_3.matrix
+[[5.0+0.0i 6.0+0.0i]
+ [7.0+0.0i 8.0+0.0i]]
+FloatFilter2_3.vector
+[[0.0+0.0i 0.0+0.0i]]
+FloatFilter2_4.matrix
+[[5.0+0.0i 6.0+0.0i]
+ [7.0+0.0i 8.0+0.0i]]
+FloatFilter2_4.vector
+[[0.0+0.0i 0.0+0.0i]]
+FloatFilter3_1.matrix
+[[9.0+0.0i 10.0+0.0i]
+ [11.0+0.0i 12.0+0.0i]]
+FloatFilter3_1.vector
+[[0.0+0.0i 0.0+0.0i]]
+FloatFilter3_2.matrix
+[[9.0+0.0i 10.0+0.0i]
+ [11.0+0.0i 12.0+0.0i]]
+FloatFilter3_2.vector
+[[0.0+0.0i 0.0+0.0i]]
+LinearSJ2_1.matrix
+[[1.0+0.0i 2.0+0.0i 5.0+0.0i 6.0+0.0i 9.0+0.0i 10.0+0.0i]
+ [3.0+0.0i 4.0+0.0i 7.0+0.0i 8.0+0.0i 11.0+0.0i 12.0+0.0i]]
+LinearSJ2_1.vector
+[[0.0+0.0i 0.0+0.0i 0.0+0.0i 0.0+0.0i 0.0+0.0i 0.0+0.0i]]
+LinearSJ3_1.matrix
+[[1.0+0.0i 2.0+0.0i 5.0+0.0i 6.0+0.0i 9.0+0.0i 10.0+0.0i]
+ [3.0+0.0i 4.0+0.0i 7.0+0.0i 8.0+0.0i 11.0+0.0i 12.0+0.0i]]
+LinearSJ3_1.vector
+[[0.0+0.0i 0.0+0.0i 0.0+0.0i 0.0+0.0i 0.0+0.0i 0.0+0.0i]]
+LinearSJ_1.matrix
+[[1.0+0.0i 2.0+0.0i 5.0+0.0i 6.0+0.0i]
+ [3.0+0.0i 4.0+0.0i 7.0+0.0i 8.0+0.0i]]
+LinearSJ_1.vector
+[[0.0+0.0i 0.0+0.0i 0.0+0.0i 0.0+0.0i]]

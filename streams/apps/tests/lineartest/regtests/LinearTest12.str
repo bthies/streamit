@@ -1,0 +1,81 @@
+/** Test combining pipelines when they don't rate match, and when they have constant vector components. **/
+void->void pipeline SimpleStreamItProgram {
+  add FloatSource();
+  add LinearPipe();
+  add LinearPipe2();
+  add FloatSink();
+}
+
+void->float filter FloatSource {
+  float x;
+  init {
+    x = 0;
+  }
+  work push 1 {
+    push(x);
+    x = x + 1;
+  }
+}
+
+float->void filter FloatSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+/** Pipeline of linear filters which have constant components. **/
+float->float pipeline LinearPipe {
+  add FloatFilter1();
+  add FloatFilter2();
+}
+/** pipeline of linear filters which have constant components in additon to not rate matching. **/
+float->float pipeline LinearPipe2 {
+  add FloatFilter3();
+  add FloatFilter4();
+}
+
+
+
+/** filter that computes [[1 2][3 4][5 6][7 8]] + [9 10] **/
+float->float filter FloatFilter1 {
+  work pop 4 push 2 {
+    float t1 = pop();
+    float t2 = pop();
+    float t3 = pop();
+    float t4 = pop();
+    push(2*t4 + 4*t3 + 6*t2 + 8*t1 + 10);
+    push(1*t4 + 3*t3 + 5*t2 + 7*t1 + 9);
+  }
+}
+/** filter computes [[1 2 3][4 5 6]] + [3 2 1] **/
+float->float filter FloatFilter2 {
+  work pop 2 push 3 {
+    float t1 = pop();
+    float t2 = pop();
+    push(3*t2 + 6*t1 + 1);
+    push(2*t2 + 5*t1 + 2);
+    push(1*t2 + 4*t1 + 3);
+  }
+}
+
+/** filter that computes [[1 2][3 4][5 6]] + [9 10] **/
+float->float filter FloatFilter3 {
+  work pop 3 push 2 {
+    float t2 = pop();
+    float t3 = pop();
+    float t4 = pop();
+    push(2*t4 + 4*t3 + 6*t2 + 10);
+    push(1*t4 + 3*t3 + 5*t2 + 9);
+  }
+}
+/** Filter computes [[1 2 1][2 1 2][3 3 3]] + [2 3 1] **/
+float->float filter FloatFilter4 {
+  work pop 3 push 3 {
+    float t1 = pop();
+    float t2 = pop();
+    float t3 = pop();
+    push(t3*1 + t2*2 + t1*3);
+    push(t3*2 + t2*1 + t1*3);
+    push(t3*1 + t2*2 + t1*3);
+  }
+}

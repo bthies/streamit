@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.19 2003-05-12 16:26:49 thies Exp $
+ * $Id: Main.java,v 1.20 2003-10-02 04:31:31 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -213,7 +213,7 @@ public class Main extends Compiler {
      */
     public void genCode() {
 	CSourceClass[]	classes = getClasses();
-	BytecodeOptimizer	optimizer = new BytecodeOptimizer(options.optimize);
+	BytecodeOptimizer	optimizer = new BytecodeOptimizer(0);//options.optimize);
 
 	this.classes.setSize(0);
 

@@ -26,7 +26,7 @@ import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
  * parents of the joiner.
  * @author jcarlos
  */
-public class GESplitJoin extends GEStreamNode implements Serializable, GEContainer{
+public class GESplitJoin extends GEContainer implements Serializable{
 
 	/**
 	 * The splitter belonging to this splitjoin.
@@ -37,38 +37,6 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	 * The joiner belonging to this splitjoin.
 	 */
 	private GEJoiner joiner;
-	
-	/**
-	 * All of the GEStreamNode structures inside of the GESplitJoin (not including
-	 * the GESplitter and the GEJoiner).
-	 */
-	//private ArrayList children;
-	 
-	/**
-	 * The sub-graph structure that is contained within this SplitJoin.
-	 * This subgraph is hidden when the SplitJoin is collapse and 
-	 * visible when expanded. 
-	 */
-	private GraphStructure localGraphStruct;
-
-	/**
-	 * Boolean that specifies if the elements contained by the GESplitJoin are 
-	 * displayed (it is expanded) or they are hidden (it is collapsed).
-	 */
-	private boolean isExpanded;
-
-	/**
-	 * The level of how deep the elements of this splitjoin are with respect to 
-	 * other container nodes that they belong to.
-	 * The toplevel pipeline has level 0. The elements of another pipeline within
-	 * this toplevel pipeline would have its level equal to 1 (same applies to other 
-	 * container nodes such as splitjoins and feedback loops).
-	 */
-//	private int level;
-
-
-	public GEStreamNode firstNode;
-
 
 	/**
 	 * GESplitJoin constructor.
@@ -81,40 +49,14 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		super(GEType.SPLIT_JOIN , name);
 		this.splitter = split;
 		this.joiner = join;
-//
-	//	this.succesors = split.getSuccesors(); 
-//		this.setChildren(split.getSuccesors());
+	
 		this.localGraphStruct = new GraphStructure();
-		this.isExpanded = true;
+		this.isExpanded = true; 
+		//this.succesors = new ArrayList(); // added 2/2/04
 
-	}
-
-	/**
-	 * Set the children of <this>
-	 * @param children The new value (ArrayList) of the children of GESplitJoin
-	 */
-	/*
-	private void setChildren(ArrayList children)
-	{
-		this.children = children;
-	}*/
-	
-	/**
-	 * Get the splitter part of this
-	 * @return GESplitter corresponding to this GESplitJoin
-	 */
-	public GESplitter getSplitter()
-	{
-		return this.splitter;
-	}
-	
-	/**
- 	 * Get the joiner part of this
-	 * @return GESJoiner corresponding to this GESplitJoin
-	 */
-	public GEJoiner getJoiner()
-	{
-		return this.joiner;
+		split.setEncapsulatingNode(this);
+		join.setEncapsulatingNode(this);
+		firstNode = splitter;
 	}
 	
 	/**
@@ -124,18 +66,10 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	public GEStreamNode construct(GraphStructure graphStruct, int lvel)
 	{
 		System.out.println("Constructing the SplitJoin " +this.getName());
-		this.level = lvel;
-		graphStruct.containerNodes.addContainerToLevel(level, this);
+		this.initiliazeNode(graphStruct, lvel);
 		lvel++;
 		
-		
-		//graphStruct.getJGraph().getGraphLayoutCache().setVisible(this, true);
-		
-		//this.localGraphStruct.setJGraph(graphStruct.getJGraph());
-		this.localGraphStruct = graphStruct;	
-		
 		this.splitter.construct(graphStruct, lvel); //this.splitter.construct(this.localGraphStruct); 
-		
 		ArrayList nodeList = (ArrayList) this.getSuccesors();
 		Iterator listIter =  nodeList.listIterator();
 		ArrayList lastNodeList = new ArrayList();
@@ -144,7 +78,6 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		{
 			GEStreamNode strNode = ((GEStreamNode) listIter.next());
 			lastNodeList.add(strNode.construct(graphStruct,lvel));// lastNodeList.add(strNode.construct(this.localGraphStruct)); 
-				
 			if (strNode instanceof GEContainer)
 			{
 				graphStruct.connectDraw(splitter, ((GEContainer)strNode).getFirstNodeInContainer()); //this.localGraphStruct.connectDraw(splitter, strNode);
@@ -164,10 +97,8 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 			graphStruct.connectDraw(strNode, joiner); //this.localGraphStruct.connectDraw(strNode, joiner); 
 		}	
 	
-		
-		//graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(),graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
-		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
-		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100,100)));		
+		// is the following line needed
+		graphStruct.getJGraph().getGraphLayoutCache().setVisible(this.getContainedElements().toArray(), false);
 		return this.joiner;
 	}
 	
@@ -179,63 +110,44 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	{
 		this.port = new DefaultPort();
 		this.add(this.port);
-		
 		(graphStruct.getAttributes()).put(this, this.attributes);
-		//GraphConstants.setAutoSize(this.attributes, true);
-
-		
 		GraphConstants.setBorderColor(this.attributes, Color.blue.darker());
 		GraphConstants.setLineWidth(this.attributes, 4);
 		GraphConstants.setBounds(this.attributes, bounds);
 		GraphConstants.setVerticalTextPosition(this.attributes, JLabel.TOP);
 		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);
-//		graphStruct.getJGraph().getGraphLayoutCache().setVisible(this.getChildren().toArray(), false);
-		graphStruct.getJGraph().getGraphLayoutCache().setVisible(this.getContainedElements().toArray(), false);	
+		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);			
 	}
-	
-	/**
-	 * Get the succesors of the GESplitJoin. The succesors are the children of the splitter
-	 * belonging to this splitjoin.
-	 * @return ArrayList with the successors of the GESplitjoin.
-	 */
-	public ArrayList getSuccesors()
-	{
-		return this.getSplitter().getSuccesors();
-	}
-	
-	 public ArrayList getContainedElements()
-	 {
-	 	ArrayList tempList = new ArrayList();
-	 	tempList.add(this.splitter);
-	 	Object[] innerElements = this.splitter.getSuccesors().toArray();
-	 	for (int i = 0; i < innerElements.length; i++)
-	 	{
-	 		tempList.add(innerElements[i]);
-	 	}
-	 	tempList.add(this.getJoiner());
-	 	return tempList;
-	 	
-	 }
-	 
 
-	
+
+	/**
+	 * Initialize the fields and draw attributes for the GESplitJoin.
+	 * @param graphStruct GraphStructure corresponding to the GESplitJoin.
+	 * @param lvel The level at which the GESplitJoin is located.
+	 */	
+	public void initiliazeNode(GraphStructure graphStruct, int lvel)
+	{
+		this.level = lvel;
+		graphStruct.containerNodes.addContainerToLevel(level, this);
+		this.localGraphStruct = graphStruct;	
+		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100,100)));		
+	}
+
 	/**
 	 * Expand or collapse the GESplitJoin structure depending on wheter it was already 
 	 * collapsed or expanded. 
-	 * @param jgraph 
 	 */	
+	
 	public void collapseExpand()
 	{
 		if (isExpanded)
 		{
 			this.collapse();
-			isExpanded = false;
+			
 		}
 		else
 		{
-			
 			this.expand();
-			isExpanded = true;
 		}
 	}	
 	
@@ -295,10 +207,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 				this.removeSourceEdge((DefaultEdge)removeArray[i]);
 				this.removeTargetEdge((DefaultEdge)removeArray[i]);
 			}
-	
 		}
-		
-		
 		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
 		//jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, false);
 		
@@ -308,10 +217,8 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		{
 			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
 		}
-		
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();	
-		//setLocationAfterExpand();
 	}
 	
 	
@@ -319,7 +226,6 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	 * Expand the GESplitJoin. When it is expanded the elements that it contains are
 	 * displayed.
  	 */
-	
 	public void collapse()
 	{
 		Object[] nodeList = this.getContainedElements().toArray();
@@ -330,8 +236,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		Iterator joinEdgeIter = localGraphStruct.getGraphModel().edges(this.getJoiner().getPort());
 		
 		ArrayList edgesToRemove =  new ArrayList();
-		
-		
+	
 		while (splitEdgeIter.hasNext())
 		{
 			DefaultEdge edge = (DefaultEdge) splitEdgeIter.next();
@@ -349,7 +254,6 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 					edgesToRemove.add(edge);
 				}
 			}
-			
 			Iterator targetIter = this.getSplitter().getTargetEdges().iterator();	
 			while(targetIter.hasNext())
 			{
@@ -362,13 +266,10 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 					edgesToRemove.add(edge);
 				}
 			}
-			
 		}
 		while (joinEdgeIter.hasNext())
 		{
 			DefaultEdge edge = (DefaultEdge) joinEdgeIter.next();
-		
-			
 			Iterator sourceIter = this.getJoiner().getSourceEdges().iterator();
 			while(sourceIter.hasNext())
 			{
@@ -381,8 +282,6 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 					edgesToRemove.add(edge);
 				}
 			}
-			
-			
 			Iterator targetIter = this.getSplitter().getTargetEdges().iterator();	
 			while(targetIter.hasNext())
 			{
@@ -395,10 +294,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 					edgesToRemove.add(edge);
 				}
 			}
-			
-			
 		}	
-			
 		Object[] removeArray = edgesToRemove.toArray();
 		for(int i = 0; i<removeArray.length;i++)
 		{
@@ -420,85 +316,73 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
 		}	
 
-		
-		//JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();
+	}
 		
-		
-		
-			
+
+	/**
+	 * Get all of the elements that are contained inside of the GESplitJoin. This includes
+	 * the GESplitter and the GEJoiner.
+	 * @return ArrayList The GEStreamNodes that belong to this GESplitJoin.
+	 */
+	 public ArrayList getContainedElements()
+	 {
+		ArrayList tempList = new ArrayList();
+		tempList.add(this.splitter);
+		//2/2/04 Object[] innerElements = this.splitter.getSuccesors().toArray();
+		Object[] innerElements = this.getSuccesors().toArray();
+		for (int i = 0; i < innerElements.length; i++)
+		{
+			tempList.add(innerElements[i]);
+		}
+		tempList.add(this.getJoiner());
+		return tempList;
+	 	
+	 }
+	 	 
+	/**
+	 * Get the joiner part of this GESplitJoin.
+	 * @return GESJoiner corresponding to this GESplitJoin
+	 */
+	public GEJoiner getJoiner()
+	{
+		return this.joiner;
 	}
 	
-	public void layoutChildren(){};
-	public void calculateDimension(){};
-	
 	/**
-	 * Sets the location of the Container nodes that have a level less than or equal 
-	 * to this.level. The bounds of the container node are set in such a way that the 
-	 * elements that it contains are enclosed.
-	 * Also, changes the location of the label so that it is more easily viewable.
+	 * Set the joiner for this GESplitJoin.
+	 * @param joiner GEJoiner
 	 */
-	/*
-	private void setLocationAfterExpand()
+	public void setJoiner(GEJoiner joiner)
 	{
-		for (int i = level; i >= 0; i--)
-		{
-			this.localGraphStruct.containerNodes.setLocationContainersAtLevel(i, this.localGraphStruct);
-		}
-	}*/
+		this.joiner = (GEJoiner) joiner;
+		this.joiner.setEncapsulatingNode(this);
+	}
 	
 	/**
-	 * Get the first node contained by the GESplitJoin (this will always be
-	 * the GESplitter corresponding to the splitjoin). 
+	 * Get the splitter part of this GESplitJoin.
+	 * @return GESplitter corresponding to this GESplitJoin
 	 */
-	public GEStreamNode getFirstNodeInContainer()
+	public GESplitter getSplitter()
 	{
 		return this.splitter;
 	}
-	
+
 	/**
-	 * Set which node is the first one container by the GEPipeline.
+	 * Set the splitter for this GESplitJoin
+	 * @param splitter GESplitter
 	 */
-	public void  setFirstNodeInContainer(GEStreamNode firstNode)
+	
+	public void setSplitter(GESplitter splitter)
 	{
-		this.splitter = (GESplitter) firstNode;
+		this.splitter = splitter;
+		this.splitter.setEncapsulatingNode(this);
+		this.firstNode = splitter;
 	}
-	
-	/**
-	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
-	 * they cannot be made visible.
-	 * @return true if it was possible to hide the node; otherwise, return false.
-	 */
-	public boolean hide()
-	{
-		this.localGraphStruct.getJGraph().getGraphLayoutCache().
-			setVisible(new Object[]{this}, false);
-		return true;
-	}
-	
-	/**
-	 * Make the GEStreamNode visible in the display. Note that some nodes cannot be hidden or 
-	 * they cannot be made visible. 
-	 * @return true if it was possible to make the node visible; otherwise, return false.
-	 */	
-	public boolean unhide()
-	{
-		this.localGraphStruct.getJGraph().getGraphLayoutCache().
-			setVisible(new Object[]{this}, true);
-		return true;
-	}	
-	
-	/** 
-	 * Get true when the GESplitJoin is expanded (contained elements are visible), 
-	 * otherwise get false.
-	 * @return true if expanded; otherwise, return false.
-	 */
-	public boolean isExpanded()
-	{
-		return this.isExpanded;
-	}
-	
+		
+		
+	public void moveNodePositionInContainer(GEStreamNode startNode, GEStreamNode endNode, int position){};
 	/**
 	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 
 	 * In this case, the textual representation corresponds to the the StreamIt source code 

@@ -135,21 +135,21 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	public String getWFAsString(int index)
 	{
 		GEWorkFunction wf = this.getWorkFunction(index);
-		String strWF = "<BR>Push = " + wf.getPushValue() + 
-					   "<BR>Pop = " + wf.getPopValue() + 
-					   "<BR>Peek = " + wf.getPeekValue();
+		String strWF = Constants.HTML_LINE_BREAK + "Push = " + wf.getPushValue() + 
+					   Constants.HTML_LINE_BREAK + "Pop = " + wf.getPopValue() + 
+					   Constants.HTML_LINE_BREAK + "Peek = " + wf.getPeekValue();
 		return strWF;
 	}
 	
 	
 	/**
-	 * Contructs the filter and returns <this>.
-	 * @return <this>
+	 * Contructs the filter and returns this..
+	 * @return GEStreamNode 
 	 */
 	public GEStreamNode construct(GraphStructure graphStruct, int lvl)
 	{
 		System.out.println("Constructing the filter " +this.getName());
-		
+		//TODO: Do we need to set a localGraphStruct ?? (1/28/04)
 		this.level = lvl;
 		
 		if (this.getNumberOfWFs() > 0) 
@@ -163,12 +163,13 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		}
 		
 		this.initDrawAttributes(graphStruct, new Rectangle(new Point(10,10)));
-		
-		graphStruct.getGraphModel().insert(new Object[] {this}, null, null, null, null);
-		
+	
 		return this;
 	}
-	
+	/**
+	 * Change the display information of the GEPhasedFilter
+	 * @param jgraph
+	 */
 	public void setDisplay(JGraph jgraph)
 	{
 		this.setInfo(this.getWFAsString(0));
@@ -185,6 +186,9 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	 */	
 	public void initDrawAttributes(GraphStructure graphStruct, Rectangle bounds)
 	{
+		this.port = new DefaultPort();
+		this.add(this.port);
+		
 		(graphStruct.getAttributes()).put(this, this.attributes);
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setVerticalTextPosition(this.attributes, JLabel.CENTER);
@@ -199,9 +203,10 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 			ex.printStackTrace();
 		}
 		
-		this.port = new DefaultPort();
-		this.add(this.port);
 	//	graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[] {this}, true);
+		
+		graphStruct.getGraphModel().insert(new Object[] {this}, null, null, null, null);
+		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
 
 	}
 	
@@ -257,26 +262,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		System.out.println("The user object is " +this.getUserObject().toString());
 		System.out.println(this.localGraphStruct.getJGraph().convertValueToString(this)); 
 	}
-	
-	/**
-	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
-	 * they cannot be made visible.
-	 * @return true if it was possible to hide the node; otherwise, return false.
-	 */
-	public boolean hide()
-	{
-		return false;
-	}
 
-	/**
-	 * Make the GEStreamNode visible in the display. Note that some nodes cannot be hidden or 
-	 * they cannot be made visible. 
-	 * @return true if it was possible to make the node visible; otherwise, return false.
-	 */	
-	public boolean unhide()
-	{
-		return false;
-	};
 	
 	/**
 	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 

@@ -7,10 +7,13 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 
+import org.jgraph.JGraph;
 import org.jgraph.graph.DefaultPort;
 import org.jgraph.graph.GraphConstants;
 
@@ -82,10 +85,8 @@ public class GESplitter extends GEStreamNode implements Serializable{
 			{
 				strWeight += ", ";
 			}
-			strWeight += this.weights[i];
-		
+			strWeight += this.weights[i];	
 		}
-		
 		strWeight += ")";
 		return strWeight;
 	}
@@ -97,8 +98,8 @@ public class GESplitter extends GEStreamNode implements Serializable{
 	public GEStreamNode construct(GraphStructure graphStruct, int lvl)
 	{
 		System.out.println("Constructing the Splitter " +this.getName());
-		
 		this.level = lvl;
+		
 		if (weights != null)
 		{
 			this.setInfo(this.getWeightsAsString());
@@ -108,7 +109,6 @@ public class GESplitter extends GEStreamNode implements Serializable{
 		{
 			this.setUserObject(this.getNameLabel());
 		}
-		
 		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100,100)));	
 		return this;
 	}
@@ -123,8 +123,7 @@ public class GESplitter extends GEStreamNode implements Serializable{
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setBounds(this.attributes, bounds);
 		GraphConstants.setVerticalTextPosition(this.attributes, JLabel.CENTER);
-		
-		
+			
 		try 
 		{
 			ImageIcon icon = ImageLoader.getImageIcon("splitter.GIF");
@@ -139,36 +138,20 @@ public class GESplitter extends GEStreamNode implements Serializable{
 		this.port = new DefaultPort();
 		this.add(this.port);
 		graphStruct.getGraphModel().insert(new Object[] {this}, null, null, null, null);
+		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
 		//graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[] {this}, true);
 	}
 
-	/**
-	 * Draw this Splitter
-	 */
-	public void draw()
+	public void setDisplay(JGraph jgraph)
 	{
-		System.out.println("Drawing the Splitter " +this.getName());
+		this.setInfo(this.getWeightsAsString());
+		
+		Map change = GraphConstants.createMap();
+		GraphConstants.setValue(change, this.getInfoLabel());
+		Map nest = new Hashtable ();
+		nest.put(this, change);
+		jgraph.getModel().edit(nest, null, null, null);
 	}
-	
-	/**
-	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
-	 * they cannot be made visible.
-	 * @return true if it was possible to hide the node; otherwise, return false.
-	 */
-	public boolean hide()
-	{
-		return false;
-	}
-
-	/**
-	 * Make the GEStreamNode visible in the display. Note that some nodes cannot be hidden or 
-	 * they cannot be made visible. 
-	 * @return true if it was possible to make the node visible; otherwise, return false.
-	 */	
-	public boolean unhide()
-	{
-		return false;
-	};
 
 
 	/**

@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.jgraph.graph.DefaultEdge;
@@ -40,16 +41,11 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 * The type of the GEStreamNode. Must be one of the types specified by GEType.
 	 */
 	protected String type;
-	
-	/**
-	 * The succesors of the GEStreamNode. 
-	 */
-	protected ArrayList succesors;
-	
+		
 	/**
 	 * The immediate GEStreamNode that contains this GEStreamNode.
 	 */
-	protected GEStreamNode encapsulatingNode;	
+	protected GEContainer encapsulatingNode;	
 	
 	
 	/**
@@ -74,7 +70,7 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 * to it in either its expanded or collapsed state. Default value is false (the value
 	 * must be set explicitly whenever the node has been connected to a different node). 
 	 */
-	protected boolean isNodeConnected;
+
 
 	/**
 	 * The input tape value for the StreamIt representation of the GEPhasedFilter.
@@ -95,7 +91,8 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	protected ArrayList args;
 	
 	/**
-	 * The level at which the GEStreamNode is located. The TopLevel node is at level zero, so 
+	 * The level at which the GEStreamNode is located (how deep the GEStreamNode is with 
+	 * respect to the TopLevel node). The TopLevel node is at level zero, so 
 	 * every immediate node it contains is at level 1. The elements of containers at level 1
 	 * will have level corresponding to 2, and so on. The default value of the level is 1 
 	 * (so that the node's parent will be the Toplevel node).
@@ -113,9 +110,8 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 */
 	public GEStreamNode(String type, String name)
 	{
-		super("<HTML><H4>"+name+"</H4></html>");
+		super("<HTML>" + Constants.HTML_TSIZE_BEGIN + name + Constants.HTML_TSIZE_END+ "</html>");
 		this.type = type;
-		this.succesors = new ArrayList();
 		this.name = name;
 		this.setInfo(name);
 		this.isInfoDisplayed = true;
@@ -123,9 +119,9 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 		this.sourceEdges = new ArrayList();
 		this.targetEdges = new ArrayList();
 		this.args = new ArrayList();
-		this.inputTape =  "void";
-		this.outputTape = "void";
-		this.isNodeConnected = false;
+		this.inputTape =  Constants.VOID;
+		this.outputTape = Constants.VOID;
+	
 		this.level = 1;
 		setNameNoID();
 	}
@@ -145,34 +141,6 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 		{
 			this.nameNoID = this.name;
 		}	
-	}
-
-	/**
- 	 * Add a child to this GEStreamNode.
- 	 * @return True if teh child was added succesfully, otherwise false.
- 	 */
-	public boolean addSuccesor(GEStreamNode strNode)
-	{
-		return this.succesors.add(strNode);
-	}
-		
-	/**
-	 * Add a child to this GEStreamNode at index i.
-	 * @return True if teh child was added succesfully, otherwise false.
-	 */
-	public void addSuccesor(GEStreamNode strNode, int i)
-	{
-		this.succesors.add(i, strNode);
-	}
-		
-		
-	/**
- 	 * Get the succesors of the GEStreamNode.
- 	 * @return An ArrayList with the succesors of the GEStreamNode. 
- 	 */
-	public ArrayList getSuccesors()
-	{
-		return this.succesors;
 	}
 
 	/**
@@ -258,42 +226,45 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 		this.outputTape = out;
 	}
 
-
-
 	/**
 	 * Returns true when this GEStreamNode is connected to other GEStreamNode in 
 	 * either its expanded or collapsed states. Otherwise, return false.
 	 * @return boolean
 	 */
+
 	public boolean isNodeConnected()
 	{
-		return this.isNodeConnected;
+		if ((this.getSourceEdges().size() == 0) && (this.getTargetEdges().size() ==0))
+		{
+			return false;
+		}
+		return true;
 	}
 
-	/**
-	 * Set the field that determines if this GEStreamNode is connected by an 
-	 * edge to any other other GEStreamNode.
-	 * @param bool
-	 */
-	public void setIsNodeConnected(boolean bool)
-	{
-		this.isNodeConnected = bool;
-	}
-	
 	/**
 	 * Sets the node that encapsulates this
 	 * @param node The GEStreamNode that encapsulates this
 	 */
-	public void setEncapsulatingNode(GEStreamNode node)
+	public void setEncapsulatingNode(GEContainer node)
 	{
+		/*
+		if (this.encapsulatingNode !=null)
+		{
+			((GEContainer)this.encapsulatingNode).removeNodeFromContainer(this);
+		}*/
 		this.encapsulatingNode = node;
+		/*
+		if (this.encapsulatingNode !=null)
+		{
+			((GEContainer)this.encapsulatingNode).addNodeToContainer(this);
+		}*/
 	}
 	
 	/**
 	 * Gets the encapsulating node of this
 	 * @return The encapsulating node of GEStreamNode
 	 */
-	public GEStreamNode getEncapsulatingNode()
+	public GEContainer getEncapsulatingNode()
 	{
 		return this.encapsulatingNode;
 	}
@@ -340,7 +311,8 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 */
 	public String getInfoLabel()
 	{
-		return new String("<HTML><H4>"+ this.name + "<BR>" + this.info + "</H4></HTML>");
+		return new String("<HTML>"+ Constants.HTML_TSIZE_BEGIN + this.name + "<BR>" + 
+						  this.info + Constants.HTML_TSIZE_END + "</HTML>");
 	}
 	
 	/**
@@ -349,7 +321,8 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 */
 	public String getNameLabel()
 	{
-		return new String("<HTML><H4>"+ this.name + "</H4></HTML>");
+		return new String("<HTML>" + Constants.HTML_TSIZE_BEGIN + this.name + 
+						  Constants.HTML_TSIZE_END + "</HTML>");
 	}
 	
 	/**
@@ -449,6 +422,44 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	}
 
 	/**
+	 * Get the names of the nodes requested.
+	 * @param nodeList ArrayList
+	 * @return Object[] array with the names of the nodes requested
+	 */
+	public static Object [] getNodeNames(ArrayList nodeList)
+	{
+		Iterator allContIter = nodeList.iterator();
+		ArrayList names = new ArrayList();
+		while(allContIter.hasNext())
+		{	
+			names.add(((GEStreamNode)allContIter.next()).name);
+		}
+		return names.toArray();
+		
+		
+	}
+
+	/**
+	 * Get the oldest GEContainer ancestor (not including the toplevel pipeline) correspoding
+	 * to the GEStreamNode passed as the argument.
+	 * @param GEStreamNode node whose oldest ancestor will be determined. 
+	 * @return GEContainer oldest ancestor
+	 */
+	public GEStreamNode getOldestContainerAncestor(GEContainer toplevel)
+	{
+		GEStreamNode pNode = this;
+		boolean containsAncestorInPipe = false;
+		while (pNode.getEncapsulatingNode() != toplevel)
+		{
+			pNode = pNode.getEncapsulatingNode();
+		}
+		return pNode;	
+			
+				
+	}
+
+
+	/**
 	 * Highlight or unhighlight the node
 	 * @param graphStruct GEStreamNode to be highlighted or unhighlighted
 	 * @param doHighlight The node gets highlighted when true, and unhighlighted when false.
@@ -461,7 +472,7 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 		//System.out.println("ENTERED HIGHLIGHT NODE CODE");
 		//if (doHighlight)
 		//demoadd
-		if ((doHighlight) && !(this instanceof GESplitJoin) && !(this instanceof GEPipeline))
+		if (doHighlight)
 		{
 			GraphConstants.setBorderColor(change, Color.yellow);
 			GraphConstants.setLineWidth(change, 4);
@@ -491,16 +502,6 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 		Map nest = new Hashtable ();
 		nest.put(this, change);
 		graphStruct.getGraphModel().edit(nest, null, null, null);
-		
-		
-		//TODO MIGHT BE WRONG BECAUSE WE ARE INSERTING THINGS TWICE
-		/*(graphStruct.getGraphModel()).edit(graphStruct, null, null, null, null);
-		/*
-		Object[] obj = graphStruct.getJGraph().getRoots();
-		for (int i = 0; i < obj.length; i++)
-		{		
-			System.out.println("THE CELLS IN THE GRAPH  "+ i + " "+ obj[i].toString());
-		}*/
 	}
 	
 	
@@ -520,23 +521,6 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 */
 	abstract public void initDrawAttributes(GraphStructure graphStruct, Rectangle bounds);
 
-
-
-	/**
-	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
-	 * they cannot be made visible.
-	 * @return true if it was possible to hide the node; otherwise, return false.
-	 */
-//	abstract public boolean hide();
-
-	/**
-	 * Make the GEStreamNode visible in the display. Note that some nodes cannot be hidden or 
-	 * they cannot be made visible. 
-	 * @return true if it was possible to make the node visible; otherwise, return false.
-	 */	
-//	abstract public boolean unhide();
-
-
 	/**
 	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 
 	 * In this case, the textual representation corresponds to the the StreamIt source code 
@@ -544,6 +528,4 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 * @param out PrintWriter that is used to output the textual representation of the graph.  
 	 */
 	abstract public void outputCode(PrintWriter out);
-
-
 }

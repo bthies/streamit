@@ -35,6 +35,9 @@ public class ContainerNodes {
 	private HashMap levelContainers;
 	private ArrayList allContainers;
 	
+	/**
+	 * Current level at which the graph is being examined. 
+	 */
 	private int currentLevelView;
 	private int maxlevel;
 	
@@ -129,22 +132,30 @@ public class ContainerNodes {
 		}		
 	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	public boolean removeContainer(GEContainer node, ArrayList list)
+	{
+		if (node instanceof GEContainer)
+		{
+			if (!(this.allContainers.remove(node))) return false;
+			ArrayList contAtLevel = this.getContainersAtLevel(node.getDepthLevel());
+			if (contAtLevel == null) return false;
+			if (!(contAtLevel.remove(node))) return false;
+			
+			Iterator listIter  = ((GEContainer) node).getContainedElements().iterator();
+			while (listIter.hasNext())
+			{
+				GEStreamNode innerContainer = (GEStreamNode) listIter.next();
+				if (innerContainer instanceof GEContainer)
+				{
+					if (!(removeContainer((GEContainer)innerContainer, list))) return false;
+				}
+			}
+			
+			list.addAll(((GEContainer)node).getContainedElements());
+			return true;
+		}
+		return false;
+	}
 
 	/**
 	 * Make invisible all of the container nodes located at level.
@@ -158,7 +169,7 @@ public class ContainerNodes {
 			Iterator listIter = levelList.iterator();
 			while(listIter.hasNext())
 			{
-				 GEContainer node = (GEContainer) listIter.next();
+				GEContainer node = (GEContainer) listIter.next();
 				 node.hide();
 			}
 		}				
@@ -176,7 +187,7 @@ public class ContainerNodes {
 			Iterator listIter = levelList.iterator();
 			while(listIter.hasNext())
 			{
-				 GEContainer node = (GEContainer) listIter.next();
+				GEContainer node = (GEContainer) listIter.next();
 				 node.unhide();
 			}
 		}				
@@ -237,7 +248,7 @@ public class ContainerNodes {
 		return names.toArray();
 	}
 	
-	public GEStreamNode getContainerNodeFromName(String name)
+	public GEContainer getContainerNodeFromName(String name)
 	{	
 		if (name == "Toplevel")
 		{
@@ -248,10 +259,10 @@ public class ContainerNodes {
 		
 		
 		Iterator aIter = this.allContainers.iterator();
-		GEStreamNode node = null;
+		GEContainer node = null;
 		while(aIter.hasNext())
 		{
-			node = (GEStreamNode) aIter.next();
+			node = (GEContainer) aIter.next();
 			if (name == node.getName())
 			{
 				System.out.println("Returning node from getContainerNodeFromName");

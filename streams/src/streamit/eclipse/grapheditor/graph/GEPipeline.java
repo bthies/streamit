@@ -25,24 +25,19 @@ import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
  * GEPipeline is the graph internal representation of a pipeline. 
  * @author jcarlos
  */
-public class GEPipeline extends GEStreamNode implements Serializable, GEContainer{
+public class GEPipeline extends GEContainer implements Serializable{
 			
 	private GEStreamNode lastNode;	
-	private GEStreamNode firstNode;
+	
 	
 	/**
 	 * The sub-graph structure that is contained within this pipeline.
 	 * This subgraph is hidden when the pipeline is collapse and 
 	 * visible when expanded. 
 	 */
-	private GraphStructure localGraphStruct;
+//	private GraphStructure localGraphStruct;
 
-	/**
-	 * Boolean that specifies if the elements contained by the Pipeline are 
-	 * displayed (it is expanded) or they are hidden (it is collapsed).
-	 */
-	private boolean isExpanded;
-	
+
 	/**
 	 * GEPipeline constructor.
 	 * @param name The name of this GEPipeline.
@@ -60,6 +55,25 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		localGraphStruct = gs;	
 		this.isExpanded = true;
 	}
+	
+	public GEStreamNode getFirstNodeInContainer()
+	{
+		if (this.succesors.size() > 0)
+		{
+			return (GEStreamNode) this.succesors.get(0);
+		}
+		return null;
+	}
+	
+	public GEStreamNode getLastNodeInContainer()
+	{
+		if (this.succesors.size() > 0)
+		{
+			return (GEStreamNode) this.succesors.get(this.succesors.size() - 1);
+		}
+		return null;
+		
+	}
 
 	/**
  	 * Constructs the pipeline and returns the last node so that the 
@@ -69,14 +83,11 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 	{
 		System.out.println("Constructing the pipeline" +this.getName());
 		boolean first = true;
-		this.level = lvel;
-		graphStruct.containerNodes.addContainerToLevel(this.level, this);
+		this.initializeNode(graphStruct, lvel);
 		lvel++;
-		this.localGraphStruct = graphStruct;
-
+		
 		ArrayList nodeList = (ArrayList) this.getSuccesors();
 		Iterator listIter =  nodeList.listIterator();
-	
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = (GEStreamNode) listIter.next();
@@ -95,14 +106,7 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 			lastNode = lastTemp;
 			first = false;
 		}
-		// removed to avoid multiple instances in the model: graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(), graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
-		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);			
-		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100,100)));
-
-		if (graphStruct.getTopLevel() == this)
-		{
-			//graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{this}, nodeList.toArray());
-		}		
+			
 		return lastNode;
 	}	
 	
@@ -114,15 +118,26 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 	{
 		this.port = new DefaultPort();
 		this.add(this.port);
-
 		(graphStruct.getAttributes()).put(this, this.attributes);
-		//GraphConstants.setAutoSize(this.attributes, true);	
-		//GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.blue));
 		GraphConstants.setBorderColor(this.attributes, Color.red.darker());
 		GraphConstants.setLineWidth(this.attributes, 4);
 		GraphConstants.setBounds(this.attributes, bounds);
 		GraphConstants.setVerticalTextPosition(this.attributes, JLabel.TOP);
-		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);	
+		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);
+		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);	
+	}
+	
+	/**
+	 * Initialize the fields and draw attributes for the GEPipeline.
+	 * @param graphStruct GraphStructure corresponding to the GEPipeline.
+	 * @param lvel The level at which the GEPipeline is located.
+	 */	
+	public void initializeNode(GraphStructure graphStruct, int lvel)
+	{
+		this.level = lvel;
+		graphStruct.containerNodes.addContainerToLevel(this.level, this);
+		this.localGraphStruct = graphStruct;
+		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100,100)));
 	}
 			
 	/**
@@ -135,12 +150,10 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		if (isExpanded)
 		{
 			this.collapse();
-			isExpanded = false;
 		}
 		else
 		{
 			this.expand();
-			isExpanded = true;
 		}		
 	}
 	/**
@@ -169,7 +182,7 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 				System.out.println(" s hash" +s.hashCode());
 				if (s.equals(edge))
 				{
-						
+					System.out.println(" The container of the edge is " + ((GEStreamNode) ((DefaultPort)edge.getSource()).getParent()).getEncapsulatingNode());
 					System.out.println("source edges were equal");
 					cs.disconnect(edge, true);
 					cs.connect(edge, finalInPipe.getPort(), true);	
@@ -185,6 +198,7 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 				System.out.println(" t hash" +t.hashCode());
 				if(t.equals(edge))
 				{
+					System.out.println(" The container of the edge is " + ((GEStreamNode) ((DefaultPort)edge.getSource()).getParent()).getEncapsulatingNode());
 					System.out.println("target edges were equal");
 					cs.disconnect(edge,false);
 					cs.connect(edge, firstInPipe.getPort(),false);
@@ -202,18 +216,15 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		}
 		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
 		//this.hide(); //jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, false);
-		
+	
+		this.isExpanded = true;	
 		for (int i = level; i >= 0; i--)
 		{
 			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
 		}
-		
-		this.isExpanded = true;
-		
-		//CHANGE 12/2/03 JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();
-		//setLocationAfterExpand();
+	
 	}	
 
 	/**
@@ -330,21 +341,6 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 	}
 	
 	/**
-	 * Set the location of all of the containers that might have been affected by the
-	 * expansion. This includes all of the containers located at the current level
-	 * and below (since everything below is expanded and the location of these
-	 * containers will have to be set). 
-	 *//*
-	private void setLocationAfterExpand()
-	{
-		for (int i = level; i >= 0; i--)
-		{
-			this.localGraphStruct.containerNodes.setLocationContainersAtLevel(i, this.localGraphStruct);
-		}
-	}*/
-	
-	
-	/**
  	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 
  	 * In this case, the textual representation corresponds to the the StreamIt source code 
  	 * equivalent of the GEStreamNode. 
@@ -418,55 +414,29 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		
 	}
 	
-	/**
-	 * Get the first node contained by the GEPipeline. 
-	 */
-	public GEStreamNode getFirstNodeInContainer()
-	{
-		return this.firstNode;
-	}
-	
-	/**
-	 * Set which node is the first one container by the GEPipeline.
-	 */
-	public void  setFirstNodeInContainer(GEStreamNode firstNode)
-	{
-		this.firstNode = firstNode;
-	
-	}
-	
-	/**
- 	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
- 	 * they cannot be made visible.
- 	 * @return true if it was possible to hide the node; otherwise, return false.
- 	 */
-	public boolean hide()
-	{
-		this.localGraphStruct.getJGraph().getGraphLayoutCache().
-			setVisible(new Object[]{this}, false);
-		return true;
-	}
 
-	/**
- 	 * Make the GEStreamNode visible in the display. Note that some nodes cannot be hidden or 
- 	 * they cannot be made visible. 
- 	 * @return true if it was possible to make the node visible; otherwise, return false.
- 	 */	
-	public boolean unhide()
+	public void moveNodePositionInContainer(GEStreamNode startNode, GEStreamNode endNode, int position)
 	{
-		this.localGraphStruct.getJGraph().getGraphLayoutCache().
-			setVisible(new Object[]{this}, true);
-		return true;
-	}	
-	
-	/** 
-	 * Get true when the GEPipeline is expanded (contained elements are visible), 
-	 * otherwise get false.
-	 * @return true if expanded; otherwise, return false.
-	 */
-	public boolean isExpanded()
-	{
-		return this.isExpanded;
+		ArrayList startParentChildren = startNode.getEncapsulatingNode().getSuccesors();
+		int startIndex = startParentChildren.indexOf(startNode);
+		startParentChildren.remove(endNode);
+		if (position == RelativePosition.AFTER)
+		{
+			if (startIndex >= startParentChildren.size())
+			{
+				System.err.println("The index array was larger than expected moveNodePositionInContainer in GEPipeline");
+				startParentChildren.add(startIndex, endNode);
+			}
+			else
+			{
+				startParentChildren.add(startIndex +1, endNode);
+			}
+							
+		}
+		else if (position == RelativePosition.BEFORE)
+		{
+			startParentChildren.add(startIndex, endNode);
+		}
 	}
 	
 	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is

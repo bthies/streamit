@@ -1,9 +1,29 @@
 package streamit.eclipse.grapheditor.graph;
 
-import at.dms.kjc.sir.*;
-import at.dms.kjc.*;
-import java.io.*;
-import java.util.*;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import at.dms.kjc.CType;
+import at.dms.kjc.JExpression;
+import at.dms.kjc.JFieldDeclaration;
+import at.dms.kjc.JInterfaceDeclaration;
+import at.dms.kjc.JMethodDeclaration;
+import at.dms.kjc.sir.AttributeStreamVisitor;
+import at.dms.kjc.sir.SIRFeedbackLoop;
+import at.dms.kjc.sir.SIRFilter;
+import at.dms.kjc.sir.SIRInterfaceTable;
+import at.dms.kjc.sir.SIRJoinType;
+import at.dms.kjc.sir.SIRJoiner;
+import at.dms.kjc.sir.SIROperator;
+import at.dms.kjc.sir.SIRPhasedFilter;
+import at.dms.kjc.sir.SIRPipeline;
+import at.dms.kjc.sir.SIRSplitJoin;
+import at.dms.kjc.sir.SIRSplitType;
+import at.dms.kjc.sir.SIRSplitter;
+import at.dms.kjc.sir.SIRStream;
+import at.dms.kjc.sir.SIRStructure;
+import at.dms.kjc.sir.SIRWorkFunction;
 
 /**
  * GraphEncoder "visits" the nodes SIRStream structures in order to build a GraphStructure
@@ -57,7 +77,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 	public void encode(SIRStream str)
 	{
 	 
-		graph.setTopLevel((GEStreamNode) str.accept(this));
+		graph.setTopLevel((GEContainer) str.accept(this));
 		
 		/* ***********************************************************
 		 * DEBUGGING CODE BEGIN
@@ -65,7 +85,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		 /*
 		System.out.println("The toplevel stream is "+ graph.getTopLevel().getName());
 		
-		ArrayList topChildren = graph.getTopLevel().getSuccesors();
+		ArrayList topChildren = ((GEContainer) graph.getTopLevel()).getContainedElements();
 		for (int i = 0; i< topChildren.size(); i++)
 		{
 			 System.out.println("The children of the toplevel are " + ((GEStreamNode) topChildren.get(i)).getName());
@@ -355,7 +375,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			
 			
 			GEStreamNode currNode = (GEStreamNode) oper.accept(this);
-			pipeline.addSuccesor(currNode);
+			pipeline.addNodeToContainer(currNode);
 			if (first)
 			{
 				pipeline.setFirstNodeInContainer(currNode);
@@ -364,15 +384,12 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			
 			first =false;
 		}
-		  
-		graph.addHierarchy(pipeline, pipeline.getSuccesors());
-		
-		
+		  		
 		/* ***********************************************************
 		 * DEBUGGING CODE BEGIN
 		*/
 		System.out.println("The pipeline "+ pipeline.getName() + " has the following children");
-		ArrayList pipeChildren = pipeline.getSuccesors();
+		ArrayList pipeChildren = pipeline.getContainedElements();
 		for (int i = 0; i < pipeChildren.size(); i++)
 		{
 			System.out.println("Child  "+ i + " = " + ((GEStreamNode) pipeChildren.get(i)).getName());
@@ -400,14 +417,11 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		// Visit the splitter and joiner 
 		GESplitter split = (GESplitter)splitter.accept(this);
 		GEJoiner join = (GEJoiner) joiner.accept(this);
-
-		
 		
 		GESplitJoin splitjoin =  new GESplitJoin(self.getName(), split, join);
-		split.setEncapsulatingNode(splitjoin);
-		join.setEncapsulatingNode(splitjoin);
+		//split.setEncapsulatingNode(splitjoin); 2/2/04
+		//join.setEncapsulatingNode(splitjoin);
 		
-//		splitjoin.addSuccesor(split);
 		splitjoin.firstNode = split;
 	
 		// ...and walk through the body.
@@ -416,14 +430,12 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			
 			SIROperator oper = (SIROperator)iter.next();
 			GEStreamNode strNode = (GEStreamNode)oper.accept(this);		
-	 		split.addSuccesor(strNode);
+	 		splitjoin.addNodeToContainer(strNode);
 //1/20/04 Removed since it affected layout algorithm strNode.addChild(join);		
 			strNode.setEncapsulatingNode(splitjoin);
 //			splitjoin.addSuccesor(strNode);
 		}
-//		splitjoin.addSuccesor(join);
-		
-		graph.addHierarchy(splitjoin, split.getSuccesors());
+
 		
 		/* ***********************************************************
 	     * DEBUGGING CODE BEGIN
@@ -478,13 +490,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		*/
 	
 		GEFeedbackLoop floop = new GEFeedbackLoop(self.getName(), split, join, body, loop);
-		
-		join.setEncapsulatingNode(floop);
-		body.setEncapsulatingNode(floop);
-		split.setEncapsulatingNode(floop);
-		loop.setEncapsulatingNode(floop);
-		
-	
+
 		/* ***********************************************************
 		 * DEBUGGING CODE BEGIN
 	   	 */

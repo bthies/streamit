@@ -16,5 +16,6 @@ public class RelativePosition
 	public static final int END_PRESENT = 4;
 	public static final int NONE_PRESENT = 8;
 	
-	
+	public static final int AFTER = 16;
+	public static final int BEFORE = 32;
 }

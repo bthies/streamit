@@ -5,9 +5,8 @@
 package streamit.eclipse.grapheditor.graph;
 
 import java.util.Properties;
-import java.util.StringTokenizer;
 
-import org.jgraph.JGraph;
+import streamit.eclipse.grapheditor.graph.utils.StringTranslator;
 
 
 /**
@@ -80,6 +79,18 @@ public class GEProperties
 	public static final String KEY_PUSH_RATE = "PushRate";
 	
 	/**
+	 * Key for the body of a FeedbackLoop.
+	 */
+	public static final String KEY_FLOOP_BODY = "FeedbackLoop Body";
+	
+	
+	/**
+	 * Key for the loop of a FeedbackLoop.
+	 */
+	public static final String KEY_FLOOP_LOOP = "FeedbackLoop Loop";
+	
+	
+	/**
 	 * Get the default properties of a Splitter.
 	 * @return Default Properties of Splitter.
 	 */
@@ -129,9 +140,10 @@ public class GEProperties
 		properties.put(GEProperties.KEY_TYPE, type);
 		properties.put(GEProperties.KEY_INPUT_TAPE, node.getInputTape());
 		properties.put(GEProperties.KEY_OUTPUT_TAPE, node.getOutputTape());
-		if (node.getEncapsulatingNode() != null)
+		GEStreamNode container = node.getEncapsulatingNode();
+		if (container != null)
 		{
-			properties.put(GEProperties.KEY_PARENT, node.getEncapsulatingNode().getName());
+			properties.put(GEProperties.KEY_PARENT, ((GEStreamNode) container).getName());
 		}
 		
 		if (type == GEType.PHASED_FILTER)
@@ -183,13 +195,15 @@ public class GEProperties
 	 * are the type and the parent of the GEStreamNode. 
 	 * @param properties
 	 */
-	public static void setNodeProperties(GEStreamNode node, Properties properties, JGraph jgraph)
+	public static void setNodeProperties(GEStreamNode node, Properties properties, GraphStructure graphStruct)
 	{
 		String type = node.getType();
 		
 //		node.setName(properties.getProperty(GEProperties.KEY_NAME));
 		node.setOutputTape(properties.getProperty(GEProperties.KEY_INPUT_TAPE));
 		node.setInputTape(properties.getProperty(GEProperties.KEY_OUTPUT_TAPE));
+		setParentProperty(node, graphStruct.containerNodes.
+												getContainerNodeFromName(properties.getProperty(GEProperties.KEY_PARENT)));
 					
 		if (type == GEType.PHASED_FILTER)
 		{
@@ -198,65 +212,57 @@ public class GEProperties
 			wf.setPopValue(Integer.parseInt(properties.getProperty(GEProperties.KEY_POP_RATE)));
 			wf.setPeekValue(Integer.parseInt(properties.getProperty(GEProperties.KEY_PEEK_RATE)));
 			
-			((GEPhasedFilter) node).setDisplay(jgraph);
-									
-		}
-		else if (type == GEType.SPLIT_JOIN)
-		{
-			String splitWeights = properties.getProperty(GEProperties.KEY_SPLITTER_WEIGHTS);
-			String joinerWeights = properties.getProperty(GEProperties.KEY_JOINER_WEIGHTS);
-			((GESplitJoin)node).getSplitter().setWeights(GEProperties.weightsToInt(splitWeights));
-			((GESplitJoin)node).getJoiner().setWeights(GEProperties.weightsToInt(joinerWeights));
-		}
-		else if (type == GEType.FEEDBACK_LOOP)
-		{
-			//TODO implement the case for feedbackloop in getNodeProperties()
-			System.out.println("********************************************");
-			System.out.println("************* NOT YET IMPLEMENTED **********");
-			System.out.println("********************************************");
-		
-			String splitWeights = properties.getProperty(GEProperties.KEY_SPLITTER_WEIGHTS);
-			String joinerWeights = properties.getProperty(GEProperties.KEY_JOINER_WEIGHTS);
-			((GESplitJoin)node).getSplitter().setWeights(GEProperties.weightsToInt(splitWeights));
-			((GESplitJoin)node).getJoiner().setWeights(GEProperties.weightsToInt(splitWeights));
-				
+			((GEPhasedFilter) node).setDisplay(graphStruct.getJGraph());						
 		}
 		else if (type == GEType.JOINER)
 		{
 			String joinerWeights = properties.getProperty(GEProperties.KEY_JOINER_WEIGHTS);
-			((GESplitJoin)node).getJoiner().setWeights(GEProperties.weightsToInt(joinerWeights));
+			((GEJoiner)node).setWeights(StringTranslator.weightsToInt(joinerWeights));
+			((GEJoiner)node).setDisplay(graphStruct.getJGraph());
 		}
 			
 		else if (type == GEType.SPLITTER)
 		{
 			String splitWeights = properties.getProperty(GEProperties.KEY_SPLITTER_WEIGHTS);
-			((GESplitJoin)node).getSplitter().setWeights(GEProperties.weightsToInt(splitWeights));
-		}
-			
-		
-		
+			((GESplitter)node).setWeights(StringTranslator.weightsToInt(splitWeights));
+			((GESplitter)node).setDisplay(graphStruct.getJGraph());
+		}				
 	}
 	
-	/**
-	 * Convert the String representation of the weights to an int[].
-	 * @param w String representation of the weights.
-	 * @return int[] corresponding to String representation of the weigths. 
-	 */
-	public static int[] weightsToInt(String w)
+
+
+	public static void setParentProperty(GEStreamNode child, GEContainer container)
 	{
-		if (w == null)
-			return new int[]{};
-		StringTokenizer t = new StringTokenizer(w, ",");
-		int weights[];
-
-		weights = new int[t.countTokens()];
-		int i = 0;
-		while (t.hasMoreTokens()){
-			weights[i] = Integer.parseInt(t.nextToken());
-			i++;
+		
+		if (child.getEncapsulatingNode() !=null)
+		{
+			child.getEncapsulatingNode().removeNodeFromContainer(child);
 		}
+			
+		child.setEncapsulatingNode(container);
 
-		return weights;
+		if (child.getEncapsulatingNode() !=null)
+		{
+			child.getEncapsulatingNode().addNodeToContainer(child);
+		}		
 	}
+	
+	/*
+	public static void setParentProperty(GEStreamNode node, Properties properties, ContainerNodes containerNodes)
+	{	
+		if (node.encapsulatingNode !=null)
+		{
+			((GEContainer)node.encapsulatingNode).removeNodeFromContainer(node);
+		}
+			
+		node.setEncapsulatingNode(containerNodes.getContainerNodeFromName(properties.getProperty(GEProperties.KEY_PARENT)));
+
+		if (node.encapsulatingNode !=null)
+		{
+			((GEContainer)node.encapsulatingNode).addNodeToContainer(node);
+		}			
+	}*/
+	
+	
 }
 

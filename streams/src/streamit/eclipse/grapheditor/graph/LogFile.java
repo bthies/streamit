@@ -7,6 +7,7 @@ package streamit.eclipse.grapheditor.graph;
 import org.eclipse.core.resources.IFile;
 
 /**
+ * 
  * @author jcarlos
  *
  */

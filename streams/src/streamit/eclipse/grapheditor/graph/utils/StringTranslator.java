@@ -23,7 +23,7 @@ public class StringTranslator {
 	 */
 	public static int[] weightsToInt(String w)
 	{
-		StringTokenizer str =  new StringTokenizer(w);
+		StringTokenizer str =  new StringTokenizer(w, "(,) ");
 		int weights[] =  new int[str.countTokens()];
 		int i = 0;
 		while(str.hasMoreTokens())

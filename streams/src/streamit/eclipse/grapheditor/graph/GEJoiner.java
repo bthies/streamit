@@ -8,10 +8,13 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 
+import org.jgraph.JGraph;
 import org.jgraph.graph.DefaultPort;
 import org.jgraph.graph.GraphConstants;
 
@@ -132,32 +135,25 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 			ex.printStackTrace();
 		}
 		
+		
 		this.port = new DefaultPort();
 		this.add(this.port);
+		
+		
 		graphStruct.getGraphModel().insert(new Object[] {this}, null, null, null, null);
-		//graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[] {this}, true);
+		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
 	}
 	
-	
-	/**
-	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
-	 * they cannot be made visible.
-	 * @return true if it was possible to hide the node; otherwise, return false.
-	 */
-	public boolean hide()
+	public void setDisplay(JGraph jgraph)
 	{
-		return false;
+		this.setInfo(this.getWeightsAsString());
+		
+		Map change = GraphConstants.createMap();
+		GraphConstants.setValue(change, this.getInfoLabel());
+		Map nest = new Hashtable ();
+		nest.put(this, change);
+		jgraph.getModel().edit(nest, null, null, null);
 	}
-
-	/**
-	 * Make the GEStreamNode visible in the display. Note that some nodes cannot be hidden or 
-	 * they cannot be made visible. 
-	 * @return true if it was possible to make the node visible; otherwise, return false.
-	 */	
-	public boolean unhide()
-	{
-		return false;
-	};
 	
 	/**
 	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 

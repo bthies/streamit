@@ -9,11 +9,11 @@
  * Top level program. 
  **/
 void->void pipeline FIRProgram {
-    //add FloatSource();
-    add FileReader<float>("input");
+    add FloatSource();
+    //add FileReader<float>("input");
     add LowPassFilter(1, pi/3, 256);
-    //add FloatPrinter();
-    add FileWriter<float>("output");
+    add FloatPrinter();
+    //add FileWriter<float>("output");
 }
 
 /** 

@@ -63,7 +63,7 @@ class SingleMultiply extends Filter
 
     float W;
     public void init(final int i) {
-	W = 2*i*i/(i+1);
+	W = 2*i*i/((float)i+1);
 	this.input = new Channel(Float.TYPE, 2, 2);
 	this.output = new Channel(Float.TYPE, 2);
     }

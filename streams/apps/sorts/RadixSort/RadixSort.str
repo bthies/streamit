@@ -1,0 +1,73 @@
+void->void pipeline RadixSort {
+  int SIZE = 16;
+  int MAX_VALUE = 2048;
+  add IntSource(SIZE);
+  add SortPipe(SIZE, MAX_VALUE);
+  add IntPrinter();
+}
+
+int->int pipeline SortPipe(int SIZE, int MAX_VALUE) {
+  for(int i=1; i < MAX_VALUE; i = i * 2) {
+    add Sort(SIZE, i);
+  }
+}
+
+int->int filter Sort(int SIZE, int radix) {
+  work push SIZE pop SIZE {
+    int [SIZE]ordering;
+
+    int j = 0;
+    for(int i=0; i < SIZE; i++) {
+      int current = pop();
+      if ((current & radix) == 0) {
+	push(current);
+      } else {
+	ordering[j++] = current;
+      }
+    }
+    for(int i=0; i < j; i++) {
+      push(ordering[i]);
+    }
+  }
+}
+
+/** IntSource.  Just used to test with the same 16 "random" numbers as
+ * in Knuth.  Eventually, probably use a fileReader reading actual
+ * random numbers.
+ **/
+void->int filter IntSource(int SIZE) {
+  int [SIZE]data;
+  int index = 0;
+  init {
+    data[0] = 503; data[1] = 087; data[2] = 512;
+    data[3] = 061; data[4] = 908; data[5] = 170;
+    data[6] = 897; data[7] = 275; data[8] = 653;
+    data[9] = 426; data[10] = 154; data[11] = 509;
+    data[12] = 612; data[13] = 677; data[14] = 765;
+    data[15] = 703;
+  }
+
+  work push 1 {
+    push(data[index++]);
+    if (index == SIZE)
+      index = 0;
+  }
+}
+
+/** IntIdentity since Identity<int> still seems to fail in the
+ * uniprocessor
+ **/
+int->int filter IntIdentity() {
+  work push 1 pop 1 {
+    push(pop());
+  }
+}
+
+/** IntPrinter utility
+ **/
+int->void filter IntPrinter() {
+  work pop 1 {
+    print(pop());
+  }
+}
+

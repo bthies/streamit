@@ -109,8 +109,10 @@ public class RuntimeHarness extends Harness {
      * Compares the output of a raw btl simulator session with
      * a file containing expected results.
      **/
-    static boolean rawCompare(String rawOutputFile, String expectedFile,
-			      String root, String filename,
+    static boolean rawCompare(String rawOutputFile,
+			      String expectedFile,
+			      String root,
+			      String filename,
 			      String options[]) {
 	try {
 	    // set up an output stream so we can grab the output of the 
@@ -118,7 +120,7 @@ public class RuntimeHarness extends Harness {
 	    // the cycle count was.
 	    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 	    
-	    boolean result = executeNative(getRawCommandArray(rawOutputFile, expectedFile),
+	    boolean result = executeNative(getRawCompareCommandArray(rawOutputFile, expectedFile),
 					   outStream);
 
 	    // if we got a good comparison, print out the results (eg speed) to the result printer
@@ -229,7 +231,7 @@ public class RuntimeHarness extends Harness {
     }
 
     /** Get a command line argument array for running the comparison perl script **/
-    public static String[] getRawCommandArray(String rawOutputFile, String expectedOutputFile) {
+    public static String[] getRawCompareCommandArray(String rawOutputFile, String expectedOutputFile) {
 	String[] cmdLineArgs = new String[3];
 	cmdLineArgs[0] = "csh";
 	cmdLineArgs[1] = "-c";

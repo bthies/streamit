@@ -88,6 +88,42 @@ class ToJava
 
         try
         {
+            for (Iterator iter = inputFiles.iterator(); iter.hasNext(); )
+            {
+                String fileName = (String)iter.next();
+                InputStream inStream = new FileInputStream(fileName);
+                DataInputStream dis = new DataInputStream(inStream);
+                StreamItLex lexer = new StreamItLex(dis);
+                parser = new StreamItParserFE(lexer);
+                parser.setFilename(fileName);
+                Program pprog = parser.program();
+                if (prog == null)
+                    prog = pprog;
+                else if (pprog != null)
+                {
+                    List newStreams, newStructs;
+                    newStreams = new java.util.ArrayList();
+                    newStreams.addAll(prog.getStreams());
+                    newStreams.addAll(pprog.getStreams());
+                    newStructs = new java.util.ArrayList();
+                    newStructs.addAll(prog.getStructs());
+                    newStructs.addAll(pprog.getStructs());
+                    prog = new Program(null, newStreams, newStructs);
+                }
+            }
+        }
+        catch (java.io.IOException e) {e.printStackTrace(System.err);}
+        catch (antlr.RecognitionException e) {e.printStackTrace(System.err);}
+        catch (antlr.TokenStreamException e) {e.printStackTrace(System.err);}
+
+        if (prog == null)
+        {
+            System.err.println("Compilation didn't generate a parse tree.");
+            return;
+        }
+
+        try
+        {
             if (outputFile != null)
                 outWriter = new FileWriter(outputFile);
             else
@@ -101,54 +137,42 @@ class ToJava
                             "  public float imag;\n" +
                             "}\n");
 
-            for (Iterator iter = inputFiles.iterator(); iter.hasNext(); )
-            {
-                String fileName = (String)iter.next();
-                InputStream inStream = new FileInputStream(fileName);
-                DataInputStream dis = new DataInputStream(inStream);
-                StreamItLex lexer = new StreamItLex(dis);
-                parser = new StreamItParserFE(lexer);
-                parser.setFilename(fileName);
-                prog = parser.program();
-                /* What's the right order for these?  Clearly generic
-                 * things like MakeBodiesBlocks need to happen first.
-                 * I don't think there's actually a problem running
-                 * MoveStreamParameters after DoComplexProp, since
-                 * this introduces only straight assignments which the
-                 * Java front-end can handle.  OTOH,
-                 * MoveStreamParameters introduces references to
-                 * "this", which doesn't exist. */
-                TempVarGen varGen = new TempVarGen();
-                prog = (Program)prog.accept(new MakeBodiesBlocks());
-                prog = (Program)prog.accept(new DisambiguateUnaries(varGen));
-                prog = (Program)prog.accept(new NoRefTypes());
-                prog = (Program)prog.accept(new RenameBitVars());
-                prog = (Program)prog.accept(new FindFreeVariables());
-                if (!libraryFormat)
-                    prog = (Program)prog.accept(new NoticePhasedFilters());
-                prog = (Program)prog.accept(new DoComplexProp(varGen));
-                prog = (Program)prog.accept(new TranslateEnqueue());
-		prog = (Program)prog.accept(new InsertIODecls(libraryFormat));
-                prog = (Program)prog.accept(new InsertInitConstructors());
-                prog = (Program)prog.accept(new MoveStreamParameters());
-                prog = (Program)prog.accept(new NameAnonymousFunctions());
-                prog = (Program)prog.accept(new TrimDumbDeadCode());
-		if (straightToSIR) {
-		  SIRStream s = (SIRStream) prog.accept(new FEIRToSIR());
-		  SIRPrinter sirPrinter = new SIRPrinter();
-		  IterFactory.createIter(s).accept(sirPrinter);
-		  sirPrinter.close();
-		  Flattener.flatten(s, new JInterfaceDeclaration[0], new SIRInterfaceTable[0], new SIRStructure[0]);
-		} else {
-		  String javaOut = (String)prog.accept(new NodesToJava(null));
-		  outWriter.write(javaOut);
-		}
+            /* What's the right order for these?  Clearly generic
+             * things like MakeBodiesBlocks need to happen first.
+             * I don't think there's actually a problem running
+             * MoveStreamParameters after DoComplexProp, since
+             * this introduces only straight assignments which the
+             * Java front-end can handle.  OTOH,
+             * MoveStreamParameters introduces references to
+             * "this", which doesn't exist. */
+            TempVarGen varGen = new TempVarGen();
+            prog = (Program)prog.accept(new MakeBodiesBlocks());
+            prog = (Program)prog.accept(new DisambiguateUnaries(varGen));
+            prog = (Program)prog.accept(new NoRefTypes());
+            prog = (Program)prog.accept(new RenameBitVars());
+            prog = (Program)prog.accept(new FindFreeVariables());
+            if (!libraryFormat)
+                prog = (Program)prog.accept(new NoticePhasedFilters());
+            prog = (Program)prog.accept(new DoComplexProp(varGen));
+            prog = (Program)prog.accept(new TranslateEnqueue());
+            prog = (Program)prog.accept(new InsertIODecls(libraryFormat));
+            prog = (Program)prog.accept(new InsertInitConstructors());
+            prog = (Program)prog.accept(new MoveStreamParameters());
+            prog = (Program)prog.accept(new NameAnonymousFunctions());
+            prog = (Program)prog.accept(new TrimDumbDeadCode());
+            if (straightToSIR) {
+                SIRStream s = (SIRStream) prog.accept(new FEIRToSIR());
+                SIRPrinter sirPrinter = new SIRPrinter();
+                IterFactory.createIter(s).accept(sirPrinter);
+                sirPrinter.close();
+                Flattener.flatten(s, new JInterfaceDeclaration[0], new SIRInterfaceTable[0], new SIRStructure[0]);
+            } else {
+                String javaOut = (String)prog.accept(new NodesToJava(null));
+                outWriter.write(javaOut);
             }
             outWriter.flush();
         }
         catch (java.io.IOException e) {e.printStackTrace(System.err);}
-        catch (antlr.RecognitionException e) {e.printStackTrace(System.err);}
-        catch (antlr.TokenStreamException e) {e.printStackTrace(System.err);}
     }
     
     public static void main(String[] args)

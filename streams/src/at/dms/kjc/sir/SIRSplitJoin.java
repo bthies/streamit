@@ -37,6 +37,20 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 	s.setJoiner(this.joiner);
 	return s;
     }
+
+    /**
+     * returns i'th child of this.
+     */
+    public SIRStream get(int i) {
+	return (SIRStream)elements.get(i);
+    }
+    
+    /**
+     * returns the number of parallel streams in this.
+     */
+    public int size() {
+	return elements.size();
+    }
     
     /**
      * sets the splitter for this SplitJoin
@@ -47,6 +61,14 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
     
     /**
+     * gets the splitter.
+     */
+    public SIRSplitter getSplitter() 
+    {
+	return this.splitter;
+    }
+    
+    /**
      * sets the joiner for this SplitJoin
      */
     public void setJoiner(SIRJoiner j) 
@@ -54,6 +76,14 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 	this.joiner = j;
     }
    
+    /**
+     * gets the joinger.
+     */
+    public SIRJoiner getJoiner() 
+    {
+	return this.joiner;
+    }
+    
 
     /**
      * Returns the output type of this.

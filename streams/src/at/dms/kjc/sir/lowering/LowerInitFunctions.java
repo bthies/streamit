@@ -48,7 +48,7 @@ public class LowerInitFunctions implements StreamVisitor {
 	    // extract child
 	    SIROperator child = (SIROperator)it.next();
 	    if (child instanceof SIRStream) {
-		// register the filter
+		// register the stream
 		prologue.add(new LIRSetChild(LoweringConstants.
 					     getStreamContext(),
 					     /* child type */
@@ -80,9 +80,9 @@ public class LowerInitFunctions implements StreamVisitor {
     }
 				 
     /**
-     * Registers the tapes in <tapePairs> with new statements in <epilogue>.
+     * Registers the tapes in <tapePairs> with new statements in <method>.
      */
-    private void registerTapes(List tapePairs, List epilogue) {
+    private void registerTapes(List tapePairs, JMethodDeclaration init) {
 	// go through tape pairs, declaring tapes...
 	for (ListIterator it = tapePairs.listIterator(); it.hasNext(); ) {
 	    // get the next pair
@@ -104,19 +104,95 @@ public class LowerInitFunctions implements StreamVisitor {
 		tapeType = ((SIRStream)pair[1]).getInputType();
 	    }
 	    // declare a tape from pair[0] to pair[1]
-	    epilogue.add(new LIRSetTape(LoweringConstants.
-					getStreamContext(),
-					/* stream struct 1 */
-					LoweringConstants.
-					getChildStruct(pair[0]),
-					/* stream struct 2 */
-					LoweringConstants.
-					getChildStruct(pair[1]), 
-					/* type on tape */
-					tapeType,
-					/* size of buffer */
+	    init.addStatement(new LIRSetTape(LoweringConstants.
+					     getStreamContext(),
+					     /* stream struct 1 */
+					     LoweringConstants.
+					     getChildStruct(pair[0]),
+					     /* stream struct 2 */
+					     LoweringConstants.
+					     getChildStruct(pair[1]), 
+					     /* type on tape */
+					     tapeType,
+					     /* size of buffer */
 	   schedule.getBufferSizeBetween(pair[0], pair[1]).intValue()
-						  ));
+					     ));
+	}
+    }
+
+    /**
+     * Registers tapes in FeedbackLoop <str> into <init> function.
+     */
+    private void registerFeedbackLoopTapes(SIRFeedbackLoop str, 
+					   JMethodDeclaration init) {
+	// work on BODY...
+	SIRStream body = str.getBody();
+	// get child context
+	JExpression bodyContext = 
+	    LoweringConstants.getStreamContext(LoweringConstants.
+					       getChildStruct(body));
+	// get the input tape size
+	int bodyInputSize = schedule.getBufferSizeBetween(str.getJoiner(), 
+							  body).intValue();
+	// get the output tape size
+	int bodyOutputSize = schedule.getBufferSizeBetween(body,
+							   str.getSplitter() 
+							   ).intValue();
+	// register tape
+	init.addStatement(new LIRSetBodyOfFeedback(bodyContext,
+						   body.getInputType(),
+						   body.getOutputType(),
+						   bodyInputSize,
+						   bodyOutputSize));
+	// work on LOOP...
+	SIRStream loop = str.getLoop();
+	// get child context
+	JExpression loopContext = 
+	    LoweringConstants.getStreamContext(LoweringConstants.
+					       getChildStruct(loop));
+	// get the input tape size
+	int loopInputSize = schedule.getBufferSizeBetween(str.getSplitter(), 
+							  loop).intValue();
+	// get the output tape size
+	int loopOutputSize = schedule.getBufferSizeBetween(loop,
+							   str.getJoiner() 
+							   ).intValue();
+	// register tape
+	init.addStatement(new LIRSetLoopOfFeedback(loopContext,
+						   loop.getInputType(),
+						   loop.getOutputType(),
+						   loopInputSize,
+						   loopOutputSize));
+    }
+
+    /**
+     * Registers tapes in SplitJoin <str> into <init> function.
+     */
+    private void registerSplitJoinTapes(SIRSplitJoin str, 
+					JMethodDeclaration init) {
+	// go through elements
+	for (int i=0; i<str.size(); i++) {
+	    // get i'th child
+	    SIRStream child = str.get(i);
+	    // get context for child
+	    JExpression childContext = 
+		LoweringConstants.getStreamContext(LoweringConstants.
+						   getChildStruct(child
+								  ));
+	    // get the input tape size
+	    int inputSize = schedule.getBufferSizeBetween(str.getSplitter(), 
+							  child).intValue();
+	    // get the output tape size
+	    int outputSize = schedule.getBufferSizeBetween(child,
+							   str.getJoiner() 
+							   ).intValue();
+	    // register an LIR node to <init>
+	    init.addStatement(new LIRSetParallelStream(childContext,
+						       i,
+						       child.getInputType(),
+						       child.getOutputType(),
+						       inputSize,
+						       outputSize));
 	}
     }
 
@@ -261,16 +337,8 @@ public class LowerInitFunctions implements StreamVisitor {
 	// register children
 	registerChildren(self.getChildren(), prologue);
 
-	// now develop an epilogue, to be inserted after the
-	// statements in the original init function.
-	List epilogue = new LinkedList();
-
-	// register tapes between children in the epilogue
-	registerTapes(self.getTapePairs(), epilogue);
-
-	// add the prologue and epilogue to the init function
+	// add the prologue to the init function
 	init.addAllStatements(0, prologue);
-	init.addAllStatements(epilogue);
     }
 	
     /* pre-visit a pipeline */
@@ -280,7 +348,10 @@ public class LowerInitFunctions implements StreamVisitor {
 				 JMethodDeclaration[] methods,
 				 JMethodDeclaration init,
 				 List elements) {
+	// do standard container stuff
 	visitContainer(self, init);
+	// register tapes between children in init function
+	registerTapes(self.getTapePairs(), init);
     }
 
     /* pre-visit a splitjoin */
@@ -289,7 +360,10 @@ public class LowerInitFunctions implements StreamVisitor {
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
 				  JMethodDeclaration init) {
+	// do standard container stuff
 	visitContainer(self, init);
+	// register tapes
+	registerSplitJoinTapes(self, init);
     }
 
     /* pre-visit a feedbackloop */
@@ -300,7 +374,10 @@ public class LowerInitFunctions implements StreamVisitor {
 				     JMethodDeclaration init,
 				     int delay,
 				     JMethodDeclaration initPath) {
+	// do standard container stuff
 	visitContainer(self, init);
+	// register tapes
+	registerFeedbackLoopTapes(self, init);
     }
 
     /* post-visit a pipeline */

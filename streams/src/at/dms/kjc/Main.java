@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.1 2001-08-30 16:32:53 thies Exp $
+ * $Id: Main.java,v 1.2 2001-10-04 23:58:15 thies Exp $
  */
 
 package at.dms.kjc;
@@ -149,7 +149,7 @@ public class Main extends Compiler {
       } else {
 	for (int count = 0; count < tree.length; count++) {
 	  checkBody(tree[count]);
-	  if (!options.java && !options.beautify) {
+	  if (!options.java && !options.beautify && !options.streamit) {
 	    tree[count] = null;
 	  }
 	}
@@ -160,7 +160,14 @@ public class Main extends Compiler {
       }
     }
 
-    if (!options.nowrite) {
+    // do streamit pass
+    if (options.streamit) {
+	for (int count=0; count < tree.length; count++) {
+	    StreaMITMain.compile(tree[count]);
+	}
+    }
+
+    if (!options.nowrite && !options.streamit) {
       if (options.java || options.beautify) {
 	if (options.multi) {
 	  acceptMultiProc(tree);

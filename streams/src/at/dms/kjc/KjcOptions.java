@@ -13,6 +13,7 @@ public class KjcOptions extends at.dms.util.Options {
   public KjcOptions() {
     this("Kjc");
   }
+  public boolean streamit = false;
   public boolean beautify = false;
   public boolean verbose = false;
   public boolean java = false;
@@ -32,6 +33,8 @@ public class KjcOptions extends at.dms.util.Options {
 
   public boolean processOption(int code, Getopt g) {
     switch (code) {
+    case 's':
+      streamit = !false; return true;
     case 'b':
       beautify = !false; return true;
     case 'v':
@@ -89,7 +92,7 @@ public class KjcOptions extends at.dms.util.Options {
     total[parent.length + 13] = "  --debug, -g:          Produces debug information (does nothing yet) [false]";
     total[parent.length + 14] = "  --lang, -l<String>:   Sets the source language (1.1, 1.2, kopi) [1.1]";
     total[parent.length + 15] = "  --filter, -f<String>: Warning filter [at.dms.kjc.DefaultFilter]";
-    
+    total[parent.length + 16] = "  --streamit, -s:       Turns on StreaMIT mode [false]";    
     return total;
   }
 
@@ -130,6 +133,7 @@ public class KjcOptions extends at.dms.util.Options {
   }
 
   private static final LongOpt[] LONGOPTS = {
+    new LongOpt("streamit", LongOpt.NO_ARGUMENT, null, 's'),
     new LongOpt("beautify", LongOpt.NO_ARGUMENT, null, 'b'),
     new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v'),
     new LongOpt("java", LongOpt.NO_ARGUMENT, null, 'j'),

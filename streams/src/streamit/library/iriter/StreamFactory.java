@@ -1,6 +1,6 @@
 package streamit.iriter;
 
-/* $Id: StreamFactory.java,v 1.10 2003-03-11 17:45:30 thies Exp $ */
+/* $Id: StreamFactory.java,v 1.11 2003-04-01 22:38:33 karczma Exp $ */
 
 import streamit.misc.DestroyedClass;
 
@@ -54,8 +54,7 @@ public class StreamFactory
             return new FeedbackLoop(streamIter.isFeedbackLoop(), this);
         }
 
-        // not implemented yet
-        ASSERT(false);
+        ERROR ("Unsupported type passed to StreamFactory!");
         return null;
     }
 }

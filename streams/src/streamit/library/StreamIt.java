@@ -7,7 +7,7 @@ import java.util.ListIterator;
 import java.util.Vector;
 import java.lang.reflect.Array;
 import streamit.scheduler2.iriter.Iterator;
-import streamit.iriter.StreamFactory;
+import streamit.scheduler2.minlatency.StreamFactory;
 import streamit.scheduler2.base.StreamInterface;
 import streamit.scheduler2.ScheduleBuffers;
 import streamit.scheduler2.Schedule;

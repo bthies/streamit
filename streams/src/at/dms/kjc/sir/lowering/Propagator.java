@@ -402,8 +402,13 @@ public class Propagator extends SLIRReplacingVisitor {
 	    cond.accept(this);
 	    body.accept(this);
 	} else {
+	    JStatement newInit = (JStatement)init.accept(this);
+	    if (newInit!=null && newInit!=init) {
+		self.setInit(newInit);
+	    }
+	    
 	    Propagator newProp=construct(cloneTable(constants),false);
-	    init.accept(newProp);
+	    //init.accept(newProp);
 	    incr.accept(newProp);
 	    cond.accept(newProp);
 	    body.accept(newProp);
@@ -417,28 +422,24 @@ public class Propagator extends SLIRReplacingVisitor {
 	    // cond should never be a constant, or else we have an
 	    // infinite or empty loop.  Thus I won't check for it... 
 	    // recurse into init
-	    JStatement newInit = (JStatement)init.accept(this);
-	    if (newInit!=null && newInit!=init) {
-		self.setInit(newInit);
-	    }
-	    
-	    write=false;
-	    // recurse into incr
-	    JStatement newIncr = (JStatement)incr.accept(this);
-	    if (newIncr!=null && newIncr!=incr)
-		self.setIncr(newIncr);
 
 	    JExpression newExp = (JExpression)cond.accept(this);
 	    if (newExp!=null && newExp!=cond) {
 		self.setCond(newExp);
 	    }
-	    write=true;
 	    
 	    // recurse into body
 	    JStatement newBody = (JStatement)body.accept(this);
 	    if (newBody!=null && newBody!=body) {
 		self.setBody(newBody);
 	    }
+
+	    //write=false;
+	    // recurse into incr
+	    JStatement newIncr = (JStatement)incr.accept(this);
+	    if (newIncr!=null && newIncr!=incr)
+		self.setIncr(newIncr);
+	    //write=true;
 	    
 	    constants=saveConstants;
 	}

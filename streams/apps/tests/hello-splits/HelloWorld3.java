@@ -34,7 +34,7 @@ public class HelloWorld3 extends Stream
         add(new CharGenerator(".....Hello World!.....\0"));
         add(new SplitJoin()
             {
-                public void Init()
+                public void init()
                 {
                     setSplitter(ROUND_ROBIN ());
                     add(new ChannelConnectFilter (Character.TYPE));

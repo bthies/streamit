@@ -23,7 +23,7 @@ public class RouteIns extends SwitchIns {
     }
 
     public String toString() {
-	String ins = op + " ";
+	String ins = op + "\t";
 	
 	for (int i = 0; i < sources.size(); i++) {
 	    //append the src, then ->, then dst

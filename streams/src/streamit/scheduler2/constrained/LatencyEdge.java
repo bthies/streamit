@@ -79,14 +79,25 @@ public class LatencyEdge extends Misc implements SDEPData
             BigInteger dstData =
                 BigInteger.valueOf(dst.getSteadyStatePop(dstChannel));
 
-            BigInteger gcd = srcData.gcd(dstData);
-            BigInteger steadyStateData =
-                srcData.multiply(dstData).divide(gcd);
+            if (srcData.signum() == 0 && dstData.signum() == 0)
+            {
+                numSteadySrcExec = 0;
+                numSteadyDstExec = 0;
+            }
+            else
+            {
 
-            numSteadySrcExec =
-                dstData.divide(gcd).intValue() * src.getSteadyNumPhases();
-            numSteadyDstExec =
-                srcData.divide(gcd).intValue() * dst.getSteadyNumPhases();
+                BigInteger gcd = srcData.gcd(dstData);
+                BigInteger steadyStateData =
+                    srcData.multiply(dstData).divide(gcd);
+
+                numSteadySrcExec =
+                    dstData.divide(gcd).intValue()
+                        * src.getSteadyNumPhases();
+                numSteadyDstExec =
+                    srcData.divide(gcd).intValue()
+                        * dst.getSteadyNumPhases();
+            }
 
             // don't initialize (allocate) this array, 'cause I don't yet
             // know its size! I'll compute the number of phases requried for

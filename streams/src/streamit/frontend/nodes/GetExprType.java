@@ -1,7 +1,7 @@
 /*
  * GetExprType.java: get the type of an expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: GetExprType.java,v 1.7 2003-06-30 21:10:41 dmaze Exp $
+ * $Id: GetExprType.java,v 1.8 2003-06-30 21:15:35 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -89,13 +89,19 @@ public class GetExprType extends FENullVisitor
 
     public Object visitExprFunCall(ExprFunCall exp)
     {
-        // Errk.  We need to keep track of function type signatures here,
-        // huh.  Need this for complex propagation, actually.
-
-        // As a cheap shortcut, though, we can assume that the only
-        // function calls are calls to built-in functions in the
-        // absence of helper function support in the parser.  These
-        // by and large have a signature like
+        // Has SymbolTable given us a function declaration?
+        try
+        {
+            Function fn = symTab.lookupFn(exp.getName());
+            return fn.getReturnType();
+        } catch (UnrecognizedVariableException e) {
+            // ignore
+        }
+        
+        // Otherwise, we can assume that the only function calls are
+        // calls to built-in functions in the absence of helper
+        // function support in the parser.  These by and large have a
+        // signature like
         //
         //   template<T> T foo(T);
         //

@@ -7,7 +7,7 @@ Iterator;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: FeedbackLoop.java,v 1.9 2002-12-02 23:54:07 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.10 2003-01-28 01:41:37 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for FeedbackLoops.
@@ -189,7 +189,7 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
         // setup my variables that come from SchedStream:
         {
             int pop = joinNumRounds * getSteadyJoinFlow().getPopWeight(0);
-            int push = splitNumRounds * getSteadySplitFlow().getPushWeight(1);
+            int push = splitNumRounds * getSteadySplitFlow().getPushWeight(0);
 
             setSteadyPeek(pop);
             setSteadyPop(pop);

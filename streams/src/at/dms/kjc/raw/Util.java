@@ -17,8 +17,10 @@ import java.io.*;
  * This class contains various function used by multiple passes
  */
 public class Util extends at.dms.util.Utils {
-    public static String CSTOVAR = "__csto__";
-    public static String CSTIVAR = "__csti__";
+    public static String CSTOINTVAR = "__csto_integer__";
+    public static String CSTOFPVAR = "__csto_float__";
+    public static String CSTIFPVAR = "__csti_float__";
+    public static String CSTIINTVAR = "__csti_integer__";
 
 
     //returns true if this filter is mapped
@@ -172,7 +174,10 @@ public class Util extends at.dms.util.Utils {
 
     public static String staticNetworkReceiveSuffix(CType tapeType) {
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-	    return "= " + CSTIVAR + ";";
+	    if (tapeType.isFloatingPoint())
+		return "= " + CSTIFPVAR + ";";
+	    else
+		return "= " + CSTIINTVAR + ";";
 	}
 	else 
 	    return "));";
@@ -182,9 +187,12 @@ public class Util extends at.dms.util.Utils {
 	StringBuffer buf = new StringBuffer();
 	
 	if (KjcOptions.altcodegen || KjcOptions.decoupled) {
-	    buf.append(CSTOVAR + " = ");
+	    if (tapeType.isFloatingPoint())
+		buf.append(CSTOFPVAR);
+	    else
+		buf.append(CSTOINTVAR);
 	    //temporary fix for type changing filters
-	    buf.append("(" + tapeType + ")");
+	    buf.append(" = (" + tapeType + ")");
 	} 
 	else {
 	    buf.append("(static_send(");    

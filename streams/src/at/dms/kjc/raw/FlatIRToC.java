@@ -157,17 +157,17 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
 	
+	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
+	    print("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
+	    print("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
+	    print("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
+	    print("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
+	}
+	
 	//if there are structures in the code, include
 	//the structure definition header files
 	if (RawBackend.structures.length > 0) 
 	    print("#include \"structs.h\"\n");
-
-	
-	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-	    print("register float " + Util.CSTOVAR + " asm(\"$csto\");\n");
-	    print("register float " + Util.CSTIVAR + " asm(\"$csti\");\n");
-	}
-	
 
 	//print the extern for the function to init the 
 	//switch, do not do this if we are compiling for
@@ -220,9 +220,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//initialize the dummy network receive value
 	if (KjcOptions.decoupled) {
 	    if (self.getInputType().isFloatingPoint()) 
-		print("  " + Util.CSTIVAR + " = 1.0;\n");
+		print("  " + Util.CSTIFPVAR + " = 1.0;\n");
 	    else 
-		print("  " + Util.CSTIVAR + " = 1;\n");
+		print("  " + Util.CSTIINTVAR + " = 1;\n");
 	}
 
 	//call the raw_init() function for the static network
@@ -1497,7 +1497,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
 	    print("{\n");
-	    print(Util.CSTOVAR + " = ");
+	    //	    print(Util.CSTOVAR + " = ");
 	    val.accept(this);
 	    for (int i = 0; i < dims.length; i++) {
 		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");

@@ -65,8 +65,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    fw.write("#include <math.h>\n\n");
 
 	    if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-		fw.write("register float " + Util.CSTOVAR + " asm(\"$csto\");\n");
-		fw.write("register float " + Util.CSTIVAR + " asm(\"$csti\");\n");
+		fw.write("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
+		fw.write("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
+		fw.write("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
+		fw.write("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
 	    }
 	    
 	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)
@@ -89,9 +91,9 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    //initialize the dummy network receive value
 	    if (KjcOptions.decoupled) {
 		if (Util.getJoinerType(joiner).isFloatingPoint()) 
-		    fw.write("  " + Util.CSTIVAR + " = 1.0;\n");
+		    fw.write("  " + Util.CSTIFPVAR + " = 1.0;\n");
 		else 
-		    fw.write("  " + Util.CSTIVAR + " = 1;\n");
+		    fw.write("  " + Util.CSTIINTVAR + " = 1;\n");
 	    }
 	    
 	    fw.write("  work();\n");

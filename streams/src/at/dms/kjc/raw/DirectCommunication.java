@@ -39,6 +39,14 @@ public class DirectCommunication extends at.dms.util.Utils
 	    return false;
 	if (PushBeforePop.check(filter.getWork()))
 	    return false;
+	//must popping a scalar
+	if (filter.getInputType().isClassType() ||
+	    filter.getInputType().isArrayType())
+	    return false;
+	//must be pushing a scalar
+	if (filter.getOutputType().isClassType() ||
+	    filter.getOutputType().isArrayType())
+	    return false;
 	//all tests pass
 	
 	//convert the communication
@@ -179,17 +187,21 @@ class DirectConvertCommunication extends SLIRReplacingVisitor
     
     
     private Object altCodeGen(SIRPopExpression self) {
-	String variable = "integer";
-	CType type = CStdType.Integer;
-
-	//hopefully this works: the "." in the var name
-	JLocalVariableExpression csti = 
-	    new JLocalVariableExpression(null,
-					 new JGeneratedLocalVariable(null, 0, type, 
-							    Util.CSTIVAR,
-							    null));
-							    
-	return csti;
+	//direct communcation is only generated if the input/output types are scalar
+	if (self.getType().isFloatingPoint())
+	    return 
+		new JLocalVariableExpression(null,
+					     new JGeneratedLocalVariable(null, 0, 
+									 CStdType.Float, 
+									 Util.CSTIFPVAR,
+									 null));
+	else 
+	   return 
+	       new JLocalVariableExpression(null,
+					    new JGeneratedLocalVariable(null, 0, 
+									CStdType.Integer,
+									Util.CSTIINTVAR,
+									null));
     }
     
     private Object normalCodeGen(SIRPopExpression self) {

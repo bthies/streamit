@@ -75,7 +75,10 @@ public class JoinerScheduleNode
 	}
 	else if (type == FIRE) {
 	    if (KjcOptions.altcodegen || KjcOptions.decoupled) {
-		ret.append(Util.CSTOVAR + " = ");
+		if (fp)
+		    ret.append(Util.CSTOFPVAR + " = ");
+		else
+		    ret.append(Util.CSTOINTVAR + " = ");
 	    }
 	    else 
 		ret.append("/* send */ asm volatile(\" lw $csto, %0\" : \"=m\"(");
@@ -102,7 +105,10 @@ public class JoinerScheduleNode
 	    ret.append(arrayAccess);
 	    
 	    if (KjcOptions.altcodegen || KjcOptions.decoupled){
-		ret.append(" = " + Util.CSTIVAR + ";\n");
+		if (fp)
+		    ret.append(" = " + Util.CSTIFPVAR + ";\n");
+		else
+		    ret.append(" = " + Util.CSTIINTVAR + ";\n");
 	    }
 	    else
 		ret.append("));\n");

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.39 2003-10-16 18:07:53 dmaze Exp $
+ * $Id: TestExamples.java,v 1.40 2003-10-17 16:59:07 thies Exp $
  **/
 package streamittest;
 
@@ -186,7 +186,7 @@ public class TestExamples extends StreamITTestCase {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "matrixmult/",
 			       "MatrixMult.java",
 			       "MatrixMult.out",
-			       0,256);
+			       0,100);
     }
 
     

@@ -37,7 +37,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     protected boolean			nl = true;
     public boolean                   declOnly = true;
     public SIRFilter               filter;
-    
+    protected JMethodDeclaration   method;
 
     // ALWAYS!!!!
     //true if we are using the second buffer management scheme 
@@ -999,6 +999,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print(";");
 	    return;
 	}
+	
+	method = self;
 
 	//set is init for dynamically allocating arrays...
 	if (filter != null &&
@@ -1013,6 +1015,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
         newLine();
 	isInit = false;
+	method = null;
     }
 
     private void dummyWork(int push) {

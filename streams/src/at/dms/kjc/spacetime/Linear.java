@@ -93,7 +93,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	int times=0;
 	int[] oldIdx=new int[4];
 	int[] oldPop=new int[4];
-	for(int turn=0;turn<3;turn++) {
+	for(int turn=0;turn<pos+4;turn++) {
 	for(int i=0;i<mult;i++)
 	    for(int j=0;j<popCount;j++)
 		for(int k=idx.length-1;k>=0;k--) {
@@ -111,7 +111,7 @@ public class Linear extends RawExecutionCode implements Constants {
 			}
 		    }
 		}
-	if(turn==0)
+	if(turn==pos-1)
 	    inline.add(getLabel()+": #LOOP");
 	}
 	inline.add("j "+getLabel());

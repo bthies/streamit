@@ -283,7 +283,12 @@ public class Rawify
 	int pendingSends=0;
 	int times=0;
 	FullIns ins=null;
-	for(int turn=0;turn<3;turn++) {
+	//final int turns2=content.getTotal()-content.getPos()+1;
+	final int turns2=content.getPos();
+	//final int turns2=1;
+	for(int turn=0;turn<turns2+4;turn++) {
+	    if(turn==turns2)
+		code.appendIns(label, init||primePump);
 	for(int i = 0;i<numTimes;i++) {
 	    for(int j=0;j<pop;j++) {
 		if(numPop==1&&j==0)
@@ -307,13 +312,13 @@ public class Rawify
 		    ins.addRoute(src,dest);
 		}
 
-		if(turn>0) {
+		if(turn>0&&times>1) {
 		    if(!end)
 			ins.addRoute(SwitchIPort.CSTO,dest2);
 		    else
 			ins.addRoute(SwitchIPort.CSTO,dest);
 		}
-
+		
 		/*if(times>2) {
 		  if(!begin) {
 		  if (KjcOptions.magicdram && node.getPrevious() != null &&
@@ -334,8 +339,9 @@ public class Rawify
 		  }
 		  }*/
 		code.appendIns(ins, init||primePump);
-		if(!begin&&times==4) {
+		if(times==4) {
 		    times=0;
+		    if(true||!begin) {
 		    //if(turn==0)
 		    //pendingSends++;
 		    if(pendingSends>0) {
@@ -352,17 +358,19 @@ public class Rawify
 				node.getNext().isOutputTrace())
 				createMagicDramStore((OutputTraceNode)node.getNext(), 
 						     node, (init || primePump), rawChip);
-
-			    /*if(turn>0) {
-			      if(!end)
-			      ins.addRoute(SwitchIPort.CSTO,dest2);
-			      else
-			      ins.addRoute(SwitchIPort.CSTO,dest);
-			      }*/
 			    
+			    if(turn>0&&l<1) {
+				if(!end)
+				    ins.addRoute(SwitchIPort.CSTO,dest2);
+				else
+				    ins.addRoute(SwitchIPort.CSTO,dest);
+			      }
+			    
+			    //if(!begin)
 			    code.appendIns(ins,init||primePump);
 			}
 			pendingSends=0;
+		    }
 		    }
 		}
 		for(int k = 1;k<numPop;k++) {
@@ -372,8 +380,9 @@ public class Rawify
 		    ins=new FullIns(tile);
 		    ins.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
 		    code.appendIns(ins, init||primePump);
-		    if(!begin&&times==4) {
+		    if(times==4) {
 			times=0;
+			if(true||!begin) {
 			//if(turn==0)
 			//pendingSends++;
 			if(pendingSends>0) {
@@ -391,23 +400,24 @@ public class Rawify
 				    createMagicDramStore((OutputTraceNode)node.getNext(), 
 							 node, (init || primePump), rawChip);
 				
-				/*if(turn>0) {
-				  if(!end)
-				  ins.addRoute(SwitchIPort.CSTO,dest2);
-				  else
-				  ins.addRoute(SwitchIPort.CSTO,dest);
-				  }*/
+				if(turn>0&&l<1) {
+				    if(!end)
+					ins.addRoute(SwitchIPort.CSTO,dest2);
+				    else
+					ins.addRoute(SwitchIPort.CSTO,dest);
+				}
 
+				//if(!begin)
 				code.appendIns(ins,init||primePump);
 			    }
 			    pendingSends=0;
 			}
+			}
 		    }
-		}
+		    }
 	    }
+	    
 	}
-	if(turn==0)
-	    code.appendIns(label, init||primePump);
 	}
 	/*for(int i=0;i<numTimes-1;i++) {
 	  FullIns newIns=new FullIns(tile);
@@ -417,8 +427,8 @@ public class Rawify
 	  FullIns newIns=new FullIns(tile,new JumpIns(label.getLabel()));
 	  newIns.addRoute(SwitchIPort.CSTO,dest);
 	  code.appendIns(newIns,init||primePump);*/
-	code.appendIns(new JumpIns(label.getLabel()),init||primePump);
-	//ins.setProcessorIns(new JumpIns(label.getLabel()));
+	//code.appendIns(new JumpIns(label.getLabel()),init||primePump);
+	ins.setProcessorIns(new JumpIns(label.getLabel()));
     }
 
     private static void createSwitchCode(FilterTraceNode node, Trace parent, 

@@ -1074,6 +1074,12 @@ public class FEIRToSIR implements FEVisitor, Constants {
 			    null);
   }
 
+    public Object visitStmtEmpty(StmtEmpty stmt) 
+    {
+        debug("In visitStmtEmpty\n");
+        return new JEmptyStatement(null, null);
+    }
+
   public Object visitStmtEnqueue(StmtEnqueue stmt) {
     debug("In visitStmtEnqueue\n");
     debug("  UNIMPLEMENTED\n");

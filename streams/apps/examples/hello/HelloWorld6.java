@@ -1,6 +1,6 @@
 /*
  * HelloWorld6.java: Hello, World example
- * $Id: HelloWorld6.str,v 1.3 2001-09-25 22:40:03 karczma Exp $
+ * $Id: HelloWorld6.java,v 1.1 2001-09-27 21:46:41 thies Exp $
  */
 
 import streamit.*;

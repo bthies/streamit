@@ -87,14 +87,32 @@ public class LowerWorkFunctions implements StreamVisitor
     /* visit a phased filter */
     public void visitPhasedFilter(SIRPhasedFilter self,
                                   SIRPhasedFilterIter iter) {
-        // This actually depends a little more on what the LIR representation
-        // of phased filters will be.  Mostly punt for now, but copy
-        // things out of visitFilter() that look productive:
-
-        // add entry/exit nodes to work function
-        addEntryExit(self.getWork());
-        // prune structure creation statements
-        removeStructureNew(self.getWork());
+        // At the point we're here, all of the calls to direct phases
+        // have been directly inserted.  We want to nuke the
+        // work function and update the phase functions.
+        Set done = new HashSet();
+        SIRWorkFunction[] phases = self.getInitPhases();
+        for (int i = 0; phases != null && i < phases.length; i++)
+        {
+            JMethodDeclaration phase = phases[i].getWork();
+            if (!done.contains(phase))
+            {
+                done.add(phase);
+                addEntryExit(phase);
+                removeStructureNew(phase);
+            }
+        }
+        phases = self.getPhases();
+        for (int i = 0; phases != null && i < phases.length; i++)
+        {
+            JMethodDeclaration phase = phases[i].getWork();
+            if (!done.contains(phase))
+            {
+                done.add(phase);
+                addEntryExit(phase);
+                removeStructureNew(phase);
+            }
+        }
     }
   
     /**

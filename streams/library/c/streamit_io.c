@@ -1,11 +1,12 @@
 /*
  * streamit_io.c: implementation of built-in IO filters
- * $Id: streamit_io.c,v 1.8 2002-12-19 19:44:15 dmaze Exp $
+ * $Id: streamit_io.c,v 1.9 2002-12-19 19:53:09 dmaze Exp $
  */
 
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "streamit.h"
 #include "streamit_internal.h"

@@ -33,5 +33,12 @@ public abstract class SIRStream extends SIROperator {
       this.methods = methods;
     }
 
+    /**
+     * sets the init function
+     */
+    public void setInit(JMethodDeclaration init) {
+	this.init = init;
+    }
+
 }
 

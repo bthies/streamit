@@ -111,5 +111,21 @@ public class SIRBuilder {
 	toplevel.add(f1);
 	toplevel.add(f2);
 
+	/* set init function to initialize components */
+	JStatement[] initStatements = 
+ 	  { new SIRInitStatement(null, null, JExpression.EMPTY, f1),
+	    new SIRInitStatement(null, null, JExpression.EMPTY, f2)};
+	toplevel.setInit(new JMethodDeclaration( /* tokref     */ null,
+				    /* modifiers  */ at.dms.kjc.
+				                    Constants.ACC_PUBLIC,
+				    /* returntype */ CStdType.Void,
+				    /* identifier */ "init",
+				    /* parameters */ JFormalParameter.EMPTY,
+				    /* exceptions */ CClassType.EMPTY,
+				    /* body       */ new JBlock(null,
+								initStatements,
+								null),
+				    /* javadoc    */ null,
+				    /* comments   */ null));
     }
 }

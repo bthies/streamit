@@ -9,90 +9,66 @@ public class Stream extends Operator
 
     // CONSTRUCTORS --------------------------------------------------------------------
 
-    public Channel input = null;
-    public Channel output = null;
+    // "input" and "output" MUST NOT BE INITIALIZED HERE or in the constructor!
+    // if they're initialized here or in the constructor, things break due
+    // to problem with order of initialization of data members and calling
+    // of constructors
+    public Channel input;
+    public Channel output;
+    
     LinkedList streamElements = new LinkedList ();
     
-    public Stream() 
+    public Stream ()
     {
-        StreamInit ();
-    	Init();
+        super ();
     }
-
+    
     public Stream(int n) 
     {
-        StreamInit ();
-	Init(n);
+        super (n);
     }
 
     public Stream(float f) 
     {
-        StreamInit ();
-	Init(f);
+        super (f);
     }
 
     public Stream(String str) 
     {
-        StreamInit ();
-        Init(str);
+        super (str);
     }
     
     public Stream(ParameterContainer params)
     {
-        StreamInit ();
-        Init (params);
+        super (params);
     }
 
-    // INIT FUNCTIONS ---------------------------------------------------------------------
-    
-    // initializatoin functions, to be over-ridden
-    public void Init() { ASSERT (false); }
-
-    // initializatoin functions, to be over-ridden
-    public void Init(int n) { ASSERT (false); }
-
-    // initializatoin functions, to be over-ridden
-    public void Init(float f) { ASSERT (false); }
-
-    // initializatoin functions, to be over-ridden
-    public void Init(String str) {ASSERT (false); }
-
-    // initializatoin functions, to be over-ridden
-    public void Init(ParameterContainer params) {ASSERT (false); }
-    
-    // general initialization function for Stream class only
-    
-    private void StreamInit ()
-    {
-        InitIO ();
-    }
-    
     public void InitIO () { }
     
-    // RESET FUNCTIONS (need to just call init functions) ---------------------------------
+    // RESET FUNCTIONS
 
     public MessageStub Reset() 
     {
-    	Init();
-    	return MESSAGE_STUB;
+        ASSERT (false);
+        return MESSAGE_STUB;
     }
 
     public MessageStub Reset(int n) 
     {
-    	Init(n);
-    	return MESSAGE_STUB;
+        ASSERT (false);
+        return MESSAGE_STUB;
     }
 
     public MessageStub Reset(String str)
     {
-    	Init(str);
-    	return MESSAGE_STUB;
+        ASSERT (false);
+        return MESSAGE_STUB;
     }
 
     // just a runtime hook to run the stream
     public void Run() 
     {
-        ConnectGraph ();
+        SetupOperator ();
         
         // execute the stream here
         while (true)
@@ -156,7 +132,7 @@ public class Stream extends Operator
                 ASSERT (sink != null);
                 
                 // setup the sink itself
-                sink.ConnectGraph ();
+                sink.SetupOperator ();
                 
                 if (source != null && source.GetIOField ("output") != null)
                 {

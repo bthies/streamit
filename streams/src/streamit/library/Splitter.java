@@ -11,6 +11,7 @@ public abstract class Splitter extends Operator
     public Channel output [] = null;
     
     public void InitIO () { }
+    public void Init () { }
     
     public abstract void Work ();
     
@@ -40,7 +41,7 @@ public abstract class Splitter extends Operator
             
             // connect it and retrieve its input and copy it into
             // the output array for this splitter
-            s.ConnectGraph ();
+            s.SetupOperator ();
             Channel channel = s.GetIOField ("input");
             output [outputIndx] = channel;
 

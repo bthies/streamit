@@ -7,8 +7,59 @@ import java.util.*;
 // Never explicitly instantiated
 class Operator extends DestroyedClass
 {
-    // I need a constructor to initialize the input/output members
-    public Operator ()
+    ParameterContainer initParams;
+    boolean initialized = false;
+    
+    public Operator() 
+    {
+        OperatorInit ();
+    	initParams = new ParameterContainer ("");
+    }
+
+    public Operator(int n) 
+    {
+        OperatorInit ();
+    	initParams = new ParameterContainer ("int").Add ("n", n);
+    }
+
+    public Operator(float f) 
+    {
+        OperatorInit ();
+    	initParams = new ParameterContainer ("float").Add ("f", f);
+    }
+
+    public Operator(String str) 
+    {
+        OperatorInit ();
+    	initParams = new ParameterContainer ("String").Add ("str", str);
+    }
+    
+    public Operator(ParameterContainer params)
+    {
+        OperatorInit ();
+    	initParams = new ParameterContainer ("ParameterContainer").Add ("params", params);
+    }
+
+    // INIT FUNCTIONS ---------------------------------------------------------------------
+    
+    // initializatoin functions, to be over-ridden
+    public void Init() { ASSERT (false); }
+
+    // initializatoin functions, to be over-ridden
+    public void Init(int n) { ASSERT (false); }
+
+    // initializatoin functions, to be over-ridden
+    public void Init(float f) { ASSERT (false); }
+
+    // initializatoin functions, to be over-ridden
+    public void Init(String str) {ASSERT (false); }
+
+    // initializatoin functions, to be over-ridden
+    public void Init(ParameterContainer params) {ASSERT (false); }
+    
+    // general initialization function for Stream class only
+    
+    private void OperatorInit ()
     {
         InitIO ();
     }
@@ -103,6 +154,10 @@ class Operator extends DestroyedClass
         {
             to.PushChar (from.PopChar ());
         } else
+        if (type == Float.TYPE)
+        {
+            to.PushFloat (from.PopFloat ());
+        } else
         if (type == Double.TYPE)
         {
             to.PushDouble (from.PopDouble ());
@@ -134,6 +189,16 @@ class Operator extends DestroyedClass
             for (indx = to.length - 1; indx >= 0; indx--)
             {
                 to [indx] .PushChar (data);
+            }
+        } else
+        if (type == Float.TYPE)
+        {
+            float data = from.PopFloat ();
+            
+            int indx;
+            for (indx = to.length - 1; indx >= 0; indx--)
+            {
+                to [indx] .PushFloat (data);
             }
         } else
         if (type == Double.TYPE)
@@ -172,6 +237,24 @@ class Operator extends DestroyedClass
     
     // a prototype work function
     void Work () { }
+
+    // this function will take care of all appropriate calls to init:
+    void SetupOperator ()
+    {
+        // don't re-initialize
+        if (initialized) return;
+        
+        ASSERT (initParams != null);
+        
+        if (initParams.GetParamName ().equals("")) Init ();
+        if (initParams.GetParamName ().equals("int")) Init (initParams.GetIntParam ("n"));
+        if (initParams.GetParamName ().equals("float")) Init (initParams.GetFloatParam ("f"));
+        if (initParams.GetParamName ().equals("String")) Init (initParams.GetStringParam ("str"));
+        if (initParams.GetParamName ().equals("ParameterContainer")) Init ((ParameterContainer) initParams.GetObjParam ("params"));
+        
+        ConnectGraph ();
+        initialized = true;
+    }
     
     public void ConnectGraph () 
     {

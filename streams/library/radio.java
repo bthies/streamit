@@ -30,7 +30,7 @@ class Butterfly extends Stream {
                 }
                 float calcWeight (int i, int N, int W)
                 {
-                    ASSERT (false); // must implement this function!
+                    //ASSERT (false); // must implement this function!
                     return 1;
                 }
                float weights[] = new float[W];
@@ -79,11 +79,12 @@ class Butterfly extends Stream {
 
 class FFT extends Stream {
     FFT (int N) { super (N); }
-   public void Init(final int N) {
-      Add(new SplitJoin() {
+   public void Init(final int K) {
+       System.out.println ("K1 = " + K);
+       Add (new SplitJoin() {
          public void Init() {
-            final int M = N;
-            SetSplitter(WEIGHTED_ROUND_ROBIN(N/2, N/2));
+            System.out.println ("K2 = " + K);
+            SetSplitter(WEIGHTED_ROUND_ROBIN(K/2, K/2));
             for(int i=0; i<2; i++) 
             
                Add(new SplitJoin() {
@@ -91,12 +92,12 @@ class FFT extends Stream {
                      SetSplitter(ROUND_ROBIN ());
                      Add(new Identity(Float.TYPE));
                      Add(new Identity(Float.TYPE));
-                     SetJoiner (WEIGHTED_ROUND_ROBIN(M/4, M/4));
+                     SetJoiner (WEIGHTED_ROUND_ROBIN(K/4, K/4));
                }});
             SetJoiner(ROUND_ROBIN ());
       }});
-      for(int i=2; i<N; i*=2)
-        Add(new Butterfly(new ParameterContainer ("").Add ("N", i).Add ("W", N)));
+      for(int i=2; i<K; i*=2)
+        Add(new Butterfly(new ParameterContainer ("").Add ("N", i).Add ("W", K)));
     }
 }
 
@@ -157,7 +158,7 @@ class RFtoIF extends Filter {
       setf(f);
    }
    public void Work() {
-      output.PushFloat(input.PopFloat()*weight[count++]);
+      output.PushFloat(input.PopFloat()* /* BUGBUG uncomment this: weight[count++]*/ 1);
       if (count==size) count = 0;
    }
    void setf(float f) {
@@ -234,14 +235,16 @@ class FloatPrinter extends Filter
 
     public void Work()
     {
-        System.out.print(input.PopFloat() + ", ");
+        System.out.println(input.PopFloat() + ", ");
     }
 
 }
 
 class TrunkedRadio extends Stream {
    int N = 64;
+   TrunkedRadio () { super (); }
    public void Init() {
+       N = 64;
       //ReadFromAtoD in = Add(new ReadFromAtoD());
        Add (new RandomSource ());
        Add(new RFtoIF(/*STARTFREQ*/ 50));

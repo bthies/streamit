@@ -12,6 +12,7 @@ public class Joiner extends Operator
     public Channel output = null;
     
     public void InitIO () { }
+    public void Init () { }
     
     void Add (Stream s)
     {
@@ -35,7 +36,7 @@ public class Joiner extends Operator
             // connect the input streams:
             Stream s = (Stream) iter.next ();
             ASSERT (s != null);
-            s.ConnectGraph ();
+            s.SetupOperator ();
             
             // retrieve the output of this filter, which will be an
             // input to this joiner

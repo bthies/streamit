@@ -24,6 +24,12 @@ public class ParameterContainer extends AssertedClass
             primitive = true;
         }
         
+        ParamData (float f)
+        {
+            data = new Float (f);
+            primitive = true;
+        }
+        
         ParamData (boolean d)
         {
             data = new Boolean (d);
@@ -40,6 +46,16 @@ public class ParameterContainer extends AssertedClass
             return intData.intValue ();
         }
 
+        float GetFloat ()
+        {
+            ASSERT (primitive);
+            
+            Float floatData = (Float) data;
+            ASSERT (floatData != null);
+            
+            return floatData.floatValue ();
+        }
+
         boolean GetBool ()
         {
             ASSERT (primitive);
@@ -48,6 +64,13 @@ public class ParameterContainer extends AssertedClass
             ASSERT (boolData != null);
             
             return boolData.booleanValue ();
+        }
+        
+        Object GetObj ()
+        {
+            ASSERT (!primitive);
+            
+            return data;
         }
     }
 
@@ -70,12 +93,21 @@ public class ParameterContainer extends AssertedClass
         return this;
     }
     
+    public ParameterContainer Add (String paramName, float floatParam)
+    {
+        ParamData data = new ParamData (floatParam);
+        parameters.put (paramName, data);
+        return this;
+    }
+    
     public ParameterContainer Add (String paramName, boolean boolParam)
     {
         ParamData data = new ParamData (boolParam);
         parameters.put (paramName, data);
         return this;
     }
+    
+    public String GetParamName () { return paramName; }
     
     public int GetIntParam (String paramName)
     {
@@ -87,6 +119,16 @@ public class ParameterContainer extends AssertedClass
         return paramData.GetInt ();
     }
 
+    public float GetFloatParam (String paramName)
+    {
+        ASSERT (parameters.containsKey (paramName));
+        
+        ParamData paramData = (ParamData) parameters.get (paramName);
+        ASSERT (paramData != null);
+        
+        return paramData.GetFloat ();
+    }
+
     public boolean GetBoolParam (String paramName)
     {
         ASSERT (parameters.containsKey (paramName));
@@ -95,5 +137,26 @@ public class ParameterContainer extends AssertedClass
         ASSERT (paramData != null);
         
         return paramData.GetBool ();
+    }
+
+    public Object GetObjParam (String paramName)
+    {
+        ASSERT (parameters.containsKey (paramName));
+        
+        ParamData paramData = (ParamData) parameters.get (paramName);
+        ASSERT (paramData != null);
+        
+        return paramData.GetObj ();
+    }
+    
+    public String GetStringParam (String paramName)
+    {
+        Object obj = GetObjParam (paramName);
+        String str = (String) obj;
+        
+        // make sure that either both or neither is null
+        ASSERT (obj == null ^ str != null);
+        
+        return str;
     }
 }

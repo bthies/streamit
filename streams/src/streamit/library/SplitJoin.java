@@ -161,7 +161,7 @@ public class SplitJoin extends Stream
     public void Add(Stream s)
     {
         ASSERT (joiner == null);
-
+        
         // add the stream to the Split
         if (splitter != null)
         {
@@ -178,12 +178,24 @@ public class SplitJoin extends Stream
     
     public void ConnectGraph ()
     {
+        // setup all children of this splitjoin
+        {
+            ListIterator iter;
+            iter = outputStreams.listIterator ();
+            while (iter.hasNext ())
+            {
+                Stream s = (Stream) iter.next ();
+                ASSERT (s != null);
+
+                s.SetupOperator ();
+            }
+        }
         // connect the SplitJoin with the Split and the Join
         if (splitter != null)
         {
             ASSERT (splitter != null);
             
-            splitter.ConnectGraph ();
+            splitter.SetupOperator ();
             
             input = splitter.GetIOField ("input", 0);
         }
@@ -192,7 +204,7 @@ public class SplitJoin extends Stream
         {
             ASSERT (joiner != null);
             
-            joiner.ConnectGraph ();
+            joiner.SetupOperator ();
             Channel outputs [] = joiner.GetIOFields ("output");
             ASSERT (outputs != null && outputs.length == 1);
             output = outputs [0];

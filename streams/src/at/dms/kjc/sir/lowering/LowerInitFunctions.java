@@ -231,7 +231,7 @@ public class LowerInitFunctions implements StreamVisitor {
 		statements.set(i,
 			       lowerInitStatement(str, (SIRInitStatement)o));
 	    } else if (o instanceof JBlock) {
-		lowerInitStatements(str, ((JBlock)o).getStatementList());
+		lowerInitStatements(str, ((JBlock)o).getStatements());
 	    }
 	}
     }
@@ -334,7 +334,7 @@ public class LowerInitFunctions implements StreamVisitor {
 	// translate init statements to function calls with context.
 	// this is modifying <init> without adding/removing extra
 	// stuff.
-	lowerInitStatements(self, init.getStatementList());
+	lowerInitStatements(self, init.getStatements());
 
 	// now add some things to the init function... 
 

@@ -679,12 +679,12 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * visits an expression statement
      */
     public void visitBlockStatement(JBlock self,
-                                    JStatement[] body,
                                     JavaStyleComment[] comments)
     {
         blockStart("BlockStatement");
-        for (int i = 0; i < body.length; i++)
-            body[i].accept(this);
+	for (ListIterator it = self.getStatementIterator(); it.hasNext(); ) {
+            ((JStatement)it.next()).accept(this);
+	}
         // comments
         blockEnd();
     }

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.35 2001-10-30 16:58:12 dmaze Exp $
+ * $Id: LIRToC.java,v 1.36 2001-10-30 17:32:57 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -691,11 +691,10 @@ public class LIRToC
      * prints an expression statement
      */
     public void visitBlockStatement(JBlock self,
-                                    JStatement[] body,
                                     JavaStyleComment[] comments) {
         print("{");
         pos += TAB_SIZE;
-        visitCompoundStatement(body);
+        visitCompoundStatement(self.getStatementArray());
         if (comments != null) {
             visitComments(comments);
         }

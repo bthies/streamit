@@ -665,12 +665,12 @@ class Unroller extends EmptyAttributeVisitor {
      * prints an expression statement
      */
     public Object visitBlockStatement(JBlock self,
-				      JStatement[] body,
 				      JavaStyleComment[] comments) {
-	for (int i=0; i<body.length; i++) {
-	    JStatement newBody = (JStatement)body[i].accept(this);
-	    if (newBody!=null && newBody!=body[i]) {
-		self.setStatement(i, newBody);
+	for (ListIterator it = self.getStatementIterator(); it.hasNext(); ) {
+	    JStatement oldBody = (JStatement)it.next();
+	    JStatement newBody = (JStatement)oldBody.accept(this);
+	    if (newBody!=null && newBody!=oldBody) {
+		it.set(newBody);
 	    }
 	}
 	return self;

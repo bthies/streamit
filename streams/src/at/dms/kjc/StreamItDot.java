@@ -217,7 +217,8 @@ public class StreamItDot implements AttributeStreamVisitor
         NamePair pair = new NamePair();
         
         // Print this within a subgraph.
-        print("subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n");
+        print(getClusterString(self));
+	//print("subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n");
         
         // Walk through each of the elements in the pipeline.
         Iterator iter = self.getChildren().iterator();
@@ -235,7 +236,7 @@ public class StreamItDot implements AttributeStreamVisitor
         print("}\n");
         return pair;
     }
-
+       
     /* pre-visit a splitjoin */
     public Object visitSplitJoin(SIRSplitJoin self,
                                  JFieldDeclaration[] fields,
@@ -247,7 +248,8 @@ public class StreamItDot implements AttributeStreamVisitor
         NamePair pair = new NamePair();
         
         // Create a subgraph again...
-        print("subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n");
+        print(getClusterString(self));
+        //print("subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n");
 
         // Visit the splitter and joiner to get their node names...
         NamePair np;
@@ -280,7 +282,8 @@ public class StreamItDot implements AttributeStreamVisitor
         NamePair np;
         
         // Create a subgraph again...
-        print("subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n");
+        print(getClusterString(self));
+        //print("subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n");
 
         // Visit the splitter and joiner.
         np = (NamePair)self.getJoiner().accept(this);
@@ -299,4 +302,14 @@ public class StreamItDot implements AttributeStreamVisitor
         print("}\n");
         return new NamePair(joinName, splitName);
     }
+
+    /**
+     * Prints out the subgraph cluser line that is needed in to make clusters. This method is overridden to make colored
+     * pipelines and splitjoins in LinearDot.
+     **/
+    public String getClusterString(SIRStream self) {
+	return "subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n";
+    }
+
+
 }

@@ -178,25 +178,73 @@ public class FusePipe {
 	// if we have just one filter, do nothing
 	if (pipe.size()==1) {
 	    return;
-	}
+	} 
 
 	// check that all the filters are fusable
 	for (int i=0; i<pipe.size(); i++) {
 	    assert isFusable(pipe.get(i)):
-                "Trying to fuse a filter that is unfusable: " + 
-                pipe.get(i) + " " + pipe.get(i).getName();
+		"Trying to fuse a filter that is unfusable: " + 
+		pipe.get(i) + " " + pipe.get(i).getName();
 	}
+	
+	
+	if (!KjcOptions.modfusion) {
 
-	// rename filter contents
-	for (int i=0; i<pipe.size(); i++) {
-	    RenameAll.renameFilterContents((SIRFilter)pipe.get(i));
-	}
+	    //if no modulation just call the shift pipeline fusion
 
-	// dispatch to the actual fuser that we use
-	SIRFilter result;
-	if (KjcOptions.modfusion) {
-	    ModuloPipelineFusion.doFusion(pipe);
+	    // rename filter contents
+	    for (int i=0; i<pipe.size(); i++) {
+		RenameAll.renameFilterContents((SIRFilter)pipe.get(i));
+	    }
+	    
+	    // dispatch to the actual fuser that we use
+	    ShiftPipelineFusion.doFusion(pipe);
+
 	} else {
+
+	    //if modulation is enabled use shift pipeline fusion to
+	    //fuse segments where no filter is peeking, and only
+	    //use modilo pipeline fusion on a pair of filters where
+	    //second filter is peeking
+
+	    int n = pipe.size();
+
+	    //System.out.println("Internal fuse! size: "+n);
+
+	    for (int i = 1; i < n; i++) {
+
+		SIRFilter f = (SIRFilter)pipe.get(i);
+		if (f.getPeekInt() > f.getPopInt()) {
+
+		    //System.out.println("Found A Peeking Filter! at: "+i);
+
+		    // recursively:
+		    // 1. first fuse rest of the pipeline 
+		    // 2. then the begininig of the pipeline
+		    fuse((SIRFilter)pipe.get(i), (SIRFilter)pipe.get(n-1)); 
+		    fuse((SIRFilter)pipe.get(0), (SIRFilter)pipe.get(i-1));
+
+		    //rename filter contents
+		    for (int y=0; y<pipe.size(); y++) {
+			RenameAll.renameFilterContents((SIRFilter)pipe.get(y));
+		    }
+		    
+		    //dispatch modulo fusion to fuse a pair of filters
+		    ModuloPipelineFusion.doFusion(pipe);
+		    return;
+		}
+	    }
+
+	    //System.out.println("Found No Peeking Filter!");
+
+	    //no peeking in the pipeline segment fuse using shift fusion!
+	    
+	    // rename filter contents
+	    for (int y=0; y<pipe.size(); y++) {
+		RenameAll.renameFilterContents((SIRFilter)pipe.get(y));
+	    }
+	    
+	    // dispatch to the actual fuser that we use
 	    ShiftPipelineFusion.doFusion(pipe);
 	}
     }

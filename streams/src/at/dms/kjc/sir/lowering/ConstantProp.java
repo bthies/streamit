@@ -62,8 +62,10 @@ public class ConstantProp {
 	    }
 	    // iterate until nothing unrolls
 	} while (unroller.hasUnrolled());
-	// recurse into sub-streams
-	recurse(str, constants);
+	// if <str> is a container, recurse from it to its sub-streams
+	if (str instanceof SIRContainer) {
+	    recurseFrom((SIRContainer)str, constants);
+	}
     }
 
     /**
@@ -125,51 +127,56 @@ public class ConstantProp {
     /**
      * Recurses from <str> into all its substreams.
      */
-    private void recurse(SIRStream str, final Hashtable constants) {
+    private void recurseFrom(SIRContainer str, final Hashtable constants) {
 	// if we're at the bottom, we're done
 	if (str.getInit()==null) {
 	    return;
 	}
-	// iterate through statements of init function, looking for SIRInit's
-	str.getInit().accept(new SLIREmptyVisitor() {
-		public void visitInitStatement(SIRInitStatement self,
-					       SIRStream target) {
-		    recurse(self, constants);
-		}
-	    });
+	// recursion method depends on whether or not there are still
+	// init statements
+	if (Flattener.INIT_STATEMENTS_RESOLVED) {
+	    for (int i=0; i<str.size(); i++) {
+		recurseInto(str.get(i), str.getParams(i), constants);
+	    }
+	} else {
+	    // iterate through statements of init function, looking for
+	    // SIRInit's
+	    str.getInit().accept(new SLIREmptyVisitor() {
+		    public void visitInitStatement(SIRInitStatement self,
+						   SIRStream target) {
+			recurseInto(self.getTarget(), self.getArgs(), constants);
+		    }
+		});
+	}
     }
 
     /**
-     * Recurses using <init> given that <constants> were built for
-     * the parent.
+     * Recurses into <str> given that it is instantiated with
+     * arguments <args>, and <constants> were built for the parent.
      */
-    private void recurse(SIRInitStatement initStatement, Hashtable constants) {
-	// get the init function of the target--this is where analysis
-	// will continue
-	JMethodDeclaration initMethod = initStatement.getTarget().getInit();
+    private void recurseInto(SIRStream str, List args, Hashtable constants) {
+	JMethodDeclaration initMethod = str.getInit();
 	// if there is no init function, we're done
 	if (initMethod==null) {
 	    return;
 	}
-	// otherwise, augment the hashtable mapping the parameters of
-	// the init function to any constants that appear in the call...
-	// get args to init function
-	List args = initStatement.getArgs();
-	// get parameters of init function
 	JFormalParameter[] parameters = initMethod.getParameters();
 	// build new constants
 	for (int i=0; i<args.size(); i++) {
 	    // if we are passing an arg to the init function...
 	    if (args.get(i) instanceof JLiteral) {
-		// if it's already a literal, just record it
+		// if it's already a literal, record it
 		constants.put(parameters[i], (JLiteral)args.get(i));
 	    } else if ((args.get(i) instanceof JLocalVariableExpression)&&constants.get(((JLocalVariableExpression)args.get(i)).getVariable())!=null) {
-		// otherwise if it's associated w/ a literal, then record that
-		constants.put(parameters[i], constants.get((JLocalVariableExpression)args.get(i)));
+		// otherwise if it's associated w/ a literal, then
+		// record that and set the actual argument to be a literal
+		JExpression constant = (JExpression)constants.get(((JLocalVariableExpression)args.get(i)).getVariable());
+		constants.put(parameters[i], constant);
+		args.set(i, constant);
 	    }
 	}
 	// recurse into sub-stream
-	propagateAndUnroll(initStatement.getTarget(), constants);
+	propagateAndUnroll(str, constants);
     }
 }
 

@@ -1,6 +1,7 @@
 package at.dms.kjc.sir.lowering;
 
 import java.util.*;
+import at.dms.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 
@@ -76,6 +77,16 @@ class InitializationHoister extends SLIRReplacingVisitor {
 				
 	// add <child, params> to parent
 	parent.add(self.getTarget(), self.getArgs());
+
+	// Since all of the args seem to be constant for now (and I
+	// think the RAW backend assumes it), this is a nice place to
+	// check it
+	for (int i=0; i<self.getArgs().size(); i++) {
+	    Utils.assert(self.getArgs().get(i) instanceof JLiteral,
+			 "Expected constant arguments to init, but found non-constant:\n" +
+			 self.getArgs().get(i) + "\n");
+	}
+	
 	// return an empty statement to eliminate the init
 	// statement
 	return new JEmptyStatement(null, null);

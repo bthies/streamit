@@ -15,6 +15,12 @@ import at.dms.kjc.lir.*;
  * lower-level function calls.
  */
 public class Flattener {
+    /**
+     * This variable is toggled once SIRInitStatements have been
+     * eliminated in favor of a hierarchical stream represenation
+     * within the SIRContainers.
+     */
+    public static boolean INIT_STATEMENTS_RESOLVED = false;
 
     /**
      * Flattens <str> into a low IR representation, given that <interfaces>
@@ -42,6 +48,7 @@ public class Flattener {
 
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
+	INIT_STATEMENTS_RESOLVED = true;
 
 	// dump the original graph to a dot format
 	StreamItDot.printGraph(str, "before.dot");

@@ -2,7 +2,7 @@
 #
 # rt-results.py: present QMTest results in CAG RT
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: rt-results.py,v 1.2 2003-12-16 21:12:49 dmaze Exp $
+# $Id: rt-results.py,v 1.3 2003-12-17 19:22:02 dmaze Exp $
 
 import os
 import os.path
@@ -112,15 +112,7 @@ def print_rt_regtest_item(rt_root):
     f.write('''<tr class=<%$Class%>>
 <td><b><a href="<%"$Test.html"%>"><%$Test%></a></b></td>
 <td><%$Status%></td><td>
-<%PERL>
-$Tickets->ClearRestrictions;
-$Tickets->LimitStatus(VALUE => "new");
-$Tickets->LimitStatus(VALUE => "open");
-$Tickets->LimitQueue(VALUE => "StreamIt Bugs", OPERATOR => "=");
-$Tickets->LimitCustomField(CUSTOMFIELD => 3, OPERATOR => "=",
-                           VALUE => "$Test");
-while (my $t = $Tickets->Next) {
-</%PERL>
+% foreach my $t (@{$TestTickets->{$Test}}) {
 <a href="<%$RT::WebPath%>/Ticket/Display.html?id=<%$t->Id%>"><%$t->id%>
 (<%$t->OwnerObj->Name%>) <%$t->Subject%></a><br>
 % }
@@ -132,6 +124,7 @@ my $Tickets = RT::Tickets->new($session{"CurrentUser"});
 $Class => "oddline"
 $Test => undef
 $Status => undef
+$TestTickets => undef
 </%ARGS>
 ''')
 
@@ -158,7 +151,7 @@ def print_rt_listing(disposition, rt_root):
     ofn = os.path.join(rt_root, 'listing.html')
     f = open(ofn, 'w')
 
-    f.write('<& /Elements/Header, Title => loc("StreamIt RegTest") &>\n')
+    f.write('<& /Elements/Header, Title => loc("StreamIt Regtest") &>\n')
     f.write('<& /Elements/Tabs, Title => loc("StreamIt Regtest") &>\n')
     f.write('<table border=0 width="100%">\n')
     f.write('<tr align=top><td>\n')
@@ -168,13 +161,28 @@ def print_rt_listing(disposition, rt_root):
     names = disposition.keys()
     names.sort()
     for k in names:
-        f.write(('<& RegtestItem, Class => "%s", Test => "%s", ' +
-                 'Status => "%s" &>\n') % (line, k, disposition[k]))
+        f.write(('<& RegtestItem, Class => "%s", Test => "%s",\n' +
+                 'Status => "%s", TestTickets => $TestTickets &>\n') %
+                (line, k, disposition[k]))
         line = nextline(line)
 
     f.write('<& /Elements/TitleBoxEnd &>\n')
     f.write('</td></tr></table>\n')
     f.write('<& /Elements/Footer &>\n')
+    f.write("""<%INIT>
+my $TestTickets = {};
+my $Tickets = RT::Tickets->new($session{"CurrentUser"});
+$Tickets->ClearRestrictions;
+$Tickets->LimitStatus(VALUE => "new");
+$Tickets->LimitStatus(VALUE => "open");
+$Tickets->LimitQueue(VALUE => "StreamIt Bugs", OPERATOR => "=");
+while (my $t = $Tickets->Next) {
+  my $Values = $t->CustomFieldValues("Regtest");
+  while (my $v = $Values->Next) {
+    push @{$TestTickets->{$v->Content}}, $t;
+  }
+}
+</%INIT>\n""")
     f.close()
 
 def print_rt_details(resname, rt_root):

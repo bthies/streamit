@@ -115,7 +115,10 @@ public class FuseSimpleSplit {
 	// if parent of <sj> is a pipeline, then copy these children
 	// in, in place of the original filter
 	SIRContainer parent = sj.getParent();
-	if (parent instanceof SIRPipeline) {
+	// DON'T CONSIDER THIS CASE SINCE IT HINDERS
+	// PARTITIONING--would like things to end up in their own
+	// nested pipeline so that pipeline can be fused
+	if (false) { //parent instanceof SIRPipeline) {
 	    int index = parent.indexOf(sj);
 	    parent.remove(index);
 	    for (int i=fused.size()-1; i>=0; i--) {

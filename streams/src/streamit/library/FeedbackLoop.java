@@ -9,29 +9,324 @@ public class FeedbackLoop extends Stream
 {
     Joiner joiner;
     Splitter splitter;
-    List enqueued;
+    List enqueued = new java.util.ArrayList();
     int delay;
     Stream body, loop;
 
-    // constructor with delay left unspecified
-    public FeedbackLoop(int N)
+    public FeedbackLoop(float a, float b, int c)
     {
-        super(N);
-        enqueued = new java.util.ArrayList();
+        super(a, b, c);
     }
 
-    // constructor with delay left unspecified
+    public FeedbackLoop(int a, float b)
+    {
+        super(a, b);
+    }
+
+    public FeedbackLoop(float[] b)
+    {
+        super(b);
+    }
+
+    public FeedbackLoop(int a, float[] b)
+    {
+        super(a, b);
+    }
+
+    public FeedbackLoop(int a, int[] b)
+    {
+        super(a, b);
+    }
+
+    public FeedbackLoop(int a, float[][] b)
+    {
+        super(a, b);
+    }
+
+    public FeedbackLoop(int i1, int i2, float f) {
+        super(i1, i2, f);
+    }
+
+    public FeedbackLoop(int i1, int i2, int i3, float[] f) {
+        super(i1, i2, i3, f);
+    }
+
+    public FeedbackLoop(int i1, int i2, float f1, float f2) {
+        super(i1, i2, f1, f2);
+    }
+
+    public FeedbackLoop(int a, int b, float[] c)
+    {
+        super(a, b, c);
+    }
+
+    public FeedbackLoop(int a, int b, float[][] c)
+    {
+        super(a, b, c);
+    }
+
+    public FeedbackLoop(int a, float[] c, float[] d) 
+    { 
+        super (a, c, d); 
+    }
+
+    public FeedbackLoop(int a, int b, int c, int d, float[][] e)
+    {
+        super(a, b, c, d, e);
+    }
+
+    public FeedbackLoop(int a, int b, int c, int d, float[][] e, float[][] f)
+    {
+        super(a, b, c, d, e, f);
+    }
+
+    public FeedbackLoop(int a, int b, int c, float[][] e, float[][] f)
+    {
+        super(a, b, c, e, f);
+    }
+
+    public FeedbackLoop(int a, int b, int c, int d, int e, float f)
+    {
+        super(a, b, c, d, e, f);
+    }
+
+    public FeedbackLoop(int a, int b, int c, int d, int e, int f, float g, float h)
+    {
+        super(a, b, c, d, e, f, g, h);
+    }
+
+    public FeedbackLoop(int a, int b, int c, int d, int e, int f, int g, float h, float i)
+    {
+        super(a, b, c, d, e, f, g, h, i);
+    }
+
+    public FeedbackLoop(float a, int b)
+    {
+        super(a, b);
+    }
+
+    public FeedbackLoop(float a, float b)
+    {
+        super(a, b);
+    }
+
+    public FeedbackLoop(float a, float b, float c)
+    {
+        super(a, b, c);
+    }
+
+    public FeedbackLoop(float a, float b, float c, float d)
+    {
+        super(a, b, c, d);
+    }
+
+    public FeedbackLoop(float a, float b, float c, float d, int e, int f)
+    {
+        super(a, b, c, d, e, f);
+    }
+
+    public FeedbackLoop(float a, float b, int c, int d)
+    {
+        super(a, b, c, d);
+    }
+
+    public FeedbackLoop(float x, float y, float z, int a, float b)
+    {
+        super(x,y,z,a,b);
+    }
+
+    public FeedbackLoop(int a, int b, int c, float d, int e)
+    {
+        super (a,b,c,d,e);
+    }
+
+    public FeedbackLoop(int a, int b, int c, float d, float e)
+    {
+        super (a,b,c,d,e);
+    }
+
+    public FeedbackLoop(float a, float b, float c, int d, int e, int f)
+    {
+        super (a,b,c,d,e,f);
+    }
+
+    public FeedbackLoop(float a, float b, int c, int d, int e, int f)
+    {
+        super (a,b,c,d,e,f);
+    }
+
+    public FeedbackLoop(float a, float b, int c, int d, int e, int f, int g)
+    {
+        super (a,b,c,d,e,f,g);
+    }
+
+    public FeedbackLoop(int a, int b, float c, int d, float e)
+    {
+        super (a,b,c,d,e);
+    }
+
+    public FeedbackLoop(float x, float y, float z, int a)
+    {
+        super(x,y,z,a);
+    }
+
+    public FeedbackLoop(float x, float y, float z, int a, int b)
+    {
+        super(x,y,z,a,b);
+    }
+
+    public FeedbackLoop(float x, float y, int a, int b, int c)
+    {
+        super(x,y,a,b,c);
+    }
+
+    public FeedbackLoop(float f1, int i1, float[] f2, float[] f3, int i2) {
+        super(f1, i1, f2, f3, i2);
+    }
+
     public FeedbackLoop()
     {
-        super();
-        enqueued = new java.util.ArrayList();
+        super ();
+    }
+
+    public FeedbackLoop(char c)
+    {
+        super (c);
+    }
+
+    public FeedbackLoop(int n)
+    {
+        super (n);
+    }
+
+    public FeedbackLoop(boolean b1)
+    {
+        super(b1);
+    }
+
+    public FeedbackLoop(int n1, int n2, boolean b1)
+    {
+        super(n1, n2, b1);
+    }
+
+    public FeedbackLoop(int n1, boolean b1)
+    {
+        super(n1, b1);
+    }
+
+    public FeedbackLoop(int x, int y)
+    {
+        super (x, y);
+    }
+
+    public FeedbackLoop(int x, int y, int z)
+    {
+        super (x, y, z);
+    }
+
+    public FeedbackLoop(int x, int y, int z, float[][] f)
+    {
+        super (x, y, z, f);
+    }
+
+    public FeedbackLoop(int x, int y, int z, int a)
+    {
+        super (x, y, z, a);
+    }
+
+    public FeedbackLoop(int a, int b, int c, int d, int e) { super(a, b, c, d, e); }
+
+    public FeedbackLoop(int a, int b, int c, int d, int e, int f, int g) 
+    {
+	super (a, b, c, d, e, f, g);
+    }
+
+    public FeedbackLoop(int n1, int n2, int n3,
+		  int n4, float f1) {
+      super(n1, n2, n3, n4, f1);
+    }
+
+    public FeedbackLoop(int x, int y, int z,
+		   int a, int b, int c)
+    {
+        super (x, y, z, a, b, c);
+    }
+
+    public FeedbackLoop(int x, int y, int z,
+		   int a, int b, int c, int d, float f)
+    {
+        super (x, y, z, a, b, c, d, f);
+    }
+
+    public FeedbackLoop(int n1, int n2, int n3,
+		   int n4, int n5, int n6, int n7, int n8, 
+		   int n9, int n10, float f)
+    {
+        super (n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, f);
+    }
+
+    public FeedbackLoop(int n1, int n2, int n3,
+		   int n4, int n5, int n6, int n7, int n8, 
+		   int n9)
+    {
+        super (n1, n2, n3, n4, n5, n6, n7, n8, n9);
     }
 
     public FeedbackLoop(float f)
     {
-        super(f);
-        enqueued = new java.util.ArrayList();
+        super (f);
     }
+
+    public FeedbackLoop(String str)
+    {
+        super (str);
+    }
+
+    public FeedbackLoop(ParameterContainer params)
+    {
+        super (params);
+    }
+
+    public FeedbackLoop( int i1, 
+		   int i2, 
+		   int i3, 
+		   int i4, 
+		   int i5, 
+		   int i6, 
+		   int i7, 
+		   int i8, 
+		   int i9, 
+		   float f) {
+	super(i1, i2, i3, i4, i5, i6, i7, i8, i9, f);
+    }
+
+    public FeedbackLoop( int i1, 
+		   int i2, 
+		   int i3, 
+		   int i4, 
+		   int i5, 
+		   int i6, 
+		   float f) {
+	super(i1, i2, i3, i4, i5, i6, f);
+    }
+
+    public FeedbackLoop(int n1, int n2, float f1[], float f2[])
+    {
+        super(n1, n2, f1, f2);
+    }
+
+    public FeedbackLoop(short s1, short s2, short s3) {
+	super(s1, s2, s3);
+    }
+
+    public FeedbackLoop(int i1,int i2,int i3,float f1) {super(i1,i2,i3,f1);}
+
+    public FeedbackLoop(Object o1) {super(o1);}
+    public FeedbackLoop(Object o1, int i1) {super(o1, i1);}
+    public FeedbackLoop(int i1, int i2, Object o1) {super(i1,i2,o1);}
+    public FeedbackLoop(Object o1,Object o2) {super(o1,o2);}
+
+    public FeedbackLoop(Object o1,Object o2,Object o3) {super(o1,o2,o3);}
 
     // set delay of feedback loop--that is, difference in original
     // stream position between items that arrive to joiner at same time,
@@ -310,34 +605,156 @@ public class FeedbackLoop extends Stream
 
     // this is silly, but I need to put these here to make them easily
     // accessible - they're just wrappers for SplitJoin
-    public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN (int w1)
+    public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(int w1)
     {
-        return SplitJoin.WEIGHTED_ROUND_ROBIN (w1);
+        return new SplitJoin.SplitJoinType(2).addWeight(w1);
     }
 
-    public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2)
+    public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(int w1, int w2)
     {
-        return SplitJoin.WEIGHTED_ROUND_ROBIN (w1, w2);
+        return new SplitJoin.SplitJoinType(2).addWeight(w1).addWeight(w2);
     }
 
-    public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3)
+    public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(int w1, int w2, int w3)
     {
-        return SplitJoin.WEIGHTED_ROUND_ROBIN (w1, w2, w3);
+        return new SplitJoin.SplitJoinType(2).addWeight(w1).addWeight(w2).addWeight(w3);
     }
 
-    public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3, int w4, int w5, int w6, int w7)
+    public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(
+        int w1,
+        int w2,
+        int w3,
+        int w4)
     {
-        return SplitJoin.WEIGHTED_ROUND_ROBIN (w1, w2, w3, w4, w5, w6, w7);
+        return new SplitJoin.SplitJoinType(2)
+            .addWeight(w1)
+            .addWeight(w2)
+            .addWeight(w3)
+            .addWeight(w4);
     }
 
-    public static SplitJoin.SplitJoinType ROUND_ROBIN ()
+    public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(
+        int w1,
+        int w2,
+        int w3,
+        int w4,
+	int w5)
     {
-        return SplitJoin.ROUND_ROBIN ();
+        return new SplitJoin.SplitJoinType(2)
+            .addWeight(w1)
+            .addWeight(w2)
+            .addWeight(w3)
+            .addWeight(w4)
+            .addWeight(w5);
     }
 
-    public static SplitJoin.SplitJoinType DUPLICATE ()
+    public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(
+        int w1,
+        int w2,
+        int w3,
+        int w4,
+        int w5,
+        int w6,
+        int w7)
     {
-        return SplitJoin.DUPLICATE ();
+        return new SplitJoin.SplitJoinType(2)
+            .addWeight(w1)
+            .addWeight(w2)
+            .addWeight(w3)
+            .addWeight(w4)
+            .addWeight(w5)
+            .addWeight(w6)
+            .addWeight(w7);
+    }
+
+    public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(
+        int w1,
+        int w2,
+        int w3,
+        int w4,
+        int w5,
+        int w6,
+        int w7,
+        int w8,
+        int w9,
+        int w10,
+        int w11,
+        int w12)
+    {
+        return new SplitJoin.SplitJoinType(2)
+            .addWeight(w1)
+            .addWeight(w2)
+            .addWeight(w3)
+            .addWeight(w4)
+            .addWeight(w5)
+            .addWeight(w6)
+            .addWeight(w7)
+            .addWeight(w8)
+            .addWeight(w9)
+            .addWeight(w10)
+            .addWeight(w11)
+            .addWeight(w12);
+    }
+
+    public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(
+        int w1,
+        int w2,
+        int w3,
+        int w4,
+        int w5,
+        int w6,
+        int w7,
+        int w8,
+        int w9,
+        int w10,
+        int w11,
+        int w12,
+        int w13,
+        int w14,
+        int w15,
+        int w16,
+        int w17,
+        int w18)
+    {
+        return new SplitJoin.SplitJoinType(2)
+            .addWeight(w1)
+            .addWeight(w2)
+            .addWeight(w3)
+            .addWeight(w4)
+            .addWeight(w5)
+            .addWeight(w6)
+            .addWeight(w7)
+            .addWeight(w8)
+            .addWeight(w9)
+            .addWeight(w10)
+            .addWeight(w11)
+            .addWeight(w12)
+            .addWeight(w13)
+            .addWeight(w14)
+            .addWeight(w15)
+            .addWeight(w16)
+            .addWeight(w17)
+            .addWeight(w18);
+    }
+
+    public static SplitJoin.SplitJoinType ROUND_ROBIN()
+    {
+        return new SplitJoin.SplitJoinType(1).addWeight(1);
+    }
+
+    public static SplitJoin.SplitJoinType ROUND_ROBIN(int weight)
+    {
+        return new SplitJoin.SplitJoinType(1).addWeight(weight);
+    }
+
+    public static SplitJoin.SplitJoinType DUPLICATE()
+    {
+        return new SplitJoin.SplitJoinType(3);
+    }
+
+    public static SplitJoin.SplitJoinType NULL()
+    {
+        return new SplitJoin.SplitJoinType(4);
     }
 
     // ----------------------------------------------------------------

@@ -15,283 +15,314 @@ public class Pipeline extends Stream
     /**
      * Default constructor
      */
-    public Pipeline () { }
+    public Pipeline () { super(); }
 
-    /**
-     * Constructor with an int.  Just calls the parent (as every construtor
-     * should (more or less)
-     */
-    public Pipeline (int n) { super (n); }
-
-    /** 
-     * Constructor with a float.
-     */
-    public Pipeline (float x) { super(x);}
-
-    /** 
-     * Constructor with a float[].
-     */
-    public Pipeline (float [] x) { super(x);}
-
-    /** 
-     * Constructor with a float, float.
-     */
-    public Pipeline (float x1, float x2) { super(x1, x2);}
-    
-    /** 
-     * Constructor with a float, int.
-     */
-    public Pipeline (float x1, int x2) { super(x1, x2);}
-    
-    /** 
-     * Constructor with a float, float, int.
-     */
-    public Pipeline (float x1, float x2, int x3) { super(x1, x2, x3);}
-    
-
-    /** 
-     * Constructor with a float, float, float.
-     */
-    public Pipeline (float x1, float x2, float x3) { super(x1, x2, x3);}
-    
-    /** 
-     * Constructor with a float, int, float[], float[], int.
-     */
-    public Pipeline(float f1, int i1, float[] f2, float[] f3, int i2) {
-        super(f1, i1, f2, f3, i2);
+    public Pipeline(float a, float b, int c)
+    {
+        super(a, b, c);
     }
 
-    /** 
-     * Constructor with a int , float [].
-     */
-    public Pipeline (int x1, float[] x2) { super(x1, x2);}
-
-    /**
-     * Constructor with two ints.
-     */
-    public Pipeline (int x, int y) { super (x, y); }
-
-    /**
-     * Constructor with int, float
-     */
-    public Pipeline (int x, float f) { super(x, f); }
-
-    /**
-     * Constructor.
-     */
-    public Pipeline (int a, int b, float[][] c) { super (a, b, c); }
-
-    /**
-     * Constructor.
-     */
-    public Pipeline (int a, int b, int c, float[][] x, float[][]y) { super (a, b, c,x,y); }
-
-    /**
-     * Constructor.
-     */
-    public Pipeline (int a, int b, float[] c) { super (a, b, c); }
-
-    /**
-     * Constructor.
-     */
-    public Pipeline (int a, float[] c, float[] d) { super (a, c, d); }
-
-    /**
-     * Constructor.
-     */
-    public Pipeline (int a, int b, float[] c, float[] d) { super (a, b, c, d); }
-
-    /**
-     * Constructor.
-     */
-    public Pipeline (int a, int b, int c, float[] d) { super (a, b, c, d); }
-
-    /**
-     * Constructor.
-     */
-    public Pipeline (int a, int b, int c, float[][] d) { super (a, b, c, d); }
-
-    /**
-     * Constructor.
-     */
-    public Pipeline (int a, int b, int c, int d, float[][] e) { super (a, b, c, d, e); }
-
-    /**
-     * Constructor.
-     */
-    public Pipeline (int a, int b, int c, int d, float[][] e, float[][] f) { super (a, b, c, d, e, f); }
-
-    /**
-     * Constructor with three ints.
-     */
-    public Pipeline (int x, int y, int z) { super (x, y, z); }
-
-    /**
-     * Constructor with three floats, three ints
-     */
-    public Pipeline (float x, float y, float z, int a, int b, int c) {super(x,y,z,a,b,c);}
-
-
-    /**
-     * Constructor with three floats, two ints
-     */
-    public Pipeline (float x, float y, float z, int a, int b) {super(x,y,z,a,b);}
-
-    /**
-     * Constructor with four ints.
-     */
-    public Pipeline (int x, int y, int z, int a) { super (x, y, z, a); }
-
-    /**
-     * Constructor with five ints.
-     */
-    public Pipeline (int a, int b, int c, int d, int e) { super(a, b, c, d, e); }
-
-    /**
-     * Constructor with six ints.
-     */
-    public Pipeline (int a, int b, int c, int d, int e, int f) { 
-     super(a, b, c, d, e, f); 
+    public Pipeline(int a, float b)
+    {
+        super(a, b);
     }
 
-    /**
-     * Constructor with seven ints.
-     */
-    public Pipeline (int a, int b, int c, int d, int e, int f, int g) { 
-     super(a, b, c, d, e, f, g); 
+    public Pipeline(float[] b)
+    {
+        super(b);
     }
 
-   /**
-     * Constructor with four floats and two ints.
-     */
-    public Pipeline (float a, float b, float c, float d, int e, int f) { 
-     super(a, b, c, d, e, f); 
+    public Pipeline(int a, float[] b)
+    {
+        super(a, b);
     }
 
-    /**
-     * Constructor with three floats, an int and anther float.
-     */
-    public Pipeline (float x, float y, float z, int a, float b)
+    public Pipeline(int a, int[] b)
+    {
+        super(a, b);
+    }
+
+    public Pipeline(int a, float[][] b)
+    {
+        super(a, b);
+    }
+
+    public Pipeline(int i1, int i2, float f) {
+        super(i1, i2, f);
+    }
+
+    public Pipeline(int i1, int i2, int i3, float[] f) {
+        super(i1, i2, i3, f);
+    }
+
+    public Pipeline(int i1, int i2, float f1, float f2) {
+        super(i1, i2, f1, f2);
+    }
+
+    public Pipeline(int a, int b, float[] c)
+    {
+        super(a, b, c);
+    }
+
+    public Pipeline(int a, int b, float[][] c)
+    {
+        super(a, b, c);
+    }
+
+    public Pipeline(int a, float[] c, float[] d) 
+    { 
+        super (a, c, d); 
+    }
+
+    public Pipeline(int a, int b, int c, int d, float[][] e)
+    {
+        super(a, b, c, d, e);
+    }
+
+    public Pipeline(int a, int b, int c, int d, float[][] e, float[][] f)
+    {
+        super(a, b, c, d, e, f);
+    }
+
+    public Pipeline(int a, int b, int c, float[][] e, float[][] f)
+    {
+        super(a, b, c, e, f);
+    }
+
+    public Pipeline(int a, int b, int c, int d, int e, float f)
+    {
+        super(a, b, c, d, e, f);
+    }
+
+    public Pipeline(int a, int b, int c, int d, int e, int f, float g, float h)
+    {
+        super(a, b, c, d, e, f, g, h);
+    }
+
+    public Pipeline(int a, int b, int c, int d, int e, int f, int g, float h, float i)
+    {
+        super(a, b, c, d, e, f, g, h, i);
+    }
+
+    public Pipeline(float a, int b)
+    {
+        super(a, b);
+    }
+
+    public Pipeline(float a, float b)
+    {
+        super(a, b);
+    }
+
+    public Pipeline(float a, float b, float c)
+    {
+        super(a, b, c);
+    }
+
+    public Pipeline(float a, float b, float c, float d)
+    {
+        super(a, b, c, d);
+    }
+
+    public Pipeline(float a, float b, float c, float d, int e, int f)
+    {
+        super(a, b, c, d, e, f);
+    }
+
+    public Pipeline(float a, float b, int c, int d)
+    {
+        super(a, b, c, d);
+    }
+
+    public Pipeline(float x, float y, float z, int a, float b)
     {
         super(x,y,z,a,b);
     }
 
-    /**
-     * Constructor with two floats and four ints.
-     */
-    public Pipeline(float f1, float f2, int i1, int i2, int i3, int i4)
+    public Pipeline(int a, int b, int c, float d, int e)
     {
-        super(f1, f2, i1, i2, i3, i4);
+        super (a,b,c,d,e);
     }
-    
-    /**
-     * Constructor with three floats, and an int.
-     */
-    public Pipeline (float x, float y, float z, int a)
+
+    public Pipeline(int a, int b, int c, float d, float e)
+    {
+        super (a,b,c,d,e);
+    }
+
+    public Pipeline(float a, float b, float c, int d, int e, int f)
+    {
+        super (a,b,c,d,e,f);
+    }
+
+    public Pipeline(float a, float b, int c, int d, int e, int f)
+    {
+        super (a,b,c,d,e,f);
+    }
+
+    public Pipeline(float a, float b, int c, int d, int e, int f, int g)
+    {
+        super (a,b,c,d,e,f,g);
+    }
+
+    public Pipeline(int a, int b, float c, int d, float e)
+    {
+        super (a,b,c,d,e);
+    }
+
+    public Pipeline(float x, float y, float z, int a)
     {
         super(x,y,z,a);
     }
 
-    /** 
-     * Constructor with two integers followed by a float
-     **/
-    public Pipeline(int i1, int i2, float f) {
-      super(i1, i2, f);
+    public Pipeline(float x, float y, float z, int a, int b)
+    {
+        super(x,y,z,a,b);
     }
 
-    /**
-     * Constructor with five integers followed by a float
-     **/
-    public Pipeline(int i1, int i2, int i3, int i4, int i5, float f) {
-	super(i1, i2, i3, i4, i5, f);
+    public Pipeline(float x, float y, int a, int b, int c)
+    {
+        super(x,y,a,b,c);
     }
 
-    /**
-     * Constructor with six integers followed by two floats
-     **/
-    public Pipeline(int i1, int i2, int i3, int i4, int i5, int i6, float f1, float f2) {
-	super(i1, i2, i3, i4, i5, i6, f1, f2);
+    public Pipeline(float f1, int i1, float[] f2, float[] f3, int i2) {
+        super(f1, i1, f2, f3, i2);
     }
 
-    /**
-     * Constructor with seven integers followed by two floats
-     **/
-    public Pipeline(int i1, int i2, int i3, int i4, int i5, int i6, int i7, float f1, float f2) {
-	super(i1, i2, i3, i4, i5, i6, i7, f1, f2);
+    public Pipeline(char c)
+    {
+        super (c);
     }
 
-    /** 
-     * Constructor with two integers and two floats
-     **/
-    public Pipeline(int i1, int i2, float f1, float f2) {
-      super(i1, i2, f1, f2);
+    public Pipeline(int n)
+    {
+        super (n);
     }
 
-    /**
-     * Constructor.
-     */
+    public Pipeline(boolean b1)
+    {
+        super(b1);
+    }
+
+    public Pipeline(int n1, int n2, boolean b1)
+    {
+        super(n1, n2, b1);
+    }
+
     public Pipeline(int n1, boolean b1)
     {
         super(n1, b1);
     }
 
-    /**
-     * Another constructor.
-     */
-    public Pipeline( int i1, 
-		     int i2, 
-		     int i3, 
-		     int i4, 
-		     int i5, 
-		     int i6, 
-		     int i7, 
-		     int i8, 
-		     int i9, 
-		     float f) {
-	super(i1, i2, i3, i4, i5, i6, i7, i8, i9, f);
+    public Pipeline(int x, int y)
+    {
+        super (x, y);
     }
 
-    public Pipeline( int i1, 
-		     int i2, 
-		     int i3, 
-		     int i4, 
-		     int i5, 
-		     int i6, 
-		     int i7, 
-		     float f) {
-	super(i1, i2, i3, i4, i5, i6, i7, f);
+    public Pipeline(int x, int y, int z)
+    {
+        super (x, y, z);
     }
 
-    public Pipeline (int n1, int n2, int n3,
+    public Pipeline(int x, int y, int z, float[][] f)
+    {
+        super (x, y, z, f);
+    }
+
+    public Pipeline(int x, int y, int z, int a)
+    {
+        super (x, y, z, a);
+    }
+
+    public Pipeline(int a, int b, int c, int d, int e) { super(a, b, c, d, e); }
+
+    public Pipeline(int a, int b, int c, int d, int e, int f, int g) 
+    {
+	super (a, b, c, d, e, f, g);
+    }
+
+    public Pipeline(int n1, int n2, int n3,
+		  int n4, float f1) {
+      super(n1, n2, n3, n4, f1);
+    }
+
+    public Pipeline(int x, int y, int z,
+		   int a, int b, int c)
+    {
+        super (x, y, z, a, b, c);
+    }
+
+    public Pipeline(int x, int y, int z,
+		   int a, int b, int c, int d, float f)
+    {
+        super (x, y, z, a, b, c, d, f);
+    }
+
+    public Pipeline(int n1, int n2, int n3,
 		   int n4, int n5, int n6, int n7, int n8, 
 		   int n9, int n10, float f)
     {
         super (n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, f);
     }
 
+    public Pipeline(int n1, int n2, int n3,
+		   int n4, int n5, int n6, int n7, int n8, 
+		   int n9)
+    {
+        super (n1, n2, n3, n4, n5, n6, n7, n8, n9);
+    }
+
+    public Pipeline(float f)
+    {
+        super (f);
+    }
+
+    public Pipeline(String str)
+    {
+        super (str);
+    }
+
+    public Pipeline(ParameterContainer params)
+    {
+        super (params);
+    }
+
     public Pipeline( int i1, 
-		     int i2, 
-		     int i3, 
-		     int i4, 
-		     int i5, 
-		     int i6, 
-		     float f) {
+		   int i2, 
+		   int i3, 
+		   int i4, 
+		   int i5, 
+		   int i6, 
+		   int i7, 
+		   int i8, 
+		   int i9, 
+		   float f) {
+	super(i1, i2, i3, i4, i5, i6, i7, i8, i9, f);
+    }
+
+    public Pipeline( int i1, 
+		   int i2, 
+		   int i3, 
+		   int i4, 
+		   int i5, 
+		   int i6, 
+		   float f) {
 	super(i1, i2, i3, i4, i5, i6, f);
+    }
+
+    public Pipeline(int n1, int n2, float f1[], float f2[])
+    {
+        super(n1, n2, f1, f2);
+    }
+
+    public Pipeline(short s1, short s2, short s3) {
+	super(s1, s2, s3);
     }
 
     public Pipeline(int i1,int i2,int i3,float f1) {super(i1,i2,i3,f1);}
 
-    public Pipeline(int i1, int i2, int i3, int i4, float f1)
-    {
-        super(i1, i2, i3, i4, f1);
-    }
-
     public Pipeline(Object o1) {super(o1);}
-
-    public Pipeline(Object o1, int i1) {super(o1,i1);}
-
+    public Pipeline(Object o1, int i1) {super(o1, i1);}
     public Pipeline(int i1, int i2, Object o1) {super(i1,i2,o1);}
-    
     public Pipeline(Object o1,Object o2) {super(o1,o2);}
 
     public Pipeline(Object o1,Object o2,Object o3) {super(o1,o2,o3);}

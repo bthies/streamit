@@ -7,14 +7,11 @@ import java.util.Vector;
 public abstract class Filter extends Stream
 {
 
-    public Filter(float a, float b, int c, int d)
-    {
-        super(a, b, c, d);
-    }
+    public Filter() { super(); }
 
-    public Filter(int a, int b, int c, int d, int e)
+    public Filter(float a, float b, int c)
     {
-	super(a, b, c, d, e);
+        super(a, b, c);
     }
 
     public Filter(int a, float b)
@@ -42,9 +39,61 @@ public abstract class Filter extends Stream
         super(a, b);
     }
 
+    public Filter(int i1, int i2, float f) {
+        super(i1, i2, f);
+    }
+
+    public Filter(int i1, int i2, int i3, float[] f) {
+        super(i1, i2, i3, f);
+    }
+
+    public Filter(int i1, int i2, float f1, float f2) {
+        super(i1, i2, f1, f2);
+    }
+
+    public Filter(int a, int b, float[] c)
+    {
+        super(a, b, c);
+    }
+
     public Filter(int a, int b, float[][] c)
     {
         super(a, b, c);
+    }
+
+    public Filter(int a, float[] c, float[] d) 
+    { 
+        super (a, c, d); 
+    }
+
+    public Filter(int a, int b, int c, int d, float[][] e)
+    {
+        super(a, b, c, d, e);
+    }
+
+    public Filter(int a, int b, int c, int d, float[][] e, float[][] f)
+    {
+        super(a, b, c, d, e, f);
+    }
+
+    public Filter(int a, int b, int c, float[][] e, float[][] f)
+    {
+        super(a, b, c, e, f);
+    }
+
+    public Filter(int a, int b, int c, int d, int e, float f)
+    {
+        super(a, b, c, d, e, f);
+    }
+
+    public Filter(int a, int b, int c, int d, int e, int f, float g, float h)
+    {
+        super(a, b, c, d, e, f, g, h);
+    }
+
+    public Filter(int a, int b, int c, int d, int e, int f, int g, float h, float i)
+    {
+        super(a, b, c, d, e, f, g, h, i);
     }
 
     public Filter(float a, int b)
@@ -57,11 +106,6 @@ public abstract class Filter extends Stream
         super(a, b);
     }
 
-    public Filter(float a, float b, int c)
-    {
-        super(a, b, c);
-    }
-
     public Filter(float a, float b, float c)
     {
         super(a, b, c);
@@ -72,88 +116,78 @@ public abstract class Filter extends Stream
         super(a, b, c, d);
     }
 
-    public Filter(float x, float y, float z, int a, float b)
+    public Filter(float a, float b, float c, float d, int e, int f)
     {
-        super(x, y, z, a, b);
+        super(a, b, c, d, e, f);
     }
 
-    public Filter(float x, float y, int a, int b, int c)
-    {
-        super(x, y, a, b, c);
-    }
-
-    public Filter(float x, float y, int a, int b, int c, int d)
-    {
-        super(x, y, a, b, c, d);
-    }
-
-    public Filter(float x, float y, int a, int b, int c, int d, int e)
-    {
-        super(x, y, a, b, c, d, e);
-    }
-
-    public Filter(int a, int b, float c, int d, float e)
-    {
-        super(a, b, c, d, e);
-    }
-
-    public Filter(int a, int b, int c, float d, float e)
-    {
-        super(a, b, c, d, e);
-    }
-
-    public Filter(int a, int b, int c, int d)
+    public Filter(float a, float b, int c, int d)
     {
         super(a, b, c, d);
     }
 
-    public Filter(int a, int b, int c, float d, int e)
+    public Filter(float x, float y, float z, int a, float b)
     {
-        super(a, b, c, d, e);
+        super(x,y,z,a,b);
     }
 
-    public Filter()
+    public Filter(int a, int b, int c, float d, int e)
     {
-        super();
+        super (a,b,c,d,e);
+    }
+
+    public Filter(int a, int b, int c, float d, float e)
+    {
+        super (a,b,c,d,e);
+    }
+
+    public Filter(float a, float b, float c, int d, int e, int f)
+    {
+        super (a,b,c,d,e,f);
+    }
+
+    public Filter(float a, float b, int c, int d, int e, int f)
+    {
+        super (a,b,c,d,e,f);
+    }
+
+    public Filter(float a, float b, int c, int d, int e, int f, int g)
+    {
+        super (a,b,c,d,e,f,g);
+    }
+
+    public Filter(int a, int b, float c, int d, float e)
+    {
+        super (a,b,c,d,e);
+    }
+
+    public Filter(float x, float y, float z, int a)
+    {
+        super(x,y,z,a);
+    }
+
+    public Filter(float x, float y, float z, int a, int b)
+    {
+        super(x,y,z,a,b);
+    }
+
+    public Filter(float x, float y, int a, int b, int c)
+    {
+        super(x,y,a,b,c);
+    }
+
+    public Filter(float f1, int i1, float[] f2, float[] f3, int i2) {
+        super(f1, i1, f2, f3, i2);
     }
 
     public Filter(char c)
     {
-        super(c);
+        super (c);
     }
 
-    public Filter(int i)
+    public Filter(int n)
     {
-        super(i);
-    }
-
-    public Filter(int n1, int n2)
-    {
-        super(n1, n2);
-    }
-
-    public Filter(int n1, int n2, int n3)
-    {
-        super(n1, n2, n3);
-    }
-
-    public Filter(int n1, int n2, int n3, int n4, float f1)
-    {
-        super(n1, n2, n3, n4, f1);
-    }
-
-    public Filter(int n1, int n2, int n3, int n4, int n5, int n6)
-    {
-        super(n1, n2, n3, n4, n5, n6);
-    }
-
-    public Filter(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9)
-    {
-        super(n1, n2, n3, n4, n5, n6, n7, n8, n9);
-    }
-
-    public Filter(short s1, short s2, short s3) {
-	super(s1, s2, s3);
+        super (n);
     }
 
     public Filter(boolean b1)
@@ -161,18 +195,126 @@ public abstract class Filter extends Stream
         super(b1);
     }
 
+    public Filter(int n1, int n2, boolean b1)
+    {
+        super(n1, n2, b1);
+    }
+
+    public Filter(int n1, boolean b1)
+    {
+        super(n1, b1);
+    }
+
+    public Filter(int x, int y)
+    {
+        super (x, y);
+    }
+
+    public Filter(int x, int y, int z)
+    {
+        super (x, y, z);
+    }
+
+    public Filter(int x, int y, int z, float[][] f)
+    {
+        super (x, y, z, f);
+    }
+
+    public Filter(int x, int y, int z, int a)
+    {
+        super (x, y, z, a);
+    }
+
+    public Filter(int a, int b, int c, int d, int e) { super(a, b, c, d, e); }
+
+    public Filter(int a, int b, int c, int d, int e, int f, int g) 
+    {
+	super (a, b, c, d, e, f, g);
+    }
+
+    public Filter(int n1, int n2, int n3,
+		  int n4, float f1) {
+      super(n1, n2, n3, n4, f1);
+    }
+
+    public Filter(int x, int y, int z,
+		   int a, int b, int c)
+    {
+        super (x, y, z, a, b, c);
+    }
+
+    public Filter(int x, int y, int z,
+		   int a, int b, int c, int d, float f)
+    {
+        super (x, y, z, a, b, c, d, f);
+    }
+
+    public Filter(int n1, int n2, int n3,
+		   int n4, int n5, int n6, int n7, int n8, 
+		   int n9, int n10, float f)
+    {
+        super (n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, f);
+    }
+
+    public Filter(int n1, int n2, int n3,
+		   int n4, int n5, int n6, int n7, int n8, 
+		   int n9)
+    {
+        super (n1, n2, n3, n4, n5, n6, n7, n8, n9);
+    }
+
     public Filter(float f)
     {
-        super(f);
+        super (f);
     }
 
     public Filter(String str)
     {
-        super(str);
+        super (str);
     }
 
+    public Filter(ParameterContainer params)
+    {
+        super (params);
+    }
+
+    public Filter( int i1, 
+		   int i2, 
+		   int i3, 
+		   int i4, 
+		   int i5, 
+		   int i6, 
+		   int i7, 
+		   int i8, 
+		   int i9, 
+		   float f) {
+	super(i1, i2, i3, i4, i5, i6, i7, i8, i9, f);
+    }
+
+    public Filter( int i1, 
+		   int i2, 
+		   int i3, 
+		   int i4, 
+		   int i5, 
+		   int i6, 
+		   float f) {
+	super(i1, i2, i3, i4, i5, i6, f);
+    }
+
+    public Filter(int n1, int n2, float f1[], float f2[])
+    {
+        super(n1, n2, f1, f2);
+    }
+
+    public Filter(short s1, short s2, short s3) {
+	super(s1, s2, s3);
+    }
+
+    public Filter(int i1,int i2,int i3,float f1) {super(i1,i2,i3,f1);}
+
     public Filter(Object o1) {super(o1);}
-    public Filter(Object o1, int i1) {super(o1,i1);}
+    public Filter(Object o1, int i1) {super(o1, i1);}
+    public Filter(int i1, int i2, Object o1) {super(i1,i2,o1);}
     public Filter(Object o1,Object o2) {super(o1,o2);}
 
     public Filter(Object o1,Object o2,Object o3) {super(o1,o2,o3);}

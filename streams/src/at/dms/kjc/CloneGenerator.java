@@ -531,8 +531,8 @@ public class CloneGenerator {
 	"at.dms.classfile.AbstractInstructionAccessor",
 	//"at.dms.util.FormattedException",
 	"at.dms.util.Message",
-	"at.dms.util.ConstList",
-	"at.dms.util.MutableList",
+	//"at.dms.util.ConstList", -- do separately because want to recognize it as a list type
+	//"at.dms.util.MutableList", -- do separately because want to recognize it as a list type
 	"at.dms.util.MessageDescription",
 	//"at.dms.util.Options" -- shouldn't have references to this
 	//"at.dms.kjc.SimpleDot",  -- don't do this because it has lots of open, close braces

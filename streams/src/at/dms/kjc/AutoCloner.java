@@ -197,7 +197,11 @@ public class AutoCloner {
 	}
 	// enumerate the list types to make the java compiler happy
 	// with calling the .clone() method
-	else if (o instanceof LinkedList) {
+	else if (o instanceof ConstList) {
+	    result = ((ConstList)o).clone();
+	    register(o, result);
+	    cloneWithinList((List)result, parent);
+	} else if (o instanceof LinkedList) {
 	    result = ((LinkedList)o).clone();
 	    register(o, result);
 	    cloneWithinList((List)result, parent);

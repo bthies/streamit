@@ -49,6 +49,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     //This vector store all the interface declarations for a toplevel prgm
     private Vector interfaceList;
 
+    //This vector stores all the interface tables as derived from the
+    //regReceiver statements.  An interface table lists the methods
+    //that implement a given interface for a given class.
+    private Vector interfaceTableList;
+
     //globals to store the split and join type so they can be set in the
     //post visit of the class declaration
     private SIRSplitType splitType;
@@ -64,6 +69,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	visitedSIROps = new Hashtable(100);
 	symbolTable = new Hashtable(300);
 	interfaceList = new Vector(100);
+	interfaceTableList = new Vector(100);
     }
 
     private void addVisitedOp(String className, SIROperator sirop) {
@@ -1228,6 +1234,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    matchedMethods[i] = currentMethod;
 	}
 	
+	// Keep track of the list of methods for this interface with a 
+	// interface table, to be passed on with a callback to Kopi2SIR
+	interfaceTableList.add(new SIRInterfaceTable(null, 
+						     interfaces[0], 
+						     (JMethodDeclaration[])
+						     matchedMethods.clone()));
 
 	return new SIRRegReceiverStatement(prefix,st, matchedMethods);
     }
@@ -1943,6 +1955,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public JInterfaceDeclaration[] getInterfaces() {
 	JInterfaceDeclaration[] ret = (JInterfaceDeclaration[])interfaceList.toArray(new JInterfaceDeclaration[0]);
+	return ret;
+    }
+    
+    /**
+     * Returns a vector of all the SIRInterfaceTables that were
+     * constructed in traversing the toplevel stream
+     */
+    public SIRInterfaceTable[] getInterfaceTables() {
+	SIRInterfaceTable[] ret = (SIRInterfaceTable[])interfaceTableList.toArray(new SIRInterfaceTable[0]);
 	return ret;
     }
     

@@ -1,7 +1,7 @@
 /*
  * ComplexProp.java: cause complex values to bubble upwards
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ComplexProp.java,v 1.3 2002-07-15 20:45:36 dmaze Exp $
+ * $Id: ComplexProp.java,v 1.4 2002-07-17 17:07:57 dmaze Exp $
  */
 
 // Does this actually belong here?  If we evolve more front-end passes,
@@ -151,7 +151,7 @@ public class ComplexProp extends FEReplacer
 
                 ar = new ExprBinary(ExprBinary.BINOP_MUL, rr, rr);
                 br = new ExprBinary(ExprBinary.BINOP_MUL, ri, ri);
-                denom = new ExprBinary(ExprBinary.BINOP_SUB, ar, br);
+                denom = new ExprBinary(ExprBinary.BINOP_ADD, ar, br);
                 
                 ar = new ExprBinary(ExprBinary.BINOP_MUL, lr, rr);
                 br = new ExprBinary(ExprBinary.BINOP_MUL, li, ri);
@@ -266,6 +266,10 @@ public class ComplexProp extends FEReplacer
         
         // Lots of special cases here.  We care about a function if
         // it matches the conditions in isEligibleFunCall().
+        if (isEligibleFunCall(exp, params, "abs"))
+            return fcAbs(exp, (ExprComplex)params.get(0));
+        if (isEligibleFunCall(exp, params, "arg"))
+            return fcArg(exp, (ExprComplex)params.get(0));
         if (isEligibleFunCall(exp, params, "exp"))
             return fcExp(exp, (ExprComplex)params.get(0));
         
@@ -287,6 +291,26 @@ public class ComplexProp extends FEReplacer
         if (!(param instanceof ExprComplex))
             return false;
         return true;
+    }
+
+    public Expression fcAbs(ExprFunCall fc, ExprComplex param)
+    {
+        // sqrt(a^2 + b^2) -- always real
+        Expression a = param.getReal();
+        Expression b = param.getImag();
+        Expression a2 = new ExprBinary(ExprBinary.BINOP_MUL, a, a);
+        Expression b2 = new ExprBinary(ExprBinary.BINOP_MUL, b, b);
+        Expression a2b2 = new ExprBinary(ExprBinary.BINOP_ADD, a2, b2);
+        Expression result = new ExprFunCall("sqrt", a2b2);
+        return result;
+    }
+
+    public Expression fcArg(ExprFunCall fc, ExprComplex param)
+    {
+        // atan(b/a) -- always real
+        // The C and Java libraries both supply atan2(), which
+        // performs this function and gives us the correct angle.
+        return new ExprFunCall("atan2", param.getImag(), param.getReal());
     }
 
     public Expression fcExp(ExprFunCall fc, ExprComplex param)

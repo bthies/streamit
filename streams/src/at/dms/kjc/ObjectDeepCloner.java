@@ -14,9 +14,11 @@ package at.dms.kjc;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
 import at.dms.util.*;
+import at.dms.compiler.JavaStyleComment;
+
 import java.io.*;
 import java.util.*;
-import at.dms.compiler.JavaStyleComment;
+import java.lang.reflect.Array;
 
 /**
  * This class implements general deep cloning using the serializable interface
@@ -88,6 +90,20 @@ public class ObjectDeepCloner
 	oldObj.accept(visitor);
 	toBeCloned = visitor.getToBeCloned();
 	return doCopy(oldObj);
+    }
+
+    /**
+     * Deep copy an array of KJC structures.  Assumes that all the
+     * elements of the array are of the same type.
+     */
+    static public JPhylum[] deepCopy(JPhylum[] oldObj) {
+	Class componentType = oldObj.getClass().getComponentType();
+	JPhylum[] result = (JPhylum[])Array.newInstance(componentType, oldObj.length);
+
+	for (int i=0; i<oldObj.length; i++) {
+	    result[i] = (JPhylum)deepCopy(oldObj[i]);
+	}
+	return result;
     }
 
     /**

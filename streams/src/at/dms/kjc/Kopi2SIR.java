@@ -1868,13 +1868,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	//build a temporary splitter just to get the type from later
 	//after we have visited the entire stream, we will call setSplitter again
 	//with the correct number of splitting streams ( in postVisit() )
-	if (splitterType.getIdent().equals("ROUND_ROBIN"))
+	if (splitterType.getIdent().equals("ROUND_ROBIN")) {
 	    // here we're supporting the syntax where
 	    // round_robin(<weight>) will create a uniform weighted
 	    // round robin that is extended across the width of the
 	    // stream
-	    splitter = SIRSplitter.createUniformRR((SIRContainer)parentStream, splitterType.getArgs());
-	else if (splitterType.getIdent().equals("DUPLICATE"))
+	    JExpression[] weightArgs = splitterType.getArgs();
+	    JExpression weight = (weightArgs.length>0 ? weightArgs[0] : new JIntLiteral(1));
+	    splitter = SIRSplitter.createUniformRR((SIRContainer)parentStream, weight);
+	} else if (splitterType.getIdent().equals("DUPLICATE"))
 	    splitter = SIRSplitter.create((SIRContainer)parentStream, SIRSplitType.DUPLICATE, 2);
 	else if (splitterType.getIdent().equals("NULL"))
 	    splitter = SIRSplitter.create((SIRContainer)parentStream, SIRSplitType.NULL, 2);
@@ -1910,7 +1912,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    // round_robin(<weight>) will create a uniform weighted
 	    // round robin that is extended across the width of the
 	    // stream
-	    joinType = SIRJoiner.createUniformRR((SIRContainer)parentStream, joiner.getArgs());
+	    JExpression[] weightArgs = joiner.getArgs();
+	    JExpression weight = (weightArgs.length>0 ? weightArgs[0] : new JIntLiteral(1));
+	    joinType = SIRJoiner.createUniformRR((SIRContainer)parentStream, weight);
 	} else if (joiner.getIdent().equals("COMBINE"))
 	    joinType = SIRJoiner.create((SIRContainer)parentStream, SIRJoinType.COMBINE, 2);	  	
 	else if (joiner.getIdent().equals("NULL"))

@@ -1961,4 +1961,28 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrPrint("output size", String.valueOf(outputSize));
 	blockEnd();
     }
+
+    /**
+     * Visits a work function entry.
+     */
+    public void visitWorkEntry(LIRWorkEntry self)
+    {
+        blockStart("LIRWorkEntry");
+        attrStart("streamContext");
+        self.getStreamContext().accept(this);
+        attrEnd();
+        blockEnd();
+    }
+
+    /**
+     * Visits a work function exit.
+     */
+    public void visitWorkExit(LIRWorkExit self)
+    {
+        blockStart("LIRWorkExit");
+        attrStart("streamContext");
+        self.getStreamContext().accept(this);
+        attrEnd();
+        blockEnd();
+    }
 }

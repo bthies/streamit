@@ -64,7 +64,8 @@ public class SIRJoinType implements Serializable {
      */
     public int toSchedType() {
 	if (this==ROUND_ROBIN) {
-	    return SchedJoinType.ROUND_ROBIN;
+	    // there is no scheduler round_robin type
+	    return SchedJoinType.WEIGHTED_ROUND_ROBIN;
 	} else if (this==WEIGHTED_RR) {
 	    return SchedJoinType.WEIGHTED_ROUND_ROBIN;
 	} else {

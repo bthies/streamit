@@ -61,7 +61,8 @@ public class SIRSplitType implements Serializable {
      */
     public int toSchedType() {
 	if (this==ROUND_ROBIN) {
-	    return SchedSplitType.ROUND_ROBIN;
+	    // there is no round_robin type in scheduler
+	    return SchedSplitType.WEIGHTED_ROUND_ROBIN;
 	} else if (this==WEIGHTED_RR) {
 	    return SchedSplitType.WEIGHTED_ROUND_ROBIN;
 	} else if (this==DUPLICATE) {

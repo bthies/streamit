@@ -96,6 +96,16 @@ public class ConstantProp {
 	}
 	// propagate to peek expression
 	JExpression newPeek = (JExpression)filter.getPeek().accept(propagator);
+
+	/*
+	System.out.println("inspecting " + filter.getPeek());
+	SIRPrinter t;
+	filter.getPeek().accept(t = new SIRPrinter());
+	t.close();
+	System.out.println("found " + newPeek);
+	System.out.println("const? " + (newPeek instanceof JLiteral));
+	*/
+
 	if (newPeek!=null && newPeek!=filter.getPeek()) {
 	    filter.setPeek(newPeek);
 	}

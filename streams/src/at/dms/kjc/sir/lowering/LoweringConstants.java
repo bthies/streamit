@@ -32,7 +32,7 @@ public class LoweringConstants {
 
     /**
      * The name of the type serving as the stream context.
-     */
+z     */
     public static final String CONTEXT_TYPE_NAME = "stream_context*";
 
     /**
@@ -78,6 +78,21 @@ public class LoweringConstants {
      */
     private static int interfaceTableCounter = 1;
 
+    /**
+     * Counts the number of vars that have been defined, so that each
+     * can be given a unique identifier.
+     */
+    private static int varCounter = 1;
+
+
+    /**
+     * Returns a unique name for a variable to be added to a method of
+     * the program.
+     */
+    public static String getUniqueVarName() {
+	return "streamItVar" + varCounter++;
+    }
+    
     /**
      * Given the <initializer> for a field that corresponds to an
      * interface table, returns a variable definition for that field.

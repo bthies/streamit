@@ -9,6 +9,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
@@ -18,7 +19,7 @@ import java.util.ListIterator;
  * This builds a schedule for the stream and instantiates the schedule
  * in a series of calls to filter's work functions.
  */
-public class SIRScheduler {
+public class SIRScheduler implements Constants {
 
     /**
      * Maps Lists returned by the scheduler to work functions that can
@@ -60,25 +61,43 @@ public class SIRScheduler {
 	    = (SchedStream)toplevel.accept(new SIRSchedBuilder(scheduler));
 	// set it to compute the schedule of <schedStream>
 	scheduler.useStream(schedStream);
+	// debugging output
+	scheduler.print(System.out);
 	// compute a schedule
 	Schedule schedule = (Schedule)scheduler.computeSchedule();
-	// print the schedules
-	printSchedule(schedule.getSteadySchedule(), "steady state ");
-	printSchedule(schedule.getInitSchedule(), "initialization ");
+	// debugging output
+	//printSchedule(schedule.getSteadySchedule(), "steady state ");
+	//printSchedule(schedule.getInitSchedule(), "initialization ");
+	// get toplevel schedule
+	Object schedObject = schedule.getSteadySchedule();
 	// make work function implementing the steady-state schedule
-	JMethodDeclaration steadyWork = makeWork(schedule.getSteadySchedule(), 
+	JMethodDeclaration steadyWork = makeWork(pruneRep(schedule.
+							  getSteadySchedule()),
 						 toplevel);
 	// set <work> as the work function of <toplevel>
 	toplevel.setWork(steadyWork);
 	// make an initialization schedule
-	Object schedObject = schedule.getInitSchedule(); 
+	schedObject = schedule.getInitSchedule(); 
 	Utils.assert(schedObject!=null, 
 		     "Got a null init. schedule from the scheduling library");
-	JMethodDeclaration initWork = makeWork(schedObject, toplevel);
+	JMethodDeclaration initWork = makeWork(pruneRep(schedObject), 
+					       toplevel);
 	// make the main function in <flatClass>, containing call to <initWork>
 	addMainFunction(toplevel, initWork);
 	// return schedule for future reference
 	return schedule;
+    }
+
+    /**
+     * If <schedObject> is a SchedRepSchedule, then just take its
+     * contents until we don't have a SchedRepSchedule.
+     */
+    private Object pruneRep(Object schedObject) {
+	while (schedObject instanceof SchedRepSchedule) {
+	    schedObject =
+		((SchedRepSchedule)schedObject).getOriginalSchedule();
+	}
+	return schedObject;
     }
 
     /**
@@ -123,9 +142,9 @@ public class SIRScheduler {
 				 JMethodDeclaration initWork) {
 	// make a call to <initWork> from within the main function
 	LinkedList statementList = new LinkedList();
-	statementList.add(makeWorkStatement(toplevel, 
-					    initWork.getName(),
-					    toplevel));
+	statementList.add(makeWorkCall(toplevel, 
+				       initWork.getName(),
+				       toplevel));
 
 	// construct LIR node
 	LIRMainFunction[] main 
@@ -194,7 +213,7 @@ public class SIRScheduler {
 	    return null;
 	}
     }
-    
+
     /**
      * Given that <list> contains a set of scheduling objects under
      * toplevel stream <toplevel>, returns a work function
@@ -249,13 +268,10 @@ public class SIRScheduler {
 	// for each filter...
 	for (ListIterator it = list.listIterator(); it.hasNext(); ) {
 	    Object next = it.next();
-	    // get name of work function associated with <schedObject>
-	    String workName = getWorkName(next, toplevel);
-	    // make the work statement
-	    JStatement workStatement = makeWorkStatement(next, 
-							 workName,
-							 toplevel);
-	    // add call to filter work to our statement list
+	    // make a statement that does some work (could be for loop
+	    // or function call)
+	    JStatement workStatement = makeWorkStatement(next, toplevel);
+	    // add work statement to list
 	    statementList.add(workStatement);
 	}
 	// return list
@@ -263,11 +279,87 @@ public class SIRScheduler {
     }
 
     /**
-     * Generates a statement that calls the work function for <schedObject>.
+     * Makes a statement that does some work as a component of a list
+     * in the schedule.  This statement is either a for loop or a call
+     * to another work function.
      */
     private JStatement makeWorkStatement(Object schedObject, 
-					 String workName,
 					 SIRStream toplevel) {
+	// see if we have a repeated scheduled object
+	if (schedObject instanceof SchedRepSchedule) {
+	    // get the repeated schedule
+	    SchedRepSchedule repSched = (SchedRepSchedule)schedObject;
+	    // get body of the for loop
+	    JStatement body = makeWorkStatement(repSched.
+						getOriginalSchedule(),
+						toplevel);
+	    // get the count for the for loop
+	    int count = repSched.getTotalExecutions().intValue();
+	    // make a for loop
+	    return makeForLoop(body, count);
+	} else {
+	    // otherwise, get name of work function associated with
+	    // <schedObject>
+	    String workName = getWorkName(schedObject, toplevel);
+	    // make the work statement
+	    return makeWorkCall(schedObject, workName, toplevel);
+	}
+    }
+
+    /**
+     * Returns a block with a loop counter declaration and a for loop
+     * that executes <contents> for <count> number of times.  If the
+     * count is just one, then return the body instead of a loop.
+     */
+    private JStatement makeForLoop(JStatement body, int count) {
+	// if the count is one, then just return the body
+	if (count==1) {
+	    return body;
+	}
+	// define a variable to be our loop counter
+	JVariableDefinition var = 
+	    new JVariableDefinition(/* where */ null,
+				    /* modifiers */ 0,
+				    /* type */ CStdType.Integer,
+				    /* ident */ 
+				    LoweringConstants.getUniqueVarName(),
+				    /* initializer */
+				    new JIntLiteral(0));
+	// make a declaration statement for our new variable
+	JVariableDeclarationStatement varDecl =
+	    new JVariableDeclarationStatement(null, var, null);
+	// make a test if our variable is less than <count>
+	JExpression cond = 
+	    new JRelationalExpression(null,
+				      OPE_LT,
+				      new JLocalVariableExpression(null, var),
+				      new JIntLiteral(count));
+	// make an increment for <var>
+	JStatement incr = 
+	    new JExpressionStatement(null,
+				     new JPostfixExpression(null,
+							    OPE_POSTINC,
+			       new JLocalVariableExpression(null, var)),
+				     null);
+	// make the for statement
+	JStatement forStatement = 
+	    new JForStatement(/* tokref */ null,
+			      /* init */ new JEmptyStatement(null, null),
+			      cond,
+			      incr,
+			      body,
+			      /* comments */ null);
+	// return the block
+	JStatement[] statements = {varDecl, forStatement};
+	return new JBlock(null, statements, null);
+    }
+
+    /**
+     * Generates a statement that calls the work function for <schedObject>.
+     */
+    private JStatement makeWorkCall(Object schedObject, 
+				    String workName,
+				    SIRStream toplevel) {
 	// build the parameter to the work function, depending on
 	// whether we're calling a filter work function or a
 	// hierarchical list-work function

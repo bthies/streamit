@@ -122,7 +122,7 @@ public class SwitchCode extends at.dms.util.Utils
     private static void printIOStartUp(Coordinate tile, FileWriter fw) throws Exception 
     {
 	if (FileVisitor.connectedToFR(tile))
-	    fw.write("\tnop\troute $csto->$cSo\n");
+	    fw.write("\tnop\troute $csto->$cEo\n");
     }
     
 	   

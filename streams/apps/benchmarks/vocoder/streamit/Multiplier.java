@@ -51,6 +51,18 @@ class Accumulator extends Filter {
   }
 }
 
+class Doubler extends Filter {
+  public Doubler() {}
+  public void init() {
+    input = new Channel(Float.TYPE, 1);
+    output = new Channel(Float.TYPE, 1);
+  }
+
+  public void work() {
+    output.pushFloat(input.peekFloat(0) + input.popFloat());
+  }
+}
+
 class Summation extends Pipeline {
   public Summation(int length) {super(length);}
   public void init(final int length) {

@@ -240,8 +240,11 @@ class SumRealsRealHandler extends Pipeline {
 	  add(new IdentityFloat());
 	  add(new Pipeline() {
 	      public void init() {
-		add(new ConstMultiplier(2.0f));
-		add(new FrontPadder(DFT_LENGTH - 2,1));
+		add(new Doubler());
+//  		add(new ConstMultiplier(2.0f));
+		if (DFT_LENGTH % 2 != 0) {
+		  add(new FrontPadder(DFT_LENGTH - 2,1));
+		}
 		add(new SplitJoin() {
 		    public void init() {
 		      setSplitter(ROUND_ROBIN());

@@ -14,16 +14,16 @@ import at.dms.compiler.TokenReference;
  * This class breaks up arrays into local vars as much as possible
  */
 public class ArrayDestroyer extends SLIRReplacingVisitor {
-    private Hashtable targets;    
-    private Hashtable replaced;
-    private Hashtable varDefs;
+    private HashMap targets;    
+    private HashMap replaced;
+    private HashMap varDefs;
 
     public ArrayDestroyer() {
-	replaced=new Hashtable();
+	replaced=new HashMap();
     }
 
     //wraps JLocalVar and index together
-    public class VarIndex {
+    /*public class VarIndex {
 	public JLocalVariable var;
 	public int index;
 	
@@ -39,7 +39,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	public int hashCode() {
 	    return var.hashCode()+4999*index;
 	}
-    }
+	}*/
 
     public void destroyArrays(SIRStream str) {
 	if (str instanceof SIRFeedbackLoop)
@@ -70,7 +70,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    }
 	if (str instanceof SIRFilter)
 	    for (int i = 0; i < str.getMethods().length; i++) {
-		varDefs=new Hashtable();
+		varDefs=new HashMap();
 		str.getMethods()[i].accept(this);
 	    }
     }
@@ -91,8 +91,8 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    }
 	}
 	if (body != null) {
-	    final Hashtable targets=new Hashtable();
-	    final Hashtable unsafe=new Hashtable();
+	    final HashMap targets=new HashMap();
+	    final HashMap unsafe=new HashMap();
 	    body.accept(new SLIRReplacingVisitor() {
 		    /**
 		     * If arrays used in any way except in array access then remove from targets
@@ -114,7 +114,12 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 			accessor.accept(this);
 			if((prefix instanceof JLocalVariableExpression)&&(!unsafe.containsKey(((JLocalVariableExpression)prefix).getVariable())))
 			    if(accessor instanceof JIntLiteral) {
-				targets.put(((JLocalVariableExpression)prefix).getVariable(),Boolean.TRUE);
+				HashMap map=(HashMap)targets.get(((JLocalVariableExpression)prefix).getVariable());
+				if(map==null) {
+				    map=new HashMap();
+				    targets.put(((JLocalVariableExpression)prefix).getVariable(),map);
+				}
+				map.put(new Integer(((JIntLiteral)accessor).intValue()),Boolean.TRUE);
 			    } else {
 				targets.remove(((JLocalVariableExpression)prefix).getVariable());
 				unsafe.put(((JLocalVariableExpression)prefix).getVariable(),Boolean.TRUE);
@@ -123,32 +128,61 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 		    }
 		});
 	    this.targets=targets;
+	    Set keySet=targets.keySet();
+	    JLocalVariable[] vars=new JLocalVariable[keySet.size()];
+	    keySet.toArray(vars);
+	    for(int i=0;i<vars.length;i++) {
+		JLocalVariable var=vars[i];
+		keySet=((HashMap)targets.get(var)).keySet();
+		Integer[] ints=new Integer[keySet.size()];
+		keySet.toArray(ints);
+		int top=0;
+		for(int j=0;j<ints.length;j++) {
+		    int newInt=ints[j].intValue();
+		    if(newInt>top)
+			top=newInt;
+		}
+		JLocalVariable[] newVars=new JLocalVariable[top+1];
+		for(int j=0;j<ints.length;j++) {
+		    int newInt=ints[j].intValue();
+		    JVariableDefinition varDef=toVar(var,newInt);
+		    body.addStatementFirst(new JVariableDeclarationStatement(null,varDef,null));
+		    newVars[newInt]=varDef;
+		}
+		replaced.put(var,newVars);
+	    }
 	    body.accept(this);
 	}
 	return self;
     }
 
-    /**
-     * visits a var decl
-     */
-    /*public Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
-      JVariableDefinition[] vars) {
-      LinkedList list=new LinkedList();
-      for (int i = 0; i < vars.length; i++) {
-      JVariableDefinition result = 
-      (JVariableDefinition)vars[i].accept(this);
-      if (result != null) {
-      list.add(result);
-      }
-      }
-      self.setVars((JVariableDefinition[])list.toArray(new JVariableDefinition[0]));
-      return self;
-      }*/
+    private JVariableDefinition toVar(JLocalVariable var,int idx) {
+	return new JVariableDefinition(null,0,var.getType(),var.getIdent()+"__destroyed_"+idx,null);
+    }
+
+    public Object visitArrayAccessExpression(JArrayAccessExpression self,
+					     JExpression prefix,
+					     JExpression accessor) {
+	JExpression newExp=(JExpression)accessor.accept(this);
+	if (newExp!=null && newExp!=accessor) {
+	    self.setAccessor(newExp);
+	}
+	if((prefix instanceof JLocalVariableExpression)&&(accessor instanceof JIntLiteral)) {
+	    JLocalVariable[] varArray=(JLocalVariable[])replaced.get(((JLocalVariableExpression)prefix).getVariable());
+	    if(varArray!=null)
+		return new JLocalVariableExpression(null,varArray[((JIntLiteral)accessor).intValue()]);
+	}
+	return self;
+    }
+
+    /*private JVariableDefinition toVar(JArrayAccessExpression array,JExpression init) {
+	return new JVariableDefinition(null,0,array.getType(),array.getPrefix().getIdent()+"__destroyed_"+((JIntLiteral)array.getAccessor()).intValue(),init);
+	}*/
     
     /**
      * Visits an assignment expression
      */
-    public Object visitAssignmentExpression(JAssignmentExpression self,
+    /*public Object visitAssignmentExpression(JAssignmentExpression self,
                                             JExpression left,
                                             JExpression right) {
 	JExpression newRight=(JExpression)right.accept(this);
@@ -171,14 +205,14 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    }
 	}
 	return self;
-    }
+	}*/
 
     
     /**
      * visits expression statement
      * passes on the VarDeclaration on if encountered
      */
-    public Object visitExpressionStatement(JExpressionStatement self,
+    /*public Object visitExpressionStatement(JExpressionStatement self,
 					   JExpression expr) {
 	Object newExp=expr.accept(this);
 	if (newExp!=null && newExp!=expr) {
@@ -188,11 +222,11 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 		self.setExpression((JExpression)newExp);
 	}
 	return self;
-    }
+	}*/
     /**
      * visits an array access
      */
-    public Object visitArrayAccessExpression(JArrayAccessExpression self,
+    /*public Object visitArrayAccessExpression(JArrayAccessExpression self,
 					     JExpression prefix,
 					     JExpression accessor) {
 	JExpression newExp = (JExpression)prefix.accept(this);
@@ -209,12 +243,5 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    return new JLocalVariableExpression(null,(JLocalVariable)replaced.get(new VarIndex(((JLocalVariableExpression)prefix).getVariable(),((JIntLiteral)accessor).intValue())));
 	}
 	return self;
-    }
-
-    private JVariableDefinition toVar(JArrayAccessExpression array,JExpression init) {
-	return new JVariableDefinition(array.getTokenReference(),0,array.getType(),array.getPrefix().getIdent()+"__destroyed_"+((JIntLiteral)array.getAccessor()).intValue(),init);
-    }
+	}*/
 }
-
-
-

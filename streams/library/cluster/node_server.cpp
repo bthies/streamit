@@ -17,8 +17,10 @@ void node_server::run(unsigned ccp_ip) {
     if (thread_init != NULL) thread_init();
 
     for (;;) {
-      sock = wait_for_connection();
-      run_server(sock);
+      sleep(10);
+
+      //sock = wait_for_connection();
+      //run_server(sock);
     }
 
   } else {

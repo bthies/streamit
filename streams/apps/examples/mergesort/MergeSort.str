@@ -64,8 +64,8 @@ int->int pipeline Sorter (int N) {
 	    add Sorter(N/2);
 	    join roundrobin();
         };
-        add Merger(N);
-    }
+    }	
+    add Merger(N);
 }
 
 /**

@@ -14,7 +14,7 @@
 #DISTDIR = /u/mtaylor/bod
 DISTDIR ?= /home/pkg/brave_new_linux
 
-MASONVER ?= 0224
+MASONVER ?= 0241
 
 ############################
 # do not change what's below

@@ -1,14 +1,14 @@
 /**
- * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.20 2003-03-07 23:53:52 aalamb Exp $
+ * Class which runs defines which tests are run using the nightly regtest.
+ * $Id: TestNightly.java,v 1.1 2003-03-07 23:53:52 aalamb Exp $
  **/
 package streamittest;
 
 import junit.framework.*;
 
-public class TestAll extends TestCase {
+public class TestNightly extends TestCase {
 
-    public TestAll(String name) {
+    public TestNightly(String name) {
 	super (name);
     }
 
@@ -53,19 +53,22 @@ public class TestAll extends TestCase {
      * add the raw tests to the test suite framework.
      **/
     public static void addRawTests(TestSuite allTests) {
+	// note : we only run with raw 4 and partition now.
+	
 	// try one without partitioning just in case we want to
 	// compare with original performance
-	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.RAW[8]));
+	//allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+	//			       CompilerInterface.RAW[8]));
 
 	// try all configurations of raw with constprop and partition
 	// This was causing the regtest to go crazy, so I am removing
 	// all but 4
- 	for (int i=4; i<=8; i+=4) {
-	    allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-					   CompilerInterface.RAW[i] |
-					   CompilerInterface.PARTITION));
-	}
+	//for (int i=4; i<=8; i+=4) {
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       //CompilerInterface.RAW[i] |
+				       CompilerInterface.RAW[4] |
+				       CompilerInterface.PARTITION));
+	//}
 
     }
 

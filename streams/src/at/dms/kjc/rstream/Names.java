@@ -8,7 +8,6 @@ package at.dms.kjc.rstream;
  *
  * @author Michael Gordon
  * 
- * @see
  */
 
 public class Names 
@@ -43,6 +42,6 @@ public class Names
     public static String structReceiveMethodPrefix = "__popPointer";
     public static String arrayReceiveMethod = "__array_receive__";
 
-    public static String rawMain = "__RAWMAIN__";
+    public static String main = "__MAIN__";
 }
 

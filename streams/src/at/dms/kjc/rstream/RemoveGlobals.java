@@ -101,7 +101,7 @@ public class RemoveGlobals extends at.dms.util.Utils
     public static JMethodDeclaration getRawMain(SIRFilter filter) 
     {
 	
-	JMethodDeclaration rawmain = getMethod(filter, Names.rawMain);
+	JMethodDeclaration rawmain = getMethod(filter, Names.main);
 	if (rawmain == null)
 	    Utils.fail("Could not find raw main function");
 	return rawmain;
@@ -134,7 +134,7 @@ public class RemoveGlobals extends at.dms.util.Utils
 	    if (methods[i].getName().startsWith("work") ||
 		methods[i].getName().startsWith("init") ||
 		methods[i].getName().startsWith("initWork") ||
-		methods[i].getName().startsWith(Names.rawMain) )
+		methods[i].getName().startsWith(Names.main) )
 		continue;
 	    
 	    //see if there are any function calls in the other methods

@@ -47,10 +47,10 @@ public class StrToRStream {
      * working directory.
      *
      * @param str The stream graph
-     *        interfaces Not used 
-     *        interfacesTable Not used
-     *        structs The structures used in this StreamIt application
-     * @return Nothing
+     * @param interfaces Not used 
+     * @param interfaceTables Not used
+     * @param structs The structures used in this StreamIt application
+     * 
      *
      * @exception None
      * 
@@ -157,24 +157,14 @@ public class StrToRStream {
 	
 	System.out.println("Flattener Begin...");
 	executionCounts = SIRScheduler.getExecutionCounts(str);
-	PartitionDot.printScheduleGraph(str, "schedule.dot", executionCounts);
-
+	
 	//flatten the "graph", there should be only one filter, so this 
 	//just wraps the filter inside a flat node
 	GraphFlattener graphFlattener = new GraphFlattener(str);
-	assert (graphFlattener.filterCount == 1) :
-	    "Error: More than one filter detected after partitioning";
-	assert (graphFlattener.top.contents instanceof SIRFilter) :
-	    "Error: Single node present after partitioning is not a filter";
-	//maybe check that the rates of the filter are all zero, i.e. it does
-	//not communicate with anyone, just to be safe...
 	System.out.println("Flattener End.");
 	
-	//create the execution counts for other passes
-	createExecutionCounts(str, graphFlattener);
-
 	//Generate the tile code
-	//	RawExecutionCode.doit(graphFlattener.top);
+	ExecutionCode.doit(graphFlattener.top, executionCounts);
 
 	if (KjcOptions.removeglobals) {
 	    RemoveGlobals.doit(graphFlattener.top);
@@ -194,9 +184,8 @@ public class StrToRStream {
      *  Helper function to add everything in a collection to the set
      *
      * @param set The Hashset we want to add <c> to
-     *        c   The collection to add
+     * @param c   The collection to add
      *
-     * @return nothing
      */
     public static void addAll(HashSet set, Collection c) 
     {
@@ -300,27 +289,5 @@ public class StrToRStream {
 	    }
 	}
     }
-    
-    //debug function
-    //run me after layout please
-    public static void printCounts(HashMap counts) {
-	Iterator it = counts.keySet().iterator();
-	while(it.hasNext()) {
-	    FlatNode node = (FlatNode)it.next();
-	    //	if (Layout.joiners.contains(node)) 
-	    System.out.println(node.contents.getName() + " " +
-			       ((Integer)counts.get(node)).intValue());
-	}
-    }
-
-    
-
-    //simple helper function to find the topmost pipeline
-    private static SIRStream getTopMostParent (FlatNode node) 
-    {
-	SIRContainer[] parents = node.contents.getParents();
-	return parents[parents.length -1];
-    }
-
 }
 

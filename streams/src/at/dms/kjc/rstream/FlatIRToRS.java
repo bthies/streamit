@@ -23,8 +23,6 @@ import at.dms.util.SIRPrinter;
  */
 public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 {
-    private boolean DEBUG = false;
-
     protected int				TAB_SIZE = 2;
     protected int				WIDTH = 80;
     protected int				pos;
@@ -36,11 +34,6 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
     public boolean                   declOnly = true;
     public SIRFilter               filter;
     
-
-    // ALWAYS!!!!
-    //true if we are using the second buffer management scheme 
-    //circular buffers with anding
-    public boolean debug = false;//true;
 
     //true if we are currently visiting the init function
     private boolean isInit = false;
@@ -184,21 +177,7 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	//the structure definition header files
 	if (StrToRStream.structures.length > 0) 
 	    print("#include \"structs.h\"\n");
-
-	//print the extern for the function to init the 
-	//switch, do not do this if we are compiling for
-	//a uniprocessor
-	if (!KjcOptions.standalone) {
-	    print("void raw_init();\n");
-	    print("void raw_init2();\n");
-	}
-
-
 		
-	//not used any more
-	//print("unsigned int " + FLOAT_HEADER_WORD + ";\n");
-	//print("unsigned int " + INT_HEADER_WORD + ";\n");
-       
 	//Visit fields declared in the filter class
 	JFieldDeclaration[] fields = self.getFields();
 	for (int i = 0; i < fields.length; i++)
@@ -215,38 +194,14 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	    methods[i].accept(this);	
 	}
 	
-	//if we are generating raw code print the begin
-	//method for the simulator
-	if (!KjcOptions.standalone) {
-	    print("void begin(void) {\n");
-	}
-	else {
-	    //otherwise print a normal main()
-	    print("int main() {\n");
-	}
-	//not used at this time
-	//print(FLOAT_HEADER_WORD + 
-	//" = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
-	//print(INT_HEADER_WORD + 
-	//" = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
+	print("int main() {\n");
 	
-	//if we are using the magic network, 
-	//use a magic instruction to initialize the magic fifos
-	if (KjcOptions.magic_net)
-	    print("  __asm__ volatile (\"magc $0, $0, 1\");\n");
-	
-	//initialize the dummy network receive value
-	if (KjcOptions.decoupled) {
-	    if (self.getInputType().isFloatingPoint()) 
-		print("  " + Util.CSTIFPVAR + " = 1.0;\n");
-	    else 
-		print("  " + Util.CSTIINTVAR + " = 1;\n");
-	}
 	//execute the raw main function
-	print(Names.rawMain + "();\n");
-	//return 0 if we are generating normal c code
-	if (KjcOptions.standalone) 
-	    print("  return 0;\n");
+	print(Names.main + "();\n");
+	
+	//return 0 even though this should never return!
+	print("  return 0;\n");
+	//closes main()
 	print("}\n");
        
 	createFile();
@@ -381,22 +336,6 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	isInit = false;
     }
 
-    private void dummyWork(int push) {
-	print("{\n");
-	print("  int i;\n");
-	print("  for(i = 0; i < " + push + "; i++)\n");
-	print("    static_send(i);\n");
-	print("}\n");
-    }
-
-    private int nextPow2(int i) {
-	String str = Integer.toBinaryString(i);
-	if  (str.indexOf('1') == -1)
-	    return 0;
-	int bit = str.length() - str.indexOf('1');
-	return (int)Math.pow(2, bit);
-    }
-    
     // ----------------------------------------------------------------------
     // STATEMENT
     // ----------------------------------------------------------------------
@@ -1025,39 +964,10 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
                                           JExpression prefix,
                                           String ident,
                                           JExpression[] args) {
-        /*
-          if (ident != null && ident.equals(JAV_INIT)) {
-          return; // we do not want generated methods in source code
-          }
-        */
 
-
-	//supress the call to memset if the array is of size 0
-	//if (ident.equals("memset")) {
-	//    String[] dims = ArrayDim.findDim(filter, ((JLocalVariableExpression)args[0]).getIdent());
-	//    if (dims[0].equals("0"))
-	//	return;
-	//}
-
-	//generate the inline asm instruction to execute the 
-	//receive if this is a receive instruction
 	assert (!ident.equals(Names.receiveMethod)) :
 	    "Error: RStream code generation should not see network receive method";
 
-
-	/*	
-	//we are receiving an array type, call the popArray method
-	if (ident.equals(Names.arrayReceiveMethod)) {
-	    popArray(args[0]);
-	    return;
-	}
-	*/
-	/*
-	if (ident.equals(Names.rateMatchSendMethod)) {
-	    rateMatchPush(args);
-	    return;
-	}
-	*/
         print(ident);
 	
 	//we want single precision versions of the math functions

@@ -7,7 +7,7 @@
 
 void->void pipeline TargetDetect {
   /* N is the length of the filters */
-  int N = 100;
+  int N = 300;
   add TargetSource(N);
   add TargetDetectSplitJoin(N,8);
   /* there are four matched filters */

@@ -26,6 +26,7 @@ public class Linear extends BufferedCommunication implements Constants {
     private static long guin=0;
     private double[] array;
     private boolean begin;
+    private boolean end;
     private double constant;
     private int popCount;
     private int peek;
@@ -42,12 +43,13 @@ public class Linear extends BufferedCommunication implements Constants {
 	//assert filterInfo.remaining<=0:"Items remaining in buffer not supported for linear filters.";
 	FilterTraceNode node=filterInfo.traceNode;
 	System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Linear.");
-	assert filterInfo.initMult<1:"Still need to create init function"+filterInfo.initMult;
+	assert filterInfo.initMult<1:"Still need to create init function: "+filterInfo.initMult;
 	assert filterInfo.primePump<1:"Still need to create primePump: "+filterInfo.primePump;
 	System.out.println("STEADYSTATE: "+filterInfo.steadyMult);
 	FilterContent content=filterInfo.filter;
 	array=content.getArray();
 	begin=content.getBegin();
+	end=content.getEnd();
 	constant=content.getConstant();
 	popCount=content.getPopCount();
 	peek=content.getPeek();
@@ -65,7 +67,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	if(filterInfo.initMult>0)
 	    bufferSize+=peek-popCount;
 	//Can be made better
-	assert array.length<=regs.length-array.length/popCount-1:"Not enough registers for coefficients";
+	assert array.length<=regs.length-array.length/popCount-1:"Not enough registers for coefficients: ";
 	num=array.length/popCount;
 	System.out.println("POS: "+pos);
 	idx=new int[num];
@@ -447,7 +449,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	    int writeIndex=0;
 	    int bufferRemaining=buffer; //Use peek buffer while bufferRemaining>0 else use net
 	    //preloop
-	    for(int i=0;i<=topPopNum;i++)
+	    for(int i=0;i<num;i++)
 		for(int j=0;j<popCount;j++) {
 		    assert bufferRemaining>0:"Buffer shouldn't run out here!";
 		    inline.add("lw    "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
@@ -458,11 +460,16 @@ public class Linear extends BufferedCommunication implements Constants {
 			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 		    }
 		}
-	    //innerloop
-	    for(int i=0;i<mult-1;i++)
+	    //pre+steadyloop
+	    final int extraTurns=(mult-1)/num;
+	    final int turns=pos*num+extraTurns;
+	    for(int i=0;i<turns;i++)
 		for(int j=0;j<popCount;j++) {
 		    if(bufferRemaining>0) {
 			//Load value and send to switch
+			//if(end)
+			//inline.add("lw    "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
+			//else
 			inline.add("lw!   "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
 			readIndex+=4;
 			bufferRemaining--;
@@ -474,28 +481,45 @@ public class Linear extends BufferedCommunication implements Constants {
 		    }
 		}
 	    //postloop
-	    for(int i=0;i<topPopNum;i++)
+	    final int remaining=mult-1-extraTurns*num;
+	    for(int i=0;i<remaining;i++)
 		for(int j=0;j<popCount;j++) {
 		    if(bufferRemaining>0) {
 			//Load value and send to switch
-			inline.add("lw!   "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
+			if(end)
+			    inline.add("lw    "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
+			else
+			    inline.add("lw!   "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
 			readIndex+=4;
 			bufferRemaining--;
 		    } else
 			inline.add("move  "+tempRegs[0]+",\\t$csti");
 		    inline.add("sw    "+tempRegs[0]+",\\t"+writeIndex+"("+tempReg+")");
-		    writeIndex++;
-		    for(int k=topPopNum;k>i;k--) {
+		    writeIndex+=4;
+		    for(int k=topPopNum;k>=i;k--) {
 			inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
 			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 		    }
 		}
+	    //forward values
+	    final int numForward=pos*num*popCount;
+	    for(int i=0;i<numForward;i++) {
+		if(bufferRemaining>0) {
+		    inline.add("lw!   "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
+		    readIndex+=4;
+		    bufferRemaining--;
+		} else
+		    inline.add("move  "+tempRegs[0]+",\\t$csti");
+		inline.add("sw    "+tempRegs[0]+",\\t"+writeIndex+"("+tempReg+")");
+		writeIndex+=4;
+	    }
 	    //Transfer rest of buffer
-	    for(;bufferRemaining>0;bufferRemaining--) {
+	    final int excess=bufferSize-popCount*(num+mult-1+topPopNum)-numForward;
+	    for(int i=0;i<excess;i++) {
 		inline.add("lw    "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
 		readIndex+=4;
 		inline.add("sw    "+tempRegs[0]+",\\t"+writeIndex+"("+tempReg+")");
-		writeIndex++;
+		writeIndex+=4;
 	    }
 	} else {
 	    //preloop

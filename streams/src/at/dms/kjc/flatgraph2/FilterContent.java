@@ -83,7 +83,7 @@ public class FilterContent {
 	initMult=unflat.initMult;
 	steadyMult=unflat.steadyMult;
 	array=unflat.array;
-	if(array!=null) {
+	if(array!=null&&initMult<1) {
 	    linear=true;
 	    constant=unflat.constant;
 	    popCount=unflat.popCount;

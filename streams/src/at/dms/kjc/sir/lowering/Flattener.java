@@ -37,9 +37,7 @@ public class Flattener {
 
 	if (StreamItOptions.fusion) {
 	    System.out.println("Running Fusion");
-	    FusePipe.doit((SIRPipeline)str, 
-			  (SIRFilter)((SIRPipeline)str).get(1), 
-			  (SIRFilter)((SIRPipeline)str).get(2));
+	    FuseAll.fuse(str);
 	    // DEBUGGING PRINTING
 	    System.out.println("--------- AFTER FUSION ------------");
 	    printer1 = new SIRPrinter();

@@ -168,8 +168,9 @@ public class RenameAll extends SLIRReplacingVisitor
         JStatement[] stmts = self.getStatementArray();
         JStatement[] newstmts = new JStatement[stmts.length];
         findDecls(stmts);
-        for (int i = 0; i < stmts.length; i++)
-            newstmts[i] = (JStatement)stmts[i].accept(this);
+        for (int i = 0; i < stmts.length; i++) {
+	    newstmts[i] = (JStatement)stmts[i].accept(this);
+	}
         symtab = ost;
         return new JBlock(self.getTokenReference(), newstmts, comments);
     }

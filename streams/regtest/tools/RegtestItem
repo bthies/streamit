@@ -1,0 +1,12 @@
+<!-- -*- mmm-classes: mason -*- -->
+<tr class=<%$Class%>><td><b><%$Op%> <%$Path%></b><br>
+% foreach my $flag (@$Flags) {
+&nbsp;&nbsp;&nbsp;<%$flag%><br>
+% }
+</td></tr>
+<%ARGS>
+$Class => 'oddline'
+$Op => 'Compile'
+$Path => undef
+$Flags => []
+</%ARGS>

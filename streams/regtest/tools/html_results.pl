@@ -18,7 +18,7 @@
 # Note: The contents of the error file are not acutally used at the
 # present time. error messages are parsed out of the log file instead.
 #
-# $Id: html_results.pl,v 1.2 2003-04-09 15:39:09 dmaze Exp $
+# $Id: html_results.pl,v 1.3 2003-09-03 19:08:44 dmaze Exp $
 
 use strict;
 
@@ -99,7 +99,7 @@ sub parse_logs {
 	my $test = shift(@parsed);
 	$test =~ s/ $prefix/ /;
 	my $options = shift(@parsed);
-	$failed->{$test} .= ("&nbsp;"x3 . $options . "<br>\n");
+	push @{$failed->{$test}}, $options;
     }
 
 
@@ -110,8 +110,32 @@ sub parse_logs {
 	# split line into test and options
 	my ($test, $options) = $current_line =~ m/(.*)\((.*)\)/g;
 	$test =~ s/ $prefix/ /;
-	$succeeded->{$test} .= ("&nbsp;"x3 . $options . "<br>\n");
+	push @{$succeeded->{$test}}, $options;
     }
+}
+
+sub generate_regtest_item {
+  my ($collection, $key, $i) = @_;
+  my $result = '';
+
+  my ($op, $path) = $key =~ /^(\S+)\s+(.*)/;
+  $result .=  "<& RegtestItem, Class => '" .
+    ($i%2?"oddline":"evenline") . "', Op => '$op',\n" .
+      "   Path => '$path',\n";
+  my $first = 1;
+  foreach my $flag (@{$collection->{$key}})
+    {
+      if ($first) {
+	$result .= "   Flags => [";
+	$first = 0;
+      } else {
+	$result .= ",\n";
+      }
+      $result .= "'$flag'";
+    }
+  $result .= "] &>\n";
+
+  return $result;
 }
 
 sub generate_listing {
@@ -123,7 +147,7 @@ sub generate_listing {
   open OUT, ">$out";
   print OUT '<& /Elements/Header, Title => loc("StreamIt Regtest") &>';
   print OUT '<& /Elements/Tabs, Title => loc("StreamIt Regtest") &>';
-  print OUT "<table border=0 width=100%>\n";
+  print OUT "<table border=0 width=\"100%\">\n";
   print OUT "<tr align=top><td>\n";
 
   if (keys %$failed)
@@ -135,9 +159,7 @@ sub generate_listing {
       foreach my $key (sort keys %$failed)
 	{
 	  $i++;
-	  print OUT "<tr class=" . ($i%2?"oddline":"evenline") . "><td>" .
-	    "<b>$key</b><br>\n" . $failed->{$key} .
-	      "</td></tr>\n";
+	  print OUT generate_regtest_item($failed, $key, $i);
 	}
       print OUT "<& /Elements/TitleBoxEnd &>\n";
     }
@@ -151,9 +173,7 @@ sub generate_listing {
       foreach my $key (sort keys %$succeeded)
 	{
 	  $i++;
-	  print OUT "<tr class=" . ($i%2?"oddline":"evenline") . "><td>" .
-	    "<b>$key</b><br>\n" . $succeeded->{$key} .
-	      "</td></tr>\n";
+	  print OUT generate_regtest_item($succeeded, $key, $i);
 	}
       print OUT "<& /Elements/TitleBoxEnd &>\n";
     }
@@ -194,20 +214,14 @@ sub read_file {
 # this sub go through and counts all of those options for all keys, so we can report the
 # number of successes and the number of failures that we have
 sub count_total_options {
-    my $hashref = shift || die ("No hash ref passed to count_total_options");
-    
-    # basic idea: for each key, we count the number of newlines
-    my $total_options = 0;
-    my $current_key;
-    foreach $current_key (keys %$hashref) {
-	my @items = split("\n", $$hashref{$current_key});
-	$total_options += @items;
-    }
-    return $total_options;
+  my $hashref = shift || die ("No hash ref passed to count_total_options");
+
+  my $total_options = 0;
+  foreach my $current_key (keys %$hashref) {
+    $total_options += @{$hashref->{$current_key}};
+  }
+  return $total_options;
 }
-    
-
-
 
 
 # stupid perl syntax

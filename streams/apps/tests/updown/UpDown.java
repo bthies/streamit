@@ -1,6 +1,9 @@
 /*
  * UpDown.java: a counter that counts between 0 and 10, and back
+ * $Id: UpDown.java,v 1.2 2001-10-17 13:53:17 dmaze Exp $
  */
+
+import streamit.*;
 
 class UpDownGen extends Filter
 {

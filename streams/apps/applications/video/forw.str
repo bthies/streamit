@@ -1,0 +1,154 @@
+/* This file performs motion prediction 
+search area refers to the size of the area
+we are serching in.
+by block I mean the area that we want to find
+a match for.
+
+M the number of lines in the search area
+N the number of pixels in the search area
+
+
+H is the highth of the block (corresponding to M)
+W is the width of the block (corresponding to N)
+*/
+
+void->void pipeline motionpred() {
+    add source();
+    add mpcore(4,3,3,2);
+    add sink(2+6);
+}
+	
+
+
+
+
+void->float filter source() {
+
+    work  push 18 {
+
+	float[4][3] A;
+	A[0][0]=0;
+	A[0][1]=0;
+	A[0][2]=0;
+	A[1][0]=0;
+	A[1][1]=1;
+	A[1][2]=2;
+	A[2][0]=0;
+	A[2][1]=2;
+	A[2][2]=5;
+	A[3][0]=0;
+	A[3][1]=4;
+	A[3][2]=2;
+
+	float[3][2] B;
+
+	B[0][0]=1;
+	B[0][1]=2;
+	B[1][0]=2;
+	B[1][1]=3;
+	B[2][0]=4;
+	B[2][1]=2;
+
+	for (int i=0; i<4; i++)
+	    for (int j=0; j<3; j++)
+		push(A[i][j]);
+
+	for (int i=0; i<3; i++)
+	    for (int j=0; j<2; j++)
+		push(B[i][j]);
+
+    }
+}
+
+
+float -> void filter sink(int M) {
+    work pop M push 0 {
+	for (int i=0; i <M; i++)
+	    println(pop());
+    }
+}
+
+// this filters first gets the search area, then gets
+// the block and the n sends the x and y coordinant of the 
+// the best matching block (with half pixel precision) and 
+// the difference block
+
+
+
+// HALF PIXEL PRECISION IS NOT YET IMPLEMENTED!
+
+	    
+	 
+float->float filter mpcore(int M,int N, int H, int W) {
+
+	float[M][N] A;// the search area
+	
+
+	float[H][W] B;// the block area
+	
+    work pop (M*N+H*W) push (2+H*W) {
+	
+	int x;       // the raw number of the best match
+        int y;       // the column number of the best match
+	float ediff; // the minimum energy in the difference
+	float temp1; // will be used to calcuate the energy in
+	             // in the difference.
+	float temp2;
+	
+	x=0;
+	y=0;
+	ediff=0;
+	
+	for(int i=0; i<M ; i++)
+	    for(int j=0; j<N;j++)
+		A[i][j]=pop();
+
+	for(int i=0; i<H; i++)
+	    for (int j=0; j<W; j++)
+		B[i][j]=pop();
+
+	ediff=M*N*256;    // just a very large value to make sure the 
+	                  // search algorithm works
+
+	for (int i=0; i<=(M-H); i++)
+	    for (int j=0; j<=(N-W); j++)
+		{
+		    temp1=0;
+		    for (int k=0; k<H;k++)
+			for (int l=0; l<W;l++)
+			    temp1 += (B[k][l]-A[k+i][j+l])*(B[k][l]-A[k+i][j+l]);
+
+		    if (temp1 < ediff)  {
+			x=i;
+			y=j;
+			ediff=temp1;
+		    }
+		}
+	
+	push(x);
+	push(y);
+	
+	for (int i=0; i<H;i++)
+	    for (int j=0; j<W;j++)
+		push(B[i][j]-A[x+i][y+j]);
+
+
+
+
+      
+	
+    }
+}
+  
+
+
+
+
+
+
+
+
+
+
+
+

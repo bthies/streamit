@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.19 2003-03-11 22:08:47 dmaze Exp $
+# $Id: knit,v 1.20 2003-03-14 19:45:26 dmaze Exp $
 #
 
 use strict;
@@ -70,7 +70,7 @@ Options specific to RAW backend:
 * --ilppartition, -A  Use the integer linear programming partitioner
 * --magic-net, -M     Generate RAW "magic network" code
 * --noanneal, -W      Do not run simulated annealing for layout
-  --numbers n, -N     Automatically gather numbers and put in results.out
+* --numbers n, -N     Automatically gather numbers and put in results.out
   --partition, -a     Automatically partition stream graph
   --ptraccess, -Q     Access buffers through a pointer
 * --ratematch, -x     Turn on rate matching

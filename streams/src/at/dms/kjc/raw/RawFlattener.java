@@ -193,6 +193,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 				    sum+=rem;
 				    newWeights.add(new Integer(rem));
 				    newEdges.add(childNode.edges[off]);
+				    remainderArray[i]=0;
 				    if((++off)==childNode.weights.length)
 					off=0;
 				} else {
@@ -499,6 +500,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 				    sum+=rem;
 				    newWeights.add(new Integer(rem));
 				    newEdges.add(childNode.incoming[off]);
+				    remainderArray[i]=0;
 				    if((++off)==childNode.incomingWeights.length)
 					off=0;
 				} else {
@@ -520,7 +522,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 				    int fit=target-oldSum;
 				    newWeights.add(new Integer(fit));
 				    newEdges.add(childNode.incoming[off]);
-				    remainderArray[i]=childNode.incomingWeights[off]-fit;
+				    remainderArray[i]=sum-target;
 				    break;
 				}
 				if((++off)==childNode.incomingWeights.length)
@@ -538,6 +540,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 		    for(int i=0;i<tempWeights.length;i++) {
 			tempWeights[i]=((Integer)newWeights.get(i)).intValue();
 		    }
+		    System.out.println(newEdges);
 		    joinerNode.incomingWeights=tempWeights;
 		    joinerNode.currentIncoming=tempEdges.length;
 		    joinerNode.inputs=tempEdges.length;
@@ -610,7 +613,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 				split.weights[off]=weight;
 			    }
 			}
-		    }
+		    }		    
 		}
 	    }
 	    

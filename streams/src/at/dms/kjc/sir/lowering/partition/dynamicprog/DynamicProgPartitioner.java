@@ -126,8 +126,10 @@ public class DynamicProgPartitioner extends ListPartitioner {
 
 	StreamTransform result = topConfig.traceback(partitions, curPartition, tilesUsed, 0);
 
+	/* This is no longer the case because of estimating fusion overhead.
 	Utils.assert(bottleneck==PartitionUtil.getMaxWork(partitions),
 		     "bottleneck=" + bottleneck + " but PartitionUtil.getMaxWork(partitions)=" + PartitionUtil.getMaxWork(partitions));
+	*/
 	return result;
     }
 

@@ -314,7 +314,7 @@ public class FlattenGraph {
 	final int rows=a.getRows();
 	double[] out=new double[rows];
 	for(int i=0;i<rows;i++)
-	    out[i]=a.getElement(i,col).getReal();
+	    out[i]=a.getElement(rows-i-1,col).getReal();
 	return out;
     }
     

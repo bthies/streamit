@@ -31,6 +31,7 @@ public class FilterContent {
     private double constant;
     private int popCount;
     private boolean linear;
+    private boolean begin;
 
     /*public FilterContent(String name,SIRWorkFunction[] init,SIRWorkFunction[] work,CType inputType,CType outputType,int initMult,int steadyMult,JMethodDeclaration[] methods,List paramList) {
       this.name=name;
@@ -44,6 +45,26 @@ public class FilterContent {
       this.paramList=paramList;
       }*/
     
+    public FilterContent(FilterContent content) {
+	name=content.name;
+	init=content.init;
+	steady=content.steady;
+	inputType=content.inputType;
+	outputType=content.outputType;
+	initMult=content.initMult;
+	steadyMult=content.steadyMult;
+	primePump=content.primePump;
+	methods=content.methods;
+	paramList=content.paramList;
+	initFunction=content.initFunction;
+	is2stage=content.is2stage;
+	fields=content.fields;
+	array=content.array;
+	constant=content.constant;
+	popCount=content.popCount;
+	linear=content.linear;
+    }
+
     public FilterContent(SIRPhasedFilter filter) {
 	name=filter.getName();
 	init=filter.getInitPhases();
@@ -101,6 +122,14 @@ public class FilterContent {
     
     public boolean isLinear() {
 	return linear;
+    }
+
+    public void setArray(double[] array) {
+	this.array=array;
+    }
+
+    public void setBegin(boolean begin) {
+	this.begin=begin;
     }
 
     public double[] getArray() {

@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.12 2003-11-07 10:38:12 jasperln Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.13 2003-12-02 21:12:09 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -92,6 +92,12 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
      */
     public void visitPopExpression(SIRPopExpression self,
 				   CType tapeType) {
+    }
+
+    /**
+     * Visits a message-receiving portal.
+     */
+    public void visitPortal(SIRPortal self) {
     }
 
     /**

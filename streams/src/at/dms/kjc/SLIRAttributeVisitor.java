@@ -74,6 +74,11 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
                             CType tapeType);
 
     /**
+     * Visits a message-receiving portal.
+     */
+    Object visitPortal(SIRPortal self);
+
+    /**
      * Visits a print statement.
      */
     Object visitPrintStatement(SIRPrintStatement self,

@@ -140,6 +140,14 @@ public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor
     }
 
     /**
+     * Visits a message-receiving portal.
+     */
+    public Object visitPortal(SIRPortal self)
+    {
+        return self;
+    }
+
+    /**
      * Visits a print statement.
      */
     public Object visitPrintStatement(SIRPrintStatement self,

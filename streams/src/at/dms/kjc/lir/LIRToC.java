@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.85 2003-10-04 02:26:04 jasperln Exp $
+ * $Id: LIRToC.java,v 1.86 2003-12-02 21:12:12 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -9,6 +9,7 @@ import java.io.*;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.List;
+import java.util.Map;
 import at.dms.util.InconsistencyException;
 
 import at.dms.kjc.sir.lowering.LoweringConstants;
@@ -91,6 +92,8 @@ public class LIRToC
         this.p = p;
         this.str = null;
         this.pos = 0;
+        this.portalCount = 0;
+        this.portalNames = new java.util.HashMap();
     }
 
     /**
@@ -1784,6 +1787,18 @@ public class LIRToC
 	}
     }
     
+    public void visitPortal(SIRPortal self)
+    {
+        // Have we seen this portal before?
+        if (!(portalNames.containsKey(self)))
+        {
+            portalCount++;
+            String theName = "__portal_" + portalCount;
+            portalNames.put(self, theName);
+        }
+        print(portalNames.get(self));
+    }
+
     public void visitPrintStatement(SIRPrintStatement self,
                                     JExpression exp)
     {
@@ -2604,4 +2619,7 @@ public class LIRToC
     protected StringWriter                str;
     protected boolean			nl = true;
     protected boolean                   declOnly = false;
+
+    protected int                       portalCount;
+    protected Map                       portalNames;
 }

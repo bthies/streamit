@@ -134,6 +134,13 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     }
 
     /**
+     * Visits a message-receiving portal.
+     */
+    public Object visitPortal(SIRPortal self) {
+        return self;
+    }
+
+    /**
      * Visits a phase-invocation statement.
      */
     public Object visitPhaseInvocation(SIRPhaseInvocation self,

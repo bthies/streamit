@@ -17,7 +17,7 @@
 #
 # ex compare_raw.pl raw_output.txt expected_output.txt
 # AAL 6/26/2002
-# $Id: compare_raw.pl,v 1.1 2002-06-26 17:34:38 aalamb Exp $
+# $Id: compare_raw.pl,v 1.2 2002-06-28 22:20:41 aalamb Exp $
 #######
 
 use strict;
@@ -118,5 +118,3 @@ sub read_file {
 
     return $file_contents;
 }
-    
-    

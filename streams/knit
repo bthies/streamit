@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.40 2003-09-22 16:34:52 dmaze Exp $
+# $Id: knit,v 1.41 2003-09-22 19:01:49 dmaze Exp $
 #
 
 use strict;
@@ -66,10 +66,12 @@ Options:
   --cluster           Compile for a networked cluster
 * --viram, -V         Compile for VIRAM, a vector uniprocessor
   --verbose           Print commands as they are executed
-  -O0, -O1, -O2       Use predefined optimization sets
   --library           Run in the Java library instead of compiling
+  --memory, -Xmx      Specify Java runtime heap limit
 
 Options available for all backends:
+  -O0, -O1, -O2       Use predefined optimization sets
+  --destroyfieldarray Break arrays in structures into component elements
 * --clone-with-serialization, -K
 *                     Use old serialization code to copy objects
 * --fusion, -f        Fuse entire program to a single filter
@@ -80,7 +82,6 @@ Options available for all backends:
 *                     Do linear replacement using a level of indirection
 * --linearreplacement3, -R
 *                     Do linear replacement using diagonal replacement
-  --memory, -Xmx      Specify Java runtime heap limit
   --nofieldprop, -L   Do not propagate constant field values
   --nolinearcollapse, -H
                       Do not combine filters with linear replacement
@@ -98,7 +99,7 @@ Options available for all backends:
 Options specific to RAW backend:
   --partition, -a     Automatically partition stream graph (greedy)
   --dppartition, -y   Use the dynamic programming partitioner
-* --altcodegen, -z    Alternate RAW communication code generation
+  --altcodegen, -z    Alternate RAW communication code generation
 * --decoupled, -X     Generate dummy communication code
 * --dpscaling, -Y     Collect theoretical scaling statistics
 * --ilppartition, -A  Use the integer linear programming partitioner

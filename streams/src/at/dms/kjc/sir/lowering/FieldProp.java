@@ -247,6 +247,35 @@ public class FieldProp
                             else
                                 invalidateField(name);
                         }
+                        else if (left instanceof JArrayAccessExpression)
+                        {
+                            JArrayAccessExpression aae =
+                                (JArrayAccessExpression)left;
+                            // Check that the prefix is a FieldAccessExpr.
+                            // Same rules as above.
+                            JExpression prefix = aae.getPrefix();
+                            if (!(prefix instanceof JFieldAccessExpression))
+                                return;
+                            JFieldAccessExpression fae =
+                                (JFieldAccessExpression)prefix;
+                            String name = fae.getIdent();
+                            if (!(fae.getPrefix() instanceof JThisExpression))
+                                return;
+                            // Also check that the offset is constant.
+                            // If it's not, invalidate the whole thing.
+                            JExpression accessor = aae.getAccessor();
+                            if (!(accessor instanceof JIntLiteral))
+                            {
+                                invalidateField(name);
+                                return;
+                            }
+                            int slot = ((JIntLiteral)accessor).intValue();
+                            // Now look at the right-hand side.
+                            if (right instanceof JLiteral)
+                                noticeArrayAssignment(name, slot, right);
+                            else
+                                invalidateArray(name, slot);
+                        }
                     }
                     public void visitCompoundAssignmentExpression
                         (JCompoundAssignmentExpression self,
@@ -300,6 +329,35 @@ public class FieldProp
                             super.visitFieldExpression(self, left, ident);
                         if (canFieldPropagate(ident))
                             return propagatedField(ident);
+                        else
+                            return orig;
+                    }
+
+                    public Object visitArrayAccessExpression
+                        (JArrayAccessExpression self,
+                         JExpression pfx,
+                         JExpression acc)
+                    {
+                        // Recurse so we have something to return.
+                        Object orig =
+                            super.visitArrayAccessExpression(self, pfx, acc);
+                        // Take a harder look at what we have...
+                        if (!(pfx instanceof JFieldAccessExpression))
+                            return orig;
+                        JFieldAccessExpression fae =
+                            (JFieldAccessExpression)pfx;
+                        if (!(fae.getPrefix() instanceof JThisExpression))
+                            return orig;
+                        // Okay, the base is a FAE with this.  Yay.
+                        // Save its name.
+                        String name = fae.getIdent();
+                        // Now, is the offset an integer literal?
+                        if (!(acc instanceof JIntLiteral))
+                            return orig;
+                        // Yay, we win (hopefully).
+                        int slot = ((JIntLiteral)acc).intValue();
+                        if (canArrayPropagate(name, slot))
+                            return propagatedArray(name, slot);
                         else
                             return orig;
                     }

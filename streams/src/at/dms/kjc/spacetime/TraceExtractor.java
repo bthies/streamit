@@ -166,7 +166,7 @@ public class TraceExtractor {
 	//output=new ExitTraceNode(write.getFileName(),true,filter.inWeights,inNode);
 	//} else
 	output=new InputTraceNode(filter.inWeights,inNode);
-	inNodes.put(filter,output);
+	inNodes.put(filter,inNode);
 	return output;
     }
 

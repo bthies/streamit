@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.6 2002-10-30 14:51:11 aalamb Exp $
+ * $Id: KjcOptions.opt,v 1.7 2002-11-05 22:20:24 mgordon Exp $
  */
 
 prefix Kjc
@@ -213,6 +213,12 @@ longname		"targetFFTSize"
 	default		"16"
 	requireArgument
 	help		"The target number of outputs (N) to produce (used with frequencyreplacement)"
+
+longname 		"removeglobals"
+	shortcut	"G"
+	type		boolean
+	default		"false"
+	help		"While building the Raw main function inline all function calls, if possible, and convert all fields of a filter to locals"
 
 longname		"poptopeek"
 	shortcut	"P"

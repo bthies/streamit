@@ -16,6 +16,20 @@ public class DLList extends AssertedClass
      */
     DLListElement theList = new DLListElement ();
     
+    /**
+     * Make a copy of the list. This does NOT copy the elements!
+     */
+    public DLList copy ()
+    {
+        DLList other = new DLList ();
+        
+        for (DLListElement elem = theList.nextElem; elem != theList; elem = elem.nextElem)
+        {
+            other.pushBack(elem.get());
+        }
+        
+        return other;
+    }
 
     /**
      * Returns the first element of a list. 

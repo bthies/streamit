@@ -9,5 +9,6 @@ package streamit.scheduler2.constrained;
 public interface StreamInterface
     extends streamit.scheduler2.hierarchical.StreamInterface
 {
-    
+    public LatencyNode getBottomLatencyNode ();
+    public LatencyNode getTopLatencyNode ();
 }

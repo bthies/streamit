@@ -12,7 +12,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
      * in the graph. Each element is a LatencyNode.
      */
     final DLList nodes = new DLList();
-
+    
     /*
      * This a map of StreamInterfaces to DLList of StreamInterfaces.
      * The second entry contains a list of ancestor of the key, 
@@ -52,8 +52,10 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         }
     }
 
-    void addNode(Filter filter)
+    LatencyNode addNode(Filter filter)
     {
-        nodes.pushBack(new LatencyNode(filter, getAncestorList (filter)));
+        LatencyNode newNode = new LatencyNode(filter, getAncestorList (filter)); 
+        nodes.pushBack(newNode);
+        return newNode;
     }
 }

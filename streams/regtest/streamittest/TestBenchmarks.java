@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.9 2002-10-21 18:52:38 aalamb Exp $
+ * $Id: TestBenchmarks.java,v 1.10 2002-10-28 23:38:47 thies Exp $
  **/
 package streamittest;
 
@@ -38,16 +38,21 @@ public class TestBenchmarks extends StreamITTestCase {
 
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
+	// can't fit on raw 8 without partition
+	if (!flagsContainRaw(flags) || 
+	    flagsContainPartition(flags) ||
+	    flagsContainFusion(flags)) {
+	    suite.addTest(new TestBenchmarks("testBitonicSort", flags));
+	    suite.addTest(new TestBenchmarks("testFir", flags));
+	    suite.addTest(new TestBenchmarks("testVocoder", flags));
+	}
 	suite.addTest(new TestBenchmarks("testSimple", flags));
         suite.addTest(new TestBenchmarks("testBeamFormer", flags));
-        suite.addTest(new TestBenchmarks("testBitonicSort", flags));
         suite.addTest(new TestBenchmarks("testFft", flags));
         suite.addTest(new TestBenchmarks("testFilterbank", flags));
-        suite.addTest(new TestBenchmarks("testFir", flags));
         suite.addTest(new TestBenchmarks("testFm", flags));
         suite.addTest(new TestBenchmarks("testGsm", flags));
         suite.addTest(new TestBenchmarks("testNokia", flags));
-        suite.addTest(new TestBenchmarks("testVocoder", flags));
 
 	return suite;
     }

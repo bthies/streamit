@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.3 2004-02-18 21:05:19 sitij Exp $
+ * $Id: LinearAnalyzer.java,v 1.4 2004-02-23 21:32:25 sitij Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -205,6 +205,11 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    nonLinearStreams.add(self);
 	    return;
 	}
+
+	/**
+	   We use two visitors - one is for the init function, in order to find the initial values of global variables. These initial values (which must be constants) are placed in the final column of the A matrix (since the final column is for constant offsets). We extract this final column, convert it into a FilterVector, and assign it to the main visitor's initial vector.
+	**/
+
 	
 	LinearFilterVisitor initVisitor = new LinearFilterVisitor(self);
 	LinearFilterVisitor mainVisitor = new LinearFilterVisitor(self);
@@ -225,7 +230,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    unrolledSelf.getInit().accept(initVisitor);
             initVisitor.complete();
 
-	    // copy the last column of A (constants) to the initVector
+	    // copy the last column of A (constants) to the init vector
 
 	    FilterMatrix A = initVisitor.getA();
 	    int rowVal = A.getRows();
@@ -233,8 +238,11 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    newMatrix.copyColumnsAt(0,A,rowVal-1,1);
 	    newMatrix = newMatrix.transpose();
 	    FilterVector initVector = FilterVector.toVector(newMatrix);
+
 	    //the last state is the constant one
 	    initVector.setElement(rowVal-1,ComplexNumber.ONE);
+
+	    //put the init vector in the main visitor
 	    mainVisitor.setInit(initVector);
 
 	    unrolledSelf.getWork().accept(mainVisitor);
@@ -439,7 +447,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 
     /**
      * Given kidList, returns a list of the values of kidMap.get(kidList)
-     * in the same ovder as the kidList.
+     * in the same order as the kidList.
      **/
     private static List getLinearRepList(HashMap kidMap, List kidList) {
 	List repList = new LinkedList(); 

@@ -19,7 +19,7 @@ import at.dms.kjc.sir.*;
  * the linear function that is computed by that IR node. LinearForms are
  * used to represent linear combinations of the inputs and states.<br>
  *
- * $Id: LinearFilterVisitor.java,v 1.3 2004-02-18 21:05:20 sitij Exp $
+ * $Id: LinearFilterVisitor.java,v 1.4 2004-02-23 21:32:25 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -200,6 +200,10 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    peekLinear.copyInputsToRow(this.B, i);
 	    peekLinear.copyStatesToRow(this.A, i);
 	}
+
+	//Finally, the last state (which is a constant) is always updated by itself, so place a one
+	// in the last entry of the A matrix
+	this.A.setElement(this.stateSize-1,this.stateSize-1,ComplexNumber.ONE);
 
     }
 

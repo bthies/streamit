@@ -1,6 +1,6 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: SplitJoin.java,v 1.5 2002-12-02 23:54:12 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.6 2003-04-06 06:54:55 karczma Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 SplitJoinIter;
@@ -23,26 +23,30 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
         super(iterator, factory);
     }
 
-    private interface SJSchedulingUtility
+    private abstract class SJSchedulingUtility
     {
-        public void addSchedulePhase(PhasingSchedule phase);
-        public void advanceChildSchedule(StreamInterface child);
-        public PhasingSchedule getChildNextPhase(StreamInterface child);
-        public PhasingSchedule getChildPhase(
+        abstract public void addSchedulePhase(PhasingSchedule phase);
+        public void advanceChildSchedule(StreamInterface child) 
+        {
+            advanceChildSchedule(child, 1);
+        }
+        abstract public void advanceChildSchedule(StreamInterface child, int nPhases);
+        abstract public PhasingSchedule getChildNextPhase(StreamInterface child);
+        abstract public PhasingSchedule getChildPhase(
             StreamInterface child,
             int phase);
-        public void advanceSplitSchedule();
-        public void advanceJoinSchedule();
+        abstract public void advanceSplitSchedule();
+        abstract public void advanceJoinSchedule();
 
-        public SplitFlow getNextSplitSteadyPhaseFlow();
-        public SplitFlow getSplitSteadyPhaseFlow(int phase);
-        public PhasingSchedule getNextSplitSteadyPhase();
-        public JoinFlow getNextJoinSteadyPhaseFlow();
-        public JoinFlow getJoinSteadyPhaseFlow(int phase);
-        public PhasingSchedule getNextJoinSteadyPhase();
+        abstract public SplitFlow getNextSplitSteadyPhaseFlow();
+        abstract public SplitFlow getSplitSteadyPhaseFlow(int phase);
+        abstract public PhasingSchedule getNextSplitSteadyPhase();
+        abstract public JoinFlow getNextJoinSteadyPhaseFlow();
+        abstract public JoinFlow getJoinSteadyPhaseFlow(int phase);
+        abstract public PhasingSchedule getNextJoinSteadyPhase();
     }
 
-    private class SJInitSchedulingUtility implements SJSchedulingUtility
+    private class SJInitSchedulingUtility extends SJSchedulingUtility
     {
         SplitJoin sj;
         SJInitSchedulingUtility(SplitJoin _sj)
@@ -55,9 +59,9 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
             sj.addInitScheduleStage(phase);
         }
 
-        public void advanceChildSchedule(StreamInterface child)
+        public void advanceChildSchedule(StreamInterface child, int nPhases)
         {
-            sj.advanceChildInitSchedule(child);
+            sj.advanceChildInitSchedule(child, nPhases);
         }
 
         public PhasingSchedule getChildNextPhase(StreamInterface child)
@@ -113,7 +117,7 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
         }
     }
 
-    private class SJSteadySchedulingUtility implements SJSchedulingUtility
+    private class SJSteadySchedulingUtility extends SJSchedulingUtility
     {
         SplitJoin sj;
         SJSteadySchedulingUtility(SplitJoin _sj)
@@ -126,9 +130,9 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
             sj.addSteadySchedulePhase(phase);
         }
 
-        public void advanceChildSchedule(StreamInterface child)
+        public void advanceChildSchedule(StreamInterface child, int nPhases)
         {
-            sj.advanceChildSteadySchedule(child);
+            sj.advanceChildSteadySchedule(child,nPhases);
         }
 
         public PhasingSchedule getChildNextPhase(StreamInterface child)
@@ -322,14 +326,12 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
                     for (nChild = 0; nChild < getNumChildren(); nChild++)
                     {
                         StreamInterface child = getHierarchicalChild(nChild);
-                        for (;
-                            phaseChildrenExecs[nChild] > 0;
-                            phaseChildrenExecs[nChild]--)
+                        for (int nPhase = 0; nPhase < phaseChildrenExecs[nChild]; nPhase++)
                         {
                             // get the phase and check that I've enough 
                             // peek data in the buffer to run it
                             PhasingSchedule childPhase =
-                                utility.getChildNextPhase(child);
+                                utility.getChildPhase(child, nPhase);
                             ASSERT(
                                 postSplitBuffers[nChild]
                                     >= childPhase.getOverallPeek());
@@ -340,14 +342,16 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
                             preJoinBuffers[nChild]
                                 += childPhase.getOverallPush();
 
-                            // add the phase to the schedule
-                            // and advance the phase counter
-                            phase.appendPhase(childPhase);
-                            utility.advanceChildSchedule(child);
-
                             // note that I've just executed a child 
                             // init phase
                             childrenExecs[nChild]--;
+                        }
+                        // add the phase to the schedule
+                        // and advance the phase counter
+                        if (phaseChildrenExecs[nChild] > 0)
+                        {
+                            phase.appendPhase(getChildPhases(child, phaseChildrenExecs[nChild]));
+                            utility.advanceChildSchedule(child, phaseChildrenExecs[nChild]);
                         }
                     }
                 }

@@ -1,6 +1,6 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: PhasingSchedule.java,v 1.6 2002-12-02 23:54:09 karczma Exp $ */
+/* $Id: PhasingSchedule.java,v 1.7 2003-04-06 06:54:51 karczma Exp $ */
 
 import java.util.Vector;
 import streamit.scheduler2.Schedule;
@@ -177,7 +177,7 @@ public class PhasingSchedule extends DestroyedClass
         overallPop = overallPop + pop;
         overallPush = overallPush + push;
     }
-
+    
     /**
      * Get the amount of data that this phasing schedule peeks, when
      * all of its phases are executed.  This amount is reported as

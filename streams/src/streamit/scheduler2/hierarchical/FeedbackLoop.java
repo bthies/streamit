@@ -1,6 +1,6 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: FeedbackLoop.java,v 1.5 2002-12-02 23:54:09 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.6 2003-04-06 06:54:50 karczma Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 FeedbackLoopIter;
@@ -347,5 +347,10 @@ abstract public class FeedbackLoop
     public JoinFlow getNextJoinSteadyPhaseFlow ()
     {
         return getJoinSteadyPhaseFlow (0);
+    }
+    
+    public PhasingSchedule getChildPhases(StreamInterface child, int nPhases)
+    {
+        return algorithm.getChildPhases(child, nPhases);
     }
 }

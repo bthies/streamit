@@ -1,6 +1,6 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: Pipeline.java,v 1.5 2002-12-02 23:54:09 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.6 2003-04-06 06:54:51 karczma Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
@@ -206,5 +206,10 @@ abstract public class Pipeline
     public PhasingSchedule getChildNextSteadyPhase(StreamInterface child)
     {
         return algorithm.getChildSteadyPhase(child, 0);
+    }
+    
+    public PhasingSchedule getChildPhases(StreamInterface child, int nPhases)
+    {
+        return algorithm.getChildPhases(child, nPhases);
     }
 }

@@ -1,6 +1,6 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: StreamAlgorithm.java,v 1.5 2002-12-02 23:54:09 karczma Exp $ */
+/* $Id: StreamAlgorithm.java,v 1.6 2003-04-06 06:54:51 karczma Exp $ */
 
 import streamit.scheduler2.Schedule;
 import streamit.misc.DestroyedClass;
@@ -238,6 +238,107 @@ public class StreamAlgorithm extends DestroyedClass
         return child.getSteadySchedulePhase(realPhase);
     }
     
+    /**
+     * Append a number of phases of a particular child.
+     * This function will make sure that if the child has multiple
+     * phases, they will get added appropriately.
+     */
+    public PhasingSchedule getChildPhases(StreamInterface child, int nPhases)
+    {
+        PhasingSchedule phase = new PhasingSchedule (child);
+        // first make sure that all the phases will be in either
+        // steady state or initialization. no cross-over is allowed
+        // for simplicity's sake. if cross-over is required, call
+        // self recursively
+        {
+            int childPhaseOffset = getPhaseShift (child);
+            if (childPhaseOffset < child.getNumInitStages() && childPhaseOffset + nPhases > child.getNumInitStages())
+            {
+                // the phases will span across boundary of 
+                // initialization and steady state, so break up
+                // this computation into two steps - one for 
+                // initialization, and one for steady state
+                phase.appendPhase(getChildPhases(child, child.getNumInitStages() - childPhaseOffset));
+                phase.appendPhase(getChildPhases(child, nPhases - (child.getNumInitStages() - childPhaseOffset)));
+                
+                return phase;
+            }
+            
+        }
+        
+        // okay everything is in a single stage - either 
+        // steady state or inirialization
+        
+        // now figure out what the period of child's phases we have
+        int nPhasesPeriod;
+        {
+            if (getPhaseShift(child) < child.getNumInitStages()) nPhasesPeriod = child.getNumInitStages();
+            else nPhasesPeriod = child.getNumSteadyPhases();
+        }
+        
+        // figure out how many times we'll go through an entire
+        // rotation of the schedule. if less than 10, then just
+        // do this in the dumb way 
+        if (nPhases / nPhasesPeriod < 10)
+        {
+            for (int nPhase=0;nPhase < nPhases;nPhase++)
+            {
+                phase.appendPhase(getChildInitStage(child, nPhase));
+            }
+            advanceChildInitSchedule(child, nPhases);
+            return phase;
+        }
+        
+        // okay, I have to do this more than 10 times
+        // construct a "smart" schedule. Note that since I'm going to 
+        // execute at least 10 rotations of the schedule, I must be
+        // in steady state schedule - init schedules can only be
+        // executed once through!
+        int power = 10;
+        
+        // start with rounding execution up to a steady state
+        {
+            int mod = nPhases % nPhasesPeriod;
+            for(;mod > 0; mod--)
+            {
+                phase.appendPhase(getChildSteadyPhase(child, 0));
+                advanceChildSteadySchedule(child, 1);
+            }
+            
+            nPhases -= mod;
+        }
+        
+        // construct a steady state phase
+        PhasingSchedule steadyState = new PhasingSchedule (child);
+        {
+            for (int nPhase = 0; nPhase < child.getNumSteadyPhases(); nPhase++)
+            {
+                steadyState.appendPhase(getChildSteadyPhase(child, nPhase));
+            }
+        }
+        
+        advanceChildSteadySchedule(child, nPhases);
+        
+        int multiplier = power;
+        for(;nPhases > 0;nPhases = nPhases / multiplier)
+        {
+            for(int nPhase = nPhases % multiplier;nPhase > 0;nPhase--)
+            {
+                phase.appendPhase(steadyState);
+            }
+            
+            PhasingSchedule newSteadyPhase = new PhasingSchedule(child);
+            for (int nPhase = 0; nPhase < multiplier; nPhase++)
+            {
+                newSteadyPhase.appendPhase(steadyState);
+            }
+            
+            steadyState = newSteadyPhase;
+        }
+        
+        return phase;
+    }
+
     
     /*
     public int getScheduleSize ()

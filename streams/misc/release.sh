@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.4 2003-03-12 22:28:25 dmaze Exp $
+# $Id: release.sh,v 1.5 2003-03-12 23:08:38 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -69,10 +69,14 @@ builddirs streams/docs semantics syntax
 cvs export -r $TAG -d $WORKING $DIRS
 cvs export -r $TAG -d $SRCDIR streams/docs/release
 
-# Make stable copies for all of the trees.
+# Make stable copies for all of the trees.  Clean the binary tree a little
+# in the process.
 cp -R $WORKING/streams $BINDIR
-rm -rf $BINDIR/compiler
+rm -rf $BINDIR/compiler $BINDIR/README.source $BINDIR/include/dot-bashrc
+rm -rf $BINDIR/include/dot-cshrc $BINDIR/misc/release.sh
+rm -rf $BINDIR/misc/get-antlr
 cp -R $BINDIR $LIBDIR
+rm -rf $LIBDIR/library/c $LIBDIR/misc $LIBDIR/include/*.bc
 
 # Build the source tarball:
 cp -R $WORKING/streams $WORKING/streamit-src-$VERSION

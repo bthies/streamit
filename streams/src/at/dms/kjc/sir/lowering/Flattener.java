@@ -236,6 +236,15 @@ public class Flattener {
 	    if (KjcOptions.linearpartition) {
 		str = new LinearPartitioner(str, lfa).toplevel();
 	    } else { 
+		// and finally, if we want to run frequency analysis
+		// 0 means stupid implementation, 1 means nice implemenation
+		if (KjcOptions.frequencyreplacement) {
+		    System.err.print("Running frequency replacement...");
+		    FrequencyReplacer.doReplace(lfa, str);
+		    System.err.println("done.");
+		    LinearDot.printGraph(str, ("linear-frequency.dot"), lfa);
+		}
+
 		// otherwise, test for linear and frequency
 		// replacement separately...
 
@@ -279,14 +288,6 @@ public class Flattener {
 		    LinearDot.printGraph(str, "linear-atlas-replace.dot", lfa);
 		}
 
-		// and finally, if we want to run frequency analysis
-		// 0 means stupid implementation, 1 means nice implemenation
-		if (KjcOptions.frequencyreplacement) {
-		    System.err.print("Running frequency replacement...");
-		    FrequencyReplacer.doReplace(lfa, str);
-		    System.err.println("done.");
-		    LinearDot.printGraph(str, ("linear-frequency.dot"), lfa);
-		}
 	    }
 
 	    if (KjcOptions.redundantreplacement) {

@@ -25,15 +25,4 @@ public class HelloWorld1 extends Stream {
 }
 
 
-class CharPrinter extends Filter 
-{
-    private Channel input = new Channel(new char[0]);
-
-    public void Work()
-    {
-	   System.out.print(input.PopChar());
-    }
-
-}
-
 

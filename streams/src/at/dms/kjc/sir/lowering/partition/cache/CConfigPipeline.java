@@ -237,8 +237,10 @@ class CConfigPipeline extends CConfigContainer {
 	    work_no_penalty += fi.getWorkEstimateNoPenalty();
 
 	    code += fi.getCodeSize() * mult[i];
-	    data += fi.getDataSize() * mult[i];
-	    if (i < to) data += fi.getOutputSize() * fi.getPushInt() * mult[i] * 2;
+	    data += fi.getDataSize();// * mult[i]; // removed Nov-15-2004
+
+	    // removed Nov-15-2004
+	    //if (i < to) data += fi.getOutputSize() * fi.getPushInt() * mult[i] * 2;
 
 	    // add impossible unroll penalty
 	    if (KjcOptions.unroll < mult[i]) work += fi.getWorkEstimate()/2;

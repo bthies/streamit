@@ -213,13 +213,14 @@ class CConfigSplitJoin extends CConfigContainer {
 
 	//System.out.println("\n[s-mult: "+s_mult+" j-mult: "+j_mult+"]");
 
-	code += s_sum * s_mult * 20;
-	code += j_sum * j_mult * 20;
+	code += s_sum * s_mult * 10; // Nov-15-2004 was 20
+	code += j_sum * j_mult * 10; // Nov-15-2004 was 20
 
 	FusionInfo child0 = childConfig(0).getFusionInfo();
 
-	data += s_sum * s_mult * child0.getInputSize() * 2;
-	data += j_sum * j_mult * child0.getOutputSize() * 2;
+	// removed Nov-15-2004
+	//data += s_sum * s_mult * child0.getInputSize() * 2; 
+	//data += j_sum * j_mult * child0.getOutputSize() * 2; 
 
 	for (int i = 0; i < cont.size(); i++) {
 	    CConfig child = childConfig(i);
@@ -229,7 +230,8 @@ class CConfigSplitJoin extends CConfigContainer {
 	    work_no_penalty += fi.getWorkEstimateNoPenalty();
 
 	    code += fi.getCodeSize() * fmult[i];
-	    data += fi.getDataSize() * fmult[i];
+	    data += fi.getDataSize(); // * fmult[i]; // removed Nov-15-2004
+
 	    //data += fi.getInputSize() * fi.getPopInt() * fmult[i] + 
 	    //fi.getOutputSize() * fi.getPushInt() * fmult[i];
 	    

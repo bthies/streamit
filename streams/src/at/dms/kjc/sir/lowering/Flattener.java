@@ -56,6 +56,9 @@ public class Flattener {
 	ConstantProp.propagateAndUnroll(str);
 	System.err.println("done.");
 
+        // resolve phases in phased filters
+        // FilterPhaser.resolvePhasedFilters(str);
+        
 	// Convert Peeks to Pops
 	if (KjcOptions.poptopeek) {
 	    System.err.print("Converting pop to peek... ");

@@ -1570,6 +1570,21 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	blockEnd();
     }
 
+    /**
+     * Visit a phase-invocation statement.
+     */
+    public void visitPhaseInvocation(SIRPhaseInvocation self,
+                                     JMethodCallExpression call,
+                                     JExpression peek,
+                                     JExpression pop,
+                                     JExpression push)
+    {
+        blockStart("SIRPhaseInvocation");
+        attrPrint("call", call);
+        attrPrint("peek", peek);
+        attrPrint("pop", pop);
+        attrPrint("push", push);
+    }
 
     /**
      * Visits a register-receiver statement.

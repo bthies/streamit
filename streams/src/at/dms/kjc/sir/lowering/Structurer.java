@@ -48,7 +48,8 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      */
     public static JClassDeclaration structure(SIROperator toplevel,
 					      JInterfaceDeclaration[] inners,
-					      SIRInterfaceTable[] tables) {
+					      SIRInterfaceTable[] tables,
+                                              SIRStructure[] structs) {
 	Structurer structurer = new Structurer();
 	toplevel.accept(structurer);
 	return structurer.toFlatClass(inners, tables);

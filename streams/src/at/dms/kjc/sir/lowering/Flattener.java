@@ -86,7 +86,8 @@ public class Flattener {
 	// make single structure
 	JClassDeclaration flatClass = Structurer.structure(str, 
 							   interfaces,
-							   interfaceTables);
+							   interfaceTables,
+                                                           structs);
 	// build schedule as set of higher-level work functions
 	Schedule schedule = SIRScheduler.buildWorkFunctions(str, flatClass);
 	// add LIR hooks to init and work functions

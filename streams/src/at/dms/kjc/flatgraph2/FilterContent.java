@@ -70,7 +70,11 @@ public class FilterContent {
 	fields = filter.getFields();
 	paramList=filter.getParams();
 	initFunction = filter.getInit();
-	is2stage = steady.length > 1;
+	assert init.length < 1 && steady.length == 1;
+	//if this filter is two stage, then it has the 
+	//init work function as the only member of the init phases
+	is2stage = init.length == 1;
+	//is2stage = steady.length > 1;
 	linear=false;
 	//total=1;
     }
@@ -116,7 +120,13 @@ public class FilterContent {
 		fields = filter.getFields();
 		paramList=filter.getParams();
 		initFunction = filter.getInit();
-		is2stage = steady.length > 1;
+		
+		assert init.length < 1 && steady.length == 1;
+		//if this filter is two stage, then it has the 
+		//init work function as the only member of the init phases
+		is2stage = init.length == 1;
+		
+		//		is2stage = steady.length > 1;
 	    }
 	} else {
 	    linear=false;
@@ -126,7 +136,12 @@ public class FilterContent {
 	    fields = filter.getFields();
 	    paramList=filter.getParams();
 	    initFunction = filter.getInit();
-	    is2stage = steady.length > 1;
+	    assert init.length < 1 && steady.length == 1;
+	    //if this filter is two stage, then it has the 
+	    //init work function as the only member of the init phases
+	    is2stage = init.length == 1;
+
+	    //is2stage = steady.length > 1;
 	}
     }
     

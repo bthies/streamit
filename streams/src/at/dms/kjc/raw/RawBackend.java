@@ -102,9 +102,11 @@ public class RawBackend {
 	}
 
 	if (KjcOptions.partition || KjcOptions.ilppartition || KjcOptions.dppartition) {
+	    System.err.println("Running Partitioning...");
 	    Partitioner.doit(str,
 			     RawBackend.rawRows *
 			     RawBackend.rawColumns);
+	    System.err.println("Done Partitioning...");
 	}
 
 	if (KjcOptions.sjtopipe) {

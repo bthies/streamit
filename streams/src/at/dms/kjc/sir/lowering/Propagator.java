@@ -680,7 +680,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	    if((left instanceof JLocalVariableExpression)&&!propVar(left)) {
 		JLocalVariable var=((JLocalVariableExpression)left).getVariable();
 		//constants.remove(var);
-		constants.put(var,newRight);
+		constants.put(var,((JLiteral)newRight).convertType(var.getType(),null));
 		added=true;
 		changed.put(var,Boolean.TRUE);
 	    } else if(left instanceof JArrayAccessExpression) {
@@ -733,7 +733,7 @@ public class Propagator extends SLIRReplacingVisitor {
 		//if(newRight!=right) {
 		Object val=constants.get(((JLocalVariableExpression)newRight).getVariable());
 		if(val!=null) {
-		    constants.put(var,val);
+		    constants.put(var,((JLiteral)val).convertType(var.getType(),null));
 		    //constants.put(((JLocalVariableExpression)newRight).getVariable(),newRight);
 		    added=true;
 		} else

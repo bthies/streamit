@@ -429,6 +429,7 @@ public class SIRScheduler implements Constants {
 	SIRStream str = ((SIRIterator)schedule.getStream()).getStream();
 	// if it's a filter or not bottom schedule, can return
 	if (str instanceof SIRFilter ||
+            str instanceof SIRPhasedFilter ||
 	    !schedule.isBottomSchedule()) {
 	    return str;
 	}
@@ -489,9 +490,9 @@ public class SIRScheduler implements Constants {
 	if (isBottom) {
 	    // if we're at the bottom, then dereference into specific
 	    // type of receiver
-	    if (op instanceof SIRFilter) {
+	    if (op instanceof SIRFilter || op instanceof SIRPhasedFilter) {
 		// make arg for filter node
-		return makeFilterWorkArgument((SIRFilter)op);
+		return makeFilterWorkArgument(op);
 	    } else if (op instanceof SIRJoiner || op instanceof SIRSplitter) {
 		return makeSplitJoinWorkArgument(op);
 	    } else {
@@ -508,7 +509,7 @@ public class SIRScheduler implements Constants {
      * Returns an expression that returns the data opucture
      * corresponding to <filter>.
      * */
-    private JExpression makeFilterWorkArgument(SIRFilter str) {
+    private JExpression makeFilterWorkArgument(SIROperator str) {
 	// get access to structure of <str>'s parent
 	JExpression parent = str.getParentStructureAccess();
 

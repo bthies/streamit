@@ -166,6 +166,17 @@ public class Operator extends DestroyedClass
             .add("c", c);
     }
 
+    public Operator(float a, float b, float c, int d, int e, int f)
+    {
+        initParams = new ParameterContainer("float-float-float-int-int-int")
+            .add("a", a)
+            .add("b", b)
+            .add("c", c)
+	    .add("d", d)
+	    .add("e", e)
+	    .add("f", f);
+    }
+
     public Operator(float a, float b, float c, float d)
     {
         initParams = new ParameterContainer("float-float-float-float")

@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: FFTWFrequencyReplacer.java,v 1.9 2002-11-20 19:12:40 aalamb Exp $
+ * $Id: FFTWFrequencyReplacer.java,v 1.10 2002-11-25 20:32:40 aalamb Exp $
  **/
 public class FFTWFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
@@ -32,7 +32,7 @@ public class FFTWFrequencyReplacer extends FrequencyReplacer{
      * flag to determine if we blindly replace all FIRs with frequency implementations or
      * if we wait until the threshold is above the one defined.
      **/
-    public static final boolean smartReplacement = true;
+    public static final boolean smartReplacement = false;
     /** The minimum size FIR we will replace. 90 came from empirical measurements. **/
     public static final int minFIRSize = 90;
     /** We multiply the FIR size to get the target FFT size if it is not specified. **/
@@ -90,9 +90,9 @@ public class FFTWFrequencyReplacer extends FrequencyReplacer{
 
 	/** set the target FFT size appropriately if it hasn't already been set */
 	LinearPrinter.println("  old target N: " + this.targetNumberOfOutputs);
-	//if (this.targetNumberOfOutputs < 1) {
-	this.targetNumberOfOutputs = fftSizeFactor * linearRep.getPeekCount();
-	//}
+	if (this.smartReplacement) {
+	    this.targetNumberOfOutputs = fftSizeFactor * linearRep.getPeekCount();
+	}
 	LinearPrinter.println("  new target N: " + this.targetNumberOfOutputs);
 	
 	/* now is when we get to the fun part, we have a linear representation
@@ -197,8 +197,6 @@ public class FFTWFrequencyReplacer extends FrequencyReplacer{
 	return returnFields;
     }
 
-
-
     /**
      * Make an init function which assigns allocates space for the various fields
      * (frequency weight fields are of size filterSize, and partial result fields are
@@ -225,6 +223,7 @@ public class FFTWFrequencyReplacer extends FrequencyReplacer{
 	float[] frequency_response_i = new float[filterSize];
 	float[] time_response_r      = getRealArray(linearRep, filterSize);
 	float[] time_response_i      = getImagArray(linearRep, filterSize);
+
 	LinearFFT.fft_float(filterSize, false, /* false means that we are not doing a reverse transform */
 			    time_response_r, /* real input */
 			    time_response_i, /* imag input */

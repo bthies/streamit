@@ -36,6 +36,7 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
      **/
     public static void doReplace(LinearAnalyzer lfa, SIRStream str, int targetSize, int replacementType) {
 	LinearPrinter.println("Beginning frequency replacement(" + getName(replacementType) + ")...");
+
 	// make a new replacer based on replacementType;
 	FrequencyReplacer replacer;
 	if (replacementType == STUPID) {

@@ -1670,8 +1670,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			  SIRStream parent,
 			  JFieldDeclaration[] fields,
 			  JMethodDeclaration[] methods,
-			  JMethodDeclaration init,
-			  List elements)
+				 JMethodDeclaration init)
     {
     }
     
@@ -1707,8 +1706,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			   SIRStream parent,
 			   JFieldDeclaration[] fields,
 			   JMethodDeclaration[] methods,
-			   JMethodDeclaration init,
-			   List elements)
+				  JMethodDeclaration init)
     {
     }
     

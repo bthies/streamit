@@ -73,8 +73,7 @@ public class Renamer extends at.dms.util.Utils implements StreamVisitor
 				 SIRStream parent,
 				 JFieldDeclaration[] fields,
 				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init,
-				 List elements) {
+				 JMethodDeclaration init) {
     }
 
     /* pre-visit a splitjoin */
@@ -101,8 +100,7 @@ public class Renamer extends at.dms.util.Utils implements StreamVisitor
 				  SIRStream parent,
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init,
-				  List elements) {
+				  JMethodDeclaration init) {
     }
 
     /* post-visit a splitjoin */

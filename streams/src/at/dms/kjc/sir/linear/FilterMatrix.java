@@ -19,7 +19,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.6 2002-08-20 19:12:47 aalamb Exp $
+ * $Id: FilterMatrix.java,v 1.7 2002-08-30 20:13:25 aalamb Exp $
  **/
 
 public class FilterMatrix {
@@ -93,6 +93,12 @@ public class FilterMatrix {
 	checkRep();
     }
 
+    /** convenience method -- automatically creates an entry with the specified real number **/
+    public void setElement(int row, int col, double realNumber) {
+	this.setElement(row,col,new ComplexNumber(realNumber,0));
+    }
+	
+
     /**
      * Ensure that the specified row and col are within the
      * internal matrix's size. Throw an exception if they are not.
@@ -117,6 +123,78 @@ public class FilterMatrix {
 
     }
 
+    /** Return a copy of this FilterMatrix. **/
+    public FilterMatrix copy() {
+	checkRep();
+	FilterMatrix copyMatrix = new FilterMatrix(this.internalSizeRows,
+						   this.internalSizeCols);
+
+	// easy implementation -- just copy element by element
+	for (int i=0; i<this.internalSizeRows; i++) {
+	    for (int j=0; j<this.internalSizeCols; j++) {
+		// this is ok because ComplexNumbers are immutable
+		copyMatrix.setElement(i,j, this.getElement(i,j));
+	    }
+	}
+	return copyMatrix;
+    }
+
+    /**
+     * Return true if the passed object is a FilterMatrix and represents the same matrix as this,
+     * on an element by element basis.
+     **/
+    public boolean equals(Object o) {
+	if (o == null) {return false;}
+	if (!(o instanceof FilterMatrix)) {return false;}
+	FilterMatrix other = (FilterMatrix)o;
+
+	// compare sizes
+	if (this.getRows() != other.getRows()) {return false;}
+	if (this.getCols() != other.getCols()) {return false;}
+
+	// now, compare element by element
+	for (int i=0; i<this.internalSizeRows; i++) {
+	    for (int j=0; j<this.internalSizeCols; j++) {
+		// if the elements are not the same, we are done
+		if (!this.getElement(i,j).equals(other.getElement(i,j))) {
+		    return false;
+		}
+	    }
+	}
+
+	// if we get here, the other matrix is the same as this one.
+	return true;
+    }
+
+    /**
+     * Preserve the semantics of equals/hashCode. If two objects
+     * are equal, they should produce the same hash code.
+     **/
+    public int hashCode() {
+	return 1;
+    }
+
+    /**
+     * Scales all elements in this matrix by the specified constant.
+     * Obviously, this method therefore mutates the matrix.
+     **/
+    public void scale(ComplexNumber factor) {
+	if (factor == null) {
+	    throw new IllegalArgumentException("null factor");
+	}
+	// for each element in the matrix, scale by the factor
+	for (int i=0; i<this.internalSizeRows; i++) {
+	    for (int j=0; j<this.internalSizeCols; j++) {
+		ComplexNumber originalElement = this.getElement(i,j);
+		// perform the multiplication
+		ComplexNumber scaledElement = originalElement.times(factor);
+		// update the matrix
+		this.setElement(i,j,scaledElement);
+	    }
+	}
+	// make sure that we haven't screwed things up.
+	checkRep();
+    }
     
 
     /** check to make sure that our assumptions about internal state hold true **/

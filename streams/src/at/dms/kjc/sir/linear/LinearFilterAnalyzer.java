@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearFilterAnalyzer.java,v 1.5 2002-08-20 21:08:33 aalamb Exp $
+ * $Id: LinearFilterAnalyzer.java,v 1.6 2002-08-30 20:13:25 aalamb Exp $
  **/
 public class LinearFilterAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear forms. never would have guessed that, would you? **/
@@ -97,6 +97,11 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
 }
 
 
+// ----------------------------------------
+// Code for visitor class.
+// ----------------------------------------
+
+
 
 
 /**
@@ -105,6 +110,13 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
  * corresponds to the filter.
  **/
 class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
+    /**
+     * Mappings from variables to LinearForms. Each LinearForm holds the
+     * affine representation that maps the expression to a combination of
+     * inputs (eg peek expressions indexes);
+     **/
+    private HashMap variablesToLinearForms;
+
     /**
      * number of items that are peeked at. therefore this is also the same
      * size of the vector that must be used to represent.
@@ -115,13 +127,6 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * number of columns that are in the matrix representation.
      **/
     private int pushSize;
-
-    /**
-     * Mappings from expressions to LinearForms. Each LinearForm holds the
-     * affine representation that maps the expression to a combination of
-     * inputs (eg peek expressions indexes);
-     **/
-    private HashMap expressionsToLinearForms;
 
     /**
      * The current offset to add to a peeked value. Eg if we execute
@@ -135,7 +140,6 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * of the current filter should be updated with the linear form.
      **/
     private int pushOffset;
-    
 
     /**
      * Flag that is set when we detect that something blatently non-linear is
@@ -162,7 +166,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     public LinearFilterVisitor(int numPeeks, int numPushes) {
 	this.peekSize = numPeeks;
 	this.pushSize = numPushes;
-	this.expressionsToLinearForms = new HashMap();
+	this.variablesToLinearForms = new HashMap();
 	this.peekOffset = 0;
 	this.pushOffset = 0;
 	this.representationMatrix = new FilterMatrix(numPeeks, numPushes);
@@ -224,13 +228,15 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// operators are. Therefore, I am going to hard code in the strings. Sorry about that.
 	// if we are computing an additon or subtraction, we are all set, otherwise
 	// we are done
-	if (!(oper.equals("+") || oper.equals("-") || oper.equals("*") || oper.equals("\\"))) {
+	if (!(oper.equals("+") || oper.equals("-") || oper.equals("*") || oper.equals("/"))) {
 	    LinearPrinter.println("  can't process " + oper + " linearly");
 	    return null;
 	}
 
 	LinearPrinter.println("  visiting JBinaryExpression(" + oper + ")");
-	
+	LinearPrinter.println("   left: " + left);
+	LinearPrinter.println("   right: " + right);
+			      
 	// first of all, try and figure out if left and right sub expression can
 	// be represented in linear form.
 	LinearForm leftLinearForm  = (LinearForm)left.accept(this);
@@ -249,12 +255,14 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 	// if both expressions were linear, we can try to merge them together
 	// dispatch on type -- sorry to all you language purists
-	if (self instanceof JAddExpression) {
+	if ((self instanceof JAddExpression) || (self instanceof JMinusExpression)) {
 	    return combineAddExpression(leftLinearForm, rightLinearForm, oper);
 	} else if (self instanceof JMultExpression) {
 	    return combineMultExpression(leftLinearForm, rightLinearForm, oper);
+	} else if (self instanceof JDivideExpression) {
+	    return combineDivideExpression(leftLinearForm, rightLinearForm, oper);
 	} else {
-	    throw new RuntimeException("Non JAdd/JMult implementing +, -, *, /");
+ 	    throw new RuntimeException("Non JAdd/JMinus/JMult/JDiv implementing +, -, *, /");
 	}
     }
 
@@ -265,7 +273,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     private Object combineAddExpression(LinearForm leftLinearForm, LinearForm rightLinearForm, String oper) {
 	// if the operator is subtraction, negate the right expression
 	if (oper.equals("-")) {
-	    leftLinearForm = leftLinearForm.negate();
+	    rightLinearForm = rightLinearForm.negate();
 	}
 
 	// now, add the two forms together and return the resulut
@@ -276,12 +284,48 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
     /**
      * Combines a multiplication expression which has at most one non constant
-     * sub expression.
+     * sub expression. If both of the linear forms are non constant (eg 
+     * weights that are non zero) then we return null
      **/
     private Object combineMultExpression(LinearForm leftLinearForm, LinearForm rightLinearForm, String oper) {
-	// we have to first test to see if we have at least one linear argument.
-	return null;
+	LinearForm constantForm;
+	LinearForm otherForm;
+
+	// figure out which form represents a constant
+	// is the left a constant?
+	if (leftLinearForm.isOnlyOffset()) {
+	    constantForm = leftLinearForm;
+	    otherForm = rightLinearForm;
+	    // how about the right?
+	} else if (rightLinearForm.isOnlyOffset()) {
+	    constantForm = rightLinearForm;
+	    otherForm = leftLinearForm;
+	// both are non constant, so give up
+	} else {
+	    return null;
+	}
+
+	// now, scale the other by the constant offset in the constant form
+	// and return the scaled version
+	LinearForm scaledForm = otherForm.multiplyByConstant(constantForm.getOffset());
+	return scaledForm;
     }
+
+    /**
+     * Combines a division expresson. The right argument has to be a constant (eg only offset)
+     **/
+    private Object combineDivideExpression(LinearForm leftLinearForm, LinearForm rightLinearForm, String oper) {       
+	// ensure that the right form is a constant. If not, we are done.
+	if (!rightLinearForm.isOnlyOffset()) {
+	    LinearPrinter.println("  right side of linear form is not constant"); 
+	    return null;
+	}
+	LinearPrinter.println("  dividing left " + leftLinearForm + "\n   by right " + rightLinearForm);
+	// just divide the left form by the constant
+	return leftLinearForm.divideByConstant(rightLinearForm.getOffset());
+    }
+	    
+
     
     
 
@@ -362,7 +406,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 // 					  JExpression[] dims, JArrayInitializer init){return null;}
 //     public Object visitPackageImport(String name){return null;}
 //     public Object visitPackageName(String name){return null;}
-//     public Object visitParenthesedExpression(JParenthesedExpression self, JExpression expr){return null;}
+    public Object visitParenthesedExpression(JParenthesedExpression self, JExpression expr){
+	LinearPrinter.println("  visiting parenthesized expression");
+	// pass ourselves through the parenthesized expression to generate the approprate constant forms
+	return expr.accept(this);
+    }
 //     public Object visitPostfixExpression(JPostfixExpression self, int oper, JExpression expr){return null;}
 //     public Object visitPrefixExpression(JPrefixExpression self, int oper, JExpression expr){return null;}
 //     public Object visitQualifiedAnonymousCreation(JQualifiedAnonymousCreation self,
@@ -490,18 +538,19 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    return null;
 	}
 
-	// if the offset is not an integer, something is very wrong...
+	// if the offset is not an integer, something is very wrong. Well, not wrong
+	// but unesolable because the index is computed with input data.
 	if (!exprLinearForm.isIntegerOffset()) {
-	    throw new RuntimeException("Can't have a non integer offset in a peek expression...");
+	    return null;
 	}
 
 	// otherwise, create a new linear form that represents which input value that this
 	// peek expression produces.
 	// basically, it will be a linear form that is all zeros in its weights
 	// except for a 1 in the index corresponding to the data item that this peek expression
-	// accesses
+	// accesses	
 	LinearForm peekExprLinearForm = this.getBlankLinearForm();
-	peekExprLinearForm.setWeight(exprLinearForm.getIntegerOffset(),
+	peekExprLinearForm.setWeight(this.peekSize - 1 - exprLinearForm.getIntegerOffset() - this.peekOffset,
 				     ComplexNumber.ONE);
 	LinearPrinter.println("  returning linear form from peek expression: " + peekExprLinearForm);
 	return peekExprLinearForm;
@@ -519,8 +568,9 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	LinearPrinter.println("  visiting method call expression: " + self);
 	return super.visitMethodCallExpression(self, prefix, ident, args);
     }
-    ////// Literal processing handlers
 
+
+    ////// Generators for literal expressions
     
     /** boolean logic falls outside the realm of linear filter analysis -- return null**/
     public Object visitBooleanLiteral(JBooleanLiteral self,boolean value) {return null;}
@@ -581,6 +631,7 @@ private LinearForm getOffsetLinearForm(double offset) {
     checkRep();
     LinearForm lf = this.getBlankLinearForm();
     lf.setOffset(offset);
+    LinearPrinter.println("  created constant linear form for " + offset);
     return lf;
 }
 
@@ -589,7 +640,7 @@ private LinearForm getOffsetLinearForm(double offset) {
      **/
     private void checkRep() {
 	// check that the only values in the HashMap are LinearForm objects
-	Iterator valIter = this.expressionsToLinearForms.values().iterator();
+	Iterator valIter = this.variablesToLinearForms.values().iterator();
 	while(valIter.hasNext()) {
 	    Object o = valIter.next();
 	    if (o == null) {throw new RuntimeException("Null object in value map");}

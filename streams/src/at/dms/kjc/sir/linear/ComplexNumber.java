@@ -9,7 +9,7 @@ package at.dms.kjc.sir.linear;
  * Complex numbers are immutable -- eg their value can't change after
  * they are instantiated.
  *
- * $Id: ComplexNumber.java,v 1.4 2002-08-15 20:38:04 aalamb Exp $
+ * $Id: ComplexNumber.java,v 1.5 2002-08-30 20:13:25 aalamb Exp $
  **/
 public class ComplexNumber {
     private final double realPart;
@@ -50,13 +50,57 @@ public class ComplexNumber {
     }
     /** Compute the sum of this and the passed complex number **/
     public ComplexNumber plus(ComplexNumber other) {
-	if (other == null) {throw new IllegalArgumentException("Null object passed to add");}
+	if (other == null) {throw new IllegalArgumentException("Null object passed to plus");}
 	return new ComplexNumber(this.realPart + other.realPart,
 				 this.imaginaryPart + other.imaginaryPart);
     }
+    /** Multiply this by the specified complex number, and return their product. **/
+    public ComplexNumber times(ComplexNumber other) {
+	if (other == null) {throw new IllegalArgumentException("Null object passed to times");}
+	// implement multiplication in the straightforward way.
+	// real part
+	double newReal = ((this.getReal() * other.getReal()) -
+			  (this.getImaginary() * other.getImaginary()));
+	double newImag = ((this.getReal() * other.getImaginary()) +
+			  (this.getImaginary() * other.getReal()));
+	return new ComplexNumber(newReal, newImag);
+    }
+    /** divide this by the specified complex number and return the dividend. **/
+    public ComplexNumber dividedby (ComplexNumber other) {
+	if (other == null) {throw new IllegalArgumentException("Null object passed to divide");}
+	// simple implementation ofdivision. First, we multiply the both the numerator and denominator 
+	// by the congugate of the denominator (makes the denom a real number), then we can divide both the real
+	// and imaginary part of the numerator by the constant in the bottom.
+	ComplexNumber numerator = this;
+	ComplexNumber denominator = other;
 
+	// bomb an error if the denominator is zero
+	if (denominator.equals(ComplexNumber.ZERO)) {
+	    throw new IllegalArgumentException("Complex divide by zero");
+	}
+	
+	// get the complex congugate of the denominator
+	ComplexNumber conjugateOfDenominator = denominator.conjugate();
+	// multiply numerator and denominator
+	numerator = numerator.times(conjugateOfDenominator);
+	denominator = denominator.times(conjugateOfDenominator);
 
+	// make sure that the denominator has zero imaginary part
+	if (!(denominator.getImaginary() == 0)) {
+	    throw new RuntimeException("real part of denominator is non zero: " + denominator.getImaginary());
+	}
+
+	// scale the numerator by 1/denom.
+	numerator = numerator.times(new ComplexNumber(1/denominator.getReal(), 0));
+	return numerator;
+    }
+    /** return the complex congugate of this complex number. (eg reverse the sign of the imaginary part) **/
+    public ComplexNumber conjugate() {
+	return new ComplexNumber(this.getReal(),
+				 -1*this.getImaginary());
+    }
     
+	
     /** Return true if the passed complex number is the same as this (by value) **/
     public boolean equals(Object o) {
 	if (o == null) {

@@ -8,7 +8,7 @@ import java.util.*;
  * keep track of the combinations of inputs that are used to compute a 
  * specific intermediate value in the program flow.
  *
- * $Id: FilterVector.java,v 1.2 2002-08-15 20:38:04 aalamb Exp $
+ * $Id: FilterVector.java,v 1.3 2002-08-30 20:13:25 aalamb Exp $
  **/
 
 public class FilterVector extends FilterMatrix {
@@ -18,21 +18,6 @@ public class FilterVector extends FilterMatrix {
 	super(1,size);
     }
 
-    /**
-     * Override the superclass's setElement because we want to regulate access to the data via
-     * set element with only one argument
-     **/
-    public void setElement(int row, int col, ComplexNumber value) {
-	throw new RuntimeException("Do not use the two index version of setElement");
-    }
-    /**
-     * Override the superclass's getElement because we want to regulate access to the data via
-     * set element with only one argument
-     **/
-    public ComplexNumber getElement(int row, int col) {
-	throw new RuntimeException("Do not use the two index version of getElement");
-    }
-    
     //////// Accessors/Modifiers
     
     
@@ -56,7 +41,15 @@ public class FilterVector extends FilterMatrix {
 	return this.getCols();
     }
 
-    
+    // return a copy of this filter vector
+    public FilterMatrix copy() {
+	FilterVector fv = new FilterVector(this.getSize());
+	// copy weights
+	for (int i=0; i<this.getSize(); i++) {
+	    fv.setElement(i,this.getElement(i));
+	}
+	return fv;
+    }
 }
 	
 

@@ -13,7 +13,7 @@ import java.util.*;
  * propage LinearForm information throughout the body of the filter and
  * hopefully construct a LinearFilterRepresentation from the filter.
  *
- * $Id: LinearForm.java,v 1.3 2002-08-16 21:16:49 aalamb Exp $
+ * $Id: LinearForm.java,v 1.4 2002-08-30 20:13:25 aalamb Exp $
  **/
 public class LinearForm {
     /** weights of inputs **/
@@ -130,6 +130,43 @@ public class LinearForm {
 	return summedForm;
     }
 
+    /**
+     * Scale a linear form by a constant. This is used for multiplications
+     * in the code by a constant factor. All of the vector entries as well
+     * as the constant of the linear form are scaled by this constant.
+     **/
+    public LinearForm multiplyByConstant(ComplexNumber scaleFactor) {
+	if (scaleFactor == null) {
+	    throw new IllegalArgumentException("null scale factor");
+	}
+	LinearForm scaledForm = new LinearForm(this.getWeightsSize());
+	// copy the weights from this
+	scaledForm.weights = (FilterVector)this.weights.copy();
+	// actually scale the weights 
+	scaledForm.weights.scale(scaleFactor);
+	// scale the offset
+	scaledForm.offset = this.offset.times(scaleFactor);
+	return scaledForm;
+    }
+
+    /**
+     * divide all weights and the offset of this linear form by a constant.
+     **/
+    public LinearForm divideByConstant(ComplexNumber divideFactor) {
+	if (divideFactor == null) {
+	    throw new IllegalArgumentException("null divide factor");
+	}
+	// make a new linear form
+	LinearForm dividedForm = new LinearForm(this.getWeightsSize());
+	// copy over the weights, one by one, dividing each one
+	for (int i=0; i<this.getWeightsSize(); i++) {
+	    dividedForm.setWeight(i,this.getWeight(i).dividedby(divideFactor));
+	}
+	// copy over the divided offset.
+	dividedForm.setOffset(this.getOffset().dividedby(divideFactor));
+
+	return dividedForm;
+    }
 
     /**
      * Add all of the weights in this linear form to the specified column in
@@ -160,7 +197,22 @@ public class LinearForm {
 	}
 	// and we are done
     }
-    
+
+    /** returns true if this object is equal in value to this linear form **/
+    public boolean equals(Object o) {
+	if (o == null) {return false;}
+	if (!(o instanceof LinearForm)) {return false;}
+	LinearForm other = (LinearForm)o;
+	// compare both the weights and the
+	// offset
+	return ((this.offset.equals(other.offset)) &&
+		(this.weights.equals(other.weights)));
+    }
+
+    /** preserve equals() semantics. **/
+    public int hashCode() {
+	return 1;
+    }
 
     /** Pretty print this linear form **/
     public String toString() {

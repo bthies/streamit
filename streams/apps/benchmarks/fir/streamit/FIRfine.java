@@ -1,3 +1,10 @@
+/**
+ * Note that the first N/2 outputs of this are bogus depending on your
+ * definition of FIR -- they represent only a partial convolution of
+ * the weights with the inputs.  FIRcoarse in this directory has
+ * output starting at N/2 of this.
+ */
+
 import streamit.*;
 import streamit.io.*;
 

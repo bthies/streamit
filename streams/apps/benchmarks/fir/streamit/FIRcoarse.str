@@ -1,0 +1,41 @@
+void->void pipeline FIRcoarse {
+    add FloatSource(10000);
+    add FIR(64);
+    add FloatPrinter(10000);
+}
+
+void->float filter FloatSource (float maxNum) {
+    float num;
+    init { num=0.0; }
+    work push 1 {
+        push (num);
+        num = num+1.0;
+        if (num == maxNum) num = 0;
+    }
+}
+
+float->void filter FloatPrinter (int x) {
+    work pop 1 { print(pop()); }
+}
+
+float->float filter FIR(int N) {
+  float[N] h;
+
+  init {
+      // make some dummy weights.  These weights are the reverse of
+      // those in FIRfine, since FIRfine has backwards weights.
+      for (int i=0; i<N; i++) {
+	  h[i] = 2*(N-i-1)*(N-i-1)/((float)(N-i-1)+1);
+      }
+  }
+
+  /* implement the FIR filtering operation as the convolution sum. */
+  work peek N pop 1 push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) { 
+      sum += h[i]*peek(i);
+    }
+    push(sum);
+    pop();
+  }
+}

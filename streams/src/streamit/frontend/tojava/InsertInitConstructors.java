@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.15 2003-08-26 19:31:41 dmaze Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.16 2003-08-26 20:41:58 dmaze Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
@@ -41,9 +41,17 @@ public class InsertInitConstructors extends InitMunger
     /**
      * Return an ordered list of all of the constructors that need to
      * be generated to initialize a particular variable.
+     *
+     * @param ctx   file name and line number for created statements
+     * @param name  base name expression
+     * @param type  type of object to create constructors for
+     * @param arrayConstructor if false, only recurse, don't actually
+     *              generate a constructor for name if it is an array
+     *              type; useful for members of multidimensional
+     *              arrays
      */
-    private List stmtsForConstructor(FEContext ctx,
-                                     Expression name, Type type)
+    private List stmtsForConstructor(FEContext ctx, Expression name,
+                                     Type type, boolean arrayConstructor)
     {
         List result = new java.util.ArrayList();
 
@@ -53,8 +61,9 @@ public class InsertInitConstructors extends InitMunger
             return result;
 
         // No; generate the constructor.
-        result.add(new StmtAssign(ctx, name,
-                                  new ExprJavaConstructor(ctx, type)));
+        if (arrayConstructor || !(type instanceof TypeArray))
+            result.add(new StmtAssign(ctx, name,
+                                      new ExprJavaConstructor(ctx, type)));
 
         // Now, if this is a structure type, we might need to
         // recursively generate constructors for the structure
@@ -71,7 +80,7 @@ public class InsertInitConstructors extends InitMunger
                     // Construct the new left-hand side:
                     Expression lhs = new ExprField(ctx, name, fname);
                     // Get child constructors and add them:
-                    result.addAll(stmtsForConstructor(ctx, lhs, ftype));
+                    result.addAll(stmtsForConstructor(ctx, lhs, ftype, true));
                 }
             }
         }
@@ -105,7 +114,7 @@ public class InsertInitConstructors extends InitMunger
                 Expression lhs = new ExprArray(ctx, name, varExp);
                 Statement body =
                     new StmtBlock(ctx,
-                                  stmtsForConstructor(ctx, lhs, base));
+                                  stmtsForConstructor(ctx, lhs, base, false));
                 Statement loop =
                     new StmtFor(ctx, decl, cond, incr, body);
                 result.add(loop);
@@ -137,7 +146,7 @@ public class InsertInitConstructors extends InitMunger
                 {
                     FEContext ctx = field.getContext();
                     Expression lhs = new ExprVar(ctx, field.getName(i));
-                    newStmts.addAll(stmtsForConstructor(ctx, lhs, type));
+                    newStmts.addAll(stmtsForConstructor(ctx, lhs, type, true));
                 }
             }
         }
@@ -187,7 +196,7 @@ public class InsertInitConstructors extends InitMunger
             {
                 FEContext ctx = decl.getContext();
                 Expression lhs = new ExprVar(ctx, decl.getName(i));
-                addStatements(stmtsForConstructor(ctx, lhs, type));
+                addStatements(stmtsForConstructor(ctx, lhs, type, true));
             }
         }
 

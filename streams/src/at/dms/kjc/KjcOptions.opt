@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.58 2004-08-31 19:00:07 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.59 2004-10-04 05:44:55 thies Exp $
  */
 
 prefix Kjc
@@ -110,6 +110,12 @@ longname		"filter"
 	help		"Warning filter"
 
 // Begin StreamIt Options ----------------------------------------------
+
+longname		"manual"
+	type		String
+	default		"null"
+	requireArgument
+	help		"Specify Java class that performs manual optimizations."
 
 longname		"stats"
 	type		boolean

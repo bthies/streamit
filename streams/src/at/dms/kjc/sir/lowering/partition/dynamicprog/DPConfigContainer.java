@@ -324,7 +324,7 @@ abstract class DPConfigContainer extends DPConfig {
 	    PartitionRecord rec = new PartitionRecord();
 	    for (int y=y1; y<=y2; y++) {
 		for (int x=x1; x<=Math.min(x2,width[y]-1); x++) {
-		    IterFactory.createFactory().createIter(childConfig(x,y).getStream()).accept(new RecordingStreamVisitor(rec, partitioner.getWorkEstimate()));
+		    IterFactory.createFactory().createIter(childConfig(x,y).getStream()).accept(new RecordingStreamVisitor(rec));
 		}
 	    }
 	    int numFilters = 0;
@@ -553,7 +553,7 @@ abstract class DPConfigContainer extends DPConfig {
 	// if the whole container is assigned to one tile, record it
 	// as such.
 	if (tileLimit==1) {
-	    IterFactory.createFactory().createIter(cont).accept(new RecordingStreamVisitor(curPartition, partitioner.getWorkEstimate()));
+	    IterFactory.createFactory().createIter(cont).accept(new RecordingStreamVisitor(curPartition));
 	} 
 	return result;
     }
@@ -587,7 +587,7 @@ abstract class DPConfigContainer extends DPConfig {
 	    // everything goes in this partition
 	    for (int y=y1; y<=y2; y++) {
 		for (int x=x1; x<=Math.min(x2,width[y]-1); x++) {
-		    IterFactory.createFactory().createIter(childConfig(x,y).getStream()).accept(new RecordingStreamVisitor(curPartition, partitioner.getWorkEstimate()));
+		    IterFactory.createFactory().createIter(childConfig(x,y).getStream()).accept(new RecordingStreamVisitor(curPartition));
 		}
 	    }
 	    if (!DynamicProgPartitioner.transformOnTraceback) {
@@ -818,12 +818,9 @@ abstract class DPConfigContainer extends DPConfig {
  */
 class RecordingStreamVisitor extends EmptyStreamVisitor {
     private final PartitionRecord curPartition;
-    private final WorkEstimate workEstimate;
 
-    public RecordingStreamVisitor(PartitionRecord _curPartition,
-				  WorkEstimate _workEstimate) {
+    public RecordingStreamVisitor(PartitionRecord _curPartition) {
 	this.curPartition = _curPartition;
-	this.workEstimate = _workEstimate;
     }
     
     /**
@@ -841,30 +838,30 @@ class RecordingStreamVisitor extends EmptyStreamVisitor {
 	} else {
 	    // filters
 	    if (!curPartition.contains(self)) {
-		curPartition.add(self, workEstimate.getWork((SIRFilter)self));
+		curPartition.add(self, -1);
 	    }
 	}
 	// also add splitters, joiners
 	if (self instanceof SIRSplitJoin) {
 	    SIRSplitter splitter = ((SIRSplitJoin)self).getSplitter();
 	    if (!curPartition.contains(splitter)) {
-		curPartition.add(splitter, 0);
+		curPartition.add(splitter, -1);
 	    }
 
 	    SIRJoiner joiner = ((SIRSplitJoin)self).getJoiner();
 	    if (!curPartition.contains(joiner)) {
-		curPartition.add(joiner, 0);
+		curPartition.add(joiner, -1);
 	    }
 	}
 	if (self instanceof SIRFeedbackLoop) {
 	    SIRSplitter splitter = ((SIRFeedbackLoop)self).getSplitter();
 	    if (!curPartition.contains(splitter)) {
-		curPartition.add(splitter, 0);
+		curPartition.add(splitter, -1);
 	    }
 
 	    SIRJoiner joiner = ((SIRFeedbackLoop)self).getJoiner();
 	    if (!curPartition.contains(joiner)) {
-		curPartition.add(joiner, 0);
+		curPartition.add(joiner, -1);
 	    }
 	}
     }

@@ -365,7 +365,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	//so, just remove the var definition, if the new array expression
 	//is not included in this definition, just remove the definition,
 	//when we visit the new array expression we will print the definition...
-	if (type.isArrayType() && !isInit) {
+	if (type.isArrayType()) { // && !isInit) {
 	    String[] dims = ArrayDim.findDim(tile.getComputeCode(), ident);
 	    //but only do this if the array has corresponding 
 	    //new expression, otherwise don't print anything.
@@ -381,6 +381,32 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    }
 	    else if (dims != null)
 		return;
+	    else if (expr instanceof JArrayInitializer) {
+		print(((CArrayType)type).getBaseType() + " " + ident);
+		JArrayInitializer init = (JArrayInitializer)expr;
+		while (true) {
+		    int length = init.getElems().length;
+		    print("[" + length + "]");
+		    if (length==0) { 
+			// hope that we have a 1-dimensional array in
+			// this case.  Otherwise we won't currently
+			// get the type declarations right for the
+			// lower pieces.
+			break;
+		    }
+		    // assume rectangular arrays
+		    JExpression next = (JExpression)init.getElems()[0];
+		    if (next instanceof JArrayInitializer) {
+			init = (JArrayInitializer)next;
+		    } else {
+			break;
+		    }
+		}
+		print(" = ");
+		expr.accept(this);
+		print(";");
+		return;
+	    }
 	}
 	
 	if (expr!=null) {

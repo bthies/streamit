@@ -501,12 +501,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//	System.out.println(ident);
 	//System.out.println(expr);
 
-	//we want to stack allocate all arrays not in the init
 	//we convert an assignment statement into the stack allocation statement'
 	//so, just remove the var definition, if the new array expression
 	//is not included in this definition, just remove the definition,
 	//when we visit the new array expression we will print the definition...
-	if (type.isArrayType() && !isInit) {
+	if (type.isArrayType()) { //{ && !isInit) {
 	    String[] dims = ArrayDim.findDim(filter, ident);
 	    //but only do this if the array has corresponding 
 	    //new expression, otherwise don't print anything.
@@ -523,8 +522,27 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    else if (dims != null)
 		return;
 	    else if (expr instanceof JArrayInitializer) {
-		print(((CArrayType)type).getBaseType() + " " +
-		      ident + "[" + ((JArrayInitializer)expr).getElems().length + "] = ");
+		print(((CArrayType)type).getBaseType() + " " + ident);
+		JArrayInitializer init = (JArrayInitializer)expr;
+		while (true) {
+		    int length = init.getElems().length;
+		    print("[" + length + "]");
+		    if (length==0) { 
+			// hope that we have a 1-dimensional array in
+			// this case.  Otherwise we won't currently
+			// get the type declarations right for the
+			// lower pieces.
+			break;
+		    }
+		    // assume rectangular arrays
+		    JExpression next = (JExpression)init.getElems()[0];
+		    if (next instanceof JArrayInitializer) {
+			init = (JArrayInitializer)next;
+		    } else {
+			break;
+		    }
+		}
+		print(" = ");
 		expr.accept(this);
 		print(";");
 		return;

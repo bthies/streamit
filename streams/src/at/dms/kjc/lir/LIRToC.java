@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.90 2003-12-08 23:24:57 dmaze Exp $
+ * $Id: LIRToC.java,v 1.91 2004-07-12 00:54:04 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -632,6 +632,33 @@ public class LIRToC
                                         CType type,
                                         String ident,
                                         JExpression expr) {
+	if (type.isArrayType() && expr instanceof JArrayInitializer) {
+	    print(((CArrayType)type).getBaseType() + " " + ident);
+	    JArrayInitializer init = (JArrayInitializer)expr;
+	    while (true) {
+		int length = init.getElems().length;
+		print("[" + length + "]");
+		if (length==0) { 
+		    // hope that we have a 1-dimensional array in
+		    // this case.  Otherwise we won't currently
+		    // get the type declarations right for the
+		    // lower pieces.
+		    break;
+		}
+		// assume rectangular arrays
+		JExpression next = (JExpression)init.getElems()[0];
+		if (next instanceof JArrayInitializer) {
+		    init = (JArrayInitializer)next;
+		} else {
+		    break;
+		}
+	    }
+	    print(" = ");
+	    expr.accept(this);
+	    print(";");
+	    return;
+	}
+
         // print(CModifier.toString(modifiers));
 	if (expr!=null) {
 	    printLocalType(type);
@@ -641,13 +668,8 @@ public class LIRToC
         print(" ");
         print(ident);
         if (expr != null) {
-            if (expr instanceof JNewArrayExpression) {
-		printLocalArrayDecl((JNewArrayExpression)expr);
-	    }
-	    else {
-		print(" = ");
-		expr.accept(this);
-	    }
+	    print(" = ");
+	    expr.accept(this);
 	}
         print(";");
     }

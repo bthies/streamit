@@ -48,12 +48,14 @@ public class ArrayDim extends SLIREmptyVisitor implements StreamVisitor{
 	variable = var;
     }
     
+    //search for array declarations in assignment statements
     public void visitAssignmentExpression(JAssignmentExpression self,
                                           JExpression left,
                                           JExpression right) {
 	
 	String ident = "";
 	
+	//get the string ident of the var we are assigning to
 	if (left instanceof JFieldAccessExpression) 
 	    ident = ((JFieldAccessExpression)left).getIdent();
 	else if (left instanceof JLocalVariableExpression) 
@@ -65,8 +67,30 @@ public class ArrayDim extends SLIREmptyVisitor implements StreamVisitor{
 	if (!variable.equals(ident))
 	    return;
 	
+	//if we are declaring a new array, record the dims
 	if (right instanceof JNewArrayExpression) {
 	    dims = ((JNewArrayExpression)right).getDims();
+	    return;
+	}
+
+    }
+
+    
+    //we can also stack allocate fields (globals) of the filter
+    //also, this will stack allocate the peek buffer introduced 
+    //by the RawExecutionCode pass
+    public void visitFieldDeclaration(JFieldDeclaration self,
+                                      int modifiers,
+                                      CType type,
+                                      String ident,
+                                      JExpression expr) {
+	//check the name
+	if (!variable.equals(ident))
+	    return;
+	
+	//record the dims
+	if (expr instanceof JNewArrayExpression) {
+	    dims = ((JNewArrayExpression)expr).getDims();
 	    return;
 	}
     }

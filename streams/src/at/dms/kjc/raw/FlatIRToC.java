@@ -39,40 +39,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     // ALWAYS!!!!
     //true if we are using the second buffer management scheme 
     //circular buffers with anding
-    public boolean circular = true;
     public boolean debug = false;//true;
     public boolean isWork = false;
     
     //fields for all of the vars names we introduce in the c code
-    private final String BUFFER_INDEX = "__i__";
-    private final String TAPE_INDEX = "__count__";
-    private final String BUFFER_SIZE = "__BUFFERSIZE__";
-    private final String BITS = "__BITS__";
-    private final String BUFFER = "__BUFFER__";
-    private static String ARRAY_INDEX = "__ARRAY_INDEX__";
-    private static String ARRAY_COPY = "__ARRAY_COPY__";
-
     private final String FLOAT_HEADER_WORD = "__FLOAT_HEADER_WORD__";
     private final String INT_HEADER_WORD = "__INT_HEADER_WORD__";
 
-
-    //fields for the var names we introduce with the rate match code
-    private static String recvBuffer = "__RECVBUFFER__";
-    private static String sendBuffer = "__SENDBUFFER__";
-    private static String sendBufferSize = "__SENDBUFFERSIZE__";
-    private static String recvBufferSize = "__RECVBUFFERSIZE__";
-    private static String sendBufferIndex = "__SENDBUFFERINDEX__";
-    private static String recvBufferIndex = "__RECVBUFFERINDEX__";
-    private static String exeIndex = "__EXEINDEX__";
-    private static String exeIndex1 = "__EXEINDEX__1__";
-    private static String sendIndex = "__SENDINDEX__";
-    private static String recvIndex = "_RECVINDEX__";    
-    private static String RECVBITS = "__RECVBITS__";  
-    private static String SENDBITS = "__SENDBITS__";
-
-    //true if we are in rate match mode and if this 
-    //filter is not in a feedback loop
-    private boolean ratematch = false;
 
     private static int filterID = 0;
     
@@ -82,8 +55,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     public static void generateCode(FlatNode node) 
     {
 	FlatIRToC toC = new FlatIRToC((SIRFilter)node.contents);
-
-	
+	//FieldInitMover.moveStreamInitialAssignments((SIRFilter)node.contents);
+	//FieldProp.doPropagate((SIRFilter)node.contents);
 
 	//Optimizations
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
@@ -135,7 +108,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//	circular = false;
 	this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
-	ratematch = KjcOptions.ratematch && !f.insideFeedbackLoop();
     }
 
     public String getString() {
@@ -168,40 +140,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     }
     */
     
-    //prints the buffer declaration for the filter
-    //if size == -1 use BUFFER_SIZE as the size
-    //otherwise use size
-    private void bufferDeclaration(CType type, String buffer, String size) 
-    {
-	if (type.isArrayType()) {
-	    CType baseType = ((CArrayType)type).getBaseType();
-	    String dims[] = Util.makeString(((CArrayType)type).getDims());
-
-	    print(baseType + " " + buffer + "[");
-	    
-	    
-	    print(size + "]");
-	    
-	    for (int i = 0; i < dims.length; i++)
-		print("[" + dims[i] + "]");
-	    print(";\n");
-	}
-	else if (type.isClassType()) {
-	}
-	else {
-	    print(type + 
-		  " " + buffer + "[");
-	    print(size);
-	    print("];\n");
-	}
-    }
-    
-    
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
-
-	//	circular = !(self.getPeekInt() > 4 * self.getPopInt()) && !ratematch;
-	
 
 	//       System.out.println(self.getName());
 	
@@ -219,74 +159,17 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("void raw_init();\n");
         print("void raw_init2();\n");
 	    
-	print("int " + TAPE_INDEX + " = -1;\n");
-	print("int " + BUFFER_INDEX + ";\n");
-	
+		
 	print("unsigned int " + FLOAT_HEADER_WORD + ";\n");
 	print("unsigned int " + INT_HEADER_WORD + ";\n");
 
-	print(" int " + exeIndex + ";\n");
-	print(" int " + exeIndex1 + ";\n");
 
-	if (ratematch || circular) {
-	    print("int " + recvBufferIndex + "= -1;\n");
-	    print("int " + sendBufferIndex + "= -1;\n");
-	}
-
-	
-
+	//print the methods used for decoupled execution
 	if (!self.getInputType().equals(CStdType.Void))
 	    print("void get(void *v) {*((" + self.getInputType() + "*)v) = (" + self.getInputType() + ") 1;}\n"); 
 	if (!self.getOutputType().equals(CStdType.Void)) {
 	    print(self.getOutputType() + " __test__;\n");
 	    print("void put(" + self.getOutputType() + " i) {__test__ = i;}\n");
-	}
-	//print the declarations for the array indexs for pushing and popping
-	//if this filter deals with arrays
-	if (self.getInputType().isArrayType() || self.getOutputType().isArrayType()) {
-	    int inputDim = 0, outputDim = 0, maxDim;
-	    //find which array has the greatest dimensionality	   
-	    if (self.getInputType().isArrayType())
-		inputDim = ((CArrayType)self.getInputType()).getArrayBound();
-	    if (self.getOutputType().isArrayType()) 
-		outputDim = ((CArrayType)self.getOutputType()).getArrayBound();
-	    maxDim = (inputDim > outputDim) ? inputDim : outputDim;
-	    
-	    for (int i = 0; i < maxDim; i++)
-		print("int " + ARRAY_INDEX + i + ";\n");
-	}
-	
-	if (ratematch) {
-	    rateMatch(self);
-	    return;
-	}
-	
-	if (filter.getPeekInt() > 0) {
-	    if (circular) {
-		int buffersize = CalcBufferSize.getConsBufSize(Layout.getNode(Layout.getTile(filter)));
-		//(two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
-		//			two.getPeekInt();
-		//		    buffersize = nextPow2(buffersize + 1);
-		//print ("#define " + BUFFER_SIZE + " " + buffersize + "\n");
-		//print ("#define " + BITS + " " + (buffersize - 1) + "\n");
-		print ("#define " + RECVBITS + " " + (buffersize - 1) + "\n");
-		bufferDeclaration(filter.getInputType(), recvBuffer, (new Integer(buffersize)).toString());
-		print(" int " + recvIndex + " = -1;\n");
-	    }
-	    else {
-		Utils.fail("not working");
-		if (filter instanceof SIRTwoStageFilter) {
-		    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
-		    int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
-			two.getPeekInt();
-		    bufferDeclaration(two.getInputType(), BUFFER,
-				      new Integer(buffersize).toString());
-		}
-		else {
-		    bufferDeclaration(filter.getInputType(), BUFFER, 
-				      new Integer(filter.getPeekInt()).toString());
-		}
-	    }
 	}
 
 	//Visit fields declared in the filter class
@@ -309,16 +192,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("  raw_init();\n");
 	print(FLOAT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
 	print(INT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
-	print("  " + self.getInit().getName() + "(");
-	print(InitArgument.getInitArguments(self));
-	print (");\n");
-	if (self instanceof SIRTwoStageFilter) {
-	    print("  " + ((SIRTwoStageFilter)self).getInitWork().getName() + "();\n");
-	}
         print("  raw_init2();\n");
-	print("  " + self.getWork().getName() + "();\n");
+	//execute the raw main function
+	print(RawExecutionCode.rawMain + "();\n");
 	print("}\n");
-	
+       
 	createFile();
     }
 
@@ -337,13 +215,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			       filter.getName());
 	}
     }
-    
-   			
-    private void rateMatch(SIRFilter self) {
-    }
-	
-
-
+       			
     /**
      * prints a field declaration
      */
@@ -360,12 +232,25 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
         newLine();
         // print(CModifier.toString(modifiers));
+
+	if (expr instanceof JNewArrayExpression) {
+	    //print the basetype
+	    print(((CArrayType)type).getBaseType() + " ");
+	    //print the field identifier
+	    print(ident);
+	    //print the dims
+	    stackAllocateArray(ident);
+	    print(";");
+	    return;
+	}
+
         print(type);
         print(" ");
         print(ident);
+
         if (expr != null) {
             print("\t= ");
-            expr.accept(this);
+	    expr.accept(this);
         }
         print(";");
     }
@@ -380,6 +265,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                        JFormalParameter[] parameters,
                                        CClassType[] exceptions,
                                        JBlock body) {
+	//System.out.println(ident);
+	
+	//in the raw path we do not want to print the 
+	//prework or work function definition
+	if (filter != null && 
+	    (filter.getWork().equals(self) ||
+	     (filter instanceof SIRTwoStageFilter &&
+	      ((SIRTwoStageFilter)filter).getInitWork().equals(self))))
+	    return;
+
         newLine();
 	// print(CModifier.toString(modifiers));
 	print(returnType);
@@ -396,82 +291,23 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    if (count != 0) {
 		print(", ");
 	    }
-	    
-	    // if (!parameters[i].isGenerated()) {
 	    parameters[i].accept(this);
 	    count++;
-	    // }
 	}
 	print(")");
 	
-	if (declOnly)
-	    {
-		print(";");
-		return;
-	    }
+	//print the declaration then return
+	if (declOnly) {
+	    print(";");
+	    return;
+	}
 
         print(" ");
-        if (body != null) {
-	    //see if this is the work function
-	    //if it is print the work header and trailer
-	    if (filter != null) {
-		isWork = filter.getWork() == self;
-		boolean isInitWork = (filter instanceof SIRTwoStageFilter && 
-				      ((SIRTwoStageFilter)filter).getInitWork() == self);
-		if (isWork || isInitWork) {
-		    int pop = isWork ? filter.getPopInt() : 
-			((SIRTwoStageFilter)filter).getInitPop();
-		    int peek = isWork ? filter.getPeekInt() : 
-			((SIRTwoStageFilter)filter).getInitPeek();
-		    int push = isWork ? filter.getPushInt() : 
-			((SIRTwoStageFilter)filter).getInitPush();
-		    if (ratematch) {
-			if (isInitWork) {
-			    printInitWorkHeader(pop, peek);
-			    body.accept(this);
-			    printInitWorkTrailer(push);
-			}
-			else {
-			    printRateMatchWorkHeader(pop, peek, push, body);
-			    body.accept(this);
-			    printRateMatchWorkTrailer(push);
-			}
-		    }
-		    else if (circular) {
-			if (isInitWork) {
-			    printInitWorkHeader(pop, peek);
-			    body.accept(this);
-			    printInitWorkTrailer(push);
-			}
-			else {
-			    printCircularWorkHeader(pop, peek, push, body);
-			    if (DEBUG)
-				dummyWork(push);
-			    else
-				body.accept(this);
-			    printCircularWorkTrailer(pop, peek, push);
-			}
-			
-		    } else {
-			Utils.fail("not working");
-			printWorkHeader(isWork, pop, peek);
-			if (DEBUG)
-			    dummyWork(push);
-			else
-			    body.accept(this);
-			printWorkTrailer(isWork, pop, peek);
-		    }
-		} else {
-		    // not the work function
-		    body.accept(this);
-		}
-	    } else {
-		// no filter?
-		body.accept(this);
-	    }
-        } else {
+        if (body != null) 
+	    body.accept(this);
+        else 
             print(";");
-        }
+
         newLine();
 	isWork = false;
     }
@@ -490,308 +326,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    return 0;
 	int bit = str.length() - str.indexOf('1');
 	return (int)Math.pow(2, bit);
-    }
-
-    private void printRateMatchWorkHeader(int pop, int peek, int push, JBlock workBlock)  
-    {
-
-   	
-    }
-    
-    private void printRateMatchSend() 
-    {
-
-
-    }
-    
-    
-    private void printRateMatchWorkTrailer(int push) 
-    {
-
-    }
-
-    private void printInitWorkHeader(int pop, int peek) 
-    {
-	print("{\n");
-	int initialItemsToReceive = peek;
-	//receive init peek items
-	if (initialItemsToReceive > 0) {
-	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + initialItemsToReceive +
-		  "; " + exeIndex + "++)\n");
-	    printReceive();
-	}   
-    }
-    
-    private void printInitWorkTrailer(int push) 
-    {
-	/*	if (push > 0) {
-	    //send everything
-	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + push +
-		  "; " + exeIndex + "++)\n");
-	    print("{\n");
-	    printRateMatchSend();
-	    //end the send
-	    print(";\n");
-	    //end the send loop
-	    print("}\n");
-	    print(sendBufferIndex + " &= " + SENDBITS + ";\n");
-	    print(sendIndex + " &= " + SENDBITS + ";\n");
-	    }*/
-	print("}\n");
-    }
-    
-    
-    private void printCircularWorkHeader( int pop, int peek, int push, JBlock workBlock) 
-    {
-	
-	print("{\n");
-	Integer init = (Integer)RawBackend.initExecutionCounts.
-	    get(Layout.getNode(Layout.getTile(filter)));
-	//	Integer steady = (Integer)RawBackend.steadyExecutionCounts.
-	//    get(Layout.getNode(Layout.getTile(filter)));
-	
-	int initCount = 0;
-	
-	if (init != null) 
-	    initCount = init.intValue();
-
-	//if this is a two stage filter, count one of the initial executions 
-	//as the initWork execution and decrement the number of times the 
-	//work function is called in the init Schedule
-	if (filter instanceof SIRTwoStageFilter)
-	    initCount--;
-	
-	//!!!!   initCount will be -1 if this is a two stage and 
-	//      it does not execute in the init sched
-
-	int prevInitCount = 0;
-	int prevPush = 0;
-	
-	FlatNode node = Layout.getNode(Layout.getTile(filter));
-	FlatNode previous = null;
-	
-	if (node.inputs > 0) {
-	    previous = node.incoming[0];
-	    prevInitCount = Util.getCountPrev(RawBackend.initExecutionCounts, 
-					 previous, node);
-	    if (prevInitCount > 0) {
-		if (previous.contents instanceof SIRSplitter || 
-		    previous.contents instanceof SIRJoiner) {
-		    prevPush = 1;
-		}
-		else
-		    prevPush = ((SIRFilter)previous.contents).getPushInt();
-	    }
-	    //System.out.println("previous: " + previous.getName());
-	    //System.out.println("prev Push: " + prevPush + " prev init: " + prevInitCount);
-	}
-
-	int remainingItemsToReceive = (prevInitCount * prevPush);
-	
-	//	System.out.println("Items to receive: " +  remainingItemsToReceive);
-
-	//if the previous node is a two stage filter then count its initWork
-	//in the initialItemsTo Receive
-	if (previous != null && previous.contents instanceof SIRTwoStageFilter) {
-	    remainingItemsToReceive -= ((SIRTwoStageFilter)previous.contents).getPushInt();
-	    remainingItemsToReceive += ((SIRTwoStageFilter)previous.contents).getInitPush();
-	}
-	
-       	//System.out.println("recalculated if prev is 2stage: " + remainingItemsToReceive);
-
-	//subtract the number of items the initWork took from the previous 
-	//stream for the initialization code.
-	if (filter instanceof SIRTwoStageFilter) {
-	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
-	    remainingItemsToReceive -= two.getInitPeek();
-	    //System.out.println("our init work: " + remainingItemsToReceive);  
-	}
-	else  {//if we are not a twostage we receive peek items on the first execution 
-	    if (initCount > 0)
-		remainingItemsToReceive -= (peek -pop);
-	}
-	remainingItemsToReceive -= (initCount * pop);
-
-	//System.out.println("our work calls in init sch: " + remainingItemsToReceive);
-
-	//execute the work function
-	if (initCount > 0) {
-	    
-	    int bottomPeek; 
-	    //fill the peek buffer 
-	    if (filter instanceof SIRTwoStageFilter) {
-		bottomPeek = ((SIRTwoStageFilter)filter).getInitPeek() - 
-		    ((SIRTwoStageFilter)filter).getInitPop();
-	    } 
-	    else {
-		bottomPeek = 0;
-	    }
-	    if (bottomPeek < peek) {
-		//		remainingItemsToReceive -= (peek - bottomPeek);
-		print(" for (" + exeIndex + " = " + bottomPeek + "; " + exeIndex + " < " + 
-		      peek + "; " + exeIndex + "++) {\n");
-		printReceive();
-		print(" }\n");
-	    }
-	    
-	    //System.out.println("difference from peek to initpeek: " + remainingItemsToReceive + "\n\n");
-	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + initCount + "; " +
-		  exeIndex + "++)\n");
-	    print("{\n");
-	    //do not receive on the first invocation
-	    if (peek > 0) {
-		print("if (" + exeIndex + " != 0) {\n");
-		print(" for (" + exeIndex1 + " = " + 0 + "; " + exeIndex1 + " < " + 
-		      pop + "; " + exeIndex1 + "++) \n");
-		printReceive();
-		print("}\n");
-	    }
-	    
-	    workBlock.accept(this);
-	    print("}\n");
-	    
-	}
-	
-	if (remainingItemsToReceive < 0)
-	    Utils.fail("Error in tile code");
-	
-	//receive the rest of the items
-	if (remainingItemsToReceive > 0) {
-	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + remainingItemsToReceive +
-		  "; " + exeIndex + "++)\n");
-	    printReceive();
-	}   
-
-	
-	print(" while (1) {\n");
-
-	if (peek > 0) {
-	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + pop +
-		  "; " + exeIndex + "++)\n");
-	    printReceive();
-	}
-	    
-	//work
-	if (debug) print("   print_int("+   Layout.getTileNumber(filter) + ");\n");
-
-    }
-    
-    private void printCircularWorkTrailer(int pop, int peek, int push) 
-    {
-	
-	// if (peek > 0) {
-// 	    print(TAPE_INDEX + " = " + TAPE_INDEX + " & " + BITS + ";\n");
-// 	    print(" for (" + BUFFER_INDEX + " = " + TAPE_INDEX + " + 1 + " + (peek - pop) + 
-// 		  "; " + BUFFER_INDEX + " < " + TAPE_INDEX + " + 1 + " + peek + 
-// 		  "; " + BUFFER_INDEX + "++) \n");
-// 	    printReceive();
-// 	}
-	//receive
-	if(peek>0) {
-	    print("\n" + recvBufferIndex + " &= " + RECVBITS + ";\n");
-	    print(recvIndex + " &= " + RECVBITS + ";\n");
-	}
-	
-	print(" }\n");
-	print("}\n");
-    }
-    
-    private void printArrayReceive() 
-    {
-	CType tapeType = filter.getInputType();
-	
-	CType baseType = ((CArrayType)tapeType).getBaseType();
-	String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
-	
-	for (int i = 0; i < dims.length; i++) {
-	    print("for (" + ARRAY_INDEX + i + " = 0; " +
-		  ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-		  ARRAY_INDEX + i + "++)\n");
-	}
-	print("{\n");
-	if (NOCOMM)
-	    print("get((void*)&(");
-	else
-	    print("static_receive_to_mem((void*)&(");
-
-	if (circular)
-	    print("   " + BUFFER + "[" + BUFFER_INDEX + " & " + BITS + "]");
-	else if (ratematch)
-	    print("   " + recvBuffer + "[" + recvBufferIndex + " & " + RECVBITS + "]");
-	else 
-	    print("   " + BUFFER + "[" + BUFFER_INDEX + "]");
-	
-	for (int i = 0; i < dims.length; i++) 
-	    print("[" + ARRAY_INDEX + i + "]");
-	
-	print("));\n");
-	//print(" = ");
-	//if (baseType.equals(CStdType.Float))
-	//    print("static_receive_f();\n");
-	//else 
-	//print("static_receive();\n");
-	print("}\n");
-    }
-    
-    private void printClassReceive()
-    {
-    }
-    
-    private void printReceive() 
-    {
-	print("{\n");
-	if (filter.getInputType().isArrayType())
-	    printArrayReceive();
-	else if (filter.getInputType().isClassType())
-	    printClassReceive();
-	else {
-	    if (NOCOMM)
-		print("get((void*)&(");
-	    else
-		print("static_receive_to_mem((void*)&(");
-
-	    if (ratematch || circular)
-		print("   " + recvBuffer + "[(++" + recvIndex + ") & " + RECVBITS + "]");
-	    else 
-		print("   " + BUFFER + "[" + BUFFER_INDEX + "]");
-	    print("));\n");
-	    //	    print(" = ");
-	    //  if (filter.getInputType().equals(CStdType.Float))
-	    //print("static_receive_f();\n");
-	    // else 
-	    //	print("static_receive();\n");
-	    
-	}
-	print("}\n");
-    }
-    
-    private void printWorkHeader(boolean isSteadyState, int pop, int peek) 
-    {
-
-    }
-    
-    private void printWorkTrailer(boolean loop, int pop, int peek) 
-    {
-	if (peek > 0) {
-	    print("\n " + TAPE_INDEX + " = 0;\n");
-	    if (peek != pop) {
-		print("/* work trailer 0 */\n");
-		print(" for (" + BUFFER_INDEX + " = " + pop + "; " + BUFFER_INDEX + " < " +
-		      peek +
-		      "; " + BUFFER_INDEX + "++)\n");
-		print("   " + BUFFER + "[" + TAPE_INDEX + "++] = " + BUFFER + "[" + BUFFER_INDEX + "];\n");
-	    }
-	    
-	    print("/* work trailer 1 */\n");
-	    print(" for (" + BUFFER_INDEX + " = " + TAPE_INDEX + "; " + BUFFER_INDEX + " < " + 
-		  peek + "; " + BUFFER_INDEX + "++) \n");
-	    printReceive();
-	    print(TAPE_INDEX + " = -1;\n");
-	}
-	if (loop) {
-	    print(" }\n");
-	}
-	print ("}\n");
     }
     
     // ----------------------------------------------------------------------
@@ -848,6 +382,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//right now array var definition is separate from allocation
 	//we convert an assignment statement into the stack allocation statement'
 	//so, just remove the var definition
+	
+
 	if (isWork && type.isArrayType()) {
 	     return;
 	}
@@ -1379,6 +915,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
         print(ident);
         print("(");
+
+	//if we are visiting a static network receive 
+	//add the void* cast and the address expression
+	//see RawExectionCode
+	if (ident.equals(RawExecutionCode.receiveMethod))
+	    print("(void*)&");
+
         int i = 0;
         /* Ignore prefix, since it's just going to be a Java class name.
         if (prefix != null) {
@@ -1588,20 +1131,20 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("int ");
 	    //print the index var decls
 	    for (int i = 0; i < dims.length -1; i++)
-		print(ARRAY_COPY + i + ", ");
-	    print(ARRAY_COPY + (dims.length - 1));
+		print(RawExecutionCode.ARRAY_COPY + i + ", ");
+	    print(RawExecutionCode.ARRAY_COPY + (dims.length - 1));
 	    print(";\n");
 	    for (int i = 0; i < dims.length; i++) {
-		print("for (" + ARRAY_COPY + i + " = 0; " + ARRAY_COPY + i +  
-		      " < " + dims[i] + "; " + ARRAY_COPY + i + "++)\n");
+		print("for (" + RawExecutionCode.ARRAY_COPY + i + " = 0; " + RawExecutionCode.ARRAY_COPY + i +  
+		      " < " + dims[i] + "; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
 	    }
 	    left.accept(this);
 	    for (int i = 0; i < dims.length; i++)
-		print("[" + ARRAY_COPY + i + "]");
+		print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
 	    print(" = ");
 	    right.accept(this);
 	    for (int i = 0; i < dims.length; i++)
-		print("[" + ARRAY_COPY + i + "]");
+		print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
 	    print(";\n}\n");
 	    return;
 	}
@@ -1610,22 +1153,19 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//done at the variable definition
 	if (isWork && right instanceof JNewArrayExpression &&
  	    (left instanceof JLocalVariableExpression)) {
-	    
+	    //get the basetype and print it 
 	    CType baseType = ((CArrayType)((JNewArrayExpression)right).getType()).getBaseType();
- 	    print(baseType + " ");
-	    
+	    print(baseType + " ");
+	    //print the identifier
 	    left.accept(this);
-	    //find the dimensions of the array!!
- 	    String ident;
+	    String ident;
 	    ident = ((JLocalVariableExpression)left).getVariable().getIdent();
-
- 	    String dims[] = 
- 		ArrayDim.findDim(filter, ident);
-	    
- 	    for (int i = 0; i < dims.length; i++)
- 		print("[" + dims[i] + "]");
- 	    return;
+	    //print the dims of the array
+	    stackAllocateArray(ident);
+	    return;
 	}
+           
+
 	
 	lastLeft=left;
         print("(");
@@ -1635,6 +1175,17 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         print(")");
     }
 
+    //stack allocate the array
+    private void stackAllocateArray(String ident) {
+	//find the dimensions of the array!!
+	String dims[] = 
+	    ArrayDim.findDim(filter, ident);
+	
+	for (int i = 0; i < dims.length; i++)
+	    print("[" + dims[i] + "]");
+	return;
+    }
+    
     /**
      * prints an array length expression
      */
@@ -1736,35 +1287,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                     CType tapeType,
                                     JExpression num)
     {
-        if (ratematch || circular) {
-	    print("(" + recvBuffer + "[" + recvBufferIndex + " + (");
-	    num.accept(this);
-	    print(") + 1 & " + RECVBITS + "])");
-	}
-	else {
-	    print("(" + BUFFER + "[" + TAPE_INDEX + " + (");
-	    num.accept(this);
-	    print(") + 1");
-	    //	    if (circular)
-	    //	print(" & " + BITS + "");
-	    print("])");
-	}
+	Utils.fail("FlatIRToC should see no peek expressions");
     }
     
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-	if (ratematch || circular) {
-	    print("(" + recvBuffer + "[++" + recvBufferIndex +
-		  " & " + RECVBITS + "])");
-	}
-	else {
-	    print("(" + BUFFER + "[++" + TAPE_INDEX);
-	    //	    if (circular)
-	    //	print(" & " + BITS);
-	    print("])");
-	}
-	
+	Utils.fail("FlatIRToC should see no pop expressions");
     }
     
     public void visitPrintStatement(SIRPrintStatement self,
@@ -1852,9 +1381,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
 	
 	for (int i = 0; i < dims.length; i++) {
-	    print("for (" + ARRAY_INDEX + i + " = 0; " +
-		  ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-		  ARRAY_INDEX + i + "++)\n");
+	    print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
+		  RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
+		  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
 	}
 	print("{");
 	if (NOCOMM)
@@ -1863,7 +1392,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("static_send((" + baseType + ") ");
 	val.accept(this);
 	for (int i = 0; i < dims.length; i++) {
-	    print("[" + ARRAY_INDEX + i + "]");
+	    print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
 	}
 	print(");\n}\n");
     }
@@ -1879,43 +1408,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                     CType tapeType,
                                     JExpression val)
     {
-	//based on the type of the tape, call the approp function
-	/*	if (ratematch) {
-	    if (tapeType.isClassType()) {
-	    }
-	    else if (tapeType.isClassType()) {
-		CType baseType = ((CArrayType)tapeType).getBaseType();
-		String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
-		
-		for (int i = 0; i < dims.length; i++) {
-		    print("for (" + ARRAY_INDEX + i + " = 0; " +
-			  ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-			  ARRAY_INDEX + i + "++)\n");
-		}
-		print("{");
-		print(sendBuffer + "[(++" + sendBufferIndex + ") & " + SENDBITS + "]");
-		for (int i = 0; i < dims.length; i++) {
-		    print("[" + ARRAY_INDEX + i + "]");
-		}
-		print(" = (" + baseType + ") ");
-		val.accept(this);
-		print(");\n}\n");
-	    }
-	    else {
-		print(sendBuffer + "[(++" + sendBufferIndex + ") & " + SENDBITS + "] = ");
-		print("(" + tapeType + ")");
-		val.accept(this);
-		print(";\n");
-	    }
-	}
-	else {*/
-	    if (tapeType.isArrayType())
-		pushArray(self, tapeType, val);
-	    else if (tapeType.isClassType())
-		pushClass(self, tapeType, val);
-	    else 
-		pushScalar(self, tapeType, val);
-	    //	}
+	if (tapeType.isArrayType())
+	    pushArray(self, tapeType, val);
+	else if (tapeType.isClassType())
+	    pushClass(self, tapeType, val);
+	else 
+	    pushScalar(self, tapeType, val);
     }
     
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,

@@ -122,6 +122,7 @@ public class RawBackend {
 	//	SwitchCode.dumpCode();
 	System.out.println("Switch Code End.");
 	//Generate the tile code
+	RawExecutionCode.doit(rawFlattener.top);
 	System.out.println("Tile Code begin...");
 	TileCode.generateCode(rawFlattener.top);
 	System.out.println("Tile Code End.");

@@ -80,10 +80,10 @@ typedef struct tape {
    ((l) == 16) ? memcpy((d), (s), 16) : \
    ((l) == 20) ? memcpy((d), (s), 20) : \
    memcpy((d), (s), (l)))
+#define READ_ADDR(t) ((t)->data + (t)->read_pos * (t)->data_size)
+#define WRITE_ADDR(t) ((t)->data + (t)->write_pos * (t)->data_size)
 #define COPY_TAPE_ITEM(s, d) \
-  (streamit_memcpy((d)->data + (d)->write_pos * (d)->data_size, \
-                   (s)->data + (s)->read_pos * (s)->data_size, \
-                   (d)->data_size))
+  (streamit_memcpy(WRITE_ADDR(d), READ_ADDR(s), (d)->data_size))
 #define FEEDBACK_DELAY(d, c, n, t, f) { \
   int i; \
   for (i = 0; i < (n); i++) { \
@@ -165,6 +165,10 @@ void register_receiver(portal p, stream_context *receiver,
                        interface_table vtbl, latency l);
 /* void register_sender(portal p, stream_context *sender, latency l); */
 void send_message(portal p, int msgid, latency l, void *params);
+stream_context *streamit_filereader_create(char *filename);
+void streamit_filereader_work(stream_context *c);
+stream_context *streamit_filewriter_create(char *filename);
+void streamit_filewriter_work(stream_context *c);
 void connect_tapes(stream_context *c);
 void streamit_run(stream_context *c, int argc, char **argv);
 

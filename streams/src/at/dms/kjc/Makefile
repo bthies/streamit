@@ -15,14 +15,14 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.3 2001-09-27 23:28:34 thies Exp $
+## $Id: Makefile,v 1.4 2001-10-02 19:15:08 thies Exp $
 ##
 
 TOPDIR =	..
 
 PACKAGE =	at/dms/kjc
 
-SUBDIRS =	sir
+SUBDIRS =	sir lir
 
 ## ----------------------------------------------------------------------
 ## TOOLS
@@ -60,7 +60,7 @@ JAVAFILES +=	BytecodeOptimizer					\
 		CodeLabel CodeSequence Constants			\
 		DefaultFilter JCheckedExpression KjcPrettyPrinter	\
 		KjcScanner KjcVisitor KjcEmptyVisitor Main 		\
-		MethodSignatureParser
+		MethodSignatureParser SLIRVisitor
 
 # Syntax tree classes
 JAVAFILES +=	JAddExpression JArrayAccessExpression			\

@@ -35,6 +35,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     //circular buffers with anding
     public boolean circular;
     public boolean debug = false;//true;
+ 
+    //fields for all of the vars names we introduce in the c code
+    private final String BUFFER_INDEX = "__i__";
+    private final String TAPE_INDEX = "__count__";
+    private final String BUFFER_SIZE = "__BUFFERSIZE__";
+    private final String BITS = "__BITS__";
+    private final String BUFFER = "__BUFFER__";
     
     private static int filterID = 0;
 
@@ -133,13 +140,14 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	//Entry point of the visitor
 	print("#include <raw.h>\n");
+	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
 	
 	//print the extern for the function to init the 
 	//switch
 	print("void raw_init();\n");
 	    
-	print("int __count__ = -1;\n");
+	print("int " + TAPE_INDEX + " = -1;\n");
 
 	if (filter.getPeekInt() > 0) {
 	    if (circular) {
@@ -148,17 +156,17 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		    int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
 			two.getPeekInt();
 		    buffersize = nextPow2(buffersize + 1);
-		    print ("#define __BUFFERSIZE__ " + buffersize + "\n");
-		    print ("#define __BITS__ " + (buffersize - 1) + "\n");
+		    print ("#define " + BUFFER_SIZE + " " + buffersize + "\n");
+		    print ("#define " + BITS + " " + (buffersize - 1) + "\n");
 		    print(two.getInputType() + 
-			  " __buffer__[__BUFFERSIZE__];\n");
+			  " " + BUFFER + "[" + BUFFER_SIZE + "];\n");
 		}
 		else{
 		    int buffersize = nextPow2(filter.getPeekInt());
-		    print ("#define __BUFFERSIZE__ " + buffersize + "\n");
-		    print ("#define __BITS__ " + (buffersize - 1) + "\n");
+		    print ("#define " + BUFFER_SIZE + " " + buffersize + "\n");
+		    print ("#define " + BITS + " " + (buffersize - 1) + "\n");
 		    print(filter.getInputType() + 
-			  " __buffer__[__BUFFERSIZE__];\n");
+			  " " + BUFFER + "[" + BUFFER_SIZE + "];\n");
 		}
 	    }
 	    else {
@@ -167,11 +175,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		    int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
 			two.getPeekInt();
 		    print(two.getInputType() + 
-			  " __buffer__[" + buffersize + "];\n");
+			  " " + BUFFER + "[" + buffersize + "];\n");
 		}
 		else {
 		    print(filter.getInputType() + 
-			  " __buffer__[" + filter.getPeekInt() + "];\n");
+			  " " + BUFFER + "[" + filter.getPeekInt() + "];\n");
 		}
 	    }
 	}
@@ -328,7 +336,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     private void printCircularWorkHeader(boolean isSteadyState, int pop, int peek) 
     {
 	print("{\n");
-	print("int i;\n");
+	print("int " + BUFFER_INDEX + ";\n");
 	// don't print the header for "work" functions in a two-stage
 	// filter, since it should go in initWork instead.  Here we
 	// calculate if we're already printed this header in initWork.
@@ -336,14 +344,15 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    filter instanceof SIRTwoStageFilter &&
 	    ((SIRTwoStageFilter)filter).getInitPeek() > 0;
 	if (peek > 0 && !alreadyPrinted) {
-	    //	    print("int i, __count__ = -1;\n");
+	    //	    print("int i, " + TAPE_INDEX + " = -1;\n");
 	    /*int buffersize = nextPow2(filter.getPeekInt());
-	      print ("#define __BUFFERSIZE__ " + buffersize + "\n");
-	      print ("#define __BITS__ " + (buffersize - 1) + "\n");
+	      print ("#define " + BUFFER_SIZE + " " + buffersize + "\n");
+	      print ("#define " + BITS + " " + (buffersize - 1) + "\n");
 	      print(filter.getInputType() + 
-	      " __buffer__[__BUFFERSIZE__];\n");*/
-	    print(" for (i = 0; i < " + peek + "; i++)\n");
-	    print("   __buffer__[i] = ");
+	      " " + BUFFER + "[" + BUFFER_SIZE + "];\n");*/
+	    print(" for (" + BUFFER_INDEX + " = 0; " + BUFFER_INDEX + " < " + peek + 
+		  "; " + BUFFER_INDEX + "++)\n");
+	    print("   " + BUFFER + "[" + BUFFER_INDEX + "] = ");
 	    if (filter.getInputType().equals(CStdType.Float))
 		print("static_receive_f();\n");
 	    else 
@@ -359,10 +368,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     {
 	
 	if (peek > 0) {
-	    print("__count__ = __count__ & __BITS__;\n");
-	    print(" for (i = __count__ + 1 + " + (peek - pop) + 
-		  "; i < __count__ + 1 + " + peek + "; i++) \n");
-	    print("   __buffer__[i & __BITS__] = ");
+	    print(TAPE_INDEX + " = " + TAPE_INDEX + " & " + BITS + ";\n");
+	    print(" for (" + BUFFER_INDEX + " = " + TAPE_INDEX + " + 1 + " + (peek - pop) + 
+		  "; " + BUFFER_INDEX + " < " + TAPE_INDEX + " + 1 + " + peek + 
+		  "; " + BUFFER_INDEX + "++) \n");
+	    print("   " + BUFFER + "[" + BUFFER_INDEX + " & " + BITS + "] = ");
 	    if (filter.getInputType().equals(CStdType.Float)) 
 		print("static_receive_f();\n");
 	    else
@@ -378,7 +388,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     private void printWorkHeader(boolean isSteadyState, int pop, int peek) 
     {
 	print("{\n");
-	print("int i;\n");
+	print("int " + BUFFER_INDEX + ";\n");
 	// don't print the header for "work" functions in a two-stage
 	// filter, since it should go in initWork instead.  Here we
 	// calculate if we're already printed this header in initWork.
@@ -386,12 +396,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    filter instanceof SIRTwoStageFilter &&
 	    ((SIRTwoStageFilter)filter).getInitPeek() > 0;
 	if (peek > 0 && !alreadyPrinted) {
-	    //print("int i, __count__ = -1;\n");
+	    //print("int i, " + TAPE_INDEX + " = -1;\n");
 	    print("/* work header */\n");
 	    //	print(filter.getInputType() + 
 	    //       " buffer[" + filter.getPeekInt() + "];\n");
-	    print(" for (i = 0; i < " + peek + "; i++)\n");
-	    print("   __buffer__[i] = ");
+	    print(" for (" + BUFFER_INDEX + " = 0; " + BUFFER_INDEX + " < " + 
+		  peek + "; " + BUFFER_INDEX + "++)\n");
+	    print("   " + BUFFER + "[" + BUFFER_INDEX + "] = ");
 	    if (filter.getInputType().equals(CStdType.Float))
 		print("static_receive_f();\n");
 	    else 
@@ -406,26 +417,27 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     private void printWorkTrailer(boolean loop, int pop, int peek) 
     {
 	if (peek > 0) {
-	    print("\n __count__ = 0;\n");
+	    print("\n " + TAPE_INDEX + " = 0;\n");
 	    if (peek != pop) {
 		print("/* work trailer 0 */\n");
-		print(" for (i = " + pop + "; i < " +
+		print(" for (" + BUFFER_INDEX + " = " + pop + "; " + BUFFER_INDEX + " < " +
 		      peek +
-		      "; i++)\n");
-		print("   __buffer__[__count__++] = __buffer__[i];\n");
+		      "; " + BUFFER_INDEX + "++)\n");
+		print("   " + BUFFER + "[" + TAPE_INDEX + "++] = " + BUFFER + "[" + BUFFER_INDEX + "];\n");
 	    }
 	    
 	    print("/* work trailer 1 */\n");
 	    // this should be filter.peek (not initPeek) regardless of
 	    // whether we're generating code for the init or
 	    // steady-state work functions
-	    print(" for (i = __count__; i < " + filter.getPeekInt() + "; i++) \n");
-	    print("   __buffer__[i] = ");
+	    print(" for (" + BUFFER_INDEX + " = " + TAPE_INDEX + "; " + BUFFER_INDEX + " < " + 
+		  filter.getPeekInt() + "; " + BUFFER_INDEX + "++) \n");
+	    print("   " + BUFFER + "[" + BUFFER_INDEX + "] = ");
 	    if (filter.getInputType().equals(CStdType.Float)) 
 		print("static_receive_f();\n");
 	    else
 		print("static_receive();\n");
-	    print(" __count__ = -1;\n");
+	    print(TAPE_INDEX + " = -1;\n");
 	}
 	if (loop) {
 	    print(" }\n");
@@ -919,9 +931,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                         JExpression[] dims,
                                         JArrayInitializer init)
     {
-        print("(" + type + "*) malloc(");
+        print("(" + type + "*) calloc(");
         dims[0].accept(this);
-        print(" * sizeof(");
+        print(" , sizeof(");
         print(type);
         print("))");
         if (init != null) {
@@ -1258,7 +1270,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                     CType tapeType,
                                     JExpression num)
     {
-        print("(__buffer__[__count__ + (");
+        print("(" + BUFFER + "[" + TAPE_INDEX + " + (");
         /*
 	  if (tapeType != null)
 	  print(tapeType);
@@ -1269,16 +1281,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         num.accept(this);
         print(") + 1");
 	if (circular)
-	    print(" & __BITS__");
+	    print(" & " + BITS + "");
 	print("])");
     }
     
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-        print("(__buffer__[++__count__");
+        print("(" + BUFFER + "[++" + TAPE_INDEX);
 	if (circular)
-	    print(" & __BITS__");
+	    print(" & " + BITS);
 	print("])");
     }
     

@@ -49,7 +49,24 @@ public class ArrayDim extends SLIREmptyVisitor implements StreamVisitor{
     {
 	variable = var;
     }
+
+    //search for array definitions in variable definitions (local variables)
+    public void visitVariableDefinition(JVariableDefinition self,
+                                        int modifiers,
+                                        CType type,
+                                        String ident,
+                                        JExpression expr) {
+	if (!variable.equals(ident))
+	    return;
+
+	//if we are declaring a new array, record the dims
+	if (expr instanceof JNewArrayExpression) {
+	    dims = ((JNewArrayExpression)expr).getDims();
+	    return;
+	}
+    }
     
+
     //search for array declarations in assignment statements
     public void visitAssignmentExpression(JAssignmentExpression self,
                                           JExpression left,

@@ -332,6 +332,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    return;
 	}
 
+
         print(type);
         print(" ");
         print(ident);
@@ -477,16 +478,26 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//System.out.println(expr);
 
 	//if we are in a work function, we want to stack allocate all arrays
-	//right now array var definition is separate from allocation
 	//we convert an assignment statement into the stack allocation statement'
-	//so, just remove the var definition
+	//so, just remove the var definition, if the new array expression
+	//is not included in this definition, just remove the definition,
+	//when we visit the new array expression we will print the definition...
 	if (isWork && type.isArrayType()) {
 	    String[] dims = ArrayDim.findDim(filter, ident);
 	    //but only do this if the array has corresponding 
-	    //new expression, otherwise print the def...
-	    if (!(dims == null)) {
+	    //new expression, otherwise don't print anything.
+	    if (expr instanceof JNewArrayExpression) {
+		//print the type
+		print(((CArrayType)type).getBaseType() + " ");
+		//print the field identifier
+		print(ident);
+		//print the dims
+		stackAllocateArray(ident);
+		print(";");
 		return;
 	    }
+	    else if (dims != null)
+		return;
 	}
 	
 	if (expr!=null) {
@@ -1319,7 +1330,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	}
 
 	//stack allocate all arrays in the work function 
-	//done at the variable definition,
+	//done at the variable definition
 	if (isWork && right instanceof JNewArrayExpression &&
  	    (left instanceof JLocalVariableExpression)) {
 	    //	    (((CArrayType)((JNewArrayExpression)right).getType()).getArrayBound() < 2)) {

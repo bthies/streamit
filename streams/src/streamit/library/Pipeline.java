@@ -125,6 +125,15 @@ public class Pipeline extends Stream
     {
         super(x,y,z,a,b);
     }
+
+    /**
+     * Constructor with two floats and four ints.
+     */
+    public Pipeline(float f1, float f2, int i1, int i2, int i3, int i4)
+    {
+        super(f1, f2, i1, i2, i3, i4);
+    }
+    
     /**
      * Constructor with three floats, and an int.
      */

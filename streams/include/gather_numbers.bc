@@ -85,6 +85,9 @@ global currentPrints = 0;
 global steadyStateExecutions = 0;
 global outputFile;
 global currentSkipped = 0;
+global gWorkCount = 0;
+global totalWorkCount = 0;
+
 
 global totalFLOPS = 0;
 global totalCycles = 0;
@@ -111,7 +114,7 @@ fn dev_gather_numbers_init(fileName, ioPort)
   fprintf(outputFile, "Run for %d steady state cycles.\n", quitAfter);
   fprintf(outputFile, "With %d items skipped for init.\n", skipPrints);
   fprintf(outputFile, "With %d items printed per steady state.\n\n", printsPerSteady);
-  fprintf(outputFile, "cycles MFLOPS\n");
+  fprintf(outputFile, "cycles MFLOPS work_count\n");
   fprintf(outputFile, "--------------------------\n");
 
   
@@ -125,6 +128,9 @@ fn dev_gather_numbers_init(fileName, ioPort)
     printf("// **** print_service: error adding device to port %d\n", ioPort);  
     return 0;
   }
+  
+  //register the workcount event
+  EventManager_RegisterHandler("clock", "__clock_handler_workcount");
   return 1;
 }
 
@@ -300,7 +306,9 @@ fn dev_gather_numbers_calc(printServiceStruct)
 	    fprintf(outputFile, "Steady State Executions: %d\n", quitAfter);
 	    fprintf(outputFile, "Total Cycles: %d\n", totalCycles);
 	    fprintf(outputFile, "Avg Cycles per Steady-State: %d\n", totalCycles/quitAfter);
+	    fprintf(outputFile, "Thruput per 10^5: %d\n", (100000/((totalCycles/quitAfter)/printsPerSteady)));
 	    fprintf(outputFile, "Avg MFLOPS: %d\n", (250*totalFLOPS)/totalCycles);
+	    fprintf(outputFile, "workCount = %d / %d\n", totalWorkCount, gNumProc*totalCycles);
 	    //this should exit!!!!!
 	    gInterrupted = 1;
 	    //this will exit the thread
@@ -311,13 +319,15 @@ fn dev_gather_numbers_calc(printServiceStruct)
 	    local dif = time_lo - lastSteadyStartCycle; 
 	    totalFLOPS += gAUTOFLOPS;
 	    totalCycles += dif;
+	    totalWorkCount += gWorkCount;
 	    
-	    fprintf(outputFile, "%d %d\n", dif, (250*gAUTOFLOPS)/dif);
+	    fprintf(outputFile, "%d %d %d\n", dif, (250*gAUTOFLOPS)/dif, gWorkCount);
 	  }	  
 	  //set the last steady state time
 	  lastSteadyStartCycle = time_lo;
-	  //reset the flops count
+	  //reset the flops count and workCount
 	  gAUTOFLOPS = 0;
+	  gWorkCount = 0;
 	}
 
 	if (print_type == 0xfff1) {		  
@@ -358,3 +368,35 @@ fn dev_gather_numbers_calc(printServiceStruct)
     }
   }
 }
+
+fn __clock_handler_workcount(hms) {
+  local j;
+  for (j = 0; j < gNumProc; ++j) {
+    local status = Proc_GetStallReason(Machine_GetProc(machine,j)); 
+    if (status == 0) 
+      gWorkCount++; 
+  }
+}
+
+
+///* fn generateUtilization(cycles) { */
+///*   local i, j; */
+///*   local workCount = 0; */
+  
+///*   printf("cycles %d\n", cycles);  */
+
+///*   for (i = 0; i < cycles; ++i) */
+///*   { */
+///*     printf("do_step0\n");  */
+///*     do_step(simInfo,1); */
+///*     printf("do_step1\n");  */
+    
+///*     for (j = 0; j < gNumProc; ++j) */
+/*     { */
+/*          local status = Proc_GetStallReason(Machine_GetProc(machine,j)); */
+/* 	 if (status == 0) */
+/*            workCount++; */
+/*     } */
+/*   } */
+/*   return workCount; */
+/* } */

@@ -16,6 +16,7 @@ import at.dms.compiler.TokenReference;
 public class ArrayDestroyer extends SLIRReplacingVisitor {
     private Hashtable targets;    
     private Hashtable replaced;
+    private Hashtable varDefs;
 
     public ArrayDestroyer() {
 	replaced=new Hashtable();
@@ -69,6 +70,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    }
 	if (str instanceof SIRFilter)
 	    for (int i = 0; i < str.getMethods().length; i++) {
+		varDefs=new Hashtable();
 		str.getMethods()[i].accept(this);
 	    }
     }
@@ -157,9 +159,15 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    JExpression prefix=((JArrayAccessExpression)left).getPrefix();
 	    JExpression accessor=((JArrayAccessExpression)left).getAccessor();
 	    if((prefix instanceof JLocalVariableExpression)&&(accessor instanceof JIntLiteral)&&(targets.containsKey(((JLocalVariableExpression)prefix).getVariable()))) {
-		JVariableDefinition var=toVar((JArrayAccessExpression)left,newRight);
-		replaced.put(new VarIndex(((JLocalVariableExpression)prefix).getVariable(),((JIntLiteral)accessor).intValue()),var);
-		return new JVariableDeclarationStatement(self.getTokenReference(),var,null);
+		VarIndex index=new VarIndex(((JLocalVariableExpression)prefix).getVariable(),((JIntLiteral)accessor).intValue());
+		JVariableDefinition var=(JVariableDefinition)replaced.get(index);
+		if(var==null) {
+		    var=toVar((JArrayAccessExpression)left,newRight);
+		    replaced.put(index,var);
+		    return new JVariableDeclarationStatement(null,var,null);
+		} else {
+		    return new JAssignmentExpression(null,new JLocalVariableExpression(null,var),right);
+		}
 	    }
 	}
 	return self;

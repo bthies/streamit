@@ -3,7 +3,7 @@ package at.dms.kjc.iterator;
 import at.dms.kjc.sir.*;
 import streamit.scheduler.iriter.*;
 
-class SIRFilterIter extends SIRIterator implements FilterIter {
+public class SIRFilterIter extends SIRIterator implements FilterIter {
 
     /**
      * The object this iterator points at.
@@ -93,4 +93,7 @@ class SIRFilterIter extends SIRIterator implements FilterIter {
 	return obj.getWork();
     }
 
+    public void accept(StreamVisitor v) {
+	v.visitFilter(obj, this);
+    }
 }

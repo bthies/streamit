@@ -3,7 +3,7 @@ package at.dms.kjc.iterator;
 import at.dms.kjc.sir.*;
 import streamit.scheduler.iriter.*;
 
-class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
+public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
 
     /**
      * Object pointed to by this iterator.
@@ -44,6 +44,14 @@ class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
     public Iterator getChild (int n) {
 	return IterFactory.createIter(obj.get(n), this, n);
     }
+
+    /**
+     * Same as getChild with different signature.
+     */
+    public SIRIterator get (int i) {
+	return (SIRIterator)getChild(i);
+    }
+    
 
     /**
      * Returns the number of ways this Splitter splits data.
@@ -129,4 +137,13 @@ class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
 	new RuntimeException("not implemented yet").printStackTrace();
 	return -1;
     }
+
+    public void accept(StreamVisitor v) {
+	v.preVisitSplitJoin(obj, this);
+	for (int i=0; i<getNumChildren(); i++) {
+	    ((SIRIterator)getChild(i)).accept(v);
+	}
+	v.postVisitSplitJoin(obj, this);
+    }
+
 }

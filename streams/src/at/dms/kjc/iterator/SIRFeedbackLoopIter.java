@@ -1,9 +1,10 @@
 package at.dms.kjc.iterator; 
 
 import at.dms.kjc.sir.*;
+import at.dms.util.*;
 import streamit.scheduler.iriter.*;
 
-class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter {
+public class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter {
 
     /**
      * Object pointed to by this iterator.
@@ -55,6 +56,20 @@ class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter {
 	return IterFactory.createIter(obj.getLoop(),
 				      this,
 				      SIRFeedbackLoop.LOOP);
+    }
+
+    /**
+     * Same as above with different signature
+     */
+    public SIRIterator get (int i) {
+	if (i==SIRFeedbackLoop.LOOP) {
+	    return (SIRIterator)getLoop();
+	} else if (i==SIRFeedbackLoop.BODY) {
+	    return (SIRIterator)getBody();
+	} else {
+	    Utils.fail("bad arg to get");
+	    return null;
+	}
     }
 
     /**
@@ -140,5 +155,12 @@ class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter {
     public int getJoinPush (int nWork) {
 	new RuntimeException("not implemented yet").printStackTrace();
 	return -1;
+    }
+
+    public void accept(StreamVisitor v) {
+	v.preVisitFeedbackLoop(obj, this);
+	((SIRIterator)getBody()).accept(v);
+	((SIRIterator)getLoop()).accept(v);
+	v.postVisitFeedbackLoop(obj, this);
     }
 }

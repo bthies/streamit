@@ -1,5 +1,6 @@
 package at.dms.kjc.iterator; 
 
+import java.util.LinkedList;
 import at.dms.kjc.sir.*;
 import streamit.scheduler.iriter.*;
 
@@ -61,6 +62,43 @@ public abstract class SIRIterator implements Iterator {
     }
     
     /**
+     * Returns list of all parent streams of this.  The first element
+     * of the list is the immediate parent of this, and the last
+     * element is the final non-null ancestor of this.
+     */
+    public SIRContainer[] getParents() {
+	LinkedList result = new LinkedList();
+	SIRIterator parent = this.parent;
+	// make list of parents
+	while (parent!=null) {
+	    result.add(parent.getStream());
+	    parent = parent.getParent();
+	}
+	return (SIRContainer[])result.toArray(new SIRContainer[0]);
+    }
+
+    /**
+     * Gets the name by which the parent would refer to the object
+     * pointed to by this iterator.  For instance, child_1, child_2,
+     * loop, body, etc.
+     */
+    public String getRelativeName() {
+	if (parent==null) {
+	    return null;
+	} else {
+	    if (parent.isFeedbackLoop()==null) {
+		return "child_" + pos;
+	    } else {
+		if (pos==SIRFeedbackLoop.LOOP) {
+		    return "loop";
+		} else {
+		    return "body";
+		}
+	    }
+	}
+    }
+
+    /**
      * Return the stream pointed to by this.  (Redundant with
      * getStream(), but required for Iterator interface.)
      */
@@ -114,6 +152,9 @@ public abstract class SIRIterator implements Iterator {
 	    new InvalidIteratorException().printStackTrace();
 	}
     }
+
+    public abstract void accept(StreamVisitor v);
+
 }
 
 /**

@@ -3,7 +3,7 @@ package at.dms.kjc.iterator;
 import at.dms.kjc.sir.*;
 import streamit.scheduler.iriter.*;
 
-class SIRPipelineIter extends SIRIterator implements PipelineIter {
+public class SIRPipelineIter extends SIRIterator implements PipelineIter {
 
     /**
      * Object pointed to by this iterator.
@@ -43,5 +43,20 @@ class SIRPipelineIter extends SIRIterator implements PipelineIter {
 
     public Iterator getChild (int n) {
 	return IterFactory.createIter(obj.get(n), this, n);
+    }
+
+    /**
+     * The same as <getChild> with a different signature.
+     */
+    public SIRIterator get (int n) {
+	return (SIRIterator)getChild(n);
+    }
+
+    public void accept(StreamVisitor v) {
+	v.preVisitPipeline(obj, this);
+	for (int i=0; i<getNumChildren(); i++) {
+	    ((SIRIterator)getChild(i)).accept(v);
+	}
+	v.postVisitPipeline(obj, this);
     }
 }

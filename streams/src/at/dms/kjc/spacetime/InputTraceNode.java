@@ -13,11 +13,10 @@ public class InputTraceNode extends TraceNode
     private String ident;
     private static int[] EMPTY_WEIGHTS=new int[0];
     private static OutputTraceNode[] EMPTY_SRCS=new OutputTraceNode[0];
-    private Trace parent;
 
     public InputTraceNode(int[] weights,
 			  OutputTraceNode[] sources) {
-	this.parent = parent;
+	//this.parent = parent;
 	if (weights.length != sources.length)
 	    Utils.fail("Add comment later");
 	this.sources = sources;
@@ -27,7 +26,7 @@ public class InputTraceNode extends TraceNode
     }
 
     public InputTraceNode(int[] weights) {
-	this.parent = parent;
+	//this.parent = parent;
 	sources=EMPTY_SRCS;
 	this.weights=weights;
 	ident = "input" + unique;
@@ -35,23 +34,11 @@ public class InputTraceNode extends TraceNode
     }
 
     public InputTraceNode() {
-	this.parent = parent;
+	//this.parent = parent;
 	sources=EMPTY_SRCS;
 	weights=EMPTY_WEIGHTS;
 	ident = "input" + unique;
 	unique++;
-    }
-
-    public void setParent(Trace par) 
-    {
-	parent = par;
-    }
-    
-
-    public Trace getParent() 
-    {
-	assert parent != null : "parent not set for input trace node";
-	return parent;
     }
 
     public boolean isFileOutput() 

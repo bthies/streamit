@@ -7,6 +7,7 @@ abstract public class TraceNode
 {
     private TraceNode next;
     private TraceNode previous;
+    private Trace parent;
 
     public TraceNode getNext() {
 	return next;
@@ -39,4 +40,14 @@ abstract public class TraceNode
 	return this instanceof OutputTraceNode;
     }
     
+    public void setParent(Trace par) 
+    {
+	parent = par;
+    }
+    
+    public Trace getParent() 
+    {
+	assert parent != null : "parent not set for trace node";
+	return parent;
+    }
 }

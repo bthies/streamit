@@ -66,6 +66,7 @@ public class Trace
 	    node=node.getNext();
 	TraceNode end=node;
 	while(node!=null&&node instanceof FilterTraceNode) {
+	    node.setParent(this);
 	    size++;
 	    end=node;
 	    node=node.getNext();

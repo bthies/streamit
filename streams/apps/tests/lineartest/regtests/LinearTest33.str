@@ -1,0 +1,87 @@
+/** 
+ * Simple program to test finding duplicate computation terms
+ * -- this one tests the redundancy calculation 
+ **/
+
+void->void pipeline LinearTest33 {
+  add SimpleSource();
+  add RedundantFilter1();
+  add RedundantFilter2();
+  add RedundantFilter3();
+  add RedundantFilter4();
+  add SimpleSink();
+}
+
+/** simple source that spits out .1, 1.1, 2.1, ... 99.1 and then repeats. **/
+void->float filter SimpleSource {
+  int x = 0;
+  work push 1 {
+    push (x + 0.01);
+    x = (x++)%100;
+  }
+}
+
+/** simple, printing sink for floating point data. **/
+float->void filter SimpleSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+  
+/** simple filter with some redundant computation. **/
+float->float filter RedundantFilter1 {
+  work pop 3 push 3 {
+    float t1 = pop();
+    float t2 = pop();
+    float t3 = pop();
+    push(0*t3 + 0*t2 + 0*t1);
+    push(0*t3 + 0*t2 + 0*t1);
+    push(1*t3 + 2*t2 + 3*t1);
+  }
+}
+
+/** simple filter with some redundant computation. **/
+float->float filter RedundantFilter2 {
+  work pop 3 push 3 {
+    float t1 = pop();
+    float t2 = pop();
+    float t3 = pop();
+    push(0*t3 + 0*t2 + 0*t1);
+    push(1*t3 + 2*t2 + 3*t1);
+    push(1*t3 + 2*t2 + 3*t1);
+  }
+}
+
+/** simple filter with some redundant computation. **/
+float->float filter RedundantFilter3 {
+  work pop 3 push 3 {
+    float t1 = pop();
+    float t2 = pop();
+    float t3 = pop();
+    push(0*t3 + 0*t2 + 0*t1);
+    push(1*t3 + 0*t2 + 0*t1);
+    push(1*t3 + 2*t2 + 3*t1);
+  }
+}
+
+/** simple filter with some redundant computation. **/
+float->float filter RedundantFilter4 {
+  work peek 3 pop 1 push 3 {
+    float t1 = peek(0);
+    float t2 = peek(1);
+    float t3 = peek(2);
+    push(3*t3 + 0*t2 + 3*t1);
+    push(2*t3 + 0*t2 + 2*t1);
+    push(1*t3 + 0*t2 + 1*t1);
+    pop();
+  }
+}
+
+
+/** simple non linear filter to avoid automatic pipeline combination **/
+float->float filter NonlinearFilter {
+  work pop 1 push 1 {
+    float t = pop();
+    push(t*t);
+  }
+}

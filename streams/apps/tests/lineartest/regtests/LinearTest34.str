@@ -1,0 +1,59 @@
+/** 
+ * Simple program to test the multidimensional frequency transformation.
+ **/
+
+void->void pipeline LinearTest34 {
+  add SimpleSource();
+  //add MultiFIRFilter();
+  add NormalFIRFilter2();
+  add SimpleSink();
+}
+
+/** simple source that spits out .1, 1.1, 2.1, ... 99.1 and then repeats. **/
+void->float filter SimpleSource {
+  int x = 0;
+  work push 1 {
+    push (x);
+    x = (x+1)%4;
+  }
+}
+
+/** simple, printing sink for floating point data. **/
+float->void filter SimpleSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+  
+/** This is the equivalent of three FIR filters in parallel that have been combined. **/
+float->float filter MultiFIRFilter {
+  work pop 1 peek 3 push 3 {
+    float t1 = peek(0);
+    float t2 = peek(1);
+    float t3 = peek(2);
+    push(3*t3 + 6*t2 + 9*t1);
+    push(2*t3 + 5*t2 + 8*t1);
+    push(1*t3 + 4*t2 + 7*t1);
+    pop();
+  }
+}
+
+
+float->float filter NormalFIRFilter {
+  work peek 3 pop 1 push 1 {
+    float t1 = peek(0);
+    float t2 = peek(1);
+    float t3 = peek(2);
+    push(3*t3 + 2*t2 + 1*t1);
+    pop();
+  }
+}
+
+float->float filter NormalFIRFilter2 {
+  work peek 2 pop 1 push 1 {
+    float t1 = peek(0);
+    float t2 = peek(1);
+    push(t2 + t1);
+    pop();
+  }
+}

@@ -1,0 +1,53 @@
+/** 
+ * Simple program to test finding duplicate computation terms
+ * among 
+ **/
+
+void->void pipeline LinearTest32 {
+  add SimpleSource();
+  add RedundantFilter();
+  add RedundantPeekFilter();
+  add SimpleSink();
+}
+
+/** simple source that spits out .1, 1.1, 2.1, ... 99.1 and then repeats. **/
+void->float filter SimpleSource {
+  int x = 0;
+  work push 1 {
+    push (x + 0.01);
+    x = (x++)%100;
+  }
+}
+
+/** simple, printing sink for floating point data. **/
+float->void filter SimpleSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+  
+/** simple filter with some redundant computation. **/
+float->float filter RedundantFilter {
+  work pop 3 push 3 {
+    float t1 = pop();
+    float t2 = pop();
+    float t3 = pop();
+    push(3*t3 + 5*t2 + 7*t1);
+    push(2*t3 + 5*t2 + 8*t1);
+    push(1*t3 + 4*t2 + 7*t1);
+  }
+}
+
+/** a simple filter with redundant peeking computation. **/
+float->float filter RedundantPeekFilter {
+  work pop 1 peek 3 push 3 {
+    float t1 = peek(0);
+    float t2 = peek(1);
+    float t3 = peek(2);
+    pop();
+    push(6*t3 + 6*t2 + 3*t1);
+    push(5*t3 + 5*t2 + 2*t1);
+    push(4*t3 + 4*t2 + 1*t1);
+  }
+}
+

@@ -2,6 +2,7 @@ package at.dms.kjc.sir.lowering.partition;
 
 import at.dms.util.*;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.raw.*;
 import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.sir.*;
@@ -10,6 +11,7 @@ import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.partition.dynamicprog.*;
 import java.lang.reflect.*;
+import java.util.*;
 
 /**
  * Contains interface for manually driving partitioning process.
@@ -59,6 +61,40 @@ public class ManualPartition {
      */
     public static SIRStream getStream(SIRStream str, int num) {
 	return str.getStreamWithNumber(num);
+    }
+
+    /**
+     * Returns set of all child streams of <str> (including <str>,
+     * possibly) that have a name beginning with a given prefix.
+     */
+    public static SIRStream[] getStreams(SIRStream str, final String prefix) {
+	final ArrayList result = new ArrayList();
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+		public void preVisitStream(SIRStream self,
+					   SIRIterator iter) {
+		    if (self.getName().startsWith(prefix)) {
+			result.add(self);
+		    }
+		}
+	    });
+	return (SIRStream[])result.toArray(new SIRStream[0]);
+    }
+
+    /**
+     * Returns stream by given name.
+     */
+    public static SIRStream getStream(SIRStream str, final String name) {
+	final ArrayList result = new ArrayList();
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+		public void preVisitStream(SIRStream self,
+					   SIRIterator iter) {
+		    if (self.getName().equals(name)) {
+			result.add(self);
+		    }
+		}
+	    });
+	assert result.size()<=1;
+	return (SIRStream)result.get(0);
     }
 
     /**
@@ -294,4 +330,78 @@ public class ManualPartition {
 	    System.exit(1);
 	}
     }
+
+    /**
+     * Performs loop unrolling up to <limit> in all methods of all
+     * deep children within <str>.
+     */
+    public static void unroll(SIRStream str, int limit) {
+	// switch unroll limit
+	int oldUnroll = KjcOptions.unroll;
+	KjcOptions.unroll = limit;
+
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+		public void preVisitStream(SIRStream self,
+					   SIRIterator iter) {
+		    // unroll in all methods
+		    JMethodDeclaration[] methods = self.getMethods();
+		    for (int i=0; i<methods.length; i++) {
+			doUnroll(methods[i]);		    }
+		}
+	    });
+	
+	// restore unroll limit
+	KjcOptions.unroll = oldUnroll;
+    }
+
+    /**
+     * Private method to actually do unrolling on a method.
+     */
+    private static void doUnroll(JMethodDeclaration method) {
+	Unroller unroller;
+	do {
+	    do {
+		//System.out.println("Unrolling..");
+		unroller = new Unroller(new Hashtable());
+		method.accept(unroller);
+	    } while(unroller.hasUnrolled());
+	    //System.out.println("Constant Propagating..");
+	    method.accept(new Propagator(new Hashtable()));
+	    //System.out.println("Unrolling..");
+	    unroller = new Unroller(new Hashtable());
+	    method.accept(unroller);
+	} while(unroller.hasUnrolled());
+	//System.out.println("Flattening..");
+	method.accept(new BlockFlattener());
+	//System.out.println("Analyzing Branches..");
+	//method.accept(new BranchAnalyzer());
+	//System.out.println("Constant Propagating..");
+	method.accept(new Propagator(new Hashtable()));
+	method.accept(new VarDeclRaiser());
+    }
+
+    /**
+     * Attempts to break down arrays in all children of <str> into
+     * local variables, and to remove array declarations that are
+     * unneeded.
+     */
+    public static void destroyArrays(SIRStream str) {
+	// set option
+	boolean oldOpt = KjcOptions.destroyfieldarray;
+	KjcOptions.destroyfieldarray = true;
+
+	// try destroying arrays
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+		public void visitFilter(SIRFilter self,
+					SIRIterator iter) {
+		    new ArrayDestroyer().destroyFieldArrays(self);
+		    // try to eliminate dead code
+		    DeadCodeElimination.doit(self);
+		}
+	    });
+		
+	// restore option
+	KjcOptions.destroyfieldarray = true;
+    }
+
 }

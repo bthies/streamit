@@ -31,13 +31,14 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		this.outputStream = outputStream;
     }
     
-	    
-
+	//    
+	// Method to be called by Jasper
+	//
 	public void encode(SIRStream str)
 	{
-		// PENDING 
-		// ADD code to set str as the toplevel stream in the graph structure 		
-		str.accept(this);
+	 		
+		graph.setTopLevel((GEStreamNode) str.accept(this));
+		System.out.println("The toplevel stream is "+ graph.getTopLevel().getName());
 	}
 
     

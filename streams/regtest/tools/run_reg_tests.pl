@@ -7,7 +7,7 @@
 # Usage: run_reg_test.pl -- runs all of the regtests  (eg make test-all)
 #        run_reg_test.pl nightly -- runs nightly regtests (eg make test-nightly)
 #
-# $Id: run_reg_tests.pl,v 1.20 2003-07-16 20:17:58 dmaze Exp $
+# $Id: run_reg_tests.pl,v 1.21 2003-09-29 09:08:46 thies Exp $
 
 use strict;
 use POSIX qw(strftime);
@@ -57,13 +57,13 @@ my $streamit_home = "$working_dir/streams";
 $ENV{"STREAMIT_HOME"} = "$streamit_home/";
 $ENV{"TOPDIR"}="$streamit_home/misc/raw/"; # for RAW
 $ENV{"PATH"} = "$streamit_home:/usr/local/bin:/usr/uns/bin:/usr/bin/X11:/bin:/usr/bin";
-my $class_path = ".:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar:/usr/uns/java/antlr.jar:$streamit_home/compiler:$streamit_home/compiler/3rdparty:$streamit_home/compiler/3rdparty/cplex/cplex.jar:$streamit_home/compiler/3rdparty/jgraph/jgraph.jar:$streamit_home/library/java:$streamit_home/eclipse";
+my $class_path = ".:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar:/usr/uns/java/antlr.jar:$streamit_home/src:$streamit_home/3rdparty:$streamit_home/3rdparty/cplex/cplex.jar:$streamit_home/3rdparty/jgraph/jgraph.jar";
 $ENV{"CLASSPATH"} = $class_path;
-$ENV{"CLASSROOT"} = "$streamit_home/compiler/kopi/classes";
+$ENV{"CLASSROOT"} = "$streamit_home/src/kopi/classes";
 
 
 # try and compile the freshly checked out streams directory
-print MHMAIL saved_execute("make -C $working_dir/streams/compiler");
+print MHMAIL saved_execute("make -C $working_dir/streams/src");
 print MHMAIL saved_execute("make -C $working_dir/streams/misc/raw setup");
 
 # now that we have compiled the compiler, set up the various files where we will direct the output

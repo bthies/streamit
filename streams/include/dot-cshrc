@@ -8,11 +8,10 @@ setenv CLASSPATH ${CLASSPATH}:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar
 ## antlr classes
 setenv CLASSPATH ${CLASSPATH}:/usr/uns/java/antlr.jar
 # streamit classes
-setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler
-setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty
-setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/cplex/cplex.jar
-setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/jgraph/jgraph.jar
-setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/library/java
+setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/src
+setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty
+setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty/cplex/cplex.jar
+setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jgraph/jgraph.jar
 
 # for running dotty
 setenv LEFTYPATH /home/bits7/NO_BACKUP/streamit/dotty
@@ -38,9 +37,6 @@ if ($?TEXINPUTS) then
 else
   setenv TEXINPUTS ${STREAMIT_HOME}/include/tex:
 endif
-
-#include for Eclipse plugins
-setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/eclipse
 
 #include builtin Eclipse plugins
 setenv ECLIPSE_PLUG /home/bits7/NO_BACKUP/streamit/eclipse/plugins

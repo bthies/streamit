@@ -12,11 +12,10 @@ CLASSPATH=${CLASSPATH}:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar
 ## antlr classes
 CLASSPATH=${CLASSPATH}:/usr/uns/java/antlr.jar
 # streamit classes
-CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler
-CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty
-CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/cplex/cplex.jar
-CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/jgraph/jgraph.jar
-CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/library/java
+CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/src
+CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty
+CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/cplex/cplex.jar
+CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jgraph/jgraph.jar
 
 # the current version of starsearch we're using
 export TOPDIR=${STREAMIT_HOME}/misc/raw
@@ -40,9 +39,6 @@ fi
 # a blank entry as "the default path".)
 TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
 export TEXINPUTS
-
-#include for Eclipse plugins
-CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/eclipse
 
 #include builtin Eclipse plugins
 export ECLIPSE_PLUG=/home/bits7/NO_BACKUP/streamit/eclipse/plugins

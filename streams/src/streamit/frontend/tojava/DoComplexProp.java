@@ -28,7 +28,7 @@ import java.util.ArrayList;
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DoComplexProp.java,v 1.17 2003-07-10 15:37:18 dmaze Exp $
+ * @version $Id: DoComplexProp.java,v 1.18 2003-07-16 15:54:38 dmaze Exp $
  */
 public class DoComplexProp extends SymbolTableVisitor
 {
@@ -73,11 +73,11 @@ public class DoComplexProp extends SymbolTableVisitor
         addStatement(new StmtAssign(expr.getContext(),
                                     new ExprField(expr.getContext(),
                                                   exprVar, "real"),
-                                    cplx.getReal()));
+                                    cplx.getRealExpr()));
         addStatement(new StmtAssign(expr.getContext(),
                                     new ExprField(expr.getContext(),
                                                   exprVar, "imag"),
-                                    cplx.getImag()));
+                                    cplx.getImagExpr()));
         return exprVar;
     }
 
@@ -173,12 +173,12 @@ public class DoComplexProp extends SymbolTableVisitor
             addStatement(new StmtAssign(stmt.getContext(),
                                         new ExprField(lhs.getContext(),
                                                       lhs, "real"),
-                                        cplx.getReal(),
+                                        cplx.getRealExpr(),
                                         stmt.getOp()));
             addStatement(new StmtAssign(stmt.getContext(),
                                         new ExprField(lhs.getContext(),
                                                       lhs, "imag"),
-                                        cplx.getImag(),
+                                        cplx.getImagExpr(),
                                         stmt.getOp()));
             return null;
         }
@@ -217,8 +217,8 @@ public class DoComplexProp extends SymbolTableVisitor
         if (newExpr instanceof ExprComplex)
         {
             ExprComplex cplx = (ExprComplex)newExpr;
-            addStatement(new StmtExpr(stmt.getContext(), cplx.getReal()));
-            addStatement(new StmtExpr(stmt.getContext(), cplx.getImag()));
+            addStatement(new StmtExpr(stmt.getContext(), cplx.getRealExpr()));
+            addStatement(new StmtExpr(stmt.getContext(), cplx.getImagExpr()));
             return null;
         }
         if (newExpr == stmt.getExpression())
@@ -281,11 +281,11 @@ public class DoComplexProp extends SymbolTableVisitor
                 addStatement(new StmtAssign(ctx,
                                             new ExprField(ctx,
                                                           exprVar, "real"),
-                                            cplx.getReal()));
+                                            cplx.getRealExpr()));
                 addStatement(new StmtAssign(ctx,
                                             new ExprField(ctx,
                                                           exprVar, "imag"),
-                                            cplx.getImag()));
+                                            cplx.getImagExpr()));
                 continue;
             }
             // Maybe the right-hand side isn't complex at all.

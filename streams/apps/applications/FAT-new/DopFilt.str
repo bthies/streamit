@@ -14,20 +14,11 @@
 
 complex[N_bm][N_srg][N_pri]->complex[N_bm][N_srg][N_dop][N_pri-N_dop+1] pipeline DopFilt(int N_bm,int N_srg,int N_pri,int N_dop) {
     add Chg40(N_bm,N_srg,N_pri,N_dop);
+    add FFTVect(N_dop);
     add ParaFFT(N_bm,N_srg,N_dop,N_pri-N_dop+1);
     add Chg41(N_bm,N_srg,N_dop,N_pri-N_dop+1);	
 }
 
-// This is a parrallel version of FFTVect
-complex[N_dop]->complex[N_dop] splitjoin ParaFFT(int N_bm,int N_srg, int N_dop,int N_stag) {
-    split roundrobin;
-    for (int i=0 ; i< N_bm; i++)
-	for (int j=0; j < N_srg; j++)
-	    for (int k=0; k < N_stag;k++)
-		add FFTVect(N_dop);
-    join roundrobin;
-}
-  
 // This filter gets the three dimensional array and generates the staggers
 complex[N_bm][N_srg][N_pri]->complex[N_dop] filter Chg40(int N_bm, int N_srg, int N_pri, int N_dop) {
     init{}

@@ -7,64 +7,10 @@
 // this pipline performs the first few blocks in subband analysis.
 complex[N_ch][N_rg][N_pri]->complex[N_ch][N_rg/N_dn][N_pri] pipeline SubAnalysis(int N_ch,int N_rg,int N_pri,int N_dn,int N_lp,int N_td, complex w, complex[N_lp] h_lp, complex[N_td] h_td){
     add FormChg20(N_ch,N_rg,N_pri);
-    add ElAnal(N_ch,N_rg,N_pri,N_dn,N_lp,N_td,w,h_lp,h_td);
-    add FormChg21(N_ch, N_rg/N_dn, N_pri);
-}
-								     
-// this SplitJoin gets as its input the elements of different subbbands and pushes them through RnAnal
-complex[N_rg]-> complex[N_rg/N_dn] splitjoin ElAnal(int N_ch,int N_rg, int N_pri,int N_dn,int N_lp,int N_td,complex W, complex[N_lp] h_lp, complex h_td) {
-    split roundrobin;
-    for (int i=0; i< N_ch; i++)
-	for (int j=0; j < N_pri; j ++)
-	    add AnalTd(N_rg,N_dn,N_lp,N_td,W,h_lp,h_td);
-    join roundrobin;
-}
-	
-// this does the frequency shift and low pass filtering and downsampling+time delay equalization for each Range
-complex[N_rg]->complex[N_rg/N_dn] pipeline AnalTd(int N_rg,int N_dn,int N_lp,int N_td,complex W, complex[N_lp] h_lp,complex[N_td] h_td) { 
     add FreqShift(N_rg,W);
     add arrayFIR(N_rg,N_lp,h_lp);
-    add DownSamp(N_rg,N_dn);
+    add DownSamp(N_dn);
     add arrayFIR(N_rg/N_dn,N_td,h_td);
+    add FormChg21(N_ch, N_rg/N_dn, N_pri);
 }
 
-// This Filter performs the Frequency shifting, each time it is
-// invoked, elements of a sequence of length N_rg are read and they
-// are multiplied by W^n Where n is the index.
-complex[N]->complex[N] filter FreqShift (int N, complex w) {
-    complex[N] X ; // X contains the coefficients
- 
-    init {
-	X[0]=1;
-	for (int i=1; i <N; i++)
-	    X[i]=X[i-1]*w;
-    }
-    
-    work push 1 pop 1 peek 0  {
-	complex[N] y;
-	y=pop();
-	for (int i=1; i < N; i++)
-	    y[i]=y[i]*X[i];
-	push(y);      
-    }
-}
-		    
-//This Filter performs the down sampling task on imaginary numbers
-complex[N_in]->complex[N_in/N_dn] filter DownSamp(int N_in,int N_dn) {
-             
-    init {
-    }
-    work push 1 pop 1 {
-	int N_out= N_in/N_dn;
-	complex[N_in] in_arr;
-	complex[N_out] out_arr;
-
-		   
-	push(pop());
-	for (int i=0 ; i <N_out ;i=i++)
-	    out_arr[i]=in_arr[i*N_dn];
-	push(out_arr);
-		    
-		    		 		    
-    }
-}

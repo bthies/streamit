@@ -1,26 +1,32 @@
 // this filter performs both a FIR operation over an array	    
-complex[N_arr]->complex[N_arr] filter arrayFIR(int N_arr, int N_lp, complex[N_lp] h) {
+complex->complex filter arrayFIR(int N_arr, int N_lp, complex[N_lp] h) {
 
     init{}
 
-    work push 1 pop 1 peek 0 {
+    work push N_arr pop N_arr peek 0 {
 	complex[N_arr] in_arr;
-	complex[N_arr] out_arr;
 
-	in_arr=pop();
+	for (int i=0; i < N_arr; i++)
+	    in_arr[i] = pop();
 
+	// Hmm, explicit convolution.  This gets used in lots of
+	// places; it might be better to do an FFT and multiply.
+	// Yay Andrew's frequency replacement code...  --dzm
+	//
+        // Also worth considering: turn this into a phased filter,
+	// since there clearly are three phases here.  --dzm
 	for (int i=0 ; i < N_lp  ; i++){
-	    out_arr[i]=0;
+	    complex out = 0;
 	    for (int j=0; (j < N_lp) && ((i-j)>=0) ; j++)
-		out_arr[i]=out_arr[i]+h[j]*in_arr[i-j];
+		out += h[j] * in_arr[i-j];
+	    push(out);
 	}
 		
 	for (int i=N_lp ; i < N_arr ; i++){
-	    out_arr[i]=0;
+	    complex out = 0;
 	    for (int j=0; (j < N_lp) ; j++)
-		out_arr[i]=out_arr[i]+h[j]*in_arr[i-j];
+		out += h[j] * in_arr[i-j];
+	    push(out);
 	}
-
-	push(out_arr);
     }
 }

@@ -84,10 +84,11 @@ static jmp_buf jmp_env;
 
 void streamit_run (stream_context *c, int argc, char **argv)
 {
-    int niters = -1, do_time = 0;
     /* NB: volatile to force preservation across setjmp()/longjmp() */
+    volatile int niters = -1, do_time = 0;
     volatile int iters_run = 0;
-    struct timeval start, now, diff;
+    struct timeval start, now;
+    volatile struct timeval diff;
     struct sigaction sa;
     int flag;
     

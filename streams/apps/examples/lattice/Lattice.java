@@ -1,10 +1,23 @@
 import streamit.*;
 import streamit.io.*;
 
+class FloatIdentity extends Filter
+{
+	public void init ()
+	{
+		setInput (Float.TYPE); setOutput (Float.TYPE);
+		setPush (1); setPop (1);
+	}
+	public void work ()
+	{
+		output.pushFloat (input.popFloat ());
+	}
+}
+
 class LatDel extends SplitJoin {// this generates the delays in the lattice structure
   public void init() {
     setSplitter(DUPLICATE());
-     add(new Delay(0));
+     add(new FloatIdentity ());
      add(new Delay(1));
     setJoiner(ROUND_ROBIN());
      }
@@ -36,20 +49,20 @@ class LatFilt extends Filter {// this is the intermediate stage of the lattice f
 class ZeroStage extends SplitJoin { //this stage is the first stage of a lattice filter
   public void init() {
    setSplitter(DUPLICATE());
-   add(new Delay(0));
-   add(new Delay(0));
+   add(new FloatIdentity ());
+   add(new FloatIdentity ());
    setJoiner(ROUND_ROBIN());
    }
 }
 
 class LastStage extends Filter {   // this class is the last stage of a lattice filter
 public void init(){ 
-   setInput(Float.TYPE); setOutput(Float.TYPE);
-   setPush(1);setPop(2);setPeek(0);
+   setInput(Float.TYPE);
+   setPop(2);
    }
 
 public void work(){
-    output.pushFloat(input.popFloat());    
+    System.out.println (input.popFloat());    
     input.popFloat();
  }
 }
@@ -58,7 +71,7 @@ class Counter extends Filter {   // this class is the last stage of a lattice fi
     float i;
 public void init(){ 
    setOutput(Float.TYPE);
-   setPush(1);setPop(0);
+   setPush(1);
    i = 0;
    }
 

@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.10 2002-11-13 20:37:04 dmaze Exp $
+# $Id: knit,v 1.11 2002-11-15 15:44:18 dmaze Exp $
 #
 
 use strict;
@@ -73,7 +73,7 @@ sub get_options
 	       "ratematch|x",
 	       "simplesjfusion|S",
 	       "sync|k",
-	       "unroll|u",
+	       "unroll|u=i",
 	       "viram|V");
   }
 
@@ -155,7 +155,7 @@ sub get_kjc_opts
     $opts{ratematch} && ($kjcopts .= " -x");
     $opts{simplesjfusion} && ($kjcopts .= " -S");
     $opts{sync} && ($kjcopts .= " -k");
-    $opts{unroll} && ($kjcopts .= " -u");
+    $opts{unroll} && ($kjcopts .= " -u " . $opts{unroll});
     $opts{viram} && ($kjcopts .= " -V");
     return $kjcopts;
 }

@@ -78,7 +78,7 @@ public class FusePipe {
 		fuse(pipe, 
 		     (SIRFilter)pipe.get(start),
 		     (SIRFilter)pipe.get(end));
-		System.out.println("Fusing " + (end-start+1) + " filters!");
+		System.err.println("Fusing " + (end-start+1) + " filters!");
 	    }
 	    start = end + 1;
 	} while (start < pipe.size()-1);
@@ -442,6 +442,9 @@ public class FusePipe {
 		// take a deep breath and clone the body of the work function
 		JBlock oldBody = new JBlock(null, work.getStatements(), null);
 		JBlock body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
+		// move variable declarations from front of <body> to
+		// front of <statements>
+		moveVarDecls(body, statements);
 		// mutate <statements> to make them fit for fusion
 		FusingVisitor fuser = 
 		    new FusingVisitor(curPhase, nextPhase, i!=0,
@@ -459,6 +462,28 @@ public class FusePipe {
 	    }
 	    // get the postlude--copying state to the peek buffer
 	    statements.addStatement(makePeekBackup(cur, curPhase));
+	}
+    }
+
+    /**
+     * Moves all variable declaration statements at front of <source>
+     * to front of <dest>.
+     */
+    private static void moveVarDecls(JBlock source, JBlock dest) {
+	JStatement decl;
+	while (true) {
+	    // get statement at front of source
+	    decl = source.getStatement(0);
+	    // if it's a var decl...
+	    if (decl instanceof JVariableDeclarationStatement) {
+		// add to front of dest
+		dest.addStatementFirst(decl);
+		// remove from front of source
+		source.removeStatement(0);
+	    } else {
+		// quite looping when we run out of decl's
+		break;
+	    }
 	}
     }
 
@@ -1006,6 +1031,11 @@ class InitFuser extends SLIRReplacingVisitor {
     private JMethodDeclaration initWork;
 
     /**
+     * The number of filter's we've fused.
+     */
+    private int numFused;
+
+    /**
      * <fusedFilter> represents what -will- be the result of the
      * fusion.  It has been allocated, but is not filled in with
      * correct values yet.
@@ -1019,6 +1049,7 @@ class InitFuser extends SLIRReplacingVisitor {
 	this.fusedBlock = new JBlock(null, new JStatement[0], null);
 	this.fusedParam = new LinkedList();
 	this.fusedArgs = new LinkedList();
+	this.numFused = 0;
     }
 
     /**
@@ -1055,7 +1086,8 @@ class InitFuser extends SLIRReplacingVisitor {
      * incorporate this info into the init function of the fused
      * filter.
      */
-    private void processArgs(FilterInfo info, JExpression[] args) {
+    private void processArgs(FilterInfo info, 
+			     JExpression[] args) {
 	// make parameters for <args>, and build <newArgs> to pass
 	// to new init function call
 	JExpression[] newArgs = new JExpression[args.length];
@@ -1064,12 +1096,15 @@ class InitFuser extends SLIRReplacingVisitor {
 		new JFormalParameter(null,
 				     0,
 				     args[i].getType(),
-				     FusePipe.INIT_PARAM_NAME + i,
+				     FusePipe.INIT_PARAM_NAME + 
+				     "_" + i + "_" + numFused,
 				     false);
 	    // add to list
 	    fusedParam.add(param);
 	    // make a new arg
 	    newArgs[i] = new JLocalVariableExpression(null, param);
+	    // increment fused count
+	    numFused++;
 	}
 
 	// add the arguments to the list

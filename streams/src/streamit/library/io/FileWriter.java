@@ -10,7 +10,7 @@ public class FileWriter extends Filter
     Class fileType;
     File outputFile;
     java.io.FileOutputStream fileOutputStream;
-    ObjectOutputStream outputStream;
+    DataOutputStream outputStream;
 
     public FileWriter (String fileName, Class type)
     {
@@ -20,7 +20,7 @@ public class FileWriter extends Filter
         {
             outputFile = new File(fileName);
             fileOutputStream = new java.io.FileOutputStream (outputFile);
-            outputStream = new ObjectOutputStream (fileOutputStream);
+            outputStream = new DataOutputStream (fileOutputStream);
         }
         catch(Throwable e)
         {
@@ -53,12 +53,8 @@ public class FileWriter extends Filter
             {
                 outputStream.writeFloat (input.popFloat ());
             } else
-            if (Class.forName ("java.io.Serializable").isAssignableFrom (fileType))
             {
-                outputStream.writeObject (input.pop ());
-            } else
-            {
-                ERROR ("You must define a writer for your type here.\nIf you're trying to write an object, it should be a serializable object\n(and then you won't have to do anything special).");
+                ERROR ("You must define a writer for your type here.\nObject writing isn't supported right now (for compatibility with the\nC library).");
             }
         }
         catch (Throwable e)

@@ -11,7 +11,7 @@ public class FileReader extends Filter
     File inputFile;
     String fileName;
     java.io.FileInputStream fileInputStream;
-    ObjectInputStream inputStream;
+    DataInputStream inputStream;
 
     public FileReader (String fileName, Class type)
     {
@@ -33,7 +33,7 @@ public class FileReader extends Filter
         {
             inputFile = new File(fileName);
             fileInputStream = new java.io.FileInputStream (inputFile);
-            inputStream = new ObjectInputStream (fileInputStream);
+            inputStream = new DataInputStream (fileInputStream);
         }
         catch(Throwable e)
         {
@@ -59,12 +59,8 @@ public class FileReader extends Filter
                     output.pushChar (inputStream.readChar ());
                 } else if (fileType == Float.TYPE) {
                     output.pushFloat (inputStream.readFloat ());
-                } else if (Class.forName ("java.io.Serializable").isAssignableFrom (fileType)) {
-                    Object newObject = inputStream.readObject ();
-                    ASSERT (newObject);
-                    output.push (newObject);
                 } else {
-                    ERROR ("You must define a reader for your type here.\nIf you're trying to read an object, it should be a serializable object\n(and then you won't have to do anything special).");
+                    ERROR ("You must define a reader for your type here.\nObjects aren't really supported right now (for compatibility\nwith the C library).");
                 }
                 done = true;
             }

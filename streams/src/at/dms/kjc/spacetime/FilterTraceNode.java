@@ -8,15 +8,17 @@ import at.dms.kjc.sir.*;
 public class FilterTraceNode extends TraceNode
 {
     private SIRFilter filter;
-    private int multiplicity;
+    private int initMult;
+    private int steadyMult;
     private int x, y;
 
     public FilterTraceNode(SIRFilter filter,
-			   int mult, int x, int y,
+			   int initMult, int steadyMult, int x, int y,
 			   Trace parent) {
 	super(parent);
 	this.filter = filter;
-	multiplicity = mult;
+	this.initMult = initMult;
+	this.steadyMult = steadyMult;
 	this.x = x;
 	this.y = y;
     }
@@ -41,7 +43,11 @@ public class FilterTraceNode extends TraceNode
 	return filter;
     }
 
-    public int getMultiplicity() {
-	return multiplicity;
+    public int getInitMult() {
+	return initMult;
+    }
+
+    public int getSteadyMult() {
+	return steadyMult;
     }
 }

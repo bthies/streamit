@@ -7,8 +7,9 @@ public class Trace
 {
     private Trace[] edges;
     private TraceNode head;
+    private Trace[] depends;
 
-    public Trace (Trace[] edges, TraceNode head) 
+    public Trace (Trace[] edges, Trace[] depends, TraceNode head) 
     {
 	this.edges = edges;
 	this.head = head;
@@ -27,5 +28,10 @@ public class Trace
     public Trace[] getEdges() 
     {
 	return edges;
+    }
+
+    public Trace[] getDepends()
+    {
+	return depends;
     }
 }

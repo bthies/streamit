@@ -412,7 +412,7 @@ class AdditionUpdateFilter extends Filter
     public void init() 
     {
 	input = new Channel(Short.TYPE, 41);
-	output = new Channel(Short.TYPE, 1);
+	output = new Channel(Short.TYPE, 160);
 	ep = new short[40]; //input
 	drp = new short[160];  //output
 	for (short i = 0; i < drp.length; i++)
@@ -746,7 +746,7 @@ class LARInputSplitJoin extends SplitJoin
 {
     public void init()
     {
-	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));  //we don't care about it going to in2
+	this.setSplitter(WEIGHTED_ROUND_ROBIN (1, 0));  //we don't care about it going to in2
 	this.add(new Identity(Float.TYPE));
 	this.add(new LARInputFilter());	
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(160, 8));  //drp[0...160], LARc[0...7];
@@ -910,8 +910,8 @@ public class StGsmDecoder extends StreamIt
 	this.add(new RPEInputFilter());
 	this.add(new RPEDecodeFilter());
 	this.add(new DecoderFeedback());
-	this.add(new LARInputSplitJoin());
 	this.add(new HoldFilter());
+	this.add(new LARInputSplitJoin());
 	this.add(new ShortTermSynthFilter());
 	this.add(new PostProcessingFilter());
     }

@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+  <head>
+    <title>Overview of streamit.frontend.passes</title>
+  </head>
+  <body>
+    <p>
+Assorted passes on the StreamIt front-end IR.  These passes generally
+are visitor classes on the front-end IR that replace parts of the IR
+tree with other parts.  Thus, a class will typically extend {@link
+streamit.frontend.nodes.FEReplacer}; {@link
+streamit.frontend.passes.SymbolTableVisitor} is derived from this and
+maintains an active {@link streamit.frontend.nodes.SymbolTable} within
+each visitor function.
+    </p>
+@author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+@version $Id: package.html,v 1.1 2003-04-15 21:20:38 dmaze Exp $
+  </body>
+</html>

@@ -1260,8 +1260,16 @@ public class Propagator extends SLIRReplacingVisitor {
 			}
 			if ((right instanceof JArrayAccessExpression)&&(((JArrayAccessExpression)right).getAccessor() instanceof JIntLiteral)) {
 			    if (right.getType()!=null) {
-				Utils.assert(right.getType() instanceof CArrayType);
-				type = ((CArrayType)right.getType()).getBaseType();
+				// looks like the type of an array
+				// access expression can either be a
+				// primitive or an array type... I
+				// don't understand exactly how this
+				// works (--bft)
+				if (right.getType() instanceof CArrayType) {
+				    type = ((CArrayType)right.getType()).getBaseType();
+				} else {
+				    type = right.getType();
+				}
 			    } else if (left.getType()!=null) { 
 				// I don't know if left type could
 				// ever be null, just extending

@@ -48,7 +48,8 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 	if (str instanceof SIRFeedbackLoop)
 	    {
 		SIRFeedbackLoop fl = (SIRFeedbackLoop)str;
-		str.getInit().accept(this);
+		if (str.getInit()!=null) 
+		    str.getInit().accept(this);
 		raiseVars(fl.getBody());
 		raiseVars(fl.getLoop());
 	    }
@@ -56,7 +57,8 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 	    {
 		SIRPipeline pl = (SIRPipeline)str;
 		Iterator iter = pl.getChildren().iterator();
-		str.getInit().accept(this);
+		if (str.getInit()!=null) 
+		    str.getInit().accept(this);
 		while (iter.hasNext())
 		    {
 			SIRStream child = (SIRStream)iter.next();
@@ -67,7 +69,8 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 	    {
 		SIRSplitJoin sj = (SIRSplitJoin)str;
 		Iterator iter = sj.getParallelStreams().iterator();
-		str.getInit().accept(this);
+		if (str.getInit()!=null) 
+		    str.getInit().accept(this);
             while (iter.hasNext())
 		{
 		    SIRStream child = (SIRStream)iter.next();

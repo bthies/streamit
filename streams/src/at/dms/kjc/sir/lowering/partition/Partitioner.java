@@ -155,20 +155,23 @@ public class Partitioner {
 	    RawFlattener flattener = new RawFlattener(str);
 	    count = flattener.getNumTiles();
 	    System.out.println("Partitioner detects " + count + " tiles.");
+	    StreamItDot.printGraph(str, "during-fusion.dot");
 	    if (count>target) {
 		// get the containers in the order of work for filters
 		// immediately contained
+		StreamItDot.printGraph(str, "partition.dot");
 		WorkList list = WorkEstimate.getWorkEstimate(str).getSortedContainerWork();
 		// work up through this list until we fuse something
 		for (int i=0; i<list.size(); i++) {
 		    SIRContainer cont = list.getContainer(i);
 		    if (cont instanceof SIRSplitJoin) {
-			System.out.println("trying to fuse split " + cont);
+			System.out.println("trying to fuse " + cont.size() + "-way split " + cont);
 			SIRStream newstr = FuseSplit.fuse((SIRSplitJoin)cont);
 			// if we fused something, quit loop
 			if (newstr!=cont) { break; }
 		    } else if (cont instanceof SIRPipeline) {
-			System.out.println("trying to fuse pipe " + cont);
+			System.out.println("trying to fuse " + (count-target) + " from " 
+					   + cont.size() + "-long pipe " + cont);
 			int num = FusePipe.fuse((SIRPipeline)cont, count-target);
 			if (num!=0) { break; }
 		    }

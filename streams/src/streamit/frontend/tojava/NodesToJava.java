@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.81 2004-01-26 21:35:18 dmaze Exp $
+ * @version $Id: NodesToJava.java,v 1.82 2004-01-30 19:04:30 dmaze Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -87,13 +87,18 @@ public class NodesToJava implements FEVisitor
             case TypePrimitive.TYPE_DOUBLE: return "double";
             case TypePrimitive.TYPE_COMPLEX: return "Complex";
             case TypePrimitive.TYPE_VOID: return "void";
+            default: assert false : type; return null;
             }
         }
         else if (type instanceof TypePortal)
         {
             return ((TypePortal)type).getName() + "Portal";
         }
-        return null;
+        else
+        {
+            assert false : type;
+            return null;
+        }
     }
 
     // Do the same conversion, but including array dimensions.
@@ -138,15 +143,20 @@ public class NodesToJava implements FEVisitor
                 return "Void.TYPE";
             case TypePrimitive.TYPE_COMPLEX:
                 return "Complex.class";
+            default:
+                assert false : t;
+                return null;
             }
         }
         else if (t instanceof TypeStruct)
             return ((TypeStruct)t).getName() + ".class";
         else if (t instanceof TypeArray)
             return "(" + makeConstructor(t) + ").getClass()";
-        // Errp.
-        System.err.println("typeToClass(): I don't understand " + t);
-        return null;
+        else
+        {
+            assert false : t;
+            return null;
+        }
     }
 
     // Helpers to get function names for stream types.
@@ -192,6 +202,8 @@ public class NodesToJava implements FEVisitor
                 if (name.startsWith("input"))
                     prefix  = "(Complex)";
                 break;
+            default:
+                assert false : type;
             }
         }
         else if (name.startsWith("input"))
@@ -292,6 +304,7 @@ public class NodesToJava implements FEVisitor
         case ExprBinary.BINOP_BAND:op = "&"; break;
         case ExprBinary.BINOP_BOR: op = "|"; break;
         case ExprBinary.BINOP_BXOR:op = "^"; break;
+        default: assert false : exp; break;
         }
         result += " " + op + " ";
         result += (String)exp.getRight().accept(this);
@@ -301,7 +314,9 @@ public class NodesToJava implements FEVisitor
 
     public Object visitExprComplex(ExprComplex exp)
     {
-        // This should cause an assertion failure, actually.
+        // We should never see one of these at this point.
+        assert false : exp;
+        // If we do, print something vaguely intelligent:
         String r = "";
         String i = "";
         if (exp.getReal() != null) r = (String)exp.getReal().accept(this);
@@ -404,9 +419,10 @@ public class NodesToJava implements FEVisitor
         {
         case ExprTernary.TEROP_COND:
             return "(" + a + " ? " + b + " : " + c + ")";
+        default:
+            assert false : exp;
+            return null;
         }
-        
-        return null;
     }
 
     public Object visitExprTypeCast(ExprTypeCast exp)
@@ -426,9 +442,8 @@ public class NodesToJava implements FEVisitor
         case ExprUnary.UNOP_POSTINC: return child + "++";
         case ExprUnary.UNOP_PREDEC: return "--" + child;
         case ExprUnary.UNOP_POSTDEC: return child + "--";
+        default: assert false : exp; return null;
         }
-
-        return null;
     }
 
     public Object visitExprVar(ExprVar exp)
@@ -600,7 +615,8 @@ public class NodesToJava implements FEVisitor
         case ExprBinary.BINOP_SUB: op = " -= "; break;
         case ExprBinary.BINOP_MUL: op = " *= "; break;
         case ExprBinary.BINOP_DIV: op = " /= "; break;
-        default: op = " = ";
+        case 0: op = " = "; break;
+        default: assert false: stmt; op = " = "; break;
         }
         // Assume both sides are the right type.
         return (String)stmt.getLHS().accept(this) + op +
@@ -698,6 +714,7 @@ public class NodesToJava implements FEVisitor
     public Object visitStmtIfThen(StmtIfThen stmt)
     {
         // must have an if part...
+        assert stmt.getCond() != null;
         String result = "if (" + (String)stmt.getCond().accept(this) + ") ";
         result += (String)stmt.getCons().accept(this);
         if (stmt.getAlt() != null)
@@ -707,11 +724,13 @@ public class NodesToJava implements FEVisitor
 
     public Object visitStmtJoin(StmtJoin stmt)
     {
+        assert stmt.getJoiner() != null;
         return "setJoiner(" + (String)stmt.getJoiner().accept(this) + ")";
     }
     
     public Object visitStmtLoop(StmtLoop stmt)
     {
+        assert stmt.getCreator() != null;
         return doStreamCreator("setLoop", stmt.getCreator());
     }
 
@@ -794,6 +813,7 @@ public class NodesToJava implements FEVisitor
 
     public Object visitStmtSplit(StmtSplit stmt)
     {
+        assert stmt.getSplitter() != null;
         return "setSplitter(" + (String)stmt.getSplitter().accept(this) + ")";
     }
 
@@ -818,6 +838,8 @@ public class NodesToJava implements FEVisitor
 
     public Object visitStmtWhile(StmtWhile stmt)
     {
+        assert stmt.getCond() != null;
+        assert stmt.getBody() != null;
         return "while (" + (String)stmt.getCond().accept(this) +
             ") " + (String)stmt.getBody().accept(this);
     }
@@ -1138,6 +1160,10 @@ public class NodesToJava implements FEVisitor
             return "setIOTypes(" + typeToClass(sst.getInType()) +
                 ", " + typeToClass(sst.getOutType()) + ")";
         }
-        return "";
+        else
+        {
+            assert false : node;
+            return "";
+        }
     }
 }

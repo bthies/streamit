@@ -6,6 +6,19 @@ import streamit.*;
 
 public abstract class SchedStream extends AssertedClass
 {
+    SchedStream (Object stream)
+    {
+        ASSERT (stream);
+        this.stream = stream;
+    }
+
+    Object stream;
+
+    public Object getStream ()
+    {
+        return stream;
+    }
+
     private int consumes = -1, produces = -1, peeks = -1;
 
     public void setProduction (int p)

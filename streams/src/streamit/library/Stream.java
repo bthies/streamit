@@ -189,7 +189,7 @@ public class Stream extends Operator
     SchedStream constructSchedule ()
     {
         // go through my children and dispatch on their
-        SchedPipeline pipeline = new SchedPipeline ();
+        SchedPipeline pipeline = new SchedPipeline (this);
 
         ListIterator childIter;
         childIter = (ListIterator) streamElements.iterator ();

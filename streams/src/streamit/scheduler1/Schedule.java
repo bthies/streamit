@@ -17,7 +17,7 @@ public class Schedule extends AssertedClass
      */
     final Map bufferSizes = new HashMap ();
 
-    public BigInteger getBufferSizeBetweeen (SchedStream streamSrc, SchedStream streamDst)
+    public BigInteger getBufferSizeBetweeen (Object streamSrc, Object streamDst)
     {
         Object result = bufferSizes.get (streamSrc);
         if (result == null) return null;
@@ -31,7 +31,7 @@ public class Schedule extends AssertedClass
         return (BigInteger) dataArray [1];
     }
 
-    public void setBufferSize (SchedStream streamSrc, SchedStream streamDst, BigInteger bufferSize)
+    public void setBufferSize (Object streamSrc, Object streamDst, BigInteger bufferSize)
     {
         ASSERT (!bufferSizes.containsKey (streamSrc));
 

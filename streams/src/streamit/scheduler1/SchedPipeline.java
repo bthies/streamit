@@ -6,6 +6,11 @@ import streamit.*;
 
 public class SchedPipeline extends SchedStream
 {
+    public SchedPipeline (Object stream)
+    {
+        super (stream);
+    }
+
     final List allChildren = new LinkedList ();
 
     public void addChild (SchedStream stream)

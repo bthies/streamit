@@ -11,8 +11,9 @@ public class SchedLoop extends SchedStream
 
     BigInteger numSplitExecutions, numJoinExecutions;
 
-    public SchedLoop (SchedJoinType join, SchedStream body, SchedSplitType split, SchedStream loop, int delay)
+    public SchedLoop (Object stream, SchedJoinType join, SchedStream body, SchedSplitType split, SchedStream loop, int delay)
     {
+        super (stream);
         this.join = join;
         this.body = body;
         this.split = split;

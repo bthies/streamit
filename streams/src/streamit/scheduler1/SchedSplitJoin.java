@@ -6,6 +6,11 @@ import streamit.scheduler.*;
 
 public class SchedSplitJoin extends SchedStream
 {
+    public SchedSplitJoin (Object stream)
+    {
+        super (stream);
+    }
+
     final List allChildren = new LinkedList ();
 
     public void addChild (SchedStream stream)

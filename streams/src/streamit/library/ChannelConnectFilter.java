@@ -16,8 +16,8 @@ public class ChannelConnectFilter extends Filter
     {
         if (type != null)
         {
-            streamInput = new Channel (type);
-            streamOutput = new Channel (type);
+            streamInput = new Channel (type, 1);
+            streamOutput = new Channel (type, 1);
         }
     }
 

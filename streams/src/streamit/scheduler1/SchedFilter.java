@@ -5,14 +5,12 @@ import java.math.BigInteger;
 
 public class SchedFilter extends SchedStream
 {
-    Object filter;
-
     final List srcMsgs = new LinkedList ();
     final List dstMsgs = new LinkedList ();
 
-    public SchedFilter (Object filter, int push, int pop, int peek)
+    public SchedFilter (Object stream, int push, int pop, int peek)
     {
-        this.filter = filter;
+        super (stream);
         setProduction (push);
         setConsumption (pop);
         setPeekConsumption (peek);
@@ -22,10 +20,5 @@ public class SchedFilter extends SchedStream
     {
         // initialize self
         setNumExecutions (BigInteger.ONE);
-    }
-
-    public Object getFilter ()
-    {
-        return filter;
     }
 }

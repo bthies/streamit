@@ -41,7 +41,7 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable {
 	work1body[0] =  
 	    new JExpressionStatement
 	    (null, new SIRPushExpression
-	     (new SIRPopExpression(), t),
+	     (new SIRPopExpression(t), t),
 	     null);
 	
 	JBlock work1block = new JBlock(/* tokref   */ null,

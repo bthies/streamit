@@ -1,7 +1,7 @@
 /*
  * DoComplexProp.java: perform constant propagation on function bodies
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.4 2002-09-18 15:59:55 dmaze Exp $
+ * $Id: DoComplexProp.java,v 1.5 2002-09-18 17:01:14 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -38,14 +38,16 @@ public class DoComplexProp extends FEReplacer
     private GetExprType getExprType;
     private VarToComplex varToComplex;
     private ComplexProp cplxProp;
+    private TempVarGen varGen;
     
-    public DoComplexProp()
+    public DoComplexProp(TempVarGen varGen)
     {
         streamType = null;
         oldStreamTypes = new LinkedList();
         symTab = null;
         varToComplex = null;
         cplxProp = new ComplexProp();
+        this.varGen = varGen;
     }
 
     private void pushSymTab()

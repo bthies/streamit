@@ -160,8 +160,9 @@ class ToJava
                  * Java front-end can handle.  OTOH,
                  * MoveStreamParameters introduces references to
                  * "this", which doesn't exist. */
+                TempVarGen varGen = new TempVarGen();
                 prog = (Program)prog.accept(new MakeBodiesBlocks());
-                prog = (Program)prog.accept(new DoComplexProp());
+                prog = (Program)prog.accept(new DoComplexProp(varGen));
                 prog = (Program)prog.accept(new MoveStreamParameters());
                 prog = (Program)prog.accept(new NameAnonymousFunctions());
                 String javaOut = (String)prog.accept(new NodesToJava(null));

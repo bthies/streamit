@@ -50,7 +50,10 @@ public interface AttributeStreamVisitor {
 			  SIRStream parent,
 			  JFieldDeclaration[] fields,
 			  JMethodDeclaration[] methods,
-			  JMethodDeclaration init);
+			  JMethodDeclaration init,
+			  List elements,
+			  SIRSplitter splitter,
+			  SIRJoiner joiner);
 
     /* pre-visit a feedbackloop */
     Object visitFeedbackLoop(SIRFeedbackLoop self,

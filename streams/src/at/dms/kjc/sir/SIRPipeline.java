@@ -1,13 +1,15 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
+import at.dms.kjc.lir.LIRStreamType;
+import java.util.List;
 import java.util.LinkedList;
 
 /**
  * This represents a pipeline of stream structures, as would be
  * declared with a Stream construct in StreaMIT.
  */
-public class SIRPipeline extends SIRStream implements Cloneable {
+public class SIRPipeline extends SIRContainer implements Cloneable {
     /**
      * The elements of the pipeline.  Each element should be an SIRStream.
      */
@@ -16,7 +18,7 @@ public class SIRPipeline extends SIRStream implements Cloneable {
     /**
      * Construct a new SIRPipeline with the given fields and methods.
      */
-    public SIRPipeline(SIRStream parent,
+    public SIRPipeline(SIRContainer parent,
 		       JFieldDeclaration[] fields,
 		       JMethodDeclaration[] methods) {
 	super(parent, fields, methods);
@@ -24,7 +26,7 @@ public class SIRPipeline extends SIRStream implements Cloneable {
 	this.elements = new LinkedList();
     }
 
-    /**
+/*
      * Return a shallow clone of the SIRPipeline
      */
     public Object clone() {
@@ -45,6 +47,64 @@ public class SIRPipeline extends SIRStream implements Cloneable {
 	return ((SIRStream)elements.getLast()).getOutputType();
     }
     
+    /**
+     * Returns the type of this stream.
+     */
+    public LIRStreamType getStreamType() {
+	return LIRStreamType.LIR_PIPELINE;
+    }
+
+    /**
+     * Returns the input type of this.
+     */
+    public CType getInputType() {
+	// input type is input type of first element of the list
+	return ((SIRStream)elements.getFirst()).getInputType();
+    }
+    
+    /**
+     * Returns the relative name by which this object refers to child
+     * <child>, or null if <child> is not a child of this.
+     */
+    public String getChildName(SIROperator str) {
+	// return "stream" + (x+1), where x is the index of <str> in this pipe
+	int index = elements.indexOf(str);
+	if (index==-1) {
+	    return null;
+	} else {
+	    return "stream" + (index+1);
+	}
+    }
+    
+    /**
+     * Returns a list of the children of this.  The children are
+     * stream objects that are contained within this.
+     */
+    public List getChildren() {
+	// the children are just the components of the pipeline
+	return (List)elements.clone();
+    }
+
+    /**
+     * Returns a list of tuples (two-element arrays) of SIROperators,
+     * representing a tape from the first element of each tuple to the
+     * second.
+     */
+    public List getTapePairs() {
+	// construct result
+	LinkedList result = new LinkedList();
+	// go through list of elements
+	for (int i=0; i<elements.size()-1; i++) {
+	    // make an entry from one stream to next
+	    SIROperator[] entry = { (SIROperator)elements.get(i),
+				    (SIROperator)elements.get(i+1) };
+	    // add entry 
+	    result.add(entry);
+	}
+	// return result
+	return result;
+    }
+
     /**
      * Add a stream to the pipeline.
      */

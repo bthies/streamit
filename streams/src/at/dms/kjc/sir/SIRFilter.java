@@ -1,5 +1,6 @@
 package at.dms.kjc.sir;
 
+import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.*;
 
 /**
@@ -31,7 +32,7 @@ public class SIRFilter extends SIRStream implements Cloneable {
      */
     private CType inputType, outputType;
 
-    public SIRFilter(SIRStream parent,
+    public SIRFilter(SIRContainer parent,
 		     JFieldDeclaration[] fields, 
 		     JMethodDeclaration[] methods, 
 		     int peek, int pop, int push, 
@@ -45,6 +46,13 @@ public class SIRFilter extends SIRStream implements Cloneable {
 	this.work = work;
 	this.inputType = inputType;
 	this.outputType = outputType;
+    }
+
+    /**
+     * Returns the type of this stream.
+     */
+    public LIRStreamType getStreamType() {
+	return LIRStreamType.LIR_FILTER;
     }
 
     /**
@@ -120,6 +128,9 @@ public class SIRFilter extends SIRStream implements Cloneable {
     }
     public void setInputType(CType t){
 	this.inputType = t;
+    }
+    public CType getInputType(){
+	return inputType;
     }
     public void setOutputType(CType t) {
 	this.outputType = t;

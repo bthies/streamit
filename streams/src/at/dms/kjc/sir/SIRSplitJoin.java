@@ -1,11 +1,14 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
+import at.dms.kjc.lir.LIRStreamType;
+import java.util.List;
+import java.util.LinkedList;
 
 /**
  * This represents a SplitJoin construct.
  */
-public class SIRSplitJoin extends SIRStream implements Cloneable{
+public class SIRSplitJoin extends SIRContainer implements Cloneable {
     /**
      * The splitter at the top of this.
      */
@@ -15,10 +18,10 @@ public class SIRSplitJoin extends SIRStream implements Cloneable{
      */
     private SIRJoiner joiner;
     /**
-     * The stream components in this.  The i'th element of this array
+     * The stream components in this.  The i'th element of this list
      * corresponds to the i'th tape in the splitter and joiner.  
      */
-    private SIRStream elements[];
+    private LinkedList elements;
 
     
 
@@ -59,9 +62,85 @@ public class SIRSplitJoin extends SIRStream implements Cloneable{
 	// output type should be output type of any of the elements.
 	// Assume that this is checked by semantic checker, and here
 	// just return the output type of the first element.
-	return elements[0].getOutputType();
+	return ((SIRStream)elements.getFirst()).getOutputType();
     }
     
+    /**
+     * Returns the input type of this.
+     */
+    public CType getInputType() {
+	// input type should be input type of any of the elements.
+	// Assume that this is checked by semantic checker, and here
+	// just return the input type of the first element.
+	return ((SIRStream)elements.getFirst()).getInputType();
+    }
+    
+    /**
+     * Returns the type of this stream.
+     */
+    public LIRStreamType getStreamType() {
+	return LIRStreamType.LIR_SPLIT_JOIN;
+    }
+
+    /**
+     * Returns the relative name by which this object refers to child
+     * <child>, or null if <child> is not a child of this.
+     */
+    public String getChildName(SIROperator str) {
+	int index = elements.indexOf(str);
+	if (index>=0) {
+	    // return stream index if it's a stream
+	    return "stream" + (index+1);
+	} else if (str==joiner) {
+	    // return joiner if joiner
+	    return "joiner";
+	} else if (str==splitter) {
+	    // return splitter if splitter
+	    return "splitter";
+	} else {
+	    // otherwise, <str> is not a child--return null
+	    return null;
+	}
+    }
+
+    /**
+     * Returns a list of the children of this.  The children are
+     * stream objects that are contained within this.
+     */
+    public List getChildren() {
+	// build result
+	LinkedList result = new LinkedList();
+	// add the children: the component streams, plus the
+	// splitter and joiner
+	result.addAll(elements);
+	result.add(splitter);
+	result.add(joiner);
+	// return result
+	return result;
+    }
+
+    /**
+     * Returns a list of tuples (two-element arrays) of SIROperators,
+     * representing a tape from the first element of each tuple to the
+     * second.
+     */
+    public List getTapePairs() {
+	// construct result
+	LinkedList result = new LinkedList();
+	// go through list of elements
+	for (int i=0; i<elements.size()-1; i++) {
+	    // make an entry from splitter to each stream
+	    SIROperator[] entry1 = { splitter, (SIROperator)elements.get(i) };
+	    // make an entry from each stream to splitter
+	    SIROperator[] entry2 = { (SIROperator)elements.get(i), joiner };
+	    // add entries
+	    result.add(entry1);
+	    result.add(entry2);
+	}
+	// return result
+	return result;
+    }
+
     /**
      * Accepts visitor <v> at this node.
      */
@@ -73,8 +152,8 @@ public class SIRSplitJoin extends SIRStream implements Cloneable{
 			    init);
 	/* visit components */
 	splitter.accept(v);
-	for (int i=0; i<elements.length; i++) {
-	    elements[i].accept(v);
+	for (int i=0; i<elements.size(); i++) {
+	    ((SIRStream)elements.get(i)).accept(v);
 	}
 	joiner.accept(v);
 	v.postVisitSplitJoin(this,
@@ -92,13 +171,16 @@ public class SIRSplitJoin extends SIRStream implements Cloneable{
 				parent,
 				fields,
 				methods,
-				init);
+				init,
+				elements,
+				splitter,
+				joiner);
     }
 
     /**
      * Construct a new SIRPipeline with the given fields and methods.
      */
-    public SIRSplitJoin(SIRStream parent,
+    public SIRSplitJoin(SIRContainer parent,
 			JFieldDeclaration[] fields,
 			JMethodDeclaration[] methods) {
 	super(parent, fields, methods);

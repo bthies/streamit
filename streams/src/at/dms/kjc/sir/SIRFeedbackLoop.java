@@ -1,11 +1,15 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
+import at.dms.kjc.lir.LIRStreamType;
+import java.util.Arrays;
+import java.util.List;
+import java.util.LinkedList;
 
 /**
  * This represents a feedback loop construct.
  */
-public class SIRFeedbackLoop extends SIRStream implements Cloneable {
+public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     /**
      * The body of this, which appears in the forward path through the
      * feedback loop.
@@ -40,7 +44,7 @@ public class SIRFeedbackLoop extends SIRStream implements Cloneable {
     /**
      * Construct a new SIRPipeline with the given fields and methods.
      */
-    public SIRFeedbackLoop(SIRStream parent,
+    public SIRFeedbackLoop(SIRContainer parent,
 			   JFieldDeclaration[] fields,
 			   JMethodDeclaration[] methods) {
 	super(parent, fields, methods);
@@ -80,6 +84,76 @@ public class SIRFeedbackLoop extends SIRStream implements Cloneable {
 	return body.getOutputType();
     }
     
+    /**
+     * Returns the input type of this.
+     */
+    public CType getInputType() {
+	// return input type of body
+	return body.getInputType();
+    }
+    
+    /**
+     * Returns the type of this stream.
+     */
+    public LIRStreamType getStreamType() {
+	return LIRStreamType.LIR_FEEDBACK_LOOP;
+    }
+
+    /**
+     * Returns the relative name by which this object refers to child
+     * <child>, or null if <child> is not a child of this.
+     */
+    public String getChildName(SIROperator str) {
+	if (str==joiner) {
+	    // return joiner
+	    return "joiner";
+	} else if (str==splitter) {
+	    // return splitter
+	    return "splitter";
+	} else if (str==body) {
+	    // return body
+	    return "body";
+	} else if (str==loop) {
+	    // return loop
+	    return "loop";
+	} else {
+	    // otherwise, <str> is not a child--return null
+	    return null;
+	}
+    }
+
+    /**
+     * Returns a list of the children of this.  The children are
+     * stream objects that are contained within this.
+     */
+    public List getChildren() {
+	// build result
+	LinkedList result = new LinkedList();
+	// add the children: the joiner, splitter, body, and loop
+	result.add(joiner);
+	result.add(body);
+	result.add(splitter);
+	result.add(loop);
+	// return result
+	return result;
+    }
+
+    /**
+     * Returns a list of tuples (two-element arrays) of SIROperators,
+     * representing a tape from the first element of each tuple to the
+     * second.
+     */
+    public List getTapePairs() {
+	// construct result
+	SIROperator[][] entries
+	    = { {joiner, body},	// connect joiner and body
+		{body, splitter},   // connect body and splitter
+		{splitter, loop},   // connect splitter and loop
+		{loop, joiner} };	// connect loop and joiner
+	// return as list
+	return Arrays.asList(entries);
+    }
+
     /**
      * Accepts visitor <v> at this node.
      */

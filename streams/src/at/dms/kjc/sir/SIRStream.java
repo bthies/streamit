@@ -1,5 +1,6 @@
 package at.dms.kjc.sir;
 
+import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.*;
 
 /**
@@ -25,7 +26,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * Don't set the init function upon instantation since the lowering
      * pass will have to create the init function
      */
-    protected SIRStream(SIRStream parent,
+    protected SIRStream(SIRContainer parent,
 			JFieldDeclaration[] fields,
 			JMethodDeclaration[] methods) {
       super(parent);
@@ -39,12 +40,6 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
 	this.methods = null;
     }
 
-    
-    /**
-     * Returns the output type of this.
-     */
-    public abstract CType getOutputType();
-    
     /*
      * Set the fields member variable 
      */
@@ -58,6 +53,21 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     public void setMethods (JMethodDeclaration[] m) {
 	this.methods = m;
     }
+
+    /**
+     * Returns the output type of this.
+     */
+    public abstract CType getOutputType();
+
+    /**
+     * Returns the type of this stream.
+     */
+    public abstract LIRStreamType getStreamType();
+
+    /**
+     * Returns the input type of this.
+     */
+    public abstract CType getInputType();
 
     /**
      * sets the init function

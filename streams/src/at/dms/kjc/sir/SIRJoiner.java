@@ -17,7 +17,7 @@ public class SIRJoiner extends SIROperator {
      */
     private int[] weights;
 
-    private SIRJoiner(SIRStream parent, SIRJoinType type, int[] weights) {
+    private SIRJoiner(SIRContainer parent, SIRJoinType type, int[] weights) {
       super(parent);
       this.weights = weights;
       this.type = type;
@@ -26,7 +26,7 @@ public class SIRJoiner extends SIROperator {
     /**
      * Constructs a joiner with given parent, type and n number of inputs.
      */
-    public static SIRJoiner create(SIRStream parent,
+    public static SIRJoiner create(SIRContainer parent,
 				   SIRJoinType type, 
 				   int n) {
 	if (type==SIRJoinType.ROUND_ROBIN || type==SIRJoinType.COMBINE) {
@@ -49,7 +49,8 @@ public class SIRJoiner extends SIROperator {
      * Constructs a weighted round-robin joiner with the given parent
      * and weights.  
      */
-    public static SIRJoiner createWeightedRR(SIRStream parent, int[] weights) {
+    public static SIRJoiner createWeightedRR(SIRContainer parent, 
+					     int[] weights) {
 	return new SIRJoiner(parent, SIRJoinType.WEIGHTED_RR, weights);
     }
 
@@ -85,6 +86,27 @@ public class SIRJoiner extends SIROperator {
 			     parent,
 			     type,
 			     weights);
+    }
+
+    /**
+     * Return type of this.
+     */
+    public SIRJoinType getType() {
+	return type;
+    }
+
+    /**
+     * Return type of this.
+     */
+    public int getWays() {
+	return weights.length;
+    }
+
+    /**
+     * Return internal weights array of this.
+     */
+    public int[] getWeights() {
+	return weights;
     }
 }
 

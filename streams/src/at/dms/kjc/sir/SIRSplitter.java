@@ -17,7 +17,9 @@ public class SIRSplitter extends SIROperator {
      */
     private int[] weights;
 
-    private SIRSplitter(SIRStream parent, SIRSplitType type, int[] weights) {
+    private SIRSplitter(SIRContainer parent, 
+			SIRSplitType type, 
+			int[] weights) {
       super(parent);
       this.weights = weights;
       this.type = type;
@@ -26,7 +28,7 @@ public class SIRSplitter extends SIROperator {
     /**
      * Constructs a splitter with given parent, type and n number of inputs.
      */
-    public static SIRSplitter create(SIRStream parent, 
+    public static SIRSplitter create(SIRContainer parent, 
 				     SIRSplitType type, 
 				     int n) {
 	if (type==SIRSplitType.ROUND_ROBIN || type==SIRSplitType.DUPLICATE) {
@@ -49,7 +51,7 @@ public class SIRSplitter extends SIROperator {
      * Constructs a weighted round-robin splitter with the given
      * parent and weights.  
      */
-    public static SIRSplitter createWeightedRR(SIRStream parent, 
+    public static SIRSplitter createWeightedRR(SIRContainer parent, 
 					       int[] weights) {
 	return new SIRSplitter(parent, SIRSplitType.WEIGHTED_RR, weights);
     }
@@ -87,5 +89,26 @@ public class SIRSplitter extends SIROperator {
 			       parent,
 			       type,
 			       weights);
+    }
+
+    /**
+     * Return type of this.
+     */
+    public SIRSplitType getType() {
+	return type;
+    }
+
+    /**
+     * Return type of this.
+     */
+    public int getWays() {
+	return weights.length;
+    }
+
+    /**
+     * Return internal weights array of this.
+     */
+    public int[] getWeights() {
+	return weights;
     }
 }

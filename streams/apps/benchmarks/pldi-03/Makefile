@@ -9,10 +9,17 @@ FIRProgram.java: FIRProgram.str lib/*.str
 SamplingRateConverter.java: SamplingRateConverter.str lib/*.str
 	$(FRONTEND) SamplingRateConverter.str lib/*.str > SamplingRateConverter.java
 
+FilterBank.java: FilterBank.str lib/*.str
+	$(FRONTEND) FilterBank.str lib/*.str > FilterBank.java
+
+Test.java: Test.str lib/*.str
+	$(FRONTEND) Test.str lib/*.str > Test.java
+
 
 
 
 
 clean:
 	rm -f *.dot *.ps *.c *.exe *.class
-	rm -f FIRProgram.java SamplingRateConverter.java
+	rm -f Test.java
+	rm -f FIRProgram.java SamplingRateConverter.java FilterBank.java

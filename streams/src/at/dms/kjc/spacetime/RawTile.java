@@ -1,6 +1,8 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
+import at.dms.util.Utils;
+
 
 public class RawTile extends ComputeNode {
     private int tileNumber;
@@ -12,7 +14,9 @@ public class RawTile extends ComputeNode {
     private SwitchCodeStore switchCode;
     private ComputeCodeStore computeCode;
 
-    private IODevice ioDevice;
+    private IODevice[] ioDevices;
+    private String[] ioDevDirection;
+    private int numIODevices;
 
     public RawTile(int row, int col, RawChip rawChip) {
 	super(rawChip);
@@ -23,7 +27,9 @@ public class RawTile extends ComputeNode {
 	switches = false;
 	switchCode = new SwitchCodeStore(this);
 	computeCode = new ComputeCodeStore(this);
-	ioDevice = null;
+	numIODevices = 0;
+	ioDevices = new IODevice[2];
+	ioDevDirection = new String[2];
     }
 
     public String toString() {
@@ -32,19 +38,41 @@ public class RawTile extends ComputeNode {
 
     public boolean hasIODevice() 
     {
-	return (ioDevice != null);
+	return (numIODevices > 0);
     }
     
     public void setIODevice(IODevice io) 
     {
-	this.ioDevice = io;
+	ioDevices[0] = io;
+    }
+
+    public void addIODevice(IODevice io, String dir) 
+    {
+	ioDevices[numIODevices] = io;
+	ioDevDirection[numIODevices] = dir;
+	numIODevices++;
     }
 
     public IODevice getIODevice() 
     {
-	return ioDevice;
+	return ioDevices[0];
+    }
+    public IODevice getIODevice(int i) 
+    {
+	return ioDevices[i];
     }
 
+    public IODevice getIODevice(String dir) 
+    {
+	for (int i = 0; i < numIODevices; i++) {
+	    if (ioDevDirection[i].equals(dir)) 
+		return ioDevices[i];
+	}
+	Utils.fail("Cannot find io device in that direction.");
+	return null;
+    }
+    
+    
     private void setTileNumber() {
 	//because the simulator only simulates 4x4 or 8x8 we
 	//have to translate the tile number according to these layouts

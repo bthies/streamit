@@ -22,9 +22,13 @@ public class RawChip {
 
 	devices = new IODevice[2*gXSize + 2*gYSize];
 
-	if (KjcOptions.magicdram) {
+	if (KjcOptions.magicdram) 
 	    addMagicDrams();
-	}
+	else    //install streaming drams
+	    addStreamingDrams();
+	
+	printChip();
+	System.exit(1);
     }
 
     public RawTile getTile(int x, int y) {
@@ -130,7 +134,7 @@ public class RawChip {
 
     //Same as getDirection(ComputeNode from, ComputeNode to) except returns SwitchIPort
     public SwitchIPort getIPort(ComputeNode from, ComputeNode to) {
-	System.out.println("Get In: "+from+" "+to);
+	//	System.out.println("Get In: "+from+" "+to);
 	if(from==to)
 	    return SwitchIPort.CSTO;
 	if(from.getX()==to.getX()) {
@@ -157,7 +161,7 @@ public class RawChip {
 
     //Same as getIPort2(ComputeNode from, ComputeNode to) except returns static net 2 port
     public SwitchIPort getIPort2(ComputeNode from, ComputeNode to) {
-	System.out.println("Get In: "+from+" "+to);
+	//	System.out.println("Get In: "+from+" "+to);
 	if(from==to)
 	    return SwitchIPort.CSTO;
 	if(from.getX()==to.getX()) {
@@ -202,6 +206,41 @@ public class RawChip {
 	return devices;
     }
 
+    private void addStreamingDrams() 
+    {
+	int i, index = 0;
+	//add the north streaming drams
+	String dir = "N";	
+	for (i = 0; i < this.gXSize; i++) {
+	    devices [index] = new StreamingDram(this, index,
+						tiles[i][0], dir);
+	    index ++;
+	}
+	//add the east streaming drams
+	dir = "E";	
+	for (i = 0; i < this.gYSize; i++) {
+	    devices [index] = new StreamingDram(this, index,
+						tiles[this.gXSize - 1][i], dir);
+	    index ++;
+	}	
+	//add the south streaming drams
+	dir = "S";	
+	for (i = this.gXSize - 1; i >= 0; i--) {
+	    devices [index] = new StreamingDram(this, index,
+						tiles[i][this.gYSize - 1], dir);
+	    index ++;
+	}
+	//add the west streaming drams
+	dir = "W";	
+	for (i = this.gYSize - 1; i >= 0; i--) {
+	    devices [index] = new StreamingDram(this, index,
+						tiles[0][i], dir);
+	    index ++;
+	}	
+	StreamingDram.setSize(this);
+	StreamingDram.setBounds(this);
+    }
+    
     private void addMagicDrams() 
     {
 	devices[0] = new MagicDram(this, 0, tiles[0][0]);
@@ -216,5 +255,11 @@ public class RawChip {
 	devices[11] = new MagicDram(this, 11, tiles[0][3]);
 	devices[13] = new MagicDram(this, 13, tiles[0][2]);
 	devices[14] = new MagicDram(this, 14, tiles[0][1]);
+    }
+
+    public void printChip() 
+    {
+	if (!KjcOptions.magicdram) 
+	    StreamingDram.printSetup(this);
     }
 }

@@ -89,7 +89,11 @@ public class Makefile
 	    buf.append("RGCCFLAGS += -missue_width=$(ISSUE_WIDTH) -mdmem_ports=$(DMEM_PORTS)\n");
 	}
 	
-	buf.append("\ninclude $(COMMONDIR)/Makefile.all\n\n");
+	buf.append("\ninclude $(COMMONDIR)/Makefile.all\n");
+	//add the drams to all sides
+	if (!KjcOptions.magicdram) 
+	    buf.append("BTL-ARGS += -dram lhs -enable_all_sides_for_dram -dram ths\n\n");
+	
 	buf.append("clean:\n");
 	buf.append("\trm -f *.o\n");
 	buf.append("\trm -f tile*.s\n\n");
@@ -113,6 +117,9 @@ public class Makefile
 	    buf.append("EXTRA_BTL_ARGS += -magic_instruction\n ");
 	}
 	*/
+	if (!KjcOptions.magicdram)
+	    buf.append("MEMORY_LAYOUT=FOUR_SIDES\n");
+	
 	buf.append("SIM-CYCLES = 500000\n\n");
 	//if we are using the magic network, tell btl
 	if (KjcOptions.magic_net)

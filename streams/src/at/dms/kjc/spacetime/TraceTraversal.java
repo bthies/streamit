@@ -13,7 +13,7 @@ public class TraceTraversal
     {
 	LinkedList traversal = new LinkedList();
 
-	//printForrest(forrest);
+	printForrest(forrest);
 
 	//we'll do one forrest at a time for now
 	for (int i = 0; i < forrest.length; i++) {
@@ -89,6 +89,11 @@ public class TraceTraversal
 	TraceNode temp = trace.getHead();
 	while (temp != null) {
 	    System.out.print(temp);
+	    if (temp.isFilterTrace()) {
+		FilterInfo fi = FilterInfo.getFilterInfo((FilterTraceNode)temp);
+		System.out.print("(" + fi.initMult + ", " + fi.primePump + ", " +
+				 fi.steadyMult + ")");
+	    }
 	    temp = temp.getNext();
 	    if (temp != null)
 		System.out.print(" -> ");

@@ -522,6 +522,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	    else if (dims != null)
 		return;
+	    else if (expr instanceof JArrayInitializer) {
+		print(((CArrayType)type).getBaseType() + " " +
+		      ident + "[" + ((JArrayInitializer)expr).getElems().length + "] = ");
+		expr.accept(this);
+	    }
 	}
 	
 	if (expr!=null) {
@@ -1394,34 +1399,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    CType baseType = ((CArrayType)((JNewArrayExpression)right).getType()).getBaseType();
 	    print(baseType + " ");
 	    //print the identifier
-	    
-	    //Before the ISCA hack this was how we printed the var ident
-	    //	    left.accept(this);
-	    
+	    left.accept(this);
+	    //print the dims of the array
 	    String ident;
 	    ident = ((JLocalVariableExpression)left).getVariable().getIdent();
-
-
-	    
-	    if (KjcOptions.ptraccess) {
-		
-		//HACK FOR THE ICSA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//turn all array access into access of a pointer pointing to the array
-		print(ident + "_Alloc");
-		
-		//print the dims of the array
-		stackAllocateArray(ident);
-
-		//print the pointer def and the assignment to the array
-		print(";\n");
-		print(baseType + " *" + ident + " = " + ident + "_Alloc");
-	    }
-	    else {
-		//the way it used to be before the hack
-		 left.accept(this);
-		 //print the dims of the array
-		 stackAllocateArray(ident);
-	    }
+	    stackAllocateArray(ident);
 	    return;
 	}
            

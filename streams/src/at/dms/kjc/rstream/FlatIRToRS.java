@@ -28,7 +28,7 @@ import at.dms.util.SIRPrinter;
 public class FlatIRToRS extends ToC implements StreamVisitor
 {
     /** if true generate do loops when identified **/
-    private final boolean GENERATE_DO_LOOPS = false;
+    private final boolean GENERATE_DO_LOOPS = true;
     /** the hashmap of for loops -> do loops **/   
     private HashMap doloops;
     /** the current filter we are visiting **/
@@ -129,14 +129,14 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 			    SIRFilterIter iter) {
 	//Entry point of the visitor
 
-	print("#include <stdlib.h>\n");
-	print("#include <math.h>\n\n");
+	//print("#include <stdlib.h>\n");
+	//print("#include <math.h>\n\n");
 
 	//if there are structures in the code, include
 	//the structure definition header files
 	//if (StrToRStream.structures.length > 0) 
 	//    print("#include \"structs.h\"\n");
-		
+	printExterns();
 	//Visit fields declared in the filter class
 	JFieldDeclaration[] fields = self.getFields();
 	for (int i = 0; i < fields.length; i++)
@@ -178,6 +178,38 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	    System.err.println("Unable to write tile code file for filter " +
 			       filter.getName());
 	}
+    }
+
+    protected void printExterns() 
+    {
+	print("#define EXTERNC \n\n");
+	print("extern EXTERNC int printf(char[], ...);\n");
+	print("extern EXTERNC int fprintf(FILE*, char[], ...);\n");
+	print("extern EXTERNC int fopen(char[], char[]);\n");
+	print("extern EXTERNC int fscanf(FILE*, char[], ...);\n");
+	print("extern EXTERNC float acosf(float);\n"); 
+	print("extern EXTERNC float asinf(float);\n"); 
+	print("extern EXTERNC float atanf(float);\n"); 
+	print("extern EXTERNC float atan2f(float, float);\n"); 
+	print("extern EXTERNC float ceilf(float);\n"); 
+	print("extern EXTERNC float cosf(float);\n"); 
+	print("extern EXTERNC float sinf(float);\n"); 
+	print("extern EXTERNC float coshf(float);\n"); 
+	print("extern EXTERNC float sinhf(float);\n"); 
+	print("extern EXTERNC float expf(float);\n"); 
+	print("extern EXTERNC float fabsf(float);\n"); 
+	print("extern EXTERNC float modff(float, float *);\n"); 
+	print("extern EXTERNC float fmodf(float, float);\n"); 
+	print("extern EXTERNC float frexpf(float, int *);\n"); 
+	print("extern EXTERNC float floorf(float);\n"); 	     
+	print("extern EXTERNC float logf(float);\n"); 
+	print("extern EXTERNC float log10f(float, int);\n"); 
+	print("extern EXTERNC float powf(float, float);\n"); 
+	print("extern EXTERNC float rintf(float);\n"); 
+	print("extern EXTERNC float sqrtf(float);\n"); 
+	print("extern EXTERNC float tanhf(float);\n"); 
+	print("extern EXTERNC float tanf(float);\n");
+	     
     }
 
     //stack allocate the array
@@ -258,7 +290,8 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	}
 	print(";");
     }
-    
+
+    //print an abstract array declaration
     private void handleArrayDecl(String ident, CType type) 
     {
 	

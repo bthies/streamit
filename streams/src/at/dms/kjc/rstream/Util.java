@@ -103,13 +103,6 @@ public class Util extends at.dms.util.Utils {
     }
 
 
-    public static JExpression passThruParens(JExpression orig) 
-    {
-	if (orig instanceof JParenthesedExpression) {
-	    return passThruParens(((JParenthesedExpression)orig).getExpr());
-	}
-	return orig;
-    }
 }
 
 

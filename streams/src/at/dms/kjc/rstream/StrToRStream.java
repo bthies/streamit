@@ -1,5 +1,6 @@
 package at.dms.kjc.rstream;
 
+import at.dms.kjc.common.*;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.GraphFlattener;
 import at.dms.util.IRPrinter;
@@ -176,6 +177,8 @@ public class StrToRStream {
 	
 	//VarDecl Raise to move array assignments down?
 	new VarDeclRaiser().raiseVars(str);
+
+	RemoveUnusedVars.doit(graphFlattener.top);
 
 	FlatIRToRS.generateCode(graphFlattener.top);
 

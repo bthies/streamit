@@ -1,5 +1,6 @@
 package at.dms.kjc.rstream;
 
+import at.dms.kjc.common.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import java.util.ListIterator;

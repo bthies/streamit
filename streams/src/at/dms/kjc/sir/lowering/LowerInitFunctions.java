@@ -38,69 +38,85 @@ public class LowerInitFunctions implements StreamVisitor {
     //
     
     /**
-     * Registers children of <self> with init function <init> and
-     * children <children>
+     * Registers some <children> with prologue <prologue> to be
+     * inserted at the beginning of an init function.  Adds statements
+     * to <prologue> that do the registering.
      */
-    private void registerChildren(JMethodDeclaration init, 
-				  List children) {
-	int childCount = children.size()-1;
+    private void registerChildren(List children, List prologue) {
 	// iterate in reverse order so they come out right
-	ListIterator it = children.listIterator(); 
-	// find the end of the list (to get it from an index you need
-	// a linked list... is there a better way to iterate backwards?)
-	for (; it.hasNext(); it.next());
-	for (; it.hasPrevious(); childCount--) {
-	    Object o = it.previous();
-	    SIRStream stream = (SIRStream)o;
-
-	    // register the child
-	    init.addStatementFirst(new LIRSetChild(LoweringConstants.
-						   getStreamContext(),
-						   /* child type */
-						   stream.getName(),
-						   /* child name */
-						   LoweringConstants.
-						   getChildName(childCount)));
+	for (ListIterator it = children.listIterator(); it.hasNext(); ) {
+	    // extract child
+	    SIROperator child = (SIROperator)it.next();
+	    if (child instanceof SIRStream) {
+		// register the filter
+		prologue.add(new LIRSetChild(LoweringConstants.
+					     getStreamContext(),
+					     /* child type */
+					     child.getName(),
+					     /* child name */
+					     child.getRelativeName()));
+	    } else if (child instanceof SIRJoiner) {
+		// get joiner
+		SIRJoiner joiner = (SIRJoiner)child;
+		// register joiner
+		prologue.add(new LIRSetJoiner(LoweringConstants.
+					      getStreamContext(),
+					      joiner.getType(),
+					      joiner.getWays(),
+					      joiner.getWeights()));
+	    } else if (child instanceof SIRSplitter) {
+		// get splitter
+		SIRSplitter splitter = (SIRSplitter)child;
+		// register splitter
+		prologue.add(new LIRSetSplitter(LoweringConstants.
+						getStreamContext(),
+						splitter.getType(),
+						splitter.getWays(),
+						splitter.getWeights()));
+	    } else {
+		Utils.fail("Unexpected child type: " + child.getClass());
+	    }
 	}
     }
 				 
     /**
-     * Registers the tapes that connect the children of <str> in <init>
+     * Registers the tapes in <tapePairs> with new statements in <epilogue>.
      */
-    private void registerTapes(SIRStream str, 
-			       JMethodDeclaration init) {
-	// assume <str> is a pipeline
-	Utils.assert(str instanceof SIRPipeline, "Can only do pipes now.");
-	SIRPipeline pipe = (SIRPipeline)str;
-	// if empty pipeline, return
-	if (pipe.size()==0) {
-	    return;
-	}
-	// go through children of <pipe>, keeping track of stream1 and
-	// stream2, which have a tape between them
-	SIRStream stream1, stream2;
-	// get stream1
-	stream1 = (SIRStream)pipe.get(0);
-	// for all the pairs of children...
-	for (int i=1; i<pipe.size(); i++) {
-	    // get stream2
-	    stream2 = (SIRStream)pipe.get(i);
-	    // declare a tape from stream1 to stream2
-	    init.addStatement(new LIRSetTape(LoweringConstants.
-					     getStreamContext(),
-					     /* stream struct 1 */
-					     LoweringConstants.
-					     getChildStruct(i-1),
-					     /* stream struct 2 */
-					     LoweringConstants.
-					     getChildStruct(i), 
-					     /* type on tape */
-					     stream1.getOutputType(), 
-					     /* size of buffer */
-	   schedule.getBufferSizeBetween(stream1, stream2).intValue()
+    private void registerTapes(List tapePairs, List epilogue) {
+	// go through tape pairs, declaring tapes...
+	for (ListIterator it = tapePairs.listIterator(); it.hasNext(); ) {
+	    // get the next pair
+	    SIROperator[] pair = (SIROperator[])it.next();
+	    // determine type of tape by finding a SIRStream.  We need
+	    // to do this in case we're connecting a splitter or
+	    // joiner, since the splitters and joiners don't know
+	    // about their types.
+	    Utils.assert(pair[0] instanceof SIRStream ||
+			 pair[1] instanceof SIRStream,
+			 "Two many-to-1 or 1-to-many operators connected? " +
+			 "Can't determine type of tape in between");
+	    CType tapeType;
+	    // assign type to either output of source or input of
+	    // sink, depending on which we can determine
+	    if (pair[0] instanceof SIRStream) {
+		tapeType = ((SIRStream)pair[0]).getOutputType();
+	    } else {
+		tapeType = ((SIRStream)pair[1]).getInputType();
+	    }
+	    // declare a tape from pair[0] to pair[1]
+	    epilogue.add(new LIRSetTape(LoweringConstants.
+					getStreamContext(),
+					/* stream struct 1 */
+					LoweringConstants.
+					getChildStruct(pair[0]),
+					/* stream struct 2 */
+					LoweringConstants.
+					getChildStruct(pair[1]), 
+					/* type on tape */
+					tapeType,
+					/* size of buffer */
+	   schedule.getBufferSizeBetween(pair[0], pair[1]).intValue()
 						  ));
-	    // re-assign stream1 for next step
-	    stream1 = stream2;
 	}
     }
 
@@ -127,10 +143,6 @@ public class LowerInitFunctions implements StreamVisitor {
      */
     private JExpressionStatement
 	lowerInitStatement(SIRStream str, SIRInitStatement initStatement) {
-	// cast str to pipe
-	Utils.assert(str instanceof SIRPipeline,
-		     "Only support lowering of pipelines at this point.");
-	SIRPipeline pipe = (SIRPipeline)str;
 	// get args from <initStatement>
 	JExpression[] args = initStatement.getArgs();
 	// get target of initialization
@@ -138,7 +150,7 @@ public class LowerInitFunctions implements StreamVisitor {
 	
 	// create the new argument--the reference to the child's state
 	JExpression childState 
-	    = LoweringConstants.getChildStruct(pipe.indexOf(target));
+	    = LoweringConstants.getChildStruct(target);
 	// create new argument list
 	JExpression[] newArgs = new JExpression[args.length + 1];
 	// set new arg
@@ -199,50 +211,13 @@ public class LowerInitFunctions implements StreamVisitor {
 					 LoweringConstants.
 					 getWorkName(self))));
     }
-  
-    /* pre-visit a pipeline */
-    public void preVisitPipeline(SIRPipeline self,
-				 SIRStream parent,
-				 JFieldDeclaration[] fields,
-				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init,
-				 List elements) {
-
-	// translate init statements to function calls with context
-	lowerInitStatements(self, init);
-
-	// add some things to the init function... these things are
-	// added to beginning, so they're in reverse order
-
-	// register children
-	registerChildren(init, elements);
-
-	// set work function, if there is one
-	if (self.hasMethod(LoweringConstants.getWorkName(self))) {
-	    init.addStatementFirst(new LIRSetWork(LoweringConstants.
-						  getStreamContext(),
-						  new LIRFunctionPointer(
-						 LoweringConstants.
-						 getWorkName(self))));
-	}
-
-	// set stream type to pipeline (at very beginning)
-	init.addStatementFirst(new LIRSetStreamType(LoweringConstants.
-						    getStreamContext(),
-						    LIRStreamType.
-						    LIR_PIPELINE));
-
-	// register tapes between children (at very end)
-	registerTapes(self, init);
-	
-    }
 
     /* visit a splitter */
     public void visitSplitter(SIRSplitter self,
 			      SIRStream parent,
 			      SIRSplitType type,
 			      int[] weights) {
-	Utils.fail("Only lower filters and pipelines for now.");
+	// do nothing at a splitter
     }
     
     /* visit a joiner */
@@ -250,7 +225,63 @@ public class LowerInitFunctions implements StreamVisitor {
 			    SIRStream parent,
 			    SIRJoinType type,
 			    int[] weights) {
-	Utils.fail("Only lower filters and pipelines for now.");
+	// do nothing at a joiner
+    }
+
+    /**
+     * Visits an SIRContainer to lower its init function.
+     */
+    private void visitContainer(SIRContainer self,
+				JMethodDeclaration init) {
+	// translate init statements to function calls with context.
+	// this is modifying <init> without adding/removing extra
+	// stuff.
+	lowerInitStatements(self, init);
+
+	// now add some things to the init function... 
+
+	// first, a prologue that comes before the original statements
+	// in the init function.  It is a list of statements.
+	List prologue = new LinkedList();
+
+	// start building up the prologoue, in order...
+	// first, set stream type to pipeline
+	prologue.add(new LIRSetStreamType(LoweringConstants.
+					  getStreamContext(),
+					  self.getStreamType()));
+
+	// set work function, if there is one
+	if (self.hasMethod(LoweringConstants.getWorkName(self))) {
+	    prologue.add(new LIRSetWork(LoweringConstants.
+					getStreamContext(),
+					new LIRFunctionPointer(
+					   LoweringConstants.
+					   getWorkName(self))));
+	}
+
+	// register children
+	registerChildren(self.getChildren(), prologue);
+
+	// now develop an epilogue, to be inserted after the
+	// statements in the original init function.
+	List epilogue = new LinkedList();
+
+	// register tapes between children in the epilogue
+	registerTapes(self.getTapePairs(), epilogue);
+
+	// add the prologue and epilogue to the init function
+	init.addAllStatements(0, prologue);
+	init.addAllStatements(epilogue);
+    }
+	
+    /* pre-visit a pipeline */
+    public void preVisitPipeline(SIRPipeline self,
+				 SIRStream parent,
+				 JFieldDeclaration[] fields,
+				 JMethodDeclaration[] methods,
+				 JMethodDeclaration init,
+				 List elements) {
+	visitContainer(self, init);
     }
 
     /* pre-visit a splitjoin */
@@ -259,7 +290,7 @@ public class LowerInitFunctions implements StreamVisitor {
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
 				  JMethodDeclaration init) {
-	Utils.fail("Only lower filters and pipelines for now.");
+	visitContainer(self, init);
     }
 
     /* pre-visit a feedbackloop */
@@ -270,7 +301,7 @@ public class LowerInitFunctions implements StreamVisitor {
 				     JMethodDeclaration init,
 				     int delay,
 				     JMethodDeclaration initPath) {
-	Utils.fail("Only lower filters and pipelines for now.");
+	visitContainer(self, init);
     }
 
     /* post-visit a pipeline */
@@ -280,6 +311,7 @@ public class LowerInitFunctions implements StreamVisitor {
 				  JMethodDeclaration[] methods,
 				  JMethodDeclaration init,
 				  List elements) {
+	// do nothing -- all work is in preVisit
     }
 
     /* post-visit a splitjoin */
@@ -288,7 +320,7 @@ public class LowerInitFunctions implements StreamVisitor {
 				   JFieldDeclaration[] fields,
 				   JMethodDeclaration[] methods,
 				   JMethodDeclaration init) {
-	Utils.fail("Only lower filters and pipelines for now.");
+	// do nothing -- all work is in preVisit
     }
 
     /* post-visit a feedbackloop */
@@ -299,7 +331,7 @@ public class LowerInitFunctions implements StreamVisitor {
 				      JMethodDeclaration init,
 				      int delay,
 				      JMethodDeclaration initPath) {
-	Utils.fail("Only lower filters and pipelines for now.");
+	// do nothing -- all work is in preVisit
     }
 }
 

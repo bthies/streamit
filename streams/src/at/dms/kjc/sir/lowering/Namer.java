@@ -73,8 +73,26 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
     }
 
     /**
+     * If the stack of names is not empty, increments the name on the top.
+     */
+    private void incCount() {
+	if (namePrefix.size()!=0) {
+	    Integer old = (Integer)namePrefix.removeLast();
+	    namePrefix.add(new Integer(old.intValue()+1));
+	}
+    }
+
+    /**
      * PLAIN-VISITS 
      */
+
+    /**
+     * The plain visit just names <self> and increments the count.
+     */
+    private void plainVisit(SIROperator self) {
+	addName(self);
+	incCount();
+    }
 	    
     /* visit a filter */
     public void visitFilter(SIRFilter self,
@@ -85,10 +103,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 			    int peek, int pop, int push,
 			    JMethodDeclaration work,
 			    CType inputType, CType outputType) {
-	addName(self);
-	// increment the count on the prefix names
-	Integer old = (Integer)namePrefix.removeLast();
-	namePrefix.add(new Integer(old.intValue()+1));
+	plainVisit(self);
     }
 
     /** 
@@ -98,7 +113,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 			      SIRStream parent,
 			      SIRSplitType type,
 			      int[] weights) {
-	fail("Not supported yet.");
+	plainVisit(self);
     }
 
     /** 
@@ -108,12 +123,21 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 			    SIRStream parent,
 			    SIRJoinType type,
 			    int[] weights) {
-	fail("Not supported yet.");
+	plainVisit(self);
     }
 
     /**
      * PRE-VISITS 
      */
+
+    /**
+     * The pre-visit adds a stream and starts counting the children.
+     */
+    private void preVisit(SIRStream self) {
+	addName(self);
+	// start counting children with namePrefix
+	namePrefix.add(new Integer(1));
+    }
 	    
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
@@ -122,9 +146,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 				 JMethodDeclaration[] methods,
 				 JMethodDeclaration init,
 				 List elements) {
-	addName(self);
-	// start counting children with namePrefix
-	namePrefix.add(new Integer(1));
+	preVisit(self);
     }
 
     /* pre-visit a splitjoin */
@@ -133,7 +155,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
 				  JMethodDeclaration init) {
-	fail("Not supported yet.");
+	preVisit(self);
     }
 
     /* pre-visit a feedbackloop */
@@ -144,12 +166,23 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 				     JMethodDeclaration init,
 				     int delay,
 				     JMethodDeclaration initPath) {
-	fail("Not supported yet.");
+	preVisit(self);
     }
 
     /**
      * POST-VISITS 
      */
+	    
+    /**
+     * The post-visit stops counting children and increments the count
+     * for the next one in the sequence.
+     */
+    private void postVisit () {
+	// stop counting children by removing a digit from namePrefix
+	namePrefix.removeLast();
+	// increment the count on the prefix names
+	incCount();
+    }
 	    
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
@@ -158,14 +191,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 				  JMethodDeclaration[] methods,
 				  JMethodDeclaration init,
 				  List elements) {
-	// stop counting children by removing a digit from namePrefix
-	namePrefix.removeLast();
-	// if we are still counting, increment the numbering so the
-	// next element is one higher
-	if (namePrefix.size()!=0) {
-	  Integer old = (Integer)namePrefix.removeLast();
-	  namePrefix.add(new Integer(old.intValue()+1));
-	}
+	postVisit();
     }
 
     /* post-visit a splitjoin */
@@ -174,7 +200,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 				   JFieldDeclaration[] fields,
 				   JMethodDeclaration[] methods,
 				   JMethodDeclaration init) {
-	fail("Not supported yet.");
+	postVisit();
     }
 
 
@@ -186,6 +212,6 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 				      JMethodDeclaration init,
 				      int delay,
 				      JMethodDeclaration initPath) {
-	fail("Not supported yet.");
+	postVisit();
     }
 }

@@ -162,8 +162,8 @@ public class SIRScheduler {
 	// for each filter...
 	for (ListIterator it = list.listIterator(); it.hasNext(); ) {
 	    Object next = it.next();
-	    // get work function associated with <next>
-	    JMethodDeclaration work = makeWork(next, toplevel);
+	    // get name of work function associated with <next>
+	    String workName = getWorkName(next, toplevel);
 	    // build the parameter to the work function, depending on
 	    // whether we're calling a filter work function or a
 	    // hierarchical list-work function
@@ -176,7 +176,7 @@ public class SIRScheduler {
 					  /* prefix -- ok to be null? */
 					  null,
 					  /* ident */
-					  work.getName(),
+					  workName,
 					  /* args */
 					  arguments);
 	    // make a statement from the call expression
@@ -190,6 +190,30 @@ public class SIRScheduler {
     }
 
     /**
+     * Given a <schedObject> and its toplevel container <toplevel>,
+     * return the name of the work function associated with
+     * <schedObject>.  If <schedObject> is a filter or list, this will
+     * involve making a work function; otherwise we can refer to
+     * constant names for splitters/joiners.
+     */
+    private String getWorkName(Object schedObject, SIRStream toplevel) {
+	// if <next> is splitter or joiner, then work is constant
+	if (schedObject instanceof SIRSplitter) {
+	    // if splitter, take splitter name
+	    return LoweringConstants.SPLITTER_WORK_NAME;
+	} else if (schedObject instanceof SIRJoiner) {
+	    // if splitter, take joiner name
+	    return LoweringConstants.JOINER_WORK_NAME;
+	} else {
+	    // otherwise, have a list or filter--need to make a work function
+	    JMethodDeclaration work = makeWork(schedObject, toplevel);
+	    // return name of work function
+	    return work.getName();
+	}
+    }
+
+
+    /**
      * Returns the proper argument to the work function for <schedObject>
      * given toplevel stream <toplevel>.
      */
@@ -199,9 +223,9 @@ public class SIRScheduler {
 	    // make arg for list -- just the current context
 	    return LoweringConstants.getDataField();
 	} else if (schedObject instanceof SIRFilter) {
-	    // make arg for filter
-	    return makeFilterWorkArgument((SIRFilter)schedObject, 
-					  toplevel);
+	    // make arg for leaf node
+	    return makeLeafWorkArgument((SIRFilter)schedObject, 
+					toplevel);
 	} else {
 	    // otherwise, fail
 	    Utils.fail("SIRScheduler expected List or SIRFilter but found" +
@@ -213,14 +237,15 @@ public class SIRScheduler {
 
     /**
      * Returns an expression that returns the data structure
-     * corresponding to <filter>, tracing pointers from the data
-     * structure for <toplevel>.
-     */
-    private JExpression makeFilterWorkArgument(SIRFilter filter,
-					       SIRStream toplevel) {
+     * corresponding to <str>, tracing pointers from the data
+     * structure for <toplevel>.  <str> should be either an SIRFilter,
+     * SIRJoiner, or SIRSplitter--that is, a "leaf" node in the tree.
+     * */
+    private JExpression makeLeafWorkArgument(SIROperator str,
+					     SIRStream toplevel) {
 
-	// get parents of <filter>
-	SIRStream parents[] = filter.getParents();
+	// get parents of <str>
+	SIRStream parents[] = str.getParents();
 
 	// construct result expression
 	JExpression result = LoweringConstants.getDataField();
@@ -228,14 +253,11 @@ public class SIRScheduler {
 	// go through parents from top to bottom, building up the
 	// field access expression.
 	for (int i=parents.length-1; i>=0; i--) {
-	  if (parents[i] instanceof SIRPipeline) {
-	    SIRPipeline pipe = (SIRPipeline)parents[i];
 	    // get the child of interest (either the next parent,
-	    // or <filter>
-	    SIRStream child = (i>0 ? parents[i-1] : filter);
+	    // or <str>)
+	    SIROperator child = (i>0 ? parents[i-1] : str);
 	    // get field name for child context
-	    String childName = 
-	      LoweringConstants.getChildName(pipe.indexOf(child));
+	    String childName = child.getRelativeName();
 	    // build up cascaded field reference
 	    result = new JFieldAccessExpression(/* tokref */
 						null,
@@ -243,9 +265,19 @@ public class SIRScheduler {
 						result,
 						/* ident */
 						childName);
-	  } else {
-	    Utils.fail("Only pipelines supported now.");
-	  }
+	}
+
+	// if we have a splitter or joiner, then the argument should
+	// be to the context instead of just to the data structure, so
+	// append a reference to the context
+	if (str instanceof SIRSplitter || str instanceof SIRJoiner) {
+	    result = new JFieldAccessExpression(/* tokref */
+						null,
+						/* prefix is previous ref*/
+						result,
+						/* ident */
+						LoweringConstants.
+						CONTEXT_VAR_NAME);
 	}
 
 	return result;
@@ -292,7 +324,7 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 				JMethodDeclaration init,
 				List elements) {
 	// represent the pipeline
-	SchedPipeline sp = scheduler.newSchedPipeline(self);
+	SchedPipeline result = scheduler.newSchedPipeline(self);
 	// add children to pipeline
 	for (ListIterator it = elements.listIterator(); it.hasNext(); ) {
 	    // get child
@@ -300,10 +332,10 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 	    // build scheduler representation of child
 	    SchedStream schedChild = (SchedStream)child.accept(this);
 	    // add child to pipe
-	    sp.addChild(schedChild);
+	    result.addChild(schedChild);
 	}
 	// return result
-	return sp;
+	return result;
     }
 
     /* pre-visit a splitjoin */
@@ -311,9 +343,27 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 				 SIRStream parent,
 				 JFieldDeclaration[] fields,
 				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init) {
-	Utils.fail("Not scheduling split-joins yet.");
-	return null;
+				 JMethodDeclaration init,
+				 List elements,
+				 SIRSplitter splitter,
+				 SIRJoiner joiner) {
+	// represent the pipeline
+	SchedSplitJoin result = scheduler.newSchedSplitJoin(self);
+	// add children to pipeline
+	for (ListIterator it = elements.listIterator(); it.hasNext(); ) {
+	    // get child
+	    SIRStream child = (SIRStream)it.next();
+	    // build scheduler representation of child
+	    SchedStream schedChild = (SchedStream)child.accept(this);
+	    // add child to pipe
+	    result.addChild(schedChild);
+	}
+	// set split type
+	result.setSplitType((SchedSplitType)splitter.accept(this));
+	// set join type
+	result.setJoinType((SchedJoinType)joiner.accept(this));
+	// return result
+	return result;
     }
 
     /* pre-visit a feedbackloop */
@@ -324,7 +374,7 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 				    JMethodDeclaration init,
 				    int delay,
 				    JMethodDeclaration initPath) {
-	Utils.fail("Not scheduling feedback loops yet.");
+	Utils.fail("Can't schedule feedback loops yet.");
 	return null;
     }
 
@@ -333,8 +383,10 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 				SIRStream parent,
 				SIRSplitType type,
 				int[] weights) {
-	Utils.fail("Not scheduling splitters yet.");
-	return null;
+	// represent the splitter
+	return scheduler.newSchedSplitType(type.toSchedType(), 
+					   Utils.intArrayToList(weights), 
+					   self);
     }
     
     /* visit a joiner */
@@ -342,7 +394,9 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 			      SIRStream parent,
 			      SIRJoinType type,
 			      int[] weights)  {
-	Utils.fail("Not scheduling joiners yet.");
-	return null;
+	// represent the joiner
+	return scheduler.newSchedJoinType(type.toSchedType(), 
+					  Utils.intArrayToList(weights),
+					  self);
     }
 }

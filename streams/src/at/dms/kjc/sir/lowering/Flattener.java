@@ -60,7 +60,7 @@ public class Flattener {
 	flatClass.addMethod(
 		new JMethodDeclaration( /* tokref     */ null,
 				    /* modifiers  */ at.dms.kjc.
-				                    Constants.ACC_PUBLIC,
+				                     Constants.ACC_PUBLIC,
 				    /* returntype */ CStdType.Void,
 				    /* identifier */ "main",
 				    /* parameters */ JFormalParameter.EMPTY,

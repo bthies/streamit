@@ -111,7 +111,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	    // the name of the type in the structure
 	    String typeName = ((SIROperator)children.get(i)).getName();
 	    // the name for the variable in the structure
-	    String varName = LoweringConstants.getChildName(i);
+	    String varName = ((SIROperator)children.get(i)).getRelativeName();
 	    // define a variable of the structure
 	    JVariableDefinition var = 
 		new JVariableDefinition(/* tokenref */ null, 
@@ -252,7 +252,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 			      SIRStream parent,
 			      SIRSplitType type,
 			      int[] weights) {
-	fail("Not implemented yet");
+	// don't do anything for a splitter
     }
   
     /* visit a joiner */
@@ -260,7 +260,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 			    SIRStream parent,
 			    SIRJoinType type,
 			    int[] weights) {
-	fail("Not implemented yet");
+	// don't do anything for a joiner
     }
 
     /**
@@ -283,7 +283,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
 				  JMethodDeclaration init) {
-	fail("Not implemented yet");
+	// don't do anything--visit on the way up
     }
   
     /* pre-visit a feedbackloop */
@@ -294,12 +294,27 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				     JMethodDeclaration init,
 				     int delay,
 				     JMethodDeclaration initPath) {
-	fail("Not implemented yet");
+	// don't do anything--visit on the way up
     }
   
     /**
      * POST-VISITS 
      */
+
+    /**
+     * Performs the standard post-visit for hierarchical nodes.
+     */
+    private void postVisit(String name, 
+			   JFieldDeclaration[] fields,
+			   JMethodDeclaration[] methods,
+			   List children) {
+	// create structure
+	createStruct(name, fields, children);
+	// if there are methods, add closure-referencing to methods
+	if (methods!=null) {
+	    flattenMethods(name, methods);
+	}
+    }
 	    
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
@@ -308,12 +323,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				  JMethodDeclaration[] methods,
 				  JMethodDeclaration init,
 				  List elements) {
-	// create structure
-	createStruct(self.getName(), fields, elements);
-	// if there are methods, add closure-referencing to methods
-	if (methods!=null) {
-	    flattenMethods(self.getName(), methods);
-	}
+	postVisit(self.getName(), fields, methods, self.getChildren());
     }
   
     /* post-visit a splitjoin */
@@ -322,7 +332,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				   JFieldDeclaration[] fields,
 				   JMethodDeclaration[] methods,
 				   JMethodDeclaration init) {
-	fail("Not implemented yet");
+	postVisit(self.getName(), fields, methods, self.getChildren());
     }
   
     /* post-visit a feedbackloop */
@@ -333,7 +343,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				      JMethodDeclaration init,
 				      int delay,
 				      JMethodDeclaration initPath) {
-	fail("Not implemented yet");
+	postVisit(self.getName(), fields, methods, self.getChildren());
     }
 }
 

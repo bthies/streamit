@@ -76,6 +76,7 @@ public class LowerWorkFunctions implements StreamVisitor
         // add entry/exit nodes to work function
         addEntryExit(self.getWork());
         // prune structure creation statements
+        removeStructureNew(self.getInit());
         removeStructureNew(self.getWork());
 	// add entry/exit nodes to initial work function, if there is one
 	if (self instanceof SIRTwoStageFilter) {

@@ -1,6 +1,6 @@
 package streamit.scheduler.minlatency;
 
-/* $Id: SplitJoin.java,v 1.2 2002-07-19 05:09:09 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.3 2002-10-01 00:01:10 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 SplitJoinIter;
@@ -420,7 +420,7 @@ public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
                             utility.getChildNextPhase(child);
                         ASSERT(
                             postSplitBuffers[nChild]
-                                > childPhase.getOverallPeek());
+                                >= childPhase.getOverallPeek());
 
                         // update the buffers
                         postSplitBuffers[nChild]

@@ -101,7 +101,7 @@ public class StaticStreamGraph
     /** add a source node to this SSG and add it to the toplevel **/
     public void addTopLevelFlatNode(FlatNode node) 
     {
-	//	System.out.println("AddTopLevelNode " + node + " to " + id) ;
+	System.out.println("AddTopLevelNode " + node + " to " + id) ;
 	assert node.isFilter();
 	SIRFilter filter = (SIRFilter)node.contents;
 	//checks on the filter
@@ -411,9 +411,16 @@ public class StaticStreamGraph
 	assert streamGraph.getLayout() == null;
 
 	System.out.println(" ****  CALLING SETTOPLEVELSIR **** ");
-
-
+	
 	topLevelSIR = newTop;
+	
+	StreamItDot.printGraph(topLevelSIR, 
+			      SpaceDynamicBackend.makeDotFileName("setTLSIR", topLevelSIR));
+     
+	assert topLevelSIR instanceof SIRContainer;
+       
+	((SIRContainer)topLevelSIR).reclaimChildren();
+	
 	//remove the old nodes from the global parent map
 	Iterator fns = flatNodes.iterator();
 	while (fns.hasNext()) {

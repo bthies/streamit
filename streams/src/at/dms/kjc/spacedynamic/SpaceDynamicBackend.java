@@ -309,15 +309,19 @@ public class SpaceDynamicBackend {
 	//Generate the tile code
 	RawExecutionCode.doit(streamGraph);
 
-	/*
+	//remove globals over all the SSGs if enabled
 	if (KjcOptions.removeglobals) {
-	    RemoveGlobals.doit(ssg.getTopLevel());
+	    for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++)
+		RemoveGlobals.doit(streamGraph.getStaticSubGraphs()[i].getTopLevel());
 	}
-	//VarDecl Raise to move array assignments down?
-	new VarDeclRaiser().raiseVars(str);
 	
-	StructureIncludeFile.doit(structures, ssg.getTopLevel());
-	*/
+	//VarDecl Raise to move array assignments down?
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++)
+	    new VarDeclRaiser().raiseVars
+		(streamGraph.getStaticSubGraphs()[i].getTopLevelSIR());
+	
+	//	StructureIncludeFile.doit(structures, ssg.getTopLevel());
+
 	
 	System.out.println("Tile Code begin...");
 	TileCode.generateCode(streamGraph);

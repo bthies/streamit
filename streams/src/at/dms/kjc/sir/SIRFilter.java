@@ -127,8 +127,6 @@ public class SIRFilter extends SIRStream implements Cloneable {
     public CType getOutputType() {
 	return this.outputType;
     }
-    
-
 }
 
 

@@ -166,6 +166,13 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
 
     /**
+     * Sets the parallel streams in this.
+     */
+    public void setParallelStreams(LinkedList elements) {
+	this.elements = (LinkedList)elements.clone();
+    }
+
+    /**
      * Returns a list of tuples (two-element arrays) of SIROperators,
      * representing a tape from the first element of each tuple to the
      * second.

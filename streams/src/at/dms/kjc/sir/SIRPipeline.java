@@ -96,6 +96,13 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     /**
+     * Sets children of this to copy of <elements>
+     */
+    public void setChildren(LinkedList elements) {
+	this.elements = (LinkedList)elements.clone();
+    }
+
+    /**
      * Returns a list of tuples (two-element arrays) of SIROperators,
      * representing a tape from the first element of each tuple to the
      * second.

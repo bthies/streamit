@@ -2,6 +2,7 @@ void->void pipeline Fib {
     add feedbackloop {
 	join roundrobin(0, 1);
 	body PeekAdd();
+	loop Identity<int>();
 	split duplicate;
 	enqueue 0;
 	enqueue 1;

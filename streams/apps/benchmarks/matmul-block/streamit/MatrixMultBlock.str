@@ -1,7 +1,7 @@
 /*
  * MatrixMultBlock.str: block matrix multiply
  * Translated from Jasper's old-syntax code
- * $Id: MatrixMultBlock.str,v 1.4 2002-11-08 17:19:55 dmaze Exp $
+ * $Id: MatrixMultBlock.str,v 1.5 2003-01-20 17:33:52 dmaze Exp $
  */
 
 void->void pipeline MatrixMultBlock
@@ -123,7 +123,7 @@ float->float splitjoin Duplicate(int x, int y)
     join roundrobin(x);
 }
 
-float->float filter BlockFloatSource(float maxNum)
+void->float filter BlockFloatSource(float maxNum)
 {
     float num;
     init { num = 0; }

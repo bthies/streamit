@@ -305,7 +305,13 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	// Serialize Functions
 
 	print("\n");
-	print("void __write_fields__"+selfID+"(object_write_buffer *buf) {\n");
+
+	print("void __write_thread__"+selfID+"(object_write_buffer *buf) {\n");
+
+	if (in != null) {
+	    print("  "+in.consumer_name()+".write_object(buf);\n"); // save consumer
+	    print("  "+in.name()+"in->write_object(buf);\n");       // save peek buffer
+	}
 
 	for (int i = 0; i < fields.length; i++) {
 
@@ -315,34 +321,38 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print("  buf->write(&"+ident+"__"+selfID+", sizeof("+type+"));\n");
 	}
 
-	print("}\n");
-	print("\n");
+	if (out != null) {
+	    print("  "+out.producer_name()+".write_object(buf);\n"); // save producer
+	}
 
-	print("void __write_thread__"+selfID+"(object_write_buffer *buf) {\n");
+	print("}\n");
+
+	print("\n");	
+
+
+
+	print("void __read_thread__"+selfID+"(object_write_buffer *buf) {\n");
 
 	if (in != null) {
-	    print("  "+in.consumer_name()+".write_object(buf);\n");
-	    print("  "+in.name()+"in->write_object(buf);\n");
+	    print("  "+in.consumer_name()+".read_object(buf);\n"); // read consumer
+	    print("  "+in.name()+"in->read_object(buf);\n");       // read peek buffer
 	}
-	print("  __write_fields__"+selfID+"(buf);\n");
+
+	for (int i = 0; i < fields.length; i++) {
+
+	    CType type = fields[i].getType();
+	    String ident = fields[i].getVariable().getIdent();
+
+	    print("  buf->read(&"+ident+"__"+selfID+", sizeof("+type+"));\n");
+	}
+
 	if (out != null) {
-	    print("  "+out.producer_name()+".write_object(buf);\n");
+	    print("  "+out.producer_name()+".read_object(buf);\n"); // read producer
 	}
 
 	print("}\n");
 
 	print("\n");	
-
-
-
-	print("void __save_thread__"+selfID+"() {\n");
-
-	print("  save_state::save_to_file("+selfID+", __steady_"+selfID+", __write_thread__"+selfID+");\n");
-
-	print("}\n");
-
-	print("\n");	
-
 
 
 
@@ -1617,8 +1627,10 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	
         print(ident);
 	
-	if (!Utils.isMathMethod(prefix, ident)) {
+	if (!Utils.isMathMethod(prefix, ident) && 
+	    ident.indexOf("::")==-1) {
 	    // don't rename the built-in math functions
+	    // don't rename calls to static functions
 	    print("__"+selfID);
 	}
         print("(");

@@ -137,8 +137,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("\n");
 
 
-	p.print("void __save_thread__"+thread_id+"() {\n");
-	p.print("  save_state::save_to_file("+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
+	p.print("void __read_thread__"+thread_id+"(object_write_buffer *buf) {\n");
+	p.print("  "+in.consumer_name()+".read_object(buf);\n");
+	for (int i = 0; i < out.size(); i++) {
+	    p.print("  "+((NetStream)out.elementAt(i)).producer_name()+".read_object(buf);\n");
+	}
 	p.print("}\n");
 
 
@@ -278,7 +281,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("      check_thread_status(state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __splitter_"+thread_id+"_work();\n");
 	p.print("    }\n");
-	p.print("    __save_thread__"+thread_id+"();\n");
+
+	p.print("    save_state::save_to_file("+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
+
 	p.print("  }\n");
 
 	p.print("}\n");
@@ -348,6 +353,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("\n");
 
+
+	//////////////////////////////////////////////
+	// serialize
+
 	p.print("void __write_thread__"+thread_id+"(object_write_buffer *buf) {\n");
 	for (int i = 0; i < in.size(); i++) {
 	    p.print("  "+((NetStream)in.elementAt(i)).consumer_name()+".write_object(buf);\n");
@@ -359,8 +368,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("\n");
 
 
-	p.print("void __save_thread__"+thread_id+"() {\n");
-	p.print("  save_state::save_to_file("+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
+	p.print("void __read_thread__"+thread_id+"(object_write_buffer *buf) {\n");
+	for (int i = 0; i < in.size(); i++) {
+	    p.print("  "+((NetStream)in.elementAt(i)).consumer_name()+".read_object(buf);\n");
+	}
+	p.print("  "+out.producer_name()+".read_object(buf);\n");
 	p.print("}\n");
 
 
@@ -528,7 +540,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("      check_thread_status(state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __joiner_"+thread_id+"_work();\n");
 	p.print("    }\n");
-	p.print("    __save_thread__"+thread_id+"();\n");
+
+	p.print("    save_state::save_to_file("+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
+
 	p.print("  }\n");
 
 	p.print("}\n");

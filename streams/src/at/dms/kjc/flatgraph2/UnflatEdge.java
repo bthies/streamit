@@ -6,8 +6,8 @@ import at.dms.util.Utils;
  * Intermediate file used in (super) synch removal
  */
 public class UnflatEdge {
-    UnflatFilter src;
-    UnflatFilter dest;
+    public UnflatFilter src;
+    public UnflatFilter dest;
     //int virtualPort;
 
     UnflatEdge() {

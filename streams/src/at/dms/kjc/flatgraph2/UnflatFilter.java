@@ -6,11 +6,11 @@ import at.dms.kjc.sir.*;
  * Intermediate file used in (super) synch removal
  */
 public class UnflatFilter {
-    SIRFilter filter;
-    int[] inWeights,outWeights;
+    public SIRFilter filter;
+    public int[] inWeights,outWeights;
     //IntList inWeights,outWeights;
     UnflatEdge[] in;
-    UnflatEdge[][] out;
+    public UnflatEdge[][] out;
     private static int nullNum=0;
     private String name;
     

@@ -36,7 +36,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.26 2003-07-07 18:59:49 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.27 2003-07-07 19:17:25 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -441,9 +441,11 @@ public class FEReplacer implements FEVisitor
             newParams.add(newParam);
             if (param != newParam) hasChanged = true;
         }
-        Expression newMin = (Expression)stmt.getMinLatency().accept(this);
+        Expression newMin = stmt.getMinLatency();
+        if (newMin != null) newMin = (Expression)newMin.accept(this);
         if (newMin != stmt.getMinLatency()) hasChanged = true;
-        Expression newMax = (Expression)stmt.getMaxLatency().accept(this);
+        Expression newMax = stmt.getMaxLatency();
+        if (newMax != null) newMax = (Expression)newMax.accept(this);
         if (newMax != stmt.getMaxLatency()) hasChanged = true;
         if (!hasChanged) return stmt;
         return new StmtSendMessage(stmt.getContext(), newReceiver,

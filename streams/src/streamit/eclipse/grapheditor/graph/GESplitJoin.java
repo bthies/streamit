@@ -85,7 +85,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	//	this.succesors = split.getSuccesors(); 
 //		this.setChildren(split.getSuccesors());
 		this.localGraphStruct = new GraphStructure();
-		this.isExpanded = false;
+		this.isExpanded = true;
 
 	}
 
@@ -302,6 +302,8 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
 		//jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, false);
 		
+		this.isExpanded = true;
+		
 		for (int i = level; i >= 0; i--)
 		{
 			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
@@ -411,6 +413,8 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		this.localGraphStruct.getGraphModel().edit(localGraphStruct.getAttributes(), cs, null, null);
 		this.localGraphStruct.getJGraph().getGraphLayoutCache().setVisible(nodeList, false);
 		
+		this.isExpanded = false;
+		
 		for (int i = level - 1; i >= 0; i--)
 		{
 			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
@@ -421,7 +425,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();
 		
-
+		
 		
 			
 	}
@@ -439,7 +443,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	{
 		for (int i = level; i >= 0; i--)
 		{
-			this.localGraphStruct.setLocationContainersAtLevel(i);
+			this.localGraphStruct.containerNodes.setLocationContainersAtLevel(i, this.localGraphStruct);
 		}
 	}
 	
@@ -483,6 +487,16 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 			setVisible(new Object[]{this}, true);
 		return true;
 	}	
+	
+	/** 
+	 * Get true when the GESplitJoin is expanded (contained elements are visible), 
+	 * otherwise get false.
+	 * @return true if expanded; otherwise, return false.
+	 */
+	public boolean isExpanded()
+	{
+		return this.isExpanded;
+	}
 	
 	/**
 	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 

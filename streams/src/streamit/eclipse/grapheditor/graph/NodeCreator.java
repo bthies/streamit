@@ -176,7 +176,7 @@ public class NodeCreator {
 		node.setDepthLevel(0);
 		
 		//TODO: Fix this hack
-		((GEPipeline) node).isExpanded  = true;
+	//	((GEPipeline) node).isExpanded  = true;
 		
 		graphStruct.containerNodes.addContainerToLevel(0, node);
 		//graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(), graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);

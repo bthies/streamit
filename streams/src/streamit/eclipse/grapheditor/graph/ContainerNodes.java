@@ -6,9 +6,15 @@
  */
 package streamit.eclipse.grapheditor.graph;
 
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+
+import org.jgraph.graph.AbstractCellView;
+import org.jgraph.graph.CellView;
+import org.jgraph.graph.GraphConstants;
 
 /**
  * @author jcarlos
@@ -152,7 +158,7 @@ public class ContainerNodes {
 			Iterator listIter = levelList.iterator();
 			while(listIter.hasNext())
 			{
-				 GEStreamNode node = (GEStreamNode) listIter.next();
+				 GEContainer node = (GEContainer) listIter.next();
 				 node.hide();
 			}
 		}				
@@ -170,12 +176,44 @@ public class ContainerNodes {
 			Iterator listIter = levelList.iterator();
 			while(listIter.hasNext())
 			{
-				 GEStreamNode node = (GEStreamNode) listIter.next();
+				 GEContainer node = (GEContainer) listIter.next();
 				 node.unhide();
 			}
 		}				
 	}
-
+	
+	/**
+	 * Hide all the expanded containers in the graph (the collapsed nodes remain
+	 * visible).
+	 */
+	public void hideAllContainers()
+	{
+		Iterator contIter = this.allContainers.iterator();
+		while (contIter.hasNext())
+		{
+			GEContainer node = (GEContainer) contIter.next();
+			if (node.isExpanded())
+			{
+				node.hide();
+			}
+		}
+	}
+	
+	/**
+	 * Unhide all of the expanded containers in the graph.
+	 */
+	public void unhideAllContainers()
+	{
+		Iterator contIter = this.allContainers.iterator();
+		while (contIter.hasNext())
+		{
+			GEContainer node = (GEContainer) contIter.next();
+			if (node.isExpanded())
+			{
+				node.unhide();
+			}
+		}
+	}
 
 	/**
 	 * Return all of the container nodes (GEPipeline, GESplitJoin, GEFeedbackLoop) 
@@ -224,6 +262,52 @@ public class ContainerNodes {
 		System.out.println("Returning null from getContainerNodeFromName");
 		return null;
 		
+	}
+	
+	
+	/**
+	 * Sets the location of the Container nodes at level. The bounds of the container
+	 * node are set in such a way that the elements that it contains are enclosed.
+	 * Also, changes the location of the label so that it is more easily viewable.
+	 * @param level The level of the containers whose location will be set. 
+	 */
+	
+	public void setLocationContainersAtLevel(int level, GraphStructure graphStruct)
+	{
+		ArrayList levelList = this.getContainersAtLevel(level);
+		
+		if (levelList != null)
+		{
+			Iterator listIter = levelList.iterator();
+			while(listIter.hasNext())
+			{
+				GEContainer node = (GEContainer) listIter.next();
+				System.out.println("node is "+ node);
+				graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{node}, true);
+				Object[] containedCells = node.getContainedElements().toArray();
+		
+				CellView[] containedCellViews = graphStruct.getJGraph().getGraphLayoutCache().getMapping(containedCells);
+
+				Rectangle cellBounds = AbstractCellView.getBounds(containedCellViews);
+				
+				
+				Map attribs = ((GEStreamNode) node).getAttributes();
+				GraphConstants.setVerticalAlignment(attribs, 1);
+				GraphConstants.setAutoSize(attribs, false);
+				if (cellBounds != null)
+				{
+					cellBounds.height += 60;
+					cellBounds.width += 60;
+					GraphConstants.setBounds(attribs, cellBounds);
+				}
+				
+				// The lines below are supposed to change label location, but they don't
+				//GraphConstants.setValue(node.getAttributes(), "hello");
+				//GraphConstants.setHorizontalAlignment(node.getAttributes(), 1);
+				
+				graphStruct.getGraphModel().edit(graphStruct.getAttributes(), null , null, null);
+			}
+		}
 	}
 	
 

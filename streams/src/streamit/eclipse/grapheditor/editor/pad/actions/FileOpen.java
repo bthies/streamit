@@ -8,9 +8,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import javax.swing.ActionMap;
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 
 import org.jgraph.graph.GraphLayoutCache;
 
@@ -21,7 +19,6 @@ import streamit.eclipse.grapheditor.editor.pad.GPGraph;
 import streamit.eclipse.grapheditor.editor.pad.GPSelectProvider;
 import streamit.eclipse.grapheditor.editor.pad.GraphModelProvider;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
-import streamit.eclipse.grapheditor.editor.utils.Utilities;
 import streamit.eclipse.grapheditor.graph.GraphEncoder;
 
 /**
@@ -102,13 +99,11 @@ public class FileOpen extends AbstractActionFile {
 		{
 			// get all open files to test against
 			GPDocument[] docs = graphpad.getAllDocuments();
-
 			if (docs != null) 
 			{
 				for (int i = 0; i < docs.length; i++) 
 				{
 					URL docname = docs[i].getFilename();
-		
 					// check if names are the same
 					if (docname != null && name.equals(docname)) 
 					{
@@ -172,8 +167,8 @@ public class FileOpen extends AbstractActionFile {
 		
 		System.out.println("FILE NAME = " + fileName);
 		System.out.println("Path == "+ System.getProperties().getProperty("java.class.path"));
-		//at.dms.kjc.Main.compile(new String[] {"--graph", "-s", "/u/jcarlos/Test/VectAdd/VectAdd.java"});
 		System.out.println("JAVA FILE: "+ fileName.substring(0, fileName.indexOf(".")+ 1 )+"java");
+		
 		streamit.frontend.ToJava.main(new String[] {"--output", fileName.substring(0, fileName.indexOf(".")+ 1 )+"java", fileName});
 		at.dms.kjc.Main.compile(new String[] {"--streamit", "--graph", "--verbose", fileName.substring(0, fileName.indexOf(".")+ 1 )+"java"});
 		
@@ -190,9 +185,11 @@ public class FileOpen extends AbstractActionFile {
 		//gGraph.getGraphLayoutCache().setVisible(gGraph.getRoots(), true);
 		graphpad.update();	
 		
+		
+		/* Removed since the code the code that expanded the Graph at the beginning was removed
 		ViewExpand ve = (ViewExpand) graphpad.getCurrentActionMap().get(Utilities.getClassNameWithoutPackage(ViewExpand.class));
 		ve.centerLayout();		
-		graphpad.update();
+		graphpad.update();*/
 		return true;
 	}
 
@@ -211,7 +208,6 @@ public class FileOpen extends AbstractActionFile {
 			return;
 
 		String fileName = "";
-	
 		try 
 		{
 			fileName = file.getPath().toString();
@@ -220,126 +216,27 @@ public class FileOpen extends AbstractActionFile {
 
 		System.out.println("FILE NAME = " + fileName);
 		System.out.println("Path == "+ System.getProperties().getProperty("java.class.path"));
-		//at.dms.kjc.Main.compile(new String[] {"--graph", "-s", "/u/jcarlos/Test/VectAdd/VectAdd.java"});
 		System.out.println("JAVA FILE: "+ fileName.substring(0, fileName.indexOf(".")+ 1 )+"java");
+		
 		streamit.frontend.ToJava.main(new String[] {"--output", fileName.substring(0, fileName.indexOf(".")+ 1 )+"java", fileName});
 		at.dms.kjc.Main.compile(new String[] {"--streamit", "--graph", "--verbose", fileName.substring(0, fileName.indexOf(".")+ 1 )+"java"});
 		
 		//graphpad.addDocument(graphModelProvider);
 		GPGraph gGraph = new GPGraph(GraphEncoder.graph.getGraphModel());
 		gGraph.setGraphLayoutCache(new GraphLayoutCache(gGraph.getModel(), gGraph, false, true));
-		
-		
 		GPDocument doc= graphpad.addDocument(null, graphModelProvider, gGraph , GraphEncoder.graph.getGraphModel(), null);
-		/*GraphEncoder.graph.setJGraph(gGraph);*/
-		doc.getGraphStructure().setJGraph(gGraph);
-
-		/*GraphEncoder.graph.constructGraph(doc.getScrollPane());*/
-		doc.getGraphStructure().constructGraph(doc.getScrollPane());
 		
+		doc.getGraphStructure().setJGraph(gGraph);
+		doc.getGraphStructure().constructGraph(doc.getScrollPane());
 		
 		//gGraph.getGraphLayoutCache().setVisible(gGraph.getRoots(), true);
 		graphpad.update();
 		
+		/* Removed since the code the code that expanded the Graph at the beginning was removed
 		ViewExpand ve = (ViewExpand) graphpad.getCurrentActionMap().get(Utilities.getClassNameWithoutPackage(ViewExpand.class));
 		ve.centerLayout();
-		
+		*/
 	}
-
-	
-/*
-	protected void addDocument(GPFileChooser chooser) {
-		// get the file format, provider
-		final File file = chooser.getSelectedFile();
-
-		final GraphModelProvider graphModelProvider =
-			GraphModelProviderRegistry.getGraphModelProvider(file);
-		final GraphModelFileFormat graphModelFileFormat =
-			GraphModelProviderRegistry.getGraphModelFileFormat(file);
-
-		// error message if no file format found
-		if (graphModelFileFormat == null) {
-			JOptionPane.showMessageDialog(
-				graphpad,
-				Translator.getString("Error.No_GraphModelFileFormat_available"),
-				Translator.getString("Error"),
-				JOptionPane.ERROR_MESSAGE);
-			return;
-		}
-
-		// extract the read properties
-		final Hashtable props =
-			graphModelFileFormat.getReadProperties(chooser.getAccessory());
-
-		Thread t = new Thread("Read File Thread") {
-
-			public void run() {
-					// create a new and clean graph
-	GPGraph gpGraph =
-		graphModelProvider.createCleanGraph(
-			graphModelProvider.createCleanGraphModel());
-
-				// try to read the graph model
-				GraphModel model = null;
-
-				URL fileURL;
-				try {
-					fileURL = file.toURL();
-
-					try {
-						model =
-							graphModelFileFormat.read(fileURL, props, gpGraph);
-
-					} catch (Exception ex) {
-						ex.printStackTrace();
-						JOptionPane.showMessageDialog(
-							graphpad,
-							ex.getLocalizedMessage(),
-							Translator.getString("Error"),
-							JOptionPane.ERROR_MESSAGE);
-						return;
-					}
-					
-					// posibility to cancel the load 
-					// process
-					if (model == null)
-						return; 
-
-					// FIX: A small hack to reset the filename
-					// if it has no standard extension
-					/*
-					 * Sorry, we can't do this!
-					 *  
-					 * We have got a multi file format support
-					 * and it can be that it is not the jgx
-					 * file extension and thats absolutly 
-					 * correct!
-					 * 
-					if (!fileURL.toString().toLowerCase().endsWith(".jgx")) {
-					    graphpad.error(Translator.getString("OldFileFormat"));
-					    fileURL = null;
-					}
-					*/
-/*
-					// add the new document with the new graph and the new model
-					graphpad.addDocument(
-						fileURL,
-						graphModelProvider,
-						gpGraph,
-						model,
-						null);
-
-					graphpad.update();
-				} catch (MalformedURLException e) {
-				}
-			}
-		};
-		t.start();
-
-	}
-*/
-
-
 
 	/** Empty implementation.
 	 *  This Action should be available

@@ -22,6 +22,7 @@ package streamit.eclipse.grapheditor.editor.pad.actions;
 
 import java.awt.event.ActionEvent;
 
+import org.jgraph.graph.DefaultGraphModel;
 import org.jgraph.graph.GraphLayoutCache;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
@@ -29,7 +30,6 @@ import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.editor.pad.GPGraph;
 import streamit.eclipse.grapheditor.editor.pad.GPSelectProvider;
 import streamit.eclipse.grapheditor.editor.pad.GraphModelProvider;
-import streamit.eclipse.grapheditor.graph.GraphEncoder;
 import streamit.eclipse.grapheditor.graph.GraphStructure;
 import streamit.eclipse.grapheditor.graph.NodeCreator;
 
@@ -65,11 +65,9 @@ public class FileNew extends AbstractActionDefault {
 		if (graphModelProvider == null)
 			return;
 
-
-
 		GraphStructure graphStruct = new GraphStructure();
 		GPGraph gGraph = new GPGraph(graphStruct.getGraphModel());
-		gGraph.setGraphLayoutCache(new GraphLayoutCache(gGraph.getModel(), gGraph, false, true));
+		gGraph.setGraphLayoutCache(new GraphLayoutCache(graphStruct.getGraphModel(), gGraph, false, true));
 		graphStruct.setJGraph(gGraph);
 	
 		

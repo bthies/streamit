@@ -41,7 +41,7 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 	 * Boolean that specifies if the elements contained by the Pipeline are 
 	 * displayed (it is expanded) or they are hidden (it is collapsed).
 	 */
-	public boolean isExpanded;
+	private boolean isExpanded;
 	
 	/**
 	 * GEPipeline constructor.
@@ -51,12 +51,14 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 	{
 		super(GEType.PIPELINE, name);
 		localGraphStruct = new GraphStructure();	
+		this.isExpanded = true;
 	}
 
 	public GEPipeline(String name, GraphStructure gs)
 	{
 		super(GEType.PIPELINE, name);
 		localGraphStruct = gs;	
+		this.isExpanded = true;
 	}
 
 	/**
@@ -206,6 +208,8 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
 		}
 		
+		this.isExpanded = true;
+		
 		//CHANGE 12/2/03 JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();
@@ -312,6 +316,8 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		System.out.println("THE NODELIST " +nodeList.toString() + " in Pipeline " + this.name);
 		this.localGraphStruct.getJGraph().getGraphLayoutCache().setVisible(nodeList, false);
 		
+		this.isExpanded = false;
+		
 		for (int i = level - 1; i >= 0; i--)
 		{
 			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
@@ -333,7 +339,7 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 	{
 		for (int i = level; i >= 0; i--)
 		{
-			this.localGraphStruct.setLocationContainersAtLevel(i);
+			this.localGraphStruct.containerNodes.setLocationContainersAtLevel(i, this.localGraphStruct);
 		}
 	}
 	
@@ -452,6 +458,16 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 			setVisible(new Object[]{this}, true);
 		return true;
 	}	
+	
+	/** 
+	 * Get true when the GEPipeline is expanded (contained elements are visible), 
+	 * otherwise get false.
+	 * @return true if expanded; otherwise, return false.
+	 */
+	public boolean isExpanded()
+	{
+		return this.isExpanded;
+	}
 	
 	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
  	 * not a container node, then a list with no elements is returned.

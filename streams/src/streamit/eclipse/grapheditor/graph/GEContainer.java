@@ -38,5 +38,8 @@ public interface GEContainer {
 	public void collapseExpand();
 	public void collapse();
 	public void expand();
+	public boolean isExpanded();
+	public boolean hide();
+	public boolean unhide();
 
 }

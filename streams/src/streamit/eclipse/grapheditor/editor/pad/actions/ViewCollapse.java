@@ -107,7 +107,7 @@ public class ViewCollapse extends AbstractActionDefault {
 			/** Set the container nodes in their correspoding locations **/
 			for (int i = currentLevelView; i >= 0; i--)
 			{
-				graphStruct.setLocationContainersAtLevel(i);
+				graphStruct.containerNodes.setLocationContainersAtLevel(i, graphStruct);
 			}	
 			/** Set the current level **/
 			if (currentLevelView < 0 )

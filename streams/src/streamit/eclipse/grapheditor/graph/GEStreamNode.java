@@ -527,14 +527,14 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 * they cannot be made visible.
 	 * @return true if it was possible to hide the node; otherwise, return false.
 	 */
-	abstract public boolean hide();
+//	abstract public boolean hide();
 
 	/**
 	 * Make the GEStreamNode visible in the display. Note that some nodes cannot be hidden or 
 	 * they cannot be made visible. 
 	 * @return true if it was possible to make the node visible; otherwise, return false.
 	 */	
-	abstract public boolean unhide();
+//	abstract public boolean unhide();
 
 
 	/**

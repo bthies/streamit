@@ -4,7 +4,6 @@
 
 package streamit.eclipse.grapheditor.graph;
 
-import java.awt.Rectangle;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -17,8 +16,6 @@ import javax.swing.JScrollPane;
 
 import org.eclipse.core.resources.IFile;
 import org.jgraph.JGraph;
-import org.jgraph.graph.AbstractCellView;
-import org.jgraph.graph.CellView;
 import org.jgraph.graph.ConnectionSet;
 import org.jgraph.graph.DefaultEdge;
 import org.jgraph.graph.DefaultGraphModel;
@@ -428,52 +425,7 @@ public class GraphStructure implements Serializable{
 		
 		highlightedNodes = nodesToHighLight;
 	}
-	
-	/**
-	 * Sets the location of the Container nodes at level. The bounds of the container
-	 * node are set in such a way that the elements that it contains are enclosed.
-	 * Also, changes the location of the label so that it is more easily viewable.
-	 * @param level The level of the containers whose location will be set. 
-	 */
-	
-	public void setLocationContainersAtLevel(int level)
-	{
-		ArrayList levelList = this.containerNodes.getContainersAtLevel(level);
-		
-		if (levelList != null)
-		{
-			Iterator listIter = levelList.iterator();
-			while(listIter.hasNext())
-			{
-				GEContainer node = (GEContainer) listIter.next();
-				System.out.println("node is "+ node);
-				this.jgraph.getGraphLayoutCache().setVisible(new Object[]{node}, true);
-				Object[] containedCells = node.getContainedElements().toArray();
-		
-				CellView[] containedCellViews = 
-					this.jgraph.getGraphLayoutCache().getMapping(containedCells);
 
-				Rectangle cellBounds = AbstractCellView.getBounds(containedCellViews);
-				
-				
-				Map attribs = ((GEStreamNode) node).getAttributes();
-				GraphConstants.setVerticalAlignment(attribs, 1);
-				GraphConstants.setAutoSize(attribs, false);
-				if (cellBounds != null)
-				{
-					cellBounds.height += 60;
-					cellBounds.width += 60;
-					GraphConstants.setBounds(attribs, cellBounds);
-				}
-				
-				// The lines below are supposed to change label location, but they don't
-				//GraphConstants.setValue(node.getAttributes(), "hello");
-				//GraphConstants.setHorizontalAlignment(node.getAttributes(), 1);
-				
-				this.model.edit(this.getAttributes(), null , null, null);
-			}
-		}
-	}
 
 	/**
 	 * Get the JGraph of GraphStructure.

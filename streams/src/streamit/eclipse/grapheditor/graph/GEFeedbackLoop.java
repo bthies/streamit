@@ -11,7 +11,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 
 import org.jgraph.graph.ConnectionSet;
@@ -26,8 +25,6 @@ import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
  * @author jcarlos
  */
 public class GEFeedbackLoop extends GEStreamNode implements Serializable, GEContainer{
-	
-	
 	
 	/**
 	 * The splitter belonging to this feedback loop.
@@ -79,7 +76,9 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 		this.body = body;
 		this.loop = loop;
 		this.localGraphStruct = new GraphStructure();
-		this.isExpanded = false;
+		
+		//TODO: might have to deal with this later 
+		this.isExpanded = true;
 		
 		//TODO: The children are never set. 
 		//Temporary solution: set them to the value returned by this.getContainedElements() 
@@ -262,7 +261,8 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 			}	
 		}
 
-		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);		
+		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);	
+		this.isExpanded = true;	
 		for (int i = level; i >= 0; i--)
 		{
 			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
@@ -342,6 +342,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 		this.localGraphStruct.getGraphModel().edit(localGraphStruct.getAttributes(), cs, null, null);
 		this.localGraphStruct.getJGraph().getGraphLayoutCache().setVisible(nodeList, false);
 		
+		this.isExpanded = false;
 		for (int i = level - 1; i >= 0; i--)
 		{
 			this.localGraphStruct.containerNodes.hideContainersAtLevel(i);
@@ -381,7 +382,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 	{
 		for (int i = level; i >= 0; i--)
 		{
-			this.localGraphStruct.setLocationContainersAtLevel(i);
+			this.localGraphStruct.containerNodes.setLocationContainersAtLevel(i, this.localGraphStruct);
 		}
 	}
 	
@@ -406,6 +407,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 	 * they cannot be made visible.
 	 * @return true if it was possible to hide the node; otherwise, return false.
 	 */
+	
 	public boolean hide()
 	{
 		this.localGraphStruct.getJGraph().getGraphLayoutCache().
@@ -424,6 +426,16 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 			setVisible(new Object[]{this}, true);
 		return true;
 	}	
+	
+	/** 
+	 * Get true when the GEFeedbackLoop is expanded (contained elements are visible), 
+	 * otherwise get false.
+	 * @return true if expanded; otherwise, return false.
+	 */
+	public boolean isExpanded()
+	{
+		return this.isExpanded;
+	}
 	
 	/**
 	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 

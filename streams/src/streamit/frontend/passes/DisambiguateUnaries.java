@@ -11,7 +11,7 @@ import streamit.frontend.tojava.TempVarGen;
  * a temporary variable.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DisambiguateUnaries.java,v 1.1 2003-05-20 15:52:23 dmaze Exp $
+ * @version $Id: DisambiguateUnaries.java,v 1.2 2003-05-20 16:04:16 dmaze Exp $
  */
 public class DisambiguateUnaries extends SymbolTableVisitor
 {
@@ -81,5 +81,34 @@ public class DisambiguateUnaries extends SymbolTableVisitor
     public Object visitExprPop(ExprPop expr)
     {
         return visitPeekOrPop(expr);
+    }
+
+    public Object visitStmtFor(StmtFor stmt)
+    {
+        // C-style for loops are a *big pain*: if nothing else, the
+        // possible presence of a continue statement means that the
+        // increment statement can't be moved inside the loop.
+        // Don't visit the condition or increment statement for
+        // this reason.  Do visit the init statement (any code it
+        // adds gets put before the loop, which is fine) and the
+        // body (which should always be a StmtBlock).
+        Statement newInit = (Statement)stmt.getInit().accept(this);
+        Statement newBody = (Statement)stmt.getBody().accept(this);
+        if (newInit == stmt.getInit() && newBody == stmt.getBody())
+            return stmt;
+        return new StmtFor(stmt.getContext(), newInit, stmt.getCond(),
+                           stmt.getIncr(), newBody);
+    }
+
+    public Object visitStmtWhile(StmtWhile stmt)
+    {
+        // Similar problem: if the condition results in inserting
+        // statements, they'd need to go both before the loop and
+        // at the end of the loop body, and continue statements
+        // would go in the wrong place.
+        Statement newBody = (Statement)stmt.getBody().accept(this);
+        if (newBody == stmt.getBody())
+            return stmt;
+        return new StmtWhile(stmt.getContext(), stmt.getCond(), newBody);
     }
 }

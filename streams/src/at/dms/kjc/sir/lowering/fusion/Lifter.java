@@ -49,6 +49,7 @@ public class Lifter implements StreamVisitor {
     public void preVisitPipeline(SIRPipeline self,
 				 SIRPipelineIter iter) {
 	liftPipelineChildren(self);
+	RefactorSplitJoin.removeSyncPoints(self);
     }
 
     /* pre-visit a splitjoin */
@@ -181,7 +182,7 @@ public class Lifter implements StreamVisitor {
 	boolean anyChange = false;
 	boolean changing;
 	do {
-	    changing = RefactorSplitJoin.raiseDupDupSJChildren(sj);
+	    changing = RefactorSplitJoin.raiseSJChildren(sj);
 	    anyChange = anyChange || changing;
 	} while (changing);
 	return anyChange;

@@ -6,6 +6,14 @@
  * Michael Gordon
  */
 
+//the blood graph variables
+global gPPMFILE;
+global gRedP;
+global gGreenP;
+global gBlueP;
+global gBloodCycles;
+global gTraceWidth = 7 + (64 / gNumProc);
+
 //for number gathering
 global gNGlastSteady = 0;
 global gNGisSteady = 0;
@@ -20,6 +28,10 @@ global gAdminCount = 0;
 global gAluCount = 0;
 global gSSNumber = 0;
 global outputFile;
+global gTotalDif = 0;
+global gTotalOutputs = 0;
+global totalCycles = 0;
+global gFpuCountTotal = 0;
 
 if (FindFunctionInSymbolHash(gSymbolTable, "dev_data_transmitter_init",3) == NULL)
   include("<dev/data_transmitter.bc>");
@@ -175,19 +187,36 @@ fn NG_update() {
       //this will exit the thread
       exit_now(0);
     }
-    if (gSSNumber > 0) {
+    if (gSSNumber > 0 && gSSNumber < gTotalSS) {
       MFLOPS = (gMHz * gFpuCount) / dif; 
       printf("SS: cycle = %d, dif = %d, MFLOPS = %d, Outputs = %d, Cycles/Output = %d\n", 	 
 	     time_lo, dif, MFLOPS, gTotalSteadyItems, dif/gTotalSteadyItems);
       fprintf(outputFile, "SS: cycle = %d, dif = %d, MFLOPS = %d, Outputs = %d, Cycles/Output = %d\n", 	 
 	      time_lo, dif, MFLOPS, gTotalSteadyItems, dif/gTotalSteadyItems);
+      //add to the totals
+      gTotalDif += dif;
+      gTotalOutputs += gTotalSteadyItems;
+      gFpuCountTotal += gFpuCount;
     }
     
     if (gSSNumber == gTotalSS) {
-      gInterrupted = 1;
+      fprintf(outputFile, "tiles ; tiles assigned ; cycles/output ; mflops\n");
+      printf("tiles ; tiles assigned ; cycles/output ; mflops (250Mhz)\n");
+      fprintf(outputFile,"%d;%d;%d;%d\n", gStreamItTiles, gMappedTiles, gTotalDif / gTotalOutputs, 
+	      (250*gFpuCountTotal)/gTotalDif);
+      printf("%d;%d;%d;%d\n", gStreamItTiles, gMappedTiles, gTotalDif / gTotalOutputs, 
+	      (250*gFpuCountTotal)/gTotalDif);
+      //only exit here if you don't want a blood graph
+      //gInterrupted = 1;
       //this will exit the thread
-      exit_now(0);
+//      exit_now(0);
+      
+      //we are done getting the numbers, deregister the handler.
+      EventManager_DeRegisterHandler("issued_instruction", "__event_instr_count");
+      //now get the blood graph
+      setup_bloodgraph("bloodgraph.ppm", gTotalDif/gTotalOutputs);
     }
+
 
     //reset the last steady state
     gNGlastSteady = time_lo;
@@ -270,4 +299,65 @@ fn __event_instr_count(hms)
   }
   
 
+}
+
+fn close_bloodgraph() {
+  free(gRedP); free(gGreenP); free(gBlueP);
+
+  close_ppm(gPPMFILE);
+  //this should exit!!!!!
+  gInterrupted = 1;
+  //this will exit the thread
+  exit_now(0);
+}
+
+fn update_bloodgraph(hms) {
+  local j;
+  local value;
+  //stop updating the blood graph
+  if (gBloodCycles <= 0) {
+    close_bloodgraph();
+  }
+    
+  for (j = 0; j < gNumProc; ++j)
+    {
+      local k;
+      local popcount;
+      local delta;
+      local curPos = 0;
+      local status = Proc_GetStallReason(Machine_GetProc(machine,j));
+      popcount = ((status & 1)
+		  + ((status >> 1) & 1)
+		  + ((status >> 2) & 1)
+		  + ((status >> 3) & 1)
+		  + ((status >> 4) & 1)
+		  + ((status >> 5) & 1)
+		  + ((status >> 6) & 1));
+      delta = (popcount << 16)/gTraceWidth;
+      
+      for (k = 0; k < gTraceWidth-1; k++)
+      {
+	value = get_proc_state_color(j, status,gRedP,gGreenP,gBlueP,curPos>>16);
+	write_ppm(gPPMFILE, *gRedP, *gGreenP, *gBlueP);
+	curPos += delta;
+      }
+      write_ppm(gPPMFILE,0,0,0);
+    }
+  gBloodCycles--;
+}
+
+
+fn setup_bloodgraph(filename, cycles) {
+  gPPMFILE = open_ppm(filename, cycles, gNumProc*gTraceWidth);
+  if (gPPMFILE == NULL)
+  {
+    printf("Error opening %s\n",filename);
+    return 0;
+  }
+  gRedP = malloc(4);
+  gGreenP = malloc(4);
+  gBlueP = malloc(4);
+
+  gBloodCycles = cycles;
+  EventManager_RegisterHandler("clock", "update_bloodgraph"); 
 }

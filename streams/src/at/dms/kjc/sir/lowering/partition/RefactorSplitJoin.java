@@ -190,11 +190,14 @@ public class RefactorSplitJoin {
     }
 
     /**
-     * Mutates <str> into one in which all splitjoins contained in any
-     * children are made rectangular and have synchronization after
-     * each child.
+     * Returns new version of <str> into one in which all splitjoins
+     * contained in any children are made rectangular and have
+     * synchronization after each child.  Also mutates <str>.
      */
-    public static void addDeepRectangularSyncPoints(SIRStream str) {
+    public static SIRStream addDeepRectangularSyncPoints(SIRStream str) {
+	// make a wrapper, so that we can deal with splitjoins on the
+	// outside
+	SIRPipeline wrapper = SIRContainer.makeWrapper(str);
 	// first lift everything
 	Lifter.lift(str);
 	// make all splitjoins rectangular and add synchronization
@@ -215,6 +218,8 @@ public class RefactorSplitJoin {
 		}});
 	// lift all but sync points we added
 	Lifter.liftPreservingSync(str);
+	// return child of wrapper
+	return wrapper.get(0);
     }
     static int ij=0;
 

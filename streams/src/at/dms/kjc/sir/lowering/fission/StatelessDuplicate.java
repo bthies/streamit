@@ -73,6 +73,9 @@ public class StatelessDuplicate {
 			       new JFieldDeclaration[0], /* fields */
 			       new JMethodDeclaration[0] /* methods */);
 
+	// replace in parent
+	origFilter.getParent().replace(origFilter, result);
+
 	// make an init function
 	JMethodDeclaration init = makeSJInit(result);
 
@@ -101,9 +104,20 @@ public class StatelessDuplicate {
 					      SIRJoinType.NULL, 
 					      reps));
 	}
+	// rescale the joiner to the appropriate width
+	result.rescale();
 	// set the init function
 	result.setInit(init);
-	origFilter.getParent().replace(origFilter, result);
+
+	/*
+	// propagate constants through the new stream, to resolve
+	// arguments to init functions
+	SIRContainer toplevel = result.getParent();
+	while (toplevel.getParent()!=null) {
+	    toplevel = toplevel.getParent();
+	}
+	ConstantProp.propagateAndUnroll(toplevel);
+	*/
     }
 
     /**
@@ -115,14 +129,14 @@ public class StatelessDuplicate {
 	JMethodDeclaration result = (JMethodDeclaration)
 	    ObjectDeepCloner.deepCopy(origFilter.getInit());
 	// get the parameters
-	JFormalParameter[] params = result.getParameters();
+	List params = sj.getParams();
 	// now build up the body as a series of calls to the sub-streams
 	LinkedList bodyList = new LinkedList();
 	for (ListIterator it = newFilters.listIterator(); it.hasNext(); ) {
 	    // build up the argument list
 	    LinkedList args = new LinkedList();
-	    for (int i=0; i<params.length; i++) {
-		args.add(new JLocalVariableExpression(null, params[i]));
+	    for (ListIterator pit = params.listIterator(); pit.hasNext(); ) {
+		args.add((JExpression)pit.next());
 	    }
 	    // add the child and the argument to the parent
 	    sj.add((SIRStream)it.next(), args);
@@ -142,9 +156,9 @@ public class StatelessDuplicate {
 	// otherwise we have a stage in the two-stage filter that
 	// doesn't consume anything at all
 	//newFilters.add(ObjectDeepCloner.deepCopy(origFilter));
+	System.err.println("Duplicating " + origFilter.getName() + " into a " + reps + "-way SplitJoin.");
 	for (int i=0; i<reps; i++) {
 	    newFilters.add(makeDuplicate(i));
-	    System.err.println("making a duplicate of " + origFilter + " " + origFilter.getName());
 	}
     }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.14 2002-11-19 22:26:39 aalamb Exp $
+ * $Id: KjcOptions.opt,v 1.15 2002-11-26 22:12:47 aalamb Exp $
  */
 
 prefix Kjc
@@ -223,7 +223,7 @@ longname		"frequencyreplacement"
 longname		"targetFFTSize"
 	shortcut	"t"
 	type		int
-	default		"-11"
+	default		"1"
 	requireArgument
 	help		"The target number of outputs (N) to produce (used with frequencyreplacement)"
 

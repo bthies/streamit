@@ -886,6 +886,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		return self;
 		//return new JVariableDefinition(null, modifiers, type, ident, cp);
 	    }
+            // Don't try to clone structures!
+            else if (type.getCClass().getSuperClass().getIdent().equals("Structure"))
+            {
+                // Just discard the initialization; we don't care.
+                return new JVariableDefinition(null, modifiers, type, ident, null);
+            }
 	    //defining a variable to be a named stream
 	    //If the class of this variable is in the SIR table then
 	    //we need to add this definition to the symbol table

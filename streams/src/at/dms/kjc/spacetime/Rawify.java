@@ -247,8 +247,7 @@ public class Rawify
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
 
 	//don't do anything for a redundant buffer
-	if (output.noOutputs() || (output.oneOutput() && 
-	    InterTraceBuffer.getBuffer(output.getSingleEdge()).redundant()))
+	if (OffChipBuffer.unnecessary(output))
 	    return;
 	
 	//if we are in the init set to zero, 1 to primepump
@@ -389,11 +388,21 @@ public class Rawify
 	if (filterNode.getNext() != null &&
 		 filterNode.getNext().isOutputTrace()) {
 	    //get this buffer or null if there are no outputs
+	    OutputTraceNode output = (OutputTraceNode)filterNode.getNext();
 	    OffChipBuffer buffer =
 		IntraTraceBuffer.getBuffer(filterNode,
-					   (OutputTraceNode)filterNode.getNext()).getNonRedundant();
+					   output).getNonRedundant();
 	    if (buffer == null)
 		return;
+
+	    //set to true if the only destination is a file, and 
+	    //everything in between is unnecessary
+	    boolean fileDest = false;
+	    if (output.oneOutput() && OffChipBuffer.unnecessary(output) &&
+		output.getSingleEdge().getDest().isFileWriter() &&
+		OffChipBuffer.unnecessary(output.getSingleEdge().getDest()))
+		fileDest = true;
+		
 	    
 	    int stage = 0;
 	    if (!init && !primepump)
@@ -411,26 +420,37 @@ public class Rawify
 	    }
 	    
 	    if (items > 0 ) {
-		int bytes = 
-		    Util.cacheLineDiv((items * Util.getTypeSize(filterNode.getFilter().getOutputType())) *
-				      4);
-		SpaceTimeBackend.println("Generating DRAM store command with " + items + " items, typesize " + 
-					 Util.getTypeSize(filterNode.getFilter().getOutputType()) + 
-					 " and " + bytes + " bytes");
-		tile.getComputeCode().addDRAMCommand(false, stage, bytes, buffer, false);
+		int words = 
+		    (items * Util.getTypeSize(filterNode.getFilter().getOutputType()));
+		if (fileDest) 
+		    tile.getComputeCode().addFileCommand(false, init || primepump, 
+							 words, buffer);
+		else {
+		    SpaceTimeBackend.println("Generating DRAM store command with " + items + " items, typesize " + 
+					     Util.getTypeSize(filterNode.getFilter().getOutputType()) + 
+					     " and " + words + " words");
+		    tile.getComputeCode().addDRAMCommand(false, stage, 
+							 Util.cacheLineDiv(words * 4),
+							 buffer, false);
+		}
 	    }
 	    if (primepump && filterInfo.primePumpItemsNotConsumed() > 0) {
-		int bytes = 
-		    Util.cacheLineDiv((filterInfo.primePumpItemsNotConsumed() * 
-				       Util.getTypeSize(filterNode.getFilter().getOutputType())) *
-				      4);
-		SpaceTimeBackend.println("Generating DRAM store command with " + filterInfo.primePumpItemsNotConsumed()
-					+ " items, typesize " + 
-				     Util.getTypeSize(filterNode.getFilter().getOutputType()) + 
-				     " and " + bytes + " bytes at end of primepipe");
-		tile.getComputeCode().addDRAMCommand(false, 2, bytes, buffer, false);
+		int words =
+		    (filterInfo.primePumpItemsNotConsumed() * 
+		     Util.getTypeSize(filterNode.getFilter().getOutputType()));
+		if (fileDest) 
+		    tile.getComputeCode().addFileCommand(false, init || primepump, 
+							 words, buffer);
+		else {
+		    SpaceTimeBackend.println("Generating DRAM store command with " + filterInfo.primePumpItemsNotConsumed()
+					     + " items, typesize " + 
+					     Util.getTypeSize(filterNode.getFilter().getOutputType()) + 
+					     " and " + words + " words at end of primepipe");
+		    tile.getComputeCode().addDRAMCommand(false, 2, 
+							 Util.cacheLineDiv(words * 4),
+							 buffer, false);
+		}
 	    }
-	    
 	}
     }
     
@@ -988,7 +1008,7 @@ public class Rawify
 	boolean cacheAlignDest = true; 
 	if (node.getNext() instanceof OutputTraceNode) {
 	    OutputTraceNode output = (OutputTraceNode)node.getNext();
-	    if (output.oneOutput() && 
+	    if (output.oneOutput() && OffChipBuffer.unnecessary(output) &&
 		output.getSingleEdge().getDest().isFileWriter() &&
 		OffChipBuffer.unnecessary(output.getSingleEdge().getDest()))
 		cacheAlignDest = false;

@@ -54,6 +54,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
      * Returns the name for <str>, or null if none has been assigned.
      */
     public static String getName(SIROperator str) {
+	if (names==null) { return null; }
 	return (String)names.get(str);
     }
 

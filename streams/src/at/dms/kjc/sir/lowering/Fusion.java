@@ -52,14 +52,13 @@ public class Fusion {
 	Schedule schedule = scheduler.computeSchedule();
 	// get the schedule -- expect it to be a list
 	List schedList = (List)schedule.getSteadySchedule();
+	SIRScheduler.printSchedule(schedList, "two fused filters");
 	// for now, assume we have the first one executing some number
 	// of times -- get this number of times
-	int count1 = 0;
-	while (schedList.get(count1)==f1) {
-	    count1++;
-	}
-	// then count2 is just however many are left
-	int count2 = schedList.size()-count1;
+	int count1 = 
+	  ((SchedRepSchedule)schedList.get(0)).getTotalExecutions().intValue();
+	int count2 =
+	  ((SchedRepSchedule)schedList.get(1)).getTotalExecutions().intValue();
 
 	// so now start building the new work function
 	JBlock newStatements = new JBlock(null, new JStatement[0], null);
@@ -137,7 +136,7 @@ public class Fusion {
 	final int popCount = 0;
 	// do the replacement
 	newConsumers.accept(new SLIRReplacingVisitor() {
-		public Object visitSIRPopExpression(SIRPopExpression oldSelf,
+		public Object visitPopExpression(SIRPopExpression oldSelf,
 						    CType oldTapeType) {
 		    // visit super
 		    SIRPopExpression self = 

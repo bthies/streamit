@@ -66,8 +66,8 @@ public class SIRScheduler implements Constants {
 	// compute a schedule
 	Schedule schedule = (Schedule)scheduler.computeSchedule();
 	// debugging output
-	//printSchedule(schedule.getSteadySchedule(), "steady state ");
-	//printSchedule(schedule.getInitSchedule(), "initialization ");
+	//printSchedule(schedule.getSteadySchedule(), "steady state");
+	//printSchedule(schedule.getInitSchedule(), "initialization");
 	// get toplevel schedule
 	Object schedObject = schedule.getSteadySchedule();
 	// make work function implementing the steady-state schedule
@@ -103,10 +103,10 @@ public class SIRScheduler implements Constants {
     /**
      * Prints a schedule to the screen, with prefix label <label>
      */
-    private void printSchedule(Object schedObject, String label) {
+    public static void printSchedule(Object schedObject, String label) {
 	// print top-level label
 	System.out.println("---------------------------------");
-	System.out.println(label + "schedule: ");
+	System.out.println(label + " schedule: ");
 	// print the schedule
 	printSchedule(schedObject, 1);
     }
@@ -114,7 +114,7 @@ public class SIRScheduler implements Constants {
     /**
      * Prints a sub-schedule with indentation <tabs>.
      */
-    private void printSchedule(Object schedObject, int tabs) {
+    private static void printSchedule(Object schedObject, int tabs) {
 	// print indentation
 	for (int i=0; i<tabs; i++) {
 	    System.out.print("  ");
@@ -127,6 +127,12 @@ public class SIRScheduler implements Constants {
 		 it.hasNext(); ) {
 		printSchedule(it.next(), tabs+1);
 	    }
+	} else if (schedObject instanceof SchedRepSchedule) {
+	    // get the schedRep
+	    SchedRepSchedule rep = (SchedRepSchedule)schedObject;
+	    // print stuff
+	    System.out.print("Rep x " + rep.getTotalExecutions() + ":");
+	    printSchedule(rep.getOriginalSchedule(), tabs+1);
 	} else {
 	    // print out an SIR component
 	    System.out.println(((SIROperator)schedObject).getName());

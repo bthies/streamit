@@ -26,6 +26,7 @@ public class Flattener {
 					    SIRInterfaceTable[]
 					    interfaceTables) {
 	// DEBUGGING PRINTING
+	System.out.println("--------- ON ENTRY TO FLATTENER ----------------");
 	SIRPrinter printer1 = new SIRPrinter();
 	str.accept(printer1);
 	printer1.close();
@@ -40,7 +41,7 @@ public class Flattener {
 	*/
 
 	// DEBUGGING PRINTING
-	System.out.println("-----------------------------------");
+	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");
 	printer1 = new SIRPrinter();
 	str.accept(printer1);
 	printer1.close();
@@ -57,7 +58,7 @@ public class Flattener {
 	LowerInitFunctions.lower(str, schedule);
 
 	// DEBUGGING PRINTING
-	System.out.println("-----------------------------------");
+	System.out.println("----------- AFTER FLATTENER ------------------");
 	IRPrinter printer = new IRPrinter();
 	flatClass.accept(printer);
 	printer.close();

@@ -5,6 +5,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.lir.LIRStreamType;
 import java.util.List;
 import java.util.LinkedList;
+import java.util.ListIterator;
 
 /**
  * This represents a pipeline of stream structures, as would be
@@ -95,6 +96,27 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     public List getChildren() {
 	// the children are just the components of the pipeline
 	return (List)elements.clone();
+    }
+
+    /**
+     * Returns a list of the children between <first> and <last>,
+     * inclusive.  Assumes that <first> and <last> are both contained
+     * in this, and that <first> comes before <last>.
+     */
+    public List getChildrenBetween(SIROperator first, SIROperator last) {
+	// make result
+	LinkedList result = new LinkedList();
+	// start iterating through children at <first>
+	ListIterator iter = elements.listIterator(elements.indexOf(first));
+	Object o;
+	do {
+	    // get next child and add to result list
+	    o = iter.next();
+	    result.add(o);
+	    // quit when we've added the last one
+	} while (o!=last);
+	// return result
+	return result;
     }
 
     /**

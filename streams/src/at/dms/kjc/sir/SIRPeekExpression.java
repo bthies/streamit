@@ -58,6 +58,13 @@ public class SIRPeekExpression extends JExpression {
 	this.arg = arg;
     }
 
+    /**
+     * Returns the argument of this.
+     */
+    public JExpression getArg() {
+	return arg;
+    }
+
     // ----------------------------------------------------------------------
     // ACCESSORS
     // ----------------------------------------------------------------------

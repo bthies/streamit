@@ -12,7 +12,7 @@
  * during the initialization part;
  */
 
-complex[N_bm][N_srg][N_pri]->complex[N_bm][N_srg][N_dop][N_pri-N_dop+1] pipline DopFilt(int N_bm,int N_srg,int N_pri,int N_dop) {
+complex[N_bm][N_srg][N_pri]->complex[N_bm][N_srg][N_dop][N_pri-N_dop+1] pipeline DopFilt(int N_bm,int N_srg,int N_pri,int N_dop) {
     add Chg40(N_bm,N_srg,N_pri,N_dop);
     add ParaFFT(N_bm,N_srg,N_dop,N_pri-N_dop+1);
     add Chg41(N_bm,N_srg,N_dop,N_pri-N_dop+1);	
@@ -62,7 +62,7 @@ complex[N_dop]->complex[N_bm][N_srg][N_dop][N_stag] filter Chg41(int N_bm,int N_
 			for (int l=0; l < N_dop; l++)
 			    OutArr[i][j][l][k]=InArr[l];
 		    }
-	push OutArr;
+	push(OutArr);
 
     }
 }
@@ -84,13 +84,13 @@ complex[N]-> complex filter DecompVect(int N){
 	InVect= pop();
 
 	for (int i ; i < N; i++)
-	    push(inVect[i]);
+	    push(InVect[i]);
     }
 }
 
 // This function gets elements of a vector and puts them back
 // togeather.
-complex->complex[N] filter CompVect{
+complex->complex[N] filter CompVect(int N){
     init{
     }
 

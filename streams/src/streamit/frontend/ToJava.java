@@ -15,7 +15,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.38 2003-07-15 19:22:43 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.39 2003-07-23 21:06:16 dmaze Exp $
  */
 public class ToJava
 {
@@ -149,9 +149,11 @@ public class ToJava
      * @param prog  the complete IR tree to lower
      * @param libraryFormat  true if the program is being converted
      *        to run under the StreamIt Java library
+     * @param varGen  object to generate unique temporary variable names
      * @returns the converted IR tree
      */
-    public static Program lowerIRToJava(Program prog, boolean libraryFormat)
+    public static Program lowerIRToJava(Program prog, boolean libraryFormat,
+                                        TempVarGen varGen)
     {
         /* What's the right order for these?  Clearly generic
          * things like MakeBodiesBlocks need to happen first.
@@ -161,7 +163,6 @@ public class ToJava
          * Java front-end can handle.  OTOH,
          * MoveStreamParameters introduces references to
          * "this", which doesn't exist. */
-        TempVarGen varGen = new TempVarGen();
         prog = (Program)prog.accept(new MakeBodiesBlocks());
         prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new DisambiguateUnaries(varGen));
@@ -211,7 +212,8 @@ public class ToJava
         if (!SemanticChecker.check(prog))
             return;
 
-        prog = lowerIRToJava(prog, libraryFormat);
+        TempVarGen varGen = new TempVarGen();
+        prog = lowerIRToJava(prog, libraryFormat, varGen);
 
         try
         {
@@ -221,7 +223,8 @@ public class ToJava
                 outWriter = new OutputStreamWriter(System.out);
             outWriter.write("import streamit.*;\n");
 
-            String javaOut = (String)prog.accept(new NodesToJava(null));
+            String javaOut =
+                (String)prog.accept(new NodesToJava(null, varGen));
             outWriter.write(javaOut);
             outWriter.flush();
         }

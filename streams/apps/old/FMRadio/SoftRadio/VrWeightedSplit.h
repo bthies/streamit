@@ -7,65 +7,65 @@ template <class dataType>
 class VrWeightedSplit : public VrSigProc<dataType, dataType>
 {
     int roundInput;
-	int nOutputs;
-	int *outputWeights;
+    int nOutputs;
+    int *outputWeights;
 
-public:
-
-	VrWeightedSplit () : roundInput (0), nOutputs (0), outputWeights (NULL)  { }
-
+ public:
+    
+    VrWeightedSplit () : roundInput (0), nOutputs (0), outputWeights (NULL)  { }
+    
     void connect_dest (VrSigProc<dataType, dataType> *dst, int weight)
-    {
-		nOutputs++;
-		outputWeights = (int*) realloc (outputWeights, nOutputs * sizeof (int));
-		outputWeights [nOutputs - 1] = weight;
-		roundInput += weight;
-
-		// connect the output to this stream
-		// first add a new output buffer to this filter
-		{
-			VrBuffer<dataType>* oldOutBuffer = outBuffer;
-			outBuffer = new (VrBuffer<dataType> *[nOutputs]);
-
-			memcpy (outBuffer, oldOutBuffer, (nOutputs-1) * sizeof (dataType*));
-			delete [] oldOutBuffer;
-			
-			outBuffer[i] = new VrBuffer<dataType>(this);
+      {
+	nOutputs++;
+	outputWeights = (int*) realloc (outputWeights, nOutputs * sizeof (int));
+	outputWeights [nOutputs - 1] = weight;
+	roundInput += weight;
+	
+	// connect the output to this stream
+	// first add a new output buffer to this filter
+	{
+	  VrBuffer<dataType>* oldOutBuffer = outBuffer;
+	  outBuffer = new (VrBuffer<dataType> *[nOutputs]);
+	  
+	  memcpy (outBuffer, oldOutBuffer, (nOutputs-1) * sizeof (dataType*));
+	  delete [] oldOutBuffer;
+	  
+	  outBuffer[i] = new VrBuffer<dataType>(this);
 #ifdef PERFMON
-			outBuffer[i]->us_cycles=cycles;
+	  outBuffer[i]->us_cycles=cycles;
 #endif
-		}
-
-		// setup the connection and increase the necessary buffering
-		dst->connect (getOutputBufferN (nOutputs - 1));
-		setHistory (roundInput);
-    }
-
+	}
+	
+	// setup the connection and increase the necessary buffering
+	dst->connect (getOutputBufferN (nOutputs - 1));
+	setHistory (roundInput);
+      }
+    
     void work (int n)
-    {
-		while (n >= roundInput)
-		{
-	        int dataLeft = 0;
-        	int nOutput = 0;
-
-			dataType *inputData = inputReadPtr (roundInput);
-
-			for (dataLeft = roundInput, nOutput = 0; 
-
-				dataLeft != 0;
-
-				outputData += outputWeights [nOutput],
-				dataLeft -= outputWeights [nOutput],
-				nOutput++)
+      {
+	while (n >= roundInput)
+	  {
+	    int dataLeft = 0;
+	    int nOutput = 0;
+	    
+	    dataType *inputData = inputReadPtr (roundInput);
+	    
+	    for (dataLeft = roundInput, nOutput = 0; 
+		 
+		 dataLeft != 0;
+		 
+		 inputData += outputWeights [nOutput],
+		   dataLeft -= outputWeights [nOutput],
+		   nOutput++)
 			{
-		    	outputWrite (inputData, outputWeights [nOuptut]);
+			  outputWrite (inputData, outputWeights [nOutput]);
 			}
-
-			incInput (roundInput);
-
-			n -= roundInput;
-		}
-    }
+	    
+	    incInput (roundInput);
+	    
+	    n -= roundInput;
+	  }
+      }
 };
 
 #endif // __VR_WEIGHTED_SPLIT_H__

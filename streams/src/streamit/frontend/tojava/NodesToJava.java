@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.27 2002-09-20 17:39:32 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.28 2002-09-20 18:29:05 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -525,7 +525,13 @@ public class NodesToJava implements FEVisitor
     
     public Object visitStmtExpr(StmtExpr stmt)
     {
-        return (String)stmt.getExpression().accept(this);
+        String result = (String)stmt.getExpression().accept(this);
+        // Gross hack to strip out leading class casts,
+        // since they'll illegal (JLS 14.8).
+        if (result.charAt(0) == '(' &&
+            Character.isUpperCase(result.charAt(1)))
+            result = result.substring(result.indexOf(')') + 1);
+        return result;
     }
 
     public Object visitStmtFor(StmtFor stmt)
@@ -627,18 +633,24 @@ public class NodesToJava implements FEVisitor
                 st.getOut() instanceof TypePrimitive &&
                 ((TypePrimitive)st.getOut()).getType() ==
                 TypePrimitive.TYPE_VOID)
-                result += "public ";
-            result += indent + "class " + spec.getName() + " extends ";
-            switch (spec.getType())
             {
-            case StreamSpec.STREAM_FILTER: result += "Filter";
-                break;
-            case StreamSpec.STREAM_PIPELINE: result += "Pipeline";
-                break;
-            case StreamSpec.STREAM_SPLITJOIN: result += "SplitJoin";
-                break;
-            case StreamSpec.STREAM_FEEDBACKLOOP: result += "FeedbackLoop";
-                break;
+                result += "public class " + spec.getName() +
+                    " extends StreamIt";
+            }
+            else
+            {
+                result += "class " + spec.getName() + " extends ";
+                switch (spec.getType())
+                {
+                case StreamSpec.STREAM_FILTER: result += "Filter";
+                    break;
+                case StreamSpec.STREAM_PIPELINE: result += "Pipeline";
+                    break;
+                case StreamSpec.STREAM_SPLITJOIN: result += "SplitJoin";
+                    break;
+                case StreamSpec.STREAM_FEEDBACKLOOP: result += "FeedbackLoop";
+                    break;
+                }
             }
             result += "\n" + indent + "{\n";
             addIndent();

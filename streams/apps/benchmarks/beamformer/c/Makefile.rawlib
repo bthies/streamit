@@ -1,0 +1,37 @@
+## Created RJudd October 18, 2000
+## SPAWARSYSCEN D857
+VSIPL_DIR = vsipl/TASP_VSIPL_Core_Plus
+
+CC=/home/pkg/brave_new_linux/0072.crudo/install/rgcc/bin/raw-local-raw-gcc
+INCLUDE += -Iinclude
+INCLUDE += -Isrc
+INCLUDE += -I$(VSIPL_DIR)/include
+INCLUDE += -I/home/pkg/brave_new_linux/0072.crudo/install/rgcc 
+INCLUDE += -I/home/pkg/brave_new_linux/0072.crudo/install/newlib/include 
+INCLUDE += -I/home/pkg/brave_new_linux/0072.crudo/install/rawlib/include
+INCLUDE += -I/home/bits6/aalamb/starsearch/common 
+INCLUDE += -I/home/pkg/brave_new_linux/0072.crudo/install/rmpilib/include
+
+DEFINES=-DVSIP_PERFORMANCE_MODE
+OPTIONS=-O6 -Wall -ansi -pedantic 
+COMPILE=$(CC) $(DEFINES) $(OPTIONS)
+
+#SOURCES= 
+SRC=src
+OBJECTS=$(SRC)/LPF.o \
+	$(SRC)/DIT.o \
+	$(SRC)/BF.o \
+	$(SRC)/PC.o \
+	$(SRC)/Utils.o \
+	$(SRC)/main_raw.o
+
+all: $(OBJECTS)
+
+
+%.o: %.c
+	$(COMPILE) $(INCLUDE) -c $? -o $@
+
+
+clean:
+	rm -f $(OBJECTS)
+

@@ -25,12 +25,21 @@ PCADemo: vsipl $(SRC)/main.o $(SRC)/LPF.o $(SRC)/DIT.o \
 			$(SRC)/DIT.o $(SRC)/BF.o $(SRC)/PC.o $(SRC)/Utils.o \
 	-lvsip_c -lm -o PCADemo
 
+raw-demo: vsipl $(SRC)/main_raw.o $(SRC)/LPF.o $(SRC)/DIT.o \
+		   $(SRC)/BF.o $(SRC)/PC.o $(SRC)/Utils.o
+	 $(LINKER) $(LINK_FLAGS) $(SRC)/main_raw.o $(SRC)/LPF.o \
+		   $(SRC)/DIT.o $(SRC)/BF.o $(SRC)/PC.o $(SRC)/Utils.o \
+	           -lvsip_c -lm -o rawPCADemo
+
+
+
 run: PCADemo
 	PCADemo $(RUN_ARGS)
 
 $(SRC)/main.o: $(SRC)/main.c $(INC)/LPF.h $(INC)/DIT.h \
 		$(INC)/BF.h $(INC)/PC.h $(INC)/Utils.h $(INC)/Globals.h
 	$(CC) $(CC_FLAGS) $(SRC)/main.c -o $(SRC)/main.o
+
 
 $(SRC)/LPF.o: $(INC)/LPF.h $(SRC)/LPF.c $(INC)/Utils.h $(INC)/Globals.h
 	$(CC) $(CC_FLAGS) $(SRC)/LPF.c -o $(SRC)/LPF.o
@@ -50,7 +59,7 @@ $(SRC)/Utils.o: $(INC)/Utils.h $(SRC)/Utils.c $(INC)/Globals.h
 clean:
 	rm -f $(SRC)/*.o
 	rm -f PCADemo
-	rm -rf vsipl
+	#rm -rf vsipl
 
 vsipl:
 	cp vsipl.tar.gz temp.tar.gz

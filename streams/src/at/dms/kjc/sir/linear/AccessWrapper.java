@@ -8,13 +8,13 @@ import at.dms.kjc.iterator.*;
 
 
 /**
- * This class represents an access expression to a field or array.
+ * This class represents an access expression for a field or array.
  * The field access expressions
- * provided by KOPI don't seem to do the right thing for equals.
+ * provided by KOPI don't seem to do the right thing for equals -- eg they
+ * implement strict object equality and I want them to use value equality.
  * (and I haven't tested the behavior of ArrayAccessExpressions, but I assume that
  * they also don't do the right thing for equals).
- * Basically, JFieldAccessExpressions are compared using object equality
- * and I want them to be compared using value equality (eg two wrappers that
+ * (eg two wrappers that
  * represent the same field should be equal).<p>
  *
  * As an interesting note on implementation in KOPI, it seems as though there are
@@ -28,120 +28,47 @@ import at.dms.kjc.iterator.*;
  *
  * Also, we can wrap array accesses, but it gets tricky when combinations of arrays and fields are used....
  *
- * $Id: AccessWrapper.java,v 1.1 2002-09-04 19:05:59 aalamb Exp $
+ * $Id: AccessWrapper.java,v 1.2 2002-09-09 21:52:06 aalamb Exp $
  **/
 
-class AccessWrapper {
-    /** space to hold the field name **/
-    String fieldIdentifier;
+abstract class AccessWrapper {
+    /** 
+     * Used for generating a hash code. Should be the same for all
+     * objects which represent the same value in the IR.
+     **/
+    String ident;
 
     /**
-     * Create a new access wrapper for the specified field name.
+     * Create an Access wrapper with the specified name. Names don't need to be unique, but
+     * they need to be the same for all wrappers that wrap the same
+     * object (same being computed by value, not boject equality).
      **/
-    AccessWrapper(String ident) {
-	this.fieldIdentifier = ident;
+    public AccessWrapper(String name) {
+	if (name == null) {throw new IllegalArgumentException("Null name passed to AccessWrapper constructor");}
+	this.ident = name;
     }
 
-    // the this and local var versions are subclasses
-    
-    /**
-     * Factory method for creating FeildAccessWrappers. Returns null
-     * if the field can not be wrapper (see rules in main class description)
-     * otherwise returns a wrapper for this field.
-     **/
-    public static AccessWrapper wrapFieldAccess(JFieldAccessExpression expr) {
-	if (expr == null) {throw new RuntimeException("null arg passed to wrapFieldAccess");}
-	// get the prefix of the field access (eg the structure/object that it belongs to)
-	JExpression prefix = expr.getPrefix();
-
-	// dispatch on type (bad OO, so sue me).
-	if (prefix instanceof JThisExpression) {
-	    return new ThisAccessWrapper(expr.getIdent());
-	} else if (prefix instanceof JLocalVariableExpression) {
-	    return new LocalVariableAccessWrapper(expr.getIdent(),
-						       ((JLocalVariableExpression)prefix).getVariable());
-	} else {
-	    System.err.println("Warning: can't wrap a FieldAccessExpression with prefix : " + prefix);
-	    return null;
-	}
-    }
-
-    /**
-     * Returns true if the specified object represents the same
-     * field access expression as this.
-     **/
+    /** check identities. **/
     public boolean equals(Object o) {
 	if (o == null) {return false;}
+	if (!(o instanceof AccessWrapper)) {return false;}
+	// cast for convenience
 	AccessWrapper other = (AccessWrapper)o;
-	if (other.fieldIdentifier.equals(this.fieldIdentifier)) {
+	if (other.ident.equals(this.ident)) {
 	    return true;
 	} else {
 	    return false;
 	}
     }
 
-    /**
-     * returns the hashcode from the identity string.
-     * simple way to preserve the semantics of equals --
-     * if two objects are equal, then their hashCode()
-     * methods return the same value.
-     **/
+    /** Return the hashcode from the string identity. **/
     public int hashCode() {
-	return this.fieldIdentifier.hashCode();
+	return this.ident.hashCode();
     }
-}
-
-/**
- * Represents a local field (eg of the form this.fieldname).
- **/
-class ThisAccessWrapper extends AccessWrapper {
-    public ThisAccessWrapper(String ident) {
-	super(ident);
-    }
-    public String toString() {
-	return ("<this." +this.fieldIdentifier + ">");
-    }
-}
-
-/**
- * Represents a field that is accessed via a local variable.
- **/
-class LocalVariableAccessWrapper extends AccessWrapper {
-    JLocalVariable localVariable;
-    
-    public LocalVariableAccessWrapper(String ident,
-					   JLocalVariable var) {
-	super(ident);
-	this.localVariable = var;
-    }
-
-    /** update the equals method to also check that the vars are the same. **/
-    public boolean equals(Object o) {
-	// if the types of object and the field names don't match
-	// then we are done.
-	if (!super.equals(o)) {
-	    return false;
-	}
-
-	// check for the correct type
-	if (!(o instanceof LocalVariableAccessWrapper)) {
-	    return false;
-	}
-	// casting magic
-	LocalVariableAccessWrapper other = (LocalVariableAccessWrapper)o;
-	// remember the super class already checked the field name for us,
-	// all we have to do is to check the variable.
-	if (other.localVariable.getIdent().equals(this.localVariable.getIdent())) {
-	    return true;
-	} else {
-	    return false;
-	}
-    }
-    public String toString() {
-	return ("<" + this.localVariable + "." +this.fieldIdentifier + ">");
-    }
+    /** returns the identity string of this access wrapper. **/
+    public String getIdent() {return this.ident;}
 
 }
 	    
-
-
+    
+	

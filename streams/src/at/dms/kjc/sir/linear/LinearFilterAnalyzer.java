@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearFilterAnalyzer.java,v 1.9 2002-09-06 17:19:42 aalamb Exp $
+ * $Id: LinearFilterAnalyzer.java,v 1.10 2002-09-09 21:52:06 aalamb Exp $
  **/
 public class LinearFilterAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -432,16 +432,15 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     public Object visitArrayAccessExpression(JArrayAccessExpression self,
 					     JExpression prefix,
 					     JExpression accessor) {
-	LinearPrinter.warn("Ignoring access expression: "+ self);
-	return null; 
+	return getMapping(self);
     }
     /**
      * When we visit an array initializer, we  simply need to return null, as we are currently
      * ignoring arrays on the principle that constprop gets rid of all the ones that are known at compile time.
      **/
     public Object visitArrayInitializer(JArrayInitializer self, JExpression[] elems){
-	LinearPrinter.warn("Ignoring access expression: " + self);
-	return null;
+	LinearPrinter.warn("Ignoring array initialization expression: " + self);
+	throw new RuntimeException("Array initializations are not supported yet.");
     }
 
     //     public Object visitArrayLengthExpression(JArrayLengthExpression self, JExpression prefix) {return null;}
@@ -479,24 +478,17 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	}
 
 	
-	// now, if the left hand side is JLocalVariableExpression add a mapping
-	// from the variable to the linear form
-	if (left instanceof JLocalVariableExpression) {
-	    JLocalVariableExpression lve = (JLocalVariableExpression)left; // casting happiness
-	    JLocalVariable lv = lve.getVariable(); // get the variable
-	    LinearPrinter.println("   adding a mapping from " + lv +
+	// try and wrap the left hand side of this expression
+	AccessWrapper leftWrapper = AccessWrapperFactory.wrapAccess(left);
+
+	// if we successfully wrapped the expression, say so, and add it to our variable
+	// map
+	if (leftWrapper != null) {
+	    LinearPrinter.println("   adding a mapping from " + left +
 				  " to " + rightLinearForm);
 	    // add the mapping from the local variable to the linear form
-	    this.variablesToLinearForms.put(lv, rightLinearForm);
+	    this.variablesToLinearForms.put(leftWrapper, rightLinearForm);
 				  
-	}
-	if (left instanceof JFieldAccessExpression) {
-	    // wrap the access expression so that the equals methods work out
-	    AccessWrapper wrapper = AccessWrapper.wrapFieldAccess((JFieldAccessExpression)left);
-	    LinearPrinter.println("   adding a field mapping from " + wrapper +
-				  " to " + rightLinearForm);
-
-	    this.variablesToLinearForms.put(wrapper, rightLinearForm);
 	}
 
 	// make sure that we didn't screw up our state
@@ -747,7 +739,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 	// wrap the field access and then use that wrapper as the
 	// key into the variables->linearform mapping
-	AccessWrapper wrapper = AccessWrapper.wrapFieldAccess(self);
+	AccessWrapper wrapper = AccessWrapperFactory.wrapAccess(self);
 
 	// if we have a mapping, return it. Otherwise return null.
 	if (this.variablesToLinearForms.containsKey(wrapper)) {
@@ -823,20 +815,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     public Object visitLocalVariableExpression(JLocalVariableExpression self, String ident){
  	LinearPrinter.println("  visiting local var expression: " + self);
 	LinearPrinter.println("   variable: " + self.getVariable());
-	
-	checkRep();
 
-	// get the variable that this expression represents
-	JLocalVariable theVariable = self.getVariable();
-	
-	// if we have a mapping, return it. Otherwise return null
-	if (this.variablesToLinearForms.containsKey(theVariable)) {
-	    LinearPrinter.println("   (found mapping!)");
-	    return this.variablesToLinearForms.get(theVariable);
-	} else {
-	    LinearPrinter.println("   (mapping not found!)");
-	    return null;
-	}
+	return getMapping(self);
     }
 //     public Object visitLogicalComplementExpression(JUnaryExpression self, JExpression expr){return null;}
     /**
@@ -862,7 +842,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	Iterator keyIter = this.variablesToLinearForms.keySet().iterator();
 	while(keyIter.hasNext()) {
 	    Object key = keyIter.next();
-	    if (key instanceof AccessWrapper) {
+	    if (key instanceof FieldAccessWrapper) {
 		toRemove.add(key);
 	    }
 	}
@@ -871,7 +851,27 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	while(removeIter.hasNext()) {
 	    this.variablesToLinearForms.remove(removeIter.next());
 	}
-    }	
+    }
+
+    /**
+     * Returns the mapping that we have from expr to linear form.
+     * returns null if no such mapping exists. 
+     **/
+    public Object getMapping(JExpression expr) {
+	checkRep();
+
+	// wrap the variable that the expression represents
+	AccessWrapper wrapper = AccessWrapperFactory.wrapAccess(expr);
+
+	// if we have a mapping, return it. Otherwise return null
+	if (this.variablesToLinearForms.containsKey(wrapper)) {
+	    LinearPrinter.println("   (found mapping for " + expr + "!)");
+	    return this.variablesToLinearForms.get(wrapper);
+	} else {
+	    LinearPrinter.println("   (mapping not found for " + expr + "!)");
+	    return null;
+	}
+    }
 
     //     public Object visitMethodDeclaration(JMethodDeclaration self, int modifiers,
 // 					 CType returnType, String ident,
@@ -933,6 +933,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// phase.
 
 	LinearPrinter.println("  visiting shift expression: " + self);
+	LinearPrinter.println("   left: " + left);
+	LinearPrinter.println("   right: " + right);
+	LinearPrinter.println("   left from self: " + self.getLeft());
+	LinearPrinter.println("   right from self: " + self.getRight());
+	
 
 	// try and figure out what the right hand side of the expression is.
 	LinearForm rightForm = (LinearForm)right.accept(this);
@@ -1013,6 +1018,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	if (argLinearForm == null) {
 	    // set the flag that says this filter isn't linear
 	    this.nonLinearFlag = true;
+	    LinearPrinter.println("  push argument wasn't linear: " + arg);
 	} else {
 	    // (note that the first push ends up in the rightmost column)
 	    // so we calculate which column that this push statement corresponds to
@@ -1046,7 +1052,14 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// a peek at the current offset, which in turn corresponds to a
 	// use of the element at size-peekoffset-1 in the input vector
 	int inputIndex = this.peekSize - this.peekOffset - 1;
-    
+
+	if (inputIndex < 0) {
+	    LinearPrinter.warn("Too many pops detected!");
+	    this.nonLinearFlag = true;
+	    return null;
+	}
+	
+	
 	LinearForm currentForm = this.getBlankLinearForm();
 	currentForm.setWeight(inputIndex, ComplexNumber.ONE);
 	
@@ -1147,49 +1160,21 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 
 
-
-
-
     /**
      * Removes the mapping of a local variable expression or a field access expression
      * from the variablesToLinearForm mapping. Throws an exception if we try to remove
      * a mapping to a type that we don't know about
      **/
     public void removeMapping(JExpression expr) {
-	// dispatch on type
-	if (expr instanceof JLocalVariableExpression) {
-	    removeMapping((JLocalVariableExpression)expr);
-	} else if (expr instanceof JFieldAccessExpression) {
-	    removeMapping((JFieldAccessExpression)expr);
-	} else {
-	    //throw new RuntimeException("Can't have linear mappings to " + expr +
-	    //" (of type " + expr.getClass().getName());
-	}
-    }
-    
-    /**
-     * Removes the mapping for a particular JLocalVariable in a JLocalVariableExpression.
-     * Does not report errors when a variable that is not in the mapping is "removed."
-     **/
-    public void removeMapping(JLocalVariableExpression lve) {
-	// extract the variable
-	JLocalVariable theVariable = lve.getVariable();
-	// if the variable is a key in the mappings, then remove the mapping
-	if (this.variablesToLinearForms.containsKey(theVariable)) {
-	    LinearPrinter.println("  Removing mapping for local variable:" + theVariable);
-	    this.variablesToLinearForms.remove(theVariable);
-	}
-    }
-    /**
-     * Removes the mapping for a particular JFieldAccessExpression
-     * Does not report errors when a variable that is not in the mapping is "removed."
-     **/
-    public void removeMapping(JFieldAccessExpression fae) {
 	// wrap the field access expression
-	AccessWrapper theWrapper = AccessWrapper.wrapFieldAccess((JFieldAccessExpression)fae);
-	LinearPrinter.println("  Removing mapping for field access expression: " + fae);
-	// actually remove the data from the hash map
-	this.variablesToLinearForms.remove(theWrapper);
+	AccessWrapper theWrapper = AccessWrapperFactory.wrapAccess(expr);
+	if (theWrapper != null) {
+	    LinearPrinter.println("   removing mapping for : " + expr);
+	    // actually remove the data from the hash map
+	    this.variablesToLinearForms.remove(theWrapper);
+	} else {
+	    LinearPrinter.println("   no previous mapping for: " + expr);
+	}
     }
     
 
@@ -1235,9 +1220,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    Object key = keyIter.next();
 	    if (key == null) {throw new RuntimeException("Null key in linear form map");}
 	    // make sure that they key is a JLocalVariable or a JFieldAccessExpression
-	    if (!((key instanceof JLocalVariable) ||
-		  (key instanceof AccessWrapper))) {
-		throw new RuntimeException("Non local or field access wrapper in linear form map.");
+	    if (!(key instanceof AccessWrapper)) {
+		throw new RuntimeException("Non access wrapper in linear form map.");
 	    }
 	    Object val = this.variablesToLinearForms.get(key);
 	    if (!(val instanceof LinearForm)) {throw new RuntimeException("Non LinearForm in value map");}

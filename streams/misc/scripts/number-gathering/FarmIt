@@ -190,9 +190,9 @@ echo "waiting for remote runs to finish..."
 wait
 
 #remove the working directories
-#for machine in "${machines[@]}"; do
-#   rm -rf "$rootdir/$machine"
-#done 
+for machine in "${machines[@]}"; do
+   rm -rf "$rootdir/$machine"
+done 
 
 #call condense
 echo -en "\033[1m\e[32;40mCondensing the various numbers into $outputfile...\033[0m\n"; tput sgr0

@@ -154,9 +154,10 @@ public class SIRPortal extends JLiteral {
         
         if (str instanceof SIRFilter || str instanceof SIRPhasedFilter)
         {
-	    
-	    FindMessageStatements find = new FindMessageStatements(str);
-	    str.getWork().accept(find);
+	    if (str.needsWork()) {
+		FindMessageStatements find = new FindMessageStatements(str);
+		str.getWork().accept(find);
+	    }
         }
     }
 

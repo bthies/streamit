@@ -1,0 +1,105 @@
+float->float[M] filter Expander(int K, int M) {
+    work pop K peek M push 1 {
+	int i;
+	float tmp[] = new float[M];
+	for (i = 0; i < M; i++) tmp[i] = peek(i);
+	push(temp);
+	for (i = 0; i < K; i++) pop();
+    }
+}
+
+float[M]->float[M] filter VectSorter(int M) {
+    work pop 1 push 1 {
+	float tmp[];
+	tmp = pop();
+	for (int i = 0; i< M-1; i++) {
+	    for (int j = i+1; j < M; j++) {
+		if(tmp[i] > tmp[j]) {
+		    int x = tmp[i];
+		    tmp[i] = tmp[j];
+		    tmp[j] = x;
+		}
+	    }
+	}
+	push(tmp);
+    }
+}
+
+float[M]->float filter FindMedian(int K, int M) {
+    work pop K peek M push 1 {
+	float tmp[] = new float[M*M];	
+	int i;
+	for (i = 0; i < M; i++) {
+	    for (j=0; j<M; j++) tmp[M*i+j] = peek(i)[j]; 
+	}	
+	for (i = 0; i < M*M-1; i++) {
+	    for (j=i+1; j<M*M; j++) {
+		if (tmp[i] > tmp[j]) {
+		    int x = tmp[i];
+		    tmp[i] = tmp[j];
+		    tmp[j] = x;
+		}
+	    }
+	}
+	Float v = tmp[0];
+	int c = 1;
+	Float vmax;
+	int cmax = 0;
+	for (i = 1; i < M*M; i++) {
+	    if (v == tmp[i]) {
+		c++;
+	    } else {
+		if (c > cmax) {
+		    cmax = c;
+		    vmax = v;
+		}
+		v = tmp[i];
+		c = 1;
+	    }
+	}
+	push(vmax);
+	for(i = 0; i < K; i++) pop();
+    }
+}
+
+float->float[M] pipline medianFilter(int K, int M, int N) {
+    add Expander(K, M);
+    add VectSorter(M);
+    add float[M]->float[M] splitjoin {
+	split roundrobin;
+	for (int i = 0; i < N; i++) add FindMedian(K, M);
+	join roundrobin;
+    };
+}
+	
+void->int filter SortInput(int N) {
+    work push N {
+	for (int i = 0; i < N; i++) push(N - i);
+    }
+}
+
+/**
+ * Prints an integer stream.
+ */
+int->void filter IntPrinter {
+    work pop 1 {
+	print(pop());
+    }
+}
+
+/**
+ * The toplevel class.  
+ */
+void->void pipeline Median {
+    add SortInput(10);
+    add medianFilter(1, 4, 32);
+    // add a printer
+    add IntPrinter();
+}
+
+
+	
+	
+		
+		    
+    

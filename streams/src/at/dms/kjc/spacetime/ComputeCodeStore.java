@@ -62,6 +62,7 @@ public class ComputeCodeStore {
     public void addDRAMCommand(boolean read, boolean init, 
 			       int bytes, OffChipBuffer buffer) 
     {
+	parent.setComputes();
 	String functName = "raw_streaming_dram_request_" +
 	    (read ? "read" : "write") + "_presynched";
 

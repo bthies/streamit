@@ -36,7 +36,7 @@ public class OffChipBuffer
 	this.dest = dest;
 
 	users = new Vector();
-	ident = "__buf_" + owner.getIODevice().getPort() + "_" + unique_id + "__";
+	ident = "__buf_" + /*owner.getIODevice().getPort() + */ "_" + unique_id + "__";
 	unique_id++;
 	setType();
 	calculateSize();
@@ -169,6 +169,13 @@ public class OffChipBuffer
     {
 	this.owner = tile;
 	tile.addBuffer(this);
+    }
+
+    public RawTile getOwner() 
+    {
+	assert (owner != null) : 
+	    "owner not set yet";
+	return owner;
     }
 
     public void addUser(RawTile tile) 

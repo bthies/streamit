@@ -115,6 +115,78 @@ public class Rawify
 
     private static void generateInputDRAMCommands(InputTraceNode input, boolean init, boolean primepump) 
     {
+	FilterTraceNode filter = (FilterTraceNode)input.getNext();
+
+	//don't do anything for redundant buffers
+	if (OffChipBuffer.getBuffer(input, filter).redundant())
+	    return;
+
+	//number of total items that are being joined
+	int items = FilterInfo.getFilterInfo(filter).totalItemsReceived(init, primepump);
+	assert items % input.totalWeights() == 0: 
+	    "weights on input trace node does not divide evenly with items received";
+	//iterations of "joiner"
+	int iterations = items / input.totalWeights();
+	int typeSize = Util.getTypeSize(filter.getFilter().getInputType());
+	    
+	//generate the commands to read from the o/i temp buffer
+	//for each input to the input trace node
+	for (int i = 0; i < input.getSources().length; i++) {
+	    OffChipBuffer srcBuffer = OffChipBuffer.getBuffer(input.getSources()[i], 
+							      input);
+	    int readBytes = iterations * typeSize * 
+		input.getWeight(input.getSources()[i]) * 4;
+	    readBytes = Util.cacheLineDiv(readBytes);
+	    srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, init || primepump,
+								 readBytes, srcBuffer);
+	}
+
+	//generate the command to write to the dest of the input trace node
+	OffChipBuffer destBuffer = OffChipBuffer.getBuffer(input, filter);
+	int writeBytes = items * typeSize * 4;
+	writeBytes = Util.cacheLineDiv(writeBytes);
+	destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init || primepump, 
+							      writeBytes, destBuffer);
+    }
+
+    private static void generateOutputDRAMCommands(OutputTraceNode output, boolean init, boolean primepump) 
+    {
+	FilterTraceNode filter = (FilterTraceNode)output.getPrevious();
+	//don't do anything for redundant buffers
+	if (OffChipBuffer.getBuffer(filter, output).redundant())
+	    return;
+	
+	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
+	//calculate the number of items sent
+	int items = filterInfo.totalItemsSent(init, primepump), 
+	    iterations, typeSize;
+	
+	typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
+	
+	//the numbers of times we should cycle thru this "splitter"
+	assert items % output.totalWeights() == 0: 
+	    "weights on output trace node does not divide evenly with items sent";
+	iterations = items / output.totalWeights();
+	
+	//generate the command to read from the src of the output trace node
+	OffChipBuffer srcBuffer = OffChipBuffer.getBuffer(filter, output);
+	int readBytes = FilterInfo.getFilterInfo(filter).totalItemsSent(init, primepump) *
+	    Util.getTypeSize(filter.getFilter().getOutputType()) * 4;
+	readBytes = Util.cacheLineDiv(readBytes);
+	srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, init || primepump,
+							     readBytes, srcBuffer);
+
+	//generate the commands to write the o/i temp buffer dest
+	Iterator dests = output.getDestSet().iterator();
+	while (dests.hasNext()){
+	    InputTraceNode input = (InputTraceNode)dests.next();
+	    OffChipBuffer destBuffer = OffChipBuffer.getBuffer(output, input);
+	    int writeBytes = iterations * typeSize *
+		output.getWeight(input) * 4;
+	    writeBytes = Util.cacheLineDiv(writeBytes);
+	    destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init || primepump,
+								  writeBytes, destBuffer);
+	}
     }
     
 

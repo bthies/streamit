@@ -32,7 +32,6 @@ public abstract class SIROperator extends at.dms.util.Utils {
      * Sets parent container
      */
     public void setParent(SIRContainer p){
-	System.err.println ("setting parent of " + this + " to " + p);
 	this.parent = p;
     }
 
@@ -64,7 +63,6 @@ public abstract class SIROperator extends at.dms.util.Utils {
      */
     public String getRelativeName() {
 	if (parent==null) {
-	    System.err.println("parent of " + this + " is null");
 	    return null;
 	} else {
 	    return parent.getChildName(this);

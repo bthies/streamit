@@ -72,14 +72,12 @@ public class RenameAll extends SLIRReplacingVisitor
     }
     
     /**
-     * Given a list of SIRFilters <filterList>, replaces each filter
-     * in the list with a renamed version of itself.
+     * Renames the contents of <f1> but does not change the identity
+     * of the filter itself.
      */
-    public void renameFilters(List filterList) {
-	for (ListIterator it=filterList.listIterator(); it.hasNext(); ) {
-	    SIRFilter filter = (SIRFilter)it.next();
-	    it.set(renameFilter(filter));
-	}
+    public void renameFilterContents(SIRFilter f1) {
+	    SIRFilter f2 = renameFilter(f1);
+	    f1.copyState(f2);
     }
 
     /**
@@ -123,6 +121,11 @@ public class RenameAll extends SLIRReplacingVisitor
                                      newWork,
                                      str.getInputType(),
                                      str.getOutputType());
+
+	// replace any init call to <str> in the parent with an init
+	// call to <nf> -- DON'T DO THIS since it messes up mutation case.
+	// replaceParentInit(str, nf);
+
         nf.setInit(newInit);
         symtab = ost;
         return nf;
@@ -273,5 +276,34 @@ public class RenameAll extends SLIRReplacingVisitor
         return new JFieldAccessExpression(self.getTokenReference(),
                                           (JExpression)left.accept(this),
                                           symtab.nameFor(ident));
+    }
+
+    /**
+     * Replaces parent init function calls to <oldStr> with calls to <newStr>
+     */
+    public static void replaceParentInit(final SIRStream oldStr,
+					 final SIRStream newStr)
+    {
+        SIRStream parent = oldStr.getParent();
+	// replace the SIRInitStatements in the parent
+	parent.getInit().accept(new SLIRReplacingVisitor() {
+		public Object visitInitStatement(SIRInitStatement oldSelf,
+						 JExpression[] oldArgs,
+						 SIRStream oldTarget) {
+		    // do the super
+		    SIRInitStatement self = 
+			(SIRInitStatement)
+			super.visitInitStatement(oldSelf, oldArgs, oldTarget);
+		    
+		    // if we're f1, change target to be <fused>
+		    if (self.getTarget()==oldStr) {
+			self.setTarget(newStr);
+			return self;
+		    } else {
+			// otherwise, return self
+			return self;
+		    }
+		}
+	    });
     }
 }

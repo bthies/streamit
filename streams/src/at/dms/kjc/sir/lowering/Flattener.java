@@ -2,6 +2,7 @@ package at.dms.kjc.sir.lowering;
 
 import streamit.scheduler.*;
 
+import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
@@ -36,9 +37,15 @@ public class Flattener {
 
 	if (StreamItOptions.fusion) {
 	    System.out.println("Running Fusion");
-	    Fusion.fuse((SIRPipeline)str, 
-			(SIRFilter)((SIRPipeline)str).get(0), 
-			(SIRFilter)((SIRPipeline)str).get(1));
+	    FusePipe.doit((SIRPipeline)str, 
+			  (SIRFilter)((SIRPipeline)str).get(1), 
+			  (SIRFilter)((SIRPipeline)str).get(2));
+	    // DEBUGGING PRINTING
+	    System.out.println("--------- AFTER FUSION ------------");
+	    printer1 = new SIRPrinter();
+	    str.accept(printer1);
+	    printer1.close();
+	    
 	}
 	
         // flatten split/joins with duplicate splitters and RR joiners

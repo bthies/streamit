@@ -23,11 +23,18 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     private LinkedList flatMethods;
 
     /**
+     * The renamed methods.  Map of old method name to new method name.
+     * this maps interned strings -> strings
+     */
+    private final HashMap renamedMethods;
+
+    /**
      * Creates a new structurer.
      */
     private Structurer() {
 	this.structs = new LinkedList();
 	this.flatMethods = new LinkedList();
+	this.renamedMethods = new HashMap();
     }
 
     /**
@@ -190,12 +197,17 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      */
     private void flattenMethods(String streamName,
 				JMethodDeclaration[] methods) {
-	// maintaint map of old method name to new method name.
-	// this maps interned strings -> strings
-	final HashMap renamedMethods = new HashMap();
 	// flatten each method
 	for (int i=0; i<methods.length; i++) {
-            flattenMethod(streamName, methods[i], renamedMethods);
+	    /*
+	    System.out.println("renaming method... old name: " + 
+			       methods[i].getName());
+	    */
+            flattenMethod(streamName, methods[i]);
+	    /*
+	    System.out.println("                   new name: " + 
+			       methods[i].getName());
+	    */
 	}
 	// change method calls to refer to new name, and to pass a
 	// data structure as the first argument
@@ -230,8 +242,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      * does.
      */
     private void flattenMethod(String streamName,
-                               JMethodDeclaration method, 
-			       HashMap renamedMethods) {
+                               JMethodDeclaration method) {
 	// get new method name
 	String newName = LoweringConstants.getMethodName(streamName, 
 							 method.getName());

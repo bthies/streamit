@@ -194,6 +194,32 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     }
 
     /**
+     * Flatten an initPath...() method, in the same way flattenMethods()
+     * does.  The main difference is that the initPath() function doesn't
+     * get a parameter for the context.
+     *
+     * Eventually, this might also take responsibility for creating
+     * an artificial initPath() function, which is called from the
+     * init function and actually does the work of setting up the
+     * feedback path.
+     */
+    private void flattenInitPath(String streamName,
+                                 JMethodDeclaration method) {
+        // rename the method
+        method.setName(LoweringConstants.
+                       getMethodName(streamName, 
+                                     method.getName()));
+        // for each statement in the method, change references
+        KjcVisitor resolver = new FieldResolver();
+        ListIterator statements = method.getStatementIterator();
+        while (statements.hasNext()) {
+            ((JStatement)statements.next()).accept(resolver);
+        }
+        // add <method> to the list of flattened methods
+        flatMethods.add(method);
+    }
+
+    /**
      * For the work method <work>, add two parameters corresponding to the
      * input and output tapes.
      */
@@ -351,6 +377,8 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	children.add(self.getLoop());
 	// do visit
 	postVisit(self.getName(), fields, methods, children);
+        // deal with initPath, too
+        flattenInitPath(self.getName(), initPath);
     }
 }
 

@@ -21,7 +21,7 @@ class FIR extends Pipeline
 {
     FIR (int N)
     {
-
+	super(N);
     }
 
     public void init (final int N)
@@ -56,7 +56,7 @@ class SingleMultiply extends Filter
 {
     SingleMultiply(int i)
     {
-
+	super(i);
     }
 
     float W;
@@ -81,9 +81,9 @@ class SingleMultiply extends Filter
 
 class FloatSource extends Filter
 {
-    FloatSource (float maxNum)
+    FloatSource (float max)
     {
-
+	super(max);
     }
     
     float num;
@@ -108,7 +108,7 @@ class FloatPrinter extends Filter
 {
     FloatPrinter (int x)
     {
-
+	super(x);
     }
     int x;
     public void init (int x2)
@@ -119,7 +119,7 @@ class FloatPrinter extends Filter
     }
     public void work ()
     {
-      System.out.println(input.popFloat ());
+      System.out.println(input.popFloat());
     }
 }
 

@@ -28,6 +28,8 @@ public class MakefileGenerator
 	    fw.write("SIM-CYCLES = 500000\n\n");
 	    fw.write("include /u/mgordon/raw/starsearch/Makefile.include\n\n");
 	    fw.write("RGCCFLAGS += -O3\n\n");
+	    if (StreamItOptions.rawRows > 4)
+		fw.write("TILE_PATTERN=8x8\n\n");
 	    fw.write("TILES = ");
 	    while (tilesIterator.hasNext()) {
 		int tile = 

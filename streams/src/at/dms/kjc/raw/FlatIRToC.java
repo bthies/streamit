@@ -975,7 +975,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                            JExpression accessor) {
         print("(");
         prefix.accept(this);
-        print("[");
+        print("[(int)");
         accessor.accept(this);
         print("]");
         print(")");

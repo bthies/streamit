@@ -145,7 +145,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    if (fire == null)
 		break;
 	    //keep track of everything needed when a node fires
-	    fireMe(fire, counters, counts);
+	    consumeData(fire, counters, counts);
 	    //simulate the firings
 	    //1 item for a joiner, push items for a filter
 	    int items = 1;
@@ -160,6 +160,8 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		generateSwitchCode(fire, getDestination(fire.edges[0], 
 							counters, "", 
 							fire));
+		//see if anyone downstream can fire
+		go(counts, counters);
 	    }
 	    
 	}
@@ -253,7 +255,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     
 
    
-    private void fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
+    private void consumeData(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
 	//System.out.println("Firing " + Namer.getName(fire.contents));
 	

@@ -53,8 +53,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		new FileWriter("tile" + Layout.getTileNumber(Layout.getTile(joiner)) 
 			       + ".c");
 	    
-	    fw.write("#include <raw.h>\n\n");
-	    
+	    fw.write("#include <raw.h>\n");
+	    fw.write("#include <math.h>\n\n");
 	    fw.write(createJoinerWork(joiner));
 	    	    
 	    //write the extern for the function to init the 

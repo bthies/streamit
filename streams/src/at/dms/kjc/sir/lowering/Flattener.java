@@ -53,7 +53,8 @@ public class Flattener {
 	    = {new LIRMainFunction(toplevel.getName(),
 				   new LIRFunctionPointer(toplevel.
 							  getInit().
-							  getName()))};
+							  getName()),
+				   null)};
 	JBlock mainBlock = new JBlock(null, main, null);
 
 	// add a method to <flatClass>

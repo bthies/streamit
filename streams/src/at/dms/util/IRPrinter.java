@@ -6,6 +6,8 @@
 package at.dms.util;
 
 import java.io.*;
+import java.util.List;
+import java.util.ListIterator;
 
 import at.dms.kjc.SLIRVisitor;
 import at.dms.compiler.JavaStyleComment;
@@ -1801,13 +1803,18 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a main function contents.
      */
     public void visitMainFunction(LIRMainFunction self,
-			   String typeName,
-			   LIRFunctionPointer init) {
+				  String typeName,
+				  LIRFunctionPointer init,
+				  List initStatements) {
 	blockStart("LIRMainFunction");
 	attrPrint("typeName", typeName);
 	attrStart("init");
 	init.accept(this);
 	attrEnd();
+	printData("init statements:");
+	for (ListIterator it = initStatements.listIterator(); it.hasNext(); ) {
+	    ((JStatement)it.next()).accept(this);
+	}
 	blockEnd();
     }
 

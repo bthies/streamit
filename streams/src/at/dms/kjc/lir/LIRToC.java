@@ -1,12 +1,13 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.17 2001-10-25 14:42:24 dmaze Exp $
+ * $Id: LIRToC.java,v 1.18 2001-10-25 16:23:52 thies Exp $
  */
 
 package at.dms.kjc.lir;
 
 import java.io.StringWriter;
 import java.util.StringTokenizer;
+import java.util.List;
 import at.dms.util.InconsistencyException;
 
 import at.dms.kjc.sir.*;
@@ -1707,7 +1708,8 @@ public class LIRToC
 
     public void visitMainFunction(LIRMainFunction self,
                                   String typeName,
-                                  LIRFunctionPointer init)
+                                  LIRFunctionPointer init,
+				  List initStatements)
     {
         print(typeName + " s = malloc(sizeof(_" + typeName + "));");
         newLine();

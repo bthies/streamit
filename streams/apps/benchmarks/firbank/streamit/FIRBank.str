@@ -64,23 +64,30 @@ float->void filter Printer {
 }
 
 float->float filter Multiply(int M, int B) {
+    int i;
 
-    work pop 2*B*M push 2*B*M { 
-	for (int i = 0; i < M; i++) {
-	    for (int j = 0; j < B; j++) {
-		// get in1
-		float real1 = pop();
-		float imag1 = pop();
-		// get in2
-		float real2 = coeff[j][2*i];
-		float imag2 = coeff[j][2*i+1];
-		// compute product
-		float real3 = real1*real2 - imag1*imag2;
-		float imag3 = real1*imag2 + imag1*real2;
-		// push
-		push(real3);
-		push(imag3);
-	    }
+    init {
+	i = 0;
+    }
+
+    work pop 2*B push 2*B { 
+	for (int j = 0; j < B; j++) {
+	    // get in1
+	    float real1 = pop();
+	    float imag1 = pop();
+	    // get in2
+	    float real2 = coeff[j][2*i];
+	    float imag2 = coeff[j][2*i+1];
+	    // compute product
+	    float real3 = real1*real2 - imag1*imag2;
+	    float imag3 = real1*imag2 + imag1*real2;
+	    // push
+	    push(real3);
+	    push(imag3);
+	}
+	i++;
+	if (i==M) {
+	    i = 0;
 	}
     }
 

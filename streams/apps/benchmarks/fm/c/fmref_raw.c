@@ -1,7 +1,7 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref_raw.c,v 1.1 2002-07-30 02:20:09 aalamb Exp $
+ * $Id: fmref_raw.c,v 1.2 2002-07-31 03:53:00 aalamb Exp $
  */
 
 #include <raw.h>
@@ -266,10 +266,11 @@ void write_floats(FloatBuffer *fb)
   /* printf() any data that's available: */
 #ifdef raw
   while (fb->rpos < fb->rlen) {
-    raw_test_pass_reg(i++);
+    //raw_test_pass_reg(i++);
     fb->rpos++;
+    i++;
   }
-  /*raw_test_done(1);*/
+  print_string("done");
   /** printf("%f\n", fb->buff[fb->rpos++]);**/
   /**print_float(fb->buff[fb->rpos++]);**/
 #else

@@ -1,6 +1,44 @@
 7/29/02 -- AAL 
 Basically did nothing to the c code. It seems as though it only does 1 output per steady state cycle, so I just let it be and calculated with the cycles that the outputs were produced from.
 
+
+first  iteration done at 0x00009cb7a (641914 cycles)
+second iteration done at 0x00009f7ce (653262 cycles) (delta=11348)
+third  iteration done at 0x0000a23b9 (664505 cycles) (delta=11243)
+
+
+==> iter takes 11348/11243 cycles (average = 11295.5)
+
+
+we are producing 1 float every time through the steady state cycle 
+1 outputs every 11295.5 cycles, so normalized to 10^5 cycles, 1*(100000/11295.5) = 8.8530831
+
+flops reported are 3194 flops, which is (3194/11295.5) * 250 = 0.28276747 MFLOPS
+
+workCount = 10103360 / 10270624 = 0.98371433
+workCount = 179751 / 181568     = 0.98999273
+workCount = 178176 / 179888     = 0.095481633
+
+
+
+Uniprocessor:
+(Xenon 2.2 GHz, 512MB cache)
+10 million iterations (outputs)
+99% utilization
+runtime for 10^7 iterations(outputs) = 128.78 seconds
+We want cycles/iteration:
+
+10^7 iterations/ sec * 
+1 output/iteration*
+1 second/2.2x10^9 
+* 10^5 cycles
+
+=  Outputs / 10^5 cycles
+
+
+
+
+------- old results without -O3 -----------
 first  iteration done at 0xdf95c (915804 cycles)
 second iteration done at 0xe9813 (956435 cycles) (delta=40631)
 third  iteration done at 0xf3684 (996996 cycles) (delta=40561)

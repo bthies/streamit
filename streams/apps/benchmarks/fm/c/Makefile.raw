@@ -4,13 +4,15 @@
 
 LIMIT = TRUE
 SIM-CYCLES = 5000000000
-#SIM-COMMAND = step(915804); step(40631); step(40561);
-#SIM-COMMAND = count_FLOPS(915804); count_FLOPS(40631); count_FLOPS(40561);
+SIM-COMMAND = sv(641914); sv(11348); sv(11243);
 
 BTL-MACHINE-FILE = fileio.bc
 
 ROOT = test
 TILES = 00
+
+RGCCFLAGS += -O3
+
 
 include $(TOPDIR)/Makefile.include
 

@@ -1,7 +1,7 @@
 #
 # streamit.py: Python extensions to QMTest for StreamIt
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamit.py,v 1.4 2003-11-23 15:42:00 dmaze Exp $
+# $Id: streamit.py,v 1.5 2003-12-23 19:05:28 dmaze Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -312,11 +312,11 @@ class CompareResultsTest(qm.test.test.Test):
             if difference > max_difference and difference > self.zero:
                 failed = 1
                 tag = 'CompareResultsTest.line_%d' % i
-                result[tag + '.expected'] = ev
-                result[tag + '.actual'] = av
+                result[tag + '.expected'] = str(ev)
+                result[tag + '.actual'] = str(av)
                 if ev != 0:
                     percent = (difference / ev) * 100
-                    result[tag + '.percent'] = percent
+                    result[tag + '.percent'] = str(percent)
 
         # All done.
         if failed:

@@ -15,7 +15,6 @@ public class PCADemo extends StreamIt
 
   public void init()
   {
-    System.out.println("Running the PCA Demo...");
     final int numChannels           = 48;
     final int numSamples            = 4096;
     final int numBeams              = 16;
@@ -35,6 +34,7 @@ public class PCADemo extends StreamIt
     final float dOverLambda         = 0.5f;
     final float cfarThreshold       = 0.95f*dOverLambda*numChannels*(0.5f*pulseSize);
 
+    System.out.println("Running the PCA Demo...");
     add(new DataSource(numChannels, numSamples, numBeams,
 		       targetBeam, targetSample, predecPulseSize));
     add(new ComplexMultiDimFir(numCoarseFilterTaps, numSamples, coarseDecimationRatio));

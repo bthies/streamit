@@ -7,6 +7,7 @@ LIBRARY =       libcluster.a
 LIBRARYP =      libcluster_p.a
 
 NAMES =		sock_dscr \
+		thread_list_element \
 		timer \
 		sdep \
 		mysocket \

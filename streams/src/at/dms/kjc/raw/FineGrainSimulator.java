@@ -57,8 +57,8 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 
 
 	joinerCode = initJoinerCode;
-	System.out.println("\n\nInit Execution Counts");
-	RawBackend.printCounts(RawBackend.initExecutionCounts);
+	//	System.out.println("\n\nInit Execution Counts");
+	//RawBackend.printCounts(RawBackend.initExecutionCounts);
 	
 	initSchedules = (new FineGrainSimulator(top, true)).goInit(initExecutionCounts, counters, null);
 	testExecutionCounts(initExecutionCounts);
@@ -182,7 +182,6 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     /* the main simulation method */
     private HashMap go(HashMap counts, SimulationCounter counters, FlatNode lastToFire) 
     {
-	
 	FlatNode fire, dest;
 		
 	while(true) {
@@ -541,14 +540,12 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	
 	queue.add(start);
 	while (!queue.isEmpty()) {
-  
 	    node = (FlatNode)queue.get(0);
 	    queue.remove(0);
 	    
 	    if (node == null)
 		continue;
 	    
-	    visited.add(node);
 	    if (canFire(node, executionCounts, counters)) {
 		mostDownStream = node;
 	    }
@@ -556,8 +553,10 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    //to keep the order of the nodes of a splitjoin in the correct order
 	    //(the order defined by the joiner) add to the queue in the reverse order
 	    for (int i = node.ways - 1; i >= 0; i--) {
-		if (!visited.contains(node.edges[i]))
-			queue.add(node.edges[i]);
+		if (!visited.contains(node.edges[i])) {
+		    queue.add(node.edges[i]); 
+		    visited.add(node.edges[i]);
+		}
 	    }
 	}
 	//no node can fire

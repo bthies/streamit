@@ -39,51 +39,66 @@ public class NumberGathering extends at.dms.util.Utils
     public static boolean doit(FlatNode top) 
     {
 	successful = false;
-	sink = Sink.getSink(top);
-	//no sink or more than one sink
-	if (sink == null) {
-	    return false;
+	//find the sinks and make sure they are synchronized
+	HashSet sinks = Sink.getSinks(top);
+	//there could be multiple sinks, find one that works
+	Iterator sinksIt = sinks.iterator();
+	while (sinksIt.hasNext()) {
+	    sink = (FlatNode)sinksIt.next();
+	    //no sink or more than one sink
+	    if (sink == null) {
+		continue;
+	    }
+	    //the prints at the sink:
+	    //no control flow
+	    //in the work function
+	    int prints = CheckPrint.check((SIRFilter)sink.contents);
+
+	    //if this sink does not print, keep looking for one that does
+	    if (prints == 0) 
+		continue;
+	    // if we failed, unroll the filter on the loops that we
+	    // indicated
+	    if (prints == -1) {
+		SinkUnroller.doit(sink);
+		prints = CheckPrint.check((SIRFilter)sink.contents);
+	    }
+	    //if there still prints in control flow after unrolling, keep searching
+	    if (prints == -1) {
+		System.out.println("Print(s) in control flow");
+		continue;
+	    }
+	    
+	    Integer initInteger = (Integer)RawBackend.initExecutionCounts.get(sink);
+	    Integer steadyInteger = (Integer)RawBackend.steadyExecutionCounts.get(sink);
+	    int init = 0, steady = 0;
+	    
+	    if (initInteger != null)
+		init = initInteger.intValue();
+	    if (steadyInteger != null) 
+		steady = steadyInteger.intValue();
+	    
+	    if (steady < 1) {
+		System.out.println
+		    ("Sink not called in Steady State");
+		continue;
+	    }
+
+	    System.out.println("Generating Number Gathering Code...");
+	    //set the globals that are read by makefilegenerator	
+	    successful = true;
+	    skipPrints = init * prints;
+	    printsPerSteady = prints * steady;
+	    System.out.println("The Sink: " + sink.contents.getName());
+	    return true;
 	}
-	//the prints at the sink:
-	//no control flow
-	//in the work function
-	int prints = CheckPrint.check((SIRFilter)sink.contents);
-	// if we failed, unroll the filter on the loops that we
-	// indicated
-	if (prints == -1) {
-	    SinkUnroller.doit(sink);
-	    prints = CheckPrint.check((SIRFilter)sink.contents);
-	}
-	if (prints < 1) {
-	    System.out.println("Cannot generate number gathering code: Print(s) in control flow");
-	    return false;
-	}
-	
-	System.out.println("Generating Number Gathering Code...");
-	Integer initInteger = (Integer)RawBackend.initExecutionCounts.get(sink);
-	Integer steadyInteger = (Integer)RawBackend.steadyExecutionCounts.get(sink);
-	int init = 0, steady = 0;
-	
-	if (initInteger != null)
-	    init = initInteger.intValue();
-	if (steadyInteger != null) 
-	    steady = steadyInteger.intValue();
-	
-	if (steady < 1) {
-	    System.out.println
-		("Cannot generate number gathering code: Sink not called in Steady State");
-	    return false;
-	}
-	
-	//set the globals that are read by makefilegenerator	
-	successful = true;
-	skipPrints = init * prints;
-	printsPerSteady = prints * steady;
-	return true;
+	System.out.println("Cannot Generate Number Gathering Code.  Could not find a suitable sink...");
+	return false;
     }
 
     static class Sink implements FlatVisitor 
     {
+
 	private static FlatNode sink;
 	//used if there are multiple sinks, to analyze them...
 	private static HashSet possibleSinks;
@@ -91,7 +106,7 @@ public class NumberGathering extends at.dms.util.Utils
 	private static boolean printOutsideSink;
 	private static FlatNode toplevel;
 
-	public static FlatNode getSink(FlatNode top) 
+	public static HashSet getSinks(FlatNode top) 
 	{
 	    toplevel = top;
 	    sink = null;
@@ -119,7 +134,8 @@ public class NumberGathering extends at.dms.util.Utils
 		}
 	    }
 	    //now pick a sink, we will just pick the first one in possibleSinks
-	    return (FlatNode)possibleSinks.iterator().next();
+	    //we have to pick a sink that has a print
+	    return possibleSinks;
 	}
     
 	private static FlatNode getLeastCommonAncestor() 
@@ -130,7 +146,8 @@ public class NumberGathering extends at.dms.util.Utils
 	    Iterator sinksIt = possibleSinks.iterator();
 	    //get all the ancestor for each sink
 	    while (sinksIt.hasNext()) {
-		ancestors.add(getAllAncestors((FlatNode)sinksIt.next()));
+		FlatNode sink = (FlatNode)sinksIt.next();
+		ancestors.add(getAllAncestors(sink, true));
 	    }
 	    //get the set representing the intersection of all
 	    //the ancestor sets...this is the common ancestors
@@ -144,25 +161,30 @@ public class NumberGathering extends at.dms.util.Utils
 	    Iterator bft = BreadthFirstTraversal.getTraversal(toplevel).listIterator();
 	    while (bft.hasNext()) {
 		FlatNode current = (FlatNode)bft.next();
-		if (commonAncestors.contains(current))
+		if (commonAncestors.contains(current)) {
 		    lca = current;
+		}
 	    }
 	
 	    //this is not the best way of doing it, but it was easy to code up!
 	    return lca;
 	}
 
-	private static HashSet getAllAncestors(FlatNode node) 
+	//get all the ancestors of a node and return the hashset, but do not add the 
+	//node itself to the hash set, so firstcall is true on the first call,
+	//and false on all the recursive calls.
+	private static HashSet getAllAncestors(FlatNode node, boolean firstCall) 
 	{
 	    HashSet ret = new HashSet();
 	    //add self
-	    ret.add(node);
+	    if (!firstCall)
+		ret.add(node);
 	    //add the upstream
 	    if (node == null || node.incoming == null ) 
 		return ret;
 	
 	    for (int i = 0; i < node.incoming.length; i++)
-		RawBackend.addAll(ret, getAllAncestors(node.incoming[i]));
+		RawBackend.addAll(ret, getAllAncestors(node.incoming[i], false));
 	    return ret;
 	}
 
@@ -193,13 +215,21 @@ public class NumberGathering extends at.dms.util.Utils
 		if (((SIRFilter)current.contents).getPopInt() == 0)
 		    return false;
 
+	    //old way
 	    //check all the incoming arcs of the joiner return 
 	    //true if all of them are true...
-	    for (int i = 0; i < current.incoming.length; i++)
-		if (!isSynchronized(ancestor, current.incoming[i]))
-		    return false;
+	    //for (int i = 0; i < current.incoming.length; i++)
+	    //if (!isSynchronized(ancestor, current.incoming[i]))
+	    //	    return false;
 
-	    return true;    
+	    //find at least one path to the ancestor that 
+	    //does not have any 0 pop filters...
+	    for (int i = 0; i < current.incoming.length; i++)
+		if (isSynchronized(ancestor, current.incoming[i]))
+		    return true;
+
+	    
+	    return false;    
 	}
     
 

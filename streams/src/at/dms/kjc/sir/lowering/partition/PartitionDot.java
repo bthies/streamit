@@ -20,6 +20,7 @@ import at.dms.kjc.sir.lowering.fission.*;
  **/
 public class PartitionDot extends StreamItDot {
     private HashMap partitions;
+    private static final String[] color_table = {"floralwhite", "blue", "aliceblue", "antiquewhite", "aquamarine", "bisque", "blue", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "chocolate", "coral", "cornflowerblue", "crimson", "cyan", "darkgoldenrod", "darkgreen", "", "darkkhaki", "darkolivegreen", "darkorange", "", "darkorchid", "darksalmon", "darkseagreen", "darkslateblue", "darkslategray", "", "", "", "", "darkturquoise", "darkviolet", "deeppink", "deepskyblue", "", "dimgray", "", "dodgerblue", "firebrick", "forestgreen", "gainsboro", "ghostwhite", "gold", "goldenrod"};
 
     public PartitionDot(PrintStream outputstream,
 			HashMap partitions) {
@@ -39,7 +40,13 @@ public class PartitionDot extends StreamItDot {
 	//        return new NamePair(makeLabelledNode(self.getRelativeName()));
 	String label = self.getName();
 	Utils.assert(partitions.containsKey(self), "Not assigned to tile: " + self.getName());
-	label += "\\npartition=" + partitions.get(self);
+	int partition;
+	try {
+	    partition = Integer.valueOf((String)partitions.get(self)).intValue();
+	} catch (NumberFormatException e) {
+	    partition = -1;
+	}
+	label += "\\npartition=" + partition + "\" color=\"" + color_table[(partition+1)%color_table.length] + "\" style=\"filled";
 	return new NamePair(makeLabelledNode(label));
     }
 

@@ -91,4 +91,8 @@ public final class FusionTransform extends StreamTransform {
 	return PartitionGroup.createFromArray(result);
     }
 
+    public String toString() {
+	return "Fusion transform (" + partitions.size() + " components)";
+    }
+
 }

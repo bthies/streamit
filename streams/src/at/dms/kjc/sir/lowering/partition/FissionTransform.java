@@ -32,4 +32,9 @@ public class FissionTransform extends StreamTransform {
 	System.err.println("trying to split " + str + " " + reps + " ways.");
 	return StatelessDuplicate.doit((SIRFilter)str, reps);
     }
+
+    public String toString() {
+	return "Fission transform (" + reps + " ways)";
+    }
+
 }

@@ -27,18 +27,18 @@ public final class VerticalCutTransform extends StreamTransform {
      * Perform the transform on <str> and return new stream.
      */
     public SIRStream doMyTransform(SIRStream str) {
+	Utils.assert(str instanceof SIRSplitJoin, "Only support vertical cuts on splitjoins, but got "  + str.getClass());
+	SIRSplitJoin sj = (SIRSplitJoin)str;
+	Utils.assert(sj.size() - cutPos - 1 > 0, "Don't allow cuts with zero items on one side");
+
 	// add one because of indexing convention in partitiongroup
-	int[] partitions = { cutPos + 1 };
+	int[] partitions = { cutPos + 1, sj.size() - cutPos - 1};
 	PartitionGroup group = PartitionGroup.createFromArray(partitions);
-	
-	if (str instanceof SIRSplitJoin) {
-	    RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, group);
-	} else if (str instanceof SIRPipeline) {
-	    RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, group);
-	} else {
-	    Utils.fail("Only support vertical cuts on SplitJoins and Pipelines, but got: " + str);
-	}
-	return str;
+	RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)sj, group);
+	return sj;
     }
 
+    public String toString() {
+	return "Vertical Cut transform (pos = " + cutPos + ")";
+    }
 }

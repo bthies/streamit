@@ -36,14 +36,16 @@ public abstract class StreamTransform {
      * Perform the transform on <str> and return new stream.
      */
     public final SIRStream doTransform(SIRStream str) {
-	// do preds
-	if (str instanceof SIRContainer) {
+	//System.err.println("performing " + this + " on " + str.getName());
+	//printHierarchy();
+	// do preds (if we have children and there are any transforms)
+	if (str instanceof SIRContainer && pred.size()>0) {
 	    doPredTransforms((SIRContainer)str);
 	}
 	// do this transform
 	SIRStream result = doMyTransform(str);
-	// do succ's
-	if (str instanceof SIRContainer) {
+	// do succ's (if we have children and there are any transforms)
+	if (result instanceof SIRContainer && succ.size()>0) {
 	    doSuccTransforms((SIRContainer)result);
 	}
 	return result;
@@ -101,19 +103,60 @@ public abstract class StreamTransform {
     private void doChildTransforms(SIRContainer cont, List transforms) {
 	// make sure we have the same number of transforms to apply as
 	// we have children
-	Utils.assert(transforms.size() == cont.size());
+	Utils.assert(transforms.size() == cont.size(),
+		     "Have " + transforms.size() + " transforms but " + cont.size() + " children for " + cont.getName());
 	
 	// visit transforms
 	for (int i=0; i<cont.size(); i++) {
 	    SIRStream child = (SIRStream)cont.get(i);
 	    SIRStream newChild = ((StreamTransform)transforms.get(i)).doTransform(child);
-	    cont.set(i, newChild);
-	    // if we got a pipeline, try lifting it.  note that this
-	    // will mutate the children array and the init function of
-	    // <self>
-	    if (newChild instanceof SIRPipeline) {
-		Lifter.eliminatePipe((SIRPipeline)newChild);
+	    // some people did their own replacing, so only do it if it's not done
+	    if (child!=newChild && cont.get(i)!=newChild) {
+		cont.replace(child, newChild);
 	    }
+	}
+
+	// try lifting pipelines as post-pass so as not to mess up
+	// counters above note that this will mutate the children
+	// array and the init function of <self>
+	for (int i=0; i<cont.size(); i++) {
+	    if (cont.get(i) instanceof SIRPipeline) {
+		int size = ((SIRPipeline)cont.get(i)).size();
+		Lifter.eliminatePipe((SIRPipeline)cont.get(i));
+		i+=size-1;
+	    }
+	}
+    }
+
+    /**
+     * Prints hierarchy of stream transforms rooted at <st>.
+     */
+    public void printHierarchy() {
+	printHierarchy(0);
+    }
+
+    private void printHierarchy(int tabs) {
+	if (pred.size()>0) {
+	    for (int i=0; i<tabs; i++) {
+		System.err.print("  ");
+	    }
+	    System.err.println("  - Preds: (" + pred.size() + ")");
+	    for (int i=0; i<pred.size(); i++) {
+		((StreamTransform)pred.get(i)).printHierarchy(tabs+1);
+	    }
+	}
+	for (int i=0; i<tabs; i++) {
+	    System.err.print("  ");
+	}
+	System.err.println((tabs+"").charAt(0) + " - " + this);
+	if (succ.size()>0) {
+	    for (int i=0; i<tabs; i++) {
+		System.err.print("  ");
+	    }
+	    System.err.println("  - Succs: (" + succ.size() + ")");
+	    for (int i=0; i<succ.size(); i++) {
+		((StreamTransform)succ.get(i)).printHierarchy(tabs+1);
+	    }	
 	}
     }
 

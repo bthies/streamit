@@ -25,4 +25,8 @@ public final class IdentityTransform extends StreamTransform {
 	return str;
     }
 
+    public String toString() {
+	return "Identity Transform";
+    }
+
 }

@@ -29,11 +29,29 @@ public final class HorizontalCutTransform extends StreamTransform {
      * that <str> is a SplitJoin.
      */
     public SIRStream doMyTransform(SIRStream str) {
-	Utils.assert(str instanceof SIRSplitJoin, "Can only do horizontal cut on splitjoin, but got: " + str);
-	// add one because of indexing convention in partitiongroup
-	int[] partitions = { cutPos + 1 };
-	RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, 
-						  PartitionGroup.createFromArray(partitions));
+	if (str instanceof SIRPipeline) {
+	    // represents a cut in the immediate children of a pipeline
+	    SIRPipeline pipe = (SIRPipeline)str;
+	    Utils.assert(pipe.size() - cutPos - 1 > 0, "Don't allow cuts with zero items on one side");
+	    // add one because of indexing convention in partitiongroup
+	    int[] partitions = { cutPos + 1 , pipe.size() - cutPos - 1 };
+	    PartitionGroup group = PartitionGroup.createFromArray(partitions);
+	    RefactorPipeline.addHierarchicalChildren(pipe, group);
+	} else if (str instanceof SIRSplitJoin) {
+	    // represents a cut in the children's children, since we are cutting each pipeline
+	    SIRSplitJoin sj = (SIRSplitJoin)str;
+	    Utils.assert(sj.getUniformHeight() - cutPos - 1 > 0, "Don't allow cuts with zero items on one side");
+	    // add one because of indexing convention in partitiongroup
+	    int[] partitions = { cutPos + 1 , sj.getUniformHeight() - cutPos - 1 };
+	    PartitionGroup group = PartitionGroup.createFromArray(partitions);
+	    return RefactorSplitJoin.addSyncPoints(sj, group);
+	} else {
+	    Utils.fail("Expected Pipeline or SplitJoin, but got: " + str.getClass());
+	}
 	return str;
+    }
+
+    public String toString() {
+	return "Horizontal Cut transform (pos = " + cutPos + ")";
     }
 }

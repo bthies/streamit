@@ -97,7 +97,7 @@ public class RefactorSplitJoin {
     public static SIRPipeline addSyncPoints(SIRSplitJoin sj, PartitionGroup partition) {
 	// check what we're getting
 	checkSymmetry(sj);
-	Utils.assert(partition.size()==((SIRPipeline)sj.get(0)).size());
+	Utils.assert(partition.getNumChildren()==((SIRPipeline)sj.get(0)).size());
 
 	// make result pipeline
 	SIRPipeline result = new SIRPipeline(sj.getParent(), 
@@ -109,20 +109,22 @@ public class RefactorSplitJoin {
 	for (int i=0; i<partition.size(); i++) {
 	    // new i'th splitjoin.  Replace init function in <sj>
 	    // before we clone the methods
-	    sj.setInit(SIRStream.makeEmptyInit());
 	    SIRSplitJoin newSJ = new SIRSplitJoin(result, 
 						  sj.getIdent()+"_"+i,
-						  (JFieldDeclaration[])ObjectDeepCloner.deepCopy(sj.getFields()),
-						  (JMethodDeclaration[])ObjectDeepCloner.deepCopy(sj.getMethods()));
+						  JFieldDeclaration.EMPTY(),
+						  JMethodDeclaration.EMPTY());
+	    newSJ.setInit(SIRStream.makeEmptyInit());
+
 	    // new pipe's for the i'th splitjoin
 	    for (int j=0; j<sj.size(); j++) {
 		SIRPipeline origPipe = (SIRPipeline)sj.get(j);
 		// reset init function in origPipe before we clone it
-		origPipe.setInit(SIRStream.makeEmptyInit());
 		SIRPipeline pipe = new SIRPipeline(newSJ,
 						   origPipe.getIdent()+"_"+i+"_"+j,
-						   (JFieldDeclaration[])ObjectDeepCloner.deepCopy(origPipe.getFields()),
-						   (JMethodDeclaration[])ObjectDeepCloner.deepCopy(origPipe.getMethods()));
+						   JFieldDeclaration.EMPTY(),
+						   JMethodDeclaration.EMPTY());
+		pipe.setInit(SIRStream.makeEmptyInit());
+
 		// add requisite streams to pipe
 		for (int k=partition.getFirst(i); k<=partition.getLast(i); k++) {
 		    pipe.add(origPipe.get(k), origPipe.getParams(k));
@@ -146,7 +148,6 @@ public class RefactorSplitJoin {
 	    newSJ.setJoiner(join);
 
 	    // add sj for this partition to the overall pipe
-	    StreamItDot.printGraph(newSJ, "newsj" + i + ".dot");
 	    result.add(newSJ);
 	}
 

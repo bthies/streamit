@@ -234,6 +234,9 @@ public class ClusterBackend implements FlatVisitor {
 
 	System.out.println("Cluster Code begin...");
 
+	ClusterFusion.setPartitionMap(partitionMap);
+	graphFlattener.top.accept(new ClusterFusion(), new HashSet(), true);
+
 	ClusterCode.setPartitionMap(partitionMap);
 	ClusterCode.generateCode(graphFlattener.top);
 	ClusterCode.generateMasterFile();

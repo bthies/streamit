@@ -768,6 +768,9 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 
 	block.addStatement(new JExpressionStatement(null, new JMethodCallExpression(null, "check_messages", new JExpression[0]), null));
 
+	block.addStatement(new JExpressionStatement(null, new JMethodCallExpression(null, "__update_pop_buf", new JExpression[0]), null));
+
+
 	//reset the simple index
 	if (isSimple(filter)){
 	    block.addStatement

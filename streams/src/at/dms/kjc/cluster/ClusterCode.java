@@ -129,6 +129,41 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 
 	//  +=============================+
+	//  | Splitter Push               |
+	//  +=============================+
+
+	int sum_of_weights = splitter.getSumOfWeights();
+
+	p.print(baseType.toString()+" __push_buffer_"+thread_id+"["+sum_of_weights+"];\n");
+	p.print("int __push_index_"+thread_id+" = 0;\n");
+	p.print("\n");
+
+	p.print("void __splitter_"+thread_id+"_push("+baseType.toString()+" data) {\n");
+
+	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
+	    for (int i = 0; i < out.size(); i++) {
+		NetStream s = (NetStream)out.elementAt(i);		
+		p.print("  "+s.producer_name()+".push(data);\n");
+	    }	    
+	} else {
+	    p.print("  __push_buffer_"+thread_id+"[__push_index_"+thread_id+"++] = data;\n");
+	    p.print("  if (__push_index_"+thread_id+" == "+sum_of_weights+") {\n");
+	    int offs = 0;
+	    
+	    for (int i = 0; i < out.size(); i++) {
+		int num = splitter.getWeight(i);
+		NetStream s = (NetStream)out.elementAt(i);
+		p.print("    "+s.producer_name()+".push_items(&__push_buffer_"+thread_id+"["+offs+"], "+num+");\n");
+		offs += num;
+	    }
+
+	    p.print("    __push_index_"+thread_id+" = 0;\n");
+	    p.print("  }\n");
+	}
+	p.print("}\n");
+	p.print("\n");
+
+	//  +=============================+
 	//  | Splitter Work               |
 	//  +=============================+
 
@@ -324,6 +359,34 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 
 	//  +=============================+
+	//  | Joiner Pop                  |
+	//  +=============================+
+
+
+	int sum_of_weights = joiner.getSumOfWeights();
+
+	p.print(baseType.toString()+" __pop_buffer_"+thread_id+"["+sum_of_weights+"];\n");
+	p.print("int __pop_index_"+thread_id+" = "+sum_of_weights+";\n");
+	p.print("\n");
+
+	p.print(baseType.toString()+" __joiner_"+thread_id+"_pop() {\n");
+
+	p.print("  if (__pop_index_"+thread_id+" == "+sum_of_weights+") {\n");
+	int _offs = 0;
+	for (int i = 0; i < in.size(); i++) {
+	    int num = joiner.getWeight(i);
+	    NetStream s = (NetStream)in.elementAt(i);
+	    p.print("    "+s.consumer_name()+".pop_items(&__pop_buffer_"+thread_id+"["+_offs+"], "+num+");\n");
+	    _offs += num;
+	}
+	p.print("    __pop_index_"+thread_id+" = 0;\n");
+	p.print("  }\n");
+	
+	p.print("  return __pop_buffer_"+thread_id+"[__pop_index_"+thread_id+"++];\n");
+	p.print("}\n");
+	p.print("\n");
+
+	//  +=============================+
 	//  | Joiner Work                 |
 	//  +=============================+
 
@@ -496,15 +559,21 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("int __init_iter = 0;\n");
 	p.println();
 
+	p.print("unsigned myip;\n");
+	p.println();
+
 	for (int i = 0; i < threadNumber; i++) {
-	    
-	    p.print("extern void __declare_sockets_"+i+"();\n");
-	    p.print("extern thread_info *__get_thread_info_"+i+"();\n");
-	    p.print("extern void run_"+i+"();\n");
-	    p.print("pthread_t __pthread_"+i+";\n");
-	    p.print("static void *run_thread_"+i+"(void *param) {\n");
-	    p.print("  run_"+i+"();\n");
-	    p.print("}\n");
+
+	    FlatNode tmp = NodeEnumerator.getFlatNode(i);
+	    if (!ClusterFusion.isEliminated(tmp)) {	    
+		p.print("extern void __declare_sockets_"+i+"();\n");
+		p.print("extern thread_info *__get_thread_info_"+i+"();\n");
+		p.print("extern void run_"+i+"();\n");
+		p.print("pthread_t __pthread_"+i+";\n");
+		p.print("static void *run_thread_"+i+"(void *param) {\n");
+		p.print("  run_"+i+"();\n");
+		p.print("}\n");
+	    }
 
 	}
 
@@ -513,9 +582,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("static void *run_join(void *param) {\n");
 
 	for (int i = 0; i < threadNumber; i++) {
-	    p.print("  if (get_myip() == init_instance::get_thread_ip("+i+")) {\n");
-	    p.print("    pthread_join(__pthread_"+i+", NULL);\n");
-	    p.print("  }\n");
+
+	    FlatNode tmp = NodeEnumerator.getFlatNode(i);
+	    if (!ClusterFusion.isEliminated(tmp)) {	    
+		p.print("  if (myip == init_instance::get_thread_ip("+i+")) {\n");
+		p.print("    pthread_join(__pthread_"+i+", NULL);\n");
+		p.print("  }\n");
+	    }
 	}
 	p.print("  sleep(1);\n");
 	p.print("  exit(0);\n");
@@ -547,9 +620,12 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("void init() {\n");
 	
 	for (int i = 0; i < threadNumber; i++) {
-	    p.print("  if (get_myip() == init_instance::get_thread_ip("+i+")) {\n");
-	    p.print("    __declare_sockets_"+i+"();\n");
-	    p.print("  }\n");
+	    FlatNode tmp = NodeEnumerator.getFlatNode(i);
+	    if (!ClusterFusion.isEliminated(tmp)) {	    
+		p.print("  if (myip == init_instance::get_thread_ip("+i+")) {\n");
+		p.print("    __declare_sockets_"+i+"();\n");
+		p.print("  }\n");
+	    }
 	}
 
 	p.print("  init_instance::initialize_sockets();\n");
@@ -558,16 +634,17 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	for (int i = 0; i < threadNumber; i++) {
 
-	    p.print("  if (get_myip() == init_instance::get_thread_ip("+i+")) {\n");
-
-	    p.print("    thread_info *info = __get_thread_info_"+i+"();\n"); 
-	    p.print("    int *state = info->get_state_flag();\n");
-	    p.print("    *state = RUN_STATE;\n");
-	    p.print("    pthread_create(&__pthread_"+i+", NULL, run_thread_"+i+", (void*)\"thread"+i+"\");\n");
-	    p.print("    info->set_pthread(__pthread_"+i+");\n");
-	    p.print("    info->set_active(true);\n");
-
-	    p.print("  }\n");
+	    FlatNode tmp = NodeEnumerator.getFlatNode(i);
+	    if (!ClusterFusion.isEliminated(tmp)) {	    
+		p.print("  if (myip == init_instance::get_thread_ip("+i+")) {\n");
+		p.print("    thread_info *info = __get_thread_info_"+i+"();\n"); 
+		p.print("    int *state = info->get_state_flag();\n");
+		p.print("    *state = RUN_STATE;\n");
+		p.print("    pthread_create(&__pthread_"+i+", NULL, run_thread_"+i+", (void*)\"thread"+i+"\");\n");
+		p.print("    info->set_pthread(__pthread_"+i+");\n");
+		p.print("    info->set_active(true);\n");
+		p.print("  }\n");
+	    }
 	}
 
 	p.print("  pthread_t id;\n");
@@ -578,6 +655,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.println();
 
 	p.print("int main(int argc, char **argv) {\n");
+
+	p.print("  myip = get_myip();\n");
 
 	p.print("  read_setup::read_setup_file();\n");
 	p.print("  __frequency_of_chkpts = read_setup::freq_of_chkpts;\n");
@@ -638,8 +717,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  thread_info *t_info;\n");
 
 	for (int i = 0; i < threadNumber; i++) {
-	    p.print("  t_info = __get_thread_info_"+i+"();\n"); 
-	    p.print("  thread_list.push_back(t_info);\n");	    
+	    FlatNode tmp = NodeEnumerator.getFlatNode(i);
+	    if (!ClusterFusion.isEliminated(tmp)) {	    
+		p.print("  t_info = __get_thread_info_"+i+"();\n"); 
+		p.print("  thread_list.push_back(t_info);\n");	
+	    }    
 	}
 
 	p.print("  (new save_manager())->start();\n");

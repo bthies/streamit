@@ -3,14 +3,7 @@ package at.dms.kjc.cluster;
 
 import java.io.*;
 import java.lang.*;
-import java.util.Vector;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.HashMap;
-import java.util.TreeSet;
-import java.util.HashSet;
+import java.util.*;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
@@ -39,6 +32,10 @@ class ClusterCodeGenerator {
     private boolean sendsCredits;
     private HashSet sendsCreditsTo;
 
+    private FlatNode node;
+    private boolean isEliminated; // true if eliminated by ClusterFusion
+    private Set fusedWith;
+
     private String TypeToC(CType t) {
 	if (t.toString().compareTo("int") == 0) return "int";
 	if (t.toString().compareTo("float") == 0) return "float";
@@ -53,6 +50,11 @@ class ClusterCodeGenerator {
 	this.fields = fields;
 
 	id = NodeEnumerator.getSIROperatorId(oper);
+
+	node = NodeEnumerator.getFlatNode(id);
+	isEliminated = ClusterFusion.isEliminated(node);
+	fusedWith = ClusterFusion.fusedWith(node);
+
 	data_in = (Vector)RegisterStreams.getNodeInStreams(oper);
 	data_out = (Vector)RegisterStreams.getNodeOutStreams(oper);
 
@@ -103,6 +105,14 @@ class ClusterCodeGenerator {
 
 	Vector r = new Vector();
 	Iterator i;
+
+	r.add("// ClusterFusion isEliminated: "+isEliminated+"\n");
+	Iterator iter = fusedWith.iterator();
+	while (iter.hasNext()) {
+	    r.add("// Fused with: "+iter.next()+"\n");
+	}
+
+	r.add("\n");
 
 	r.add("#include <stdlib.h>\n");
 	r.add("#include <unistd.h>\n");
@@ -333,21 +343,55 @@ class ClusterCodeGenerator {
 	r.add("\n");
 
 	//  +=============================+
+	//  | Fused Methods               |
+	//  +=============================+
+
+	if (!isEliminated) {
+	    Iterator iter2 = fusedWith.iterator();
+	    while (iter2.hasNext()) {
+		FlatNode tmp = (FlatNode)iter2.next();
+		int fid = NodeEnumerator.getNodeId(tmp);
+		r.add("extern void __declare_sockets_"+fid+"();\n");
+		r.add("extern void __init_sockets_"+fid+"(void (*cs_fptr)());\n");
+		r.add("extern void __flush_sockets_"+fid+"();\n");
+		r.add("extern void __peek_sockets_"+fid+"();\n");
+		r.add("\n");
+	    }
+	}
+
+	//  +=============================+
 	//  | Declare Sockets             |
 	//  +=============================+
 
 	r.add("void __declare_sockets_"+id+"() {\n");
 
+	if (!isEliminated) {
+	    Iterator iter2 = fusedWith.iterator();
+	    while (iter2.hasNext()) {
+		FlatNode tmp = (FlatNode)iter2.next();
+		int fid = NodeEnumerator.getNodeId(tmp);
+		r.add("  __declare_sockets_"+fid+"();\n");
+	    }
+	}
+
 	i = data_in.iterator();
 	while (i.hasNext()) {
 	    NetStream in = (NetStream)i.next();
-	    r.add("  init_instance::add_incoming("+in.getSource()+","+in.getDest()+", DATA_SOCKET);\n");
+
+	    FlatNode tmp = NodeEnumerator.getFlatNode(in.getSource());
+	    if (!fusedWith.contains(tmp)) {	
+		r.add("  init_instance::add_incoming("+in.getSource()+","+in.getDest()+", DATA_SOCKET);\n");
+	    }
 	}
 
 	i = data_out.iterator();
 	while (i.hasNext()) {
 	    NetStream out = (NetStream)i.next();
-	    r.add("  init_instance::add_outgoing("+out.getSource()+","+out.getDest()+", DATA_SOCKET);\n");
+
+	    FlatNode tmp = NodeEnumerator.getFlatNode(out.getDest());
+	    if (!fusedWith.contains(tmp)) {		
+		r.add("  init_instance::add_outgoing("+out.getSource()+","+out.getDest()+", DATA_SOCKET);\n");
+	    }
 	}
 
 	i = msg_from.iterator();
@@ -364,38 +408,52 @@ class ClusterCodeGenerator {
 	}
 
 	r.add("}\n");
-
 	r.add("\n");
 
 	//  +=============================+
 	//  | Init Sockets                |
 	//  +=============================+
 
-	r.add("void __init_sockets_"+id+"() {\n");
+	r.add("void __init_sockets_"+id+"(void (*cs_fptr)()) {\n");
 
 	r.add("  mysocket *sock;\n");
 	r.add("\n");
+
+	if (!isEliminated) {
+	    Iterator iter2 = fusedWith.iterator();
+	    while (iter2.hasNext()) {
+		FlatNode tmp = (FlatNode)iter2.next();
+		int fid = NodeEnumerator.getNodeId(tmp);
+		r.add("  __init_sockets_"+fid+"(cs_fptr);\n");
+	    }
+	}
 
 	i = data_in.iterator();
 	while (i.hasNext()) {
 	    NetStream in = (NetStream)i.next();
 
-	    r.add("  sock = init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET);\n");
-	    r.add("  sock->set_check_thread_status(check_status_during_io__"+id+");\n");
-	    r.add("  sock->set_item_size(sizeof("+in.getType()+"));\n");
-	    r.add("  "+in.consumer_name()+".set_socket(sock);\n");
-	    r.add("\n");
+	    FlatNode tmp = NodeEnumerator.getFlatNode(in.getSource());
+	    if (!fusedWith.contains(tmp)) {
+		r.add("  sock = init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET);\n");
+		r.add("  sock->set_check_thread_status(cs_fptr);\n");
+		r.add("  sock->set_item_size(sizeof("+in.getType()+"));\n");
+		r.add("  "+in.consumer_name()+".set_socket(sock);\n");
+		r.add("\n");
+	    }
 	}
 
 	i = data_out.iterator();
 	while (i.hasNext()) {
 	    NetStream out = (NetStream)i.next();
 
-	    r.add("  sock = init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET);\n");
-	    r.add("  sock->set_check_thread_status(check_status_during_io__"+id+");\n");
-	    r.add("  sock->set_item_size(sizeof("+out.getType()+"));\n");
-	    r.add("  "+out.producer_name()+".set_socket(sock);\n");
-	    r.add("\n");
+	    FlatNode tmp = NodeEnumerator.getFlatNode(out.getDest());
+	    if (!fusedWith.contains(tmp)) {
+		r.add("  sock = init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET);\n");
+		r.add("  sock->set_check_thread_status(cs_fptr);\n");
+		r.add("  sock->set_item_size(sizeof("+out.getType()+"));\n");
+		r.add("  "+out.producer_name()+".set_socket(sock);\n");
+		r.add("\n");
+	    }
 	}
 
 	i = msg_from.iterator();
@@ -415,6 +473,65 @@ class ClusterCodeGenerator {
 	r.add("}\n");
 	r.add("\n");
 
+
+	//  +=============================+
+	//  | Flush Sockets               |
+	//  +=============================+
+
+	r.add("void __flush_sockets_"+id+"() {\n");
+
+	if (!isEliminated) {
+	    Iterator iter2 = fusedWith.iterator();
+	    while (iter2.hasNext()) {
+		FlatNode tmp = (FlatNode)iter2.next();
+		int fid = NodeEnumerator.getNodeId(tmp);
+		r.add("  __flush_sockets_"+fid+"();\n");
+	    }
+	}
+
+	i = data_out.iterator();
+	while (i.hasNext()) {
+	    NetStream out = (NetStream)i.next();
+
+	    FlatNode tmp = NodeEnumerator.getFlatNode(out.getDest());
+	    if (!fusedWith.contains(tmp)) {
+		r.add("  "+out.producer_name()+".flush();\n");
+		r.add("  "+out.producer_name()+".get_socket()->close();\n");
+	    }
+	}
+
+	r.add("}\n");
+	r.add("\n");
+
+
+	//  +=============================+
+	//  | Peek Sockets                |
+	//  +=============================+
+
+	r.add("void __peek_sockets_"+id+"() {\n");
+
+	if (!isEliminated) {
+	    Iterator iter2 = fusedWith.iterator();
+	    while (iter2.hasNext()) {
+		FlatNode tmp = (FlatNode)iter2.next();
+		int fid = NodeEnumerator.getNodeId(tmp);
+		r.add("  __peek_sockets_"+fid+"();\n");
+	    }
+	}
+
+	i = data_in.iterator();
+	while (i.hasNext()) {
+	    NetStream in = (NetStream)i.next();
+
+	    FlatNode tmp = NodeEnumerator.getFlatNode(in.getSource());
+	    if (!fusedWith.contains(tmp)) {
+		r.add("  "+in.consumer_name()+".peek(0);\n");
+	    }
+	}
+
+	r.add("}\n");
+	r.add("\n");
+
 	return r;
     }
 
@@ -424,11 +541,51 @@ class ClusterCodeGenerator {
 	Vector r = new Vector();
 	Iterator i;
 
-	r.add("\nvoid run_"+id+"() {\n");
+	r.add("\n");
 
-	r.add("  int i;\n");
+	//  +=============================+
+	//  | Init State                  |
+	//  +=============================+
 
-	r.add("  __init_sockets_"+id+"();\n");
+	if (!isEliminated) {
+	    Iterator iter2 = fusedWith.iterator();
+	    while (iter2.hasNext()) {
+		FlatNode tmp = (FlatNode)iter2.next();
+		int fid = NodeEnumerator.getNodeId(tmp);
+		r.add("extern void __init_state_"+fid+"();\n");
+		r.add("\n");
+	    }
+	}
+	    
+	r.add("void __init_state_"+id+"() {\n");
+
+	if (!isEliminated) {
+	    Iterator iter2 = fusedWith.iterator();
+	    while (iter2.hasNext()) {
+		FlatNode tmp = (FlatNode)iter2.next();
+		int fid = NodeEnumerator.getNodeId(tmp);
+		r.add("  __init_state_"+fid+"();\n");
+	    }
+	}
+
+	if (init_f != null) r.add("  "+init_f+"();\n");
+	r.add("  save_state::load_state("+id+", &__steady_"+id+", __read_thread__"+id+");\n");
+	r.add("  __number_of_iterations_"+id+" = __max_iteration - __steady_"+id+";\n");
+
+	if (oper instanceof SIRFilter) {
+	    r.add("  __init_pop_buf__"+id+"();\n");
+	}
+
+	r.add("}\n");
+	r.add("\n");
+
+	//  +=============================+
+	//  | Run Function                |
+	//  +=============================+
+
+	r.add("void run_"+id+"() {\n");
+
+	r.add("  __init_sockets_"+id+"(check_status_during_io__"+id+");\n");
 
 	i = msg_to.iterator();
 	while (i.hasNext()) {
@@ -485,15 +642,23 @@ class ClusterCodeGenerator {
 	    }
 	}
 
+	r.add("  __init_state_"+id+"();\n");
 
-	if (init_f != null) r.add("  "+init_f+"();\n");
-
-	r.add("  save_state::load_state("+id+", &__steady_"+id+", __read_thread__"+id+");\n");
-	
-	r.add("  __number_of_iterations_"+id+" = __max_iteration - __steady_"+id+";\n");
+	r.add("\n");
 
 	if (!data_out.iterator().hasNext()) {
 	    r.add("  timer t1;\n");
+
+	    /*
+	    r.add("  //peek one item from all incoming data streams\n");
+	    i = data_in.iterator();
+	    while (i.hasNext()) {
+		NetStream in = (NetStream)i.next();
+		r.add("  "+in.consumer_name()+".peek(0);\n");
+	    }
+	    */
+
+	    r.add("  __peek_sockets_"+id+"();\n");
 	    r.add("  t1.start();\n");
 	}
 
@@ -504,13 +669,9 @@ class ClusterCodeGenerator {
 	    r.add("  if (__timer_enabled) t1.output(stderr);\n");
 	}
 
-	i = data_out.iterator();
-	while (i.hasNext()) {
-	    NetStream out = (NetStream)i.next();
+	r.add("\n");
 
-	    r.add("  "+out.producer_name()+".flush();\n");
-	    r.add("  "+out.producer_name()+".get_socket()->close();\n");
-	}
+	r.add("  __flush_sockets_"+id+"();\n");
 
 	r.add("  pthread_exit(NULL);\n");
 

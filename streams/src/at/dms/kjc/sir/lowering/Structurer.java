@@ -217,9 +217,9 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				// rename the call
 				self.setIdent(newName);
 			    }
+			    // add data argument
+			    self.addArgFirst(LoweringConstants.getDataField());
 			}
-			// add data argument
-			self.addArgFirst(LoweringConstants.getDataField());
 		    }
 		});
 	}

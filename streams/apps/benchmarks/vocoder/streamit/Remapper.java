@@ -84,10 +84,6 @@ class Remapper extends Pipeline {
 //      add(new Decimator(1));
   }
 
-  int gcd(int a, int b) {
-    return (b == 0) ? a : gcd(b, a % b);
-  }
-
   Remapper(int oldLen, int newLen) {
     super(oldLen, newLen);
   }

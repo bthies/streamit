@@ -30,28 +30,28 @@ public class Operator extends DestroyedClass
     public Operator(float[] a)
     {
         initParams = new ParameterContainer("float[]")
-            .add("a", a);
+            .add("a", copyFloatArray1D(a));
     }
 
     public Operator(int a, float[] b)
     {
         initParams = new ParameterContainer("int-float[]")
             .add("a", a)
-            .add("b", b);
+            .add("b", copyFloatArray1D(b));
     }
 
     public Operator(int a, int[] b)
     {
         initParams = new ParameterContainer("int-int[]")
             .add("a", a)
-            .add("b", b);
+            .add("b", copyIntArray1D(b));
     }
 
     public Operator(int a, float[][] b)
     {
         initParams = new ParameterContainer("int-float[][]")
             .add("a", a)
-            .add("b", b);
+            .add("b", copyFloatArray2D(b));
     }
 
     public Operator(int i1, int i2, float f)
@@ -88,7 +88,7 @@ public class Operator extends DestroyedClass
         initParams = new ParameterContainer("int-int-float[]")
             .add("a", a)
             .add("b", b)
-            .add("c", c);
+            .add("c", copyFloatArray1D(c));
     }
 
     public Operator(int a, int b, int c, float[] d)
@@ -97,15 +97,15 @@ public class Operator extends DestroyedClass
             .add("a", a)
             .add("b", b)
             .add("c", c)
-            .add("d", d);
+            .add("d", copyFloatArray1D(d));
     }
 
     public Operator (int a, float[] c, float[] d) 
     { 
         initParams = new ParameterContainer("int-float[]-float[]")
             .add("a",a)
-            .add("c",c)
-            .add("d",d);
+            .add("c",copyFloatArray1D(c))
+            .add("d",copyFloatArray1D(d));
     }
 
     public Operator(int a, int b, float[][] c)
@@ -113,7 +113,7 @@ public class Operator extends DestroyedClass
         initParams = new ParameterContainer("int-int-float[][]")
             .add("a", a)
             .add("b", b)
-            .add("c", c);
+            .add("c", copyFloatArray2D(c));
     }
 
     public Operator(int i1, int i2, float f1, float f2)
@@ -140,7 +140,7 @@ public class Operator extends DestroyedClass
             .add("b", b)
             .add("c", c)
             .add("d", d)
-            .add("e", e);
+            .add("e", copyFloatArray2D(e));
     }
 
     public Operator(int a, int b, int c, int d, float[][] e, float[][] f)
@@ -150,8 +150,8 @@ public class Operator extends DestroyedClass
             .add("b", b)
             .add("c", c)
             .add("d", d)
-            .add("e", e)
-            .add("f", f);
+            .add("e", copyFloatArray2D(e))
+            .add("f", copyFloatArray2D(f));
     }
 
     public Operator(int a, int b, int c, float[][] x, float[][] y)
@@ -160,8 +160,8 @@ public class Operator extends DestroyedClass
             .add("a", a)
             .add("b", b)
             .add("c", c)
-            .add("x", x)
-            .add("y", y);
+            .add("x", copyFloatArray2D(x))
+            .add("y", copyFloatArray2D(y));
     }
 
     public Operator(float a, int b)
@@ -328,7 +328,7 @@ public class Operator extends DestroyedClass
             .add("a", a)
             .add("b", b)
             .add("c", c)
-            .add("d", d);
+            .add("d", copyFloatArray2D(d));
     }
 
     public Operator(int a, int b, int c, float d, int e)
@@ -473,8 +473,8 @@ public class Operator extends DestroyedClass
         initParams = new ParameterContainer("int-int-float[]-float[]")
             .add("a", a)
             .add("b", b)
-            .add("c", c)
-            .add("d", d);
+            .add("c", copyFloatArray1D(c))
+            .add("d", copyFloatArray1D(d));
     }
 
     public Operator(short s1, short s2, short s3) {
@@ -1395,5 +1395,35 @@ public class Operator extends DestroyedClass
             // this is all the other errors:
             ASSERT (false);
         }
+    }
+
+
+    float[][] copyFloatArray2D(float[][] input) {
+	// according to streamit semantics, assume arrays are rectangular
+	float[][] result = new float[input.length][input[0].length];
+	for (int i=0; i<input.length; i++) {
+	    for (int j=0; j<input[0].length; j++) {
+		result[i][j] = input[i][j];
+	    }
+	}
+	return result;
+    }
+
+    float[] copyFloatArray1D(float[] input) {
+	// according to streamit semantics, assume arrays are rectangular
+	float[] result = new float[input.length];
+	for (int i=0; i<input.length; i++) {
+	    result[i] = input[i];
+	}
+	return result;
+    }
+
+    int[] copyIntArray1D(int[] input) {
+	// according to streamit semantics, assume arrays are rectangular
+	int[] result = new int[input.length];
+	for (int i=0; i<input.length; i++) {
+	    result[i] = input[i];
+	}
+	return result;
     }
 }

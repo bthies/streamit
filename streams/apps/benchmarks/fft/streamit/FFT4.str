@@ -4,7 +4,7 @@ void->void pipeline FFT {
     add FloatPrinter();
 }
 
-float->float splitjoin FFTKernel (int N) {
+float->float pipeline FFTKernel (int N) {
     add splitjoin {
 	split roundrobin(N/2, N/2);
 	for (int i=0; i<2; i++) {

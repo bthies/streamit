@@ -210,6 +210,10 @@ public class LowerInitFunctions implements StreamVisitor {
 							   str.getJoiner() 
 							   ).intValue();
 	    // register an LIR node to <init>
+	    if (child.getInputType()==null) {
+		System.out.println("null child: " + child.getName() + " " +
+				   child.getIdent());
+	    }
 	    init.addStatement(new LIRSetParallelStream(parentContext,
                                                        childContext,
 						       i,

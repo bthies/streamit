@@ -190,9 +190,39 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      */
     private void flattenMethods(String streamName,
 				JMethodDeclaration[] methods) {
-	// for each method
-	for (int i=0; i<methods.length; i++)
-            flattenMethod(streamName, methods[i]);
+	// maintaint map of old method name to new method name.
+	// this maps interned strings -> strings
+	final HashMap renamedMethods = new HashMap();
+	// flatten each method
+	for (int i=0; i<methods.length; i++) {
+            flattenMethod(streamName, methods[i], renamedMethods);
+	}
+	// change method calls to refer to new name, and to pass a
+	// data structure as the first argument
+	for (int i=0; i<methods.length; i++) {
+	    methods[i].accept(new SLIREmptyVisitor() {
+		    public void visitMethodCallExpression(JMethodCallExpression
+							  self,
+							  JExpression prefix,
+							  String ident,
+							  JExpression[] args) {
+			// do the super
+			super.visitMethodCallExpression(self, prefix, 
+							ident, args);
+			// if we're calling one of our own methods...
+			if (prefix instanceof JThisExpression) {
+			    // if <ident> has been renamed...
+			    String newName = (String)renamedMethods.get(ident);
+			    if (newName!=null) {
+				// rename the call
+				self.setIdent(newName);
+			    }
+			}
+			// add data argument
+			self.addArgFirst(LoweringConstants.getDataField());
+		    }
+		});
+	}
     }
 
     /**
@@ -200,11 +230,15 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      * does.
      */
     private void flattenMethod(String streamName,
-                               JMethodDeclaration method) {
+                               JMethodDeclaration method, 
+			       HashMap renamedMethods) {
+	// get new method name
+	String newName = LoweringConstants.getMethodName(streamName, 
+							 method.getName());
+	// record change of name in <renamedMethods>
+	renamedMethods.put(method.getName().intern(), newName);
         // rename the method
-        method.setName(LoweringConstants.
-                       getMethodName(streamName, 
-                                     method.getName()));
+        method.setName(newName);
         // add the parameter
         addParameter(method, 
                      streamName, 
@@ -382,7 +416,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	// do visit
 	postVisit(self.getName(), fields, methods, children);
         // deal with initPath, too
-        flattenMethod(self.getName(), initPath);
+        //flattenMethod(self.getName(), initPath);
     }
 }
 

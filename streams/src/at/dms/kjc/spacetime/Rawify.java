@@ -89,10 +89,6 @@ public class Rawify
 	    //append the receive code
 	    if (node.getPrevious() != null && node.getPrevious().isFilterTrace()) 
 		createReceiveCode(i, node, parent, filterInfo, init, tile, rawChip);
-
-	}
-	
-	for (int i = 0; i < mult; i++) {
 	    //append the send code
 	    if (node.getNext() != null && node.getNext().isFilterTrace()) 
 		createSendCode(i, node, parent, filterInfo, init, tile, rawChip);
@@ -130,6 +126,7 @@ public class Rawify
 	//by the size of the type it is receiving
 	int itemsReceiving = itemsNeededToFire(filterInfo, iteration, init) *
 	    Util.getTypeSize(node.getFilter().getInputType());
+
 	
 	for (int j = 0; j < itemsReceiving; j++) {
 	    RouteIns ins = new RouteIns(tile);

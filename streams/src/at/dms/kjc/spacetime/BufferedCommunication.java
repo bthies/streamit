@@ -156,27 +156,26 @@ public class BufferedCommunication extends RawExecutionCode
 	    
 	    //compute how many times this filter fires
 	    //find the stage with the max number of executions and add the primepump
-	    int maxExe = Math.max(filterInfo.initMult, filterInfo.steadyMult) +	    
-		filterInfo.primePump;
+	    //int maxExe = Math.max(filterInfo.initMult, filterInfo.steadyMult) +	    
+	    //	filterInfo.primePump;
 	    
-	    buffersize *= maxExe;
+	    //buffersize *= maxExe;
 	    
-	    /*
-		FilterTraceNode[] previousFilters = filterInfo.getPreviousFilters();
-		if (previousFilters.length == 1) {
-		    FilterInfo prevInfo = new FilterInfo(previousFilters[0]);
-		    
-		    //find the stage with the max number of executions
-		    int maxExe = Math.max(Math.max(prevInfo.initMult, prevInfo.steadyMult),
-					  prevInfo.primePump);
-		    //now mult the previous buffersize calc by the stage with the 
-		    //greatest number of executions...
-		    buffersize *= maxExe;
-		}
-		else 
-		    Utils.fail("Split/joins not supported");
+	    
+	    FilterTraceNode[] previousFilters = filterInfo.getPreviousFilters();
+	    if (previousFilters.length == 1) {
+		FilterInfo prevInfo = FilterInfo.getFilterInfo(previousFilters[0]);
+		
+		//find the stage with the max number of executions
+		int maxExe = Math.max(Math.max(prevInfo.initMult, prevInfo.steadyMult),
+				      prevInfo.primePump);
+		//now mult the previous buffersize calc by the stage with the 
+		//greatest number of executions...
+		buffersize *= maxExe;
 	    }
-	    */
+	    else 
+		Utils.fail("Split/joins not supported");
+	    
 
 	    JVariableDefinition recvBufVar = 
 		new JVariableDefinition(null, 
@@ -423,12 +422,54 @@ public class BufferedCommunication extends RawExecutionCode
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
+	if (filterInfo.getNextFilters().length > 1)
+	    Utils.fail("split joins not supported");
+	FilterInfo upstream = FilterInfo.getFilterInfo(filterInfo.getNextFilters()[0]);
+	
 
 	//not rate matching
 	    
 	JBlock workBlock = 
 	    (JBlock)ObjectDeepCloner.
 	    deepCopy(filter.getWork().getBody());
+
+	//reset the simple index
+	if (filterInfo.isSimple() && 
+	    filterInfo.traceNode.getPrevious().isFilterTrace()) {
+	    block.addStatement
+		(new JExpressionStatement(null,
+					  (new JAssignmentExpression
+					   (null,
+					    new JFieldAccessExpression
+					    (null, new JThisExpression(null),
+					     generatedVariables.simpleIndex.getIdent()),
+					    new JIntLiteral(-1))), null));
+	}
+	
+	//if this filter is the last in the trace and communicating to anothter filter
+	//who is simple, reset the simple index during each iteration
+	if (filterInfo.traceNode.getNext().isOutputTrace() &&
+	    upstream != null && upstream.isSimple()) {
+	    block.addStatement
+		(new JExpressionStatement(null,
+					  (new JAssignmentExpression
+					   (null,
+					    new JFieldAccessExpression
+					    (null, new JThisExpression(null),
+					     simpleIndex + upstream.filter.getName()),
+					    new JIntLiteral(-1))), null));
+	}
+	
+	
+	if (filterInfo.traceNode.getPrevious().isFilterTrace()) {
+	    //add the statements to receive pop * steady mult items into the buffer
+	    //execute this before the for loop that has the work function
+	    block.addStatement
+		(makeForLoop(receiveCode(filter, filter.getInputType(),
+					 generatedVariables),
+			     generatedVariables.exeIndex,
+			     new JIntLiteral(filterInfo.pop)));
+	}
 
 	//if we are in debug mode, print out that the filter is firing
 	if (SpaceTimeBackend.FILTER_DEBUG_MODE) {
@@ -470,8 +511,11 @@ public class BufferedCommunication extends RawExecutionCode
 	    block.addStatement(loop);
 	}
 	
-	//reset the simple index
-	if (filterInfo.isSimple()) {
+	//reset the simple index outside of the loop if this filter is the first
+	//in the trace because it uses the buffer that for the entire steady state
+	if (filterInfo.isSimple() && 
+	    filterInfo.traceNode.getPrevious() != null &&
+	    filterInfo.traceNode.getPrevious().isInputTrace()) {
 	    block.addStatementFirst
 		(new JExpressionStatement(null,
 					  (new JAssignmentExpression
@@ -482,19 +526,26 @@ public class BufferedCommunication extends RawExecutionCode
 					    new JIntLiteral(-1))), null));
 	}
 	
-	if (filterInfo.traceNode.getPrevious().isFilterTrace()) {
-	    //add the statements to receive pop * steady mult items into the buffer
-	    //execute this before the for loop that has the work function
+
+	//if this filter is the last in the trace and communicating to anothter filter
+	//who is simple, reset the simple index (the next filter's) during each iteration
+	//do not do this in the loop, because it fills the entire buffer
+	if (filterInfo.traceNode.getNext().isOutputTrace() &&
+	    upstream != null && upstream.isSimple()) {
 	    block.addStatementFirst
-		(makeForLoop(receiveCode(filter, filter.getInputType(),
-					 generatedVariables),
-			     generatedVariables.exeIndex,
-			     new JIntLiteral(filterInfo.pop * filterInfo.steadyMult)));
+		(new JExpressionStatement(null,
+					  (new JAssignmentExpression
+					   (null,
+					    new JFieldAccessExpression
+					    (null, new JThisExpression(null),
+					     simpleIndex + upstream.filter.getName()),
+					    new JIntLiteral(-1))), null));
 	}
 
 	//reset the simple index if we are receiving from another trace
 	//to allow it to write to the buffer in the correct index
-	if (filterInfo.isSimple() && 
+	/*
+	  if (filterInfo.isSimple() && 
 	    filterInfo.traceNode.getPrevious().isInputTrace()) {
 	    block.addStatement
 		(new JExpressionStatement(null,
@@ -505,7 +556,7 @@ public class BufferedCommunication extends RawExecutionCode
 					     generatedVariables.simpleIndex.getIdent()),
 					    new JIntLiteral(-1))), null));
 	}
-	
+	*/
 	/*
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 				      CStdType.Void,

@@ -152,12 +152,31 @@ public class DirectCommunication extends RawExecutionCode
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
+	FilterInfo upstream = null;
+	if (filterInfo.getNextFilters().length > 1)
+	    Utils.fail("split joins not supported");
+	else if (filterInfo.getNextFilters().length == 1) 
+	    upstream = FilterInfo.getFilterInfo(filterInfo.getNextFilters()[0]);
 	
 	//inline the work function in a while loop
 	JBlock workBlock = 
 	    (JBlock)ObjectDeepCloner.
 	    deepCopy(filter.getWork().getBody());
 
+	//if this filter is the last in the trace and communicating to anothter filter
+	//who is simple, reset the simple index during each iteration
+	if (filterInfo.traceNode.getNext() != null &&
+	    filterInfo.traceNode.getNext().isOutputTrace() &&
+	    upstream != null && upstream.isSimple()) {
+	    block.addStatement
+		(new JExpressionStatement(null,
+					  (new JAssignmentExpression
+					   (null,
+					    new JFieldAccessExpression
+					    (null, new JThisExpression(null),
+					     simpleIndex + upstream.filter.getName()),
+					    new JIntLiteral(-1))), null));
+	}
 	
 	//create the for loop that will execute the work function
 	//local variable for the work loop
@@ -167,6 +186,8 @@ public class DirectCommunication extends RawExecutionCode
 								  workCounter,
 								  null);
 	
+	
+
 	JStatement loop = 
 	    makeForLoop(workBlock, loopCounter, new JIntLiteral(filterInfo.steadyMult));
 	block.addStatement(new JVariableDeclarationStatement(null,

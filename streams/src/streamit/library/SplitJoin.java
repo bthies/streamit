@@ -36,6 +36,11 @@ public class SplitJoin extends Stream
         super(n1, n2);
     }
 
+    public SplitJoin(int n1, int n2, int n3)
+    {
+        super(n1, n2, n3);
+    }
+
     public SplitJoin(float n1, float n2, float n3, int n4)
     {
         super(n1, n2, n3, n4);
@@ -180,6 +185,14 @@ public class SplitJoin extends Stream
         return new SplitJoinType (1);
     }
 
+    /**
+     * TODO:  add support for a non-unity weight in a round-robin.
+     */
+    public static SplitJoinType ROUND_ROBIN (int weight)
+    {
+        return new SplitJoinType (1);
+    }
+
     public static SplitJoinType DUPLICATE ()
     {
         return new SplitJoinType (3);
@@ -248,7 +261,6 @@ public class SplitJoin extends Stream
             {
                 Stream s = (Stream) iter.next ();
                 ASSERT (s != null);
-
                 s.setupOperator ();
             }
         }

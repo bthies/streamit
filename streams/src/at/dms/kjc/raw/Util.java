@@ -104,7 +104,6 @@ public class Util extends at.dms.util.Utils {
     }
     
     public static CType getOutputType(FlatNode node) {
-	
 	if (node.contents instanceof SIRFilter)
 	    return ((SIRFilter)node.contents).getOutputType();
 	else if (node.contents instanceof SIRJoiner)

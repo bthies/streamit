@@ -287,7 +287,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	catch (Exception e) {
 	    e.printStackTrace();
 	}
-	dumpLayout();
+	dumpLayout("layout.dot");
     }
     
     
@@ -372,14 +372,40 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		row++;
 	    }
 	}
-	Iterator nodes = assigned.iterator();
-	int tile = 0;
-	while(nodes.hasNext()) {
-	    FlatNode node = (FlatNode)nodes.next();
-	    //do not assign identities to tiles
-	    assign(getTile(tile), node);
-	    tile++;
+	//Iterator nodes = assigned.iterator();
+	ListIterator dfTraversal = DFTraversal.getDFTraversal(toplevel).listIterator(0);
+	int row = 0;
+	int column = 0;
+
+	for (row = 0; row < StreamItOptions.rawRows; row ++) {
+	    if (row % 2 == 0) {
+		for (column = 0; column < StreamItOptions.rawColumns;) {
+		    if (!dfTraversal.hasNext())
+			break;
+		    FlatNode node = (FlatNode)dfTraversal.next();
+		    if (!assigned.contains(node))
+			continue;
+		    assign(getTile(row, column), node);
+		    column++;
+		}
+	    }
+	    else {
+		for (column = StreamItOptions.rawColumns -1; column >= 0;) {
+		    if (!dfTraversal.hasNext())
+			break; 
+		    FlatNode node = (FlatNode)dfTraversal.next();
+		    if (!assigned.contains(node))
+			continue;
+		    assign(getTile(row, column), node); 
+		    column--;
+		}
+	    }
+	    if (!dfTraversal.hasNext())
+		break;
 	}
+
+
+	dumpLayout("initial.dot");
     }
     
     private static int placementCost() 
@@ -521,7 +547,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 			      StreamItOptions.rawColumns);
     }
     
-    public static void dumpLayout() {
+    public static void dumpLayout(String fileName) {
 	StringBuffer buf = new StringBuffer();
 	
 	buf.append("digraph Layout {\n");
@@ -576,7 +602,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	buf.append("}\n");
 	
 	try {
-	    FileWriter fw = new FileWriter("layout.dot");
+	    FileWriter fw = new FileWriter(fileName);
 	    fw.write(buf.toString());
 	    fw.close();
 	}
@@ -686,7 +712,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    handAssignNode((FlatNode)keys.next());
 	}
 	System.out.println("Final Cost: " + placementCost());
-	dumpLayout();
+	dumpLayout("layout.dot");
     }
 
     private static void handAssignNode(FlatNode node) 

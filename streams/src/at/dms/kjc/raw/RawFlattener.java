@@ -325,7 +325,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 				FlatNode inEdge=inEdges[off];
 				//Dummy identity node
 				//Later we will set its input and outputs to the right places
-				FlatNode ident=new FlatNode(new SIRIdentity(null,"Ident",Util.getOutputType(inEdge)));
+				FlatNode ident=new FlatNode(new SIRIdentity(Util.getOutputType(inEdge)));
 				ident.inputs=1;
 				ident.ways=1;
 				ident.weights=new int[]{1};
@@ -373,7 +373,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 				    inEdge=inEdges[off];
 				    entry=(LinkedList)needSplit.get(inEdge);
 				    //Dummy identity again
-				    ident=new FlatNode(new SIRIdentity(null,"Ident",Util.getOutputType(inEdge)));
+				    ident=new FlatNode(new SIRIdentity(Util.getOutputType(inEdge)));
 				    ident.inputs=1;
 				    ident.ways=1;
 				    ident.weights=new int[]{1};
@@ -614,7 +614,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 			LinkedList edges=(LinkedList)visited.get(node);
 			if(edges==null) {
 			    edges=new LinkedList();
-			    FlatNode ident=new FlatNode(new SIRIdentity(null,"Ident",Util.getOutputType(node)));
+			    FlatNode ident=new FlatNode(new SIRIdentity(Util.getOutputType(node)));
 			    FlatNode split=new FlatNode(SIRSplitter.createWeightedRR(null,new JExpression[0]));
 			    node.edges[0]=split;
 			    split.inputs=1;
@@ -630,7 +630,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 			    edges.add(newWeights.get(i));
 			    visited.put(node,edges);
 			} else {
-			    FlatNode ident=new FlatNode(new SIRIdentity(null,"Ident",Util.getOutputType(node)));
+			    FlatNode ident=new FlatNode(new SIRIdentity(Util.getOutputType(node)));
 			    FlatNode split=(FlatNode)edges.get(0);
 			    ident.inputs=1;
 			    ident.ways=1;
@@ -698,7 +698,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	    createGraph(loop.getLoop());
 	    FlatNode.addEdges(currentNode, joinerNode);
 	    //Add dummy identity on the output splitter so splitters are always followed by a filter (making analysis simple)
-	    FlatNode ident=new FlatNode(new SIRIdentity(null,"Ident",Util.getOutputType(splitterNode.edges[0])));
+	    FlatNode ident=new FlatNode(new SIRIdentity(Util.getOutputType(splitterNode.edges[0])));
 	    FlatNode.addEdges(splitterNode, ident);
 	    currentNode = ident;
 	    

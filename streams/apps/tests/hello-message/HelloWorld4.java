@@ -23,8 +23,8 @@ public class HelloWorld4 extends Stream {
     // this is the defining part of the stream
     public void init() {
 	MessagingCharGenerator generator;
-	Add(generator = new MessagingCharGenerator(".....Hello World!.....\0"));
-	Add(new MessagingBufferedCharPrinter(generator));
+	add(generator = new MessagingCharGenerator(".....Hello World!.....\0"));
+	add(new MessagingBufferedCharPrinter(generator));
     }
 }
 
@@ -43,15 +43,15 @@ final class MessagingCharGenerator extends Filter {
     private String message;
 
     // <message> is string to output, one char at a time
-    public void Init(String message) {
+    public void init(String message) {
 	// init counter
 	i = 0;
 	// init message
 	this.message = message;
     }
 
-    public void Work() {
-	output.PushChar(message.charAt(0));
+    public void work() {
+	output.pushChar(message.charAt(0));
 	i++;
     }
 
@@ -78,13 +78,13 @@ final class MessagingBufferedCharPrinter extends Filter {
 	super(str);
     }
 
-    public void Init(MessagingCharGenerator generator) {
+    public void init(MessagingCharGenerator generator) {
 	sb = new StringBuffer();
 	this.generator = generator;
     }
 
-    public void Work() {
-	char c = input.PopChar();
+    public void work() {
+	char c = input.popChar();
 	sb.append(c);
 	// if we hit null-terminated string, print to screen, flush the
 	// buffer, and send message to generator
@@ -94,7 +94,7 @@ final class MessagingBufferedCharPrinter extends Filter {
 	    // flush buffer
 	    sb = new StringBuffer();
 	    // send message to generator
-	    SendMessage(generator.StartOver());
+	    sendMessage(generator.startOver());
 	}
     }
 }

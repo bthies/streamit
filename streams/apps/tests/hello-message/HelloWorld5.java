@@ -1,7 +1,7 @@
 /*
 
   Hello World Program #5:
-
+  
   runs in parallel with one of the previous HelloWorld programs, then
   switches to a different one to run in parallel with once it has
   finished.
@@ -22,27 +22,27 @@ public class HelloWorld5 extends SplitJoin {
     }
 
     // if init with no arguments, then init with random 
-    public void Init() 
+    public void init() 
     {
-	Init(1 + (int)(Math.random()*4));
+	init(1 + (int)(Math.random()*4));
     }
 
     // this is the defining part of the stream
-    public void Init(int selection)
+    public void init(int selection)
     {
 	// setup the one to run in parallel
-	Add(new Stream() {
+	add(new Stream() {
 		public void init() {
-		    Add(new CharGenerator("Hello World!.....\0"));
-		    Add(new ResetingCharPrinter(this));
+		    add(new CharGenerator("Hello World!.....\0"));
+		    add(new ResetingCharPrinter(this));
 		}
 	    });
 	// setup the other one to run.  this acts like the old SwitchSelect.
 	switch(selection) {
-	case 1: Add(new HelloWorld1()); break;
-	case 2: Add(new HelloWorld2()); break;
-	case 3: Add(new HelloWorld3()); break;
-	case 4: Add(new HelloWorld4()); break;
+	case 1: add(new HelloWorld1()); break;
+	case 2: add(new HelloWorld2()); break;
+	case 3: add(new HelloWorld3()); break;
+	case 4: add(new HelloWorld4()); break;
 	}
     }
 }
@@ -59,11 +59,11 @@ class ResetingCharPrinter extends Filter {
 	super(str);
     }
 
-    public void Init(Stream str) {
+    public void init(Stream str) {
 	this.str = str;
     }
     
-    public void Work() {
+    public void work() {
 	char c;
 	System.out.print(c = input.popChar());
 	if (c=='\0') {

@@ -33,7 +33,10 @@ public class AutoCloner {
 
 	toBeCloned = visitor.getToBeCloned();
 	registry = new HashMap();
-	return cloneToplevel(oldObj);
+	Object result = cloneToplevel(oldObj);
+	// clear registry to promote GC
+	registry = null;
+	return result;
     }
 
     /**
@@ -47,7 +50,10 @@ public class AutoCloner {
 
 	toBeCloned = visitor.getToBeCloned();
 	registry = new HashMap();
-	return cloneToplevel(oldObj);
+	Object result = cloneToplevel(oldObj);
+	// clear registry to promote GC
+	registry = null;
+	return result;
     }
 
     /**
@@ -61,7 +67,10 @@ public class AutoCloner {
 
 	toBeCloned = visitor.getToBeCloned();
 	registry = new HashMap();
-	return cloneToplevel(oldObj);
+	Object result = cloneToplevel(oldObj);
+	// clear registry to promote GC
+	registry = null;
+	return result;
     }
 
     /*************************************************************

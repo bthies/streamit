@@ -1,7 +1,7 @@
 /*
  * DoComplexProp.java: perform constant propagation on function bodies
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.9 2002-11-20 20:43:56 dmaze Exp $
+ * $Id: DoComplexProp.java,v 1.10 2002-11-21 21:43:35 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -171,6 +171,7 @@ public class DoComplexProp extends FEReplacer
 
     public Object visitFunction(Function func)
     {
+        symTab.registerFn(func);
         pushSymTab();
         paramListToSymTab(func.getParams());
         Object result = super.visitFunction(func);
@@ -180,6 +181,7 @@ public class DoComplexProp extends FEReplacer
 
     public Object visitFuncWork(FuncWork func)
     {
+        symTab.registerFn(func);
         pushSymTab();
         paramListToSymTab(func.getParams());
         Object result = super.visitFuncWork(func);

@@ -7,6 +7,7 @@ import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
 
@@ -106,7 +107,7 @@ public class Flattener {
 	new VarDeclRaiser().raiseVars(str);
 	
 	// name the components
-	Namer.assignNames(str);
+	SIRIterator iter = IterFactory.createIter(str);
 	
 	// make single structure
 	JClassDeclaration flatClass = Structurer.structure(str, 

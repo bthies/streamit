@@ -32,7 +32,7 @@ public class FirFilter extends Filter {
 
     public void init(int numTaps) {
 	int i;
-        input = new Channel (Float.TYPE, 1, 10);
+        input = new Channel (Float.TYPE, 1, numTaps);
         output = new Channel (Float.TYPE, 1);
         numberOfTaps = numTaps;
         COEFF = new float[numTaps];

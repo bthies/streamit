@@ -10,15 +10,21 @@ package streamit.frontend.nodes;
  * fully-expanded real and imaginary parts.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ExprComplex.java,v 1.3 2003-06-30 20:23:12 dmaze Exp $
+ * @version $Id: ExprComplex.java,v 1.4 2003-07-16 15:53:26 dmaze Exp $
  */
 public class ExprComplex extends Expression
 {
     private Expression real, imag;
     
-    /** Create a new ExprComplex with the specified real and imaginary
-     * parts.  Either of real or imag may be null; see the class
-     * description for details. */
+    /**
+     * Create a new ExprComplex with the specified real and imaginary
+     * parts.  Either of real or imag may be null, for a purely real
+     * or imaginary complex number.
+     *
+     * @param context  file and line number this expression corresponds to
+     * @param real     real part of the complex expression, or null
+     * @param imag     imaginary part of the complex expression or null
+     */
     public ExprComplex(FEContext context, Expression real, Expression imag)
     {
         super(context);
@@ -26,11 +32,49 @@ public class ExprComplex extends Expression
         this.imag = imag;
     }
     
-    /** Returns the real part of this. */
+    /**
+     * Returns the real part of this.  May return null if this is a
+     * purely imaginary expression.
+     *
+     * @returns the real part of the expression, or null
+     */
     public Expression getReal() { return real; }  
 
-    /** Returns the imaginary part of this. */
+    /**
+     * Returns a non-null expression for the real part of this.  If
+     * this is a purely imaginary expression, returns an expression
+     * corresponding to zero.
+     *
+     * @returns the real part of the expression
+     */
+    public Expression getRealExpr()
+    {
+        if (real != null)
+            return real;
+        return new ExprConstFloat(this.getContext(), 0.0f);
+    }
+
+    /**
+     * Returns the imaginary part of this.  May return null if this is
+     * a purely real expression.
+     *
+     * @returns the imaginary part of the expression, or null
+     */
     public Expression getImag() { return imag; }
+
+    /**
+     * Returns a non-null expression for the imaginary part of this.
+     * If this is a purely real expression, returns an expression
+     * corresponding to zero.
+     *
+     * @returns the imaginary part of the expression
+     */
+    public Expression getImagExpr()
+    {
+        if (imag != null)
+            return imag;
+        return new ExprConstFloat(this.getContext(), 0.0f);
+    }
 
     /** Accept a front-end visitor. */
     public Object accept(FEVisitor v)

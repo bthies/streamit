@@ -18,4 +18,22 @@ public class JoinerScheduleNode
     {
 	return buffer;
     }
+
+    public void printMe() 
+    {
+	if (type == FIRE)
+	    System.out.print("Fire: ");
+	else 
+	    System.out.print("Receive: ");
+	System.out.println(buffer);
+    }
+
+    public static void printSchedule(JoinerScheduleNode first) 
+    {
+	do {
+	    first.printMe();
+	    first = first.next;
+	}while(first != null);
+    }
+    
 }

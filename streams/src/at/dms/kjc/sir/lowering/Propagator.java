@@ -929,9 +929,10 @@ public class Propagator extends SLIRReplacingVisitor {
 					String oper,
 					JExpression left,
 					JExpression right) {
-	if (self instanceof JBinaryArithmeticExpression) {
-	    return doBinaryArithmeticExpression((JBinaryArithmeticExpression)
-						self, 
+	if (self instanceof JBinaryArithmeticExpression ||
+	    self instanceof JConditionalOrExpression ||
+	    self instanceof JConditionalAndExpression) {
+	    return doBinaryArithmeticExpression(self, 
 						left, 
 						right);
 	} else {
@@ -974,7 +975,7 @@ public class Propagator extends SLIRReplacingVisitor {
     /**
      * For processing BinaryArithmeticExpressions.  
      */
-    private Object doBinaryArithmeticExpression(JBinaryArithmeticExpression 
+    private Object doBinaryArithmeticExpression(JBinaryExpression 
 						self,
 						JExpression left,
 						JExpression right) {

@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 /**
- * This pass identifies java-style for loop that can be converted to 
+ * This pass identifies java-style for loops that can be converted to 
  * fortran-style do loops. It should be run right before code generation
  * so that no other pass alters the for loops that are recognized and thus
  * invalidates the classification.
@@ -22,6 +22,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
     //
     private int forLevel = 0;
     private HashMap varUses;
+    private HashMap loops;
 
     /**
      * The entry point of this class, given a stream <top> and 
@@ -29,13 +30,14 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
      * each filter as to whether they can be converted to do loops.
      *
      * @param top The top level of the application
-     *
+     * @return Returns a hashmap of JForStatements -> DoLoopInfo
      */
 
-    public static void doit(FlatNode top)
+    public static HashMap doit(FlatNode top)
     {
 	IDDoLoops doLoops = new IDDoLoops();
 	top.accept(doLoops, null, true);
+	return doLoops.loops;
     }
 
     /**
@@ -69,6 +71,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
     private IDDoLoops() 
     {
 	forLevel = 0;
+	loops = new HashMap();
     }
     
     
@@ -86,7 +89,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	//we are inside a for loop
 	forLevel++;
 	
-	System.out.println("----------------");
+	//	System.out.println("----------------");
 	if (init != null) {
 	    JExpression initExp = getExpression(init);
 	    //JAssignment Expression 
@@ -96,16 +99,16 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	    //check for method calls
 	    if (info.init != null && CheckForMethodCalls.check(info.init))
 		info.init = null;
-	    System.out.println("Induction Var: " + info.induction);
-	    System.out.println("init exp: " + info.init);
+	    //System.out.println("Induction Var: " + info.induction);
+	    //System.out.println("init exp: " + info.init);
 	}
 	if (cond != null && info.induction != null && info.init != null) {
 	    //get the condition statement and put it in the correct format
-	    getDLCondExpression(passThruParens(cond), info);
+	    getDLCondExpression(Util.passThruParens(cond), info);
 	    //check for method calls in condition
 	    if (info.cond != null && CheckForMethodCalls.check(info.cond))
 		info.cond = null;
-	    System.out.println("cond exp: " + info.cond);
+	    //	    System.out.println("cond exp: " + info.cond);
 	    //cond.accept(this);
 	}
 	//check the increment, only if there is one and we have passed 
@@ -117,7 +120,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	    //check for method call in increment
 	    if (info.incr != null && CheckForMethodCalls.check(info.incr))
 		info.incr = null;
-	    System.out.println("incr exp: " + info.incr);
+	    //	    System.out.println("incr exp: " + info.incr);
 	    //incr.accept(this);
 	}
 
@@ -128,14 +131,15 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	    //increment are accessed in the body, and check for function calls
 	    //if their are fields or structures that included in this list of
 	    //variables
-	    CheckLoopBody checkBody = new CheckLoopBody(info);
-	    checkBody.check(body);
-	    
-	    //check that the induction variable is only used in the body of
-	    //the loop and no where outside the loop
-	    System.out.println("Scope of Induction Variable: " + 
-			       scopeOfInduction(self,
-						info));
+	    if (CheckLoopBody.check(info, body)) {
+		//check that the induction variable is only used in the body of
+		//the loop and no where outside the loop
+		if (scopeOfInduction(self, info)) {
+		    //everything passed add it to the hashmap
+		    //System.out.println("Identified Do loop...");
+		    loops.put(self, info);
+		}
+	    }
 	}
 	
 	//check for nested for loops that can be converted...
@@ -160,7 +164,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	while (allInductionUses.hasNext()) {
 	    Object use = allInductionUses.next();
 	    if (!usesInForLoop.contains(use)) {
-		System.out.println("Couldn't find " + use + " in loop.");
+		//System.out.println("Couldn't find " + use + " in loop.");
 		return false;
 	    }
 	    
@@ -190,9 +194,11 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		if (comp.getLeft() instanceof JLocalVariableExpression &&
 		    ((JLocalVariableExpression)comp.getLeft()).getVariable().equals(info.induction)) {
 		    if (comp.getOperation() == OPE_PLUS) {
-			info.incr = comp.getRight();
+			info.incr = new JExpressionStatement(null, comp.getRight(), null);
 		    } else if (comp.getOperation() == OPE_MINUS) {
-			info.incr = new JUnaryMinusExpression(null, comp.getRight());
+			info.incr = new JExpressionStatement(null, 
+							     new JUnaryMinusExpression(null, comp.getRight()),
+							     null);
 		    }
 		}
 	    }
@@ -205,16 +211,20 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		    if (bin.getLeft() instanceof JLocalVariableExpression &&
 			((JLocalVariableExpression)bin.getLeft()).getVariable().equals(info.induction)) {
 			if (ass.getRight() instanceof JAddExpression)
-			    info.incr = bin.getRight();
+			    info.incr = new JExpressionStatement(null, bin.getRight(), null);
 			if (ass.getRight() instanceof JMinusExpression)
-			    info.incr = new JUnaryMinusExpression(null, bin.getRight());
+			    info.incr = new JExpressionStatement(null,
+								 new JUnaryMinusExpression(null, bin.getRight()),
+								 null);
 		    }
 		    if (bin.getRight() instanceof JLocalVariableExpression &&
 			((JLocalVariableExpression)bin.getRight()).getVariable().equals(info.induction)) {
 			if (ass.getRight() instanceof JMinusExpression)
-			    info.incr = bin.getLeft();
+			    info.incr = new JExpressionStatement(null, bin.getLeft(), null);
 			if (ass.getRight() instanceof JMinusExpression)
-			    info.incr = new JUnaryMinusExpression(null, bin.getLeft());
+			    info.incr = new JExpressionStatement(null, 
+								 new JUnaryMinusExpression(null, bin.getLeft()),
+								 null);
 		    }
 		}
 	    }
@@ -225,9 +235,9 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	    if (pre.getExpr() instanceof JLocalVariableExpression &&
 		((JLocalVariableExpression)pre.getExpr()).getVariable().equals(info.induction)) {
 		if (pre.getOper() == OPE_PREINC) {
-		    info.incr = new JIntLiteral(1);
+		    info.incr = new JExpressionStatement(null, new JIntLiteral(1), null);
 		} else {
-		    info.incr = new JIntLiteral(-1);
+		    info.incr = new JExpressionStatement(null, new JIntLiteral(-1), null);
 		}		
 	    }
 	}
@@ -237,9 +247,9 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	    if (post.getExpr() instanceof JLocalVariableExpression &&
 		((JLocalVariableExpression)post.getExpr()).getVariable().equals(info.induction)) {
 		if (post.getOper() == OPE_POSTINC) {
-		    info.incr = new JIntLiteral(1);
+		    info.incr = new JExpressionStatement(null, new JIntLiteral(1), null);
 		} else {
-		    info.incr = new JIntLiteral(-1);
+		    info.incr = new JExpressionStatement(null, new JIntLiteral(-1), null);
 		}		
 	    }
 	}
@@ -301,7 +311,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	    else 
 		return;
 	    
-	    info.init = ass.getRight();
+	    info.init = new JExpressionStatement(null, ass.getRight(), null);
 	}
     }
     
@@ -311,146 +321,94 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 	if (orig instanceof JExpressionListStatement) {
 	    JExpressionListStatement els = (JExpressionListStatement)orig;
 	    if (els.getExpressions().length == 1)
-		return passThruParens(els.getExpression(0));
+		return Util.passThruParens(els.getExpression(0));
 	    else
 		return null;
 	}
 	else if (orig instanceof JExpressionStatement) {
-	    return passThruParens(((JExpressionStatement)orig).getExpression());
+	    return Util.passThruParens(((JExpressionStatement)orig).getExpression());
 	}
 	else 
 	    return null;
     }
- 
-    public static JExpression passThruParens(JExpression orig) 
+}
+
+class CheckLoopBody extends SLIREmptyVisitor 
+{
+    private DoLoopInformation info;
+    private HashSet varsToCheck;
+    private HashSet varsAssigned;
+    private boolean hasFields;
+    private boolean hasMethods;
+
+    public static boolean check(DoLoopInformation info, JStatement body)
     {
-	if (orig instanceof JParenthesedExpression) {
-	    return passThruParens(((JParenthesedExpression)orig).getExpr());
-	}
-	return orig;
-    }
+	CheckLoopBody check = new CheckLoopBody(info, body);
 
-
-    class CheckLoopBody extends SLIREmptyVisitor 
-    {
-	private DoLoopInformation info;
-	private HashSet varsToCheck;
-	private HashSet varsAssigned;
-	private boolean hasFields;
-	private boolean hasMethods;
-
-	public boolean check(JStatement body)
-	{
-	    Iterator it;	
-	    body.accept(this);
+	Iterator it;	
+	//check for method calls
+	body.accept(check);
 	    
-	    if (hasFields && hasMethods)
+
+	if (check.hasFields && check.hasMethods)
+	    return false;
+	    
+	it  = check.varsAssigned.iterator();
+	/*System.out.println("*** Vars assigned: ");
+	while (it.hasNext()) {
+	  Object cur = it.next();
+	  System.out.println("  " + cur);
+	  }
+	System.out.println("*** Vars assigned.  ");
+	*/
+	it = check.varsToCheck.iterator();
+	while (it.hasNext()) {
+	    Object var = it.next();
+	    if (check.varsAssigned.contains(var)) {
+		//System.out.println("Cannot formulate do loop, var " + var + 
+		//		   " assigned in loop ");
 		return false;
-	    
-	    it  = varsAssigned.iterator();
-	    System.out.println("*** Vars assigned: ");
-	    while (it.hasNext()) {
-		Object cur = it.next();
-		System.out.println("  " + cur);
 	    }
-	    System.out.println("*** Vars assigned.  ");
-
-	    it = varsToCheck.iterator();
-	    while (it.hasNext()) {
-		Object var = it.next();
-		if (varsAssigned.contains(var)) {
-		    System.out.println("Cannot formulate do loop, var " + var + 
-				       " assigned in loop");
-		    return false;
-		}
 		
-	    }
-	    System.out.println("Body okay");
-	    return true;
 	}
+	//System.out.println("Body okay");
+	return true;
+    }
 	
-	public CheckLoopBody(DoLoopInformation info) 
-	{
-	    this.info = info;
-	    varsToCheck = new HashSet();
-	    varsAssigned = new HashSet();
-	    hasFields = false;
-	    hasMethods = false;
-	    findVarsToCheck();
-	}
+    private CheckLoopBody(DoLoopInformation info, JStatement body) 
+    {
+	this.info = info;
+	varsToCheck = new HashSet();
+	hasFields = false;
+	hasMethods = false;
+	findVarsToCheck();
+	//get all the vars assigned in the body...
+	varsAssigned =	VarsAssigned.getVarsAssigned(body);
+    }
 	
-	private void findVarsToCheck() 
-	{
-	    //add the induction variable
-	    varsToCheck.add(info.induction);
-	    StrToRStream.addAll(varsToCheck, VariablesUsed.getVars(info.init));
-	    StrToRStream.addAll(varsToCheck, VariablesUsed.getVars(info.cond));
-	    StrToRStream.addAll(varsToCheck, VariablesUsed.getVars(info.incr));
+    private void findVarsToCheck() 
+    {
+	//add the induction variable
+	varsToCheck.add(info.induction);
+	StrToRStream.addAll(varsToCheck, VariablesUsed.getVars(info.init));
+	StrToRStream.addAll(varsToCheck, VariablesUsed.getVars(info.cond));
+	StrToRStream.addAll(varsToCheck, VariablesUsed.getVars(info.incr));
 
-	    Iterator it = varsToCheck.iterator();
-	    while (it.hasNext()) {
-		Object cur = it.next();
-		if (cur instanceof String) 
-		    hasFields = true;
-		System.out.println(cur);
-	    }
-	    
-	}
-	
-
-	public void visitAssignmentExpression(JAssignmentExpression self,
-					      JExpression left,
-					      JExpression right) {
-	    
-	    StrToRStream.addAll(varsAssigned, VariablesUsed.getVars(left));
-	    right.accept(this);
-	}
-
-	public void visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
-						      int oper,
-						      JExpression left,
-						      JExpression right) {
-	    StrToRStream.addAll(varsAssigned, VariablesUsed.getVars(left));
-	    right.accept(this);
-	}
-	
-	public void visitPrefixExpression(JPrefixExpression self,
-                                      int oper,
-                                      JExpression expr) {
-	    StrToRStream.addAll(varsAssigned, VariablesUsed.getVars(expr));
-	}
-
-	public void visitPostfixExpression(JPostfixExpression self,
-					   int oper,
-					   JExpression expr) {
-	    StrToRStream.addAll(varsAssigned, VariablesUsed.getVars(expr));
-	}
-	
-	public void visitMethodCallExpression(JMethodCallExpression self,
-					      JExpression prefix,
-					      String ident,
-					      JExpression[] args) {
-	    hasMethods = true;
-	    for (int i = 0; i < args.length; i++) 
-		args[i].accept(this);    
+	Iterator it = varsToCheck.iterator();
+	while (it.hasNext()) {
+	    Object cur = it.next();
+	    if (cur instanceof String) 
+		hasFields = true;
 	}
     }
-    
-    
+	
 
-    class DoLoopInformation 
-    {
-	public JLocalVariable induction;
-	public JExpression init;
-	public JExpression cond;
-	public JExpression incr;
-
-	public DoLoopInformation() 
-	{
-	    induction = null;
-	    init = null;
-	    cond = null;
-	    incr = null;
-	}
-    }    
+    public void visitMethodCallExpression(JMethodCallExpression self,
+					  JExpression prefix,
+					  String ident,
+					  JExpression[] args) {
+	hasMethods = true;
+	for (int i = 0; i < args.length; i++) 
+	    args[i].accept(this);    
+    }
 }

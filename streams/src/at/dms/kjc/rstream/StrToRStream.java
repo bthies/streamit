@@ -69,7 +69,8 @@ public class StrToRStream {
 	
 	// move field initializations into init function
 	System.out.print("Moving initializers into init functions... ");
-	FieldInitMover.moveStreamInitialAssignments(str);
+	FieldInitMover.moveStreamInitialAssignments(str,
+						    FieldInitMover.IGNORE_ARRAY_INITIALIZERS);
 	System.out.println("done.");
 	
 	// propagate constants and unroll loop
@@ -176,11 +177,8 @@ public class StrToRStream {
 	//VarDecl Raise to move array assignments down?
 	new VarDeclRaiser().raiseVars(str);
 
-	//find all do loops, probably want to mo
-	IDDoLoops.doit(graphFlattener.top);
-
 	FlatIRToRS.generateCode(graphFlattener.top);
-	
+
 	System.exit(0);
     }
 
@@ -195,7 +193,10 @@ public class StrToRStream {
     {
 	Iterator it = c.iterator();
 	while (it.hasNext()) {
-	    set.add(it.next());
+	    Object obj = it.next();
+	    if (obj == null)
+		System.out.println("trying to add null obj");
+	    set.add(obj);
 	}
     }
 }

@@ -64,19 +64,26 @@ public class UseDefInfo extends SLIREmptyVisitor
     {
 	uses = new HashMap();
     }
-    
+
+    /*    
     private void addUse(JFieldAccessExpression exp)
     {
+
 	if (!uses.containsKey(exp.getIdent()))
 	    uses.put(exp.getIdent(), new HashSet());
 
 	((HashSet)uses.get(exp.getIdent())).add(exp);
     }
-    
+    */
     private void addUse(JLocalVariableExpression exp) 
     {
 	//if we didn't see this var before, add the 
 	//hashset to hold uses
+	
+	if (exp.getVariable() == null) 
+	    System.out.println("Null variable");
+	
+
 	if (!uses.containsKey(exp.getVariable()))
 	    uses.put(exp.getVariable(), new HashSet());
 
@@ -86,13 +93,5 @@ public class UseDefInfo extends SLIREmptyVisitor
     public void visitLocalVariableExpression(JLocalVariableExpression self,
 					     String ident) {
 	addUse(self);
-    }
-    
-    public void visitFieldExpression(JFieldAccessExpression self,
-				     JExpression left,
-				     String ident)
-    {
-	addUse(self);
-	left.accept(this);
     }
 }

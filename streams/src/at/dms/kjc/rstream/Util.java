@@ -83,7 +83,7 @@ public class Util extends at.dms.util.Utils {
 	
 	
 	for (int i = 0; i < dims.length; i++) {
-	    FlatIRToRS ftoc = new FlatIRToRS();
+	    FlatIRToRS ftoc = new FlatIRToRS(null);
 	    dims[i].accept(ftoc);
 	    ret[i] = ftoc.getString();
 	}
@@ -100,6 +100,15 @@ public class Util extends at.dms.util.Utils {
 	    ret[i] = ((JIntLiteral)dims[i]).intValue();
 	}
 	return ret;
+    }
+
+
+    public static JExpression passThruParens(JExpression orig) 
+    {
+	if (orig instanceof JParenthesedExpression) {
+	    return passThruParens(((JParenthesedExpression)orig).getExpr());
+	}
+	return orig;
     }
 }
 

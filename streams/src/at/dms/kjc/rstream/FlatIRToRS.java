@@ -1,5 +1,6 @@
 package at.dms.kjc.rstream;
 
+import at.dms.kjc.common.*;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
@@ -26,6 +27,8 @@ import at.dms.util.SIRPrinter;
  */
 public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 {
+    /** if true generate do loops when identified **/
+    private final boolean GENERATE_DO_LOOPS = true;
     /** tabbing / spacing variables **/
     protected int TAB_SIZE = 2;
     /** tabbing / spacing variables **/
@@ -41,8 +44,12 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
     private SIRFilter filter;
     /** true if we are currently visiting the init function **/
     private boolean isInit = false;
+    /** the current function we are visiting **/
+    private JMethodDeclaration method;
     /** Needed to pass info from assignment to visitNewArray **/
     private JExpression lastLeft;
+    /** the hashmap of for loops -> do loops **/
+    private HashMap doloops;
 
     
     /**
@@ -66,6 +73,7 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	//iterate over all the methods, calling the magic below...
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
 	    JMethodDeclaration method=((SIRFilter)node.contents).getMethods()[i];
+	    	    
 	    if (!KjcOptions.nofieldprop) {
 		Unroller unroller;
 		do {
@@ -81,7 +89,7 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 		
 		method.accept(new BlockFlattener());
 		method.accept(new Propagator(new Hashtable()));
-	    } //run the block flattener no matter what
+	    } 
 	    else
 		method.accept(new BlockFlattener());
 	    method.accept(arrayDest);
@@ -100,16 +108,18 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	     {
 	     }
 	*/
-
+	//find all do loops, 
+	toC.doloops = IDDoLoops.doit(node);
 	//now iterate over all the methods and generate the c code.
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
     
     
-    public FlatIRToRS() 
+    public FlatIRToRS()
     {
 	this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
+	doloops = new HashMap();
     }
 
     
@@ -117,6 +127,8 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	this.filter = f;
 	this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
+	doloops = new HashMap();
+
     }
 
     public String getString() {
@@ -197,6 +209,40 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	}
     }
        			
+     /**
+     * Prints initialization for an array with static initializer, e.g., "int A[2] = {1,2};"
+     *
+     * To promote code reuse with other backends, inputs a visitor to
+     * do the recursive call.
+     */
+    private void declareInitializedArray(CType type, String ident, JExpression expr) {
+	print(((CArrayType)type).getBaseType()); // note this calls print(CType), not print(String)
+	print(" " + ident);
+	JArrayInitializer init = (JArrayInitializer)expr;
+	while (true) {
+	    int length = init.getElems().length;
+	    print("[" + length + "]");
+	    if (length==0) { 
+		// hope that we have a 1-dimensional array in
+		// this case.  Otherwise we won't currently
+		// get the type declarations right for the
+		// lower pieces.
+		break;
+	    }
+	    // assume rectangular arrays
+	    JExpression next = (JExpression)init.getElems()[0];
+	    if (next instanceof JArrayInitializer) {
+		init = (JArrayInitializer)next;
+	    } else {
+		break;
+	    }
+	}
+	print(" = ");
+	expr.accept(this);
+	print(";");
+	return;
+    }
+
     /**
      * prints a field declaration
      */
@@ -274,6 +320,9 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	    return;
 	}
 
+	//set the current method we are visiting
+	method = self;
+
 	//set is init for dynamically allocating arrays...
 	if (filter != null &&
 	    self.getName().startsWith("init"))
@@ -288,6 +337,7 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 
         newLine();
 	isInit = false;
+	method = null;
     }
 
     // ----------------------------------------------------------------------
@@ -322,6 +372,7 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	JExpression[] dims = expr.getDims();
 	for (int i = 0 ; i < dims.length; i++) {
 	    FlatIRToRS toC = new FlatIRToRS();
+	    toC.doloops = this.doloops;
 	    dims[i].accept(toC);
 	    print("[" + toC.getString() + "]");
 	}
@@ -342,14 +393,14 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	//is not included in this definition, just remove the definition,
 	//when we visit the new array expression we will print the definition...
 	if (type.isArrayType() && !isInit) {
-	    String[] dims = ArrayDim.findDim(filter, ident);
+	    String[] dims = ArrayDim.findDim(filter, method, ident);
 	    //but only do this if the array has corresponding 
 	    //new expression, otherwise don't print anything.
 	    if (expr instanceof JNewArrayExpression) {
-		//print the type
-		print(((CArrayType)type).getBaseType() + " ");
+		//print the type -- note that this prints a type, not a string
+		print(((CArrayType)type).getBaseType());
 		//print the field identifier
-		print(ident);
+		print(" " + ident);
 		//print the dims
 		stackAllocateArray(ident);
 		print(";");
@@ -358,10 +409,7 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	    else if (dims != null)
 		return;
 	    else if (expr instanceof JArrayInitializer) {
-		print(((CArrayType)type).getBaseType() + " " +
-		      ident + "[" + ((JArrayInitializer)expr).getElems().length + "] = ");
-		expr.accept(this);
-		print(";");
+		declareInitializedArray(type, ident, expr);
 		return;
 	    }
 	}
@@ -458,25 +506,52 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
      * prints a for statement
      */
     public void visitForStatement(JForStatement self,
-                                  JStatement init,
-                                  JExpression cond,
-                                  JStatement incr,
+                                  JStatement forInit,
+                                  JExpression forCond,
+                                  JStatement forIncr,
                                   JStatement body) {
-        print("for (");
-        if (init != null) {
-            init.accept(this);
+	JStatement init;
+	JExpression cond;
+	JStatement incr;
+
+	//check if this is a do loop
+	if (GENERATE_DO_LOOPS && doloops.containsKey(self)) {
+	    DoLoopInformation doInfo = (DoLoopInformation)doloops.get(self);
+	    //System.out.println("Induction Var: " + doInfo.induction);
+	    //System.out.println("init exp: " + doInfo.init);		       
+	    //System.out.println("cond exp: " + doInfo.cond);
+	    //System.out.println("incr exp: " + doInfo.incr);
+
+	    print("doloop (");
+	    print(doInfo.induction.getType());
+	    print(" ");
+	    print(doInfo.induction.getIdent());
+	    print(" = ");
+	    init = doInfo.init;
+	    cond = doInfo.cond;
+	    incr = doInfo.incr;
+	} else { //normal for loop
+	    print("for (");
+	    init = forInit;
+	    cond = forCond;
+	    incr = forIncr;
+	}
+	
+	if (init != null) {
+	    init.accept(this);
 	    //the ; will print in a statement visitor
 	}
-
-        print(" ");
-        if (cond != null) {
-            cond.accept(this);
-        }
-	//cond is an expression so print the ;
-        print("; ");
+	
+	print(" ");
+	if (cond != null) {
+	    cond.accept(this);
+	}
+	    //cond is an expression so print the ;
+	print("; ");
 	if (incr != null) {
 	    FlatIRToRS l2c = new FlatIRToRS(filter);
-            incr.accept(l2c);
+	    l2c.doloops = this.doloops;
+	    incr.accept(l2c);
 	    // get String
 	    String str = l2c.getString();
 	    // leave off the trailing semicolon if there is one
@@ -485,16 +560,17 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	    } else { 
 		print(str);
 	    }
-        }
-
-        print(") ");
-
+	}
+	
+	print(") ");
+	
         print("{");
+	newLine();
         pos += TAB_SIZE;
         body.accept(this);
         pos -= TAB_SIZE;
         newLine();
-        print("}");
+	print("}");
     }
 
     /**
@@ -1121,7 +1197,7 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	    else 
 		Utils.fail("Assigning an array to an unsupported expression of type " + left.getClass() + ": " + left);
 	    
-	    String[] dims = ArrayDim.findDim(filter, ident);
+	    String[] dims = ArrayDim.findDim(filter, method, ident);
 	    //if we cannot find the dim, just create a pointer copy
 	    if (dims == null) {
 		lastLeft=left;
@@ -1162,7 +1238,8 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 
 	    //get the basetype and print it 
 	    CType baseType = ((CArrayType)((JNewArrayExpression)right).getType()).getBaseType();
-	    print(baseType + " ");
+	    print(baseType);
+	    print(" ");
 	    //print the identifier
 	    left.accept(this);
 	    //print the dims of the array
@@ -1186,7 +1263,7 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
     private void stackAllocateArray(String ident) {
 	//find the dimensions of the array!!
 	String dims[] = 
-	    ArrayDim.findDim(filter, ident);
+	    ArrayDim.findDim(filter, method, ident);
 	
 	for (int i = 0; i < dims.length; i++)
 	    print("[" + dims[i] + "]");

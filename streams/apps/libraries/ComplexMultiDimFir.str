@@ -1,0 +1,67 @@
+/*
+ *  Copyright 2001 Massachusetts Institute of Technology
+ *
+ *  Permission to use, copy, modify, distribute, and sell this software and its
+ *  documentation for any purpose is hereby granted without fee, provided that
+ *  the above copyright notice appear in all copies and that both that
+ *  copyright notice and this permission notice appear in supporting
+ *  documentation, and that the name of M.I.T. not be used in advertising or
+ *  publicity pertaining to distribution of the software without specific,
+ *  written prior permission.  M.I.T. makes no representations about the
+ *  suitability of this software for any purpose.  It is provided "as is"
+ *  without express or implied warranty.
+ */
+
+
+
+float->float filter ComplexMultiDimFir(int numTaps, int vectorLength, int ratio) {
+
+  int currentScratchIndex, currentVectorIndex;
+  float[numTaps*2] scratchSpace, COEFF;
+
+
+  init {
+    for (int i=0; i<numTaps*2; i++)
+    {
+      COEFF[i] = 0;
+    }
+    COEFF[0] = 1;
+  }
+
+  work push 2 pop 2*ratio {
+
+    float sumReal = 0.0;
+    float sumImag = 0.0;
+
+    scratchSpace[currentScratchIndex] = pop();
+    scratchSpace[currentScratchIndex+1] = pop();
+
+    for (int i = 0; i < ratio - 1; i++)
+    {
+      pop();
+      pop();
+    }
+
+    for (int i=0; i<numTaps*2; i += 2)
+    {
+      sumReal += COEFF[i]*scratchSpace[i] - COEFF[i+1]*scratchSpace[i+1];
+      sumImag += COEFF[i+1]*scratchSpace[i] + COEFF[i]*scratchSpace[i+1];
+    }
+    push(sumReal);
+    push(sumImag);
+
+    currentScratchIndex += 2;
+    if( currentScratchIndex >= numTaps*2)
+    {
+      currentScratchIndex = 0;
+    }
+
+    currentVectorIndex++;
+    if( currentVectorIndex >= vectorLength )
+    {
+      currentVectorIndex = 0; currentScratchIndex = 0;
+      for(int j = 0; j < numTaps*2; j++)
+	scratchSpace[j] = 0;
+    }
+  }
+}

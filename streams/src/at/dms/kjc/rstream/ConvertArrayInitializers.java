@@ -220,8 +220,11 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
 									 (JExpression)indices.get(j));
 		   }
 		
-		 * the follow code is fix to produce the dimmensions in the
-		 * proper order:
+		 * the  follow code  will produce  the dimmensions  in the
+		 * proper order:  the prefix is the  variable name, append
+		 * to that the  first dimmension and then in  the loop add
+		 * every  other  dimmension but  the  last; following  the
+		 * loop, add the very  last dimmension
 		 */
 
 		//build the final array access expression, top down

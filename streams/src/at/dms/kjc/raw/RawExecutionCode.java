@@ -1024,8 +1024,9 @@ public class RawExecutionCode extends at.dms.util.Utils
 	
 	//if it is not a scalar receive change the name to the appropriate 
 	//method call, from struct.h
-	if (type.isArrayType()) 
-	    receiveMethodName = arrayReceiveMethod;
+	if (type.isArrayType()) {
+	    return arrayReceiveCode(filter,(CArrayType) type, localVariables);
+	}
 	else if (type.isClassType()) {
 	    receiveMethodName = structReceiveMethodPrefix  + type.toString();
 	}
@@ -1055,7 +1056,49 @@ public class RawExecutionCode extends at.dms.util.Utils
 	return new JExpressionStatement(null, exp, null);
     }
     
+    //generate the code to receive the array into the buffer
+    JStatement arrayReceiveCode(SIRFilter filter, CArrayType type, LocalVariables localVariables) {
+	//get the dimensionality of the input buffer
+	int dim = type.getDims().length + 1;
+	//make sure there are enough indices
+	if (localVariables.ARRAY_INDEX.length < (dim - 1))
+	    Utils.fail("Error generating array receive code");
+	//generate the first (outermost array access)
+	JArrayAccessExpression arrayAccess = 
+	    new JArrayAccessExpression(null, 
+				       new JLocalVariableExpression(null, 
+								    localVariables.recvBuffer),
+				      bufferIndex(filter, localVariables));
+	//generate the remaining array accesses
+	for (int i = 0; i < dim - 1; i++) 
+	    arrayAccess = new JArrayAccessExpression(null, arrayAccess,
+						    new JLocalVariableExpression
+						    (null, localVariables.ARRAY_INDEX[i]));
+	
+	//now place the array access in a method call to alert flatirtoc that it is a 
+	//static receive
+	JExpression[] args = new JExpression[1];
+	args[0] = arrayAccess;
+	
+	JMethodCallExpression methodCall = 
+	    new JMethodCallExpression(null, 
+				      new JThisExpression(null),
+				      receiveMethod,
+				      args);
+	//now generaate the nested for loops	
 
+	//get the dimensions of the array as set by kopi2sir
+	JExpression[] dims = type.getDims();
+	JStatement stmt = new JExpressionStatement(null,
+						   methodCall,
+						   null);
+	for (int i = 0; i < dims.length - 1; i++) 
+	    stmt = makeForLoop(stmt, localVariables.ARRAY_INDEX[i],
+			       dims[i]);
+	
+	return stmt;       
+    }
+    
     //return the buffer access expression for the receive code
     //depends if this is a simple filter
     private JExpression bufferIndex(SIRFilter filter, 

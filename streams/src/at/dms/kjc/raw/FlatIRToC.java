@@ -41,6 +41,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     //true if we are using the second buffer management scheme 
     //circular buffers with anding
     public boolean debug = false;//true;
+
+    //true if we are currently visiting the init function
+    private boolean isInit = false;
     
     //fields for all of the vars names we introduce in the c code
     private final String FLOAT_HEADER_WORD = "__FLOAT_HEADER_WORD__";
@@ -374,7 +377,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	     (filter instanceof SIRTwoStageFilter &&
 	      ((SIRTwoStageFilter)filter).getInitWork().equals(self))))
 	    return;
-	
+
+	//set is init for dynamically allocating arrays...
+	isInit = self.equals(filter.getInit());
+
 	   
         newLine();
 	// print(CModifier.toString(modifiers));
@@ -410,6 +416,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
             print(";");
 
         newLine();
+	isInit = false;
     }
 
     private void dummyWork(int push) {
@@ -448,7 +455,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     /**
      * prints a variable declaration statement
      */
-    public void visitVariableDeclarationStatement(JVariableDeclarationStatement self,
+    public void visitVariableeclarationStatement(JVariableDeclarationStatement self,
                                                   JVariableDefinition[] vars) {
         for (int i = 0; i < vars.length; i++) {
             vars[i].accept(this);
@@ -479,12 +486,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//	System.out.println(ident);
 	//System.out.println(expr);
 
-	//we want to stack allocate all arrays
+	//we want to stack allocate all arrays not in the init
 	//we convert an assignment statement into the stack allocation statement'
 	//so, just remove the var definition, if the new array expression
 	//is not included in this definition, just remove the definition,
 	//when we visit the new array expression we will print the definition...
-	if (type.isArrayType()) {
+	if (type.isArrayType() && !isInit) {
 	    String[] dims = ArrayDim.findDim(filter, ident);
 	    //but only do this if the array has corresponding 
 	    //new expression, otherwise don't print anything.
@@ -1012,8 +1019,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     }
 
     /**
+     * This should never be called 
      * Generates code to receive an array type into the buffer
      **/
+    /*
     public void popArray(JExpression arg) 
     {
 	String dims[] = Util.makeString(((CArrayType)filter.getInputType()).getDims());
@@ -1038,21 +1047,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print(Util.staticNetworkReceiveSuffix(((CArrayType)filter.getInputType()).getBaseType()));
 	print("}");
     }
-    
-    //for rate matching, we want to store the value of the item pushed  
-    //into the output buffer and increment the sendbufferindex
-    //args[0] is the item we want to push...
-    /*
-    private void rateMatchPush(JExpression[] args) 
-    {
-	print("(" + RawExecutionCode.sendBuffer);
-	print("[++" + RawExecutionCode.sendBufferIndex + "] = ");
-	args[0].accept(this);
-	print(")");
-    }
     */
-    
-
     /**
      * prints a method call expression
      */
@@ -1082,12 +1077,14 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print(Util.staticNetworkReceiveSuffix(args[0].getType()));
 	    return;  
 	}
-	
+
+	/*	
 	//we are receiving an array type, call the popArray method
 	if (ident.equals(RawExecutionCode.arrayReceiveMethod)) {
 	    popArray(args[0]);
 	    return;
 	}
+	*/
 	/*
 	if (ident.equals(RawExecutionCode.rateMatchSendMethod)) {
 	    rateMatchPush(args);
@@ -1123,18 +1120,28 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     {
 	if (prefix instanceof JTypeNameExpression &&
 	    ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
+	   
 	    (ident.equals("acos") ||
 	     ident.equals("asin") ||
 	     ident.equals("atan") ||
 	     ident.equals("atan2") ||
 	     ident.equals("ceil") ||
 	     ident.equals("cos") ||
+	     ident.equals("sin") ||
+	     ident.equals("cosh") ||
+	     ident.equals("sinh") ||
 	     ident.equals("exp") ||
-	     ident.equals("floorf") ||
+	     ident.equals("fabs") ||
+	     ident.equals("modf") ||
+	     ident.equals("fmod") ||
+	     ident.equals("frexp") ||
+	     ident.equals("floor") ||	     
 	     ident.equals("log") ||
+	     ident.equals("log10") ||
 	     ident.equals("pow") ||
 	     ident.equals("rint") ||
 	     ident.equals("sqrt") ||
+	     ident.equals("tanh") ||
 	     ident.equals("tan")))
 	    return true;
 	return false;
@@ -1366,10 +1373,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    return;
 	}
 
-	//stack allocate all arrays 
+	//stack allocate all arrays when not in init function
 	//done at the variable definition
 	if (right instanceof JNewArrayExpression &&
- 	    (left instanceof JLocalVariableExpression)) {
+ 	    (left instanceof JLocalVariableExpression) && !isInit) {
 	    //	    (((CArrayType)((JNewArrayExpression)right).getType()).getArrayBound() < 2)) {
 
 	    //get the basetype and print it 

@@ -91,7 +91,7 @@ public class DirectCommunication extends at.dms.util.Utils
 	if (RawBackend.FILTER_DEBUG_MODE) {
 	    statements.addStatement
 		(new SIRPrintStatement(null,
-				       new JStringLiteral(null, filter.getName() + " Starting Steady-State"),
+				       new JStringLiteral(null, filter.getName() + " Starting Steady-State\\n"),
 				       null));
 	}
 

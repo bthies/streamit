@@ -1,12 +1,12 @@
 /*
  * Flybit.java: an interesting piece of the Butterfly example
  * (to demonstrate split/joins)
- * $Id: Flybit.java,v 1.1 2001-10-10 15:17:49 dmaze Exp $
+ * $Id: Flybit.java,v 1.2 2001-10-10 19:02:26 dmaze Exp $
  */
 
 import streamit.*;
 
-class Flybit extends Pipeline
+public class Flybit extends Pipeline
 {
     static public void main(String[] t)
     {
@@ -42,9 +42,7 @@ class Flybit extends Pipeline
                             Channel output = new Channel(Integer.TYPE, 2);
                             public void work()
                             {
-                                int val1 = ((Integer)input.pop()).intValue();
-                                int val2 = ((Integer)input.pop()).intValue();
-                                output.push(new Integer(val1 - val2));
+                                output.pushInt(input.popInt()-input.popInt());
                             }
                         });
                     add(new Filter()
@@ -53,9 +51,7 @@ class Flybit extends Pipeline
                             Channel output = new Channel(Integer.TYPE, 2);
                             public void work()
                             {
-                                int val1 = ((Integer)input.pop()).intValue();
-                                int val2 = ((Integer)input.pop()).intValue();
-                                output.push(new Integer(val1 + val2));
+                                output.pushInt(input.popInt()+input.popInt());
                             }
                         });
                     setJoiner(WEIGHTED_ROUND_ROBIN(2, 2));

@@ -9,6 +9,14 @@ package grapheditor;
 import java.io.*;
 import java.util.ArrayList;
 
+
+import com.jgraph.graph.*;
+import java.awt.Rectangle;
+import java.awt.Color;
+import javax.swing.BorderFactory; 
+
+
+
 /**
  *  GEPhasedFilter is the graph editor's internal representation of a phased filter.
  *  @author jcarlos
@@ -23,6 +31,17 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		super(GEType.PHASED_FILTER, name);
 		initWorkFunctions = new ArrayList();
 		workFunctions = new ArrayList();
+		
+		/* *************************************************************************
+		 * Creation of the JGraph components necessary to draw the stream structure
+		*/
+		this.port = new DefaultPort();
+		this.add(this.port);
+		GraphConstants.setBorder(this.attributes , BorderFactory.createRaisedBevelBorder());
+		GraphConstants.setBounds(this.attributes, new Rectangle(100,100,100,100));
+		GraphConstants.setBackground(this.attributes, Color.blue);
+		/* ***********************************************************
+		*/
 	}
 	
 	
@@ -67,7 +86,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	/**
 	 * Contructs the filter and returns itself since Filters have no children.
 	 */
-	public GEStreamNode construct()
+	public GEStreamNode construct(GraphStructure graphStruct)
 	{
 		System.out.println("Constructing the filter " +this.getName());
 		this.draw();	

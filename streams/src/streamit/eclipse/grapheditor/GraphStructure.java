@@ -8,7 +8,8 @@ import java.util.*;
 import java.io.*;
 
 //import com.sun.rsasign.t;
-
+import com.jgraph.graph.*;
+import com.jgraph.JGraph;
 
 /**
  * Graph data structure that has GEStreamNode objects as its nodes. 
@@ -17,6 +18,11 @@ import java.io.*;
 public class GraphStructure implements Serializable{
 	
 	private HashMap graph;
+	private ConnectionSet cs;
+	private ArrayList cells;
+	private Map globalAttributes;
+	private DefaultGraphModel model;
+	private JGraph jgraph;
 	
 	// The toplevel GEStreamNode. Typically it should be a GEPipeline object.  
 	private GEStreamNode topLevel;
@@ -27,13 +33,22 @@ public class GraphStructure implements Serializable{
 		for (int i = 0;  i < nodes.size(); i++)
 		{
 			GEStreamNode n = (GEStreamNode) nodes.get(i);
-			this.graph.put(n, n.getChildren());
+			this.graph.put(n, n.getSuccesors());
 		}
+		
+		cs = new ConnectionSet();
+		cells = new ArrayList();
+		globalAttributes= new Hashtable();
 	}
 	
 	public GraphStructure()
 	{
 		graph = new HashMap();
+		cs = new ConnectionSet();
+		cells = new ArrayList();
+		globalAttributes= new Hashtable();
+		model = new DefaultGraphModel();
+		jgraph = new JGraph(model);
 	}
 	
 	/**
@@ -51,7 +66,7 @@ public class GraphStructure implements Serializable{
 	 */
 	public void addNode(GEStreamNode node, GEStreamNode parent, int index)
 	{
-		ArrayList nodeList = this.getChildren(parent); 
+		ArrayList nodeList = this.getSuccesors(parent); 
 		nodeList.add(index, node);
 	}
 	
@@ -60,7 +75,7 @@ public class GraphStructure implements Serializable{
 	 */ 	
 	public void deleteNode(GEStreamNode node)
 	{
-		ArrayList nodeList = this.getChildren(node);
+		ArrayList nodeList = this.getSuccesors(node);
 		int listSize = nodeList.size();
 		
 		for (int i = 0; i < listSize; i++)
@@ -76,7 +91,7 @@ public class GraphStructure implements Serializable{
 	 * Get the children of <node>
 	 * @return ArrayList with the children of <node>
 	 */ 
-	public ArrayList getChildren(GEStreamNode node)
+	public ArrayList getSuccesors(GEStreamNode node)
 	{
 		return (ArrayList) this.graph.get(node);
 	}
@@ -86,7 +101,8 @@ public class GraphStructure implements Serializable{
 	 */
 	public void constructGraph()
 	{
-		this.topLevel.construct();
+		this.topLevel.construct(this);
+		model.insert(cells.toArray(), globalAttributes, cs, null, null);
 	}
 	
 	
@@ -108,5 +124,21 @@ public class GraphStructure implements Serializable{
 	{
 		return this.topLevel;
 	}
+	
+	
+	public void connectDraw(GEStreamNode lastNode, GEStreamNode currentNode)
+	{
+		DefaultEdge edge = new DefaultEdge();
+		Map edgeAttrib = GraphConstants.createMap();
+		globalAttributes.put(edge, edgeAttrib);
+		
+		GraphConstants.setLineEnd(edgeAttrib, GraphConstants.ARROW_CLASSIC);
+		GraphConstants.setEndFill(edgeAttrib, true);
+				
+		cs.connect(edge, lastNode.getPort(), currentNode.getPort());
+				
+		cells.add(edge);	
+	}
+	
 }
 

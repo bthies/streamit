@@ -5,6 +5,7 @@ import at.dms.kjc.*;
 import java.io.*;
 import java.util.*;
 
+
 public class GraphEncoder implements AttributeStreamVisitor {
  
     //May Want outputStream or stdout. Not sure
@@ -22,6 +23,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		//Later we can change to outputting to file perhaps
 	
 		this.outputStream = System.out;
+	
     }
     
     public GraphEncoder(PrintStream outputStream) 
@@ -44,7 +46,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		 */
 		System.out.println("The toplevel stream is "+ graph.getTopLevel().getName());
 		
-		ArrayList topChildren = graph.getTopLevel().getChildren();
+		ArrayList topChildren = graph.getTopLevel().getSuccesors();
 		for (int i = 0; i< topChildren.size(); i++)
 		{
 			 System.out.println("The children of the toplevel are " + ((GEStreamNode) topChildren.get(i)).getName());
@@ -86,9 +88,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		{
 			SIRWorkFunction[] phases = self.getPhases();
 			for (int i = 0; i < phases.length; i++)
-			{
-				 
-				
+			{	
 				phFilter.addWorkFunction(new GEWorkFunction(work.getName(), 
 															phases[i].getPushInt(), 
 															phases[i].getPopInt(), 
@@ -97,8 +97,6 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			phases = self.getInitPhases();
 			for (int i = 0; i < phases.length; i++)
 			{
-				
-		
 				phFilter.addInitWorkFunction (new GEWorkFunction(work.getName(), 
 																 phases[i].getPushInt(), 
 																 phases[i].getPopInt(), 
@@ -110,6 +108,8 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			// if constants not resolved for the ints, will get an exception
 			System.out.println("Exception thrown " + e.toString());
 		}
+		
+		
 		
 			
 			/* ***********************************************************
@@ -325,6 +325,11 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		// Walk through each of the elements in the pipeline.
 		Iterator iter = self.getChildren().iterator();
 		
+		//
+		//DefaultGraphCell lastCell = null;
+		//
+	
+	/*	
 		while (iter.hasNext())
 		{
 			SIROperator oper = (SIROperator)iter.next();
@@ -332,17 +337,38 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			
 			GEStreamNode currNode = (GEStreamNode) oper.accept(this);
 			pipeline.addChild(currNode);
-				
-		}
+			
+			
+			DefaultGraphCell currCell = new DefaultGraphCell(self.getName());
+			Map cellAttrib = GraphConstants.createMap();
+			DefaultPort port = new DefaultPort();
+			currCell.add(port);
+			GraphConstants.setBorder(cellAttrib, BorderFactory.createRaisedBevelBorder());
+			GraphConstants.setBounds(cellAttrib, new Rectangle(100,100,100,100));
+			GraphConstants.setBackground(cellAttrib, Color.blue);
+			
+			if (lastCell != null)
+			{
+				DefaultEdge edge = new DefaultEdge();
+				Map edgeAttrib = GraphConstants.createMap();
+				GraphConstants.setLineEnd(edgeAttrib, GraphConstants.ARROW_CLASSIC);
+				ConnectionSet cs = new ConnectionSet(edge, (Port) lastCell.getChildAt(0), (Port) currCell.getChildAt(0));
+				Object cells[] = new Object[]{edge, lastCell, currCell};
+			}
+	
+			
+			lastCell = currCell;
+	
+		
 		  
-		graph.addHierarchy(pipeline, pipeline.getChildren());
+		graph.addHierarchy(pipeline, pipeline.getSuccesors());
 		
 		
 		/* ***********************************************************
 		 * DEBUGGING CODE BEGIN
-		*/
+		
 		System.out.println("The pipeline "+ pipeline.getName() + " has the following children");
-		ArrayList pipeChildren = pipeline.getChildren();
+		ArrayList pipeChildren = pipeline.getSuccesors();
 		for (int i = 0; i < pipeChildren.size(); i++)
 		{
 			System.out.println("Child  "+ i + " = " + ((GEStreamNode) pipeChildren.get(i)).getName());
@@ -351,7 +377,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		 * DEBUGGING CODE END
 		*********************************************************** */		
 		
-		return pipeline;
+		return null;
     }
     
     /**
@@ -385,7 +411,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		}
 		
 		GESplitJoin splitjoin =  new GESplitJoin(self.getName(), split, join);
-		graph.addHierarchy(splitjoin, split.getChildren());
+		graph.addHierarchy(splitjoin, split.getSuccesors());
 		
 		/* ***********************************************************
 	     * DEBUGGING CODE BEGIN
@@ -394,7 +420,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		System.out.println("\t Split = "+ splitjoin.getSplitter().getName());
 		System.out.println("\t Join = "+ splitjoin.getJoiner().getName());
 		
-		ArrayList sjChildren = splitjoin.getChildren();
+		ArrayList sjChildren = splitjoin.getSuccesors();
 		
 		for (int i = 0; i < sjChildren.size(); i++)
 		{

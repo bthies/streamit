@@ -8,6 +8,8 @@ package grapheditor;
 import java.io.*;
 import java.util.*;
 
+import com.jgraph.graph.*;
+
 /**
  * GEPipeline is the graph internal representation of a node. .
  * @author jcarlos
@@ -19,7 +21,9 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 	
 	public GEPipeline(String name)
 	{
+	
 		super(GEType.PIPELINE, name);
+		System.out.println("Constructing the pipeline");
 	}
 
 
@@ -27,18 +31,18 @@ public class GEPipeline extends GEStreamNode implements Serializable{
  * Constructs the pipeline and returns the last node in the pipeline that will be connecting
  * to the next graph structure.
  */
-	public GEStreamNode construct()
+	public GEStreamNode construct(GraphStructure graphStruct)
 	{
 		System.out.println("Constructing the pipeline" +this.getName());
 		boolean first = true;
 	
 		this.draw();
-		ArrayList nodeList = (ArrayList) this.getChildren();
+		ArrayList nodeList = (ArrayList) this.getSuccesors();
 		Iterator listIter =  nodeList.listIterator();
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = (GEStreamNode) listIter.next();
-			GEStreamNode lastTemp = strNode.construct();
+			GEStreamNode lastTemp = strNode.construct(graphStruct);
 			
 			if(!first)
 			{
@@ -46,6 +50,9 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 				
 				// TO BE ADDED
 				// connectDraw(lastNode, strNode);
+				
+				
+				
 			}
 			
 			lastNode = lastTemp;
@@ -67,7 +74,10 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		// draw shrunk version
 	}
 
-	
+	public static void test()
+	{
+		System.out.println("Testing static method in pipeline");
+	}
 	
 	
 	

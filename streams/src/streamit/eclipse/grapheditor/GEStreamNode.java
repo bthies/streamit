@@ -8,21 +8,27 @@ package grapheditor;
 import java.util.*;
 import java.io.*;
 
+import com.jgraph.graph.*;
+
+
 /**
  * GEStremaNode is the graph internal representation of a node. .
  * @author jcarlos
  */
-public abstract class GEStreamNode implements Serializable{
+public abstract class GEStreamNode extends DefaultGraphCell implements Serializable{
 	
 	protected ArrayList children;
 	protected String type;
 	protected String name;
+	protected DefaultPort port;
 
 	public GEStreamNode(String type, String name)
 	{
+		System.out.println("Constructing the stream node");
 		this.type = type;
 		this.children = new ArrayList();
 		this.name = name;
+		
 	}
 
 	/**
@@ -37,7 +43,7 @@ public abstract class GEStreamNode implements Serializable{
  	 * Get the children of <this>
  	 * @return An ArrayList with the children of the GEStreamNode. 
  	 */
-	public ArrayList getChildren()
+	public ArrayList getSuccesors()
 	{
 		return this.children;
 	}
@@ -48,7 +54,9 @@ public abstract class GEStreamNode implements Serializable{
 	 */
 	public String getName()
 	{
+		System.out.println("Entering getName()");
 		return this.name;
+		 
 	}
 	
 	/**
@@ -59,9 +67,18 @@ public abstract class GEStreamNode implements Serializable{
 	{
 		return this.type;	
 	}
+	/**
+	 * Get the port of <this>
+	 * @return The port that corresponds to the GEStreamNode
+	 */
+	public Port getPort()
+	{
+		return this.port;
+	}
+	
 
 	abstract public void draw();
-	abstract GEStreamNode construct();
+	abstract GEStreamNode construct(GraphStructure graphStruct);
 	abstract public void collapse();
 	
 }

@@ -26,7 +26,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		super(GEType.SPLIT_JOIN , name);
 		this.splitter = split;
 		this.joiner = join;
-		this.setChildren(split.getChildren());
+		this.setChildren(split.getSuccesors());
 		
 	}
 
@@ -57,38 +57,35 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	 * Constructs the splitjoin and returns the last node in the splitjoin that wil be connecting
 	 * to the next graph structure.
 	 */	
-	public GEStreamNode construct()
+	public GEStreamNode construct(GraphStructure graphStruct)
 	{
 		System.out.println("Constructing the SplitJoin " +this.getName());
 		
 		this.draw();
-		this.splitter.construct();
+		this.splitter.construct(graphStruct);
 		
-		ArrayList nodeList = (ArrayList) this.getChildren();
+		ArrayList nodeList = (ArrayList) this.getSuccesors();
 		Iterator listIter =  nodeList.listIterator();
 		ArrayList lastNodeList = new ArrayList();
 		
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = ((GEStreamNode) listIter.next());
-			lastNodeList.add(strNode.construct());
+			lastNodeList.add(strNode.construct(graphStruct));
 			
 			System.out.println("Connecting " + splitter.getName()+  " to "+ strNode.getName());
-			
-			// TO BE ADDED			
-			//connectDraw(splitter, strNode);
+			graphStruct.connectDraw(splitter, strNode);
 		}
 		
 		listIter =  lastNodeList.listIterator();
-		this.joiner.construct();
+		this.joiner.construct(graphStruct);
 		
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = (GEStreamNode) listIter.next();
-			System.out.println("Connecting " + strNode.getName()+  " to "+ joiner.getName());
 			
-			// TO BE ADDED
-			//connectDraw(strNode, joiner);
+			System.out.println("Connecting " + strNode.getName()+  " to "+ joiner.getName());
+			graphStruct.connectDraw(strNode, joiner);
 		}	
 		
 		System.out.println("exiting splitjoin construction");
@@ -96,9 +93,9 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	}
 	
 	
-	public ArrayList getChildren()
+	public ArrayList getSuccesors()
 	{
-		return this.getSplitter().getChildren();
+		return this.getSplitter().getSuccesors();
 	}
 	
 	

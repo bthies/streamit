@@ -70,6 +70,14 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
 	top.accept(new Layout(), new HashSet(), false);
 	
+	if (assigned.size() > 
+	    (StreamItOptions.rawRows * StreamItOptions.rawColumns)) {
+	    System.err.println("\nLAYOUT ERROR: Need " + assigned.size() +
+			       " tiles, have " + 
+			       (StreamItOptions.rawRows * StreamItOptions.rawColumns) +
+			       " tiles.");
+	    System.exit(-1);
+	}
     }
     
     public static Set getTiles() {

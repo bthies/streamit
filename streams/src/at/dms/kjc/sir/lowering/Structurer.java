@@ -173,42 +173,24 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     private void flattenMethods(String streamName,
 				JMethodDeclaration[] methods) {
 	// for each method
-	for (int i=0; i<methods.length; i++) {
-	    // rename the method
-	    methods[i].setName(LoweringConstants.
-			       getMethodName(streamName, 
-					     methods[i].getName()));
-	    // add the parameter
-	    addParameter(methods[i], 
-			 streamName, 
-			 LoweringConstants.STATE_PARAM_NAME);
-	    // for each statement in the method, change references
-	    KjcVisitor resolver = new FieldResolver();
-	    ListIterator statements = methods[i].getStatementIterator();
-	    while (statements.hasNext()) {
-		((JStatement)statements.next()).accept(resolver);
-	    }
-	    // add <method> to the list of flattened methods
-	    flatMethods.add(methods[i]);
-	}
+	for (int i=0; i<methods.length; i++)
+            flattenMethod(streamName, methods[i]);
     }
 
     /**
-     * Flatten an initPath...() method, in the same way flattenMethods()
-     * does.  The main difference is that the initPath() function doesn't
-     * get a parameter for the context.
-     *
-     * Eventually, this might also take responsibility for creating
-     * an artificial initPath() function, which is called from the
-     * init function and actually does the work of setting up the
-     * feedback path.
+     * Flatten a single method, in the same way flattenMethods()
+     * does.
      */
-    private void flattenInitPath(String streamName,
-                                 JMethodDeclaration method) {
+    private void flattenMethod(String streamName,
+                               JMethodDeclaration method) {
         // rename the method
         method.setName(LoweringConstants.
                        getMethodName(streamName, 
                                      method.getName()));
+        // add the parameter
+        addParameter(method, 
+                     streamName, 
+                     LoweringConstants.STATE_PARAM_NAME);
         // for each statement in the method, change references
         KjcVisitor resolver = new FieldResolver();
         ListIterator statements = method.getStatementIterator();
@@ -378,7 +360,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	// do visit
 	postVisit(self.getName(), fields, methods, children);
         // deal with initPath, too
-        flattenInitPath(self.getName(), initPath);
+        flattenMethod(self.getName(), initPath);
     }
 }
 

@@ -1,9 +1,9 @@
-package streamit.scheduler;
+package streamit.scheduler2;
 
 import streamit.misc.AssertedClass;
 import java.util.Vector;
 
-/* $Id: Schedule.java,v 1.7 2002-12-02 17:29:24 karczma Exp $ */
+/* $Id: Schedule.java,v 1.8 2002-12-02 23:54:04 karczma Exp $ */
 
 /**
  * <dl>
@@ -35,7 +35,7 @@ public class Schedule extends AssertedClass
     /**
      * Stream iterator corresponding to this schedule.
      */
-    final private streamit.scheduler.iriter.Iterator workStream;
+    final private streamit.scheduler2.iriter.Iterator workStream;
     
     /**
      * Number of times that this schedule is supposed to be repeated
@@ -45,7 +45,7 @@ public class Schedule extends AssertedClass
     /**
      * Create a schedule that will be used with many sub-schedules.
      */
-    public Schedule (streamit.scheduler.iriter.Iterator stream)
+    public Schedule (streamit.scheduler2.iriter.Iterator stream)
     {
         subScheds = new Vector ();
         workFunc = null;
@@ -56,7 +56,7 @@ public class Schedule extends AssertedClass
      * Create the schedule to be a bottom schedule with a single
      * work function.
      */
-    public Schedule (Object workFunction, streamit.scheduler.iriter.Iterator stream)
+    public Schedule (Object workFunction, streamit.scheduler2.iriter.Iterator stream)
     {
         workFunc = workFunction;
         workStream = stream;
@@ -127,7 +127,7 @@ public class Schedule extends AssertedClass
      * Returns the stream to which this schedule phase corresponds.
      * @return schedule's stream
      */
-    public streamit.scheduler.iriter.Iterator getStream()
+    public streamit.scheduler2.iriter.Iterator getStream()
     {
         return workStream;
     }

@@ -1,12 +1,12 @@
-package streamit.scheduler.minlatency;
+package streamit.scheduler2.minlatency;
 
-/* $Id: Pipeline.java,v 1.6 2002-12-02 17:49:44 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.7 2002-12-02 23:54:12 karczma Exp $ */
 
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
-import streamit.scheduler.hierarchical.StreamInterface;
-import streamit.scheduler.base.StreamFactory;
-import streamit.scheduler.hierarchical.PhasingSchedule;
+import streamit.scheduler2.hierarchical.StreamInterface;
+import streamit.scheduler2.base.StreamFactory;
+import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 /**
  * This class implements a minimum-latency algorithm for creating
@@ -16,7 +16,7 @@ import streamit.scheduler.hierarchical.PhasingSchedule;
  * @author  Michal Karczmarek
  */
 
-public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
+public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
 {
     public Pipeline(PipelineIter iterator, StreamFactory factory)
     {

@@ -1,8 +1,8 @@
-package streamit.scheduler.hierarchical;
+package streamit.scheduler2.hierarchical;
 
-/* $Id: StreamInterfaceWithSnJ.java,v 1.2 2002-07-18 05:34:42 karczma Exp $ */
+/* $Id: StreamInterfaceWithSnJ.java,v 1.3 2002-12-02 23:54:09 karczma Exp $ */
 
-import streamit.scheduler.Schedule;
+import streamit.scheduler2.Schedule;
 
 /**
  * This interface provides the required functional interface for
@@ -20,7 +20,7 @@ import streamit.scheduler.Schedule;
  */
 
 public interface StreamInterfaceWithSnJ
-    extends StreamInterface, streamit.scheduler.base.StreamInterfaceWithSnJ
+    extends StreamInterface, streamit.scheduler2.base.StreamInterfaceWithSnJ
 {
     /**
      * Get the number of phases that the split of this SplitJoin has.

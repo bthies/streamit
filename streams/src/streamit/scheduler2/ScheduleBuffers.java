@@ -1,4 +1,4 @@
-package streamit.scheduler;
+package streamit.scheduler2;
 
 import streamit.misc.DestroyedClass;
 import streamit.misc.UniquePairContainer;
@@ -7,19 +7,19 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 Iterator;
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 FilterIter;
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 SplitJoinIter;
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 FeedbackLoopIter;
-import streamit.scheduler.Schedule;
+import streamit.scheduler2.Schedule;
 
-/* $Id: ScheduleBuffers.java,v 1.8 2002-12-02 17:29:24 karczma Exp $ */
+/* $Id: ScheduleBuffers.java,v 1.9 2002-12-02 23:54:04 karczma Exp $ */
 
 /**
  * This class uses a valid schedule and an iterator to determine 
@@ -41,8 +41,8 @@ public class ScheduleBuffers extends DestroyedClass
     }
 
     public int getBufferSizeBetween(
-        streamit.scheduler.iriter.Iterator userBefore,
-        streamit.scheduler.iriter.Iterator userAfter)
+        streamit.scheduler2.iriter.Iterator userBefore,
+        streamit.scheduler2.iriter.Iterator userAfter)
     {
         Iterator before = (Iterator) user2persistent.get(userBefore);
         Iterator after = (Iterator) user2persistent.get(userAfter);

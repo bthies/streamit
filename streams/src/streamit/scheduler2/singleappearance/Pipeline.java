@@ -1,15 +1,15 @@
-package streamit.scheduler.singleappearance;
+package streamit.scheduler2.singleappearance;
 
-/* $Id: Pipeline.java,v 1.5 2002-07-16 02:18:48 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.6 2002-12-02 23:54:14 karczma Exp $ */
 
 import java.util.Map;
 import java.util.HashMap;
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
-import streamit.scheduler.hierarchical.StreamInterface;
-import streamit.scheduler.base.StreamFactory;
-import streamit.scheduler.Schedule;
-import streamit.scheduler.hierarchical.PhasingSchedule;
+import streamit.scheduler2.hierarchical.StreamInterface;
+import streamit.scheduler2.base.StreamFactory;
+import streamit.scheduler2.Schedule;
+import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 /**
  * This class implements a single-appearance algorithm for creating
@@ -19,7 +19,7 @@ import streamit.scheduler.hierarchical.PhasingSchedule;
  * @author  Michal Karczmarek
  */
 
-public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
+public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
 {
     public Pipeline(PipelineIter iterator, StreamFactory factory)
     {

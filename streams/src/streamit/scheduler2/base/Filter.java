@@ -1,9 +1,9 @@
-package streamit.scheduler.base;
+package streamit.scheduler2.base;
 
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 FilterIter;
 
-/* $Id: Filter.java,v 1.6 2002-12-02 17:49:36 karczma Exp $ */
+/* $Id: Filter.java,v 1.7 2002-12-02 23:54:07 karczma Exp $ */
 
 /**
  * Computes some basic data for Filters.

@@ -1,8 +1,8 @@
-package streamit.scheduler.hierarchical;
+package streamit.scheduler2.hierarchical;
 
-/* $Id: StreamAlgorithm.java,v 1.4 2002-12-02 17:49:41 karczma Exp $ */
+/* $Id: StreamAlgorithm.java,v 1.5 2002-12-02 23:54:09 karczma Exp $ */
 
-import streamit.scheduler.Schedule;
+import streamit.scheduler2.Schedule;
 import streamit.misc.DestroyedClass;
 import java.util.Map;
 import java.util.HashMap;

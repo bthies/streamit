@@ -1,8 +1,8 @@
-package streamit.scheduler.iriter;
+package streamit.scheduler2.iriter;
 
-import streamit.scheduler.iriter.Iterator;
+import streamit.scheduler2.iriter.Iterator;
 
-/* $Id: PipelineIter.java,v 1.5 2002-06-30 04:01:14 karczma Exp $ */
+/* $Id: PipelineIter.java,v 1.6 2002-12-02 23:54:11 karczma Exp $ */
 
 /**
  * <dl>

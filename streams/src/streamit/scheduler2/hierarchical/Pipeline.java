@@ -1,11 +1,11 @@
-package streamit.scheduler.hierarchical;
+package streamit.scheduler2.hierarchical;
 
-/* $Id: Pipeline.java,v 1.4 2002-07-16 01:09:53 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.5 2002-12-02 23:54:09 karczma Exp $ */
 
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
-import streamit.scheduler.base.StreamFactory;
-import streamit.scheduler.Schedule;
+import streamit.scheduler2.base.StreamFactory;
+import streamit.scheduler2.Schedule;
 
 /**
  * This class provides the required functions to implement a schduler
@@ -18,7 +18,7 @@ import streamit.scheduler.Schedule;
  */
 
 abstract public class Pipeline
-    extends streamit.scheduler.base.Pipeline
+    extends streamit.scheduler2.base.Pipeline
     implements StreamInterface
 {
     final private StreamAlgorithm algorithm = new StreamAlgorithm(this);
@@ -41,7 +41,7 @@ abstract public class Pipeline
      */
     protected StreamInterface getHierarchicalChild(int nChild)
     {
-        streamit.scheduler.base.StreamInterface child;
+        streamit.scheduler2.base.StreamInterface child;
         child = getChild(nChild);
 
         if (!(child instanceof StreamInterface))
@@ -52,12 +52,12 @@ abstract public class Pipeline
         return (StreamInterface) child;
     }
 
-    public streamit.scheduler.base.StreamInterface getTop()
+    public streamit.scheduler2.base.StreamInterface getTop()
     {
         return getChild(0);
     }
 
-    public streamit.scheduler.base.StreamInterface getBottom()
+    public streamit.scheduler2.base.StreamInterface getBottom()
     {
         return getChild(getNumChildren() - 1);
     }

@@ -1,11 +1,11 @@
-package streamit.scheduler.singleappearance;
+package streamit.scheduler2.singleappearance;
 
-/* $Id: Filter.java,v 1.5 2002-12-02 17:49:46 karczma Exp $ */
+/* $Id: Filter.java,v 1.6 2002-12-02 23:54:14 karczma Exp $ */
 
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 FilterIter;
-import streamit.scheduler.Schedule;
-import streamit.scheduler.hierarchical.PhasingSchedule;
+import streamit.scheduler2.Schedule;
+import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 /**
  * This class implements a single-appearance algorithm for creating
@@ -15,7 +15,7 @@ import streamit.scheduler.hierarchical.PhasingSchedule;
  * @author  Michal Karczmarek
  */
 
-public class Filter extends streamit.scheduler.hierarchical.Filter
+public class Filter extends streamit.scheduler2.hierarchical.Filter
 {
     public Filter(FilterIter iterator)
     {

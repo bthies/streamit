@@ -1,9 +1,9 @@
-package streamit.scheduler.hierarchical;
+package streamit.scheduler2.hierarchical;
 
-/* $Id: PhasingSchedule.java,v 1.5 2002-12-02 17:49:41 karczma Exp $ */
+/* $Id: PhasingSchedule.java,v 1.6 2002-12-02 23:54:09 karczma Exp $ */
 
 import java.util.Vector;
-import streamit.scheduler.Schedule;
+import streamit.scheduler2.Schedule;
 import streamit.misc.DestroyedClass;
 
 /**

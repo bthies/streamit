@@ -1,8 +1,8 @@
-package streamit.scheduler.hierarchical;
+package streamit.scheduler2.hierarchical;
 
-/* $Id: StreamInterface.java,v 1.5 2002-12-02 17:49:42 karczma Exp $ */
+/* $Id: StreamInterface.java,v 1.6 2002-12-02 23:54:09 karczma Exp $ */
 
-import streamit.scheduler.Schedule;
+import streamit.scheduler2.Schedule;
 
 /**
  * This interface provides the required functional interface for
@@ -20,7 +20,7 @@ import streamit.scheduler.Schedule;
  */
 
 public interface StreamInterface
-    extends streamit.scheduler.base.StreamInterface
+    extends streamit.scheduler2.base.StreamInterface
 {
     /**
      * Returns the object that has ability to consume/peek data
@@ -29,7 +29,7 @@ public interface StreamInterface
      * would be self (splits and joins are considered parts of the
      * stream objects).
      */
-    public streamit.scheduler.base.StreamInterface getTop();
+    public streamit.scheduler2.base.StreamInterface getTop();
 
     /**
      * Returns the object that has ability to consume/peek data
@@ -38,7 +38,7 @@ public interface StreamInterface
      * would be self (splits and joins are considered parts of the
      * stream objects).
      */
-    public streamit.scheduler.base.StreamInterface getBottom();
+    public streamit.scheduler2.base.StreamInterface getBottom();
 
     /**
      * Return the number of phases that this StreamInterface's steady 

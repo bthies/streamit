@@ -1,9 +1,9 @@
-package streamit.scheduler.base;
+package streamit.scheduler2.base;
 
-import streamit.scheduler.Schedule;
-import streamit.scheduler.iriter.Iterator;
+import streamit.scheduler2.Schedule;
+import streamit.scheduler2.iriter.Iterator;
 
-/* $Id: StreamInterface.java,v 1.6 2002-12-02 17:49:37 karczma Exp $ */
+/* $Id: StreamInterface.java,v 1.7 2002-12-02 23:54:07 karczma Exp $ */
 
 /**
  * This interface will provide the basic functionality for

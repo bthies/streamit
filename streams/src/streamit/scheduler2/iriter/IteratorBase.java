@@ -1,6 +1,6 @@
-package streamit.scheduler.iriter;
+package streamit.scheduler2.iriter;
 
-/* $Id: IteratorBase.java,v 1.2 2002-06-30 04:01:14 karczma Exp $ */
+/* $Id: IteratorBase.java,v 1.3 2002-12-02 23:54:11 karczma Exp $ */
 
 /**
  * <dl>

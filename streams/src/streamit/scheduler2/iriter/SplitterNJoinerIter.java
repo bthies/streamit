@@ -1,6 +1,6 @@
-package streamit.scheduler.iriter;
+package streamit.scheduler2.iriter;
 
-/* $Id: SplitterNJoinerIter.java,v 1.2 2002-12-02 20:40:01 karczma Exp $ */
+/* $Id: SplitterNJoinerIter.java,v 1.3 2002-12-02 23:54:11 karczma Exp $ */
 
 /**
  * An interface for retrieving data about streams with a Splitter and

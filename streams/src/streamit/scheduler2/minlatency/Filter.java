@@ -1,11 +1,11 @@
-package streamit.scheduler.minlatency;
+package streamit.scheduler2.minlatency;
 
-/* $Id: Filter.java,v 1.2 2002-07-23 01:55:32 karczma Exp $ */
+/* $Id: Filter.java,v 1.3 2002-12-02 23:54:12 karczma Exp $ */
 
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 FilterIter;
-import streamit.scheduler.Schedule;
-import streamit.scheduler.hierarchical.PhasingSchedule;
+import streamit.scheduler2.Schedule;
+import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 /**
  * This class implements a minimum-latency algorithm for creating
@@ -15,7 +15,7 @@ import streamit.scheduler.hierarchical.PhasingSchedule;
  * @author  Michal Karczmarek
  */
 
-public class Filter extends streamit.scheduler.hierarchical.Filter
+public class Filter extends streamit.scheduler2.hierarchical.Filter
 {
     public Filter(FilterIter iterator)
     {

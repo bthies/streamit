@@ -1,11 +1,11 @@
-package streamit.scheduler.hierarchical;
+package streamit.scheduler2.hierarchical;
 
-/* $Id: FeedbackLoop.java,v 1.4 2002-07-18 05:34:41 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.5 2002-12-02 23:54:09 karczma Exp $ */
 
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 FeedbackLoopIter;
-import streamit.scheduler.base.StreamFactory;
-import streamit.scheduler.Schedule;
+import streamit.scheduler2.base.StreamFactory;
+import streamit.scheduler2.Schedule;
 
 /**
  * This class provides the required functions to implement a schduler
@@ -18,7 +18,7 @@ import streamit.scheduler.Schedule;
  */
 
 abstract public class FeedbackLoop
-    extends streamit.scheduler.base.FeedbackLoop
+    extends streamit.scheduler2.base.FeedbackLoop
     implements StreamInterfaceWithSnJ
 {
     final private StreamAlgorithmWithSnJ algorithm =
@@ -129,12 +129,12 @@ abstract public class FeedbackLoop
         return joinPhases[nPhase];
     }
 
-    public streamit.scheduler.base.StreamInterface getTop()
+    public streamit.scheduler2.base.StreamInterface getTop()
     {
         return this;
     }
 
-    public streamit.scheduler.base.StreamInterface getBottom()
+    public streamit.scheduler2.base.StreamInterface getBottom()
     {
         return this;
     }

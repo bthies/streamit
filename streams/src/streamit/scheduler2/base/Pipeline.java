@@ -1,9 +1,9 @@
-package streamit.scheduler.base;
+package streamit.scheduler2.base;
 
-import streamit.scheduler.iriter./*persistent.*/PipelineIter;
+import streamit.scheduler2.iriter./*persistent.*/PipelineIter;
 import java.math.BigInteger;
 
-/* $Id: Pipeline.java,v 1.6 2002-12-02 17:49:37 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.7 2002-12-02 23:54:07 karczma Exp $ */
 
 /**
  * Computes some basic data for Pipelines.  

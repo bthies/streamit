@@ -1,18 +1,18 @@
-package streamit.scheduler.base;
+package streamit.scheduler2.base;
 
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 FeedbackLoopIter;
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 Iterator;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 SplitterNJoinerIter;
-import streamit.scheduler.iriter.JoinerIter;
-import streamit.scheduler.iriter.SplitterIter;
+import streamit.scheduler2.iriter.JoinerIter;
+import streamit.scheduler2.iriter.SplitterIter;
 
-/* $Id: StreamWithSplitNJoin.java,v 1.5 2002-12-02 17:49:37 karczma Exp $ */
+/* $Id: StreamWithSplitNJoin.java,v 1.6 2002-12-02 23:54:07 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for Streams that contain

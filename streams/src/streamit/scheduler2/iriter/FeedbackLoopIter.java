@@ -1,6 +1,6 @@
-package streamit.scheduler.iriter;
+package streamit.scheduler2.iriter;
 
-/* $Id: FeedbackLoopIter.java,v 1.8 2002-12-02 20:40:01 karczma Exp $ */
+/* $Id: FeedbackLoopIter.java,v 1.9 2002-12-02 23:54:10 karczma Exp $ */
 
 /**
  * <dl>

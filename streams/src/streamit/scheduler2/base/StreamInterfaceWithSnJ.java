@@ -1,6 +1,6 @@
-package streamit.scheduler.base;
+package streamit.scheduler2.base;
 
-/* $Id: StreamInterfaceWithSnJ.java,v 1.1 2002-07-18 05:34:37 karczma Exp $ */
+/* $Id: StreamInterfaceWithSnJ.java,v 1.2 2002-12-02 23:54:07 karczma Exp $ */
 
 /**
  * This interface provides the required functional interface for

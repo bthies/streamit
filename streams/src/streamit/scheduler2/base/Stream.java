@@ -1,9 +1,9 @@
-package streamit.scheduler.base;
+package streamit.scheduler2.base;
 
 import streamit.misc.DestroyedClass;
-import streamit.scheduler.iriter.Iterator;
+import streamit.scheduler2.iriter.Iterator;
 
-/* $Id: Stream.java,v 1.3 2002-12-02 17:49:37 karczma Exp $ */
+/* $Id: Stream.java,v 1.4 2002-12-02 23:54:07 karczma Exp $ */
 
 /**
  * This class provides the basic functionality for

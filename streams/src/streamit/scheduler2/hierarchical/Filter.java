@@ -1,10 +1,10 @@
-package streamit.scheduler.hierarchical;
+package streamit.scheduler2.hierarchical;
 
-/* $Id: Filter.java,v 1.4 2002-07-16 01:09:53 karczma Exp $ */
+/* $Id: Filter.java,v 1.5 2002-12-02 23:54:09 karczma Exp $ */
 
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 FilterIter;
-import streamit.scheduler.Schedule;
+import streamit.scheduler2.Schedule;
 
 /**
  * This class provides the required functions to implement a schduler
@@ -17,7 +17,7 @@ import streamit.scheduler.Schedule;
  */
 
 abstract public class Filter
-    extends streamit.scheduler.base.Filter
+    extends streamit.scheduler2.base.Filter
     implements StreamInterface
 {
     final private StreamAlgorithm algorithm = new StreamAlgorithm(this);
@@ -32,12 +32,12 @@ abstract public class Filter
      */
     abstract public void computeSchedule();
 
-    public streamit.scheduler.base.StreamInterface getTop()
+    public streamit.scheduler2.base.StreamInterface getTop()
     {
         return this;
     }
 
-    public streamit.scheduler.base.StreamInterface getBottom()
+    public streamit.scheduler2.base.StreamInterface getBottom()
     {
         return this;
     }

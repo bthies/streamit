@@ -1,6 +1,6 @@
-package streamit.scheduler.iriter;
+package streamit.scheduler2.iriter;
 
-/* $Id: JoinerIter.java,v 1.3 2002-06-30 04:01:14 karczma Exp $ */
+/* $Id: JoinerIter.java,v 1.4 2002-12-02 23:54:11 karczma Exp $ */
 
 /**
  * An interface for retrieving data about streams with a Joiner.

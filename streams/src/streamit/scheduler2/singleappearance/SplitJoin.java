@@ -1,13 +1,13 @@
-package streamit.scheduler.singleappearance;
+package streamit.scheduler2.singleappearance;
 
-/* $Id: SplitJoin.java,v 1.6 2002-07-18 05:34:47 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.7 2002-12-02 23:54:14 karczma Exp $ */
 
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 SplitJoinIter;
-import streamit.scheduler.base.StreamFactory;
-import streamit.scheduler.hierarchical.StreamInterface;
-import streamit.scheduler.Schedule;
-import streamit.scheduler.hierarchical.PhasingSchedule;
+import streamit.scheduler2.base.StreamFactory;
+import streamit.scheduler2.hierarchical.StreamInterface;
+import streamit.scheduler2.Schedule;
+import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 /**
  * This class implements a single-appearance algorithm for creating
@@ -17,7 +17,7 @@ import streamit.scheduler.hierarchical.PhasingSchedule;
  * @author  Michal Karczmarek
  */
 
-public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
+public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
 {
     final private PhasingSchedule splitSched, joinSched;
 

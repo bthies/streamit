@@ -1,12 +1,12 @@
-package streamit.scheduler.minlatency;
+package streamit.scheduler2.minlatency;
 
-/* $Id: FeedbackLoop.java,v 1.2 2002-07-23 01:55:32 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.3 2002-12-02 23:54:12 karczma Exp $ */
 
-import streamit.scheduler.iriter./*persistent.*/
+import streamit.scheduler2.iriter./*persistent.*/
 FeedbackLoopIter;
-import streamit.scheduler.hierarchical.StreamInterface;
-import streamit.scheduler.base.StreamFactory;
-import streamit.scheduler.hierarchical.PhasingSchedule;
+import streamit.scheduler2.hierarchical.StreamInterface;
+import streamit.scheduler2.base.StreamFactory;
+import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 /**
  * This class implements a minimum-latency algorithm for creating
@@ -17,7 +17,7 @@ import streamit.scheduler.hierarchical.PhasingSchedule;
  */
 
 public class FeedbackLoop
-    extends streamit.scheduler.hierarchical.FeedbackLoop
+    extends streamit.scheduler2.hierarchical.FeedbackLoop
 {
     public FeedbackLoop(FeedbackLoopIter iterator, StreamFactory factory)
     {

@@ -574,9 +574,10 @@ class Propagator extends SLIRReplacingVisitor {
 	// return a constant if we have it
 	if (newExp.isConstant()) {
 	    return newExp;
-	} else {
-	    return doPromote(expr,expr.convertType(type));
+	    //} else {
+	    //return doPromote(expr,expr.convertType(type));
 	}
+	return self;
     }
 
     /**

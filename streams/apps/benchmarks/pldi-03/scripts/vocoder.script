@@ -1,4 +1,26 @@
-normal:--unroll 100000:ChannelVocoder
-part:--linearpartition:ChannelVocoder
-partatlas:--linearpartition --atlas:ChannelVocoder
-freq:--frequencyreplacement:ChannelVocoder
+normal::ChannelVocoder
+unroll:--unroll 100000:ChannelVocoder
+
+linearnc:--unroll 10000 --linearreplacement --nolinearcollapse:ChannelVocoder
+linearnc2:--unroll 10000 --linearreplacement2 --nolinearcollapse:ChannelVocoder
+linearnc3:--unroll 10000 --linearreplacement3 --nolinearcollapse:ChannelVocoder
+
+freqnc:--unroll 10000 --frequencyreplacement --nolinearcollapse:ChannelVocoder
+freq:--unroll 10000 --frequencyreplacement:ChannelVocoder
+
+linear:--unroll 10000 --linearreplacement:ChannelVocoder
+linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:ChannelVocoder
+
+part:--unroll 10000 --linearpartition:ChannelVocoder
+partatlas:--unroll 10000 --linearpartition --atlas:ChannelVocoder
+
+linear3:--unroll 100000 --linearreplacement3:ChannelVocoder
+linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:ChannelVocoder
+
+atlas:--unroll 100000 --atlas:ChannelVocoder
+atlasfreq:--unroll 100000 --atlas --frequencyreplacement:ChannelVocoder
+
+gfusefreq:--fusion --unroll 10000 --frequencyreplacement:ChannelVocoder
+fuselinear:--fusion --unroll 10000 --linearreplacement:ChannelVocoder
+fuselinearfreq:--fusion --unroll 10000 --linearreplacement --frequencyreplacement:ChannelVocoder
+fusepart:--fusion --unroll 10000 --linearpartition:ChannelVocoder

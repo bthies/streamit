@@ -1,4 +1,26 @@
-normal:--unroll 100000:SamplingRateConverter
-part:--linearpartition:SamplingRateConverter
-partatlas:--linearpartition --atlas:SamplingRateConverter
-freq:--frequencyreplacement:SamplingRateConverter
+normal::SamplingRateConverter
+unroll:--unroll 100000:SamplingRateConverter
+
+linearnc:--unroll 10000 --linearreplacement --nolinearcollapse:SamplingRateConverter
+linearnc2:--unroll 10000 --linearreplacement2 --nolinearcollapse:SamplingRateConverter
+linearnc3:--unroll 10000 --linearreplacement3 --nolinearcollapse:SamplingRateConverter
+
+freqnc:--unroll 10000 --frequencyreplacement --nolinearcollapse:SamplingRateConverter
+freq:--unroll 10000 --frequencyreplacement:SamplingRateConverter
+
+linear:--unroll 10000 --linearreplacement:SamplingRateConverter
+linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:SamplingRateConverter
+
+part:--unroll 10000 --linearpartition:SamplingRateConverter
+partatlas:--unroll 10000 --linearpartition --atlas:SamplingRateConverter
+
+linear3:--unroll 100000 --linearreplacement3:SamplingRateConverter
+linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:SamplingRateConverter
+
+atlas:--unroll 100000 --atlas:SamplingRateConverter
+atlasfreq:--unroll 100000 --atlas --frequencyreplacement:SamplingRateConverter
+
+fusefreq:--fusion --unroll 10000 --frequencyreplacement:SamplingRateConverter
+fuselinear:--fusion --unroll 10000 --linearreplacement:SamplingRateConverter
+fuselinearfreq:--fusion --unroll 10000 --linearreplacement --frequencyreplacement:SamplingRateConverter
+fusepart:--fusion --unroll 10000 --linearpartition:SamplingRateConverter

@@ -1,4 +1,26 @@
-normal:--unroll 100000:LinkedFMTest
-part:--linearpartition:LinkedFMTest
-partatlas:--linearpartition --atlas:LinkedFMTest
-freq:--frequencyreplacement:LinkedFMTest
+normal::LinkedFMTest
+unroll:--unroll 100000:LinkedFMTest
+
+linearnc:--unroll 10000 --linearreplacement --nolinearcollapse:LinkedFMTest
+linearnc2:--unroll 10000 --linearreplacement2 --nolinearcollapse:LinkedFMTest
+linearnc3:--unroll 10000 --linearreplacement3 --nolinearcollapse:LinkedFMTest
+
+freqnc:--unroll 10000 --frequencyreplacement --nolinearcollapse:LinkedFMTest
+freq:--unroll 10000 --frequencyreplacement:LinkedFMTest
+
+linear:--unroll 10000 --linearreplacement:LinkedFMTest
+linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:LinkedFMTest
+
+part:--unroll 10000 --linearpartition:LinkedFMTest
+partatlas:--unroll 10000 --linearpartition --atlas:LinkedFMTest
+
+linear3:--unroll 100000 --linearreplacement3:LinkedFMTest
+linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:LinkedFMTest
+
+atlas:--unroll 100000 --atlas:LinkedFMTest
+atlasfreq:--unroll 100000 --atlas --frequencyreplacement:LinkedFMTest
+
+fusefreq:--fusion --unroll 10000 --frequencyreplacement:LinkedFMTest
+fuselinear:--fusion --unroll 10000 --linearreplacement:LinkedFMTest
+fuselinearfreq:--fusion --unroll 10000 --linearreplacement --frequencyreplacement:LinkedFMTest
+fusepart:--fusion --unroll 10000 --linearpartition:LinkedFMTest

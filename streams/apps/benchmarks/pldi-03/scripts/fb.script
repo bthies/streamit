@@ -1,4 +1,26 @@
-normal:--unroll 100000:FilterBank
-part:--linearpartition:FilterBank
-partatlas:--linearpartition --atlas:FilterBank
-freq:--frequencyreplacement:FilterBank
+normal::FilterBank
+unroll:--unroll 100000:FilterBank
+
+linearnc:--unroll 10000 --linearreplacement --nolinearcollapse:FilterBank
+linearnc2:--unroll 10000 --linearreplacement2 --nolinearcollapse:FilterBank
+linearnc3:--unroll 10000 --linearreplacement3 --nolinearcollapse:FilterBank
+
+freqnc:--unroll 10000 --frequencyreplacement --nolinearcollapse:FilterBank
+freq:--unroll 10000 --frequencyreplacement:FilterBank
+
+linear:--unroll 10000 --linearreplacement:FilterBank
+linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:FilterBank
+
+part:--unroll 10000 --linearpartition:FilterBank
+partatlas:--unroll 10000 --linearpartition --atlas:FilterBank
+
+linear3:--unroll 100000 --linearreplacement3:FilterBank
+linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:FilterBank
+
+atlas:--unroll 100000 --atlas:FilterBank
+atlasfreq:--unroll 100000 --atlas --frequencyreplacement:FilterBank
+
+fusefreq:--fusion --unroll 10000 --frequencyreplacement:FilterBank
+fuselinear:--fusion --unroll 10000 --linearreplacement:FilterBank
+fuselinearfreq:--fusion --unroll 10000 --linearreplacement --frequencyreplacement:FilterBank
+fusepart:--fusion --unroll 10000 --linearpartition:FilterBank

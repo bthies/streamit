@@ -14,9 +14,13 @@ linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:FIRProgram
 part:--unroll 10000 --linearpartition:FIRProgram
 partatlas:--unroll 10000 --linearpartition --atlas:FIRProgram
 
-freq3:--unroll 100000 --linearreplacement3:FIRProgram
+linear3:--unroll 100000 --linearreplacement3:FIRProgram
 linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:FIRProgram
 
 atlas:--unroll 100000 --atlas:FIRProgram
 atlasfreq:--unroll 100000 --atlas --frequencyreplacement:FIRProgram
 
+fusefreq:--fusion --unroll 10000 --frequencyreplacement:FIRProgram
+fuselinear:--fusion --unroll 10000 --linearreplacement:FIRProgram
+fuselinearfreq:--fusion --unroll 10000 --linearreplacement --frequencyreplacement:FIRProgram
+fusepart:--fusion --unroll 10000 --linearpartition:FIRProgram

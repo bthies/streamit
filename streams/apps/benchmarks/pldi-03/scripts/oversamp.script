@@ -1,5 +1,26 @@
-normal:--unroll 100000:Oversampler
-part:--linearpartition:Oversampler
-partatlas:--linearpartition --atlas:Oversampler
-freq:--frequencyreplacement:Oversampler
+normal::Oversampler
+unroll:--unroll 100000:Oversampler
 
+linearnc:--unroll 10000 --linearreplacement --nolinearcollapse:Oversampler
+linearnc2:--unroll 10000 --linearreplacement2 --nolinearcollapse:Oversampler
+linearnc3:--unroll 10000 --linearreplacement3 --nolinearcollapse:Oversampler
+
+freqnc:--unroll 10000 --frequencyreplacement --nolinearcollapse:Oversampler
+freq:--unroll 10000 --frequencyreplacement:Oversampler
+
+linear:--unroll 10000 --linearreplacement:Oversampler
+linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:Oversampler
+
+part:--unroll 10000 --linearpartition:Oversampler
+partatlas:--unroll 10000 --linearpartition --atlas:Oversampler
+
+linear3:--unroll 100000 --linearreplacement3:Oversampler
+linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:Oversampler
+
+atlas:--unroll 100000 --atlas:Oversampler
+atlasfreq:--unroll 100000 --atlas --frequencyreplacement:Oversampler
+
+fusefreq:--fusion --unroll 10000 --frequencyreplacement:Oversampler
+fuselinear:--fusion --unroll 10000 --linearreplacement:Oversampler
+fuselinearfreq:--fusion --unroll 10000 --linearreplacement --frequencyreplacement:Oversampler
+fusepart:--fusion --unroll 10000 --linearpartition:Oversampler

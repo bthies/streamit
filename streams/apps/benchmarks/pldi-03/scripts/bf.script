@@ -1,4 +1,26 @@
 normal::CoarseSerializedBeamFormer
-part:--linearpartition:CoarseSerializedBeamFormer
-partatlas:--linearpartition --atlas:CoarseSerializedBeamFormer
-freq:--frequencyreplacement:CoarseSerializedBeamFormer
+unroll:--unroll 100000:CoarseSerializedBeamFormer
+
+linearnc:--unroll 10000 --linearreplacement --nolinearcollapse:CoarseSerializedBeamFormer
+linearnc2:--unroll 10000 --linearreplacement2 --nolinearcollapse:CoarseSerializedBeamFormer
+linearnc3:--unroll 10000 --linearreplacement3 --nolinearcollapse:CoarseSerializedBeamFormer
+
+freqnc:--unroll 10000 --frequencyreplacement --nolinearcollapse:CoarseSerializedBeamFormer
+freq:--unroll 10000 --frequencyreplacement:CoarseSerializedBeamFormer
+
+linear:--unroll 10000 --linearreplacement:CoarseSerializedBeamFormer
+linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:CoarseSerializedBeamFormer
+
+part:--unroll 10000 --linearpartition:CoarseSerializedBeamFormer
+partatlas:--unroll 10000 --linearpartition --atlas:CoarseSerializedBeamFormer
+
+linear3:--unroll 100000 --linearreplacement3:CoarseSerializedBeamFormer
+linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:CoarseSerializedBeamFormer
+
+atlas:--unroll 100000 --atlas:CoarseSerializedBeamFormer
+atlasfreq:--unroll 100000 --atlas --frequencyreplacement:CoarseSerializedBeamFormer
+
+fusefreq:--fusion --unroll 10000 --frequencyreplacement:CoarseSerializedBeamFormer
+fuselinear:--fusion --unroll 10000 --linearreplacement:CoarseSerializedBeamFormer
+fuselinearfreq:--fusion --unroll 10000 --linearreplacement --frequencyreplacement:CoarseSerializedBeamFormer
+fusepart:--fusion --unroll 10000 --linearpartition:CoarseSerializedBeamFormer

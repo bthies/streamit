@@ -1,4 +1,26 @@
-normal:--unroll 100000:TargetDetect
-part:--linearpartition:TargetDetect
-partatlas:--linearpartition --atlas:TargetDetect
-freq:--frequencyreplacement:TargetDetect
+normal::TargetDetect
+unroll:--unroll 100000:TargetDetect
+
+linearnc:--unroll 10000 --linearreplacement --nolinearcollapse:TargetDetect
+linearnc2:--unroll 10000 --linearreplacement2 --nolinearcollapse:TargetDetect
+linearnc3:--unroll 10000 --linearreplacement3 --nolinearcollapse:TargetDetect
+
+freqnc:--unroll 10000 --frequencyreplacement --nolinearcollapse:TargetDetect
+freq:--unroll 10000 --frequencyreplacement:TargetDetect
+
+linear:--unroll 10000 --linearreplacement:TargetDetect
+linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:TargetDetect
+
+part:--unroll 10000 --linearpartition:TargetDetect
+partatlas:--unroll 10000 --linearpartition --atlas:TargetDetect
+
+linear3:--unroll 100000 --linearreplacement3:TargetDetect
+linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:TargetDetect
+
+atlas:--unroll 100000 --atlas:TargetDetect
+atlasfreq:--unroll 100000 --atlas --frequencyreplacement:TargetDetect
+
+fusefreq:--fusion --unroll 10000 --frequencyreplacement:TargetDetect
+fuselinear:--fusion --unroll 10000 --linearreplacement:TargetDetect
+fuselinearfreq:--fusion --unroll 10000 --linearreplacement --frequencyreplacement:TargetDetect
+fusepart:--fusion --unroll 10000 --linearpartition:TargetDetect

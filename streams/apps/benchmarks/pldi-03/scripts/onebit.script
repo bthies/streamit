@@ -1,5 +1,26 @@
-normal:--unroll 100000:OneBitDToA
-part:--linearpartition:OneBitDToA
-partatlas:--linearpartition --atlas:OneBitDToA
-freq:--frequencyreplacement:OneBitDToA
+normal::OneBitDToA
+unroll:--unroll 100000:OneBitDToA
 
+linearnc:--unroll 10000 --linearreplacement --nolinearcollapse:OneBitDToA
+linearnc2:--unroll 10000 --linearreplacement2 --nolinearcollapse:OneBitDToA
+linearnc3:--unroll 10000 --linearreplacement3 --nolinearcollapse:OneBitDToA
+
+freqnc:--unroll 10000 --frequencyreplacement --nolinearcollapse:OneBitDToA
+freq:--unroll 10000 --frequencyreplacement:OneBitDToA
+
+linear:--unroll 10000 --linearreplacement:OneBitDToA
+linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:OneBitDToA
+
+part:--unroll 10000 --linearpartition:OneBitDToA
+partatlas:--unroll 10000 --linearpartition --atlas:OneBitDToA
+
+linear3:--unroll 100000 --linearreplacement3:OneBitDToA
+linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:OneBitDToA
+
+atlas:--unroll 100000 --atlas:OneBitDToA
+atlasfreq:--unroll 100000 --atlas --frequencyreplacement:OneBitDToA
+
+fusefreq:--fusion --unroll 10000 --frequencyreplacement:OneBitDToA
+fuselinear:--fusion --unroll 10000 --linearreplacement:OneBitDToA
+fuselinearfreq:--fusion --unroll 10000 --linearreplacement --frequencyreplacement:OneBitDToA
+fusepart:--fusion --unroll 10000 --linearpartition:OneBitDToA

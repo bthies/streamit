@@ -134,7 +134,8 @@ public class BufferedCommunication extends RawExecutionCode
 			 filterInfo.pop + filterInfo.peek, filterInfo.prePeek);
 		}
 		else //not ratematching and we do not have a circular buffer
-		    buffersize = maxpeek;
+		    buffersize = maxpeek;  //this really should be max pop, but peek  == pop
+		                           //in this case 
 
 		//define the simple index variable
 		JVariableDefinition simpleIndexVar = 
@@ -152,11 +153,15 @@ public class BufferedCommunication extends RawExecutionCode
 		buffersize = Util.nextPow2(maxpeek + filterInfo.remaining);
 	    }
 
-
-
-	    //adjust the size of the buffer if this is the first traceNode of a trace
-	    if (filterInfo.traceNode.getPrevious().isInputTrace()) {
-		//compute how many items the previous filter generates
+	    
+	    //compute how many times this filter fires
+	    //find the stage with the max number of executions and add the primepump
+	    int maxExe = Math.max(filterInfo.initMult, filterInfo.steadyMult) +	    
+		filterInfo.primePump;
+	    
+	    buffersize *= maxExe;
+	    
+	    /*
 		FilterTraceNode[] previousFilters = filterInfo.getPreviousFilters();
 		if (previousFilters.length == 1) {
 		    FilterInfo prevInfo = new FilterInfo(previousFilters[0]);
@@ -171,7 +176,7 @@ public class BufferedCommunication extends RawExecutionCode
 		else 
 		    Utils.fail("Split/joins not supported");
 	    }
-	    
+	    */
 
 	    JVariableDefinition recvBufVar = 
 		new JVariableDefinition(null, 

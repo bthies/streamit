@@ -37,30 +37,25 @@ public class SIRPhasedFilterIter extends SIRIterator implements FilterIter
 	return obj;
     }
 
-    // At this point we realize that either the FilterIter model is
-    // wrong, or it's sufficiently general, just with oddly named
-    // functions.
     public int getNumInitStages() {
-        // Requires analysis of the work function; in particular, if
-        // work doesn't return, then the init stages are before the
-        // not-terminating loop.
-        return 0;
+    	if (obj.getInitPhases() == null) return 0;
+    	return obj.getInitPhases().length;
     }
 
     public int getInitPeekStage(int phase) {
-        return -1;
+    	return obj.getInitPhases()[phase].getPeekInt();
     }
     
     public int getInitPushStage(int phase) {
-        return -1;
+		return obj.getInitPhases()[phase].getPushInt();
     }
 
     public int getInitPopStage(int phase) {
-        return -1;
+		return obj.getInitPhases()[phase].getPopInt();
     }
 
     public Object getInitFunctionStage(int phase) {
-        return null;
+        return obj.getInitPhases()[phase].getWork();
     }
 
     // In particular, everything from here on down we had better be able

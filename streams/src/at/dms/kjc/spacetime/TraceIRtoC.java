@@ -1484,7 +1484,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    {
 		if (!KjcOptions.standalone) {
 		    print("raw_test_pass_reg(");
-		    print("print_int(");
+		    //print("print_int(");
 		}
 		else
 		    print("printf(\"%d\\n\", "); 
@@ -1497,7 +1497,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    {
 		if (!KjcOptions.standalone) {
 		    print("raw_test_pass_reg(");
-		    print("print_float(");
+		    //print("print_float(");
 		}
 		else 
 		    print("printf(\"%f\\n\", "); 
@@ -1510,7 +1510,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    {
 		if (!KjcOptions.standalone) {
 		    print("raw_test_pass_reg(");
-		    print("print_int(");
+		    //print("print_int(");
 		}
 		
 		else

@@ -169,10 +169,10 @@ public class FilterInfo
     //consumed in the steady state of the down stream filters...
     public int primePumpItemsNotConsumed() 
     {
-	assert traceNode.getNext() instanceof OutputTraceNode :
-	    "Need to call primePumpItemsNotConsumed() on last filter of trace";
+	//	assert traceNode.getNext() instanceof OutputTraceNode :
+	//    "Need to call primePumpItemsNotConsumed() on last filter of trace";
 
-	if (push == 0)
+	if (!(traceNode.getNext() instanceof OutputTraceNode) || push == 0)
 	    return 0;
 
 	OutputTraceNode out = (OutputTraceNode)traceNode.getNext();

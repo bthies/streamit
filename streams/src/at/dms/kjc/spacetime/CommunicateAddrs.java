@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
+import at.dms.kjc.*;
 
 public class CommunicateAddrs 
 {
@@ -128,14 +129,14 @@ public class CommunicateAddrs
 		//add the code to the owner to send the address to the
 		//static net for the init
 		((StringBuffer)functions.get(allocatingTile)).append
-		    ("  " + Util.staticNetworkSendPrefix(buffer.getType()) + 
+		    ("  " + Util.staticNetworkSendPrefix(CStdType.Integer) + 
 		     buffer.getIdent(true) + 
 		     Util.staticNetworkSendSuffix() + ";\n");
 
 		//add the code to the owner to send the address to the
 		//static net for the steady
 		((StringBuffer)functions.get(allocatingTile)).append
-		    ("  " + Util.staticNetworkSendPrefix(buffer.getType()) + 
+		    ("  " + Util.staticNetworkSendPrefix(CStdType.Integer) + 
 		     buffer.getIdent(false) + 
 		     Util.staticNetworkSendSuffix() + ";\n");
 
@@ -153,12 +154,12 @@ public class CommunicateAddrs
 		((StringBuffer)functions.get(dram.getNeighboringTile())).append
 		    ("  " + Util.staticNetworkReceivePrefix() + 
 		     buffer.getIdent(true) + 
-		     Util.staticNetworkReceiveSuffix(buffer.getType()) + ";\n");
+		     Util.staticNetworkReceiveSuffix(CStdType.Integer) + ";\n");
 		//add the code to receive the address into the pointer (steady)
 		((StringBuffer)functions.get(dram.getNeighboringTile())).append
 		    ("  " + Util.staticNetworkReceivePrefix() + 
 		     buffer.getIdent(false) + 
-		     Util.staticNetworkReceiveSuffix(buffer.getType()) + ";\n");
+		     Util.staticNetworkReceiveSuffix(CStdType.Integer) + ";\n");
 	    }
 	}
     }

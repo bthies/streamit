@@ -16,6 +16,9 @@ public class SIRBuilder {
      */
     public static void buildHello6() {
 
+	SIRPipeline toplevel = new SIRPipeline(null,
+					       /* fields  */ null,
+					       /* methods */ null);
 	/* build filter 1 */
 
 	JVariableDefinition x = 
@@ -63,7 +66,8 @@ public class SIRBuilder {
 
 	CType type1 = CStdType.Integer;
 
-	SIRFilter f1 = new SIRFilter(/* fields */ fields1,
+	SIRFilter f1 = new SIRFilter(toplevel,
+				     /* fields */ fields1,
 				     /* methods */ null,
 				     /* peek, pop, push */ 0, 0, 1,
 				     /* work */ work1,
@@ -95,7 +99,8 @@ public class SIRBuilder {
 
 	CType type2 = CStdType.Integer;
 
-	SIRFilter f2 = new SIRFilter(/* fields */ null,
+	SIRFilter f2 = new SIRFilter(toplevel,
+				     /* fields */ null,
 				     /* methods */ null,
 				     /* peek, pop, push */ 1, 1, 0,
 				     /* work */ work2,
@@ -103,8 +108,6 @@ public class SIRBuilder {
 
 	/* build pipeline and add filters */
 
-	SIRPipeline toplevel = new SIRPipeline(/* fields  */ null,
-					       /* methods */ null);
 	toplevel.add(f1);
 	toplevel.add(f2);
 

@@ -17,21 +17,24 @@ public class SIRSplitter extends SIROperator {
      */
     private int[] weights;
 
-    private SIRSplitter(SIRSplitType type, int[] weights) {
-	this.weights = weights;
-	this.type = type;
+    private SIRSplitter(SIRStream parent, SIRSplitType type, int[] weights) {
+      super(parent);
+      this.weights = weights;
+      this.type = type;
     }
 
     /**
-     * Constructs a splitter of a given type and n number of inputs.
+     * Constructs a splitter with given parent, type and n number of inputs.
      */
-    public static SIRSplitter create(SIRSplitType type, int n) {
+    public static SIRSplitter create(SIRStream parent, 
+				     SIRSplitType type, 
+				     int n) {
 	if (type==SIRSplitType.ROUND_ROBIN || type==SIRSplitType.DUPLICATE) {
 	    // fill weights with 1
-	    return new SIRSplitter(type, initArray(n, 1));
+	    return new SIRSplitter(parent, type, initArray(n, 1));
         } else if (type==SIRSplitType.NULL) {
 	    // for null type, fill with zero weights
-	    return new SIRSplitter(type, initArray(n, 0));
+	    return new SIRSplitter(parent, type, initArray(n, 0));
 	} else if (type==SIRSplitType.WEIGHTED_RR) {
 	    // if making a weighted round robin, should use other constructor
 	    fail("Need to specify weights for weighted round robin");
@@ -43,10 +46,12 @@ public class SIRSplitter extends SIROperator {
     }
 
     /**
-     * Constructs a weighted round-robin splitter with the given weights.
+     * Constructs a weighted round-robin splitter with the given
+     * parent and weights.  
      */
-    public static SIRSplitter createWeightedRR(int[] weights) {
-	return new SIRSplitter(SIRSplitType.WEIGHTED_RR, weights);
+    public static SIRSplitter createWeightedRR(SIRStream parent, 
+					       int[] weights) {
+	return new SIRSplitter(parent, SIRSplitType.WEIGHTED_RR, weights);
     }
 
     /**
@@ -69,6 +74,7 @@ public class SIRSplitter extends SIROperator {
      */
     public void accept(SIRVisitor v) {
 	v.visitSplitter(this,
+			parent,
 			type,
 			weights);
     }

@@ -40,25 +40,34 @@ public class SIRFeedbackLoop extends SIRStream {
     /**
      * Construct a new SIRPipeline with the given fields and methods.
      */
-    public SIRFeedbackLoop(JFieldDeclaration[] fields,
+    public SIRFeedbackLoop(SIRStream parent,
+			   JFieldDeclaration[] fields,
 			   JMethodDeclaration[] methods) {
-	super(fields, methods);
+	super(parent, fields, methods);
     }
 
     /**
      * Accepts visitor <v> at this node.
      */
     public void accept(SIRVisitor v) {
-	v.visitFeedbackLoop(this,
-			    fields,
-			    methods,
-			    init,
-			    delay,
-			    initPath);
+	v.preVisitFeedbackLoop(this,
+			       parent,
+			       fields,
+			       methods,
+			       init,
+			       delay,
+			       initPath);
 	/* visit components */
 	joiner.accept(v);
 	body.accept(v);
 	splitter.accept(v);
 	loop.accept(v);
+	v.postVisitFeedbackLoop(this,
+				parent,
+				fields,
+				methods,
+				init,
+				delay,
+				initPath);
     }
 }

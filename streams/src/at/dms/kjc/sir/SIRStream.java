@@ -11,9 +11,9 @@ public abstract class SIRStream extends SIROperator {
      * The fields of this, not including the input and output channels.  */
     protected JFieldDeclaration[] fields;
     /**
-     * The user-defined methods of this, not including work, init,
-     * initPath, etc.  This includes all message handlers and local
-     * utility functions that are used within this structure.
+     * The methods of this, INCLUDING work, init, initPath, etc.  This
+     * includes all message handlers and local utility functions that
+     * are used within this structure. 
      */
     protected JMethodDeclaration[] methods;
     /**
@@ -25,11 +25,12 @@ public abstract class SIRStream extends SIROperator {
      * Don't set the init function upon instantation since the lowering
      * pass will have to create the init function
      */
-    protected SIRStream(JFieldDeclaration[] fields,
+    protected SIRStream(SIRStream parent,
+			JFieldDeclaration[] fields,
 			JMethodDeclaration[] methods) {
-	this.fields = fields;
-	this.methods = methods;
-	this.init = init;
+      super(parent);
+      this.fields = fields;
+      this.methods = methods;
     }
 
 }

@@ -17,22 +17,24 @@ public class SIRJoiner extends SIROperator {
      */
     private int[] weights;
 
-    private SIRJoiner(SIRJoinType type, int[] weights) {
-	this.weights = weights;
-	this.type = type;
+    private SIRJoiner(SIRStream parent, SIRJoinType type, int[] weights) {
+      super(parent);
+      this.weights = weights;
+      this.type = type;
     }
 
-
     /**
-     * Constructs a joiner of a given type and n number of inputs.
+     * Constructs a joiner with given parent, type and n number of inputs.
      */
-    public static SIRJoiner create(SIRJoinType type, int n) {
+    public static SIRJoiner create(SIRStream parent,
+				   SIRJoinType type, 
+				   int n) {
 	if (type==SIRJoinType.ROUND_ROBIN || type==SIRJoinType.COMBINE) {
 	    // fill weights with 1
-	    return new SIRJoiner(type, initArray(n, 1));
+	    return new SIRJoiner(parent, type, initArray(n, 1));
         } else if (type==SIRJoinType.NULL) {
 	    // for null type, fill with zero weights
-	    return new SIRJoiner(type, initArray(n, 0));
+	    return new SIRJoiner(parent, type, initArray(n, 0));
 	} else if (type==SIRJoinType.WEIGHTED_RR) {
 	    // if making a weighted round robin, should use other constructor
 	    fail("Need to specify weights for weighted round robin");
@@ -44,10 +46,11 @@ public class SIRJoiner extends SIROperator {
     }
 
     /**
-     * Constructs a weighted round-robin joiner with the given weights.
+     * Constructs a weighted round-robin joiner with the given parent
+     * and weights.  
      */
-    public static SIRJoiner createWeightedRR(int[] weights) {
-	return new SIRJoiner(SIRJoinType.WEIGHTED_RR, weights);
+    public static SIRJoiner createWeightedRR(SIRStream parent, int[] weights) {
+	return new SIRJoiner(parent, SIRJoinType.WEIGHTED_RR, weights);
     }
 
     /**
@@ -69,6 +72,7 @@ public class SIRJoiner extends SIROperator {
      */
     public void accept(SIRVisitor v) {
 	v.visitJoiner(this,
+		      parent,
 		      type,
 		      weights);
     }

@@ -31,13 +31,14 @@ public class SIRFilter extends SIRStream {
      */
     private CType inputType, outputType;
 
-    public SIRFilter(JFieldDeclaration[] fields, 
+    public SIRFilter(SIRStream parent,
+		     JFieldDeclaration[] fields, 
 		     JMethodDeclaration[] methods, 
 		     int peek, int pop, int push, 
 		     JMethodDeclaration work, 
 		     CType inputType, 
 		     CType outputType) {
-	super(fields, methods);
+	super(parent, fields, methods);
 	this.peek = peek;
 	this.pop = pop;
 	this.push = push;
@@ -51,6 +52,7 @@ public class SIRFilter extends SIRStream {
      */
     public void accept(SIRVisitor v) {
 	v.visitFilter(this,
+		      parent,
 		      fields,
 		      methods,
 		      init,

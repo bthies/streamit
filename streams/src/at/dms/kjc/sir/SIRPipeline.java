@@ -16,9 +16,10 @@ public class SIRPipeline extends SIRStream {
     /**
      * Construct a new SIRPipeline with the given fields and methods.
      */
-    public SIRPipeline(JFieldDeclaration[] fields,
-			JMethodDeclaration[] methods) {
-	super(fields, methods);
+    public SIRPipeline(SIRStream parent,
+		       JFieldDeclaration[] fields,
+		       JMethodDeclaration[] methods) {
+	super(parent, fields, methods);
 	// initialize elements array
 	this.elements = new LinkedList();
     }
@@ -38,17 +39,40 @@ public class SIRPipeline extends SIRStream {
     }
 
     /**
+     * Returns the index of <str> in this pipeline, or -1 if <str>
+     * does not appear in this.
+     */
+    public int indexOf(SIRStream str) {
+	return elements.indexOf(str);
+    }
+
+    /**
+     * Returns the number of substreams in this.
+     */
+    public int size() {
+	return elements.size();
+    }
+
+    /**
      * Accepts visitor <v> at this node.
      */
     public void accept(SIRVisitor v) {
-	v.visitPipeline(this,
-			fields,
-			methods,
-			init);
+	v.preVisitPipeline(this,
+			   parent,
+			   fields,
+			   methods,
+			   init,
+			   elements);
 	/* visit components */
 	for (int i=0; i<elements.size(); i++) {
 	    ((SIRStream)elements.get(i)).accept(v);
 	}
+	v.postVisitPipeline(this,
+			    parent,
+			    fields,
+			    methods,
+			    init,
+			    elements);
     }
 }
 

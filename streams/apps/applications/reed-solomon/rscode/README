@@ -1,0 +1,14 @@
+
+See the files
+
+config.doc 	documentation of some compile time parameters
+rs.doc 		overview of the Reed-Solomon coding program
+rs.man		a man page, slightly outdated at this point
+example.c	a simple example of encoding,decoding, and error correction
+
+Makefile	should work on a Sun system, may require GNU make.
+
+
+hqm@ua.com
+Universal Access
+

@@ -1,0 +1,82 @@
+
+berlekamp.c,329
+int Correct_Errors_Erasures(238,4948
+Find_Roots(216,4354
+Modified_Berlekamp_Massey(48,1203
+add_polys(174,3633
+compute_discrepancy(163,3421
+compute_modified_omega(99,2234
+compute_next_omega(153,3275
+copy_poly(180,3727
+init_gamma(135,3017
+mul_z_poly(201,4049
+mult_polys(111,2441
+scale_poly(186,3820
+zero_poly(193,3925
+
+berr.c,13
+main(20,340
+
+crcgen.c,47
+BIT16 crc_ccitt(23,442
+BIT16 crchware(36,698
+
+fhead.c,13
+main(13,250
+
+galois.c,79
+ginv(85,1391
+gmult(75,1272
+init_exp_table(37,636
+init_galois_tables(29,541
+
+rerr.c,13
+main(20,341
+
+rs.c,576
+C1_Decode_Stage(323,7741
+C2_Decode_Stage(384,9509
+build_codeword(584,13977
+byte_erasure(493,12200
+byte_err(486,12126
+check_syndrome(622,14591
+compute_genpoly(643,14959
+csyn(612,14485
+decode_block(247,5886
+decode_block_int(258,6114
+decode_data(599,14271
+decode_file(230,5559
+encode_block(168,3673
+encode_data(670,15556
+encode_data2(560,13559
+encode_data4(528,12918
+encode_file(129,2912
+main(56,1291
+output_coded_block(150,3278
+output_decoded_block(156,3399
+print_intbuf(463,11698
+print_parity(500,12377
+print_syndrome(510,12513
+zero_fill_from(480,12016
+
+rsmsg.c,275
+build_codeword(146,3206
+byte_erasure(118,2693
+byte_err(111,2619
+check_syndrome(184,3820
+compute_genpoly(209,4255
+csyn(174,3714
+decode_data(161,3500
+encode_data(236,4852
+init_generator_polynomial(198,3986
+main(69,1589
+print_parity(125,2870
+print_syndrome(135,3006
+
+sberr.c,12
+main(8,118
+
+trunc.c,13
+main(11,245
+
+ecc.h,0

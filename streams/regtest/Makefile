@@ -28,7 +28,7 @@ test-all: compile
 
 # create a report (with performance numbers) from last regression run
 report:
-	tools/parse_results.pl regtest_log.txt regtest_errors.txt regtest_results.txt
+	tools/parse_results.pl regtest_log.txt regtest_errors.txt regtest_success.txt regtest_results.txt
 
 
 

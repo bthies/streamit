@@ -1,6 +1,6 @@
 #
 # Makefile: Build the StreaMIT C runtime library
-# $Id: Makefile,v 1.9 2001-11-17 00:44:17 karczma Exp $
+# $Id: Makefile,v 1.10 2002-11-15 16:34:32 dmaze Exp $
 #
 
 CC =		gcc
@@ -9,8 +9,8 @@ AR =		ar
 RANLIB =	ranlib
 LIBRARY =	libstreamit.a
 LIBRARYP =	libstreamit_p.a
-NAMES =		stream_context streamit_io streamit_message streamit_run \
-		streamit_splitjoin streamit_tape
+NAMES =		stream_context streamit_frequency streamit_io \
+		streamit_message streamit_run streamit_splitjoin streamit_tape
 OBJS = 		$(NAMES:%=%.o)
 OBJSP =		$(NAMES:%=%_p.o)
 

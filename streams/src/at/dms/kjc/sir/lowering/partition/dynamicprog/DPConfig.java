@@ -14,12 +14,11 @@ import at.dms.kjc.sir.lowering.partition.*;
 
 abstract class DPConfig implements Cloneable {
     /**  
-     * A[i,j,k] that gives the bottleneck work for segment i-j of
-     * the structure if children i through j are assigned to k
-     * tiles.  If this corresponds to a filter's config, then A is
-     * null.
+     * A_s[x1][x2][y1][y2][n] holds minimum cost of assigning children
+     * (x1..x2, y1..y2) of stream s to n tiles.  If this corresponds
+     * to a filter's config, then A is null.
      */
-    protected int[][][] A;
+    protected int[][][][][] A;
 
     /**
      * The partitioner this is part of.
@@ -40,9 +39,7 @@ abstract class DPConfig implements Cloneable {
      * Traceback through a pre-computed optimal solution, keeping
      * track of new partitions in <partitions> and adding to
      * current partition <curPartition>, and returning stream
-     * transform to perform best partitioning.  <tileCounter> is a
-     * one-element array holding the value of the current tile we
-     * are assigning to filters (in a depth-first way).
+     * transform to perform best partitioning.
      */
     abstract public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit);
 
@@ -73,6 +70,5 @@ abstract class DPConfig implements Cloneable {
      * Sets this to wrap <str>.
      */
     protected abstract void setStream(SIRStream str);
-	
 }
 

@@ -12,16 +12,20 @@ import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.partition.*;
 
-class DPConfigContainer extends DPConfig {
+abstract class DPConfigContainer extends DPConfig {
     /**
      * The stream for this container.
      */
     protected SIRContainer cont;
 
-    public DPConfigContainer(SIRContainer cont, DynamicProgPartitioner partitioner) {
+    /**
+     * <width> and <height> represent the dimensions of the stream.
+     */
+    protected DPConfigContainer(SIRContainer cont, DynamicProgPartitioner partitioner, 
+				int width, int height) {
 	super(partitioner);
 	this.cont = cont;
-	this.A = new int[cont.size()][cont.size()][partitioner.getNumTiles()+1];
+	this.A = new int[width][width][height][height][partitioner.getNumTiles()+1];
     }
 
     public SIRStream getStream() {
@@ -38,23 +42,23 @@ class DPConfigContainer extends DPConfig {
 
     protected int get(int tileLimit) {
 	// otherwise, compute it
-	return get(0, cont.size()-1, tileLimit);
+	return get(0, A.length, 0, A[0][0].length, tileLimit);
     }
 
-    protected int get(int child1, int child2, int tileLimit) {
+    protected int get(int x1, int x2, int y1, int y2, int tileLimit) {
 	// if we've memoized the value before, return it
-	if (A[child1][child2][tileLimit]>0) {
+	if (A[x1][x2][y1][y2][tileLimit]>0) {
 	    /*
 	      System.err.println("Found memoized A[" + child1 + "][" + child2 + "][" + tileLimit + "] = " + 
 	      A[child1][child2][tileLimit] + " for " + cont.getName());
 	    */
-	    return A[child1][child2][tileLimit];
+	    return A[x1][x2][y1][y2][tileLimit];
 	}
 
 	// if we are down to one child, then descend into child
-	if (child1==child2) {
-	    int childCost = childConfig(child1).get(tileLimit);
-	    A[child1][child2][tileLimit] = childCost;
+	if (x1==x2 && y1==y2) {
+	    int childCost = childConfig(x1, x2).get(tileLimit);
+	    A[x1][x2][y1][y2][tileLimit] = childCost;
 	    //System.err.println("Returning " + childCost + " from descent into child.");
 	    return childCost;
 	}	    
@@ -62,39 +66,39 @@ class DPConfigContainer extends DPConfig {
 	// otherwise, if <tileLimit> is 1, then just sum the work
 	// of our components
 	if (tileLimit==1) {
-	    int sum = get(child1, child1, tileLimit) + get(child1+1, child2, tileLimit);
-	    A[child1][child2][tileLimit] = sum;
+	    int sum = get(x1, x1, y1, y1, tileLimit);
+	    sum += x1<x2 ? get( x1+1, x2, y1, y1, tileLimit) : 0;
+	    sum += y1<y2 ? get(x1, x1, y1+1, y2, tileLimit) : 0;
+	    sum += x1<x2 && y1<y2 ? get(x1+1, x2, y1+1, y2, tileLimit) : 0;
+	    A[x1][x2][y1][y2][tileLimit] = sum;
 	    //System.err.println("Returning sum " + sum + " from fusion.");
 	    return sum;
 	}
 
-	// otherwise, find the lowest-cost child AFTER WHICH to
-	// make a partition at this level
-	/*
-	  System.err.println("Allocating " + tileLimit + " between children " + child1 + " and " + child2 + 
-	  " of " + cont.getClass() + " " + cont.getName());
-	*/
+	// otherwise, try making a vertical cut
 	int min = Integer.MAX_VALUE;
-	for (int i=child1; i<child2; i++) {
-	    for (int j=1; j<tileLimit; j++) {
-		int cost = Math.max(get(child1, i, j), get(i+1, child2, tileLimit-j));
+	for (int xPivot=x1; xPivot<x2; xPivot++) {
+	    for (int tPivot=1; tPivot<tileLimit; tPivot++) {
+		int cost = Math.max(get(x1, xPivot, y1, y2, tPivot),
+				    get(xPivot+1, x2, y1, y2, tileLimit-tPivot));
 		if (cost < min) {
-		    /*
-		      System.err.println(" found new min of " + cost + " for " + cont.getName() + " [" 
-		      + child1 + "," + child2 + "] with " + tileLimit + " tiles:\n" +
-		      "\t" + j + " tiles to children " + child1 + "-" + i + "\n" + 
-		      "\t" + (tileLimit-j) + " tiles to children " + (i+1) + "-" + 
-		      child2);
-		    */
 		    min = cost;
 		}
 	    }
 	}
-	/*
-	  System.err.println("Assigning MIN A[" + child1 + "][" + child2 + "][" + tileLimit + "]=" + min + 
-	  " for " + cont.getName());
-	*/
-	A[child1][child2][tileLimit] = min;
+
+	// try making horizontal cut (for splitjoin, pipeline, feedbackloop)
+	for (int yPivot=y1; yPivot<y2; yPivot++) {
+	    for (int tPivot=1; tPivot<tileLimit; tPivot++) {
+		int cost = Math.max(get(x1, x2, y1, yPivot, tPivot),
+				    get(x1, x2, yPivot+1, y2, tileLimit-tPivot));
+		if (cost < min) {
+		    min = cost;
+		}
+	    }
+	}
+	
+	A[x1][x2][y1][y2][tileLimit] = min;
 	return min;
     }
 
@@ -102,15 +106,9 @@ class DPConfigContainer extends DPConfig {
      * Traceback function.
      */
     public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit) {
-	// only support fusion for now.
-	FusionTransform st = new FusionTransform();
-	// add partitions at beginning and end
-	st.addPartition(0);
-	st.addPartition(cont.size());
-
-	traceback(st, partitions, curPartition, 0, cont.size()-1, tileLimit);
-	// if the whole container is assigned to one tile, record
-	// it as such.
+	StreamTransform st = traceback(partitions, curPartition, 0, A.length, 0, A[0][0].length, tileLimit);
+	// if the whole container is assigned to one tile, record it
+	// as such.
 	if (tileLimit==1) {
 	    curPartition.add(cont);
 	} 
@@ -118,54 +116,86 @@ class DPConfigContainer extends DPConfig {
     }
 	
     /**
-     * Traceback helper function. The child1, child2, and
-     * tileLimit are as above.  The stream transform <st> is the
-     * one we're building up to carry out the final partitioning.
+     * Traceback helper function.
      */
-    protected void traceback(FusionTransform st, LinkedList partitions, PartitionRecord curPartition,
-			     int child1, int child2, int tileLimit) {
-	// if we only have one tile left, or if we are only
-	// looking at one child, then just recurse into children
-	if (child1==child2 || tileLimit==1) {
-	    for (int i=child1; i<=child2; i++) {
-		st.add(childConfig(i).traceback(partitions, curPartition, tileLimit));
-	    }
-	    return;
-	}
+    protected StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition,
+					int x1, int x2, int y1, int y2, int tileLimit) {
 
-	// otherwise, find the best partitioning of this into
-	// <tileLimit> sizes.  See where the first break was,
-	// breaking ties by fewest number of tiles required.
-	int min = Integer.MAX_VALUE;
-	for (int i=child1; i<child2; i++) {
-	    for (int j=1; j<tileLimit; j++) {
-		int cost = Math.max(get(child1, i, j), get(i+1, child2, tileLimit-j));
-		if (cost==A[child1][child2][tileLimit]) {
-		    /*
-		      System.err.println("Found best split of " + cont.getName() + " [" + child1 + "," + child2 + 
-		      "]: " + j + " to [" + child1 + "," + i + "],  " + (tileLimit-j) + " to [" +
-		      (i+1) + "," + child2 + "]");
-		    */
-		    // if we found our best cost, then the
-		    // division is at this <i> with <j> partitions
-		    // on the left.  First recurse left, then
-		    // start new partition, then recurse right.
-		    traceback(st, partitions, curPartition, child1, i, j);
-		    curPartition = new PartitionRecord();
-		    partitions.add(curPartition);
-		    traceback(st, partitions, curPartition, i+1, child2, tileLimit-j);
-		    // remember that we had a partition here
-		    st.addPartition(i+1);
-		    return;
+	// if we're down to one node, then descend into it
+	if (x1==x2 && y1==y2) {
+	    return childConfig(x1, y1).traceback(partitions, curPartition, tileLimit);
+	}
+	
+	// if we only have one tile left, return fusion transform with
+	// children fused first
+	if (tileLimit==1) {
+	    FusionTransform result = new FusionTransform();
+	    result.addPartition(0);
+	    if (x1<x2) {
+		// if there are horizontal streams, fuse them first
+		result.addPartition(1+x2-x1);
+		for (int x=x1; x<=x2; x++) {
+		    result.addPred(traceback(partitions, curPartition, x, x, y1, y2, tileLimit));
+		}
+	    } else {
+		// otherwise, fuse the vertical streams
+		result.addPartition(1+y2-y1);
+		for (int y=y1; y<=y2; y++) {
+		    result.addPred(traceback(partitions, curPartition, x1, x2, y, y, tileLimit));
 		}
 	    }
-	}	    
-    }
+	    return result;
+	}
+
+	// otherwise, see if we made a vertical cut (breaking into left/right pieces)
+	for (int xPivot=x1; xPivot<x2; xPivot++) {
+	    for (int tPivot=1; tPivot<tileLimit; tPivot++) {
+		int cost = Math.max(get(x1, xPivot, y1, y2, tPivot),
+				    get(xPivot+1, x2, y1, y2, tileLimit-tPivot));
+		if (cost==A[x1][x2][y1][y2][tileLimit]) {
+		    // there's a division at this <xPivot>.  We'll
+		    // return a vertical cut
+		    StreamTransform result = new VerticalCutTransform(xPivot);
+		    // recurse left and right, adding transforms as post-ops
+		    result.addSucc(traceback(partitions, curPartition, x1, xPivot, y1, y2, tPivot));
+		    // mark that we have a partition here
+		    curPartition = new PartitionRecord();
+		    partitions.add(curPartition);
+		    result.addSucc(traceback(partitions, curPartition, xPivot+1, x2, y1, y2, tileLimit-tPivot));
+		    // all done
+		    return result;
+		}
+	    }
+	}
+
+	// otherwise, see if we made a horizontal cut (breaking into top/bottom pieces)
+	for (int yPivot=y1; yPivot<y2; yPivot++) {
+	    for (int tPivot=1; tPivot<tileLimit; tPivot++) {
+		int cost = Math.max(get(x1, x2, y1, yPivot, tPivot),
+				    get(x1, x2, yPivot+1, y2, tileLimit-tPivot));
+		if (cost==A[x1][x2][y1][y2][tileLimit]) {
+		    // there's a division at this <yPivot>.  We'll
+		    // return a horizontal cut.
+		    StreamTransform result = new HorizontalCutTransform(yPivot);
+		    // recurse left and right, adding transforms as post-ops
+		    result.addSucc(traceback(partitions, curPartition, x1, x2, y1, yPivot, tPivot));
+		    // mark that we have a partition here
+		    curPartition = new PartitionRecord();
+		    partitions.add(curPartition);
+		    result.addSucc(traceback(partitions, curPartition, x1, x2, yPivot+1, y2, tileLimit-tPivot));
+		    // all done
+		    return result;
+		}
+	    }
+	}
 	
-    /**
-     * Returns config for child at index <childIndex>
-     */
-    protected DPConfig childConfig(int childIndex) {
-	return partitioner.getConfig(cont.get(childIndex));
+	// if we make it this far, then we didn't find our traceback
+	Utils.fail("Didn't find traceback.");
+	return null;
     }
+
+    /**
+     * Returns config for child at index <x, y>
+     */
+    protected abstract DPConfig childConfig(int x, int y);
 }

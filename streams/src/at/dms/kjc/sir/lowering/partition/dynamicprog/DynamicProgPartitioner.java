@@ -153,11 +153,13 @@ public class DynamicProgPartitioner extends ListPartitioner {
     private DPConfig createConfig(SIRStream str) {
 	if (str instanceof SIRFilter) {
 	    return new DPConfigFilter((SIRFilter)str, this);
+	} else if (str instanceof SIRPipeline) {
+	    return new DPConfigPipeline((SIRPipeline)str, this);
 	} else if (str instanceof SIRSplitJoin) {
 	    return new DPConfigSplitJoin((SIRSplitJoin)str, this);
 	} else {
-	    Utils.assert(str instanceof SIRContainer, "Unexpected stream type: " + str);
-	    return new DPConfigContainer((SIRContainer)str, this);
+	    Utils.assert(str instanceof SIRFeedbackLoop, "Unexpected stream type: " + str);
+	    return new DPConfigFeedbackLoop((SIRFeedbackLoop)str, this);
 	}
     }
 

@@ -12,7 +12,7 @@ public class ManualOpt {
 	// get the small-numbered CombineDFT streams
 	LinkedList dft = new LinkedList();
 	for (int i=37; i<=40; i++) {
-	    dft.add(ManualPartition.getStream(str, "CombineDFT_" + i));
+	    dft.add(ManualPartition.getStream(str, i));
 	}
 	
 	// unroll them each by a factor of 32, and destroy arrays

@@ -49,201 +49,6 @@ public class ILPPartitioner {
      */
     private int numTiles;
 
-    private ILPPartitioner(SIRStream str, int numTiles) {
-	this.str = str;
-	this.numTiles = numTiles;
-    }
-    
-    /**
-     * Tries to adjust <str> into <num> pieces of equal work.
-     */
-    public static void doit(SIRStream str, int numTiles) {
-	new ILPPartitioner(str, numTiles).doit();
-    }
-
-    private void doit() {
-	System.err.println("Starting ILP Partitioner . . . ");
-	// dump the orig graph
-	StreamItDot.printGraph(str, "before.dot");
-
-	// Lift filters out of pipelines if they're the only thing in
-	// the pipe
-	System.err.print("Lifting filters... ");
-	Lifter.lift(str);
-	System.err.println("done.");
-
-	// count tiles 
-	System.err.print("count tiles... ");
-	int count = new RawFlattener(str).getNumTiles();
-	System.err.println(count + " tiles.");
-
-	// if we have too few tiles, then use the other partitioner to
-	// fiss the big ones
-	if (count < numTiles) {
-	    System.err.println("More tiles than nodes; fissing with greedy partitioner...");
-	    Partitioner.doit(str, numTiles);
-	    return;
-	} else {
-	    partitionAndFuse();
-	}
-
-	// dump the final graph
-	StreamItDot.printGraph(str, "after.dot");
-	System.err.println("Done with ILP Partitioner.");
-    }
-    
-    private void partitionAndFuse() {
-	HashMap partitions = CalcPartitions.doit(str, numTiles);
-	str.accept(new ILPFuser(partitions));
-    }
-
-}
-
-/*
-  This is the class that performs the fusion dictated by the
-  partitioner.  The general strategy is this:
-
-  1. make copy of children so you can look them up later
-  
-  2. visit each of children and replace any of them with what they returned
-  
-  3. fuse yourself (or pieces of yourself) according to hashmap for your original kids
-
-  4. return the new version of yourself
-*/
-class ILPFuser extends EmptyAttributeStreamVisitor {
-    /**
-     * The partition mapping.
-     */
-    private HashMap partitions;
-
-    public ILPFuser(HashMap partitions) {
-	this.partitions = partitions;
-    }
-
-    /******************************************************************/
-    // local methods for the ILPFuser
-
-    /**
-     * Visits/replaces the children of <cont>
-     */
-    private void replaceChildren(SIRContainer cont) {
-	// visit children
-	for (int i=0; i<cont.size(); i++) {
-	    SIRStream newChild = (SIRStream)cont.get(i).accept(this);
-	    cont.set(i, newChild);
-	    // if we got a pipeline, try lifting it.  note that this
-	    // will mutate the children array and the init function of
-	    // <self>
-	    if (newChild instanceof SIRPipeline) {
-		Lifter.eliminatePipe((SIRPipeline)newChild);
-	    }
-	}
-    }
-
-    /**
-     * Returns an array suitable for the fusers that indicates the
-     * groupings of children into partitions, according to
-     * this.partitions.  For instance, if input is:
-     *
-     *  <children> = {0, 0, 5, 7, 7, 7}
-     *
-     * then output is {2, 1, 3}
-     */
-    private int[] calcChildPartitions(List children) {
-	List resultList = new LinkedList();
-	int pos = 0;
-	while (pos<children.size()) {
-	    int count = 0;
-	    int cur = getPartition(children.get(pos));
-	    do {
-		pos++;
-		count++;
-	    } while (pos<children.size() && 
-		     getPartition(children.get(pos))==cur && 
-		     // don't conglomerate -1 children, as they are
-		     // containers with differing tile content
-		     cur!=-1);
-	    resultList.add(new Integer(count));
-	}
-	// copy results into int array
-	int[] result = new int[resultList.size()];
-	for (int i=0; i<result.length; i++) {
-	    result[i] = ((Integer)resultList.get(i)).intValue();
-	}
-	return result;
-    }
-
-    /******************************************************************/
-    // these are methods of empty attribute visitor
-
-    /* visit a pipeline */
-    public Object visitPipeline(SIRPipeline self,
-			 JFieldDeclaration[] fields,
-			 JMethodDeclaration[] methods,
-			 JMethodDeclaration init) {
-	//System.err.println("visiting " + self);
-	// build partition array based on orig children
-	int[] childPart = calcChildPartitions(self.getChildren());
-	// replace children
-	replaceChildren(self);
-	// fuse children internally
-	FusePipe.fuse(self, childPart);
-	return self;
-    }
-
-    /* visit a splitjoin */
-    public Object visitSplitJoin(SIRSplitJoin self,
-			  JFieldDeclaration[] fields,
-			  JMethodDeclaration[] methods,
-			  JMethodDeclaration init,
-			  SIRSplitter splitter,
-			  SIRJoiner joiner) {
-	//System.err.println("visiting " + self);
-	// build partition array based on orig children
-	int[] childPart = calcChildPartitions(self.getParallelStreams());
-	// replace children
-	replaceChildren(self);
-	// fuse
-	return FuseSplit.fuse(self, childPart);
-    }
-
-    /* visit a feedbackloop */
-    public Object visitFeedbackLoop(SIRFeedbackLoop self,
-			     JFieldDeclaration[] fields,
-			     JMethodDeclaration[] methods,
-			     JMethodDeclaration init,
-			     JMethodDeclaration initPath) {
-	//System.err.println("visiting " + self);
-	// fusing a whole feedback loop isn't supported yet
-	Utils.assert(getPartition(self)==-1);
-	// replace children
-	replaceChildren(self);
-	return self;
-    }
-
-    /******************************************************************/
-
-    /**
-     * Returns int partition for <str>
-     */
-    private int getPartition(Object str) {
-	Utils.assert(partitions.containsKey(str), 
-		     "No partition recorded for: " + str);
-	return ((Integer)partitions.get(str)).intValue();
-    }
-}
-
-class CalcPartitions {
-    
-    /**
-     * The toplevel stream we're operating on.
-     */
-    private SIRStream str;
-    /**
-     * The target number of tiles this partitioner is going for.
-     */
-    private int numTiles;
     /**
      * List of NODES (i.e., filters and joiners) in the stream graph.
      * This list is in the "canonicalized order" (see lp-partition
@@ -267,7 +72,7 @@ class CalcPartitions {
      */
     private WorkEstimate work;
 
-    private CalcPartitions(SIRStream str, int numTiles) {
+    public ILPPartitioner(SIRStream str, int numTiles) {
 	this.str = str;
 	this.numTiles = numTiles;
 	this.nodes = new LinkedList();
@@ -275,6 +80,11 @@ class CalcPartitions {
 	this.last = new HashMap();
     }
     
+    public void toplevelFusion() {
+	HashMap partitions = calcPartitions();
+	ApplyPartitions.doit(str, partitions);
+    }
+
     /**
      * Returns a mapping from every stream structure in <str> to an
      * integer partition number, from -1...(numTiles-1).  If a stream
@@ -282,11 +92,7 @@ class CalcPartitions {
      * that tile number.  If it is split across multiple tiles, then
      * it has a target of -1.
      */
-    public static HashMap doit(SIRStream str, int numTiles) {
-	return new CalcPartitions(str, numTiles).doit();
-    }
-
-    private HashMap doit() {
+    private HashMap calcPartitions() {
 	this.work = WorkEstimate.getWorkEstimate(str);
 	buildNodesList();
 	double[] sol = calcSolution();
@@ -530,10 +336,8 @@ class CalcPartitions {
 
 	// constriants for the sake of speeding up the solution
 	// process
-	/*
 	constrainLinearOrder(lp);
-	constrainSymmetry(lp);
-	*/
+	//constrainSymmetry(lp);
     }
 
     private void constrainZeroOneVars(LinearProgram lp) {

@@ -78,6 +78,7 @@ public class FuseAll implements StreamVisitor {
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
 				     SIRFeedbackLoopIter iter) {
+	Utils.fail("Don't yet support fusion of feedback loops.");
     }
 
     /**

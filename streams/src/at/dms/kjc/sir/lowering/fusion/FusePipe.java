@@ -358,6 +358,7 @@ public class FusePipe {
 		// need to count first execution of a two-stage filter separately
 		if (last.filter instanceof SIRTwoStageFilter &&
 		    last.init.num > 0) {
+		    //System.err.println("last is two-stage.  getInitPush=" + ((SIRTwoStageFilter)last.filter).getInitPush() + " last.init.num=" + last.init.num + " last.filter.getPushInt=" + last.filter.getPushInt() + " getInitPeek=" + ((SIRTwoStageFilter)last.filter).getInitPeek() + " getInitPop=" + ((SIRTwoStageFilter)last.filter).getInitPop());
 		    lastProduce = ((SIRTwoStageFilter)last.filter).getInitPush() + 
 			(last.init.num-1) * last.filter.getPushInt();
 		} else {
@@ -374,6 +375,9 @@ public class FusePipe {
 		// the peek buffer is the difference between what the
 		// previous one produces and this one consumes
 		peekBufferSize = lastProduce - myConsume;
+		Utils.assert(peekBufferSize>=0, 
+			     "Pipeline fusion trying to create a negative peek buffer of " + peekBufferSize + " when fusing between " + last.filter + " and " + filter + "\n" +
+			     "  peekBufferSize = lastProduce - myConsume = " + lastProduce + " - " + myConsume);
 	    }
 
 	    // get ready to make rest of phase-specific info

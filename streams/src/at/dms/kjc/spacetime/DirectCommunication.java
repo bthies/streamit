@@ -35,9 +35,6 @@ public class DirectCommunication extends RawExecutionCode
 	
 	//runs some tests to see if we can 
 	//generate code direct commmunication code
-	if (!KjcOptions.magicdram && fi.traceNode.getPrevious() != null && 
-	    fi.traceNode.getPrevious().isInputTrace())
-	    return false;
 	if (KjcOptions.ratematch)
 	    return false;
 	if (fi.isTwoStage())
@@ -68,18 +65,6 @@ public class DirectCommunication extends RawExecutionCode
 	super(filterInfo);
 	System.out.println("Generating code for " + filterInfo.filter + " using Direct Comm.");
 
-	//if the next filter is not a filtertraceNode, it is a outputtracenode
-	//so we have to write the output of the filter to the next filter's 
-	//input buffer, do this only for the hacked intratile communication
-	if (!KjcOptions.magicdram && 
-	    (filterInfo.traceNode.getNext() != null &&
-	    !filterInfo.traceNode.getNext().isFilterTrace())) {
-	    JMethodDeclaration[] methods = filterInfo.filter.getMethods();
-	    InterTraceCommunication inter = new InterTraceCommunication(filterInfo);
-	    for (int i = 0; i < methods.length; i++) {
-		methods[i].accept(inter);
-	    }	
-	}
     }
 
     public JFieldDeclaration[] getVarDecls() 
@@ -175,21 +160,6 @@ public class DirectCommunication extends RawExecutionCode
 	JBlock workBlock = 
 	    (JBlock)ObjectDeepCloner.
 	    deepCopy(filter.getWork().getBody());
-
-	//if this filter is the last in the trace and communicating to anothter filter
-	//who is simple, reset the simple index during each iteration
-	if (!KjcOptions.magicdram && filterInfo.traceNode.getNext() != null &&
-	    filterInfo.traceNode.getNext().isOutputTrace() &&
-	    upstream != null && upstream.isSimple()) {
-	    block.addStatement
-		(new JExpressionStatement(null,
-					  (new JAssignmentExpression
-					   (null,
-					    new JFieldAccessExpression
-					    (null, new JThisExpression(null),
-					     simpleIndex + upstream.filter.getName()),
-					    new JIntLiteral(-1))), null));
-	}
 	
 	//create the for loop that will execute the work function
 	//local variable for the work loop

@@ -61,16 +61,6 @@ public class BufferedCommunication extends RawExecutionCode
 	
 	JMethodDeclaration[] methods = filterInfo.filter.getMethods();
 
-	if (!KjcOptions.magicdram && 
-	    (filterInfo.traceNode.getNext() != null &&
-	     !filterInfo.traceNode.getNext().isFilterTrace())) {
-	    	InterTraceCommunication inter = new InterTraceCommunication(filterInfo);
-		for (int i = 0; i < methods.length; i++) {
-		    methods[0].accept(inter);
-		}
-	}
-	
-	
 	for (int i = 0; i < methods.length; i++) {
 	    //iterate over the statements and call the ConvertCommunication
 	    //class to convert peek, pop
@@ -402,6 +392,7 @@ public class BufferedCommunication extends RawExecutionCode
 	
 	//reset the simple index if we are receiving from another trace
 	//to allow it to write to the buffer in the correct index
+	//IS THIS STILL CORRECT?
 	if (!KjcOptions.magicdram && filterInfo.isSimple() && 
 		filterInfo.traceNode.getPrevious().isInputTrace()) {
 		statements.addStatement
@@ -470,21 +461,6 @@ public class BufferedCommunication extends RawExecutionCode
 					    new JIntLiteral(-1))), null));
 	}
 	
-	//if this filter is the last in the trace and communicating to anothter filter
-	//who is simple, reset the simple index during each iteration
-	if (!KjcOptions.magicdram && filterInfo.traceNode.getNext().isOutputTrace() &&
-	    upstream != null && upstream.isSimple()) {
-	    block.addStatement
-		(new JExpressionStatement(null,
-					  (new JAssignmentExpression
-					   (null,
-					    new JFieldAccessExpression
-					    (null, new JThisExpression(null),
-					     simpleIndex + upstream.filter.getName()),
-					    new JIntLiteral(-1))), null));
-	}
-	
-	
 	if (KjcOptions.magicdram || filterInfo.traceNode.getPrevious().isFilterTrace()) {
 	    //add the statements to receive pop * steady mult items into the buffer
 	    //execute this before the for loop that has the work function
@@ -550,22 +526,6 @@ public class BufferedCommunication extends RawExecutionCode
 					    new JIntLiteral(-1))), null));
 	}
 	
-
-	//if this filter is the last in the trace and communicating to anothter filter
-	//who is simple, reset the simple index (the next filter's) during each iteration
-	//do not do this in the loop, because it fills the entire buffer
-	if (!KjcOptions.magicdram && filterInfo.traceNode.getNext().isOutputTrace() &&
-	    upstream != null && upstream.isSimple()) {
-	    block.addStatementFirst
-		(new JExpressionStatement(null,
-					  (new JAssignmentExpression
-					   (null,
-					    new JFieldAccessExpression
-					    (null, new JThisExpression(null),
-					     simpleIndex + upstream.filter.getName()),
-					    new JIntLiteral(-1))), null));
-	}
-
 	//reset the simple index if we are receiving from another trace
 	//to allow it to write to the buffer in the correct index
 	/*

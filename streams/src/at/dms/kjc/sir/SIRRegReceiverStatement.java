@@ -14,7 +14,9 @@ public class SIRRegReceiverStatement extends JStatement {
     /**
      * The name of the portal to register with.
      */
-    private String portal;
+    private JExpression portal;
+    private SIRStream receiver;
+    private CMethod[] methods;
 
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
@@ -23,12 +25,11 @@ public class SIRRegReceiverStatement extends JStatement {
     /**
      * Construct a node in the parsing tree
      */
-    public SIRRegReceiverStatement(TokenReference where, 
-				   JavaStyleComment[] comments, 
-				   String portal) {
-	super(where, comments);
-
+    public SIRRegReceiverStatement(JExpression portal, SIRStream receiver, CMethod[] methods) {
+	super(null, null);
 	this.portal = portal;
+	this.receiver = receiver;
+	this.methods = methods;
     }
     
     /**
@@ -38,9 +39,45 @@ public class SIRRegReceiverStatement extends JStatement {
 	super(null, null);
 
 	this.portal = null;
+	this.receiver = null;
+	this.methods = null;
     }
     
-    public void setPortal(String p) {
+    /**
+     * Get the portal for this statement
+     */
+    public JExpression getPortal() {
+	return this.portal;
+    }
+
+    
+    /**
+     * Get the receiver for this statement
+     */
+    public SIRStream  getReceiver() {
+	return this.receiver;
+    }
+
+    /**
+     * Get the methods  for this statement
+     */
+    public CMethod[] getMethods() {
+	return this.methods;
+    }
+
+    
+    /**
+     * Set the receiver for this statement
+     */
+    public void setReceiver(SIRStream p) {
+	this.receiver = p;
+    }
+
+
+    /**
+     * Set the portal for this statement
+     */
+    public void setPortal(JExpression p) {
 	this.portal = p;
     }
     
@@ -64,7 +101,7 @@ public class SIRRegReceiverStatement extends JStatement {
      */
     public void accept(KjcVisitor p) {
 	if (p instanceof SLIRVisitor) {
-	    ((SLIRVisitor)p).visitRegReceiverStatement(this, portal);
+	    ((SLIRVisitor)p).visitRegReceiverStatement(this, portal, receiver, methods);
 	} else {
 	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
 	}

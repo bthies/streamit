@@ -13,7 +13,7 @@ public class SIRMessageStatement extends JStatement {
     /**
      * The portal that is the target of the message.
      */
-    private String portal;
+    private JExpression portal;
     /**
      * The name of the method to invoke in the portal.
      */
@@ -26,6 +26,10 @@ public class SIRMessageStatement extends JStatement {
      * The latency with which the message should be delivered.
      */
     private SIRLatency latency;
+    /**
+     * The index of the method in the interface
+     */
+    private int index;
 
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
@@ -34,12 +38,12 @@ public class SIRMessageStatement extends JStatement {
     /**
      * Construct a node in the parsing tree
      */
-    public SIRMessageStatement(TokenReference where, JavaStyleComment[] comments, String portal, String ident, JExpression[] args, SIRLatency latency) {
-	super(where, comments);
+    public SIRMessageStatement(JExpression portal, int index, JExpression[] args, SIRLatency latency) {
+	super(null, null);
 
 	this.portal = portal;
-	this.ident = ident;
 	this.args = args;
+	this.index = index;
 	this.latency = latency;
     }
 
@@ -51,17 +55,30 @@ public class SIRMessageStatement extends JStatement {
 	super(null, null);
 
 	this.portal = null;
-	this.ident = null;
+	this.index = -1;
 	this.args = null;
 	this.latency = null;
     }
 
-    public void setPortal (String p) {
-	this.portal = p;
+    public int getIndex () {
+	return index;
+    }
+    public JExpression getPortal() {
+	return portal;
+    }
+    public SIRLatency getLatency() {
+	return latency;
+    }
+    public JExpression[] getArgs() {
+	return args;
     }
 
-    public void setIdent (String i) {
-	this.ident = i;
+    public void setIndex (int index) {
+	this.index = index;
+    }
+
+    public void setPortal (JExpression p) {
+	this.portal = p;
     }
     
     public void setArgs (JExpression[] a) {
@@ -103,7 +120,7 @@ public class SIRMessageStatement extends JStatement {
 	if (p instanceof SLIRVisitor) {
 	    ((SLIRVisitor)p).visitMessageStatement(this, 
 						   portal,
-						   ident,
+						   index,
 						   args,
 						   latency);
 	} else {

@@ -170,7 +170,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
 	
-	if(KjcOptions.altcodegen){
+	if(KjcOptions.altcodegen && !KjcOptions.decoupled){
 	    print("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
 	    print("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
 	    print("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");

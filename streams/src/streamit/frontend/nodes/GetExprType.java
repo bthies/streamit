@@ -1,7 +1,7 @@
 /*
  * GetExprType.java: get the type of an expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: GetExprType.java,v 1.6 2002-11-20 20:43:54 dmaze Exp $
+ * $Id: GetExprType.java,v 1.7 2003-06-30 21:10:41 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -33,8 +33,20 @@ public class GetExprType extends FENullVisitor
 
     public Object visitExprBinary(ExprBinary exp)
     {
-        // This requires type unification.  Punt for the moment (though
-        // it wouldn't actually be hard).
+        // Comparison operators always return a boolean value.
+        switch(exp.getOp())
+        {
+        case ExprBinary.BINOP_EQ:
+        case ExprBinary.BINOP_NEQ:
+        case ExprBinary.BINOP_LT:
+        case ExprBinary.BINOP_LE:
+        case ExprBinary.BINOP_GT:
+        case ExprBinary.BINOP_GE:
+            return new TypePrimitive(TypePrimitive.TYPE_BOOLEAN);
+        }
+        
+        // Otherwise, this requires type unification.  Punt for the
+        // moment (though it wouldn't actually be hard).
         return exp.getLeft().accept(this);
     }
 

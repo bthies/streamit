@@ -162,7 +162,7 @@ public class SIRScheduler implements Constants {
 	    // otherwise we have a container, so simulate execution of
 	    // children
 	    for (int i=0; i<schedule.getNumPhases(); i++) {
-		fillExecutionCounts(schedule.getSubSched(i), counts, schedule.getSubSchedNumExecs(i));
+		fillExecutionCounts(schedule.getSubSched(i), counts, numReps * schedule.getSubSchedNumExecs(i));
 	    }
 	}
     }

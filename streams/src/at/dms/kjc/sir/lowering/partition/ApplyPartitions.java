@@ -84,13 +84,21 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
 	//System.err.println("visiting " + self);
 	// replace children
 	replaceChildren(self);
+	PartitionGroup group = PartitionGroup.createFromAssignments(self.getParallelStreams(), partitions);
 	// fuse
-	SIRStream result = FuseSplit.fuse(self, 
-					  PartitionGroup.createFromAssignments(self.getParallelStreams(), partitions));
-	// if we got a pipeline back, that means we used old fusion,
+	SIRStream result = FuseSplit.fuse(self, group);
+	// if we got pipelines back, that means we used old fusion,
 	// and we should fuse the pipe again
-	if (result instanceof SIRPipeline) {
+	if (group.size()==1 && result instanceof SIRPipeline) {
+	    // if the whole thing is a pipeline
 	    FusePipe.fuse((SIRPipeline)result);
+	} else {
+	    // if we might have component pipelines
+	    for (int i=0; i<group.size(); i++) {
+		if (group.get(i)>1 && ((SIRSplitJoin)result).get(i) instanceof SIRPipeline) {
+		    FusePipe.fuse((SIRPipeline)((SIRSplitJoin)result).get(i));
+		}
+	    }
 	}
 	return result;
     }

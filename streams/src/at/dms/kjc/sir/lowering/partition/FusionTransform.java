@@ -45,8 +45,18 @@ class FusionTransform extends IdentityTransform {
 	    result = FuseSplit.fuse((SIRSplitJoin)str, childPart);
 	    // if we got a pipeline back, that means we used old fusion,
 	    // and we should fuse the pipe again
-	    if (result instanceof SIRPipeline) {
-		FusePipe.fuse((SIRPipeline)result);
+	    if (childPart.size()==1) { 
+		if (result instanceof SIRPipeline) {
+		    // if the whole thing is a pipeline
+		    FusePipe.fuse((SIRPipeline)result);
+		}
+	    } else {
+		// if we might have component pipelines
+		for (int i=0; i<childPart.size(); i++) {
+		    if (childPart.get(i)>1 && ((SIRSplitJoin)result).get(i) instanceof SIRPipeline) {
+			FusePipe.fuse((SIRPipeline)((SIRSplitJoin)result).get(i));
+		    }
+		}
 	    }
 	} else if (str instanceof SIRFeedbackLoop) {
 	    Utils.fail("FeedbackLoop fusion not supported");

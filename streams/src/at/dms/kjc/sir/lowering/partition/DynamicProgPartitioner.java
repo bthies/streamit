@@ -66,6 +66,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	Utils.assert(tileCounter[0]<numTiles, "Assigned " + tileCounter[0] + " tiles, but we only have " + numTiles);
 
 	PartitionUtil.printTileWork(map, work, numTiles);
+	PartitionDot.printGraph(str, "partitions.dot", map);
 	return result;
     }
 

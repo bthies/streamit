@@ -17,7 +17,7 @@ class DPConfigSplitJoin extends DPConfigContainer {
     public DPConfigSplitJoin(SIRSplitJoin sj, DynamicProgPartitioner partitioner) {
 	super(sj, partitioner, wrapInArray(sj.size()), 1);
 	assert sj.getRectangularHeight()==1:
-            "Require sj's with height of 1 now.";
+            "Require sj's with height of 1 now, but" + sj.getIdent() + " has height of " + sj.getRectangularHeight();
     }
     
     /**

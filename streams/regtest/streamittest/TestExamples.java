@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.5 2002-07-01 21:55:57 aalamb Exp $
+ * $Id: TestExamples.java,v 1.6 2002-07-02 19:54:45 aalamb Exp $
  **/
 package streamittest;
 
@@ -54,6 +54,10 @@ public class TestExamples extends StreamITTestCase {
 	suite.addTest(new TestExamples("testFile", flags));
 	suite.addTest(new TestExamples("testFieldProp", flags));
 	suite.addTest(new TestExamples("testFieldProp2", flags));
+	suite.addTest(new TestExamples("testFieldInit", flags));
+	suite.addTest(new TestExamples("testFieldInit2", flags));
+	suite.addTest(new TestExamples("testFieldInit3", flags));
+	suite.addTest(new TestExamples("testFieldInit4", flags));
 	suite.addTest(new TestExamples("testLattice", flags));
 	//suite.addTest(new TestExamples("testMergeSort", flags));
 	//suite.addTest(new TestExamples("testUpDown", flags));
@@ -159,6 +163,30 @@ public class TestExamples extends StreamITTestCase {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "field-prop/",
 			       "FieldPropTest2.java",
 			       "FieldPropTest2.out");
+    }
+
+    public void testFieldInit() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "field-init/",
+			       "FieldInit.java",
+			       "FieldInit.out");
+    }
+
+    public void testFieldInit2() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "field-init/",
+			       "FieldInit2.java",
+			       "FieldInit2.out");
+    }
+
+    public void testFieldInit3() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "field-init/",
+			       "FieldInit3.java",
+			       "FieldInit3.out");
+    }
+
+    public void testFieldInit4() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "field-init/",
+			       "FieldInit4.java",
+			       "FieldInit4.out");
     }
 
     public void testLattice() {

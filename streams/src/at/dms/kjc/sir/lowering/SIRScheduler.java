@@ -22,7 +22,20 @@ public class SIRScheduler {
      * Maps Lists returned by the scheduler to work functions that can
      * be called.
      */
-    private static HashMap listToWork;
+    private HashMap listToWork;
+
+    /**
+     * The destination flatClass that we're working on.
+     */
+    private JClassDeclaration flatClass;
+
+    /**
+     * Creates one of these.
+     */
+    private SIRScheduler(JClassDeclaration flatClass) {
+	this.listToWork = new HashMap();
+	this.flatClass = flatClass;
+    }
 
     /**
      * Does the scheduling, adding a work function corresponding to
@@ -30,6 +43,14 @@ public class SIRScheduler {
      */
     public static Schedule schedule(SIRStream toplevel, 
 				    JClassDeclaration flatClass) {
+	return new SIRScheduler(flatClass).schedule(toplevel);
+    }
+
+    /**
+     * The private, instance-wise version of <schedule>, to do the
+     * scheduling.
+     */
+    private Schedule schedule(SIRStream toplevel) {
 	// make a scheduler
 	Scheduler scheduler = new SimpleHierarchicalScheduler();
 	// get a representation of the stream structure
@@ -39,13 +60,9 @@ public class SIRScheduler {
 	scheduler.useStream(schedStream);
 	// compute a schedule
 	Schedule schedule = (Schedule)scheduler.computeSchedule();
-	// make new mapping from schedule lists to work functions
-	listToWork = new HashMap();
 	// make work function implementing the schedule
 	JMethodDeclaration work = makeWork(schedule.getSchedule(), 
 					   toplevel);
-	// add <work> to <flatClass>
-	flatClass.addMethod(work);
 	// add <work> to <toplevel>
 	toplevel.addMethod(work);
 	// return schedule for future reference
@@ -58,8 +75,8 @@ public class SIRScheduler {
      * hierarchical scheduling unit) or an SIRFilter (corresponding to
      * the base case, in which a filter's work function should be executed.)
      */
-    private static JMethodDeclaration makeWork(Object schedObject,
-					       SIRStream toplevel) {
+    private JMethodDeclaration makeWork(Object schedObject,
+					SIRStream toplevel) {
 	// see what kind of schedObject we have
 	if (schedObject instanceof List) {
 	    // if we have a list, process as hierarhical unit...
@@ -71,8 +88,11 @@ public class SIRScheduler {
 	    } else {
 		// otherwise, compute the work function
 		JMethodDeclaration work = makeWorkForList(list, toplevel);
-		// and remember it for next time in the listToWork map
+		// store the new work function in a few places...
+		// first, in listToWork so we can get it next time
 		listToWork.put(list, work);
+		// second, in the flatClass
+		flatClass.addMethod(work);
 		// return work
 		return work;
 	    }
@@ -93,8 +113,8 @@ public class SIRScheduler {
      * toplevel stream <toplevel>, returns a work function
      * corresponding to <list>.  
      */
-    private static JMethodDeclaration makeWorkForList(List list, 
-						      SIRStream toplevel) {
+    private JMethodDeclaration makeWorkForList(List list, 
+					       SIRStream toplevel) {
 	JStatement[] statementList = makeWorkStatements(list, toplevel);
 	// make block for statements
 	JBlock statementBlock = new JBlock(null, 
@@ -120,7 +140,7 @@ public class SIRScheduler {
 				                     Constants.ACC_PUBLIC,
 				    /* returntype */ CStdType.Void,
 				    /* identifier */ LoweringConstants.
-				                     getWorkName(toplevel),
+				                     getAnonWorkName(),
 				    /* parameters */ parameters,
 				    /* exceptions */ CClassType.EMPTY,
 				    /* body       */ statementBlock,
@@ -135,8 +155,8 @@ public class SIRScheduler {
      * calls to the work functions corresponding to the elements of
      * <list> with top-level stream <toplevel>
      */
-    private static JStatement[] makeWorkStatements(List list, 
-						   SIRStream toplevel) {
+    private JStatement[] makeWorkStatements(List list, 
+					    SIRStream toplevel) {
 	// build the statements for <work> ...
 	List statementList = new LinkedList();
 	// for each filter...
@@ -173,8 +193,8 @@ public class SIRScheduler {
      * Returns the proper argument to the work function for <schedObject>
      * given toplevel stream <toplevel>.
      */
-    private static JExpression makeWorkArgument(Object schedObject,
-						SIRStream toplevel) {
+    private JExpression makeWorkArgument(Object schedObject,
+					 SIRStream toplevel) {
 	if (schedObject instanceof List) {
 	    // make arg for list -- just the current context
 	    return LoweringConstants.getDataField();
@@ -196,8 +216,8 @@ public class SIRScheduler {
      * corresponding to <filter>, tracing pointers from the data
      * structure for <toplevel>.
      */
-    private static JExpression makeFilterWorkArgument(SIRFilter filter,
-						      SIRStream toplevel) {
+    private JExpression makeFilterWorkArgument(SIRFilter filter,
+					       SIRStream toplevel) {
 
 	// get parents of <filter>
 	SIRStream parents[] = filter.getParents();

@@ -46,6 +46,12 @@ public class LoweringConstants {
     public static final String OUTPUT_TAPE_NAME = "outTape";
 
     /**
+     * Counts the work functions that have been created so that each
+     * can be assigned a unique name.
+     */
+    private static int workFunctionCounter = 1;
+
+    /**
      * Returns the name of the <childNum>'th child for use as a
      * variable name in the structure for a stream construct.
      * <childNum> should start counting at zero.
@@ -145,6 +151,14 @@ public class LoweringConstants {
      */
     public static String getWorkName(SIRStream str) {
 	return getMethodName(str.getName(), "work");
+    }
+
+    /**
+     * Returns a new, unique name for a work function that might have
+     * no analogue in the stream structure (is "anonymous")
+     */
+    public static String getAnonWorkName() {
+	return "hierarchical_work_" + workFunctionCounter++;
     }
 
     /**

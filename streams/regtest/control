@@ -10,6 +10,12 @@ test fft-local {
   output FFT.out
 }
 
+test fuse-test {
+  directory docs/examples/hand/fuse-test
+  source FuseTest.java
+  output FuseTest.out
+}
+
 test fib {
   directory docs/examples/hand/fib
   source Fib.java
@@ -24,6 +30,7 @@ test fir {
   directory docs/examples/hand/fir
   make
   source LinkedFirTest.java
+  output LinkedFirTest.out
 }
 
 test flybit {
@@ -60,13 +67,18 @@ test unroll {
 test updown {
   directory docs/examples/hand/updown
   source UpDown.java
+  disabled
 }
 
-test fmtest {
-  directory apps/FMRadio
-  make
-  source LinkedFMTest.java
-  disabled
+test fm {
+  directory docs/examples/hand/fm
+  source *.java
+}
+
+test matrixmult {
+  directory apps/matrixmult
+  source *.java
+  output MatrixMult.out
 }
 
 test file {

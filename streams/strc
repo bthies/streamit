@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.44 2004-06-16 19:07:01 jasperln Exp $
+# $Id: strc,v 1.45 2004-08-18 17:15:26 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -102,7 +102,8 @@ $fns = old_to_c($fns) unless $opts{tokopi};
 exit(1) if !$fns;
 $fns = new_to_c($fns) if $opts{tokopi};
 exit(1) if !$fns;
-$fns = c_to_out($fns, $opts{output}) unless ($opts{raw} || $opts{cluster});
+$fns = c_to_out($fns, $opts{output}) unless 
+    ($opts{raw} || $opts{cluster} || $opts{standalone} || $opts{rstream});
 exit(1) if !$fns;
 exit(0);
 
@@ -123,6 +124,7 @@ Options:
   --uni               Compile for uniprocessor with C library (default)
   --raw n, -r n       Compile for RAW, with an n-by-n grid
   --standalone, -S    Generate C file without library dependencies
+  --rstream, -R       Generate C file to be compiled by RStream compiler 
 * --streamit          Output of the compiler is a StreamIt program
 * --cluster n         Compile for a networked cluster with n nodes
 * --viram             Compile for VIRAM, a vector uniprocessor
@@ -268,6 +270,7 @@ sub get_options
 			    "statespace!",
 			    "magicdram!",
 			    "standalone|S",
+			    "rstream|R",
 			    "stats!",
 			    "streamit",
 			    "sync",
@@ -390,7 +393,7 @@ sub old_to_c
     my $kjcopts = get_kjc_opts();
     my $xmx = "-Xmx" . $opts{memory};
     my $jfiles = join(' ', @$fns);
-    if (!$opts{raw} && !$opts{standalone} && !$opts{cluster})
+    if (!$opts{raw} && !$opts{standalone} && !$opts{cluster} && !$opts{rstream})
       {
 	my $target = change_extension($fns->[0], "java", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
@@ -404,6 +407,7 @@ sub old_to_c
 	my $result = call("$java $xmx at.dms.kjc.Main --streamit $kjcopts $jfiles");
 	return undef if $result != 0;
 	return ["tile0.c"] if $opts{standalone};
+	return ["str.c"] if $opts{rstream};
 	return [];
       }
   }
@@ -510,6 +514,7 @@ sub get_kjc_opts
     $opts{ratematch} && ($kjcopts .= " --ratematch");
     $opts{rawcol} && ($kjcopts .= " --rawcol ". $opts{rawcol});
     $opts{standalone} && ($kjcopts .= " --standalone");
+    $opts{rstream} && ($kjcopts .= " --rstream");
     $opts{removeglobals} && ($kjcopts .= " --removeglobals");
     $opts{simplesjfusion} && ($kjcopts .= " --simplesjfusion");
     $opts{simulatework} && ($kjcopts .= " --simulatework");

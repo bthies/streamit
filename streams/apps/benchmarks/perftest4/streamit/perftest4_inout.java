@@ -80,8 +80,7 @@ public class perftest4_inout extends StreamIt
     
     static public void main(String[] t)
     {
-        perftest4_inout test = new perftest4_inout();
-        test.run(t);
+        new perftest4_inout().run(t);
     }
     
     public void init() {

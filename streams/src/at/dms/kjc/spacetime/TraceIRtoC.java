@@ -104,8 +104,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
     private void optimizations() 
     {
 	for (int i = 0; i < tile.getComputeCode().getMethods().length; i++) {
-	    //if (!KjcOptions.nofieldprop) {
-	    if (false) {
+	    if (!KjcOptions.nofieldprop) {
 		 Unroller unroller;
 		 do {
 		     do {

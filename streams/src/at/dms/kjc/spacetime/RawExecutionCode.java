@@ -88,8 +88,8 @@ public abstract class RawExecutionCode
      * is non-positive, just returns empty (!not legal in the general case)
      */
     public static JStatement makeForLoop(JStatement body,
-					  JLocalVariable var,
-					  JExpression count) {
+					 JVariableDefinition var,
+					 JExpression count) {
 	if (body == null)
 	    return new JEmptyStatement(null, null);
 	
@@ -98,8 +98,9 @@ public abstract class RawExecutionCode
 	// other for loops and to get the codegen right.
 	JExpression initExpr[] = {
 	    new JAssignmentExpression(null,
-				      new JLocalVariableExpression(null,
-								   var),
+				      new JFieldAccessExpression(null, 
+								 new JThisExpression(null),
+								 var.getIdent()),
 				      new JIntLiteral(0)) };
 	JStatement init = new JExpressionListStatement(null, initExpr, null);
 	// if count==0, just return init statement
@@ -114,14 +115,15 @@ public abstract class RawExecutionCode
 	JExpression cond = 
 	    new JRelationalExpression(null,
 				      Constants.OPE_LT,
-				      new JLocalVariableExpression(null,
-								   var),
+				      new JFieldAccessExpression(null, 
+								   new JThisExpression(null),
+								   var.getIdent()),
 				      count);
 	JExpression incrExpr = 
 	    new JPostfixExpression(null, 
 				   Constants.OPE_POSTINC, 
-				   new JLocalVariableExpression(null,
-								   var));
+				   new JFieldAccessExpression(null, new JThisExpression(null),
+								var.getIdent()));
 	JStatement incr = 
 	    new JExpressionStatement(null, incrExpr, null);
 

@@ -12,10 +12,11 @@ public class LinearTransformFeedback extends LinearTransform {
 
 	this.bodyRep = bodyRep;
 	this.loopRep = loopRep;
-	this.inputToBody = weights[0];
-	this.loopToBody = weights[1];
-	this.bodyToOutput = weights[2];
-	this.bodyToLoop = weights[3];
+
+	this.bodyToOutput = weights[0];
+	this.bodyToLoop = weights[1];
+	this.inputToBody = weights[2];
+	this.loopToBody = weights[3];
 
     }
 
@@ -118,26 +119,59 @@ public class LinearTransformFeedback extends LinearTransform {
 
     public static LinearTransform calculateFeedback(LinearFilterRepresentation bodyRep, LinearFilterRepresentation loopRep, int[] weights) {
 
-	int bodyInput, bodyOutput;
+	int bodyToOutput, bodyToLoop, inputToBody, loopToBody;
+	int loopPush, loopPop, bodyPush, bodyPop;
+	int loopLCM, bodyLCM, loopFirings, bodyFirings, joinerFirings, splitterFirings;
 
-	bodyInput = weights[0] + weights[1];
-	bodyOutput = weights[2] + weights[3];
+	LinearFilterRepresentation newBodyRep, newLoopRep;
+	int[] newWeights = new int[4];
 
-	if(bodyInput != bodyRep.getPopCount())
-	    return new LinearTransformNull("Body pop count doesn't match --> feedback is unschedulable");
+	bodyToOutput = weights[0];
+	bodyToLoop = weights[1];
+	inputToBody = weights[2];
+	loopToBody = weights[3];
 
-	if(bodyOutput != bodyRep.getPushCount())
-	    return new LinearTransformNull("Body push count doesn't match --> feedback is unschedulable");
+	loopPush = loopRep.getPushCount();
+	loopPop = loopRep.getPopCount();
+	bodyPush = bodyRep.getPushCount();
+	bodyPop = bodyRep.getPopCount();
 
-	if(weights[3] != loopRep.getPopCount())
-	    return new LinearTransformNull("Loop pop count doesn't match --> feedback is unschedulable");
+	loopLCM = lcm(loopPush,weights[3]);
+	loopFirings = loopLCM / loopPush;
+	joinerFirings = loopLCM / weights[3];
+
+	bodyLCM = lcm(bodyPush,weights[0]+weights[1]);
+	bodyFirings = bodyLCM / bodyPush; 
+	splitterFirings = bodyLCM / (weights[0]+weights[1]);
+
+
+	LinearPrinter.println("loop,joiner,body,splitter firings: " + loopFirings + " " +
+			      joinerFirings + " " + bodyFirings + " " + splitterFirings);
+
+
+	// checks:
+	// 1. loop output + filter input = body input
+
+	if(loopFirings*loopPush + joinerFirings*inputToBody != bodyFirings*bodyPop)  
+	    return new LinearTransformNull("feedback is unschedulable - loop output");
+
+	//2. body output = filter output + loop input
+
+	if(bodyFirings*bodyPush != splitterFirings*bodyToOutput + loopFirings*loopPop)
+	    return new LinearTransformNull("feedback is unschedulable - body output");
+
+	newBodyRep = bodyRep.expand(bodyFirings);
+	newLoopRep = loopRep.expand(loopFirings);
 	
-	if(weights[1] != loopRep.getPushCount())
-	    return new LinearTransformNull("Loop push count doesn't match --> feedback is unschedulable");
+	newWeights[0] = splitterFirings*bodyToOutput;
+	newWeights[1] = splitterFirings*bodyToLoop;
+	newWeights[2] = joinerFirings*inputToBody;
+	newWeights[3] =	joinerFirings*loopToBody;
 
-	return new LinearTransformFeedback(bodyRep,loopRep,weights);
+	return new LinearTransformFeedback(newBodyRep,newLoopRep,newWeights);
 
     }
 
 }
+
 

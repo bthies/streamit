@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.12 2004-04-02 20:41:11 sitij Exp $
+ * $Id: LinearAnalyzer.java,v 1.13 2004-04-09 21:06:51 sitij Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -293,6 +293,19 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 
 	linearString = (this.hasLinearRepresentation(Loop)) ? "linear" : "non-linear";
 	LinearPrinter.println("  " + Loop + "(" + linearString + ")");
+
+
+
+	/* Need to get enqueued values !!!
+
+	JMethodDeclaration initPath = self.getInitPath();
+	JBlock initBlock = initPath.getBody();
+	JStatement[] statements = initBlock.getStatementArray();
+
+	for(int i=0; i<statements.length; i++)
+	    LinearPrinter.println("ith statement " + statements[i]);
+
+	*/
 
 
 	// grab the next child. If we have a linear rep

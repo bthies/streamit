@@ -317,10 +317,9 @@ abstract class DPConfigContainer extends DPConfig {
 	// otherwise, if <tileLimit> is 1, then just sum the work
 	// of our components
 	if (tileLimit==1) {
-	    // see if we have a message receiver in this record.  If
+	    // see if we have an unfusable filter in this record.  If
 	    // we do and it isn't the only filter in the record, then
-	    // return infinite cost, as message receivers have a lot
-	    // of communication overhead and deserve their own tile.
+	    // return infinite cost
 	    PartitionRecord rec = new PartitionRecord();
 	    for (int y=y1; y<=y2; y++) {
 		for (int x=x1; x<=Math.min(x2,width[y]-1); x++) {
@@ -328,18 +327,17 @@ abstract class DPConfigContainer extends DPConfig {
 		}
 	    }
 	    int numFilters = 0;
-	    boolean messageReceivers = false;
+	    boolean fusable = true;
 	    for (int i=0; i<rec.size(); i++) {
 		if (rec.get(i) instanceof SIRFilter) {
 		    SIRFilter filter = (SIRFilter)rec.get(i);
 		    numFilters++;
-		    SIRPortal[] portal = SIRPortal.getPortalsWithReceiver(filter);
-		    if (portal.length>=1) {
-			messageReceivers = true;
+		    if (!isFusable(filter)) {
+			fusable = false;
 		    }
 		}
 	    }
-	    if (messageReceivers && numFilters>1) {
+	    if (!fusable && numFilters>1) {
 		return new DPCost(Integer.MAX_VALUE/2, Integer.MAX_VALUE/2);
 	    }
 
@@ -543,6 +541,22 @@ abstract class DPConfigContainer extends DPConfig {
 	    }
 	}
 	return overhead;
+    }
+
+    /**
+     * Returns whether or not it is okay to fuse <filter> with others.
+     */
+    private boolean isFusable(SIRFilter filter) {
+	// don't fuse message receivers because they have a lot of communication overhead
+	SIRPortal[] portal = SIRPortal.getPortalsWithReceiver(filter);
+	if (portal.length>=1) {
+	    return false;
+	}
+	// don't fuse file readers or file writers
+	if (filter instanceof SIRFileReader || filter instanceof SIRFileWriter) {
+	    return false;
+	}
+	return true;
     }
 
     /**

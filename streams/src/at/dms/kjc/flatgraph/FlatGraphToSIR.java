@@ -82,15 +82,28 @@ public class FlatGraphToSIR extends at.dms.util.Utils
 	    splitJoin.setJoiner(joiner);
 
 	    for (int i = 0; i < current.edges.length; i++) {
-		if (current.edges[i] != null)
-		    reSIR(splitJoin, current.edges[i], visited);
+		if (current.edges[i] != null) {
+		    //wrap all parallel splitter edges in a pipeline
+		    SIRPipeline pipeline = new SIRPipeline(splitJoin, "Pipeline" + id++);
+		    pipeline.setInit(SIRStream.makeEmptyInit());
+		    splitJoin.add(pipeline);
+		    reSIR(pipeline, current.edges[i], visited);
+		}
+		
 	    }
 	    return;
 	}
 	
 	if (current.isJoiner()){
-	    assert parent instanceof SIRSplitJoin;
-	    SIRSplitJoin splitJoin = (SIRSplitJoin)parent;
+	    
+	    SIRContainer splitJoin = parent;
+	    while (!(splitJoin instanceof SIRSplitJoin)) {
+		splitJoin = splitJoin.getParent();
+	    }
+	    
+	    assert splitJoin != null;
+	    
+	    
 
 	    if (!visited.contains(current)) {
 		//make sure we have not seen this Joiner
@@ -99,10 +112,10 @@ public class FlatGraphToSIR extends at.dms.util.Utils
 		visited.add(current);
 		//first time we are seeing this joiner so set it as the joiner
 		//and visit the remainder of the graph
-		splitJoin.setJoiner((SIRJoiner)current.contents);
+		((SIRSplitJoin)splitJoin).setJoiner((SIRJoiner)current.contents);
 		if (current.ways > 0) {
 		    assert current.edges.length == 1 && current.ways == 1 && current.edges[0] != null;
-		    reSIR(splitJoin.getParent(), current.edges[0], visited);
+		    reSIR(((SIRSplitJoin)splitJoin).getParent(), current.edges[0], visited);
 		}
 	    }
 	}    

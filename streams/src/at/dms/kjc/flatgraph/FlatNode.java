@@ -177,7 +177,6 @@ public class FlatNode {
 	    weights[0] = 1;
 	}
 	
-	
 	edges[currentEdge++] = to;
     }
 

@@ -13,18 +13,9 @@ import java.util.*;
  * This class flattens the stream graph
  */
 
-public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
+public class GraphFlattener extends at.dms.util.Utils 
 {
-    public int filterCount;
-
-    //given a flatnode map to the execution count
-    //don't rely on these to be always set, they are only valid after
-    //a call to dumpGraph
-    public HashMap initExecutionCounts;
-    public HashMap steadyExecutionCounts; 
-
     private FlatNode currentNode;
-    private StringBuffer buf;
     //this hashset stores the splitters of feedbackloops
     //so the edges can be swapped after createGraph()
     //see the note in the create graph algorithm
@@ -755,95 +746,6 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	return node;
     }
 
-    /** 
-     * creates the dot file representing the flattened graph 
-     * must be called after createExecutionCounts in 
-     */
-    public void dumpGraph(String filename, HashMap initExeCount,
-			  HashMap steadyExeCount) 
-    {
-	this.initExecutionCounts = initExeCount;
-	this.steadyExecutionCounts = steadyExeCount;
-	
-	buf = new StringBuffer();
-	
-	buf.append("digraph Flattend {\n");
-	buf.append("size = \"8, 10.5\";");
-	filterCount = 0;
-	top.accept(this, new HashSet(), true);
-	//	System.out.println("Filters in Graph: " + filterCount);
-	buf.append("}\n");	
-	try {
-	    FileWriter fw = new FileWriter(filename);
-	    fw.write(buf.toString());
-	    fw.close();
-	}
-	catch (Exception e) {
-	    System.err.println("Could not print flattened graph");
-	}
-	
-    }
-
-    /* appends the dot file code representing the given node */
-    public void visitNode(FlatNode node) 
-    {
-	if (node.contents instanceof SIRFilter) {
-	    filterCount++;
-	    SIRFilter filter = (SIRFilter)node.contents;
-	    assert buf!=null;
-
-	    buf.append(node.getName() + "[ label = \"" +
-		       node.getName() + "\\n");
-	    buf.append("init Mult: " + getMult(node, true) + 
-		       " steady Mult: " + getMult(node, false));
-	    buf.append("\\n");
-	    buf.append(" peek: " + filter.getPeek() + 
-		       " pop: " + filter.getPop() + 
-		       " push: " + filter.getPush());
-	    buf.append("\\n");
-	    if (node.contents instanceof SIRTwoStageFilter) {
-		SIRTwoStageFilter two = (SIRTwoStageFilter)node.contents;
-		buf.append(" initPeek: " + two.getInitPeek() + 
-			   " initPop: " + two.getInitPop() + 
-			   " initPush: " + two.getInitPush());
-		buf.append("\\n");
-	    }
-	    if (node.inputs != node.incoming.length) {
-		buf.append("node.inputs (" + node.inputs + ") != node.incoming.length (" + 
-			   node.incoming.length + ")");
-		buf.append("\\n");
-	    }
-	    if (node.ways != node.edges.length) {
-		buf.append("node.ways (" + node.ways + ") != node.edges.length (" + 
-			   node.edges.length + ")");
-	    }
-	    
-	    buf.append("\"];");
-	}
-	
-	if (node.contents instanceof SIRJoiner) {
-	    for (int i = 0; i < node.inputs; i++) {
-		//joiners may have null upstream neighbors
-		if (node.incoming[i] == null)
-		    continue;
-		buf.append(node.incoming[i].getName() + " -> " 
-			   + node.getName());
-		buf.append("[label=\"" + node.incomingWeights[i] + "\"];\n");
-	    }
-      
-	}
-	for (int i = 0; i < node.ways; i++) {
-	    if (node.edges[i] == null)
-		continue;
-	    if (node.edges[i].contents instanceof SIRJoiner)
-		continue;
-	    buf.append(node.getName() + " -> " 
-		+ node.edges[i].getName());
-	    buf.append("[label=\"" + node.weights[i] + "\"];\n");
-	}
-    }
-
-
     public static CType getOutputType(FlatNode node) {
 	if (node.contents instanceof SIRFilter)
 	    return ((SIRFilter)node.contents).getOutputType();
@@ -886,7 +788,8 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	    return CStdType.Void;
     }
 
-    public int getMult(FlatNode node, boolean init)
+    public static int getMult(FlatNode node, boolean init, 
+			      HashMap initExecutionCounts, HashMap steadyExecutionCounts)
     {
 	if ((init ? initExecutionCounts : steadyExecutionCounts) == null)
 	    return -1;

@@ -1086,7 +1086,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 				      new JThisExpression(null),
 				      receiveMethod,
 				      args);
-	//now generaate the nested for loops	
+	//now generate the nested for loops	
 
 	//get the dimensions of the array as set by kopi2sir
 	JExpression[] dims = type.getDims();

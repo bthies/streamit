@@ -107,9 +107,6 @@ public class IMEMEstimation implements FlatVisitor
 	File file = new File(dir);
 	file.mkdir();
 
-	// make structures header file in this directory
-	StructureIncludeFile.doit(RawBackend.structures, dir);
-
 	// set magic net to false
 	KjcOptions.magic_net = false;
 	//set rate match to false
@@ -139,6 +136,8 @@ public class IMEMEstimation implements FlatVisitor
 	if (KjcOptions.removeglobals) {
 	    RemoveGlobals.doit(top);
 	}
+	// make structures header file in this directory
+	StructureIncludeFile.doit(RawBackend.structures, top, dir);
 
 	TileCode.generateCode(top);
 	MakefileGenerator.createMakefile();

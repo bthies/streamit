@@ -49,8 +49,6 @@ public class RawBackend {
 
 	structures = structs;
 	
-	StructureIncludeFile.doit(structures);
-
 	// set number of columns/rows
 	RawBackend.rawRows = KjcOptions.raw;
 	if(KjcOptions.rawcol>-1)
@@ -282,15 +280,17 @@ public class RawBackend {
 	//VarDecl Raise to move array assignments down?
 	new VarDeclRaiser().raiseVars(str);
 
+	StructureIncludeFile.doit(structures, graphFlattener.top);
+
 	System.out.println("Tile Code begin...");
 	TileCode.generateCode(graphFlattener.top);
 	System.out.println("Tile Code End.");
 
 
-
 	//generate the makefiles
 	System.out.println("Creating Makefile.");
 	MakefileGenerator.createMakefile();
+
 	System.out.println("Exiting");
 	System.exit(0);
     }

@@ -2,7 +2,7 @@
 # AAL 6/25/2002 Script that runs regression tests every evening
 # (gets called from cron job on cagfram-46.lcs.mit.edu user
 # aalamb).
-# $Id: run_reg_tests.sh,v 1.5 2002-07-03 19:31:51 aalamb Exp $
+# $Id: run_reg_tests.sh,v 1.6 2002-07-08 17:47:34 thies Exp $
 
 # Environmental Variables
 # home directory for CVS
@@ -88,7 +88,7 @@ echo "\n\n" >> $TEMP
 $STREAMIT_HOME/regtest/tools/parse_results.pl $REG_LOG $REG_ERR $SUCCESS >> $TEMP
 
 # send mail to with the results of the test to the streamit mailing list
-cat $TEMP | mail -s "StreamIT Regression Test Summary" aalamb@mit.edu commit-stream@cag.lcs.mit.edu
+cat $TEMP | mail -s "StreamIT Regression Test Summary" aalamb@mit.edu commit-stream@cag.lcs.mit.edu nmani@cag.lcs.mit.edu
 #cat $TEMP | mail -s "StreamIT Regression Test Summary" aalamb@mit.edu 
 
 # clean up temp file

@@ -8,10 +8,13 @@ LIBRARYP =      libcluster_p.a
 
 NAMES =		sock_dscr \
 		thread_info \
+		object_write_buffer \
 		connection_info \
 		timer \
 		sdep \
 		mysocket \
+		data_consumer \
+		data_producer \
 		open_socket \
 		message \
 		init_instance \

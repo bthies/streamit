@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCompilationUnit.java,v 1.3 2001-11-02 21:55:30 mgordon Exp $
+ * $Id: JCompilationUnit.java,v 1.4 2003-05-16 22:07:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -38,6 +38,8 @@ public class JCompilationUnit extends JPhylum {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JCompilationUnit() {} // for cloning only
 
   /**
    * Constructs a CompilationUnit with the specified top level context

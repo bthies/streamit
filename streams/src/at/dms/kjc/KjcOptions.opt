@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.55 2004-04-01 17:07:39 thies Exp $
+ * $Id: KjcOptions.opt,v 1.56 2004-05-25 02:30:57 mgordon Exp $
  */
 
 prefix Kjc
@@ -384,3 +384,23 @@ longname		"backend"
 	default		"null"
 	requireArgument
 	help		"Class name of the StreamIt compiler backend to run."
+
+longname		"steadymult"
+	type 		int
+	default		"1"
+	requireArgument
+	help		"For the SpaceTime RAW backend, multiply the steady-state multiplicities by i"
+
+longname		"forceplacement"
+	type 		boolean
+	default		"false"
+	help		"For the SpaceTime RAW backend, use try to minimize communication in layout"
+
+longname		"scheduler"
+	type 		String
+	default		"work"
+	requireArgument
+	help		"For the SpaceTime RAW backend, either work, dep, or comm."
+
+
+

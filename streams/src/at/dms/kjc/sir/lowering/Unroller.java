@@ -3,6 +3,7 @@ package at.dms.kjc.sir.lowering;
 
 import java.util.*;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.util.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
@@ -46,6 +47,30 @@ public class Unroller extends SLIRReplacingVisitor {
 	inInit=false;
     }
     
+    /**
+     * Unrolls <filter> up to a factor of 100000.
+     */
+    public static void unrollFilter(SIRFilter filter) {
+	// set all loops to be unrolled again
+	IterFactory.createIter(filter).accept(new EmptyStreamVisitor() {
+		public void preVisitStream(SIRStream filter, SIRIterator iter) {
+		    for (int i=0; i<filter.getMethods().length; i++) {
+			filter.getMethods()[i].accept(new SLIREmptyVisitor() {
+				public void visitForStatement(JForStatement self, JStatement init, JExpression cond,
+							      JStatement incr, JStatement body) {
+				    self.setUnrolled(false);
+				}
+			    });
+		    }
+		}
+	    });
+	// now do unrolling
+	int origUnroll = KjcOptions.unroll;
+	KjcOptions.unroll = 100000;
+	FieldProp.doPropagate(filter);
+	KjcOptions.unroll = origUnroll;
+    }
+
     public void setInit(boolean init) {
 	inInit=init;
     }

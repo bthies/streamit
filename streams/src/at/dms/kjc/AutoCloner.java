@@ -109,9 +109,9 @@ public class AutoCloner {
      * for that.  This dictates the toplevel cloning policy, and is
      * called on every field that is cloned.
      *
-     * The parent is the object (if any) that contains <o> as a field.
-     * In the event that <o> is an SIROperator, its parent will be set
-     * to <parent> after cloning.  Parent can be null if this case is
+     * The parent is the object (if any) that is <o>'s parent. In the
+     * event that <o> is an SIROperator, its parent will be set to
+     * <parent> after cloning.  Parent can be null if this case is
      * N/A.
      */
     static public Object cloneToplevel(Object o, Object parent) {
@@ -206,7 +206,7 @@ public class AutoCloner {
 	    result = o;
 	}
 	// try fixing parent
-	fixParent(o, parent);
+	fixParent(result, parent);
 	// remember result
 	register(o, result);
 	return result;
@@ -246,8 +246,8 @@ public class AutoCloner {
 	while (e.hasMoreElements()) {
 	    Object key = e.nextElement();
 	    Object value = orig.get(key);
-	    result.put(fixParent(cloneToplevel(key, null), parent),
-		       fixParent(cloneToplevel(value, null), parent));
+	    result.put(cloneToplevel(key, parent),
+		       cloneToplevel(value, parent));
 	}
 	return result;
     }
@@ -259,7 +259,7 @@ public class AutoCloner {
     static private void cloneWithinList(List clone, Object parent) {
 	for (int i=0; i<clone.size(); i++) {
 	    Object old = clone.get(i);
-	    clone.set(i, fixParent(cloneToplevel(old, null), parent));
+	    clone.set(i, cloneToplevel(old, parent));
 	}
     }
 
@@ -270,7 +270,7 @@ public class AutoCloner {
     static private void cloneWithinArray(Object[] clone, Object parent) {
 	// clone elements
 	for (int i=0; i<clone.length; i++) {
-	    clone[i] = fixParent(cloneToplevel(clone[i], null), parent);
+	    clone[i] = cloneToplevel(clone[i], parent);
 	}
     }
 

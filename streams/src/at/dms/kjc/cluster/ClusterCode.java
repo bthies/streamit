@@ -86,9 +86,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p = new TabbedPrintWriter(str);
 	
 	p.print("#include <stdlib.h>\n");
-	p.print("#include <math.h>\n\n");	
-	p.print("#include <mysocket.h>\n");
+	p.print("#include <math.h>\n");	
 	p.print("#include <init_instance.h>\n");
+	p.print("#include <mysocket.h>\n");
+	p.print("#include <peek_stream.h>\n");
 
 	p.print("\n");
 
@@ -188,9 +189,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p = new TabbedPrintWriter(str);
 
 	p.print("#include <stdlib.h>\n");
-	p.print("#include <math.h>\n\n");	
-	p.print("#include <mysocket.h>\n");
+	p.print("#include <math.h>\n");	
 	p.print("#include <init_instance.h>\n");
+	p.print("#include <mysocket.h>\n");
+	p.print("#include <peek_stream.h>\n");
 
 	p.print("\n");
 

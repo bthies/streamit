@@ -164,8 +164,9 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	//if (RawBackend.structures.length > 0) 
 	//    print("#include \"structs.h\"\n");
 
-	p.print("#include <mysocket.h>\n");
 	p.print("#include <init_instance.h>\n");
+	p.print("#include <mysocket.h>\n");
+	p.print("#include <peek_stream.h>\n");
 
 	p.print("\n");
 
@@ -183,7 +184,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	NetStream out = RegisterStreams.getFilterOutStream(self);
 
 	if (in != null) {	    
-	    print("mysocket *"+in.name()+"in;\n");
+	    print("peek_stream<"+self.getInputType().toString()+"> *"+in.name()+"in;\n");
 	}
 
 	if (out != null) {	    
@@ -223,7 +224,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("  int i;\n");
 
 	if (in != null) {
-	    print("  "+in.name()+"in = new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+"));\n");
+	    print("  "+in.name()+"in = new peek_stream<int>(new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+")));\n");
 	}
 
 	if (out != null) {
@@ -1387,7 +1388,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
                                     JExpression num)
     {
 
-	print("peek(");
+	NetStream in = RegisterStreams.getFilterInStream(filter);
+	print(in.name()+"in->peek(");
 	num.accept(this);
 	print(")");
 
@@ -1399,16 +1401,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     {
 
 	NetStream in = RegisterStreams.getFilterInStream(filter);
-
-	if (tapeType.equals(CStdType.Integer)) {
-
-	    print(in.name()+"in->read_int()");
-	    
-	} else if (tapeType.equals(CStdType.Float)) {
-
-	    print(in.name()+"in->read_float()");
-
-	}
+	print(in.name()+"in->pop()");
 
 	//Utils.fail("FlatIRToCluster should see no pop expressions");
     }

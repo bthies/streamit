@@ -53,6 +53,7 @@ public abstract class RawExecutionCode
 
     public static String initStage = "__INITSTAGE__";
     public static String steadyStage = "__STEADYSTAGE__";
+    public static String primePumpStage = "__PRIMEPUMP__";
     public static String workCounter = "__WORKCOUNTER__";
  
     //keep a unique integer for each filter in each trace
@@ -80,7 +81,7 @@ public abstract class RawExecutionCode
     public abstract JMethodDeclaration[] getHelperMethods();
     public abstract JMethodDeclaration getInitStageMethod();
     public abstract JBlock getSteadyBlock();
-    
+    public abstract JMethodDeclaration getPrimePumpMethod();
     
      /**
      * Returns a for loop that uses field <var> to count

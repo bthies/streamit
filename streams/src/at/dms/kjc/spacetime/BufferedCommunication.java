@@ -304,15 +304,39 @@ public class BufferedCommunication extends RawExecutionCode
 	Vector methods = new Vector();
 
 	//add all helper methods, except work function and initWork
-	for (int i = 0; i < filterInfo.filter.getMethods().length; i++) 
+	/*
+	  for (int i = 0; i < filterInfo.filter.getMethods().length; i++) 
 	    if (!(filterInfo.filter.getMethods()[i].equals(filterInfo.filter.getWork()) ||
 		(filterInfo.isTwoStage() && 
 		 filterInfo.filter.getInitWork().
 		 equals(filterInfo.filter.getMethods()[i]))))
-		methods.add(filterInfo.filter.getMethods()[i]);
+		 methods.add(filterInfo.filter.getMethods()[i]);
+	*/
 	
+	//add all methods
+	for (int i = 0; i < filterInfo.filter.getMethods().length; i++) 
+	    methods.add(filterInfo.filter.getMethods()[i]);
 	return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);
     }
+
+    public JMethodDeclaration getPrimePumpMethod() 
+    {
+	JBlock statements = new JBlock(null, new JStatement[0], null);
+	FilterContent filter = filterInfo.filter;
+
+	//add the calls to the work function for the priming of the pipeline
+	statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));
+	//return the method
+	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+			       CStdType.Void,
+			       primePumpStage + uniqueID,
+			       JFormalParameter.EMPTY,
+			       CClassType.EMPTY,
+			       statements,
+			       null,
+			       null); 
+    }
+    
 
     public JMethodDeclaration getInitStageMethod() 
     {
@@ -322,19 +346,25 @@ public class BufferedCommunication extends RawExecutionCode
 	//add the call to initWork
 	if (filterInfo.isTwoStage()) {
 	    //FilterContent two = filter;
+	    /*
 	    JBlock body = 
 		(JBlock)ObjectDeepCloner.deepCopy
 		(filter.getInitWork().getBody());
-
+	    */
+	    JMethodCallExpression initWorkCall = 
+		new JMethodCallExpression(null, new JThisExpression(null),
+					  filter.getInitWork().getName(),
+					  new JExpression[0]);
+	    
 	    //add the code to receive the items into the buffer from the network
 	    statements.addStatement
 		(makeForLoop(receiveCode(filter, filter.getInputType(), 
 					 generatedVariables),
 			     generatedVariables.exeIndex,
 			     new JIntLiteral(filterInfo.prePeek)));
-	    
+
 	    //now inline the init work body
-	    statements.addStatement(body);
+	    statements.addStatement(new JExpressionStatement(null, initWorkCall, null));
 	    //if a simple filter, reset the simpleIndex
 	    if (filterInfo.isSimple()) {
 		statements.addStatement
@@ -382,9 +412,6 @@ public class BufferedCommunication extends RawExecutionCode
 				       null));
 	}
 	
-	//add the calls to the work function for the priming of the pipeline
-	statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));
-
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 				      CStdType.Void,
 				      initStage + uniqueID,
@@ -418,9 +445,8 @@ public class BufferedCommunication extends RawExecutionCode
 
 	//not rate matching
 	    
-	JBlock workBlock = 
-	    (JBlock)ObjectDeepCloner.
-	    deepCopy(filter.getWork().getBody());
+	JStatement workBlock = 
+	    getWorkFunctionCall(filter);
 
 	//reset the simple index
 	if (filterInfo.isSimple()) {
@@ -486,6 +512,19 @@ public class BufferedCommunication extends RawExecutionCode
     }
 
 
+    private JStatement getWorkFunctionCall(FilterContent filter) 
+    {
+	//inline
+	//return (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
+	return new JExpressionStatement(null, 
+					new JMethodCallExpression(null,
+								  new JThisExpression(null),
+								  filter.getWork().getName(),
+								  new JExpression[0]),
+					null);
+    }
+    
+
     //generate the loop for the work function firings in the 
     //initialization schedule
     JStatement generateInitWorkLoop(FilterContent filter, 
@@ -529,8 +568,8 @@ public class BufferedCommunication extends RawExecutionCode
 	block.addStatement(ifStatement);
 	
 	//clone the work function and inline it
-	JBlock workBlock = 
-	    (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
+	JStatement workBlock = 
+	    getWorkFunctionCall(filter);
 	
 	//if we are in debug mode, print out that the filter is firing
 	if (SpaceTimeBackend.FILTER_DEBUG_MODE) {

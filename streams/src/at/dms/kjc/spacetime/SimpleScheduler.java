@@ -430,7 +430,7 @@ public class SimpleScheduler
 	}
 	
 	//if we want to, try to force a single input trace to the source's tile
-	if (true && trace.getHead().getSourceSet().size() == 1) {
+	if (false && trace.getHead().getSourceSet().size() == 1) {
 	    Trace upstream = ((Edge)trace.getHead().getSourceSet().iterator().next()).getSrc().getParent();
 	    if (schedule.contains(upstream)) {
 		RawTile tile = rawChip.getTile(upstream.getTail().getPrevFilter().getX(),

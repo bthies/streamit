@@ -122,6 +122,37 @@ public class DirectCommunication extends RawExecutionCode
 	return (JFieldDeclaration[])decls.toArray(new JFieldDeclaration[0]);
     }
 
+    public JMethodDeclaration getPrimePumpMethod() 
+    {
+	JBlock statements = new JBlock(null, new JStatement[0], null);
+	FilterContent filter = filterInfo.filter;
+	
+	//add the calls to the work function in the prime pump stage
+	statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));	
+
+	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+				      CStdType.Void,
+				      primePumpStage + uniqueID,
+				      JFormalParameter.EMPTY,
+				      CClassType.EMPTY,
+				      statements,
+				      null,
+				      null);
+    }
+    
+    
+    private JStatement getWorkFunctionCall(FilterContent filter) 
+    {
+	//inline
+	//return (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
+	return new JExpressionStatement(null, 
+					new JMethodCallExpression(null,
+								  new JThisExpression(null),
+								  filter.getWork().getName(),
+								  new JExpression[0]),
+					null);
+    }
+
     public JMethodDeclaration getInitStageMethod() 
     {
 	JBlock statements = new JBlock(null, new JStatement[0], null);
@@ -129,8 +160,6 @@ public class DirectCommunication extends RawExecutionCode
 
 	//add the calls for the work function in the initialization stage
 	statements.addStatement(generateInitWorkLoop(filter));
-	//add the calls to the work function in the prime pump stage
-	statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));	
 	
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 				      CStdType.Void,
@@ -145,10 +174,13 @@ public class DirectCommunication extends RawExecutionCode
     public JMethodDeclaration[] getHelperMethods() 
     {
 	Vector methods = new Vector();
-	
+	/*
 	//add all helper methods, except work function
 	for (int i = 0; i < filterInfo.filter.getMethods().length; i++) 
 	    if (!(filterInfo.filter.getMethods()[i].equals(filterInfo.filter.getWork())))
+		methods.add(filterInfo.filter.getMethods()[i]);
+	*/
+	for (int i = 0; i < filterInfo.filter.getMethods().length; i++)
 		methods.add(filterInfo.filter.getMethods()[i]);
 	
 	return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);	
@@ -170,9 +202,8 @@ public class DirectCommunication extends RawExecutionCode
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
 	//inline the work function in a while loop
-	JBlock workBlock = 
-	    (JBlock)ObjectDeepCloner.
-	    deepCopy(filter.getWork().getBody());
+	JStatement workBlock = 
+	    getWorkFunctionCall(filter);
 	
 	//create the for loop that will execute the work function
 	//local variable for the work loop
@@ -210,8 +241,8 @@ public class DirectCommunication extends RawExecutionCode
 	JBlock block = new JBlock(null, new JStatement[0], null);
 
 	//clone the work function and inline it
-	JBlock workBlock = 
-	    (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
+	JStatement workBlock = 
+	    getWorkFunctionCall(filter);
 	
 	//if we are in debug mode, print out that the filter is firing
 	if (SpaceTimeBackend.FILTER_DEBUG_MODE) {

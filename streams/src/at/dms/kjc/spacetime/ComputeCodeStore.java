@@ -21,11 +21,6 @@ public class ComputeCodeStore {
     protected JMethodDeclaration rawMain;
 
     protected RawTile parent;
-    //index into the main function for this tile that keeps
-    //the index where we should add the next init stage call
-    protected int initIndex;
-    //steady index for steady state calls
-    protected int steadyIndex;
     protected JBlock steadyLoop;
     //the block that executes each tracenode's init schedule
     protected JBlock initBlock;
@@ -47,7 +42,6 @@ public class ComputeCodeStore {
 					 new JBlock(null, new JStatement[0], null) , null, null);
 	
 
-	initIndex = 1;
 	//add the block for the init stage calls
 	initBlock = new JBlock(null, new JStatement[0], null);
 	rawMain.addStatement(initBlock);
@@ -60,7 +54,6 @@ public class ComputeCodeStore {
 							new JExpression[0]),
 			      null));
 	*/
-	steadyIndex = 0;
 	//create the body of steady state loop
 	steadyLoop = new JBlock(null, new JStatement[0], null);
 	//add it to the while statement
@@ -91,8 +84,7 @@ public class ComputeCodeStore {
 	if (init)
 	    initBlock.addStatement(new JExpressionStatement(null, call, null));
 	else 
-	    steadyLoop.addStatement(steadyIndex ++, 
-				    new JExpressionStatement(null, call, null));
+	    steadyLoop.addStatement(new JExpressionStatement(null, call, null));
     }
     
     
@@ -152,10 +144,8 @@ public class ComputeCodeStore {
 	    initBlock.addStatement(new JExpressionStatement(null, assExp, null));
 	}
 	else {
-	    steadyLoop.addStatement(steadyIndex ++, 
-				    new JExpressionStatement(null, call, null));
-	    steadyLoop.addStatement(steadyIndex ++, 
-				    new JExpressionStatement(null, assExp, null));
+	    steadyLoop.addStatement(new JExpressionStatement(null, call, null));
+	    steadyLoop.addStatement(new JExpressionStatement(null, assExp, null));
 	}
     }
 
@@ -182,11 +172,10 @@ public class ComputeCodeStore {
 	//add the steady state
 	JBlock steady = exeCode.getSteadyBlock();
 	if (CODE)
-	    steadyLoop.addStatement(steadyIndex++, steady);
+	    steadyLoop.addStatement(steady);
 	else //add a place holder for debugging 
 	    steadyLoop.addStatement
-		(steadyIndex++,		
-		 new JExpressionStatement(null,
+		(new JExpressionStatement(null,
 					  new JMethodCallExpression(null,
 								    new JThisExpression(null),
 								    filterInfo.filter.toString(),
@@ -247,7 +236,40 @@ public class ComputeCodeStore {
 
     public void addTracePrimePump(FilterInfo filterInfo)
     {
-	
+	parent.setComputes();
+	RawExecutionCode exeCode;
+
+	//check to see if we have seen this filter already
+	if (rawCode.containsKey(filterInfo.filter)) {
+	    exeCode = (RawExecutionCode)rawCode.get(filterInfo.filter);
+	}
+	else {
+	    //otherwise create the raw ir code 
+	    //if we can run linear or direct communication, run it
+	    if(filterInfo.isLinear())
+		exeCode=new Linear(filterInfo);
+	    else if (filterInfo.isDirect())
+		exeCode = new DirectCommunication(filterInfo);
+	    else
+		exeCode = new BufferedCommunication(filterInfo);
+	    addTraceFieldsAndMethods(exeCode, filterInfo);
+	}	
+	JMethodDeclaration primePump = exeCode.getPrimePumpMethod();
+	if (primePump != null) {
+	    if (CODE)
+		addMethod(primePump);
+	    
+	}
+	//now add a call to the init stage in main at the appropiate index
+	//and increment the index
+	initBlock.
+	    addStatement(new JExpressionStatement
+			 (null, 
+			  new JMethodCallExpression(null,
+						    new JThisExpression(null),
+						    primePump.getName(),
+						    new JExpression[0]),
+			  null));
     }
 
     public void addTraceInit(FilterInfo filterInfo)

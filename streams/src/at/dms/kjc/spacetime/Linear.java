@@ -175,7 +175,11 @@ public class Linear extends RawExecutionCode implements Constants {
     private String getLabel() {
 	return LABEL_PREFIX+uin;
     }
-
+    
+    public JMethodDeclaration getPrimePumpMethod() {
+	return null;
+    }
+    
     public JMethodDeclaration getInitStageMethod() {
 	//return linearInit;
 

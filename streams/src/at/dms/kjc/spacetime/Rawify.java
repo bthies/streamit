@@ -70,15 +70,7 @@ public class Rawify
 					 trace, filterInfo, init, primepump, tile, rawChip);
 		    //used for debugging, nothing more
 		    tile.addFilterTrace(init, false, filterNode);
-		    //generate the init/primepump code for the trace
-		    if (primepump) {
-			tile.getComputeCode().addTraceInit(filterInfo);
-		    }
-		    else if (!primepump && !init) {
-			//generate the compute code for the trace and place it in
-			//the tile
-			tile.getComputeCode().addTraceSteady(filterInfo);
-		    }
+		    addComputeCode(init, primepump, tile, filterInfo);
 		}
 		else if (traceNode.isInputTrace() && !KjcOptions.magicdram) {
 		    assert StreamingDram.differentDRAMs((InputTraceNode)traceNode) :

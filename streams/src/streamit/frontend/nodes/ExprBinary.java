@@ -1,14 +1,28 @@
 /*
- * ExprBinary.java: A binary expression
- * David Maze <dmaze@cag.lcs.mit.edu>
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
  */
 
 package streamit.frontend.nodes;
 
 /**
- * An ExprBinary is a binary expression.  It has two child expressions,
- * which must be non-null, and an operator.  The child expressions are
- * ordered (because a-b is different from b-a).
+ * A binary expression.  This has two child expressions, which must be
+ * non-null, and an operator.  The child expressions are ordered
+ * (because a-b is different from b-a).
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: ExprBinary.java,v 1.5 2003-10-09 19:50:59 dmaze Exp $
  */
 public class ExprBinary extends Expression
 {
@@ -34,9 +48,16 @@ public class ExprBinary extends Expression
     private int op;
     private Expression left, right;
     
-    /** Create a new binary expression given the operation and the
+    /**
+     * Create a new binary expression given the operation and the
      * left and right child nodes.  Requires that op is a valid
-     * operator code and that left and right are non-null. */
+     * operator code and that left and right are non-null. 
+     *
+     * @param context  file and line number this expression corresponds to
+     * @param op       BINOP_ operator combining the two expressions
+     * @param left     expression on the left of the operator
+     * @param right    expression on the right of the operator
+     */
     public ExprBinary(FEContext context,
                       int op, Expression left, Expression right)
     {
@@ -46,13 +67,25 @@ public class ExprBinary extends Expression
         this.right = right;
     }
 
-    /** Returns the operator of this. */
+    /**
+     * Returns the operator of this.
+     *
+     * @return BINOP_ operator code for this expression
+     */
     public int getOp() { return op; }   
 
-    /** Returns the left child expression of this. */
+    /**
+     * Returns the left child expression of this.
+     *
+     * @return expression on the left-hand side of the operator
+     */
     public Expression getLeft() { return left; }
 
-    /** Returns the right child expression of this. */
+    /**
+     * Returns the right child expression of this.
+     *
+     * @return expression on the right-hand side of the operator
+     */
     public Expression getRight() { return right; }
 
     /** Accept a front-end visitor. */

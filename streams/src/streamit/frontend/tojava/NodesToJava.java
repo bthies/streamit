@@ -1,3 +1,19 @@
+/*
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
 package streamit.frontend.tojava;
 
 import streamit.frontend.nodes.*;
@@ -11,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.75 2003-10-08 21:45:53 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.76 2003-10-09 19:51:02 dmaze Exp $
  */
 public class NodesToJava implements FEVisitor
 {

@@ -1,7 +1,17 @@
 /*
- * InitMunger.java: base class for visitors that add init statements
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: InitMunger.java,v 1.2 2002-09-23 16:05:11 dmaze Exp $
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
  */
 
 package streamit.frontend.tojava;
@@ -16,6 +26,12 @@ import java.util.ArrayList;
 
 /**
  * Base class for visitors that add statements to classes' init functions.
+ * This provides functions to locate an init function in a set of
+ * functions, and to add statements to the start of a stream object's
+ * init function.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: InitMunger.java,v 1.3 2003-10-09 19:51:02 dmaze Exp $
  */
 abstract public class InitMunger extends FEReplacer
 {

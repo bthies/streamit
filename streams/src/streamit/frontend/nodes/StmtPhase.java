@@ -1,7 +1,17 @@
 /*
- * StmtPhase.java: a statement that invokes a work function phase
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StmtPhase.java,v 1.1 2003-01-10 18:22:01 dmaze Exp $
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
  */
 
 package streamit.frontend.nodes;
@@ -13,6 +23,9 @@ package streamit.frontend.nodes;
  * is that this should invoke the specified phased function and then
  * suspend the work function, though this may not be the most accurate
  * description or anything even close to an actual implementation.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: StmtPhase.java,v 1.2 2003-10-09 19:51:00 dmaze Exp $
  */
 public class StmtPhase extends Statement
 {

@@ -1,7 +1,17 @@
 /*
- * GetExprType.java: get the type of an expression
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: GetExprType.java,v 1.10 2003-10-06 20:02:11 dmaze Exp $
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
  */
 
 package streamit.frontend.nodes;
@@ -9,9 +19,12 @@ package streamit.frontend.nodes;
 import java.util.List;
 
 /**
- * Visitor that returns the type of an expression.  This needs to be created
- * with a symbol table to help resolve the types of variables.  All of the
- * visitor methods return Types.
+ * Visitor that returns the type of an expression.  This needs to be
+ * created with a symbol table to help resolve the types of variables.
+ * All of the visitor methods return <code>Type</code>s.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: GetExprType.java,v 1.11 2003-10-09 19:50:59 dmaze Exp $
  */
 public class GetExprType extends FENullVisitor
 {

@@ -1,7 +1,17 @@
 /*
- * ExprPop.java: a StreamIt pop expression
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprPop.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
  */
 
 package streamit.frontend.nodes;
@@ -10,10 +20,17 @@ package streamit.frontend.nodes;
  * A StreamIt pop expression.  This pops a single item off of the current
  * filter's input tape; its type is the input type of the filter.  This
  * expression has no internal state.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: ExprPop.java,v 1.3 2003-10-09 19:50:59 dmaze Exp $
  */
 public class ExprPop extends Expression
 {
-    /** Creates a new pop expression. */
+    /**
+     * Creates a new pop expression.
+     *
+     * @param context  file and line number of the expression
+     */
     public ExprPop(FEContext context)
     {
         super(context);

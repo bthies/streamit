@@ -1,19 +1,32 @@
 /*
- * StmtFor.java: a C-style for loop
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StmtFor.java,v 1.2 2002-09-06 16:28:43 dmaze Exp $
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
  */
 
 package streamit.frontend.nodes;
 
 /**
- * StmtFor is a C-style for loop.  The loop contains an initialization
- * statement, a loop condition, and an increment statement.  On entry,
- * the initialization statement is executed, and then the condition is
- * evaluated.  If the condition is true, the body is executed, followed
- * by the increment statement.  This loops until the condition returns
- * false.  Continue statements cause control flow to go to the increment
- * statement.
+ * A C-style for loop.  The loop contains an initialization statement,
+ * a loop condition, and an increment statement.  On entry, the
+ * initialization statement is executed, and then the condition is
+ * evaluated.  If the condition is true, the body is executed,
+ * followed by the increment statement.  This loops until the
+ * condition returns false.  Continue statements cause control flow to
+ * go to the increment statement.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: StmtFor.java,v 1.3 2003-10-09 19:51:00 dmaze Exp $
  */
 public class StmtFor extends Statement
 {

@@ -1,17 +1,31 @@
 /*
- * FENullVisitor.java: visitor implementation that always returns null
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FENullVisitor.java,v 1.7 2003-07-07 18:59:49 dmaze Exp $
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
  */
 
 package streamit.frontend.nodes;
 
 /**
- * FENullVisitor is an implementation of FEVisitor that always returns
- * null.  It is intended to be a base class for other visitors that
- * only visit a subset of the node tree, and don't want to return
- * objects of the same type as the parameter.  FEReplacer is a better
- * default for transformations on the tree.
+ * Implementation of FEVisitor that always returns <code>null</code>.
+ * This is intended to be a base class for other visitors that only
+ * visit a subset of the node tree, and don't want to return objects
+ * of the same type as the parameter.  {@link
+ * streamit.frontend.nodes.FEReplacer} is a better default for
+ * transformations on the tree.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: FENullVisitor.java,v 1.8 2003-10-09 19:50:59 dmaze Exp $
  */
 public class FENullVisitor implements FEVisitor
 {

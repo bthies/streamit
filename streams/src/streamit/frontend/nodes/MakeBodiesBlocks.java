@@ -1,7 +1,17 @@
 /*
- * MakeBodiesBlocks.java: force the bodies of compound statements into blocks
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: MakeBodiesBlocks.java,v 1.2 2003-01-09 19:41:53 dmaze Exp $
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
  */
 
 package streamit.frontend.nodes;
@@ -14,6 +24,9 @@ import java.util.List;
  * with blocks.  This obeys the same conventions as FEReplacer.
  * Compound statements, including functions, have their bodies replaced
  * with StmtBlocks if they are a different sort of statement.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: MakeBodiesBlocks.java,v 1.3 2003-10-09 19:50:59 dmaze Exp $
  */
 public class MakeBodiesBlocks extends FEReplacer
 {

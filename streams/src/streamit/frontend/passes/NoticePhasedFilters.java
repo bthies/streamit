@@ -1,7 +1,17 @@
 /*
- * NoticePhasedFilters.java: convert filters to phased ones where appropriate
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NoticePhasedFilters.java,v 1.4 2003-02-21 15:34:57 dmaze Exp $
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
  */
 
 package streamit.frontend.passes;
@@ -14,9 +24,13 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Front-end visitor pass that replaces StreamSpecs corresponding to
- * filters with StreamSpecs corresponding to phased filters, but only
- * if the work function has no declared I/O rates.
+ * Convert filters to phased filters where appropriate.  This pass
+ * replaces StreamSpecs corresponding to filters with StreamSpecs
+ * corresponding to phased filters, but only if the work function has
+ * no declared I/O rates.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: NoticePhasedFilters.java,v 1.5 2003-10-09 19:51:01 dmaze Exp $
  */
 public class NoticePhasedFilters extends FEReplacer
 {

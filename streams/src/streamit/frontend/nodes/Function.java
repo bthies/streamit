@@ -1,7 +1,17 @@
 /*
- * Function.java: a generic function declaration
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: Function.java,v 1.6 2003-05-13 21:50:32 dmaze Exp $
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
  */
 
 package streamit.frontend.nodes;
@@ -10,11 +20,14 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A Function represents a function declaration in a StreamIt program.
- * This may be an init function, work function, helper function, or
- * message handler.  A function has a class (one of the above), an
- * optional name, an optional parameter list, a return type (void for
- * anything other than helper functions), and a body.
+ * A function declaration in a StreamIt program.  This may be an init
+ * function, work function, helper function, or message handler.  A
+ * function has a class (one of the above), an optional name, an
+ * optional parameter list, a return type (void for anything other
+ * than helper functions), and a body.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: Function.java,v 1.7 2003-10-09 19:50:59 dmaze Exp $
  */
 public class Function extends FENode
 {

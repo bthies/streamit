@@ -1,7 +1,17 @@
 /*
- * ExprPeek.java: a StreamIt peek expression
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprPeek.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
  */
 
 package streamit.frontend.nodes;
@@ -11,19 +21,31 @@ package streamit.frontend.nodes;
  * filter's input tape, without removing it; its type is the input type of
  * the filter.  This expression has a single child expression indicating
  * which item off the tape is to be read.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: ExprPeek.java,v 1.3 2003-10-09 19:50:59 dmaze Exp $
  */
 public class ExprPeek extends Expression
 {
     private Expression expr;
     
-    /** Creates a new pop expression. */
+    /**
+     * Creates a new peek expression.
+     *
+     * @param context  file and line number of the expression
+     * @param expr     position on the tape to peek at
+     */
     public ExprPeek(FEContext context, Expression expr)
     {
         super(context);
         this.expr = expr;
     }
 
-    /** Returns the position on the tape to be read. */
+    /**
+     * Returns the position on the tape to be read.
+     *
+     * @return expression indicating which item is to be read
+     */
     public Expression getExpr()
     {
         return expr;

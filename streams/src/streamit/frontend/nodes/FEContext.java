@@ -1,14 +1,28 @@
 /*
- * FEContext.java: explain where a front-end node came from
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEContext.java,v 1.2 2003-07-07 21:21:06 dmaze Exp $
+ * Copyright 2003 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
  */
 
 package streamit.frontend.nodes;
 
 /**
- * A FEContext provides source locations and other context for a front-end
- * node.  It has a file name, line number, and column number.
+ * A FEContext provides source locations and other context for a
+ * front-end node.  It has a file name, line number, and column
+ * number.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: FEContext.java,v 1.3 2003-10-09 19:50:59 dmaze Exp $
  */
 public class FEContext
 {
@@ -24,7 +38,7 @@ public class FEContext
     /** Create a new context object with a known filename but no
      * line information.
      *
-     * @arg fileName  Name of the file, or null if it is unavailable
+     * @param fileName  Name of the file, or null if it is unavailable
      */
     public FEContext(String fileName)
     {
@@ -34,8 +48,8 @@ public class FEContext
     /** Create a new context object with a known filename and line
      * number but no column number.
      *
-     * @arg fileName  Name of the file, or null if it is unavailable
-     * @arg line      Line number, or -1 if it is unavailable
+     * @param fileName  Name of the file, or null if it is unavailable
+     * @param line      Line number, or -1 if it is unavailable
      */
     public FEContext(String fileName, int line)
     {
@@ -45,9 +59,9 @@ public class FEContext
     /** Create a new context object with known filename, line number,
      * and column number.
      *
-     * @arg fileName  Name of the file, or null if it is unavailable
-     * @arg line      Line number, or -1 if it is unavailable
-     * @arg col       Column number, or -1 if it is unavailable
+     * @param fileName  Name of the file, or null if it is unavailable
+     * @param line      Line number, or -1 if it is unavailable
+     * @param col       Column number, or -1 if it is unavailable
      */
     public FEContext(String fileName, int line, int col)
     {

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.13 2002-11-14 03:31:20 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.14 2002-11-19 22:26:39 aalamb Exp $
  */
 
 prefix Kjc
@@ -134,8 +134,8 @@ longname		"debug"
 	default		"false"
 	help		"Produces debug information (does nothing yet)"
 
-longname		"constprop"
-	shortcut	"c"
+longname		"nofieldprop"
+	shortcut	"L"
 	type		boolean
 	default		"false"
 	help		"Turns on StreamIt Field Prop"

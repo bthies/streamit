@@ -61,8 +61,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    fw.write("/* " + joiner.contents.getName() + "*/\n");
 	    fw.write("#include <raw.h>\n");
 	    fw.write("#include <math.h>\n\n");
-	    fw.write("static inline void static_send_from_mem(void *val) instr_one_input(\"lw $csto,0(%0)\");\n");
-	    fw.write("static inline void static_receive_to_mem(void *val) instr_one_input(\"sw $csti,0(%0)\");\n");
+	    //	    fw.write("static inline void static_send_from_mem(void *val) instr_one_input(\"lw $csto,0(%0)\");\n");
+	    //fw.write("static inline void static_receive_to_mem(void *val) instr_one_input(\"sw $csti,0(%0)\");\n");
 
 
 	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)

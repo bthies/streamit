@@ -151,8 +151,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("#include <math.h>\n\n");
 		
 	//print the inline asm 
-        print("static inline void static_send_from_mem(void *val) instr_one_input(\"lw $csto,0(%0)\");\n");
-        print("static inline void static_receive_to_mem(void *val) instr_one_input(\"sw $csti,0(%0)\");\n");
+	//        print("static inline void static_send_from_mem(void *val) instr_one_input(\"lw $csto,0(%0)\");\n");
+	//        print("static inline void static_receive_to_mem(void *val) instr_one_input(\"sw $csti,0(%0)\");\n");
 
 	//print the extern for the function to init the 
 	//switch
@@ -913,14 +913,17 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
           }
         */
 
+	//generate the inline asm instruction to execute the 
+	//receive if this is a receive instruction
+	if (ident.equals(RawExecutionCode.receiveMethod)) {
+	    print ("/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (");
+	    visitArgs(args, 0);
+	    print("));");
+	    return;  
+       }
+
         print(ident);
         print("(");
-
-	//if we are visiting a static network receive 
-	//add the void* cast and the address expression
-	//see RawExectionCode
-	if (ident.equals(RawExecutionCode.receiveMethod))
-	    print("(void*)&");
 
         int i = 0;
         /* Ignore prefix, since it's just going to be a Java class name.

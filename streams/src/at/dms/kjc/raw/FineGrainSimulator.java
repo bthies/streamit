@@ -104,7 +104,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	Iterator it = exeCounts.keySet().iterator();
 	while(it.hasNext()) {
 	    FlatNode node = (FlatNode)it.next();
-	    if (Layout.getTile(node) != null) {
+	    if (Layout.isAssigned(node)) {
 		if (((Integer)exeCounts.get(node)).intValue() != 0) {
 		    System.out.println(node.contents.getName() + " has " + 
 				       exeCounts.get(node) + " executions remaining!!!!");
@@ -547,6 +547,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 		counters.incrementBufferCount(node);
 		LinkedList list = new LinkedList();
 		list.add(node);
+		//if previous == identity 
 		return list;
 	    }
 	    else {

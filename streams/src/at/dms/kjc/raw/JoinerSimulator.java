@@ -74,6 +74,11 @@ public class JoinerSimulator
 				     JoinerCounter counters,
 				     String buf) 
     {
+	/*if (node.contents instanceof SIRSplitter ||
+	    node.contents instanceof SIRIdentity) {
+	    simulateDataItem(node.incoming[0], schedNode, counters, 
+			     "0" + buf);
+			     } else */
 	if (node.contents instanceof SIRFilter || node.contents instanceof SIRSplitter) {
 	    //fill in the joiner schedule node
 	    schedNode.type = JoinerScheduleNode.RECEIVE;

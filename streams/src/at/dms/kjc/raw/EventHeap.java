@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 import at.dms.kjc.flatgraph.FlatNode;
 import java.util.Iterator;
+import java.util.HashMap;
 
 /**
  * The class represents the heap of scheduled events for the work
@@ -12,10 +13,12 @@ import java.util.Iterator;
 public class EventHeap 
 {
     private LinkedList eventHeap;
-    
+    private HashMap itemIDs;
+
     public EventHeap() 
     {
 	eventHeap = new LinkedList();
+	itemIDs = new HashMap();
     }
 
     public boolean isEmpty() 
@@ -26,21 +29,31 @@ public class EventHeap
     //add to the event queue in the correct order...
     public void addEvent(SimulatorEvent event) 
     {
-	for (int i = 0; i < eventHeap.size(); i++) {
-	    if (((SimulatorEvent)eventHeap.get(i)).time > event.time) {
-		eventHeap.add(i, event);
-		return;
+	int pos = -1;
+	int i;
+	
+	for (i = 0; i < eventHeap.size(); i++) {
+	    SimulatorEvent current = (SimulatorEvent)eventHeap.get(i);
+	    if (current.time > event.time) {
+		pos = i;
+		break;
 	    }
 	}
-	//if we get here, add it to the end
-	eventHeap.addLast(event);
+	
+	for (int j = i; i < eventHeap.size(); i++) {
+	    SimulatorEvent current = (SimulatorEvent)eventHeap.get(i);
+	    if (current.node == event.node && 
+		current.itemID < event.itemID) {
+		pos = i + 1;
+	    } 
+	}
+	
+	if (pos != -1)
+	    eventHeap.add(pos, event);
+	else	//if we get here, add it to the end
+	    eventHeap.addLast(event);
     }
     
-    public void addEvent(String type, int time, FlatNode node, List dests, boolean isLast)
-    {
-	SimulatorEvent event = new SimulatorEvent(type, time, node, dests, isLast);
-	addEvent(event);
-    }
     
     public SimulatorEvent getNextEvent() 
     {
@@ -59,5 +72,17 @@ public class EventHeap
     {
 	return eventHeap.iterator();
     }
-    
+
+    public int getItemId(FlatNode node) 
+    {
+	if (!itemIDs.containsKey(node)) {
+	    itemIDs.put(node, new Integer(0));
+	    return 0;
+	}
+	else {
+	    int old = ((Integer)itemIDs.get(node)).intValue();
+	    itemIDs.put(node, new Integer(old + 1));
+	    return old;
+	}
+    }    
 }

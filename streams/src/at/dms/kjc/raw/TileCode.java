@@ -73,6 +73,18 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		fw.write("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
 	    }
 
+	    if (RawBackend.FILTER_DEBUG_MODE) {
+		fw.write("void static_send_print(");
+		fw.write(Util.getJoinerType(joiner) + " f) {\n");
+		if (Util.getJoinerType(joiner).isFloatingPoint()) 
+		    fw.write("print_float(f);\n");
+		else 
+		    fw.write("print_int(f);\n");
+		fw.write("static_send(f);\n");
+		fw.write("}\n\n");
+	    }
+	
+	    
 	    //if there are structures in the code, include
 	    //the structure definition header files
 	    //this must be included after the above declarations 

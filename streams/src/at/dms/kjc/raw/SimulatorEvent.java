@@ -14,13 +14,16 @@ public class SimulatorEvent
     public FlatNode node;
     public List dests;
     public boolean isLast;
+    public int itemID;
     
-    public SimulatorEvent(String type, int time, FlatNode node, List dests, boolean isLast) 
+    public SimulatorEvent(String type, int time, FlatNode node, List dests, int itemID,
+			  boolean isLast) 
     {
 	this.type = type;
 	this.time = time;
 	this.node = node;
 	this.dests = dests;
 	this.isLast = isLast;
+	this.itemID = itemID;
     }
 }

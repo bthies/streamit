@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime;
 import at.dms.util.Utils;
 import at.dms.kjc.flatgraph2.*;
 import java.util.LinkedList;
+import java.util.Iterator;
 
 public class MagicDramLoop extends MagicDramInstruction 
 {
@@ -33,6 +34,16 @@ public class MagicDramLoop extends MagicDramInstruction
 
     public String toC() 
     {
-	return "";
+	StringBuffer sb = new StringBuffer();
+	sb.append("for (index = 0; index < " + tripCount + "; index++) {\n");
+	Iterator it = ins.iterator();
+	while (it.hasNext()) {
+	    MagicDramInstruction in = (MagicDramInstruction)it.next();
+	    if (in instanceof MagicDramLoop)
+		Utils.fail("Cannot have nested loop in magic dram loop");
+	    sb.append(in.toC());
+	}
+	sb.append("}\n");
+	return sb.toString();
     }
 }

@@ -119,6 +119,7 @@ public class MagicDram extends IODevice
 	    fw.write("fn dev_magic_dram" + port + "_calc(port)\n");
 	    fw.write("{\n");
 	    fw.write("\tlocal temp = 0;\n");
+	    fw.write("\tlocal index = 0;\n");
 	    
 	    Iterator inds = indices.iterator();
 	    while (inds.hasNext()) {

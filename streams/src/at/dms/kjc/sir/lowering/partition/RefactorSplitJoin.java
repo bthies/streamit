@@ -16,8 +16,10 @@ public class RefactorSplitJoin {
      */
     public static void addHierarchicalChildren(SIRSplitJoin sj, PartitionGroup partition) {
 	// get copy of children and params
-	List children = sj.getChildren();
+	List children = sj.getParallelStreams();
 	List params = sj.getParams();
+	// clear old children
+	sj.clear();
 	
 	// the new and old weights for the splitter and joiner
 	int[] oldSplit=sj.getSplitter().getWeights();

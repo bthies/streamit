@@ -1,9 +1,10 @@
 /*
  * HelloWorld6.c: translated "hello, world" StreaMIT example
- * $Id: HelloWorld6.c,v 1.6 2001-09-27 20:30:10 dmaze Exp $
+ * $Id: HelloWorld6.c,v 1.7 2001-09-28 20:18:24 karczma Exp $
  */
 
 #include "streamit.h"
+#include <stdio.h>
 #include <stdlib.h>
 
 /* dzm: I expect that the code will be output in roughly this order,
@@ -75,12 +76,12 @@ void HelloWorld6_init(HelloWorld6_data *d, void *p)
   register_child(d->c, d->child1->c);
   HelloWorld6_1_init(d->child1, d);
 
-  create_tape(d->child1->c, d->child2->c, sizeof(int), 1);
-
   d->child2 = malloc(sizeof(HelloWorld6_2_data));
   d->child2->c = create_context(d->child2);
   register_child(d->c, d->child2->c);
   HelloWorld6_2_init(d->child2, d);
+
+  create_tape(d->child1->c, d->child2->c, sizeof(int), 1);
 }
 
 void HelloWorld6_work(HelloWorld6_data *d, tape *in_tape, tape *out_tape)

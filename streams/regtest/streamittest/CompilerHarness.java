@@ -1,7 +1,7 @@
 /**
  * Provides Java interface to the main StreamIT compiler, allowing
  * for easy regression testing.
- * $Id: CompilerHarness.java,v 1.11 2002-11-18 20:51:44 dmaze Exp $
+ * $Id: CompilerHarness.java,v 1.12 2003-06-27 22:03:10 dmaze Exp $
  **/
 package streamittest;
 
@@ -55,7 +55,7 @@ public class CompilerHarness extends Harness {
 
 	try {
 	    // execute natively
-	    converterResult = executeNative(cmdLineArgs);
+	    converterResult = executeNative(cmdLineArgs, root);
 	} catch (Exception e) {
 	    ResultPrinter.printError("Caught exception in syntax converter : " + e.getMessage());
 	    e.printStackTrace();
@@ -101,7 +101,8 @@ public class CompilerHarness extends Harness {
 	    FileOutputStream fileOut = new FileOutputStream(outFileName);
 	    
 	    // execute natively
-	    compilerResult = executeNative(cmdLineArgs, fileOut);
+	    compilerResult = executeNative(cmdLineArgs, fileOut,
+                                           new File(root));
 
 	    // close file descriptor
 	    fileOut.close();
@@ -130,7 +131,7 @@ public class CompilerHarness extends Harness {
 	try {
 
 	    gccResult = executeNative(getGccCommandArray(sourceFileName,
-							 exeFileName));
+							 exeFileName), null);
 	} catch (Exception e) {
 	    ResultPrinter.printError("gcc execution caused exception (?): " + e);
 	    e.printStackTrace();
@@ -151,7 +152,8 @@ public class CompilerHarness extends Harness {
 	// try and compile the source file with make
 	try {
 	    rawResult = executeNative(getRawCommandArray(rootPath,
-							 makefileName));
+							 makefileName),
+                                      rootPath);
 	} catch (Exception e) {
 	    ResultPrinter.printError("raw compliation caused exception (?): " + e);
 	    e.printStackTrace();

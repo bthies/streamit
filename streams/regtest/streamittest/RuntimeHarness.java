@@ -40,7 +40,7 @@ public class RuntimeHarness extends Harness {
 
 	    // execute streamit program
 	    result =  executeNative(getUniRuntimeCommandArray(program),
-				    fout);
+				    fout, null);
 
 	    // close the output stream
 	    fout.close();
@@ -72,7 +72,7 @@ public class RuntimeHarness extends Harness {
 
 	    // execute raw program on simulator
 	    result =  executeNative(getRawRuntimeCommandArray(path, makefileName),
-				    fout);
+				    fout, new File(path));
 
 	    // close the output stream
 	    fout.close();
@@ -95,7 +95,7 @@ public class RuntimeHarness extends Harness {
      **/
     static boolean uniCompare(String file1, String file2) {
 	try {
-	    return executeNative(getUniCompareCommandArray(file1, file2));
+	    return executeNative(getUniCompareCommandArray(file1, file2), null);
 	} catch (Exception e) {
 	    ResultPrinter.printError("Caught an exception while comparing output: " +
 				     e.getMessage());
@@ -121,7 +121,7 @@ public class RuntimeHarness extends Harness {
 	    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 	    
 	    boolean result = executeNative(getRawCompareCommandArray(rawOutputFile, expectedFile),
-					   outStream);
+					   outStream, null);
 	    return result;
 	} catch (Exception e) {
 	    ResultPrinter.printError("Caught an exception while comparing raw output: " +
@@ -136,7 +136,7 @@ public class RuntimeHarness extends Harness {
      **/
     static boolean make(String root, String target) {
 	try {
-	    return executeNative(getMakeCommandArray(root, target));
+	    return executeNative(getMakeCommandArray(root, target), root);
 	} catch (Exception e) {
 	    ResultPrinter.printError("Caught an exception while running make: " +
 				     e.getMessage());

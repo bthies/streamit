@@ -34,8 +34,10 @@ public class Harness {
     }
 
     /** run command natively, ignoring stdout (eg for gcc, make) **/
-    public static boolean executeNative(String[] cmdArray) throws Exception {
-	return executeNative(cmdArray, null);
+    public static boolean executeNative(String[] cmdArray, String cwd) throws Exception {
+        File cwdf = null;
+        if (cwd != null) cwdf = new File(cwd);
+	return executeNative(cmdArray, null, cwdf);
     }
 
     /**
@@ -46,18 +48,19 @@ public class Harness {
      *
      * Writes standard output from program to outStream.
      **/
-    public static boolean executeNative(String[] cmdArray, OutputStream outStream) throws Exception {
+    public static boolean executeNative(String[] cmdArray, OutputStream outStream, File cwd) throws Exception {
 	// add a hook to the command array that will limit the execution time
 	cmdArray = addTimeLimit(cmdArray);
 	
 	// start the process executing
-	Process jProcess = Runtime.getRuntime().exec(cmdArray);
+	Process jProcess = Runtime.getRuntime().exec(cmdArray, null, cwd);
 	
 	// get hooks into the output and error streams
 	InputStreamReader outReader=new InputStreamReader(jProcess.getInputStream());
 	BufferedReader jOutStream = new BufferedReader(outReader);
 	BufferedReader jErrorStream =  new BufferedReader(new InputStreamReader(jProcess.getErrorStream()));
 
+        System.out.println("In directory: " + cwd.getPath());
 	System.out.println("Starting:\n" + flattenCommandArray(cmdArray));
 
 	// block until the child process is done (time limiting is done outside the JVM).
@@ -126,11 +129,30 @@ public class Harness {
 	String[] cmdArray = new String[3];
 	// run via csh (following other examples)
 	try {
-	    cmdArray[0] = "csh";
-	    cmdArray[1] = "-c";
-	    cmdArray[2] = ("echo \\\n\\\n" + label + "\\\n\\\n >> " + dstFile + "; " + // append label
-			   "cat " + srcFile + " >> " + dstFile);               // append srcFile
-	    return executeNative(cmdArray);
+            FileOutputStream fos = new FileOutputStream(dstFile, true);
+            OutputStreamWriter osw = new OutputStreamWriter(fos);
+            BufferedWriter bw = new BufferedWriter(osw);
+            PrintWriter pw = new PrintWriter(bw);
+            
+            pw.println();
+            pw.println();
+            pw.println(label);
+            pw.println();
+            
+            FileInputStream fis = new FileInputStream(srcFile);
+            InputStreamReader isr = new InputStreamReader(fis);
+            BufferedReader br = new BufferedReader(isr);
+            
+            while (true) {
+                String line = br.readLine();
+                if (line == null) break;
+                pw.println(line);
+            }
+
+            // The end.
+            br.close();
+            pw.close();
+            return true;
 	} catch (Exception e) {
 	    ResultPrinter.printError("appending file caused exception (?): " + e);
 	    e.printStackTrace();
@@ -142,18 +164,7 @@ public class Harness {
      * Deletes <filename>.
      */
     public static boolean deleteFile(String filename) {
-	String[] cmdArray = new String[3];
-	// run via csh (following other examples)
-	try {
-	    cmdArray[0] = "csh";
-	    cmdArray[1] = "-c";
-	    cmdArray[2] = "rm -f " + filename;
-	    return executeNative(cmdArray);
-	} catch (Exception e) {
-	    ResultPrinter.printError("deleting " + filename + " caused exception (?): " + e);
-	    e.printStackTrace();
-	    return false;
-	}
+        return new File(filename).delete();
     }
 
     /**
@@ -181,7 +192,7 @@ public class Harness {
 	try {
 	    // we are going to use ls to expand the filenames for us
 	    ByteArrayOutputStream lsBuff = new ByteArrayOutputStream();
-	    executeNative(getLsCommandOpts(fileName), lsBuff);
+	    executeNative(getLsCommandOpts(fileName), lsBuff, null);
 	    
 	    // parse ls output:
 	    StringTokenizer st = new StringTokenizer(lsBuff.toString(), // output from ls

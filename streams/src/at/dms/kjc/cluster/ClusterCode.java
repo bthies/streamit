@@ -270,7 +270,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("\n");
 
 	    p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
-	    p.print("  tmp = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+	    p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+	    p.print("    tmp = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;\n");
+	    p.print("    #else\n");
+	    p.print("    tmp = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+	    p.print("    #endif\n");
 	    p.print("  #else\n");
 
 	    if (ClusterFusion.fusedWith(node).contains(source)) {
@@ -290,7 +294,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		_d = s.getDest();
 
 		p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
-		p.print("  BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp;HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+
+		p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+		p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp;HEAD_"+_s+"_"+_d+"++;\n");
+		p.print("    #else\n");
+		p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp;HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+		p.print("    #endif\n");
+
 		p.print("  #else\n");
 		p.print("  "+s.producer_name()+".push(tmp);\n");
 		p.print("  #endif\n");
@@ -311,7 +321,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
 
 	    for (int y = 0; y < sum; y++) {
-		p.print("  tmp["+y+"] = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+
+		p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+		p.print("    tmp["+y+"] = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;\n");
+		p.print("    #else\n");
+		p.print("    tmp["+y+"] = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+		p.print("    #endif\n");
+
 	    }
 
 	    p.print("  #else\n");
@@ -337,7 +353,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
 
 		for (int y = 0; y < num; y++) {
-		    p.print("  BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp["+(offs+y)+"];HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+
+		    p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+		    p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp["+(offs+y)+"];HEAD_"+_s+"_"+_d+"++;\n");
+		    p.print("    #else\n");
+		    p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp["+(offs+y)+"];HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+		    p.print("    #endif\n");
+
 		}
 
 		p.print("  #else\n");
@@ -603,7 +625,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
 
 		    for (int y = 0; y < num; y++) {
-			p.print("  tmp["+(offs+y)+"] = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+
+			p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+			p.print("    tmp["+(offs+y)+"] = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;\n");
+			p.print("    #else\n");
+			p.print("    tmp["+(offs+y)+"] = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+			p.print("    #endif\n");
+			
 		    }
 
 		    p.print("  #else\n");
@@ -624,7 +652,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
 
 		for (int y = 0; y < sum; y++) {
-		    p.print("  BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp["+y+"];HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+
+		    p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+		    p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp["+y+"];HEAD_"+_s+"_"+_d+"++;\n");
+		    p.print("    #else\n");
+		    p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp["+y+"];HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+		    p.print("    #endif\n");
+
 		}
 
 		p.print("  #else\n");

@@ -393,9 +393,11 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	    print("  inline "+input_type.toString()+" __pop__"+selfID+"() {\n");
 
-	    print("    "+input_type.toString()+" res=BUFFER_"+s+"_"+d+"[TAIL_"+s+"_"+d+"];");
-	    print("TAIL_"+s+"_"+d+"++;");
-	    print("TAIL_"+s+"_"+d+"&=__BUF_SIZE_MASK_"+s+"_"+d+";\n");
+	    print("    "+input_type.toString()+" res=BUFFER_"+s+"_"+d+"[TAIL_"+s+"_"+d+"];\n");
+	    print("    TAIL_"+s+"_"+d+"++;\n");
+	    print("    #ifndef __NOPEEK_"+s+"_"+d+"\n");
+	    print("    TAIL_"+s+"_"+d+"&=__BUF_SIZE_MASK_"+s+"_"+d+";\n");
+	    print("    #endif\n");
 	    print("    return res;\n");
 
 	    print("  }\n");
@@ -404,7 +406,12 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    // peek from fusion buffer
 
 	    print("  inline "+input_type.toString()+" __peek__"+selfID+"(int offs) {\n");
-	    print("    return BUFFER_"+s+"_"+d+"[(TAIL_"+s+"_"+d+"+offs)&__BUF_SIZE_MASK_"+s+"_"+d+"];");
+	    print("    #ifdef __NOPEEK_"+s+"_"+d+"\n");
+	    print("    return BUFFER_"+s+"_"+d+"[TAIL_"+s+"_"+d+"+offs];\n");
+	    print("    #else\n");
+	    print("    return BUFFER_"+s+"_"+d+"[(TAIL_"+s+"_"+d+"+offs)&__BUF_SIZE_MASK_"+s+"_"+d+"];\n");
+	    print("    #endif\n");
+
 	    print("  }\n");
 	    print("\n");
 
@@ -466,7 +473,11 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	    print("  inline void __push__"+selfID+"("+output_type.toString()+" data) {\n");
 
-	    print("    BUFFER_"+s+"_"+d+"[HEAD_"+s+"_"+d+"]=data;HEAD_"+s+"_"+d+"++;HEAD_"+s+"_"+d+"&=__BUF_SIZE_MASK_"+s+"_"+d+";\n");
+	    print("    BUFFER_"+s+"_"+d+"[HEAD_"+s+"_"+d+"]=data;\n");
+	    print("    HEAD_"+s+"_"+d+"++;\n");
+	    print("    #ifndef __NOPEEK_"+s+"_"+d+"\n");
+	    print("    HEAD_"+s+"_"+d+"&=__BUF_SIZE_MASK_"+s+"_"+d+";\n");
+	    print("    #endif\n");
 
 	    print("  }\n");
 	    print("\n");

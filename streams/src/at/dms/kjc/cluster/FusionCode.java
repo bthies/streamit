@@ -41,7 +41,55 @@ class FusionCode {
 		int dst = stream.getDest();
 
 		p.print("#define __FUSED_"+src+"_"+dst+"\n");
+
+		SIROperator src_oper = NodeEnumerator.getOperator(src);
+		SIROperator dst_oper = NodeEnumerator.getOperator(dst);
+
+		boolean no_peek = false;
+
+		if (dst_oper instanceof SIRJoiner ||
+		    dst_oper instanceof SIRSplitter) { no_peek = true; }
+		
+		if (dst_oper instanceof SIRFilter) {
+		    SIRFilter f = (SIRFilter)dst_oper;
+		    if (f.getPeekInt() == f.getPopInt()) { no_peek = true; }
+		}
+
+		if (no_peek) p.print("#define __NOPEEK_"+src+"_"+dst+"\n");
+
 		p.print("#define __BUF_SIZE_MASK_"+src+"_"+dst+" 8191\n");
+
+		if (src_oper instanceof SIRFilter) {
+		    SIRFilter f = (SIRFilter)src_oper;
+		    Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(src));
+		    int steady_int = 0;
+		    if (steady != null) { steady_int = (steady).intValue(); }
+		    int push_n = f.getPushInt();
+		    int total = (steady_int * push_n);
+		    p.print("//source pushes: "+steady_int+" * "+push_n+" = ("+total+" items)\n");
+		}
+
+		if (dst_oper instanceof SIRFilter) {
+		    SIRFilter f = (SIRFilter)dst_oper;
+		    Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
+		    int steady_int = 0;
+		    if (steady != null) { steady_int = (steady).intValue(); }
+
+		    int pop_n = f.getPopInt();
+		    int peek_n = f.getPeekInt();
+
+		    p.print("//destination pops: "+steady_int+" * "+pop_n+" ");		    
+		    if (peek_n > pop_n) {
+			p.print("peeks: "+(peek_n-pop_n)+" ");		    
+		    }
+
+		    int total = (steady_int * pop_n) + (peek_n - pop_n);
+
+		    p.print(" = ("+total+" items)\n");
+		}
+
+		p.print("\n");
+
 	    }
 	}
 
@@ -248,6 +296,17 @@ class FusionCode {
 		if (steady != null) steady_int = (steady).intValue();
 
 		if (steady_int > 0) {
+
+		    Vector out = RegisterStreams.getNodeOutStreams(oper);
+		    for (int i = 0; i < out.size(); i++) {
+			NetStream s = (NetStream)out.elementAt(i);
+			int _s = s.getSource();
+			int _d = s.getDest();
+			p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+			p.print("    HEAD_"+_s+"_"+_d+" = 0; TAIL_"+_s+"_"+_d+" = 0;\n");
+			p.print("    #endif\n");
+		    }
+
 
 		    p.print("    for (int i=0; i<("+steady_int+"*__MULT); i++) { "+get_work_function(oper)+"(); }");
 

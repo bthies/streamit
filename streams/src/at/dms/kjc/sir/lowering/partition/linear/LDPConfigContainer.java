@@ -112,7 +112,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	}
 
 	case LinearPartitioner.COLLAPSE_FREQ: {
-	    if (!lfa.hasLinearRepresentation(str) || !LEETFrequencyReplacer.canReplace(str, lfa)) {
+	    if (!lfa.hasLinearRepresentation(str) || !LEETFrequencyReplacer.canReplace(str, lfa) || KjcOptions.nolinearcollapse) {
 		cost = Integer.MAX_VALUE;
 	    } else {
 		// otherwise, return freq costn
@@ -124,7 +124,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 
 	case LinearPartitioner.COLLAPSE_LINEAR: {
 	    // if we don't have a linear node, return infinity
-	    if (!lfa.hasLinearRepresentation(str)) {
+	    if (!lfa.hasLinearRepresentation(str) || KjcOptions.nolinearcollapse) {
 		cost = Integer.MAX_VALUE;
 	    } else {
 		// otherwise, return cost of collapsed node

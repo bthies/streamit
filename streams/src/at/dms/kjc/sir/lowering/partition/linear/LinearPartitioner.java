@@ -23,7 +23,7 @@ public class LinearPartitioner {
      * The threshold for the number of multiplies in a node before we
      * stop unrolling and generate a matrix multiply with loops.
      */
-    public static final int MAX_MULT_TO_UNROLL = 512;
+    public static final int MAX_MULT_TO_UNROLL = 256;
 
     /**
      * Whether or not we're trying to cut splitjoins horizontally and

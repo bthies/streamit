@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.41 2003-10-17 21:15:18 dmaze Exp $
+# $Id: release.sh,v 1.42 2003-10-17 21:54:10 thies Exp $
 #
 
 # Interesting/configurable variables:
@@ -79,6 +79,11 @@ for f in $INFILES; do
     $WORKING/streams/misc/make-dot-in.pl "$WORKING/streams/$f"
   fi
 done
+
+# Don't release CPLEX jar file or anything that depends on it
+rm -rf $WORKING/3rdparty/cplex/
+rm -rf $WORKING/streams/src/at/dms/kjc/linprog/
+rm -rf $WORKING/streams/src/at/dms/kjc/sir/lowering/partition/ILPPartitioner.java
 
 # Some benchmarks we can't (or won't) export; trim those here.
 rm -rf $WORKING/streams/apps/benchmarks/beamformer/c

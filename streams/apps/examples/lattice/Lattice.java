@@ -83,7 +83,7 @@ public void work(){
  }
 }
 
-class Counter extends Filter {   // this class is the last stage of a lattice filter
+class Counter extends Filter {
     float i;
 public void init(){ 
    setOutput(Float.TYPE);

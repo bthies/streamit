@@ -26,13 +26,18 @@ public class RawBackend {
 	// DEBUGGING PRINTING
 	System.out.println("Entry to RAW Backend");
 
+	// move field initializations into init function
+	System.out.print("Moving initializers into init functions... ");
+	FieldProp.moveStreamInitialAssignments(str);
+	System.out.println("done.");
+	
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
-	//Renamer.renameAll(str);
 	ConstantProp.propagateAndUnroll(str);
-	//FieldProp.doPropagate(str);
-	
 	System.out.println("Done Constant Prop and Unroll...");
+
+	// construct stream hierarchy from SIRInitStatements
+	ConstructSIRTree.doit(str);
 
 	//SIRPrinter printer1 = new SIRPrinter();
 	//str.accept(printer1);

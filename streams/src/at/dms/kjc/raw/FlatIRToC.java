@@ -1199,7 +1199,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     }
 
     public void visitInitStatement(SIRInitStatement self,
-                                   JExpression[] body,
                                    SIRStream stream)
     {
         print("/* InitStatement */");

@@ -70,7 +70,11 @@ public class SIRFilterIter extends SIRIterator implements FilterIter {
     }
 
     public Object getInitFunctionStage (int phase) {
-	return obj.getInit();
+	if (obj instanceof SIRTwoStageFilter) {
+	    return ((SIRTwoStageFilter)obj).getInitWork();
+	} else {
+	    return null;
+	}
     }
     
     public int getNumWorkPhases () {
@@ -86,7 +90,7 @@ public class SIRFilterIter extends SIRIterator implements FilterIter {
     }
 
     public int getPushPhase (int phase) {
-	return obj.getPopInt();
+	return obj.getPushInt();
     }
 
     public Object getWorkFunctionPhase (int phase) {

@@ -92,8 +92,13 @@ public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
      * of work function for Splitter of this Stream.
      */
     public int getSplitPop (int nWork) {
-	new RuntimeException("not implemented yet").printStackTrace();
-	return -1;
+	if (obj.getSplitter().getType()==SIRSplitType.DUPLICATE) {
+	    return 1;
+	} else if (obj.getSplitter().getType()==SIRSplitType.NULL) {
+	    return 0;
+	} else {
+	    return obj.getSplitter().getSumOfWeights();
+	}
     }
 
     /**
@@ -119,8 +124,7 @@ public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
      * @return n-th work function for the Splitter
      */
     public Object getSplitterWork (int nWork) {
-	Utils.fail("todo - still need to implement");
-	return null;
+	return SIRSplitter.WORK_FUNCTION;
     }
 
     /**
@@ -128,8 +132,7 @@ public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
      * @return n-th work function for the Joiner
      */
     public Object getJoinerWork(int nWork) {
-	Utils.fail("todo - still need to implement");
-	return null;
+	return SIRJoiner.WORK_FUNCTION;
     }
 
     /**
@@ -153,8 +156,12 @@ public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
      * of work function for Joiner of this SplitJoin.
      */
     public int getJoinPush (int nWork) {
-	new RuntimeException("not implemented yet").printStackTrace();
-	return -1;
+	SIRJoiner joiner = obj.getJoiner();
+	if (joiner.getType()==SIRJoinType.NULL) {
+	    return 0;
+	} else {
+	    return joiner.getSumOfWeights();
+	}
     }
 
     public void accept(StreamVisitor v) {

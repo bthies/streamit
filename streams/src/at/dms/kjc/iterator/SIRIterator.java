@@ -155,6 +155,24 @@ public abstract class SIRIterator implements Iterator {
 
     public abstract void accept(StreamVisitor v);
 
+    /**
+     * Overload hashCode so that iterators hash according to the
+     * stream objects they're iterating over.  This is required for
+     * the scheduler interface.
+     */
+    public int hashCode() {
+	return getStream().hashCode();
+    } 
+
+    /**
+     * Overload equals so that iterators are equal according to the
+     * stream objects they're iterating over.  This is required for
+     * the scheduler interface.
+     */
+    public boolean equals(Object o) {
+	return o instanceof SIRIterator && ((SIRIterator)o).getStream()==this.getStream();
+    } 
+
 }
 
 /**

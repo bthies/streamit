@@ -382,7 +382,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    type.equals("Float")||
 	    type.equals("Short") ||
 	    type.equals("String") ||
-	    type.equals("Long")) 
+	    type.equals("Long")||
+	    type.equals("Bit"))  
 	    return true;
 	else 
 	    return false;
@@ -671,6 +672,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    return CStdType.String;	
 	else if (type.equals("Long"))
 	    return CStdType.Long;
+	else if (type.equals("Bit"))
+	    return CStdType.Bit;
 	else
 	    at.dms.util.Utils.fail("Non-Supported Type for Filter Input");
 	return null;

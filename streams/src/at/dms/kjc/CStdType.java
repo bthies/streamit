@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CStdType.java,v 1.3 2001-09-25 22:52:38 thies Exp $
+ * $Id: CStdType.java,v 1.4 2003-04-05 23:44:52 kunal Exp $
  */
 
 package at.dms.kjc;
@@ -42,6 +42,7 @@ public class CStdType extends at.dms.util.Utils implements Constants {
   public static final CIntType Integer = new CIntType();
   public static final CLongType	Long = new CLongType();
   public static final CShortType Short = new CShortType();
+    public static final CBitType Bit = new CBitType();
 
   public static CClassType Object = CClassType.lookup(Constants.JAV_OBJECT);
   public static CClassType Class = CClassType.lookup(Constants.JAV_CLASS);

@@ -35,6 +35,7 @@ public class NumberGathering extends at.dms.util.Utils
     public static int printsPerSteady = 0;
     public static int skipPrints = 0;
     public static FlatNode sink;
+    public static int totalPrintsPerSteady = 0;
 
     public static boolean doit(FlatNode top) 
     {
@@ -43,12 +44,32 @@ public class NumberGathering extends at.dms.util.Utils
 	HashSet sinks = Sink.getSinks(top);
 	//there could be multiple sinks, find one that works
 	Iterator sinksIt = sinks.iterator();
+	
+	//get the totalNumber of prints
 	while (sinksIt.hasNext()) {
 	    sink = (FlatNode)sinksIt.next();
-	    //no sink or more than one sink
+	    int prints = CheckPrint.check((SIRFilter)sink.contents);
+	    Integer steadyInteger = (Integer)RawBackend.steadyExecutionCounts.get(sink);
+	    int steady = 0;
+	    
+	    if (steadyInteger != null) 
+		steady = steadyInteger.intValue();
+
+	    if (prints > 0)
+		totalPrintsPerSteady += (prints * steady);
+	}
+	
+	System.out.println(" ****** Total Prints = " + totalPrintsPerSteady);
+	
+	sinksIt = sinks.iterator();
+
+	while (sinksIt.hasNext()) {
+	    sink = (FlatNode)sinksIt.next();
+
 	    if (sink == null) {
 		continue;
 	    }
+
 	    //the prints at the sink:
 	    //no control flow
 	    //in the work function
@@ -66,7 +87,7 @@ public class NumberGathering extends at.dms.util.Utils
 	    }
 	    //if there still prints in control flow after unrolling, keep searching
 	    if (prints == -1) {
-		System.out.println("Print(s) in control flow");
+		Utils.fail("Print(s) in control flow");
 		continue;
 	    }
 	    
@@ -92,7 +113,7 @@ public class NumberGathering extends at.dms.util.Utils
 	    printsPerSteady = prints * steady;
 	    //remove the prints from all other tiles
 	    //change the prints in the sink to be a magic print
-	    RemovePrintln.doit(top, sink);
+	    //RemovePrintln.doit(top, sink);
 	    System.out.println("The Sink: " + sink.contents.getName());
 	    return true;
 	}

@@ -48,15 +48,18 @@ public class MakefileGenerator
 		! (KjcOptions.numbers > 0 && NumberGathering.successful))
 		fw.write("LIMIT = TRUE\n"); // need to define limit for SIMCYCLES to matter
 	    */
-            fw.write("ATTRIBUTES = IMEM_LARGE\n");
+            fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
 	    //if we are generating number gathering code, 
 	    //we do not want to use the default print service...
 	    if (KjcOptions.outputs > 0 ||
 		KjcOptions.numbers > 0 && NumberGathering.successful ||
 		KjcOptions.decoupled) {
-		fw.write("ATTRIBUTES += NO_PRINT_SERVICE\n");
 		fw.write("EXTRA_BTL_ARGS += -magic_instruction\n ");
 	    }
+	    else {
+		fw.write("ATTRIBUTES += USES_PRINT_SERVICE\n");
+	    }
+	    
 	    //fw.write("SIM-CYCLES = 500000\n\n");
 	    fw.write("\n");
 	    //if we are using the magic network, tell btl
@@ -229,6 +232,7 @@ public class MakefileGenerator
 	//number gathering code
 	if (KjcOptions.numbers > 0 && NumberGathering.successful) {
 	    fw.write("global printsPerSteady = " + NumberGathering.printsPerSteady + ";\n");
+	    fw.write("global calculatedPrintsPerSteady = " + NumberGathering.totalPrintsPerSteady + ";\n");
 	    fw.write("global skipPrints = " + NumberGathering.skipPrints + ";\n");
 	    fw.write("global quitAfter = " + KjcOptions.numbers + ";\n");
 	    fw.write("global gSinkX = " + 
@@ -291,7 +295,9 @@ public class MakefileGenerator
 	    ("global gAUTOFLOPS = 0;\n" +
 	     "fn __event_fpu_count(hms)\n" +
 	     "{" +
-	     "\tif (imem_instr_is_fpu(hms.instrWord))\n" +
+	     "\tlocal instrDynamic = hms.instr_dynamic;\n" +
+	     "\tlocal instrWord = InstrDynamic_GetInstrWord(instrDynamic);\n" +
+	     "\tif (imem_instr_is_fpu(instrWord))\n" +
 	     "\t{\n" +
 	     "\t\tAtomicIncrement(&gAUTOFLOPS);\n" +
 	     "\t}\n" +

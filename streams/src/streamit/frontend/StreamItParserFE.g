@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.12 2002-10-18 15:30:35 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.13 2002-10-18 15:45:08 dmaze Exp $
  */
 
 header {
@@ -432,6 +432,8 @@ incOrDec returns [Expression x] { x = null; }
 
 value_expr returns [Expression x] { x = null; }
 	:	x=minic_value_expr
+	|	m:MINUS x=minic_value_expr
+			{ x = new ExprUnary(getContext(m), ExprUnary.UNOP_NEG, x); }
 	|	x=streamit_value_expr
 	;
 
@@ -461,9 +463,6 @@ value returns [Expression x] { x = null; Expression array; List l; }
 constantExpr returns [Expression x] { x = null; }
 	:	n:NUMBER
 			{ x = ExprConstant.createConstant(getContext(n), n.getText()); }
-	|	t:MINUS m:NUMBER
-			{ x = ExprConstant.createConstant(getContext(t),
-				t.getText() + m.getText()); }
 	|	c:CHAR_LITERAL
 			{ x = new ExprConstChar(getContext(c), c.getText()); }
 	|	s:STRING_LITERAL

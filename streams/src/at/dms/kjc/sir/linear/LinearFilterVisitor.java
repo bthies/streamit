@@ -480,7 +480,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     public Object visitCastExpression(JCastExpression self, JExpression expr, CType type){
 	// if we have a non ordinal type for the expression, and an ordinal type for
 	// the cast, then this is a non linear operation, and we should return null.
-	if ((!expr.getType().isOrdinal()) && type.isOrdinal()) {
+	if (type.isOrdinal() && (!expr.getType().isOrdinal())) {
 	    // this chops off digits (possibly), so non linear. We are all done.
 	    return null;
 	} else {

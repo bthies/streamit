@@ -146,7 +146,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 	JExpression fieldAccessExpr;
 	fieldAccessExpr = new JFieldAccessExpression(null, new JThisExpression(null), arrField.getIdent());
 	JExpression fieldArrayAccessExpr;
-	fieldArrayAccessExpr = new JArrayAccessExpression(null, fieldAccessExpr, new JIntLiteral(index));
+	fieldArrayAccessExpr = new JArrayAccessExpression(null, fieldAccessExpr, new JIntLiteral(index), arrField.getType());
 	
 	return fieldArrayAccessExpr;
     }

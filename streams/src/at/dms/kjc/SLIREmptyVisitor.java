@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.4 2001-11-06 18:03:30 thies Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.5 2001-11-06 18:09:25 thies Exp $
  */
 
 package at.dms.kjc;
@@ -200,7 +200,6 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
      */
     public void visitRunSpecialWork(LIRRunSpecialWork self) {
 	self.getStreamContext().accept(this);
-	self.getChildContext().accept(this);
     }
     
     /**

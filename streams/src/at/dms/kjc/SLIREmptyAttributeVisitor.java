@@ -137,7 +137,6 @@ public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor
      */
     public Object visitRunSpecialWork(LIRRunSpecialWork self) {
 	self.getStreamContext().accept(this);
-	self.getChildContext().accept(this);
 	return self;
     }
     

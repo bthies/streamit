@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.22 2003-10-13 16:07:31 thies Exp $
+# $Id: strc,v 1.23 2003-10-13 20:37:05 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -433,7 +433,7 @@ sub get_kjc_opts
     $opts{noanneal} && ($kjcopts .= " --noanneal");
     $opts{nofieldprop} && ($kjcopts .= " --nofieldprop");
     $opts{nolinearcollapse} && ($kjcopts .= " --nolinearcollapse");
-    $opts{numbers} && ($kjcopts .= " --numbers" . $opts{numbers});
+    $opts{numbers} && ($kjcopts .= " --numbers " . $opts{numbers});
     $opts{poptopeek} && ($kjcopts .= " --poptopeek");
     $opts{'print-partitioned-source'} && ($kjcopts .= " --print_partitioned_source");
     $opts{ptraccess} && ($kjcopts .= " --ptraccess");

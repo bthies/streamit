@@ -1723,4 +1723,18 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrPrint("size", String.valueOf(size));
 	blockEnd();
     }
+
+    /**
+     * Visits a main function contents.
+     */
+    public void visitMainFunction(LIRMainFunction self,
+			   String typeName,
+			   LIRFunctionPointer init) {
+	blockStart("LIRMainFunction");
+	attrPrint("typeName", typeName);
+	attrStart("init");
+	init.accept(this);
+	attrEnd();
+	blockEnd();
+    }
 }

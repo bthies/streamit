@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.7 2001-10-03 13:47:04 thies Exp $
+ * $Id: SLIRVisitor.java,v 1.8 2001-10-03 18:04:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -177,5 +177,13 @@ public interface SLIRVisitor extends KjcVisitor
 		      JExpression dstStruct,
 		      CType type,
 		      int size);
+
+    /**
+     * Visits a main function contents.
+     */
+    void visitMainFunction(LIRMainFunction self,
+			   String typeName,
+			   LIRFunctionPointer init);
+
 }
 

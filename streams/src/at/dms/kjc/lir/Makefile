@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.3 2001-10-02 19:15:23 thies Exp $
+## $Id: Makefile,v 1.4 2001-10-03 18:04:43 thies Exp $
 ##
 
 TOPDIR =	../..
@@ -43,7 +43,8 @@ JAVAFILES +=	LIRFunctionPointer \
 		LIRSetPush \
 		LIRSetStreamType \
 		LIRSetWork \
-		LIRStreamType
+		LIRStreamType \
+		LIRMainFunction
 
 MESSAGES =	../KjcMessages
 

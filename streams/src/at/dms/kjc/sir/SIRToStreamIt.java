@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.7 2004-10-15 01:08:14 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.8 2005-01-12 19:57:10 thies Exp $
  */
 public class SIRToStreamIt
     extends at.dms.util.Utils
@@ -23,15 +23,16 @@ public class SIRToStreamIt
      */
     private int forLoopHeader;
     /*
-     * Test code: top-level entry point.
+     * Test code: top-level entry point if you are processing SIR that
+     * has not been compiled at all -- i.e., the stream graph has not
+     * been unrolled.  This includes the stream graph unrolling as
+     * part of its processing.
      */
-    public static void run(SIRStream str,
+    public static void runBeforeCompiler(SIRStream str,
                            JInterfaceDeclaration[] interfaces,
                            SIRInterfaceTable[] interfaceTables,
                            SIRStructure[] structs)
     {
-        System.out.println("*/");
-        
         // Rename top-level object.
         str.setIdent(str.getIdent() + "_c");
         
@@ -40,8 +41,20 @@ public class SIRToStreamIt
         ConstructSIRTree.doit(str);
         FieldProp.doPropagate(str);
         new BlockFlattener().flattenBlocks(str);
-        
-        SIRToStreamIt s2s = new SIRToStreamIt(new TabbedPrintWriter(new PrintWriter(System.out)));
+	run(str, interfaces, interfaceTables, structs);
+    }
+	
+    /*
+     * Test code: top-level entry point.  For use on stream graphs
+     * that have already been expanded in the compiler.
+     */
+    public static void run(SIRStream str,
+                           JInterfaceDeclaration[] interfaces,
+                           SIRInterfaceTable[] interfaceTables,
+                           SIRStructure[] structs) {
+        System.out.println("*/");
+	
+	SIRToStreamIt s2s = new SIRToStreamIt(new TabbedPrintWriter(new PrintWriter(System.out)));
 
         for (int i = 0; i < structs.length; i++)
         {

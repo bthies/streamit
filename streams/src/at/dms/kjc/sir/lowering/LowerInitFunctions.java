@@ -18,20 +18,20 @@ import java.util.ListIterator;
  */
 public class LowerInitFunctions implements StreamVisitor {
 
-    private final Schedule schedule;
+    private final SIRSchedule sirSchedule;
 
     /**
-     * Construct one of these with schedule <schedule>
+     * Construct one of these with SIRSchedule <sirSchedule>
      */
-    private LowerInitFunctions(Schedule schedule) {
-	this.schedule = schedule;
+    private LowerInitFunctions(SIRSchedule sirSchedule) {
+	this.sirSchedule = sirSchedule;
     }
 
     /**
      * Lowers the init functions in <str>.
      */
-    public static void lower(SIRIterator iter, Schedule schedule) {
-	iter.accept(new LowerInitFunctions(schedule));
+    public static void lower(SIRIterator iter, SIRSchedule sirSchedule) {
+	iter.accept(new LowerInitFunctions(sirSchedule));
     }
 
     //
@@ -149,7 +149,7 @@ public class LowerInitFunctions implements StreamVisitor {
      */
     private int myGetBufferSizeBetween(SIROperator op1, SIROperator op2) {
 	// call scheduler
-	int result = schedule.getBufferSizeBetween(op1, op2).intValue();
+	int result = sirSchedule.getBufferSizeBetween(op1, op2);
 	// TERRIBLE HACK to account for extra buffer size needed by
 	// non-zero initPush on uniprocessor (will not work on RAW).
 	// Just augment the buffer size by initPush if the previous

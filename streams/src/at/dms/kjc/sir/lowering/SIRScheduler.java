@@ -64,9 +64,10 @@ public class SIRScheduler implements Constants {
      * <toplevel> to <flatClass>.  Returns the schedule built as part
      * of this.
      */
-    public static Schedule buildWorkFunctions(SIRStream toplevel, 
+    public static SIRSchedule buildWorkFunctions(SIRStream toplevel, 
 					      JClassDeclaration flatClass) {
-	return new SIRScheduler(flatClass).buildWorkFunctions(toplevel);
+	Schedule schedule = new SIRScheduler(flatClass).buildWorkFunctions(toplevel);
+	return new SIRSchedule(schedule);
     }
 
     /**

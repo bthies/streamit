@@ -1,7 +1,5 @@
 package at.dms.kjc.sir.lowering;
 
-import streamit.scheduler1.*;
-
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
@@ -211,7 +209,7 @@ public class Flattener {
 	System.err.println("done.");
 	// build schedule as set of higher-level work functions
 	System.err.print("Scheduling... ");
-	Schedule schedule = SIRScheduler.buildWorkFunctions(str, flatClass);
+	SIRSchedule schedule = SIRScheduler.buildWorkFunctions(str, flatClass);
 	System.err.println("done.");
 	// add LIR hooks to init and work functions
 	System.err.print("Annotating IR for uniprocessor... ");

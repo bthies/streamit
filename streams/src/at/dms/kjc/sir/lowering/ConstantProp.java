@@ -1,7 +1,5 @@
 package at.dms.kjc.sir.lowering;
 
-import streamit.scheduler1.*;
-
 import java.util.*;
 import at.dms.kjc.*;
 import at.dms.util.*;

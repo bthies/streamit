@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.13 2004-04-21 17:34:18 sitij Exp $
+ * $Id: LinearDirectReplacer.java,v 1.14 2004-04-28 19:50:58 sitij Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -90,12 +90,14 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	linearRep = this.linearityInformation.getLinearRepresentation(self);
 
 	/********** test print for optimization *********/
-				LinearPrinter.println("Before optimization: " + linearRep);
-	LinearFilterRepresentation testRep = LinearOptimizer.getMinStateRep(linearRep);
-	LinearPrinter.println("After optimization: " + testRep);
+	LinearPrinter.println("Before optimization: " + linearRep);
+	//LinearFilterRepresentation testRep = LinearOptimizer.getObservableRep(linearRep);
+	//LinearPrinter.println("After optimization: " + testRep);
 
+	//LinearPrinter.println("Before optimization, old states = " + linearRep.getStateCount());
+	//LinearPrinter.println("After optimization, new states = " + testRep.getStateCount());
 
-			linearRep = testRep;
+	//linearRep = testRep;
 	
 	/***********************************************/
 
@@ -160,9 +162,6 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    fieldExpr = new JFieldAccessExpression(null, thisExpr, varName);
 	    litExpr = new JDoubleLiteral(null, initVector.getElement(i).getReal());
 	    assign = new JAssignmentExpression(null, fieldExpr, litExpr);
-
-
-	    LinearPrinter.println("i,val"  + i + " " + initVector.getElement(i).getReal());
 
 	    // wrap the assign expression in a expression statement
 	    JExpressionStatement assignWrapper = new JExpressionStatement(null, // tokenReference

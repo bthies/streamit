@@ -12,7 +12,7 @@ import at.dms.kjc.sir.statespace.*;
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.
  * 
- * $Id: LinearTransformPipeline.java,v 1.13 2004-04-21 17:34:24 sitij Exp $
+ * $Id: LinearTransformPipeline.java,v 1.14 2004-04-28 19:51:11 sitij Exp $
  **/
 
 public class LinearTransformPipeline extends LinearTransform {
@@ -125,14 +125,15 @@ public class LinearTransformPipeline extends LinearTransform {
 		//the easy case, just set the overall prework to be the first filter's prework
 
 		if(rep2.preworkNeeded()==false) {
-		    preworkAprime = new FilterMatrix(state1+state2,state1+state2);
+		    int tot = state1+state2;
+
+		    preworkAprime = new FilterMatrix(tot,tot);
 		    preworkAprime.copyAt(0,0,rep1.getPreWorkA());
 
-		    int tot = state1+state2;
 		    for(int i=state1; i<tot; i++)
 			preworkAprime.setElement(i,i,ComplexNumber.ONE);
 
-		    preworkBprime = new FilterMatrix(state1+state2,rep1.getPreWorkB().getCols());
+		    preworkBprime = new FilterMatrix(tot,rep1.getPreWorkB().getCols());
 		    preworkBprime.copyAt(0,0,rep1.getPreWorkB());
 		}
 
@@ -146,23 +147,24 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 		    */
   
 		    int n = 1;
-		    int filter2InputsNeeded = newPop2 + rep2Expanded.getPreWorkPopCount();
+		    int filter2ExtraInputsNeeded = rep2Expanded.getPreWorkPopCount();
 
-		    while(newPush1*n < filter2InputsNeeded)
+		    while(push1*n < filter2ExtraInputsNeeded)
 			n++;
 
-		    n = n-1;
-
 		    int removeVars = newInputVars2;
-		    int extraVars = newPush1*n;  // which is >= than removeVars
+		    int extraVars = push1*n;
 
-		    int newVar2Total = state2 - removeVars + extraVars;
+		    LinearPrinter.println("n,old,new = " + n + " " + removeVars + " " + extraVars);
+
+		    int newVar2Total = state2;
 
 		    FilterMatrix preworkA2_new, preworkB2_new;
 		    preworkA2_new = rep2Expanded.getPreWorkA();
 		    preworkB2_new = rep2Expanded.getPreWorkB();
 
 		    if(extraVars > removeVars) {
+			newVar2Total = state2 - removeVars + extraVars;
 
 			LinearFilterRepresentation newRep2;
 			newRep2 = rep2Expanded.changeStoredInputs(extraVars);
@@ -180,7 +182,7 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 		    
 		    }
 
-		    LinearFilterRepresentation rep1MoreExpanded = rep1Expanded.expand_with_prework(n);
+		    LinearFilterRepresentation rep1MoreExpanded = rep1.expand_with_prework(n);
 		    FilterMatrix preworkA1_new = rep1MoreExpanded.getA();
 		    FilterMatrix preworkB1_new = rep1MoreExpanded.getB();
 	
@@ -200,7 +202,6 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 		    newInputVars1 = 0;
 
 		}
-
 	    }
 
 

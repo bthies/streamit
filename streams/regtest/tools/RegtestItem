@@ -1,9 +1,24 @@
-<!-- -*- mmm-classes: mason -*- -->
-<tr class=<%$Class%>><td><b><%$Op%> <%$Path%></b><br>
+<!-- -*- mode: html; mmm-classes: mason -*- -->
+<tr class=<%$Class%>><td colspan=2><b><%$Op%> <%$Path%></b></td></tr>
 % foreach my $flag (@$Flags) {
-&nbsp;&nbsp;&nbsp;<%$flag%><br>
+<tr class=<%$Class%>><td>&nbsp;&nbsp;&nbsp;<%$flag%></td><td>
+<%PERL>
+$Tickets->ClearRestrictions;
+$Tickets->LimitStatus(VALUE => "new");
+$Tickets->LimitStatus(VALUE => "open");
+$Tickets->LimitQueue(VALUE => "StreamIt Bugs", OPERATOR => "=");
+$Tickets->LimitCustomField(CUSTOMFIELD => 3, OPERATOR => "=",
+			   VALUE => "$Path $flag");
+while (my $Ticket = $Tickets->Next) {
+</%PERL>
+<a href="<%$RT::WebPath%>/Ticket/Display.html?id=<%$Ticket->Id%>"><%$Ticket->id%>
+(<%$Ticket->OwnerObj->Name%>) <%$Ticket->Subject%></a><br>
+% }
 % }
 </td></tr>
+<%INIT>
+my $Tickets = RT::Tickets->new($session{'CurrentUser'});
+</%INIT>
 <%ARGS>
 $Class => 'oddline'
 $Op => 'Compile'

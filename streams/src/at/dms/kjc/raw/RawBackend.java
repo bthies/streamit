@@ -31,6 +31,10 @@ public class RawBackend {
     public static HashMap[] executionCounts;
     
     public static SIRStructure[] structures;
+    
+    //if true have each filter print out each value it is pushing
+    //onto its output tape
+    public static boolean FILTER_DEBUG_MODE = false;
 
     public static void run(SIRStream str,
 			   JInterfaceDeclaration[] 

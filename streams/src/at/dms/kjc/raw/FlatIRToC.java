@@ -186,6 +186,18 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("void raw_init2();\n");
 	}
 
+	if (RawBackend.FILTER_DEBUG_MODE &&
+	    self.getOutputType().isNumeric()) {
+	    print("void static_send_print(");
+	    print(self.getOutputType() + " f) {\n");
+	    if (self.getOutputType().isFloatingPoint()) 
+		print("print_float(f);\n");
+	    else 
+		print("print_int(f);\n");
+	    print("static_send(f);\n");
+	    print("}\n\n");
+	}
+		
 	//not used any more
 	//print("unsigned int " + FLOAT_HEADER_WORD + ";\n");
 	//print("unsigned int " + INT_HEADER_WORD + ";\n");
@@ -980,6 +992,14 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
           }
         */
 
+
+	//supress the call to memset if the array is of size 0
+	//if (ident.equals("memset")) {
+	//    String[] dims = ArrayDim.findDim(filter, ((JLocalVariableExpression)args[0]).getIdent());
+	//    if (dims[0].equals("0"))
+	//	return;
+	//}
+
 	//generate the inline asm instruction to execute the 
 	//receive if this is a receive instruction
 	if (ident.equals(RawExecutionCode.receiveMethod)) {
@@ -1457,6 +1477,17 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		    print("print_int(");
 		else
 		    print("printf(\"%d\\n\", "); 
+		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
+		//print("gdn_send(");
+		exp.accept(this);
+		print(");");
+	    }
+	else if (type.equals(CStdType.String)) 
+	    {
+		if (!KjcOptions.raw_uni)
+		    print("print_string(");
+		else
+		    print("printf(\"%s\\n\", "); 
 		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);

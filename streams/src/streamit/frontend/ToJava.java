@@ -30,12 +30,14 @@ class ToJava
 "Usage: java streamit.frontend.ToJava [--output out.java] in.str ...\n" +
 "\n" +
 "Options:\n" +
+"  --library      Output code suitable for the Java library\n" +
 "  --help         Print this message\n" +
 "  --output file  Write output to file, not stdout\n" +
 "\n");
     }
 
     private boolean printHelp = false;
+    private boolean libraryFormat = false;
     private String outputFile = null;
     private List inputFiles = new ArrayList();
 
@@ -55,6 +57,8 @@ class ToJava
             }
             else if (args[i].equals("--output"))
                 outputFile = args[++i];
+            else if (args[i].equals("--library"))
+                libraryFormat = true;
             else
                 // Maybe check for unrecognized options.
                 inputFiles.add(args[i]);
@@ -108,10 +112,11 @@ class ToJava
                  * "this", which doesn't exist. */
                 TempVarGen varGen = new TempVarGen();
                 prog = (Program)prog.accept(new MakeBodiesBlocks());
-                prog = (Program)prog.accept(new NoticePhasedFilters());
+                if (!libraryFormat)
+                    prog = (Program)prog.accept(new NoticePhasedFilters());
                 prog = (Program)prog.accept(new DoComplexProp(varGen));
                 prog = (Program)prog.accept(new TranslateEnqueue());
-                prog = (Program)prog.accept(new InsertIODecls());
+                prog = (Program)prog.accept(new InsertIODecls(libraryFormat));
                 prog = (Program)prog.accept(new InsertInitConstructors());
                 prog = (Program)prog.accept(new MoveStreamParameters());
                 prog = (Program)prog.accept(new NameAnonymousFunctions());

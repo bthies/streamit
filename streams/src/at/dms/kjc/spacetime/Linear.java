@@ -177,12 +177,11 @@ public class Linear extends RawExecutionCode implements Constants {
     }
     
     public JMethodDeclaration getPrimePumpMethod() {
-	//Copied From DirectCommunication
 	JBlock statements = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
 	
 	//add the calls to the work function in the prime pump stage
-	statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));	
+	//statements.addStatement(getSteadyBlock());//getWorkFunctionBlock(filterInfo.primePump));	
 
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 				      CStdType.Void,
@@ -195,108 +194,100 @@ public class Linear extends RawExecutionCode implements Constants {
     }
     
     public JMethodDeclaration getInitStageMethod() {
-	//return linearInit;
-
-	//Copied From DirectCommunication
-	JBlock statements = new JBlock(null, new JStatement[0], null);
-	FilterContent filter = filterInfo.filter;
-
-	//add the calls for the work function in the initialization stage
-	statements.addStatement(generateInitWorkLoop(filter));
-	//add the calls to the work function in the prime pump stage
-	statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));	
-	
-	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
-				      CStdType.Void,
-				      initStage + uniqueID,
-				      JFormalParameter.EMPTY,
-				      CClassType.EMPTY,
-				      statements,
-				      null,
-				      null);
+	return linearInit;
+	/*
+	  //Copied From DirectCommunication
+	  JBlock statements = new JBlock(null, new JStatement[0], null);
+	  FilterContent filter = filterInfo.filter;
+	  
+	  //add the calls for the work function in the initialization stage
+	  //statements.addStatement(generateInitWorkLoop(filter));
+	  //add the calls to the work function in the prime pump stage
+	  //statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));	
+	  
+	  return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+	  CStdType.Void,
+	  initStage + uniqueID,
+	  JFormalParameter.EMPTY,
+	  CClassType.EMPTY,
+	  statements,
+	  null,
+	  null);*/
     }
     
     public JMethodDeclaration[] getHelperMethods() {
-	//return emptyMethods;
+	return emptyMethods;
 	
-	//Copied From DirectCommunication
-	ArrayList methods = new ArrayList();
-	
-	//add all helper methods, except work function
-	for (int i = 0; i < filterInfo.filter.getMethods().length; i++) 
-	    if (!(filterInfo.filter.getMethods()[i].equals(filterInfo.filter.getWork())))
-		methods.add(filterInfo.filter.getMethods()[i]);
-	
-	return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);	
+	/*
+	  //Copied From DirectCommunication
+	  ArrayList methods = new ArrayList();
+	  
+	  //add all helper methods, except work function
+	  for (int i = 0; i < filterInfo.filter.getMethods().length; i++) 
+	  if (!(filterInfo.filter.getMethods()[i].equals(filterInfo.filter.getWork())))
+	  methods.add(filterInfo.filter.getMethods()[i]);
+	  
+	  return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);	*/
     }
 
-    //Copied from DirectCommunication
-    JStatement generateInitWorkLoop(FilterContent filter)
-    {
-	JBlock block = new JBlock(null, new JStatement[0], null);
-
-	//clone the work function and inline it
-	JBlock workBlock = 
-	    (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
-	
-	//if we are in debug mode, print out that the filter is firing
-	if (SpaceTimeBackend.FILTER_DEBUG_MODE) {
-	    block.addStatement
-		(new SIRPrintStatement(null,
-				       new JStringLiteral(null, filter.getName() + " firing (init)."),
-				       null));
-	}
-	
-	block.addStatement(workBlock);
-	
-	//return the for loop that executes the block init - 1
-	//times
-	return makeForLoop(block, generatedVariables.exeIndex1, 
-			   new JIntLiteral(filterInfo.initMult));
-    }
+    /*
+      //Copied from DirectCommunication
+      JStatement generateInitWorkLoop(FilterContent filter)
+      {
+      JBlock block = new JBlock(null, new JStatement[0], null);
+      
+      //clone the work function and inline it
+      JBlock workBlock = 
+      (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
+      
+      //if we are in debug mode, print out that the filter is firing
+      if (SpaceTimeBackend.FILTER_DEBUG_MODE) {
+      block.addStatement
+      (new SIRPrintStatement(null,
+      new JStringLiteral(null, filter.getName() + " firing (init)."),
+      null));
+      }
+      
+      block.addStatement(workBlock);
+      
+      //return the for loop that executes the block init - 1
+      //times
+      return makeForLoop(block, generatedVariables.exeIndex1, 
+      new JIntLiteral(filterInfo.initMult));
+      }*/
 
     //Copied From DirectCommunication
-    private JBlock getWorkFunctionBlock(int mult)
-    {
-	JBlock block = new JBlock(null, new JStatement[0], null);
-	FilterContent filter = filterInfo.filter;
-	//inline the work function in a while loop
-	JBlock workBlock = 
-	    (JBlock)ObjectDeepCloner.
-	    deepCopy(filter.getWork().getBody());
-	
-	//create the for loop that will execute the work function
-	//local variable for the work loop
-	JVariableDefinition loopCounter = new JVariableDefinition(null,
-								  0,
-								  CStdType.Integer,
-								  workCounter,
-								  null);
-	
-	
-
-	JStatement loop = 
-	    makeForLoop(workBlock, loopCounter, new JIntLiteral(mult));
-	block.addStatement(new JVariableDeclarationStatement(null,
-							     loopCounter,
-							     null));
-	block.addStatement(loop);
-	/*
-	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
-				      CStdType.Void,
-				      steadyStage + uniqueID,
-				      JFormalParameter.EMPTY,
-				      CClassType.EMPTY,
-				      block,
-				      null,
-				      null);
-	*/
-	return block;
-    }
-
+    /*private JBlock getWorkFunctionBlock(int mult)
+      {
+      JBlock block = new JBlock(null, new JStatement[0], null);
+      FilterContent filter = filterInfo.filter;
+      //inline the work function in a while loop
+      JBlock workBlock = 
+      (JBlock)ObjectDeepCloner.
+      deepCopy(filter.getWork().getBody());
+      
+      //create the for loop that will execute the work function
+      //local variable for the work loop
+      JVariableDefinition loopCounter = new JVariableDefinition(null,
+      0,
+      CStdType.Integer,
+      workCounter,
+      null);
+      
+      
+      
+      JStatement loop = 
+      makeForLoop(workBlock, loopCounter, new JIntLiteral(mult));
+      block.addStatement(new JVariableDeclarationStatement(null,
+      loopCounter,
+      null));
+      block.addStatement(loop);
+      return block;
+      }*/
+    
     public JFieldDeclaration[] getVarDecls() {
 	FilterContent filter = filterInfo.filter;
-	JFieldDeclaration[] fields=new JFieldDeclaration[array.length+3 + filter.getFields().length];
+	JFieldDeclaration[] fields=new JFieldDeclaration[array.length+1/*3 + filter.getFields().length*/];
 	
 	for(int i=0;i<array.length;i++)
 	    try {
@@ -308,11 +299,9 @@ public class Linear extends RawExecutionCode implements Constants {
 	    fields[array.length]=new JFieldDeclaration(null,new JVariableDefinition(null,0,CStdType.Float,getConstant(),new JFloatLiteral(null,Float.toString((float)constant))),null,null);
 	} catch(PositionedError e) {
 	    Utils.fail("Couldn't convert constant: "+constant);
-
-
 	}
 
-	
+	/*
 	  //Adapted from Gordo's Code
 	  //index variable for certain for loops
 	  JVariableDefinition exeIndexVar = 
@@ -346,7 +335,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	  //all the communication is in the work function
 	  //filter.getWork().accept(new DirectConvertCommunication());
 	  //End Gordo's Code.
-	
+	*/
 	return fields;
     }
     

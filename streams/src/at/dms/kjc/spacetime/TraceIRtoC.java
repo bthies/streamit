@@ -69,7 +69,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	
 	//write header 
 	generateHeader();
-	
+
 	//generate the fields
 	for (int i = 0; i < tile.getComputeCode().getFields().length; i++)
 	    tile.getComputeCode().getFields()[i].accept(this);
@@ -1419,13 +1419,13 @@ public class TraceIRtoC extends SLIREmptyVisitor
                                     CType tapeType,
                                     JExpression num)
     {
-	Utils.fail("FlatIRToC should see no peek expressions");
+	Utils.fail("TraceIRToC should see no peek expressions");
     }
     
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-	Utils.fail("FlatIRToC should see no pop expressions");
+	Utils.fail("TraceIRToC should see no pop expressions");
     }
     
     public void visitPrintStatement(SIRPrintStatement self,

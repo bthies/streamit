@@ -943,40 +943,8 @@ public class Rawify
 	    return;
 	}
 	
-	//START Copy Gordo
-	int mult, sentItems = 0;
-	
-	//don't cache align if the only source is a file reader
-	boolean cacheAlignSource = true;
-	if (node.getPrevious() instanceof InputTraceNode) {
-	    OffChipBuffer buf = IntraTraceBuffer.getBuffer((InputTraceNode)node.getPrevious(), 
-							   node).getNonRedundant();
-	    if (buf != null && buf.getDest() instanceof OutputTraceNode &&
-		((OutputTraceNode)buf.getDest()).isFileReader())
-		cacheAlignSource = false;
-	}
-	
-	//don't cache align the dest if the true dest is a file writer
-	boolean cacheAlignDest = true; 
-	if (node.getNext() instanceof OutputTraceNode) {
-	    OutputTraceNode output = (OutputTraceNode)node.getNext();
-	    if (output.oneOutput() && OffChipBuffer.unnecessary(output) &&
-		output.getSingleEdge().getDest().isFileWriter() &&
-		OffChipBuffer.unnecessary(output.getSingleEdge().getDest()))
-		cacheAlignDest = false;
-	}
-	
-
-      
-	if (primePump)
-	    mult = filterInfo.primePump - (filterInfo.push == 0 ? 0 :
-					   (filterInfo.primePumpItemsNotConsumed() / filterInfo.push));
-	else if (init)
-	    mult = filterInfo.initMult;
-	else 
-	    mult = filterInfo.steadyMult;
-	//STOP Copy from Gordo
-
+	//******START Copy Gordo
+	//******STOP Copy from Gordo
 
 	ComputeNode sourceNode = null;
 
@@ -1313,57 +1281,8 @@ public class Rawify
 	//ins.setProcessorIns(new JumpIns(label.getLabel()));
 	ins.setProcessorIns(new BnezdIns(SwitchReg.R3,SwitchReg.R3,label.getLabel()));
 
-	//START Copy from Gordo
-	//now we must take care of the remaining items on the input tape 
-	//after the initialization phase if the upstream filter produces more than
-	//we consume in init
-	if (init && filterInfo.remaining > 0) {
-	    appendReceiveInstructions(node, 
-				      filterInfo.remaining * Util.getTypeSize(node.getFilter().getInputType()),
-				      filterInfo, init, false, tile, rawChip);
-	}
-
-	//we must add some switch instructions to account for the fact
-	//that we must transfer cacheline sized chunks in the streaming dram
-	//do it for the init and the steady state, primepump 
-
-	//some sanity checks!
-
-	/*if (primePump)
-	  assert (sentItems == (filterInfo.totalItemsSent(init, primePump) - 
-	  filterInfo.primePumpItemsNotConsumed())) :
-	  "insane";
-	  else
-	  assert (sentItems == filterInfo.totalItemsSent(init, primePump)) :
-	  "insane";*/
-
-	//generate code to fill the remainder of the cache line
-	if (!KjcOptions.magicdram && node.getNext().isOutputTrace() && 
-	    cacheAlignDest)
-	    fillCacheLine(node, init, primePump, sentItems);
-
-	if (primePump && filterInfo.push > 0 &&
-	    filterInfo.primePumpItemsNotConsumed() / filterInfo.push > 0) {
-	    mult = (filterInfo.primePumpItemsNotConsumed() / filterInfo.push);
-	    for (int i = 0; i < mult; i++) {
-		//append the receive code
-		createReceiveCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
-		//append the send code 
-		createSendCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
-	    }
-	    //handle filling the cache line for the steady buffer of the primepump 
-	    //stage
-	    if (!KjcOptions.magicdram && node.getNext().isOutputTrace() && cacheAlignDest)
-		fillCacheLine(node, init, primePump, 
-			      filterInfo.primePumpItemsNotConsumed());
-	}
-	//because all dram transfers must be multiples of cacheline
-	//generate code to disregard the remainder of the transfer
-	if (!KjcOptions.magicdram && node.getPrevious().isInputTrace() && cacheAlignSource)
-	    handleUnneededInput(node, init, primePump, 
-				filterInfo.totalItemsReceived(init, primePump));
-
-	//STOP Copy From Gordo
+	//******START Copy from Gordo
+	//******STOP Copy From Gordo
     }
 
 

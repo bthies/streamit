@@ -37,9 +37,9 @@ public class LinearPreprocessor extends EmptyStreamVisitor {
 	    int pop=steady.getPopInt();
 	    int push=steady.getPushInt();
 	    int diff=peek-pop;
-	    init.setPeek(new JIntLiteral(2*diff));
-	    init.setPop(new JIntLiteral(diff));
-	    init.setPush(new JIntLiteral((peek/pop-1)*push));
+	    init.setPeek(2*diff);
+	    init.setPop(diff);
+	    init.setPush((peek/pop-1)*push);
 	    System.out.println("Steady: "+steady.getPeek()+" "+steady.getPop()+" "+steady.getPush());
 	    System.out.println("Init: "+init.getPeek()+" "+init.getPop()+" "+init.getPush());
 	}

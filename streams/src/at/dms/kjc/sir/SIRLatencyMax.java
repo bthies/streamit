@@ -1,6 +1,7 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
+import at.dms.util.*;
 
 /** 
  * This represents a maximum latency for message delivery.
@@ -9,7 +10,7 @@ public class SIRLatencyMax extends SIRLatency implements Comparable {
     /**
      * The maximum latency.
      */
-    protected int max;
+    protected JExpression max;
 
     /**
      * No argument constructor, FOR AUTOMATIC CLONING ONLY.
@@ -21,15 +22,30 @@ public class SIRLatencyMax extends SIRLatency implements Comparable {
     /**
      * Constructs a new latency with the given maximum.
      */
-    public SIRLatencyMax(int max) {
+    public SIRLatencyMax(JExpression max) {
 	this.max = max;
     }
 
     /**
      * Returns the maximum of this latency.
      */
-    public int getMax() {
+    public JExpression getMaxExpression() {
 	return max;
+    }
+
+    /**
+     * Sets maximum of this latency.
+     */
+    public void setMaxExpression(JExpression _max) {
+	max = _max;
+    }
+
+    /**
+     * Returns the maximum of this latency.
+     */
+    public int getMax() {
+	Utils.assert(max instanceof JIntLiteral, "Haven't resolved the max latency expression to a constant.  It is: " + max);
+	return ((JIntLiteral)max).intValue();
     }
 
     /**
@@ -37,7 +53,7 @@ public class SIRLatencyMax extends SIRLatency implements Comparable {
      * difference.
      */
     public int compareTo(Object o) {
-	return max - ((SIRLatencyMax)o).max;
+	return getMax() - ((SIRLatencyMax)o).getMax();
     }
 
     /**

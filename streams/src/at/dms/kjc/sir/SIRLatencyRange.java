@@ -1,6 +1,7 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
+import at.dms.util.*;
 
 /** 
  * This represents a range of latencies for message delivery.
@@ -10,7 +11,7 @@ public class SIRLatencyRange extends SIRLatencyMax {
      * The minimum latency for this.  (The maximum latency is held in
      * the superclass.)
      */
-    protected int min;
+    protected JExpression min;
     
     /**
      * No argument constructor, FOR AUTOMATIC CLONING ONLY.
@@ -22,16 +23,31 @@ public class SIRLatencyRange extends SIRLatencyMax {
     /**
      * Constructs a latency with the range between <min> and <max>.
      */
-    public SIRLatencyRange(int min, int max) {
+    public SIRLatencyRange(JExpression min, JExpression max) {
 	super(max);
 	this.min = min;
+    }
+
+    /**
+     * Returns the minimum of this latency.
+     */
+    public JExpression getMinExpression() {
+	return min;
+    }
+
+    /**
+     * Sets minimum of this latency.
+     */
+    public void setMinExpression(JExpression _min) {
+	min = _min;
     }
 
     /**
      * Returns the minimum of this range.
      */
     public int getMin() {
-	return min;
+	Utils.assert(min instanceof JIntLiteral, "Haven't resolved the min latency expression to a constant.  It is: " + min);
+	return ((JIntLiteral)min).intValue();
     }
 
     /**

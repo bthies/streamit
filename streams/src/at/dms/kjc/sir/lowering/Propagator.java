@@ -1191,6 +1191,24 @@ public class Propagator extends SLIRReplacingVisitor {
     }
 
     /**
+     * Visits a max latency.
+     */
+    public Object visitLatencyMax(SIRLatencyMax self) {
+	self.setMaxExpression((JExpression)self.getMaxExpression().accept(this));
+    	return self;
+    }
+
+    /**
+     * Visits a latency range.
+     */
+    public Object visitLatencyRange(SIRLatencyRange self) {
+	//System.err.println("recursing into latency range, from " + self.getMaxExpression() + " to " + self.getMaxExpression().accept(this));
+	self.setMinExpression((JExpression)self.getMinExpression().accept(this));
+	self.setMaxExpression((JExpression)self.getMaxExpression().accept(this));
+	return self;
+    }
+
+    /**
      * Visits an array length access expression
      */
     public Object visitArrayLengthExpression(JArrayLengthExpression self,

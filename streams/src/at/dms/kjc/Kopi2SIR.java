@@ -1829,15 +1829,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             if (args.length > 1)
                 at.dms.util.Utils.fail(printLine(self) +
                                        "Exactly one arg to setMaxLatency() allowed");
-            nextLatency = new SIRLatencyMax(args[0].intValue());
+            nextLatency = new SIRLatencyMax(args[0]);
             return null;
         }
         else if (ident.equals("setLatency")) {
             if (args.length > 2)
                 at.dms.util.Utils.fail(printLine(self) +
                                        "Exactly two args to setLatency() allowed");
-            nextLatency = new SIRLatencyRange(args[0].intValue(),
-                                              args[1].intValue());
+            nextLatency = new SIRLatencyRange(args[0],
+                                              args[1]);
             return null;
         }
 	else if (ident.equals("add")) {            //Handle an add call in a pipeline

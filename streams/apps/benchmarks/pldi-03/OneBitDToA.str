@@ -5,11 +5,32 @@
  * acceptable.
  **/
 void->void pipeline OneBitDToA {
+  // the source of data (eventually, this should be an audio stream)
   add DataSource();
+
+  // go through the process of oversampling
+  add OverSampler();
+
+  // The noise shaper moves some of the noise into higher frequencies
   add NoiseShaper();
-  add LowPassFilter(1,pi/20,64);
+  // This low pass filter filters out the noise that is in higher frequencies.
+  add LowPassFilter(1,pi/100,256);
   add DataSink();
 }
+
+/** 
+ * This is a 16x oversampler -- eg it upsamples
+ * its input by a factor of 16. The 16 factor is
+ * achieved in four steps. In each step we upsample
+ * and then low pass filter with cutoff of pi/2. 
+ **/
+float->float pipeline OverSampler {
+  for (int i=0; i<4; i++) {
+    add Expander(2);
+    add LowPassFilter(2,pi/2,64);
+  }
+}
+
 
 /** 
  * This is a first order noise shaper. It is built with a
@@ -65,6 +86,7 @@ float->void filter DataSink {
 /** Simple data selector filter (for filtering out multiplexed output for debugging) **/
 float->float filter DataSelector {
   work pop 2 push 1 {
+    //push(pop());
     pop();
     push(pop());
   }

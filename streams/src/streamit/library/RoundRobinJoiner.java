@@ -1,6 +1,7 @@
 package streamit;
 
 import streamit.scheduler.SchedJoinType;
+import streamit.scheduler.Scheduler;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -21,7 +22,7 @@ public class RoundRobinJoiner extends Joiner {
     // This code constructs an independent graph for the scheduler
     // ----------------------------------------------------------------
 
-    SchedJoinType getSchedType ()
+    SchedJoinType getSchedType (Scheduler scheduler)
     {
         ArrayList weights = new ArrayList (srcs.size ());
 
@@ -32,6 +33,6 @@ public class RoundRobinJoiner extends Joiner {
             weights.add (one);
         }
 
-        return new SchedJoinType (SchedJoinType.ROUND_ROBIN, weights, this);
+        return scheduler.newSchedJoinType (SchedJoinType.ROUND_ROBIN, weights, this);
     }
 }

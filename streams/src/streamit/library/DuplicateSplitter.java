@@ -3,6 +3,7 @@ package streamit;
 import java.util.ArrayList;
 import java.util.Iterator;
 import streamit.scheduler.SchedSplitType;
+import streamit.scheduler.Scheduler;
 
 public class DuplicateSplitter extends Splitter
 {
@@ -15,7 +16,7 @@ public class DuplicateSplitter extends Splitter
     // This code constructs an independent graph for the scheduler
     // ----------------------------------------------------------------
 
-    SchedSplitType getSchedType ()
+    SchedSplitType getSchedType (Scheduler scheduler)
     {
         ArrayList weights = new ArrayList (dest.size ());
 
@@ -36,6 +37,6 @@ public class DuplicateSplitter extends Splitter
             }
         }
 
-        return new SchedSplitType (SchedSplitType.DUPLICATE, weights, this);
+        return scheduler.newSchedSplitType (SchedSplitType.DUPLICATE, weights, this);
     }
 }

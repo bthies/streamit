@@ -226,7 +226,7 @@ public class SplitJoin extends Stream
     SchedStream constructSchedule ()
     {
         // create a new splitjoin
-        SchedSplitJoin splitJoin = new SchedSplitJoin (this);
+        SchedSplitJoin splitJoin = scheduler.newSchedSplitJoin (this);
 
         // setup the splitter
         if (splitter != null)

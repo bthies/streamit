@@ -82,7 +82,7 @@ public abstract class Filter extends Stream
         ASSERT (popCount >= 0 && pushCount >= 0);
         ASSERT (popCount > 0 || pushCount > 0);
 
-        SchedFilter self = new SchedFilter (this, pushCount, popCount, peekCount);
+        SchedFilter self = scheduler.newSchedFilter (this, pushCount, popCount, peekCount);
         self.setProduction (pushCount);
         self.setConsumption (popCount);
         return self;

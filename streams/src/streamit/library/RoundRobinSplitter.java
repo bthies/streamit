@@ -1,6 +1,7 @@
 package streamit;
 
 import streamit.scheduler.SchedSplitType;
+import streamit.scheduler.Scheduler;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -19,7 +20,7 @@ public class RoundRobinSplitter extends Splitter
     // This code constructs an independent graph for the scheduler
     // ----------------------------------------------------------------
 
-    SchedSplitType getSchedType ()
+    SchedSplitType getSchedType (Scheduler scheduler)
     {
         ArrayList weights = new ArrayList (dest.size ());
 
@@ -30,6 +31,6 @@ public class RoundRobinSplitter extends Splitter
             weights.add (one);
         }
 
-        return new SchedSplitType (SchedSplitType.ROUND_ROBIN, weights, this);
+        return scheduler.newSchedSplitType (SchedSplitType.ROUND_ROBIN, weights, this);
     }
 }

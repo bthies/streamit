@@ -69,8 +69,10 @@ public class StreaMITMain {
 
         String backendClass = null;
         String backendMethod = "run";
-        if (KjcOptions.graph) {
-            backendClass = "streamit.eclipse.grapheditor.GraphEncoder";
+        if (KjcOptions.backend != null) {
+            backendClass = KjcOptions.backend;
+        } else if (KjcOptions.graph) {
+            backendClass = "streamit.eclipse.grapheditor.graph.GraphEncoder";
         } else if (KjcOptions.raw != -1) {
             System.out.println("*/");
             if (KjcOptions.spacetime) {

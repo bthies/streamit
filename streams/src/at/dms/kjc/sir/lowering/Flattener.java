@@ -2,6 +2,7 @@ package at.dms.kjc.sir.lowering;
 
 import streamit.scheduler.*;
 
+import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.reordering.*;

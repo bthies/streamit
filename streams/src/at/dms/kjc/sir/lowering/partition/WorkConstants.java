@@ -1,4 +1,4 @@
-package at.dms.kjc.sir.lowering;
+package at.dms.kjc.sir.lowering.partition;
 
 /**
  * This interface contains estimates of work for various operations.

@@ -1,4 +1,4 @@
-package at.dms.kjc.sir.lowering;
+package at.dms.kjc.sir.lowering.partition;
 
 import java.util.*;
 import at.dms.util.*;

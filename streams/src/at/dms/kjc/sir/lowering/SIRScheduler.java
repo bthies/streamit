@@ -183,7 +183,7 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 				JMethodDeclaration init,
 				List elements) {
 	// represent the pipeline
-	SchedPipeline sp = new SchedPipeline();
+	SchedPipeline sp = new SchedPipeline(self);
 	// add children to pipeline
 	for (ListIterator it = elements.listIterator(); it.hasNext(); ) {
 	    // get child

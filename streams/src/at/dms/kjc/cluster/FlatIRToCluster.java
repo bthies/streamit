@@ -107,7 +107,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    ((SIRFilter)node.contents).getMethods()[i].accept(new VarDeclRaiser());
 	}
 
-	
+	DeadCodeElimination.doit((SIRFilter)node.contents);
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
     

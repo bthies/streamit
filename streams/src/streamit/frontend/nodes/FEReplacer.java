@@ -36,14 +36,21 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.28 2003-07-30 19:18:04 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.29 2003-08-26 18:19:02 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
-    // No direct accessor.  If derived classes need access to this
-    // more than addStatement() provides, change this to protected
-    // visibility.
-    private List newStatements;
+    /**
+     * Mutable list of statements to be added to the current block.
+     * This is only usefully defined within a call to
+     * <code>visitStmtBlock</code>; it will generally be defined
+     * within any statement or expression visitor.  Passes probably
+     * don't want to modify this directly; use
+     * <code>addStatement</code>, <code>addStatements</code>, or
+     * return a <code>Statement</code> object from a statement visitor
+     * function.
+     */
+    protected List newStatements;
 
     /**
      * Adds a statement to the list of statements that replace the

@@ -1,5 +1,5 @@
 // this filter performs both a FIR operation over an array	    
-complex[N_arr]->complex[N_arr] filter arrayFIR(int N_arr, int N_lp, complex[] h) {
+complex[N_arr]->complex[N_arr] filter arrayFIR(int N_arr, int N_lp, complex[N_lp] h) {
 
     init{}
 
@@ -11,11 +11,11 @@ complex[N_arr]->complex[N_arr] filter arrayFIR(int N_arr, int N_lp, complex[] h)
 
 	for (int i=0 ; i < N_lp  ; i++){
 	    out_arr[i]=0;
-	    for (int j=0; (j < N_lp) & ((i-j)>=0) ; j++)
+	    for (int j=0; (j < N_lp) && ((i-j)>=0) ; j++)
 		out_arr[i]=out_arr[i]+h[j]*in_arr[i-j];
 	}
 		
-	for (int i=N_lp ; i < N_in ; i++){
+	for (int i=N_lp ; i < N_arr ; i++){
 	    out_arr[i]=0;
 	    for (int j=0; (j < N_lp) ; j++)
 		out_arr[i]=out_arr[i]+h[j]*in_arr[i-j];

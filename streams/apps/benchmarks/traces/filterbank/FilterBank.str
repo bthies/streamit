@@ -4,11 +4,11 @@
  * processing is yet to be determined, and then reconstructs them.
  **/
 void->void pipeline FilterBank {
-    //add DataSource();
-    add FileReader<float>("input");
+    add DataSource();
+    //add FileReader<float>("input");
     add FilterBankPipeline(3);
-    //add FloatPrinter();
-    add FileWriter<float>("output");
+    add FloatPrinter();
+    //add FileWriter<float>("output");
 }
 
 

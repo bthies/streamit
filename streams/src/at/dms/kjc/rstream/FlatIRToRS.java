@@ -23,28 +23,20 @@ import at.dms.util.SIRPrinter;
  */
 public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 {
-    protected int				TAB_SIZE = 2;
-    protected int				WIDTH = 80;
-    protected int				pos;
-    protected String                      className;
+    protected int TAB_SIZE = 2;
+    protected int WIDTH = 80;
+    protected int pos;
 
-    protected TabbedPrintWriter		p;
-    protected StringWriter                str; 
-    protected boolean			nl = true;
-    public boolean                   declOnly = true;
-    public SIRFilter               filter;
+    protected TabbedPrintWriter p;
+    protected StringWriter str; 
+    public boolean declOnly = true;
+    public SIRFilter filter;
     
 
     //true if we are currently visiting the init function
     private boolean isInit = false;
     
-    //fields for all of the vars names we introduce in the c code
-    private final String FLOAT_HEADER_WORD = "__FLOAT_HEADER_WORD__";
-    private final String INT_HEADER_WORD = "__INT_HEADER_WORD__";
 
-
-    private static int filterID = 0;
-    
     //Needed to pass info from assignment to visitNewArray
     JExpression lastLeft;
 
@@ -168,15 +160,13 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 
 	//do not print the raw header if compiling
 	//for uniprocessor
-	if (!KjcOptions.standalone) 
-	    print("#include <raw.h>\n");
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
 
 	//if there are structures in the code, include
 	//the structure definition header files
-	if (StrToRStream.structures.length > 0) 
-	    print("#include \"structs.h\"\n");
+	//if (StrToRStream.structures.length > 0) 
+	//    print("#include \"structs.h\"\n");
 		
 	//Visit fields declared in the filter class
 	JFieldDeclaration[] fields = self.getFields();
@@ -1434,66 +1424,37 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 		 type.equals(CStdType.Integer) ||
 		 type.equals(CStdType.Short))
 	    {
-		if (!KjcOptions.standalone)
-		    print("print_int(");
-		else
-		    print("printf(\"%d\\n\", "); 
-		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
-		//print("gdn_send(");
+		print("printf(\"%d\\n\", "); 
 		exp.accept(this);
 		print(");");
 	    }
 	else if (type.equals(CStdType.Char))
 	    {
-		if (!KjcOptions.standalone)
-		    print("print_int(");
-		else
-		    print("printf(\"%d\\n\", "); 
-		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
-		//print("gdn_send(");
+		print("printf(\"%d\\n\", "); 
 		exp.accept(this);
 		print(");");
 	    }
 	else if (type.equals(CStdType.Float))
 	    {
-		if (!KjcOptions.standalone)
-		    print("print_float(");
-		else 
-		    print("printf(\"%f\\n\", "); 
-		//print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
-		//print("gdn_send(");
+		print("printf(\"%f\\n\", ");
 		exp.accept(this);
 		print(");");
 	    }
         else if (type.equals(CStdType.Long))
 	    {
-		if (!KjcOptions.standalone)
-		    print("print_int(");
-		else
-		    print("printf(\"%d\\n\", "); 
-		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
-		//print("gdn_send(");
+		print("printf(\"%d\\n\", "); 
 		exp.accept(this);
 		print(");");
 	    }
 	else if (type.equals(CStdType.String)) 
 	    {
-		if (!KjcOptions.standalone)
-		    print("print_string(");
-		else
-		    print("printf(\"%s\\n\", "); 
-		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
-		//print("gdn_send(");
+		print("printf(\"%s\\n\", "); 
 		exp.accept(this);
 		print(");");
 	    }
 	else
 	    {
-		System.out.println("Unprintatble type");
-		print("print_int(");
-		exp.accept(this);
-		print(");");
-		//Utils.fail("Unprintable Type");
+		assert false : "Unprintable type";
 	    }
     }
 

@@ -55,19 +55,33 @@ class CheckForCommunication extends SLIREmptyVisitor
 	return checker.found;
     }
 	
+    /**
+     * Visitor method for pop expressions, set found to true
+     * if we get here.  Called by the visitor.
+     *
+     */
     public void visitPopExpression(SIRPopExpression oldSelf,
 				   CType oldTapeType) {
 	  
 	found = true;
     }
 	
+    /**
+     * Visitor method for peek expressions, set found to true
+     * if we get here.  Called by the visitor.
+     *
+     */
     public void visitPeekExpression(SIRPeekExpression oldSelf,
 				    CType oldTapeType,
 				    JExpression oldArg) {
 	found = true;
     }
 	
-	
+    /**
+     * Visitor method for push expressions, set found to true
+     * if we get here.  Called by the visitor.
+     *
+     */
     public void visitPushExpression(SIRPushExpression self,
 				    CType tapeType,
 				    JExpression arg) {

@@ -63,7 +63,7 @@ int->int filter CompareExchange(boolean sortdir) {
 /**
  * Creates N keys and sends it out  
  */
-int->int filter KeySource(int N) {
+void->int filter KeySource(int N) {
 
   int[N] A;
 

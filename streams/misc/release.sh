@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.22 2003-10-06 22:06:13 dmaze Exp $
+# $Id: release.sh,v 1.23 2003-10-14 16:14:42 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -59,7 +59,7 @@ builddirs() {
 # Get a checked-out copy of the source tree.
 mkdir $WORKING/streams
 DIRS="streams/strc streams/Makefile streams/README.source"
-builddirs streams 3rdparty src library include misc configure.in Makefile.in
+builddirs streams 3rdparty src library include misc configure.in
 builddirs streams/apps benchmarks examples libraries sorts
 builddirs streams/docs cookbook implementation-notes release syntax
 

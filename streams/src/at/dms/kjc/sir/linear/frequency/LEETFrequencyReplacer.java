@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.7 2003-02-10 18:31:36 aalamb Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.8 2003-02-13 16:22:02 aalamb Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -217,7 +217,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 					   freqWork,                      /* work */
 					   N+x-1,                         /* initPeek */
 					   N+x-1,                         /* initPop */
-					   N+x-1,                         /* initPush */
+					   N,                             /* initPush */
 					   freqInitWork,                  /* initWork */
 					   self.getInputType(),           /* input type */
 					   self.getOutputType());         /* output type */

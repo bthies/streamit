@@ -77,7 +77,7 @@ public class FusePipe {
 	    if (end > start) {
 		fuse((SIRFilter)pipe.get(start),
 		     (SIRFilter)pipe.get(end));
-		System.err.println("Fusing " + (end-start+1) + " filters!");
+		System.err.println("Fusing " + (end-start+1) + " Pipeline filters!");
 	    }
 	    start = end + 1;
 	} while (start < pipe.size()-1);

@@ -14,7 +14,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.11 2002-11-25 20:31:58 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.12 2002-11-26 22:06:41 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -157,14 +157,14 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     //void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {}
     /**
      * We visit a pipeline after all sub-streams have been visited.
-     * If all of the sub components have linear forms, then we will
-     * Try and combine those linear forms into a linear form that
-     * represents exactly what the pipeline is doing.
+     * We combine any adjacent linear children into their own wrapper
+     * pipeline and also determine a linear form for them.
      **/
     public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {
 	this.pipelinesSeen++;
 	LinearPrinter.println("Visiting pipeline: " + "(" + self + ")");
 	
+	// This bit just goes and prints out the children of the pipeline.
 	Iterator kidIter = self.getChildren().iterator();
 	LinearPrinter.println("Children: ");
 	while(kidIter.hasNext()) {
@@ -173,64 +173,115 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    LinearPrinter.println("  " + currentKid + "(" + linearString + ")");
 	}
 
-	// go down the list of children in the pipeline, trying to create 
-	// a (possibly) gigantic matrix representation for what is going on.
+	// start going down the list of pipeline children.
+	int pipeCounter = 0;
 	kidIter = self.getChildren().iterator();
-	// if we don't have any children, we are done
-	if (!kidIter.hasNext()) {
-	    LinearPrinter.warn("Pipeline: " + self + " has no children ?!?!?!?!");
+	SIRPipeline currentPipe = new SIRPipeline("LinearWrapper"+pipeCounter);
+	while(kidIter.hasNext()) {
+	    // grab the next child. If we have a linear rep, add the kid to the pipeline
+	    SIRStream currentKid = (SIRStream)kidIter.next();
+	    LinearPrinter.println(" current child: " + currentKid);
+	    if (this.hasLinearRepresentation(currentKid)) {
+		// add this kid to the current linear pipeline.
+		currentPipe.add(currentKid);
+	    } else {
+		// kid was non linear. Replace the children in self with the new pipeline
+		// and update the mapping from filters to LinearFilterRepresentations.
+		doPipelineAdd(self, currentPipe, this.filtersToLinearRepresentation);
+		currentPipe = new SIRPipeline("LinearWrapper"+pipeCounter);
+		pipeCounter++;
+	    }
+	}
+	// add the current pipeline (to catch the end of the pipeline) -- doens't add empty pipelines
+	doPipelineAdd(self, currentPipe, this.filtersToLinearRepresentation);	
+	// check to make sure that we didn't foobar ourselves.
+	checkRep();
+    }
+
+    /**
+     * This method does the actual work of replacing a group
+     * of adjacent pipeline children with a wrapping pipeline,
+     * calculating the overall linear form of that wrapping
+     * pipeline, and updating the map from filters to linear representations.
+     **/
+    private static void doPipelineAdd(SIRPipeline parentPipe,
+				      SIRPipeline newChildPipe,
+				      HashMap linearRepMap) {
+
+	LinearPrinter.println(" new child pipe: ");
+	Iterator newKidIter = newChildPipe.getChildren().iterator();
+	while(newKidIter.hasNext()) {LinearPrinter.println("  " + newKidIter.next());}
+	
+
+	// if the new child pipe has 0-1 children, we are done
+	if (newChildPipe.size() <= 1) {
+	    LinearPrinter.println("  " + ((newChildPipe.size()==0)? "(no children)" : "(one child)"));
 	    return;
 	}
-
-	// grab the first child. If we don't have a linear rep, we are done.
-	SIRStream firstKid = (SIRStream)kidIter.next();
-	if (!this.hasLinearRepresentation(firstKid)) {return;}
-	// get the matrix/vector corresponding to this rep.
-	LinearFilterRepresentation overallRep = this.getLinearRepresentation(firstKid);
 	
-	// now, we should be good, go through the rest of the children, trying to
-	// tack on their linear reps to the overall one. If we hit a combination that
-	// we can't do, then we set overallRep to null
-	while(kidIter.hasNext() && (overallRep != null)) {
-	    SIRStream currentKid = (SIRStream)kidIter.next();
-	    // see if we have a representation for the current pipeline child
-	    if (this.hasLinearRepresentation(currentKid)) {
-		LinearFilterRepresentation currentRep = this.getLinearRepresentation(currentKid);
-		// calculate what transformations we need to do on the two representations
-		// in order to allow them to combine.
-		LinearTransform pipelineTransform;
-		pipelineTransform = LinearTransformPipeline.calculate(overallRep, currentRep);
-		// actually try to do the tranformation
-		try {
-		    overallRep = pipelineTransform.transform();
-		} catch (NoTransformPossibleException e) {
-		    LinearPrinter.println("  can't combine representations: " + overallRep + currentRep +
-					  " reason: " + e.getMessage());
-		    overallRep = null;
-		}
-	    } else {
-		// we didn't know anything about this filter, so just give up
-		overallRep = null;
+	// if the newChild pipeline contains all of the children of
+	// the parent pipe, there is no need to do any replacing
+	// (we would just be adding a pipeline with its only child a pipeline).
+	if (parentPipe.size() != newChildPipe.size()) {
+	    // set the parent field of the child pipe to be the parent (duh)
+	    newChildPipe.setParent(parentPipe);
+	    newChildPipe.setInit(SIRStream.makeEmptyInit()); // set to empty init method
+	    // remember the location of the first wrapper pipe's child
+	    // in the original parent pipeline (so we can insert the wrapper
+	    // pipe at the appropriate place.
+	    int newPipeIndex = parentPipe.indexOf(newChildPipe.get(0));
+	    if (newPipeIndex == -1) {throw new RuntimeException("unknown child in wrapper pipe");}
+	    // now, remove all of the streams that appear in the new child wrapper pipeline
+	    Iterator wrappedChildIter = newChildPipe.getChildren().iterator();
+	    while(wrappedChildIter.hasNext()) {
+		SIRStream removeKid = (SIRStream)wrappedChildIter.next() ;
+		parentPipe.remove(removeKid);
 	    }
+	    // now, add the new child pipeline to the parent at the index of first wrapped child
+	    parentPipe.add(newPipeIndex,newChildPipe);
+	} else {
+	    // no need to do wrap all of the children again.
+	    newChildPipe = parentPipe;
 	}
-
 	
-	// if we have an overall rep, then we should add a mapping from this pipeline to
-	// that rep, and return.
-	if (overallRep != null) {
-	    // check for debugging mode (because assembling the string takes a loooong time)
+	
+	// now, calculate the overall linear rep of the child pipeline
+	List repList = getLinearRepList(linearRepMap, newChildPipe.getChildren()); // list of linear reps
+	LinearTransform pipeTransform = LinearTransformPipeline.calculate(repList);
+	try {
+	    LinearFilterRepresentation newRep = pipeTransform.transform();
+	    // add a mapping from child pipe to the new linear form.
+	    linearRepMap.put(newChildPipe, newRep);
+	    // write output for output parsing scripts (check output mode
+	    // because printing this takes a loooooong time for big matrices) 
 	    if (LinearPrinter.getOutput()) {
-		LinearPrinter.println("Linear pipeline found: " + self +
-				      "\n-->Matrix:\n" + overallRep.getA() +
-				      "\n-->Constant Vector:\n" + overallRep.getb());
+		LinearPrinter.println("Linear pipeline found: " + newChildPipe +
+				      "\n-->Matrix:\n" + newRep.getA() +
+				      "\n-->Constant Vector:\n" + newRep.getb());
 	    }
-	    // add a mapping from the pipeline to its linear form.
-	    this.filtersToLinearRepresentation.put(self, overallRep);
-	    checkRep(); // to make sure we didn't shoot ourselves somehow
+	
+	} catch (NoTransformPossibleException e) {
+	    // otherwise something bad happened in the combination process.
+	    LinearPrinter.println(" can't combine transform reps: " + e.getMessage());
+	    //throw new RuntimeException("Error combining pipeline!");
 	}
 	return;
     }
 
+    /**
+     * Given kidList, returns a list of the values of kidMap.get(kidList)
+     * in the same ovder as the kidList.
+     **/
+    private static List getLinearRepList(HashMap kidMap, List kidList) {
+	List repList = new LinkedList(); 
+	Iterator kidIter = kidList.iterator();
+	while(kidIter.hasNext()) {
+	    repList.add(kidMap.get(kidIter.next()));
+	}
+	return repList;
+    }
+
+    
     //public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {}
 
     /**

@@ -5,7 +5,7 @@
 
 LIMIT = TRUE
 SIM-CYCLES = 5000000
-SIM-COMMAND = step(0x0880e); count_FLOPS(36000);
+SIM-COMMAND = sv(69201); sv(68791); sv(68791);
 
 BTL-MACHINE-FILE = fileio.bc
 
@@ -18,7 +18,7 @@ ifndef TOPDIR
 $(error TOPDIR not defined, make sure to include Makefile.include)
 endif
 
-OBJECT_FILES_00 = bitonic.o
+OBJECT_FILES_00 = bitonic_raw.o
 
 
 include $(COMMONDIR)/Makefile.all

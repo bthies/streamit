@@ -1,0 +1,37 @@
+7/30/02 -- AAL 
+changed it only to print once at the end of sorting things twice -- because the cycle iteration count was too low otherwise.
+
+first  iteration done at 0x000010e51 (69201 cycles)
+second iteration done at 0x000021b08 (137992 cycles) (delta=68791)
+third  iteration done at 0x0000327bf (206783 cycles) (delta=68791)
+
+
+==> iter takes 68791/68791 cycles (average = 68791)
+
+
+
+since we are producing a bitonic sort of 32 elements 2 times per printing "done", we are producing  
+64 outputs every 68791 cycles, so normalized to 10^5 cycles, 64*(100000/68791) = 93.035426
+
+
+flops reported are 0 (not surprising given that this is an integer app) flops, which is 0 MFLOPS, by the way
+
+workCount = 1091749 / 1107216 = 0.98603073
+workCount = 1085641 / 1100656 = 0.98635814
+workCount = 1085641 / 1100656 = 0.98635814
+
+
+
+Uniprocessor (7/30/2002):
+(Xenon 2.2 GHz, 512MB cache)
+10 million iterations (64 outputs/iteration)
+99.9% utilization
+runtime for 10^7 iterations = 195.41 seconds
+
+We want cycles/iteration:
+10^7 iterations/ 195.41 sec * 
+64 outputs/1 iteration
+1 second /2.2x10^9 cycles
+* 10^5 cycles 
+
+= 148.87114 outputs/10^5 cycles

@@ -70,7 +70,6 @@ public class ClusterBackend implements FlatVisitor {
 
 	structures = structs;
 	
-	StructureIncludeFile.doit(structures);
 
 	// set number of columns/rows
  	//RawBackend.rawRows = KjcOptions.raw;
@@ -230,6 +229,7 @@ public class ClusterBackend implements FlatVisitor {
 	    RemoveGlobals.doit(graphFlattener.top);
 	}
 
+	StructureIncludeFile.doit(structures, graphFlattener.top);
 
 	/// start output portals
 

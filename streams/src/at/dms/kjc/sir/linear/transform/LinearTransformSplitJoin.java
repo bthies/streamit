@@ -9,31 +9,32 @@ import java.util.*;
 
 /**
  * Contains the code for merging all the filters from a split join
- * into a single monolithic matrix.
- * $Id: LinearTransformSplitJoin.java,v 1.5 2002-11-25 20:33:26 aalamb Exp $
+ * into a single monolithic matrix. <p>
+ * $Id: LinearTransformSplitJoin.java,v 1.6 2002-12-02 23:03:06 aalamb Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;
-    /** filterExpansionFactors[i] contains the (integer) factors by which to expand filter i. **/
-    int[] filterExpansionFactors;
+    /** filterExpansionFactors[i] contains the factors by which to expand filter i. **/
+    ExpansionRule[] filterExpansionFactors;
     /** the weights of the round robin joiner. **/
     int[] roundRobinJoinerWeights;
-    /** combinationWeight is the (integer) factor by which we need to expand the weighted roundrobin joiner. **/ 
-    int joinerExpansionFactor;
+    /** joinRep is the (integer) factor by which we need to
+	expand all of the weights in the roundrobin joiner. **/ 
+    int joinRep;
     
     /**
      * Create one of these transformations with the appropriate pieces.
      * Doesn't copy the arrays, just copies the pointers.
      **/
     private LinearTransformSplitJoin(LinearFilterRepresentation[] lfr,
-				     int[] expandFact,
-				     int[] rrWeights,
-				     int joinExpandFact) {
+				     ExpansionRule[] expandFact,
+				     int[] rrWeights) {
 	this.linearRepresentations = lfr;
 	this.filterExpansionFactors = expandFact;
 	this.roundRobinJoinerWeights = rrWeights;
-	this.joinerExpansionFactor = joinExpandFact;
     }
+
+
 
     /**
      * Implement the actual transformation for a duplicate splitter splitjoin construct.
@@ -47,19 +48,21 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	LinearPrinter.println(" preparing to combine splitjoin of " +
 			      filterCount +
 			      " filters");
-	LinearPrinter.println(" joiner expansion factor: " + joinerExpansionFactor);
 	LinearPrinter.println(" Filter (expansion) factors:");
 	for (int i=0; i<filterCount; i++) {
 	    LinearPrinter.println("   " +
 				  "(" + this.filterExpansionFactors[i] + ")");
 	}
 	
-	// do the expansion
+	// do the expansion of each of the linear reps.
 	LinearFilterRepresentation[] expandedReps = new LinearFilterRepresentation[filterCount];
-	int totalCols = 0;
+	int totalCols = 0; // totalCols keeps track of the total number of columns in the expanded reps
+	
 	for (int i=0; i<filterCount; i++) {
-	    LinearPrinter.println("  expanding filter by " + this.filterExpansionFactors[i]);
-	    expandedReps[i] = this.linearRepresentations[i].expand(this.filterExpansionFactors[i]);
+	    LinearPrinter.println("  expanding filter with " + this.filterExpansionFactors[i]);
+	    expandedReps[i] = this.linearRepresentations[i].expand(this.filterExpansionFactors[i].peek,
+								   this.filterExpansionFactors[i].pop,
+								   this.filterExpansionFactors[i].push);
 	    totalCols += expandedReps[i].getPushCount();
 	}
 
@@ -75,9 +78,16 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	FilterMatrix expandedA = new FilterMatrix(expandedReps[0].getPeekCount(), totalCols);
 	FilterVector expandedb = new FilterVector(totalCols);
 
+	// just do a little paranoia check and ensure that all of the peek counts are the same
+	for (int i=0; i<filterCount; i++) {
+	    if (expandedA.getRows() != expandedReps[i].getPeekCount()) {
+		throw new RuntimeException("inconsistency -- expanded reps don't all have the same peek!");
+	    }
+	}
+	
 	// now, copy the cols of the matrices (and vectors) into the expanded versions
 	// for each expanded matrix, copy joinWeight[i] cols into the new matrix and vector
-	// at an offset that makes the output work out correctly. See paper.
+	// at an offset that makes the output work out correctly. See paper (specifically Figure 10 in the submission)
 	// start copying the cols of the right most filter at the appropriate start offset
 	int startOffset = 0;
 	for (int i=(filterCount-1); i>=0; i--) { // iterate through filters from right to left
@@ -105,24 +115,26 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	}
 
 	// calculate what the new pop rate is (it needs to the the same for all filters)
-	int newPopCount = (this.linearRepresentations[0].getPopCount() *
-			   this.filterExpansionFactors[0]);
+	int newPopCount = expandedReps[0].getPopCount();
+	// again, paranoia to make sure that they are all the same
+	for (int i=0; i<filterCount; i++) {
+	    if (newPopCount != expandedReps[i].getPopCount()) {
+		throw new RuntimeException("Inconsistency -- pop counts are not all the same");
+	    }
+	}
 
 	// now, return a new LinearRepresentation that represents the transformed
-	// splitjoin. 
+	// splitjoin with the new A and b, along with the new pop count.
 	return new LinearFilterRepresentation(expandedA, expandedb, newPopCount);
     }
 
 
     /**
+     * Utility method that
      * Parses a List of LinearFilter representations into an array of
-     * LinearFilterRepresenetations checking for peek=pop rates. If peek!= pop
-     * for any of the filters, then we return null. Else we return an array
-     * of LinearFilterRepresentation.
+     * of LinearFilterRepresentations.
      **/
     public static LinearFilterRepresentation[] parseRepList(List representationList) {
-	// create an array of LinearFilterRepresentations, and check that peek
-	// is the same as pop for all filters.
 	LinearFilterRepresentation[] filterReps;
 	filterReps = new LinearFilterRepresentation[representationList.size()];
 
@@ -141,10 +153,11 @@ public class LinearTransformSplitJoin extends LinearTransform{
     /**
      * Calculate the necessary information to combine the splitjoin when the splitter is
      * a duplicate. See the documentation (eg what will be my thesis) for an explanation
-     * of what is going on and why the expansion factors are chosen the way that they are.
+     * of what is going on and why the expansion factors are chosen the way that they are.<p>
      *
      * The input is a List of LinearFilterRepresentations and a matching array of joiner
-     * weights.
+     * weights. Note that this method merely calls the other calculateDuplicate so that
+     * I can reuse code in calculateRoundRobin...
      **/
     public static LinearTransform calculateDuplicate(List representationList,
 						     int[] joinerWeights) {
@@ -161,7 +174,7 @@ public class LinearTransformSplitJoin extends LinearTransform{
 
     /**
      * the function that does the actual work of calculating the
-     * expansion factors for the filters and the joiner.
+     * necessary expansion numbers for filters and the joiner.
      * basiclly, it takes as input an array of filter reps and an array of joiner weights
      * and (if all checks pass) calculates the weights necessary to expand each filter
      * by and the factor necessary to expand the roundrobin joiner by. It then returns a
@@ -193,155 +206,92 @@ public class LinearTransformSplitJoin extends LinearTransform{
 				  " ==> " + joinerFirings[i] + " firings in the steady state");
 	}
 	// now, calculate the lcm of all the joiner expansion factors     
-	int joinerExpandFact = lcm(joinerFirings);
+	int joinRep = lcm(joinerFirings);
+
+	// the overall number of repetitions for each filter
+	int[] overallFilterFirings = new int[filterCount];
 	
-	// now, calculate the weights that the individual filters need to be expanded by
-	// and the factor by which to expand the round robin joiner
-	int[] overallFilterWeights = new int[filterCount];
-	
-	LinearPrinter.println("  overall joiner expansion factor: " + joinerExpandFact);
+	LinearPrinter.println("  overall joiner expansion factor: " + joinRep);
 	for (int i=0; i<filterCount; i++) {
-	    LinearPrinter.println("  expand fact: " + joinerExpandFact +
+	    LinearPrinter.println("  expand fact: " + joinRep +
 				  " weight: " + joinerWeights[i] +
 				  "#cols: " + filterReps[i].getPushCount());
-	    overallFilterWeights[i] =  (joinerExpandFact * joinerWeights[i]) / filterReps[i].getPushCount();
-	    if (overallFilterWeights[i] == 0) {throw new RuntimeException("expansion factor was 0");}
-	    LinearPrinter.println("  overall filter weight for " + i + " is " + overallFilterWeights[i]); 
+	    overallFilterFirings[i] =  (joinerWeights[i] * joinRep) / filterReps[i].getPushCount();
+	    LinearPrinter.println("  overall filter rep for " + i + " is " + overallFilterFirings[i]); 
 	}
 
-	// now, we need to verify that the total # of rows (eg the size of each column) is
-	// is the same after the appropriate expansions so that the schedule works out. If
-	// not, then the graph is unschedulable.
-	// We also need to check that the peek rate for each of the filters
-	// after expansion is the same.
-	int totalInputData = overallFilterWeights[0]*filterReps[0].getPeekCount();
-	int totalPeekRate  = (filterReps[0].getPeekCount() +  // old peek
-			      (overallFilterWeights[0] - 1)*filterReps[0].getPopCount()); // (factor-1)*pop
-	for (int i=0; i<filterCount; i++) {
-	    // if total peeked at is not the same for the current filter, we are done.
-	    if ((overallFilterWeights[i]*filterReps[i].getPeekCount()) != totalInputData) {
-		LinearPrinter.println("  graph is unschedulable. aborting combination.");
-		return new LinearTransformNull("Unscheduable Graph");
-	    }
-	    // if the peek rate is not the same for the current filter, we are also done.
-	    if (totalPeekRate !=
-		(filterReps[i].getPeekCount() + (overallFilterWeights[i] - 1)*filterReps[i].getPopCount())) {
-		LinearPrinter.println("filer " + i + " doesn't have same peek rate after expansion.");
-		return new LinearTransformNull("Peek Rates don't match.");
-	    }
-	}
-
-		    
+	// calcluate the maximum peek rate (the max of any of the expanded sub filters)
+	int maxPeek = getMaxPeek(filterReps, overallFilterFirings);
 	
+	// now, calculate the peek, pop and push rates of the individual filters.
+	ExpansionRule filterExpansions[] = new ExpansionRule[filterCount];
+	for (int i=0; i<filterCount; i++) {
+	    filterExpansions[i] = new ExpansionRule(maxPeek,
+						    filterReps[i].getPopCount() * overallFilterFirings[i],
+						    filterReps[i].getPushCount() * overallFilterFirings[i]);
+	}
 
+	// do some sanity checks:
+	// 1. The total data pushed is the same as the total consumed by the joiner
+	int totalDataProducedByFilters = 0;
+	int totalDataConsumedByJoiner = 0;
+	for (int i=0; i<filterCount; i++) {
+	    totalDataProducedByFilters += filterExpansions[i].push;
+	}
+	for (int i=0; i<joinerWeights.length; i++) {
+	    totalDataConsumedByJoiner += joinerWeights[i] * joinRep;
+	}
+	if (totalDataProducedByFilters != totalDataConsumedByJoiner) {
+	    return new LinearTransformNull("data produced by filters(" + totalDataProducedByFilters +
+					   ") doesn't equal data consumed by joiner(" +
+					   totalDataConsumedByJoiner +")");
+	}
+	// 2. The total data poped is the same for all of the filters
+	int overallPopCount = filterExpansions[0].pop;
+	for (int i=0; i<filterCount; i++) {
+	    if (filterExpansions[i].pop != overallPopCount) {
+		return new LinearTransformNull("Overall pop count doesn't match --> split join is unschedulable");
+	    }
+	}
+	
 	// finally, if we get to here, we have the expansion factors that we need, and
 	// we can pass that information into a new LinearTransform object
 	return new LinearTransformSplitJoin(filterReps,
-					    overallFilterWeights,
-					    joinerWeights,
-					    joinerExpandFact);
+					    filterExpansions,
+					    joinerWeights);
     }
 
-    /**
-     * Calculate the necessary information to combine the splitjoin when the splitter is
-     * a roundrobin.
-     * The basic idea will be to transform the linear reps that we have coming into this 
-     * split join such that they describe the equivaled computation using a duplicate
-     * splitter. We will do so by expandind the filter reps by inserting rows of
-     * zeros in the appropriate places to match the number of rows.
-     **/
-    public static LinearTransform calculateRoundRobin(List representationList,
-						      int[] joinerWeights,
-						      int[] splitterWeights) {
-       
-	LinearPrinter.println(" calculating splitjoin transform with roundrobin splitter.");
-	if (representationList.size() != splitterWeights.length) {
-	    throw new IllegalArgumentException("different numbers of reps and splitter weights " +
-					       "while transforming splitjoin");
+    /** Calculates the maxmum peek rate (o_i * joinRep + e_i - o_i) for all of the filters. **/
+    public static int getMaxPeek(LinearFilterRepresentation[] filterReps, int[] filterFirings) {
+	int maxPeek = -1;
+	for (int i=0; i<filterReps.length; i++) {
+	    int currentPeek = filterReps[i].getPopCount() * (filterFirings[i] - 1)  + filterReps[i].getPeekCount();
+	    if (currentPeek > maxPeek) {maxPeek = currentPeek;}
 	}
-
-	// calculate the rep list from the passed in list
-	LinearFilterRepresentation[] filterReps = parseRepList(representationList);
-	int filterCount = filterReps.length;
-
-	// first, we are going to figure out how many times the roundrobin splitter
-	// fires in the steady state by determining the lcm of the weight and rows
-	// of each A  divided by weightsand then the overall Lcm of that.
-	int[] splitterFiringLcms = new int[filterCount];
-	for (int i=0; i<filterCount; i++) {
-	    int rows = filterReps[i].getPeekCount();
-	    int weight = splitterWeights[i];
-	    int currentLcm = lcm(rows, weight); // number of items that need to be produced in the steady state
-	    // number of times splitter needs to be fired to produce the correct number of outputs
-	    int currentSplitterFirings = currentLcm / weight;
-	    splitterFiringLcms[i] = currentSplitterFirings;
-	    
-	    LinearPrinter.println("  lcm of filter " + i + "'s rows (" + rows +
-				  ") and weight(" + weight + ") = " + lcm(weight, rows));
-	    LinearPrinter.println("  splitter firings: " + splitterFiringLcms[i]);
-	}
-	int splitterFirings = lcm(splitterFiringLcms);
-	LinearPrinter.println("  overall splitter firings: " + splitterFirings);
-
-	// now, figure out the sum of the splitter weights (eg the total number
-	// of rows (possibly off by an integer factor) that we would like
-	// each of the filter reps to end up having
-	int splitterSum = 0;
-	for (int i=0; i<filterCount; i++) {
-	    splitterSum += splitterWeights[i];
-	}
-	LinearPrinter.println("  total splitter sum: " + splitterSum);
-
-	// first expand all reps by a factor of splitterFirings. 
-	// then, we know that each filter can be expanded into splitterSum * currentRows new rows.
-	// with (splitterSum - splitterWeights[i])*rows of zeros
-	LinearFilterRepresentation[] duplicateReps = new LinearFilterRepresentation[filterCount];
-	int currentOffset = 0;
-	// iterate through the representations backwards (eg rightmost rep first)
-	for (int i=(filterCount-1); i>=0; i--) {
-	    LinearPrinter.println("  expanding filter: " + i);
-	    LinearFilterRepresentation expandedRep;
-	    // the number of items the new filter needs to consume
-	    int totalConsumption = (splitterFirings * splitterWeights[i]);
-	    LinearPrinter.println("   filter needs to consume " + totalConsumption + " items");
-	    // the total number of times that a filter needs to execute (eg how much to expand it by)
-	    // note this is always going to be an integer due to the way we calculated splitterFirings
-	    int filterExecutions = totalConsumption / filterReps[i].getPeekCount();
-	    LinearPrinter.println("   filter needs to execute " + filterExecutions + " times");
-	    if ((totalConsumption % filterReps[i].getPeekCount()) != 0) {
-		throw new RuntimeException("filter executes a fractional number of times");
-	    }
-	    // now, just expand the current rep be the factor that we have calculated
-	    expandedRep = filterReps[i].expand(filterExecutions);
-	    
-	    // make a new representation that has the same # of cols
-	    // but splitterSum * currentRows rows.
-	    int newRows = splitterSum * splitterFirings;
-	    int newCols = expandedRep.getPushCount();
-	    FilterMatrix newA = new FilterMatrix(newRows, newCols);
-	    FilterVector newb = (FilterVector)expandedRep.getb().copy();
-	    LinearPrinter.println("  created new A(" + newRows + "," + newCols + ")");
-	    LinearPrinter.println("  copied b(" + newCols + ")");
-	    
-	    // now, copy the rows from old representation into the new representation
-	    int numSections = expandedRep.getPeekCount() / splitterWeights[i];
-	    LinearPrinter.println("  number of " + splitterWeights[i] + " sections is " + numSections); 
-	    // each section has the splitterWeights[i] rows associated with it
-	    for (int j=0; j<numSections; j++) { // j is the jth chunk of weights[i] rows
-		LinearPrinter.println("  copying chunk " + j + " of " + splitterWeights[i] + " rows into filter " + i);
-		// copy the rows into A and b of the new representation
-		int newStart = currentOffset + j*splitterSum; // start row in newRep
-		int sourceStart = j*splitterWeights[i]; // start row in expandedRep.A
-		int numRows = splitterWeights[i]; // number of rows to copy
-		newA.copyRowsAt(newStart, expandedRep.getA(), sourceStart, numRows);
-	    }
-	    // update the current offset (from the top) where we copy data to
-	    currentOffset += splitterWeights[i];
-	    duplicateReps[i] = new LinearFilterRepresentation(newA, newb, newRows);
-	}
-	// now we are ready to try duplicating
-	return calculateDuplicate(duplicateReps, joinerWeights);
+	return maxPeek;
     }
+
+    /** Structure to hold new peek/pop/push rates for linear reps **/
+    static class ExpansionRule {
+	int peek;
+	int pop;
+	int push;
+	ExpansionRule(int e, int o, int u) {
+	    this.peek = e;
+	    this.pop  = o;
+	    this.push = u;
+	}
+	public String toString() {
+	    return ("(peek:" + this.peek +
+		    ", pop:" + this.pop +
+		    ", push:" + this.push +
+		    ")");
+	}
+    }
+
+
+
+    
     
 }
 

@@ -12,7 +12,14 @@ import java.util.*;
  * about how to transform one or more linear transforms into
  * a new linear representation. For example, for pipeline combinations,
  * the LRT contains information about what factor to use for expansion
- * for both filters trying to be combined.
+ * for both filters trying to be combined.<p>
+ *
+ * The interface to a LinearTransform is simple the transform()
+ * method, which will return the overall linear representation
+ * that the transform calculates. To create a LinearTransform,
+ * you use one of the static methods in the subclasses to pre-compute
+ * whatever is necessary, and then you call transfor() on the returned
+ * object.
  **/
 public abstract class LinearTransform {
 

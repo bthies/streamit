@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.33 2001-10-29 20:42:09 thies Exp $
+ * $Id: LIRToC.java,v 1.34 2001-10-29 20:43:59 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -2046,9 +2046,6 @@ public class LIRToC
                                       boolean isFinal,
                                       CType type,
                                       String ident) {
-        if (isFinal) {
-            print("final ");
-        }
         print(type);
         if (ident.indexOf("$") == -1) {
             print(" ");

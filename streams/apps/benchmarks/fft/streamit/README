@@ -12,7 +12,7 @@ FFT3:
  - inputs in natural order, outputs in bit-reversed order
  - written by Mani Narayanan for comparison with UC Berkeley VIRAM
  - fine-grained decimation-in-time implementation
- - answer verifies with C version in fftref
+ - answer verifies with C version in ../c/fft3
  - properly handles real/imag parts and roots of unity weights
 
 fftref:

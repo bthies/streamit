@@ -216,8 +216,7 @@ public class StreamItDot implements AttributeStreamVisitor
                                 SIRStream parent,
                                 JFieldDeclaration[] fields,
                                 JMethodDeclaration[] methods,
-                                JMethodDeclaration init,
-                                List elements)
+                                JMethodDeclaration init)
     {
         NamePair pair = new NamePair();
         
@@ -225,7 +224,7 @@ public class StreamItDot implements AttributeStreamVisitor
         print("subgraph cluster_" + getName() + " {\n");
         
         // Walk through each of the elements in the pipeline.
-        Iterator iter = elements.iterator();
+        Iterator iter = self.getChildren().iterator();
         while (iter.hasNext())
         {
             SIROperator oper = (SIROperator)iter.next();
@@ -247,7 +246,6 @@ public class StreamItDot implements AttributeStreamVisitor
                                  JFieldDeclaration[] fields,
                                  JMethodDeclaration[] methods,
                                  JMethodDeclaration init,
-                                 List elements,
                                  SIRSplitter splitter,
                                  SIRJoiner joiner)
     {
@@ -264,7 +262,7 @@ public class StreamItDot implements AttributeStreamVisitor
         pair.last = np.last;
 
         // ...and walk through the body.
-        Iterator iter = elements.iterator();
+        Iterator iter = self.getParallelStreams().iterator();
         while (iter.hasNext())
         {
             SIROperator oper = (SIROperator)iter.next();

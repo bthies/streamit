@@ -266,15 +266,14 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 				 SIRStream parent,
 				 JFieldDeclaration[] fields,
 				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init,
-				 List elements) {
+				 JMethodDeclaration init) {
 	// record this container as one that should be cloned
 	toBeCloned.add(self);
 	// visit node
 	visitStream(self);
 	// visit children
-	for (int i=0; i<elements.size(); i++) {
-	    ((SIRStream)elements.get(i)).accept(this);
+	for (int i=0; i<self.size(); i++) {
+	    self.get(i).accept(this);
 	}
     }
 
@@ -329,8 +328,7 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 				  SIRStream parent,
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init,
-				  List elements) {
+				  JMethodDeclaration init) {
     }
 
     /* post-visit a splitjoin -- do nothing, visit on way down */

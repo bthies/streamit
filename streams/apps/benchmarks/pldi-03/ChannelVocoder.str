@@ -26,13 +26,14 @@ void->void pipeline ChannelVocoder {
 
 /** This class is just a wrapper so that we don't have anonymous inner classes. **/
 float->float splitjoin MainSplitjoin {
-  int DECIMATION = 10; // decimation factor
-  int NUM_FILTERS = 2; //18;
-    
+  int PITCH_WINDOW = 100; // the number of samples to base the pitch detection on
+  int DECIMATION   = 50; // decimation factor
+  int NUM_FILTERS  = 4; //18;
+  
   split duplicate;
-  add PitchDetector(DECIMATION);
+  add PitchDetector(PITCH_WINDOW, DECIMATION);
   add VocoderFilterBank(NUM_FILTERS, DECIMATION);
-  join roundrobin(1,2); // can't be NUM_FILTERS b/c const prop didn't work
+  join roundrobin(1,4); // can't be NUM_FILTERS b/c const prop didn't work
 }
 
 
@@ -45,15 +46,15 @@ void->float filter DataSource() {
 
   init {
     index = 0;
-    x[0] = 0.70867825;
+    x[0] = -0.70867825;
     x[1] = 0.9750938;
-    x[2] = 0.009129746;
+    x[2] = -0.009129746;
     x[3] = 0.28532153;
-    x[4] = 0.42127264;
-    x[5] = 0.95795095;
+    x[4] = -0.42127264;
+    x[5] = -0.95795095;
     x[6] = 0.68976873;
     x[7] = 0.99901736;
-    x[8] = 0.8581795;
+    x[8] = -0.8581795;
     x[9] = 0.9863592;
     x[10] = 0.909825;
   }
@@ -70,17 +71,9 @@ void->float filter DataSource() {
  * the input so that it doesn't get identified as a 
  * linear filter.
  **/
-float->float pipeline PitchDetector(int decimation) {
-  add NonIdentity();
-
-  add Compressor(decimation);
-}
-/** filter's only purpose is to not be linear. **/
-float->float filter NonIdentity {
-  work push 1 pop 1 {
-    float t = pop();
-    push (t*t);
-  }
+float->float pipeline PitchDetector(int winsize, int decimation) {
+  add CenterClip();
+  add CorrPeak(winsize, decimation);
 }
 
 
@@ -103,47 +96,72 @@ float->float splitjoin VocoderFilterBank(int N, int decimation) {
  * by a decimator with decimation rate of decimation.
  **/
 float->float pipeline FilterDecimate(int i, int decimation) {
-  add VocoderBandPassFilter(i, 64); // 64 tap filter
+  //add VocoderBandPassFilter(i, 64); // 64 tap filter
+  add BandPassFilter(2, 400*i, 400*(i+1), 64); 
   add Compressor(decimation);
+
+
 }
-
-
-
 
 /** 
- * Low pass filter code from lib/LowPassFilter.str recentered at filtNum*400Hz. 
- * This filter is a lpf with cutoff 200 Hz wide (at sampling rate of 8000 Hz)
- * and is modulated using a cosine. N is still the size of the filter.
+ * This filter "center clips" the input value so that it is always
+ * within the range of -.75 to .75
  **/
-float->float filter VocoderBandPassFilter(int filtNum, int N) {
-  float[N] h;
-  
-  /* since the impulse response is symmetric, I don't worry about reversing h[n]. */
-  init {
-    float cutoffFreq = (2*pi*200)/8000;
-    int OFFSET = N/2;
-    for (int i=0; i<N; i++) {
-      int idx = i + 1;
-      // generate real part
-      if (idx == OFFSET) 
-	/* take care of div by 0 error (lim x->oo of sin(x)/x actually equals 1)*/
-	h[i] = cutoffFreq / pi; 
-      else 
-	h[i] = sin(cutoffFreq * (idx-OFFSET)) / (pi*(idx-OFFSET));
+float->float filter CenterClip {
+  float MIN = -0.75;
+  float MAX =  0.75;
+  work pop 1 push 1 {
+    float t = pop();
+    if (t<MIN) {
+      push(MIN); 
+    } else if (t>MAX) {
+      push(MAX);
+    } else {
+      push(t);
     }
-    // now, modulate the passband centered at i*400 Hz
-    for (int i=0; i<N; i++) {
-      h[i] = h[i]*2*cos((2*pi*400*filtNum*i)/8000);
-    }
-  }
-
-  /* implement the FIR filtering operation as the convolution sum. */
-  work peek N pop 1 push 1 {
-    float sum = 0;
-    for (int i=0; i<N; i++) { 
-      sum += h[i]*peek(i);
-    }
-    push(sum);
-    pop();
   }
 }
+
+/** 
+ * This filter calculates the autocorrelation of the next winsize elements
+ * and then chooses the max peak. If the max peak is under a threshold we
+ * output a zero. If the max peak is above the threshold, we simply output 
+ * its value.
+ **/
+float->float filter CorrPeak(int winsize, int decimation) {
+  float THRESHOLD = 0.07;
+  work peek winsize push 1 pop decimation {
+    float[winsize] autocorr; // auto correlation
+    for (int i=0; i<winsize; i++) {
+      float sum = 0;
+      for (int j=i; j<winsize; j++) {
+	sum += peek(i)*peek(j);
+      }
+      autocorr[i] = sum/winsize;
+    }
+
+    // armed with the auto correlation, find the max peak
+    // in a real vocoder, we would restrict our attention to
+    // the first few values of the auto corr to catch the initial peak
+    // due to the fundamental frequency.
+    float maxpeak = 0;
+    for (int i=0; i<winsize; i++) {
+      if (autocorr[i]>maxpeak) {
+	maxpeak = autocorr[i];
+      }
+    }
+
+    //println("max peak" + maxpeak);
+    
+    // output the max peak if it is above the threshold.
+    // otherwise output zero;
+    if (maxpeak > THRESHOLD) {
+      push(maxpeak);
+    } else {
+      push(0);
+    }
+    for (int i=0; i<decimation; i++) {
+      pop();
+    }
+  }
+}	   

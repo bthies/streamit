@@ -44,6 +44,7 @@ clean:
 	rm -f Test.java BF*.java
 	rm -f FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java 
 	rm -f CoarseSerializedBeamFormer.java LinkedFMTest.java OneBitDToA.java
+	rm -f ChannelVocoder.java
 	rm -rf streamgraphs
 
 report_clean:
@@ -81,3 +82,6 @@ redundant-beamformer: benchmarks
 test: ChannelVocoder.java
 	jikes ChannelVocoder.java
 	java ChannelVocoder -i 10
+
+test-compile: ChannelVocoder.java
+	$(COMPILER) --linearanalysis --debug ChannelVocoder.java > ChannelVocoder.c

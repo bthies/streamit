@@ -1,0 +1,16 @@
+<benchmark>
+  <name>lifter</name>
+  <desc>Test lifting deeply nested streams</desc>
+  <description>
+The main body of this test contains streams deeply nested.  A pipeline
+or split-join containing a single child can be replaced with the
+child; this tests the compiler's ability to lift child streams out of
+their containers.
+  </description>
+  <implementations>
+    <impl lang="StreamIt">
+      <file class="source">TestLifter.str</file>
+      <file class="output">TestLifter.out</file>
+    </impl>
+  </implementations>
+</benchmark>

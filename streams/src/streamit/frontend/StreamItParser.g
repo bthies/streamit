@@ -1,6 +1,6 @@
 /*
  * StreamItParser.g: A grammar for StreamIt
- * $Id: StreamItParser.g,v 1.16 2002-08-16 21:24:49 dmaze Exp $
+ * $Id: StreamItParser.g,v 1.17 2002-09-23 20:49:51 dmaze Exp $
  */
 
 header {
@@ -104,14 +104,13 @@ statement
 
 streamit_statement
 	:	minic_statement
-	|	add_statement
-	|	body_statement
-	| 	loop_statement
+	|	add_statement SEMI!
+	|	body_statement SEMI!
+	| 	loop_statement SEMI!
 	|	split_statement SEMI!
 	|	join_statement SEMI!
 	|	enqueue_statement SEMI!
 	|	push_statement SEMI!
-	|	print_statement SEMI!
 	;
 
 add_statement
@@ -131,7 +130,7 @@ stream_or_inline
 	| (TK_pipeline) => TK_pipeline^ block
 	| (TK_splitjoin) => TK_splitjoin^ block
 	| (TK_feedbackloop) => TK_feedbackloop^ block
-	| ID (LESS_THAN data_type MORE_THAN!)? (func_call_params)? SEMI!
+	| ID (LESS_THAN data_type MORE_THAN!)? (func_call_params)?
 	;
 
 split_statement
@@ -152,11 +151,6 @@ splitter_or_joiner
 
 enqueue_statement
 	: TK_enqueue^ right_expr
-	;
-
-print_statement
-	:	TK_print^
-		right_expr
 	;
 
 data_type

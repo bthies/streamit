@@ -848,15 +848,6 @@ public class Operator extends DestroyedClass
     // initializatoin functions, to be over-ridden
     public void init(ParameterContainer params) { invalidInitError (); }
 
-    // initIO initializes all input/output channels
-    // as required
-    final public void initIO ()
-    {
-        // You must not provide an initIO function
-        // to initialize
-        ASSERT (false);
-    }
-
     public static MessageStub MESSAGE_STUB;
 
     // initialize the MESSAGE_STUB

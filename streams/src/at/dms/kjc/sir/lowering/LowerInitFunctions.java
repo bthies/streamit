@@ -126,9 +126,7 @@ public class LowerInitFunctions implements StreamVisitor {
     private void registerFeedbackLoopTapes(SIRFeedbackLoop str, 
 					   JMethodDeclaration init) {
         // get parent context
-        JExpression parentContext =
-            LoweringConstants.getStreamContext(LoweringConstants.
-                                               getChildStruct(str));
+        JExpression parentContext = LoweringConstants.getStreamContext();
 
 	// work on BODY...
 	SIRStream body = str.getBody();

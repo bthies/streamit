@@ -334,7 +334,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				   JFieldDeclaration[] fields,
 				   JMethodDeclaration[] methods,
 				   JMethodDeclaration init) {
-	postVisit(self.getName(), fields, methods, self.getChildren());
+	postVisit(self.getName(), fields, methods, self.getParallelStreams());
     }
   
     /* post-visit a feedbackloop */
@@ -345,7 +345,12 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				      JMethodDeclaration init,
 				      int delay,
 				      JMethodDeclaration initPath) {
-	postVisit(self.getName(), fields, methods, self.getChildren());
+	// make a list of body and loop
+	List children = new LinkedList();
+	children.add(self.getBody());
+	children.add(self.getLoop());
+	// do visit
+	postVisit(self.getName(), fields, methods, children);
     }
 }
 

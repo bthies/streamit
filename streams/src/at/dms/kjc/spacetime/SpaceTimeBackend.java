@@ -399,8 +399,9 @@ public class SpaceTimeBackend
 	    SoftwarePipeline.pipeline(sched,traces);
 	    for(int i=0;i<traces.length;i++)
 		traces[i].doneDependencies();
+	    System.err.println("TopNodes in Forest: "+traceForrest.length);
 	    traceForrest=PruneTopTraces.prune(traceForrest);
-	    //System.err.println("TOPNODE IN FOREST: "+traceForrest.length+" "+traceForrest[0].getHead().getNext());
+	    System.err.println("TopNodes in Forest: "+traceForrest.length);
 	}
 	
 	//traceList=null;

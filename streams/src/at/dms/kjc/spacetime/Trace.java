@@ -37,8 +37,8 @@ public class Trace
     public Trace(InputTraceNode head) {
 	this.head = head;
 	head.setParent(this);
-	depends = new Trace[0];
-	edges = new Trace[0];
+	//depends = new Trace[0];
+	//edges = new Trace[0];
 	len=-1;
 	dependsTemp=new ArrayList();
 	edgesTemp=new ArrayList();
@@ -51,8 +51,8 @@ public class Trace
 	head.setParent(this);
 	head.setNext(node);
 	node.setPrevious(head);
-	depends = new Trace[0];
-	edges = new Trace[0];
+	//depends = new Trace[0];
+	//edges = new Trace[0];
 	len=-1;
 	dependsTemp=new ArrayList();
 	edgesTemp=new ArrayList();
@@ -141,9 +141,9 @@ public class Trace
     }
 
     public boolean depends(Trace trace) {
-	if(depends==null)
+	if(depends==null) {
 	    return dependsTemp.contains(trace);
-	else
+	} else
 	    for(int i=0;i<depends.length;i++)
 		if(depends[i]==trace)
 		    return true;

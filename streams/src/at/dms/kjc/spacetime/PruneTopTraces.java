@@ -11,6 +11,13 @@ public class PruneTopTraces {
 	    Trace trace=traces[i];
 	    if(trace.getDepends().length==0)
 		temp[idx++]=trace;
+	    else {
+		Trace[] depends=trace.getDepends();
+		System.err.println("TraceDepend "+trace+":");
+		for(int j=0;j<depends.length;j++) {
+		    System.err.println(depends[j]);
+		}
+	    }
 	    /*InputTraceNode input=(InputTraceNode)trace.getHead();
 	      OutputTraceNode[] srcs=input.getSources();
 	      boolean ok=true;

@@ -26,13 +26,15 @@ public class SoftwarePipeline {
 		    else
 			assert oldPrimePump==srcPrimePump:"Case Not Supported Yet";
 		    if(trace.depends(srcTrace)) { //Hack to get rid of loops
-			System.err.println(trace+" depends on "+srcTrace);
 			found=true;
 		    } else
 			for(int k=num-1;k>=0;k--)
 			    if(tile[k]==srcTrace)
 				found=true;
 		    if(found) {
+			trace.setPrimePump(srcPrimePump);
+		    } else if(sched.getPosition(srcTrace)[2]<sched.getPosition(trace)[2]) {
+			trace.addDependency(srcTrace);
 			trace.setPrimePump(srcPrimePump);
 		    } else {
 			srcTrace.addDependency(trace);

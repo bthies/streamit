@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.31 2003-10-07 17:52:50 dmaze Exp $
+ * $Id: TestExamples.java,v 1.32 2003-10-10 19:48:19 dmaze Exp $
  **/
 package streamittest;
 
@@ -106,6 +106,8 @@ public class TestExamples extends StreamITTestCase {
     }
 
     public void testChol() {
+        doSyntaxConvertTest(EXAMPLE_ROOT + "chol-para/",
+                            "chol.str", "chol.java");
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "chol-para/",
 			       "chol.java",
 			       "chol.out",
@@ -147,6 +149,8 @@ public class TestExamples extends StreamITTestCase {
     }
     
     public void testFib2() {
+        doSyntaxConvertTest(EXAMPLE_ROOT + "fib/",
+                            "Fib2.str", "Fib2.java");
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "fib/",
 			       "Fib2.java",
 			       "Fib2.out",
@@ -154,6 +158,8 @@ public class TestExamples extends StreamITTestCase {
     }
 
     public void testFile() {
+        doSyntaxConvertTest(EXAMPLE_ROOT + "file/",
+                            "FileTest.str", "FileTest.java");
 	doCompileTest(EXAMPLE_ROOT + "file/",
 		      "FileTest.java");
     }
@@ -167,6 +173,8 @@ public class TestExamples extends StreamITTestCase {
     }
 
     public void testLattice() {
+        doSyntaxConvertTest(EXAMPLE_ROOT + "lattice/",
+                            "Lattice.str", "Lattice.java");
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "lattice/",
 			       "Lattice.java",
 			       "Lattice.out",

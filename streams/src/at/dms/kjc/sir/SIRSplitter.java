@@ -73,6 +73,19 @@ public class SIRSplitter extends SIROperator {
     }
 
     /**
+     * If this is a splitter that has equal weight per way, then
+     * rescale the weights to be of the given <extent>
+     */
+    public void rescale(int extent) {
+	if (type==SIRSplitType.DUPLICATE ||
+	    type==SIRSplitType.ROUND_ROBIN ||
+	    type==SIRSplitType.NULL) {
+	    this.weights = initLiteralArray(extent, ((JIntLiteral)
+						     weights[0]).intValue());
+	}
+    }
+    
+    /**
      * Accepts visitor <v> at this node.
      */
     public void accept(StreamVisitor v) {
@@ -100,7 +113,7 @@ public class SIRSplitter extends SIROperator {
     }
 
     /**
-     * Return type of this.
+     * Return the number of outputs of this.
      */
     public int getWays() {
 	return weights.length;

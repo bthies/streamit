@@ -167,10 +167,16 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Sets the parallel streams in this.
+     * Sets the parallel streams in this, and resets the count on the
+     * splitters and joiners, if they depended on the number of
+     * <elements> before.
      */
     public void setParallelStreams(LinkedList elements) {
+	// reset elements
 	this.elements = (LinkedList)elements.clone();
+	// reset splits and joins to have right number of elements
+	this.splitter.rescale(elements.size());
+	this.joiner.rescale(elements.size());
     }
 
     /**

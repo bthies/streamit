@@ -99,7 +99,20 @@ public class SIRJoiner extends SIROperator {
     }
 
     /**
-     * Return type of this.
+     * If this is a joiner that has equal weight per way, then rescale
+     * the weights to be of the given <extent>
+     */
+    public void rescale(int extent) {
+	if (type==SIRJoinType.COMBINE ||
+	    type==SIRJoinType.ROUND_ROBIN ||
+	    type==SIRJoinType.NULL) {
+	    this.weights = initLiteralArray(extent, ((JIntLiteral)
+						     weights[0]).intValue());
+	}
+    }
+
+    /**
+     * Return the number of inputs to this.
      */
     public int getWays() {
 	return weights.length;

@@ -38,7 +38,7 @@ class FMDemodulator extends Filter {
 
     public void init()
     {
-        input = new Channel (Float.TYPE, 1);
+        input = new Channel (Float.TYPE, 1, 2);
         output = new Channel (Float.TYPE, 1);
 
         mGain = maxAmplitude*(sampleRate

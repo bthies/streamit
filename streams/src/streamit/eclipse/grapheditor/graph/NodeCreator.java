@@ -85,29 +85,10 @@ public class NodeCreator {
 		node.setInputTape(properties.getProperty(GEProperties.KEY_INPUT_TAPE));
 			
 		GEContainer parentNode = graphStruct.containerNodes.getContainerNodeFromName(properties.getProperty(GEProperties.KEY_PARENT));
-		node.setEncapsulatingNode(parentNode);
+
+		parentNode.addNodeToContainer(node);		
 		node.setDepthLevel(parentNode.getDepthLevel() + 1);
-		
-		
-		
-		// 1/30/04 if ((parentNode.getSuccesors().size() == 0) && (parentNode.getType() ==GEType.PIPELINE))
-	//TODO: changing the way that nodeisconnected works //
-	/*
-		if ((((GEContainer)parentNode).getContainedElements().size() == 0) && 
-			(parentNode.getType() ==GEType.PIPELINE))
-		{
-			parentNode.addSuccesor(node);
-			node.isNodeConnected = true;
-		}
-	*/
-		
-	
-		parentNode.addNodeToContainer(node);
-		
-	
-	
-	
-	
+
 		/** The node that we are adding is a container, must add it to container list 
 		 * at corresponding level **/
 		if ((node.getType() == GEType.PIPELINE) || (node.getType() == GEType.SPLIT_JOIN) || 

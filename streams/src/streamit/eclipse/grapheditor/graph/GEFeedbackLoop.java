@@ -13,12 +13,8 @@ import java.util.Iterator;
 
 import javax.swing.JLabel;
 
-import org.jgraph.graph.ConnectionSet;
-import org.jgraph.graph.DefaultEdge;
 import org.jgraph.graph.DefaultPort;
 import org.jgraph.graph.GraphConstants;
-
-import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
 
 /**
  * GEFeedbackLoop is the graph internal representation of  a feedback loop.
@@ -66,22 +62,11 @@ public class GEFeedbackLoop extends GEContainer implements Serializable{
 		
 		//TODO: might have to deal with this later 
 		this.isExpanded = true;
-		
-		//TODO: The children are never set. 
-		//Temporary solution: set them to the value returned by this.getContainedElements() 
-		//this.succesors = new ArrayList();
-		succesors.add(join);
-		succesors.add(body);
-		succesors.add(loop);
-		succesors.add(split);
-		 
-		joiner.setEncapsulatingNode(this);
-		body.setEncapsulatingNode(this);
-		loop.setEncapsulatingNode(this);
-		split.setEncapsulatingNode(this); 
-		 
-		firstNode = joiner;
-		this.getContainedElements();
+
+		this.addNodeToContainer(join);
+		this.addNodeToContainer(body);
+		this.addNodeToContainer(loop);
+		this.addNodeToContainer(split);
 	}
 
 	/**
@@ -160,27 +145,102 @@ public class GEFeedbackLoop extends GEContainer implements Serializable{
 		this.localGraphStruct = graphStruct;	
 		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100,100)));	
 	}
+
+	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
+	 * not a container node, then a list with no elements is returned.
+	 * @return ArrayList of contained elements. If <this> is not a container, return empty list.
+	 */
+	public ArrayList getContainedElements()
+	{
+		ArrayList tempList = new ArrayList();
+		tempList.addAll(this.succesors);
+		return tempList;
+	}
+
+	/**
+	 * Get the splitter part of this.
+	 * @return GESplitter corresponding to this GEFeedbackLoop.
+	 */
+	public GESplitter getSplitter()
+	{
+		return this.splitter;
+	}
 	
 	/**
-	 * Expand or collapse the GESplitJoin structure depending on wheter it was already 
-	 * collapsed or expanded. 
-	 * @param jgraph 
-	 */	
-	public void collapseExpand()
+	 * Get the joiner part of this.
+	 * @return GESJoiner corresponding to this GEFeedbackLoop.
+	 */
+	public GEJoiner getJoiner()
 	{
-		if (isExpanded)
-		{
-			this.collapse();
-		}
-		else
-		{		
-			this.expand();
-		}
+		return this.joiner;
 	}	
+	
+	/**
+	 * Get the body of this.
+	 * @return GEStreamNode that is the body of GEFeedbackLoop.
+	 */
+	public GEStreamNode getBody()
+	{
+		return this.body;
+	}
+	
+	/**
+	 * Get the loop of this.
+	 * @return GEStreamNode that is the loop of GEFeedbackLoop.
+	 */
+	public GEStreamNode getLoop()
+	{
+		return this.loop;
+	}
+
+
+	/**
+	 * Writes the textual representation of the GEStreamNode to the StringBuffer. 
+	 * In this case, the textual representation corresponds to the the StreamIt source code 
+	 * equivalent of the GEStreamNode. 
+	 * @param strBuff StringBuffer that is used to output the textual representation of the graph.  
+	 */
+	public void outputCode(StringBuffer strBuff)
+	{
+		String tab = "     ";
+		String newLine = "\n";
+		
+		/** Create the basic definition for the GEStreamNode */
+		strBuff.append(newLine + this.inputTape)
+				.append("->")
+				.append(this.outputTape + " ")
+				.append(GEType.GETypeToString(this.type)+" ")
+				.append(this.name + this.outputArgs() + " {" + newLine);
+		
+		/** Specify the inner elements in the GEFeedbackLoop*/
+		strBuff.append(tab + "join " + this.joiner.name + "();" + newLine);
+		strBuff.append(tab + "body " + this.body.name + "();" + newLine);
+		strBuff.append(tab + "loop " + this.loop.name + "();" + newLine);
+		strBuff.append(tab + "split " + this.splitter.name + "();" + newLine);			
+		strBuff.append("}" + newLine);
+	
+		/** Output the code for all the elements contained in this GEContainer */
+		Iterator containedIter = this.getContainedElements().iterator();		    
+		while (containedIter.hasNext())
+		{
+			((GEStreamNode) containedIter.next()).outputCode(strBuff); 	
+		}
+	}
+	
+	public void moveNodePositionInContainer(GEStreamNode startNode, GEStreamNode endNode, int position){};	
+}
+
+
+
+
+
+
 	
 	/**
 	 * Expand the GEFEedbackLoop. When it is expanded the elements that it contains become visible.
 	 */
+	
+	/*
 	public void expand()
 	{
 		Object[] nodeList = this.getContainedElements().toArray();
@@ -237,11 +297,14 @@ public class GEFeedbackLoop extends GEContainer implements Serializable{
 		manager.arrange();	
 		
 	}
+*/
+
 
 	/**
 	 * Collapse the GEFeedbackLoop. The elements contained by the GEFeedbackLoop become
 	 * invisible.
 	 */
+	/*
 	public void collapse()
 	{
 		Object[] nodeList = this.getContainedElements().toArray();
@@ -314,93 +377,4 @@ public class GEFeedbackLoop extends GEContainer implements Serializable{
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();
 	}
-
-	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
-	 * not a container node, then a list with no elements is returned.
-	 * @return ArrayList of contained elements. If <this> is not a container, return empty list.
-	 */
-	public ArrayList getContainedElements()
-	{
-		ArrayList tempList = new ArrayList();
-		/*
-		tempList.add(this.joiner);
-		tempList.add(this.body);
-		tempList.add(this.loop);
-		tempList.add(this.splitter);*/
-		tempList.addAll(this.succesors);
-
-	   return tempList;
-	 	
-	}
-	
-
-	/**
-	 * Get the splitter part of this.
-	 * @return GESplitter corresponding to this GEFeedbackLoop.
-	 */
-	public GESplitter getSplitter()
-	{
-		return this.splitter;
-	}
-	
-	/**
-	 * Get the joiner part of this.
-	 * @return GESJoiner corresponding to this GEFeedbackLoop.
-	 */
-	public GEJoiner getJoiner()
-	{
-		return this.joiner;
-	}	
-	
-	/**
-	 * Get the body of this.
-	 * @return GEStreamNode that is the body of GEFeedbackLoop.
-	 */
-	public GEStreamNode getBody()
-	{
-		return this.body;
-	}
-	
-	/**
-	 * Get the loop of this.
-	 * @return GEStreamNode that is the loop of GEFeedbackLoop.
-	 */
-	public GEStreamNode getLoop()
-	{
-		return this.loop;
-	}
-
-
-	/**
-	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 
-	 * In this case, the textual representation corresponds to the the StreamIt source code 
-	 * equivalent of the GEStreamNode. 
-	 * @param out PrintWriter that is used to output the textual representation of the graph.  
-	 */
-	public void outputCode(PrintWriter out)
-	{
-		String tab = "     ";
-			
-		out.println();
-		out.print(this.inputTape + "->" + this.outputTape + " feedbackloop " + this.name);
-		
-		if (this.args.size() > 0)
-		{
-			this.outputArgs(out);
-		}
-		out.println(" { ");	
-					
-		out.println(tab + "join " + this.joiner.name + "();");
-		out.println(tab + "body " + this.body.name + "();");
-		out.println(tab + "loop " + this.loop.name + "();");
-		out.println(tab + "split " + this.splitter.name + "();");			
-		out.println("}");
-		out.println();
-	}
-	
-	public void moveNodePositionInContainer(GEStreamNode startNode, GEStreamNode endNode, int position){};	
-}
-
-
-
-
+	*/

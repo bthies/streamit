@@ -1,14 +1,10 @@
 /*
  * Created on Jan 17, 2004
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
  */
 package streamit.eclipse.grapheditor.graph;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -17,10 +13,9 @@ import org.jgraph.graph.CellView;
 import org.jgraph.graph.GraphConstants;
 
 /**
+ * The ContainerNodes class has all of the container nodes present in the
+ * graph structure. GEContainers might be present at different levels of depth.
  * @author jcarlos
- *
- * To change the template for this generated type comment go to
- * Window>Preferences>Java>Code Generation>Code and Comments
  */
 public class ContainerNodes {
 
@@ -32,7 +27,6 @@ public class ContainerNodes {
 	 * The map has the levels as its keys, and the cotnainer objects within that level as the
 	 * values of the map.
 	 */
-	private HashMap levelContainers;
 	private ArrayList allContainers;
 	
 	/**
@@ -48,7 +42,7 @@ public class ContainerNodes {
 	public ContainerNodes() 
 	{
 		allContainers = new ArrayList();
-		levelContainers = new HashMap();
+//		levelContainers = new HashMap();
 		currentLevelView = 0;
 		maxlevel = 0;
 	}
@@ -56,7 +50,18 @@ public class ContainerNodes {
 
 	public ArrayList getContainersAtLevel(int level)
 	{
-		return (ArrayList) this.levelContainers.get(new Integer(level));
+		ArrayList tempList = new ArrayList();
+		for (Iterator containerIter = allContainers.iterator(); containerIter.hasNext(); )
+		{
+			GEContainer cont = (GEContainer)containerIter.next();
+			 if (level == cont.getDepthLevel())
+			 {
+			 	tempList.add(cont);
+			 }
+		}
+		return tempList;
+		
+		//return (ArrayList) this.levelContainers.get(new Integer(level));
 	}
 
 	/**
@@ -67,7 +72,7 @@ public class ContainerNodes {
 	public void addContainerToLevel(int level, GEStreamNode node)
 	{
 		ArrayList levelList = null;
-		if(this.levelContainers.get(new Integer(level)) == null)
+/*		if(this.levelContainers.get(new Integer(level)) == null)
 		{
 			levelList = new ArrayList();
 			levelList.add(node);
@@ -77,12 +82,13 @@ public class ContainerNodes {
 		{
 			levelList = (ArrayList) this.levelContainers.get(new Integer(level));
 			levelList.add(node);
-		}
+		}*/
 		this.allContainers.add(node);
 		if (level > maxlevel)
 		{
 			maxlevel = level;
 		}
+		
 		
 	}
 	
@@ -93,7 +99,8 @@ public class ContainerNodes {
 	 */		
 	public boolean expandContainersAtLevel(int level)
 	{
-		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
+//		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
+		ArrayList levelList = (ArrayList) getContainersAtLevel(level);
 		if (levelList != null)
 		{
 			Iterator listIter = levelList.iterator();
@@ -117,7 +124,8 @@ public class ContainerNodes {
 	public void collapseContainersAtLevel(int level)
 	{
 		System.out.println ("Level to collapse is " + level);
-		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
+//		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
+		ArrayList levelList = (ArrayList) getContainersAtLevel(level);
 		if (levelList != null)
 		{
 			Iterator listIter = levelList.iterator();
@@ -132,15 +140,27 @@ public class ContainerNodes {
 		}		
 	}
 
+	/**
+	 * Remove the GEContainer node from ContainerNodes. 
+	 * @param node GEContainer to remove
+	 * @param list ArrayList that will list all of the elements inside of the GEContainer
+	 * that is to be deleted.
+	 * @return true if it was possible to remove the GEContainer; otherwise, return false. 
+	 */
 	public boolean removeContainer(GEContainer node, ArrayList list)
 	{
 		if (node instanceof GEContainer)
 		{
-			if (!(this.allContainers.remove(node))) return false;
+			if ( ! (this.allContainers.remove(node))) { 
+				return false;
+			}
 			ArrayList contAtLevel = this.getContainersAtLevel(node.getDepthLevel());
-			if (contAtLevel == null) return false;
-			if (!(contAtLevel.remove(node))) return false;
-			
+//			if (contAtLevel == null) {
+//				return false;
+//			}
+//			if (!(contAtLevel.remove(node))) {
+//				return false; 
+//			}
 			Iterator listIter  = ((GEContainer) node).getContainedElements().iterator();
 			while (listIter.hasNext())
 			{
@@ -156,6 +176,31 @@ public class ContainerNodes {
 		}
 		return false;
 	}
+	
+	
+	/*
+	public void moveContainerToLevel(int level, GEContainer container)
+	{
+		this.allContainers.remove(container);
+		this.getContainersAtLevel(container.getDepthLevel()).remove(container);
+		this.addContainerToLevel(level, container);
+		
+		container.setDepthLevel(level);
+		
+		container.setContainedElementsLevel(level + 1);	
+	}	
+	*/	
+		
+		
+		
+		
+		
+		
+		
+	
+	
+	
+	
 
 	/**
 	 * Make invisible all of the container nodes located at level.
@@ -163,7 +208,8 @@ public class ContainerNodes {
 	 */	
 	public void hideContainersAtLevel(int level)
 	{
-		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
+//		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
+		ArrayList levelList = (ArrayList) getContainersAtLevel(level);
 		if (levelList != null)
 		{
 			Iterator listIter = levelList.iterator();
@@ -181,7 +227,8 @@ public class ContainerNodes {
 	 */
 	public void unhideContainersAtLevel(int level)
 	{
-		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
+//		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
+		ArrayList levelList = (ArrayList) getContainersAtLevel(level);
 		if (levelList != null)
 		{
 			Iterator listIter = levelList.iterator();
@@ -192,6 +239,10 @@ public class ContainerNodes {
 			}
 		}				
 	}
+	
+	
+	
+	
 	
 	/**
 	 * Hide all the expanded containers in the graph (the collapsed nodes remain
@@ -254,7 +305,7 @@ public class ContainerNodes {
 		{
 			System.out.println("Returning toplevel from getContainerNodeFromName");
 	///		return this.topLevel;
-	return null;
+			return null;
 		}
 		
 		
@@ -362,6 +413,7 @@ public class ContainerNodes {
 	public int getMaxLevelView()
 	{
 		return this.maxlevel;
+	
 	}
 	
 	/**

@@ -189,7 +189,9 @@ public class GraphStructure implements Serializable{
 					}		
 					else
 					{
-						endNodeActual = startNode.getOldestContainerAncestor(this.topLevel);		
+						endNodeActual = startNode.getOldestContainerAncestor(this.topLevel);
+						connectDraw(startNode, endNode);
+						return 0;		
 					}
 				}
 			}
@@ -631,16 +633,19 @@ public class GraphStructure implements Serializable{
 	 * Output the code representation of the GraphStructure.
 	 * @param out
 	 */
-	public void outputCode(PrintWriter out)
+	public void outputCode(StringBuffer strBuff)
 	{
-	    this.topLevel.outputCode(out);
+	    this.topLevel.outputCode(strBuff);
 	    
+	    
+/*	    
 	    ArrayList childList = this.topLevel.succesors;
 	    Iterator childIter = childList.iterator();
 	    
 	    while (childIter.hasNext())
 	    {
 	   		((GEStreamNode) childIter.next()).outputCode(out); 	
-	    }	    
+	    }
+	    */	    
 	}
 }

@@ -155,10 +155,10 @@ public class GESplitter extends GEStreamNode implements Serializable{
 
 
 	/**
-	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 
+	 * Writes the textual representation of the GEStreamNode to the StringBuffer. 
 	 * In this case, the textual representation corresponds to the the StreamIt source code 
 	 * equivalent of the GEStreamNode. 
-	 * @param out PrintWriter that is used to output the textual representation of the graph.  
+	 * @param strBuff StringBuffer that is used to output the textual representation of the graph.  
 	 */
-	public void outputCode(PrintWriter out){};
+	public void outputCode(StringBuffer strBuff){};
 }

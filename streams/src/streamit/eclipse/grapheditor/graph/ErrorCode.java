@@ -7,7 +7,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 /**
- * 
+ * Handles the errors that might occur in the application due to 
+ * illegal actions by the user.
  * @author jcarlos
  */
 public class ErrorCode 
@@ -28,6 +29,11 @@ public class ErrorCode
 	public static final int CODE_INVALID_PARENT_TYPE = -12;
 	public static final int CODE_JOINER_NO_SAME_PARENT_CONNECT = -13;
 	 
+	public static final int CODE_NO_BODY_IN_FLOOP = -16;
+	public static final int CODE_NO_LOOP_IN_FLOOP  = -17;
+	public static final int CODE_SAME_BODY_AND_LOOP = -18;
+	 
+	 
 	public static final String MESSAGE_EDGES_IN ="Cannot connect more than one edges into node";
 	public static final String MESSAGE_EDGES_OUT ="Cannot connect more than one edges out from the node";
 	public static final String MESSAGE_CONTAINER_CONNECTION ="Cannot connect to/from a container node";
@@ -42,6 +48,10 @@ public class ErrorCode
 	public static final String MESSAGE_INVALID_PARENT_TYPE = "Selected an invalid parent type";
 	public static final String MESSAGE_JOINER_NO_SAME_PARENT_CONNECT = "The joiner must connect to a node in the same container node";
 	public static final String MESSAGE_DEFAULT_ERROR="Invalid node connection";
+	
+	public static final String MESSAGE_NO_BODY_IN_FLOOP = "Must select a loop for the feedbackloop.";
+	public static final String MESSAGE_NO_LOOP_IN_FLOOP = "Must select a body for the feedbackloop.";
+	public static final String MESSAGE_SAME_BODY_AND_LOOP ="Cannot select the same body and loop for the feedbackloop";
 		
 	public static void handleErrorCode(int error)
 	{
@@ -98,6 +108,18 @@ public class ErrorCode
 			}
 			case CODE_JOINER_NO_SAME_PARENT_CONNECT:{
 				errorMessage = MESSAGE_JOINER_NO_SAME_PARENT_CONNECT;
+				break;
+			}
+			case CODE_NO_BODY_IN_FLOOP:{
+				errorMessage = MESSAGE_NO_BODY_IN_FLOOP;
+				break;
+			}
+			case CODE_NO_LOOP_IN_FLOOP:{
+				errorMessage = MESSAGE_NO_LOOP_IN_FLOOP;
+				break;
+			}
+			case CODE_SAME_BODY_AND_LOOP:{
+				errorMessage = MESSAGE_SAME_BODY_AND_LOOP;
 				break;
 			}
 			default:{

@@ -18,6 +18,7 @@ import org.jgraph.graph.DefaultEdge;
 import org.jgraph.graph.DefaultGraphCell;
 import org.jgraph.graph.DefaultPort;
 import org.jgraph.graph.GraphConstants;
+import org.jgraph.graph.GraphModel;
 import org.jgraph.graph.Port;
 
 /**
@@ -152,6 +153,11 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 		return this.name;	 
 	}
 	
+	public void setName(String name)
+	{
+		this.name = name;
+	}
+	
 	/**
 	 * Get the name with no ID (without the underscore 
 	 * and the numbers that follow it).
@@ -275,7 +281,16 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 */
 	public int getDepthLevel()
 	{
-		return this.level;
+		//return this.level;
+		GEContainer container = this.getEncapsulatingNode();
+		if (container != null)
+		{
+			return 1 + container.getDepthLevel();
+		}
+		else
+		{
+			return 0;	
+		}
 	}
 	
 	/**
@@ -405,20 +420,26 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 * "(arg1, arg2, ... , argn)".
 	 * @param out PrintWriter used to output text representation of args. 
 	 */
-	protected void outputArgs(PrintWriter out)
+	protected StringBuffer outputArgs()
 	{
-		out.print(" ( ");
-		
+		StringBuffer strBuff = new StringBuffer();
 		int numArgs = this.args.size();	
-		for (int i = 0; i < numArgs; i++)
+		if (numArgs > 0)
 		{
-			out.print((String) args.get(i));	
-			if (i != numArgs - 1)
+			strBuff.append(" ( ");
+				
+			for (int i = 0; i < numArgs; i++)
 			{
-				out.print(",");
+				strBuff.append((String) args.get(i));	
+				if (i != numArgs - 1)
+				{
+					strBuff.append(",");
+				}
 			}
-		}
-		out.print(" ) ");		
+			strBuff.append(" ) ");
+		}	
+		return strBuff;
+			
 	}
 
 	/**
@@ -443,7 +464,7 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	 * Get the oldest GEContainer ancestor (not including the toplevel pipeline) correspoding
 	 * to the GEStreamNode passed as the argument.
 	 * @param GEStreamNode node whose oldest ancestor will be determined. 
-	 * @return GEContainer oldest ancestor
+	 * @return GEStreamNode oldest ancestor
 	 */
 	public GEStreamNode getOldestContainerAncestor(GEContainer toplevel)
 	{
@@ -456,6 +477,57 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 		return pNode;	
 			
 				
+	}
+
+
+	public void deleteNode(GraphModel model)
+	{
+		GEContainer parent = this.getEncapsulatingNode();
+					
+		if (parent != null)
+		{
+			 parent.removeNodeFromContainer(this);
+		}
+
+		Iterator sourceIter = this.getSourceEdges().iterator();
+		Iterator targetIter = this.getTargetEdges().iterator();
+
+		/** 
+		 * Must remove the source edge of the node to be deleted from
+		 * the list of target edges of the edge's target node.  
+		 */
+		while (sourceIter.hasNext())
+		{
+			DefaultEdge edge = (DefaultEdge) sourceIter.next();
+			DefaultPort port = (DefaultPort) edge.getTarget();
+			if (port != null)
+			{
+				if (port.getParent() != null)
+				{
+					((GEStreamNode) port.getParent()).getTargetEdges().remove(edge);
+				}
+			}	
+		}
+
+		/** 
+		 * Must remove the target edge of the node to be deleted from
+		 * the list of source edges of the edge's source node.  
+		 */					
+		while (targetIter.hasNext())
+		{
+			DefaultEdge edge = (DefaultEdge) targetIter.next();
+			DefaultPort port = (DefaultPort) edge.getSource();
+			if (port != null)
+			{
+				if (port.getParent() != null)
+				{
+					((GEStreamNode) port.getParent()).getSourceEdges().remove(edge);
+				}
+			}	
+		}
+		
+		model.remove(this.getSourceEdges().toArray());
+		model.remove(this.getTargetEdges().toArray());
 	}
 
 
@@ -522,10 +594,10 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	abstract public void initDrawAttributes(GraphStructure graphStruct, Rectangle bounds);
 
 	/**
-	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 
+	 * Writes the textual representation of the GEStreamNode to the StringBuffer. 
 	 * In this case, the textual representation corresponds to the the StreamIt source code 
 	 * equivalent of the GEStreamNode. 
-	 * @param out PrintWriter that is used to output the textual representation of the graph.  
+	 * @param strBuff StringBuffer that is used to output the textual representation of the graph.  
 	 */
-	abstract public void outputCode(PrintWriter out);
+	abstract public void outputCode(StringBuffer strBuff);
 }

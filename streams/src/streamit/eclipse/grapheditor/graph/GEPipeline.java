@@ -7,19 +7,14 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.swing.JLabel;
 
-import org.jgraph.graph.ConnectionSet;
-import org.jgraph.graph.DefaultEdge;
 import org.jgraph.graph.DefaultPort;
 import org.jgraph.graph.GraphConstants;
-
-import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
 
 /**
  * GEPipeline is the graph internal representation of a pipeline. 
@@ -28,15 +23,6 @@ import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
 public class GEPipeline extends GEContainer implements Serializable{
 			
 	private GEStreamNode lastNode;	
-	
-	
-	/**
-	 * The sub-graph structure that is contained within this pipeline.
-	 * This subgraph is hidden when the pipeline is collapse and 
-	 * visible when expanded. 
-	 */
-//	private GraphStructure localGraphStruct;
-
 
 	/**
 	 * GEPipeline constructor.
@@ -56,24 +42,7 @@ public class GEPipeline extends GEContainer implements Serializable{
 		this.isExpanded = true;
 	}
 	
-	public GEStreamNode getFirstNodeInContainer()
-	{
-		if (this.succesors.size() > 0)
-		{
-			return (GEStreamNode) this.succesors.get(0);
-		}
-		return null;
-	}
-	
-	public GEStreamNode getLastNodeInContainer()
-	{
-		if (this.succesors.size() > 0)
-		{
-			return (GEStreamNode) this.succesors.get(this.succesors.size() - 1);
-		}
-		return null;
-		
-	}
+
 
 	/**
  	 * Constructs the pipeline and returns the last node so that the 
@@ -139,26 +108,131 @@ public class GEPipeline extends GEContainer implements Serializable{
 		this.localGraphStruct = graphStruct;
 		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100,100)));
 	}
+
+	/**
+	 * Writes the textual representation of the GEStreamNode to the StringBuffer. 
+	 * In this case, the textual representation corresponds to the the StreamIt source code 
+	 * equivalent of the GEStreamNode. 
+	 * @param strBuff StringBuffer that is used to output the textual representation of the graph.  
+	 */
+	public void outputCode(StringBuffer strBuff)
+	{
+		String tab = "     ";
+		String newLine = "\n";
+		
+		/** Create the basic definition for the GEStreamNode */
+		strBuff.append(newLine + this.inputTape)
+				.append("->")
+				.append(this.outputTape + " ")
+				.append(GEType.GETypeToString(this.type)+" ")
+				.append(this.name + this.outputArgs() + " {" + newLine);
+		
+		/** Specify the inner elements in the GEPipeline*/
+		Iterator containedIter = this.getContainedElements().iterator();
+		while(containedIter.hasNext())
+		{
+			strBuff.append(tab + "add " + ((GEStreamNode) containedIter.next()).name + "();" + newLine);
+		}		
+		strBuff.append("}");
+	
+		/** Output the code for all the elements contained in this GEContainer */
+		containedIter = this.getContainedElements().iterator();		    
+		while (containedIter.hasNext())
+		{
+			((GEStreamNode) containedIter.next()).outputCode(strBuff); 	
+		}
+	}
+	
+
 			
 	/**
-	 * Expand or collapse the GEStreamNode structure depending on wheter it was already 
-	 * collapsed or expanded. 
-	 * @param jgraph The JGraph that will be modified to allow the expanding/collapsing.
+	 * Determine the dimension of the pipeline. This is determined by how many elements
+	 * the pipeline has. The height is the sum of the heights of the elements. 
+	 * The width ids the maximum width of the elements inside the pipeline  
+	 *
 	 */
-	public void collapseExpand()
+	public void calculateDimension()
 	{
-		if (isExpanded)
+		Iterator childIter = this.getSuccesors().iterator();
+		int height = 0;
+		int width  = Constants.MIN_WIDTH;
+		while (childIter.hasNext())
 		{
-			this.collapse();
+			GEStreamNode node = (GEStreamNode) childIter.next();
+			Dimension dim = null;
+			if (node instanceof GEContainer)
+			{
+				dim = node.getDimension();
+			}
+			else
+			{
+				dim = Constants.DEFAULT_DIMENSION; 
+			}
+			height += dim.height + Constants.X_SEPARATION;
+			if (dim.width > width)
+			{
+				width = dim.width;
+			}	
 		}
-		else
-		{
-			this.expand();
-		}		
+		this.setDimension(new Dimension(width, height));
 	}
-	/**
+	
+	public void layoutChildren()
+	{
+		
+		Point pt = this.getLocation();
+		Iterator childIter = this.getSuccesors().iterator();
+		while (childIter.hasNext())
+		{
+			GEStreamNode node = (GEStreamNode) childIter.next();
+			node.setLocation(new Point(Constants.x+50, Constants.y+50));
+		}
+		
+	}
+	
+
+	public void moveNodePositionInContainer(GEStreamNode startNode, GEStreamNode endNode, int position)
+	{
+		ArrayList startParentChildren = startNode.getEncapsulatingNode().getSuccesors();
+		int startIndex = startParentChildren.indexOf(startNode);
+		startParentChildren.remove(endNode);
+		if (position == RelativePosition.AFTER)
+		{
+			if (startIndex >= startParentChildren.size())
+			{
+				System.err.println("The index array was larger than expected moveNodePositionInContainer in GEPipeline");
+				startParentChildren.add(startIndex, endNode);
+			}
+			else
+			{
+				startParentChildren.add(startIndex +1, endNode);
+			}
+							
+		}
+		else if (position == RelativePosition.BEFORE)
+		{
+			startParentChildren.add(startIndex, endNode);
+		}
+	}
+	
+	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
+ 	 * not a container node, then a list with no elements is returned.
+ 	 * @return ArrayList of contained elements. If <this> is not a container, return empty list.
+ 	 */
+	public ArrayList getContainedElements()
+	{
+		return this.getSuccesors();
+	}	
+}
+
+
+
+
+
+/**
 	 * Expand the GEPipeline so that the nodes that it contains become visible.
 	 */
+	/*
 	public void expand()
 	{
 		Object[] nodeList = this.getSuccesors().toArray();
@@ -226,10 +300,11 @@ public class GEPipeline extends GEContainer implements Serializable{
 		manager.arrange();
 	
 	}	
-
+*/
 	/**
 	 * Collapse the GEPipeline so that the nodes it contains become invisible. 
 	 */
+	/*
 	public void collapse()
 	{
 		Object[] nodeList = this.getSuccesors().toArray();
@@ -339,112 +414,4 @@ public class GEPipeline extends GEContainer implements Serializable{
 		manager.arrange();	
 
 	}
-	
-	/**
- 	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 
- 	 * In this case, the textual representation corresponds to the the StreamIt source code 
- 	 * equivalent of the GEStreamNode. 
- 	 * @param out PrintWriter that is used to output the textual representation of the graph.  
- 	 */
-	public void outputCode(PrintWriter out)
-	{
-		String tab = "     ";
-		
-		out.println();
-		out.print(this.inputTape + "->" + this.outputTape + " pipeline " + this.name);
-	
-		if (this.args.size() > 0)
-		{
-			this.outputArgs(out);
-		}
-		out.println(" { ");	
-				
-		Iterator childIter  = this.getSuccesors().iterator();
-		while(childIter.hasNext())
-		{
-			out.println(tab + "add " + ((GEStreamNode) childIter.next()).name + "();");
-		}
-		
-		out.println("}");
-		out.println();
-	}
-	
-	/**
-	 * Determine the dimension of the pipeline. This is determined by how many elements
-	 * the pipeline has. The height is the sum of the heights of the elements. 
-	 * The width ids the maximum width of the elements inside the pipeline  
-	 *
-	 */
-	public void calculateDimension()
-	{
-		Iterator childIter = this.getSuccesors().iterator();
-		int height = 0;
-		int width  = Constants.MIN_WIDTH;
-		while (childIter.hasNext())
-		{
-			GEStreamNode node = (GEStreamNode) childIter.next();
-			Dimension dim = null;
-			if (node instanceof GEContainer)
-			{
-				dim = node.getDimension();
-			}
-			else
-			{
-				dim = Constants.DEFAULT_DIMENSION; 
-			}
-			height += dim.height + Constants.X_SEPARATION;
-			if (dim.width > width)
-			{
-				width = dim.width;
-			}	
-		}
-		this.setDimension(new Dimension(width, height));
-	}
-	
-	public void layoutChildren()
-	{
-		
-		Point pt = this.getLocation();
-		Iterator childIter = this.getSuccesors().iterator();
-		while (childIter.hasNext())
-		{
-			GEStreamNode node = (GEStreamNode) childIter.next();
-			node.setLocation(new Point(Constants.x+50, Constants.y+50));
-		}
-		
-	}
-	
-
-	public void moveNodePositionInContainer(GEStreamNode startNode, GEStreamNode endNode, int position)
-	{
-		ArrayList startParentChildren = startNode.getEncapsulatingNode().getSuccesors();
-		int startIndex = startParentChildren.indexOf(startNode);
-		startParentChildren.remove(endNode);
-		if (position == RelativePosition.AFTER)
-		{
-			if (startIndex >= startParentChildren.size())
-			{
-				System.err.println("The index array was larger than expected moveNodePositionInContainer in GEPipeline");
-				startParentChildren.add(startIndex, endNode);
-			}
-			else
-			{
-				startParentChildren.add(startIndex +1, endNode);
-			}
-							
-		}
-		else if (position == RelativePosition.BEFORE)
-		{
-			startParentChildren.add(startIndex, endNode);
-		}
-	}
-	
-	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
- 	 * not a container node, then a list with no elements is returned.
- 	 * @return ArrayList of contained elements. If <this> is not a container, return empty list.
- 	 */
-	public ArrayList getContainedElements()
-	{
-		return this.getSuccesors();
-	}	
-}
+*/	

@@ -5,7 +5,6 @@ package streamit.eclipse.grapheditor.graph;
 
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -265,23 +264,51 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 
 	
 	/**
-	 * Writes the textual representation of the GEStreamNode using the PrintWriter specified by out. 
+	 * Writes the textual representation of the GEStreamNode to the StringBuffer. 
 	 * In this case, the textual representation corresponds to the the StreamIt source code 
 	 * equivalent of the GEStreamNode. 
-	 * @param out PrintWriter that is used to output the textual representation of the graph.  
+	 * @param strBuff StringBuffer that is used to output the textual representation of the graph.  
 	 */
-	public void outputCode(PrintWriter out)
+	public void outputCode(StringBuffer strBuff)
 	{
 		String tab = "     ";
-		out.println();
-		out.print(this.inputTape + "->" + this.outputTape + " filter " + this.name);
-	
-		if (this.args.size() > 0)
-		{
-			this.outputArgs(out);
-		}
-		out.println(" { ");		
+		String newLine = "\n";
 		
+		/** Create the basic definition for the GEStreamNode */
+		strBuff.append(newLine + this.inputTape)
+					.append("->")
+					.append(this.outputTape + " ")
+					.append(GEType.GETypeToString(this.type)+" ")
+					.append(this.name + this.outputArgs() + " {" + newLine + newLine);
+		
+		/** add the "init" declaration */
+		strBuff.append(tab + "init {" + newLine + newLine);
+		strBuff.append(tab + "}" + newLine + newLine);
+	
+		/** add the "work" declaration */
+		int pop = 0;
+		int push = 0;
+		int peek = 0;
+		try
+		{
+			GEWorkFunction wf = this.getWorkFunction();
+			pop = wf.getPopValue();
+			push = wf.getPushValue();
+			peek = wf.getPeekValue();
+		}
+		catch (Exception e)
+		{
+			 
+		}
+		strBuff.append(tab + "work ")
+				.append(pop > 0 ? "pop " + pop + " " : "")
+				.append(push > 0 ? "push " + push + " " : "")
+				.append(peek > 0 ? "peek " + peek + " " : "")
+				.append("{" + newLine + newLine + tab +"}" + newLine);
+
+		strBuff.append("}" + newLine);		
+			
+/*
 		
 		//TODO: Handle the case when there are more than one work functions
 		if (this.getNumberOfWFs() > 0 )
@@ -295,8 +322,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 			//TODO: Initialization code specific to the filter
 			out.println(tab+ "}");
 		}
-		
-		out.println("} ");
-		out.println();		
+*/
+				
 	}
 }

@@ -56,13 +56,17 @@ public class GEProperties
 	 */
 	public static final String KEY_SPLITTER_WEIGHTS = "Splitter Weights";
 	
-	
+	/**
+	 * Key for the level of the GEStreamNode.
+	 */
+	public static final String KEY_LEVEL = "Level";
+
 	/**
 	 * Key for the joiner weights property. Only applies to Joiners.
 	 */
 	public static final String KEY_JOINER_WEIGHTS = "Joiner Weights";
 	
-	
+
 	/**
 	 * Key for the Pop rate property. Only applies to filters.
 	 */
@@ -140,6 +144,8 @@ public class GEProperties
 		properties.put(GEProperties.KEY_TYPE, type);
 		properties.put(GEProperties.KEY_INPUT_TAPE, node.getInputTape());
 		properties.put(GEProperties.KEY_OUTPUT_TAPE, node.getOutputTape());
+		properties.put(GEProperties.KEY_LEVEL, Integer.toString(node.getDepthLevel()));
+		
 		GEStreamNode container = node.getEncapsulatingNode();
 		if (container != null)
 		{
@@ -170,9 +176,6 @@ public class GEProperties
 		else if (type == GEType.FEEDBACK_LOOP)
 		{
 			//TODO implement the case for feedbackloop in getNodeProperties()
-			System.out.println("********************************************");
-			System.out.println("************* NOT YET IMPLEMENTED **********");
-			System.out.println("********************************************");
 			properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, ((GEFeedbackLoop)node).getSplitter().getWeightsAsString());
 			properties.put(GEProperties.KEY_JOINER_WEIGHTS, ((GEFeedbackLoop)node).getJoiner().getWeightsAsString());
 			
@@ -199,7 +202,7 @@ public class GEProperties
 	{
 		String type = node.getType();
 		
-//		node.setName(properties.getProperty(GEProperties.KEY_NAME));
+		node.setName(properties.getProperty(GEProperties.KEY_NAME));
 		node.setOutputTape(properties.getProperty(GEProperties.KEY_INPUT_TAPE));
 		node.setInputTape(properties.getProperty(GEProperties.KEY_OUTPUT_TAPE));
 		setParentProperty(node, graphStruct.containerNodes.
@@ -230,7 +233,11 @@ public class GEProperties
 	}
 	
 
-
+	/**
+	 * Set the container as the parent of the GEStreamNode child. 
+	 * @param child GEStreamNode
+	 * @param container GEContainer
+	 */
 	public static void setParentProperty(GEStreamNode child, GEContainer container)
 	{
 		
@@ -238,31 +245,16 @@ public class GEProperties
 		{
 			child.getEncapsulatingNode().removeNodeFromContainer(child);
 		}
-			
-		child.setEncapsulatingNode(container);
-
+		
+		container.addNodeToContainer(child);
+		
+		
+//		
+/*		child.setEncapsulatingNode(container);
 		if (child.getEncapsulatingNode() !=null)
 		{
 			child.getEncapsulatingNode().addNodeToContainer(child);
-		}		
-	}
-	
-	/*
-	public static void setParentProperty(GEStreamNode node, Properties properties, ContainerNodes containerNodes)
-	{	
-		if (node.encapsulatingNode !=null)
-		{
-			((GEContainer)node.encapsulatingNode).removeNodeFromContainer(node);
-		}
-			
-		node.setEncapsulatingNode(containerNodes.getContainerNodeFromName(properties.getProperty(GEProperties.KEY_PARENT)));
-
-		if (node.encapsulatingNode !=null)
-		{
-			((GEContainer)node.encapsulatingNode).addNodeToContainer(node);
-		}			
-	}*/
-	
-	
+		}*/		
+	}	
 }
 

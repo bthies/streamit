@@ -7,6 +7,7 @@ package streamit.eclipse.grapheditor.graph;
 import java.awt.Dimension;
 
 /**
+ * Class that contains constants.
  * @author jcarlos
  *
  */
@@ -20,8 +21,9 @@ public class Constants {
 	static final String SPLITJOIN = "Splitjoin";
 	static final String FEEDBACKLOOP = "FeedbackLoop";
 	
-	static final String VOID = "Void";
-	static final String FLOAT = "Float";
+	static final String VOID = "void";
+	static final String FLOAT = "float";
+	static final String INT = "int";
 	
 	static final String TEXT_SIZE = "4";
 	static final String HTML_TSIZE_BEGIN = "<H"+ Constants.TEXT_SIZE +">";

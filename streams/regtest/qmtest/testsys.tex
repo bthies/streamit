@@ -1,0 +1,183 @@
+\documentclass[11pt]{article}
+
+\usepackage{booktabs}
+% \textsf looks terrible in the postscript world, but quite nice in
+% the Computer Modern world.  Using the pslatex package makes it
+% look less bad, but still not great.  --dzm
+%\usepackage{pslatex}
+%\usepackage{palatino}
+\usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{streamit}
+
+\title{A QMTest-Based Test System for StreamIt}
+\author{David Maze\\\texttt{dmaze@cag.lcs.mit.edu}}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Motivation}
+
+The StreamIt compiler is becoming an increasingly complex piece of
+software, with several independent back-ends and different compiler
+flows.  Our previous test system was based on the Java JUnit test
+infrastructure, a system designed for adding light-weight unit tests
+to existing Java classes; upon this, we retrofitted a system that
+could run a single compiler flow by invoking the Java runtime several
+times.  Since then, we have developed a script, \textsf{strc}, to run
+the compiler, added standardized sets of options, and added at least
+one potential alternate flow to the compiler; we also have a desire to
+test the Java library ``compiler'' flow path.
+
+The JUnit infrastructure has become increasingly dated.  Potential
+compiler flags were implemented as a 32-bit integer bitfield; when the
+flags used for the \textsf{strc} standard optimization sets were
+added, 30 of the 32 bits were used.  The old test system could never
+support the Java library path without significant coding, and it will
+be difficult to add support for either frontend-to-Kopi conversion or
+the cluster backend.  It also proves to be very difficult to run the
+test system as a set of parallel jobs.
+
+Other people have recommended using the
+\href{http://www.qmtest.com/}{QMTest} infrastructure for more involved
+system tests.  QMTest is written entirely in Python, but this makes it
+easy to add more tests by writing simple Python classes.  Tests can
+have dependencies on other tests, and can be run hierarchically; ``run
+all of the FM radio tests'' is easy to do, ``run all of the RAW
+tests'' is straightforward (but slightly less easy).  QMTest also has
+built-in support for running tests in parallel, though customizing it
+to our environment may require writing code.
+
+\section{Implementation}
+
+This incarnation of the test system is entirely in Python, with some
+additional XML.
+
+\subsection{Directory Layout}
+
+The default setup for QMTest is to have a ``test
+database'' consisting of a set of directories with embedded XML files;
+a \textsf{QMTest} directory at the top level contains additional
+control information.  The \textsf{build-qmtest.py} script reads a
+control file, then builds a directory tree that QMTest will notice.
+By default this builds a tree parallel to the StreamIt \textsf{apps}
+directory named \textsf{apps.qms}, copying in files from the main tree
+as needed.
+
+The script searches for files named \textsf{benchmark.xml} and reads
+those.  In particular, the relevant XML file must have one or more
+\verb|<impl>|s for the ``StreamIt'' language; all files listed there
+are copied into all of the child directories of the matching QMTest
+directory.  Implementations are named by the ``name'' attribute of the
+corresponding XML tag, or as ``impl1'', ``impl2'', and so on.
+
+The QMTest name for a particular test then consists of the path to the
+XML file, the implementation name, the backend/optimization name, and
+then the name of the actual test.  So, for example,
+\textsf{apps.benchmarks.fm.impl1.raw4\_o2.run} would be the QMTest test
+that runs the code produced by \texttt{strc -{}-raw 4 -O2} on the only
+implementation in \textsf{apps/benchmarks/fm}.  The test components
+are named \textsf{compile}, \textsf{run}, and \textsf{verify}.
+
+\paragraph{Java library.}  Compilation for the Java library uses the
+backend name \textsf{library}.  Since \textsf{strc} runs the compiled
+program on its own, there is no \textsf{run} stage.
+
+\paragraph{Uniprocessor backend.}  Compilation for the uniprocessor
+backend uses the backend name \textsf{uni}, along with
+\textsf{uni\_o1} and \textsf{uni\_o2} for optimized compilation.
+
+\paragraph{RAW backend.}  Compilation for a 4x4 RAW chip uses the
+backend name \textsf{raw4}, along with \textsf{raw4\_o1} and
+\textsf{raw4\_o2} for optimized compilation.  Unlike in the old test
+system, the compilation stage does not build the output of the
+compiler; we let the execution stage handle this, since the RAW
+makefile system will do this on its own.
+
+In all cases, the directory structure matches the name of the test,
+with the final component being a file in the target directory.  To be
+recognized by QMTest, directory names end with \texttt{.qms}, and test
+files with \texttt{.qmt}.
+
+\subsection{Python Scripts}
+
+As mentioned previously, \textsf{build-qmtest.py} generates the
+directory layout for QMTest to use.  It does the work of scanning the
+directory tree for \textsf{benchmark.xml} files, creating directories,
+and creating XML test files.  The Python XML DOM infrastructure is
+used to create the various files, which get written out.
+
+These reference QMTest Test classes, which are by and large defined in
+\textsf{qmtest.py}.  There are three classes here, which describe the
+three stages of the StreamIt tests.  Of particular note, the
+``verify'' stage is implemented within a single Python function, where
+before it was a set of three separate Perl scripts.  Each class
+contains an \textsf{arguments} field, which corresponds exactly to the
+set of \verb|<argument>| tags that may be declared in the XML test
+files.
+
+QMTest also depends on several files being in the \textsf{QMTest}
+subdirectory of the top level of the directory tree.  These are the
+files \textsf{classes.qmc} and \textsf{configuration}, along with the
+\textsf{streamit.py} file which provides the test classes.
+
+\section{Extensibility}
+
+Extensibility was a key concern for this system.  It should prove much
+easier to add to the system than to the original system.
+
+\subsection{New Benchmarks}
+
+In the old system, adding benchmarks involves modifying the Java
+source for the regtest.  In this system, a new test (or a new
+implementation) just involves adding or modifying a
+\textsf{benchmark.xml} file; compilation or execution will always
+happen, and verification will happen if there is a
+\verb|<file class="output">| in the implementation.
+
+\subsection{Fewer Benchmarks}
+
+It is somewhat easy to run QMTest on a set of fewer benchmarks than
+all of them.  You can create a test suite using the QMTest GUI, or
+reverse-engineer the suite XML file format and programmatically create
+a list of tests or suites.  A straightforward future extension will be
+to add support for running all of the benchmarks for a particular
+backend.  You can already use a truncated path, such as \textsf{qmtest
+  run apps.benchmarks.fm} to run all implementations and all
+configurations of the FM Radio benchmark.
+
+\subsection{Different Compiler Flags}
+
+The \textsf{regtest.xml} file controls some high-level behavior of the
+system, and is read by \textsf{build-qmtest.py} to assemble the
+directory tree.  To add or remove compiler flags, add or remove
+\verb|<option>| tags from this file.
+
+\subsection{Different Compiler Flows}
+
+Any change in the compiler flow that is hidden within \textsf{strc} is
+irrelevant to this test system.  For example, \textsf{strc} handles
+the experimental \verb|--tokopi| option to not generate an
+intermediate Java file; testing this would just involve adding the
+compiler flag to the control file.
+
+For more involved changes, you may need to write a QMTest object.  Add
+it to \textsf{streamit.py}.  \textsf{build-qmtest.py} also needs to be
+updated to add or create the relevant \texttt{.qmt} file.  For
+example, you could use this technique to separately test whether our
+generated RAW source code compiles by adding a stage in between the
+``compile'' and ``run'' stages.  (This could also be accomplished by
+modifying the \textsf{RunStrcTest} Python test class.)
+
+\subsection{Adding Backends}
+
+Adding a backend is probably the most involved change in the current
+system.  This requires moderate changes in both \textsf{streamit.py}
+and \textsf{build-qmtest.py}, along with adding the backend to
+\textsf{regtest.xml}.  In particular, there are places which test the
+backend flag for validity, and places which dispatch based on the
+backend and assume it is one of the extant backends.
+
+\end{document}

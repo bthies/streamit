@@ -1,0 +1,11 @@
+<regtest>
+  <test root="apps"/>
+  <option target="library"/>
+  <option target="uni"/>
+  <option target="uni">-O1</option>
+  <option target="uni">-O2</option>
+  <option target="raw4"/>
+  <option target="raw4">-O1</option>
+  <option target="raw4">-O2</option>
+  <option target="raw4">-O2 --altcodegen</option>
+</regtest>

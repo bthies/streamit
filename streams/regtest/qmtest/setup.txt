@@ -1,0 +1,80 @@
+How to test StreamIt?
+---------------------
+
+There's two somewhat obvious ways to set this up: we either want one
+test for each benchmark, or one test for each stage for each
+benchmark.  Which stages exist depends on what the compiler targets:
+for the library target there's "compile" and "uniprocessor verify";
+for uniprocessor, "compile", "run", "uniprocessor verify"; for RAW,
+"compile", "run RAW", "RAW verify".  But, since these stages run in
+sequence, it might make sense to have a single test for "do everything
+for some backend".
+
+This gets complicated further by us jumping at some point from
+directory-based naming into subsets of the benchmark.xml files.
+Looking at our FFT, for example, which has multiple implementations,
+we'd get tests like:
+
+  apps.benchmarks.fft.fft.fft2.library.compilelib
+  apps.benchmarks.fft.fft.fft2.raw4.runraw
+  apps.benchmarks.fft.fft.fft3.uni.compileuni
+
+where the first "fft" is the directory name, the second "fft" is the
+<name> of the <benchmark>, and we haven't accounted for different
+option sets yet.
+
+In parallel with this, it'd be nice to have each test run in a
+separate directory and produce separate output.  This will increase
+the storage requirements of the testing, but avoid problems where a
+first run succeeds but a second run fails (or vice versa) because some
+component of the source has changed.
+
+Given this, it's actually probably most straightforward to use the
+default QMTest XML database format, and use XSLT on benchall.xml to
+generate the test tree.  We should probably throw away either the
+bottommost directory name or the benchmark name.  Say we discard the
+benchmark name; then test names are <dir>.<impl>.<targetopts>.<part>,
+which is sane.  <targetopts> needs to encapsulate both the compiler
+target and options, or what gets thrown on to the strc command line.
+So:
+
+  apps.benchmarks.fft.fft2.library.compilelib
+  apps.benchmarks.fft.fft2.raw4_o1.runraw
+  apps.benchmarks.fft.fft3.uni_o2.verifyuni
+
+And it makes some sense to copy source files into these directories.
+So there's a regtest setup phase, where it builds benchall.xml, turns
+it into QMTest test files, builds QMTest suite files, and copies
+source and output files.  This sounds a little more involved than XSLT
+can do directly, though, so we'd need something to go through and
+actively process the benchall file.
+
+CONTROL FILE: something should tell the system what, exactly, to
+test.  Since everything else is XML, this could be too.
+
+  <regtest>
+    <test root="apps"/>
+    <option target="library"/>
+    <option target="uni"/>
+    <option target="uni">-O1</option>
+    <option target="uni">-O2</option>
+    <option target="raw4"/>
+    <option target="raw4">-O1</option>
+    <option target="raw4">-O2</option>
+    <option target="raw4">-O2 --altcodegen</option>
+  </regtest>
+
+This is sufficiently straightforward to be user-editable to test only
+a set of applications or a set of options.  It'd be nice if this were
+more extensible, but probably the best way to actually add targets in
+this context is in code.
+
+FLOW: read the benchall.xml file, tracking current directory, and
+build a parallel tree in the QMTest directory.  When we encounter a
+<benchmark>, go through its <impl>s with lang="StreamIt".  Create a
+subdirectory in the QMTest directory for each option set.  Copy (or
+symlink) the source and output files to that subdirectory.  Then
+create QMTest test XML files: for target="library", compilelib and
+verifyuni; for target="uni", compileuni, rununi, and verifyuni; for
+target="raw.*", compileraw, runraw, and verifyraw.  Then run QMTest.
+

@@ -1,0 +1,2 @@
+<?xml version="1.0" ?>
+<class-directory><class kind="database">streamit.StreamItDatabase</class><class kind="test">streamit.RunStrcTest</class><class kind="test">streamit.RunProgramTest</class><class kind="test">streamit.CompareResultsTest</class></class-directory>

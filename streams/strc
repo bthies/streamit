@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.11 2003-10-06 19:10:40 dmaze Exp $
+# $Id: strc,v 1.12 2003-10-06 19:40:35 dmaze Exp $
 #
 
 use strict;
@@ -80,6 +80,7 @@ Options:
 + --java              Input file is "old" syntax (in Java)
   --output filename   Write a binary to filename
   --raw n, -r n       Compile for RAW, with an n-by-n grid
+  --standalone, -S    Generate C file without library dependencies
 * --cluster           Compile for a networked cluster
 * --viram, -V         Compile for VIRAM, a vector uniprocessor
   --verbose           Print commands as they are executed
@@ -126,7 +127,6 @@ Options specific to RAW backend:
 + --ptraccess, -Q     Access buffers through a pointer
 + --ratematch, -x     Turn on rate matching
   --rawcol, -c        Specify number of columns; --raw has number of rows
-  --raw-uni, -S       Use RAW backend to generate uniprocessor code
 + --removeglobals, -G Inline all functions and turn globals into locals
   --simulatework, -s  Use simulator for work estimation
 * --spacetime         Use space-time partitioner
@@ -200,13 +200,13 @@ sub get_options
 			    "ptraccess|Q",
 			    "ratematch|x",
 			    "rawcol|c=i",
-			    "raw-uni|raw_uni|S",
 			    "redundantreplacement|t",
 			    "removeglobals|G",
 			    "simplesjfusion",
 			    "simulatework|s",
 			    "sjtopipe|J",
 			    "spacetime!",
+			    "standalone|S",
 			    "stats!",
 			    "sync|k",
 			    "tokopi!",
@@ -298,7 +298,7 @@ sub old_to_c
     my $kjcopts = get_kjc_opts();
     my $xmx = "-Xmx" . $opts{memory};
     my $jfiles = join(' ', @$fns);
-    if (!$opts{raw} && !$opts{'raw-uni'} && !$opts{cluster})
+    if (!$opts{raw} && !$opts{standalone} && !$opts{cluster})
       {
 	my $target = change_extension($fns->[0], "java", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
@@ -403,7 +403,7 @@ sub get_kjc_opts
     $opts{ptraccess} && ($kjcopts .= " -Q");
     $opts{ratematch} && ($kjcopts .= " -x");
     $opts{rawcol} && ($kjcopts .= " -q ". $opts{rawcol});
-    $opts{'raw-uni'} && ($kjcopts .= " -U");
+    $opts{standalone} && ($kjcopts .= " -U");
     $opts{removeglobals} && ($kjcopts .= " -G");
     $opts{simplesjfusion} && ($kjcopts .= " -S");
     $opts{simulatework} && ($kjcopts .= " -T");

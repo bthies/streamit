@@ -3,6 +3,7 @@ package at.dms.kjc.sir;
 import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.lir.LIRStreamType;
+import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
 
@@ -122,7 +123,26 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 	    return CStdType.Null;
     }
 
-    
+    public int getPushForSchedule(HashMap[] counts) {
+	// the splitjoin pushes everything that children push in a
+	// steady-state
+	int sum = 0;
+	for (int i=0; i<size(); i++) {
+	    sum += get(i).getPushForSchedule(counts);
+	}
+	return sum;
+    }
+
+    public int getPopForSchedule(HashMap[] counts) {
+	// the splitjoin pops everything that children pop in a
+	// steady-state
+	int sum = 0;
+	for (int i=0; i<size(); i++) {
+	    sum += get(i).getPopForSchedule(counts);
+	}
+	return sum;
+    }
+
     /**
      * Sets the parallel streams in this, and resets the count on the
      * splitters and joiners, if they depended on the number of
@@ -326,7 +346,7 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
 
     public String toString() {
-	return "SIRSplitJoin name=" + getName() + " ident=" + getIdent();
+	return "SIRSplitJoin name=" + getName();
     }
 
 }

@@ -1,8 +1,10 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.lir.LIRStreamType;
+import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.util.*;
+import java.util.HashMap;
 
 /**
  * This represents a StreaMIT filter.
@@ -134,6 +136,20 @@ public class SIRFilter extends SIRStream implements Cloneable {
 	return this.pop;
     }
 
+    public int getPushForSchedule(HashMap[] counts) {
+	Utils.assert(counts[1].containsKey(this),
+		     "Execution count doesn't contain " + this);
+	int steadyCount = ((int[])counts[1].get(this))[0];
+	return steadyCount * getPushInt();
+    }
+
+    public int getPopForSchedule(HashMap[] counts) {
+	Utils.assert(counts[1].containsKey(this),
+		     "Execution count doesn't contain " + this);
+	int steadyCount = ((int[])counts[1].get(this))[0];
+	return steadyCount * getPopInt();
+    }
+
     /**
      * Returns how many items are popped.  This will throw an
      * exception if the integral numbers haven't been calculated
@@ -201,7 +217,7 @@ public class SIRFilter extends SIRStream implements Cloneable {
     }
 
     public String toString() {
-	return "SIRFilter name=" + getName() + " ident=" + getIdent();
+	return "SIRFilter name=" + getName();
     }
 }
 

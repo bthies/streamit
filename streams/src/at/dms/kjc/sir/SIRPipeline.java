@@ -4,6 +4,7 @@ import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.lir.LIRStreamType;
 import java.util.List;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.io.*;
@@ -59,6 +60,16 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      */
     public LIRStreamType getStreamType() {
 	return LIRStreamType.LIR_PIPELINE;
+    }
+
+    public int getPushForSchedule(HashMap[] counts) {
+	// the pipeline pushes what the last element pushes
+	return get(size()-1).getPushForSchedule(counts);
+    }
+
+    public int getPopForSchedule(HashMap[] counts) {
+	// the pipeline pops what the first item pops
+	return get(0).getPopForSchedule(counts);
     }
 
     /**
@@ -158,7 +169,7 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     public String toString() {
-	return "SIRPipeline name=" + getName() + " ident=" + getIdent();
+	return "SIRPipeline name=" + getName();
     }
 
 }

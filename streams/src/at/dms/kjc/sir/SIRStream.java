@@ -178,6 +178,26 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     public abstract CType getInputType();
 
     /**
+     * Returns the number of items pushed out of this stream in one
+     * execution of the steady-state, given the steady-state execution
+     * counts specified by <counts> (as in SIRScheduler.)  Requires
+     * that <counts> contains a firing for each *filter* that
+     * contained in the hierarchy of this (does not depend on
+     * splitters / joiners.)
+     *
+     * The intent of this method is that <counts> can be calculated
+     * once for a stream graph, then the splitjoins & pipelines of the
+     * graph can be refactored, and one can still call this to get the
+     * push count of new constructs without re-invoking the scheduler.
+     */
+    public abstract int getPushForSchedule(HashMap[] counts);
+
+    /**
+     * Same as getPushForSchedule, but with pop instead of push.
+     */
+    public abstract int getPopForSchedule(HashMap[] counts);
+
+    /**
      * Returns whether or not this class needs a call to an init
      * function to be generated.  Special library functions like
      * FileReader's and FileWriter's do not need an init call.

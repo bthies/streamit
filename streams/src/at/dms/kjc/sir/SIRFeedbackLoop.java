@@ -4,6 +4,7 @@ import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.lir.LIRStreamType;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
 
@@ -85,7 +86,33 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 	// return input type of body
 	return getBody().getInputType();
     }
-    
+
+    public int getPushForSchedule(HashMap[] counts) {
+	// get what the body pushes
+	int bodyPush = getBody().getPushForSchedule(counts);
+	// scale it by what is lost in the splitter
+	if (splitter.getType()==SIRSplitType.DUPLICATE) {
+	    return bodyPush;
+	} else {
+	    int[] weights = splitter.getWeights();
+	    // scale by what is passed out of construct
+	    Utils.assert((bodyPush * weights[0]) % (weights[0] + weights[1]) == 0,
+			 "Found non-integral splitting ratio in steady-state feedbackloop schedule.");
+	    return bodyPush * weights[0] / (weights[0] + weights[1]);
+	}
+    }
+
+    public int getPopForSchedule(HashMap[] counts) {
+	// get what body pops
+	int bodyPop = getBody().getPopForSchedule(counts);
+	// scale it by what is channeled through the joiner
+	int[] weights = joiner.getWeights();
+	// scale by what is passed out of construct
+	Utils.assert((bodyPop * weights[0]) % (weights[0] + weights[1]) == 0,
+		     "Found non-integral joining ratio in steady-state feedbackloop schedule.");
+	return bodyPop * weights[0] / (weights[0] + weights[1]);
+    }
+
     /**
      * Returns the type of this stream.
      */
@@ -304,6 +331,11 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
      * Returns the path-initialization function of this.
      */
     public JMethodDeclaration getInitPath() {
-        return initPath;
+	return initPath;
     }
+
+    public String toString() {
+	return "SIRFeedbackLoop name=" + getName();
+    }
+
 }

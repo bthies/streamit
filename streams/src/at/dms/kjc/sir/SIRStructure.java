@@ -2,6 +2,7 @@ package at.dms.kjc.sir;
 
 import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.*;
+import java.util.HashMap;
 
 /**
  * This class represents a data structure that may be passed between
@@ -47,7 +48,17 @@ public class SIRStructure extends SIRStream
     {
         at.dms.util.Utils.fail(ident + ": attempt to add an init function to a Structure");
     }
-    
+    public int getPushForSchedule(HashMap[] counts)
+    {
+        at.dms.util.Utils.fail(ident + ": attempt to call getPushForSchedule for Structure");
+	return -1;
+    }
+    public int getPopForSchedule(HashMap[] counts)
+    {
+        at.dms.util.Utils.fail(ident + ": attempt to call getPopForSchedule for Structure");
+	return -1;
+    }
+
     /* Things that we need to implement: */
     public CType getOutputType() { return null; }
     public LIRStreamType getStreamType() { return null; } // (implement?)

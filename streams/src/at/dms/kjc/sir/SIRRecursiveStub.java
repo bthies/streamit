@@ -64,6 +64,24 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
     /**
      * Shouldn't be calling this.
      */
+    public int getPushForSchedule(HashMap[] counts)
+    {
+        Utils.fail("Can't get push for schedule of recursive stub.");
+	return -1;
+    }
+
+    /**
+     * Shouldn't be calling this.
+     */
+    public int getPopForSchedule(HashMap[] counts)
+    {
+        Utils.fail("Can't get pop for schedule of recursive stub.");
+	return -1;
+    }
+
+    /**
+     * Shouldn't be calling this.
+     */
     public LIRStreamType getStreamType() {
 	Utils.fail("Can't get stream type of recursive stub.");
 	return null;

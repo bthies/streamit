@@ -1,7 +1,9 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.lir.LIRStreamType;
+import at.dms.util.Utils;
 import at.dms.kjc.*;
+import java.util.HashMap;
 
 /**
  * A StreamIt phased filter.  Like SIRFilter, this has constant
@@ -113,13 +115,13 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
 	return this.outputType;
     }
 
-	public SIRWorkFunction[] getInitPhases() {
-		return initPhases;
-	}
-
-	public void setInitPhases(SIRWorkFunction[] initPhases) {
-		this.initPhases = initPhases;
-	}
+    public SIRWorkFunction[] getInitPhases() {
+	return initPhases;
+    }
+    
+    public void setInitPhases(SIRWorkFunction[] initPhases) {
+	this.initPhases = initPhases;
+    }
 	
     public SIRWorkFunction[] getPhases() {
         return phases;
@@ -130,6 +132,22 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
     }
 
     public String toString() {
-	return "SIRPhasedFilter name=" + getName() + " ident=" + getIdent();
+	return "SIRPhasedFilter name=" + getName();
+    }
+
+    public int getPushForSchedule(HashMap[] counts) {
+	// not implementing this right now because I'm unclear if
+	// there is a distinct execution count for each phase.  can
+	// fix without too much trouble later. --bft
+	Utils.fail("Don't yet support getPushForSchedule for phased filters.");
+	return -1;
+    }
+
+    public int getPopForSchedule(HashMap[] counts) {
+	// not implementing this right now because I'm unclear if
+	// there is a distinct execution count for each phase.  can
+	// fix without too much trouble later. --bft
+	Utils.fail("Don't yet support getPopForSchedule for phased filters.");
+	return -1;
     }
 }

@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.7 2002-07-15 18:58:13 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.8 2002-07-15 19:14:13 dmaze Exp $
  */
 
 header {
@@ -34,7 +34,7 @@ options {
 	NodesToJava n2j = new NodesToJava(null);
 	ComplexProp cplx_prop = new ComplexProp();
 	TempVarGen varGen;
-	TJSymTab symTab = null;
+	SymbolTable symTab = null;
 	String getIndent ()
 	{
 		String result = "";
@@ -81,7 +81,7 @@ filter_decl returns [String t]
 	NodesToJava last_n2j = n2j;
 	String body = "";
 	List params = null;
-	symTab = new TJSymTab(symTab);
+	symTab = new SymbolTable(symTab);
 }
 	: #(
 			TK_filter 
@@ -154,7 +154,7 @@ struct_stream_decl2[String superclass] returns [String t]
 	String body = null;
 	List params = null;
 	InitFunction init = new InitFunction();
-	symTab = new TJSymTab(symTab);
+	symTab = new SymbolTable(symTab);
 }
 	:
 		type=stream_type name:ID
@@ -353,7 +353,7 @@ block returns [String t]
 	String stmt = "";
 	TempVarGen lastVarGen = varGen;
 	varGen = new TempVarGen();
-	symTab = new TJSymTab(symTab);
+	symTab = new SymbolTable(symTab);
 }
 : #(
     LCURLY { indent++; }

@@ -30,16 +30,8 @@ class BeamFormer extends Filter
 
   public BeamFormer (int nBeams, int nChannels, int nSamples)
   {
-    super ();
-    numberOfBeams      = nBeams;
-    numberOfChannels   = nChannels;
-    numberOfSamples    = nSamples;
-    BeamFormingWeights = new float(numberOfBeams*numberOfChannels);
-    inputData          = new float(numberOfChannels*numberOfSamples);
+    super (nBeams, nChannels, nSamples);
   }
-
-  Channel input = new Channel (Float.TYPE, numberOfChannels*numberOfSamples);
-  Channel output = new Channel (Float.TYPE, numberOfBeams*numberOfSamples);
 
   public void initIO()
   {
@@ -47,8 +39,17 @@ class BeamFormer extends Filter
     streamOutput = output;
   }
 
-  public void init()
+  public void init(int nBeams, int nChannels, int nSamples)
   {
+    numberOfBeams      = nBeams;
+    numberOfChannels   = nChannels;
+    numberOfSamples    = nSamples;
+    BeamFormingWeights = new float(numberOfBeams*numberOfChannels);
+    inputData          = new float(numberOfChannels*numberOfSamples);
+
+    input = new Channel (Float.TYPE, numberOfChannels*numberOfSamples);
+    output = new Channel (Float.TYPE, numberOfBeams*numberOfSamples);
+
     // NEED TO GENERATE BF WEIGHTS HERE
   }
 

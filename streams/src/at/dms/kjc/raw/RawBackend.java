@@ -143,23 +143,27 @@ public class RawBackend {
 	    int count = new GraphFlattener(str).getNumTiles();
 	    int numTiles = RawBackend.rawRows * RawBackend.rawColumns;
 	    boolean manual = KjcOptions.manual != null;
-	    boolean partitioning = !manual && (KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_greedier || KjcOptions.partition_ilp);
-	    if (count>numTiles && !partitioning && !manual) {
+	    boolean partitioning = ((KjcOptions.standalone || !manual) // still fuse graph if both manual and standalone enabled
+				    && (KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_greedier || KjcOptions.partition_ilp));
+	    // want to turn on partitioning for standalone; in this
+	    // case, manual is for manual optimizations, not manual
+	    // partitioning
+	    if (count>numTiles && !partitioning && !manual) { //
 		System.out.println("Need " + count + " tiles, so turning on partitioning...");
 		KjcOptions.partition_dp = true;
 		partitioning = true;
-	    }
-
-	    if (partitioning) {
-		System.err.println("Running Partitioning...");
-		str = Partitioner.doit(str, count, numTiles, true, false);
-		System.err.println("Done Partitioning...");
 	    }
 
 	    if (manual) {
 		System.err.println("Running Manual Partitioning...");
 		str = ManualPartition.doit(str);
 		System.err.println("Done Manual Partitioning...");
+	    }
+
+	    if (partitioning) {
+		System.err.println("Running Partitioning...");
+		str = Partitioner.doit(str, count, numTiles, true, false);
+		System.err.println("Done Partitioning...");
 	    }
 
 	    if (KjcOptions.sjtopipe) {

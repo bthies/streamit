@@ -48,7 +48,8 @@ my @tests = (
 	     "regtests/LinearTest31.str",
 	     "regtests/LinearTest32.str",
 	     "regtests/LinearTest33.str",
-	     #"regtests/LinearTest31.str",
+	     "regtests/LinearTest34.str",
+	     "regtests/LinearTest35.str",
 	     );
 
 #@tests = (

@@ -137,7 +137,7 @@ public class IMEMEstimation implements FlatVisitor
 	    RemoveGlobals.doit(top);
 	}
 	// make structures header file in this directory
-	StructureIncludeFile.doit(RawBackend.structures, top, dir);
+	StructureIncludeFile.doit(SpaceDynamicBackend.structures, top, dir);
 
 	TileCode.generateCode(top);
 	MakefileGenerator.createMakefile();

@@ -82,7 +82,7 @@ public class MakefileGenerator
 		createBCFile(true, tiles);
             else
                 createBCFile(false, tiles);
-	    if (RawBackend.rawRows > 4) {
+	    if (SpaceDynamicBackend.rawRows > 4) {
 		fw.write("TILE_PATTERN = 8x8\n\n");
 	    }
 	    //fix for snake boot race condition
@@ -167,7 +167,7 @@ public class MakefileGenerator
 	//let the simulation know how many tiles are mapped to 
 	//filters or joiners
 	fw.write("global gStreamItTilesUsed = " + Layout.getTilesAssigned() + ";\n");
-	fw.write("global gStreamItTiles = " + RawBackend.rawRows * RawBackend.rawColumns +
+	fw.write("global gStreamItTiles = " + SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns +
 		 ";\n");
 	fw.write("global gStreamItUnrollFactor = " + KjcOptions.unroll + ";\n");
 	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
@@ -183,7 +183,7 @@ public class MakefileGenerator
 	    fw.write("  local workestpath = malloc(strlen(streamit_home) + 30);\n");
 	    fw.write("  gFilterNames = listi_new();\n");
 	    Iterator it = tiles.iterator();
-	    for (int i = 0; i < RawBackend.rawRows * RawBackend.rawColumns; i++) {
+	    for (int i = 0; i < SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns; i++) {
 		if (tiles.contains(Layout.getTile(i))) {
 		    fw.write("  listi_add(gFilterNames, \"" +
 			     Layout.getNode(Layout.getTile(i)).getName() + "\");\n");
@@ -418,7 +418,7 @@ public class MakefileGenerator
 
 private static int getIOPort(Coordinate tile) 
 {
-    return RawBackend.rawColumns + 
+    return SpaceDynamicBackend.rawColumns + 
 	+ tile.getRow();
 }
 

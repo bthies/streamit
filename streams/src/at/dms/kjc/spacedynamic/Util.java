@@ -225,7 +225,7 @@ public class Util extends at.dms.util.Utils {
 	} 
 	else {
 	    buf.append("(");
-	    if (RawBackend.FILTER_DEBUG_MODE)
+	    if (SpaceDynamicBackend.FILTER_DEBUG_MODE)
 		buf.append("static_send_print");
 	    else
 		buf.append("static_send");
@@ -300,7 +300,7 @@ public class Util extends at.dms.util.Utils {
 	    
 	    for (int i = 0; i < current.ways; i++) {
 		if(current.weights[i]!=0)
-		    RawBackend.addAll(ret, getDirectDownstreamHelper(current.edges[i]));
+		    SpaceDynamicBackend.addAll(ret, getDirectDownstreamHelper(current.edges[i]));
 	    }
 	    return ret;
 	}

@@ -188,7 +188,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    print("volatile int " + Util.CSTIINTVAR + ";\n");
 	}
 	
-	if (RawBackend.FILTER_DEBUG_MODE) {
+	if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
 	    print("void static_send_print(");
 	    if (self.getOutputType() == CStdType.Void)
 		print("int f) {\n");		
@@ -204,7 +204,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	
 	//if there are structures in the code, include
 	//the structure definition header files
-	if (RawBackend.structures.length > 0) 
+	if (SpaceDynamicBackend.structures.length > 0) 
 	    print("#include \"structs.h\"\n");
 
 	//print the extern for the function to init the 

@@ -173,8 +173,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 
 	// initExec counts might be null if we're calling for work
 	// estimation before exec counts have been determined.
-	if (RawBackend.initExecutionCounts!=null) {
-	    Integer init = (Integer)RawBackend.initExecutionCounts.
+	if (SpaceDynamicBackend.initExecutionCounts!=null) {
+	    Integer init = (Integer)SpaceDynamicBackend.initExecutionCounts.
 		get(Layout.getNode(Layout.getTile(filter)));
 	
 	    if (init != null) 
@@ -212,7 +212,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    }
 	    else {
 		//upstream not a splitter, just get the number of executions
-		upStreamItems = getUpStreamItems(RawBackend.initExecutionCounts,
+		upStreamItems = getUpStreamItems(SpaceDynamicBackend.initExecutionCounts,
 						 node);
 	    }
 	}
@@ -312,16 +312,16 @@ public class RawExecutionCode extends at.dms.util.Utils
 	
 	//now current must be a joiner or filter
 	//get the number of item current produces
-	int currentUpStreamItems = getUpStreamItems(RawBackend.initExecutionCounts,
+	int currentUpStreamItems = getUpStreamItems(SpaceDynamicBackend.initExecutionCounts,
 						 current.edges[0]);
 	System.out.println(currentUpStreamItems);
 	/*
-	  if (getUpStreamItems(RawBackend.initExecutionCounts, node) != 
+	  if (getUpStreamItems(SpaceDynamicBackend.initExecutionCounts, node) != 
 	  ((int)(currentUpStreamItems * roundRobinMult)))
 	    System.out.println
 		("***** CORRECTING FOR INCOMING SPLITTER BUFFER IN INIT SCHEDULE (" + 
 		 node.contents.getName() + " " + ((int)(currentUpStreamItems * roundRobinMult))
-		 + " vs. " + getUpStreamItems(RawBackend.initExecutionCounts, node) + ") *****\n");
+		 + " vs. " + getUpStreamItems(SpaceDynamicBackend.initExecutionCounts, node) + ") *****\n");
 	*/
 	
 	//return the number of items passed from current to node thru the splitters
@@ -415,13 +415,13 @@ public class RawExecutionCode extends at.dms.util.Utils
 		if (KjcOptions.ratematch) {
 		    //System.out.println(filter.getName());
 		    
-		    int i = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue();
+		    int i = ((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(node)).intValue();
 
 		    //i don't know, the prepeek could be really large, so just in case
 		    //include it.  Make the buffer big enough to hold 
 		    buffersize = 
 			Math.max
-			((((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() - 1) * 
+			((((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(node)).intValue() - 1) * 
 			 filter.getPopInt() + filter.getPeekInt(), prepeek);
 		}
 		else //not ratematching and we do not have a circular buffer
@@ -447,7 +447,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 		//see Mgordon's thesis for explanation (Code Generation Section)
 		if (KjcOptions.ratematch)
 		    buffersize = 
-			Util.nextPow2(Math.max((((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() - 1) * 
+			Util.nextPow2(Math.max((((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(node)).intValue() - 1) * 
 					       filter.getPopInt() + filter.getPeekInt(), prepeek) + remaining);
 		else
 		    buffersize = Util.nextPow2(maxpeek + remaining);
@@ -529,7 +529,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	//if we are rate matching, create the output buffer with its 
 	//index
 	if (KjcOptions.ratematch && filter.getPushInt() > 0) {
-	    int steady = ((Integer)RawBackend.steadyExecutionCounts.
+	    int steady = ((Integer)SpaceDynamicBackend.steadyExecutionCounts.
 			  get(Layout.getNode(Layout.getTile(filter)))).intValue();
 	    
 	    //define the send buffer index variable
@@ -749,7 +749,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 			     new JIntLiteral(remaining))); 
 	}
 
-	if (RawBackend.FILTER_DEBUG_MODE) {
+	if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
 	    statements.addStatement
 		(new SIRPrintStatement(null,
 				       new JStringLiteral(null, filter.getName() + " Starting Steady-State\\n"),
@@ -809,7 +809,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
 	
 	//if we are in debug mode, print out that the filter is firing
-	if (RawBackend.FILTER_DEBUG_MODE) {
+	if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
 	    block.addStatement
 		(new SIRPrintStatement(null,
 				       new JStringLiteral(null, filter.getName() + " firing (init).\\n"),
@@ -840,7 +840,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 					    LocalVariables localVariables) 
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
-	int steady = ((Integer)RawBackend.steadyExecutionCounts.
+	int steady = ((Integer)SpaceDynamicBackend.steadyExecutionCounts.
 	    get(Layout.getNode(Layout.getTile(filter)))).intValue();
 
 	//reset the simple index
@@ -884,7 +884,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	workBlock.accept(new RateMatchConvertPush(localVariables));
 
 	//if we are in debug mode, print out that the filter is firing
-	if (RawBackend.FILTER_DEBUG_MODE) {
+	if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
 	    block.addStatement
 		(new SIRPrintStatement(null,
 				       new JStringLiteral(null, filter.getName() + " firing.\\n"),
@@ -983,7 +983,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    deepCopy(filter.getWork().getBody());
 
 	//if we are in debug mode, print out that the filter is firing
-	if (RawBackend.FILTER_DEBUG_MODE) {
+	if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
 	    block.addStatement
 		(new SIRPrintStatement(null,
 				       new JStringLiteral(null, filter.getName() + " firing.\\n"),

@@ -52,21 +52,21 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	
 	
 	//create copies of the executionCounts
-	HashMap initExecutionCounts = (HashMap)RawBackend.initExecutionCounts.clone();
-	HashMap steadyExecutionCounts = (HashMap)RawBackend.steadyExecutionCounts.clone();
+	HashMap initExecutionCounts = (HashMap)SpaceDynamicBackend.initExecutionCounts.clone();
+	HashMap steadyExecutionCounts = (HashMap)SpaceDynamicBackend.steadyExecutionCounts.clone();
 
 
 	joinerCode = initJoinerCode;
 	
 	//	System.out.println("\n\nInit Execution Counts");
-	//RawBackend.printCounts(RawBackend.initExecutionCounts);
+	//SpaceDynamicBackend.printCounts(SpaceDynamicBackend.initExecutionCounts);
 	
 	initSchedules = (new FineGrainSimulator(top, true)).goInit(initExecutionCounts, counters, null);
 	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");
 	
 	//System.out.println("\n\nSteady Execution Counts");
-	//RawBackend.printCounts(RawBackend.steadyExecutionCounts);
+	//SpaceDynamicBackend.printCounts(SpaceDynamicBackend.steadyExecutionCounts);
 
 	counters.resetBuffers();
 
@@ -365,7 +365,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 		 fire.contents instanceof SIRFilter) {
 	    //we are ratematching filters
 	    return (((SIRFilter)fire.contents).getPopInt() * 
-		((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue() +
+		((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(fire)).intValue() +
 		(((SIRFilter)fire.contents).getPeekInt() -
 		 ((SIRFilter)fire.contents).getPopInt()));
 	}
@@ -402,7 +402,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    //we are ratematching on the filter
 	    //it consumes for the entire steady state
 	    return ((SIRFilter)fire.contents).getPopInt() *
-		((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue();
+		((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(fire)).intValue();
 	}
 	//otherwise just consume pop
 	return ((SIRFilter)fire.contents).getPopInt();
@@ -430,7 +430,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 		ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
 	    else if (!initSimulation && KjcOptions.ratematch) {
 		//we are ratematching so produce all the data on the one firing.
-		ret *= ((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue();
+		ret *= ((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(fire)).intValue();
 	    }
 	    //now this node has fired
 	    counters.setFired(fire);
@@ -730,12 +730,12 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 			       " init push: " + two.getPushInt());
 	}
 	
-	if (RawBackend.initExecutionCounts.containsKey(node))
+	if (SpaceDynamicBackend.initExecutionCounts.containsKey(node))
 	    System.out.println("   executes in init " + 
-			       ((Integer)RawBackend.initExecutionCounts.get(node)).intValue());
-	if (RawBackend.steadyExecutionCounts.containsKey(node))
+			       ((Integer)SpaceDynamicBackend.initExecutionCounts.get(node)).intValue());
+	if (SpaceDynamicBackend.steadyExecutionCounts.containsKey(node))
 	    System.out.println("   executes in steady " + 
-			       ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue());
+			       ((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(node)).intValue());
     }
     
     private String getJoinerBuffer(FlatNode node, FlatNode previous) 

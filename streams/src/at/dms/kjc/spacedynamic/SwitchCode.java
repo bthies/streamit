@@ -27,7 +27,7 @@ public class SwitchCode extends at.dms.util.Utils
     {
 	//Use the simulator to create the switch schedules
 	
-	RawBackend.simulator.simulate(top);
+	SpaceDynamicBackend.simulator.simulate(top);
 	//now print the schedules
 	dumpSchedules();
     }
@@ -36,11 +36,11 @@ public class SwitchCode extends at.dms.util.Utils
     {
 	//get all the nodes that have either init switch code
 	//or steady state switch code
-	HashSet tiles = new HashSet(RawBackend.simulator.initSchedules.
+	HashSet tiles = new HashSet(SpaceDynamicBackend.simulator.initSchedules.
 	    keySet());
 	
-	RawBackend.addAll(tiles, RawBackend.simulator.steadySchedules.keySet());
-	RawBackend.addAll(tiles, Layout.getTiles());
+	SpaceDynamicBackend.addAll(tiles, SpaceDynamicBackend.simulator.steadySchedules.keySet());
+	SpaceDynamicBackend.addAll(tiles, Layout.getTiles());
 
 	//do not generate switchcode for Tiles assigned to file readers/writers
 	//they are just dummy tiles
@@ -62,10 +62,10 @@ public class SwitchCode extends at.dms.util.Utils
 		//get the code
 		String steadyCode = "";
 		String initCode = "";
-		if (RawBackend.simulator.initSchedules.get(tile) != null)
-		    initCode = ((StringBuffer)RawBackend.simulator.initSchedules.get(tile)).toString();
-		if (RawBackend.simulator.steadySchedules.get(tile) != null)
-		    steadyCode = ((StringBuffer)RawBackend.simulator.steadySchedules.get(tile)).toString();
+		if (SpaceDynamicBackend.simulator.initSchedules.get(tile) != null)
+		    initCode = ((StringBuffer)SpaceDynamicBackend.simulator.initSchedules.get(tile)).toString();
+		if (SpaceDynamicBackend.simulator.steadySchedules.get(tile) != null)
+		    steadyCode = ((StringBuffer)SpaceDynamicBackend.simulator.steadySchedules.get(tile)).toString();
 		
 		//the sequences we are going to compress if compression is needed
 		Repetition[] big3init = null;
@@ -97,7 +97,7 @@ public class SwitchCode extends at.dms.util.Utils
 		    getRepetitionCounts(big3work, fw);
 		fw.write("sw_loop:\n");
 		//print the steady state switch code
-		if (RawBackend.simulator.steadySchedules.get(tile) != null)
+		if (SpaceDynamicBackend.simulator.steadySchedules.get(tile) != null)
 		    toASM(steadyCode, "w", big3work, fw);
 		//print the jump ins
 		fw.write("\tj\tsw_loop\n\n");

@@ -32,8 +32,8 @@ public class FileVisitor implements FlatVisitor {
 	FileVisitor frv = new FileVisitor();
 	top.accept(frv, new HashSet(), false);
 	//add everything to the fileNodes hashset
-	RawBackend.addAll(fileNodes, fileReaders);
-	RawBackend.addAll(fileNodes, fileWriters);
+	SpaceDynamicBackend.addAll(fileNodes, fileReaders);
+	SpaceDynamicBackend.addAll(fileNodes, fileWriters);
     }
 	
     public FileVisitor() 

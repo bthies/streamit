@@ -52,7 +52,7 @@ public class NumberGathering extends at.dms.util.Utils
 	while (sinksIt.hasNext()) {
 	    sink = (FlatNode)sinksIt.next();
 	    int prints = CheckPrint.check((SIRFilter)sink.contents);
-	    Integer steadyInteger = (Integer)RawBackend.steadyExecutionCounts.get(sink);
+	    Integer steadyInteger = (Integer)SpaceDynamicBackend.steadyExecutionCounts.get(sink);
 	    int steady = 0;
 	    
 	    if (steadyInteger != null) 
@@ -94,8 +94,8 @@ public class NumberGathering extends at.dms.util.Utils
 		continue;
 	    }
 	    
-	    Integer initInteger = (Integer)RawBackend.initExecutionCounts.get(sink);
-	    Integer steadyInteger = (Integer)RawBackend.steadyExecutionCounts.get(sink);
+	    Integer initInteger = (Integer)SpaceDynamicBackend.initExecutionCounts.get(sink);
+	    Integer steadyInteger = (Integer)SpaceDynamicBackend.steadyExecutionCounts.get(sink);
 	    int init = 0, steady = 0;
 	    
 	    if (initInteger != null)
@@ -243,7 +243,7 @@ public class NumberGathering extends at.dms.util.Utils
 		return ret;
 	
 	    for (int i = 0; i < node.incoming.length; i++)
-		RawBackend.addAll(ret, getAllAncestors(node.incoming[i], false));
+		SpaceDynamicBackend.addAll(ret, getAllAncestors(node.incoming[i], false));
 	    return ret;
 	}
 

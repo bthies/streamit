@@ -88,7 +88,7 @@ public class DirectCommunication extends at.dms.util.Utils
 	    (JBlock)ObjectDeepCloner.
 	    deepCopy(filter.getWork().getBody());
 
-	if (RawBackend.FILTER_DEBUG_MODE) {
+	if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
 	    statements.addStatement
 		(new SIRPrintStatement(null,
 				       new JStringLiteral(null, filter.getName() + " Starting Steady-State\\n"),

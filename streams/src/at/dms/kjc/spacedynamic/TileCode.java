@@ -41,8 +41,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	tiles = new HashSet();
 	//for decoupled execution the scheduler does not run
 	if (!(KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM)) {
-	    tiles.addAll(RawBackend.simulator.initSchedules.keySet());
-	    tiles.addAll(RawBackend.simulator.steadySchedules.keySet());
+	    tiles.addAll(SpaceDynamicBackend.simulator.initSchedules.keySet());
+	    tiles.addAll(SpaceDynamicBackend.simulator.steadySchedules.keySet());
 	}
 	Iterator tileIterator = tiles.iterator();
 	while(tileIterator.hasNext()) {
@@ -73,7 +73,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		fw.write("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
 	    }
 
-	    if (RawBackend.FILTER_DEBUG_MODE) {
+	    if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
 		fw.write("void static_send_print(");
 		fw.write(Util.getJoinerType(joiner) + " f) {\n");
 		if (Util.getJoinerType(joiner).isFloatingPoint()) 
@@ -90,7 +90,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    //this must be included after the above declarations 
 	    //(of CSTO*, CSTI*)
 
-	    if (RawBackend.structures.length > 0) 
+	    if (SpaceDynamicBackend.structures.length > 0) 
 		fw.write("#include \"structs.h\"\n");
 	    
 	    if (KjcOptions.decoupled) {
@@ -205,9 +205,9 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    ret.append(";\n");
 	}
 
-	printSchedule(joiner, (JoinerScheduleNode)RawBackend.simulator.initJoinerCode.get(joiner), ret);
+	printSchedule(joiner, (JoinerScheduleNode)SpaceDynamicBackend.simulator.initJoinerCode.get(joiner), ret);
 	ret.append("while(1) {\n");
-	printSchedule(joiner, (JoinerScheduleNode)RawBackend.simulator.steadyJoinerCode.get(joiner), ret);
+	printSchedule(joiner, (JoinerScheduleNode)SpaceDynamicBackend.simulator.steadyJoinerCode.get(joiner), ret);
 	ret.append("}}\n");
 
 	return ret.toString();

@@ -66,8 +66,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     private static void init(FlatNode top) 
     {
 	layout.toplevel = top;
-	int rows = RawBackend.rawRows;
-	int columns = RawBackend.rawColumns;
+	int rows = SpaceDynamicBackend.rawRows;
+	int columns = SpaceDynamicBackend.rawColumns;
 		
 	//determine if there is a file reader/writer in the graph
 	//call init() to traverse the graph 
@@ -94,10 +94,10 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	System.out.println("Tiles layout.assigned: " + layout.assigned.size());
 
 	if (layout.assigned.size() > 
-	    (RawBackend.rawRows * RawBackend.rawColumns)) {
+	    (SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns)) {
 	    System.err.println("\nLAYOUT ERROR: Need " + layout.assigned.size() +
 			       " tiles, have " + 
-			       (RawBackend.rawRows * RawBackend.rawColumns) +
+			       (SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns) +
 			       " tiles.");
 	    System.exit(-1);
 	}
@@ -151,11 +151,11 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
     public static Coordinate getTile(int tileNumber) 
     {
-	if (!(tileNumber / RawBackend.rawColumns < RawBackend.rawRows))
+	if (!(tileNumber / SpaceDynamicBackend.rawColumns < SpaceDynamicBackend.rawRows))
 	    Utils.fail("tile number too high");
 	
-	return layout.coordinates[tileNumber / RawBackend.rawColumns]
-	    [tileNumber % RawBackend.rawColumns];
+	return layout.coordinates[tileNumber / SpaceDynamicBackend.rawColumns]
+	    [tileNumber % SpaceDynamicBackend.rawColumns];
     }
 	    
     public static String getDirection(Coordinate from,
@@ -210,7 +210,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	//because the simulator only simulates 4x4 or 8x8 we
 	//have to translate the tile number according to these layouts
 	int columns = 4;
-	if (RawBackend.rawColumns > 4)
+	if (SpaceDynamicBackend.rawColumns > 4)
 	    columns = 8;
 	int row = tile.getRow();
 	int column = tile.getColumn();
@@ -256,7 +256,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	int nsucc =0, j = 0;
 	double currentCost = 0.0, minCost = 0.0;
 	//number of paths tried at an iteration
-	int nover = 100; //* RawBackend.rawRows * RawBackend.rawColumns;
+	int nover = 100; //* SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns;
 
 	try {
 	    init(node);
@@ -285,7 +285,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    }
 	    //run the annealing twice.  The first iteration is really just to get a 
 	    //good initial layout.  Some random layouts really kill the algorithm
-	    for (int two = 0; two < RawBackend.rawRows ; two++) {
+	    for (int two = 0; two < SpaceDynamicBackend.rawRows ; two++) {
 		double t = annealMaxTemp(); 
 		double tFinal = annealMinTemp();
 		while (true) {
@@ -408,17 +408,17 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    //check to see if there are less then
 	    //file readers/writers the number of columns
 	    if (FileVisitor.fileReaders.size() + 
-		FileVisitor.fileWriters.size() > RawBackend.rawRows)
+		FileVisitor.fileWriters.size() > SpaceDynamicBackend.rawRows)
 		Utils.fail("Too many file readers/writers (must be less than rows).");
 	    //assign the file streams to the added column starting at the top
 	    //row
 	    while (frs.hasNext()) {
-		assign(layout.coordinates[row][RawBackend.rawColumns], 
+		assign(layout.coordinates[row][SpaceDynamicBackend.rawColumns], 
  		       (FlatNode)frs.next());
 		row++;
 	    }
 	    while (fws.hasNext()) {
-		assign(layout.coordinates[row][RawBackend.rawColumns],
+		assign(layout.coordinates[row][SpaceDynamicBackend.rawColumns],
 		       (FlatNode)fws.next());
 		row++;
 	    }
@@ -428,9 +428,9 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	int row = 0;
 	int column = 0;
 
-	for (row = 0; row < RawBackend.rawRows; row ++) {
+	for (row = 0; row < SpaceDynamicBackend.rawRows; row ++) {
 	    if (row % 2 == 0) {
-		for (column = 0; column < RawBackend.rawColumns;) {
+		for (column = 0; column < SpaceDynamicBackend.rawColumns;) {
 		    if (!dfTraversal.hasNext())
 			break;
 		    FlatNode node = (FlatNode)dfTraversal.next();
@@ -441,7 +441,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		}
 	    }
 	    else {
-		for (column = RawBackend.rawColumns -1; column >= 0;) {
+		for (column = SpaceDynamicBackend.rawColumns -1; column >= 0;) {
 		    if (!dfTraversal.hasNext())
 			break; 
 		    FlatNode node = (FlatNode)dfTraversal.next();
@@ -462,7 +462,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     private static double placementCost() 
     {
 	HashSet nodes = (HashSet)layout.assigned.clone();
-	RawBackend.addAll(nodes, FileVisitor.fileReaders);
+	SpaceDynamicBackend.addAll(nodes, FileVisitor.fileReaders);
 	
 	Iterator nodesIt = nodes.iterator();
 	HashSet routers = new HashSet();
@@ -505,7 +505,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		//if the final dest is a filter then just get the execution count of the 
 		//dest filter * its pop rate
 		if (dest.contents instanceof SIRFilter) {
-		    items = ((Integer)RawBackend.steadyExecutionCounts.get(dest)).intValue() *
+		    items = ((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(dest)).intValue() *
 			((SIRFilter)dest.contents).getPopInt();
 		}
 		//we are sending to a joiner thru a splitter (should only happen when 
@@ -517,7 +517,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    if (dest.incomingWeights.length >= 2)
 			rate = ((double)dest.incomingWeights[0])/(double)(dest.incomingWeights[0] +
 							dest.incomingWeights[1]);
-		    items = (int)(((Integer)RawBackend.steadyExecutionCounts.get(dest)).intValue() / rate);
+		    items = (int)(((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(dest)).intValue() / rate);
 		}
 	    }
 	    else {  //sending without an intermediate splitter
@@ -528,10 +528,10 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    push = 1;
 		else 
 		    push = ((SIRFilter)node.contents).getPushInt();
-		if(RawBackend.steadyExecutionCounts.get(node)==null)
+		if(SpaceDynamicBackend.steadyExecutionCounts.get(node)==null)
 		    items=1;
 		else
-		    items = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() *
+		    items = ((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(node)).intValue() *
 			push;
 	    }
 	    sum += ((items * hops) + (items * Util.getTypeSize(Util.getOutputType(node)) * 
@@ -594,8 +594,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     
     private static int getRandom() 
     {
-	return layout.random.nextInt(RawBackend.rawRows*
-			      RawBackend.rawColumns);
+	return layout.random.nextInt(SpaceDynamicBackend.rawRows*
+			      SpaceDynamicBackend.rawColumns);
     }
     
     public static void dumpLayout(String fileName) {
@@ -604,15 +604,15 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	buf.append("digraph Layout {\n");
 	buf.append("size = \"8, 10.5\"");
 	buf.append("node [shape=box,fixedsize=true,width=2.5,height=1];\nnodesep=.5;\nranksep=\"2.0 equally\";\nedge[arrowhead=dot, style=dotted]\n");
-	for (int i = 0; i < RawBackend.rawRows; i++) {
+	for (int i = 0; i < SpaceDynamicBackend.rawRows; i++) {
 	    buf.append("{rank = same;");
-	    for (int j = 0; j < RawBackend.rawColumns; j++) {
+	    for (int j = 0; j < SpaceDynamicBackend.rawColumns; j++) {
 		buf.append("tile" + getTileNumber(getTile(i, j)) + ";");
 	    }
 	    buf.append("}\n");
 	}
-	for (int i = 0; i < RawBackend.rawRows; i++) {
-	    for (int j = 0; j < RawBackend.rawColumns; j++) {
+	for (int i = 0; i < SpaceDynamicBackend.rawRows; i++) {
+	    for (int j = 0; j < SpaceDynamicBackend.rawColumns; j++) {
 		Iterator neighbors = getNeighbors(getTile(i, j)).iterator();
 		while (neighbors.hasNext()) {
 		    Coordinate n = (Coordinate)neighbors.next();
@@ -673,7 +673,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    return new HashSet();
 	HashSet ret = new HashSet();
 	for (int i = 0; i < node.ways; i++) {
-	    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
+	    SpaceDynamicBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
 	}
 	return ret;
     }
@@ -703,7 +703,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	      if (node.contents.getParent() instanceof SIRFeedbackLoop) {
 	      //add the connection to all the nodes outside of the feedback
 	      if (node.ways > 1) {
-	      RawBackend.addAll(ret, getDownStreamHelper(node.edges[0]));
+	      SpaceDynamicBackend.addAll(ret, getDownStreamHelper(node.edges[0]));
 	      ret.add(node.edges[1]);
 	      }
 	      else 
@@ -712,7 +712,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 			  */
 	    for (int i = 0; i < node.ways; i++) {
 		if(node.weights[i]!=0)
-		    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
+		    SpaceDynamicBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
 	    }
 	    return ret;
 	}
@@ -731,12 +731,12 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	//get east west neighbor
 	//if (column - 1 >= 0)
 	//    neighbors.add(getTile(row, column - 1));
-	if (column + 1 < RawBackend.rawColumns) 
+	if (column + 1 < SpaceDynamicBackend.rawColumns) 
 	    neighbors.add(getTile(row, column + 1));	
 	
 	//if (row - 1 >= 0)
 	//    neighbors.add(getTile(row - 1, column));
-	if (row + 1 < RawBackend.rawRows) 
+	if (row + 1 < SpaceDynamicBackend.rawRows) 
 	    neighbors.add(getTile(row + 1, column));
 
 	return neighbors;
@@ -771,7 +771,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    System.err.println("Negative Value: Try again.");
 		    continue;
 		}
-		if (row.intValue() > (RawBackend.rawRows -1)) {
+		if (row.intValue() > (SpaceDynamicBackend.rawRows -1)) {
 		    System.err.println("Value Too Large: Try again.");
 		    continue;
 		}
@@ -782,7 +782,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    System.err.println("Negative Value: Try again.");
 		    continue;
 		}
-		if (column.intValue() > (RawBackend.rawColumns -1)) {
+		if (column.intValue() > (SpaceDynamicBackend.rawColumns -1)) {
 		    System.err.println("Value Too Large: Try again.");
 		    continue;
 		}

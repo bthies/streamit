@@ -18,7 +18,7 @@ import java.util.*;
 import java.io.*;
 import at.dms.util.Utils;
 
-public class RawBackend {
+public class SpaceDynamicBackend {
     // number of rows and columns that we're compiling for
     public static int rawRows = -1;
     public static int rawColumns = -1;
@@ -53,11 +53,11 @@ public class RawBackend {
 	structures = structs;
 	
 	// set number of columns/rows
-	RawBackend.rawRows = KjcOptions.raw;
+	SpaceDynamicBackend.rawRows = KjcOptions.raw;
 	if(KjcOptions.rawcol>-1)
-	    RawBackend.rawColumns = KjcOptions.rawcol;
+	    SpaceDynamicBackend.rawColumns = KjcOptions.rawcol;
 	else
-	    RawBackend.rawColumns = KjcOptions.raw;
+	    SpaceDynamicBackend.rawColumns = KjcOptions.raw;
 
 	//use the work based simulator to layout the communication instructions
 	if (KjcOptions.wbs)
@@ -167,7 +167,7 @@ public class RawBackend {
 		// the filters
 		int count = new GraphFlattener(subStr).getNumTiles();
 		//partition this sub graph based on the number of tiles it is assigned...
-		int numTiles = staticSubGraph.getNumTiles();//RawBackend.rawRows * RawBackend.rawColumns;
+		int numTiles = staticSubGraph.getNumTiles();//SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns;
 		boolean manual = KjcOptions.manual != null;
 		boolean partitioning = ((KjcOptions.standalone || !manual) // still fuse graph if both manual and standalone enabled
 					&& (KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_greedier || KjcOptions.partition_ilp));
@@ -226,7 +226,8 @@ public class RawBackend {
 		createExecutionCounts(subStr, graphFlattener);
 		
 		//dump the flatgraph of the application, must be called after createExecutionCounts
-		graphFlattener.dumpGraph(makeDotFileName("flatgraph", subStr));
+		graphFlattener.dumpGraph(makeDotFileName("flatgraph", subStr), initExecutionCounts,
+					 steadyExecutionCounts);
 		
 		
 		//Generate number gathering simulator code
@@ -359,7 +360,7 @@ public class RawBackend {
 		 
 		 if (val==25) { 
 		 System.err.println("Warning: catching scheduler bug with special-value "
-		 + "overwrite in RawBackend");
+		 + "overwrite in SpaceDynamicBackend");
 		 val=26;
 		 }
 	       	if ((i == 0) &&

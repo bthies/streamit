@@ -40,7 +40,7 @@ public class MagicNetworkSchedule
 	    topFile = new FileWriter("magic_schedules.bc");
 	    
 	    //now the above hashmaps should be filled
-	    RawBackend.simulator.simulate(top);
+	    SpaceDynamicBackend.simulator.simulate(top);
 	    
 	    //declare any vars needed
 	    createTopHeader(topFile);
@@ -116,9 +116,9 @@ public class MagicNetworkSchedule
 	int realRows = 4, realColumns = 4;
 	int row, column;
 
-	if (RawBackend.rawRows > 4)
+	if (SpaceDynamicBackend.rawRows > 4)
 	    realRows = 8;
-	if (RawBackend.rawColumns > 4)
+	if (SpaceDynamicBackend.rawColumns > 4)
 	    realColumns = 8;
 	
 
@@ -130,7 +130,7 @@ public class MagicNetworkSchedule
 		//we have to create entries for all tiles in the real configuration
 		//so we have to create 0 entries for the tiles not used if we
 		//are simulating a layout different from 4x4 or 8x8
-		if (row < RawBackend.rawRows && column < RawBackend.rawColumns) {
+		if (row < SpaceDynamicBackend.rawRows && column < SpaceDynamicBackend.rawColumns) {
 		    Coordinate current = Layout.getTile(row, column);
 		    
 		    if (steadySendSchedules.containsKey(current))
@@ -150,7 +150,7 @@ public class MagicNetworkSchedule
 		//we have to create entries for all tiles in the real configuration
 		//so we have to create 0 entries for the tiles not used if we
 		//are simulating a layout different from 4x4 or 8x8
-		if (row < RawBackend.rawRows && column < RawBackend.rawColumns) {
+		if (row < SpaceDynamicBackend.rawRows && column < SpaceDynamicBackend.rawColumns) {
 		    Coordinate current = Layout.getTile(row, column);
 		    
 		    if (steadyReceiveSchedules.containsKey(current))

@@ -54,7 +54,7 @@ public class BlockExecutionCounts implements FlatVisitor
 	else {
 	    //blockCounts.put(node, new Integer(1));
 	    blockCounts.put(node, 
-			    new Integer(((Integer)RawBackend.
+			    new Integer(((Integer)SpaceDynamicBackend.
 					 steadyExecutionCounts.get(node)).intValue()));
 	}
 	return;

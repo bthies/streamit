@@ -52,11 +52,11 @@ public class JoinerRemoval implements FlatVisitor
 
 		for (int i = 0; i < node.inputs; i++) {
 		    //make sure it does not execute in the initialization schedule
-		    if (RawBackend.initExecutionCounts.get(node.incoming[i]) != null)
+		    if (SpaceDynamicBackend.initExecutionCounts.get(node.incoming[i]) != null)
 			return;
 		    SIRFilter filter = (SIRFilter)node.incoming[i].contents;
 		    System.out.println(node.incoming[i]+"->"+node);
-		    int exe = ((Integer)RawBackend.steadyExecutionCounts.get(node.incoming[i])).intValue();
+		    int exe = ((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(node.incoming[i])).intValue();
 		    int prod = exe * filter.getPushInt();
 		    if (exe != BlockExecutionCounts.getBlockCount(node.incoming[i]))
 			return;

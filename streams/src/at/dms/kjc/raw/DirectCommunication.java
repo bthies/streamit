@@ -120,7 +120,7 @@ class DirectConvertCommunication extends SLIRReplacingVisitor
 	    if(KjcOptions.sketchycodegen)
 		floatSuffix = "_sketch_f";
 	    else
-		floatSuffix = "_sketch_f";
+		floatSuffix = "_f";
 	
 	
 	//create the method call for static_receive()

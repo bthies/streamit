@@ -1,0 +1,34 @@
+void->void pipeline SimpleSplit {
+  add IntSource;
+  add AdderSplit;
+  add IntPrinter;
+}
+
+int->int splitjoin AdderSplit {
+    split roundrobin;
+    add Adder(1);
+    add Adder(2);
+    add Adder(3);
+    join roundrobin;
+}
+
+
+int->int filter Adder(int i) {
+    int val;
+    init {
+	val = i;
+    }
+    
+    work pop 1 push 1 {
+	push(pop() + val);
+    }
+}
+
+void->int filter IntSource {
+  int x;
+  init { x = 0; }
+  work push 1 { push(x++); }
+}
+int->void filter IntPrinter {
+  work pop 1 { print(pop()); }
+}

@@ -287,6 +287,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         newLine();
         // print(CModifier.toString(modifiers));
 
+	//only stack allocate singe dimension arrays
 	if (expr instanceof JNewArrayExpression) {
 	    //print the basetype
 	    print(((CArrayType)type).getBaseType() + " ");
@@ -1225,9 +1226,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	}
 
 	//stack allocate all arrays in the work function 
-	//done at the variable definition
+	//done at the variable definition,
 	if (isWork && right instanceof JNewArrayExpression &&
  	    (left instanceof JLocalVariableExpression)) {
+	    //	    (((CArrayType)((JNewArrayExpression)right).getType()).getArrayBound() < 2)) {
+
 	    //get the basetype and print it 
 	    CType baseType = ((CArrayType)((JNewArrayExpression)right).getType()).getBaseType();
 	    print(baseType + " ");
@@ -1246,7 +1249,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		//HACK FOR THE ICSA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		//turn all array access into access of a pointer pointing to the array
 		print(ident + "_Alloc");
-				
+		
 		//print the dims of the array
 		stackAllocateArray(ident);
 

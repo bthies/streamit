@@ -51,9 +51,6 @@ public class RawBackend {
 	else
 	    RawBackend.rawColumns = KjcOptions.raw;
 
-	//	if (KjcOptions.ratematch)
-	//    simulator = new RateMatchSim();
-	//else 
 	simulator = new FineGrainSimulator();
 
 	//this must be run now, FlatIRToC relies on it!!!
@@ -158,6 +155,13 @@ public class RawBackend {
 	//Generate the switch code	
 	CalcBufferSize.createBufferSizePow2(rawFlattener.top);
 
+	if (KjcOptions.ratematch) {
+	    if (RateMatch.doit(rawFlattener.top))
+		System.out.println("Rate Matching Test Successful");
+	    else 
+		System.out.println("Rate Matching Test Failed");
+	}
+		
 	if (KjcOptions.magic_net) {
 	    MagicNetworkSchedule.generateSchedules(rawFlattener.top);
 	}

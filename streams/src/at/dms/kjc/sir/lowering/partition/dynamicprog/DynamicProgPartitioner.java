@@ -31,7 +31,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * the top or bottommost elements of child pipelines are also
      * containers, instead of filters.
      */
-    static final int HORIZONTAL_CONTAINER_OVERHEAD = 120;
+    static final int HORIZONTAL_CONTAINER_OVERHEAD = 30;
     /**
      * Whether or not we're sharing configurations in symmetrical
      * splitjoins.  Sharing doesn't work with 2-D partitioning, but

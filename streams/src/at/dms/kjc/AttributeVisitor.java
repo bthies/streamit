@@ -48,14 +48,16 @@ public interface AttributeVisitor {
 			     String superName,
 			     CClassType[] interfaces,
 			     JPhylum[] body,
+			       JFieldDeclaration[] fields,
 			     JMethodDeclaration[] methods,
 			     JTypeDeclaration[] decls);
   /**
    * visits a class body
    */
-  Object visitClassBody(JTypeDeclaration[] decls,
-		      JMethodDeclaration[] methods,
-		      JPhylum[] body);
+    Object visitClassBody(JTypeDeclaration[] decls,
+			  JFieldDeclaration[] fields,
+			JMethodDeclaration[] methods,
+			JPhylum[] body);
 
   /**
    * visits a class declaration
@@ -67,6 +69,7 @@ public interface AttributeVisitor {
 				  CClassType[] interfaces,
 				  JTypeDeclaration[] decls,
 				  JPhylum[] body,
+				    JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods);
 
   /**

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcEmptyVisitor.java,v 1.3 2001-10-02 22:10:36 thies Exp $
+ * $Id: KjcEmptyVisitor.java,v 1.4 2001-10-29 04:09:18 thies Exp $
  */
 
 package at.dms.kjc;
@@ -28,7 +28,7 @@ import at.dms.compiler.JavadocComment;
  * It can be extended to add some functionality at a given node.
  *
  * Suggested from: Max R. Andersen(max@cs.auc.dk) */
-public abstract class KjcEmptyVisitor implements Constants, KjcVisitor {
+public class KjcEmptyVisitor implements Constants, KjcVisitor {
 
   // ----------------------------------------------------------------------
   // TYPE DECLARATION

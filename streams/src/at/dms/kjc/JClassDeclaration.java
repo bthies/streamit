@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassDeclaration.java,v 1.6 2001-10-02 21:19:20 thies Exp $
+ * $Id: JClassDeclaration.java,v 1.7 2001-10-29 04:09:18 thies Exp $
  */
 
 package at.dms.kjc;
@@ -580,13 +580,14 @@ public class JClassDeclaration extends JTypeDeclaration {
   public Object accept(AttributeVisitor p) {
    Object trash = super.accept(p);
    return p.visitClassDeclaration(this,
-			    modifiers,
-			    ident,
-			    superName,
-			    interfaces,
-			    body,
-			    methods,
-			    inners);
+				  modifiers,
+				  ident,
+				  superName,
+				  interfaces,
+				  body,
+				  fields,
+				  methods,
+				  inners);
   }
 
 

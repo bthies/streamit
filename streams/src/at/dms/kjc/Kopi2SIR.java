@@ -283,6 +283,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                       String superName,
                                       CClassType[] interfaces,
                                       JPhylum[] body,
+					     JFieldDeclaration[] fields,
                                       JMethodDeclaration[] methods,
                                       JTypeDeclaration[] decls)
     {
@@ -317,7 +318,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	if (current == null) 
 	    printMe("Null");
 	
-	trash = visitClassBody(decls, methods, body);
+	trash = visitClassBody(decls, fields, methods, body);
 
 	/* add the current SIR OP to the parent */
 	
@@ -372,6 +373,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
     
     public Object visitClassBody(JTypeDeclaration[] decls,
+				 JFieldDeclaration[] fields,
                                JMethodDeclaration[] methods,
                                JPhylum[] body)
     {
@@ -414,10 +416,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                            CClassType[] interfaces,
                                            JTypeDeclaration[] decls,
                                            JPhylum[] body,
+					     JFieldDeclaration[] fields,
                                            JMethodDeclaration[] methods)
     {
 	printMe("visitInnerClassDeclaration");
-        trash = visitClassBody(decls, methods, body);
+        trash = visitClassBody(decls, fields, methods, body);
         return self;
     }
     

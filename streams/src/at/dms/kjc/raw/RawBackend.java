@@ -63,6 +63,9 @@ public class RawBackend {
 	    System.out.println("Done SJFusion...");
 	}
 
+	//VarDecl Raise to move array assignments up
+	new VarDeclRaiser().raiseVars(str);
+
         // do constant propagation on fields
         if (StreamItOptions.constprop) {
 	    System.out.println("Running Constant Propagation of Fields");
@@ -83,6 +86,9 @@ public class RawBackend {
 	}
 
 	StreamItDot.printGraph(str, "after.dot");
+
+	//VarDecl Raise to move array assignments up
+	new VarDeclRaiser().raiseVars(str);
 
        	System.out.println("Flattener Begin...");
 	executionCounts = SIRScheduler.getExecutionCounts(str);

@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.13 2002-11-07 22:57:42 dmaze Exp $
+ * $Id: CompilerInterface.java,v 1.14 2002-11-19 15:10:48 aalamb Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -29,6 +29,7 @@ public class CompilerInterface {
     public static final int LINEAR_REPLACEMENT = 0x4000;
     public static final int DEBUG              = 0x8000;
     public static final int POPTOPEEK          =0x10000;
+    public static final int DPPARTITION        =0x20000;
     
 
 
@@ -46,6 +47,7 @@ public class CompilerInterface {
 
     public static final String OPTION_DEBUG              = "--debug";
     public static final String OPTION_POPTOPEEK          = "--poptopeek";
+    public static final String OPTION_DPPARTITION        = "--dppartition";
        
     
     // suffix to add to the various pieces of compilation
@@ -238,8 +240,12 @@ public class CompilerInterface {
 	    numOptions++;
 	}
 
-	
-	
+	// dynamic programming partitioner
+	if ((flags & DPPARTITION) == DPPARTITION) {
+	    options[numOptions] = OPTION_DPPARTITION;
+	    numOptions++;
+	}
+
 	// copy over the options that were used into an options
 	// array that is the correct size
 	String[] optionsToReturn = new String[numOptions];

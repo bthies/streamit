@@ -910,18 +910,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 
 	//we are defining a new variable with a "new" in the code
 	if (retObj instanceof JUnqualifiedInstanceCreation) {
-	    //Portal creation (normal unqualified instance creation)
-	    if (type.toString().endsWith("Portal")) {
-		//Portal Definition , SIRCreatePortal add to symbol Table
-		//make the SIRCreatePortal the new expression in the definition
-		SIRCreatePortal cp = new SIRCreatePortal();
-		// mutate and return self
-		self.setExpression(cp);
-		return self;
-		//return new JVariableDefinition(null, modifiers, type, ident, cp);
-	    }
             // Don't try to clone structures!
-            else if (type.getCClass().getSuperClass().getIdent().equals("Structure"))
+            if (type.getCClass().getSuperClass().getIdent().equals("Structure"))
             {
                 // Just discard the initialization; we don't care.
 		self.setInitializer(null);
@@ -1444,7 +1434,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	printMe("  Declaring: " + type.getIdent());
 	if (params.length == 0)
 	    params = JExpression.EMPTY;
-	if (type.getIdent().equals("Channel")) 
+	    //Portal creation (normal unqualified instance creation)
+        if (type.getIdent().endsWith("Portal")) {
+            //Portal Definition , SIRCreatePortal add to symbol Table
+            //make the SIRCreatePortal the new expression in the definition
+            SIRCreatePortal cp = new SIRCreatePortal();
+            return cp;
+        }
+	else if (type.getIdent().equals("Channel")) 
 	    /*Channel declaration, treat the args as special */
 	{
 	    Vector v = new Vector(3);

@@ -23,7 +23,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.
  * <p>
- * $Id: LinearDirectReplacer.java,v 1.2 2003-03-30 21:50:56 thies Exp $
+ * $Id: LinearDirectReplacer.java,v 1.3 2003-03-31 20:36:22 thies Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -95,22 +95,6 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	parent.replace(self, newImplementation);
 
 	LinearPrinter.println("Relative child name: " + newImplementation.getRelativeName());
-
-	// remove the mappings from all of the children of this stream in our linearity information
-	// first, we need to find them all, and then we need to remove them all
-	HashSet oldKeys = getAllChildren(self);
-
-	// now, remove the keys from the linear representation (self is also a "child")
-	Iterator keyIter = oldKeys.iterator();
-	while(keyIter.hasNext()) {
-	    SIRStream currentKid = (SIRStream)keyIter.next();
-	    LinearPrinter.println(" removing child: " + currentKid);
-	    this.linearityInformation.removeLinearRepresentation(currentKid);
-	}
-	// all done.
-
-	// add a mapping from the new filter to the old linear rep (because it still computes the same thing)
-	this.linearityInformation.addLinearRepresentation(newImplementation, linearRep); // add same old linear rep
 
 	// return that we replaced something
 	return true;

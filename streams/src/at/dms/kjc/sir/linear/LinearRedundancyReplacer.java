@@ -10,7 +10,7 @@ import at.dms.kjc.iterator.*;
 
 /**
  * RedundantReplacer.
- * $Id: LinearRedundancyReplacer.java,v 1.8 2003-03-30 21:50:56 thies Exp $
+ * $Id: LinearRedundancyReplacer.java,v 1.9 2003-03-31 20:36:22 thies Exp $
  **/
 public class LinearRedundancyReplacer extends LinearReplacer implements Constants{
     /** The prefix to use to name fields. **/
@@ -94,29 +94,10 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	SIRStream newImplementation;
 	newImplementation = makeEfficientImplementation(self, linearRep, tupleData);
 
-
-	// remove the mappings from all of the children of this stream in our linearity information
-	// first, we need to find them all, and then we need to remove them all
-	HashSet oldKeys = getAllChildren(self);
-	
-	// now, remove the keys from the linear representation (self is also a "child")
-	Iterator keyIter = oldKeys.iterator();
-	while(keyIter.hasNext()) {
-	    SIRStream currentKid = (SIRStream)keyIter.next();
-	    LinearPrinter.println(" removing child: " + currentKid);
-	    this.linearInformation.removeLinearRepresentation(currentKid);
-	}
-	// all done.
-
 	// do the acutal replacment of the current pipeline with the new implementation
 	parent.replace(self, newImplementation);
 	
 	LinearPrinter.println("Relative child name: " + newImplementation.getRelativeName());
-	
-	
-	// add a mapping from the new filter to the old linear rep (because it still computes
-	// the same thing add same old linear rep
-	this.linearInformation.addLinearRepresentation(newImplementation, linearRep);
 
 	// return true since we replaced something
 	return true;

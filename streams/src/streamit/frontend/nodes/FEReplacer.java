@@ -36,7 +36,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.27 2003-07-07 19:17:25 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.28 2003-07-30 19:18:04 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -272,7 +272,31 @@ public class FEReplacer implements FEVisitor
                           creator.getPortals());
     }
     
-    public Object visitSCSimple(SCSimple creator) { return creator; }
+    public Object visitSCSimple(SCSimple creator)
+    {
+        List newParams = new ArrayList();
+        List newPortals = new ArrayList();
+        boolean hasChanged = false;
+        for (Iterator iter = creator.getParams().iterator(); iter.hasNext(); )
+        {
+            Expression param = (Expression)iter.next();
+            Expression newParam = doExpression(param);
+            newParams.add(newParam);
+            if (newParam != param) hasChanged = true;
+        }
+        for (Iterator iter = creator.getPortals().iterator(); iter.hasNext(); )
+        {
+            Expression portal = (Expression)iter.next();
+            Expression newPortal = doExpression(portal);
+            newPortals.add(newPortal);
+            if (newPortal != portal) hasChanged = true;
+        }
+        if (!hasChanged)
+            return creator;
+        return new SCSimple(creator.getContext(), creator.getName(),
+                            creator.getTypes(), newParams, newPortals);
+    }
+    
     public Object visitSJDuplicate(SJDuplicate sj) { return sj; }
 
     public Object visitSJRoundRobin(SJRoundRobin sj)

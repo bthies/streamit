@@ -1,7 +1,7 @@
 /*
  * beamformer.c: Standalone beam-former reference implementation
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: beamformer.c,v 1.4 2003-11-04 17:14:14 dmaze Exp $
+ * $Id: beamformer.c,v 1.5 2003-11-07 08:47:00 thies Exp $
  */
 
 #ifdef raw
@@ -161,12 +161,12 @@ void begin(void)
       for (j = 0; j < NUM_CHANNELS; j++)
         InputGenerate(i, inputs + j*NUM_SAMPLES*2,
                       NUM_SAMPLES);
-      for (j = 0; j < NUM_POST_DEC_1 * NUM_CHANNELS; j++)
+      for (j = 0; j < NUM_POST_DEC_1; j++)
         BeamFirFilter(&coarse_fir_data[i],
                       NUM_SAMPLES, COARSE_DECIMATION_RATIO,
                       inputs + j * COARSE_DECIMATION_RATIO*2,
                       predec + j * 2);
-      for (j = 0; j < NUM_POST_DEC_2 * NUM_CHANNELS; j++)
+      for (j = 0; j < NUM_POST_DEC_2; j++)
         BeamFirFilter(&fine_fir_data[i],
                       NUM_POST_DEC_1, FINE_DECIMATION_RATIO,
                       predec + j * FINE_DECIMATION_RATIO * 2,

@@ -72,8 +72,8 @@ foreach (@input_lines) {
     # add a result line
     push(@result_lines, "$filename-$postfix\t$options\t$overall_time1\t$overall_time2\t$overall_outputs");
 
-    # now, run for approximately one 100 milliseconds..
-    $one_sec_iters = int($one_sec_iters / 10);
+    # now, run for approximately one 1 milliseconds..
+    $one_sec_iters = int($one_sec_iters / 1000);
     if ($one_sec_iters == 0) {$one_sec_iters = 1;} # make sure always more than zero (filterbank...)
     print "\nSaving output of $one_sec_iters iterations...";
     print `$OUTPUTDIR/$filename-$postfix.exe -i $one_sec_iters > $OUTPUTDIR/$filename-$postfix.out`;

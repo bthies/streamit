@@ -37,6 +37,12 @@ foreach (@input_lines) {
     #java->c
     do_streamit_compile($OUTPUTDIR, $filename, $options);
     print `cp $OUTPUTDIR/$filename.c $OUTPUTDIR/$filename-$postfix.c`;
+    
+    # save the generated dot files (before, after, and linear)
+    `mv $OUTPUTDIR/before.dot $OUTPUTDIR/$filename-$postfix-before.dot`;
+    `mv $OUTPUTDIR/after.dot $OUTPUTDIR/$filename-$postfix-after.dot`;
+    `mv $OUTPUTDIR/linear.dot $OUTPUTDIR/$filename-$postfix-linear.dot`;
+
     # normal c->exe
     do_c_compile($OUTPUTDIR, "$filename-$postfix");
 

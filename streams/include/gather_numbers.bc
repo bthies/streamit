@@ -319,7 +319,6 @@ fn __event_instr_count(hms)
 {
   local instrDynamic = hms.instr_dynamic;
   local instrWord = InstrDynamic_GetInstrWord(instrDynamic);
-  local lWorkCount = gWorkCount;
   local tileNumber = Proc_GetTileNumber(hms.theProc);
   local time_hi, time_lo;
   

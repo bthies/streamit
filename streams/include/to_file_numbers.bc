@@ -18,7 +18,7 @@ global gTraceWidth = 7 + (64 / gNumProc);
 global gNGlastSteady = 0;
 global gNGisSteady = 0;
 //for deadlock detection
-global gDEADLOCK_COUNT = 2000;
+global gDEADLOCK_COUNT = 100000;
 global gLastInsCycle = 0;
 //
 global gFpuCount = 0;
@@ -32,6 +32,8 @@ global gTotalDif = 0;
 global gTotalOutputs = 0;
 global totalCycles = 0;
 global gFpuCountTotal = 0;
+global gWorkCount = 0;
+global gWorkCountTotal = 0;
 
 if (FindFunctionInSymbolHash(gSymbolTable, "dev_data_transmitter_init",3) == NULL)
   include("<dev/data_transmitter.bc>");
@@ -189,23 +191,25 @@ fn NG_update() {
     }
     if (gSSNumber > 0 && gSSNumber < gTotalSS) {
       MFLOPS = (gMHz * gFpuCount) / dif; 
-      printf("SS: cycle = %d, dif = %d, MFLOPS = %d, Outputs = %d, Cycles/Output = %d\n", 	 
-	     time_lo, dif, MFLOPS, gTotalSteadyItems, dif/gTotalSteadyItems);
-      fprintf(outputFile, "SS: cycle = %d, dif = %d, MFLOPS = %d, Outputs = %d, Cycles/Output = %d\n", 	 
-	      time_lo, dif, MFLOPS, gTotalSteadyItems, dif/gTotalSteadyItems);
+      printf("SS: cycle = %d, dif = %d, MFLOPS = %d, Outputs = %d, Work Count = %d / %d, Cycles/Output = %d\n", 	 
+	     time_lo, dif, MFLOPS, gTotalSteadyItems, gWorkCount, gStreamItTiles * dif, dif/gTotalSteadyItems);
+      fprintf(outputFile, "SS: cycle = %d, dif = %d, MFLOPS = %d, Outputs = %d, Work Count = %d / %d, Cycles/Output = %d\n", 	 
+	      time_lo, dif, MFLOPS, gTotalSteadyItems, gWorkCount, gStreamItTiles * dif , dif/gTotalSteadyItems);
       //add to the totals
       gTotalDif += dif;
       gTotalOutputs += gTotalSteadyItems;
       gFpuCountTotal += gFpuCount;
+      gWorkCountTotal += gWorkCount;
     }
     
     if (gSSNumber == gTotalSS) {
-      fprintf(outputFile, "tiles ; tiles assigned ; cycles/output ; mflops\n");
-      printf("tiles ; tiles assigned ; cycles/output ; mflops (250Mhz)\n");
-      fprintf(outputFile,"%d;%d;%d;%d\n", gStreamItTiles, gMappedTiles, gTotalDif / gTotalOutputs, 
-	      (250*gFpuCountTotal)/gTotalDif);
-      printf("%d;%d;%d;%d\n", gStreamItTiles, gMappedTiles, gTotalDif / gTotalOutputs, 
-	      (250*gFpuCountTotal)/gTotalDif);
+      fprintf(outputFile, "tiles ; tiles assigned ; cycles/output ; Work Cycles ; Total Cycles ; mflops\n");
+      printf("tiles ; tiles assigned ; cycles/output ; Work Cycles ; Total Cycles ; mflops\n");
+
+      fprintf(outputFile,"%d;%d;%d;%d;%d;%d\n", gStreamItTiles, gMappedTiles, gTotalDif / gTotalOutputs, 
+	      gWorkCountTotal, gStreamItTiles * gTotalDif, (250*gFpuCountTotal)/gTotalDif);
+      printf("%d;%d;%d;%d;%d;%d\n", gStreamItTiles, gMappedTiles, gTotalDif / gTotalOutputs, 
+	     gWorkCountTotal, gStreamItTiles * gTotalDif, (250*gFpuCountTotal)/gTotalDif);
       //only exit here if you don't want a blood graph
       //gInterrupted = 1;
       //this will exit the thread
@@ -213,8 +217,8 @@ fn NG_update() {
       
       //we are done getting the numbers, deregister the handler.
       EventManager_DeRegisterHandler("issued_instruction", "__event_instr_count");
-      //now get the blood graph
-      setup_bloodgraph("bloodgraph.ppm", gTotalDif/gTotalOutputs);
+      //now get the blood graph for one steady state...
+      setup_bloodgraph("bloodgraph.ppm", gTotalDif/gTotalSS);
     }
 
 
@@ -222,6 +226,7 @@ fn NG_update() {
     gNGlastSteady = time_lo;
     //reset the mflops counter
     gFpuCount = 0;
+    gWorkCount = 0;
     //increment the steady state number
     gSSNumber++;
   }
@@ -270,7 +275,7 @@ fn __event_instr_count(hms)
   //reset the last useful cycle
   gLastInsCycle = time_lo;
   
-//  AtomicIncrement(&gWorkCount);
+  AtomicIncrement(&gWorkCount);
 
   if (InstrWord_IsFPU(instrWord))
   {

@@ -15,6 +15,16 @@
 #include <stdio.h>
 #include <sys/poll.h>
 
+int mysocket::total_data_received = 0;
+int mysocket::total_data_sent = 0;
+
+int mysocket::get_total_data_received() {
+  return total_data_received;
+}
+
+int mysocket::get_total_data_sent() {
+  return total_data_sent;
+}
 
 unsigned get_myip() {
 
@@ -69,6 +79,7 @@ bool mysocket::data_available() {
 
 int mysocket::write_chunk(char *buf, int len) {
 
+  total_data_sent += len;
 
   /////////////////////////////////
   // initial attempt to write data
@@ -79,6 +90,7 @@ int mysocket::write_chunk(char *buf, int len) {
 
   if (retval == len) return 0;
 
+  total_data_sent -= len;
 
   /////////////////////////////////
   // if initial attempt failed try again
@@ -108,12 +120,16 @@ int mysocket::write_chunk(char *buf, int len) {
     if (done >= len) break;
   }
 
+  total_data_sent += len;
+
   return 0;
 
 }
 
 
 int mysocket::read_chunk(char *buf, int len) {
+
+  total_data_received += len;
 
   /////////////////////////////////
   // initial attempt to read data
@@ -123,6 +139,8 @@ int mysocket::read_chunk(char *buf, int len) {
   retval = read(fd, buf, len);
 
   if (retval == len) return 0;
+
+  total_data_received -= len;
 
   ////////////////////////////////
   // if initial attempt failed try again
@@ -153,6 +171,8 @@ int mysocket::read_chunk(char *buf, int len) {
 
     if (done >= len) break;
   }
+
+  total_data_received += len;
 
   return 0;
 

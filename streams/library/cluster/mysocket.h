@@ -14,6 +14,9 @@ class mysocket {
  private:
   int fd;
 
+  static int total_data_received;
+  static int total_data_sent;
+
  protected:
   void set_socket(int s) { fd = s; }
 
@@ -25,6 +28,9 @@ class mysocket {
   bool data_available();
   int get_fd();
 
+  static int get_total_data_received();
+  static int get_total_data_sent();
+  
   int read_chunk(char *buf, int len);  
   int write_chunk(char *buf, int len);
 

@@ -11,7 +11,7 @@ public class LoweringConstants {
     /**
      * The name of the type serving as the stream context.
      */
-    public static final String CONTEXT_TYPE_NAME = "StreamContext";
+    public static final String CONTEXT_TYPE_NAME = "stream_context";
 
     /**
      * The name of the variable holding the stream context in structures.
@@ -33,7 +33,7 @@ public class LoweringConstants {
     /**
      * The name of the type of the tape parameters to work functions.
      */
-    public static final String TAPE_TYPE_NAME = "Tape";
+    public static final String TAPE_TYPE_NAME = "tape";
 
     /**
      * The name of the parameter corresponding to the input tape.

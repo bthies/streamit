@@ -57,10 +57,6 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(filter);
-
-	if (KjcOptions.poptopeek) {
-	    PopToPeek.removeAllPops(filter);
-	}
 	
 	//VarDecl Raise to move peek index up so
 	//constant prop propagates the peek buffer index
@@ -74,12 +70,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	RemovePrintStatements.doIt(top);
 	
 	//Generate the tile code
-	//run the specific class depending
-	//on if pops have been removed
-	if (KjcOptions.poptopeek) 
-	    RawExecutionCodeNoPop.doit(top);
-	else 
-	    RawExecutionCode.doit(top);
+	RawExecutionCode.doit(top);
 
 	if (KjcOptions.removeglobals) {
 	    RemoveGlobals.doit(top);

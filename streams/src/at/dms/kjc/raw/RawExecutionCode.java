@@ -251,9 +251,9 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    
 	    return new JNewArrayExpression(null, baseType, dims, null);
 	}
-	else if (inputType.isClassType()) {
-	    Utils.fail("Structures not implemented");
-	}
+	//	else if (inputType.isClassType()) {
+	//    Utils.fail("Structures not implemented");
+	//	}
 
 	//else basetype, create the array
 	JExpression dims[] = {new JIntLiteral(buffersize)};
@@ -720,13 +720,12 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    return null;
 	
 	if (filter.getInputType().isArrayType()) {
-	    //NOT IMPLEMENTED YET      !!!!!!!!!!!!!!!!!!!!!!!!!!!
+	    Utils.fail("Arrays over tapes not implemented");
 	    return null;
 	}
 	else if (filter.getInputType().isClassType()) {
-	    //NOT IMPLEMENTED YET      !!!!!!!!!!!!!!!!!!!!!!!!!!!
-	    return null;
 	    
+	    Utils.fail("Structures man");
 	} 
 	else if (!filter.getInputType().equals(CStdType.Void)) {
 	    //we want to create a statement of the form:

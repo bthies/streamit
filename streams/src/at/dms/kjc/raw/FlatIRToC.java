@@ -157,6 +157,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
 	
+	//if there are structures in the code, include
+	//the structure definition header files
+	if (RawBackend.structures.length > 0) 
+	    print("#include \"structs.h\"\n");
+
+	
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
 	    print("union static_network {\n");
 	    print("  int integer;\n");

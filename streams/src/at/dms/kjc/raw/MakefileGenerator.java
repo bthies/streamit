@@ -41,7 +41,8 @@ public class MakefileGenerator
 	    Iterator tilesIterator = tiles.iterator();
 	    
 	    fw.write("#-*-Makefile-*-\n\n");
-	    fw.write("LIMIT = TRUE\n"); // need to define limit for SIMCYCLES to matter
+	    if (! (KjcOptions.numbers > 0 && NumberGathering.successful))
+		fw.write("LIMIT = TRUE\n"); // need to define limit for SIMCYCLES to matter
             fw.write("ATTRIBUTES = IMEM_LARGE\n");
 	    //if we are generating number gathering code, 
 	    //we do not want to use the default print service...
@@ -94,6 +95,19 @@ public class MakefileGenerator
 		fw.write("\n");
 	    }
 	    
+	    //run sam's perl script to insert the communication 
+	    if (KjcOptions.altcodegen) {
+		fw.write("\nDMEM_PORTS  = 1\n");
+		fw.write("ISSUE_WIDTH = 1\n\n");
+
+		fw.write("EXTRA_BTL_ARGS += -issue_width $(ISSUE_WIDTH) -dmem_ports $(DMEM_PORTS\n");
+		fw.write("RGCCFLAGS += -missue_width=$(ISSUE_WIDTH) -mdmem_ports=$(DMEM_PORTS)\n");
+
+		fw.write("\ntile%.s: tile%.c\n");
+		fw.write("\t$(RGCC) $(RGCCFLAGS) $(INCLUDES) $(DEFS) -S $< -o tile$%.S\n");
+		fw.write("\t/u/slarsen/tmp/fixnw.pl tile$%.S $@\n");
+	    }
+
 	    fw.write("\ninclude $(COMMONDIR)/Makefile.all\n\n");
 	    fw.write("clean:\n");
 	    fw.write("\trm -f *.o\n\n");

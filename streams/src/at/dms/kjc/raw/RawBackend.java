@@ -11,6 +11,7 @@ import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.lir.*;
 import java.util.*;
+import java.io.*;
 import at.dms.util.Utils;
 
 public class RawBackend {
@@ -25,13 +26,22 @@ public class RawBackend {
     public static Simulator simulator;
     // get the execution counts from the scheduler
     public static HashMap[] executionCounts;
+    
+    public static SIRStructure[] structures;
 
     public static void run(SIRStream str,
 			   JInterfaceDeclaration[] 
 			   interfaces,
 			   SIRInterfaceTable[]
-			   interfaceTables) {
+			   interfaceTables,
+			   SIRStructure[]
+			   structs) {
+
 	System.out.println("Entry to RAW Backend");
+
+	structures = structs;
+	
+	createStructuresIncludeFile(structures);
 
 	// set number of columns/rows
 	RawBackend.rawColumns = KjcOptions.raw;
@@ -102,10 +112,6 @@ public class RawBackend {
 
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
-
-	if (KjcOptions.poptopeek) {
-	    PopToPeek.removeAllPops(str);
-	}
 	
 	//VarDecl Raise to move peek index up so
 	//constant prop propagates the peek buffer index
@@ -146,7 +152,10 @@ public class RawBackend {
 	//Generate number gathering simulator code
 	if (KjcOptions.numbers > 0) {
 	    SinkUnroller.doit(rawFlattener.top);
-	    NumberGathering.doit(rawFlattener.top);
+	    if (!NumberGathering.doit(rawFlattener.top)) {
+		System.err.println("Could not generate number gathering code.  Exiting...");
+		System.exit(1);
+	    }
 	}
 	
 	//remove print statements in the original app
@@ -155,12 +164,7 @@ public class RawBackend {
 	    RemovePrintStatements.doIt(rawFlattener.top);
 	
 	//Generate the tile code
-	//run the specific class depending
-	//on if pops have been removed
-	if (KjcOptions.poptopeek) 
-	    RawExecutionCodeNoPop.doit(rawFlattener.top);
-	else 
-	    RawExecutionCode.doit(rawFlattener.top);
+	RawExecutionCode.doit(rawFlattener.top);
 
 	if (KjcOptions.removeglobals) {
 	    RemoveGlobals.doit(rawFlattener.top);
@@ -343,4 +347,35 @@ public class RawBackend {
 	SIRContainer[] parents = node.contents.getParents();
 	return parents[parents.length -1];
     }
+
+    /** 
+     * create a c header file with all the structure definitions
+     * as typedef'ed structs.
+     **/
+    private static void createStructuresIncludeFile(SIRStructure[] structs) 
+    {
+	if (structs.length == 0) 
+	    return;
+
+	try {
+	    FileWriter fw = new FileWriter("structs.h");
+	    
+	    for (int i = 0; i < structs.length; i++) {
+		SIRStructure current = structs[i];
+		fw.write("typedef struct _" + current.getIdent() + " {\n");
+		for (int j = 0; j < current.getFields().length; j++) {
+		    fw.write("\t" + current.getFields()[j].getType() + " " +
+			     current.getFields()[j].getVariable().getIdent() +
+			     ";\n");
+		}
+		fw.write("} " + current.getIdent() + ";\n");
+	    }
+	    fw.close();
+	}
+	catch (Exception e) {
+	    e.printStackTrace();
+	    System.err.println("Error creating structure include file");
+	}
+    }
 }
+

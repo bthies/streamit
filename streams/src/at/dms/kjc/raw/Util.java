@@ -75,19 +75,24 @@ public class Util extends at.dms.util.Utils {
 
 	if (!(type.isArrayType() || type.isClassType()))
 	    return 1;
-	
-	if (type instanceof CArrayType) {
-	    int elements = 1;
-	    int dims[] = Util.makeInt(((CArrayType)type).getDims());
-	    
-	    for (int i = 0; i < dims.length; i++) 
-		elements *= dims[i];
-
-	    return elements;
+	else if (type.isArrayType()) {
+		int elements = 1;
+		int dims[] = Util.makeInt(((CArrayType)type).getDims());
+		
+		for (int i = 0; i < dims.length; i++) 
+		    elements *= dims[i];
+		
+		return elements;
+	    }
+	else if (type.isClassType()) {
+	    int size = 0;
+	    for (int i = 0; i < type.getCClass().getFields().length; i++) {
+		size += getTypeSize(type.getCClass().getFields()[i].getType());
+	    }
+	    return size;
 	}
-	
-	System.out.println("should not be here");
-	return 1;
+	Utils.fail("Unrecognized type");
+	return 0;
     }
 
     public static CType getJoinerType(FlatNode joiner) 

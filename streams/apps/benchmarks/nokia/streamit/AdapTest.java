@@ -1,6 +1,43 @@
 import streamit.*;
 import streamit.io.*;
 
+
+    class SourceAHL extends Pipeline{
+
+	public SourceAHL(int W, int Q, int N, int K, float[][] h, float[][] C) {super (W,Q,N,K,h,C);}
+
+	public void init(int W, int Q,int N,int K,float [][] h, float [][]C){
+	    add (new Sourceh(W,K,h));
+	    add (new GenA(W,Q,N,K,C));
+	    add (new AandL(Q*N+W-1,K*N));
+	    }
+    }
+
+    class AandL extends SplitJoin{// the input to this filter is the matrix A(row oriented), the out put is matrix A (row oriented) plus its cholskey decomposition factor L}
+
+	public AandL ( int M, int N){super(M,N);}
+
+	public void init(int M, int N){
+	    setSplitter(DUPLICATE());
+	    add (new FloatIdentity());
+	    add (new GenL(M,N));
+	    setJoiner(WEIGHTED_ROUND_ROBIN(M*N,N*(N+1)/2));
+	    }
+    }
+
+    class GenL extends Pipeline{// the input is matrix A (row oriented), the output is L
+
+	public GenL (int M, int N) {super (M,N);}
+	
+	public void init(int M,int N) {
+	    add (new RowCol(M,N));
+	    add (new SelfProd(M,N));
+	    add (new chold(N));
+	}
+    }
+	    
+
+
 class AdapTest extends StreamIt {
     int K=3;
     int N=3;
@@ -30,9 +67,7 @@ class AdapTest extends StreamIt {
         add(new chold(K*N));
 	add(new Sink());
     }
-
-    
-    
+		 
 
 class Source extends Filter {
     float d[][]={
@@ -76,6 +111,31 @@ class Sink extends Filter{
 		    
 		
 }
+
+
+class Sourceh extends Filter {
+   float [][] d;
+    int     K;
+    int     W;
+    public Sourceh(int W, int K, float[][] d){super(W,K,d);}
+    public void init(int W, int K, float [][] d){
+	setOutput(Float.TYPE);
+	setPush(K*W);
+	this.W=W;
+	this.K=K;
+	
+	    }
+    public void work(){
+	for(int i=0;i<K;i++)
+	    for(int j=0;j<W;j++)
+		output.pushFloat(d[j][i]);
+    }
+}
+
+
+
+
+
 
 
 

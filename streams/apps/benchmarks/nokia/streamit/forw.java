@@ -3,29 +3,39 @@ import streamit.io.*;
 
 class forw extends Filter // this Filter performs forward substition LY=b. 
    {
+    public forw(int N) { super (N);}
     int    N; //  the dimension of the matrix
     float[][]  L; // L is the input matrix 
     float[]  y; // y is the output result
        // we do not need to store the vector b
     float    sum ; //this will be used as a buffer variable
              
-public forw(int N, float[][] L){ super (N,L);}
-          public void init (int N, float[][] L) {
+       public void init(int N) {
           setInput(Float.TYPE); 
           setOutput(Float.TYPE);
-          setPush(N); 
-          setPop(N);
+          setPush(N*(N+1)/2); 
+          setPop(N+N*(N+1)/2);
           y=new float[N];
-	  this.L=L;
+	  L=new float[N][N];
           this.N=N;
-          
-          } 
+       } 
  
-
+       
+       
 public void work() {
+       for (int i=0; i <N; i++) {
+	   y[i]=input.popFloat();
+       }
+	
+    for( int i=0; i <N; i++)
+	for (int j=i; j<N; j++){
+      	    L[j][i]=input.popFloat();
+	}
+    
   for (int i=0; i<N;i++)
       {
-	  sum= input.popFloat();
+	  
+	  sum= y[i];
 	      for (int j=0; j<i ; j++)
 		  sum -= L[i][j]*y[j];
 	  y[i]=sum/L[i][i];

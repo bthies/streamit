@@ -11,22 +11,30 @@ class backs extends Filter // this Filter performs back substition LTd=y.
 // we do not need to store the vector y, we need to read y in the backward direction, that is we have to read y[n-1] first and then proceed to y[0]
     float    sum ; //this will be used as a buffer variable
              
-public backs(int N, float[][] LT){ super (N,LT);}
+public backs(int N){ super (N);}
           public void init (int N, float[][] LT) {
           setInput(Float.TYPE); 
           setOutput(Float.TYPE);
-          setPush(N); 
-          setPop(N);
+          setPush(N+N); 
+          setPop(N+N*(N+1)/2);
           y=new float[N];
 	  d=new float[N];
+	  LT=new float[N][N];
 	  this.LT=LT;
           this.N=N;
           } 
  
 
 public void work() {
+    
   for (int i=0; i<N ; i++)
       y[i]=input.popFloat();
+
+
+  for (int i=0; i<N;i++)
+	for (int j=i; j<N;j++){
+	    LT[i][j]=input.popFloat();
+	}
 
   for (int i=N-1; i>=0;i--)
       {

@@ -7,28 +7,32 @@ class multvect extends Filter // this Filter performs b=AHr
     float[][]  AH; // AH is the input matrix 
      //  it is not neccessary to save b. b is generated in the order b[0],b[1],b[2]....
     float[]  r;//
-    float    sum; //sum will be used as a buffer 
+    float    sum; //sum will be used as a buffer
+       int    M;   
              
-public multvect(int N, float[][] AH){ super (N,AH);}
-          public void init (int N, float[][] AH) {
+public multvect(int M,int N) { super (M,N);}
+          public void init (int M,int N) {
           setInput(Float.TYPE); 
           setOutput(Float.TYPE);
           setPush(N); 
-          setPop(N);
-          r=new float[N];
-	  this.AH=AH;
+          setPop(M+N*M);
+          r=new float[M];
+	  AH=new float[N][M];
           this.N=N;
+	  this.M=M;
           } 
  
 
 public void work() {
-    for (int i=0; i<N ; i++)
+    for (int i=0; i<M ; i++)
 	r[i]=input.popFloat();
-
+    for (int i=0; i<M;i++)
+	for (int j=0; j<N;j++)
+	    AH[j][i]=input.popFloat();
     for (int i=0; i<N;i++)
       {
 	  sum=0;
-	      for (int j=0; j<N ; j++)
+	      for (int j=0; j<M ; j++)
 		  sum += AH[i][j]*r[j];
           output.pushFloat(sum);
       }

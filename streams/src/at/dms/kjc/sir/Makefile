@@ -15,14 +15,12 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.5 2001-09-25 19:01:13 thies Exp $
+## $Id: Makefile,v 1.6 2001-09-27 18:47:59 thies Exp $
 ##
 
 TOPDIR =	../..
 
 PACKAGE =	at/dms/kjc/sir
-
-SUBDIRS =	lowering
 
 ## ----------------------------------------------------------------------
 ## TOOLS
@@ -57,7 +55,10 @@ JAVAFILES +=	SIRVisitor \
 		SIRSplitJoin \
 		SIRSplitType \
 		SIRSplitter \
-		SIRStream
+		SIRStream \
+		lowering/LoweringConstants \
+		lowering/Structurer \
+		lowering/Namer
 
 MESSAGES =	../KjcMessages
 

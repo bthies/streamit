@@ -26,7 +26,7 @@ public class SwitchScheduleNode
     
     public int getDest(int i) 
     {
-	return ((Integer)(destination.get(i))).intValue();
+	return ((Integer)(destinations.get(i))).intValue();
     }
     
 }

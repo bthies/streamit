@@ -1,6 +1,7 @@
 package at.dms.kjc.raw;
 
 import at.dms.kjc.sir.*;
+import java.util.HashMap;
 
 /** 
  * This class keeps the counters for weights of the splitter/joiners
@@ -14,12 +15,5 @@ public class SimulationCounter {
 	counts = new HashMap();
     }
 
-    /* traverse the given arc, <num> corresponds to the channel
-       number
-    */
-    public void traverseSplitter(SIRSplitter splitter, int num) {
-	if (SIRContainer instanceof SIRPipeline)
-	    return;
-	counts.get(splitter
-	
+}	
 	

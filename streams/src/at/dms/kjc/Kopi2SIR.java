@@ -456,16 +456,31 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    return;
 	}
 	else if (stream instanceof SIRIdentity) {
-	    if (args.length != 1)
-		at.dms.util.Utils.fail(lineNumber + ": Exactly 1 arg required for Identity");
-	    if (args[0] instanceof JStringLiteral)
-		((SIRIdentity)stream).setType(getType(((JStringLiteral)args[0]).stringValue()));
-	    else if (args[0] instanceof JMethodCallExpression)
-		((SIRIdentity)stream).setType(((JMethodCallExpression)args[0]).getPrefix().getType());
-            else if (args[0] instanceof JClassExpression)
-                ((SIRIdentity)stream).setType(((JClassExpression)args[0]).getClassType());
-	    else 
-		Utils.fail(lineNumber + "Illegal arg to Identity");
+	    if (args.length !=1 && args.length != 2)
+		at.dms.util.Utils.fail(lineNumber + ": 1 or 2 args required for Identity");
+	    if (args.length == 1) {
+		((SIRIdentity)stream).setRate(new JIntLiteral(1));
+		if (args[0] instanceof JStringLiteral)
+		    ((SIRIdentity)stream).setType(getType(((JStringLiteral)args[0]).stringValue()));
+		else if (args[0] instanceof JMethodCallExpression)
+		    ((SIRIdentity)stream).setType(((JMethodCallExpression)args[0]).getPrefix().getType());
+		else if (args[0] instanceof JClassExpression)
+		    ((SIRIdentity)stream).setType(((JClassExpression)args[0]).getClassType());
+		else 
+		    Utils.fail(lineNumber + ": Illegal arg to Identity");
+	    }
+	    else if (args.length == 2) {
+		((SIRIdentity)stream).setRate(args[0]);    
+		
+		if (args[1] instanceof JStringLiteral)
+		    ((SIRIdentity)stream).setType(getType(((JStringLiteral)args[1]).stringValue()));
+		else if (args[1] instanceof JMethodCallExpression)
+		    ((SIRIdentity)stream).setType(((JMethodCallExpression)args[1]).getPrefix().getType());
+		else if (args[1] instanceof JClassExpression)
+		    ((SIRIdentity)stream).setType(((JClassExpression)args[1]).getClassType());
+		else 
+		    Utils.fail(lineNumber + ": Illegal 2nd arg to Identity");
+	    }
 	}
     }
 

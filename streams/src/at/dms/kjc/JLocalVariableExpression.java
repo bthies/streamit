@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLocalVariableExpression.java,v 1.10 2003-11-13 10:46:10 thies Exp $
+ * $Id: JLocalVariableExpression.java,v 1.11 2004-08-18 14:35:47 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -238,7 +238,7 @@ public class JLocalVariableExpression extends JExpression {
   }
 
     public String toString() {
-	return "VarExp:"+variable.getIdent();
+	return "VarExp: " + variable.getIdent();
     }
 
   // ----------------------------------------------------------------------

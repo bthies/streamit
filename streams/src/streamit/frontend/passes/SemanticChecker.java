@@ -11,7 +11,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.5 2003-07-09 15:34:46 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.6 2003-07-09 16:47:06 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -28,6 +28,7 @@ public class SemanticChecker
         SemanticChecker checker = new SemanticChecker();
         Map streamNames = checker.checkStreamNames(prog);
         checker.checkDupFieldNames(prog, streamNames);
+        checker.checkFunctionValidity(prog);
         checker.checkStatementPlacement(prog);
         checker.checkIORates(prog);
         return checker.good;
@@ -179,6 +180,50 @@ public class SemanticChecker
                 report(ctx, "'" + name + "' has the same name as");
                 report(octx, "a stream or structure");
             }
+        }
+    }
+
+    /**
+     * Check that functions do not exist in context they are required
+     * to, and that all required functions exist.  In particular,
+     * work functions are required in filters and init functions
+     * are required in not-filters; work, prework, and phase functions
+     * are not allowed in not-filters.
+     *
+     * @param prog  parsed program object to check
+     */
+    public void checkFunctionValidity(Program prog)
+    {
+        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
+        {
+            StreamSpec spec = (StreamSpec)iter.next();
+            boolean hasInit = false;
+            boolean hasWork = false;
+            for (Iterator ifunc = spec.getFuncs().iterator();
+                 ifunc.hasNext(); )
+            {
+                Function func = (Function)ifunc.next();
+                if (func.getCls() == Function.FUNC_INIT)
+                    hasInit = true;
+                if (func.getCls() == Function.FUNC_WORK)
+                {
+                    hasWork = true;
+                    if (spec.getType() != StreamSpec.STREAM_FILTER)
+                        report(func, "work functions only allowed in filters");
+                }
+                if (func.getCls() == Function.FUNC_PREWORK)
+                    if (spec.getType() != StreamSpec.STREAM_FILTER)
+                        report(func, "prework functions only allowed " +
+                               "in filters");
+                if (func.getCls() == Function.FUNC_PHASE)
+                    if (spec.getType() != StreamSpec.STREAM_FILTER)
+                        report(func, "phase functions only allowed " +
+                               "in filters");
+            }
+            if (spec.getType() == StreamSpec.STREAM_FILTER && !hasWork)
+                report(spec, "missing work function");
+            if (spec.getType() != StreamSpec.STREAM_FILTER && !hasInit)
+                report(spec, "missing init function");
         }
     }
 

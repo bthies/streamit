@@ -4,6 +4,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.flatgraph2.FilterContent;
 import at.dms.util.Utils;
 import java.util.HashSet;
+import java.util.HashMap;
 
 /** 
     A class to hold all the various information for a filter
@@ -22,10 +23,32 @@ public class FilterInfo
     public int primePump;
     public int peek;
 
+    private boolean direct;
+
     public FilterTraceNode traceNode;
     public FilterContent filter;
 
-    public FilterInfo(FilterTraceNode traceNode)
+    private static HashMap filterInfos;
+    
+    static 
+    {
+	filterInfos = new HashMap();
+    }
+    
+
+    public static FilterInfo getFilterInfo(FilterTraceNode traceNode) 
+    {
+	if (!filterInfos.containsKey(traceNode)) {
+	    FilterInfo info = new FilterInfo(traceNode);
+	    filterInfos.put(traceNode, info);
+	    return info;
+	}
+	else
+	    return (FilterInfo)filterInfos.get(traceNode);
+    }
+    
+
+    private FilterInfo(FilterTraceNode traceNode)
     {
 	filter = traceNode.getFilter();
 	this.traceNode = traceNode;
@@ -45,7 +68,9 @@ public class FilterInfo
 	    prePop = filter.getInitPop();
 	}
 	
+	calculateRemaining();
 	
+	direct = DirectCommunication.testDC(this);
     }
     
     public boolean isTwoStage() 
@@ -147,14 +172,18 @@ public class FilterInfo
 	return remaining;
     }
 
+    //returns true if this filter does not need a receive buffer
+    //but it does receive items
+    public boolean isDirect() 
+    {
+	return direct;
+    }
+    
+
     //does this filter require a receive buffer during code 
     //generation
     public boolean noBuffer() 
     {
-	//always need a buffer for rate matching.
-	//	    if (KjcOptions.ratematch)
-	//	return false;
-	
 	if (peek == 0 &&
 	    prePeek == 0)
 	    return true;

@@ -425,15 +425,6 @@ public class BufferedCommunication extends RawExecutionCode
 	FilterContent filter = filterInfo.filter;
 
 	//not rate matching
-	
-	if (filterInfo.traceNode.getPrevious().isFilterTrace()) {
-	    //add the statements to receive pop items into the buffer
-	    block.addStatement
-		(makeForLoop(receiveCode(filter, filter.getInputType(),
-					 generatedVariables),
-			     generatedVariables.exeIndex,
-			     new JIntLiteral(filterInfo.pop)));
-	}
 	    
 	JBlock workBlock = 
 	    (JBlock)ObjectDeepCloner.
@@ -491,6 +482,16 @@ public class BufferedCommunication extends RawExecutionCode
 					    new JIntLiteral(-1))), null));
 	}
 	
+	if (filterInfo.traceNode.getPrevious().isFilterTrace()) {
+	    //add the statements to receive pop * steady mult items into the buffer
+	    //execute this before the for loop that has the work function
+	    block.addStatementFirst
+		(makeForLoop(receiveCode(filter, filter.getInputType(),
+					 generatedVariables),
+			     generatedVariables.exeIndex,
+			     new JIntLiteral(filterInfo.pop * filterInfo.steadyMult)));
+	}
+
 	//reset the simple index if we are receiving from another trace
 	//to allow it to write to the buffer in the correct index
 	if (filterInfo.isSimple() && 

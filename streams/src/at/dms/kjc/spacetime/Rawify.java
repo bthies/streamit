@@ -28,9 +28,14 @@ public class Rawify
 		    RawTile tile = rawChip.getTile(((FilterTraceNode)traceNode).getX(), 
 						   ((FilterTraceNode)traceNode).getY());
 		    //create the filter info class
-		    FilterInfo filterInfo = new FilterInfo((FilterTraceNode)traceNode);
+		    FilterInfo filterInfo = FilterInfo.getFilterInfo((FilterTraceNode)traceNode);
 		    //switch code for the trace
-		    createSwitchCode((FilterTraceNode)traceNode, 
+		    //generate switchcode based on the presence of buffering		    
+		    if (filterInfo.isDirect()) 
+			createSwitchCodeDirect((FilterTraceNode)traceNode, 
+				     trace, filterInfo, init, tile, rawChip);
+		    else
+			createSwitchCodeBuffered((FilterTraceNode)traceNode, 
 				     trace, filterInfo, init, tile, rawChip);
 		    //generate the compute code for the trace and place it in
 		    //the tile
@@ -52,50 +57,45 @@ public class Rawify
 	    EndSteadyState(rawChip);
     }
 
-    private static void createSwitchCode(FilterTraceNode node, Trace parent, 
-					 FilterInfo filterInfo,
-					 boolean init, RawTile tile,
-					 RawChip rawChip) 
+    private static void createSwitchCodeDirect(FilterTraceNode node, Trace parent, 
+						 FilterInfo filterInfo,
+						 boolean init, RawTile tile,
+						 RawChip rawChip) 
+    {
+	//get the multiplicity based on the init variable
+	int mult = (init) ? node.getInitMult() : node.getSteadyMult();
+		
+	for (int i = 0; i < mult; i++) {
+	    //append the receive code
+	    if (node.getPrevious() != null && node.getPrevious().isFilterTrace()) 
+		createReceiveCode(i, node, parent, filterInfo, init, tile, rawChip);
+	    //append the send code
+	    if (node.getNext() != null && node.getNext().isFilterTrace()) 
+		createSendCode(i, node, parent, filterInfo, init, tile, rawChip);
+	}
+	//don't have to worry about remaining
+    }
+    
+
+    private static void createSwitchCodeBuffered(FilterTraceNode node, Trace parent, 
+						 FilterInfo filterInfo,
+						 boolean init, RawTile tile,
+						 RawChip rawChip) 
     {
 	//get the multiplicity based on the init variable
 	int mult = (init) ? node.getInitMult() : node.getSteadyMult();
 	
 	for (int i = 0; i < mult; i++) {
 	    //append the receive code
-	    if (node.getPrevious() != null && node.getPrevious().isFilterTrace()) {
-		//if this is the init and it is the first time executing
-		//and a twostage filter, use initpop and multiply this
-		//by the size of the type it is receiving
-		int itemsReceiving = itemsNeededToFire(filterInfo, i, init) *
-		    Util.getTypeSize(node.getFilter().getInputType());
+	    if (node.getPrevious() != null && node.getPrevious().isFilterTrace()) 
+		createReceiveCode(i, node, parent, filterInfo, init, tile, rawChip);
 
-		for (int j = 0; j < itemsReceiving; j++) {
-		    RouteIns ins = new RouteIns(tile);
-		    //add the route from the source tile to this
-		    //tile's compute processor
-		    ins.addRoute(rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(), 
-						 ((FilterTraceNode)node.getPrevious()).getY()),
-				 tile);
-		    tile.getSwitchCode().appendIns(ins, init);
-		}
-	    }
+	}
+	
+	for (int i = 0; i < mult; i++) {
 	    //append the send code
-	    if (node.getNext() != null && node.getNext().isFilterTrace()) {
-		//get the items needed to fire and multiply it by the type 
-		//size
-		int items = itemsFiring(filterInfo, i, init) * 
-		    Util.getTypeSize(node.getFilter().getOutputType());
-		
-		for (int j = 0; j < items; j++) {
-		    RouteIns ins = new RouteIns(tile);
-		    //add the route from this tile to the next trace node
-		    ins.addRoute(tile, rawChip.getTile(((FilterTraceNode)node.getNext()).getX(), 
-						       ((FilterTraceNode)node.getNext()).getY()));
-		    //append the instruction
-		    tile.getSwitchCode().appendIns(ins, init);
-		}	
-	    }
-	    
+	    if (node.getNext() != null && node.getNext().isFilterTrace()) 
+		createSendCode(i, node, parent, filterInfo, init, tile, rawChip);
 	}
 	
 	//now we must take care of the remaining items on the input tape 
@@ -121,6 +121,47 @@ public class Rawify
 	}
     }
     
+    private static void createReceiveCode(int iteration, FilterTraceNode node, Trace parent, 
+				   FilterInfo filterInfo, boolean init, RawTile tile,
+				   RawChip rawChip) 
+    {
+	//if this is the init and it is the first time executing
+	//and a twostage filter, use initpop and multiply this
+	//by the size of the type it is receiving
+	int itemsReceiving = itemsNeededToFire(filterInfo, iteration, init) *
+	    Util.getTypeSize(node.getFilter().getInputType());
+	
+	for (int j = 0; j < itemsReceiving; j++) {
+	    RouteIns ins = new RouteIns(tile);
+	    //add the route from the source tile to this
+	    //tile's compute processor
+	    ins.addRoute(rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(), 
+					 ((FilterTraceNode)node.getPrevious()).getY()),
+			 tile);
+	    tile.getSwitchCode().appendIns(ins, init);
+	}
+    }
+
+    private static void createSendCode(int iteration, FilterTraceNode node, Trace parent, 
+				   FilterInfo filterInfo, boolean init, RawTile tile,
+				   RawChip rawChip) 
+    {
+	//get the items needed to fire and multiply it by the type 
+	//size
+	int items = itemsFiring(filterInfo, iteration, init) * 
+	    Util.getTypeSize(node.getFilter().getOutputType());
+	
+	for (int j = 0; j < items; j++) {
+	    RouteIns ins = new RouteIns(tile);
+	    //add the route from this tile to the next trace node
+	    ins.addRoute(tile, rawChip.getTile(((FilterTraceNode)node.getNext()).getX(), 
+					       ((FilterTraceNode)node.getNext()).getY()));
+	    //append the instruction
+	    tile.getSwitchCode().appendIns(ins, init);
+	}	
+    }
+
+
     private static int itemsFiring(FilterInfo filterInfo, int exeCount, boolean init) 
     {
 	int items = filterInfo.push;

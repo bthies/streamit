@@ -62,7 +62,7 @@ public class ComputeCodeStore {
 	else {
 	    //otherwise create the raw ir code 
 	    //if we can run direct communication, run it
-	    if (DirectCommunication.testDC(filterInfo))
+	    if (filterInfo.isDirect())
 		exeCode = new DirectCommunication(filterInfo);
 	    else
 		exeCode = new BufferedCommunication(filterInfo);
@@ -126,7 +126,7 @@ public class ComputeCodeStore {
 	RawExecutionCode exeCode;
 	
 	//if we can run direct communication, run it
-	if (DirectCommunication.testDC(filterInfo))
+	if (filterInfo.isDirect())
 	    exeCode = new DirectCommunication(filterInfo);
 	else 
 	    exeCode = new BufferedCommunication(filterInfo);

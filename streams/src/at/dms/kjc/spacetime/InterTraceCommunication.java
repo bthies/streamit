@@ -27,7 +27,7 @@ public class InterTraceCommunication extends SLIRReplacingVisitor
 	FilterTraceNode[] upNodes = filterInfo.getNextFilters();
 	upstream = new FilterInfo[upNodes.length];
 	for (int i = 0; i < upNodes.length; i++) {
-	    upstream[i] = new FilterInfo(upNodes[i]);
+	    upstream[i] = FilterInfo.getFilterInfo(upNodes[i]);
 	}
     }
     

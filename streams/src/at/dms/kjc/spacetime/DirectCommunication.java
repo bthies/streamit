@@ -17,6 +17,7 @@ import at.dms.kjc.sir.lowering.*;
 import java.util.Hashtable;
 import java.math.BigInteger;
 import at.dms.kjc.flatgraph2.FilterContent;
+import at.dms.util.SIRPrinter;
 
 //if 
 //not 2 stage
@@ -47,7 +48,7 @@ public class DirectCommunication extends RawExecutionCode
 	    return false;
 	if (PeekFinder.findPeek(filter.getWork()))
 	    return false;
-	if (PushBeforePop.check(filter.getWork()))
+	if (PushBeforePop.check(filter.getWork())) 
 	    return false;
 	//must popping a scalar
 	if (filter.getInputType().isClassType() ||

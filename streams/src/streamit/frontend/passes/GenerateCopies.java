@@ -28,7 +28,7 @@ import java.util.Collections;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.5 2004-07-08 05:45:38 thies Exp $
+ * @version $Id: GenerateCopies.java,v 1.6 2004-11-03 04:05:26 thies Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -202,12 +202,24 @@ public class GenerateCopies extends SymbolTableVisitor
             stmt = (StmtAssign)result;
             if (needsCopy(stmt.getRHS()))
             {
+		// make a copy of the RHS in the event that it is a
+		// function call.  We don't want to call the function
+		// multiple times for each element.
+		Expression copy = assignToTemp(stmt.getRHS(), 
+					       // "true" as deep
+					       // argument will cause
+					       // bugs; need more
+					       // sophisticated
+					       // framework to do
+					       // nested structures
+					       // correctly
+					       false);
                 // drops op!  If there are compound assignments
                 // like "a += b" here, we lose.  There shouldn't be,
                 // though, since those operators aren't well-defined
                 // for structures and arrays and this should be run
                 // after complex prop.
-                makeCopy(stmt.getRHS(), stmt.getLHS());
+                makeCopy(copy, stmt.getLHS());
                 return null;
             }
         }

@@ -28,9 +28,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
      * shouldn't clone.
      */
     public static final String[] DO_NOT_CLONE_THESE_FIELDS = {
-        "trash"
+	"parentStream",
+	"topLevel",
+        "trash",
+	"visitedSIROps",
+	"symbolTable",
+	"interfaceList",
+	"interfaceTableList",
+	"structureList"
     };
-
+    
     /* The entire application */
     private JCompilationUnit[] application;
 
@@ -995,9 +1002,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    //If the class of this variable is in the SIR table then
 	    //we need to add this definition to the symbol table
 	    else if (getVisitedOp(type.toString()) != null) {
+		SIRStream temp=(SIRStream)getVisitedOp(type.toString());
+		//System.err.println("CLONNING var: "+temp);
 		
 		SIRStream ST = (SIRStream)ObjectDeepCloner.
-		    deepCopy((SIRStream)getVisitedOp(type.toString()));
+		    deepCopy(temp);
 		printMe("Adding " + ident + " to symbol table");
 		
 		//If this a builtin filter set its args
@@ -1491,6 +1500,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	      */
 	//The only time that we can use an Anonymous class is inside an add statement 
 	//which needs to be translated into an SIRInitStatement
+	//System.err.println("CONNING anon: "+SIROp);
 	SIRInitStatement sis = new SIRInitStatement(Arrays.asList(params), (SIRStream)ObjectDeepCloner.deepCopy((SIRStream)SIROp));
 	return sis;
     }
@@ -1727,7 +1737,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 				       getType().getCClass().getIdent());
 
 	    // don't clone recursive stubs
+	    //if(!(st instanceof SIRRecursiveStub))
+	    //System.err.println("CLONNING: "+st);
 	    newST = (SIRStream) ObjectDeepCloner.deepCopy(st);
+	    //else
+	    //newST=st;
 	    //if this is a builtin filter, set the args
 	    setBuiltinArgs(newST, ((JUnqualifiedInstanceCreation)SIROp).getParams());
 	    newST.setParent((SIRContainer)parentStream);
@@ -2736,17 +2750,17 @@ public Object deepClone() {
 protected void deepCloneInto(at.dms.kjc.Kopi2SIR other) {
   super.deepCloneInto(other);
   other.application = (at.dms.kjc.JCompilationUnit[])at.dms.kjc.AutoCloner.cloneToplevel(this.application, other);
-  other.parentStream = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.parentStream, other);
-  other.topLevel = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.topLevel, other);
+  other.parentStream = this.parentStream;
+  other.topLevel = this.topLevel;
   other.trash = this.trash;
   other.num = this.num;
   other.lineNumber = this.lineNumber;
   other.currentMethod = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.currentMethod, other);
-  other.visitedSIROps = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.visitedSIROps, other);
-  other.symbolTable = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.symbolTable, other);
-  other.interfaceList = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.interfaceList, other);
-  other.interfaceTableList = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.interfaceTableList, other);
-  other.structureList = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.structureList, other);
+  other.visitedSIROps = this.visitedSIROps;
+  other.symbolTable = this.symbolTable;
+  other.interfaceList = this.interfaceList;
+  other.interfaceTableList = this.interfaceTableList;
+  other.structureList = this.structureList;
   other.searchList = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.searchList, other);
   other.params = (at.dms.kjc.JFormalParameter[])at.dms.kjc.AutoCloner.cloneToplevel(this.params, other);
   other.paramNames = (java.lang.String[])at.dms.kjc.AutoCloner.cloneToplevel(this.paramNames, other);

@@ -45,13 +45,13 @@ JAVA_SRCS_DEPS = $(filter %.java.deps, $(JAVA_TARGET:%.class=%.java.deps))
 
 %.java : %.opt
 	@rm -f $*.java
-	@cd `dirname $<` ; \
-	java at.dms.compiler.tools.optgen.Main `basename $<`
+	cd $(dir $<) && \
+	java at.dms.compiler.tools.optgen.Main $(notdir $<)
 
 %.java : %.g
 	@rm -f $*.java
-	@cd `dirname $<` ; \
-	java antlr.Tool `basename $<`
+	cd $(dir $<) && \
+	java antlr.Tool $(notdir $<)
 
 all: $(C_TARGET) $(CXX_TARGET) $(JAVA_TARGET) java_class_compile Makefile.deps 
 

@@ -67,7 +67,7 @@ public class Partitioner {
 	    int work = sorted.getWork(pos);
 	    // make a list of candidates that have the same amount of work
 	    LinkedList candidates = new LinkedList();
-	    while (sorted.getWork(pos)==work && pos>=0) {
+	    while (pos>=0 && sorted.getWork(pos)==work) {
 		candidates.add(sorted.getFilter(pos));
 		pos--;
 	    }

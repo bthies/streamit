@@ -18,7 +18,7 @@ import java.util.*;
  * int i;
  * i = 5;
  * </pre>
- * $Id: FieldInitMover.java,v 1.4 2002-07-02 19:10:44 aalamb Exp $
+ * $Id: FieldInitMover.java,v 1.5 2002-07-02 22:50:37 thies Exp $
  **/
 public class FieldInitMover extends EmptyStreamVisitor {
   
@@ -35,7 +35,7 @@ public class FieldInitMover extends EmptyStreamVisitor {
      */
     public void visitStream(SIRStream self,
 			    SIRIterator iter) {
-	System.out.println("!!visiting stream: " + self);
+	//System.out.println("!!visiting stream: " + self);
 	
 	moveFieldInitializations(self);
 	
@@ -102,7 +102,7 @@ class FieldInitMoverVisitor extends SLIRReplacingVisitor {
 					String ident,
 					JExpression expr)
 	{
-	    System.out.println("!!Visiting field: " + self);
+	    //System.out.println("!!Visiting field: " + self);
 	    // if this field declaration has an initial value,
 	    // make an assignment expression to stick in the
 	    // init function

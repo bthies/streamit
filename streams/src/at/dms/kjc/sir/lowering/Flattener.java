@@ -144,7 +144,7 @@ public class Flattener {
 	}
 	//Destroys arrays into local variables if possible
 	System.err.print("Destroying arrays... ");
-	new ArrayDestroyer().destroyArrays(str);
+	//new ArrayDestroyer().destroyArrays(str);
 	System.err.println("done.");
 	//Raise variables to the top of their block
 	System.err.print("Raising variables... ");

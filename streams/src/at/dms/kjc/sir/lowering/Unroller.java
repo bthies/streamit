@@ -325,13 +325,13 @@ public class Unroller extends SLIRReplacingVisitor {
 	//int numLoops=numExec/KjcOptions.unroll;
 	int remain=numExec%KjcOptions.unroll;
 	JStatement[] newBody=new JStatement[2*KjcOptions.unroll];
-	if(newBody.length>=2) {
-	    newBody[0]=self.getBody();
-	    newBody[1]=self.getIncrement();
-	}
-	for(int i=2;i<2*KjcOptions.unroll;i++) {
+	//if(newBody.length>=2) {
+	//newBody[0]=self.getBody();
+	//newBody[1]=self.getIncrement();
+	//}
+	for(int i=0;i<2*KjcOptions.unroll;i++) {
 	    JStatement cloneBody=(JStatement)ObjectDeepCloner.deepCopy(self.getBody());
-	    JStatement cloneIncr=(JStatement)ObjectDeepCloner.deepCopy(makeIncr(info,1));
+	    JStatement cloneIncr=(JStatement)ObjectDeepCloner.deepCopy(makeIncr(info,info.incrVal));
 	    newBody[i]=cloneBody;
 	    i++;
 	    newBody[i]=cloneIncr;
@@ -341,7 +341,7 @@ public class Unroller extends SLIRReplacingVisitor {
 	newStatements[0]=self.getInit();
 	for(int i=1;i<2*remain+1;i++) {
 	    JStatement cloneBody=(JStatement)ObjectDeepCloner.deepCopy(self.getBody());
-	    JStatement cloneIncr=(JStatement)ObjectDeepCloner.deepCopy(makeIncr(info,1));
+	    JStatement cloneIncr=(JStatement)ObjectDeepCloner.deepCopy(makeIncr(info,info.incrVal));
 	    newStatements[i]=cloneBody;
 	    i++;
 	    newStatements[i]=cloneIncr;

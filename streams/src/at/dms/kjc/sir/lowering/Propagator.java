@@ -488,6 +488,19 @@ public class Propagator extends SLIRReplacingVisitor {
 	}*/
 
     /**
+     * Visits a print statement.
+     */
+    public Object visitPrintStatement(SIRPrintStatement self,
+				    JExpression arg) {
+	JExpression newExp = (JExpression)arg.accept(this);
+	if (write&&newExp!=null && newExp!=arg) {
+	    self.setArg(newExp);
+	}
+	
+	return self;
+    }
+
+    /**
      * Visits a peek expression.
      */
     public Object visitPeekExpression(SIRPeekExpression self,
@@ -1202,101 +1215,75 @@ public class Propagator extends SLIRReplacingVisitor {
 		if(state instanceof JExpressionStatement) {
 		    JExpression expr=((JExpressionStatement)state).getExpression();
 		    if(expr instanceof JAssignmentExpression) {
-			//if((((JAssignmentExpression)expr).getCopyVar()==null)) {
-			    JExpression left=((JAssignmentExpression)expr).getLeft();
-			    JExpression right=((JAssignmentExpression)expr).getRight();
-			    //if((!propVar(left))&&(!propVar(right))) {
-				//try {
-				    //System.err.println("In Assign:"+((JLocalVariableExpression)left).getVariable()+" "+(JFieldAccessExpression)right+" "+((JAssignmentExpression)expr).getCopyVar());
-			    //  System.err.println(((JAssignmentExpression)expr).getCopyVar());
-				//} catch(Exception e) {
-			    /*try {
-			      //System.err.println("In Assign:"+left+" "+((JFieldAccessExpression)right)+" "+((JAssignmentExpression)expr).getCopyVar());
-			      System.err.println("In Assign:"+left+" "+right+" "+((JAssignmentExpression)expr).getCopyVar());
-			      } catch(Exception e3) {
-			      }*/
-			    /*try {
-			      System.err.println("In Assign:"+((JLocalVariableExpression)left).getVariable()+" "+right);
-			      } catch(Exception e2) {
-			      try {
-			      System.err.println("In Assign:"+left+" "+((JLocalVariableExpression)right).getVariable());
-			      } catch(Exception e3) {
-			      }
-			      }*/
-				//}
-				//if(!(right instanceof JLocalVariableExpression)||!propVar(((JLocalVariableExpression)right).getVariable()))
-				//if(left instanceof JArrayAccessExpression) {
-				//JExpression prefix=((JArrayAccessExpression)left).getPrefix();
-				//if(prefix instanceof JLocalVariableExpression) {
-				//if(!propVar(((JLocalVariableExpression)prefix).getVariable())) {
-				//CType type;
-				//if(right.getType()!=null)
-				//	type=right.getType();
-				//  else
-				//	type=left.getType();
-				//  JVariableDefinition var=new JVariableDefinition(self.getTokenReference(),0,type,propName(),right);
-				//    self.addStatement(i,new JVariableDeclarationStatement(self.getTokenReference(),var,null));
-				//  size++;
-				//    i++;
-				//  ((JAssignmentExpression)expr).setRight(new JLocalVariableExpression(self.getTokenReference(),var));
-				//    }
-				//}
-				//} else if(left instanceof JLocalVariableExpression) {
-				CType type;
-				//Types worth copying
-				if((right instanceof JFieldAccessExpression)||((right instanceof JArrayAccessExpression)&&(((JArrayAccessExpression)right).getAccessor() instanceof JIntLiteral))) {
-				    if(right.getType()!=null)
-					type=right.getType();
-				    else
-					type=left.getType();
-				    JVariableDefinition var=new JVariableDefinition(self.getTokenReference(),0,type,propName(),right);
-				    JVariableDeclarationStatement newState=new JVariableDeclarationStatement(self.getTokenReference(),var,null);
-				    self.addStatement(i++,newState);
-				    size++;
-				    ((JAssignmentExpression)expr).setCopyVar(new JLocalVariableExpression(self.getTokenReference(),var));
-				//((JAssignmentExpression)expr).setRight(new JLocalVariableExpression(self.getTokenReference(),var));
-				}
-		    }
-		    //}
-		    //}
-		} else if(state instanceof JVariableDeclarationStatement) {
-		    /*JVariableDefinition[] vars=((JVariableDeclarationStatement)state).getVars();
-		      if(vars.length==1) {
-		      JVariableDefinition var=vars[0];
-		      if(propVarLocal(var)&&var.getValue()!=null)
-		      copyMap.put(var.getValue(),var);
-		      }*/
-		}
-		while(mutated.size()!=0) {
-		    JLocalVariable var=(JLocalVariable)mutated.removeFirst();
-		    size++;
-		    Object val=constants.get(var);
-		    if(val!=null)
-			self.addStatement(i++,new JExpressionStatement(null,new JAssignmentExpression(null,new JLocalVariableExpression(null,var),(JLiteral)val),null));
-		    else {
-			System.err.println("WARNING: Unknown Mutated Value For "+var);
-			self.addStatement(i++,new JExpressionStatement(null,new JLocalVariableExpression(null,var),null));
+			JExpression left=((JAssignmentExpression)expr).getLeft();
+			JExpression right=((JAssignmentExpression)expr).getRight();
+			CType type;
+			//Types worth copying
+			if((right instanceof JFieldAccessExpression)||((right instanceof JArrayAccessExpression)&&(((JArrayAccessExpression)right).getAccessor() instanceof JIntLiteral))) {
+			    if(right.getType()!=null)
+				type=right.getType();
+			    else
+				type=left.getType();
+			    JVariableDefinition var=new JVariableDefinition(self.getTokenReference(),0,type,propName(),right);
+			    JVariableDeclarationStatement newState=new JVariableDeclarationStatement(self.getTokenReference(),var,null);
+			    self.addStatement(i++,newState);
+			    size++;
+			    ((JAssignmentExpression)expr).setCopyVar(new JLocalVariableExpression(self.getTokenReference(),var));
+			}
 		    }
 		}
+		/*while(mutated.size()!=0) {
+		  JLocalVariable var=(JLocalVariable)mutated.removeFirst();
+		  size++;
+		  Object val=constants.get(var);
+		  if(val!=null)
+		  self.addStatement(i++,new JExpressionStatement(null,new JAssignmentExpression(null,new JLocalVariableExpression(null,var),(JLiteral)val),null));
+		  else {
+		  System.err.println("WARNING: Unknown Mutated Value For "+var);
+		  self.addStatement(i++,new JExpressionStatement(null,new JLocalVariableExpression(null,var),null));
+		  }
+		  }*/
 	    }
 	}
-	return super.visitBlockStatement(self,comments);
-    }
-    
-    //Visit the block starting from index statement
-    public Object visitBlockStatement(int index,
-				      JBlock self) {
-	for (;index<self.size();index++) {
-	    JStatement oldBody = self.getStatement(index);
+	int size=self.size();
+	for(int i=0;i<size;i++) {
+	    JStatement oldBody=(JStatement)self.getStatement(i);
 	    Object newBody = oldBody.accept(this);
 	    if (!(newBody instanceof JStatement))
 		continue;
 	    if (newBody!=null && newBody!=oldBody) {
-		self.setStatement(index,(JStatement)newBody);
+		self.setStatement(i,(JStatement)newBody);
+	    }
+	    while(mutated.size()!=0) {
+		JLocalVariable var=(JLocalVariable)mutated.removeFirst();
+		size++;
+		Object val=constants.get(var);
+		if(val!=null)
+		    self.addStatement(i++,new JExpressionStatement(null,new JAssignmentExpression(null,new JLocalVariableExpression(null,var),(JLiteral)val),null));
+		else {
+		    System.err.println("WARNING: Unknown Mutated Value For "+var);
+		    self.addStatement(i++,new JExpressionStatement(null,new JLocalVariableExpression(null,var),null));
+		}
 	    }
 	}
+	visitComments(comments);
 	return self;
     }
+    
+    //Visit the block starting from index statement
+    /*public Object visitBlockStatement(int index,
+      JBlock self) {
+      for (;index<self.size();index++) {
+      JStatement oldBody = self.getStatement(index);
+      Object newBody = oldBody.accept(this);
+      if (!(newBody instanceof JStatement))
+      continue;
+      if (newBody!=null && newBody!=oldBody) {
+      self.setStatement(index,(JStatement)newBody);
+      }
+      }
+      return self;
+	}*/
 
     private String propName() {
 	return "__constpropvar_"+propNum++;

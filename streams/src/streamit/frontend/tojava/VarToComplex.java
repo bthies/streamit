@@ -8,10 +8,17 @@ import streamit.frontend.passes.SymbolTableVisitor;
  * parts.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: VarToComplex.java,v 1.8 2003-06-24 21:09:51 dmaze Exp $
+ * @version $Id: VarToComplex.java,v 1.9 2003-06-30 20:01:09 dmaze Exp $
  */
 public class VarToComplex extends SymbolTableVisitor
 {
+    private static Expression makeComplexPair(Expression exp)
+    {
+        Expression real = new ExprField(exp.getContext(), exp, "real");
+        Expression imag = new ExprField(exp.getContext(), exp, "imag");
+        return new ExprComplex(exp.getContext(), real, imag);
+    }
+
     public VarToComplex(SymbolTable st, StreamType strt)
     {
         super(st, strt);
@@ -21,11 +28,7 @@ public class VarToComplex extends SymbolTableVisitor
     {
         Type type = (Type)exp.accept(new GetExprType(symtab, streamType));
         if (type.isComplex())
-        {
-            Expression real = new ExprField(exp.getContext(), exp, "real");
-            Expression imag = new ExprField(exp.getContext(), exp, "imag");
-            return new ExprComplex(exp.getContext(), real, imag);
-        }
+            return makeComplexPair(exp);
         else
             return exp;
     }
@@ -34,14 +37,14 @@ public class VarToComplex extends SymbolTableVisitor
     {
         // If the expression is already visiting a field of a Complex
         // object, don't recurse further.
-        if (exp.getLeft() instanceof ExprVar)
-        {
-            ExprVar left = (ExprVar)exp.getLeft();
-            String name = left.getName();
-            Type type = symtab.lookupVar(name);
-            if (type.isComplex())
-                return exp;
-        }
+        GetExprType get = new GetExprType(symtab, streamType);
+        Type type = (Type)(exp.getLeft().accept(get));
+        if (type.isComplex())
+            return exp;
+        // Perhaps this field is complex.
+        type = (Type)(exp.accept(get));
+        if (type.isComplex())
+            return makeComplexPair(exp);
         // Otherwise recurse normally.
         return super.visitExprField(exp);
     }
@@ -52,11 +55,7 @@ public class VarToComplex extends SymbolTableVisitor
         // otherwise, move on.
         Type type = (Type)exp.accept(new GetExprType(symtab, streamType));
         if (type.isComplex())
-        {
-            Expression real = new ExprField(exp.getContext(), exp, "real");
-            Expression imag = new ExprField(exp.getContext(), exp, "imag");
-            return new ExprComplex(exp.getContext(), real, imag);
-        }
+            return makeComplexPair(exp);
         else
             return exp;
     }

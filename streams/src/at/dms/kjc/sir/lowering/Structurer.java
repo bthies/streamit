@@ -310,8 +310,34 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
                                SIRStream parent,
                                JFieldDeclaration[] fields)
     {
-        // create struct type
-        createStruct(self.getName(), fields, EMPTY_LIST);
+        System.err.println("visitStructure " + self.getName());
+	JClassDeclaration classDecl = 
+	    new JClassDeclaration(/* TokenReference where */
+				  null,
+				  /* int modifiers, */
+				  at.dms.kjc.Constants.ACC_PUBLIC,
+				  /* String ident,  */
+				  self.getName(),
+				  /* CClassType superClass, */
+				  CStdType.Object,
+				  /* CClassType[] interfaces, */
+				  CClassType.EMPTY,
+				  /* JFieldDeclaration[] fields, */
+				  fields,
+				  /* JMethodDeclaration[] methods, */
+				  JMethodDeclaration.EMPTY(),
+				  /* JTypeDeclaration[] inners, */
+				  JClassDeclaration.EMPTY,
+				  /* JPhylum[] initializers, */
+				  null,
+				  /* JavadocComment javadoc, */
+				  null,
+				  /* JavaStyleComment[] comment */
+				  null
+				  );
+
+	// add class to list
+	structs.add(classDecl);
     }
      
     /* visit a filter */

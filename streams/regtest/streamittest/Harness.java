@@ -33,40 +33,52 @@ public class Harness {
 	// get hooks into the output and error streams
 	BufferedReader jOutStream = new BufferedReader(new InputStreamReader(jProcess.getInputStream()));
 	BufferedReader jErrorStream =  new BufferedReader(new InputStreamReader(jProcess.getErrorStream()));
+
+	// wait for the process to be done
 	jProcess.waitFor();
 	
-	
-	// figure out what the result was based on the exit value of gcc
-	// (if not 0, then error compiling
-	if ((jProcess.exitValue() != 0) || (jErrorStream.ready())) {
-	    // print output from gcc so that we know what is going on
-	    ResultPrinter.printError("Error running: " + cmdArray[0]);
+	// if 0 is not returned, print stdout to result printer for debugging
+	if (jProcess.exitValue() != 0) {
+	    // print output from so that we know what is going on
+	    ResultPrinter.printError("Error running: " + flattenCommandArray(cmdArray));
 	    ResultPrinter.printError("return value: " + jProcess.exitValue());
 	    ResultPrinter.printError("stdout: ");
 	    while (jOutStream.ready()) {
-		ResultPrinter.printError(":" + jOutStream.readLine());
+		ResultPrinter.printError("out:" + jOutStream.readLine());
 	    }
-	    ResultPrinter.printError("stderr: ");
+	    // flush errors to disk
+	    ResultPrinter.flushFileWriter();
+	}
+
+	if (jErrorStream.ready()) {
+	    ResultPrinter.printError("Error messages while running: " + flattenCommandArray(cmdArray));
+	    ResultPrinter.printError("err: ");
 	    while (jErrorStream.ready()) {
 		ResultPrinter.printError(":" + jErrorStream.readLine());
 	    }
-	    return false;
-	} else {
-	    // if we have an output stream to write to,
-	    // write out stdout there.
-	    if (outStream != null) {
-		// copy the data in the output stream to the file
-		while(jOutStream.ready()) {
-		    outStream.write(jOutStream.read());
-		}
-	    }
-	    // if we get here, streamit compilation went fine
-	    return true;
+	    // flush errors to disk
+	    ResultPrinter.flushFileWriter();
+	    
 	}
+
+	if (jProcess.exitValue() != 0) {
+	    return false;
+	}
+
+	// if we have an output stream to write to,
+	// write out stdout there.
+	if (outStream != null) {
+	    // copy the data in the output stream to the file
+	    while(jOutStream.ready()) {
+		outStream.write(jOutStream.read());
+	    }
+	}
+	// if we get here, streamit compilation succeeded
+	return true;
     }
 
     /**
-     * Expand a filename with a wildcard in it to an array of file named.
+     * Expand a filename with a wildcard in it to an array of file names.
      **/
     public static String[] expandFileName(String fileName) {
 	Vector filenames = new Vector(); // expanded filenames
@@ -107,7 +119,17 @@ public class Harness {
 	return args;
     }
 
-
+    /**
+     * Convertes a command array (of strings) into a
+     * single string for display purposes.
+     **/
+    public static String flattenCommandArray(String[] arr) {
+	String returnString = "";
+	for (int i=0; i<arr.length; i++) {
+	    returnString += arr[i] + " ";
+	}
+	return returnString;
+    }
     
     
 }

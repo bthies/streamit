@@ -1,7 +1,7 @@
 /**
  * Provides Java interface to the main StreamIT compiler, allowing
  * for easy regression testing.
- * $Id: CompilerHarness.java,v 1.2 2002-06-21 20:03:54 aalamb Exp $
+ * $Id: CompilerHarness.java,v 1.3 2002-06-24 21:25:36 aalamb Exp $
  **/
 package streamittest;
 
@@ -14,8 +14,6 @@ import at.dms.kjc.raw.*;
 import java.io.*;
 
 public class CompilerHarness extends Harness {
-    static final boolean DEBUG = false;
-    
     // command lines    
     static final String GCC_COMMAND = "gcc";
     static final String JAVA_COMMAND = "java";
@@ -30,28 +28,23 @@ public class CompilerHarness extends Harness {
     static final String C_LIBRARY_FILES = C_LIBRARY_PATH + "stream*.c";
     
     /**
-     * Run the compiler with the options specified in the 
+     * Run the streamit compiler with the options specified in the 
      * passed array. Returns true if compliation is successful
      * false otherwise.
      **/
-    static boolean compile(String[] options,
-			   String inFileName,
-			   String outFileName,
-			   String exeFileName) {
-	if (DEBUG) {
-	    printOptions(options);
-	}
+    static boolean streamITCompile(String[] options,
+				   String root,
+				   String inFileName,
+				   String outFileName) {
 
 	// result of running the streamit compiler
 	boolean compilerResult = false;
-	// result of running gcc
-	boolean gccResult = false;
 
 	// expand input streamit files
 	String[] expandedFileNames = expandFileName(inFileName);
 	
 	// new array for options and for filename
-	String[] cmdLineArgs = getJavaCommandArray(options, expandedFileNames);
+	String[] cmdLineArgs = getJavaCommandArray(options, root, expandedFileNames);
 
 	try {
 
@@ -69,53 +62,79 @@ public class CompilerHarness extends Harness {
 	} catch (Exception e) {
 	    ResultPrinter.printError("Caught exception compiling with streamit : " + e.getMessage());
 	    e.printStackTrace();
+	    return false;
 	}
 
-	// try and compile the resulting c file with gcc
+	return compilerResult;
+
+    }
+
+    /**
+     * Run the gcc compiler (uniprocessor path)
+     * to convert the source file to the exeFile.
+     **/
+    static boolean gccCompile(String sourceFileName,
+			      String exeFileName) {
+    
+	// result of running gcc
+	boolean gccResult = false;
+	
+	// try and compile the source file with gcc
 	try {
 
-	    gccResult = executeNative(getGccCommandArray(outFileName,
+	    gccResult = executeNative(getGccCommandArray(sourceFileName,
 							 exeFileName));
 	} catch (Exception e) {
 	    ResultPrinter.printError("gcc execution caused exception (?): " + e);
 	    e.printStackTrace();
 	}
 
-	// things are only ok if both the streamit compiler and
-	// gcc correctly compiled
-	return (compilerResult && gccResult);
-    }	
+	return gccResult;
+
+    }
+    /**
+     * run the make process to compile for raw.
+     **/
+    static boolean rawCompile(String rootPath,
+			      String makefileName) {
+
+	// result of running the raw compiler 
+	boolean rawResult = false;
+	
+	// try and compile the source file with make
+	try {
+	    rawResult = executeNative(getRawCommandArray(rootPath,
+							 makefileName));
+	} catch (Exception e) {
+	    ResultPrinter.printError("raw compliation caused exception (?): " + e);
+	    e.printStackTrace();
+	}
 
 
+	return rawResult;
+    }    
+
+    /**
+     * Get command line options for running the streamit compiler
+     * with the specified options and the specified file names.
+     * root path is needed to change dir so raw stuff ends up in the correct place
+     **/
     public static String[] getJavaCommandArray(String[] options,
+					       String root, 
 					       String[] expandedFileNames) {
 	// expand the filename that was passed in to multiple filenames
 	// if that is necessary
-	
-	String[] cmdLineArgs = new String[(1 + // java
-					   1 + // -Xmx256M
-					   1 + // at....Main
-					   options.length + // streamit options
-					   expandedFileNames.length)]; // filenames
-	
-	// copy over the java command
-	cmdLineArgs[0] = JAVA_COMMAND;
-	// copy over the expression for the memory use
-	cmdLineArgs[1] = JAVA_OPTION_MEM;
-	// copy over the main class file
-	cmdLineArgs[2] = JAVA_MAIN;
-	
-	
-	// copy over the options
-	for (int i=0; i<options.length;i++) {
-	    cmdLineArgs[i+3] = options[i];
-	}
+	String[] cmdLineArgs = new String[3];
 
-	// copy over the filenames
-	for (int i=0; i<expandedFileNames.length; i++) {
-	    cmdLineArgs[3 + options.length + i] = expandedFileNames[i];
-	}
-	
+	cmdLineArgs[0] = "csh";
+	cmdLineArgs[1] = "-c";
+	cmdLineArgs[2] = ("cd " + root + ";" + // cd to the correct directory
+			  JAVA_COMMAND + " " +
+			  JAVA_OPTION_MEM + " " +
+			  JAVA_MAIN + " " +
+			  flattenCommandArray(options) +  // compiler options
+			  flattenCommandArray(expandedFileNames));
+
 	return cmdLineArgs;
     }
     
@@ -149,6 +168,26 @@ public class CompilerHarness extends Harness {
 	return opts;
     }
 
+
+    /**
+     * Set up an array of commands to run the raw compiler makefile.
+     **/
+    public static String[] getRawCommandArray(String rootPath, String makefileName) {
+
+	String opts[] = new String[(1 + // make
+				    1 + // -C
+				    1 + // dir
+				    1 + // -f
+				    1)]; // makefile
+	opts[0] = "make";
+	opts[1] = "-C";
+	opts[2] = rootPath;
+	opts[3] = "-f";
+	opts[4] = makefileName;
+
+	return opts;
+    }
+    
 
     /**
      * Print out the options in the passed array.

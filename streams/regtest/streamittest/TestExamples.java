@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.1 2002-06-21 20:03:54 aalamb Exp $
+ * $Id: TestExamples.java,v 1.2 2002-06-24 21:25:36 aalamb Exp $
  **/
 package streamittest;
 
@@ -51,7 +51,7 @@ public class TestExamples extends StreamITTestCase {
 
 	return suite;
     }
-    
+
     public void testFFT() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "fft/",
 			       "FFT_inlined.java",

@@ -5,7 +5,7 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.2 2002-06-21 20:03:54 aalamb Exp $
+ * $Id: StreamITTestCase.java,v 1.3 2002-06-24 21:25:36 aalamb Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "docs/examples/hand/";
@@ -32,11 +32,13 @@ class StreamITTestCase extends TestCase {
      **/
     public void doCompileTest(String root,
 			      String filename) {
+
+	// print out test details for verbose output
 	ResultPrinter.printTest(this.getClass().getName(),
-				this.getName() + " compile",
-				" compiling with " + compiler.getOptionsString());
-	
-    	assertTrue("Compile " + filename + "(" + compiler.getOptionsString() + ")",
+				this.getName() + " compile ",
+				"compiling " + root + filename + " with " + compiler.getOptionsString());
+
+    	assertTrue("Compile " + root + filename + "(" + compiler.getOptionsString() + ")",
 		   compiler.streamITCompile(root,
 					    filename));
     }
@@ -55,19 +57,24 @@ class StreamITTestCase extends TestCase {
 	doCompileTest(root, filename);
 
 
+
 	// test execution
+
+	// print out test details for verbose output
 	ResultPrinter.printTest(this.getClass().getName(),
-				this.getName() + " run",
-				" running ");
-	assertTrue("Run FieldInit",
+				this.getName() + " run ",
+				" running " + root + filename + ", redirecting output to " + root + datafile);
+	assertTrue("Executing " + root + filename,
 		   compiler.streamITRun(root,
 					filename));
 
 	// test output
+	
+	// print out test details for verbose output
 	ResultPrinter.printTest(this.getClass().getName(),
-				this.getName() + " verify",
-				" verifying output ");	
-	assertTrue("Verify FieldInit",
+				this.getName() + " verify ",
+				" verifying output of " + root + filename);	
+	assertTrue("Verify output " + root + filename,
 		   compiler.streamITCompare(root,
 					    filename,
 					    datafile));

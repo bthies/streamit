@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.2 2002-06-21 20:03:54 aalamb Exp $
+ * $Id: TestAll.java,v 1.3 2002-06-24 21:25:36 aalamb Exp $
  **/
 package streamittest;
 
@@ -19,17 +19,27 @@ public class TestAll extends TestCase {
      **/
     public static Test makeTestSuite(int flags) {
 	TestSuite suite = new TestSuite();
-	suite.addTest(TestApps.suite(flags));
 	suite.addTest(TestExamples.suite(flags));
-	suite.addTest(TestTemplate.suite(flags));
+	suite.addTest(TestApps.suite(flags));
 	suite.addTest(TestFieldInit.suite(flags));
+	suite.addTest(TestTemplate.suite(flags));
 	return suite;	
     }
 
 
     public static Test suite() {
 	TestSuite allTests = new TestSuite();
-	    
+
+	//addUniprocessorTests(allTests);
+	addRawTests(allTests);
+
+	return allTests;
+    }
+
+    /**
+     * add the uniprocessor tests to the test suite framework.
+     **/
+    public static void addUniprocessorTests(TestSuite allTests) {
 	// try with no optimizations running
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE));
 
@@ -37,15 +47,9 @@ public class TestAll extends TestCase {
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.CONSTPROP));
 
-	// try with const prop and unrolling
-	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.CONSTPROP |
-				       CompilerInterface.UNROLL));
-
 	// const prop, unrolling, fusion
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.CONSTPROP |
-				       CompilerInterface.UNROLL |
 				       CompilerInterface.FUSION));
 
 	// const prop, unrolling, fusion, partitioning
@@ -54,9 +58,39 @@ public class TestAll extends TestCase {
 				       CompilerInterface.UNROLL |
 				       CompilerInterface.FUSION |
 				       CompilerInterface.PARTITION));
-			 
 
-	return allTests;
+    }
+
+    /**
+     * add the raw tests to the test suite framework.
+     **/
+    public static void addRawTests(TestSuite allTests) {
+	// raw with 4 tiles, 8 tiles
+	// raw with 4 partitioning
+	// const prop on/off for all three
+
+	/*
+	// raw with 4 tiles
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.RAW4));
+
+	// raw with 4 tiles, constprop
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.RAW4 |
+				       CompilerInterface.CONSTPROP));
+				       
+	*/				       
+	// raw with 8 tiles
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.RAW8));
+	/*
+	// raw with 8 tiles, constprop
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.RAW8 |
+				       CompilerInterface.CONSTPROP));
+
+	*/
+
     }
 
 

@@ -6,44 +6,52 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.2 2002-06-21 20:03:54 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.3 2002-06-24 21:25:36 aalamb Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
     public static final int NONE         = 0x0;
-    public static final int RAW          = 0x1;
+    //public static final int RAW          = 0x1;
     public static final int CONSTPROP    = 0x2;
     public static final int UNROLL       = 0x4;
-    public static final int FUSION       = 0x10;
-    public static final int PARTITION    = 0x20;
-
+    public static final int FUSION       = 0x8;
+    public static final int PARTITION    = 0x10;
+    public static final int RAW4         = 0x20;
+    public static final int RAW8         = 0x40;
     
     // Options
     public static final String OPTION_STREAMIT  = "--streamit";
     public static final String OPTION_CONSTPROP = "--constprop";
     public static final String OPTION_UNROLL    = "--unroll";
     public static final String OPTION_FUSION    = "--fusion";
-    public static final String OPTION_PARTITION = "--parition";
+    public static final String OPTION_PARTITION = "--partition";
 
-    public static final String OPTION_RAW       = "--raw";
-
+    public static final String OPTION_RAW        = "--raw";
+    public static final String OPTION_FOUR       = "4";
+    public static final String OPTION_EIGHT      = "8";
+    
     // suffix to add to the various pieces of compilation
     public static final String SUFFIX_C    = ".c";
     public static final String SUFFIX_EXE  = ".exe";
     public static final String SUFFIX_DATA = ".data";
+    public static final String SUFFIX_RAW_DATA = ".data.raw";
     
 
     
     // fields
+    /** option mask that was passed in **/
+    int compilerFlags;
     /** the options to pass to the streamit compiler **/
     String[] compilerOptions;
+
     
     /**
      * Create a new Compiler interface (always created using
      * factor method createCompilerInterface).
      **/
-    private CompilerInterface(String[] options) {
+    private CompilerInterface(int flags, String[] options) {
 	super();
+	this.compilerFlags = flags;
 	this.compilerOptions = options;
     }
     
@@ -53,10 +61,35 @@ public class CompilerInterface {
      * the caller.
      **/
     boolean streamITCompile(String root, String filename) {
-	return CompilerHarness.compile(this.compilerOptions,
-				       root + filename,        // input file(s)
-				       root + filename + SUFFIX_C,    // output c file
-				       root + filename + SUFFIX_EXE); // executable
+
+
+	boolean streamITResult;
+	boolean targetResult;
+
+
+	streamITResult = CompilerHarness.streamITCompile(this.compilerOptions,
+							 root,
+							 root + filename,                // input file(s)
+							 root + filename + SUFFIX_C);    // output c file
+
+	// if we didn't correctly compile for streamit, abort here
+	if (streamITResult == false) {
+	    return false;
+	}
+
+	// if we are executing on raw
+	if (rawTarget(this.compilerFlags)) {
+	    // run the raw compile (via make)
+	    targetResult = CompilerHarness.rawCompile(root,
+						      at.dms.kjc.raw.MakefileGenerator.MAKEFILE_NAME);
+	} else {
+	    // run uniprocessor compile
+	    targetResult =  CompilerHarness.gccCompile(root + filename + SUFFIX_C,    // output c file
+						       root + filename + SUFFIX_EXE); // executable
+	}
+
+	// return true if we passed both tests
+	return (streamITResult && targetResult);
     }
 
 
@@ -65,8 +98,15 @@ public class CompilerInterface {
      * false if something bad happened.
      **/
     boolean streamITRun(String root, String filename) {
-	return RuntimeHarness.execute(root + filename + SUFFIX_EXE,
-				      root + filename + SUFFIX_DATA);
+	if (rawTarget(this.compilerFlags)) {
+	    // set up the execution of the program in the raw simulator
+	    return RuntimeHarness.rawExecute(root,
+					     at.dms.kjc.raw.MakefileGenerator.MAKEFILE_NAME,
+					     root + filename + SUFFIX_DATA);
+	} else {
+	    return RuntimeHarness.uniExecute(root + filename + SUFFIX_EXE,
+					     root + filename + SUFFIX_DATA);
+	}
     }
 
     /**
@@ -92,12 +132,6 @@ public class CompilerInterface {
 	options[numOptions] = OPTION_STREAMIT;
 	numOptions++;
 	
-	// if we are compiling to raw 
-	if ((flags & RAW) == RAW) {
-	    options[numOptions] = OPTION_RAW;
-	    numOptions++;
-	}
-
 	// if we want to turn on constant prop
 	if ((flags & CONSTPROP) == CONSTPROP) {
 	    options[numOptions] = OPTION_CONSTPROP;
@@ -122,6 +156,23 @@ public class CompilerInterface {
 	    numOptions++;
 	}
 
+	// if we are compiling to 4 raw tiles 
+	if ((flags & RAW4) == RAW4) {
+	    options[numOptions] = OPTION_RAW;
+	    numOptions++;
+	    options[numOptions] = OPTION_FOUR;
+	    numOptions++;
+	}
+
+	// if we are compiling to 8 raw tiles 
+	if ((flags & RAW8) == RAW8) {
+	    options[numOptions] = OPTION_RAW;
+	    numOptions++;
+	    options[numOptions] = OPTION_EIGHT;
+	    numOptions++;
+	}
+
+	
 	// copy over the options that were used into an options
 	// array that is the correct size
 	String[] optionsToReturn = new String[numOptions];
@@ -130,7 +181,7 @@ public class CompilerInterface {
 	}
 
 	// create a new interface with these options	
-	return new CompilerInterface(optionsToReturn);
+	return new CompilerInterface(flags, optionsToReturn);
     }
 
     /**
@@ -151,4 +202,13 @@ public class CompilerInterface {
 	return returnString;
     }
 
+    /**
+     * returns true if the flags passed include any of the raw options.
+     **/
+    public static boolean rawTarget(int flags) {
+	boolean raw4 = ((flags & RAW4) == RAW4);
+	boolean raw8 = ((flags & RAW8) == RAW8);
+
+	return (raw4 || raw8);
+    }
 }

@@ -3,6 +3,10 @@
 
 #include "streamit.h"
 
+static void add_child_to_list(stream_context *child,
+                              stream_context_list **first,
+                              stream_context_list **last);
+
 stream_context *create_context(void *p)
 {
     stream_context *c = NULL;
@@ -81,9 +85,12 @@ void set_stream_type(stream_context *c, stream_type type)
         c->type_data.pipeline_data.last_child = NULL;
         break;
     case SPLIT_JOIN:
-      break;
     case FEEDBACK_LOOP:
-      break;
+        c->type_data.splitjoin_data.first_child = NULL;
+        c->type_data.splitjoin_data.last_child = NULL;
+        /* set_splitter() and set_joiner() do the rest of the
+         * initialization. */
+        break;
     default:
         assert (0);
         break;
@@ -107,37 +114,45 @@ void register_child(stream_context *c, stream_context *child)
         assert (0);
         break;
     case PIPELINE:
-        {
-            // allocate the new node
-            stream_context_list *new_child = (stream_context_list*) malloc (sizeof (stream_context_list));
-            assert (new_child);
-
-            // initialize the new node
-            new_child->context = child;
-            new_child->next = NULL;
-
-            // insert the new node into the list
-            if (c->type_data.pipeline_data.last_child != NULL)
-            {
-                // add the node to the list
-                assert (c->type_data.pipeline_data.first_child);
-                c->type_data.pipeline_data.last_child->next = new_child;
-                c->type_data.pipeline_data.last_child = new_child;
-            } else {
-                // this is the first node in the list
-                c->type_data.pipeline_data.first_child = new_child;
-                c->type_data.pipeline_data.last_child = new_child;
-            }
-
-            break;
-        }
+        add_child_to_list(child,
+                          &c->type_data.pipeline_data.first_child,
+                          &c->type_data.pipeline_data.last_child);
         break;
     case SPLIT_JOIN:
-      break;
     case FEEDBACK_LOOP:
-      break;
+        add_child_to_list(child,
+                          &c->type_data.splitjoin_data.first_child,
+                          &c->type_data.splitjoin_data.last_child);
+        break;
     default:
         assert (0);
 
+    }
+}
+
+static void add_child_to_list(stream_context *child,
+                              stream_context_list **first,
+                              stream_context_list **last)
+{
+    stream_context_list *new_child;
+    // allocate the new node
+    new_child = (stream_context_list*) malloc (sizeof (stream_context_list));
+    assert (new_child);
+        
+    // initialize the new node
+    new_child->context = child;
+    new_child->next = NULL;
+        
+    // insert the new node into the list
+    if (*last != NULL)
+    {
+        // add the node to the list
+        assert (*first);
+        (*last)->next = new_child;
+        *last = new_child;
+    } else {
+        // this is the first node in the list
+        *first = new_child;
+        *last = new_child;
     }
 }

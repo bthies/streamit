@@ -33,6 +33,11 @@ public class DynamicProgPartitioner extends ListPartitioner {
      */
     static final int HORIZONTAL_CONTAINER_OVERHEAD = 30;
     /**
+     * Threshold value of instruction code size before cost goes up
+     * dramatically.
+     */
+    static final int ICODE_THRESHOLD = 100;
+    /**
      * Whether or not we're sharing configurations in symmetrical
      * splitjoins.  Sharing doesn't work with 2-D partitioning, but
      * keeping as a variable for documentation purposes in case we
@@ -78,6 +83,10 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * Whether or not joiners need a tile.
      */
     private boolean joinersNeedTiles;
+    /**
+     * Whether or not there is a limit on instruction code size.
+     */
+    private boolean limitICode;
 
     /**
      * <joinersNeedTiles> indicates whether or not joiners in the graph
@@ -85,10 +94,15 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * counted as free.  If true, a tile will be allocated to each
      * joiner, though adjacent joiners will be considered as collapsed
      * into one.
+     *
+     * <limitICode> indicates whether or not we are considering an
+     * instruction code size limit, and factoring that into the work
+     * function.
      */
-    public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles, boolean joinersNeedTiles) {
+    public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles, boolean joinersNeedTiles, boolean limitICode) {
 	super(str, work, numTiles);
 	this.joinersNeedTiles = joinersNeedTiles;
+	this.limitICode = limitICode;
 	this.configMap = new HashMap();
 	this.uniformSJ = new HashSet();
     }
@@ -101,7 +115,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	PartitionUtil.setupScalingStatistics();
 	for (int i=1; i<maxTiles; i++) {
 	    LinkedList partitions = new LinkedList();
-	    new DynamicProgPartitioner(str, work, i, true).calcPartitions(partitions, false);
+	    new DynamicProgPartitioner(str, work, i, true, false).calcPartitions(partitions, false);
 	    PartitionUtil.doScalingStatistics(partitions, i);
 	}
 	PartitionUtil.stopScalingStatistics();
@@ -335,6 +349,13 @@ public class DynamicProgPartitioner extends ListPartitioner {
      */
     public boolean joinersNeedTiles() {
 	return this.joinersNeedTiles;
+    }
+
+    /**
+     * Whether or not to limit icode of fused parts.
+     */
+    public boolean limitICode() {
+	return this.limitICode;
     }
 
     int getBottleneck() {

@@ -60,11 +60,11 @@ public class ComputeCodeStore {
     //if read is false, then it is a write
     //
     public void addDRAMCommand(boolean read, boolean init, 
-			       int bytes, OffChipBuffer buffer) 
+			       int bytes, OffChipBuffer buffer, boolean presynched) 
     {
 	parent.setComputes();
 	String functName = "raw_streaming_dram_request_" +
-	    (read ? "read" : "write") + "_presynched";
+	    (read ? "read" : "write") + (presynched ? "_presynched" : "");
 
 	//the args for the streaming dram command
 	

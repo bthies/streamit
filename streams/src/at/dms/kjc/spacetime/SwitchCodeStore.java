@@ -68,6 +68,20 @@ public class SwitchCodeStore {
     {
 	return commAddrIns.size();
     }
+    
+    /*
+    public static void generateSwitchCode(ComputeNode source, ComputeNode[] dests,
+					  int stage, String comment)
+    {
+	if (stage == 0) 
+	    source.getRawChip().getTile(i).getSwitchCode().appendCommAddrIns(new Comment(comment));
+	if (stage == 1) 
+	    source.getRawChip().getTile(i).getSwitchCode().appendIns(new Comment(comment), true);
+	if (stage == 2)
+	    source.getRawChip().getTile(i).getSwitchCode().appendIns(new Comment(comment), false);
+	generateSwitchCode(source, dests, stage);
+    }
+    */
 
     /**
      give a source and an array of dests, generate the code to 

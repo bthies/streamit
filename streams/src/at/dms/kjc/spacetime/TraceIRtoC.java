@@ -74,6 +74,8 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	for (int i = 0; i < tile.getComputeCode().getFields().length; i++)
 	    tile.getComputeCode().getFields()[i].accept(this);
 	
+	print("\n");
+	
 	//print the pointers to the off chip buffers
 	if (!KjcOptions.magicdram)
 	    print(CommunicateAddrs.getFields(tile));

@@ -138,7 +138,7 @@ public class Rawify
 		input.getWeight(input.getSources()[i]) * 4;
 	    readBytes = Util.cacheLineDiv(readBytes);
 	    srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, init || primepump,
-								 readBytes, srcBuffer);
+								 readBytes, srcBuffer, true);
 	}
 
 	//generate the command to write to the dest of the input trace node
@@ -146,7 +146,7 @@ public class Rawify
 	int writeBytes = items * typeSize * 4;
 	writeBytes = Util.cacheLineDiv(writeBytes);
 	destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init || primepump, 
-							      writeBytes, destBuffer);
+							      writeBytes, destBuffer, true);
     }
 
     private static void generateOutputDRAMCommands(OutputTraceNode output, boolean init, boolean primepump) 
@@ -176,8 +176,8 @@ public class Rawify
 	    Util.getTypeSize(filter.getFilter().getOutputType()) * 4;
 	readBytes = Util.cacheLineDiv(readBytes);
 	srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, init || primepump,
-							     readBytes, srcBuffer);
-
+							     readBytes, srcBuffer, true);
+ 
 	//generate the commands to write the o/i temp buffer dest
 	Iterator dests = output.getDestSet().iterator();
 	while (dests.hasNext()){
@@ -187,7 +187,7 @@ public class Rawify
 		output.getWeight(input) * 4;
 	    writeBytes = Util.cacheLineDiv(writeBytes);
 	    destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init || primepump,
-								  writeBytes, destBuffer);
+								  writeBytes, destBuffer, true);
 	}
     }
     
@@ -227,7 +227,7 @@ public class Rawify
 		Util.cacheLineDiv((items * Util.getTypeSize(filterNode.getFilter().getInputType())) *
 				  4);
 
-	    tile.getComputeCode().addDRAMCommand(true, init || primepump, bytes, buffer);
+	    tile.getComputeCode().addDRAMCommand(true, init || primepump, bytes, buffer, true);
 	} 
     }
 
@@ -254,7 +254,8 @@ public class Rawify
 		Util.cacheLineDiv((items * Util.getTypeSize(filterNode.getFilter().getOutputType())) *
 				  4);
 	    SpaceTimeBackend.println("Generating DRAM store command with " + items + " items and " + bytes + " bytes");
-	    tile.getComputeCode().addDRAMCommand(false, init || primepump, bytes, buffer);
+	    //this command cannot be presynched
+	    tile.getComputeCode().addDRAMCommand(false, init || primepump, bytes, buffer, false);
 	}
     }
     

@@ -98,11 +98,11 @@ public class CommunicateAddrs
 		     Util.staticNetworkSendSuffix() + ";\n");
 		
 		//add declaration of pointer to neighbor
-		((StringBuffer)fields.get(allocatingTile)).append
+		((StringBuffer)fields.get(dram.getNeighboringTile())).append
 		    (buffer.getType().toString() + "* " + 
 		     buffer.getIdent() + ";\n");
 		//add the code to receive the address into the pointer
-		((StringBuffer)functions.get(allocatingTile)).append
+		((StringBuffer)functions.get(dram.getNeighboringTile())).append
 		    ("  " + Util.staticNetworkReceivePrefix() + 
 		     buffer.getIdent() + 
 		     Util.staticNetworkReceiveSuffix(buffer.getType()) + ";\n");

@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.6 2002-09-24 15:30:17 dmaze Exp $
+# $Id: knit,v 1.7 2002-09-25 17:43:11 dmaze Exp $
 #
 
 use strict;
@@ -120,7 +120,7 @@ sub old_to_c
     foreach my $java (@$fns)
       {
 	my $c = change_extension($java, "java", "c");
-	call("java at.dms.kjc.Main -s $kjcopts $java > $c");
+	call("java -Xmx512M at.dms.kjc.Main -s $kjcopts $java > $c");
 	push @out, $c;
       }
     return \@out;

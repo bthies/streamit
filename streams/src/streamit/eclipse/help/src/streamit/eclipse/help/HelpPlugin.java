@@ -21,7 +21,7 @@ public class HelpPlugin extends AbstractUIPlugin {
 		super(descriptor);
 		plugin = this;
 		try {
-			resourceBundle= ResourceBundle.getBundle("streamit.eclipse.help.HelpPluginResources");
+			resourceBundle= ResourceBundle.getBundle(HelpPlugin.class.getName());
 		} catch (MissingResourceException x) {
 			resourceBundle = null;
 		}

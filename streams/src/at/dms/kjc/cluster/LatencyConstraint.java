@@ -25,12 +25,25 @@ import streamit.scheduler2.*;
 import streamit.scheduler2.iriter.*;
 
 /**
- *
+ * Reprecents a constraint due to a latency constrained message.
  */
 
 public class LatencyConstraint {
 
-    private int sourceInit, sourceSteadyExec, destSteadyExec;
+    // int sourceInit
+
+    // for downstream messages this stores how many times source 
+    // (upstream node) can execute before it sends the first credit.
+
+    // for upstream messages this stores the initial credit that
+    // the destination (upstream node) receives.
+
+    private int sourceInit;
+
+    // steady state execution counts
+
+    private int sourceSteadyExec, destSteadyExec; 
+    
     private SIRFilter receiver;
     int dependencyData[];
 

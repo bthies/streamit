@@ -110,13 +110,18 @@ public class LatencyConstraints {
 			    int this_min = 0;
 
 			    SIRLatency latency = senders[y].getLatency();
+
+			    // we are interested in the least of the upper bounds.
 			
+			    // in each case we will send the message with as large latency
+			    // as possible.
+
 			    if (latency instanceof SIRLatencyMax) {
 				this_min = ((SIRLatencyMax)latency).getMax();
 			    }
 
 			    if (latency instanceof SIRLatencyRange) {
-				this_min = ((SIRLatencyRange)latency).getMin();
+				this_min = ((SIRLatencyRange)latency).getMax();
 			    }
 
 			    System.out.println("          detect Latency: "+
@@ -285,6 +290,15 @@ public class LatencyConstraints {
 			}
 			
 			constraint.output();
+		    }
+
+		    // take care of upstream messages
+
+		    if (upstream) {
+		    
+			
+
+
 		    }
 
 		    // for loop closes

@@ -11,7 +11,7 @@ import java.util.Iterator;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.9 2003-07-07 21:28:12 dmaze Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.10 2003-07-31 20:33:39 dmaze Exp $
  */
 public class SymbolTableVisitor extends FEReplacer
 {
@@ -68,6 +68,24 @@ public class SymbolTableVisitor extends FEReplacer
     {
         // To think about: should we cache GetExprType objects?
         return (Type)expr.accept(new GetExprType(symtab, streamType));
+    }
+
+    /**
+     * Add a variable declaration and register the variable in the
+     * symbol table.  This creates a {@link
+     * streamit.frontend.nodes.StmtVarDecl} for the specified type and
+     * name, and adds that statement using {@link addStatement}.  It
+     * also registers the new variable in the current symbol table.
+     *
+     * @param context  file and line number the statement belongs to
+     * @param type     type of the variable
+     * @param name     name of the variable
+     */
+    protected void addVarDecl(FEContext context, Type type, String name)
+    {
+        Statement stmt = new StmtVarDecl(context, type, name, null);
+        addStatement(stmt);
+        symtab.registerVar(name, type, stmt, SymbolTable.KIND_LOCAL);
     }
 
     public Object visitFieldDecl(FieldDecl field)

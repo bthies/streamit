@@ -29,6 +29,7 @@ public class Linear extends BufferedCommunication implements Constants {
     private double constant;
     private int popCount;
     private int[] idx;
+    private int num; //idx.length
     private int topPopNum; //idx.length-1
     private long uin;
     private int pos;
@@ -46,7 +47,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	popCount=content.getPopCount();
 	//Can be made better
 	assert array.length<=regs.length-array.length/popCount-1:"Not enough registers for coefficients";
-	int num=array.length/popCount;
+	num=array.length/popCount;
 	pos=content.getPos();
 	System.out.println("POS: "+pos);
 	idx=new int[num];
@@ -166,38 +167,47 @@ public class Linear extends BufferedCommunication implements Constants {
 	inline=new InlineAssembly();
 	body[body.length-4]=inline;
 	//Preloop
-	inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
-	inline.add("la "+tempReg+", %0");
-	/*for(int i=0;i<topPopNum;i++)
-	  for(int j=0;j<popCount;j++)
-	  for(int k=i;k>=0;k--) {
-	  inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-	  inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
-	  }
-	  for(int turn=0;turn<pos;turn++)
-	  for(int j=0;j<popCount;j++)
-	  for(int k=topPopNum;k>=0;k--) {
-	  inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-	  inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
-	  }*/
-	int index=0;
-	for(int i=0;i<topPopNum;i++)
-	    for(int j=0;j<popCount;j++)
-		for(int k=i;k>=0;k--) {
+	final int turns=pos*num;
+	if(begin) {
+	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
+	    inline.add("la "+tempReg+", %0");
+	    int index=0;
+	    for(int i=0;i<topPopNum;i++)
+		for(int j=0;j<popCount;j++) {
 		    inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
-		    inline.add("mul.s "+tempRegs[0]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
-		    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
 		    index+=4;
+		    for(int k=i;k>=0;k--) {
+			inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+		    }
 		}
-	for(int turn=0;turn<pos;turn++)
-	    for(int j=0;j<popCount;j++)
-		for(int k=topPopNum;k>=0;k--) {
-		    inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
-		    inline.add("mul.s "+tempRegs[0]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
-		    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+	    for(int turn=0;turn<turns;turn++)
+		for(int j=0;j<popCount;j++) {
+		    if(turn==0) //First execution don't pass on values
+			inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+		    else
+			inline.add("lw!   "+tempRegs[0]+",\\t"+index+"("+tempReg+")"); //Load value and send to switch
 		    index+=4;
+		    for(int k=topPopNum;k>=0;k--) {
+			inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+		    }
 		}
-	//TODO: Handle Remaining Items
+	    //TODO: Handle Remaining Items
+	} else {
+	    for(int i=0;i<topPopNum;i++)
+		for(int j=0;j<popCount;j++)
+		    for(int k=i;k>=0;k--) {
+			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		    }
+	    for(int turn=0;turn<turns;turn++)
+		for(int j=0;j<popCount;j++)
+		    for(int k=topPopNum;k>=0;k--) {
+			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		    }
+	}
 	//Loop Counter
 	inline=new InlineAssembly();
 	body[body.length-3]=inline;
@@ -232,8 +242,10 @@ public class Linear extends BufferedCommunication implements Constants {
 	//Postloop
 	inline=new InlineAssembly();
 	body[body.length-1]=inline;
-	inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
-	inline.add("la "+tempReg+", %0");
+	if(begin) {
+	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
+	    inline.add("la "+tempReg+", %0");
+	}
 	//TODO: Restore regs 
 	inline.add(".set at");
 	return new JBlock(null,body,null);

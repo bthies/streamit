@@ -971,10 +971,9 @@ public class Rawify
 		    IntraTraceBuffer.getBuffer(node, (OutputTraceNode)node.getNext()).
 		    getNonRedundant().getDRAM();
 	    }
-	    
 	}
 	SwitchOPort dest = rawChip.getOPort(tile, destNode);
-	SwitchOPort dest2 = rawChip.getOPort2(tile, destNode);
+	//SwitchOPort dest2 = rawChip.getOPort2(tile, destNode);
 	destNode = null;
 	//Get filter properties
 	FilterContent content = node.getFilter();
@@ -983,72 +982,77 @@ public class Rawify
 	final int numPop = numCoeff/pop;
 	final boolean begin=content.getBegin();
 	final boolean end=content.getEnd();
+	final int pos=content.getPos();
+	final int turns=pos*numCoeff;
 	//System.out.println("SRC: "+src);
 	//System.out.println("DEST: "+dest);
 	//Begin codegen
 	SwitchCodeStore code = tile.getSwitchCode();
 	//System.err.println("Getting HERE!");
 	code.appendIns(new Comment("HERE!"),false);
-	boolean first=true;
 	//Preloop
-	for(int i = 0; i<numPop-1; i++)
-	    for(int j = 0; j<pop; j++) {
-		FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-		ins.addRoute(src, SwitchOPort.CSTI);
-		//if(!first) {
-		if(!end) {
-		    ins.addRoute(src,dest);
-		    //}
-		}
-		code.appendIns(ins, false);
-		for(int k = i-1; k>= 0; k--) {
-		    FullIns newIns = new FullIns(tile);
-		    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-		    code.appendIns(newIns, false);
-		}
-		FullIns newIns=null;
-		if(!begin) {
-		    newIns=new FullIns(tile);
-		    newIns.addRoute(src2, SwitchOPort.CSTI2);
-		    code.appendIns(newIns, false);
-		}
-		/*if(!first) {
-		  newIns = new FullIns(tile);
-		  newIns.addRoute(SwitchIPort.CSTO,dest);
-		  code.appendIns(newIns, init||primePump);
-		  }
-		  first=false;*/
-	    }
-	final int turns=content.getPos();
-	for(int turn=0;turn<turns;turn++)
-	    for(int j = 0; j<pop; j++) {
-		FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-		ins.addRoute(src, SwitchOPort.CSTI);
-		if(!first) {
-		    if(!end) {
-			ins.addRoute(src,dest);
+	if(begin) {
+	    //First execution don't pass on values
+	    final int lessTurns=turns-1; //So loop for one less
+	    for(int turn=0;turn<lessTurns;turn++)
+		for(int j = 0; j<pop; j++) {
+		    FullIns ins=new FullIns(tile);
+		    ins.addRoute(SwitchIPort.CSTO,dest);
+		    code.appendIns(ins,false);
+		    if(j==0) {
+			FullIns newIns=new FullIns(tile);
+			newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
+			code.appendIns(newIns, false);
 		    }
 		}
-		code.appendIns(ins, false);
-		for(int k = numPop-2; k>= 0; k--) {
-		    FullIns newIns = new FullIns(tile);
-		    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-		    code.appendIns(newIns, false);
+	} else {
+	    for(int i = 0; i<numPop-1; i++) {
+		for(int j = 0; j<pop; j++) {
+		    //Pass first value
+		    FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+		    ins.addRoute(src, SwitchOPort.CSTI);
+		    code.appendIns(ins, false);
+		    //Repeat first value
+		    for(int k = i-1; k>= 0; k--) {
+			FullIns newIns = new FullIns(tile);
+			newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+			code.appendIns(newIns, false);
+		    }
+		    //Pass in partial sum
+		    if(j==0) {
+			FullIns newIns=new FullIns(tile);
+			newIns.addRoute(src, SwitchOPort.CSTI); //Used to be src2,csti2
+			code.appendIns(newIns, false);
+		    }
 		}
-		FullIns newIns=null;
-		if(!begin) {
-		    newIns=new FullIns(tile);
-		    newIns.addRoute(src2, SwitchOPort.CSTI2);
-		    code.appendIns(newIns, false);
-		}
-		if(!first) {
-		    newIns = new FullIns(tile);
-		    newIns.addRoute(SwitchIPort.CSTO,dest2);
-		    code.appendIns(newIns, false);
-		}
-		first=false;
 	    }
-	code.appendIns(new MoveIns(SwitchReg.R3,SwitchIPort.CSTO),false); //Getting loop counter
+	    for(int turn=0;turn<turns;turn++)
+		for(int j = 0; j<pop; j++) {
+		    //Pass first value
+		    FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+		    ins.addRoute(src, SwitchOPort.CSTI);
+		    if(!(end||turn==0)) //First execution don't pass on values
+			ins.addRoute(src,dest);
+		    code.appendIns(ins, false);
+		    //Repeat first value
+		    for(int k = numPop-2; k>= 0; k--) {
+			FullIns newIns = new FullIns(tile);
+			newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+			code.appendIns(newIns, false);
+		    }
+		    //Pass in partial sum
+		    if(j==0) {
+			FullIns newIns=new FullIns(tile);
+			newIns.addRoute(src, SwitchOPort.CSTI); //Used to be src2,csti2
+			//Pass out partial sum to next filter
+			if(turn!=0) //First execution don't pass on values
+			    newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
+			code.appendIns(newIns, false);
+		    }
+		}
+	}
+	//Get loop counter
+	code.appendIns(new MoveIns(SwitchReg.R3,SwitchIPort.CSTO),false);
 	//Innerloop
 	Label label = code.getFreshLabel();
 	code.appendIns(label,false);

@@ -209,9 +209,11 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
     private void visitStream(SIRStream stream) {
 	// visit the methods
 	JMethodDeclaration[] methods = stream.getMethods();
-	for (int i=0; i<methods.length; i++) {
-	    methods[i].accept(this);
-	}
+        if (methods != null) {
+            for (int i=0; i<methods.length; i++) {
+                methods[i].accept(this);
+            }
+        }
 	// visit the fields
 	JFieldDeclaration[] fields = stream.getFields();
 	for (int i=0; i<fields.length; i++) {

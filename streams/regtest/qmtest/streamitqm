@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# streamitqm: Prepare the StreamIt tree for QMTest
+# David Maze <dmaze@cag.lcs.mit.edu>
+# $Id: streamitqm,v 1.1 2003-11-18 21:37:44 dmaze Exp $
+#
+
+cd "$STREAMIT_HOME"
+FILES="classes.qmc configuration streamit.py"
+
+case "$1" in
+    setup)
+	test -d QMTest || mkdir QMTest
+	for f in $FILES; do cp ./regtest/qmtest/$f QMTest; done
+	./regtest/qmtest/build-qmtest.py ./regtest/qmtest/regtest.xml
+	;;
+
+    clean)
+	rm -rf QMTest apps.qms results.qmr
+	;;
+
+    commit)
+	cp QMTest/* regtest/qmtest
+	;;
+
+    *)
+	echo "Usage: streamitqm [setup|clean|commit]" >&2
+	exit 1
+	;;
+esac

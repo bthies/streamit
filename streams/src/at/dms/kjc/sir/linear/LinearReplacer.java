@@ -9,7 +9,9 @@ import at.dms.compiler.*;
 
 
 /**
- * A LinearReplacer is the base class that all replacers inherit from.
+ * A LinearReplacer is the base class that all replacers that make
+ * use of linear information inherit from.
+ * $Id: LinearReplacer.java,v 1.13 2003-03-08 21:13:57 aalamb Exp $
  **/
 public abstract class LinearReplacer extends EmptyStreamVisitor implements Constants{
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
@@ -146,12 +148,23 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 	JExpression fieldAccessExpr;
 	fieldAccessExpr = new JFieldAccessExpression(null, new JThisExpression(null), arrField.getIdent());
 	JExpression fieldArrayAccessExpr;
-	fieldArrayAccessExpr = new JArrayAccessExpression(null, fieldAccessExpr, new JIntLiteral(index), arrField.getType());
+	fieldArrayAccessExpr = new JArrayAccessExpression(null,
+							  fieldAccessExpr,
+							  new JIntLiteral(index),
+							  arrField.getType());
 	
 	return fieldArrayAccessExpr;
     }
-	
 
+        /* makes a field array access expression of the form this.arrField[index] */
+    public JExpression makeArrayFieldAccessExpr(String arrFieldName, int index) {
+	JExpression fieldAccessExpr = makeFieldAccessExpression(arrFieldName);
+	JExpression arrayIndex = new JIntLiteral(index);
+	JExpression arrayAccessExpression = new JArrayAccessExpression(null,
+								       fieldAccessExpr,
+								       arrayIndex);
+	return arrayAccessExpression;
+    }
     
     
 }

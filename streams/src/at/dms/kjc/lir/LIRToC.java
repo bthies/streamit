@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.86 2003-12-02 21:12:12 dmaze Exp $
+ * $Id: LIRToC.java,v 1.87 2003-12-05 21:01:09 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -230,6 +230,14 @@ public class LIRToC
             methods[i].accept(this);
         }
 
+        // Print all of the portals.
+        for (int i = 0; i < SIRPortal.getPortals().length; i++) {
+            print("portal ");
+            SIRPortal.getPortals()[i].accept(this);
+            print(";");
+            newLine();
+        }
+
         // Print any interface tables there might be.
         if (body != null) {
             for (int i = 0; i < body.length ; i++) {
@@ -382,7 +390,7 @@ public class LIRToC
 
             // And now print a wrapper for send_message().
             newLine();
-            print("void send_" + name + "(portal *p, latency l");
+            print("void send_" + name + "(portal p, latency l");
             for (int j = 0; j < params.length; j++) {
                 print(", ");
                 print(params[j]);

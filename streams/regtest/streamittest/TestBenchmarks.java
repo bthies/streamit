@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.47 2003-10-16 16:14:33 dmaze Exp $
+ * $Id: TestBenchmarks.java,v 1.48 2003-10-17 10:16:34 thies Exp $
  **/
 package streamittest;
 
@@ -124,7 +124,9 @@ public class TestBenchmarks extends StreamITTestCase {
     }
 
     public void testFFT3() {
-	doCompileRunVerifyTest(BENCH_ROOT + "fft/streamit/",
+        String root = BENCH_ROOT + "fft/streamit/";
+        doSyntaxConvertTest(root, "FFT3.str", "FFT3.java");
+	doCompileRunVerifyTest(root,
 			       "FFT3.java",
 			       "FFT3.out",
 			       0, 64);

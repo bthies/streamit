@@ -43,7 +43,8 @@ public class Flattener {
 			       SIRStructure[] structs) {
 
 	// move field initializations into init function
-	FieldInitMover.moveStreamInitialAssignments(str);
+	FieldInitMover.moveStreamInitialAssignments(str, 
+		       FieldInitMover.COPY_ARRAY_INITIALIZERS);
 
 	// propagate constants and unroll loops
 	System.err.print("Running Constant Prop and Unroll... ");
@@ -102,7 +103,10 @@ public class Flattener {
 
 	// move field initializations into init function
 	System.err.print("Moving initial assignments... ");
-	FieldInitMover.moveStreamInitialAssignments(str);
+	// ignore array initializers this time since we already moved
+	// them copied them over once, don't need to move again
+	FieldInitMover.moveStreamInitialAssignments(str,
+	       FieldInitMover.IGNORE_ARRAY_INITIALIZERS);
 	System.err.println("done.");
 
 	if (KjcOptions.sjtopipe) {

@@ -124,7 +124,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				     (JTypeDeclaration[])
 				     structs.toArray(new JTypeDeclaration[0]),
 				     /* JPhylum[] initializers */
-				     null,
+				     JClassDeclaration.EMPTY,
 				     /* JavadocComment javadoc */
 				     null,
 				     /* JavaStyleComment[] comment */
@@ -208,7 +208,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				  /* JTypeDeclaration[] inners, */
 				  JClassDeclaration.EMPTY,
 				  /* JPhylum[] initializers, */
-				  null,
+				  JClassDeclaration.EMPTY,
 				  /* JavadocComment javadoc, */
 				  null,
 				  /* JavaStyleComment[] comment */
@@ -349,7 +349,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				  /* JTypeDeclaration[] inners, */
 				  JClassDeclaration.EMPTY,
 				  /* JPhylum[] initializers, */
-				  null,
+				  JClassDeclaration.EMPTY,
 				  /* JavadocComment javadoc, */
 				  null,
 				  /* JavaStyleComment[] comment */

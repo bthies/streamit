@@ -18,12 +18,21 @@ import java.util.*;
  * int i;
  * i = 5;
  * </pre>
- * $Id: FieldInitMover.java,v 1.9 2004-07-12 02:09:45 thies Exp $
+ * $Id: FieldInitMover.java,v 1.10 2004-07-12 06:16:48 thies Exp $
  **/
 public class FieldInitMover extends EmptyStreamVisitor {
+    public static final int MOVE_ARRAY_INITIALIZERS = 0;
+    public static final int COPY_ARRAY_INITIALIZERS = 1;
+    public static final int IGNORE_ARRAY_INITIALIZERS = 2;
+
+    private final int moveArrayInitializers;
   
-    public static void moveStreamInitialAssignments(SIRStream str) {
-	FieldInitMover mover = new FieldInitMover();
+    private FieldInitMover(int moveArrayInitializers) {
+	this.moveArrayInitializers = moveArrayInitializers;
+    }
+
+    public static void moveStreamInitialAssignments(SIRStream str, int moveArrayInitializers) {
+	FieldInitMover mover = new FieldInitMover(moveArrayInitializers);
 	IterFactory.createFactory().createIter(str).accept(mover);
     }
 
@@ -47,7 +56,7 @@ public class FieldInitMover extends EmptyStreamVisitor {
      **/
     private void moveFieldInitializations(SIRStream filter) {
 	// get a visitor that will walk down the filter, replacing fields as it goes
-	FieldInitMoverVisitor harvester = new FieldInitMoverVisitor();
+	FieldInitMoverVisitor harvester = new FieldInitMoverVisitor(moveArrayInitializers);
 
 	// for each field declaration, harvest any initialization expressions
 	JFieldDeclaration[] fields = filter.getFields();
@@ -79,10 +88,12 @@ public class FieldInitMover extends EmptyStreamVisitor {
     static class FieldInitMoverVisitor extends SLIRReplacingVisitor {
 	/** Assignments that need to be added to the initializations statements **/
 	Vector assignmentStatements;
+	private int moveArrayInitializers;
 
-	FieldInitMoverVisitor() {
+	FieldInitMoverVisitor(int moveArrayInitializers) {
 	    super();
 	    this.assignmentStatements = new Vector();
+	    this.moveArrayInitializers = moveArrayInitializers;
 	}
 
 	public Vector getAssignmentStatements() {
@@ -104,10 +115,8 @@ public class FieldInitMover extends EmptyStreamVisitor {
 	    // make an assignment expression to stick in the
 	    // init function
 	    //System.out.println("Initial expression for field: " + expr);
-	    if (expr != null && 
-		// don't move array initializers because they need to
-		// be declared with field.
-		!(expr instanceof JArrayInitializer)) {
+	    if (expr != null &&
+		(moveArrayInitializers!=FieldInitMover.IGNORE_ARRAY_INITIALIZERS || !(expr instanceof JArrayInitializer))) {
 		// build up the this.field = initalValue expression
 		
 		
@@ -130,8 +139,11 @@ public class FieldInitMover extends EmptyStreamVisitor {
 		// add to the init function
 		assignmentStatements.add(assignStmt);
 		
-		// mutate the field so that it has no initializer expression
-		self.getVariable().setExpression(null);
+		// only move if specified
+		if (moveArrayInitializers==FieldInitMover.MOVE_ARRAY_INITIALIZERS && expr instanceof JArrayInitializer) {
+		    // mutate the field so that it has no initializer expression
+		    self.getVariable().setExpression(null);
+		}
 	    }
 	    return self;
 	}

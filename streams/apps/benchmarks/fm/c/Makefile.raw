@@ -20,7 +20,7 @@ ifndef TOPDIR
 $(error TOPDIR not defined, make sure to include Makefile.include)
 endif
 
-OBJECT_FILES_00 = fmref_raw.o
+OBJECT_FILES_00 = fmref.o
 
 
 include $(COMMONDIR)/Makefile.all

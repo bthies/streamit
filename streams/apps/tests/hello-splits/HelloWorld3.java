@@ -33,15 +33,15 @@ public class HelloWorld3 extends Stream
     {
         Add(new CharGenerator(".....Hello World!.....\0"));
         //Add(new XORLoop());
-        Add(new SplitJoin() 
+        Add(new SplitJoin()
             {
-                public void Init() 
+                public void Init()
                 {
                     SetSplitter(WEIGHTED_ROUND_ROBIN (2, 2));
-                    Add(new ChannelConnectFilter (new char [1]));
+                    Add(new ChannelConnectFilter (Character.TYPE));
                     //Add(new XORLoop());
-                    //Add(new ChannelConnectFilter (new char [1]));
-                    Add(new ChannelConnectFilter (new char [1]));
+                    //Add(new ChannelConnectFilter (Character.TYPE));
+                    Add(new ChannelConnectFilter (Character.TYPE));
                     SetJoiner(ROUND_ROBIN());
                 }
             });
@@ -71,7 +71,7 @@ public class HelloWorld3 extends Stream
 
 }
 /*
-class XORLoop extends FeedbackLoop 
+class XORLoop extends FeedbackLoop
 {
     public void Init() {
         SetDelay(3);
@@ -85,8 +85,8 @@ class XORFilter extends Filter
 {
     public void InitIO ()
     {
-        input = new Channel(new char[0]);
-        output = new Channel(new char[0]);
+        input = new Channel(Character.TYPE);
+        output = new Channel(Character.TYPE);
     }
 
     public void Work()
@@ -99,17 +99,17 @@ class XORFilter extends Filter
 
 // buffers input until it gets a null-terminated string, then prints it
 // to the screen
-class BufferedCharPrinter extends Filter 
+class BufferedCharPrinter extends Filter
 {
     public void InitIO ()
     {
-        input = new Channel(new char[0]);
+        input = new Channel(Character.TYPE);
     }
 
     // string it's queueing up
     private StringBuffer sb;
 
-    public void Init() 
+    public void Init()
     {
         sb = new StringBuffer();
     }

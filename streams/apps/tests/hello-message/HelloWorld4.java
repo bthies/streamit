@@ -31,7 +31,7 @@ public class HelloWorld4 extends Stream {
 final class MessagingCharGenerator extends Filter {
 
     private Channel input = null;
-    private Channel output = new Channel(new char[0]);
+    private Channel output = new Channel(Character.TYPE);
 
     public MessagingCharGenerator(String str) {
 	super(str);
@@ -66,7 +66,7 @@ final class MessagingCharGenerator extends Filter {
 // to the screen
 final class MessagingBufferedCharPrinter extends Filter {
 
-    private Channel input = new Channel(new char[0]);
+    private Channel input = new Channel(Character.TYPE);
     private Channel output = null;
 
     // string it's queueing up

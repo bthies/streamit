@@ -10,64 +10,64 @@ public class Channel extends DestroyedClass
     Class type;
     Operator source = null, sink = null;
     boolean declaredFull = false;
-    
+
     LinkedList queue;
-    
+
     // the channel should be constructed with a 0-length array
     // indicating the type that will be held in this channel.
-    public Channel(Class channelType) 
+    public Channel(Class channelType)
     {
         ASSERT (channelType != null);
         type = channelType;
         queue = new LinkedList ();
     }
-    
+
     public Channel (Channel original)
     {
         ASSERT (original != null);
-        
+
         type = original.GetType ();
         queue = new LinkedList ();
     }
-    
+
     void EnsureData (int amount)
     {
         while (queue.size () < amount)
         {
             ASSERT (source != null);
-            
+
             source.Work ();
         }
     }
-    
+
     void EnsureData ()
     {
         EnsureData (1);
     }
-    
+
     private void Enqueue (Object o)
     {
-    	queue.addLast (o);
-    	
-    	// overflow at 50 chars in the queue
-    	if (queue.size () > 100 && !declaredFull)
-    	{
-    		source.AddFullChannel (this);
+        queue.addLast (o);
+
+        // overflow at 50 chars in the queue
+        if (queue.size () > 100 && !declaredFull)
+        {
+                source.AddFullChannel (this);
             declaredFull = true;
-    	}
+        }
     }
-    
+
     private Object Dequeue ()
     {
-    	if (queue.size () < 50 && declaredFull)
-    	{
-    		source.RemoveFullChannel (this);
+        if (queue.size () < 50 && declaredFull)
+        {
+                source.RemoveFullChannel (this);
             declaredFull = false;
-    	}
-    	
-    	return queue.removeFirst ();
+        }
+
+        return queue.removeFirst ();
     }
-    
+
 
     // PUSH OPERATIONS ----------------------------------------------
 
@@ -75,15 +75,15 @@ public class Channel extends DestroyedClass
     public void Push(Object o)
     {
         ASSERT (o.getClass () == type);
-        
+
         Enqueue (o);
     }
 
     // push an int
-    public void PushInt(int i) 
+    public void PushInt(int i)
     {
         ASSERT (type == Integer.TYPE);
-        
+
         Enqueue (new Integer (i));
     }
 
@@ -91,7 +91,7 @@ public class Channel extends DestroyedClass
     public void PushChar(char c)
     {
         ASSERT (type == Character.TYPE);
-        
+
         Enqueue (new Character  (c));
     }
 
@@ -99,7 +99,7 @@ public class Channel extends DestroyedClass
     public void PushDouble(double d)
     {
         ASSERT (type == Double.TYPE);
-        
+
         Enqueue (new Double (d));
     }
 
@@ -107,7 +107,7 @@ public class Channel extends DestroyedClass
     public void PushFloat(float d)
     {
         ASSERT (type == Float.TYPE);
-        
+
         Enqueue (new Float (d));
     }
 
@@ -123,11 +123,11 @@ public class Channel extends DestroyedClass
     public Object Pop()
     {
         EnsureData ();
-        
+
         Object data;
         data = Dequeue ();
         ASSERT (data != null);
-        
+
         return data;
     }
 
@@ -135,24 +135,24 @@ public class Channel extends DestroyedClass
     public int PopInt()
     {
         ASSERT (type == Integer.TYPE);
-        
+
         Integer data;
         data = (Integer) Pop ();
         ASSERT (data != null);
-        
+
         return data.intValue ();
     }
-    
+
 
     // pop a char
     public char PopChar()
     {
         ASSERT (type == Character.TYPE);
-        
+
         Character c;
         c = (Character) Pop ();
         ASSERT (c != null);
-        
+
         return c.charValue ();
     }
 
@@ -160,29 +160,29 @@ public class Channel extends DestroyedClass
     public double PopDouble()
     {
         ASSERT (type == Double.TYPE);
-        
+
         Double data;
         data = (Double) Pop ();
         ASSERT (data != null);
-        
+
         return data.doubleValue ();
     }
-    
+
     // pop a float
     public float PopFloat()
     {
         ASSERT (type == Float.TYPE);
-        
+
         Float data;
         data = (Float) Pop ();
         ASSERT (data != null);
-        
+
         return data.floatValue ();
     }
-    
+
 
     // pop a String
-    public String PopString() 
+    public String PopString()
     {
         String data = (String) Pop ();;
         ASSERT (data != null);
@@ -195,12 +195,12 @@ public class Channel extends DestroyedClass
     // peek at something of type <type>
     public Object Peek(int index)
     {
-        EnsureData (index);
-        
+        EnsureData (index + 1);
+
         Object data;
-        data = queue.get (index - 1);
+        data = queue.get (index);
         ASSERT (data != null);
-        
+
         return data;
     }
 
@@ -208,11 +208,11 @@ public class Channel extends DestroyedClass
     public int PeekInt(int index)
     {
         ASSERT (type == Integer.TYPE);
-        
+
         Integer data;
         data = (Integer) Peek (index);
         ASSERT (data != null);
-        
+
         return data.intValue ();
     }
 
@@ -220,11 +220,11 @@ public class Channel extends DestroyedClass
     public char PeekChar(int index)
     {
         ASSERT (type == Character.TYPE);
-        
+
         Character data;
         data = (Character) Peek (index);
         ASSERT (data != null);
-        
+
         return data.charValue ();
     }
 
@@ -232,11 +232,11 @@ public class Channel extends DestroyedClass
     public double PeekDouble(int index)
     {
         ASSERT (type == Double.TYPE);
-        
+
         Double data;
         data = (Double) Peek (index);
         ASSERT (data != null);
-        
+
         return data.doubleValue ();
     }
 
@@ -244,11 +244,11 @@ public class Channel extends DestroyedClass
     public double PeekFloat(int index)
     {
         ASSERT (type == Float.TYPE);
-        
+
         Float data;
         data = (Float) Peek (index);
         ASSERT (data != null);
-        
+
         return data.floatValue ();
     }
 
@@ -258,14 +258,14 @@ public class Channel extends DestroyedClass
         String data;
         data = (String) Peek (index);
         ASSERT (data != null);
-        
+
         return data;
     }
-    
+
     // ------------------------------------------------------------------
     //                  syntax checking functions
     // ------------------------------------------------------------------
-    
+
     Class GetType () { return type; }
 
     // ------------------------------------------------------------------
@@ -274,7 +274,7 @@ public class Channel extends DestroyedClass
 
     Operator GetSource () { return source; }
     Operator GetSink () { return sink; }
-    
+
     void SetSource (Operator _source) { source = _source; }
     void SetSink (Operator _sink) { sink = _sink; }
 }

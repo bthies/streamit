@@ -9,8 +9,12 @@ class RandomSource extends Filter
     
     public void Work ()
     {
-        float value = (float) java.lang.Math.random ();
+        /*
+         float value = (float) java.lang.Math.random ();
         output.PushFloat (value);
+         */
+        output.PushFloat (1);
+        output.PushFloat (-2);
     }
 }
 

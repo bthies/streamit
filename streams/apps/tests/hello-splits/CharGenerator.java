@@ -1,8 +1,8 @@
 import streamit.*;
 
-public class CharGenerator extends Filter 
+public class CharGenerator extends Filter
 {
-    public CharGenerator(String str) 
+    public CharGenerator(String str)
     {
         super(str);
     }
@@ -12,13 +12,13 @@ public class CharGenerator extends Filter
     // the string to output
     private String message;
 
-    public void InitIO () 
-    { 
-        output = new Channel (new char [1]);
+    public void InitIO ()
+    {
+        output = new Channel (Character.TYPE);
     }
-    
+
     // <message> is string to output, one char at a time
-    public void Init(String message) 
+    public void Init(String message)
     {
         // init counter
         i = 0;
@@ -30,7 +30,7 @@ public class CharGenerator extends Filter
     {
         output.PushChar(message.charAt(i));
         i++;
-        if (message.length () == i) 
+        if (message.length () == i)
         {
             i = 0;
             output.PushChar ('\n');

@@ -160,34 +160,36 @@ public class Unroller extends SLIRReplacingVisitor {
 				    JExpression cond,
 				    JStatement incr,
 				    JStatement body) {
-	// first recurse into body
-	Hashtable saveModified=currentModified;
-	currentModified=new Hashtable();
-	JStatement newStmt = (JStatement)body.accept(this);
-	if (newStmt!=null && newStmt!=body) {
-	    self.setBody(newStmt);
-	}
-	// check for loop induction variable
-	
-	UnrollInfo info = getUnrollInfo(init, cond, incr, body,values,constants);
-	// see if we can unroll...
-	if(shouldUnroll(info, body, currentModified)) {
-	    // Set modified
+	if(!self.unrolled) { //Ignore if already unrolled
+	    // first recurse into body
+	    Hashtable saveModified=currentModified;
+	    currentModified=new Hashtable();
+	    JStatement newStmt = (JStatement)body.accept(this);
+	    if (newStmt!=null && newStmt!=body) {
+		self.setBody(newStmt);
+	    }
+	    // check for loop induction variable
+	    
+	    UnrollInfo info = getUnrollInfo(init, cond, incr, body,values,constants);
+	    // see if we can unroll...
+	    if(shouldUnroll(info, body, currentModified)) {
+		// Set modified
+		saveModified.putAll(currentModified);
+		currentModified=saveModified;
+		currentModified.put(info.var,Boolean.TRUE);
+		// do unrolling
+		return doUnroll(info, self);
+	    } else if(canUnroll(info,currentModified)) {
+		// Set modified
+		saveModified.putAll(currentModified);
+		currentModified=saveModified;
+		currentModified.put(info.var,Boolean.TRUE);
+		// do unrolling
+		return doPartialUnroll(info, self);
+	    }
 	    saveModified.putAll(currentModified);
 	    currentModified=saveModified;
-	    currentModified.put(info.var,Boolean.TRUE);
-	    // do unrolling
-	    return doUnroll(info, self);
-	} else if(canUnroll(info,currentModified)) {
-	    // Set modified
-	    saveModified.putAll(currentModified);
-	    currentModified=saveModified;
-	    currentModified.put(info.var,Boolean.TRUE);
-	    // do unrolling
-	    return doPartialUnroll(info, self);
 	}
-	saveModified.putAll(currentModified);
-	currentModified=saveModified;
 	return self;
     }
 
@@ -343,27 +345,41 @@ public class Unroller extends SLIRReplacingVisitor {
 		cloneBody.accept(new SLIRReplacingVisitor() {
 			public Object visitLocalVariableExpression(JLocalVariableExpression self2,
 								   String ident) {
-			    if(inductVar.equals(self2.getVariable()))
+			    if(inductVar.equals(self2.getVariable())) {
 				return makeIncreased(info,incremented*incrVal);
-			    else
+			    } else
 				return self2;
 			}  
 		    });
 		newBody[i]=cloneBody;
 	    }
 	}
-	
 	JBlock body=new JBlock(null,newBody,null);
 	JStatement[] newStatements=new JStatement[2*remain+2];
 	newStatements[0]=self.getInit();
+	int result=info.initVal;
 	for(int i=1;i<2*remain+1;i++) {
 	    JStatement cloneBody=(JStatement)ObjectDeepCloner.deepCopy(self.getBody());
 	    JStatement cloneIncr=(JStatement)ObjectDeepCloner.deepCopy(makeIncr(info,info.incrVal));
 	    newStatements[i]=cloneBody;
 	    i++;
 	    newStatements[i]=cloneIncr;
+	    result=incrementCounter(result,info);
 	}
-	newStatements[newStatements.length-1]=new JForStatement(null,new JEmptyStatement(null,null),self.getCondition(),makeIncr(info,KjcOptions.unroll*info.incrVal),body,null);
+	JForStatement newFor=new JForStatement(null,
+					       new JExpressionStatement(null,
+									new JAssignmentExpression(null,
+												  new JLocalVariableExpression(null,
+															       info.var),
+												  new JIntLiteral(result)),
+									null),
+					       
+					       self.getCondition(),
+					       makeIncr(info,KjcOptions.unroll*info.incrVal),
+					       body,
+					       null);
+	newFor.unrolled=true;
+	newStatements[newStatements.length-1]=newFor;
 	return new JBlock(null,
 			  newStatements,
 			  null);

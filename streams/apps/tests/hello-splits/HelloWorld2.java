@@ -25,39 +25,39 @@ public class HelloWorld2 extends StreamIt
     // this is the defining part of the stream
     public void init()
     {
-        add(new CharGenerator("Hello World2!"));
-        add(new SplitJoin()
+        this.add(new CharGenerator("Hello World2!"));
+        this.add(new SplitJoin()
         {
             public void init()
             {
                 setSplitter(ROUND_ROBIN ());
-                add(new Identity (Character.TYPE));
-                add(new Identity (Character.TYPE));
+                this.add(new Identity (Character.TYPE));
+                this.add(new Identity (Character.TYPE));
                 setJoiner (ROUND_ROBIN ());
             }
         });
-        add (new Pipeline ()
+        this.add (new Pipeline ()
         {
             public void init ()
             {
-                add (new Pipeline ()
+                this.add (new Pipeline ()
                 {
                     public void init ()
                     {
-                        add (new SplitJoin ()
+                        this.add (new SplitJoin ()
                         {
                             public void init ()
                             {
                                 setSplitter (WEIGHTED_ROUND_ROBIN (2, 1, 4, 2));
-                                add (new Filter ()
+                                this.add (new Filter ()
                                 {
                                     Channel input = new Channel(Character.TYPE, 1);
                                     Channel output = new Channel (Character.TYPE, 2);
 
                                     public void initIO ()
                                     {
-                                        streamInput = input;
-                                        streamOutput = output;
+                                        this.streamInput = input;
+                                        this.streamOutput = output;
                                     }
 
                                     public void work()
@@ -66,15 +66,15 @@ public class HelloWorld2 extends StreamIt
                                        output.pushChar (input.popChar ());
                                     }
                                 });
-                                add (new Filter ()
+                                this.add (new Filter ()
                                 {
                                     Channel input = new Channel(Character.TYPE, 1);
                                     Channel output = new Channel (Character.TYPE, 8);
 
                                     public void initIO ()
                                     {
-                                        streamInput = input;
-                                        streamOutput = output;
+                                        this.streamInput = input;
+                                        this.streamOutput = output;
                                     }
 
                                     public void work()
@@ -90,8 +90,8 @@ public class HelloWorld2 extends StreamIt
                                         output.pushChar (c);
                                     }
                                 });
-                                add (new Identity (Character.TYPE));
-                                add(new CharPrinter());
+                                this.add (new Identity (Character.TYPE));
+                                this.add(new CharPrinter());
                                 setJoiner (WEIGHTED_ROUND_ROBIN (1, 2, 1, 0));
                             }
                         });
@@ -99,6 +99,6 @@ public class HelloWorld2 extends StreamIt
                 });
             }
         });
-        add (new CharPrinter ());
+        this.add (new CharPrinter ());
     }
 }

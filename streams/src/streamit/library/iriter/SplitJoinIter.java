@@ -78,7 +78,7 @@ public class SplitJoinIter
 
     public int getSplitterNumWork()
     {
-        if (splitjoin.getSplitter() instanceof NullSplitter)
+        if (splitjoin.getSplitter() instanceof NullSplitter || splitjoin.getSplitter().getConsumption() == 0)
         {
             return 0;
         }
@@ -102,7 +102,7 @@ public class SplitJoinIter
 
     public int getJoinerNumWork()
     {
-        if (splitjoin.getJoiner() instanceof NullJoiner)
+        if (splitjoin.getJoiner() instanceof NullJoiner || splitjoin.getSplitter().getConsumption() == 0)
         {
             return 0;
         }

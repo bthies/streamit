@@ -12,13 +12,13 @@ import at.dms.kjc.sir.*;
  * more useful stuff will come later.
  **/
 public class LinearDot extends StreamItDot {
-    private LinearFilterAnalyzer linearData;
+    private LinearAnalyzer linearData;
     /**
      * Make a LinearDot printer that prints out the dot graph using information
      * from the linear filter analyzer to annotate the graph (eg color it silly).
      **/
     public LinearDot(PrintStream outputstream,
-		     LinearFilterAnalyzer anal) {
+		     LinearAnalyzer anal) {
 	super(outputstream);
 	this.linearData = anal;
     }
@@ -90,10 +90,10 @@ public class LinearDot extends StreamItDot {
 
 
     /**
-     * Prints dot graph of <str> to <filename>, using LinearFilterAnalyzer lfa.
+     * Prints dot graph of <str> to <filename>, using LinearAnalyzer lfa.
      */
     public static void printGraph(SIRStream str, String filename,
-				  LinearFilterAnalyzer lfa) {
+				  LinearAnalyzer lfa) {
 	try {
 	    FileOutputStream out = new FileOutputStream(filename);
 	    StreamItDot dot = new LinearDot(new PrintStream(out), lfa);

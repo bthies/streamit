@@ -20,11 +20,11 @@ import at.dms.compiler.*;
  * }
  * </pre>
  * <p>
- * $Id: LinearFilterDirectReplacer.java,v 1.3 2002-09-11 19:36:07 aalamb Exp $
+ * $Id: LinearFilterDirectReplacer.java,v 1.4 2002-09-13 18:06:56 aalamb Exp $
  **/
 public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Constants{
-    LinearFilterAnalyzer linearityInformation;
-    public LinearFilterDirectReplacer(LinearFilterAnalyzer lfa) {
+    LinearAnalyzer linearityInformation;
+    public LinearFilterDirectReplacer(LinearAnalyzer lfa) {
 	if (lfa == null){
 	    throw new IllegalArgumentException("Null linear filter analyzer passed to constructor!");
 	}

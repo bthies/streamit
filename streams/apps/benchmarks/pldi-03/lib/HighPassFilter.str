@@ -1,28 +1,32 @@
 /** 
- * Simple FIR low pass filter with gain=g, wc=cutoffFreq(in radians) and N samples.
- * Eg:
+ * Simple FIR high pass filter with gain=g, stopband ws(in radians) and N samples.
+ *
+ * Eg
  *                 ^ H(e^jw)
  *                 |
- *          ---------------
- *          |      |      |
- *          |      |      |
+ *     --------    |    -------
+ *     |      |    |    |     |
+ *     |      |    |    |     |
  *    <-------------------------> w
- *         -wc            wc
+ *                   pi-wc pi pi+wc
+ *
  *
  * This implementation is a FIR filter is a rectangularly windowed sinc function 
- * (eg sin(x)/x), which is the optimal FIR low pass filter in 
+ * (eg sin(x)/x) multiplied by e^(j*pi*n)=(-1)^n, which is the optimal FIR high pass filter in 
  * mean square error terms.
  *
  * Specifically, h[n] has N samples from n=0 to (N-1)
- * such that h[n] = sin(cutoffFreq*pi*(n-N/2))/(pi*(n-N/2)).
+ * such that h[n] = (-1)^(n-N/2) * sin(cutoffFreq*pi*(n-N/2))/(pi*(n-N/2)).
+ * where cutoffFreq is pi-ws
  * and the field h holds h[-n].
  */
-float->float filter LowPassFilter(float g, float cutoffFreq, int N) {
+float->float filter HighPassFilter(float g, float ws, int N) {
   float[N] h;
 
   /* since the impulse response is symmetric, I don't worry about reversing h[n]. */
   init {
     int OFFSET = N/2;
+    float cutoffFreq = pi - ws;
     for (int i=0; i<N; i++) {
       int idx = i + 1;
       // generate real part
@@ -31,7 +35,14 @@ float->float filter LowPassFilter(float g, float cutoffFreq, int N) {
 	h[i] = g * cutoffFreq / pi; 
       else 
 	h[i] = g * sin(cutoffFreq * (idx-OFFSET)) / (pi*(idx-OFFSET));
+
+      /* now, multiliy by -1 if appropriate. */
+      if (((idx-OFFSET)%2) == 0)
+	h[i] = -1*h[i];
+
     }
+
+
   }
 
   /* implement the FIR filtering operation as the convolution sum. */

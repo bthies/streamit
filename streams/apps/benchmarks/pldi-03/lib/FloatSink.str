@@ -1,0 +1,9 @@
+/**
+ * Simple StreamIt filter that simply absorbs floating 
+ * point numbers without printing them. 
+ **/
+float->void filter FloatSink {
+  work pop 1 {
+    pop();
+  }
+}

@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.2 2003-11-20 17:53:21 dmaze Exp $
+# $Id: run-reg-tests.py,v 1.3 2003-11-20 22:10:04 dmaze Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -20,8 +20,8 @@ import time
 admins = 'streamit-regtest-log@cag.lcs.mit.edu'
 users = 'streamit-regtest@cag.lcs.mit.edu'
 cvs_root = '/projects/raw/cvsroot'
-regtest_root = '/home/bits7/NO_BACKUP/streamit/regtest_working'
-# regtest_root = '/home/bits8/streamit/regtest'
+# regtest_root = '/home/bits7/NO_BACKUP/streamit/regtest_working'
+regtest_root = '/home/bits8/streamit/regtest'
 rt_root = '/projects/streamit/www/rt'
 smtp_server = 'catfish.lcs.mit.edu'
 
@@ -134,7 +134,8 @@ class RunRegTests:
     def run_tests(self):
         os.chdir(self.streamit_home)
         self.starttime = time.localtime()
-        self.run_and_log('qmtest run', 'qmtestlog', 'Running QMTest')
+        self.run_and_log('qmtest run', 'qmtestlog', 'Running QMTest',
+			 permissible=1)
         self.endtime = time.localtime()
 
     def report(self):

@@ -25,24 +25,41 @@ public abstract class GEStreamNode implements Serializable{
 		this.name = name;
 	}
 
-	// Add the next child belonging to the stream node
+	/**
+ 	 * Add a child to this GEStreamNode 
+ 	 */
 	public boolean addChild(GEStreamNode strNode)
 	{
-		return true;
+		return this.children.add(strNode);
 	}
-	
-	// Return the children of the stream node
+		
+	/**
+ 	 * Get the children of <this>
+ 	 * @return An ArrayList with the children of the GEStreamNode. 
+ 	 */
 	public ArrayList getChildren()
 	{
 		return this.children;
 	}
 
+	/**
+ 	 * Get the name of <this> 
+ 	 * @return The name of this GEStreamNode.
+	 */
 	public String getName()
 	{
 		return this.name;
 	}
-
 	
+	/**
+ 	* Get the type of <this>
+ 	* @return The type of this GEStreamNode.
+ 	*/	
+	public String getType()
+	{
+		return this.type;	
+	}
+
 	abstract public void draw();
 	abstract public void construct();
 

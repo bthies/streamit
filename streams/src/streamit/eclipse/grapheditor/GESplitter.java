@@ -8,10 +8,8 @@ package grapheditor;
 
 import java.io.*;
 /**
+ * GESplitter is the graph editor's internal representation of a splitter.
  * @author jcarlos
- *
- * To change the template for this generated type comment go to
- * Window>Preferences>Java>Code Generation>Code and Comments
  */
 public class GESplitter extends GEStreamNode implements Serializable{
 	
@@ -21,6 +19,17 @@ public class GESplitter extends GEStreamNode implements Serializable{
 	public GESplitter(String label,int[] weights)
 	{
 		super(GEType.SPLITTER , label);
+		this.label = label;
+		this.weights = weights;
+	}
+	
+	/**
+	 * Get the weights of this 
+	 * @return The weights corresponding to the GESplitter
+	 */
+	public int[] getWeights()
+	{
+		return this.weights;
 	}
 	
 	public void draw(){};

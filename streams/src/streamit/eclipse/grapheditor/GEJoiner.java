@@ -6,10 +6,8 @@ package grapheditor;
 import java.io.*;
 
 /**
+ * GEJoiner is the graph editor's internal representation of a joiner.
  * @author jcarlos
- *
- * To change the template for this generated type comment go to
- * Window>Preferences>Java>Code Generation>Code and Comments
  */
 public class GEJoiner extends GEStreamNode implements Serializable{
 	
@@ -23,6 +21,16 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 		this.label = label;
 		this.weights = weights;
 	}
+	
+	/**
+	 * Get the weights of this 
+	 * @return The weights corresponding to the GEJoiner
+	 */
+	public int[] getWeights()
+	{
+		return this.weights;
+	}
+	
 	public void draw(){};
 	public void construct(){};
 }

@@ -170,25 +170,42 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    int offs = 0;
 		
 	    p.print("  "+baseType.toString()+" tmp["+sum+"];\n");
-
 	    p.print("  "+in.consumer_name()+".read_chunk(tmp, "+sum+" * sizeof("+baseType.toString()+"), "+sum+");\n");
 		
 	    for (int i = 0; i < out.size(); i++) {
-		    
 		int num = splitter.getWeight(i);
 		NetStream s = (NetStream)out.elementAt(i);		
-		
 		p.print("  "+s.producer_name()+".write_chunk(&tmp["+offs+"], "+num+" * sizeof("+baseType.toString()+"), "+num+");\n");
-		    
 		offs += num;
-		    
 	    }
-		
 	}
 
 	p.print("}\n");
-	
 	p.print("\n");
+
+
+	//  +=============================+
+	//  | Splitter Work 1k            |
+	//  +=============================+
+
+	p.print("void __splitter_"+thread_id+"_work_1k() {\n");
+
+	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
+	    
+	    p.print("  "+baseType.toString()+" tmp[1000 * "+steady_counts+"];\n");
+	    p.print("  "+in.consumer_name()+".read_chunk(tmp, 1000 * "+steady_counts+" * sizeof("+baseType.toString()+"), 1000 * "+steady_counts+");\n");		
+	    for (int i = 0; i < out.size(); i++) {
+		NetStream s = (NetStream)out.elementAt(i);		
+		p.print("  "+s.producer_name()+".write_chunk(tmp, 1000 * "+steady_counts+" * sizeof("+baseType.toString()+"), 1000 * "+steady_counts+");\n");
+	    }
+
+	} else {	
+	    p.print("  for (int i = 0; i < 1000 * "+steady_counts+"; i++) __splitter_"+thread_id+"_work();\n");
+	}	
+
+	p.print("}\n");
+	p.print("\n");
+
 
 	//  +=============================+
 	//  | Splitter Main               |
@@ -205,13 +222,21 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  }\n");
 	p.print("  __steady_"+thread_id+"++;\n");
 
+	p.print("  while (__number_of_iterations_"+thread_id+" > 1000) {\n");
+	p.print("    check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
+	p.print("    __splitter_"+thread_id+"_work_1k();\n");
+	p.print("    __number_of_iterations_"+thread_id+" -= 1000;\n");
+	p.print("    __steady_"+thread_id+" += 1000;\n");
+	p.print("    if (__frequency_of_chkpts != 0 && __steady_"+thread_id+" % __frequency_of_chkpts == 0) save_state::save_to_file(__thread_"+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
+	p.print("  }\n");
+	
 	p.print("  for (i = 1; i <= __number_of_iterations_"+thread_id+"; i++, __steady_"+thread_id+"++) {\n");	
 	p.print("    for (ii = 0; ii < "+steady_counts+"; ii++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __splitter_"+thread_id+"_work();\n");
 	p.print("    }\n");
 
-	p.print("    if (__frequency_of_chkpts != 0 && i % __frequency_of_chkpts == 0) save_state::save_to_file(__thread_"+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
+	p.print("    if (__frequency_of_chkpts != 0 && __steady_"+thread_id+" % __frequency_of_chkpts == 0) save_state::save_to_file(__thread_"+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
 
 	p.print("  }\n");
 

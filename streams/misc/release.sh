@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.31 2003-10-16 17:32:41 dmaze Exp $
+# $Id: release.sh,v 1.32 2003-10-17 13:09:39 thies Exp $
 #
 
 # Interesting/configurable variables:
@@ -100,6 +100,10 @@ rm -rf $WORKING/streams/src/at/dms/kjc/cluster
 rm -rf $WORKING/streams/src/at/dms/kjc/flatgraph2
 rm -rf $WORKING/streams/src/at/dms/kjc/raw2
 rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
+
+# Some parts of the language notes we don't want to be visible
+rm -f $WORKING/streams/docs/syntax/02-04-24-additions
+rm -f $WORKING/streams/docs/syntax/02-08-additions
 
 # Build interesting bits of the documentation; they go in both releases.
 for d in cookbook release syntax; do

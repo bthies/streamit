@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.13 2002-10-18 15:45:08 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.14 2002-10-18 18:15:42 dmaze Exp $
  */
 
 header {
@@ -199,8 +199,11 @@ enqueue_statement returns [Statement s] { s = null; Expression x; }
 
 data_type returns [Type t] { t = null; Expression x; }
 	:	t=primitive_type
-		(LSQUARE x=right_expr RSQUARE
-			{ t = new TypeArray(t, x); }
+		(	l:LSQUARE
+			(x=right_expr { t = new TypeArray(t, x); }
+			| { throw new SemanticException("missing array bounds in type declaration", getFilename(), l.getLine()); }
+			)
+			RSQUARE
 		)*
 	|	TK_void { t = new TypePrimitive(TypePrimitive.TYPE_VOID); }
 	;
@@ -451,12 +454,17 @@ minic_value_expr returns [Expression x] { x = null; }
 	|	x=constantExpr
 	;
 
-value returns [Expression x] { x = null; Expression array; List l; }
+value returns [Expression x] { x = null; Expression array; }
 	:	name:ID { x = new ExprVar(getContext(name), name.getText()); }
 		(	DOT field:ID
 			{ x = new ExprField(x.getContext(), x, field.getText()); }
-		|	LSQUARE array=right_expr RSQUARE
-			{ x = new ExprArray(x.getContext(), x, array); }
+		|	l:LSQUARE
+
+			(array=right_expr { x = new ExprArray(x.getContext(), x, array); }
+			| { throw new SemanticException("missing array index",
+						getFilename(), l.getLine()); }
+			)
+			RSQUARE
 		)*
 	;
 

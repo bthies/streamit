@@ -22,6 +22,12 @@ public class LoweringConstants {
 	FILE_WRITER_WORK_NAME = "streamit_filewriter_work";
 
     /**
+     * The name of the method in the runtime system that runs identity.
+     */
+    public static final String
+        IDENTITY_WORK_NAME = "streamit_identity_work";
+
+    /**
      * The name of the method in the runtime system that runs a splitter.
      */
     public static final String SPLITTER_WORK_NAME = "run_splitter";

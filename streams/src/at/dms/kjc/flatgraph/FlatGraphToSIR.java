@@ -54,7 +54,15 @@ public class FlatGraphToSIR extends at.dms.util.Utils
 		assert !(visited.contains(current)) : "FlatGraph -> SIR does not support Feedbackloops";
 		//record that we have added this filter
 		visited.add(current);
-		pipeline.add((SIRFilter)current.contents, ((SIRFilter)current.contents).getParams());
+		List params;
+		//if its parent does not contain it, just pass null params...
+		if (parent.indexOf(current.getFilter()) == -1)
+		    params = new LinkedList(); 
+		else
+		    params = ((SIRFilter)current.contents).getParams();
+		
+		
+		pipeline.add((SIRFilter)current.contents, params);
 		((SIRFilter)current.contents).setParent(parent);
 		//nothing more to do here so just return
 		if (current.ways == 0)

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: OptionDefinition.java,v 1.1 2001-08-30 16:32:46 thies Exp $
+ * $Id: OptionDefinition.java,v 1.2 2002-09-27 22:41:39 thies Exp $
  */
 
 package at.dms.compiler.tools.optgen;
@@ -137,7 +137,7 @@ class OptionDefinition {
    * @param	out		the output stream
    */
   public void printFields(PrintWriter out) {
-    out.print("  public ");
+    out.print("  public static ");
     out.print(type);
     out.print(" ");
     out.print(longname);

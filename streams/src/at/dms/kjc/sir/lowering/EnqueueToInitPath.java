@@ -22,7 +22,7 @@ import at.dms.kjc.flatgraph.FlatVisitor;
  * that enqueue statements are outside of any control flow.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: EnqueueToInitPath.java,v 1.1 2003-09-08 22:12:14 dmaze Exp $
+ * @version $Id: EnqueueToInitPath.java,v 1.2 2003-10-09 08:47:04 thies Exp $
  */
 public class EnqueueToInitPath
 {
@@ -57,28 +57,33 @@ public class EnqueueToInitPath
         // Okay, none of that.  Find the init function,
         JMethodDeclaration init = self.getInit();
         // and walk its code looking for enqueue statements.
-        List values = new java.util.ArrayList();
-        String enqType = null;
-        JBlock body = init.getBody();
-        for (Iterator iter = body.getStatementIterator(); iter.hasNext(); )
-        {
-            JStatement stmt = (JStatement)iter.next();
-            // What we're looking for is function calls that
-            // begin with enqueue.  So:
-            if (!(stmt instanceof JExpressionStatement))
-                continue;
-            JExpression expr = ((JExpressionStatement)stmt).getExpression();
-            if (!(expr instanceof JMethodCallExpression))
-                continue;
-            JMethodCallExpression mce = (JMethodCallExpression)expr;
-            if (!(mce.getIdent().startsWith("enqueue")))
-                continue;
-            // Okay, we win.  We want to remove this statement
-            iter.remove();
-            // and save the value and type.
-            values.add(mce.getArgs()[0]);
-            enqType = mce.getIdent().substring(7); // len("enqueue")
-        }
+        final List values = new java.util.ArrayList();
+        final String[] enqTypeWrapper = new String[1];
+	init.getBody().accept(new SLIREmptyVisitor() {
+		public void visitBlockStatement(JBlock self,
+						JavaStyleComment[] comments) {
+		    super.visitBlockStatement(self, comments);
+		    for (Iterator iter = self.getStatementIterator(); iter.hasNext(); )
+			{
+			    JStatement stmt = (JStatement)iter.next();
+			    // What we're looking for is function calls that
+			    // begin with enqueue.  So:
+			    if (!(stmt instanceof JExpressionStatement))
+				continue;
+			    JExpression expr = ((JExpressionStatement)stmt).getExpression();
+			    if (!(expr instanceof JMethodCallExpression))
+				continue;
+			    JMethodCallExpression mce = (JMethodCallExpression)expr;
+			    if (!(mce.getIdent().startsWith("enqueue")))
+				continue;
+			    // Okay, we win.  We want to remove this statement
+			    iter.remove();
+			    // and save the value and type.
+			    values.add(mce.getArgs()[0]);
+			    enqTypeWrapper[0] = mce.getIdent().substring(7); // len("enqueue")
+			}
+		}});
+	String enqType = enqTypeWrapper[0];
 
         // Now build the new function.
         List stmts = new java.util.ArrayList();
@@ -127,7 +132,7 @@ public class EnqueueToInitPath
             stmts.add(new JReturnStatement(null, new JNullLiteral(null), null));
         }
         
-        body = new JBlock(null, stmts, null);
+        JBlock body = new JBlock(null, stmts, null);
         JMethodDeclaration decl =
             new JMethodDeclaration(null, // token reference
                                    0, // modifiers

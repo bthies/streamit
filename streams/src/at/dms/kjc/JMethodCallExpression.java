@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodCallExpression.java,v 1.6 2001-11-11 03:00:50 thies Exp $
+ * $Id: JMethodCallExpression.java,v 1.7 2002-06-22 00:14:49 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -65,7 +65,9 @@ public class JMethodCallExpression extends JExpression {
    * @return the type of this expression
    */
   public CType getType() {
-    return method.getReturnType();
+      if(method!=null)
+	  return method.getReturnType();
+      return null;
   }
 
   /**

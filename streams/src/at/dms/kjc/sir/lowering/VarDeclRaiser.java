@@ -22,6 +22,15 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
      */
     private LinkedList varDefs;
 
+    /**
+     * Top level block of current analysis
+     */
+    private JBlock parent;
+
+    public VarDeclRaiser() {
+	super();
+    }
+
     // ----------------------------------------------------------------------
     // Moving VariableDeclarations to front of block
     // ----------------------------------------------------------------------
@@ -61,8 +70,11 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 
     public Object visitBlockStatement(JBlock self,
 				      JavaStyleComment[] comments) {
-	LinkedList saveDefs=varDefs;
-	varDefs=new LinkedList();
+	if(parent==null) {
+	    parent=self;
+	    varDefs=new LinkedList();
+	}
+	//LinkedList saveDefs=varDefs;
 	int size=self.size();
 	for (int i=0;i<size;i++) {
 	    JStatement oldBody = (JStatement)self.getStatement(i);
@@ -89,22 +101,25 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 		self.setStatement(i,(JStatement)newBody);
 	    }
 	}
-	Hashtable visitedVars=new Hashtable();
-	for(int i=varDefs.size()-1;i>=0;i--) {
-	    JVariableDeclarationStatement varDec=(JVariableDeclarationStatement)varDefs.get(i);
-	    self.addStatementFirst(varDec);
-	    JVariableDefinition[] varArray=varDec.getVars();
-	    LinkedList newVars=new LinkedList();
-	    for(int j=0;j<varArray.length;j++) {
-		JLocalVariable var=(JLocalVariable)varArray[j];
-		if(!visitedVars.containsKey(var)) {
-		    visitedVars.put(var,Boolean.TRUE);
-		    newVars.add(var);
+	if(parent==self) {
+	    Hashtable visitedVars=new Hashtable();
+	    for(int i=varDefs.size()-1;i>=0;i--) {
+		JVariableDeclarationStatement varDec=(JVariableDeclarationStatement)varDefs.get(i);
+		self.addStatementFirst(varDec);
+		JVariableDefinition[] varArray=varDec.getVars();
+		LinkedList newVars=new LinkedList();
+		for(int j=0;j<varArray.length;j++) {
+		    JLocalVariable var=(JLocalVariable)varArray[j];
+		    if(!visitedVars.containsKey(var)) {
+			visitedVars.put(var,Boolean.TRUE);
+			newVars.add(var);
+		    }
 		}
+		varDec.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
 	    }
-	    varDec.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
+	    parent=null;
 	}
-	varDefs=saveDefs;
+	//varDefs=saveDefs;
 	visitComments(comments);
 	return self;
     }

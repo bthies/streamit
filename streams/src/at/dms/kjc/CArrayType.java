@@ -15,13 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CArrayType.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CArrayType.java,v 1.2 2002-07-21 18:42:24 mgordon Exp $
  */
 
 package at.dms.kjc;
 
 import at.dms.compiler.UnpositionedError;
 import at.dms.util.SimpleStringBuffer;
+import at.dms.util.Utils;
 
 /**
  * This class represents class type in the type structure
@@ -244,10 +245,25 @@ public class CArrayType extends CClassType {
     }
   }
 
+
+    /**
+     *dims is only set as part of a channel declaration
+     * so the input output type of a filter has dims set
+     * but all other CArrayType's do not
+     **/
+    public JExpression[] getDims() {
+	return dims;
+    }
+
+    public void setDims(JExpression[] d){
+	dims = d;
+    }
+
   // ----------------------------------------------------------------------
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
   private CType		baseType;
   private int		arrayBound;
+    private JExpression  dims[];
 }

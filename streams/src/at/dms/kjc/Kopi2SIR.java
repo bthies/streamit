@@ -1424,9 +1424,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits an array allocator expression
      */
     public Object visitNewArrayExpression(JNewArrayExpression self,
-                                        CType type,
-                                        JExpression[] dims,
-                                        JArrayInitializer init) 
+					  CType type,
+					  JExpression[] dims,
+					  JArrayInitializer init) 
     {
         blockStart("NewArrayExpression", self);
 	if (dims.length == 0)
@@ -1874,12 +1874,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	
     }
     
-    
-    
-
     /**
-   * visits a local variable expression
-   */
+     * visits a local variable expression
+     */
     public Object visitLocalVariableExpression(JLocalVariableExpression self,
                                              String ident) 
     {
@@ -2056,10 +2053,25 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 					   "Input declaration on non-Filter");
 		SIRFilter filter = (SIRFilter)parentStream;
 		Vector v = (Vector)right.accept(this);
+		//set the input type of the filter
                 if (v.elementAt(0) instanceof JClassExpression)
                     filter.setInputType(((JClassExpression)v.elementAt(0)).getClassType());
-                else
+                else if (v.elementAt(0) instanceof JStringLiteral)
                     filter.setInputType(getType(((JStringLiteral)v.elementAt(0)).stringValue()));
+		else if (v.elementAt(0) instanceof JMethodCallExpression) {
+		    //defining an array to be passed over the tape...
+		    JMethodCallExpression methCall = (JMethodCallExpression)v.elementAt(0);
+		    if (methCall.getIdent().equals("getClass")) {
+			if (!(methCall.getPrefix().getType() instanceof CArrayType))
+			    Utils.fail(printLine(self) + "Malformed type on input declaration");
+			//record the dims of the array
+			((CArrayType)methCall.getPrefix().getType()).setDims(((JNewArrayExpression)methCall.getPrefix()).getDims());
+			filter.setInputType(methCall.getPrefix().getType());
+		    }
+		}
+		else 
+		    Utils.fail(printLine(self) + "Malformed type on input declaration");
+
 		filter.setPop((JExpression)v.elementAt(1));
 		//If a peek value is given, and it is greater than pops
 		//set the peek
@@ -2079,12 +2091,26 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		filter.setPush((JExpression)v.elementAt(1));
                 if (v.elementAt(0) instanceof JClassExpression)
                     filter.setOutputType(((JClassExpression)v.elementAt(0)).getClassType());
-                else
-                    filter.setOutputType(getType(((JStringLiteral)v.elementAt(0)).stringValue()));
+                else if (v.elementAt(0) instanceof JStringLiteral) {
+		    filter.setOutputType(getType(((JStringLiteral)v.elementAt(0)).stringValue()));
+		}
+		else if (v.elementAt(0) instanceof JMethodCallExpression) {
+		    //defining an array to be passed over the tape...
+		    JMethodCallExpression methCall = (JMethodCallExpression)v.elementAt(0);
+		    if (methCall.getIdent().equals("getClass")) {
+			if (!(methCall.getPrefix().getType() instanceof CArrayType))
+			    Utils.fail(printLine(self) + "Malformed type on input declaration");
+			((CArrayType)methCall.getPrefix().getType()).setDims(((JNewArrayExpression)methCall.getPrefix()).getDims());
+			filter.setOutputType(methCall.getPrefix().getType());
+		    }
+		}
+		else 
+		    Utils.fail(printLine(self) + "Malformed type on output declaration");
 		return null;
 	    }
 
 	}
+	    
 	if (left != null)
 	    self.setLeft((JExpression)left.accept(this));
 	if (right != null)

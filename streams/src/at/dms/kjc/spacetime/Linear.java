@@ -325,7 +325,7 @@ public class Linear extends BufferedCommunication implements Constants {
 			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 			}
 		    }
-	    for(int i=0;i<=topPopNum-1;i++)
+	    for(int i=0;i<topPopNum;i++)
 		for(int j=0;j<popCount;j++)
 		    if(emptySpots>0) {
 			for(int k=topPopNum;k>i;k--) {

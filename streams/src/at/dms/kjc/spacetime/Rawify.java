@@ -1290,7 +1290,10 @@ public class Rawify
 		}
 	    //Pass last partial sum
 	    ins = new FullIns(tile);
-	    ins.addRoute(SwitchIPort.CSTO,dest2);
+	    if(end)
+		ins.addRoute(SwitchIPort.CSTO,dest);
+	    else
+		ins.addRoute(SwitchIPort.CSTO,dest2);
 	    code.appendIns(ins,false);
 	    //Pass remaining values to filters downstream
 	    for(int i=0;i<pos*numPop;i++) {

@@ -1,6 +1,6 @@
 package streamit.scheduler.minlatency;
 
-/* $Id: Pipeline.java,v 1.3 2002-07-18 05:34:45 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.4 2002-07-19 05:09:09 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 PipelineIter;
@@ -9,7 +9,7 @@ import streamit.scheduler.base.StreamFactory;
 import streamit.scheduler.hierarchical.PhasingSchedule;
 
 /**
- * This class implements a single-appearance algorithm for creating
+ * This class implements a minimum-latency algorithm for creating
  * schedules.
  * 
  * @version 2
@@ -23,6 +23,248 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
         super(iterator, factory);
     }
 
+    private interface PipelineSchedulingUtility
+    {
+        public void addSchedulePhase(PhasingSchedule phase);
+        public void advanceChildSchedule(StreamInterface child);
+        public PhasingSchedule getChildNextPhase(StreamInterface child);
+        public PhasingSchedule getChildPhase(
+            StreamInterface child,
+            int phase);
+    }
+
+    private class PipelineInitSchedulingUtility
+        implements PipelineSchedulingUtility
+    {
+        Pipeline pipeline;
+        PipelineInitSchedulingUtility(Pipeline _pipeline)
+        {
+            pipeline = _pipeline;
+        }
+
+        public void addSchedulePhase(PhasingSchedule phase)
+        {
+            pipeline.addInitScheduleStage(phase);
+        }
+
+        public void advanceChildSchedule(StreamInterface child)
+        {
+            pipeline.advanceChildInitSchedule(child);
+        }
+
+        public PhasingSchedule getChildNextPhase(StreamInterface child)
+        {
+            return pipeline.getChildNextInitStage(child);
+        }
+
+        public PhasingSchedule getChildPhase(
+            StreamInterface child,
+            int stage)
+        {
+            return pipeline.getChildInitStage(child, stage);
+        }
+    }
+    
+    private class PipelineSteadySchedulingUtility
+        implements PipelineSchedulingUtility
+    {
+        Pipeline pipeline;
+        PipelineSteadySchedulingUtility(Pipeline _pipeline)
+        {
+            pipeline = _pipeline;
+        }
+
+        public void addSchedulePhase(PhasingSchedule phase)
+        {
+            pipeline.addSteadySchedulePhase(phase);
+        }
+
+        public void advanceChildSchedule(StreamInterface child)
+        {
+            pipeline.advanceChildSteadySchedule(child);
+        }
+
+        public PhasingSchedule getChildNextPhase(StreamInterface child)
+        {
+            return pipeline.getChildNextSteadyPhase(child);
+        }
+
+        public PhasingSchedule getChildPhase(
+            StreamInterface child,
+            int stage)
+        {
+            return pipeline.getChildSteadyPhase(child, stage);
+        }
+    }
+    
+    /**
+     * create the init schedule according to whatever limits
+     * I am passed
+     */
+    public void computeMinLatencySchedule(
+        PipelineSchedulingUtility utility,
+        int childrenExecs[],
+        int dataInBuffers[])
+    {
+        // reset the buffer below the pipeline (it's not actually used
+        // for any computation)
+        dataInBuffers[getNumChildren()] = 0;
+        
+        // calculate how much data the pipeline is supposed to push out
+        // during execution of this schedule
+        int pipelineOverallPush = 0;
+        {
+            int lastChildIndex = getNumChildren () - 1;
+            StreamInterface child = getHierarchicalChild(lastChildIndex);
+            int nPhase = childrenExecs [lastChildIndex] - 1;
+            for ( ; nPhase >= 0; nPhase--)
+            {
+                PhasingSchedule phase = utility.getChildPhase(child, nPhase);
+                pipelineOverallPush += phase.getOverallPush();
+            }
+        }
+
+        // repeat while the last child still needs to pull some data
+        while (dataInBuffers[getNumChildren()] < pipelineOverallPush)
+        {
+            int numChildExecs[] = new int[getNumChildren()];
+
+            // figure out how many times each child needs to get executed
+            {
+                int nextChildDataNeeded = 1, nChild;
+                for (nChild = getNumChildren() - 1;
+                    nChild >= 0;
+                    nChild--)
+                {
+                    StreamInterface child = getHierarchicalChild(nChild);
+                    int childPeek = 0, childPop = 0;
+
+                    // repeat while still need to provide data 
+                    // for the next child
+                    while (nextChildDataNeeded > 0)
+                    {
+                        // figure out how much this phase/stage will 
+                        // push/pop/peek
+                        PhasingSchedule phase =
+                            utility.getChildPhase(
+                                child,
+                                numChildExecs[nChild]);
+                        int phasePeek = phase.getOverallPeek();
+                        int phasePop = phase.getOverallPop();
+                        int phasePush = phase.getOverallPush();
+
+                        // update the overall phase child peek/pop
+                        childPeek = MAX(childPeek, childPop + phasePeek);
+                        childPop += phasePop;
+
+                        // reduce the amount of data still needed
+                        // by the next child
+                        nextChildDataNeeded -= phasePush;
+
+                        // note that I just executed another stage/phase 
+                        // of this child
+                        numChildExecs[nChild]++;
+                    }
+
+                    // figure out how much data the previous child
+                    // still needs to provide:
+                    nextChildDataNeeded =
+                        childPeek - dataInBuffers[nChild];
+                }
+            }
+
+            // construct an actual stage of the schedule and execute it
+            {
+                PhasingSchedule steadyPhase = new PhasingSchedule(this);
+
+                int nChild;
+                for (nChild = 0; nChild < getNumChildren(); nChild++)
+                {
+                    StreamInterface child = getHierarchicalChild(nChild);
+
+                    for (;
+                        numChildExecs[nChild] > 0;
+                        numChildExecs[nChild]--)
+                    {
+                        PhasingSchedule phase =
+                            utility.getChildNextPhase(child);
+
+                        // add this stage to the init schedule
+                        steadyPhase.appendPhase(phase);
+                        utility.advanceChildSchedule(child);
+
+                        // better have enough data in the buffer to execute 
+                        // this phase
+                        ASSERT(
+                            nChild == 0
+                                || dataInBuffers[nChild]
+                                    >= phase.getOverallPeek());
+
+                        // adjust buffers for this child
+                        dataInBuffers[nChild] -= phase.getOverallPop();
+                        dataInBuffers[nChild
+                            + 1] += phase.getOverallPush();
+
+                        // mark down that this child had another phase executed
+                        childrenExecs[nChild]--;
+                    }
+                }
+
+                // add the init stage to the init schedule
+                utility.addSchedulePhase(steadyPhase);
+            }
+        }
+
+        // it is possible that I need another phase to execute clean-up
+        // phases of the children that don't output from the pipeline
+        // (all but the bottom most child)
+        {
+            PhasingSchedule extraPhase = new PhasingSchedule(this);
+
+            int nChild;
+            for (nChild = 0; nChild < getNumChildren(); nChild++)
+            {
+                StreamInterface child = getHierarchicalChild(nChild);
+
+                for (;
+                    childrenExecs[nChild] > 0;
+                    childrenExecs[nChild]--)
+                {
+                    PhasingSchedule phase =
+                        utility.getChildNextPhase(child);
+
+                    // add this stage to the init schedule
+                    extraPhase.appendPhase(phase);
+                    utility.advanceChildSchedule(child);
+
+                    // better have enough data in the buffer to execute 
+                    // this phase
+                    ASSERT(
+                        nChild == 0
+                            || dataInBuffers[nChild]
+                                >= phase.getOverallPeek());
+
+                    // adjust buffers for this child
+                    dataInBuffers[nChild] -= phase.getOverallPop();
+                    dataInBuffers[nChild + 1] += phase.getOverallPush();
+                }
+
+                // make sure that I've executed every child the right number
+                // of phases.  if this assert goes off, the error is not in
+                // the code right above (the for above will never execute)
+                // but in the init/steady schedule calculcation!
+                ASSERT(childrenExecs[nChild] == 0);
+            }
+
+            // have I done anything?
+            if (extraPhase.getNumPhases() != 0)
+            {
+                // yes - add the extra phase to the schedule!
+                utility.addSchedulePhase(extraPhase);
+            }
+        }
+    }
+        
     public void computeSchedule()
     {
         int steadyChildPhases[] = new int[getNumChildren()];
@@ -132,257 +374,8 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
         // This is repeated until all children have had at least
         // childInitStages worth of stages or phases executed.  Reasoning for
         // this is in my (karczma) notebook, date 02/07/14.
-        {
-            while (numChildrenForInit > 0)
-            {
-                int numChildExecs[] = new int[getNumChildren()];
-
-                // figure out how many times each child needs to get executed
-                {
-                    int nextChildDataNeeded = 1, nChild;
-                    for (nChild = getNumChildren() - 1;
-                        nChild >= 0;
-                        nChild--)
-                    {
-                        StreamInterface child = getHierarchicalChild(nChild);
-                        int childPeek = 0, childPop = 0;
-
-                        // repeat while still need to provide data 
-                        // for the next child
-                        while (nextChildDataNeeded > 0)
-                        {
-                            // figure out how much this phase/stage will 
-                            // push/pop/peek
-                            PhasingSchedule initStage =
-                                getChildInitStage(
-                                    child,
-                                    numChildExecs[nChild]);
-                            int stagePeek = initStage.getOverallPeek();
-                            int stagePop = initStage.getOverallPop();
-                            int stagePush = initStage.getOverallPush();
-
-                            // update the overall phase child peek/pop
-                            childPeek = MAX(childPeek, childPop + stagePeek);
-                            childPop += stagePop;
-
-                            // reduce the amount of data still needed
-                            // by the next child
-                            nextChildDataNeeded -= stagePush;
-
-                            // note that I just executed another stage/phase 
-                            // of this child
-                            numChildExecs[nChild]++;
-                        }
-
-                        // figure out how much data the previous child
-                        // still needs to provide:
-                        nextChildDataNeeded =
-                            childPeek - dataInBuffers[nChild];
-                    }
-                }
-
-                // construct an actual stage of the schedule and execute it
-                {
-                    PhasingSchedule initStage = new PhasingSchedule(this);
-
-                    int nChild;
-                    for (nChild = 0; nChild < getNumChildren(); nChild++)
-                    {
-                        StreamInterface child = getHierarchicalChild(nChild);
-
-                        for (;
-                            numChildExecs[nChild] > 0;
-                            numChildExecs[nChild]--)
-                        {
-                            PhasingSchedule childInitStage =
-                                getChildNextInitStage(child);
-
-                            // add this stage to the init schedule
-                            initStage.appendPhase(childInitStage);
-                            advanceChildInitSchedule(child);
-
-                            // better have enough data in the buffer to execute 
-                            // this phase
-                            ASSERT(
-                                nChild == 0
-                                    || dataInBuffers[nChild]
-                                        >= initStage.getOverallPeek());
-
-                            // adjust buffers for this child
-                            dataInBuffers[nChild]
-                                -= childInitStage.getOverallPop();
-                            dataInBuffers[nChild
-                                + 1] += childInitStage.getOverallPush();
-
-                            // if just added the last required stage, 
-                            // reduce the # of children that still need init
-                            if (childInitStages[nChild] > 0)
-                            {
-                                childInitStages[nChild]--;
-                                if (childInitStages[nChild] == 0)
-                                {
-                                    numChildrenForInit--;
-                                }
-                            }
-                        }
-                    }
-
-                    // add the init stage to the init schedule
-                    addInitScheduleStage(initStage);
-                }
-            }
-
-            ASSERT(numChildrenForInit == 0);
-        }
-
-        // create the steady-state schedule
-        // disturbingly, this is essentially the same code as above for
-        // initialization schedule.  basically, this performs a pull-schedule
-        // which is what this needs to do (no long explanation needed here :)
-        {
-            // reset the buffer below the pipeline (it's not actually used
-            // for any computation)
-            dataInBuffers[getNumChildren()] = 0;
-
-            // repeat while the last child still needs to pull some data
-            while (dataInBuffers[getNumChildren()] < getSteadyPush())
-            {
-                int numChildExecs[] = new int[getNumChildren()];
-
-                // figure out how many times each child needs to get executed
-                {
-                    int nextChildDataNeeded = 1, nChild;
-                    for (nChild = getNumChildren() - 1;
-                        nChild >= 0;
-                        nChild--)
-                    {
-                        StreamInterface child = getHierarchicalChild(nChild);
-                        int childPeek = 0, childPop = 0;
-
-                        // repeat while still need to provide data 
-                        // for the next child
-                        while (nextChildDataNeeded > 0)
-                        {
-                            // figure out how much this phase/stage will 
-                            // push/pop/peek
-                            PhasingSchedule phase =
-                                getChildSteadyPhase(
-                                    child,
-                                    numChildExecs[nChild]);
-                            int phasePeek = phase.getOverallPeek();
-                            int phasePop = phase.getOverallPop();
-                            int phasePush = phase.getOverallPush();
-
-                            // update the overall phase child peek/pop
-                            childPeek = MAX(childPeek, childPop + phasePeek);
-                            childPop += phasePop;
-
-                            // reduce the amount of data still needed
-                            // by the next child
-                            nextChildDataNeeded -= phasePush;
-
-                            // note that I just executed another stage/phase 
-                            // of this child
-                            numChildExecs[nChild]++;
-                        }
-
-                        // figure out how much data the previous child
-                        // still needs to provide:
-                        nextChildDataNeeded =
-                            childPeek - dataInBuffers[nChild];
-                    }
-                }
-
-                // construct an actual stage of the schedule and execute it
-                {
-                    PhasingSchedule steadyPhase = new PhasingSchedule(this);
-
-                    int nChild;
-                    for (nChild = 0; nChild < getNumChildren(); nChild++)
-                    {
-                        StreamInterface child = getHierarchicalChild(nChild);
-
-                        for (;
-                            numChildExecs[nChild] > 0;
-                            numChildExecs[nChild]--)
-                        {
-                            PhasingSchedule phase =
-                                getChildNextSteadyPhase(child);
-
-                            // add this stage to the init schedule
-                            steadyPhase.appendPhase(phase);
-                            advanceChildInitSchedule(child);
-
-                            // better have enough data in the buffer to execute 
-                            // this phase
-                            ASSERT(
-                                nChild == 0
-                                    || dataInBuffers[nChild]
-                                        >= phase.getOverallPeek());
-
-                            // adjust buffers for this child
-                            dataInBuffers[nChild] -= phase.getOverallPop();
-                            dataInBuffers[nChild
-                                + 1] += phase.getOverallPush();
-
-                            // mark down that this child had another phase executed
-                            steadyChildPhases[nChild]--;
-                        }
-                    }
-
-                    // add the init stage to the init schedule
-                    addSteadySchedulePhase(steadyPhase);
-                }
-            }
-
-            // it is possible that I need another phase to execute clean-up
-            // phases of the children that don't actually push or pop anything
-            // do it here
-            {
-                PhasingSchedule extraPhase = new PhasingSchedule(this);
-
-                int nChild;
-                for (nChild = 0; nChild < getNumChildren(); nChild++)
-                {
-                    StreamInterface child = getHierarchicalChild(nChild);
-
-                    for (;
-                        steadyChildPhases[nChild] > 0;
-                        steadyChildPhases[nChild]--)
-                    {
-                        PhasingSchedule phase =
-                            getChildNextSteadyPhase(child);
-
-                        // add this stage to the init schedule
-                        extraPhase.appendPhase(phase);
-                        advanceChildInitSchedule(child);
-
-                        // better have enough data in the buffer to execute 
-                        // this phase
-                        ASSERT(
-                            nChild == 0
-                                || dataInBuffers[nChild]
-                                    >= phase.getOverallPeek());
-
-                        // adjust buffers for this child
-                        dataInBuffers[nChild] -= phase.getOverallPop();
-                        dataInBuffers[nChild + 1] += phase.getOverallPush();
-                    }
-
-                    // make sure that I've executed every child the right number
-                    // of phases.  if this assert goes off, the error is not in
-                    // the code right above (the for above will never execute)
-                    // but in the init/steady schedule calculcation!
-                    ASSERT(steadyChildPhases[nChild] == 0);
-                }
-
-                // have I done anything?
-                if (extraPhase.getNumPhases() != 0)
-                {
-                    // yes - add the extra phase to the schedule!
-                    addSteadySchedulePhase(extraPhase);
-                }
-            }
-        }
+        
+        computeMinLatencySchedule(new PipelineInitSchedulingUtility(this), childInitStages, dataInBuffers);
+        computeMinLatencySchedule(new PipelineSteadySchedulingUtility(this), steadyChildPhases, dataInBuffers);
     }
 }

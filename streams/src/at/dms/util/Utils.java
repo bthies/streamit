@@ -15,14 +15,12 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.14 2003-04-19 00:18:23 thies Exp $
+ * $Id: Utils.java,v 1.15 2003-05-16 02:02:59 thies Exp $
  */
 
 package at.dms.util;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
+import java.io.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.LoweringConstants;
@@ -75,6 +73,78 @@ public abstract class Utils implements Serializable {
   }
 
     
+    /**
+    * Returns the contents of <fileName> as a string buffer.
+    */
+    public static StringBuffer readFile(String fileName)
+    throws IOException
+    {
+        StringBuffer result = new StringBuffer();
+        BufferedReader in = new BufferedReader(new FileReader(fileName));
+        while (true) {
+            String line = in.readLine();
+            if (line == null) {
+                break;
+            } else {
+                result.append(line + "\n");
+            }
+        }
+        in.close();
+        return result;
+    }
+
+    /**
+     * Writes <str> to <filename>, overwriting it if it's already
+     * there.
+     */
+    public static void writeFile(String filename, String str) throws IOException {
+	FileWriter out = new FileWriter(filename);
+	out.write(str, 0, str.length());
+	out.close();
+    }
+
+    /**
+    /** replaces in all occurances
+    *@modifies: nothing.
+    *@effects: constructs a new String from orig, replacing all occurances of oldSubStr with newSubStr.
+    *@returns: a copy of orig with all occurances of oldSubStr replaced with newSubStr.
+    *
+    * if any of arguments are null, returns orig.
+    */
+    public static synchronized String replaceAll( String orig, String oldSubStr, String newSubStr )
+    {
+	if (orig==null || oldSubStr==null || newSubStr==null) {
+	    return orig;
+	}
+	// create a string buffer to do replacement
+	StringBuffer sb = new StringBuffer(orig);
+	// keep track of difference in length between orig and new
+	int offset = 0;
+	// keep track of last index where we saw the substring appearing
+	int index = -1;
+	
+	while (true) {
+
+	    // look for occurrence of old string
+	    index = orig.indexOf(oldSubStr, index+1);
+	    if (index==-1) {
+		// quit when we run out of things to replace
+		break;
+	    }
+	    
+	    // otherwise, do replacement
+	    sb.replace(index - offset, 
+		       index - offset + oldSubStr.length(), 
+		       newSubStr);
+
+	    // increment our offset
+	    offset += oldSubStr.length() - newSubStr.length();
+	}
+
+	// return new string
+	return sb.toString();
+    }
+
     /**
      * Returns <val> as a percentage with maximum of 4 digits
      */

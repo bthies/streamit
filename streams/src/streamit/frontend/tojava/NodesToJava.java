@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.14 2002-08-06 15:27:56 thies Exp $
+ * $Id: NodesToJava.java,v 1.15 2002-08-06 15:43:53 thies Exp $
  */
 
 package streamit.frontend.tojava;
@@ -222,10 +222,19 @@ public class NodesToJava implements FEVisitor
 
     public Object visitExprFunCall(ExprFunCall exp)
     {
-	// Math.sqrt will return a double, but we're only supporting
-	// float's now, so add a cast to float.  Not sure if this is
-	// the right thing to do for all math functions in all cases?
-        String result = "(float)Math." + exp.getName() + "(";
+	String result;
+	// look for print and println statements; assume everything
+	// else is a math function
+	if (exp.getName().equals("print")) {
+	    result = "System.out.print(";
+	} else if (exp.getName().equals("println")) {
+	    result = "System.out.println(";
+	} else {
+	    // Math.sqrt will return a double, but we're only supporting
+	    // float's now, so add a cast to float.  Not sure if this is
+	    // the right thing to do for all math functions in all cases?
+	    result = "(float)Math." + exp.getName() + "(";
+	}
         boolean first = true;
         for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
         {

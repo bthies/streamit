@@ -13,24 +13,28 @@
 
 import streamit.*;
 
-public class HelloWorld2 extends Stream {
+public class HelloWorld2 extends Stream
+{
 
     // presumably some main function invokes the stream
-    public static void main(String args[]) {
-	new HelloWorld2().run();
+    public static void main(String args[])
+    {
+    	new HelloWorld2().Run();
     }
 
     // this is the defining part of the stream
-    public void init() {
-	add(new CharGenerator("Hello World!"));
-	add(new SplitJoin() {
-		public void init() {
-		    splitter(Splitter.ROUND_ROBIN_SPLITTER);
-		    add(new CharPrinter());
-		    add(new CharPrinter());
-		    add(new CharPrinter());
-		}
-	    });
+    public void Init() 
+    {
+    	Add(new CharGenerator("Hello World!"));
+    	Add(new SplitJoin() 
+    	{
+    		public void init() 
+    		{
+    		    Splitter(Splitter.ROUND_ROBIN_SPLITTER);
+    		    Add(new CharPrinter());
+    		    Add(new CharPrinter());
+    		    Add(new CharPrinter());
+    		}
+        });
     }
-
 }

@@ -1,7 +1,7 @@
 /*
  * StreamSpec.java: specification of a named or anonymous stream
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamSpec.java,v 1.3 2002-09-06 16:01:15 dmaze Exp $
+ * $Id: StreamSpec.java,v 1.4 2002-09-06 16:28:43 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -101,7 +101,6 @@ public class StreamSpec extends FENode
     /** Accept a front-end visitor. */
     public Object accept(FEVisitor v)
     {
-        // return v.visitStreamSpec(this);
-        return null;
+        return v.visitStreamSpec(this);
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Function.java: a generic function declaration
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: Function.java,v 1.1 2002-09-04 15:12:56 dmaze Exp $
+ * $Id: Function.java,v 1.2 2002-09-06 16:28:43 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -106,7 +106,6 @@ public class Function extends FENode
     /** Accepts a front-end visitor. */
     public Object accept(FEVisitor v)
     {
-        // return v.visitFunction(this);
-        return null;
+        return v.visitFunction(this);
     }
 }

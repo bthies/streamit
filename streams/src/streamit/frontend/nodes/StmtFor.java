@@ -1,7 +1,7 @@
 /*
  * StmtFor.java: a C-style for loop
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StmtFor.java,v 1.1 2002-09-04 15:12:57 dmaze Exp $
+ * $Id: StmtFor.java,v 1.2 2002-09-06 16:28:43 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -58,8 +58,7 @@ public class StmtFor extends Statement
     /** Accept a front-end visitor. */
     public Object accept(FEVisitor v)
     {
-        // return v.acceptStmtFor(this);
-        return null;
+        return v.visitStmtFor(this);
     }
 }
 

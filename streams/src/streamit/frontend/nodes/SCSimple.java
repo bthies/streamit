@@ -1,7 +1,7 @@
 /*
  * SCSimple.java: simple stream creator
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: SCSimple.java,v 1.1 2002-09-04 15:12:56 dmaze Exp $
+ * $Id: SCSimple.java,v 1.2 2002-09-06 16:28:43 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -41,8 +41,7 @@ public class SCSimple extends StreamCreator
     /** Accept a front-end visitor. */
     public Object accept(FEVisitor v)
     {
-        //return v.visitSCSimple(this);
-        return null;
+        return v.visitSCSimple(this);
     }
 }
 

@@ -1,7 +1,7 @@
 /*
  * StreamType.java: record the I/O type of a stream
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamType.java,v 1.2 2002-09-04 15:10:07 dmaze Exp $
+ * $Id: StreamType.java,v 1.3 2002-09-06 16:28:43 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -50,7 +50,6 @@ public class StreamType extends FENode
     /** Accepts a front-end visitor. */
     public Object accept(FEVisitor v)
     {
-        // return v.visitStreamType(this);
-        return null;
+        return v.visitStreamType(this);
     }
 }

@@ -1,7 +1,7 @@
 /*
  * SJDuplicate.java: a duplicating splitter
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: SJDuplicate.java,v 1.1 2002-09-04 15:12:56 dmaze Exp $
+ * $Id: SJDuplicate.java,v 1.2 2002-09-06 16:28:43 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -20,7 +20,6 @@ public class SJDuplicate extends SplitterJoiner
     /** Accept a front-end visitor. */
     public Object accept(FEVisitor v)
     {
-        // return v.visitSJDuplicate(this);
-        return null;
+        return v.visitSJDuplicate(this);
     }
 }

@@ -1,7 +1,7 @@
 /*
  * StmtReturn.java: a return statement
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StmtReturn.java,v 1.1 2002-09-04 15:12:57 dmaze Exp $
+ * $Id: StmtReturn.java,v 1.2 2002-09-06 16:28:43 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -35,7 +35,6 @@ public class StmtReturn extends Statement
     /** Accepts a front-end visitor. */
     public Object accept(FEVisitor v)
     {
-        // return v.visitStmtReturn();
-        return null;
+        return v.visitStmtReturn(this);
     }
 }

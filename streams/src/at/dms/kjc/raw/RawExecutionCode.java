@@ -187,39 +187,27 @@ public class RawExecutionCode extends at.dms.util.Utils
 	//the number of items produced by the upstream filter in
 	//initialization
 	int upStreamItems = 0;
-	//number of times the previous node fires in init
-	int prevInitCount = 0;
-	//its push rate
-	int prevPush = 0;
 	
 	FlatNode node = Layout.getNode(Layout.getTile(filter));
 	FlatNode previous = null;
 	
 	if (node.inputs > 0) {
 	    previous = node.incoming[0];
-	    prevInitCount = Util.getCountPrev(RawBackend.initExecutionCounts, 
-					 previous, node);
-	    if (prevInitCount > 0) {
-		if (previous.contents instanceof SIRSplitter || 
-		    previous.contents instanceof SIRJoiner) {
-		    prevPush = 1;
-		}
-		else
-		    prevPush = ((SIRFilter)previous.contents).getPushInt();
+	    //okay the number of items produced by the upstream splitter may not 
+	    //equal the number of items that produced by the filter feeding the splitter
+	    //now, since I do not map splitter, this discrepancy must be accounted for.  
+	    //We do not have an incoming buffer for ths splitter, so the data must
+	    //trickle down to the filter(s) that the splitter feeds
+	    if (previous.contents instanceof SIRSplitter) {
+		upStreamItems = getPrevSplitterUpStreamItems(previous, node);
 	    }
-	    //System.out.println("previous: " + previous.getName());
-	    //System.out.println("prev Push: " + prevPush + " prev init: " + prevInitCount);
+	    else {
+		//upstream not a splitter, just get the number of executions
+		upStreamItems = getUpStreamItems(RawBackend.initExecutionCounts,
+						 node);
+	    }
 	}
-	
-	//calculate the total items produced by the upstream node
-	upStreamItems = (prevInitCount * prevPush);
-	//if the previous node is a two stage filter then count its initWork
-	//in the initialItemsTo Receive
-	if (previous != null && previous.contents instanceof SIRTwoStageFilter) {
-	    upStreamItems -= ((SIRTwoStageFilter)previous.contents).getPushInt();
-	    upStreamItems += ((SIRTwoStageFilter)previous.contents).getInitPush();
-	}
-
+	    
 	//see my thesis for an explanation of this calculation
 	if (initFire  - 1 > 0) {
 	    bottomPeek = Math.max(0, 
@@ -235,7 +223,95 @@ public class RawExecutionCode extends at.dms.util.Utils
 	
     }
     
+    /* node is not directly connected upstream to a splitter, this function
+       will calculate the number of items send to node */
+    private int getUpStreamItems(HashMap executionCounts, FlatNode node) 
+    {
+	//if the node has not incoming channels then just return 0
+	if (node.inputs < 1)
+	    return 0;
+	
+	FlatNode previous = node.incoming[0];
+	
+	int prevPush = 0;
+	
+	//get the number of times the previous node executes in the 
+	//schedule
+	int prevInitCount = Util.getCountPrev(executionCounts, 
+					      previous, node);
+	
+	//get the push rate for the previous
+	if (prevInitCount > 0) {
+	    if (previous.contents instanceof SIRSplitter || 
+		previous.contents instanceof SIRJoiner) {
+		prevPush = 1;
+	    }
+	    else
+		prevPush = ((SIRFilter)previous.contents).getPushInt();
+	}
+	
+	//push * executions
+	int upStreamItems = (prevInitCount * prevPush);
 
+	//System.out.println("previous: " + previous.getName());
+	//System.out.println("prev Push: " + prevPush + " prev init: " + prevInitCount);
+
+	//if the previous node is a two stage filter then count its initWork
+	//in the initialItemsTo Receive
+	if (previous != null && previous.contents instanceof SIRTwoStageFilter) {
+	    upStreamItems -= ((SIRTwoStageFilter)previous.contents).getPushInt();
+	    upStreamItems += ((SIRTwoStageFilter)previous.contents).getInitPush();
+	}
+
+	return upStreamItems;
+    }
+
+
+    /**
+       If the filter's upstream neighbor is a splitter we may have a problem 
+       where the filter feeding the splitter produces more data than the splitter
+       passes on in the init stage.  So we need to recognize this and forward the data
+       on to the filter(s) that the splitter feeds.  Remember, we do not map splitters
+       so the data on the splitters input tape after the init stage is over must go somewhere.
+    **/
+    private int getPrevSplitterUpStreamItems(FlatNode prev, FlatNode node) 
+    {
+	double roundRobinMult = 1.0;
+		
+	//there is nothing feeding this splitter, so just return 0
+	if (prev.inputs < 1) 
+	    return 0;
+	
+	//follow the channels backward until we get to a filter or joiner,
+	//remembering the weights on the rr splitters that connect
+	//the filter (joiner) to node, so we know the number of items passed to <node>
+	FlatNode current = prev;
+	FlatNode downstream = node;
+	while (current.contents instanceof SIRSplitter) {
+	    if (!(((SIRSplitter)current.contents).getType() == SIRSplitType.DUPLICATE))
+		roundRobinMult *= Util.getRRSplitterWeight(current, downstream);
+	    if (current.inputs < 1)
+		return 0;
+	    downstream = current;
+	    current = current.incoming[0];
+	}
+	
+	//now current must be a joiner or filter
+	//get the number of item current produces
+	int currentUpStreamItems = getUpStreamItems(RawBackend.initExecutionCounts,
+						 current.edges[0]);
+
+	//	if (getUpStreamItems(RawBackend.initExecutionCounts, node) != 
+	//    ((int)(currentUpStreamItems * roundRobinMult)))
+	//    System.out.println
+	//	("***** CORRECTING FOR INCOMING SPLITTER BUFFER IN INIT SCHEDULE (" + 
+	//	 node.contents.getName() + ") *****\n");
+	
+	//return the number of items passed from current to node thru the splitters
+	//(some may be roundrobin so we must use the weight multiplier.
+	return (int)(currentUpStreamItems * roundRobinMult);
+    }
+    
     //returns the expression that will create the buffer array.  A JNewArrayExpression
     //with the proper type, dimensions, and size...
     private JExpression bufferInitExp(SIRFilter filter, CType inputType,
@@ -578,6 +654,13 @@ public class RawExecutionCode extends at.dms.util.Utils
 			     new JIntLiteral(remaining))); 
 	}
 
+	if (RawBackend.FILTER_DEBUG_MODE) {
+	    statements.addStatement
+		(new SIRPrintStatement(null,
+				       new JStringLiteral(null, filter.getName() + " Starting Steady-State"),
+				       null));
+	}
+	
 	//add the call to the work function
 	statements.addStatement(generateSteadyStateLoop(filter,
 							localVariables));
@@ -629,6 +712,15 @@ public class RawExecutionCode extends at.dms.util.Utils
 	//clone the work function and inline it
 	JBlock workBlock = 
 	    (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
+	
+	//if we are in debug mode, print out that the filter is firing
+	if (RawBackend.FILTER_DEBUG_MODE) {
+	    block.addStatement
+		(new SIRPrintStatement(null,
+				       new JStringLiteral(null, filter.getName() + " firing (init)."),
+				       null));
+	}
+	
 	block.addStatement(workBlock);
 	
 	//return the for loop that executes the block init - 1
@@ -693,6 +785,16 @@ public class RawExecutionCode extends at.dms.util.Utils
 	JBlock workBlock = 
 	    (JBlock)ObjectDeepCloner.
 	    deepCopy(filter.getWork().getBody());
+
+	//if we are in debug mode, print out that the filter is firing
+	if (RawBackend.FILTER_DEBUG_MODE) {
+	    block.addStatement
+		(new SIRPrintStatement(null,
+				       new JStringLiteral(null, filter.getName() + " firing."),
+				       null));
+	}
+
+	//add the cloned work function to the block
 	block.addStatement(workBlock);
 	//	}
 	

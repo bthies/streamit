@@ -210,6 +210,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	p.print("#include <init_instance.h>\n");
 	p.print("#include <mysocket.h>\n");
 	p.print("#include <peek_stream.h>\n");
+	p.print("#include <timer.h>\n");
 
 	p.print("\n");
 
@@ -370,7 +371,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 				}
 			    }
 
-			    print("    "+thread_method_name+"(");
+			    print("    "+thread_method_name+"__"+selfID+"(");
 			    for (int a = 0; a < param_count; a++) {
 				if (a > 0) print(", ");
 				print("p"+a);
@@ -419,7 +420,11 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	}
 
 
-	print("  "+self.getInit().getName()+"();\n");
+	print("  "+self.getInit().getName()+"__"+selfID+"();\n");
+
+	if (out == null) print("  timer t;\n");
+	if (out == null) print("  t.start();\n");
+	
 	print("  for (i = 0; i < __number_of_iterations; i++) { \n");
 
 	{
@@ -430,8 +435,14 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	}
 
-	print("    "+self.getWork().getName()+"();\n");
+	
+
+	print("    "+self.getWork().getName()+"__"+selfID+"();\n");
 	print("  } \n");
+
+	if (out == null) print("  t.stop();\n");
+	if (out == null) print("  t.output(stderr);\n");
+
 	print("  sleep(3); // so that sockets dont get closed\n");
 	print("}\n");
        
@@ -496,6 +507,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
         print(type);
         print(" ");
         print(ident);
+	print("__"+selfID);
 
         if (expr != null) {
             print("\t= ");
@@ -548,6 +560,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print("initPath"); 
 	else 
 	    print(ident);
+	print("__"+selfID);
 	print("(");
 	int count = 0;
 	
@@ -1188,6 +1201,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	}
 	
         print(ident);
+	print("__"+selfID);
         print("(");
 	
 	//if this method we are calling is the call to a structure 
@@ -1313,6 +1327,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    if (!(left instanceof JThisExpression))
 		print(".");
             print(ident);
+	    print("__"+selfID);
 	    print(")");
         }
     }

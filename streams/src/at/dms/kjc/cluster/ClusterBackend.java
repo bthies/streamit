@@ -175,6 +175,8 @@ public class ClusterBackend {
 			       " reverse_sdep["+t+"] = "+phaserev);
 	}
 
+	DoSchedules.findSchedules(selfIter, firstIter, str);
+
        	System.out.println(" done.");
 
 	// end constrained scheduler

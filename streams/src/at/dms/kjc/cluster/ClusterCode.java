@@ -458,24 +458,42 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.println();
 	p.println();
 
-	p.print("run_cluster: master.cpp");
+	p.print("run_cluster: master.o");
 
 	for (int i = 0; i < threadNumber; i++) {
-	    p.print(" thread"+i+".cpp");
+	    p.print(" thread"+i+".o");
 	}
 
 	p.println();
 
-	p.print("\tgcc -O2 -I$(STREAMIT_HOME)/library/cluster -o run_cluster master.cpp");
+	p.print("\tgcc -O2 -o run_cluster master.o");
 	
 	for (int i = 0; i < threadNumber; i++) {
-	    p.print(" thread"+i+".cpp");
+	    p.print(" thread"+i+".o");
 	}
 
 	p.print(" -L$(STREAMIT_HOME)/library/cluster -lpthread -lstdc++ -lcluster");
 
 	p.println();
 	p.println();
+
+	p.print("master.o: master.cpp");
+	p.println();
+	p.print("\tgcc -O2 -I$(STREAMIT_HOME)/library/cluster -c master.cpp");
+	p.println();
+	p.println();
+
+
+	for (int i = 0; i < threadNumber; i++) {
+
+	    p.print("thread"+i+".o: thread"+i+".cpp");
+	    p.println();
+	    p.print("\tgcc -O2 -I$(STREAMIT_HOME)/library/cluster -c thread"+i+".cpp");
+	    p.println();
+	    p.println();
+
+	}
+
 	
 	try {
 	    FileWriter fw = new FileWriter("Makefile.cluster");

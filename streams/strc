@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.9 2003-10-06 18:40:21 dmaze Exp $
+# $Id: strc,v 1.10 2003-10-06 19:03:40 dmaze Exp $
 #
 
 use strict;
@@ -93,7 +93,7 @@ Options available for all backends:
 *                     Do linear replacement using a level of indirection
 * --linearreplacement3
 *                     Do linear replacement using diagonal replacement
-* --nofieldprop, -L   Do not propagate constant field values
+* --nofieldprop       Do not propagate constant field values
 * --nolinearcollapse, -H
 *                     Do not combine filters with linear replacement
 * --print-partitioned-source, -c
@@ -181,7 +181,7 @@ sub get_options
 			    "magic-net|magic_net|M",
 			    "memory|Xmx=s",
 			    "noanneal|W",
-			    "nofieldprop|L",
+			    "nofieldprop",
 			    "nolinearcollapse|H",
 			    "norun",
 			    "nosched",
@@ -198,7 +198,7 @@ sub get_options
 			    "raw-uni|raw_uni|S",
 			    "redundantreplacement|t",
 			    "removeglobals|G",
-			    "simplesjfusion|S",
+			    "simplesjfusion",
 			    "simulatework|s",
 			    "sjtopipe|J",
 			    "spacetime!",
@@ -224,7 +224,6 @@ sub get_options
 	if ($opts{optimize} >= 1)
 	  {
 	    $opts{unroll} = 16 unless exists $opts{unroll};
-	    $opts{altcodegen} = 1 unless exists $opts{altcodegen};
 	    $opts{ratematch} = 1 unless exists $opts{ratematch};
 	    $opts{wbs} = 1 unless exists $opts{wbs};
 	    $opts{destroyfieldarray} = 1 unless
@@ -294,7 +293,7 @@ sub old_to_c
     my $kjcopts = get_kjc_opts();
     my $xmx = "-Xmx" . $opts{memory};
     my $jfiles = join(' ', @$fns);
-    if (!$opts{raw} && !$opts{cluster})
+    if (!$opts{raw} && !$opts{'raw-uni'} && !$opts{cluster})
       {
 	my $target = change_extension($fns->[0], "java", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};

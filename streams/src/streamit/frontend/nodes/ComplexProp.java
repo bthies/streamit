@@ -1,7 +1,7 @@
 /*
  * ComplexProp.java: cause complex values to bubble upwards
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ComplexProp.java,v 1.10 2002-10-04 02:18:28 dmaze Exp $
+ * $Id: ComplexProp.java,v 1.11 2002-10-04 02:27:05 dmaze Exp $
  */
 
 // Does this actually belong here?  If we evolve more front-end passes,
@@ -437,39 +437,14 @@ public class ComplexProp extends FEReplacer
 
     public Expression fcPow(ExprFunCall fc, Expression base, Expression exp)
     {
-	// Go to polar form.  Then base=C*e(a+bi); we just add exp to the
-	// exponent.
-	Expression absBase = base;
-	Expression argBase = new ExprConstInt(base.getContext(), 0);
-	if (base instanceof ExprComplex)
-	{
-	    absBase = new ExprFunCall(base.getContext(), "abs", base);
-	    absBase = (Expression)absBase.accept(this);
-	    argBase = new ExprFunCall(base.getContext(), "arg", base);
-	    argBase = (Expression)argBase.accept(this);
-	}
-	
-	Expression newExp = new ExprBinary(base.getContext(),
-					   ExprBinary.BINOP_ADD,
-					   argBase, exp);
-	Expression real = new ExprFunCall(base.getContext(), "cos", newExp);
-	real = new ExprBinary(real.getContext(), ExprBinary.BINOP_MUL,
-			      real, absBase);
-	Expression imag = new ExprFunCall(base.getContext(), "sin", newExp);
-	imag = new ExprBinary(imag.getContext(), ExprBinary.BINOP_MUL,
-			      imag, absBase);
-	// Now, this is actually a little tricky: if newExp is complex
-	// (meaning that exp is complex), then real and imag will both
-	// also be complex.  So create the variable (real + i*imag):
-	imag = new ExprBinary(imag.getContext(), ExprBinary.BINOP_MUL,
-			      imag, new ExprComplex(imag.getContext(),
-						    new ExprConstInt(imag.getContext(),
-								     0),
-						    new ExprConstInt(imag.getContext(),
-								     1)));
-	Expression result = new ExprBinary(base.getContext(),
-					   ExprBinary.BINOP_ADD, real, imag);
-	// And run ComplexProp on this.
+	// In general, base^exp = e^(exp*ln(base)).  This is easy enough
+	// to do here, solves all of the nasty corner cases, and might
+	// have a prayer of being efficient.
+	Expression lnBase = new ExprFunCall(base.getContext(), "log", base);
+	Expression newExp = new ExprBinary(exp.getContext(),
+					   ExprBinary.BINOP_MUL,
+					   exp, lnBase);
+	Expression result = new ExprFunCall(fc.getContext(), "exp", newExp);
 	result = (Expression)result.accept(this);
 	return result;
     }

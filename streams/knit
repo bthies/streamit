@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.5 2002-09-23 20:46:02 dmaze Exp $
+# $Id: knit,v 1.6 2002-09-24 15:30:17 dmaze Exp $
 #
 
 use strict;
@@ -35,7 +35,20 @@ Options:
   --java              Input file is "old" syntax
   --output filename   Write a binary to filename
   --raw n             Compile for RAW, with an n-by-n grid
-  --verbose           Print commands as they are executed 
+  --verbose           Print commands as they are executed
+
+Options passed to Kopi:
+  --constprop, -c     Turns on StreamIt Field Prop
+  --fusion, -o        Perform filter fusion
+  --linearanalysis    Perform linear analysis
+  --linearreplacement Perform linear transformations based on analysis
+  --noanneal, -N      Do not run simulated annealing for layout
+  --partition, -a     Automatically partition stream graph
+  --ratematch, -x     Turn on rate matching for RAW
+  --simplesjfusion    Revert to the old, simple SplitJoin fusion algorithm
+  --sync, -k          Turn on sync removal
+  --unroll, -u        StreamIt Unroll
+  --viram, -V         Compile for VIRAM, a vector uniprocessor
 EOT
 }
 
@@ -48,8 +61,19 @@ sub get_options
 	       "java!",
 	       "old-converter",
 	       "output|o=s",
-	       "raw=i",
-	       "verbose|v");
+	       "raw|r=i",
+	       "verbose|v",
+	       "constprop|c!",
+	       "fusion|o!",
+	       "linearanalysis|i!",
+	       "linearreplacement|I!",
+	       "noanneal|N!",
+	       "partition|a!",
+	       "ratematch|x!",
+	       "simplesjfusion|S!",
+	       "sync|k!",
+	       "unroll|u!",
+	       "viram|V!");
   }
 
 sub call
@@ -92,8 +116,7 @@ sub old_to_c
   {
     my ($fns) = @_;
     my @out = ();
-    my $kjcopts = "";
-    $opts{raw} && ($kjcopts .= " -raw $opts{raw}");
+    my $kjcopts = get_kjc_opts();
     foreach my $java (@$fns)
       {
 	my $c = change_extension($java, "java", "c");
@@ -110,3 +133,21 @@ sub c_to_out
     call("gcc -g -o$target -I$sh/library/c " . join(' ', @$fns) .
 	 " -L$sh/library/c -lstreamit -lm");
   }
+
+sub get_kjc_opts
+  {
+    my $kjcopts = "";
+    $opts{raw} && ($kjcopts .= " -raw " . $opts{raw});
+    $opts{constprop} && ($kjcopts .= " -c");
+    $opts{fusion} && ($kjcopts .= " -o");
+    $opts{linearanalysis} && ($kjcopts .= " -i");
+    $opts{linearreplacement} && ($kjcopts .= " -I");
+    $opts{noanneal} && ($kjcopts .= " -N");
+    $opts{partition} && ($kjcopts .= " -a");
+    $opts{ratematch} && ($kjcopts .= " -x");
+    $opts{simplesjfusion} && ($kjcopts .= " -S");
+    $opts{sync} && ($kjcopts .= " -k");
+    $opts{unroll} && ($kjcopts .= " -u");
+    $opts{viram} && ($kjcopts .= " -V");
+    return $kjcopts;
+}

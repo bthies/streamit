@@ -20,7 +20,7 @@ import at.dms.util.*;
  * of the compiler aware of phases.  In some places this is easier
  * than in others; big changes show up in the backends.
  *
- * @version $Id: SIRTwoStageFilter.java,v 1.5 2003-05-16 20:47:03 dmaze Exp $
+ * @version $Id: SIRTwoStageFilter.java,v 1.6 2003-05-27 03:35:03 thies Exp $
  */
 public class SIRTwoStageFilter extends SIRFilter {
     /* Internal invariant: the init and work phases arrays each have
@@ -84,6 +84,23 @@ public class SIRTwoStageFilter extends SIRFilter {
 		     "\ninitPop=" + getInitPop() + 
 		     "\nPeek=" + getPeekInt() + 
 		     "\nPop=" + getPopInt());
+    }
+
+    /**
+     * Overloads super.copyState
+     */
+    public void copyState(SIRFilter other) {
+	super.copyState(other);
+	if (!(other instanceof SIRTwoStageFilter)) {
+	    // this is a little tricky -- if we're copying from an
+	    // SIRFilter into a TwoStageFilter, then we don't want the
+	    // single-stage filter's "non-existant" init stage to
+	    // clobber the "empty" init stage of the two-stage filter.
+	    // So just restore the empty init stage here if we have a
+	    // two-stage filter.
+	    setInitPhases(new SIRWorkFunction[1]);
+	    getInitPhases()[0] = new SIRWorkFunction();
+	}
     }
 
     /**

@@ -382,6 +382,8 @@ public class ClusterBackend implements FlatVisitor {
 	    }
 	}
 	
+	/*
+
 	//now, in the above calculation, an execution of a joiner node is 
 	//considered one cycle of all of its inputs.  For the remainder of the
 	//raw backend, I would like the execution of a joiner to be defined as
@@ -407,6 +409,8 @@ public class ClusterBackend implements FlatVisitor {
 		}
 	    }
 	}
+	*/
+
 	
 	//The following code fixes an implementation quirk of two-stage-filters
 	//in the *FIRST* version of the scheduler.  It is no longer needed,

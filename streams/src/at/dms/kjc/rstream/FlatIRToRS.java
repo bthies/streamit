@@ -104,7 +104,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	//find all do loops, 
 	toC.doloops = IDDoLoops.doit(node);
 	//remove unnecessary do loops
-	RemoveDeadDoLoops.doit(node, toC.doloops);
+	//RemoveDeadDoLoops.doit(node, toC.doloops);
 	//now iterate over all the methods and generate the c code.
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }

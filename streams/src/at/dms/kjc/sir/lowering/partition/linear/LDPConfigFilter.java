@@ -91,6 +91,7 @@ class LDPConfigFilter extends LDPConfig {
     }
 
     public StreamTransform traceback(int collapse) {
+	if (LinearPartitioner.DEBUG) { printArray(); }
 
 	switch(collapse) {
 	    
@@ -105,8 +106,9 @@ class LDPConfigFilter extends LDPConfig {
 	    int min = Integer.MAX_VALUE;
 	    int minOption = -1;
 	    for (int i=0; i<options.length; i++) {
-		if (get(options[i])<min) {
-		    min = options[i];
+		int cost = get(options[i]);
+		if (cost<min) {
+		    min = cost;
 		    minOption = i;
 		}
 	    }
@@ -144,5 +146,17 @@ class LDPConfigFilter extends LDPConfig {
     protected void setStream(SIRStream str) {
 	Utils.assert(str instanceof SIRFilter);
 	this.filter = (SIRFilter)str;
+    }
+
+    public void printArray() {
+	String msg = "Printing array for " + getStream().getIdent() + " --------------------------";
+	System.err.println(msg);
+	for (int i1=0; i1<A.length; i1++) {
+	    System.err.println(getStream().getIdent() + "[" + LinearPartitioner.COLLAPSE_STRING(i1) + "] = " + A[i1]);
+	}
+	for (int i=0; i<msg.length(); i++) {
+	    System.err.print("-");
+	}
+	System.err.println();
     }
 }

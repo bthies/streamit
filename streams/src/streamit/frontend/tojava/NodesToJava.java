@@ -28,7 +28,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.86 2004-07-28 20:14:53 jasperln Exp $
+ * @version $Id: NodesToJava.java,v 1.87 2004-11-15 06:12:28 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -108,8 +108,8 @@ public class NodesToJava implements FEVisitor
         if (type instanceof TypeArray)
         {
             TypeArray array = (TypeArray)type;
-            return convertTypeFull(array.getBase()) + "[" +
-                (String)array.getLength().accept(this) + "]";
+            return "[" + (String)array.getLength().accept(this) + "]"
+		+ convertTypeFull(array.getBase());
         }
         return convertType(type);
     }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.6 2001-10-12 05:52:19 mgordon Exp $
+ * $Id: JBlock.java,v 1.7 2001-10-12 10:23:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -84,6 +84,20 @@ public class JBlock extends JStatement {
      */
     public void addStatementFirst(JStatement statement) {
 	body.addFirst(statement);
+    }
+
+    /**
+     * Adds all statements in <lst> to this, at the specified position.
+     */
+    public void addAllStatements(int pos, List lst) {
+	body.addAll(pos, lst);
+    }
+
+    /**
+     * Adds all statements in <lst> to end of this.
+     */
+    public void addAllStatements(List lst) {
+	body.addAll(lst);
     }
 
   // ----------------------------------------------------------------------

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.8 2001-10-03 12:32:23 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.9 2001-10-12 10:23:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -118,6 +118,20 @@ public class JMethodDeclaration extends JMemberDeclaration {
      */
     public void addStatementFirst(JStatement statement) {
 	body.addStatementFirst(statement);
+    }
+   
+    /**
+     * Adds all statements in <lst> to this, at the specified position.
+     */
+    public void addAllStatements(int pos, List lst) {
+	body.addAllStatements(pos, lst);
+    }
+
+    /**
+     * Adds all statements in <lst> to end of this.
+     */
+    public void addAllStatements(List lst) {
+	body.addAllStatements(lst);
     }
 
   // ----------------------------------------------------------------------

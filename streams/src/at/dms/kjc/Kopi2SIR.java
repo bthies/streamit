@@ -79,7 +79,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	String TYPE = clazz.getSourceClass().getSuperClass().getIdent();
     
 	if (TYPE.equals("Pipeline")) {
-	    SIRPipeline current = new SIRPipeline(parentStream, 
+	    SIRPipeline current = new SIRPipeline((SIRContainer)parentStream, 
 				   JFieldDeclaration.EMPTY,
 				   JMethodDeclaration.EMPTY);
 	    parentOperator = parentStream = current;
@@ -87,7 +87,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	}
 	if (TYPE.equals("Filter")) {
 	    SIRFilter current = new SIRFilter();
-	    current.setParent(parentStream);
+	    current.setParent((SIRContainer)parentStream);
 	    current.setFields(JFieldDeclaration.EMPTY);
 	    current.setMethods(JMethodDeclaration.EMPTY);
 	    parentOperator = parentStream = current;
@@ -95,7 +95,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	}
 	if (TYPE.equals("FeedbackLoop")) {
 	    SIRFeedbackLoop current = new SIRFeedbackLoop();
-	    current.setParent(parentStream);
+	    current.setParent((SIRContainer)parentStream);
 	    current.setFields(JFieldDeclaration.EMPTY);
 	    current.setMethods(JMethodDeclaration.EMPTY);
 	    parentOperator = parentStream = current;
@@ -1176,7 +1176,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    SIRStream st = (SIRStream)getVisitedOp(((JUnqualifiedInstanceCreation)SIROp).
 						   getType().getCClass().getIdent());
 	    SIRStream newST = (SIRStream) st.clone();
-	    newST.setParent(parentStream);
+	    newST.setParent((SIRContainer)parentStream);
 	    if (regMethod.equals("add"))
 		((SIRPipeline)parentStream).add(newST);
 	    else if (regMethod.equals("setBody"))
@@ -1302,7 +1302,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    at.dms.util.Utils.fail("arg to setSplitter must be a method call");
 	int n = 2;
 	
-	return SIRSplitter.create(parentStream, SIRSplitType.ROUND_ROBIN, 2);
+	return SIRSplitter.create((SIRContainer)parentStream, 
+				  SIRSplitType.ROUND_ROBIN, 2);
 	//return SIRSplitter.create(parentStream, SIRSplitType.DUPLICATE, 2);
     }
 
@@ -1310,7 +1311,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
 	if (!(type instanceof JMethodCallExpression))
 	    at.dms.util.Utils.fail("arg to setJoiner must be a method call");
-	return SIRJoiner.create(parentStream, SIRJoinType.ROUND_ROBIN, 2);
+	return SIRJoiner.create((SIRContainer)parentStream, 
+				SIRJoinType.ROUND_ROBIN, 2);
     }
     
     

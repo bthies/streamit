@@ -87,7 +87,9 @@ public class LinearOptimizer {
 	s2 = reduceParameters(true); 
 	LinearPrinter.println("got reduction up to value " + s2); 
 			
-	if(s2 >= 0) { 
+	if(s2 >= 0) {
+	    // for now, leave at least 1 state
+	    s2 = Math.min(s2,states-2);
 	    qr_Algorithm(s2); 
 	    cleanAll(); 
 	    zeroInitEntries(); 
@@ -95,6 +97,13 @@ public class LinearOptimizer {
 	    removeUnreachableStates(s2); 
 	}  
 		
+	// minimally parametrize the system
+	cleanAll();
+	transposeSystem();
+	minParametrize(false);
+	transposeSystem();
+
+	cleanAll();
 	return extractRep();
     }
 
@@ -163,8 +172,6 @@ public class LinearOptimizer {
 
 	states = newStates;
     }
-
-
     
     // add constant state 1
     // makes all other init vector entries zero    
@@ -247,6 +254,8 @@ public class LinearOptimizer {
 		removeState(i);
 		temp_index--;
 	    }
+	    else
+		LinearPrinter.println("Did not remove Unobservable state");
 	}
     }
 
@@ -547,6 +556,127 @@ public class LinearOptimizer {
     }
 
 
+    // removes as many non-zero entries as possible
+    private void minParametrize(boolean normal) {
+
+	int currRow = 0;
+	int currCol = 0;
+	int currStage = 0;
+	int searchRow, max_index;
+	boolean found;
+	double temp_val, max_val;
+	ComplexNumber tempComplex;
+
+	while((currRow < states)&&(currStage < inputs)) {
+	    
+	    found = false;
+	    searchRow = currRow;
+
+	    // find a non-zero entry in the B matrix and swap with the current row
+	    /*
+	    while((!found)&&(searchRow < states)) {
+		if(!totalMatrix.getElement(searchRow,states+currStage).equals(ComplexNumber.ZERO))
+		    found = true;
+		searchRow++;
+	    }
+	    */
+
+	    max_index = currRow;
+	    max_val = Math.abs(totalMatrix.getElement(currRow,states+currStage).getReal());
+	    for(int i=currRow+1; i<states; i++) {
+		temp_val = Math.abs(totalMatrix.getElement(i,states+currStage).getReal());
+		if(temp_val > max_val) {
+		    max_val = temp_val;
+		    max_index=i;
+		}
+	    }
+	    swap(currRow,max_index);
+	    if(totalMatrix.getElement(currRow,states+currStage).equals(ComplexNumber.ZERO))
+		found = false;
+	    else
+		found = true;
+
+	    
+	    if(found) { 
+		//		swap(currRow,searchRow-1);
+
+		temp_val = totalMatrix.getElement(currRow,states+currStage).getReal();
+		scale(currRow,1.0/temp_val,normal);
+	    
+		// make all entries above and below it to zero
+		for(int i=0; i<states; i++) { 
+		    if(i!=currRow) {
+			tempComplex = totalMatrix.getElement(i,states+currStage);
+			if(!tempComplex.equals(ComplexNumber.ZERO))
+			    addMultiple(currRow,i,-tempComplex.getReal(),normal);	
+		    }
+		}
+	    }
+
+	    currRow++;
+	    currStage++;
+
+	    // now go diagonally down from the next row
+
+	    while(found && (currRow < states) & (currCol < states)) {
+
+		found = false;
+		searchRow = currRow;
+
+		// find a non-zero entry in the A matrix and swap with the current row
+		/*
+		while((!found)&&(searchRow < states)) {
+		    if(!totalMatrix.getElement(searchRow,currCol).equals(ComplexNumber.ZERO))
+			found = true;
+		    searchRow++;
+		}
+		*/
+
+                max_index = currRow;
+		max_val = Math.abs(totalMatrix.getElement(currRow,currCol).getReal());
+		for(int i=currRow+1; i<states; i++) {
+		    temp_val = Math.abs(totalMatrix.getElement(i,currCol).getReal());
+		    if(temp_val > max_val) {
+			max_val = temp_val;
+			max_index=i;
+		    }
+		}
+		swap(currRow,max_index);
+		LinearPrinter.println("BIGGEST VALUE: " + totalMatrix.getElement(currRow,currCol).getReal());
+		if(totalMatrix.getElement(currRow,currCol).equals(ComplexNumber.ZERO))
+		    found = false;
+		else
+		    found = true;
+
+
+		if(found) {
+		    //		    swap(currRow,searchRow-1);
+		    
+		    temp_val = totalMatrix.getElement(currRow,currCol).getReal(); 
+		    scale(currRow,1.0/temp_val,normal);
+		    
+		    // make all entries above and below it to zero
+		    for(int i=0; i<states; i++) { 
+			if(i!=currRow) {
+			    tempComplex = totalMatrix.getElement(i,currCol);
+			    if(!tempComplex.equals(ComplexNumber.ZERO))
+			    	addMultiple(currRow,i,-tempComplex.getReal(),normal);
+			    LinearPrinter.println("VALUE: " + totalMatrix.getElement(i,currCol).getReal());		
+			}
+		    }
+		    currRow++;
+		}
+
+		currCol++;
+	    }
+		  
+	}
+    }
+
+
+
+
+
     // swaps rows a,b and cols a,b in totalMatrix, totalPreMatrix
     // also swaps elements a,b in init vector
     private void swap(int a, int b) {
@@ -581,13 +711,17 @@ public class LinearOptimizer {
 
     // multiplies row a, col a by val in totalMatrix, totalPreMatrix
     // also multiplies element a by val in init vector
-    private void scale(int a, double val) {
+    private void scale(int a, double val, boolean normal) {
 
 	totalMatrix.multiplyRowAndCol(a,val);
 	if(preNeeded) {
 	    totalPreMatrix.multiplyRowAndCol(a,val);			    
 	}
-	initVec.multiplyCol(a,val);
+	
+	if(normal)
+	    initVec.multiplyCol(a,val);
+	else
+	    initVec.multiplyCol(a,1.0/val);
 
 	LinearPrinter.println("SCALED " + a + " " + val);		
 

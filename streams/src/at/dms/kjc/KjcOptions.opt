@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.40 2003-07-01 22:23:11 janiss Exp $
+ * $Id: KjcOptions.opt,v 1.41 2003-08-11 06:51:15 thies Exp $
  */
 
 prefix Kjc
@@ -376,3 +376,8 @@ longname		"graph"
 	type		boolean
 	default		"false"
 	help		"Outputs graph representation for eclipse plugin"
+
+longname		"wbs"
+	type		boolean
+	default 	"false"
+	help 		"Uses the work based simulator for laying out the communication instructions."

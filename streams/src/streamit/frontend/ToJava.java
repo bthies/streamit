@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.50 2003-10-14 17:54:38 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.51 2003-12-01 20:27:25 dmaze Exp $
  */
 public class ToJava
 {
@@ -183,7 +183,7 @@ public class ToJava
         prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new DisambiguateUnaries(varGen));
         prog = (Program)prog.accept(new NoRefTypes());
-        prog = (Program)prog.accept(new FindFreeVariables());
+        prog = (Program)prog.accept(new NameAnonymousStreams(varGen));
         if (!libraryFormat)
             prog = (Program)prog.accept(new NoticePhasedFilters());
         prog = (Program)prog.accept(new DoComplexProp(varGen));

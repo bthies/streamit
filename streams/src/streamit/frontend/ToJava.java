@@ -112,6 +112,7 @@ class ToJava
                  * "this", which doesn't exist. */
                 TempVarGen varGen = new TempVarGen();
                 prog = (Program)prog.accept(new MakeBodiesBlocks());
+                prog = (Program)prog.accept(new RenameBitVars());
                 if (!libraryFormat)
                     prog = (Program)prog.accept(new NoticePhasedFilters());
                 prog = (Program)prog.accept(new DoComplexProp(varGen));

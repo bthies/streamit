@@ -40,7 +40,7 @@ package streamit.frontend.nodes;
  * specified, or gleaned from a program representation.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TempVarGen.java,v 1.4 2004-02-12 21:34:44 dmaze Exp $
+ * @version $Id: TempVarGen.java,v 1.5 2004-02-13 21:23:22 dmaze Exp $
  */
 public class TempVarGen
 {
@@ -83,6 +83,8 @@ public class TempVarGen
 
         // Find all local-variable expressions in the program.  If
         // they start with __s, the next character is the old prefix.
+        // Also, find top-level streamspecs, and if their names start
+        // with AnonFilter_, the next character is the old prefix.
         // Use the lowest character higher than any of the old
         // prefixes.
         prog.accept(new FEReplacer() {
@@ -90,21 +92,33 @@ public class TempVarGen
                 {
                     String name = expr.getName();
                     if (name.startsWith("__s") && name.length() > 3)
-                    {
-                        char pp = name.charAt(3);
-                        if (Character.isLetter(pp))
-                        {
-                            char op = prefix.charAt(0);
-                            if (pp >= op)
-                            {
-                                char np = (char)((int)pp + 1);
-                                prefix = String.valueOf(np);
-                            }
-                        }
-                    }
-                    return expr;
+                        checkPrefix(name.charAt(3));
+                    return super.visitExprVar(expr);
+                }
+
+                public Object visitStreamSpec(StreamSpec ss)
+                {
+                    String name = ss.getName();
+                    if (name != null &&
+                        name.startsWith("AnonFilter_") &&
+                        name.length() > 11)
+                        checkPrefix(name.charAt(11));
+                    return super.visitStreamSpec(ss);
                 }
             });
+    }
+
+    private void checkPrefix(char c)
+    {
+        if (Character.isLetter(c))
+        {
+            char op = prefix.charAt(0);
+            if (c >= op)
+            {
+                char np = (char)((int)c + 1);
+                prefix = String.valueOf(np);
+            }
+        }
     }
     
     /**

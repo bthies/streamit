@@ -54,17 +54,15 @@ typedef struct tape {
   int write_pos;
   int data_size;
   int tape_length;
+  int mask;
 } tape;
-#define INCR_TAPE_WRITE(t) \
-  ((++((t)->write_pos) >= (t)->tape_length) ? \
-    (t)->write_pos = 0 : (t)->write_pos)
-#define INCR_TAPE_READ(t) \
-  ((++((t)->read_pos) >= (t)->tape_length) ? \
-    (t)->read_pos = 0 : (t)->read_pos)
+#define INCR_TAPE_POS(t, v) ((t)->v = ((t)->v+1) & (t)->mask)
+#define PEEK_TAPE(t, type, n) \
+  (((type *)(t)->data)[((t)->read_pos+n+1)&(t)->mask])
+#define INCR_TAPE_WRITE(t) INCR_TAPE_POS(t, write_pos)
+#define INCR_TAPE_READ(t) INCR_TAPE_POS(t, read_pos)
 #define PUSH_TAPE(t, type, d) \
   (((type *)((t)->data))[INCR_TAPE_WRITE(t)] = (d))
-#define PEEK_TAPE(t, type, n) \
-  (((type *)(t)->data)[((t)->read_pos+n+1)%(t)->tape_length])
 #define POP_TAPE(t, type) \
   (((type *)((t)->data))[INCR_TAPE_READ(t)])
 #define PUSH(c, type, d) PUSH_TAPE((c)->output_tape, type, d)

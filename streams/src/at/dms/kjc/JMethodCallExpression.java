@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodCallExpression.java,v 1.5 2001-11-02 17:35:30 mgordon Exp $
+ * $Id: JMethodCallExpression.java,v 1.6 2001-11-11 03:00:50 thies Exp $
  */
 
 package at.dms.kjc;
@@ -252,6 +252,18 @@ public class JMethodCallExpression extends JExpression {
 	return method;
     }
 
+    /**
+     * Adds <arg> as the first arg of this.
+     */
+    public void addArgFirst(JExpression arg) {
+	JExpression newArgs[] = new JExpression[args.length + 1];
+	newArgs[0] = arg;
+	for (int i=0; i<args.length; i++) {
+	    newArgs[i+1] = args[i];
+	}
+	this.args = newArgs;
+    }
+
     public JExpression[] getArgs() {
 	return args;
     }
@@ -264,12 +276,16 @@ public class JMethodCallExpression extends JExpression {
 	prefix = p;
     }
 
+    public void setIdent(String ident) {
+	this.ident = ident;
+    }
+
   // ----------------------------------------------------------------------
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
   protected JExpression		prefix;
-  protected final String	ident;
+  protected String	ident;
   protected JExpression[]	args;
 
   protected CMethod		method;

@@ -209,8 +209,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    current.setFields(JFieldDeclaration.EMPTY);
 	    current.setMethods(JMethodDeclaration.EMPTY);
 	    current.setIdent(clazz.getIdent());
-	    current.setInputType(CStdType.Null);
-	    current.setOutputType(CStdType.Null);
+	    current.setInputType(CStdType.Void);
+	    current.setOutputType(CStdType.Void);
 	    parentStream = current;
 	    return current;
 	}
@@ -363,7 +363,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    //the second arg will be turned into string by visitFieldExpression because it is a type
 	    if (!(args[1] instanceof JStringLiteral))
 		at.dms.util.Utils.fail(lineNumber + ": Second argument to FileReader must be a type");
-	    ((SIRFileReader)stream).setInputType(CStdType.Null);
+	    ((SIRFileReader)stream).setInputType(CStdType.Void);
 	    ((SIRFileReader)stream).setOutputType(getType(((JStringLiteral)args[1]).stringValue()));
 	    return;
 	}
@@ -377,7 +377,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    if (!(args[1] instanceof JStringLiteral))
 		at.dms.util.Utils.fail(lineNumber + ": Second argument to FileWriter must be a type");
 	    ((SIRFileWriter)stream).setInputType(getType(((JStringLiteral)args[1]).stringValue()));
-	    ((SIRFileWriter)stream).setOutputType(CStdType.Null);
+	    ((SIRFileWriter)stream).setOutputType(CStdType.Void);
 	    return;
 	}
     }
@@ -655,10 +655,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
     private boolean ignoreMethodDeclaration(String ident) 
     {
-	if (ident.equals("work") ||
+	if (//ident.equals("work") ||
 	    ident.equals("add") ||
-	    ident.equals("initIO") ||
-	    ident.startsWith("initPath"))
+	    //	    ident.startsWith("initPath") ||
+	    ident.equals("initIO"))
 	    return true;
 	return false;
     }

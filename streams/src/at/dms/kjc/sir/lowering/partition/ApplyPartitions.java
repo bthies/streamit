@@ -123,7 +123,13 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
 	// replace children
 	replaceChildren(self);
 	// fuse
-	return FuseSplit.fuse(self, childPart);
+	SIRStream result = FuseSplit.fuse(self, childPart);
+	// if we got a pipeline back, that means we used old fusion,
+	// and we should fuse the pipe again
+	if (result instanceof SIRPipeline) {
+	    FusePipe.fuse((SIRPipeline)result);
+	}
+	return result;
     }
 
     /* visit a feedbackloop */

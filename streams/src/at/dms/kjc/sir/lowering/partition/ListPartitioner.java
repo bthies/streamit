@@ -22,11 +22,6 @@ import at.dms.kjc.sir.lowering.fission.*;
  */
 public abstract class ListPartitioner {
     /**
-     * The work estimate that is given to joiner nodes.
-     */
-    protected static final int JOINER_WORK_ESTIMATE = 1;
-    
-    /**
      * The toplevel stream we're operating on.
      */
     protected SIRStream str;

@@ -35,6 +35,11 @@ public class ILPPartitioner extends ListPartitioner {
     protected static final double GAP_TOLERANCE = 0.20;  // fractional gap to be satisfied with
     protected static final long GAP_TIMEOUT = 30*60;     // stop looking for solution within gap_tolerance
 
+    /**
+     * The work estimate that is given to joiner nodes.
+     */
+    protected static final int JOINER_WORK_ESTIMATE = 1;
+    
     public ILPPartitioner(SIRStream str, int numTiles) {
 	super(str, numTiles);
     }
@@ -162,8 +167,6 @@ public class ILPPartitioner extends ListPartitioner {
 	nodes.add(new DummyNode());
     }
 
-    class DummyNode extends Object {}
-
     /**
      * Returns the variable number of w_max, the variable that
      * represents the maximum amount of work across all tiles.
@@ -249,13 +252,13 @@ public class ILPPartitioner extends ListPartitioner {
 	constrainZeroOneVars(lp);
 	constrainOneTilePerNode(lp);
 	constrainWMax(lp);
-	//constrainConnectedPartitions(lp);
+	constrainConnectedPartitions(lp);
 	constrainHierarchicalPartitions(lp);
 	constrainSeparateJoiners(lp);
 
 	// constriants for the sake of speeding up the solution
 	// process
-	constrainLinearOrder(lp);
+	//constrainLinearOrder(lp);
 	//constrainSymmetry(lp);
     }
 
@@ -314,7 +317,8 @@ public class ILPPartitioner extends ListPartitioner {
 		    con[pNum(j, i)] = -1 * ILPPartitioner.JOINER_WORK_ESTIMATE;
 		} else {
 		    // otherwise we should have a dummy node
-		    Utils.assert(node instanceof DummyNode);
+		    Utils.assert(node instanceof DummyNode, "Didn't expect node " 
+				 + node + " of type " + node.getClass());
 		}
 	    }
 	    lp.addConstraintGE(con, 0);

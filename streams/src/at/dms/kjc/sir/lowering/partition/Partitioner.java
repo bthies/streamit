@@ -37,8 +37,8 @@ public class Partitioner {
 	    if (KjcOptions.ilppartition) {
 		new ILPPartitioner(str, target).toplevelFusion();
 	    } else {
-		//new GreedyPartitioner(str, target).toplevelFusion();
-		new DynamicProgPartitioner(str, target).toplevelFusion();
+		new GreedyPartitioner(str, target).toplevelFusion();
+		//new DynamicProgPartitioner(str, target).toplevelFusion();
 	    }
 	}
 

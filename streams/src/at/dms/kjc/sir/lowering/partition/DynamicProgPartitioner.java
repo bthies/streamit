@@ -32,7 +32,10 @@ public class DynamicProgPartitioner extends ListPartitioner {
     }
     
     public void toplevelFusion() {
+	long start = System.currentTimeMillis();
 	HashMap partitions = calcPartitions();
+	System.err.println("Dynamic programming partitioner took " + 
+			   (System.currentTimeMillis()-start)/1000 + " secs to calculate partitions.");
 	ApplyPartitions.doit(str, partitions);
     }
 
@@ -46,8 +49,18 @@ public class DynamicProgPartitioner extends ListPartitioner {
     private HashMap calcPartitions() {
 	this.work = WorkEstimate.getWorkEstimate(str);
 
-	buildStreamConfig();
-	HashMap result = null; //!!!
+	// build stream config
+	DPConfig topConfig = buildStreamConfig();
+	// build up tables
+	int bottleneck = topConfig.get(numTiles);
+	System.err.println("Found bottleneck work is " + bottleneck + ".  Tracing back...");
+	// expand config stubs that were shared for symmetry optimizations
+	expandSharedConfigs();
+	// build up assignment
+	HashMap result = new HashMap();
+	int[] tileCounter = { 0 };
+	topConfig.traceback(result, tileCounter, numTiles);
+	Utils.assert(tileCounter[0]<numTiles, "Assigned " + tileCounter[0] + " tiles, but we only have " + numTiles);
 
 	PartitionUtil.printTileWork(result, work, numTiles);
 	return result;
@@ -55,10 +68,11 @@ public class DynamicProgPartitioner extends ListPartitioner {
 
     /**
      * Builds up mapping from stream to array in this, also
-     * identifying the uniform splitjoins.
+     * identifying the uniform splitjoins.  Returns a config for the
+     * toplevel stream.
      */
-    private void buildStreamConfig() {
-	str.accept(new EmptyAttributeStreamVisitor() {
+    private DPConfig buildStreamConfig() {
+	return (DPConfig)str.accept(new EmptyAttributeStreamVisitor() {
 		public Object visitSplitJoin(SIRSplitJoin self,
 					     JFieldDeclaration[] fields,
 					     JMethodDeclaration[] methods,
@@ -75,6 +89,8 @@ public class DynamicProgPartitioner extends ListPartitioner {
 		    for (int i=1; i<self.size(); i++) {
 			SIRStream child = self.get(i);
 			if (equivStructure(lastEquiv, child)) {
+			    System.err.println("Detected symmetry between " + 
+					       firstChild.getName() + " and " + child.getName());
 			    configMap.put(child, lastConfig);
 			} else {
 			    lastEquiv = child;
@@ -83,6 +99,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 		    }
 		    // if all were equivalent, then add them to uniform list
 		    if (lastEquiv== self.get(0)) {
+			System.err.println("Detected uniform splitjoin: " + self.getName());
 			uniformSJ.add(self);
 		    }
 		    return makeConfig(self);
@@ -117,37 +134,384 @@ public class DynamicProgPartitioner extends ListPartitioner {
 		}
 
 		private DPConfig makeConfig(SIRStream self) {
-		    DPConfig config = new DPConfig(self);
+		    DPConfig config = createConfig(self);
 		    configMap.put(self, config);
 		    return config;
 		}
 	    });
     }
 
-    class DPConfig {
-	/**
-	 * A stream that can be used to access the children of this
-	 * config.
-	 */
-	public final SIRStream str;
+    /**
+     * Expands shared config records into separate records so that the
+     * traceback can give a full schedule.
+     */
+    private void expandSharedConfigs() {
+	// these are config mappings that were once shared, but we
+	// have expanded to be unshared
+	HashMap unshared = new HashMap();
+	// this is the working set under consideration -- contains
+	// some shared and some non-shared items
+	HashMap potentialShares = configMap;
+	do {
+	    // less shared is our first-level fix of shares we find in
+	    // potential shares.  They might still have some sharing.
+	    HashMap lessShared = new HashMap();
+	    for (Iterator it = potentialShares.keySet().iterator(); it.hasNext(); ) {
+		SIRStream str = (SIRStream)it.next();
+		DPConfig config = (DPConfig)potentialShares.get(str);
+		SIRStream configStr = config.getStream();
+		// if <config> represents something other than <str>, then
+		// replace it with an identical config that wraps <str>
+		if (str!=configStr) {
+		    unshared.put(str, config.copyWithStream(str));
+		    // also need to take care of children of <str>.  Do
+		    // this by associating them with the children of
+		    // <configStr> and putting them back in the mix; will
+		    // iterate 'til nothing is left.
+		    if (str instanceof SIRContainer) {
+			SIRContainer cont = (SIRContainer)str;
+			for (int i=0; i<cont.size(); i++) {
+			    lessShared.put(cont.get(i), configMap.get(((SIRContainer)configStr).get(i)));
+			}
+		    }
+		}
+	    }
+	    potentialShares = lessShared;
+	} while (!(potentialShares.isEmpty()));
+	// add all from <unshared> to <configMap> (don't do above to
+	// avoid modifying what we're iterating over)
+	configMap.putAll(unshared);
+    }
+
+    /**
+     * Returns a DPConfig for <str>
+     */
+    private DPConfig createConfig(SIRStream str) {
+	if (str instanceof SIRFilter) {
+	    return new DPConfigFilter((SIRFilter)str);
+	} else if (str instanceof SIRSplitJoin) {
+	    return new DPConfigSplitJoin((SIRSplitJoin)str);
+	} else {
+	    Utils.assert(str instanceof SIRContainer, "Unexpected stream type: " + str);
+	    return new DPConfigContainer((SIRContainer)str);
+	}
+    }
+
+    abstract class DPConfig implements Cloneable {
 	/**  
-	 * A[i,j,k] that gives the bottleneck work for segment i-j of the
-	 * structure if children i through j are assigned to k tiles.
+	 * A[i,j,k] that gives the bottleneck work for segment i-j of
+	 * the structure if children i through j are assigned to k
+	 * tiles.  If this corresponds to a filter's config, then A is
+	 * null.
 	 */
-	public int[][][] A;
+	protected int[][][] A;
+
+	/**
+	 * Return the bottleneck work if this config is fit on
+	 * <tileLimit> tiles.
+	 */
+	abstract protected int get(int tileLimit);
+
+	/**
+	 * Traceback through a pre-computed optimal solution, storing
+	 * the optimal tile assignment to <map>.  <tileCounter> is a
+	 * one-element array holding the value of the current tile we
+	 * are assigning to filters (in a depth-first way).
+	 */
+	abstract public void traceback(HashMap map, int[] tileCounter, int tileLimit);
+
+	/**
+	 * Returns the stream this config is wrapping.
+	 */
+	abstract public SIRStream getStream();
+
+	/**
+	 * Returns a copy of this with the same A matrix as this
+	 * (object identity is the same), but with <str> as the
+	 * stream.
+	 */
+	public DPConfig copyWithStream(SIRStream str) {
+	    // use cloning instead of a new constructor so that we
+	    // don't reconstruct a fresh A array.
+	    DPConfig result = null;
+	    try {
+		result = (DPConfig)this.clone();
+	    } catch (CloneNotSupportedException e) {
+		e.printStackTrace();
+	    }
+	    result.setStream(str);
+	    return result;
+	}
+
+	/**
+	 * Sets this to wrap <str>.
+	 */
+	protected abstract void setStream(SIRStream str);
 	
-	public DPConfig(SIRStream str) {
-	    this.str = str;
-	    if (str instanceof SIRContainer) {
-		SIRContainer cont = (SIRContainer)str;
-		this.A = new int[cont.size()][cont.size()][numTiles];
+    }
+
+    class DPConfigContainer extends DPConfig {
+	/**
+	 * The stream for this container.
+	 */
+	protected SIRContainer cont;
+
+	public DPConfigContainer(SIRContainer cont) {
+	    this.cont = cont;
+	    this.A = new int[cont.size()][cont.size()][numTiles+1];
+	}
+
+	public SIRStream getStream() {
+	    return cont;
+	}
+
+	/**
+	 * Requires <str> is a container.
+	 */
+	protected void setStream(SIRStream str) {
+	    Utils.assert(str instanceof SIRContainer);
+	    this.cont = (SIRContainer)str;
+	}
+
+	protected int get(int tileLimit) {
+	    // otherwise, compute it
+	    return get(0, cont.size()-1, tileLimit);
+	}
+
+	protected int get(int child1, int child2, int tileLimit) {
+	    // if we've memoized the value before, return it
+	    if (A[child1][child2][tileLimit]>0) {
+		/*
+		System.err.println("Found memoized A[" + child1 + "][" + child2 + "][" + tileLimit + "] = " + 
+				   A[child1][child2][tileLimit] + " for " + cont.getName());
+		*/
+		return A[child1][child2][tileLimit];
+	    }
+
+	    // if we are down to one child, then descend into child
+	    if (child1==child2) {
+		int childCost = childConfig(child1).get(tileLimit);
+		A[child1][child2][tileLimit] = childCost;
+		//System.err.println("Returning " + childCost + " from descent into child.");
+		return childCost;
+	    }	    
+
+	    // otherwise, if <tileLimit> is 1, then just sum the work
+	    // of our components
+	    if (tileLimit==1) {
+		int sum = get(child1, child1, tileLimit) + get(child1+1, child2, tileLimit);
+		A[child1][child2][tileLimit] = sum;
+		//System.err.println("Returning sum " + sum + " from fusion.");
+		return sum;
+	    }
+
+	    // otherwise, find the lowest-cost child AFTER WHICH to
+	    // make a partition at this level
+	    /*
+	    System.err.println("Allocating " + tileLimit + " between children " + child1 + " and " + child2 + 
+			       " of " + cont.getClass() + " " + cont.getName());
+	    */
+	    int min = Integer.MAX_VALUE;
+	    for (int i=child1; i<child2; i++) {
+		for (int j=1; j<tileLimit; j++) {
+		    int cost = Math.max(get(child1, i, j), get(i+1, child2, tileLimit-j));
+		    if (cost < min) {
+			/*
+			System.err.println(" found new min of " + cost + " for " + cont.getName() + " [" 
+					   + child1 + "," + child2 + "] with " + tileLimit + " tiles:\n" +
+					   "\t" + j + " tiles to children " + child1 + "-" + i + "\n" + 
+					   "\t" + (tileLimit-j) + " tiles to children " + (i+1) + "-" + 
+					   child2);
+			*/
+			min = cost;
+		    }
+		}
+	    }
+	    /*
+	    System.err.println("Assigning MIN A[" + child1 + "][" + child2 + "][" + tileLimit + "]=" + min + 
+			       " for " + cont.getName());
+	    */
+	    A[child1][child2][tileLimit] = min;
+	    return min;
+	}
+
+	/**
+	 * Traceback function.
+	 */
+	public void traceback(HashMap map, int[] tileCounter, int tileLimit) {
+	    traceback(map, tileCounter, 0, cont.size()-1, tileLimit);
+	    // if the whole container is assigned to one tile, record
+	    // it as such.  otherwise record as -1
+	    if (tileLimit==1) {
+		map.put(cont, new Integer(tileCounter[0]));
 	    } else {
-		this.A = null;
+		map.put(cont, new Integer(-1));
+	    }
+	}
+	
+	/**
+	 * Traceback helper function. The child1, child2, and
+	 * tileLimit are as above.
+	 */
+	protected void traceback(HashMap map, int[] tileCounter,
+				 int child1, int child2, int tileLimit) {
+	    // if we only have one tile left, or if we are only
+	    // looking at one child, then just recurse into children
+	    if (child1==child2 || tileLimit==1) {
+		for (int i=child1; i<=child2; i++) {
+		    childConfig(i).traceback(map, tileCounter, tileLimit);
+		}
+		return;
+	    }
+
+	    // otherwise, find the best partitioning of this into
+	    // <tileLimit> sizes.  See where the first break was,
+	    // breaking ties by fewest number of tiles required.
+	    int min = Integer.MAX_VALUE;
+	    for (int i=child1; i<child2; i++) {
+		for (int j=1; j<tileLimit; j++) {
+		    int cost = Math.max(get(child1, i, j), get(i+1, child2, tileLimit-j));
+		    if (cost==A[child1][child2][tileLimit]) {
+			/*
+			System.err.println("Found best split of " + cont.getName() + " [" + child1 + "," + child2 + 
+					   "]: " + j + " to [" + child1 + "," + i + "],  " + (tileLimit-j) + " to [" +
+					   (i+1) + "," + child2 + "]");
+			*/
+			// if we found our best cost, then the
+			// division is at this <i> with <j> partitions
+			// on the left.  First recurse left, then
+			// increment tile counter, then recurse right.
+			traceback(map, tileCounter, child1, i, j);
+			tileCounter[0]++;
+			traceback(map, tileCounter, i+1, child2, tileLimit-j);
+			// we're all done
+			return;
+		    }
+		}
+	    }	    
+	}
+	
+	/**
+	 * Returns config for child at index <childIndex>
+	 */
+	protected DPConfig childConfig(int childIndex) {
+	    SIRStream child = cont.get(childIndex);
+	    return (DPConfig) configMap.get(child);
+	}
+    }
+
+    class DPConfigSplitJoin extends DPConfigContainer {
+	public DPConfigSplitJoin(SIRSplitJoin split) {
+	    super(split);
+	}
+
+	protected int get(int tileLimit) {
+	    /*
+	    if (uniformSJ.contains(cont)) {
+		// optimize uniform splitjoins
+		return getUniform(tileLimit);
+	    } else {
+	    */
+	    // otherwise, use normal procedure
+	    if (tileLimit==1 || (cont.getParent() instanceof SIRSplitJoin)) {
+		// if the tileLimit is 1 or parent is a splitjoin (in
+		// which joiners will be collapsed), then we're fusing
+		// the splitjoin the whole way, so just return the sum
+		// cost
+		return super.get(tileLimit);
+	    } else {
+		// however, if we want to break the splitjoin up, then
+		// we have to subtract one from the tileLimit to
+		// account for the joiner tiles
+		return super.get(tileLimit-1);
 	    }
 	}
 
-	public int get(int child1, int child2, int numTiles) {
-	    return 0; //!!!
+	/**
+	 * Return bottleneck for uniform splitjoins.
+	 */
+	private int getUniform(int tileLimit) {
+	    // get cost of child
+	    int childCost = ((DPConfig)configMap.get(cont.get(0))).get(tileLimit);
+	    if (tileLimit<=2) {
+		// if one tile or two, have to fuse the whole thing
+		return childCost * cont.size();
+	    } else {
+		// otherwise, return the cost of a group.  subtract one
+		// tile to account for the joiner.
+		int groupSize = (int)Math.ceil(((double)cont.size()) / ((double)(tileLimit-1)));
+		return childCost * groupSize;
+	    }
 	}
+
+	/**
+	 * Do traceback for uniform splitjoins.
+	 */
+	/*
+	private int tracebackUniform(HashMap map, int[] tileCounter, int tileLimit) {
+	}
+	*/
+
+	public void traceback(HashMap map, int[] tileCounter, int tileLimit) {
+	    /*
+	    if (uniformSJ.contains(cont)) {
+		// optimize uniform splitjoins
+		tracebackUniform(map, tileCounter, tileLimit);
+	    } else {
+	    */
+	    if (tileLimit==1 || (cont.getParent() instanceof SIRSplitJoin)) {
+		super.traceback(map, tileCounter, tileLimit);
+	    } else {
+		// if we're not fusing into a single tile, need to:
+		// 1) decrease the tileLimit since one will be reserved for the joiner
+		super.traceback(map, tileCounter, tileLimit-1);
+		// 2) unless we have a tileLimit of 2 (in which case
+		//    the joiner should just as well be fused in with
+		//    the parallel streams) increment the tile count
+		//    before adding the joiner
+		if (tileLimit!=2) {
+		    tileCounter[0]++;
+		}
+	    }
+	    // add the joiner
+	    map.put(((SIRSplitJoin)cont).getJoiner(), new Integer(tileCounter[0]));
+	}
+    }
+
+    class DPConfigFilter extends DPConfig {
+	/**
+	 * The filter corresponding to this.
+	 */
+	private SIRFilter filter;
+
+	public DPConfigFilter(SIRFilter filter) {
+	    this.filter = filter;
+	    this.A = null;
+	}
+
+	public int get(int tileLimit) {
+	    return work.getWork(filter);
+	}
+
+	public SIRStream getStream() {
+	    return filter;
+	}
+
+	/**
+	 * Requires <str> is a filter.
+	 */
+	protected void setStream(SIRStream str) {
+	    Utils.assert(str instanceof SIRFilter);
+	    this.filter = (SIRFilter)str;
+	}
+
+	/**
+	 * Add this to the map and return.
+	 */
+	public void traceback(HashMap map, int[] tileCounter, int tileLimit) {
+	    // System.err.println("Assigning " + filter.getName() + " to tile " + tileCounter[0]);
+	    map.put(filter, new Integer(tileCounter[0]));
+	}
+
     }
 }

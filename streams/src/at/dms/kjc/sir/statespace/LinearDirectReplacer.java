@@ -11,7 +11,7 @@ import at.dms.compiler.*;
 
 /**
  * A LinearDirectReplacer replaces the contents of the work functions for
- * linear filters (as determined by the linear filter analyzer) with an appripriate
+ * linear filters (as determined by the linear filter analyzer) with an appropriate
  * direct implementation (eg a bunch of push statements with the specified
  * combination of input values. <p>
  * Eg a filter that had linear form [1; 2; 3]+4 would get a work function:
@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.7 2004-03-17 20:34:38 sitij Exp $
+ * $Id: LinearDirectReplacer.java,v 1.8 2004-04-02 20:41:11 sitij Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -90,9 +90,9 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	linearRep = this.linearityInformation.getLinearRepresentation(self);
 
 	/********** test print for optimization *********/
-	LinearPrinter.println(linearRep + " ");
-	LinearFilterRepresentation testRep = LinearOptimizer.getMinStateRep(linearRep);
-	LinearPrinter.println(testRep + " ");
+	//		LinearPrinter.println(linearRep + " ");
+	//	LinearFilterRepresentation testRep = LinearOptimizer.getMinStateRep(linearRep);
+	//	LinearPrinter.println(testRep + " ");
 	/***********************************************/
 
 
@@ -129,9 +129,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 
 	int numStates = linearRep.getStateCount();
 	FilterVector initVector = linearRep.getInit();
-	int peekCount = linearRep.getPeekCount();
 	int popCount = linearRep.getPopCount();
-	int offset = peekCount - popCount;	
 
 	String varName;
 	JVariableDefinition vars[] = new JVariableDefinition[numStates];
@@ -286,7 +284,6 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	int popCount = representation.getPopCount();
 	int pushCount = representation.getPushCount();
 	int stateCount = representation.getStateCount();
-	int peekCount = representation.getPeekCount();   
 
 	JThisExpression thisExpr = new JThisExpression(null);
 	
@@ -654,7 +651,6 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 
 	int popCount = representation.getPreWorkPopCount();
 	int stateCount = representation.getStateCount();
-	//	int peekCount = representation.getPeekCount();   
 
 	JThisExpression thisExpr = new JThisExpression(null);
 	

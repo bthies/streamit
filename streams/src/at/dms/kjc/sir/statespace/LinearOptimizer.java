@@ -92,9 +92,10 @@ public class LinearOptimizer {
 	newC.copyRowsAndColsAt(0,0,totalMatrix,states,0,outputs,states);
 	newD.copyRowsAndColsAt(0,0,totalMatrix,states,states,outputs,inputs);
 
-	newRep = new LinearFilterRepresentation(newA,newB,newC,newD,init,l.getPeekCount());
+	newRep = new LinearFilterRepresentation(newA,newB,newC,newD,l.getStoredInputCount(),init);
 
 	return newRep;
     }
 
 }
+

@@ -15,7 +15,7 @@ import java.util.*;
  * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
  * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformSplitJoin.java,v 1.6 2004-03-15 21:36:12 sitij Exp $
+ * $Id: LinearTransformSplitJoin.java,v 1.7 2004-04-02 20:41:22 sitij Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;
@@ -65,8 +65,8 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	int totalOutputs = 0;
 	int totalStates = 0;
 	int totalInputs = this.filterExpansionFactors[0].pop;
-	int peekVal = this.filterExpansionFactors[0].peek;
-	int currPeek;
+	int storedInputsVal = this.filterExpansionFactors[0].storedInputs;
+	int currInputsVal;
 	int factor;
 	LinearFilterRepresentation tempRep;
 
@@ -74,10 +74,10 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	    LinearPrinter.println("  expanding filter with " + this.filterExpansionFactors[i]);
 	    factor = this.filterExpansionFactors[i].pop / this.linearRepresentations[i].getPopCount(); 
 	    tempRep = this.linearRepresentations[i].expand(factor);
-	    currPeek = tempRep.getPeekCount();
+	    currInputsVal = tempRep.getStoredInputCount();
 
-	    if(peekVal > currPeek)
-		expandedReps[i] = tempRep.changePeek(peekVal);
+	    if(storedInputsVal > currInputsVal)
+		expandedReps[i] = tempRep.changeStoredInputs(storedInputsVal);
 	    else
 		expandedReps[i] = tempRep;
 
@@ -106,12 +106,12 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	expandedPreA = null;
 	expandedPreB = null;
 
-	boolean overallPreNeeded = peekVal > totalInputs;
+	boolean overallPreNeeded = storedInputsVal > 0;
  
 
 	if(overallPreNeeded) {
 	    expandedPreA = new FilterMatrix(totalStates, totalStates);
-	    expandedPreB = new FilterMatrix(totalStates, peekVal-totalInputs);
+	    expandedPreB = new FilterMatrix(totalStates, storedInputsVal);
 	}
 
 	
@@ -185,9 +185,9 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	// splitjoin with the new matrices, along with the new init vector and peek count.
 
 	if(overallPreNeeded)
-	    return new LinearFilterRepresentation(expandedA,expandedB,expandedC,expandedD,expandedPreA,expandedPreB,expandedInit);
+	    return new LinearFilterRepresentation(expandedA,expandedB,expandedC,expandedD,expandedPreA,expandedPreB,storedInputsVal,expandedInit);
 	else
-	    return new LinearFilterRepresentation(expandedA,expandedB,expandedC,expandedD,expandedInit,peekVal);
+	    return new LinearFilterRepresentation(expandedA,expandedB,expandedC,expandedD,storedInputsVal,expandedInit);
     }
 	
 
@@ -277,18 +277,18 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	for (int i=0; i<filterCount; i++) {
 	    LinearPrinter.println("  expand fact: " + joinRep +
 				  " weight: " + joinerWeights[i] +
-				  "#cols: " + filterReps[i].getPushCount());
+				  "#rows: " + filterReps[i].getPushCount());
 	    overallFilterFirings[i] =  (joinerWeights[i] * joinRep) / filterReps[i].getPushCount();
 	    LinearPrinter.println("  overall filter rep for " + i + " is " + overallFilterFirings[i]); 
 	}
 
-	// calcluate the maximum peek rate (the max of any of the expanded sub filters)
-	int maxPeek = getMaxPeek(filterReps, overallFilterFirings);
+	// calcluate the maximum stored inputs (the max of any of the expanded sub filters)
+	int maxStoredInputs = getMaxStoredInputs(filterReps);
 	
 	// now, calculate the peek, pop and push rates of the individual filters.
 	ExpansionRule filterExpansions[] = new ExpansionRule[filterCount];
 	for (int i=0; i<filterCount; i++) {
-	    filterExpansions[i] = new ExpansionRule(maxPeek,
+	    filterExpansions[i] = new ExpansionRule(maxStoredInputs,
 						    filterReps[i].getPopCount() * overallFilterFirings[i],
 						    filterReps[i].getPushCount() * overallFilterFirings[i]);
 	}
@@ -323,30 +323,40 @@ public class LinearTransformSplitJoin extends LinearTransform{
 					    joinerWeights);
     }
 
-    /** Calculates the maxmum peek rate (o_i * firings + e_i - o_i) for all of the filters. **/
-    public static int getMaxPeek(LinearFilterRepresentation[] filterReps, int[] filterFirings) {
-	int maxPeek = -1;
+    /** Calculates the maximum input states **/
+    public static int getMaxStoredInputs(LinearFilterRepresentation[] filterReps) {
+
+	int maxVal = -1;
+	int currVal, temp;
+    
 	for (int i=0; i<filterReps.length; i++) {
-	    int currentPeek = filterReps[i].getPopCount() * (filterFirings[i] - 1)  + filterReps[i].getPeekCount();
-	    if (currentPeek > maxPeek) {maxPeek = currentPeek;}
+	    currVal = filterReps[i].getStoredInputCount();
+	    temp = filterReps[i].getPreWorkPopCount();
+
+	    LinearPrinter.println(i + " (stored,preworkpop): " + currVal + " " + temp);
+
+
+	    if(temp > currVal)
+		currVal = temp;
+	    if (currVal > maxVal) {maxVal = currVal;}
 	}
-	return maxPeek;
+	return maxVal;
     }
 
     /** Structure to hold new peek/pop/push rates for linear reps. **/
     static class ExpansionRule {
-	int peek;
+	int storedInputs;
 	int pop;
 	int push;
 	/** Create a new ExpansionRule. **/
 	ExpansionRule(int e, int o, int u) {
-	    this.peek = e;
+	    this.storedInputs = e;
 	    this.pop  = o;
 	    this.push = u;
 	}
 	/** Nice human readable string (for debugging...) **/
 	public String toString() {
-	    return ("(peek:" + this.peek +
+	    return ("(stored:" + this.storedInputs +
 		    ", pop:" + this.pop +
 		    ", push:" + this.push +
 		    ")");

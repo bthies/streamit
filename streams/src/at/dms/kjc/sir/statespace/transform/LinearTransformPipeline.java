@@ -12,7 +12,7 @@ import at.dms.kjc.sir.statespace.*;
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.
  * 
- * $Id: LinearTransformPipeline.java,v 1.11 2004-03-17 20:34:47 sitij Exp $
+ * $Id: LinearTransformPipeline.java,v 1.12 2004-04-02 20:41:22 sitij Exp $
  **/
 
 public class LinearTransformPipeline extends LinearTransform {
@@ -45,7 +45,8 @@ public class LinearTransformPipeline extends LinearTransform {
 	FilterVector init1, init2, initprime;
 
 	int pop1, push1, pop2, push2, total, factor1, factor2;
-	int newPop1, newPop2, newPush1, newPush2, newPeek1, newPeek2, state1, state2;
+	int newPop1, newPop2, newPush1, newPush2, state1, state2;
+	int newInputVars1, newInputVars2;
 
 	boolean combinedPreWorkNeeded;
 	FilterMatrix preworkA1, preworkB1, preworkA2, preworkB2, preworkAprime, preworkBprime;
@@ -88,6 +89,7 @@ public class LinearTransformPipeline extends LinearTransform {
 
 	    
 	    // now, actually create the expanded reps.
+
 	    LinearFilterRepresentation rep1Expanded = rep1.expand(factor1);
 	    LinearFilterRepresentation rep2Expanded = rep2.expand(factor2);
 
@@ -98,7 +100,7 @@ public class LinearTransformPipeline extends LinearTransform {
 	    state1 = rep1Expanded.getStateCount();
 	    newPop1 = rep1Expanded.getPopCount();
 	    newPush1 = rep1Expanded.getPushCount();
-	    newPeek1 = rep1Expanded.getPeekCount();
+	    newInputVars1 = rep1Expanded.getStoredInputCount();
 
 	    A2 = rep2Expanded.getA();
 	    B2 = rep2Expanded.getB();
@@ -107,7 +109,7 @@ public class LinearTransformPipeline extends LinearTransform {
 	    state2 = rep2Expanded.getStateCount();
 	    newPop2 = rep2Expanded.getPopCount();
 	    newPush2 = rep2Expanded.getPushCount();
-	    newPeek2 = rep2Expanded.getPeekCount();
+	    newInputVars2 = rep2Expanded.getStoredInputCount();
 
 	    // now we must combine the initialization matrices, if necessary
 
@@ -125,6 +127,11 @@ public class LinearTransformPipeline extends LinearTransform {
 		if(rep2.preworkNeeded()==false) {
 		    preworkAprime = new FilterMatrix(state1+state2,state1+state2);
 		    preworkAprime.copyAt(0,0,rep1.getPreWorkA());
+
+		    int tot = state1+state2;
+		    for(int i=state1; i<tot; i++)
+			preworkAprime.setElement(i,i,ComplexNumber.ONE);
+
 		    preworkBprime = new FilterMatrix(state1+state2,rep1.getPreWorkB().getCols());
 		    preworkBprime.copyAt(0,0,rep1.getPreWorkB());
 		}
@@ -139,34 +146,18 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 		    */
   
 		    int n = 1;
- 
-		    while(newPush1*n < newPeek2)
+		    int filter2InputsNeeded = newPop2 + rep2Expanded.getPreWorkPopCount();
+
+		    while(newPush1*n < filter2InputsNeeded)
 			n++;
 
 		    n = n-1;
 
-		    /************** new ******/
-		    /*
-		    int tempp = newPop1*n + newPeek1;
-		    LinearPrinter.println("old,new: " + newPeek1 + " " + tempp); 
-			
-			rep1Expanded = rep1Expanded.changePeek(newPop1*n + newPeek1);
-			A1 = rep1Expanded.getA();
-			B1 = rep1Expanded.getB();
-			C1 = rep1Expanded.getC();
-			D1 = rep1Expanded.getD();
-			init1 = rep1Expanded.getInit();
-			state1 = rep1Expanded.getStateCount();
-			newPop1 = rep1Expanded.getPopCount();
-			newPush1 = rep1Expanded.getPushCount();
-			newPeek1 = rep1Expanded.getPeekCount();
-		    */
-		    
+		    int removeVars = newInputVars2;
+		    int extraVars = newPush1*n;  // which is >= than removeVars
 
-		    /************ end new *********/
-
-		    int removeVars = newPeek2 - newPop2;
-		    int extraVars = newPush1*n;
+		    //		    int removeVars = newPeek2 - newPop2;
+		    //		    int extraVars = newPush1*n;
 		    int newVar2Total = state2 - removeVars + extraVars;
 
 		    FilterMatrix preworkA2_new, preworkB2_new;
@@ -176,7 +167,7 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 		    if(extraVars > removeVars) {
 
 			LinearFilterRepresentation newRep2;
-			newRep2 = rep2Expanded.changePeek(newPop2 + extraVars);
+			newRep2 = rep2Expanded.changeStoredInputs(extraVars);
 
 			A2 = newRep2.getA();
 			B2 = newRep2.getB();
@@ -190,12 +181,11 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 			state2 = newVar2Total;
 		    
 		    }
-		    
-		    
+
 		    LinearFilterRepresentation rep1MoreExpanded = rep1Expanded.expand_with_prework(n);
 		    FilterMatrix preworkA1_new = rep1MoreExpanded.getA();
 		    FilterMatrix preworkB1_new = rep1MoreExpanded.getB();
-		    LinearPrinter.println("Rows: " + preworkB1_new.getRows() + " Cols: " + preworkB1_new.getCols());
+	
 		    FilterMatrix C1_temp = rep1MoreExpanded.getC();
 		    FilterMatrix D1_temp = rep1MoreExpanded.getD();
  
@@ -206,11 +196,10 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 
 		    preworkBprime = new FilterMatrix(state1+newVar2Total,preworkB1_new.getCols());
 
-		    if(preworkBprime.getCols() > preworkBprime.getRows())
-			LinearPrinter.println("!!!!!");
-
 		    preworkBprime.copyAt(0,0,preworkB1_new);
 		    preworkBprime.copyAt(state1,0,preworkB2_new.times(D1_temp));
+
+		    newInputVars1 = 0;
 
 		}
 
@@ -247,16 +236,19 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 	    // now, assemble the overall linear rep.
 	    LinearFilterRepresentation combinedRep;
 
-	    if(combinedPreWorkNeeded)
-		combinedRep = new LinearFilterRepresentation(Aprime,Bprime,Cprime,Dprime,preworkAprime,preworkBprime,initprime);
+	    if(combinedPreWorkNeeded) {
+		combinedRep = new LinearFilterRepresentation(Aprime,Bprime,Cprime,Dprime,preworkAprime,preworkBprime,newInputVars1,initprime);
+
+	    }
+
 	    else
-		combinedRep = new LinearFilterRepresentation(Aprime,Bprime,Cprime,Dprime,initprime,newPop1);
+		combinedRep = new LinearFilterRepresentation(Aprime,Bprime,Cprime,Dprime,newInputVars1,initprime);
 
 
 	    LinearPrinter.println("Created new linear rep: \n" +
-				  " peek=" + combinedRep.getPeekCount() + "\n" +
+				  " inputvars =" + combinedRep.getStoredInputCount() + "\n" +
 				  " pop=" + combinedRep.getPopCount() + "\n" +
-				  " push=" + combinedRep.getPushCount());
+				  " push=" + combinedRep.getPushCount() + "\n" + combinedRep);
 				  
 
 	    // now, we set the combined rep to be rep1 and repeat
@@ -280,3 +272,8 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 	return new LinearTransformPipeline(linearRepList);
     }
 }
+
+
+
+
+

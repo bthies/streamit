@@ -109,9 +109,9 @@ public class LinearTransformFeedback extends LinearTransform {
 
 	LinearFilterRepresentation newRep;
 
-	//no prework function, peek==pop
+	//no prework function, zero stored inputs
 
-	newRep = new LinearFilterRepresentation(A,B,C,D,init,totalInput);
+	newRep = new LinearFilterRepresentation(A,B,C,D,0,init);
 
 	return newRep;
     }

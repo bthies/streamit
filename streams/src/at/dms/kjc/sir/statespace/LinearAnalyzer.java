@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.11 2004-03-15 21:36:02 sitij Exp $
+ * $Id: LinearAnalyzer.java,v 1.12 2004-04-02 20:41:11 sitij Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -192,15 +192,15 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	LinearPrinter.println("Visiting " + "(" + self + ")");
 
 	// set up the visitor that will actually collect the data
-	int peekRate = self.getPeekInt();
+	//	int peekRate = self.getPeekInt();
 	int pushRate = self.getPushInt();
 	int popRate  = self.getPopInt();
-	LinearPrinter.println("  Peek rate: " + peekRate);
+	//	LinearPrinter.println("  Peek rate: " + peekRate);
 	LinearPrinter.println("  Push rate: " + pushRate);
 	LinearPrinter.println("  Pop rate: "  + popRate);
-	// if we have a peek or push rate of zero, this isn't a linear filter that we care about,
+	// if we have a peek or pop rate of zero, this isn't a linear filter that we care about,
 	// so only try and visit the filter if both are non-zero
-	if ((peekRate == 0) || (pushRate == 0)) {
+	if ((popRate == 0) || (pushRate == 0)) {
 	    LinearPrinter.println("  " + self.getIdent() + " is source/sink.");
 	    nonLinearStreams.add(self);
 	    return;
@@ -209,7 +209,6 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	/**
 	   We use two visitors - one is for the init function, in order to find the initial values of global variables. These initial values (which must be constants) are placed in the final column of the A matrix (since the final column is for constant offsets). We extract this final column, convert it into a FilterVector, and assign it to the main visitor's initial vector.
 	**/
-
 	
 	LinearFilterVisitor initVisitor = new LinearFilterVisitor(self);
 	LinearFilterVisitor mainVisitor = new LinearFilterVisitor(self);
@@ -341,13 +340,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	LinearPrinter.println(" transform successful.");
 	// check for debugging so we don't waste time producing output if not needed
 	if (LinearPrinter.getOutput()) {
-	     LinearPrinter.println("Linear feedbackloop found: " + self +
-				  "\n-->MatrixA:\n" + newRep.getA() +
-				  "\n-->MatrixB:\n" + newRep.getB() +
-				  "\n-->MatrixC:\n" + newRep.getC() +
-				  "\n-->MatrixD:\n" + newRep.getD() +
-				  "\n-->Initial:\n" + newRep.getInit());
-	    
+	    LinearPrinter.println("Linear feedbackloop found: " + self + " " + newRep);				  	    
 	}
 	// add a mapping from this feedback to the new linear representation
 	addLinearRepresentation(self, newRep);
@@ -502,12 +495,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    // write output for output parsing scripts (check output mode
 	    // because printing this takes a loooooong time for big matrices) 
 	    if (LinearPrinter.getOutput()) {
-		/*	LinearPrinter.println("Linear pipeline found: " + overallPipe +
-				      "\n-->MatrixA:\n" + newRep.getA() +
-				      "\n-->MatrixB:\n" + newRep.getB() +
-				      "\n-->MatrixC:\n" + newRep.getC() +
-				      "\n-->MatrixD:\n" + newRep.getD() +
-				      "\n-->Initial:\n" + newRep.getInit());
+		/*	LinearPrinter.println("Linear pipeline found: " + overallPipe +	" " + newRep);     
 		*/ }
 	} catch (NoTransformPossibleException e) {
 	    // otherwise something bad happened in the combination process.
@@ -634,12 +622,8 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	LinearPrinter.println(" transform successful.");
 	// check for debugging so we don't waste time producing output if not needed
 	if (LinearPrinter.getOutput()) {
-	        	    LinearPrinter.println("Linear splitjoin found: " + self +
-				  "\n-->MatrixA:\n" + newRep.getA() +
-				  "\n-->MatrixB:\n" + newRep.getB() +
-				  "\n-->MatrixC:\n" + newRep.getC() +
-				  "\n-->MatrixD:\n" + newRep.getD() +
-				  "\n-->Initial:\n" + newRep.getInit());
+	            	    LinearPrinter.println("Linear splitjoin found: " + self + 
+						  " " + newRep);
 	    
 	}
 	// add a mapping from this split join to the new linear representation
@@ -725,16 +709,17 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// make matrix 
 	// we want to input vSum items and output as many items as the
 	// child would have gotten in the original splitter (eg splitWeights[childPos])
-	// which implies the new matrix has vSum rows and splitWeights[childPos] cols
 
 	int outputs = splitWeights[childPos];
+	int inputs = vTot;
+	int states = 1;
 
-	FilterMatrix newA = new FilterMatrix(1,1);
-	FilterMatrix newB = new FilterMatrix(1,vTot);
+	FilterMatrix newA = new FilterMatrix(states,states);
+	FilterMatrix newB = new FilterMatrix(states,inputs);
 	
-	FilterMatrix newC = new FilterMatrix(outputs,1);
-	FilterMatrix newD = new FilterMatrix(outputs, vTot);
-	FilterVector newInit = new FilterVector(1);
+	FilterMatrix newC = new FilterMatrix(outputs,states);
+	FilterMatrix newD = new FilterMatrix(outputs,inputs);
+	FilterVector newInit = new FilterVector(states);
 
 	// determine the number of rows between the top and the start of the decimator's ones
 	int vSum_k1 = 0;
@@ -749,7 +734,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 
 
 	// make a new decimator rep out of the new A,B,C,D
-	return new LinearFilterRepresentation(newA, newB, newC, newD, newInit, vTot);
+	return new LinearFilterRepresentation(newA, newB, newC, newD, 0, newInit);
 
     }
     

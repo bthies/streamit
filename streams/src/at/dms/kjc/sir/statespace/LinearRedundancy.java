@@ -14,7 +14,7 @@ import java.util.*;
  * More information might be gleaned from:
  * http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf<br>
  *
- * $Id: LinearRedundancy.java,v 1.1 2004-02-09 17:55:01 thies Exp $
+ * $Id: LinearRedundancy.java,v 1.2 2004-04-02 20:41:12 sitij Exp $
  **/
 public class LinearRedundancy {
     /**
@@ -41,7 +41,9 @@ public class LinearRedundancy {
 	// the final output). We also pull out the peek, pop and push counts
 	// to make the following code more readable.
 	FilterMatrix A = lfr.getA();
-	int peekCount = lfr.getPeekCount();
+	//	int peekCount = lfr.getPeekCount();
+	int peekCount = lfr.getPopCount();
+
 	int popCount = lfr.getPopCount();
 	int pushCount = lfr.getPushCount();
 	int maxExecutions = divCeiling(peekCount, popCount);

@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * This class also holds initial matrices initA, initB that are to be used to 
  * update the state exactly ONCE (for a prework function).
  *
- * $Id: LinearFilterRepresentation.java,v 1.12 2004-03-17 20:34:38 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.13 2004-04-02 20:41:11 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -40,12 +40,11 @@ public class LinearFilterRepresentation {
     private LinearCost cost;
 
     /**
-     * The peek count of the filter. This is necessary for doing pipeline combinations
-     * and it is information not stored in the dimensions of the
-     * representation matrix or vector. peekCount - popCount is the number of variables that
-     * must be popped initially (to be done with the initialization matrices)
+     * this represents how many states are used to store inputs
+     * the FIRST storedInputs states store the inputs, so state 0 represents peek(0),
+     * state 1 represents peek(1), state storedInputs-1 represents peek(storedInputs-1)
      **/
-    private int peekCount;
+    private int storedInputs;
 
     /**
      * Create a new linear filter representation with matrices A, B, C, and D.
@@ -58,8 +57,8 @@ public class LinearFilterRepresentation {
 				      FilterMatrix matrixB,
 				      FilterMatrix matrixC,
 				      FilterMatrix matrixD,
-				      FilterVector vec,
-				      int peekc) {
+				      int storedInputs,
+				      FilterVector vec) {
 
 	// lots of size checking
 
@@ -75,31 +74,28 @@ public class LinearFilterRepresentation {
 	    throw new IllegalArgumentException("Matrices A,C must have same number of cols");
 	if(vec.getSize() != matrixA.getRows())
 	    throw new IllegalArgumentException("initial vector must be same size as A");
-	if(peekc < matrixD.getCols())
-	    throw new IllegalArgumentException("peek count cannot be less than pop count");
-	//	if(peekc-matrixD.getCols() > matrixA.getRows())
-	//	    throw new IllegalArgumentException("number of states must not be less than peek-pop count");
+	if(storedInputs > matrixA.getRows())
+	    throw new IllegalArgumentException("cant have more input states than total states");
+	
 
 	this.A = matrixA.copy();
 	this.B = matrixB.copy();
 	this.C = matrixC.copy();
 	this.D = matrixD.copy();
 	this.initVec = (FilterVector)vec.copy();	
-	this.peekCount = peekc;
-	int popCount = this.getPopCount();
+	this.storedInputs = storedInputs;
 
-	if(popCount == peekc) {  // no separate initialization needed, so use the same matrices
+	if(storedInputs == 0) {  // no separate initialization needed, so use the same matrices
 	    this.preworkNeeded = false;
 	}
 	else {
 	    int stateCount = this.getStateCount();
-	    int offset = peekc - popCount;
 
 	    // preworkA is the identity
 	    this.preworkA = this.createPreWorkA(stateCount);
 
 	    // preworkB puts the inputs into the extra states
-	    this.preworkB = this.createPreWorkB(stateCount,offset);
+	    this.preworkB = this.createPreWorkB(stateCount,storedInputs);
 	    
 	    this.preworkNeeded = true;
 	}
@@ -115,6 +111,7 @@ public class LinearFilterRepresentation {
 				      FilterMatrix matrixD,
 				      FilterMatrix preworkA,
 				      FilterMatrix preworkB,
+				      int storedInputs,
 				      FilterVector vec) {
 
 	// lots of size checking
@@ -129,14 +126,16 @@ public class LinearFilterRepresentation {
 	    throw new IllegalArgumentException("Matrices C,D must have same number of rows");
 	if(matrixC.getCols() != matrixA.getCols())
 	    throw new IllegalArgumentException("Matrices A,C must have same number of cols");
+	if(storedInputs > matrixA.getRows())
+	    throw new IllegalArgumentException("cant have more input states than total states");
+	if(storedInputs > preworkB.getCols())
+	    throw new IllegalArgumentException("cant have more input states than initial inputs");
 	if(preworkA.getRows() != preworkA.getCols())
 	    throw new IllegalArgumentException("Matrix preworkA must be square");
 	if(preworkA.getRows() != matrixA.getRows())
 	    throw new IllegalArgumentException("Matrices A, prework A must be same size");
 	if(preworkA.getRows() != preworkB.getRows())
 	    throw new IllegalArgumentException("Matrices preworkA,preworkB must have same number of rows");
-	//	if(preworkB.getCols() > matrixA.getRows())
-	//	    throw new IllegalArgumentException("number of states must be not be less than peek-pop count " + preworkB.getCols() + " " + matrixA.getRows());
 	if(vec.getSize() != matrixA.getRows())
 	    throw new IllegalArgumentException("initial vector must be same size as A");
 
@@ -148,10 +147,12 @@ public class LinearFilterRepresentation {
 	this.preworkB = preworkB.copy();
 	this.preworkNeeded = true;
 	this.initVec = (FilterVector)vec.copy();	
-	this.peekCount = this.B.getCols() + this.preworkB.getCols();
+	this.storedInputs = storedInputs;
 
 	// we calculate cost on demand (with the linear partitioner)
 	this.cost = null;
+
+
     }
 
 
@@ -186,8 +187,8 @@ public class LinearFilterRepresentation {
     /** Get the state vector initialization matrix. **/
     public FilterVector getInit() {return this.initVec;}
 
-    /** Get the peek count.  **/
-    public int getPeekCount() {return this.peekCount;}
+    /** Get the stored input count.  **/
+    public int getStoredInputCount() {return this.storedInputs;}
     /** Get the push count. (#rows of D or C) **/
     public int getPushCount() {return this.D.getRows();}
     /** Get the pop count. (#cols of D) **/
@@ -239,50 +240,42 @@ public class LinearFilterRepresentation {
     /**
      * Returns true if at least one constant component is non-zero.
      **/
-        
     public boolean hasConstantComponent() {
-	/*
-        int index = A.zeroRow();
-	if(index == -1)
-	    return false;
-	else
-	  return initVec.getElement(index) != ComplexNumber.ZERO;
-	*/
-
-
 	return false;
     }
     
 
     /**
-     * Changes the peek value of this linear Representation (to a greater value)
+     * Changes the stored input value of this linear Representation (to a greater value)
      **/
 
 
 		    /* 
-The way this filter operates has been altered. Previously, it used its first newPeek2-newPop2 variables to represent peek(0),peek(1),...,peek(newPeek2-newPop2-1), and used its newPop2 inputs to represent peek(newPeek2-newPop2),peek(newPeek2-newPop2+1),...,peek(newPeek2-1).
+The way this filter operates has been altered. Previously, it used its first oldStoredInputs variables to represent peek(0),peek(1),...,peek(oldStoredInputs-1), and used its pop inputs to represent peek(oldStoredInputs),peek(oldStoredInputs+1),...,peek(oldStoredInputs+pop-1).
 
-Now, the filter should use its first addVars variables to represent peek(0),peek(1),...,peek(extraVars-1), and use its first newPop2-extraVars inputs to represent peek(extraVars),peek(extraVars+1),...,peek(newPeek2-1), The remaining inputs should be used to update the extraVars variables.
+Now, the filter should use its first newStoredInputs variables to represent peek(0),peek(1),...,peek(newStoredInputs-1), and use its first pop-(newStoredInputs-oldStored) inputs to represent peek(newStoredInputs),peek(newStoredInputs+1),...,peek(oldStoredInputs+pop-1). The remaining inputs should be used to update the extraVars variables.
 
 We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must expanded some of the matrices, and reorder their contents. Why is that inequality true? addVars = n*newPush1 < newPeek2 <= (n+1)*newPush1, and newPush1 = newPop2, so (n+1)*newPush1 = extraVars + newPush1 = addVars + newPop1 >= newPeek2, so addVars >= newPeek2-newPop1.
 		    */
 
 
-    public LinearFilterRepresentation changePeek(int newPeek) {
+    public LinearFilterRepresentation changeStoredInputs(int newStoredInputs) {
 
-	int oldPeek = this.peekCount;
+	int oldStoredInputs = this.getStoredInputCount();
 
-	if(oldPeek >= newPeek)
-	    throw new IllegalArgumentException("need param newPeek(" + newPeek + ") to be < oldPeek(" + oldPeek + ")"); 
+	if(newStoredInputs <= oldStoredInputs)
+	    throw new IllegalArgumentException("need param old: " + oldStoredInputs + 
+					       " to be < new: " + newStoredInputs); 
 
 	int pushCount = this.getPushCount();
 	int popCount = this.getPopCount();
 	int oldStateCount = this.getStateCount();
-	int removeVars = oldPeek - popCount;
-	int addVars = newPeek - popCount;
+	int removeVars = oldStoredInputs;
+	int addVars = newStoredInputs;
 	int newStateCount = oldStateCount - removeVars + addVars;
+	int oldPrePop, newPrePop, shiftPop, endCount;
 
-	FilterMatrix A, B, C, D, preA, preB;
+	FilterMatrix A, B, C, D, oldPreA, oldPreB;
 	FilterMatrix newA, newB, newC, newD, newPreA, newPreB;
 			
 	A = this.getA();
@@ -290,17 +283,59 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	C = this.getC();
 	D = this.getD();
 
+	oldPrePop = this.getPreWorkPopCount();
+	if(addVars > oldPrePop) {
+	    newPrePop = addVars;
+	    shiftPop = addVars - oldPrePop;
+	}
+	else {
+	    newPrePop = oldPrePop;
+	    shiftPop = 0;
+	}
+
 	newA = new FilterMatrix(newStateCount,newStateCount);
+	newB = new FilterMatrix(newStateCount,popCount);
+	newC = new FilterMatrix(pushCount,newStateCount);
+	newD = new FilterMatrix(pushCount,popCount);
+	newPreA = new FilterMatrix(newStateCount,newStateCount);
+	newPreB = new FilterMatrix(newStateCount,newPrePop);
+
+	if(this.preworkNeeded()) {
+	    oldPreA = this.getPreWorkA();
+	    oldPreB = this.getPreWorkB();
+
+	    newPreB.copyRowsAndColsAt(0,0,oldPreB,0,0,removeVars,removeVars);
+	    newPreB.copyRowsAndColsAt(addVars,0,oldPreB,removeVars,0,oldStateCount-removeVars,oldPreB.getCols());
+	}
+	else {
+	    oldPreA = new FilterMatrix(oldStateCount,oldStateCount);
+	}
+
+	newPreA.copyRowsAndColsAt(addVars,addVars,oldPreA,removeVars,removeVars,oldStateCount-removeVars,oldStateCount-removeVars);
+	newPreA.copyRowsAndColsAt(0,addVars,oldPreA,0,removeVars,removeVars,oldStateCount-removeVars);
+
+	for(int i=removeVars; i<addVars; i++)
+	    newPreB.setElement(i,i,ComplexNumber.ONE);
+
+
 	newA.copyRowsAndColsAt(addVars,addVars,A,removeVars,removeVars,oldStateCount-removeVars,oldStateCount-removeVars);
 	newA.copyRowsAndColsAt(0,addVars,A,0,removeVars,removeVars,oldStateCount-removeVars);
 	newA.copyRowsAndColsAt(addVars,0,A,removeVars,0,oldStateCount-removeVars,removeVars);
 	newA.copyRowsAndColsAt(0,0,A,0,0,removeVars,removeVars);
-	newA.copyRowsAndColsAt(addVars,removeVars,B,removeVars,0,oldStateCount-removeVars,addVars-removeVars);
-	newA.copyRowsAndColsAt(0,removeVars,B,0,0,removeVars,addVars-removeVars);
 
-	newB = new FilterMatrix(newStateCount,popCount);
-	newB.copyRowsAndColsAt(0,0,B,0,addVars-removeVars,removeVars,popCount-(addVars-removeVars));
-	newB.copyRowsAndColsAt(addVars,0,B,removeVars,addVars-removeVars,oldStateCount-removeVars,popCount-(addVars-removeVars));
+	if(popCount >= shiftPop) {
+	    newB.copyRowsAndColsAt(0,0,B,0,shiftPop,removeVars,popCount-shiftPop);
+	    newB.copyRowsAndColsAt(addVars,0,B,removeVars,shiftPop,oldStateCount-removeVars,popCount-shiftPop);
+
+	    newD.copyColumnsAt(0,D,shiftPop,popCount-shiftPop);
+
+	    endCount = shiftPop;
+	}
+	else
+	    endCount = popCount;
+
+	newA.copyRowsAndColsAt(addVars,removeVars,B,removeVars,0,oldStateCount-removeVars,endCount);
+	newA.copyRowsAndColsAt(0,removeVars,B,0,0,removeVars,endCount);
 
 	for(int i=removeVars; i<addVars; i++) {
 	    if(i+popCount<addVars)
@@ -309,61 +344,35 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 		newB.setElement(i,i+popCount-addVars,ComplexNumber.ONE);
 	}
 
-
-	newPreA = new FilterMatrix(newStateCount,newStateCount);
-	newPreB = new FilterMatrix(newStateCount,newPeek-popCount);
-
-	if(this.preworkNeeded()) {
-	    preA = this.getPreWorkA();
-	    preB = this.getPreWorkB();
-
-	    newPreA.copyRowsAndColsAt(addVars,addVars,preA,removeVars,removeVars,oldStateCount-removeVars,oldStateCount-removeVars);
-	    newPreA.copyRowsAndColsAt(0,addVars,preA,0,removeVars,removeVars,oldStateCount-removeVars);
-
-	    newPreB.copyRowsAndColsAt(0,0,preB,0,0,removeVars,removeVars);
-	    newPreB.copyRowsAndColsAt(addVars,0,preB,removeVars,0,oldStateCount-removeVars,removeVars);
-	}
-	else {
-	    for(int i=0; i<newStateCount; i++)
-		newPreA.setElement(i,i,ComplexNumber.ONE);
-	}
-	
-	for(int i=removeVars; i<addVars; i++)
-	    newPreB.setElement(i,i,ComplexNumber.ONE);
-	
-	newC = new FilterMatrix(pushCount,newStateCount);
 	newC.copyColumnsAt(addVars,C,removeVars,oldStateCount-removeVars);
 	newC.copyColumnsAt(0,C,0,removeVars);
-	newC.copyColumnsAt(removeVars,D,0,addVars-removeVars);
-			
-	newD = new FilterMatrix(pushCount,popCount);
+	newC.copyColumnsAt(removeVars,D,0,endCount);
 
-	int offset_temp = addVars-removeVars;
-	LinearPrinter.println("offset,length,total: " + offset_temp + " " + removeVars + " " + D.getCols());
-	newD.copyColumnsAt(0,D,addVars-removeVars,popCount-(addVars-removeVars));
 
-	//	newD.copyColumnsAt(0,D,addVars-removeVars,removeVars);
-
-	/*
+	LinearPrinter.println("inputvars: " + oldStoredInputs + " -> " + newStoredInputs);
+	LinearPrinter.println("before change " + this);
+	
 	LinearPrinter.println("after changePeek A " + newA);
 	LinearPrinter.println("after changePeek B" + newB);
 	LinearPrinter.println("after changePeek C " + newC);
 	LinearPrinter.println("after changePeek D" + newD);
 	LinearPrinter.println("after changePeek preA " + newPreA);
 	LinearPrinter.println("after changePeek preB " + newPreB);
-	*/
+	
 
 	FilterVector init = this.getInit();
 	FilterVector newInit = new FilterVector(newStateCount);
 	newInit.copyAt(0,addVars-removeVars,init);
 		
 
-	//	LinearPrinter.println("after changePeek init " + newInit);
-
-
+	//	LinearPrinter.println("after changeStoredInputs init " + newInit);
 	
 	LinearFilterRepresentation newRep; 
-	newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreA,newPreB,newInit);
+
+	if(this.preworkNeeded())
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreA,newPreB,newStoredInputs,newInit);
+	else
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newStoredInputs,newInit);
 
 	return newRep;
     }
@@ -381,11 +390,14 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	    throw new IllegalArgumentException("need a positive multiplier");
 	}
 
+	if(factor == 1)
+	    return this;
+
 	// pull out old values for ease in understanding the code.
 	int stateCount = this.getStateCount();
 	int oldPush = this.getPushCount();
 	int oldPop  = this.getPopCount();
-	int oldPeek = this.getPeekCount();
+	int inputStates = this.getStoredInputCount();
 
 	// newA = oldA^(factor);
 	// newB = [oldA^(factor-1) * B  oldA^(factor-2) * B  ...  oldA * B  B]
@@ -478,15 +490,10 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	    FilterMatrix newPreWorkA = this.getPreWorkA();
 	    FilterMatrix newPreWorkB = this.getPreWorkB();
 
-	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreWorkA,newPreWorkB,newInitVec);
-	
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreWorkA,newPreWorkB,inputStates,newInitVec);	
 	}
 	else {
-	    // newpeek - newpop = oldpeek - oldpop
-	    // newpop = factor*oldpop
-
-	    int newPeek = oldPeek - oldPop + oldPop*factor;
-	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newInitVec,newPeek);
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,inputStates,newInitVec);
 	}
 
 	return newRep;
@@ -509,10 +516,10 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	int stateCount = this.getStateCount();
 	int oldPush = this.getPushCount();
 	int oldPop  = this.getPopCount();
-	int oldPeek = this.getPeekCount();
+	int inputStates = this.getStoredInputCount();
 
 	// newA = oldA^(factor) * preA;
-	// newB = [oldA^(factor * preB  oldA^(factor-1) * B  oldA^(factor-2) * B  ...  oldA * B  B]
+	// newB = [oldA^(factor) * preB  oldA^(factor-1) * B  oldA^(factor-2) * B  ...  oldA * B  B]
 	// newC = [C * preA  C * A * preA  C * A^2 * preA  ...  C * A^(factor-2) * preA  C * A^(factor-1) * preA] (transposed)
 
 	/* 
@@ -617,33 +624,20 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	    FilterMatrix newPreWorkA = this.getPreWorkA();
 	    FilterMatrix newPreWorkB = this.getPreWorkB();
 
-	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreWorkA,newPreWorkB,newInitVec);
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreWorkA,newPreWorkB,inputStates,newInitVec);
 	
 	}
 	else
-	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newInitVec, newB.getCols());
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,inputStates,newInitVec);
 		
 	return newRep;
 	
     }
 
-	
-    /**
-     * Returns true if this filter is an FIR filter. A linear filter is FIR  
-     * if push=pop=1 and no constant component.
-     **/
-    /*
-    public boolean isFIR() {
-	return ((this.getPopCount() == 1) &&
-		(this.getPushCount() == 1) &&
-		(this.getb().getElement(0,0).equals(ComplexNumber.ZERO)));
-    }
-    */
-
     /**
      * returns a LinearCost object that represents the number
      * of multiplies and adds that are necessary to implement this
-     * linear filter representation.
+     * linear filter representation (in steady state).
      **/
     
     public LinearCost getCost() {
@@ -747,10 +741,12 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
     }
 
     public String toString() {
-	String retString = new String("Matrix A:\n" + A + 
+	String retString = new String("\n Matrix A:\n" + A + 
 				      "\n Matrix B:\n" + B + 
 				      "\n Matrix C:\n" + C + 
-				      "\n Matrix D:\n" + D);
+				      "\n Matrix D:\n" + D +
+				      "\n PreworkA:\n" + preworkA +
+				      "\n PreworkB:\n" + preworkB );
 	return retString;
     }
 

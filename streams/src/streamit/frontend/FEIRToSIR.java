@@ -110,40 +110,51 @@ public class FEIRToSIR implements FEVisitor {
     return null;
   }
 
-  public JFieldDeclaration stmtVarDeclToJFieldDeclaration(StmtVarDecl decl) {
-    debug("In stmtVarDeclToJFieldDeclaration\n");
-    JVariableDefinition def = null;
-    /* We no longer use StmtVarDecls for field declarations, there are
-     * separate frontend FieldDecl objects instead.  This code is
-     * incompatible with changing StmtVarDecl to have multiple
-     * declarations, so I'm leaving it commented out; FieldDecl will
-     * probably change the same way soon enough, though.  --dzm
-    if (decl.getInit() != null) {
-      def = new JVariableDefinition(null, // token reference
-				    at.dms.kjc.Constants.ACC_PUBLIC,
-				    feirTypeToSirType(decl.getType()),
-				    decl.getName(),
-				    (JExpression) decl.getInit().accept(this));
-    } else {
-      def = new JVariableDefinition(null, // token reference
-				    at.dms.kjc.Constants.ACC_PUBLIC,
-				    feirTypeToSirType(decl.getType()),
-				    decl.getName(),
-				    null);
+  public List fieldDeclToJFieldDeclarations(FieldDecl decl) {
+    debug("In fieldDeclToJFieldDeclarations\n");
+    List result = new ArrayList();
+    for (int i = 0; i < decl.getNumFields(); i++)
+    {
+        JVariableDefinition def = null;
+        if (decl.getInit(i) != null) {
+            def = new JVariableDefinition(null, // token reference
+                                          at.dms.kjc.Constants.ACC_PUBLIC,
+                                          feirTypeToSirType(decl.getType(i)),
+                                          decl.getName(i),
+                                          (JExpression) decl.getInit(i).accept(this));
+        } else {
+            def = new JVariableDefinition(null, // token reference
+                                          at.dms.kjc.Constants.ACC_PUBLIC,
+                                          feirTypeToSirType(decl.getType(i)),
+                                          decl.getName(i),
+                                          null);
+        }
+        JFieldDeclaration fDecl = new JFieldDeclaration(null, /* token reference */
+                                                        def,
+                                                        null, /* javadoc */
+                                                        null); /* comments */
+        result.add(fDecl);
     }
-*/
-    JFieldDeclaration fDecl = new JFieldDeclaration(null, /* token reference */
-						    def,
-						    null, /* javadoc */
-						    null); /* comments */
-    return fDecl;
+    return result;
   }
+
+    private void setStreamFields(SIRStream stream, List vars)
+    {
+        JFieldDeclaration[] fields = new JFieldDeclaration[1];
+        List fieldList = new ArrayList();
+        for (Iterator iter = vars.iterator(); iter.hasNext(); )
+        {
+            FieldDecl decl = (FieldDecl)iter.next();
+            fieldList.addAll(fieldDeclToJFieldDeclarations(decl));
+        }
+        fields = (JFieldDeclaration[])fieldList.toArray(fields);
+        stream.setFields(fields);
+    }
 
   public SIRStream visitFilterSpec(StreamSpec spec) {
     int i;
     List list;
     SIRFilter result = new SIRFilter();
-    StmtVarDecl[] vars = new StmtVarDecl[spec.getVars().size()];
     SIRStream oldParent = parent;
 
     parent = result;
@@ -154,22 +165,14 @@ public class FEIRToSIR implements FEVisitor {
     result.setInputType(feirTypeToSirType(spec.getStreamType().getIn()));
     result.setOutputType(feirTypeToSirType(spec.getStreamType().getOut()));
 
-    list = spec.getVars();
-    for (i = 0; i < vars.length; i++) {
-      vars[i] = (StmtVarDecl) list.get(i);
-    }
-    JFieldDeclaration[] fields = new JFieldDeclaration[vars.length];
+    setStreamFields(result, spec.getVars());
+
     Function[] funcs = new Function[spec.getFuncs().size()];
     list = spec.getFuncs();
     for (i = 0; i < funcs.length; i++) {
       funcs[i] = (Function) list.get(i);
     }
     JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
-
-    for (i = 0; i < vars.length; i++) {
-      fields[i] = stmtVarDeclToJFieldDeclaration(vars[i]);
-    }
-    result.setFields(fields);
 
     for (i = 0; i < funcs.length; i++) {
       methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
@@ -206,29 +209,20 @@ public class FEIRToSIR implements FEVisitor {
     int i;
     List list;
     SIRPipeline result = new SIRPipeline(spec.getName());
-    StmtVarDecl[] vars = new StmtVarDecl[spec.getVars().size()];
     SIRStream oldParent = parent;
 
     debug("In visitPipelineSpec\n");
 
     parent = result;
     
-    list = spec.getVars();
-    for (i = 0; i < vars.length; i++) {
-      vars[i] = (StmtVarDecl) list.get(i);
-    }
-    JFieldDeclaration[] fields = new JFieldDeclaration[vars.length];
+    setStreamFields(result, spec.getVars());
+
     Function[] funcs = new Function[spec.getFuncs().size()];
     list = spec.getFuncs();
     for (i = 0; i < funcs.length; i++) {
       funcs[i] = (Function) list.get(i);
     }
     JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
-
-    for (i = 0; i < vars.length; i++) {
-      fields[i] = stmtVarDeclToJFieldDeclaration(vars[i]);
-    }
-    result.setFields(fields);
 
     for (i = 0; i < funcs.length; i++) {
       methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
@@ -568,29 +562,20 @@ public class FEIRToSIR implements FEVisitor {
     int i;
     List list;
     SIRSplitJoin result = new SIRSplitJoin((SIRContainer) parent, spec.getName());
-    StmtVarDecl[] vars = new StmtVarDecl[spec.getVars().size()];
     SIRStream oldParent = parent;
 
     debug("In visitSplitJoinSpec\n");
 
     parent = result;
     
-    list = spec.getVars();
-    for (i = 0; i < vars.length; i++) {
-      vars[i] = (StmtVarDecl) list.get(i);
-    }
-    JFieldDeclaration[] fields = new JFieldDeclaration[vars.length];
+    setStreamFields(result, spec.getVars());
+    
     Function[] funcs = new Function[spec.getFuncs().size()];
     list = spec.getFuncs();
     for (i = 0; i < funcs.length; i++) {
       funcs[i] = (Function) list.get(i);
     }
     JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
-
-    for (i = 0; i < vars.length; i++) {
-      fields[i] = stmtVarDeclToJFieldDeclaration(vars[i]);
-    }
-    result.setFields(fields);
 
     for (i = 0; i < funcs.length; i++) {
       methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
@@ -609,29 +594,20 @@ public class FEIRToSIR implements FEVisitor {
     int i;
     List list;
     SIRFeedbackLoop result = new SIRFeedbackLoop((SIRContainer) parent, spec.getName());
-    StmtVarDecl[] vars = new StmtVarDecl[spec.getVars().size()];
     SIRStream oldParent = parent;
 
     debug("In visitFeedbackLoopSpec\n");
 
     parent = result;
+
+    setStreamFields(result, spec.getVars());
     
-    list = spec.getVars();
-    for (i = 0; i < vars.length; i++) {
-      vars[i] = (StmtVarDecl) list.get(i);
-    }
-    JFieldDeclaration[] fields = new JFieldDeclaration[vars.length];
     Function[] funcs = new Function[spec.getFuncs().size()];
     list = spec.getFuncs();
     for (i = 0; i < funcs.length; i++) {
       funcs[i] = (Function) list.get(i);
     }
     JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
-
-    for (i = 0; i < vars.length; i++) {
-      fields[i] = stmtVarDeclToJFieldDeclaration(vars[i]);
-    }
-    result.setFields(fields);
 
     for (i = 0; i < funcs.length; i++) {
       methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
@@ -650,29 +626,20 @@ public class FEIRToSIR implements FEVisitor {
     int i;
     List list;
     SIRPhasedFilter result = new SIRPhasedFilter(spec.getName());
-    StmtVarDecl[] vars = new StmtVarDecl[spec.getVars().size()];
     SIRStream oldParent = parent;
 
     debug("In visitPhasedFilterSpec\n");
 
     parent = result;
     
-    list = spec.getVars();
-    for (i = 0; i < vars.length; i++) {
-      vars[i] = (StmtVarDecl) list.get(i);
-    }
-    JFieldDeclaration[] fields = new JFieldDeclaration[vars.length];
+    setStreamFields(result, spec.getVars());
+    
     Function[] funcs = new Function[spec.getFuncs().size()];
     list = spec.getFuncs();
     for (i = 0; i < funcs.length; i++) {
       funcs[i] = (Function) list.get(i);
     }
     JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
-
-    for (i = 0; i < vars.length; i++) {
-      fields[i] = stmtVarDeclToJFieldDeclaration(vars[i]);
-    }
-    result.setFields(fields);
 
     for (i = 0; i < funcs.length; i++) {
       methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);

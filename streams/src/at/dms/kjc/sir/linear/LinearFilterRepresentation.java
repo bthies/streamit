@@ -14,7 +14,7 @@ import java.util.*;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.14 2002-11-25 20:31:58 aalamb Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.15 2002-11-25 21:33:00 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -95,40 +95,56 @@ public class LinearFilterRepresentation {
 	if (newPeek < this.getPeekCount()) {
 	    throw new IllegalArgumentException("newPeek is less than old peek");
 	}
+	if (newPop < this.getPopCount()) {
+	    throw new IllegalArgumentException("newPop is less than old push");
+	}
 	if (newPush < this.getPushCount()) {
 	    throw new IllegalArgumentException("newPush is less than old push");
 	}
 
-	int factor = 1;
-	
+	// pull out old values for ease in understanding the code.
 	int oldPush = this.getPushCount();
 	int oldPeek = this.getPeekCount();
 	int oldPop  = this.getPopCount();
-	//int newPush = oldPush * factor;
-	//int newPeek = oldPeek + (factor-1)*oldPop;
-	//int newPop  = oldPop * factor;
 	FilterMatrix oldMatrix = this.getA();
 	FilterMatrix newMatrix = new FilterMatrix(newPeek, newPush);
 
 	// now, populate the new matrix with the appropriate copies of the old matrix
-	// (eg the As).
-	// copy over the first old matrix into the upper left hand corner
-	newMatrix.copyAt(0,0,oldMatrix);
-	for (int i=1; i<factor; i++) { // this many copies
-	    // each one is offset by oldPop in the vertical direction, and offset by oldPush in
-	    // the horizonytal direction.
-	    newMatrix.copyAt(i*oldPop, i*oldPush, oldMatrix);
+	// (eg the As). We will be copying numCompleteCopies starting from lower left
+	int numCompleteCopies = (newPush/oldPush);
+	for (int i=0; i<numCompleteCopies; i++) {
+	    // copy the matrix starting at row: e' - e - (i*o)
+	    // col = u'-(i+1)u
+	    newMatrix.copyAt(newPeek - oldPeek - i*(oldPop),
+			     newPush - (i+1)*oldPush,
+			     oldMatrix);
 	}
 
-	// also, duplicate the b vector factor times
-	FilterVector oldVector = this.getb();
-	FilterVector newVector = new FilterVector(newPush);
-	for (int i=0; i<factor; i++) {
-	    for (int j=0; j<oldPush; j++) {
-		newVector.setElement((i*oldPush) +j,
-				oldVector.getElement(j));
+	// do housecleaning for any fractional copies of A that we need to make
+	// (first, calculate the number of rows and columns that need to be filled with
+	// parts of the old matrix).
+	int numPartialRows = newPeek - oldPeek - (numCompleteCopies - 1)*oldPop;
+	int numPartialCols = newPush - numCompleteCopies * oldPush;
+
+	// sanity checks
+	if (numPartialRows < 0) {throw new RuntimeException("partial rows < 0!");}
+	if (numPartialCols < 0) {throw new RuntimeException("partial cols < 0!");}
+
+	// now, copy over the missing parts of A
+	for (int i=0; i<numPartialRows; i++) {
+	    for (int j=0; j<numPartialCols; j++) {
+		newMatrix.setElement(i,j,oldMatrix.getElement(oldPeek-numPartialRows+i,
+							      oldPush-numPartialCols+j));
 	    }
 	}
+	
+	// now copy all elements of the new vector
+	FilterVector oldVector = this.getb();
+	FilterVector newVector = new FilterVector(newPush);
+	for (int i=0; i<newPush; i++) {
+	    newVector.setElement(i,oldVector.getElement(oldPush-1-((newPush-i-1)%oldPush)));
+	}
+
 
 	// create a new Linear rep for the expanded filter
 	LinearFilterRepresentation newRep;

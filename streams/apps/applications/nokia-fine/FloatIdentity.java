@@ -10,6 +10,8 @@ class FloatIdentity extends Filter
 	}
 	public void work ()
 	{
-		output.pushFloat (input.popFloat ());
+	    output.pushFloat (input.popFloat ());
+	    //input.popFloat ();
+	    //output.pushFloat(1f);
 	}
 }

@@ -8,6 +8,7 @@ import streamit.io.*;
 
 	public void init(int W, int Q,int N,int K,float [][] h, float [][]C){
 	    add (new Sourceh(W,K,h));
+	    //add(new Printer());
 	    add (new GenA(W,Q,N,K,C));
 	    add (new AandL(Q*N+W-1,K*N));
 	    }
@@ -30,6 +31,7 @@ import streamit.io.*;
 	public GenL (int M, int N) {super (M,N);}
 	
 	public void init(int M,int N) {
+	    //add(new Printer());
 	    add (new RowCol(M,N));
 	    add (new SelfProd(M,N));
 	    add (new choldAhA(N));
@@ -135,6 +137,10 @@ class Sourceh extends Filter {
 	this.W=W;
 	this.K=K;
 	this.d=d;
+	//System.out.println(d[0][0]);
+	//System.out.println(d[0][1]);
+	//System.out.println(d[1][0]);
+	//System.out.println(d[1][1]);
 	    }
     public void work(){
 	for(int i=0;i<K;i++)

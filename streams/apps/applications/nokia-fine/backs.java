@@ -40,10 +40,14 @@ public void work() {
 
   for (int i=N-1; i>=0;i--)
       {
+	  //System.out.println(1010101);
 	  sum=y[i];
-	      for (int j=i+1; j<N ; j++)
-		  sum -= LT[i][j]*d[i];
+	  //for (int j=i+1; j<N ; j++)
+	  //sum -= LT[i][j]*d[i];
+	  //System.out.println(sum);
+	  //System.out.println(LT[i][i]);
 	  y[i]=sum/LT[i][i];
+	  //System.out.println(y[i]);
           output.pushFloat(y[i]);
       }
 }

@@ -21,15 +21,26 @@ class ConvMat extends SplitJoin{// generates the matrix consisting of the convol
      public void init(int K,int W, int Q,int N,float[][] C){
 	float[] Crow;
         setSplitter(ROUND_ROBIN(W));
-	for (int i=0;i<K;i++){
-	    Crow = new float[Q];
-	    for(int j=0;j<Q;j++) {Crow[j]=C[j][i];
-            //System.out.println(Crow[j]);
-	    
-	    }
-	     add(new extFilt(W,W+N*Q-1,Crow));
-	     //add(new FloatIdentity());
-	}	
+	//for (int i=0;i<K;i++){
+	Crow = new float[2];
+	//for(int j=0;j<Q;j++) {Crow[j]=C[j][0];
+	//System.out.println(Crow[j]);
+	
+	//}
+	Crow[0]=C[0][0];
+	Crow[1]=C[1][0];
+	
+	add(new extFilt(W,W+N*Q-1,Crow));
+	//add(new FloatIdentity());
+	//}	
+	Crow = new float[Q];
+	//for(int j=0;j<Q;j++) {Crow[j]=C[j][1];
+	//System.out.println(Crow[j]);
+	
+	//}
+	Crow[0]=C[0][1];
+	Crow[1]=C[1][1];
+	add(new extFilt2(W,W+N*Q-1,Crow));
 	setJoiner(ROUND_ROBIN(W+N*Q-1));
     }
 }
@@ -63,9 +74,12 @@ class AddZeroBeg extends SplitJoin{// adds M zeros to the begining of a sequence
     public AddZeroBeg( int M,int L) {super (M,L);}
     public void init(int M,int L) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(0,L));
+	//setSplitter(WEIGHTED_ROUND_ROBIN(L,0));
 	add (new ZeroGen());
 	add (new FloatIdentity());
+	//add(new Printer());
 	setJoiner(WEIGHTED_ROUND_ROBIN(M,L));
+	//setJoiner(WEIGHTED_ROUND_ROBIN(L,M));
     }
 
 }
@@ -84,6 +98,17 @@ class extFilt extends Pipeline{// this filter performs the convolution of L  and
     public extFilt(int W,int M,float[] impulse) {super (W,M,impulse);}
     public void init(int W, int M,float[] impulse){
 	add (new AddZeroBeg(impulse.length-1,W));
+	//add(new Printer());
+	add (new FirFilter(impulse));
+	add (new AddZeroEnd(W+impulse.length-1,M));
+    }
+}
+
+class extFilt2 extends Pipeline{// this filter performs the convolution of L  and then extends the sequenc
+    public extFilt2(int W,int M,float[] impulse) {super (W,M,impulse);}
+    public void init(int W, int M,float[] impulse){
+	add (new AddZeroBeg(impulse.length-1,W));
+	//add(new Printer());
 	add (new FirFilter(impulse));
 	add (new AddZeroEnd(W+impulse.length-1,M));
     }
@@ -105,6 +130,7 @@ class GenA extends Pipeline{// the whole matrix A generator, the input is column
  
 	
     
+
 
 
 

@@ -169,9 +169,10 @@ public class ConstantProp {
 	}
 	
 	public Object visitInitStatement(SIRInitStatement self,
-				       SIRStream target) {
-	    recurseInto(self.getTarget(), self.getArgs(), constants);
-	    return self;
+					 SIRStream target) {
+	    SIRInitStatement newSelf=(SIRInitStatement)super.visitInitStatement(self,target);
+	    recurseInto(newSelf.getTarget(), newSelf.getArgs(), constants);
+	    return newSelf;
 	}
     }
     
@@ -186,9 +187,11 @@ public class ConstantProp {
 	if (initMethod==null) {
 	    return;
 	}
+	//List argCopy=(List)args.clone();
 	JFormalParameter[] parameters = initMethod.getParameters();
 	// build new constants
-	for (int i=0; i<args.size(); i++) {
+	int size=args.size();
+	for (int i=0; i<size; i++) {
 	    //System.err.println("Arg "+i+"="+args.get(i));
 	    // if we are passing an arg to the init function...
 	    if (args.get(i) instanceof JLiteral) {
@@ -203,8 +206,12 @@ public class ConstantProp {
 		constants.put(parameters[i],constant);
 		if(constant instanceof JExpression)
 		    args.set(i, constant);
+		//args.remove(i);
+		//i--;
+		//size--;
 	    }
 	}
+	ArrayCopy.acceptInit(str.getInit(),constants);	
 	// recurse into sub-stream
 	propagateAndUnroll(str, constants);
     }

@@ -82,6 +82,7 @@ class dcalc extends StreamIt {
 	//	add(new LrL(K*N));
 	//      add(new backs(K*N));
 	add(new Ahrchold(K*N));
+	//add(new Printer());
 	add(new LrL(K*N));
 	add(new backs(K*N));
 	add(new SinkD(K*N));
@@ -159,6 +160,7 @@ class Ahrd extends Pipeline{// the input is Ar, L , the output is Ahr,d,AhA
     public void init(int M,int N) {
 	add (new AhrL1(M,N));
 	add (new split_ahrd(N));
+	//add(new Printer());
       }
 
 }
@@ -233,7 +235,8 @@ class SinkD extends Filter{
 		//System.out.print("This is ");
 		//System.out.print(i);
 		//System.out.print(" : ");
-		System.out.println(input.popFloat());
+		//System.out.println(input.popFloat());
+		input.popFloat();
 	    }
 	    
     }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.12 2002-03-07 13:21:38 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.13 2002-07-12 11:48:14 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -451,6 +451,10 @@ public class JMethodDeclaration extends JMemberDeclaration {
 	return parameters;
     }
 
+    public void setParameters(JFormalParameter[] param) {
+	parameters=param;
+    }
+
     // need a different method array for every method in case people
     // start to add methods; can't just have a constant.
     public static JMethodDeclaration[] EMPTY() {
@@ -465,3 +469,6 @@ public class JMethodDeclaration extends JMemberDeclaration {
   protected CClassType[]		exceptions;
   protected JBlock			body;
 }
+
+
+

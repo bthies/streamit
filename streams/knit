@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.28 2003-05-28 17:50:56 dmaze Exp $
+# $Id: knit,v 1.29 2003-05-28 20:40:50 dmaze Exp $
 #
 
 use strict;
@@ -20,6 +20,15 @@ if ($opts{'more-help'})
 if ($opts{help})
   {
     usage(\*STDOUT, 0);
+    exit(0);
+  }
+if (!@ARGV)
+  {
+    print <<EOH;
+knit: StreamIt compiler wrapper
+Usage: knit [options] file.str ...
+Run 'knit --help' for option listing
+EOH
     exit(0);
   }
 my $fns = \@ARGV;

@@ -1,5 +1,5 @@
 
-CC =		gcc
+CC =		gcc34
 CC_IA64 =       ecc
 
 CFLAGS = 	-O2 -I.

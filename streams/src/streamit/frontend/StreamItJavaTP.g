@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.3 2002-07-10 18:53:02 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.4 2002-07-10 20:11:14 dmaze Exp $
  */
 
 header {
@@ -668,6 +668,7 @@ value_expression returns [Expression x]
 {
 	x = null;
 	Expression left, right;
+	List l;
   String func_params = "", array_mods = "";
 }
 	: id:ID { x = new ExprVar(id.getText()); }
@@ -675,20 +676,15 @@ value_expression returns [Expression x]
 		{ x = new ExprField(left, field.getText()); }
 	| #(LSQUARE left=expression right=expression)
 		{ x = new ExprArray(left, right); }
-	;
-/*
-		( field=var_ref 
-		| #(LPAREN root=expr func_params=func_call_params) 
-		| #(LSQUARE root=expr array_mods=array_modifiers) 
-		| #(DOT root=expr field=field_ref) { field = "." + field; }
-		)
-		{ t = root + field + func_params + array_mods; }
+	| #(LPAREN fn:ID l=func_param_list)
+		{ x = new ExprFunCall(fn.getText(), l); }
 	;
 
-var_ref returns [Expression x] {x=null;}
-	: id:ID { x = new ExprVar(id.getText()); }
+func_param_list returns [List l] { l = new ArrayList();	Expression x; }
+	: #(LPAREN
+			( x=expression { l.add(x); } )*
+		)
 	;
-*/
 
 func_call_params returns [String t]
 {

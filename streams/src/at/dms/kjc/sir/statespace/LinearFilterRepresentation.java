@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * This class also holds initial matrices initA, initB that are to be used to 
  * update the state exactly ONCE (for a prework function).
  *
- * $Id: LinearFilterRepresentation.java,v 1.19 2004-08-19 01:34:30 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.20 2004-08-27 20:16:42 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -81,6 +81,13 @@ public class LinearFilterRepresentation {
 	this.D = matrixD.copy();
 	this.initVec = (FilterVector)vec.copy();	
 	this.storedInputs = storedInputs;
+
+	this.A.cleanEntries();
+	this.B.cleanEntries();
+	this.C.cleanEntries();
+	this.D.cleanEntries();
+	this.initVec.cleanEntries();
+
 
 	if(storedInputs == 0) {  // no separate initialization needed
 	    this.preworkNeeded = false;
@@ -365,6 +372,64 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 
 	return newRep;
     }
+
+    /* puts outputs into states at end of state vector */
+    /*  NOT NECESSARY, adding stored inputs is the same thing */
+    public LinearFilterRepresentation addStoredOutputs() {
+	
+	int oldStates = this.getStateCount();
+	int pushVal = this.getPushCount();
+	int popVal = this.getPopCount();
+	int addValue = this.getPushCount();
+	int newStates = oldStates+addValue;
+
+	int storedInputs = this.getStoredInputCount();
+
+	FilterMatrix newA = new FilterMatrix(newStates,newStates);
+	FilterMatrix newB = new FilterMatrix(newStates,popVal);
+	FilterMatrix newC = new FilterMatrix(pushVal,newStates);
+	FilterMatrix newD = new FilterMatrix(pushVal,popVal);
+
+	newA.copyAt(0,0,this.getA());
+	newA.copyAt(oldStates,0,this.getC().times(this.getA()));
+
+	newB.copyAt(0,0,this.getB());
+	newB.copyAt(oldStates,0,this.getD().plus(this.getC().times(this.getB())));
+
+	newC.copyAt(0,oldStates,FilterMatrix.getIdentity(addValue));
+
+	FilterVector newInit = new FilterVector(newStates);
+	newInit.copyAt(0,0,this.getInit());
+
+	LinearFilterRepresentation newRep;
+	
+	if(this.preworkNeeded()) {
+
+	    int prePopVal = this.getPreWorkPopCount();
+	    
+	    FilterMatrix newPreA = new FilterMatrix(newStates,newStates);
+	    FilterMatrix newPreB = new FilterMatrix(newStates,prePopVal);
+	    
+	    newPreA.copyAt(oldStates,0,this.getC().times(this.getPreWorkA()));
+	    newPreA.copyAt(0,0,this.getPreWorkA());
+	    
+	    newPreB.copyAt(oldStates,0,this.getC().times(this.getPreWorkB()));
+	    newPreB.copyAt(0,0,this.getPreWorkB());
+
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreA,newPreB,storedInputs,newInit);
+
+	}
+	else {
+
+	    FilterMatrix tempInit = this.getC().times(this.getInit().transpose()).transpose();
+	    newInit.copyAt(0,oldStates,tempInit);
+
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,storedInputs,newInit);
+	}
+
+	return newRep;
+    }
+    
 
 
 
@@ -678,7 +743,7 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 
     public String toString() {
 
-	String retString = new String("\n Matrix A:\n" + A + 
+	String retString = new String( "\n Matrix A:\n" + A + 
 				      "\n Matrix B:\n" + B + 
 				      "\n Matrix C:\n" + C + 
 				      "\n Matrix D:\n" + D +

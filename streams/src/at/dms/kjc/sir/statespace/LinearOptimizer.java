@@ -1,10 +1,28 @@
 package at.dms.kjc.sir.statespace;
 
-/* The optimizer has many subroutines. First we remove unreachable and
- * unobservable states. Then we attempt to put the system in a form with
- * the fewest number of parameters (entries that are non-zero, non-one)
+/* The optimizer has many subroutines. First we isolate and remove unreachable and
+ * unobservable states. Then we put the system in observable and reachable
+ * canonical form. We do this to reduce the number of parameters (non-zero, 
+ * non-one entries)
+ *
+ *
+ * All the changes done to the matrices are done through row operations. Every time
+ * a row operation is performed, the corresponding inverse column operation must be 
+ * performed as well. We do partial pivoting (finding the maximum element in a subcolumn
+ * to remove all elements below it) to ensure stability. However, removal of elements
+ * ABOVE it is not necessarily stable! That's why we have the thresh variable as a check.
+ * A value for thresh of 1 or 2 should ensure stability, but doesn't give a good performance 
+ * gain. How to deal with this is perhaps an area of future work. Also, any scaling is also 
+ * potentially unstable, and we use thresh to check that as well. Note that all this applies 
+ * only to finding the canonical forms. For isolating the unreachable/unobservable states,
+ * we don't need to remove elements above the sub-column and we don't need to do any scaling.
+ *
+ *
  *
  */
+
+
+
 
 public class LinearOptimizer {
 
@@ -28,54 +46,38 @@ public class LinearOptimizer {
                      |C'  0 |
 
     */
-    public LinearOptimizer(LinearFilterRepresentation orig, boolean doStoreInputs) {
-	/*	
-	outputs = orig.getPushCount();
-	inputs = orig.getPopCount();
-	states = orig.getStateCount() + inputs;
-	preNeeded = orig.preworkNeeded();
+    public LinearOptimizer(LinearFilterRepresentation orig, boolean doStoreInputs) {	
+	
+	/*
+	  if the D matrix is not empty, and we've been told to store inputs,
+	  put all inputs into states.
 
-	totalMatrix = new FilterMatrix(states+outputs,states+inputs);
-	totalMatrix.copyAt(0,0,orig.getA());
-	totalMatrix.copyAt(0,states-inputs,orig.getB());
-	totalMatrix.copyAt(states-inputs,states, FilterMatrix.getIdentity(inputs));
-	totalMatrix.copyAt(states,0,orig.getC());
-	totalMatrix.copyAt(states,states-inputs,orig.getD());
-	D = new FilterMatrix(outputs,inputs);
-
-	initVec = new FilterVector(states);
-	initVec.copyAt(0,0,orig.getInit());
-	storedInputs = orig.getStoredInputCount();
-
-	if(preNeeded) {
-	    pre_inputs = orig.getPreWorkPopCount() + inputs;
-	    totalPreMatrix = new FilterMatrix(states,states+pre_inputs);
-
-	    totalPreMatrix.copyAt(0,0,orig.getPreWorkA());
-	    totalPreMatrix.copyAt(0,states,orig.getPreWorkB());
-	    totalPreMatrix.copyAt(states-inputs,states+pre_inputs-inputs, FilterMatrix.getIdentity(inputs));
-	}
-	else {
-	    pre_inputs = inputs;
-	    totalPreMatrix = new FilterMatrix(states,states+pre_inputs);
-	    totalPreMatrix.copyAt(0,0, FilterMatrix.getIdentity(states-inputs));
-	    totalPreMatrix.copyAt(states-inputs,states, FilterMatrix.getIdentity(inputs));
-	    preNeeded = true;
-        }
+	  once the D matrix is empty, all the inputs have been stored
 	*/
-
-	//if the D matrix is not empty, and we've been told to store inputs
 	if(doStoreInputs) {
 	    int max = orig.getPopCount();
 	    int counter = 0;    // this is just to make sure we don't get stuck in an infinite loop
 	    while((!orig.getD().isZero())&&(counter<max)) {	   
 		orig = orig.changeStoredInputs(orig.getStoredInputCount() + 1);
 		counter++;
-	    }
+	    }	    
 	}
+								
+	// staged execution - right now won't give a gain
+	//boolean addExtraStages = true;
+	boolean addExtraStages = false;
+	int numStages = 2;
+	
+	if(addExtraStages) {
+	    for(int i=0; i<numStages; i++)
+		orig = orig.changeStoredInputs(orig.getStoredInputCount() + orig.getPopCount());  
+	}
+	
 
-	LinearPrinter.println("After adding input states: " + orig);
-
+	LinearPrinter.println("AFTER ADDING INPUTS, #STATES: " + orig.getStateCount());
+		
+	//	LinearPrinter.println("After adding input states: " + orig);
+	
 
 	outputs = orig.getPushCount();
 	inputs = orig.getPopCount();
@@ -107,80 +109,96 @@ public class LinearOptimizer {
     public LinearFilterRepresentation optimize() {
 
 	int s1, s2;
-					
-	// remove unobservable states
+	LinearFilterRepresentation tempRep;
+
+	LinearPrinter.println("BEGIN");
+						
+	// isolate the unobservable states
 	transposeSystem();
-	s1 = reduceParameters(false);
+	s1 = rowEchelonForm(false);
 	transposeSystem();	
 	cleanAll();
 	LinearPrinter.println("got reduction up to value " + s1);	
 
-	// for now, leave at least 1 state
-	s1 = Math.min(s1,states-2);			
-	if(s1 >= 0) {	   
+	// remove all possible unobservable states
+	// however, there is an an extra constant state added		
+	if((s1 >= 0)) {	   
+	    zeroInitEntries(true); // the extra state added here will be removed later
+	    cleanAll();
 	    removeUnobservableStates(s1);
 	}
-		
-	LinearPrinter.println("After observable reduction, before reachable reduction: \n" + totalMatrix + "\n" + initVec); 
 
-	// remove unreachable states 
-	s2 = reduceParameters(true);
+	// remove the constant state, if it is not the only state remaining
+	if(isRemovableLast()&&(states>1))
+	    removeState(states-1);
+	
+	tempRep = extractRep();
+	//	LinearPrinter.println("After observable reduction, before reachable reduction: \n" + tempRep); 
+
+	// isolate the unreachable states 
+	s2 = rowEchelonForm(true);
 	cleanAll();
 	LinearPrinter.println("got reduction up to value " + s2); 
 
-	LinearPrinter.println("Before QR algorithm: \n" + totalMatrix + "\n" + initVec);
-
-	// for now, leave at least 1 state
-	s2 = Math.min(s2,states-2);			
+	//	LinearPrinter.println("Before QR algorithm: \n" + totalMatrix + "\n" + initVec);
+	
+	// remove all possible unreachable states
+	// however, there is an extra constant state added			
 	if(s2 >= 0) {
-	    qr_Algorithm(s2); 
-	    cleanAll(); 
-	    zeroInitEntries(); 
-	    cleanAll(); 
+	    LinearPrinter.println("INSIDE UNREACHABLE REMOVAL BLOCK");
+	    qr_Algorithm(s2);  
+	    cleanAll();  
+	    zeroInitEntries(true); // the extra state added here will be removed later
+	    cleanAll();  
 	    removeUnreachableStates(s2); 
 	}  		
+	
+	// remove the constant state, if it is not the only state remaining
+	if(isRemovableLast()&&(states>1))
+	    removeState(states-1);
+
+	tempRep = extractRep();
+	//	LinearPrinter.println("After state reduction, before min param: \n" + tempRep);
+		
+	// try to reduce parameters
+					
+	canonicalForm(true);      // put in reachable canonical form
 	cleanAll();
-
-	LinearPrinter.println("After state reduction, before min param: \n" + totalMatrix + "\n" + initVec);
 	
-	// minimally parametrize the system
-			
-	    minParametrize(true);      // put in reachable canonical form
-	    cleanAll();
+	LinearFilterRepresentation tempReachableRep = extractRep();
+	LinearCost tempReachableCost = tempReachableRep.getCost();
+	
+	LinearPrinter.println("Reachable rep: " + tempReachableRep);
+	LinearPrinter.println("Cost (multiplies, adds): " + tempReachableCost.getMultiplies() + " " + tempReachableCost.getAdds());
+	
+	
+	transposeSystem();
+	canonicalForm(false);     // put in observable cononical form
+	transposeSystem();
+	cleanAll();
 	    
-	    LinearFilterRepresentation tempReachableRep = extractRep();
-	    LinearCost tempReachableCost = tempReachableRep.getCost();
-
-	    LinearPrinter.println("Reachable rep: " + tempReachableRep);
-	    LinearPrinter.println("Cost (multiplies, adds): " + tempReachableCost.getMultiplies() + " " + tempReachableCost.getAdds());
-
-
-	    transposeSystem();
-	    minParametrize(false);     // put in observable cononical form
-	    transposeSystem();
-	    cleanAll();
+	LinearFilterRepresentation tempObservableRep = extractRep();
+	LinearCost tempObservableCost = tempObservableRep.getCost();
 	
-	    LinearFilterRepresentation tempObservableRep = extractRep();
-	    LinearCost tempObservableCost = tempObservableRep.getCost();
-
-
-	    LinearPrinter.println("Observable rep: " + tempObservableRep);	
-	    LinearPrinter.println("Cost (multiplies, adds): " + tempObservableCost.getMultiplies() + " " + tempObservableCost.getAdds());
-
-	    if(tempObservableCost.lessThan(tempReachableCost)) {
-		LinearPrinter.println("Observable rep is better");
-		return tempObservableRep;
-	    }
-	    else {
-		LinearPrinter.println("Reachable rep is better");
-		return tempReachableRep;
-	    }
-		  
-	    //                    return extractRep();
+	
+	LinearPrinter.println("Observable rep: " + tempObservableRep);	
+	LinearPrinter.println("Cost (multiplies, adds): " + tempObservableCost.getMultiplies() + " " + tempObservableCost.getAdds());
+	
+	// compare reachable and observable forms, return the better one
+	if(tempObservableCost.lessThan(tempReachableCost)) {
+	    LinearPrinter.println("Observable rep is better");
+	    return tempObservableRep;
+	}
+	else {
+	    LinearPrinter.println("Reachable rep is better");
+	    return tempReachableRep;
+	}
+				  
+	//                     return extractRep();
     }
 
 
-    // extract representation from total matrix
+    // extract linear representation from total matrix
     private LinearFilterRepresentation extractRep() {
 
 	LinearFilterRepresentation newRep;
@@ -247,8 +265,8 @@ public class LinearOptimizer {
     
 
     // add constant state 1
-    // makes all other init vector entries zero    
-    private void zeroInitEntries() {
+    // makes all other init vector entries zero
+    private void zeroInitEntries(boolean normal) {
 	addConstantState();
 	
 	ComplexNumber tempComplex;
@@ -261,12 +279,15 @@ public class LinearOptimizer {
 		// therefore, we will use MAX_PRECISION_BUFFER, which is greater	     
 		if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
 		    temp = tempComplex.getReal();
-		    addMultiple(states-1,i,-temp,true);
+		    if(normal)
+			addMultiple(states-1,i,-temp,true);
+		    else
+			addMultiple(i,states-1,temp,false);
 		    // set the value to be exactly zero (in case it is very small but non-zero)
 		    initVec.setElement(i,ComplexNumber.ZERO);
 		}	
 	    }
-	}		
+	}
     }
 
     
@@ -276,6 +297,34 @@ public class LinearOptimizer {
 	initVec.cleanEntries();
 	if(preNeeded)
 	    totalPreMatrix.cleanEntries();
+    }
+
+
+
+    // check if the last state (constant 1) can be removed
+    private boolean isRemovableLast() {
+
+	// check if other states depend on it
+	for(int i=0; i<states-1; i++) {
+	    if(!totalMatrix.getElement(i,states-1).equals(ComplexNumber.ZERO))
+		return false;
+	}
+
+	// check if outputs depend on it
+	for(int i=0; i<outputs; i++) {
+	    if(!totalMatrix.getElement(states+i,states-1).equals(ComplexNumber.ZERO))
+		return false;
+	}
+
+	// check if other states in prematrix depend on it
+	if(preNeeded) {
+	    for(int i=0; i<states-1; i++) {
+		if(!totalPreMatrix.getElement(i,states-1).equals(ComplexNumber.ZERO))
+		    return false;
+	    }
+	}
+
+	return true;
     }
 
 
@@ -302,7 +351,7 @@ public class LinearOptimizer {
 	if(!initVec.getElement(index).equals(ComplexNumber.ZERO))
 	    return false;
 
-	// check that state doesn't get updated by last state
+	// check that state doesn't get updated by last state (which is the constant 1)
 	if(!totalMatrix.getElement(index,states-1).equals(ComplexNumber.ZERO))
 	    return false;
 
@@ -342,14 +391,19 @@ public class LinearOptimizer {
 	}
     }
 
+    // checks whether or not state index is removable (for an unobservable state)
     private boolean isRemovableObs(int index, int end_index) {
+	
+	// if this unobservable state has initial value zero, we can definitely remove it
+	if(initVec.getElement(index).equals(ComplexNumber.ZERO))
+	    return true;
 
-	// check that no observable state updated by this (unobservable) state in the prework matrix A
+	// if not, check that no observable state updated by this (unobservable) state in the prework matrix A
 	if(preNeeded) {
-	    for(int i=end_index+1; i<states; i++)
+	    for(int i=end_index+1; i<states; i++) 
 		if(!(totalPreMatrix.getElement(i,index).equals(ComplexNumber.ZERO)))
 		    return false;
-		   
+	    
 	}
 	
 	return true;
@@ -411,6 +465,7 @@ public class LinearOptimizer {
 
     // does the qr algorithm on A[0..end_index, 0..end_index]
     // also does the appropriate transform to matrix C
+    // don't need to do anything to matrix B because the relevant part of it is all zeros
     private void qr_Algorithm(int end_index) {
 
 	LinearPrinter.println("Start Off Diagonalize");
@@ -511,6 +566,7 @@ public class LinearOptimizer {
 
     // zeros out entries below the "off-diagonal" in A[0..end_index, 0..index]
     // the off-diagonal is the diagonal below the main diagonal
+    // this is a necessary procedure to start the QR algorithm
     private void off_diagonalize(int end_index) {
 
 	double curr, temp, val;
@@ -557,10 +613,15 @@ public class LinearOptimizer {
     }
 
 
-    // eliminates entries in totalMatrix, totalPreMatrix
-    // returns an int s indicating that states 0..s do not depend on inputs
-    // boolean normal indicates whether or not we are using the normal matrices (as opposed to transposes)
-    private int reduceParameters(boolean normal) {
+    /* 
+       puts [A B] ([A^T C^T) in row echelon form, which exposes the 
+       unreachable (unobservable) states
+       
+       returns integer s indicating the states 0...s are unreachable (unobservable)
+       if normal = true, we're finding unreachable states
+       otherwise, we're finding unobservable states
+    */
+    private int rowEchelonForm(boolean normal) {
 
 	int i = states-1;
 	int j = states+inputs-1;
@@ -591,10 +652,10 @@ public class LinearOptimizer {
 	    if(i == j)
 		break;
 
-	    LinearPrinter.println("hello " + totalMatrix.getElement(i,j));
+	    //	    LinearPrinter.println("hello " + totalMatrix.getElement(i,j));
 
 
-	    //partial pivoting
+	    //partial pivoting for stability
 	    max_index = i;
 	    max_val = Math.abs(totalMatrix.getElement(i,j).getReal());
 	    for(int l=0; l<i; l++) {
@@ -608,10 +669,9 @@ public class LinearOptimizer {
 
 	    curr = totalMatrix.getElement(i,j).getReal();
 	    
-	    LinearPrinter.println("i,j,curr " + i + " " + j + " " + curr);
+	    //	    LinearPrinter.println("i,j,curr " + i + " " + j + " " + curr);
 
 	    if(!totalMatrix.getElement(i,j).equals(ComplexNumber.ZERO)) {
-		//scale(i,1/curr);
 		for(int k=0; k<i; k++) {
 		    tempComplex = totalMatrix.getElement(k,j);
 		    if((!tempComplex.equals(ComplexNumber.ZERO))) {
@@ -642,16 +702,27 @@ public class LinearOptimizer {
     }
 
 
-    // removes as many non-zero entries as possible
-    private void minParametrize(boolean normal) {
+    /* 
+       put the matrices into observable (reachable) canonical form
+       if normal = true, put into reachable form
+       otherwise, put into observable form
+    */
+    private void canonicalForm(boolean normal) {
 
 	int currRow = 0;
 	int currCol = 0;
 	int currStage = 0;
 	int max_index;
 	boolean found;
-	double temp_val, max_val;
+	double temp_val, max_val, div;
 	ComplexNumber tempComplex;
+
+	/* 
+	   This value should be just above 1 for stability purposes.
+	   However, then there is much less gain in performance.
+	   The value 10000 works well for most applications
+	*/				       
+	double thresh = 10000.0001;
 
 	while((currRow < states)&&(currStage < inputs)) {
 	    
@@ -678,23 +749,40 @@ public class LinearOptimizer {
 	    
 	    if(found) { 
 
-		temp_val = totalMatrix.getElement(currRow,states+currStage).getReal();	    
-		// make all entries above and below it to zero
-		for(int i=0; i<states; i++) { 
-		    if(i!=currRow) {
-			tempComplex = totalMatrix.getElement(i,states+currStage);
-			if(!tempComplex.equals(ComplexNumber.ZERO)) {
-			    // do NOT do row operations with values too close to MAX_PRECISION
-			    // therefore, we will use MAX_PRECISION_BUFFER, which is greater	     
-			    if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
-				addMultiple(currRow,i,-tempComplex.getReal()/temp_val,normal);
+		temp_val = totalMatrix.getElement(currRow,states+currStage).getReal();
+	    
+		// make all entries above it to zero IF they aren't much bigger
+		for(int i=0; i<currRow; i++) { 
+		    tempComplex = totalMatrix.getElement(i,states+currStage);
+		    if(!tempComplex.equals(ComplexNumber.ZERO)) {
+			// do NOT do row operations with values too close to MAX_PRECISION
+			// therefore, we will use MAX_PRECISION_BUFFER, which is greater	     
+			if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
+			    div = -tempComplex.getReal()/temp_val;
+			    if(Math.abs(div) < thresh) {
+				addMultiple(currRow,i,div,normal);
 				// set the value to be exactly zero (in case it is very small but non-zero)
 				totalMatrix.setElement(i,states+currStage,ComplexNumber.ZERO);
 			    }
 			}
 		    }
+		    
 		}
-		if(Math.abs(temp_val) > 0.01) 
+
+		// make all entries below it to zero
+		for(int i=currRow+1; i<states; i++) { 
+		    tempComplex = totalMatrix.getElement(i,states+currStage);
+		    if(!tempComplex.equals(ComplexNumber.ZERO)) {
+			// do NOT do row operations with values too close to MAX_PRECISION
+			// therefore, we will use MAX_PRECISION_BUFFER, which is greater	     
+			if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
+			    addMultiple(currRow,i,-tempComplex.getReal()/temp_val,normal);
+			    // set the value to be exactly zero (in case it is very small but non-zero)
+			    totalMatrix.setElement(i,states+currStage,ComplexNumber.ZERO);
+			}
+		    }
+		}
+		if(Math.abs(1.0/temp_val) < thresh) 
 		    scale(currRow,1.0/temp_val,normal);
 	    }
 
@@ -719,7 +807,7 @@ public class LinearOptimizer {
 		    }
 		}
 		swap(currRow,max_index);
-		LinearPrinter.println("BIGGEST VALUE: " + totalMatrix.getElement(currRow,currCol).getReal());
+		//		LinearPrinter.println("BIGGEST VALUE: " + totalMatrix.getElement(currRow,currCol).getReal());
 		if(Math.abs(totalMatrix.getElement(currRow,currCol).getReal()) > ComplexNumber.MAX_PRECISION_BUFFER)
 		    found = true;
 		else
@@ -729,26 +817,44 @@ public class LinearOptimizer {
 		    
 		    temp_val = totalMatrix.getElement(currRow,currCol).getReal(); 
 		    
-		    // make all entries above and below it to zero
-		    for(int i=0; i<states; i++) {
-			if(i!=currRow) {
-			    tempComplex = totalMatrix.getElement(i,currCol);
-			    if(!tempComplex.equals(ComplexNumber.ZERO)) {
-				// do NOT do row operations with values too close to MAX_PRECISION
-				// therefore, we will use MAX_PRECISION_BUFFER, which is greater
-				if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
-				    LinearPrinter.println("GETTING RID OF: " + tempComplex.getReal());
-				    addMultiple(currRow,i,-tempComplex.getReal()/temp_val,normal);	
-				    LinearPrinter.println("VALUE: " + totalMatrix.getElement(i,currCol).getReal());
+		    // make all entries above it to zero IF they aren't much bigger
+		    for(int i=0; i<currRow; i++) {
+			tempComplex = totalMatrix.getElement(i,currCol);
+			if(!tempComplex.equals(ComplexNumber.ZERO)) {
+			    // do NOT do row operations with values too close to MAX_PRECISION
+			    // therefore, we will use MAX_PRECISION_BUFFER, which is greater
+			    if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
+				//	   		LinearPrinter.println("GETTING RID OF: " + tempComplex.getReal());
+				div = -tempComplex.getReal()/temp_val;
+				if(Math.abs(div) < thresh) {
+				    addMultiple(currRow,i,div,normal);	
+				    // 	    LinearPrinter.println("VALUE: " + totalMatrix.getElement(i,currCol).getReal());
 				    // set the value to be exactly zero (in case it is very small but non-zero)
-				    totalMatrix.setElement(i,currCol,ComplexNumber.ZERO);	       
+				    totalMatrix.setElement(i,currCol,ComplexNumber.ZERO);
 				}
+			    }
+			}			    
+		    }
+
+
+		    // make all entries below it to zero
+		    for(int i=currRow+1; i<states; i++) {
+			tempComplex = totalMatrix.getElement(i,currCol);
+			if(!tempComplex.equals(ComplexNumber.ZERO)) {
+			    // do NOT do row operations with values too close to MAX_PRECISION
+			    // therefore, we will use MAX_PRECISION_BUFFER, which is greater
+			    if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
+				//	LinearPrinter.println("GETTING RID OF: " + tempComplex.getReal());
+				addMultiple(currRow,i,-tempComplex.getReal()/temp_val,normal);	
+				//LinearPrinter.println("VALUE: " + totalMatrix.getElement(i,currCol).getReal());
+				// set the value to be exactly zero (in case it is very small but non-zero)
+				totalMatrix.setElement(i,currCol,ComplexNumber.ZERO);	       
 			    }
 			}
 		    }
-		    if(Math.abs(temp_val) > 0.01) 
+		    if(Math.abs(1.0/temp_val) < thresh) 
 			scale(currRow,1.0/temp_val,normal);
-		   
+		    
 		    currRow++;
 		}
 
@@ -757,9 +863,6 @@ public class LinearOptimizer {
 		  
 	}
     }
-
-
-
 
 
     // swaps rows a,b and cols a,b in totalMatrix, totalPreMatrix
@@ -772,7 +875,7 @@ public class LinearOptimizer {
 	}
 	initVec.swapCols(a,b);
 	
-	LinearPrinter.println("SWAPPED " + a + " " + b);
+	//	LinearPrinter.println("SWAPPED " + a + " " + b);
     }
 
 
@@ -790,7 +893,7 @@ public class LinearOptimizer {
 	else
 	    initVec.addCol(b,a,-val);
 
-	LinearPrinter.println("ADDED MULTIPLE " + a + " " + b + " " + val);			
+	//	LinearPrinter.println("ADDED MULTIPLE " + a + " " + b + " " + val);			
     }
 
 
@@ -808,8 +911,7 @@ public class LinearOptimizer {
 	else
 	    initVec.multiplyCol(a,1.0/val);
 
-	LinearPrinter.println("SCALED " + a + " " + val);		
-
+	//	LinearPrinter.println("SCALED " + a + " " + val);		
     }
 
 
@@ -826,3 +928,11 @@ public class LinearOptimizer {
     }
 
 }
+
+
+
+
+
+
+
+

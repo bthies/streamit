@@ -3,6 +3,24 @@ package at.dms.kjc.sir.statespace.transform;
 import at.dms.kjc.sir.statespace.*;
 import java.util.*;
 
+
+
+/*
+  Some things we don't deal with yet:
+
+  - loop or body block with peek > pop rate
+
+  - non-zero enqueued values
+
+  - more enqueued values than the pop rate of the (expanded) body block
+
+  - converting roundrobin to duplicate splitter
+
+  However, all items except the first are covered in the thesis
+
+ */
+
+
 public class LinearTransformFeedback extends LinearTransform {
 
     LinearFilterRepresentation bodyRep, loopRep;
@@ -124,7 +142,7 @@ public class LinearTransformFeedback extends LinearTransform {
 
 	// do not accept reps that have a prework
 	if(bodyRep.preworkNeeded()||loopRep.preworkNeeded())	    
-	    return new LinearTransformNull("feedback is unschedulable - has a prework");
+	    return new LinearTransformNull("do not consider blocks with a prework");
 
 	int bodyToOutput, bodyToLoop, inputToBody, loopToBody;
 	int loopPush, loopPop, bodyPush, bodyPop;

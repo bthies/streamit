@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.18 2004-08-17 21:00:05 sitij Exp $
+ * $Id: LinearDirectReplacer.java,v 1.19 2004-08-27 20:16:42 sitij Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -91,15 +91,16 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	linearRep = this.linearityInformation.getLinearRepresentation(self);
 	boolean doStoreInputs;
 
+
+	// if the filter is part of a feedback loop, DONT change its stored inputs (peek rate)
+	// otherwise, there may be scheduling problems
 	if(self.insideFeedbackLoop())
 	    doStoreInputs = false;
 	else
 	    doStoreInputs = true;
 
-	LinearPrinter.println("AFTER getLinearRepresentation");
-
 	/********** test print for optimization *********/
-	
+		
 	LinearPrinter.println("Before optimization: " + linearRep);
 		
 	LinearCost oldCost = linearRep.getCost();
@@ -108,8 +109,10 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	LinearFilterRepresentation newRep = opt.optimize();
 	LinearCost newCost = newRep.getCost();
 
-	LinearPrinter.println("After optimization: " + newRep);
-	linearRep = newRep;
+	//	LinearPrinter.println("After optimization: " + newRep);
+
+
+	LinearPrinter.println("AFTER OPTIMIZATION #STATES: " + newRep.getStateCount());
 	
 	LinearPrinter.println("Before Optimization (multiplies, adds) " 
 			      + oldCost.getMultiplies() + " " + oldCost.getAdds());
@@ -117,6 +120,9 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	LinearPrinter.println("After Optimization (multiplies, adds) " 
 			      + newCost.getMultiplies() + " " + newCost.getAdds());
 	
+
+	linearRep = newRep;
+
 	/***********************************************/
 
 
@@ -422,17 +428,25 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    if (combinationExpressions.size() == 0) {
 		// if we have no combination expressions, it means we should simply output a zero
 		pushArgument = offsetNode;
-	    } else {
+	    } 
+	    else if (combinationExpressions.size() == 1) {
+
+		pushArgument = (JExpression)combinationExpressions.get(0);
+
+	    }
+	    else {
+
+
 		// combination expressions need to be nested.
 		// Start with the right most node
 		int numCombos = combinationExpressions.size();
 		pushArgument = new JAddExpression(null, // tokenReference
-						  ((JExpression)combinationExpressions.get(numCombos-1)), // left
-						  offsetNode); // right
+						  ((JExpression)combinationExpressions.get(numCombos-2)), // left
+						  ((JExpression)combinationExpressions.get(numCombos-1))); // right
 		// now, for all of the other combinations, make new add nodes with the
 		// comb. exprs as the left argument and the current add expr as the right
 		// argument.
-		for (int k=2; k<=numCombos; k++) {
+		for (int k=3; k<=numCombos; k++) {
 		    pushArgument = new JAddExpression(null, // tokenReference,
 						      ((JExpression)combinationExpressions.get(numCombos-k)), // left
 						      pushArgument); // right (use the previous expression)
@@ -564,17 +578,22 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    if (combinationExpressions.size() == 0) {
 		// if we have no combination expressions, it means we should simply output a zero
 		assignArgument = offsetNode;
-	    } else {
+	    } 
+	    else if (combinationExpressions.size() == 1) {
+		assignArgument = (JExpression)combinationExpressions.get(0);
+
+	    }
+	    else {
 		// combination expressions need to be nested.
 		// Start with the right most node
 		int numCombos = combinationExpressions.size();
 		assignArgument = new JAddExpression(null, // tokenReference
-						  ((JExpression)combinationExpressions.get(numCombos-1)), // left
-						  offsetNode); // right
+						  ((JExpression)combinationExpressions.get(numCombos-2)), // left
+						  ((JExpression)combinationExpressions.get(numCombos-1))); // right
 		// now, for all of the other combinations, make new add nodes with the
 		// comb. exprs as the left argument and the current add expr as the right
 		// argument.
-		for (int k=2; k<=numCombos; k++) {
+		for (int k=3; k<=numCombos; k++) {
 		    assignArgument = new JAddExpression(null, // tokenReference,
 						      ((JExpression)combinationExpressions.get(numCombos-k)), // left
 						      assignArgument); // right (use the previous expression)
@@ -790,17 +809,23 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    if (combinationExpressions.size() == 0) {
 		// if we have no combination expressions, it means we should simply output a zero
 		assignArgument = offsetNode;
-	    } else {
+	    } 
+	    else if (combinationExpressions.size() == 1) {
+
+		assignArgument = (JExpression)combinationExpressions.get(0);
+
+	    }
+	    else {
 		// combination expressions need to be nested.
 		// Start with the right most node
 		int numCombos = combinationExpressions.size();
 		assignArgument = new JAddExpression(null, // tokenReference
-						  ((JExpression)combinationExpressions.get(numCombos-1)), // left
-						  offsetNode); // right
+						  ((JExpression)combinationExpressions.get(numCombos-2)), // left
+						  ((JExpression)combinationExpressions.get(numCombos-1))); // right
 		// now, for all of the other combinations, make new add nodes with the
 		// comb. exprs as the left argument and the current add expr as the right
 		// argument.
-		for (int k=2; k<=numCombos; k++) {
+		for (int k=3; k<=numCombos; k++) {
 		    assignArgument = new JAddExpression(null, // tokenReference,
 						      ((JExpression)combinationExpressions.get(numCombos-k)), // left
 						      assignArgument); // right (use the previous expression)

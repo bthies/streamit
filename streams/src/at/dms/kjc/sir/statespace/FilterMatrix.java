@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.15 2004-08-17 21:00:05 sitij Exp $
+ * $Id: FilterMatrix.java,v 1.16 2004-08-27 20:16:42 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -122,10 +122,19 @@ public class FilterMatrix {
 
     public void cleanEntries() {
 	ComplexNumber temp;
+	Double tempDouble;
 
 	for(int i=0; i<this.internalSizeRows; i++)
 	    for(int j=0; j<this.internalSizeCols; j++) {
 		temp = this.getElement(i,j);
+		tempDouble = new Double(temp.getReal());
+
+		if(tempDouble.isInfinite())
+		    LinearPrinter.println("HAVE INFINITE ENTRY");
+
+		if(tempDouble.isNaN())
+		    LinearPrinter.println("HAVE NAN");
+
 		if(temp.isReal()&&temp.isIntegral()) {
 		    this.setElement(i,j,Math.round(temp.getReal()));
 		}

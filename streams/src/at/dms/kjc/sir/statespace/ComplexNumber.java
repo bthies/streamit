@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * Complex numbers are immutable -- i.e. their value can't change after
  * they are instantiated.<br>
  *
- * $Id: ComplexNumber.java,v 1.7 2004-08-19 01:34:30 sitij Exp $
+ * $Id: ComplexNumber.java,v 1.8 2004-08-27 20:16:42 sitij Exp $
  **/
 public class ComplexNumber {
     private final double realPart;
@@ -23,10 +23,17 @@ public class ComplexNumber {
      * This is necessary because because of the imprecision of
      * floating point arithmetic.
      **/
+
+    /* I implemented two separate values because it seemed row operations
+     * involving values too close to MAX_PRECISION tended to cause problems.
+     * Hence a 'buffer' of 1000 between the two values.
+     * This might not be necessary though, I'm not completely sure.
+     *
+     */
     public static final double MAX_PRECISION = .0000000000001;
     public static final double MAX_PRECISION_BUFFER = MAX_PRECISION*1000;
-    //    public static final double MAX_PRECISION = .0000000001;
-    //    public static final double MAX_PRECISION_BUFFER = MAX_PRECISION;
+    //        public static final double MAX_PRECISION = .00001;
+    //        public static final double MAX_PRECISION_BUFFER = MAX_PRECISION;
 
     /** Canonical number zero. **/
     public static final ComplexNumber ZERO = new ComplexNumber(0,0);

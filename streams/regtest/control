@@ -68,3 +68,15 @@ test fmtest {
   source LinkedFMTest.java
   disabled
 }
+
+test file {
+  directory docs/examples/hand/file
+  source FileTest.java
+}
+
+test gsm {
+  directory apps/Gsm/JVocoder
+  make
+  source Gsm.java
+  disabled
+}

@@ -57,14 +57,14 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 
 
 	joinerCode = initJoinerCode;
-		System.out.println("\n\nInit Execution Counts");
-	RawBackend.printCounts(RawBackend.initExecutionCounts);
+	//System.out.println("\n\nInit Execution Counts");
+	//RawBackend.printCounts(RawBackend.initExecutionCounts);
 	initSchedules = (new FineGrainSimulator(top, true)).goInit(initExecutionCounts, counters, null);
 	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");
 
-	System.out.println("\n\nSteady Execution Counts");
-	RawBackend.printCounts(RawBackend.steadyExecutionCounts);
+	//	System.out.println("\n\nSteady Execution Counts");
+	//RawBackend.printCounts(RawBackend.steadyExecutionCounts);
 
 	counters.resetBuffers();
 
@@ -332,7 +332,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    ((SIRTwoStageFilter)fire.contents).getInitPop() == 0)// &&
 	    // !(((SIRTwoStageFilter)fire.contents).getInitPeek() == 0)) 
 	    {
-		System.out.println("Not Counting-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
+		//		System.out.println("Not Counting-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
 		return;
 	    }
 	int oldVal = ((Integer)executionCounts.get(fire)).intValue();

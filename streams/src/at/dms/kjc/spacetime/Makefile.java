@@ -100,6 +100,7 @@ public class Makefile
     {
 	buf.append("#-*-Makefile-*-\n\n");
 	buf.append("ATTRIBUTES = IMEM_LARGE\n");
+	buf.append("ATTRIBUTES += USES_PRINT_SERVICE\n");
 	/* when I implement number gathering this will have to change
 	// need to define limit for SIMCYCLES to matter
 	if (!(KjcOptions.numbers > 0 && NumberGathering.successful))

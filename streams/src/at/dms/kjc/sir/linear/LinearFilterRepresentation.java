@@ -14,7 +14,7 @@ import java.util.*;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.8 2002-09-18 17:15:37 aalamb Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.9 2002-09-27 16:17:10 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -100,7 +100,7 @@ public class LinearFilterRepresentation {
 	for (int i=1; i<factor; i++) { // this many copies
 	    // each one is offset by oldPop in the vertical direction, and offset by oldPush in
 	    // the horizonytal direction.
-	    newMatrix.copyAt(oldPeek+(i-1)*oldPop, i*oldPush, oldMatrix);
+	    newMatrix.copyAt(i*oldPop, i*oldPush, oldMatrix);
 	}
 
 	// also, duplicate the b vector factor times

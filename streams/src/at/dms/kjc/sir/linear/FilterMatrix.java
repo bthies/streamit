@@ -19,7 +19,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.5 2002-08-16 21:16:49 aalamb Exp $
+ * $Id: FilterMatrix.java,v 1.6 2002-08-20 19:12:47 aalamb Exp $
  **/
 
 public class FilterMatrix {
@@ -148,6 +148,9 @@ public class FilterMatrix {
 	String returnString = "[";
 	// for each row
 	for (int i=0; i<internalSizeRows; i++) {
+	    if (i != 0) {
+		returnString += " ";
+	    }
 	    returnString += "[";
 	    // for each column
 	    for (int j=0; j<internalSizeCols; j++) {
@@ -159,6 +162,9 @@ public class FilterMatrix {
 		}
 	    }
 	    returnString += "]";
+	    if (i != (internalSizeRows-1)) {
+		returnString += "\n";
+	    }
 	}
 	returnString += "]";
 

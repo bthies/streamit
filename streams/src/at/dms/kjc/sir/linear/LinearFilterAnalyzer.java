@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearFilterAnalyzer.java,v 1.3 2002-08-16 21:16:49 aalamb Exp $
+ * $Id: LinearFilterAnalyzer.java,v 1.4 2002-08-20 19:12:47 aalamb Exp $
  **/
 public class LinearFilterAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear forms. never would have guessed that, would you? **/
@@ -28,9 +28,13 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
     /**
      * Main entry point -- searches the passed stream for
      * linear filters and calculates their associated matricies.
+     *
+     * If the debug flag is set, then we print a lot of debugging information
      **/
-    public static LinearFilterAnalyzer findLinearFilters(SIRStream str) {
-	System.out.println("aal--In linear filter visitor");
+    public static LinearFilterAnalyzer findLinearFilters(SIRStream str, boolean debug) {
+	// set up the printer to either print or not depending on the debug flag
+	LinearPrinter.setOutput(debug);
+	LinearPrinter.println("aal--In linear filter visitor");
 	LinearFilterAnalyzer lfv = new LinearFilterAnalyzer();
 	IterFactory.createIter(str).accept(lfv);
 	return lfv;
@@ -39,13 +43,13 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
 
     /** More or less get a callback for each stram **/
     public void visitFilter(SIRFilter self, SIRFilterIter iter) {
-	System.out.println("Visiting " + "(" + self + ")");
+	LinearPrinter.println("Visiting " + "(" + self + ")");
 
 	// set up the visitor that will actually collect the data
 	int peekRate = extractInteger(self.getPeek());
 	int pushRate = extractInteger(self.getPush());
-	System.out.println("  Peek rate: " + peekRate);
-	System.out.println("  Push rate: " + pushRate);
+	LinearPrinter.println("  Peek rate: " + peekRate);
+	LinearPrinter.println("  Push rate: " + pushRate);
 	// if we have a peek or push rate of zero, this isn't a linear filter that we care about,
 	// so only try and visit the filter if both are non-zero
 	if ((peekRate != 0) && (pushRate != 0)) {
@@ -59,13 +63,13 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
 
 	    // print out the results of pumping the visitor
 	    if (theVisitor.computesLinearFunction()) {
-		System.out.println("Linear filter found: " + self +
+		LinearPrinter.println("Linear filter found: " + self +
 				   "\n-->Matrix:\n" + theVisitor.getMatrixRepresentation() +
-				   "\n-->Constant Vector:" + theVisitor.getConstantVector());
+				   "\n-->Constant Vector:\n" + theVisitor.getConstantVector());
 	    }
 		
 	} else {
-	    System.out.println("  " + self.getIdent() + " is source/sink.");
+	    LinearPrinter.println("  " + self.getIdent() + " is source/sink.");
 	}
     }
 
@@ -76,9 +80,7 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
 	JIntLiteral literal = (JIntLiteral)expr;
 	return literal.intValue();
     }
-    
 
-    
     private void checkRep() {
 	// make sure that all keys in FiltersToMatricies are strings, and that all
 	// values are LinearForms.
@@ -108,6 +110,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * size of the vector that must be used to represent.
      **/
     private int peekSize;
+    /**
+     * Number of items that are pused. Therefore it also represents the
+     * number of columns that are in the matrix representation.
+     **/
+    private int pushSize;
 
     /**
      * Mappings from expressions to LinearForms. Each LinearForm holds the
@@ -154,6 +161,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      **/
     public LinearFilterVisitor(int numPeeks, int numPushes) {
 	this.peekSize = numPeeks;
+	this.pushSize = numPushes;
 	this.expressionsToLinearForms = new HashMap();
 	this.peekOffset = 0;
 	this.pushOffset = 0;
@@ -193,7 +201,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 //     public Object visitArrayLengthExpression(JArrayLengthExpression self, JExpression prefix) {return null;}
 
     public Object visitAssignmentExpression(JAssignmentExpression self, JExpression left, JExpression right) {
-	System.out.println("  visiting assignment expression: " + self);
+	LinearPrinter.println("  visiting assignment expression: " + self);
 	return super.visitAssignmentExpression(self, left, right);
     }
 
@@ -220,11 +228,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// if we are computing an additon or subtraction, we are all set, otherwise
 	// we are done
 	if (!(oper.equals("+") || oper.equals("-"))) {
-	    System.out.println("  can't process " + oper + " linearly");
+	    LinearPrinter.println("  can't process " + oper + " linearly");
 	    return null;
 	}
 
-	System.out.println("  visiting JAddExpression(" + oper + ")");
+	LinearPrinter.println("  visiting JAddExpression(" + oper + ")");
 	
 	// first of all, try and figure out if left and right sub expression can
 	// be represented in linear form.
@@ -373,7 +381,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * resolves into linear form, then we are golden -- we make a note of the 
      **/
     public Object visitPushExpression(SIRPushExpression self, CType tapeType, JExpression arg) {
-	System.out.println("  visiting push expression: " +
+	LinearPrinter.println("  visiting push expression: " +
 			   "argument: " + arg);
 	// try and resolve the argument to a LinearForm by munging the argument
 	LinearForm argLinearForm = (LinearForm)arg.accept(this);
@@ -385,10 +393,13 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    // set the flag that says this filter isn't linear
 	    this.nonLinearFlag = true;
 	} else {
+	    // (note that the first push ends up in the rightmost column)
+	    // so we calculate which column that this push statement corresponds to
+	    int pushColumn = this.pushSize - this.pushOffset -1;
 	    // we have a linear form, so we update the matrix representation
-	    argLinearForm.copyToColumn(this.representationMatrix, this.pushOffset);
+	    argLinearForm.copyToColumn(this.representationMatrix, pushColumn);
 	    // update the constant vector with the offset from the linear form
-	    this.representationVector.setElement(this.pushOffset, argLinearForm.getOffset());
+	    this.representationVector.setElement(pushColumn, argLinearForm.getOffset());
 	    // increment the push offset (for the next push statement)
 	    this.pushOffset++;
 	}
@@ -404,19 +415,22 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * with a "1" at the appropriate place in the weights vector.
      **/
     public Object visitPopExpression(SIRPopExpression self, CType tapeType) {
-	System.out.println("  visiting pop expression: " + self);
+	LinearPrinter.println("  visiting pop expression: " + self);
 	// A pop expression is one of the base cases for creating LinearForms
 	// the pop expression will creates a linear form that corresponds to using
-	// a peek at the current offset.
+	// a peek at the current offset, which in turn corresponds to a
+	// use of the element at size-peekoffset-1 in the input vector
+	int inputIndex = this.peekSize - this.peekOffset - 1;
+    
 	LinearForm currentForm = this.getBlankLinearForm();
-	currentForm.setWeight(this.peekOffset, ComplexNumber.ONE);
+	currentForm.setWeight(inputIndex, ComplexNumber.ONE);
 	
 	// when we hit a pop expression, all further peek expressions have their
 	// indicies incremented by one compared to the previous expressions
 	this.peekOffset++;
 
 	// return the linear form of the pop expression
-	System.out.println("  returning " + currentForm + " from pop expression");
+	LinearPrinter.println("  returning " + currentForm + " from pop expression");
 	return currentForm;
     }
     /**
@@ -427,7 +441,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * index we are processing.
      **/
     public Object visitPeekExpression(SIRPeekExpression self, CType tapeType, JExpression arg) {
-	System.out.println("  visiting peek expression" +
+	LinearPrinter.println("  visiting peek expression" +
 			   " peek index: " + arg);
 
 	// now, we have to visit the expression of the peek( ) to see if it is a constant
@@ -459,7 +473,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	LinearForm peekExprLinearForm = this.getBlankLinearForm();
 	peekExprLinearForm.setWeight(exprLinearForm.getIntegerOffset(),
 				     ComplexNumber.ONE);
-	System.out.println("  returning linear form from peek expression: " + peekExprLinearForm);
+	LinearPrinter.println("  returning linear form from peek expression: " + peekExprLinearForm);
 	return peekExprLinearForm;
     }
 
@@ -472,7 +486,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 					    JExpression prefix,
 					    String ident,
 					    JExpression[] args) {
-	System.out.println("  visiting method call expression: " + self);
+	LinearPrinter.println("  visiting method call expression: " + self);
 	return super.visitMethodCallExpression(self, prefix, ident, args);
     }
     ////// Literal processing handlers
@@ -573,3 +587,46 @@ private LinearForm getOffsetLinearForm(double offset) {
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Control point for printing messages **/
+class LinearPrinter {
+    /** flag to control output generation. **/
+    private static boolean outputEnabled = false;
+    public static void setOutput(boolean outFlag) {
+	outputEnabled = outFlag;
+    }
+    public static void println(String message) {
+	if (outputEnabled) {
+	    System.out.println(message);
+	}
+    }
+    public static void print(String message) {
+	if (outputEnabled) {
+	    System.out.print(message);
+	}
+    }
+}
+    

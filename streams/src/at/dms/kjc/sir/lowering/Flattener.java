@@ -91,9 +91,6 @@ public class Flattener {
 	    SJToPipe.doit(str);
 	}
 
-	// dump the partitioned graph to a dot format
-	StreamItDot.printGraph(str, "after.dot");
-
 	/* Not general code: Just a test for sync-removal on TwoWeightedRR.java */ 
 	/* StreamItDot.printGraph(str, "before-syncremov.dot");
 	SIRPipeline parentPipe = (SIRPipeline)str; 
@@ -123,11 +120,11 @@ public class Flattener {
 	    System.err.println("done.");
 	}
 
-    /* dzm -- note phase ordering issue here.  In particular, we
-     * probably want to form filter phases before fusing the world, but we need
-     * to run field prop before forming phases. */
-    // resolve phases in phased filters
-    FilterPhaser.resolvePhasedFilters(str);    
+	/* dzm -- note phase ordering issue here.  In particular, we
+	 * probably want to form filter phases before fusing the world, but we need
+	 * to run field prop before forming phases. */
+	// resolve phases in phased filters
+	FilterPhaser.resolvePhasedFilters(str);    
         
 	// move field initializations into init function
 	System.err.print("Moving initial assignments... ");
@@ -162,6 +159,9 @@ public class Flattener {
 	System.err.println("done.");
 
 	str = doLinearAnalysis(str);
+
+	// dump the partitioned graph to a dot format
+	StreamItDot.printGraph(str, "after.dot");
 
 	// if we have don't have a container, wrap it in a pipeline
 	// for the sake of SIRScheduler.
@@ -235,6 +235,7 @@ public class Flattener {
 	// we are working with.
 	if (KjcOptions.linearanalysis ||
 	    KjcOptions.linearreplacement ||
+	    KjcOptions.linearpartition ||
 	    (KjcOptions.frequencyreplacement != -1) ||
 	    KjcOptions.redundantreplacement) {
 	    // restore unroll to original value
@@ -242,7 +243,8 @@ public class Flattener {
 
 	    // run the linear analysis and stores the information garnered in the lfa
 	    System.err.print("Running linear analysis... ");
-	    LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug);
+	    // only refactor linear children if we're NOT doing the linear partitioner
+	    LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, !KjcOptions.linearpartition);
 	    System.err.println("done.");
 
 	    // now, print out the graph using the LinearPrinter which colors the graph

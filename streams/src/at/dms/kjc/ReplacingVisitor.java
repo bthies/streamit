@@ -112,9 +112,11 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
 				      JavaStyleComment[] comments) {
 	for (ListIterator it = self.getStatementIterator(); it.hasNext(); ) {
 	    JStatement oldBody = (JStatement)it.next();
-	    JStatement newBody = (JStatement)oldBody.accept(this);
+	    Object newBody = oldBody.accept(this);
+	    if (!(newBody instanceof JStatement))
+		continue;
 	    if (newBody!=null && newBody!=oldBody) {
-		it.set(newBody);
+		it.set((JStatement)newBody);
 	    }
 	}
 	visitComments(comments);

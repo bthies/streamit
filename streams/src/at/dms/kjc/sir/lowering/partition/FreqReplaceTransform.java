@@ -31,18 +31,10 @@ public final class FreqReplaceTransform extends StreamTransform {
     public SIRStream doMyTransform(SIRStream str) {
 	// again detect that <str> is linear, since it is a newly constructed stream
 	LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, lfa);
-	// see if the user has specified a replacement type.  If not,
-	// just use max replacement.
-	int replacementType;
-	if (KjcOptions.frequencyreplacement!=-1) {
-	    replacementType = KjcOptions.frequencyreplacement;
-	} else {
-	    replacementType = FrequencyReplacer.BEST_AVAILABLE;
-	}
 
 	StreamItDot.printGraph(str.getParent(), "debug1.dot");
 	StreamItDot.printGraph(str, "debug2.dot");
-	FrequencyReplacer.doReplace(lfa, str, replacementType);
+	FrequencyReplacer.doReplace(lfa, str);
 	StreamItDot.printGraph(str.getParent(), "debug3.dot");
 	// kind of hard to get a handle on the new stream... return
 	// null for now; this shouldn't get dereferenced in linear

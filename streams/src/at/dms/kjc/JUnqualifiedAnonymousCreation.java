@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnqualifiedAnonymousCreation.java,v 1.3 2003-01-20 20:12:56 dmaze Exp $
+ * $Id: JUnqualifiedAnonymousCreation.java,v 1.4 2003-05-16 03:49:40 thies Exp $
  */
 
 package at.dms.kjc;
@@ -25,7 +25,7 @@ import at.dms.compiler.TokenReference;
 import at.dms.compiler.UnpositionedError;
 
 /**
- * !!! This class represents a new allocation expression 'new Toto(1){}'
+ * !!! This class represents a new allocation expression 'new Toto(1)'
  */
 public class JUnqualifiedAnonymousCreation extends JExpression {
 
@@ -281,11 +281,6 @@ public class JUnqualifiedAnonymousCreation extends JExpression {
       }
     }
 
-//     if (constructor.getOwner().isNested() && !constructor.getOwner().isStatic() && constructor.getOwner().hasOuterThis()) {
-//       // SUPER SYNTHETIC PARAMETER
-//       if (local.getOwner() != null && local.getOwner() == constructor.getOwner().getOwner()) {
-//       }
-//     }
     for (int i = 0; i < params.length; i++) {
       params[i].genCode(code, false);
     }

@@ -72,6 +72,11 @@ public class Flattener {
 	ConstructSIRTree.doit(str);
 	INIT_STATEMENTS_RESOLVED = true;
 
+	if (hasDynamicRates(str)) {
+	    System.err.println("Failure: Dynamic rates are not yet supported in the uniprocessor backend.");
+	    System.exit(1);
+	}
+
 	lowerFilterContents(str, true);
 
 	Lifter.liftAggressiveSync(str);
@@ -185,6 +190,47 @@ public class Flattener {
 	System.err.println("Generating code...");
 	LIRToC.generateCode(flatClass);
 	//System.err.println("done.");
+    }
+
+    public static boolean hasDynamicRates(SIRStream str) {
+	final boolean[] result = { false };
+	// look for dynamic expressions in peek or pop rate
+	// declarations of all filters and phased filters in graph.
+	IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+		public void visitFilter(SIRFilter self,
+				 SIRFilterIter iter) {
+		    // look for dynamic expressions
+		    if (self.getPush().isDynamic() ||
+			self.getPop().isDynamic() ||
+			self.getPeek().isDynamic()) {
+			result[0] = true;
+		    }
+		}
+		
+		/* visit a phased filter */
+		public void visitPhasedFilter(SIRPhasedFilter self,
+				       SIRPhasedFilterIter iter) {
+		    // check init phases
+		    SIRWorkFunction[] init = self.getInitPhases();
+		    for (int i=0; i<init.length; i++) {
+			if (init[i].getPush().isDynamic() ||
+			    init[i].getPop().isDynamic() ||
+			    init[i].getPeek().isDynamic()) {
+			    result[0] = true;
+			}
+		    }
+		    // check work phases
+		    SIRWorkFunction[] work = self.getPhases();
+		    for (int i=0; i<work.length; i++) {
+			if (work[i].getPush().isDynamic() ||
+			    work[i].getPop().isDynamic() ||
+			    work[i].getPeek().isDynamic()) {
+			    result[0] = true;
+			}
+		    }
+		}
+	    });
+	return result[0];
     }
     
     /**

@@ -180,16 +180,17 @@ public class StreamItDot implements AttributeStreamVisitor
         print(getClusterString(self));
         
         // Walk through each of the phases.
-        for (int i = 0; i < phases.length; i++)
-        {
-            NamePair p2 = (NamePair)phases[i].accept(this);
-            printEdge(pair.last, p2.first);
-            // Update the known edges.
-            if (pair.first == null)
-                pair.first = p2.first;
-            pair.last = p2.last;
-        }
-
+        if (phases != null)
+            for (int i = 0; i < phases.length; i++)
+            {
+                NamePair p2 = (NamePair)phases[i].accept(this);
+                printEdge(pair.last, p2.first);
+                // Update the known edges.
+                if (pair.first == null)
+                    pair.first = p2.first;
+                pair.last = p2.last;
+            }
+        
         print("}\n");
         return pair;
     }

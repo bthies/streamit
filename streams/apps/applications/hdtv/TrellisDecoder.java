@@ -13,10 +13,10 @@ class TrellisDecoder extends SplitJoin {
 	// set up the pipeline (see ATSC standard A53 revision b)
 	// switch between de-precoder and trellis decoder
 	this.setSplitter(WEIGHTED_ROUND_ROBIN(1,2));
-	this.add(new PreCoder());
-	this.add(new UngerboeckEncoder());
-	// take one input from precoder, two from 1/2 trellis encoder
-	this.setJoiner(ROUND_ROBIN());
+	this.add(new PreDecoder());
+	this.add(new UngerboeckDecoder());
+	// take one input from precoder, one from 2/1 trellis decoder
+	this.setJoiner(WEIGHTED_ROUND_ROBIN(1,1));
     }
 }
 

@@ -37,7 +37,7 @@ class HDTVEncodePipeline extends Pipeline {
 	this.add(new IntegerSplitter());
 
 	// encode using reed-solomon encoder
-	//this.add(new ReedSolomonEncoder());
+	this.add(new ReedSolomonEncoder());
 
 	// split "bytes" into "bits"
 	this.add(new Bitifier());
@@ -71,7 +71,7 @@ class HDTVDecodePipeline extends Pipeline {
 	this.add(new UnBitifier());
 
 	// decode (and correct errors with reed solomon
-	//this.add(new ReedSolomonDecoder());
+	this.add(new ReedSolomonDecoder());
 	
 	// recombine "bytes" back into integers
 	this.add(new IntegerCombiner());
@@ -311,30 +311,5 @@ class SymbolUnMapper extends Filter {
 	}
     }
 
-}
-
-
-
-
-
-
-class TrellisEncoder extends Filter {
-    public void init() {
-	input = new Channel(Integer.TYPE,1);
-	output = new Channel(Integer.TYPE,1);
-    }
-    public void work() {
-	output.pushInt(input.popInt());
-    }
-}
-
-class TrellisDecoder extends Filter {
-    public void init() {
-	input = new Channel(Integer.TYPE,1);
-	output = new Channel(Integer.TYPE,1);
-    }
-    public void work() {
-	output.pushInt(input.popInt());
-    }
 }
 

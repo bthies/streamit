@@ -5,51 +5,51 @@
  * is directly copied, with appropriate syntax changes to make
  * it valid java/StreamIT code.
  *
- * -Andrew Lamb aalamb@mit.edu 6/17/2002
+ * Incidentally, all of this code is in both the ReedSolomon encoder and the
+ * decoder because StreamIT doesn't yet generate code for static classes
+ * -Andrew Lamb aalamb@mit.edu 7/15/2002
  **/
 
 import streamit.*;
-public class ReedSolomonEncoder extends Filter {
+public class ReedSolomonDecoder extends Filter {
     public static final int N = 207; // total number of bytes output
-    public static final int K = 187; // total data bytes (note that N - K = T = number of ECC bytes) 
+    public static final int K = 187; // total data bytes (note that N - K = T = number of ECC bytes = 20 in our example) 
 
     public void init() {
-
-	this.initialize_ecc();
-	input  = new Channel(Integer.TYPE, K); // pops K data items
-	output = new Channel(Integer.TYPE, N); // pushes N items on to output
+	input  = new Channel(Integer.TYPE, N);
+	output = new Channel(Integer.TYPE, K);
     }
     public void work() {
-
 	int i;
-	int codeword[] = new int[255]; // space for the encoded message data
-	 // input buffer (necessary because of the way rscode does things)
-	int msg[] = new int[K];
+	int codeword[] = new int[255]; // space for the coded
+
+	int erasures[] = new int[16];
+	int nerasures = 0;
 
 	
-	/** pop the data off of the input tape **/
-	for (i=0; i<K; i++) {
-	    msg[i] = (int)input.popInt();
-	}
-	
-	/** Encode the data, ending up with N-K parity bytes **/
-	this.encode_data(msg, K, codeword);
-
-	// print out the parity data to verify that the java version
-	// does the same thing as the c version
-	for (i=0; i<N-K; i++) {
-	    //System.out.println("Parity Byte " + i +
-	    //	       "=" + (int)codeword[DataSource.MESSAGE_SIZE + 1 + i]);
-	}
-
-	/** push out the encoded message onto the tape **/
+	/** pop the (encoded) data codeword off of the input tape **/
 	for (i=0; i<N; i++) {
+	    codeword[i] = input.popInt();
+	}
+	
+	/** Decode the data, ending up with NPAR parity bytes **/
+	decode_data(codeword, N);
+
+	/* check if syndrome is all zeros */
+	if (check_syndrome () != 0) {
+	    correct_errors_erasures (codeword, 
+				     N,
+				     nerasures, 
+				     erasures);
+	    
+	    System.out.println("(Detected errors)");
+	}
+	
+	/** push out the decoded message -- k is the decoded message size **/
+	for (i=0; i<K; i++) {
 	    output.pushInt(codeword[i]);
 	}
     }
-
-
-
     
     /*---------------------ecc.h-------------------------*/
     

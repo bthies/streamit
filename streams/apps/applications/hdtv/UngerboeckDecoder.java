@@ -253,7 +253,8 @@ class UngerboeckDecoder extends Filter
 	// lookup what input caused this transition
 	inputValue = inputTable[s1][s2];
 	if (inputValue == UNINIT) {
-	  System.out.println("Error!!! invalid transition from " + s1 + " to " + s2);
+	    //System.out.println("Error!!! invalid transition from " + s1 + " to " + s2);
+	    System.out.println("Error!!! invalid transition");
 	//  throw new RuntimeException("Error");
 	}
 	

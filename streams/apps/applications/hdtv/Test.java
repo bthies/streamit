@@ -13,14 +13,19 @@ public class Test extends StreamIt
 	this.add(new TestDataSource());
 
 	// add a reed solomon encoder
-	//this.add(new ReedSolomonEncoder());
+	this.add(new ReedSolomonEncoder());
+	this.add(new ReedSolomonDecoder());
+	
 
 	//this.add(new PreCoder());
 	//this.add(new PreDecoder());
 
+	//this.add(new TrellisEncoder());
+	//this.add(new TrellisDecoder());
+
 	//this.add(new TestDataSnooper("input",1));	
-	this.add(new UngerboeckEncoder());
-	this.add(new UngerboeckDecoder());
+	//this.add(new UngerboeckEncoder());
+	//this.add(new UngerboeckDecoder());
 	//this.add(new TestDataSnooper("output",1));
 	
 	//this.add(new TrellisEncoder());

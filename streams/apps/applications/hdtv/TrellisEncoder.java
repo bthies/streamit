@@ -17,7 +17,7 @@ class TrellisEncoder extends SplitJoin {
     public void init() {
 	// set up the pipeline (see ATSC standard A53 revision b)
 	// switch between precoder and trellis encoder
-	this.setSplitter(ROUND_ROBIN());
+	this.setSplitter(WEIGHTED_ROUND_ROBIN(1,1));
 	this.add(new PreCoder());
 	this.add(new UngerboeckEncoder());
 	// take one input from precoder, two from 1/2 trellis encoder

@@ -1,3 +1,5 @@
+SOURCES  = HDTV.java TrellisEncoder.java TrellisDecoder.java PreCoder.java PreDecoder.java UngerboeckEncoder.java UngerboeckDecoder.java ReedSolomonEncoder.java ReedSolomonDecoder.java
+
 COMPILER = java -Xmx512M  at.dms.kjc.Main -s
 LINKER   = gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c 
 
@@ -10,26 +12,38 @@ clean:
 	rm -rf Makefile.streamit
 	rm -rf kernel
 	rm -rf tile.rbf
-	rm -rf hdtv_writeup.aux hdtv_writeup.dvi hdtv_writeup.log 
+	rm -rf *.aux 
+	rm -rf hdtv_writeup.dvi hdtv_writeup.log 
 	rm -rf hdtv_writeup.ps hdtv_writeup.pdf
 	rm -rf hdtv_writeup.bbl hdtv_writeup.blg
+	rm -rf texput.log
+	rm -rf hdtv-stream-graph.*;
+	rm -rf images/hdtv-stream-graph.*;
+
+java-compile: 
+	jikes HDTV.java
 
 java:
-	jikes HDTV.java
-	java HDTV -norun -printgraph > out.dot
 	java HDTV -i 1000
 
 uni:
-	$(COMPILER) HDTV.java > HDTV.c
+	$(COMPILER) $(SOURCES) > HDTV.c
 	$(LINKER) HDTV.c -o HDTV.exe
-	HDTV.exe -i 1000
+#HDTV.exe -i 1000
 
 raw:
-	$(COMPILER) --raw 8 HDTV.java
-	make -f Makefile.streamit
+	$(COMPILER) --raw 8 $(SOURCES)
 	make -f Makefile.streamit run
 
-doc:
+stream-graph-generate: java-compile
+	java HDTV -norun -printgraph > hdtv.dot
+	dot -Tps hdtv.dot > hdtv-stream-graph.ps
+stream-graph: stream-graph-generate
+	gv hdtv-stream-graph.ps
+
+doc: stream-graph-generate
+	ps2epsi hdtv-stream-graph.ps hdtv-stream-graph.eps
+	cp hdtv-stream-graph.eps images
 	latex hdtv_writeup.tex
 	bibtex hdtv_writeup
 	latex hdtv_writeup.tex

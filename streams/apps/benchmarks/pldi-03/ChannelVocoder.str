@@ -17,24 +17,26 @@
  * sound was unvoiced.
  **/
 void->void pipeline ChannelVocoder {
-
   add DataSource();
+  // low pass filter to filter out high freq noise
+  add LowPassFilter(1, (2*pi*5000)/8000, 64); 
   add MainSplitjoin();
   add FloatPrinter();
 }
 
 /** This class is just a wrapper so that we don't have anonymous inner classes. **/
 float->float splitjoin MainSplitjoin {
-  int FS = 8000; // Sampling Rate
-  int decimation_factor = 10; // decimation factor
+  int DECIMATION = 10; // decimation factor
+  int NUM_FILTERS = 2; //18;
+    
   split duplicate;
-  add PitchDetector();
-  add VocoderFilterBank(decimation_factor);
-  join roundrobin;
+  add PitchDetector(DECIMATION);
+  add VocoderFilterBank(NUM_FILTERS, DECIMATION);
+  join roundrobin(1,2); // can't be NUM_FILTERS b/c const prop didn't work
 }
 
 
-
+/** a simple data source. **/
 void->float filter DataSource() {
   int SIZE = 11;
   int index;
@@ -68,18 +70,27 @@ void->float filter DataSource() {
  * the input so that it doesn't get identified as a 
  * linear filter.
  **/
-float->float filter PitchDetector() {
+float->float pipeline PitchDetector(int decimation) {
+  add NonIdentity();
+
+  add Compressor(decimation);
+}
+/** filter's only purpose is to not be linear. **/
+float->float filter NonIdentity {
   work push 1 pop 1 {
     float t = pop();
     push (t*t);
   }
 }
-  
+
+
+
+
 /** The channel vocoder filterbank. **/
-float->float splitjoin VocoderFilterBank(int decimation) {
-  int NUM = 18;
+float->float splitjoin VocoderFilterBank(int N, int decimation) {
+
   split duplicate;
-  for (int i=0; i<NUM; i++) {
+  for (int i=0; i<N; i++) {
     add FilterDecimate(i, decimation);
   }
   join roundrobin;
@@ -92,5 +103,47 @@ float->float splitjoin VocoderFilterBank(int decimation) {
  * by a decimator with decimation rate of decimation.
  **/
 float->float pipeline FilterDecimate(int i, int decimation) {
-  add Identity<float>;
+  add VocoderBandPassFilter(i, 64); // 64 tap filter
+  add Compressor(decimation);
+}
+
+
+
+
+/** 
+ * Low pass filter code from lib/LowPassFilter.str recentered at filtNum*400Hz. 
+ * This filter is a lpf with cutoff 200 Hz wide (at sampling rate of 8000 Hz)
+ * and is modulated using a cosine. N is still the size of the filter.
+ **/
+float->float filter VocoderBandPassFilter(int filtNum, int N) {
+  float[N] h;
+  
+  /* since the impulse response is symmetric, I don't worry about reversing h[n]. */
+  init {
+    float cutoffFreq = (2*pi*200)/8000;
+    int OFFSET = N/2;
+    for (int i=0; i<N; i++) {
+      int idx = i + 1;
+      // generate real part
+      if (idx == OFFSET) 
+	/* take care of div by 0 error (lim x->oo of sin(x)/x actually equals 1)*/
+	h[i] = cutoffFreq / pi; 
+      else 
+	h[i] = sin(cutoffFreq * (idx-OFFSET)) / (pi*(idx-OFFSET));
+    }
+    // now, modulate the passband centered at i*400 Hz
+    for (int i=0; i<N; i++) {
+      h[i] = h[i]*2*cos((2*pi*400*filtNum*i)/8000);
+    }
+  }
+
+  /* implement the FIR filtering operation as the convolution sum. */
+  work peek N pop 1 push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) { 
+      sum += h[i]*peek(i);
+    }
+    push(sum);
+    pop();
+  }
 }

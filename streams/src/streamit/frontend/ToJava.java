@@ -131,6 +131,7 @@ class ToJava
                 prog = (Program)prog.accept(new InsertInitConstructors());
                 prog = (Program)prog.accept(new MoveStreamParameters());
                 prog = (Program)prog.accept(new NameAnonymousFunctions());
+                prog = (Program)prog.accept(new TrimDumbDeadCode());
 		if (straightToSIR) {
 		  SIRStream s = (SIRStream) prog.accept(new FEIRToSIR());
 		  SIRPrinter sirPrinter = new SIRPrinter();

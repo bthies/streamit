@@ -24,11 +24,11 @@ public class LatencyEdge extends Misc implements SDEPData
      * to execute the dst phase x, src must have been executed at least 
      * dst2srcDependency[x] times.
      * 
-     * This array has a size of (numInitDstExec + numSteadyDstExec).
+     * This array has a size of (numInitDstExec + numSteadyDstExec + 1).
      * In order to find out dependency beyond this size, we need to
-     * wrap around from element (numInitDstExec + numSteadyDstExec) to
-     * element (numInitDstExec). (here I assume that everything starts
-     * at 0, which it does) 
+     * wrap around from element (numInitDstExec + numSteadyDstExec + 1) to
+     * element (numInitDstExec + 1). (here I assume that everything starts
+     * at 1, which it does) 
      */
     final int[] dst2srcDependency;
 
@@ -41,7 +41,8 @@ public class LatencyEdge extends Misc implements SDEPData
         LatencyNode upstream,
         int outputChannel,
         LatencyNode downstream,
-        int inputChannel)
+        int inputChannel,
+        int initDataInChannel)
     {
         // do some trivial initializations
         {
@@ -100,7 +101,7 @@ public class LatencyEdge extends Misc implements SDEPData
             // dependency in one fell swoop 
             {
                 int dstStage = 0, srcStage = 0;
-                int nDataInChannel = 0;
+                int nDataInChannel = initDataInChannel;
                 {
                     for (dstStage = 0;
                         dstStage < dst.getInitNumPhases();
@@ -144,7 +145,8 @@ public class LatencyEdge extends Misc implements SDEPData
             }
 
             // allocate storage to keep track of the dependency
-            dst2srcDependency = new int[numInitDstExec + numSteadyDstExec];
+            dst2srcDependency =
+                new int[numInitDstExec + numSteadyDstExec + 1];
 
             // compute the dependency for numInitDstExec + numSteadyDstExec
             // phases of the dst node.
@@ -153,7 +155,7 @@ public class LatencyEdge extends Misc implements SDEPData
             // not push any data
             {
                 int dstStage = 0, srcStage = 0;
-                int nDataInChannel = 0;
+                int nDataInChannel = initDataInChannel;
                 for (dstStage = 0;
                     dstStage < numInitDstExec + numSteadyDstExec;
                     dstStage++)
@@ -161,14 +163,14 @@ public class LatencyEdge extends Misc implements SDEPData
                     int dataNeeded =
                         dst.getPhasePeek(dstStage, inputChannel);
 
-                    while (dataNeeded >= nDataInChannel)
+                    while (dataNeeded > nDataInChannel)
                     {
                         nDataInChannel
                             += src.getPhasePush(srcStage, outputChannel);
                         srcStage++;
                     }
 
-                    dst2srcDependency[dstStage] = srcStage - 1;
+                    dst2srcDependency[dstStage+1] = srcStage;
 
                     nDataInChannel
                         -= dst.getPhasePop(dstStage, inputChannel);
@@ -200,12 +202,12 @@ public class LatencyEdge extends Misc implements SDEPData
         numSteadySrcExec = node.getSteadyNumPhases();
         numSteadyDstExec = node.getSteadyNumPhases();
 
-        dst2srcDependency = new int[numInitDstExec + numSteadyDstExec];
+        dst2srcDependency = new int[numInitDstExec + numSteadyDstExec + 1];
 
         // create the appropriate latency maps
         {
             int n;
-            for (n = 0; n < numInitDstExec + numSteadyDstExec; n++)
+            for (n = 0; n < numInitDstExec + numSteadyDstExec + 1; n++)
             {
                 dst2srcDependency[n] = n;
             }
@@ -273,7 +275,8 @@ public class LatencyEdge extends Misc implements SDEPData
             }
 
             // allocate storage to keep track of the dependency
-            dst2srcDependency = new int[numInitDstExec + numSteadyDstExec];
+            dst2srcDependency =
+                new int[numInitDstExec + numSteadyDstExec + 1];
 
             // compute the dependency for numInitDstExec + numSteadyDstExec
             // phases of the dst node.
@@ -282,7 +285,7 @@ public class LatencyEdge extends Misc implements SDEPData
             // not push any data
             {
                 for (int nPhase = 0;
-                    nPhase < numInitDstExec + numSteadyDstExec;
+                    nPhase < numInitDstExec + numSteadyDstExec + 1;
                     nPhase++)
                 {
                     dst2srcDependency[nPhase] =
@@ -334,7 +337,8 @@ public class LatencyEdge extends Misc implements SDEPData
             }
 
             // allocate storage to keep track of the dependency
-            dst2srcDependency = new int[numInitDstExec + numSteadyDstExec];
+            dst2srcDependency =
+                new int[numInitDstExec + numSteadyDstExec + 1];
 
             // compute the dependency for numInitDstExec + numSteadyDstExec
             // phases of the dst node.
@@ -343,7 +347,7 @@ public class LatencyEdge extends Misc implements SDEPData
             // not push any data
             {
                 for (int nPhase = 0;
-                    nPhase < numInitDstExec + numSteadyDstExec;
+                    nPhase < numInitDstExec + numSteadyDstExec + 1;
                     nPhase++)
                 {
                     dst2srcDependency[nPhase] =
@@ -386,17 +390,17 @@ public class LatencyEdge extends Misc implements SDEPData
 
     public int getSrcPhase4DstPhase(int nDstPhase)
     {
-        if (nDstPhase < numInitDstExec)
+        if (nDstPhase < numInitDstExec + 1)
         {
             return dst2srcDependency[nDstPhase];
         }
         else
         {
             int nSteadyStates =
-                (nDstPhase - numInitDstExec) / numSteadyDstExec;
+                (nDstPhase - (numInitDstExec + 1)) / numSteadyDstExec;
             int nSmallerDstPhase =
-                ((nDstPhase - numInitDstExec) % numSteadyDstExec)
-                    + numInitDstExec;
+                ((nDstPhase - (numInitDstExec + 1)) % numSteadyDstExec)
+                    + numInitDstExec + 1;
             return dst2srcDependency[nSmallerDstPhase]
                 + nSteadyStates * numSteadySrcExec;
         }
@@ -406,17 +410,16 @@ public class LatencyEdge extends Misc implements SDEPData
     {
         // first have to figure out if I need to "wrap around"
         int addDstPhase = 0;
-        if (nSrcPhase > numInitSrcExec + numSteadySrcExec)
+        if (nSrcPhase >= numInitSrcExec + numSteadySrcExec + 1)
         {
-            int fullExecs = (nSrcPhase - numInitSrcExec) / numSteadySrcExec;
+            int fullExecs = (nSrcPhase - numInitSrcExec - 1) / numSteadySrcExec;
             addDstPhase = fullExecs * numSteadyDstExec;
-            fullExecs =
-                numInitSrcExec
-                    + (numInitSrcExec - numInitSrcExec) % numSteadySrcExec;
+            nSrcPhase =
+                nSrcPhase - fullExecs * numSteadySrcExec;
         }
 
         int dstPhaseLow = 0,
-            dstPhaseHigh = numInitDstExec + numSteadyDstExec - 1;
+            dstPhaseHigh = numInitDstExec + numSteadyDstExec;
         while (dstPhaseHigh - dstPhaseLow > 1)
         {
             int dstPhaseMid = (dstPhaseLow + dstPhaseHigh) / 2;
@@ -431,13 +434,13 @@ public class LatencyEdge extends Misc implements SDEPData
         }
 
         int dstPhase;
-        if (dst2srcDependency[dstPhaseLow] >= nSrcPhase)
+        if (dst2srcDependency[dstPhaseHigh] <= nSrcPhase)
         {
-            dstPhase = dstPhaseLow;
+            dstPhase = dstPhaseHigh;
         }
         else
         {
-            dstPhase = dstPhaseHigh;
+            dstPhase = dstPhaseLow;
         }
 
         return dstPhase + addDstPhase;

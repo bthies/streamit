@@ -56,7 +56,7 @@ public class SplitJoin
         }
 
         // add all children to the latency graph
-        for (int nChild = 0; nChild + 1 < getNumChildren(); nChild++)
+        for (int nChild = 0; nChild < getNumChildren(); nChild++)
         {
             StreamInterface child = getConstrainedChild(nChild);
 
@@ -65,12 +65,12 @@ public class SplitJoin
 
             //create the appropriate edges
             LatencyEdge topEdge =
-                new LatencyEdge(latencySplitter, nChild, topChildNode, 0);
+                new LatencyEdge(latencySplitter, nChild, topChildNode, 0, 0);
             latencySplitter.addDependency(topEdge);
             topChildNode.addDependency(topEdge);
 
             LatencyEdge bottomEdge =
-                new LatencyEdge(bottomChildNode, 0, latencyJoiner, nChild);
+                new LatencyEdge(bottomChildNode, 0, latencyJoiner, nChild, 0);
             latencyJoiner.addDependency(bottomEdge);
             bottomChildNode.addDependency(bottomEdge);
         }

@@ -352,6 +352,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("\nvoid check_status__"+selfID+"() {\n");
 	print("  if (*state_flag_"+selfID+" == RUN_STATE) return;\n");
 	print("  for(;;) {\n");
+	print("    usleep(10000);\n");
 	print("    if (*state_flag_"+selfID+" == RUN_STATE) return;\n");
 	print("  }\n");
 	print("}\n");

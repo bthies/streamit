@@ -87,14 +87,18 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p = new TabbedPrintWriter(str);
 	
 	p.print("#include <stdlib.h>\n");
-	p.print("#include <math.h>\n");	
+	p.print("#include <unistd.h>\n");
+	p.print("#include <math.h>\n");
+	p.print("\n");
 	p.print("#include <init_instance.h>\n");
 	p.print("#include <mysocket.h>\n");
 	p.print("#include <peek_stream.h>\n");
+	p.print("#include <thread_list_element.h>\n");
 
 	p.print("\n");
 
 	p.print("extern int __number_of_iterations;\n");
+	p.print("int *state_flag_"+thread_id+";\n");
 	
 	//Visit fields declared in the filter class
 	//JFieldDeclaration[] fields = self.getFields();
@@ -169,9 +173,20 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("}\n");
 	
 	p.print("\n");
+
+	p.print("void check_status__"+thread_id+"() {\n");
+	p.print("    if (*state_flag_"+thread_id+" == RUN_STATE) return;\n");
+	p.print("    for(;;) {\n");
+	p.print("        usleep(10000);\n");
+	p.print("        if (*state_flag_"+thread_id+" == RUN_STATE) return;\n");
+	p.print("    }\n");
+	p.print("}\n");
+
+	p.print("\n");
 	
-	p.print("void run_"+thread_id+"() {\n");
+	p.print("void run_"+thread_id+"(int *flag) {\n");
 	p.print("  int i;\n");
+	p.print("  state_flag_"+thread_id+" = flag;\n");
 	
 	p.print("  "+in.name()+"in = new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET));\n");
 	
@@ -191,6 +206,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 	p.print("  {int __split_iter = " + init + " + " + ClusterBackend.steadyExecutionCounts.get(node) + " * __number_of_iterations;\n");
 	p.print("  for (i = 0; i < __split_iter; i++) {\n");
+	p.print("    check_status__"+thread_id+"();\n");
 	p.print("    __splitter_"+thread_id+"_work();\n");
 	p.print("  }}\n");
 	
@@ -225,14 +241,18 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p = new TabbedPrintWriter(str);
 
 	p.print("#include <stdlib.h>\n");
+	p.print("#include <unistd.h>\n");
 	p.print("#include <math.h>\n");	
+	p.print("\n");
 	p.print("#include <init_instance.h>\n");
 	p.print("#include <mysocket.h>\n");
 	p.print("#include <peek_stream.h>\n");
+	p.print("#include <thread_list_element.h>\n");
 
 	p.print("\n");
 
 	p.print("extern int __number_of_iterations;\n");
+	p.print("int *state_flag_"+thread_id+";\n");
 
 	//Visit fields declared in the filter class
 	//JFieldDeclaration[] fields = self.getFields();
@@ -337,8 +357,20 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("\n");
 
-	p.print("void run_"+thread_id+"() {\n");
+	p.print("void check_status__"+thread_id+"() {\n");
+	p.print("    if (*state_flag_"+thread_id+" == RUN_STATE) return;\n");
+	p.print("    for(;;) {\n");
+	p.print("        usleep(10000);\n");
+	p.print("        if (*state_flag_"+thread_id+" == RUN_STATE) return;\n");
+	p.print("    }\n");
+	p.print("}\n");
+
+	p.print("\n");
+
+	p.print("void run_"+thread_id+"(int *flag) {\n");
 	p.print("  int i;\n");
+	p.print("  state_flag_"+thread_id+" = flag;\n");
+
 	
 	for (int i = 0; i < in.size(); i++) {
 	    NetStream s = (NetStream)in.elementAt(i);
@@ -359,6 +391,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 	p.print("  {int __join_iter = " + init + " + " + ClusterBackend.steadyExecutionCounts.get(node) + " * __number_of_iterations;\n");
 	p.print("  for (i = 0; i < __join_iter; i++) {\n");
+	p.print("    check_status__"+thread_id+"();\n");
 	p.print("    __joiner_"+thread_id+"_work();\n");
 	p.print("  }}\n");
 

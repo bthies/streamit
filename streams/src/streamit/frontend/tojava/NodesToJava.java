@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.44 2003-02-10 21:25:02 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.45 2003-02-12 22:25:25 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -780,6 +780,35 @@ public class NodesToJava implements FEVisitor
                 result += ", " + (String)io.getRate2().accept(this);
             result += ")";
             return result;
+        }
+        if (node instanceof StmtAddPhase)
+        {
+            StmtAddPhase ap = (StmtAddPhase)node;
+            String result;
+            if (ap.isInit())
+                result = "addInitPhase";
+            else result = "addSteadyPhase";
+            result += "(";
+            if (ap.getPeek() == null)
+                result += "0, ";
+            else
+                result += (String)ap.getPeek().accept(this) + ", ";
+            if (ap.getPop() == null)
+                result += "0, ";
+            else
+                result += (String)ap.getPop().accept(this) + ", ";
+            if (ap.getPush() == null)
+                result += "0, ";
+            else
+                result += (String)ap.getPush().accept(this) + ", ";
+            result += "\"" + ap.getName() + "\")";
+            return result;
+        }
+        if (node instanceof StmtSetTypes)
+        {
+            StmtSetTypes sst = (StmtSetTypes)node;
+            return "setIOTypes(" + typeToClass(sst.getInType()) +
+                ", " + typeToClass(sst.getOutType()) + ")";
         }
         return "";
     }

@@ -427,6 +427,7 @@ public class SpaceTimeBackend
 	    //create the raw execution code and switch for the steady-state
 	    System.out.println("Creating Steady-State Stage");
 	    Rawify.run(steadyList.listIterator(), rawChip, false);
+	    TraceDotGraph.dumpGraph(steadyList, "tracegraph.dot");
 	    //generate the switch code assembly files...
 	    GenerateSwitchCode.run(rawChip);
 	    //generate the compute code from the SIR

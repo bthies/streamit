@@ -128,6 +128,9 @@ public class OffChipBuffer
     {
 	//	assert !redundant() : "calling setDRAM() on redundant buffer";
 	this.dram = DRAM;
+	if (source.isOutputTrace() && dest.isInputTrace() && redundant())
+	    SpaceTimeBackend.println("*Redundant: " + this.toString());
+
     }
     
     public boolean isAssigned() 
@@ -262,5 +265,14 @@ public class OffChipBuffer
 	return source + "->" + dest + "[" + dram + "]";
     }
     
+    public TraceNode getSource() 
+    {
+	return source;
+    }
+    
+    public TraceNode getDest() 
+    {
+	return dest;
+    }
 }
 

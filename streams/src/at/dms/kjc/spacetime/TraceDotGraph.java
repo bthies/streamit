@@ -1,0 +1,44 @@
+package at.dms.kjc.spacetime;
+
+import at.dms.kjc.sir.*;
+import at.dms.kjc.*;
+import at.dms.kjc.flatgraph2.*;
+import java.io.FileWriter;
+import java.util.LinkedList;
+import java.util.Iterator;
+
+
+public class TraceDotGraph 
+{
+    public static void dumpGraph(LinkedList steadyTrav, String fileName) 
+    {
+	try {
+	    FileWriter fw = new FileWriter(fileName);
+	    fw.write("digraph TraceDotGraph {\n");
+	    fw.write("size = \"8, 10.5\";\n");
+	    Iterator it = Util.traceNodeTraversal(steadyTrav);
+	    while (it.hasNext()) {
+		TraceNode node = (TraceNode)it.next();		
+		fw.write(node.hashCode() + "[ label=\"" + node.toString() + "\"];\n");
+	    }
+	    Iterator buffers = OffChipBuffer.getBuffers().iterator();
+	    while (buffers.hasNext()) {
+		OffChipBuffer buffer = (OffChipBuffer)buffers.next();
+		fw.write(buffer.getSource().hashCode() + " -> " + buffer.getDest().hashCode() + 
+			 "[label=\"" + buffer.getDRAM() + "\"");
+		if (buffer.redundant())
+		    fw.write(", style=dashed");
+		else
+		    fw.write(", style=bold");
+		fw.write("];\n");
+	    }
+	    fw.write("}\n");
+	    fw.close();
+	}
+	catch (Exception e) {
+	    
+	}
+	
+    }
+    
+}

@@ -1,11 +1,14 @@
 #include <math.h>
 #include <stdio.h>
 #include <iostream.h>
+	
 
-const int K=2;
-const int N=2;
-const int Q=2;
-const int W=2;
+
+
+const int K=4;
+const int N=20;
+const int Q=15;
+const int W=7;
 const int m=N*Q+W-1;
 const int n=K*N;
 
@@ -35,19 +38,25 @@ main() {
 	float h[W][K];
 	float C[Q][K];
 	float  r[Q*N+W-1];    
-	h[0][0]=1;
-	h[0][1]=3;
-	h[1][0]=2;
-	h[1][1]=5;
-	C[0][0]=1;
-	C[0][1]=0;
-	C[1][0]=1;
-	C[1][1]=2;
-	r[0]=1;
-	r[1]=2;
-	r[2]=3;
-	r[3]=4;
-	r[4]=5;
+	for (int i=0;i<N*Q+W-1;i++)
+	    r[i]=i;
+
+	float sum=0;	
+
+	for (int i=0;i<K;i++) {
+	    sum+=1;
+	    //sum=sum/7;
+
+	    for (int j=0;j<Q;j++){
+		sum+=1;
+		C[j][i]=sum;
+	    }
+
+	    for (int j=0;j<W;j++){
+		sum++;
+		h[j][i]=sum;
+	    }
+	}
 	Decode(C,h,r);
 
 

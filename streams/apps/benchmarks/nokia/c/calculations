@@ -1,7 +1,14 @@
 7/29/02 -- AAL 
 changed the file from a cpp file to a c file, with associated changes in io and constant declarations (I had to do some calculations manually that are normally parameterized -- because I couldn't tell which ms were what.
 
---- calculations are not done yet because I am having trouble running the stupind thing on a raw tile
+Magic things added to the makefile (to increase instruction memory on raw)
+
+SPEC-IMEM-SIZE = -imem_size 131072
+SPEC-SMEM-SIZE = -smem_size 262144
+
+BTL-ARGS += $(SPEC-IMEM-SIZE) $(SPEC-SMEM-SIZE)
+
+
 
 
 first  iteration done at 0x15b4b (88907 cycles)
@@ -10,8 +17,7 @@ third  iteration done at 0x3f3cd (259021 cycles) (delta=85057)
 
 ==> iter takes 85057/85057 cycles (average = 85057)
 
-since we are producing a FFT-64, we are producing 64 complex numbers, for 
-128 outputs every 85057 cycles, so normalized to 10^5 cycles, 128*(100000/85057) = 150.48732
+we are producing a 4 element output array, we produce 4 numbers, 85057 cycles, so normalized to 10^5 cycles, 128*(100000/85057) = 150.48732
 
 flops reported are 11390 flops, which is (11390/85057) * 250 = 33.47755 MFLOPS
 

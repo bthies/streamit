@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.76 2002-11-19 22:27:26 aalamb Exp $
+ * $Id: LIRToC.java,v 1.77 2002-12-03 16:57:48 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -12,6 +12,7 @@ import java.util.StringTokenizer;
 import java.util.List;
 import at.dms.util.InconsistencyException;
 
+import at.dms.kjc.sir.lowering.LoweringConstants;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import at.dms.compiler.*;
@@ -22,6 +23,9 @@ public class LIRToC
 {
     //Needed to pass info from assignment to visitNewArray
     JExpression lastLeft;
+
+    //Name of the "this" parameter to init and work functions
+    public static final String THIS_NAME = LoweringConstants.STATE_PARAM_NAME;
 
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
@@ -245,7 +249,7 @@ public class LIRToC
         {
             newLine();
             print("void " + iname + "_" + methods[i].getName() +
-                  "(void *data, void *params)");
+                  "(void *" + THIS_NAME + ", void *params)");
             newLine();
             print("{");
             pos += TAB_SIZE;
@@ -258,7 +262,7 @@ public class LIRToC
             print(imName + "_params q = params;");
             // Call the actual function.
             newLine();
-            print(methods[i].getName() + "(data");
+            print(methods[i].getName() + "(" + THIS_NAME);
             for (int j = 0; j < im.getParameters().length; j++)
                 print(", q->p" + j);
             print(");");
@@ -964,9 +968,9 @@ public class LIRToC
                                     JExpression prefix) {
         if (prefix != null) {
             prefix.accept(this);
-            print(".data");
+            print("." + THIS_NAME);
         } else {
-            print("data");
+            print(THIS_NAME);
         }
     }
 
@@ -1335,7 +1339,7 @@ public class LIRToC
             // This identifier is used for the enclosing instance of
             // inner classes; see JLS 8.1.2.
             print("((" + left.getType().getCClass().getOwner().getType() +
-                  ")(data->context->parent->stream_data))");
+                  ")(" + THIS_NAME + "->context->parent->stream_data))");
             return;
         }
         int		index = ident.indexOf("_$");
@@ -1800,7 +1804,7 @@ public class LIRToC
     {
         print("register_receiver(");
         portal.accept(this);
-        print(", data->context, ");
+        print(", " + THIS_NAME + "->context, ");
         print(self.getItable().getVarDecl().getIdent());
         print(", LATENCY_BEST_EFFORT);");
         // (But shouldn't there be a latency field in here?)
@@ -1822,7 +1826,7 @@ public class LIRToC
      * Visits a file reader.
      */
     public void visitFileReader(LIRFileReader self) {
-        String childName = "data->" + self.getChildName();
+        String childName = THIS_NAME + "->" + self.getChildName();
         print(childName + " = malloc(sizeof(_ContextContainer));");
         newLine();
         print(childName + "->context = streamit_filereader_create(\"" +
@@ -1837,7 +1841,7 @@ public class LIRToC
      * Visits a file writer.
      */
     public void visitFileWriter(LIRFileWriter self) {
-        String childName = "data->" + self.getChildName();
+        String childName = THIS_NAME + "->" + self.getChildName();
         print(childName + " = malloc(sizeof(_ContextContainer));");
         newLine();
         print(childName + "->context = streamit_filewriter_create(\"" +
@@ -1853,7 +1857,7 @@ public class LIRToC
      */
     public void visitIdentity(LIRIdentity self) 
     {
-        String childName = "data->" + self.getChildName();
+        String childName = THIS_NAME + "->" + self.getChildName();
         print(childName + " = malloc(sizeof(_ContextContainer));");
         newLine();
         print(childName + "->context = streamit_identity_create();");
@@ -1869,14 +1873,15 @@ public class LIRToC
                               String childName)
     {
         // Pay attention, three statements!
-        print("data->" + childName + " = malloc(sizeof(_" + childType + "));");
+        print(THIS_NAME + "->" + childName +
+              " = malloc(sizeof(_" + childType + "));");
         newLine();
-        print("data->" + childName + "->context = " +
-              "create_context(data->" + childName + ");");
+        print(THIS_NAME + "->" + childName + "->context = " +
+              "create_context(" + THIS_NAME + "->" + childName + ");");
         newLine();
         print("register_child(");
         streamContext.accept(this);
-        print(", data->" + childName + "->context);");
+        print(", " + THIS_NAME + "->" + childName + "->context);");
     }
     
     public void visitSetTape(LIRSetTape self,
@@ -2089,20 +2094,21 @@ public class LIRToC
                                   LIRFunctionPointer init,
 				  List initStatements)
     {
-        print(typeName + " data = malloc(sizeof(_" + typeName + "));");
+        print(typeName + " " + THIS_NAME +
+              " = malloc(sizeof(_" + typeName + "));");
         newLine();
-        print("data->context = create_context(data);");
+        print(THIS_NAME + "->context = create_context(" + THIS_NAME + ");");
         newLine();
         init.accept(this);
-        print("(data);");
+        print("(" + THIS_NAME + ");");
         newLine();
-        print("connect_tapes(data->context);");
+        print("connect_tapes(" + THIS_NAME + "->context);");
         newLine();
         Iterator iter = initStatements.iterator();
         while (iter.hasNext())
             ((JStatement)(iter.next())).accept(this);
         newLine();
-        print("streamit_run(data->context, argc, argv);");
+        print("streamit_run(" + THIS_NAME + "->context, argc, argv);");
         newLine();
         print("return 0;");
     }

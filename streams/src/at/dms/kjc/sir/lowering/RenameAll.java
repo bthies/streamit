@@ -21,7 +21,7 @@ public class RenameAll extends SLIRReplacingVisitor
 
     private String newName(String oldName)
     {
-        String name = oldName + "_" + counter;
+        String name = oldName + "__" + counter;
         counter++;
         return name;
     }

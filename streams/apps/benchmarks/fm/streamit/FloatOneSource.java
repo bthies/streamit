@@ -16,11 +16,11 @@ import streamit.library.*;
 
 class FloatOneSource extends Filter
 {
-    int x;
+    float x;
     public void init ()
     {
         output = new Channel(Float.TYPE, 1);
-	x = 0;
+	x = 0.0f;
     }
     public void work()
     {

@@ -204,7 +204,7 @@ float->float filter FMDemodulator(float sampRate, float max, float bandwidth) {
 
 void->float filter FloatOneSource {
 
-  int x;
+  float x;
 
   init {
     x = 0;

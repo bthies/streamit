@@ -11,9 +11,7 @@ public class OutputTraceNode extends TraceNode
     private InputTraceNode[][] dests;
     
     public OutputTraceNode(int[] weight,
-			   InputTraceNode[][] dests,
-			   Trace parent) {
-	super(parent);
+			   InputTraceNode[][] dests) {
 	this.weights = weights;
 	this.dests = dests;
 	if (weight.length != dests.length)

@@ -13,9 +13,7 @@ public class FilterTraceNode extends TraceNode
     private int x, y;
 
     public FilterTraceNode(SIRFilter filter,
-			   int initMult, int steadyMult, int x, int y,
-			   Trace parent) {
-	super(parent);
+			   int initMult, int steadyMult, int x, int y) {
 	this.filter = filter;
 	this.initMult = initMult;
 	this.steadyMult = steadyMult;

@@ -4,7 +4,7 @@ void->void pipeline FIRBank {
     int K = 12;   // number of taps per FIR
     int B = 2048; // largest power of 2 above (N+K)
 
-    add FileReader<float>("input2.dat");
+    add FileReader<float>("input.dat");
     add splitjoin {
         split roundrobin;
         for (int i=0; i<M; i++) {
@@ -82107,17 +82107,10 @@ float->float pipeline FFTKernel1(int n) {
 }
 
 
-float->float splitjoin FFTKernel2(int n) {
-
-  split roundrobin(2*n);
-  for(int i=0; i<2; i++) {
-    add pipeline {
-      add FFTReorder(n);
-      for(int j=2; j<=n; j*=2)
+float->float pipeline FFTKernel2(int n) {
+    add FFTReorder(n);
+    for(int j=2; j<=n; j*=2)
         add CombineDFT(j);
-    }
-  }
-  join roundrobin(2*n);
 }
 
 float->float pipeline IFFTKernel2(int N) {

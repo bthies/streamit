@@ -388,7 +388,8 @@ abstract class DPConfigContainer extends DPConfig {
 	// if there is only one tile available, then recurse
 	Utils.assert(tilesAvail>0);
 	Utils.assert(tileLimit>1);
-	if (tilesAvail==1) {
+	// only force a cut if it's impossible to make a horizontal cut
+	if (tilesAvail==1 && y1==y2) {
 	    // must have added a joiner if you've gotten to this point
 	    DPCost cost = get(x1, x2, y1, y2, tilesAvail, 1);
 	    A[x1][x2][y1][y2][tileLimit][nextToJoiner] = cost.getMaxCost();
@@ -397,10 +398,11 @@ abstract class DPConfigContainer extends DPConfig {
 	    return cost;
 	}
 
-	// otherwise, try making a vertical cut...
-	// see if we can do a vertical cut -- first, that there
-	// are two streams to cut between
-	boolean tryVertical = x1<x2 && sameWidth[y1][y2];
+	// otherwise, try making a vertical cut...  see if we can do a
+	// vertical cut -- first, that there are two streams to cut
+	// between and that there are enough tiles to have two
+	// children
+	boolean tryVertical = x1<x2 && sameWidth[y1][y2] && tilesAvail>1;
 
 	// then, if we're starting on a pipeline, and have more than
 	// one row, and this is our first vertical cut, that we can
@@ -578,14 +580,14 @@ abstract class DPConfigContainer extends DPConfig {
 	// if there is only one tile available, then recurse
 	Utils.assert(tilesAvail>0);
 	Utils.assert(tileLimit>1);
-	if (tilesAvail==1) {
+	if (tilesAvail==1 && y1==y2) {
 	    // must have added a joiner if you've gotten to this point
 	    SIRStream result = traceback(partitions, curPartition, x1, x2, y1, y2, tilesAvail, 1, str);
 	    indent--;
 	    return result;
 	}
 
-	SIRSplitJoin verticalObj = getVerticalObj(x1, x2, y1, y2, str);
+	SIRSplitJoin verticalObj = getVerticalObj(x1, x2, y1, y2, tilesAvail, str);
 
 	if (verticalObj!=null) {
 	    // otherwise, see if we made a vertical cut (breaking into
@@ -691,10 +693,10 @@ abstract class DPConfigContainer extends DPConfig {
      * Return a splitjoin that a vertical cut could be performed on.
      * If it is impossible to perform a vertical cut, returns null.
      */
-    private SIRSplitJoin getVerticalObj(int x1, int x2, int y1, int y2, SIRStream str) {
+    private SIRSplitJoin getVerticalObj(int x1, int x2, int y1, int y2, int tilesAvail, SIRStream str) {
 	// see if we can do a vertical cut -- first, that there
 	// are two streams to cut between
-	boolean tryVertical = x1<x2 && sameWidth[y1][y2];
+	boolean tryVertical = x1<x2 && sameWidth[y1][y2] && tilesAvail>1;
 	
 	// get the object we're doing vertical cuts on, and try to
 	// remove any synchronization

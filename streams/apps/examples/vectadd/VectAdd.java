@@ -36,9 +36,14 @@ class VectSource extends Filter
   } 
   public void init(final int N, final int Z[]) 
   { 
-    output = new Channel(Float.TYPE, 2); 
+    output = new Channel(Integer.TYPE, 1); 
     this.N = N; 
-    this.idx = 0; 
+    this.idx = 0;
+  
+    //this.Z = new int[N]; 
+    //for (int i=0; i<N; i++) 
+    //  this.Z[i] = Z[i]; 
+ 
     this.Z = Z; 
   } 
   public void work() 
@@ -69,7 +74,7 @@ class TwoVectSource extends SplitJoin
     for (int i=0; i<N; i++) 
     { 
       A[i] = i; 
-      B[i] = N-i; 
+      B[i] = i; //N-i; 
     } 
 
     /* generate and mix the two streams */ 

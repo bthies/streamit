@@ -1,0 +1,15 @@
+<benchmark>
+  <name>ComparisonCounting</name>
+  <desc>Comparison Counting Sorting Algorithm</desc>
+  <description>
+  Algorithm that performs an N-way split of N elements.  Each path calculates
+  the ordered index for each of the N elements by comparing it to every other
+  element.
+  </description>
+  <reference></reference>
+  <implementations>  
+    <impl lang="StreamIt">
+      <file>ComparisonCounting.str</file>
+    </impl>   
+  </implementations>
+</benchmark>

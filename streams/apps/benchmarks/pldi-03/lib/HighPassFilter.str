@@ -29,19 +29,15 @@ float->float filter HighPassFilter(float g, float ws, int N) {
     float cutoffFreq = pi - ws;
     for (int i=0; i<N; i++) {
       int idx = i + 1;
+      /* flip signs every other sample (done this way so that it gets array destroyed) */
+      int sign = ((i%2) == 0) ? 1 : -1;
       // generate real part
       if (idx == OFFSET) 
 	/* take care of div by 0 error (lim x->oo of sin(x)/x actually equals 1)*/
-	h[i] = g * cutoffFreq / pi; 
+	h[i] = sign * g * cutoffFreq / pi; 
       else 
-	h[i] = g * sin(cutoffFreq * (idx-OFFSET)) / (pi*(idx-OFFSET));
-
-      /* now, multiliy by -1 if appropriate. */
-      if (((idx-OFFSET)%2) == 0)
-	h[i] = -1*h[i];
-
+	h[i] = sign * g * sin(cutoffFreq * (idx-OFFSET)) / (pi*(idx-OFFSET));
     }
-
 
   }
 

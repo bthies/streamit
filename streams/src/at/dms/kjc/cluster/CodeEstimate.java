@@ -37,7 +37,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     // local varaibles construct your own CodeEstimate 
     // instance and call visitFilter.
 
-    private static CodeEstimate estimate(SIRFilter filter) {
+    public static CodeEstimate estimate(SIRFilter filter) {
 	CodeEstimate est = new CodeEstimate(filter);
 	est.visitFilter(filter);
 	saved_code.put(filter, new Integer(est.code_size));
@@ -160,6 +160,8 @@ public class CodeEstimate extends SLIREmptyVisitor {
 	    size = DataEstimate.getTypeSize(type);
 	}
 	
+	//System.out.print("local variable: "+ident+" size: "+size);
+
 	//System.out.println("filter: "+filter+" variable: "+ident+" size: "+size);
 	locals_size += size;
 	

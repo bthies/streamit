@@ -107,7 +107,8 @@ class LDPConfigFilter extends LDPConfig {
 	    int minOption = -1;
 	    for (int i=0; i<options.length; i++) {
 		long cost = get(options[i]);
-		if (cost<min) {
+		// use <= so that we default to NONE
+		if (cost<=min) {
 		    min = cost;
 		    minOption = i;
 		}

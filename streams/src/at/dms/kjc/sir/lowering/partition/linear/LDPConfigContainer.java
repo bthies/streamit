@@ -278,13 +278,19 @@ abstract class LDPConfigContainer extends LDPConfig {
 	}
 
 	case LinearPartitioner.COLLAPSE_LINEAR: {
-	    // if we don't have a linear node, return infinity
 	    if (!lfa.hasLinearRepresentation(str) || KjcOptions.nolinearcollapse) {
+		// if we don't have a linear node, return infinity
 		cost = Long.MAX_VALUE;
 	    } else {
-		// otherwise, return cost of collapsed node
-		LinearFilterRepresentation l = lfa.getLinearRepresentation(str);
-		cost = getScalingFactor(l, str) * l.getCost().getDirectCost();
+		SIRSplitJoin verticalObj = getVerticalObj(x1, x2, y1, y2, str);
+		if (verticalObj!=null && verticalObj.getSplitter().getType()!=SIRSplitType.DUPLICATE) {
+		    // also don't consider linear collapse of RR splitjoins -- it only adds overhead
+		    cost = Long.MAX_VALUE;
+		} else {
+		    // otherwise, return cost of collapsed node
+		    LinearFilterRepresentation l = lfa.getLinearRepresentation(str);
+		    cost = getScalingFactor(l, str) * l.getCost().getDirectCost();
+		}
 	    }
 	    break;
 	}
@@ -292,51 +298,12 @@ abstract class LDPConfigContainer extends LDPConfig {
 	case LinearPartitioner.COLLAPSE_NONE: {
 	    cost = Long.MAX_VALUE;
 
-	    // see if we can do a vertical cut -- first, that there
-	    // are two streams to cut between
-	    boolean tryVertical = x1<x2;
-
-	    // then, that all the child streams have same width
-	    if (tryVertical) {
-		int childWidth = width[y1];
-		for (int i=y1+1; i<=y2; i++) {
-		    if (width[i]!=childWidth) {
-			tryVertical = false;
-		    }
-		}
-	    }
-
-	    // get the object we're doing vertical cuts on, and try to
-	    // remove any synchronization
-	    SIRSplitJoin verticalObj = null;
-	    if (tryVertical) {
-		if (str instanceof SIRPipeline) {
-		    // make a copy of our pipeline, since we're about
-		    // to split across it.  Don't worry about parent
-		    // field of children, since they seem to be
-		    // switched around a lot during partitioning (and
-		    // restored after)
-		    SIRPipeline copy = new SIRPipeline(str.getParent(), str.getIdent()+"_copy");
-		    for (int i=0; i<((SIRPipeline)str).size(); i++) { copy.add(((SIRPipeline)str).get(i)); }
-		    // now remove synchronization in <copy>.
-		    RefactorSplitJoin.removeMatchingSyncPoints(copy);
-		    // now if we only have one splitjoin left as the child, we can do a cut
-		    if (copy.size()==1) {
-			verticalObj = (SIRSplitJoin)copy.get(0);
-		    } else {
-			// otherwise can't do a cut
-			tryVertical = false;
-		    }
-		} else if (str instanceof SIRSplitJoin) {
-		    verticalObj = (SIRSplitJoin)str;
-		} else {
-		    Utils.fail("Didn't expect " + str.getClass() + " as object of vertical cut.");
-		}
-	    }
-	    Utils.assert(!(tryVertical && verticalObj==null));
+	    // see if we can do a vertical cut -- try getting what
+	    // we'd do it on
+	    SIRSplitJoin verticalObj = getVerticalObj(x1, x2, y1, y2, str);
 
 	    // try a vertical cut if possible
-	    if (tryVertical) {
+	    if (verticalObj!=null) {
 		// if uniform, do a uniform partition
 		boolean allUniform = true;
 		for (int i=y1; i<=y2; i++) {
@@ -488,6 +455,62 @@ abstract class LDPConfigContainer extends LDPConfig {
     }
 
     /**
+     * Return a splitjoin that a vertical cut could be performed on.
+     * If it is impossible to perform a vertical cut, returns null.
+     */
+    private SIRSplitJoin getVerticalObj(int x1, int x2, int y1, int y2, SIRStream str) {
+	// see if we can do a vertical cut -- first, that there
+	// are two streams to cut between
+	boolean tryVertical = x1<x2;
+	
+	// then, that all the child streams have same width
+	if (tryVertical) {
+	    int childWidth = width[y1];
+	    for (int i=y1+1; i<=y2; i++) {
+		if (width[i]!=childWidth) {
+		    tryVertical = false;
+		}
+	    }
+	}
+	
+	// get the object we're doing vertical cuts on, and try to
+	// remove any synchronization
+	SIRSplitJoin verticalObj = null;
+	if (tryVertical) {
+	    if (str instanceof SIRPipeline) {
+		// make a copy of our pipeline, since we're about
+		// to split across it.  Don't worry about parent
+		// field of children, since they seem to be
+		// switched around a lot during partitioning (and
+		// restored after)
+		SIRPipeline copy = new SIRPipeline(str.getParent(), str.getIdent()+"_copy");
+		for (int i=0; i<((SIRPipeline)str).size(); i++) { copy.add(((SIRPipeline)str).get(i)); }
+		// now remove synchronization in <copy>.
+		RefactorSplitJoin.removeMatchingSyncPoints(copy);
+		// now if we only have one splitjoin left as the child, we can do a cut
+		if (copy.size()==1) {
+		    verticalObj = (SIRSplitJoin)copy.get(0);
+		} else {
+		    // otherwise can't do a cut
+		    tryVertical = false;
+		}
+	    } else if (str instanceof SIRSplitJoin) {
+		verticalObj = (SIRSplitJoin)str;
+	    } else {
+		Utils.fail("Didn't expect " + str.getClass() + " as object of vertical cut.");
+	    }    
+	}
+	Utils.assert(!(tryVertical && verticalObj==null));
+	
+	// return obj if it's possible to do vert cut
+	if (tryVertical) {
+	    return verticalObj;
+	} else {
+	    return null;
+	}
+    }
+
+    /**
      * Traceback function.
      */
     public StreamTransform traceback(int collapse) {
@@ -559,51 +582,11 @@ abstract class LDPConfigContainer extends LDPConfig {
 	}
 
 	case LinearPartitioner.COLLAPSE_NONE: {
-	    // see if we can do a vertical cut -- first, that there
-	    // are two streams to cut between
-	    boolean tryVertical = x1<x2;
-
-	    // then, that all the child streams have same width
-	    if (tryVertical) {
-		int childWidth = width[y1];
-		for (int i=y1+1; i<=y2; i++) {
-		    if (width[i]!=childWidth) {
-			tryVertical = false;
-		    }
-		}
-	    }
-
-	    // get the object we're doing vertical cuts on, and try to
-	    // remove any synchronization
-	    SIRSplitJoin verticalObj = null;
-	    if (tryVertical) {
-		if (str instanceof SIRPipeline) {
-		    // make a copy of our pipeline, since we're about
-		    // to split across it.  Don't worry about parent
-		    // field of children, since they seem to be
-		    // switched around a lot during partitioning (and
-		    // restored after)
-		    SIRPipeline copy = new SIRPipeline(str.getParent(), str.getIdent()+"_copy");
-		    for (int i=0; i<((SIRPipeline)str).size(); i++) { copy.add(((SIRPipeline)str).get(i)); }
-		    // now remove synchronization in <copy>.
-		    RefactorSplitJoin.removeMatchingSyncPoints(copy);
-		    // now if we only have one splitjoin left as the child, we can do a cut
-		    if (copy.size()==1) {
-			verticalObj = (SIRSplitJoin)copy.get(0);
-		    } else {
-			// otherwise can't do a cut
-			tryVertical = false;
-		    }
-		} else if (str instanceof SIRSplitJoin) {
-		    verticalObj = (SIRSplitJoin)str;
-		} else {
-		    Utils.fail("Didn't expect " + str.getClass() + " as object of vertical cut.");
-		}
-	    }
-	    Utils.assert(!(tryVertical && verticalObj==null));
+	    // see if we can do a vertical cut -- get what we would do it on
+	    SIRSplitJoin verticalObj = getVerticalObj(x1, x2, y1, y2, str);
 
 	    // try a vertical cut if possible
-	    if (tryVertical) {
+	    if (verticalObj!=null) {
 		// if uniform, do a uniform partition
 		boolean allUniform = true;
 		for (int i=y1; i<=y2; i++) {

@@ -61,13 +61,13 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
      */
     private void addName(SIROperator str) {
 	StringBuffer name = new StringBuffer();
-	// start name with list of positions, e.g. 1_2_1_
-	for (ListIterator e = namePrefix.listIterator(); e.hasNext(); ) {
-	    name.append(e.next());
-	    name.append("_");
-	}
-	// end name with the class of the IR object
+	// start name with the class of the IR object
 	name.append(splitQualifiedName(str.getClass().toString(), '.')[1]);
+	// end name with list of positions, e.g. 1_2_1_
+	for (ListIterator e = namePrefix.listIterator(); e.hasNext(); ) {
+	    name.append("_");
+	    name.append(e.next());
+	}
 	// associate name with <str>
 	names.put(str, name.toString());
     }

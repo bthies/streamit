@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClassType.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CClassType.java,v 1.2 2001-09-25 22:52:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -256,7 +256,8 @@ public class CClassType extends CType {
   // ----------------------------------------------------------------------
 
   public static void init(Compiler compiler) {
-    allCClassType = new Hashtable(2000);
+      // bft: removed 9/25 since there was a static initializer, too
+      // allCClassType = new Hashtable(2000);
   }
 
   // ----------------------------------------------------------------------

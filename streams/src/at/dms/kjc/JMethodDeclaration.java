@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.1 2001-08-30 16:32:52 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.2 2001-09-25 22:52:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -71,6 +71,22 @@ public class JMethodDeclaration extends JMemberDeclaration {
     assert(parameters != null);
     assert(exceptions != null);
   }
+
+    /**
+     * Inserts <param> as the first parameter of this.
+     */
+    public void addParameter(JFormalParameter param) {
+	// make new parameter list
+	JFormalParameter newp[] = new JFormalParameter[parameters.length+1];
+	// insert new one
+	newp[0] = param;
+	// copy over the old ones
+	for (int i=0; i<parameters.length; i++) {
+	    newp[i+1] = parameters[i];
+	}
+	// set parameters to be new parameters
+	parameters = newp;
+    }
 
   // ----------------------------------------------------------------------
   // INTERFACE CHECKING

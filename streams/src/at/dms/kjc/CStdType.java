@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CStdType.java,v 1.2 2001-09-25 14:16:34 thies Exp $
+ * $Id: CStdType.java,v 1.3 2001-09-25 22:52:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -43,13 +43,16 @@ public class CStdType extends at.dms.util.Utils implements Constants {
   public static final CLongType	Long = new CLongType();
   public static final CShortType Short = new CShortType();
 
-  public static CClassType	Object;
-  public static CClassType	Class;
-  public static CClassType	String;
-  public static CClassType	Throwable;
-  public static CClassType	Exception;
-  public static CClassType	Error;
-  public static CClassType	RuntimeException;
+  public static CClassType Object = CClassType.lookup(Constants.JAV_OBJECT);
+  public static CClassType Class = CClassType.lookup(Constants.JAV_CLASS);
+  public static CClassType String = CClassType.lookup(Constants.JAV_STRING);
+  public static CClassType Throwable 
+      = CClassType.lookup(Constants.JAV_THROWABLE);
+  public static CClassType Exception
+      = CClassType.lookup(Constants.JAV_EXCEPTION);
+  public static CClassType Error = CClassType.lookup(Constants.JAV_ERROR);
+  public static CClassType RuntimeException
+       = CClassType.lookup(Constants.JAV_RUNTIME_EXCEPTION);
 
   // ----------------------------------------------------------------------
   // INITIALIZERS
@@ -60,13 +63,5 @@ public class CStdType extends at.dms.util.Utils implements Constants {
    */
   public static void init(Compiler compiler) {
     CClassType.init(compiler);
-
-    Object = CClassType.lookup(Constants.JAV_OBJECT);
-    Class = CClassType.lookup(Constants.JAV_CLASS);
-    String = CClassType.lookup(Constants.JAV_STRING);
-    Throwable = CClassType.lookup(Constants.JAV_THROWABLE);
-    Exception = CClassType.lookup(Constants.JAV_EXCEPTION);
-    Error = CClassType.lookup(Constants.JAV_ERROR);
-    RuntimeException = CClassType.lookup(Constants.JAV_RUNTIME_EXCEPTION);
   }
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.13 2002-07-12 11:48:14 jasperln Exp $
+ * $Id: JMethodDeclaration.java,v 1.14 2003-01-26 12:30:54 thies Exp $
  */
 
 package at.dms.kjc;
@@ -459,6 +459,10 @@ public class JMethodDeclaration extends JMemberDeclaration {
     // start to add methods; can't just have a constant.
     public static JMethodDeclaration[] EMPTY() {
 	return new JMethodDeclaration[0];
+    }
+
+    public String toString() {
+	return "JMethodDeclaration, ident=" + ident;
     }
 
   // $$$ MOVE TO BE PRIVATE

@@ -232,9 +232,10 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
      /**
      * Set the Init Path method  of the feedback loop 
      **/
-    public void setInitPath(JMethodDeclaration initPath)
+    public void setInitPath(JMethodDeclaration newInitPath)
     {
-	this.initPath= initPath;
+	addReplacementMethod(newInitPath, this.initPath);
+	this.initPath= newInitPath;
     }
 
     /**

@@ -87,9 +87,9 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     /**
      * Sets the work function.
      */
-    public void setWork (JMethodDeclaration w) {
-	this.work = w;
-	addMethod(w);
+    public void setWork (JMethodDeclaration newWork) {
+	addReplacementMethod(newWork, this.work);
+	this.work = newWork;
     }
 
     /**
@@ -135,22 +135,39 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * sets the init function
      */
     public void setInit(JMethodDeclaration newInit) {
-	//Check if we already have an init function
-	if (this.init != null) {
-	    //if so swap the old init function with new
-	    for (int i=0; i<methods.length; i++) {
-		if (methods[i]==init) { 
-		    methods[i]=newInit;
+	addReplacementMethod(newInit, this.init);
+	this.init = newInit;
+    }
+
+    /**
+     * Adds <newMethod> to this.  If <origMethod> is a method of this,
+     * then <newMethod> takes its first place (<origMethod> is
+     * removed).  If <origMethod> is null, then <newMethod> is just
+     * added to this.
+     *
+     * Assumes <origMethod> appears at most once in this (as should
+     * all methods.)
+     */
+    protected void addReplacementMethod(JMethodDeclaration newMethod,
+				      JMethodDeclaration origMethod) {
+	// check if <origMethod> is null
+	if (origMethod==null) {
+	    // if yes, then just add <newMethod>
+	    addMethod(newMethod);
+	} else {
+	    //otherwise, try swappping the old init function with new
+	    int i;
+	    for (i=0; i<methods.length; i++) {
+		if (methods[i]==origMethod) { 
+		    methods[i]=newMethod;
 		    break;
 		}
 	    }
+	    // if we didn't find it, then just add <newMethod>
+	    if (i==methods.length) {
+		addMethod(newMethod);
+	    }
 	}
-	else {
-	    //no old init just add
-	    addMethod(newInit);
-	}
-	//set the init
-	this.init = newInit;
     }
 
     /**

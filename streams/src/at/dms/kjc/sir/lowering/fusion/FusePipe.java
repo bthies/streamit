@@ -1113,7 +1113,7 @@ class FusingVisitor extends SLIRReplacingVisitor {
  * This builds up the init function of the fused class by traversing
  * the init function of the parent.
  */
-class InitFuser extends SLIRReplacingVisitor {
+class InitFuser {
     /**
      * The info on the filters we're trying to fuse.
      */

@@ -7,9 +7,10 @@
 
 use strict;
 # java(streamit) --> c
-my $S = "java -Xmx512M at.dms.kjc.Main -s --constprop  --debug ";
+my $S = "java -Xmx512M at.dms.kjc.Main -s --unroll 100000 --debug ";
 # c --> exe
-my $SL = "gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c";
+my $SL = "gcc -O2 -I/u/aalamb/streams/library/c -L/u/aalamb/streams/library/c/";
+my $SL_POST = " -lstreamit -lsrfftw -lsfftw -lm ";
 # compare output
 my $CMP = "/u/aalamb/streams/regtest/tools/compare_uni.pl";
 my $CMP_PATH = "/u/aalamb/streams/regtest/tools/";
@@ -36,8 +37,12 @@ my @tests = ("regtests/LinearTest1.java",
 	     "regtests/LinearTest20.str",
 	     "regtests/LinearTest21.str",
 	     "regtests/LinearTest22.str",
-	     "regtests/LinearTest23.str",);
-
+	     "regtests/LinearTest23.str",
+	     "regtests/LinearTest24.str",
+	     "regtests/LinearTest25.str",
+	     "regtests/LinearTest26.str",
+	     "regtests/LinearTest27.str",
+	     "regtests/LinearTest28.str");
 
 my $current_test;
 foreach $current_test (@tests) {
@@ -74,8 +79,8 @@ foreach $current_test (@tests) {
     `$command`;
     
     # now, compile the c to an exe for both the original program and the replaced prgram
-    print `$SL $base.c -o $base.exe`;
-    print `$SL $base.replaced.c -o $base.replaced.exe`;
+    print `$SL $base.c -o $base.exe $SL_POST`;
+    print `$SL $base.replaced.c -o $base.replaced.exe $SL_POST`;
     # execute both the original and the replaced program 100 iterations
     print `$base.exe -i 100 > $base.run`;
     print `$base.replaced.exe -i 100 > $base.replaced.run`;

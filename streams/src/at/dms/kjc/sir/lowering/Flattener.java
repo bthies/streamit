@@ -177,7 +177,7 @@ public class Flattener {
 	    // and finally, if we want to run frequency analysis
 	    if (KjcOptions.frequencyreplacement) {
 		System.err.print("Running frequency replacement... ");
-		FrequencyReplacer.doReplace(lfa, str);
+		FrequencyReplacer.doReplace(lfa, str, KjcOptions.targetFFTSize);
 		System.err.println("done.");
 		LinearDot.printGraph(str, "linear-frequency.dot", lfa);
 	    }

@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation
  * 
- * $Id: FFTWFrequencyReplacer.java,v 1.3 2002-10-29 20:39:37 aalamb Exp $
+ * $Id: FFTWFrequencyReplacer.java,v 1.4 2002-10-30 14:51:20 aalamb Exp $
  **/
 public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
@@ -26,20 +26,31 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
     
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
     LinearAnalyzer linearityInformation;
+    /** the target number of outputs to produce each firing of FIR filters. */
+    int targetNumberOfOutputs;
     
-    private FrequencyReplacer(LinearAnalyzer lfa) {
+    private FrequencyReplacer(LinearAnalyzer lfa, int targetSize) {
 	if (lfa == null){
 	    throw new IllegalArgumentException("Null linear filter analyzer!");
 	}
-
+	if (targetSize <= 0) {
+	    throw new IllegalArgumentException("Target filter size must be greater than 0");
+	}
 	this.linearityInformation = lfa;
+	this.targetNumberOfOutputs = targetSize;
     }
 
-    /** start the process of replacement on str using the Linearity information in lfa. **/
-    public static void doReplace(LinearAnalyzer lfa, SIRStream str) {
+    /**
+     * start the process of replacement on str using the Linearity information in lfa.
+     * targetSize is the targeted number of outputs to produce per steady state iteration
+     * for each filter that is transformed using the frequency conversion. The actual number of
+     * outputs produced will always be targetSize or greater (because the FFT we are doing only
+     * operates on inputs that are powers of two long.
+     **/
+    public static void doReplace(LinearAnalyzer lfa, SIRStream str, int targetSize) {
 	LinearPrinter.println("Beginning frequency replacement...");
 	// make a new replacer with the information contained in the analyzer
-	FrequencyReplacer replacer = new FrequencyReplacer(lfa);
+	FrequencyReplacer replacer = new FrequencyReplacer(lfa, targetSize);
 	// pump the replacer through the stream graph.
 	IterFactory.createIter(str).accept(replacer);
     }
@@ -68,7 +79,7 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	/* now is when we get to the fun part, we have a linear representation
 	 * that computes an FIR (ef pop 1, push 1, peek N) and we want to replace it with an FFT. */
 	int x = linearRep.getPeekCount();
-	int N = calculateN(10,x);
+	int N = calculateN(this.targetNumberOfOutputs,x);
 	int filterSize = N+2*(x-1);
 	LinearPrinter.println(" creating frequency filter. (N=" + N +
 			      ",x=" + x + ",size=" + filterSize + ")");
@@ -242,7 +253,7 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 						   makeComment("allocate space for input buffer.")));
 
 	/* now, copy the data from the input tape into the buffer, element by element */
-	for (int i=0; i<(x+N-1); i++) {
+	for (int i=0; i<(N+x-1); i++) {
 	    JLocalVariableExpression currentBuffExpr = new JLocalVariableExpression(null, inputBuffer);
 	    JArrayAccessExpression currentAccessExpr = new JArrayAccessExpression(null, currentBuffExpr, new JIntLiteral(i));
 	    SIRPeekExpression      currentPeekExpr   = new SIRPeekExpression(new JIntLiteral(i), CStdType.Float);
@@ -284,8 +295,8 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	comment = makeComment("call to free the buffer space");
 	body.addStatement(new JExpressionStatement(null, freeCall, comment));
 	
-	/* stick in the appropriate number (x) of pop calls */
-	for (int i=0; i<x; i++) {
+	/* stick in the appropriate number (N) of pop calls */
+	for (int i=0; i<N; i++) {
 	    body.addStatement(new JExpressionStatement(null, new SIRPopExpression(CStdType.Float), null));
 	}
 	

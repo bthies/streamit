@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.5 2002-10-28 02:40:42 aalamb Exp $
+ * $Id: KjcOptions.opt,v 1.6 2002-10-30 14:51:11 aalamb Exp $
  */
 
 prefix Kjc
@@ -205,7 +205,14 @@ longname		"frequencyreplacement"
 	shortcut	"F"
 	type		boolean
 	default		"false"
-	help		"convert convolution sums to frequency domain."
+	help		"convert filters computing convolution sums to frequency domain."
+
+longname		"targetFFTSize"
+	shortcut	"t"
+	type		int
+	default		"16"
+	requireArgument
+	help		"The target number of outputs (N) to produce (used with frequencyreplacement)"
 
 longname		"poptopeek"
 	shortcut	"P"

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.13 2003-10-06 19:56:20 dmaze Exp $
+# $Id: strc,v 1.14 2003-10-06 20:58:23 dmaze Exp $
 #
 
 use strict;
@@ -96,10 +96,10 @@ Options available for all backends:
 + --fission           Do vertical fission up to limit of argument
   --linearreplacement, -l
                       Perform linear transformations based on analysis
-* --linearreplacement2
-*                     Do linear replacement using a level of indirection
-* --linearreplacement3
-*                     Do linear replacement using diagonal replacement
++ --linearreplacement2
++                     Do linear replacement using a level of indirection
++ --linearreplacement3
++                     Do linear replacement using diagonal replacement
 + --nofieldprop       Do not propagate constant field values
 + --nolinearcollapse, -H
 +                     Do not combine filters with linear replacement
@@ -115,12 +115,13 @@ Options available for all backends:
   --unroll, -u        Specify loop unrolling limit
 
 Options specific to RAW backend:
-  --partition, -p     Automatically partition stream graph (greedy)
-  --dppartition, -d   Use the dynamic programming partitioner
+  --partition, -p     Automatically partition stream graph
++   --partition=dp      Dynamic programming partitioner (default)
++   --partition=greedy  Greedy partitioner
+*   --partition=ilp     Integer linear programming partitioner
 * --altcodegen, -z    Alternate RAW communication code generation
 * --decoupled, -X     Generate dummy communication code
 * --dpscaling, -Y     Collect theoretical scaling statistics
-* --ilppartition, -A  Use the integer linear programming partitioner
   --magic-net, -M     Generate RAW "magic network" code
 * --noanneal, -W      Do not run simulated annealing for layout
   --numbers n, -N     Automatically gather numbers and put in results.out
@@ -171,12 +172,10 @@ sub get_options
 			    "atlas!",
 			    "clone-with-serialization|clone_with_serialization",
 			    "decoupled|X",
-			    "dppartition|d",
 			    "dpscaling|Y",
 			    "fission|fission=i",
 			    "frequencyreplacement|F",
 			    "fusion|f",
-			    "ilppartition|A",
 			    "iterations|i=i",
 			    "library!",
 			    "linearpartition|L",
@@ -191,7 +190,7 @@ sub get_options
 			    "norun",
 			    "nosched",
 			    "numbers|N=i",
-			    "partition|p",
+			    "partition|p:s",
 			    "poptopeek|P",
 			    "marksteady!",
 			    "printsched!",
@@ -237,6 +236,18 @@ sub get_options
 	if ($opts{optimize} >= 0)
 	  {
 	    $opts{unroll} = 0 unless exists $opts{unroll};
+	  }
+      }
+    # Validate partitioning:
+    if (exists $opts{partition})
+      {
+	$opts{partition} = "dp" if $opts{partition} eq "";
+	$opts{partition} = "dp" if $opts{partition} eq "dynamic";
+	if (!grep {$opts{partition} eq $_} ('dp', 'greedy', 'ilp'))
+	  {
+	    print STDERR "Unsupported --partition option $opts{partition};" .
+	      " run strc --more-help for valid options";
+	    return 0;
 	  }
       }
     return 1;
@@ -380,16 +391,17 @@ sub get_kjc_opts
   {
     my $kjcopts = "";
     $opts{raw} && ($kjcopts .= " -raw " . $opts{raw});
+    $opts{partition} eq 'dp' && ($kjcopts .= " -y");
+    $opts{partition} eq 'greedy' && ($kjcopts .= " -a");
+    $opts{partition} eq 'ilp' && ($kjcopts .= " -A");
     $opts{altcodegen} && ($kjcopts .= " -z");
     $opts{atlas} && ($kjcopts .= " -E");
     $opts{'clone-with-serialization'} && ($kjcopts .= " -K");
     $opts{decoupled} && ($kjcopts .= " -X");
-    $opts{dppartition} && ($kjcopts .= " -y");
     $opts{dpscaling} && ($kjcopts .= " -Y");
     $opts{frequencyreplacement} && ($kjcopts .= " -F");
     $opts{fission} && ($kjcopts .= " --fission " . $opts{fission});
     $opts{fusion} && ($kjcopts .= " -o");
-    $opts{ilppartition} && ($kjcopts .= " -A");
     $opts{linearpartition} && ($kjcopts .= " -B");
     $opts{linearreplacement} && ($kjcopts .= " -I");
     $opts{linearreplacement2} && ($kjcopts .= " -Z");
@@ -399,7 +411,6 @@ sub get_kjc_opts
     $opts{nofieldprop} && ($kjcopts .= " -L");
     $opts{nolinearcollapse} && ($kjcopts .= " -H");
     $opts{numbers} && ($kjcopts .= " -N" . $opts{numbers});
-    $opts{partition} && ($kjcopts .= " -a");
     $opts{poptopeek} && ($kjcopts .= " -P");
     $opts{'print-partitioned-source'} && ($kjcopts .= " -c");
     $opts{ptraccess} && ($kjcopts .= " -Q");

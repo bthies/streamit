@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLocalVariable.java,v 1.13 2003-08-29 19:25:37 thies Exp $
+ * $Id: JLocalVariable.java,v 1.14 2003-10-13 13:01:09 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -130,6 +130,10 @@ public abstract class JLocalVariable extends JPhylum {
   public CType getType() {
     return type;
   }
+
+    public void setType(CType type) {
+	this.type=type;
+    }
 
   /**
    * @return	the value of this local variable at initialization

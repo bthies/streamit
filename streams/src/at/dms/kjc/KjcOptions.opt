@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.47 2003-10-10 16:21:49 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.48 2003-10-13 13:01:10 jasperln Exp $
  */
 
 prefix Kjc
@@ -395,3 +395,8 @@ longname 		"outputs"
 	default 	"-1"
 	requireArgument
 	help		"Run the application until it produces <n> outputs (RAW only)."
+
+longname		"struct"
+	type		boolean
+	default		"false"
+	help		"Handle Structures. Experimental feature."

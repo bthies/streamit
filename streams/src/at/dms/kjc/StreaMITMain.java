@@ -7,12 +7,26 @@ import java.lang.reflect.*;
  * This provides the toplevel interface for StreaMIT.
  */
 public class StreaMITMain {
+    private static Object params[] = new Object[4];
+    private static Class paramTypes[] = new Class[4];
     
+    //Only use from backends after done with params
+    public static void clearParams() {
+	params[0]=null;
+	params[1]=null;
+	params[2]=null;
+	params[3]=null;
+	params=null;
+	paramTypes[0]=null;
+	paramTypes[1]=null;
+	paramTypes[2]=null;
+	paramTypes[3]=null;	
+    }
+
     /**
      * Prints out C code for the program being compiled.
      */
     public static void compile(JCompilationUnit[] app) {
-	
 	//using the raw backend to generate uniprocessor code
 	//so set the number of tiles to 1 and 
 	//turn partitioning on...
@@ -33,21 +47,25 @@ public class StreaMITMain {
 	    KjcOptions.decoupled)
 	    at.dms.util.Utils.fail("The options magic_net and decoupled are mutually exclusive.");
 	
+	System.err.println("Starting Kopi2SIR..");
+
 	if(!KjcOptions.graph)
 	    System.out.println("/*");
 	Kopi2SIR k2s = new Kopi2SIR(app);
 	SIRStream stream = null;
 	for (int i = 0; i < app.length; i++) {
+	    //System.err.println("Visiting "+i+" of "+(app.length-1));
 	    SIRStream top = (SIRStream)app[i].accept(k2s);
 	    if (top != null)
 		stream = top;
 	}
 
-        System.out.println("Out of Kopi2SIR.");
+	System.err.println("Done Kopi2SIR..");
 
 	SemanticChecker.doCheck(stream);
 
         System.out.println("Out of semantic checker.");
+	System.err.println("Done Semantic Check..");
 
         String backendClass = null;
         String backendMethod = "run";
@@ -71,13 +89,14 @@ public class StreaMITMain {
         // To find a method, we need its name and signature.  To
         // invoke it, we need to stuff the parameters into an
         // Object[]; given this, it's easy to get the types.
-        Object params[] = new Object[4];
-        Class paramTypes[] = new Class[4];
         params[0] = stream;
         params[1] = k2s.getInterfaces();
         params[2] = k2s.getInterfaceTables();
         params[3] = k2s.getStructures();
-
+	
+	stream=null;
+	k2s=null;
+	
         try {
             paramTypes[0] = Class.forName("at.dms.kjc.sir.SIRStream");
             for (int i = 1; i < 4; i++)
@@ -104,3 +123,7 @@ public class StreaMITMain {
         }
     }
 }
+
+
+
+

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPhylum.java,v 1.8 2003-05-28 05:58:44 thies Exp $
+ * $Id: JPhylum.java,v 1.9 2003-10-30 11:58:40 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -31,19 +31,19 @@ import at.dms.kjc.iterator.*;
  * This class represents the root class for all elements of the parsing tree
  */
 public abstract class JPhylum extends at.dms.compiler.Phylum implements Constants, Finalizable {
-    static Vector registry = new Vector (200);
-    
-    public static void addTokenReference(JPhylum j) {
-    	registry.add(j);
-    }
-    
-    public static JPhylum getTokenReference(int index) {
-	return ((JPhylum) registry.get(index));
-    }
-
-    public static int regSize() {
-	return registry.size();
-    }
+    /*static Vector registry = new Vector (200);
+      
+      public static void addTokenReference(JPhylum j) {
+      registry.add(j);
+      }
+      
+      public static JPhylum getTokenReference(int index) {
+      return ((JPhylum) registry.get(index));
+      }
+      
+      public static int regSize() {
+      return registry.size();
+      }*/
 
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
@@ -58,7 +58,7 @@ public abstract class JPhylum extends at.dms.compiler.Phylum implements Constant
   public JPhylum(TokenReference where) {
     super(where);
 
-    this.addTokenReference(this);
+    //this.addTokenReference(this);
   }
 
 

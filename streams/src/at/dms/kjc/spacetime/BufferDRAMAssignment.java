@@ -82,29 +82,27 @@ public class BufferDRAMAssignment
     {
 	//get the assignment for each input trace node
 	HashMap ass = assignment((OutputTraceNode)traceNode, chip);
-	Iterator inputTs = ass.keySet().iterator();
+	Iterator edges = ass.keySet().iterator();
 	
 	SpaceTimeBackend.println("Assigning Output Buffers for: " + traceNode + " " + traceNode.getDestSet().size());
 
 	//commit the assignment
-	while (inputTs.hasNext()) {
-	    InputTraceNode inputT = (InputTraceNode)inputTs.next();
-	    SpaceTimeBackend.println("  " + inputT + " ...");
+	while (edges.hasNext()) {
+	    Edge edge = (Edge)edges.next();
+	    SpaceTimeBackend.println("  " + edge + " ...");
 	    //if already assigned do nothing
-	    if (OffChipBuffer.getBuffer(traceNode, inputT).isAssigned())
+	    if (InterTraceBuffer.getBuffer(edge).isAssigned())
 		continue;
-	    SpaceTimeBackend.println("  Assigning (" + (OutputTraceNode)traceNode + "->" + 
-				     inputT + ") to " + ass.get(inputT));
+	    SpaceTimeBackend.println("  Assigning (" + edge + ") to " + ass.get(edge));
 	    
-	    OffChipBuffer.getBuffer((OutputTraceNode)traceNode,
-				    inputT).setDRAM((StreamingDram)ass.get(inputT));
+	    InterTraceBuffer.getBuffer(edge).setDRAM((StreamingDram)ass.get(edge));
 	}
     }
     
    
     private static void inputFilterAssignment(InputTraceNode input, RawChip chip) 
     {
-	FilterTraceNode filter = (FilterTraceNode)input.getNext();
+	FilterTraceNode filter = input.getNextFilter();
 	
 	RawTile tile = chip.getTile(filter.getX(), filter.getY());
 	//the neighboring dram of the tile we are assigning this buffer to
@@ -116,12 +114,13 @@ public class BufferDRAMAssignment
 	//assign the buffer to the dram
 	SpaceTimeBackend.println("Assigning (" + input + "->" + 
 			   input.getNext() + " to " + tile.getIODevices()[index] + ")");
-	OffChipBuffer.getBuffer(input, input.getNext()).setDRAM((StreamingDram)tile.getIODevices()[index]);
+	IntraTraceBuffer.getBuffer(input, filter).
+	    setDRAM((StreamingDram)tile.getIODevices()[index]);
     }
 
     private static void filterOutputAssignment(OutputTraceNode output, RawChip chip) 
     {
-	FilterTraceNode filter = (FilterTraceNode)output.getPrevious();
+	FilterTraceNode filter = output.getPrevFilter();
 	
 	RawTile tile = chip.getTile(filter.getX(), filter.getY());
 	//the neighboring dram of the tile we are assigning this buffer to
@@ -133,13 +132,14 @@ public class BufferDRAMAssignment
 	//assign the buffer to the dram
 	SpaceTimeBackend.println("Assigning (" + output.getPrevious() + "->" + 
 			   output + " to " + tile.getIODevices()[index] + ")");
-	OffChipBuffer.getBuffer(output.getPrevious(), output).setDRAM((StreamingDram)tile.getIODevices()[index]);	
+	IntraTraceBuffer.getBuffer(filter, output).
+	    setDRAM((StreamingDram)tile.getIODevices()[index]);	
     }
     
 
     /**
      * given an <output> tracenode, this method returns a hashmap that assigns
-     * the uptream inputtracenodes to streaming drams, so one can assign
+     * the downstream edges to streaming drams, so one can assign
      * the IO buffers to drams based on the hashmap, make sure that
      * the buffer for the filter->outputtracenode and the buffers for the
      * inputtracenode->filter are assigned (it can always be reset) 
@@ -148,8 +148,8 @@ public class BufferDRAMAssignment
     public static HashMap assignment(OutputTraceNode output, RawChip chip) 
     {
 	HashMap assign = new HashMap();
-	Iterator inputTs = output.getSortedOutputs().iterator();
-	//the input traces that have more than one input 
+	Iterator edges = output.getSortedOutputs().iterator();
+	//the edges that have more than one input 
 	//and were not initially assigned
 	HashSet needToAssign = new HashSet();
 	HashSet unassignedPorts = new HashSet();
@@ -157,13 +157,16 @@ public class BufferDRAMAssignment
 	//if this outputtracenode has one output try to assign it 
 	//to the same dram as its previous buffer
 	if (output.oneOutput()) {
-	    StreamingDram wanted = OffChipBuffer.getBuffer(output.getPrevious(),
-							   output).getDRAM();
+	    StreamingDram wanted = 
+		IntraTraceBuffer.getBuffer(output.getPrevFilter(),
+					   output).getDRAM();
 	    //if the dram is not being used by another buffer connected to 
 	    //the input trace, then assign it, otherwise let the below crap
 	    //handle it.
-	    if (!assignedInputDRAMs(output.getDests()[0][0]).contains(wanted))
-		assign.put(output.getDests()[0][0], wanted);
+	    if (!assignedInputDRAMs(output.getSingleEdge().getDest()).contains(wanted))
+		assign.put(output.getSingleEdge(), wanted);
+	    else
+		needToAssign.add(output.getSingleEdge());
 	}
 
 	//populate the unassigned ports set
@@ -172,33 +175,34 @@ public class BufferDRAMAssignment
 
 	//try to assign input trace nodes with one input 
 	//first to make them redundant
-	while (inputTs.hasNext()) {
-	    InputTraceNode inputT = (InputTraceNode)inputTs.next();
-	    if (inputT.oneInput()) {
+	while (edges.hasNext()) {
+	    Edge edge = (Edge)edges.next();
+	    if (edge.getDest().oneInput()) {
 		StreamingDram wanted =
-		    OffChipBuffer.getBuffer(inputT, inputT.getNext()).getDRAM();
+		    IntraTraceBuffer.getBuffer(edge.getDest(), 
+					       edge.getDest().getNextFilter()).getDRAM();
 		if (unassignedPorts.contains(wanted)) {
 		    unassignedPorts.remove(wanted);
-		    assign.put(inputT, wanted);
+		    assign.put(edge, wanted);
 		}
 		else //we could not assign it, the port was already assigned to a one input
-		    needToAssign.add(inputT);
+		    needToAssign.add(edge);
 	    }
 	    else {
 		//otherwise we need to assign it below
-		needToAssign.add(inputT);
+		needToAssign.add(edge);
 	    }
 	    
 	}
 	//assign the rest
 	SpaceTimeBackend.println("  Need to assign (normally): " + needToAssign.size());
-	inputTs = needToAssign.iterator();
-	while (inputTs.hasNext()) {
-	    InputTraceNode inputT = (InputTraceNode)inputTs.next();
-	    SpaceTimeBackend.println("    Getting assignment for " + inputT);
+	edges = needToAssign.iterator();
+	while (edges.hasNext()) {
+	    Edge edge = (Edge)edges.next();
+	    SpaceTimeBackend.println("    Getting assignment for " + edge);
 	    //now assign the buffer to the first available port that show up 
 	    //in the iterator
-	    Iterator portOrder = assignmentOrder(output, inputT, chip);
+	    Iterator portOrder = assignmentOrder(edge, chip);
 	    boolean assigned = false;
 	    //SpaceTimeBackend.println("Assigning " + output + "->" + inputT + ": ");
 	    while (portOrder.hasNext()) {
@@ -208,9 +212,9 @@ public class BufferDRAMAssignment
 		//and exit the inner loop if the port has not 
 		//been used by this output trace and the corresponding input trace
 		if (unassignedPorts.contains(current) && 
-		    !assignedInputDRAMs(inputT).contains(current)) {
+		    !assignedInputDRAMs(edge.getDest()).contains(current)) {
 		    unassignedPorts.remove(current);
-		    assign.put(inputT, current);
+		    assign.put(edge, current);
 		    assigned = true;
 		    //SpaceTimeBackend.println("  Assigned to " + current);
 		    break;
@@ -227,8 +231,8 @@ public class BufferDRAMAssignment
     {
 	HashSet set = new HashSet();
 	for (int i = 0; i < input.getSources().length; i++) {
-	    if (OffChipBuffer.getBuffer(input.getSources()[i], input).isAssigned())
-		set.add(OffChipBuffer.getBuffer(input.getSources()[i], input).getDRAM());
+	    if (InterTraceBuffer.getBuffer(input.getSources()[i]).isAssigned())
+		set.add(InterTraceBuffer.getBuffer(input.getSources()[i]).getDRAM());
 	}
 	return set;
     }
@@ -242,34 +246,34 @@ public class BufferDRAMAssignment
     public static Set tilesOccupiedSplit(OutputTraceNode output, HashMap assignment) 
     {
 	HashSet tiles = new HashSet();
-	Iterator inputTs = assignment.keySet().iterator();
-	StreamingDram src = OffChipBuffer.getBuffer(output.getPrevious(),
-						    output).getDRAM();
+	Iterator edges = assignment.keySet().iterator();
+	StreamingDram src = IntraTraceBuffer.getBuffer(output.getPrevFilter(),
+						       output).getDRAM();
 	
-	while (inputTs.hasNext()) {
+	while (edges.hasNext()) {
 	    //add the tiles for splitting
 	    Util.addAll(tiles, Router.getRoute(src, 
-					       (StreamingDram)assignment.get(inputTs.next())));
+					       (StreamingDram)assignment.get(edges.next())));
 	}
 	return tiles;
     }
+    
 
     public static Set tilesOccupiedJoin(InputTraceNode input) 
     {
 	HashSet tiles = new HashSet();
-	StreamingDram dest = OffChipBuffer.getBuffer(input, 
-						     input.getNext()).getDRAM();
+	StreamingDram dest = IntraTraceBuffer.getBuffer(input, 
+							input.getNextFilter()).getDRAM();
 	for (int i = 0; i < input.getSources().length; i++) {
 	    Util.addAll(tiles, 
-			Router.getRoute(OffChipBuffer.getBuffer(input.getSources()[i], input).getDRAM(),
+			Router.getRoute(InterTraceBuffer.getBuffer(input.getSources()[i]).getDRAM(),
 					dest));
 	}
 	return tiles;
     }
     
 
-    private static Iterator assignmentOrder(OutputTraceNode output, 
-					    InputTraceNode input, RawChip chip) 
+    private static Iterator assignmentOrder(Edge edge, RawChip chip) 
     {
 	//the streaming DRAM implementation can do both a 
 	//read and a write on the same cycle, so it does not 
@@ -278,10 +282,10 @@ public class BufferDRAMAssignment
 	//so just assign to ports based on the distance from the output
 	//tracenode's port and to the input of the inputracenode
 	TreeSet sorted = new TreeSet();
-	StreamingDram src = OffChipBuffer.getBuffer(output.getPrevious(),
-						    output).getDRAM();
-	StreamingDram dst = OffChipBuffer.getBuffer(input, 
-						    input.getNext()).getDRAM();
+	StreamingDram src = IntraTraceBuffer.getBuffer(edge.getSrc().getPrevFilter(),
+						       edge.getSrc()).getDRAM();
+	StreamingDram dst = IntraTraceBuffer.getBuffer(edge.getDest(), 
+						       edge.getDest().getNextFilter()).getDRAM();
 	//	System.out.println("Order for: " + OffChipBuffer.getBuffer(output,input) + ", " +
 	//		   src + " to " + dst);
 	for (int i = 0; i < chip.getDevices().length; i++) {

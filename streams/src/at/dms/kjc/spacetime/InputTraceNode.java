@@ -92,6 +92,10 @@ public class InputTraceNode extends TraceNode
 	return sources[0];
     }
     
+    public FilterTraceNode getNextFilter() 
+    {
+	return (FilterTraceNode)getNext();
+    }
     
     public boolean noInputs() 
     {

@@ -188,4 +188,9 @@ public class OutputTraceNode extends TraceNode
 	return sortedOutputs;
     }
     
+    public FilterTraceNode getPrevFilter() 
+    {
+	return (FilterTraceNode)getPrevious();
+    }
+    
 }

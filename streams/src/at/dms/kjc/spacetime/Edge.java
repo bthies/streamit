@@ -16,4 +16,10 @@ public class Edge {
     public InputTraceNode getDest() {
 	return dest;
     }
+
+    public String toString() 
+    {
+	return src.toString() + "->" + dest.toString();
+    }
 }
+

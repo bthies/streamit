@@ -1,6 +1,6 @@
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.3 2002-08-12 18:56:47 dmaze Exp $
+ * $Id: StreamItLex.g,v 1.4 2002-08-15 14:33:01 dmaze Exp $
  */
 
 header {
@@ -38,7 +38,8 @@ tokens {
 	// Complicated types:
 	"struct"; "template";
 	// Control flow:
-	"if"; "else"; "while"; "for"; "switch"; "case"; "default";
+	"if"; "else"; "while"; "for"; "switch"; "case"; "default"; "break";
+	"continue"; "return";
 	// Intrinsic values:
 	"pi";
 	// Other:

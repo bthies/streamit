@@ -129,7 +129,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 
     public SDEPData computeSDEP(
         LatencyNode upstreamNode,
-        LatencyNode downstreamNode)
+        LatencyNode downstreamNode) throws NoPathException
     {
         // first find all the edges that need to be traversed when figuring
         // out the dependencies between nodes
@@ -205,7 +205,10 @@ public class LatencyGraph extends streamit.misc.AssertedClass
             // within their lowest common ancestor.
             // if you don't understand this, or think it's wrong, ask karczma 
             // (03/07/15)
-            ASSERT(!edgesToTraverse.empty());
+            //ASSERT(!edgesToTraverse.empty());
+	    if (edgesToTraverse.empty()) {
+		throw new NoPathException();
+	    }
         }
 
         // now go through all the edges and count how many useful edges

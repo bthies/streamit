@@ -83,15 +83,31 @@
   </target>
 
   <!-- JAVA COMPILATION. -->
-  <target name="all-java-source" depends="frontend-source,kjc-source"/>
-  <target name="compiler" depends="all-java-source"
+  <target name="all-java-source"
+    depends="frontend-source,kjc-source"/>
+  <fileset dir="." id="streamit.java.files">
+    <patternset id="streamit.java.sources">
+      <include name="compiler/**/*.java"/>
+      <include name="library/java/**/*.java"/>
+      <exclude name="**/streamit/stair/**"/>
+      <exclude name="**/at/dms/kjc/raw2/**"/>
+      <exclude name="**/streamit/iriter/**"/>
+    </patternset>
+  </fileset>
+  <target name="sourcepath">
+    <pathconvert targetos="unix" property="sourcepath"
+      refid="streamit.java.files"/>
+    <echo>Source path: ${sourcepath}</echo>
+  </target>
+  <target name="depends" depends="all-java-source">
+    <depend srcdir="." closure="true">
+      <patternset refid="streamit.java.sources"/>
+    </depend>
+  </target>
+  <target name="compiler" depends="depends"
     description="Build the StreamIt compiler and front-end">
-    <javac debug="true" depend="true" nowarn="true">
-      <src path="compiler"/>
-      <src path="library/java"/>
-      <exclude name="streamit/stair/**"/>
-      <exclude name="at/dms/kjc/raw2/**"/>
-      <exclude name="streamit/iriter/**"/>
+    <javac srcdir="." debug="true" depend="true" nowarn="true">
+      <patternset refid="streamit.java.sources"/>
     </javac>
   </target>
   <target name="class-clean">

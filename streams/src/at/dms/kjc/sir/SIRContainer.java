@@ -14,9 +14,10 @@ public abstract class SIRContainer extends SIRStream {
     }
 
     protected SIRContainer(SIRContainer parent,
+			   String ident,
 			   JFieldDeclaration[] fields,
 			   JMethodDeclaration[] methods) {
-      super(parent, fields, methods);
+      super(parent, ident, fields, methods);
     }
 
     /**

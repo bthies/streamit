@@ -37,13 +37,14 @@ public class SIRFilter extends SIRStream implements Cloneable {
     }
 
     public SIRFilter(SIRContainer parent,
+		     String ident,
 		     JFieldDeclaration[] fields, 
 		     JMethodDeclaration[] methods, 
 		     JExpression peek, JExpression pop, JExpression push, 
 		     JMethodDeclaration work, 
 		     CType inputType, 
 		     CType outputType) {
-	super(parent, fields, methods);
+	super(parent, ident, fields, methods);
 	this.peek = peek;
 	this.pop = pop;
 	this.push = push;
@@ -65,6 +66,7 @@ public class SIRFilter extends SIRStream implements Cloneable {
     public Object clone() 
     {
 	SIRFilter f = new SIRFilter(this.parent,
+				    this.ident,
 				    this.fields,
 				    this.methods,
 				    this.peek,

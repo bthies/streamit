@@ -26,15 +26,22 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * for SIRContainers.
      */
     protected JMethodDeclaration work;
+    /**
+     * The name of the class in the StreamIt source file corresponding
+     * to this stream.
+     */
+    protected String ident;
 
     /*
      * Don't set the init function upon instantation since the lowering
      * pass will have to create the init function
      */
     protected SIRStream(SIRContainer parent,
+			String ident,
 			JFieldDeclaration[] fields,
 			JMethodDeclaration[] methods) {
       super(parent);
+      this.ident = ident;
       this.fields = fields;
       this.methods = methods;
     }
@@ -50,6 +57,17 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      */
     public void setFields (JFieldDeclaration[] f) {
 	this.fields = f;
+    }
+
+    /**
+     * Sets the identifier of this.
+     */
+    public void setIdent(String ident) {
+	this.ident = ident;
+    }
+
+    public String getIdent() {
+	return ident;
     }
 
     /**

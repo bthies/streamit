@@ -45,9 +45,10 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
      * Construct a new SIRPipeline with the given fields and methods.
      */
     public SIRFeedbackLoop(SIRContainer parent,
+			   String ident,
 			   JFieldDeclaration[] fields,
 			   JMethodDeclaration[] methods) {
-	super(parent, fields, methods);
+	super(parent, ident, fields, methods);
     }
 
     /**
@@ -63,6 +64,7 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     public Object clone() 
     {
 	SIRFeedbackLoop f = new SIRFeedbackLoop(this.parent,
+						this.ident,
 						this.fields,
 						this.methods);
 	f.setInit(this.init);

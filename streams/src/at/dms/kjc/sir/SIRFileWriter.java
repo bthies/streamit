@@ -20,10 +20,12 @@ public class SIRFileWriter extends SIRFilter implements Cloneable {
     }
 
     public SIRFileWriter(SIRContainer parent,
+			 String ident,
 			 JExpression peek, JExpression pop, JExpression push, 
 			 CType inputType,
 			 String fileName) {
 	super(parent,
+	      ident,
 	      /* fields */ null,
 	      /* methods */ null,
 	      peek, pop, push,
@@ -38,6 +40,7 @@ public class SIRFileWriter extends SIRFilter implements Cloneable {
      */
     public Object clone() {
 	SIRFileWriter f = new SIRFileWriter(getParent(),
+					    getIdent(),
 					    getPeek(),
 					    getPop(),
 					    getPush(),

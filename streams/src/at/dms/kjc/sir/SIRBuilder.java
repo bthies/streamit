@@ -20,6 +20,7 @@ public class SIRBuilder {
     public static SIRStream buildHello6() {
 
 	SIRPipeline toplevel = new SIRPipeline(null,
+					       "HelloWorld6",
 					       /* fields  */ 
 					       JFieldDeclaration.EMPTY,
 					       /* methods */ 
@@ -90,6 +91,7 @@ public class SIRBuilder {
 	CType type1 = CStdType.Integer;
 
 	SIRFilter f1 = new SIRFilter(toplevel,
+				     "filter name",
 				     /* fields */ fields1,
 				     /* methods */ meth1,
 				     /* peek, pop, push */ 
@@ -139,6 +141,7 @@ public class SIRBuilder {
 	CType type2 = CStdType.Integer;
 
 	SIRFilter f2 = new SIRFilter(toplevel,
+				     "filter name",
 				     /* fields */ JFieldDeclaration.EMPTY,
 				     /* methods */ meth2,
 				     /* peek, pop, push */ 

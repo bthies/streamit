@@ -19,9 +19,10 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      * Construct a new SIRPipeline with the given fields and methods.
      */
     public SIRPipeline(SIRContainer parent,
+		       String ident,
 		       JFieldDeclaration[] fields,
 		       JMethodDeclaration[] methods) {
-	super(parent, fields, methods);
+	super(parent, ident, fields, methods);
 	// initialize elements array
 	this.elements = new LinkedList();
     }
@@ -30,8 +31,8 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      * Return a shallow clone of the SIRPipeline
      */
     public Object clone() {
-	SIRPipeline p = new SIRPipeline(this.parent, this.fields,
-					this.methods);
+	SIRPipeline p = new SIRPipeline(this.parent, this.ident,
+					this.fields, this.methods);
 	p.setInit(this.init);
 	for(int i = 0; i < elements.size(); i++) {
 	    // get child

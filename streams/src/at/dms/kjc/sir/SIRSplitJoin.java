@@ -30,8 +30,9 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      */
     public Object clone() {
 	SIRSplitJoin s = new SIRSplitJoin(this.parent,
-				       this.fields,
-				       this.methods);
+					  this.ident,
+					  this.fields,
+					  this.methods);
 	s.setInit(this.init);
 	s.setSplitter(this.splitter);
 	s.setJoiner(this.joiner);
@@ -234,9 +235,10 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      * Construct a new SIRPipeline with the given fields and methods.
      */
     public SIRSplitJoin(SIRContainer parent,
+			String ident,
 			JFieldDeclaration[] fields,
 			JMethodDeclaration[] methods) {
-	super(parent, fields, methods);
+	super(parent, ident, fields, methods);
 	elements = new LinkedList();
     }
      /**

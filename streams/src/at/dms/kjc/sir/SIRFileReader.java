@@ -20,10 +20,12 @@ public class SIRFileReader extends SIRFilter implements Cloneable {
     }
 
     public SIRFileReader(SIRContainer parent,
+			 String ident,
 			 JExpression peek, JExpression pop, JExpression push, 
 			 CType outputType,
 			 String fileName) {
 	super(parent,
+	      ident,
 	      /* fields */ null,
 	      /* methods */ null,
 	      peek, pop, push,
@@ -38,6 +40,7 @@ public class SIRFileReader extends SIRFilter implements Cloneable {
      */
     public Object clone() {
 	SIRFileReader f = new SIRFileReader(getParent(),
+					    getIdent(),
 					    getPeek(),
 					    getPop(),
 					    getPush(),

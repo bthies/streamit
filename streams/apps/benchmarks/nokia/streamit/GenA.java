@@ -19,10 +19,10 @@ class ConvMat extends SplitJoin{// generates the matrix consisting of the convol
  
     public ConvMat(int K, int W, int Q,int N,float[][] C) {super (K,W,Q,N,C);}
      public void init(int K,int W, int Q,int N,float[][] C){
-	float[] Crow;
+	float[] Crow = new float[Q];
         setSplitter(ROUND_ROBIN(W));
 	for (int i=0;i<K;i++){
-	    Crow = new float[Q];
+
 	    for(int j=0;j<Q;j++) {Crow[j]=C[j][i];
             //System.out.println(Crow[j]);
 	    

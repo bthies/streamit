@@ -90,7 +90,7 @@ public class PartitionGroup {
      */
     public int getFirst(int k) {
 	int sum = 0;
-	for (int i=0; i<k-1; i++) {
+	for (int i=0; i<k; i++) {
 	    sum += partitions[i];
 	}
 	return sum;

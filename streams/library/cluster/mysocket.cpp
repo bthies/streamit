@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <sys/poll.h>
 
 
 unsigned get_myip() {
@@ -44,6 +45,25 @@ void print_ip(FILE *f, unsigned ip) {
 
 mysocket::mysocket(int s) {
   fd = s;
+}
+
+
+int mysocket::get_fd() {
+  return fd;
+}
+
+
+bool mysocket::data_available() {
+
+  struct pollfd pfd;
+  pfd.fd = fd;
+  pfd.events = POLLIN;
+  pfd.revents = 0;
+  if (poll(&pfd, 1, 0) > 0 && pfd.revents == POLLIN) 
+    return true; 
+  else 
+    return false;
+
 }
 
 
@@ -124,6 +144,8 @@ int mysocket::read_chunk(char *buf, int len) {
     
     if (select(fd + 1, &set, NULL, NULL, &rwait) > 0) {
       
+      //printf("read_chunk :: select returns true\n");
+      
       retval = read(fd, buf + done, len - done);
 
       if (retval > 0) done += retval;
@@ -168,10 +190,5 @@ float mysocket::read_float() {
 void mysocket::write_float(float a) {
   write_chunk((char*)&a, sizeof(a));
   return;
-}
-
-
-int mysocket::get_fd() {
-  return fd;
 }
 

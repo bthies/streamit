@@ -3,6 +3,7 @@
 #define __MYSOCKET_H
 
 #include <stdio.h>
+#include <sys/poll.h>
 
 extern unsigned get_myip();
 extern unsigned lookup_ip(char *host);
@@ -20,9 +21,12 @@ class mysocket {
 
   mysocket() {}
   mysocket(int s);
+  
+  bool data_available();
+  int get_fd();
+
   int read_chunk(char *buf, int len);  
   int write_chunk(char *buf, int len);
-  int get_fd();
 
   int read_int();
   void write_int(int);

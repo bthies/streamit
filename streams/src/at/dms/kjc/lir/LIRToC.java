@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.7 2001-10-09 17:10:21 dmaze Exp $
+ * $Id: LIRToC.java,v 1.8 2001-10-09 17:20:44 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1414,46 +1414,46 @@ public class LIRToC
     public void visitPrintStatement(SIRPrintStatement self,
                                     JExpression exp)
     {
-        switch (exp.getType().getTypeID())
+        CType type = exp.getType();
+        
+        if (type.equals(CStdType.Boolean))
         {
-        case TID_BOOLEAN:
             print("printf(\"%s\\n\", ");
             exp.accept(this);
             print(" ? \"true\" : \"false\");");
-            break;
-            
-        case TID_BYTE:
-        case TID_INT:
+        }
+        else if (type.equals(CStdType.Byte) ||
+                 type.equals(CStdType.Integer) ||
+                 type.equals(CStdType.Short))
+        {
             print("printf(\"%d\\n\", ");
             exp.accept(this);
             print(");");
-            break;
-            
-        case TID_CHAR:
+        }
+        else if (type.equals(CStdType.Char))
+        {
             print("printf(\"%c\\n\", ");
             exp.accept(this);
             print(");");
-            break;
-            
-        case TID_DOUBLE:
-        case TID_FLOAT:
-        case TID_SHORT:
+        }
+        else if (type.equals(CStdType.Float) ||
+                 type.equals(CStdType.Double))
+        {
             print("printf(\"%f\\n\", ");
             exp.accept(this);
             print(");");
-            break;
-            
-        case TID_LONG:
+        }
+        else if (type.equals(CStdType.Long))
+        {
             print("printf(\"%ld\\n\", ");
             exp.accept(this);
             print(");");
-            break;
-            
-        default:
+        }
+        else
+        {
             print("printf(\"(unprintable type)\\n\", ");
             exp.accept(this);
             print(");");
-            break;
         }
     }
     

@@ -4,7 +4,7 @@
  * Created on May 31, 2001, 4:50 PM
  */
 
-package streamit;
+package streamit.misc;
 
 import java.lang.*;
 import java.lang.reflect.*;
@@ -20,7 +20,7 @@ public class DestroyedClass extends AssertedClass
     static {
         try
         {
-            DestroyedClass = Class.forName ("streamit.DestroyedClass");
+            DestroyedClass = Class.forName ("streamit.misc.DestroyedClass");
         }
         catch (ClassNotFoundException error)
         {

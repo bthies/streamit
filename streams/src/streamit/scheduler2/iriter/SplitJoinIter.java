@@ -1,8 +1,8 @@
-package streamit.scheduler.v2;
+package streamit.scheduler.iriter;
 
-import streamit.scheduler.v2.Iterator;
+import streamit.scheduler.iriter.Iterator;
 
-/* $Id: SplitJoinIter.java,v 1.1 2002-04-20 19:23:04 karczma Exp $ */
+/* $Id: SplitJoinIter.java,v 1.2 2002-05-01 23:20:05 karczma Exp $ */
 
 /**
  * <dl>

@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.PrintStream;
 import streamit.*;
 
-public abstract class Scheduler extends DestroyedClass
+public abstract class Scheduler extends streamit.misc.DestroyedClass
 {
     class SchedBufferRestriction
     {

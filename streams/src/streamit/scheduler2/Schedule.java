@@ -1,8 +1,8 @@
-package streamit.scheduler.v2;
+package streamit.scheduler;
 
-import streamit.AssertedClass;
+import streamit.misc.AssertedClass;
 
-/* $Id: Schedule.java,v 1.1 2002-04-20 19:23:03 karczma Exp $ */
+/* $Id: Schedule.java,v 1.2 2002-05-01 23:20:02 karczma Exp $ */
 
 /**
  * <dl>

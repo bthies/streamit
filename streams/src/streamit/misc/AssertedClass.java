@@ -4,7 +4,7 @@
  * Created on May 31, 2001, 6:27 PM
  */
 
-package streamit;
+package streamit.misc;
 
 public class AssertedClass
 {

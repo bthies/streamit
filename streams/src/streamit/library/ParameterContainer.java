@@ -2,6 +2,8 @@ package streamit;
 
 import java.util.*;
 
+import streamit.misc.AssertedClass;
+
 public class ParameterContainer extends AssertedClass
 {
     Map parameters = new TreeMap ();

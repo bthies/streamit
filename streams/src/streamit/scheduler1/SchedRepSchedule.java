@@ -3,7 +3,7 @@ package streamit.scheduler;
 import java.util.ArrayList;
 import java.util.List;
 import java.math.BigInteger;
-import streamit.AssertedClass;
+import streamit.misc.AssertedClass;
 
 public class SchedRepSchedule extends AssertedClass
 {

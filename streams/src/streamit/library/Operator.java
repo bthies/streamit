@@ -3,6 +3,8 @@ package streamit;
 import java.lang.reflect.*;
 import java.util.*;
 
+import streamit.misc.DestroyedClass;
+
 // an operator takes N inputs and produces N outputs.
 // Never explicitly instantiated
 public class Operator extends DestroyedClass

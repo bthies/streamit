@@ -5,7 +5,7 @@ package streamit;
 import java.util.*;
 import java.lang.*;
 
-public class Channel extends DestroyedClass
+public class Channel extends streamit.misc.DestroyedClass
 {
     Class type;
     Operator source = null, sink = null;

@@ -15,7 +15,7 @@ import java.util.*;
  * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
  * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformSplitJoin.java,v 1.7 2004-04-02 20:41:22 sitij Exp $
+ * $Id: LinearTransformSplitJoin.java,v 1.8 2004-08-05 00:27:55 sitij Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;
@@ -63,9 +63,9 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	// do the expansion of each of the linear reps.
 	LinearFilterRepresentation[] expandedReps = new LinearFilterRepresentation[filterCount];
 	int totalOutputs = 0;
-	int totalStates = 0;
 	int totalInputs = this.filterExpansionFactors[0].pop;
 	int storedInputsVal = this.filterExpansionFactors[0].storedInputs;
+	int totalStates = storedInputsVal;
 	int currInputsVal;
 	int factor;
 	LinearFilterRepresentation tempRep;
@@ -85,7 +85,7 @@ public class LinearTransformSplitJoin extends LinearTransform{
 
 	    LinearPrinter.println("i,states: " + i + " " + expandedReps[i].getStateCount());
 
-	    totalStates += expandedReps[i].getStateCount();
+	    totalStates += expandedReps[i].getStateCount() - storedInputsVal;
 	}
 
 	// figure how how many columns the "stride" is (eg the sum of the weights)
@@ -112,32 +112,39 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	if(overallPreNeeded) {
 	    expandedPreA = new FilterMatrix(totalStates, totalStates);
 	    expandedPreB = new FilterMatrix(totalStates, storedInputsVal);
+
+	    expandedPreB.copyRowsAt(0,FilterMatrix.getIdentity(storedInputsVal),0,storedInputsVal);
 	}
 
-	
-	// now, copy the rows of the matrices into the expanded versions
-	// for each expanded matrix, copy joinWeight[i] rows into the new matrix
+
+	expandedA.copyRowsAndColsAt(0,0,expandedReps[0].getA(),0,0,storedInputsVal,storedInputsVal);
+	expandedB.copyRowsAt(0,expandedReps[0].getB(),0,storedInputsVal);
 
 	int startOffset = 0;
-	int stateOffset = 0;
+	int stateOffset = storedInputsVal;
 	for (int i=0; i<filterCount; i++) {
 
-	    int currStateValue = expandedReps[i].getStateCount();
+	    int currStateValue = expandedReps[i].getStateCount() - storedInputsVal;
 
 	    // put the filter's state update matrices in the expanded state update matrices
 
-	    expandedInit.copyAt(0, stateOffset, expandedReps[i].getInit());
+	    expandedInit.copyColumnsAt(stateOffset,expandedReps[i].getInit(),storedInputsVal,currStateValue);
 
-	    expandedA.copyAt(stateOffset, stateOffset, expandedReps[i].getA());
-	    expandedB.copyAt(stateOffset, 0, expandedReps[i].getB());
+	    expandedA.copyRowsAndColsAt(stateOffset,0,expandedReps[i].getA(),storedInputsVal,0,currStateValue,storedInputsVal);
+
+	    expandedA.copyRowsAndColsAt(stateOffset,stateOffset,expandedReps[i].getA(),storedInputsVal,storedInputsVal,currStateValue,currStateValue);
+
+	    expandedB.copyRowsAt(stateOffset,expandedReps[i].getB(),storedInputsVal,currStateValue);
 
 	    if(overallPreNeeded) {
 		if(expandedReps[i].preworkNeeded()) {
-		    expandedPreA.copyAt(stateOffset, stateOffset, expandedReps[i].getPreWorkA());
-		    expandedPreB.copyAt(stateOffset, 0, expandedReps[i].getPreWorkB());
+		    expandedPreA.copyRowsAndColsAt(stateOffset,stateOffset,expandedReps[i].getPreWorkA(),storedInputsVal,storedInputsVal,currStateValue,currStateValue);
+		    expandedPreB.copyRowsAt(stateOffset,expandedReps[i].getPreWorkB(),storedInputsVal,currStateValue);
 		}
 	    }
 
+	    // now, copy the rows of the matrices into the expanded versions
+	    // for each expanded matrix, copy joinWeight[i] rows into the new matrix
  
 	    // figure out how many groups of joinWeight rows that we have
 	    int numGroups = expandedReps[i].getPushCount() / this.roundRobinJoinerWeights[i]; // total # of groups
@@ -154,8 +161,10 @@ public class LinearTransformSplitJoin extends LinearTransform{
 		// the offset into the current source matrix is (size-j-1)*joinWeights[i]
 		// the number of rows that we are copying is combination weights[i]
 
+		expandedC.copyRowsAndColsAt(currentOffset,0,expandedReps[i].getC(),j*this.roundRobinJoinerWeights[i],0,this.roundRobinJoinerWeights[i],storedInputsVal);
+
 		expandedC.copyRowsAndColsAt(currentOffset, stateOffset, expandedReps[i].getC(),
-					j*this.roundRobinJoinerWeights[i], 0,
+					j*this.roundRobinJoinerWeights[i], storedInputsVal,
 					this.roundRobinJoinerWeights[i], currStateValue);
 
 

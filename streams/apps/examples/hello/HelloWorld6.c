@@ -1,6 +1,6 @@
 /*
  * HelloWorld6.c: translated "hello, world" StreaMIT example
- * $Id: HelloWorld6.c,v 1.5 2001-09-26 14:04:18 dmaze Exp $
+ * $Id: HelloWorld6.c,v 1.6 2001-09-27 20:30:10 dmaze Exp $
  */
 
 #include "streamit.h"
@@ -74,6 +74,8 @@ void HelloWorld6_init(HelloWorld6_data *d, void *p)
   d->child1->c = create_context(d->child1);
   register_child(d->c, d->child1->c);
   HelloWorld6_1_init(d->child1, d);
+
+  create_tape(d->child1->c, d->child2->c, sizeof(int), 1);
 
   d->child2 = malloc(sizeof(HelloWorld6_2_data));
   d->child2->c = create_context(d->child2);

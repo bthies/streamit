@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.14 2003-04-15 19:22:17 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.15 2003-04-15 20:43:46 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -49,9 +49,12 @@ public class FEReplacer implements FEVisitor
      * current one.  This should be called inside a statement
      * visitor (and possibly inside a recursively called
      * expression visitor, but take care).  Statements added go
-     * after the statement returned by the visitor, if any.
+     * before the statement returned by the visitor, if any.  For
+     * example, it is legitimate to use <code>addStatement</code> to
+     * add a declaration for a variable that is used inside a rewritten
+     * statement, and return the statement from the visitor function.
      * 
-     * @param stmt  The statement to add
+     * @param stmt The statement to add
      */ 
     protected void addStatement(Statement stmt)
     {
@@ -64,8 +67,8 @@ public class FEReplacer implements FEVisitor
      * a derived class needs to do extra processing on every
      * expression, it can override this method.
      * 
-     * @param expr         Expression to visit
-     * @return Expression  Expression to replace <code>expr</code>
+     * @param expr  Expression to visit
+     * @return      Expression to replace <code>expr</code>
      */
     protected Expression doExpression(Expression expr)
     {

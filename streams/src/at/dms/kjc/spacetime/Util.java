@@ -216,6 +216,8 @@ public class Util {
     public static int magicBufferSize(InputTraceNode in, 
 				 OutputTraceNode out) 
     {
+	//i don't remember why I have the + down there,
+	//but i am not going to change it now
 	return Math.max(steadyBufferSize(in, out),
 			initBufferSize(in, out)) + 
 	    primePumpBufferSize(in, out);

@@ -21,6 +21,12 @@ public class RouteIns implements SwitchIns {
     public void addRoute(ComputeNode source, ComputeNode dest) {
 	if (source == null || dest == null) 
 	    Utils.fail("Trying to add a null source or dest to route instruction");
+	//check if the source,dest pair exists
+	for (int i = 0; i < sources.size();i++) {
+	    if (sources.get(i) == source &&
+		dests.get(i) == dest)
+		return;
+	}    
 	sources.add(source);
 	dests.add(dest);
     }

@@ -13,6 +13,7 @@ import at.dms.kjc.sir.stats.StatisticsGathering;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.partition.cache.*;
+import at.dms.kjc.sir.lowering.partition.dynamicprog.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.lir.*;
@@ -142,7 +143,7 @@ public class ClusterBackend implements FlatVisitor {
 
 	int threads = KjcOptions.cluster;
 
-	boolean limitICode = KjcOptions.cacheopt;
+	boolean doCacheOptimization = KjcOptions.cacheopt;
 
 	System.err.println("Running Partitioning... target number of threads: "+threads);
 	// actually fuse components if fusion flag is enabled
@@ -151,7 +152,12 @@ public class ClusterBackend implements FlatVisitor {
 	    if (!KjcOptions.partition_greedy && !KjcOptions.partition_greedier) {
 		KjcOptions.partition_dp = true;
 	    }
-	    str = CachePartitioner.doit(str);
+	    
+	    if ( doCacheOptimization ) {
+		str = CachePartitioner.doit(str);
+	    } else {		
+		str = Partitioner.doit(str, 0, threads, false, false);
+	    }
 	    /*
 	    if (str instanceof SIRContainer) {
 		((SIRContainer)str).reclaimChildren();
@@ -160,7 +166,13 @@ public class ClusterBackend implements FlatVisitor {
 	} 
 
 	HashMap partitionMap = new HashMap();
-	str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), threads).calcPartitions(partitionMap);
+
+	if ( doCacheOptimization ) {
+	    str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), threads).calcPartitions(partitionMap);
+	} else {
+	    str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, false).calcPartitions(partitionMap);	
+	}
+	
 	System.err.println("Done Partitioning...");
 
 	if (KjcOptions.sjtopipe) {

@@ -1,85 +1,5 @@
-/* print_service.bc
- *
- * This file describes the print service device
- * 
- * The print service device accepts requests from
- * the tiles telling it to print various data.  It
- * serves as a (very limited) replacement for being
- * able to send data to stdout.
- *
- * This device waits for a message on the memory
- * dynamic network of the format:
- * first word is the header (a word with the following data:)
- *      bits    field  
- *
- *      28:24   length
- *      23:20   type           (should be 0xE for the print service)
- *      19:15   sender_y_pos
- *      14:10   sender_x_pos
- *
- * Second and third words are the time tag (hi and lo bits respectively)
- * fourth word is the service request:
- *      0xfff0: hex integer
- *      0xfff1: signed decimal integer
- *      0xffff: float
- *      0xfabc: string
- * An unknown request defaults to hex integer.
- *
- * For everything but strings, the fifth and following words until the end of 
- * the message will all be printed using the current service request.
- *
- * Strings will have the standard header, but the fifth word of the 
- * first message for a given string will contain the string's size in
- * bytes (including terminating null).  Subsequent messages, which
- * will be necessary if the string is too long for a single message,
- * will not include the size.
- *
- * The address assignments to the particular ports are dependent on
- * the size of the raw machine that you are running on.  In all cases
- * addresses starting with 0x00 will go to the east of the north-east
- * corner, addresses starting with 0xff will go to the south of the
- * south-east corner (port gXSize+gYSize).
- *
- */
-
-/*
-
-Debugging Tips: 
-
-
-
-prompt> include("<dev/print_service.bc>");       // loads the file
-prompt> dev_print_service_init(0);               // creates the dynamic device
-prompt> SimListDevices() ;                      // list the installed devices
-
-  [ DEVICE NAME        RESET ROUTINE          CALC ROUTINE           PARAM    ]
-
-1 [ Dynamic Echo       dev_print_service_reset dev_print_service_calc  000658a0 ]
-0 [ Serial Rom         dev_serial_rom_reset   dev_serial_rom_calc    00065670 ]
-
-prompt> hms_print(0x65670);                // list the contents of the map you created
-ioPort                 00000003
-wordLength             00000143
-fileName               effff927
-data                   0005c910
-
-prompt> printf("%s\n", 0x65670.fileName);  // print out the filename of the serial rom
-dynamic_test.raw
-
-prompt> hms_print(0x658a0);
-ioPort                 00000000
-
-
-
-*/
-
-
-//*****************************************************************
-// dev_print_service_init()
-//
-// initializes the print service
-//
-
+//Number gathering bc code
+//global gMagicInstrHMS;
 global lastCycle;
 
 //the blood graph variables
@@ -118,19 +38,156 @@ global gAluCountTotal = 0;
 global totalCycles = 0;
 global gNumberDone = 0;
 
-fn dev_gather_numbers_init(fileName, ioPort)
+fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 {
-  // create hash_map
-  local printServiceStruct = hms_new();
-  local result;
+  local sender_x;
+  local sender_y;
+  local time_hi, time_lo;
+  local proc = Machine_GetProc(machine, procNum);
 
-  // package up a descriptor for the reset and calc routines
-  // this takes advantage of the fact that bug has semantic
-  // sugar for string->UInt32 hashmaps
+  //get the cycle
+  Proc_GetCycleCounter(proc, &time_hi, &time_lo);
 
-  printServiceStruct.ioPort = ioPort;
-  printServiceStruct.fileName = fileName;
-  printServiceStruct.theFile = fopen(fileName, "a");
+  //calculate the x, y coordinates...
+  sender_y = procNum / gXSize;
+  sender_x = procNum - (sender_y * gXSize);
+
+  if (!((rs == 0) && (imm == 2)))
+    return 0;
+
+  //record the total number of steady state prints the 
+  //current cycle
+  if (gSteadyState == 1) 
+    gSteadyStatePrints++;
+	  
+  //that this print was issued at the sink we are interested in.
+  //check that the number gathering is not done and
+  if (gNumberDone != 1 && 
+      gSinkX == sender_x &&
+      gSinkY == sender_y) {
+    currentPrints++;
+    //skip anything printed in the init
+    if (currentSkipped < skipPrints) {
+      currentSkipped++;
+      currentPrints = 0;
+    }
+    else if (currentPrints == printsPerSteady) {
+      //hit the end of a steady
+      //reset the number of prints we have seen in this
+      //steady state
+      currentPrints = 0;
+      steadyStateExecutions ++;
+	    
+      //quit after quitAfter executions
+      if (steadyStateExecutions == quitAfter + 2) {
+	printf("Generating results.out\n");
+	//we are done number gathering
+	gNumberDone = 1;
+	fprintf(outputFile, "\nSummmary:\n");
+	fprintf(outputFile, "Steady State Executions: %d\n", quitAfter);
+	fprintf(outputFile, "Total Cycles: %d\n", totalCycles);
+	fprintf(outputFile, "Total Steady State Outputs: %d\n", gSteadyStatePrints);
+	fprintf(outputFile, "Avg Cycles per Steady-State: %d\n", totalCycles/quitAfter);
+	fprintf(outputFile, "Thruput per 10^5: %d\n", 
+		(100000) / (totalCycles/gSteadyStatePrints));
+	fprintf(outputFile, "Total Non-Blocked Cycles: %d\n\n", 
+		(gWorkCountTotal));
+	// The following should no longer be necessary
+	// - ((gNumProc - gStreamItTilesUsed) * totalCycles)));
+	 
+	//we need to account for the unused tiles, should show up as jump instructions
+	fprintf(outputFile, "Instruction Mix:\n");
+	fprintf(outputFile, "FPU: %d\n", gFpuCountTotal);
+	fprintf(outputFile, "MEM: %d\n", gMemCountTotal);
+	fprintf(outputFile, "BRANCH: %d\n", gBrCountTotal); 
+	// the following should no longer be necessary
+	//   ((gNumProc - gStreamItTilesUsed) * totalCycles));
+	fprintf(outputFile, "ADMIN: %d\n", gAdminCountTotal);
+	fprintf(outputFile, "ALU: %d\n\n", gAluCountTotal);
+	      
+	//printf("gWorkCountTotal: %d\n", gWorkCountTotal);
+	//printf("((gNumProc - gStreamItTilesUsed) * totalCycles): %d\n", 
+	//	     ((gNumProc - gStreamItTilesUsed) * totalCycles));
+
+	fprintf(outputFile, "workCount* = %d / %d\n", 
+		gWorkCountTotal,
+		//- ((gNumProc - gStreamItTilesUsed) * totalCycles)),
+		gStreamItTiles*totalCycles);
+	fprintf(outputFile, "Avg MFLOPS: %d\n", (250*gFpuCountTotal)/totalCycles);	   
+	fprintf(outputFile, "* Note: the numerator is the total non-blocked cycles\n");
+	fprintf(outputFile, "  for *assigned* tiles in the configuration.\n");
+	fprintf(outputFile, "  The denominator is the total number of cycles\n");
+	fprintf(outputFile, "  for all the tiles in the streamit configuration.\n");
+	      
+	//print the numbers in a nicer format for automatic
+	//extracting
+	fprintf(outputFile,
+		"\n# format: tiles in config:tiles assigned:cycles/steady:thruput:MFLOPS:");
+	fprintf(outputFile, 
+		"instr issued:fpu:mem:branch:admin:alu:max instr issued:\n");
+	fprintf(outputFile, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\n",
+		gStreamItTiles, gStreamItTilesUsed, totalCycles/quitAfter,
+		((100000) / (totalCycles/gSteadyStatePrints)),
+		(250*gFpuCountTotal)/totalCycles,
+		gWorkCountTotal, // - ((gNumProc - gStreamItTilesUsed) * totalCycles)),
+		gFpuCountTotal, gMemCountTotal, 
+		gBrCountTotal, //- ((gNumProc - gStreamItTilesUsed) * totalCycles),
+		gAdminCountTotal, gAluCountTotal, 
+		gStreamItTiles*totalCycles);
+	//we are done getting the numbers, deregister the handler.
+	EventManager_DeRegisterHandler("issued_instruction", "__event_instr_count");
+	//now get the blood graph	   
+	setup_bloodgraph("bloodgraph.ppm", totalCycles/quitAfter);
+	//this should exit!!!!!
+	//gInterrupted = 1;
+	//this will exit the thread
+	//exit_now(0);
+      }
+      else if (steadyStateExecutions > 1) {
+	local dif = time_lo - lastSteadyStartCycle; 
+	      
+	//from now on, we are in the steady state
+	gSteadyState = 1;
+
+
+	totalCycles += dif;
+	if (totalCycles < 0) {
+	  printf("\n** Total Cycles Overflow **\n\n");
+	}
+	gWorkCountTotal += gWorkCount;
+	if (gWorkCountTotal < 0) {
+	  printf("\n** Total Work Count Overflow **\n\n");
+	}
+	gFpuCountTotal += gFpuCount;
+	gMemCountTotal += gMemCount;
+	gBrCountTotal += gBrCount;
+	gAdminCountTotal += gAdminCount;
+	gAluCountTotal += gAluCount;
+	
+	printf("Cycles: %d,  MFLOPS: %d\n", dif, (250*gFpuCount)/dif);
+	fprintf(outputFile, "%d %d %d\n", dif, (250*gFpuCount)/dif, gWorkCount);
+      }	  
+      //set the last steady state time
+      lastSteadyStartCycle = time_lo;
+      //reset the flops count and workCount
+      gFpuCount = 0;
+      gMemCount = 0;
+      gBrCount = 0;
+      gAdminCount = 0;
+      gAluCount = 0;
+      gWorkCount = 0;
+    }
+  }
+  return 1;
+}
+
+fn gather_numbers_init()
+{
+  //register the magic instruction
+  listi_add(gMagicInstrHMS.theList, & fn (procNum, rs, imm, result_ptr)
+  {
+    return gather_numbers_calc(procNum, rs, imm, result_ptr);
+  });
   
   //open the file to dump the data to
   outputFile = fopen("results.out", "w");
@@ -145,339 +202,10 @@ fn dev_gather_numbers_init(fileName, ioPort)
   fprintf(outputFile, "cycles MFLOPS work_count\n");
   fprintf(outputFile, "--------------------------\n");
 
-  
-  // create the print service device
-  result = SimAddDevice("Gather_Numbers",// text name, for debugging
-                        "dev_gather_numbers_reset", // routine called on machine reset
-                        "dev_gather_numbers_calc", // routine called between calc and edge
-                        printServiceStruct); // parameter passed to both the above 
-  if (result == 0)
-  {
-    printf("// **** print_service: error adding device to port %d\n", ioPort);  
-    return 0;
-  }
-  
   //register the workcount event
   EventManager_RegisterHandler("issued_instruction", "__event_instr_count");
 
   return 1;
-}
-
-
-//*****************************************************************
-// dev_print_service_reset(print_service_struct *printServiceStruct)
-//
-// called when the machine is reset
-// in this particular case, does nothing 
-//
-
-fn dev_gather_numbers_reset(printServiceStruct)
-{
-}
-
-//*****************************************************************
-// dev_print_service_calc(print_service_struct *printServiceStruct)
-//
-// given time every cycle
-// repeatedly receives a request and prints it
-//
-//
-
-fn dev_gather_numbers_calc(printServiceStruct)
-{
-  local value;
-  local port = printServiceStruct.ioPort;
-  local length;
-  local type_tag;
-  local sender_y;
-  local sender_x;
-  local time_hi;
-  local time_lo;
-  local print_type;
-  local key;
-  local str_len;
-  local str_mem;
-  local str_offs;
-  local stringTable = hm_new();
-  local theFile = printServiceStruct.theFile;
-  local junk;
-  local fBits;
-
-  while (1)
-  {
-    // arbitrate with other port clients
-    while (!memory_to_io_peek(machine, port, &value))
-      yield;
-
-    DecodeDynHdr(value, &fBits, &length, &type_tag, &sender_y, &sender_x, &junk, &junk);
-    if (type_tag != 0xE)
-    {
-      printf("warning: ignoring request %x received on print service port (hdr == %x (y,x)=(%x,%x) length = %x\n", 
-             type_tag, value, sender_y, sender_x, length);
-      yield;
-      continue;
-    }
-
-    // it's for us; let's use it.
-    value = threaded_memory_io_receive(machine, port);
-    yield;
-
-    if (length > 0) {
-      // get the high bits of the time stamp
-      length--;
-      time_hi = threaded_memory_io_receive(machine, port);
-      yield;
-    }
-    if (length > 0) {
-      // get the low bits of the time stamp
-      length--;
-      time_lo = threaded_memory_io_receive(machine, port);
-      yield;
-    }
-    if (length > 0) {
-      // get the type to print
-      length--;
-      print_type = threaded_memory_io_receive(machine, port);
-      yield;
-    }
-
-    if (print_type == 0xfabc) {
-      printf("warning: String printing not supported with the number gathering infrastructure.\n"); 
-      key = (sender_y << 5) | sender_x;
-      
-      // check for string in-progress from this node
-      // if no string in progress, start a new one.
-      if (!hm_contains_key(stringTable, key)) {
-
-	str_len = threaded_memory_io_receive(machine, port);
-	yield;
-	   
-	length--;
-	   
-	// top 2 bits of this word contain the byte offset of the string
-	// within the word.  this is used for printing non-word-aligned
-	// strings.
-	str_offs = (str_len >> 30) & 0x3;
-	str_len = str_len & 0x3fffffff;
-
-	// i guess i should have used a hash map instead of shoving extra
-	// data into the beginning of the memory buffer, but this seems to 
-	// work okay.
-	str_mem = malloc(str_len + 3 + 20);
-	*(str_mem+4) = str_len;
-	*(str_mem+8) = time_hi;
-	*(str_mem+12) = time_lo;
-	*(str_mem+16) = str_offs;
-
-	*str_mem = 0;
-	hm_add(stringTable, key, str_mem);	   
-      }
-	 
-      str_mem = hm_lookup(stringTable, key);
-
-      // copy new data onto end of old data
-      while (length > 0) {
-	value = threaded_memory_io_receive(machine, port);
-	yield;
-
-	length--;
-	   
-	// reorder the bytes.
-	*(str_mem + 20 + *str_mem) = convert_to_little_endian(value);
-
-	(*str_mem) += 4;	   
-      }
-
-      if (*str_mem >= *(str_mem + 4)) {
-	// print the cycle time 
-	printf("[%x%x: %x%08x]: ", sender_y, sender_x, 
-	       *(str_mem+8), *(str_mem+12));
-	   
-	printf(str_mem + 20 + *(str_mem+16));
-
-	fprintf(theFile, "[%x%x: %x%08x]: ", sender_y, sender_x, 
-		*(str_mem+8), *(str_mem+12));
-	fprintf(theFile, str_mem + 20 + *(str_mem+16));
-	fflush(theFile);
-
-	// remove table entry
-	free(str_mem);
-	hm_remove(stringTable, key);
-      }
-	 
-    } else {  //not a string type
-      while (length > 0)
-      {
-	//we are ignoring the high time bits for now
-	
-	length--;
-	value = threaded_memory_io_receive(machine, port);
-        //print the cycle time
-	printf("[%x%x: %x%08x]: ", sender_y, sender_x, time_hi, time_lo);
-		
-	fprintf(theFile, "[%x%x: %x%08x]: ", sender_y, sender_x, time_hi, time_lo);
-	fflush(theFile);
-	
-	//record the total number of steady state prints the 
-	//current cycle
-	if (gSteadyState == 1) 
-	  gSteadyStatePrints++;
-	  
-        //that this print was issued at the sink we are interested in.
-	//check that the number gathering is not done and
-	if (gNumberDone != 1 && 
-	    gSinkX == sender_x &&
-	    gSinkY == sender_y) {
-	  currentPrints++;
-	  //skip anything printed in the init
-	  if (currentSkipped < skipPrints) {
-	    currentSkipped++;
-	    currentPrints = 0;
-	  }
-	  else if (currentPrints == printsPerSteady) {
-	    //hit the end of a steady
-	    //reset the number of prints we have seen in this
-	    //steady state
-	    currentPrints = 0;
-	    steadyStateExecutions ++;
-	    
-	    //quit after quitAfter executions
-	    if (steadyStateExecutions == quitAfter + 2) {
-	      printf("Generating results.out\n");
-	      //we are done number gathering
-	      gNumberDone = 1;
-	      fprintf(outputFile, "\nSummmary:\n");
-	      fprintf(outputFile, "Steady State Executions: %d\n", quitAfter);
-	      fprintf(outputFile, "Total Cycles: %d\n", totalCycles);
-	      fprintf(outputFile, "Total Steady State Outputs: %d\n", gSteadyStatePrints);
-	      fprintf(outputFile, "Avg Cycles per Steady-State: %d\n", totalCycles/quitAfter);
-	      fprintf(outputFile, "Thruput per 10^5: %d\n", 
-		      (100000) / (totalCycles/gSteadyStatePrints));
-	      fprintf(outputFile, "Total Non-Blocked Cycles: %d\n\n", 
-		      (gWorkCountTotal));
-	      // The following should not longer be necessary
-	      // - ((gNumProc - gStreamItTilesUsed) * totalCycles)));
-	 
-	      //we need to account for the unused tiles, should show up as jump instructions
-	      fprintf(outputFile, "Instruction Mix:\n");
-	      fprintf(outputFile, "FPU: %d\n", gFpuCountTotal);
-	      fprintf(outputFile, "MEM: %d\n", gMemCountTotal);
-	      fprintf(outputFile, "BRANCH: %d\n", gBrCountTotal); 
-	      // the following should no longer be necessary
-              //   ((gNumProc - gStreamItTilesUsed) * totalCycles));
-	      fprintf(outputFile, "ADMIN: %d\n", gAdminCountTotal);
-	      fprintf(outputFile, "ALU: %d\n\n", gAluCountTotal);
-	      
-	      //printf("gWorkCountTotal: %d\n", gWorkCountTotal);
-	      //printf("((gNumProc - gStreamItTilesUsed) * totalCycles): %d\n", 
-	      //	     ((gNumProc - gStreamItTilesUsed) * totalCycles));
-
-	      fprintf(outputFile, "workCount* = %d / %d\n", 
-		      gWorkCountTotal,
-		       //- ((gNumProc - gStreamItTilesUsed) * totalCycles)),
-		      gStreamItTiles*totalCycles);
-	      fprintf(outputFile, "Avg MFLOPS: %d\n", (250*gFpuCountTotal)/totalCycles);	   
-	      fprintf(outputFile, "* Note: the numerator is the total non-blocked cycles\n");
-	      fprintf(outputFile, "  for *assigned* tiles in the configuration.\n");
-	      fprintf(outputFile, "  The denominator is the total number of cycles\n");
-	      fprintf(outputFile, "  for all the tiles in the streamit configuration.\n");
-	      
-	      //print the numbers in a nicer format for automatic
-	      //extracting
-	      fprintf(outputFile,
-		      "\n# format: tiles in config:tiles assigned:cycles/steady:thruput:MFLOPS:");
-	      fprintf(outputFile, 
-		      "instr issued:fpu:mem:branch:admin:alu:max instr issued:\n");
-	      fprintf(outputFile, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\n",
-		      gStreamItTiles, gStreamItTilesUsed, totalCycles/quitAfter,
-		      ((100000) / (totalCycles/gSteadyStatePrints)),
-		      (250*gFpuCountTotal)/totalCycles,
-		      gWorkCountTotal, // - ((gNumProc - gStreamItTilesUsed) * totalCycles)),
-		      gFpuCountTotal, gMemCountTotal, 
-		      gBrCountTotal, //- ((gNumProc - gStreamItTilesUsed) * totalCycles),
-		      gAdminCountTotal, gAluCountTotal, 
-		      gStreamItTiles*totalCycles);
-	      //we are done getting the numbers, deregister the handler.
-	      EventManager_DeRegisterHandler("issued_instruction", "__event_instr_count");
-	      //now get the blood graph	   
-	      setup_bloodgraph("bloodgraph.ppm", totalCycles/quitAfter);
-	      //this should exit!!!!!
-	      //gInterrupted = 1;
-	      //this will exit the thread
-	      //exit_now(0);
-	    }
-	    else if (steadyStateExecutions > 1) {
-	      local dif = time_lo - lastSteadyStartCycle; 
-	      
-              //from now on, we are in the steady state
-	      gSteadyState = 1;
-
-
-	      totalCycles += dif;
-	      if (totalCycles < 0) {
-		printf("\n** Total Cycles Overflow **\n\n");
-	      }
-	      gWorkCountTotal += gWorkCount;
-	      if (gWorkCountTotal < 0) {
-		printf("\n** Total Work Count Overflow **\n\n");
-	      }
-	      gFpuCountTotal += gFpuCount;
-	      gMemCountTotal += gMemCount;
-	      gBrCountTotal += gBrCount;
-	      gAdminCountTotal += gAdminCount;
-	      gAluCountTotal += gAluCount;
-	      
-	      fprintf(outputFile, "%d %d %d\n", dif, (250*gFpuCount)/dif, gWorkCount);
-	    }	  
-	    //set the last steady state time
-	    lastSteadyStartCycle = time_lo;
-	    //reset the flops count and workCount
-	    gFpuCount = 0;
-	    gMemCount = 0;
-	    gBrCount = 0;
-	    gAdminCount = 0;
-	    gAluCount = 0;
-	    gWorkCount = 0;
-	  }
-	}
-	
-	if (print_type == 0xfff1) {		  
-	  printf("%d\n", value, value);
-
-	  fprintf(theFile, "%d\n", value, value);
-	  fflush(theFile);
-
-	}
-	else {
-	  if (print_type == 0xffff) {
-	    printf("%f\n", double(value));
-
-	    fprintf(theFile, "%f\n", double(value));
-	    fflush(theFile);
-	  }
-	  else {
-	    if (print_type == 0xfbad) {
-	      printf("program requested simulator pause\n");
-	      printf("type 'go()' to continue\n");
-
-	      fprintf(theFile, "program requested simulator pause\n");
-	      fprintf(theFile, "type 'go()' to continue\n");
-	      fflush(theFile);
-
-	      gInterrupted = 1;
-	    }
-	    else {
-	      printf("0x%x\n", value);
-
-	      fprintf(theFile, "0x%x\n", value);
-	      fflush(theFile);
-	    }
-	  }
-	}
-	yield;
-      }
-    }
-  }
 }
 
 fn close_bloodgraph() {

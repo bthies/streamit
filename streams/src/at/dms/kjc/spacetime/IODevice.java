@@ -48,7 +48,12 @@ public abstract class IODevice extends ComputeNode
     {
 	tiles.add(tile);
     }
-    
+
+    /**
+     * return the tile(s) associated with this iodevice
+     * so for a streaming dram it is the tiles that are mapped 
+     * to this dram
+     **/
     public RawTile[] getTiles() 
     {
 	return (RawTile[])tiles.toArray(new RawTile[0]);
@@ -67,7 +72,9 @@ public abstract class IODevice extends ComputeNode
 	    return rawChip.getTile(0, Y);
 	if (X == rawChip.getXSize())
 	    return rawChip.getTile(X - 1, Y);
-	else // Y == rawChip.getYSize()
+	if (Y == rawChip.getYSize())
 	    return rawChip.getTile(X, Y -1);
+	assert false : "invalid x, y coordinate for streaming dram";
+	return null;
     }
 }

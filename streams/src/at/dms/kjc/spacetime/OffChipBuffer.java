@@ -27,6 +27,9 @@ public class OffChipBuffer
     
     protected OffChipBuffer(TraceNode source, TraceNode dest)
     {
+	assert source != null && dest != null : 
+	    "source or dest cannot be null for an off chip buffer";
+
 	if ((source.isFilterTrace() && !dest.isOutputTrace()) ||
 	    (source.isOutputTrace() && !dest.isInputTrace()) ||
 	    (source.isInputTrace() && !dest.isFilterTrace()))
@@ -44,10 +47,16 @@ public class OffChipBuffer
 
     public boolean redundant() 
     {
-	//two cases
 	if (source.isInputTrace() && dest.isFilterTrace()) {
+	    //if this is a input->filter and no inputs then unnecessary
+	    if (((InputTraceNode)source).noInputs()) {
+		System.out.println("source: " + source + ", dest: " + dest + " size: " + size);
+		return true;
+	    }
+	    
 	    //if only one source to the input and the dram for the
 	    //previous buffer is the same then redunant
+	    
 	    OutputTraceNode out = ((InputTraceNode)source).getParent().getDepends()[0].getTail();
 	    if (((InputTraceNode)source).oneInput() &&
 		OffChipBuffer.getBuffer(out, source).getDRAM() == dram)
@@ -56,6 +65,10 @@ public class OffChipBuffer
 	    //one output and the dram is the same as the previous 
 	    if (((OutputTraceNode)source).oneOutput() &&
 		OffChipBuffer.getBuffer(source.getPrevious(), source).getDRAM() == dram)
+		return true;
+	} else if (source.isFilterTrace() && dest.isOutputTrace()) {
+	    //if this a filter->outputtrace and the output has no outputs
+	    if (((OutputTraceNode)dest).noOutputs())
 		return true;
 	}
 	return false;	
@@ -122,10 +135,6 @@ public class OffChipBuffer
 
     private void calculateSize() 
     {
-	if (redundant()) {
-	    size = Address.ZERO;
-	    return;
-	}	    
 	//we'll make it 32 byte aligned
 	if (source.isFilterTrace()) {
 	    //the size is the max of the multiplicities

@@ -44,7 +44,7 @@ public class RawTile extends ComputeNode {
     
     public void addIODevice(IODevice io) 
     {
-	assert IODevices.length < 1 : "Trying to add too many neighboring IO devices";
+	assert IODevices.length < 2 : "Trying to add too many neighboring IO devices";
 	IODevice[] newIOs = new IODevice[IODevices.length + 1];
 	for (int i = 0; i < IODevices.length; i++)
 	    newIOs[i] = IODevices[i];
@@ -127,32 +127,22 @@ public class RawTile extends ComputeNode {
     public void setComputes() {
 	computes = true;
     }
-    /*
-      public void addIODevice(IODevice io, String dir) 
-    {
-	ioDevices[numIODevices] = io;
-	ioDevDirection[numIODevices] = dir;
-	numIODevices++;
-    }
-    */    
- /*
-    public IODevice getIODevice(String dir) 
-    {
-	for (int i = 0; i < numIODevices; i++) {
-	    if (ioDevDirection[i].equals(dir)) 
-		return ioDevices[i];
-	}
-	Utils.fail("Cannot find io device in that direction.");
-	return null;
-    }
-    */   
-    
     public void printDram() 
     {
-	if (dram != null) 
-	    System.out.println("Tile: " + getTileNumber() + " -> port: "  + dram.getPort());
+	if (dram != null)
+	    System.out.print("Tile: " + getTileNumber() + " -> port: "  + dram.getPort() + " ");
 	else
-	    System.out.println("Tile: " + getTileNumber() + " -> null ");
+	    System.out.print("Tile: " + getTileNumber() + " -> null ");
+	if (IODevices.length > 0) {
+	    System.out.print("(neighbors: ");
+	    for (int i = 0; i < IODevices.length; i++) {
+		System.out.print("port " + IODevices[i].getPort());
+		if (i < IODevices.length - 1) 
+		    System.out.print(", ");
+	    }
+	    System.out.print(")");
+	}
+	System.out.println();
     }
     
     public static void printDramSetup(RawChip chip) 

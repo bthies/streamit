@@ -241,8 +241,7 @@ public class RawChip {
 	//add the north streaming drams
 	String dir = "N";	
 	for (i = 0; i < this.gXSize; i++) {
-	    devices [index] = new StreamingDram(this, index);
-						
+	    devices [index] = new StreamingDram(this, index);						
 	    index ++;
 	}
 	//add the east streaming drams

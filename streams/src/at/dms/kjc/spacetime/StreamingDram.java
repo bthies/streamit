@@ -24,16 +24,7 @@ public class StreamingDram extends IODevice
     StreamingDram(RawChip chip, int port)
     {
 	super(chip, port);
-	if (Y == -1)
-	    chip.getTile(X, 0).addIODevice(this);
-	else if (X == -1)
-	    chip.getTile(0, Y).addIODevice(this);
-	else if (X == rawChip.getXSize())
-	    chip.getTile(X - 1, Y).addIODevice(this);
-	else if (Y == rawChip.getYSize())
-	    chip.getTile(X, Y -1).addIODevice(this);
-	else 
-	    assert false : "invalid x, y coordinate for streaming dram";
+	getNeighboringTile().addIODevice(this);
     }
 
     public static StreamingDram getStrDram(Address addr, RawChip chip) 

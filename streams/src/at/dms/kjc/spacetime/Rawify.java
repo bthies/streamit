@@ -138,7 +138,7 @@ public class Rawify
 		input.getWeight(input.getSources()[i]) * 4;
 	    readBytes = Util.cacheLineDiv(readBytes);
 	    srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, init || primepump,
-								 readBytes, srcBuffer);
+										     readBytes, srcBuffer);
 	}
 
 	//generate the command to write to the dest of the input trace node

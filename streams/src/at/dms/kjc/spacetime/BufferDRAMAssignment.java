@@ -7,18 +7,28 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.Random;
 
 
 public class BufferDRAMAssignment
 {
+    private static Random rand;
+    
+    static 
+    {
+	rand = new Random(17);
+    }
+    
+
     /** 
      * Assign the buffers to ports
      **/
-    public static void run(ListIterator steadyTrav, RawChip chip) 
+    public static void run(LinkedList steadyList, RawChip chip) 
     {
-	//cycle thru the steady state trav...
-	//when we hit an output trace node
-	//assign its output buffers to 
+	ListIterator steadyTrav = steadyList.listIterator();
+	//first go thru the traversal and assign
+	//input->filter and filter->output buffers to drams 
+	//based on jasper's placement
 	while(steadyTrav.hasNext()) {
 	    Trace trace = (Trace)steadyTrav.next();
 	    TraceNode traceNode = trace.getHead();
@@ -27,11 +37,22 @@ public class BufferDRAMAssignment
 		//to a dram
 		if (traceNode.isInputTrace()) 
 		    inputFilterAssignment((InputTraceNode)traceNode, chip);
-		
 		//assign the buffer between the output trace node and the filter
 		if (traceNode.isOutputTrace())
 		    filterOutputAssignment((OutputTraceNode)traceNode, chip);
-		
+		traceNode = traceNode.getNext();
+	    }
+	    
+	}
+	
+	//cycle thru the steady state trav...
+	//when we hit an output trace node
+	//assign its output buffers to
+	steadyTrav = steadyList.listIterator();
+	while(steadyTrav.hasNext()) {
+	    Trace trace = (Trace)steadyTrav.next();
+	    TraceNode traceNode = trace.getHead();
+	    while (traceNode != null) {
 		//for each output trace node get assign
 		//its output buffers to ports
 		//based on the ordering given by assignment order
@@ -55,12 +76,32 @@ public class BufferDRAMAssignment
     
     private static void inputFilterAssignment(InputTraceNode input, RawChip chip) 
     {
+	FilterTraceNode filter = (FilterTraceNode)input.getNext();
 	
+	RawTile tile = chip.getTile(filter.getX(), filter.getY());
+	//the neighboring dram of the tile we are assigning this buffer to
+	int index = 0;
+	//if there is more than one neighboring dram, randomly pick one
+	if (tile.getIODevices().length > 1) {
+	    index = rand.nextInt(tile.getIODevices().length);
+	}
+	//assign the buffer to the dram
+	OffChipBuffer.getBuffer(input, input.getNext()).setDRAM((StreamingDram)tile.getIODevices()[index]);
     }
 
-    private static void filterOutputAssignment(OutputTraceNode input, RawChip chip) 
+    private static void filterOutputAssignment(OutputTraceNode output, RawChip chip) 
     {
+	FilterTraceNode filter = (FilterTraceNode)output.getPrevious();
 	
+	RawTile tile = chip.getTile(filter.getX(), filter.getY());
+	//the neighboring dram of the tile we are assigning this buffer to
+	int index = 0;
+	//if there is more than one neighboring dram, randomly pick one
+	if (tile.getIODevices().length > 1) {
+	    index = rand.nextInt(tile.getIODevices().length);
+	}
+	//assign the buffer to the dram
+	OffChipBuffer.getBuffer(output.getPrevious(), output).setDRAM((StreamingDram)tile.getIODevices()[index]);	
     }
     
 
@@ -89,7 +130,7 @@ public class BufferDRAMAssignment
 	    //in the iterator
 	    Iterator portOrder = assignmentOrder(output, inputT, chip);
 	    while (portOrder.hasNext()) {
-		StreamingDram current = (StreamingDram)portOrder.next();
+		StreamingDram current = ((PortDistance)portOrder.next()).dest;
 		//assign the current dram to this input trace node
 		//and exit the inner loop
 		if (unassignedPorts.contains(current)) {

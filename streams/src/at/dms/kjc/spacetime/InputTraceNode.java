@@ -84,5 +84,9 @@ public class InputTraceNode extends TraceNode
     {
 	return (sources.length == 1);
     }
+    public boolean noInputs() 
+    {
+	return sources.length == 0;
+    }
     
 }

@@ -408,17 +408,18 @@ public class SpaceTimeBackend
 	if(true&&REAL) {
 	    //mgordon's stuff
 	    System.out.println("Building Trace Traversal");
-	    ListIterator initTrav = TraceTraversal.getTraversal(traceForrest).listIterator();    
-	    ListIterator steadyTrav = TraceTraversal.getTraversal(traceForrest).listIterator();    
+	    LinkedList initList = TraceTraversal.getTraversal(traceForrest);
+	    LinkedList steadyList = TraceTraversal.getTraversal(traceForrest);
+	    
 		
 	    //assign the buffers not assigned by Jasp to drams
-	    BufferDRAMAssignment.run(steadyTrav, rawChip);
+	    BufferDRAMAssignment.run(steadyList, rawChip);
 	    //create the raw execution code and switch code for the initialization phase
 	    System.out.println("Creating Initialization Stage");
-	    Rawify.run(initTrav, rawChip, true); 
+	    Rawify.run(initList.listIterator(), rawChip, true); 
 	    //create the raw execution code and switch for the steady-state
 	    System.out.println("Creating Steady-State Stage");
-	    Rawify.run(steadyTrav, rawChip, false);
+	    Rawify.run(steadyList.listIterator(), rawChip, false);
 	    //communicate the addresses for the off-chip buffers
 	    if (!KjcOptions.magicdram) {
 		//so right now, this pass does not communicate addresses

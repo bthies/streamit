@@ -127,6 +127,12 @@ public class OutputTraceNode extends TraceNode
 	return (weights.length == 1 &&
 		dests[0].length == 1);
     }
+
+    public boolean noOutputs() 
+    {
+	return weights.length == 0;
+    }
+    
     
     /** return an iterator that iterates over the 
      * inputtracenodes in descending order of the number

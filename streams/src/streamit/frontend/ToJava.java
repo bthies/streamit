@@ -152,6 +152,7 @@ class ToJava
                 StreamItLex lexer = new StreamItLex(dis);
                 parser = new StreamItParserFE(lexer);
                 prog = parser.program();
+                prog = (Program)prog.accept(new NameAnonymousFunctions());
                 String javaOut = (String)prog.accept(new NodesToJava(null));
                 outWriter.write(javaOut);
             }

@@ -8,11 +8,6 @@
   <implementations>  
     <impl lang="StreamIt">
       <file>BatcherSort.str</file>
-      <desc>Original implementation</desc>
-    </impl>
-    <impl lang="StreamIt">
-      <file>AutoBatcherSort.str</file>
-      <desc>Slightly more fine-grained implementation</desc>
     </impl>
   </implementations>
 </benchmark>

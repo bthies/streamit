@@ -141,6 +141,7 @@ public class SwitchCode extends at.dms.util.Utils
     //we must get the constants from the processor
     private static void toASM(String ins, Repetition[] compressMe, FileWriter fw) throws Exception
     {
+        int seq = 0;
 	StringTokenizer t = new StringTokenizer(ins, "\n");
 
 	if (compressMe == null) {
@@ -159,13 +160,14 @@ public class SwitchCode extends at.dms.util.Utils
 		counter++;
 		int repetitions = 1;
 		for (int i = 0; i < compressMe.length; i++) {
-		    if (counter == compressMe[i].line) {
+		    if (compressMe[i].hasLine(counter)) {
 			repetitions = compressMe[i].repetitions;
 			fw.write("\tmove $3, $" + i + "\n");
-			fw.write("seq_start" + i + ":\n");
+			fw.write("seq_start" + seq + ":\n");
 			//fw.write("\tnop\t" + current + "\n");
 			//fw.write("\tbnezd $3, $3, seq_start" + i + "\n");
-			fw.write("\tbnezd $3, $3, seq_start" + i + "\t" + current + "\n");
+			fw.write("\tbnezd $3, $3, seq_start" + seq + "\t" + current + "\n");
+                        seq++;
 			break;
 		    }
 		}
@@ -186,15 +188,18 @@ public class SwitchCode extends at.dms.util.Utils
     //class used to encapsulate a sequence: the starting line and the repetition count
     static class Repetition 
     {
-	public int line;
+	public Set lines;
 	public int repetitions;
 	public int length;
 	public Repetition(int l, int r) 
 	{
-	    line = l;
+            lines = new HashSet();
+            lines.add(new Integer(l));
 	    repetitions = r;
 	    // length = len;
 	}
+        public void addLine(int l) { lines.add(new Integer(l)); }
+        public boolean hasLine(int l) { return lines.contains(new Integer(l)); }
     }
     
     private static int getCodeLength(String str) 
@@ -229,25 +234,36 @@ public class SwitchCode extends at.dms.util.Utils
 	    }
 	    else {
 		//see if the repetition count is larger than any of the previous
-		for (int i = 0; i < 3; i++) {
-		    if (repetitions > threeBiggest[i].repetitions) {
-			threeBiggest[i] = new Repetition(line, repetitions); 
-			break;
-		    }
-		}
+                addToThreeBiggest(threeBiggest, line, repetitions);
 		repetitions = 1;
 		last = current;
 		line = counter;
 	    }
 	}
 	//see if the repetition count is larger for the last sequence
+        addToThreeBiggest(threeBiggest, line, repetitions);
+	return threeBiggest;
+    }
+
+    private static void addToThreeBiggest(Repetition[] threeBiggest,
+                                          int line,
+                                          int repetitions)
+    {
 	for (int i = 0; i < 3; i++) {
+            if (repetitions == threeBiggest[i].repetitions)
+            {
+                threeBiggest[i].addLine(line);
+                break;
+            }
 	    if (repetitions > threeBiggest[i].repetitions) {
-		threeBiggest[i] = new Repetition(line, repetitions); 
+                // shuffle the remainder down:
+                for (int j = i + 1; j < 3; j++)
+                    threeBiggest[j] = threeBiggest[j-1];
+                // add the new one:
+		threeBiggest[i] = new Repetition(line, repetitions);
 		break;
 	    }
 	}
-	return threeBiggest;
     }
       
    private static String[] getStringArray(StringTokenizer st) {

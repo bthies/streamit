@@ -112,7 +112,6 @@ public class FusePipe {
 		     (SIRFilter)pipe.get(end));
 		numEliminated += end-start;
 		start = start + 1;
-		System.err.println("Fusing " + (end-start+1) + " Pipeline filters!");
 	    } else {
 		start = end + 1;
 	    }
@@ -226,6 +225,7 @@ public class FusePipe {
 	SIRPipeline parent = (SIRPipeline)first.getParent();
 	// make a list of the filters to be fused
 	List filterList = parent.getChildrenBetween(first, last);
+	System.err.println("Fusing " + (filterList.size()) + " Pipeline filters.");
 	// fuse the filters
 	SIRFilter fused = fuse(filterList);
 	// return the fused filter

@@ -183,6 +183,7 @@ public class RefactorSplitJoin {
      * Given a split-join sj with a duplicate splitter, raise any
      * children of sj that also have duplicate splitters, provided
      * that there is no buffering required for the child's outputs.
+     * Returns whether or not any raising was done.
      *
      * Good: (outputs A1, A2, B, B)
      *
@@ -212,15 +213,16 @@ public class RefactorSplitJoin {
      *      RR(1)
      *        |
      */
-    public static SIRSplitJoin raiseDupDupSJChildren(SIRSplitJoin sj)
+    public static boolean raiseDupDupSJChildren(SIRSplitJoin sj)
     {
+	boolean didRaising = false;
         // Check that sj's splitter is duplicate:
         if (sj.getSplitter().getType() != SIRSplitType.DUPLICATE)
-            return sj;
+            return false;
         // For sanity, confirm that we have a round-robin joiner.
         if (sj.getJoiner().getType() != SIRJoinType.ROUND_ROBIN &&
             sj.getJoiner().getType() != SIRJoinType.WEIGHTED_RR)
-            return sj;
+            return false;
         int[] joinWeights = sj.getJoiner().getWeights();
         
         // Whee.  Let's look at sj's children:
@@ -244,6 +246,7 @@ public class RefactorSplitJoin {
             // Okay, we can raise the child.  This involves setting a new
             // (weighted round robin) joiner, and moving the child's children
             // into sj.  Do the joiner first:
+	    didRaising = true;
             JExpression[] oldWeights = sj.getJoiner().getInternalWeights();
             JExpression[] newWeights =
                 new JExpression[sj.size() + sjChild.size() - 1];
@@ -277,6 +280,6 @@ public class RefactorSplitJoin {
             sj.setJoiner(newJoiner);
         }
 
-        return sj;
+        return didRaising;
     }
 }

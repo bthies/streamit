@@ -63,13 +63,13 @@ class BeamFormer extends Filter
 
     for (i = 0;  i < numberOfBeams; i++)
     {
-      for (j = 0; i < numberOfSamples; i++)
+      for (j = 0; j < numberOfSamples; j++)
       {
         float out = 0;
-        for (k = 0; k < numberOfChannels; i++)
+        for (k = 0; k < numberOfChannels; k++)
         {
-          out += beamFormingWeights[i*numberOfChannels+k]*
-	    inputData[k*numberOfSamples+j];
+          out += (beamFormingWeights[i*numberOfChannels+k]) *
+	    (inputData[k*numberOfSamples+j]);
         }
         output.pushFloat(out);
       }

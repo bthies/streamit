@@ -157,6 +157,12 @@ public class SplitJoin
         ERROR("Not implemented yet.");
     }
 
+    public void registerConstraint(P2PPortal portal)
+    {
+        ERROR ("You cannot have SplitJoin as the lowest common parent!");
+    }
+    
+    
     Restrictions restrictions;
     final DLList initRestrictedChildren = new DLList();
     int numInitialRestrictions = 0;

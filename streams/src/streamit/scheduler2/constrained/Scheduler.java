@@ -17,8 +17,11 @@
 package streamit.scheduler2.constrained;
 
 import streamit.scheduler2.iriter.Iterator;
-import streamit.scheduler2.base.StreamInterface;
 import streamit.scheduler2.SDEPData;
+import streamit.scheduler2.Schedule;
+
+import streamit.misc.OMap;
+import streamit.misc.OMapIterator;
 
 public class Scheduler extends streamit.scheduler2.Scheduler
 {
@@ -29,8 +32,16 @@ public class Scheduler extends streamit.scheduler2.Scheduler
     {
         super(_root);
 
-        factory =  new ConstrainedStreamFactory(this);
-        rootStream = factory.newFrom(root, null);
+        factory = new ConstrainedStreamFactory(this);
+        rootStream =
+            (
+                streamit
+                    .scheduler2
+                    .constrained
+                    .StreamInterface)factory
+                    .newFrom(
+                root,
+                null);
     }
 
     public void computeSchedule()
@@ -42,6 +53,9 @@ public class Scheduler extends streamit.scheduler2.Scheduler
 
         initSchedule = rootStream.getInitSchedule();
         steadySchedule = rootStream.getSteadySchedule();
+
+        initSchedule = removeMsgs(initSchedule);
+        steadySchedule = removeMsgs(steadySchedule);
     }
 
     public SDEPData computeSDEP(Iterator src, Iterator dst)
@@ -59,17 +73,71 @@ public class Scheduler extends streamit.scheduler2.Scheduler
         Iterator src,
         Iterator dst,
         int min,
-        int max)
+        int max,
+        Object handlerFunction)
     {
         ERROR("Not implemented");
     }
 
+    final OMap subNoMsgs = new OMap();
+
     public void addUpstreamConstraint(
-        Iterator src,
-        Iterator dst,
+        Iterator upstream,
+        Iterator downstream,
         int min,
-        int max)
+        int max,
+        Object handlerFunction)
     {
-        ERROR("Not implemented");
+        LatencyGraph graph = factory.getLatencyGraph();
+        Filter upstreamFilter = (Filter)factory.newFrom(upstream, null);
+        LatencyNode srcNode = upstreamFilter.getLatencyNode();
+        LatencyNode dstNode =
+            ((Filter)factory.newFrom(downstream, null)).getLatencyNode();
+
+        StreamInterface parent =
+            graph.findLowestCommonAncestor(srcNode, dstNode);
+
+        P2PPortal portal =
+            new P2PPortal(
+                true,
+                srcNode,
+                dstNode,
+                min,
+                max,
+                parent,
+                upstreamFilter,
+                upstream,
+                handlerFunction);
+        parent.registerConstraint(portal);
+        subNoMsgs.insert(portal.getPortalMessageCheckPhase().getSchedule(), null);
+    }
+
+    Schedule removeMsgs(Schedule sched)
+    {
+        // maybe I've already been processed?
+        OMapIterator subNoMsgsSched = subNoMsgs.find(sched);
+        if (!subNoMsgsSched.equals(subNoMsgs.end()))
+        {
+            return (Schedule)subNoMsgsSched.getData();
+        }
+        
+        if (sched.isBottomSchedule()) return sched;
+        
+        // nope - recursively go through the schedules and construct
+        // a new set without any nulls :)
+        Schedule newSched = new Schedule (sched.getStream());
+        for (int i=0;i<sched.getNumPhases();i++)
+        {
+            Schedule newSubSched = removeMsgs (sched.getSubSched(i));
+            if (newSubSched != null)
+            {
+                int nTimes = sched.getSubSchedNumExecs(i);
+                newSched.addSubSchedule(newSubSched, nTimes);
+            }
+        }
+        
+        subNoMsgs.insert(sched, newSched);
+
+        return newSched;
     }
 }

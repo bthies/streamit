@@ -133,25 +133,31 @@ public class Filter
         int nDataAvailable)
     {
         PhasingSchedule phase = new PhasingSchedule(this);
+        boolean noMoreData = false;
 
-        no_more_data:
-        while (restrictions.getBlockingRestriction(getLatencyNode())
-            == null)
+        while (!noMoreData
+            && restrictions.getBlockingRestriction(getLatencyNode()) == null)
         {
             Restriction strongestRestriction =
                 restrictions.getStrongestRestriction(getLatencyNode());
-                
-            int nAllowedPhases = (strongestRestriction != null ?
-                strongestRestriction.getNumAllowedExecutions() : -1);
+
+            int nAllowedPhases =
+                (strongestRestriction != null
+                    ? strongestRestriction.getNumAllowedExecutions()
+                    : -1);
 
             // BUGBUG this can DEFINITELY be a LOT more efficient!
             int nExecutions = 0;
-            while (strongestRestriction == null || nAllowedPhases > nExecutions)
+            while (strongestRestriction == null
+                || nAllowedPhases > nExecutions)
             {
                 PhasingSchedule schedPhase =
                     getPhaseSchedule(nCurrentPhase);
                 if (schedPhase.getOverallPeek() > nDataAvailable)
-                    break no_more_data;
+                {
+                    noMoreData = true;
+                    break;
+                }
 
                 phase.appendPhase(schedPhase);
                 nDataAvailable -= schedPhase.getOverallPop();
@@ -191,27 +197,30 @@ public class Filter
             restrictions.add(restriction);
         }
     }
-    
+
     boolean isFilterDoneSteadyState = false;
 
     public void createSteadyStateRestrictions(int streamNumExecs)
     {
         NodeSteadyRestriction restriction =
-            new NodeSteadyRestriction(getLatencyNode (), streamNumExecs, this);
+            new NodeSteadyRestriction(
+                getLatencyNode(),
+                streamNumExecs,
+                this);
         restrictions.add(restriction);
     }
-    
-    public void doneSteadyState (LatencyNode node)
+
+    public void doneSteadyState(LatencyNode node)
     {
-        ASSERT (node == getLatencyNode ());
+        ASSERT(node == getLatencyNode());
         isFilterDoneSteadyState = true;
     }
-    
-    public boolean isDoneSteadyState ()
+
+    public boolean isDoneSteadyState()
     {
         return isFilterDoneSteadyState;
     }
-    
+
     public void registerNewlyBlockedSteadyRestriction(Restriction restriction)
     {
         // this should only happen if a filter sends a msg to itself!

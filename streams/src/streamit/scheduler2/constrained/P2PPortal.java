@@ -1,5 +1,9 @@
 package streamit.scheduler2.constrained;
 
+import streamit.scheduler2.hierarchical.PhasingSchedule;
+import streamit.scheduler2.iriter.Iterator;
+import streamit.scheduler2.Schedule;
+
 public class P2PPortal extends streamit.misc.AssertedClass
 {
     final LatencyNode upstreamNode, downstreamNode;
@@ -7,11 +11,15 @@ public class P2PPortal extends streamit.misc.AssertedClass
     final int minLatency;
     final int maxLatency;
     final StreamInterface parentStream;
+    final PhasingSchedule messageCheckPhase;
 
-    P2PPortal(
+    public P2PPortal(
         boolean _isUpstreamPortal,
         LatencyNode _upstreamNode,
-        LatencyNode _downstreamNode, int _minLatency, int _maxLatency, StreamInterface _parentStream)
+        LatencyNode _downstreamNode,
+        int _minLatency,
+        int _maxLatency,
+        StreamInterface _parentStream)
     {
         isUpstreamPortal = _isUpstreamPortal;
         upstreamNode = _upstreamNode;
@@ -19,6 +27,34 @@ public class P2PPortal extends streamit.misc.AssertedClass
         minLatency = _minLatency;
         maxLatency = _maxLatency;
         parentStream = _parentStream;
+        messageCheckPhase = null;
+    }
+
+    public P2PPortal(
+        boolean _isUpstreamPortal,
+        LatencyNode _upstreamNode,
+        LatencyNode _downstreamNode,
+        int _minLatency,
+        int _maxLatency,
+        StreamInterface _parentStream,
+        StreamInterface receiverStream,
+        Iterator receiverStreamIter,
+        Object workFunction)
+    {
+        isUpstreamPortal = _isUpstreamPortal;
+        upstreamNode = _upstreamNode;
+        downstreamNode = _downstreamNode;
+        minLatency = _minLatency;
+        maxLatency = _maxLatency;
+        parentStream = _parentStream;
+
+        messageCheckPhase =
+            new PhasingSchedule(
+                receiverStream,
+                new Schedule(workFunction, receiverStreamIter),
+                0,
+                0,
+                0);
     }
 
     public boolean isDownstream()
@@ -54,5 +90,10 @@ public class P2PPortal extends streamit.misc.AssertedClass
     public StreamInterface getParent()
     {
         return parentStream;
+    }
+    public PhasingSchedule getPortalMessageCheckPhase()
+    {
+        ASSERT (messageCheckPhase);
+        return messageCheckPhase;
     }
 }

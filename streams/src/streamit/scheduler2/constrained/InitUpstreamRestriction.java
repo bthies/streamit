@@ -57,7 +57,13 @@ public class InitUpstreamRestriction extends Restriction
             // upstream, positive latency
             ASSERT(portal.getMinLatency() >= 0);
 
-            ERROR("not implemented");
+            // this type of portal does not cause me to have to execute
+            // the upstream filter a certain # of times before being
+            // ready to correctly process messages for this portal.
+            // that means that I can just set my max executions to 0,
+            // and get removed immediately :)
+            
+            setMaxExecutions (0);
         }
     }
 

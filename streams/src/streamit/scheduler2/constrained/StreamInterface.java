@@ -85,6 +85,11 @@ public interface StreamInterface
      */
     public void doneSteadyState (LatencyNode node);
 
+    /**
+     * Inform a stream that is has to take care of a constraint. 
+     */
+    public void registerConstraint(P2PPortal portal);
+    
     public PhasingSchedule getNextPhase(
         Restrictions restrs,
         int nDataAvailable);

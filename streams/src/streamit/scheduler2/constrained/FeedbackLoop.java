@@ -169,6 +169,11 @@ public class FeedbackLoop
     
 
 
+    public void registerConstraint(P2PPortal portal)
+    {
+        ERROR ("not implemented");
+    }
+    
     public void createSteadyStateRestrictions(int streamNumExecs)
     {
         ERROR ("not implemented");

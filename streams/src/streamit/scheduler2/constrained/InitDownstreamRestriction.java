@@ -19,8 +19,6 @@ public class InitDownstreamRestriction extends Restriction
 
         sdep = _sdep;
         parent = _parent;
-
-        ERROR("not implemented");
     }
 
     public boolean notifyExpired()

@@ -136,6 +136,14 @@ public class Pipeline
         int minLatency = portal.getMinLatency();
         int maxLatency = portal.getMaxLatency();
 
+        // make sure that I'm actually the lowest common ancestor of
+        // these two nodes!
+        ASSERT(
+            latencyGraph.findLowestCommonAncestor(
+                portal.getUpstreamNode(),
+                portal.getDownstreamNode())
+                == this);
+
         // also get the SDEP function for this portal
         SDEPData sdep = null;
         try
@@ -156,7 +164,6 @@ public class Pipeline
         }
 
         Pair oldSDEP = portal2sdep.insert(portal, sdep);
-
     }
 
     Restrictions restrictions;
@@ -270,6 +277,9 @@ public class Pipeline
         SteadyDownstreamRestriction downstreamRestriction =
             new SteadyDownstreamRestriction(portal, sdep, this);
 
+        upstreamRestriction.useDownstreamRestriction(downstreamRestriction);
+        downstreamRestriction.useUpstreamRestriction(upstreamRestriction);
+
         // these will automatically remove the initialization restrictions
         // from the restrictions queues
         restrictions.add(upstreamRestriction);
@@ -315,14 +325,20 @@ public class Pipeline
             steadyStateRestrictedChildren.pushBack(child);
         }
 
+        // flush the "newlyblockedrestrictions"
+        {
+            while (!newlyBlockedRestrictions.empty())
+                newlyBlockedRestrictions.popFront();
+        }
+
         checkForAllMessagesNow = true;
     }
 
-    public void doneSteadyState (LatencyNode node)
+    public void doneSteadyState(LatencyNode node)
     {
-        ERROR ("Pipelines do not own any nodes to have steady state!");
+        ERROR("Pipelines do not own any nodes to have steady state!");
     }
-    
+
     public boolean isDoneSteadyState()
     {
         while (!steadyStateRestrictedChildren.empty())
@@ -392,12 +408,11 @@ public class Pipeline
             }
         }
 
-        for (int nChild = 0; nChild < getNumChildren(); nChild++)
+        boolean hadNewBlockedRestrictions = false;
+        do
         {
-            boolean hadNewBlockedRestrictions;
-            do
+            for (int nChild = 0; nChild < getNumChildren(); nChild++)
             {
-                hadNewBlockedRestrictions = false;
                 StreamInterface child = getConstrainedChild(nChild);
 
                 PhasingSchedule childPhase =
@@ -409,23 +424,25 @@ public class Pipeline
                     + 1] += childPhase.getOverallPush();
 
                 phase.appendPhase(childPhase);
+            };
 
-                while (!newlyBlockedRestrictions.empty())
-                {
-                    ERROR("not tested");
-                    hadNewBlockedRestrictions = true;
+            hadNewBlockedRestrictions = false;
 
-                    Restriction restriction =
-                        (Restriction)newlyBlockedRestrictions.front().get();
-                    PhasingSchedule msgPhase = restriction.checkMsg();
-                    if (msgPhase != null)
-                        phase.appendPhase(msgPhase);
+            while (!newlyBlockedRestrictions.empty())
+            {
+                hadNewBlockedRestrictions = true;
 
-                    newlyBlockedRestrictions.popFront();
-                }
+                Restriction restriction =
+                    (Restriction)newlyBlockedRestrictions.front().get();
+                PhasingSchedule msgPhase = restriction.checkMsg();
+                if (msgPhase != null)
+                    phase.appendPhase(msgPhase);
+
+                newlyBlockedRestrictions.popFront();
             }
-            while (hadNewBlockedRestrictions);
+
         }
+        while (hadNewBlockedRestrictions);
 
         return phase;
     }

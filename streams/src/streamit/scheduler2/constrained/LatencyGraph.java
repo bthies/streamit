@@ -55,7 +55,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         return ancestors;
     }
 
-    StreamInterface findLowestCommonAncestor(
+    public StreamInterface findLowestCommonAncestor(
         LatencyNode src,
         LatencyNode dst)
     {

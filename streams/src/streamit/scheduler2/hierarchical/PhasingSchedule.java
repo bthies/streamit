@@ -229,7 +229,7 @@ public class PhasingSchedule extends DestroyedClass
      * get a Schedule that corresponds to this phasing schedule
      * @return corresponding Schedule
      */
-    Schedule getSchedule()
+    public Schedule getSchedule()
     {
         // is this phasing schedule just a wrapper for a real schedule?
         if (schedule != null)

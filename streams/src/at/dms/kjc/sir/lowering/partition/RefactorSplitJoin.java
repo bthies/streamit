@@ -5,11 +5,123 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
-import at.dms.kjc.sir.lowering.fusion.Lifter;
+import at.dms.kjc.sir.lowering.fusion.*;
 import java.util.List;
 import java.util.HashMap;
 
 public class RefactorSplitJoin {
+
+    /**
+     * Converts <sj> to a pipeline, where the left-most children of
+     * the <sj> are the top-most elements of the pipeline.  Initial
+     * input is passed through so that lower stages of the pipe can
+     * operate on it.
+     *
+     * Only works on splitjoins that have filters for children, that
+     * these filters have an integral pop/push ratio (this could
+     * possibly be lifted with more clever scheduling) and that have
+     * the same input and output type.  Otherwise this returns the
+     * original <sj>.
+     */
+    public static SIRStream convertToPipeline(SIRSplitJoin sj) {
+	if (sj.getInputType()!=sj.getOutputType()) {
+	    return sj;
+	}
+	// only deal with filters
+	for (int i=0; i<sj.size(); i++) {
+	    if (sj.get(i) instanceof SIRFilter) {
+		// for now, require that the pop/push ratio is an
+		// integer.
+		if ((((SIRFilter)sj.get(i)).getPopInt() % ((SIRFilter)sj.get(i)).getPushInt()) !=0) {
+		    return sj;
+		}
+	    } else { 
+		return sj;
+	    }
+	}
+	// make result pipe
+	SIRPipeline pipe = new SIRPipeline(sj.getParent(),
+					   sj.getIdent() +"_ToPipe",
+					   JFieldDeclaration.EMPTY(),
+					   JMethodDeclaration.EMPTY());
+	pipe.setInit(SIRStream.makeEmptyInit());
+	// clone the children <size> times.  Then, in the i'th child
+	// of the resulting pipeline, replace all elements except the
+	// i'th child of the splitjoin with an identity.  Set the
+	// split weights of children 0..i-1 (inclusive) to the join
+	// weights of the original; the rest to the split weights of
+	// the original.  Set the join weights of children 0..i
+	// (inclusive) to the join rates of the original; set the rest
+	// of thqe join weights to the split rates of hte original.
+	for (int i=0; i<sj.size(); i++) {
+	    SIRSplitJoin child = new SIRSplitJoin(pipe,
+						  sj.getIdent() + "_Fiss" + i,
+						  JFieldDeclaration.EMPTY(),
+						  JMethodDeclaration.EMPTY());
+	    child.setInit(SIRStream.makeEmptyInit());
+	    // make split weights, join weights
+	    JExpression[] jwOrig = sj.getJoiner().getInternalWeights();
+	    JExpression[] swOrig = sj.getSplitter().getInternalWeights();
+	    JExpression[] jw = new JExpression[sj.size()];
+	    JExpression[] sw = new JExpression[sj.size()];
+	    // in first splitjoin, do computation of left-most child,
+	    // and expand the other children by the <popPushRati>
+	    // factor that they need to compute their join weights
+	    // later
+	    int popPushRatio = ((SIRFilter)sj.get(i)).getPopInt() / ((SIRFilter)sj.get(i)).getPushInt();
+	    if (i==0) {
+		// add the one doing computation
+		child.add(sj.get(i));
+		sw[i] = swOrig[i];
+		jw[i] = jwOrig[i];
+		// add the placeholders -- expanding data to do lower down
+		for (int j=i+1; j<sj.size(); j++) {
+		    child.add(new SIRIdentity(sj.getInputType()));
+		    sw[j] = swOrig[j];
+		    jw[j] = new JIntLiteral(popPushRatio * ((JIntLiteral)jwOrig[j]).intValue());
+		}
+	    } else {
+		// add copies for preserving output values computed above
+		for (int j=0; j<i; j++) {
+		    child.add(new SIRIdentity(sj.getInputType()));
+		    sw[j] = jwOrig[j];
+		    jw[j] = jwOrig[j];
+		}
+		// add guy doing computation
+		child.add(sj.get(i));
+		sw[i] = new JIntLiteral(popPushRatio * ((JIntLiteral)jwOrig[i]).intValue());
+		jw[i] = jwOrig[i];
+		// add more placeholders
+		for (int j=i+1; j<sj.size(); j++) {
+		    child.add(new SIRIdentity(sj.getInputType()));
+		    sw[j] = new JIntLiteral(popPushRatio * ((JIntLiteral)jwOrig[j]).intValue());
+		    jw[j] = new JIntLiteral(popPushRatio * ((JIntLiteral)jwOrig[j]).intValue());
+		}
+	    }
+	    // set splitter, joiner... if <sj>'s splitter is
+	    // duplicate, then the first child splitter needs to be
+	    // duplicate.  But all subsequent children start with RR.
+	    if (i==0 && sj.getSplitter().getType()==SIRSplitType.DUPLICATE) {
+		child.setSplitter(SIRSplitter.create(child, SIRSplitType.DUPLICATE, sw));
+	    } else {
+		child.setSplitter(SIRSplitter.create(child, SIRSplitType.WEIGHTED_RR, sw));
+	    }
+	    child.setJoiner(SIRJoiner.create(child, SIRJoinType.WEIGHTED_RR, jw));
+	    // add to result pipeline
+	    pipe.add(child);
+	    // fuse child completely
+	    SIRStream result = FuseSplit.fuse(child);
+	    if (result instanceof SIRPipeline) {
+		FusePipe.fuse((SIRPipeline)result);
+	    }
+	}
+	// replace <sj> with <pipe> and return <pipe>
+	if (sj.getParent()!=null) {
+	    sj.getParent().replace(sj, pipe);
+	}
+	return pipe;
+    }
+
     /**
      * Given a splitjoin <sj> and a partitioning <partition> of its
      * children, mutates <sj> so that all the elements of each

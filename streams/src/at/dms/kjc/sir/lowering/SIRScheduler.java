@@ -1,7 +1,6 @@
 package at.dms.kjc.sir.lowering;
 
 import streamit.scheduler2.iriter.Iterator;
-import streamit.iriter.StreamFactory;
 import streamit.scheduler2.base.StreamInterface;
 import streamit.scheduler2.ScheduleBuffers;
 import streamit.scheduler2.Schedule;
@@ -184,7 +183,7 @@ public class SIRScheduler implements Constants {
      * Interface with the scheduler to get a schedule for <str>.
      */
     private static StreamInterface computeSchedule(SIRStream str) {
-	StreamFactory factory = new StreamFactory();
+	SIRStreamFactory factory = new SIRStreamFactory();
 	StreamInterface schedInterface = factory.newFrom(IterFactory.createIter(str));
 	schedInterface.computeSchedule();
 	return schedInterface;
@@ -534,5 +533,34 @@ public class SIRScheduler implements Constants {
 
 	// return reference to context of parent
 	return LoweringConstants.getStreamContext(parent);
+    }
+}
+
+/**
+ * Controls which scheduler is used for each of the stream constructs.
+ */
+public class SIRStreamFactory implements streamit.scheduler2.base.StreamFactory {
+
+    public StreamInterface newFrom(Iterator streamIter) {
+        if (streamIter.isFilter() != null) {
+            return new streamit.scheduler2.minlatency.Filter(streamIter.isFilter());
+        }
+
+        if (streamIter.isPipeline() != null) {
+            return new streamit.scheduler2.minlatency.Pipeline(streamIter.isPipeline(), this);
+        }
+        
+        if (streamIter.isSplitJoin() != null) {
+            return new streamit.scheduler2.minlatency.SplitJoin(streamIter.isSplitJoin(), this);
+        }
+
+        if (streamIter.isFeedbackLoop() != null) {
+            return new streamit.scheduler2.minlatency.FeedbackLoop(streamIter.isFeedbackLoop(), this);
+        }
+	
+	// not implemented yet
+	Utils.fail("Unimplemented stream: " + streamIter);
+
+        return null;
     }
 }

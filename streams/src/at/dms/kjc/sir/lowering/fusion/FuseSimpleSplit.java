@@ -319,10 +319,6 @@ public class FuseSimpleSplit {
 	    SIRStream child = sj.get(i);
 	    List params = sj.getParams(i);
 	    if (child.needsInit()) {
-		if (init==null) {
-		    StreamItDot.printGraph(sj, "debug.dot");
-		    StreamItDot.printGraph(sj.getParent(), "debug2.dot");
-		}
 		init.addStatement(new JExpressionStatement(null,
 							   new JMethodCallExpression(null, 
 										     new JThisExpression(null),

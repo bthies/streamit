@@ -139,7 +139,6 @@ public class FusePipe {
 	    internalFuse(parent);
 	} else {
 	    // otherwise, create a sub-pipeline to contain first..last.
-	    StreamItDot.printGraph(parent, "debug1.dot");
 	    SIRPipeline newPipe = new SIRPipeline(parent, parent.getIdent() + "_Cont",
 						  JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
 	    for (int i=lastIndex; i>=firstIndex; i--) {
@@ -147,11 +146,8 @@ public class FusePipe {
 		parent.remove(i);
 	    }
 	    parent.add(firstIndex, newPipe);
-	    StreamItDot.printGraph(parent, "debug2.dot");
 	    internalFuse(newPipe);
-	    StreamItDot.printGraph(parent, "debug3.dot");
 	    Lifter.eliminatePipe(newPipe);
-	    StreamItDot.printGraph(parent, "debug4.dot");
 	}
     }
 

@@ -1,13 +1,15 @@
 package streamit;
 
+import java.util.*;
+import java.lang.reflect.*;
+
 // creates a split/join
 public class SplitJoin extends Stream
 {
-    public Channel input = null;
-    public Channel output = null;
-
-    Splitter splitter = null;
-    Joiner joiner = null;
+    Splitter splitter;
+    Joiner joiner;
+    
+    LinkedList outputStreams;
 
     public SplitJoin() 
     {
@@ -18,6 +20,9 @@ public class SplitJoin extends Stream
     {
         super(n);
     }
+    
+    // initializing IO will be handled by the Add function
+    public void InitIO () { }
 
     // specify the splitter
     public void UseSplitter(Splitter s) 
@@ -27,10 +32,21 @@ public class SplitJoin extends Stream
     }
 
     // specify the joiner
+    // must also add all the appropriate outputs to the joiner!
     public void UseJoiner(Joiner j) 
     {
         ASSERT (joiner == null && j != null);
         joiner = j;
+        
+        ListIterator iter;
+        iter = outputStreams.listIterator ();
+        while (iter.hasNext ())
+        {
+            Stream s = (Stream) iter.next ();
+            ASSERT (s != null);
+            
+            joiner.Add (s);
+        }
     }
 
     // add a stream to the parallel section between the splitter and the joiner
@@ -39,38 +55,65 @@ public class SplitJoin extends Stream
         Channel newInput = s.GetIOField ("input");
         Channel newOutput = s.GetIOField ("output");
         
-        if (input == null)
+        ASSERT (joiner == null);
+        
+        // figure out the input and output types
+        if (newInput != null)
         {
-            input = newInput;
-        } else 
-        if (newInput != null) 
-        {
-            // check that the input types agree
-            ASSERT (newInput.GetType ().getName ().equals (input.GetType ().getName ()));
+            if (input == null)
+            {
+                input = (Channel) newInput.clone ();
+                ASSERT (input != null);
+            } else {
+                // check that the input types agree
+                ASSERT (newInput.GetType ().getName ().equals (input.GetType ().getName ()));
+            }
         }
         
-        if (output == null)
+        if (newOutput != null)
         {
-            output = newOutput;
-        } else 
-        if (newOutput != null) 
-        {
-            // check that the output types agree
-            ASSERT (newOutput.GetType ().getName ().equals (output.GetType ().getName ()));
+            if (output == null)
+            {
+                output = (Channel) newOutput.clone ();
+                ASSERT (output != null);
+            } else {
+                // check that the output types agree
+                ASSERT (newOutput.GetType ().getName ().equals (output.GetType ().getName ()));
+            }
         }
         
+        // add the stream to the Split
         if (splitter != null)
         {
             splitter.Add (s);
         } else {
             ASSERT (newInput == null);
         }
-        
-        if (joiner != null) 
+
+        if (newOutput != null) outputStreams.add (s);
+    }
+    
+    void ConnectGraph ()
+    {
+        // connect the SplitJoin with the Split and the Join
+        if (input != null)
         {
-            joiner.Add (s);
-        } else {
-            ASSERT (newOutput == null);
+            ASSERT (splitter != null);
+            
+            splitter.SetIOField ("input", 0, input);
+            splitter.ConnectGraph ();
+        }
+        
+        if (output != null)
+        {
+            ASSERT (joiner != null);
+            
+            joiner.ConnectGraph ();
+            Channel outputs [] = joiner.GetIOFields ("output");
+            ASSERT (outputs != null && outputs.length == 1);
+            output = outputs [0];
+            ASSERT (output != null);
         }
     }
+    
 }

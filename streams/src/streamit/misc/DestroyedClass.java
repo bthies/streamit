@@ -17,7 +17,7 @@ public class DestroyedClass extends AssertedClass
     
     // The class initializer initializes thisClass
     // to the appropriate value
-    {
+    static {
         try
         {
             destroyedClass = Class.forName ("streamit.DestroyedClass");

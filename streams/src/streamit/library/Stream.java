@@ -133,7 +133,7 @@ public abstract class Stream extends Operator
     //    - the output from the last child is copied over
     //      to the Operator and the operation is finished
     
-    void ConnectGraph ()
+    public void ConnectGraph ()
     {
         // get my source.  If I don't have one, I'm a source.
         Stream source = this;
@@ -143,6 +143,12 @@ public abstract class Stream extends Operator
         // contains serially.  Go through this list and
         // setup the connections through channels:
         
+        // if I am a sink, add self to the list:
+        if (GetIOField ("output") == null)
+        {
+            AddSink ();
+        }
+
         try
         {
             ListIterator childIter;
@@ -157,7 +163,7 @@ public abstract class Stream extends Operator
                 Channel currentDestChannel = sink.GetIOField ("input");
                 
                 // make sure that the channels use the same data types
-                ASSERT (currentSourceChannel == null ^ currentDestChannel != null);
+                ASSERT ((currentSourceChannel == null) == (currentDestChannel == null));
                 ASSERT (currentSourceChannel == null || currentDestChannel == null ||
                         currentSourceChannel.GetType ().getName ().equals (currentDestChannel.GetType ().getName ()));
                 
@@ -180,13 +186,6 @@ public abstract class Stream extends Operator
                 // and setup for the next iteration
                 source = sink;
                 currentSourceChannel = source.GetIOField ("output");
-                
-                // if the current Operator is a sink, add it 
-                // to the list:
-                if (currentSourceChannel == null)
-                {
-                    sink.AddSink ();
-                }
             }
             
             if (currentSourceChannel != null)

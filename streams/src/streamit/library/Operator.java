@@ -30,10 +30,10 @@ class Operator extends DestroyedClass
     }
     
     // allSinks is used for scheduling the streaming graph
-    private static LinkedList allSinks;
-    private static HashSet fullChannels;
+    public static LinkedList allSinks;
+    public static HashSet fullChannels;
     
-    {
+    static {
         allSinks = new LinkedList ();
         fullChannels = new HashSet ();
     }
@@ -72,13 +72,10 @@ class Operator extends DestroyedClass
     	    Iterator fullChannel;
         	fullChannel = fullChannels.iterator ();
         
-	        while (fullChannel.hasNext ())
-	        {
-	        	Channel ch = (Channel) fullChannel.next ();
-	        	ASSERT (ch != null);
-	        	
-	        	ch.GetSink ().Work ();
-	        }
+            Channel ch = (Channel) fullChannel.next ();
+            ASSERT (ch != null);
+
+            ch.GetSink ().Work ();
 	     }
     }
     
@@ -92,6 +89,27 @@ class Operator extends DestroyedClass
 	{
 		fullChannels.remove (channel);
 	}
+
+    public static void PassOneData (Channel from, Channel to)
+    {
+        Class type = from.GetType ();
+        ASSERT (type == to.GetType ());
+        
+        if (type == Integer.TYPE)
+        {
+            to.PushInt (from.PopInt ());
+        } else
+        if (type == Character.TYPE)
+        {
+            to.PushChar (from.PopChar ());
+        } else
+        if (type == Double.TYPE)
+        {
+            to.PushDouble (from.PopDouble ());
+        } else {
+            to.Push (from.Pop ());
+        }
+    }
 
     // send a message to a handler that returns <stub> within <delay>
     // units of my input/output (to be specified more clearly...)
@@ -109,6 +127,11 @@ class Operator extends DestroyedClass
     
     // a prototype work function
     void Work () { }
+    
+    public void ConnectGraph () 
+    {
+        ASSERT (false);
+    }
 
     // ------------------------------------------------------------------
     // ------------------ all graph related functions -------------------

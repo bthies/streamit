@@ -9,6 +9,7 @@ public class Channel extends DestroyedClass implements Cloneable
 {
     Class type;
     Operator source = null, sink = null;
+    boolean declaredFull = false;
     
     LinkedList queue;
     
@@ -41,17 +42,19 @@ public class Channel extends DestroyedClass implements Cloneable
     	queue.addLast (o);
     	
     	// overflow at 50 chars in the queue
-    	if (queue.size () == 50)
+    	if (queue.size () > 100 && !declaredFull)
     	{
     		source.AddFullChannel (this);
+            declaredFull = true;
     	}
     }
     
     private Object Dequeue ()
     {
-    	if (queue.size () == 50)
+    	if (queue.size () < 50 && declaredFull)
     	{
     		source.RemoveFullChannel (this);
+            declaredFull = false;
     	}
     	
     	return queue.removeFirst ();

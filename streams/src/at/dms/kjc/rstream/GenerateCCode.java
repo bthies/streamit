@@ -61,11 +61,6 @@ public class GenerateCCode
 
 	arrayInits = new ConvertArrayInitializers();
 	
-	//remember all new array expression
-	newArrayExprs = new NewArrayExprs(top);
-
-	toRS = new FlatIRToRS(newArrayExprs);
-
 	visitGraph(top, true);
 
 	visitGraph(top, false);
@@ -118,6 +113,12 @@ public class GenerateCCode
     private void writeCompleteFile() 
     {
 	StringBuffer str = new StringBuffer();
+
+
+	//remember all new array expression
+	newArrayExprs = NewArrayExprs.doit(fields, functions, mainMethod);
+
+	toRS = new FlatIRToRS(newArrayExprs);
 
 	//if there are structures in the code, include
 	//the structure definition header files
@@ -231,8 +232,8 @@ public class GenerateCCode
      * is non-positive, just returns an empty statement.
      */
     public static JStatement makeForLoop(JStatement body,
-					  JLocalVariable var,
-					  JExpression count) {
+					JLocalVariable var,
+					JExpression count) {
 	// make init statement - assign zero to <var>.  We need to use
 	// an expression list statement to follow the convention of
 	// other for loops and to get the codegen right.
@@ -264,6 +265,28 @@ public class GenerateCCode
 
 	return new JForStatement(null, init, cond, incr, body, null);
     }
+
+    
+    /**
+     * Returns a do loop that uses local variable <var> to count
+     * <count> times with the body of the loop being <body>.  If count
+     * is non-positive, just returns an empty statement.
+     */
+    public static JStatement makeDoLoop(JStatement body,
+					JLocalVariable var,
+					JIntLiteral count) 
+    {
+	return 
+	    new JDoLoopStatement(var,
+			     new JIntLiteral(0),
+			     count,
+			     new JIntLiteral(1),
+			     body,
+			     true, //count up
+			     true); //zero increment
+    }
+
+
 
     public static JVariableDefinition newIntLocal(String prefix, int uniqueID, int initVal) 
     {

@@ -230,7 +230,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		    getVariable().equals(info.induction)) {
 		    //return right if plus
 		    if (comp.getOperation() == OPE_PLUS) {
-			info.incr = new JExpressionStatement(null, Util.passThruParens(comp.getRight()), null);
+			info.incr = Util.passThruParens(comp.getRight());
 		    } /*else if (comp.getOperation() == OPE_MINUS) {
 			info.incr = new JExpressionStatement(null, 
 							     new JUnaryMinusExpression(null, comp.getRight()),
@@ -256,7 +256,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 			getVariable().equals(info.induction)) {
 			//if plus return the right,
 			if (Util.passThruParens(ass.getRight()) instanceof JAddExpression)
-			    info.incr = new JExpressionStatement(null, Util.passThruParens(bin.getRight()), null);
+			    info.incr = Util.passThruParens(bin.getRight());
 			/*if (ass.getRight() instanceof JMinusExpression)
 			    info.incr = new JExpressionStatement(null,
 								 new JUnaryMinusExpression(null, bin.getRight()),
@@ -267,7 +267,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 			((JLocalVariableExpression)Util.passThruParens(bin.getRight())).
 			getVariable().equals(info.induction)) {
 			if (Util.passThruParens(ass.getRight()) instanceof JAddExpression)
-			    info.incr = new JExpressionStatement(null, Util.passThruParens(bin.getLeft()), null);
+			    info.incr = Util.passThruParens(bin.getLeft());
 			/*if (Util.passThruParens(ass.getRight()) instanceof JMinusExpression)
 			    info.incr = new JExpressionStatement(null, 
 								 new JUnaryMinusExpression
@@ -284,7 +284,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		((JLocalVariableExpression)Util.passThruParens(pre.getExpr())).
 		getVariable().equals(info.induction)) {
 		if (pre.getOper() == OPE_PREINC) {
-		    info.incr = new JExpressionStatement(null, new JIntLiteral(1), null);
+		    info.incr = new JIntLiteral(1);
 		} /*else {
 		    info.incr = new JExpressionStatement(null, new JIntLiteral(-1), null);
 		    }	*/	
@@ -297,7 +297,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		((JLocalVariableExpression)Util.passThruParens(post.getExpr())).
 		getVariable().equals(info.induction)) {
 		if (post.getOper() == OPE_POSTINC) {
-		    info.incr = new JExpressionStatement(null, new JIntLiteral(1), null);
+		    info.incr = new JIntLiteral(1);
 		} /*else {
 		    info.incr = new JExpressionStatement(null, new JIntLiteral(-1), null);
 		    }	*/	
@@ -382,7 +382,7 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		return;
 	    
 	    //set the initialization statement of the for loop...
-	    info.init = new JExpressionStatement(null, ass.getRight(), null);
+	    info.init = ass.getRight();
 	}
     }
     

@@ -5,8 +5,9 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import java.util.ListIterator;
 import at.dms.kjc.flatgraph.*;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Vector;
 import java.util.Iterator;
 import at.dms.util.*;
 
@@ -46,6 +47,28 @@ public class NewArrayExprs extends SLIRReplacingVisitor implements FlatVisitor
 	newArray = new HashMap();
 	node.accept(this, null, true);
     }
+
+    public NewArrayExprs()
+    {
+	arrayAssignments = new HashMap();
+	newArray = new HashMap();
+    }
+
+    public static NewArrayExprs doit(Vector fields, Vector functions, 
+			    JMethodDeclaration main) 
+    {
+	NewArrayExprs newArrayExprs = new NewArrayExprs();
+
+	for (int i = 0; i < fields.size(); i++)
+	    ((JFieldDeclaration)fields.get(i)).accept(newArrayExprs);
+	for (int i = 0; i < functions.size(); i++)
+	    ((JMethodDeclaration)functions.get(i)).accept(newArrayExprs);
+	
+	main.accept(newArrayExprs);
+	
+	return newArrayExprs;
+    }
+    
 
     public void visitNode(FlatNode node) 
     {

@@ -115,11 +115,11 @@ public class RemoveDeadDoLoops extends SLIRReplacingVisitor implements FlatVisit
     private int generateDoLoop(DoLoopInformation doInfo, JStatement body) 
     {
 	//make sure the init and the incr are integers
-	if (IDDoLoops.getExpression(doInfo.incr) instanceof JIntLiteral &&
-	    IDDoLoops.getExpression(doInfo.init) instanceof JIntLiteral) {
+	if (Util.passThruParens(doInfo.incr) instanceof JIntLiteral &&
+	    Util.passThruParens(doInfo.init) instanceof JIntLiteral) {
 
-	    JIntLiteral incr = (JIntLiteral)IDDoLoops.getExpression(doInfo.incr);
-	    JIntLiteral init = (JIntLiteral)IDDoLoops.getExpression(doInfo.init);
+	    JIntLiteral incr = (JIntLiteral)Util.passThruParens(doInfo.incr);
+	    JIntLiteral init = (JIntLiteral)Util.passThruParens(doInfo.init);
 	    JIntLiteral cond = null;
 
 	    //if the cond is a int literal we are set
@@ -130,7 +130,8 @@ public class RemoveDeadDoLoops extends SLIRReplacingVisitor implements FlatVisit
 		    
 	    //if the cond is a binary expression, try to fold it
 	    if (Util.passThruParens(doInfo.cond) instanceof JBinaryArithmeticExpression) {
-		JBinaryArithmeticExpression binExp = (JBinaryArithmeticExpression)Util.passThruParens(doInfo.cond);
+		JBinaryArithmeticExpression binExp = 
+		    (JBinaryArithmeticExpression)Util.passThruParens(doInfo.cond);
 		if (Util.passThruParens(binExp.getLeft()) instanceof JIntLiteral && 
 		    Util.passThruParens(binExp.getRight()) instanceof JIntLiteral) {
 		    JIntLiteral right = (JIntLiteral)Util.passThruParens(binExp.getRight());

@@ -29,7 +29,7 @@ import at.dms.util.SIRPrinter;
 public class FlatIRToRS extends ToC 
 {
     /** if true generate do loops when identified **/
-    public static final boolean GENERATE_DO_LOOPS = true;
+    public static final boolean GENERATE_DO_LOOPS = false;//true;
     /** the hashmap of for loops -> do loops **/   
     private HashMap doloops;
     /** the current filter we are visiting **/
@@ -327,44 +327,47 @@ public class FlatIRToRS extends ToC
     // STATEMENT
     // ----------------------------------------------------------------------   
 
+    public void visitDoLoopStatement(JDoLoopStatement self) 
+    {
+	assert self.countUp() : "Currently we only handle doloops with positive increment";
+	
+	print("doloop (");
+	print(self.getInduction().getType());
+	print(self.getInduction().getIdent());
+	print(" = ");
+	self.getInitValue().accept(this);
+	print("; ");
+	self.getCondValue().accept(this);
+	print("; ");
+	self.getIncrValue().accept(this);
+	print(") ");
+	
+	newLine();
+        pos += TAB_SIZE;
+        self.getBody().accept(this);
+        pos -= TAB_SIZE;
+        newLine();
+    }
+    
+
     /**
      * prints a for statement
      */
     public void visitForStatement(JForStatement self,
-                                  JStatement forInit,
-                                  JExpression forCond,
-                                  JStatement forIncr,
+                                  JStatement init,
+                                  JExpression cond,
+                                  JStatement incr,
                                   JStatement body) {
-	JStatement init;
-	JExpression cond;
-	JStatement incr;
+
+	if (GENERATE_DO_LOOPS && self instanceof JDoLoopStatement) {
+	    visitDoLoopStatement((JDoLoopStatement)self);
+	    return;
+	}
 	
 	//be careful, if you return prematurely, decrement me
 	forLoopHeader++;
 
-	//check if this is a do loop
-	if (GENERATE_DO_LOOPS && doloops.containsKey(self)) {
-	    DoLoopInformation doInfo = (DoLoopInformation)doloops.get(self);
-	    //System.out.println("Induction Var: " + doInfo.induction);
-	    //System.out.println("init exp: " + doInfo.init);		       
-	    //System.out.println("cond exp: " + doInfo.cond);
-	    //System.out.println("incr exp: " + doInfo.incr);
-		
-	    
-	    print("doloop (");
-	    print(doInfo.induction.getType());
-	    print(" ");
-	    print(doInfo.induction.getIdent());
-	    print(" = ");
-	    init = doInfo.init;
-	    cond = doInfo.cond;
-	    incr = doInfo.incr;
-	} else { //normal for loop
-	    print("for (");
-	    init = forInit;
-	    cond = forCond;
-	    incr = forIncr;
-	}
+	print("for (");
 	
 	if (init != null) {
 	    init.accept(this);

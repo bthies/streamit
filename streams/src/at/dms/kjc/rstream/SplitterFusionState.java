@@ -158,12 +158,12 @@ public class SplitterFusionState extends FusionState
 								   outgoingAccess,
 								   incomingAccess),
 					 null);
-	    loops.addStatement(GenerateCCode.makeForLoop(assignment,
+	    loops.addStatement(GenerateCCode.makeDoLoop(assignment,
 							 innerVar,
 							 new JIntLiteral(node.weights[i])));
 	}
 	
-	return GenerateCCode.makeForLoop(loops, induction, new JIntLiteral(mult));
+	return GenerateCCode.makeDoLoop(loops, induction, new JIntLiteral(mult));
     }
 				 
 
@@ -219,7 +219,7 @@ public class SplitterFusionState extends FusionState
 	    assigns.addStatement(assignment);
 	}
 	
-	return GenerateCCode.makeForLoop(assigns, induction, 
+	return GenerateCCode.makeDoLoop(assigns, induction, 
 					     new JIntLiteral(mult));
     }
     

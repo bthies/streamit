@@ -148,13 +148,13 @@ public class JoinerFusionState extends FusionState
 								   outgoingAccess,
 								   incomingAccess),
 					 null);
-	    innerLoops.addStatement(GenerateCCode.makeForLoop(assignment,
+	    innerLoops.addStatement(GenerateCCode.makeDoLoop(assignment,
 							      innerVar,
 							      new JIntLiteral(node.incomingWeights[i])));
 	    
 	}
 	
-	statements.addStatement(GenerateCCode.makeForLoop(innerLoops,
+	statements.addStatement(GenerateCCode.makeDoLoop(innerLoops,
 							   induction,
 							   new JIntLiteral(mult)));
 	

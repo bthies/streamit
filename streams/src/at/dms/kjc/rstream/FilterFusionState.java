@@ -266,7 +266,7 @@ public class FilterFusionState extends FusionState
 	JStatement body = new JExpressionStatement(null, copyExp, null);
 
 	// return a for loop that executes (peek-pop) times.
-	return GenerateCCode.makeForLoop(body,
+	return GenerateCCode.makeDoLoop(body,
 			   loopCounterRestore, 
 			   new JIntLiteral(peekBufferSize));
     }
@@ -323,7 +323,7 @@ public class FilterFusionState extends FusionState
 	JStatement body = new JExpressionStatement(null, copyExp, null);
 
 	// return a for loop that executes (peek-pop) times.
-	return GenerateCCode.makeForLoop(body,
+	return GenerateCCode.makeDoLoop(body,
 					 loopCounterBackup, 
 					 new JIntLiteral(peekBufferSize));
     }
@@ -337,14 +337,16 @@ public class FilterFusionState extends FusionState
 		filter.getMethods()[i] != filter.getWork())
 		functions.add(filter.getMethods()[i]);
 	}
-	
+
+	//add fields 
+	for (int i = 0; i < filter.getFields().length; i++) 
+	    fields.add(filter.getFields()[i]);
+
+	/*
 	//add init function
 	if (filter.getInit() != null)
 	    functions.add(filter.getInit());
 	
-	//add fields 
-	for (int i = 0; i < filter.getFields().length; i++) 
-	    fields.add(filter.getFields()[i]);
 	
 	//add call to the init function to the init block
 	initFunctionCalls.addStatement(new JExpressionStatement
@@ -353,7 +355,18 @@ public class FilterFusionState extends FusionState
 					(null, new JThisExpression(null),
 					 filter.getInit().getName(), new JExpression[0]),
 					null));
+
+	*/
+
+	//inline init functions in initFunctionCalls
+	//clone init function 
+	JMethodDeclaration init = filter.getInit();
+	JBlock oldBody = new JBlock(null, init.getStatements(), null);
 	
+	JStatement body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
+
+	initFunctionCalls.addStatement(body);
+
 	//if this buffer peeks add the declaration for the peek buffer
 	//to the main function
 	JStatement peekBufDecl = getPeekBufDecl();
@@ -409,7 +422,7 @@ public class FilterFusionState extends FusionState
 					     (null, forIndex, null));
 	    
 	    
-	    body = GenerateCCode.makeForLoop(body, forIndex, new JIntLiteral(mult));
+	    body = GenerateCCode.makeDoLoop(body, forIndex, new JIntLiteral(mult));
 	    
 	    body.accept(new ConvertChannelExprs(this, isInit));
 	    

@@ -1,0 +1,25 @@
+# this performs linking, packaging, symbol creation for a one-tile
+# version of fft.
+#
+
+LIMIT = TRUE
+SIM-CYCLES = 5000000
+SIM-COMMAND = step(10000); count_FLOPS(10000);
+
+BTL-MACHINE-FILE = fileio.bc
+
+ROOT = test
+TILES = 00
+
+include $(TOPDIR)/Makefile.include
+
+ifndef TOPDIR
+$(error TOPDIR not defined, make sure to include Makefile.include)
+endif
+
+OBJECT_FILES_00 = firref.o
+
+
+include $(COMMONDIR)/Makefile.all
+
+BTL-ARGS += -host

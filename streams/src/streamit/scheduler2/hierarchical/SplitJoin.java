@@ -1,6 +1,6 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: SplitJoin.java,v 1.4 2002-07-16 01:09:54 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.5 2002-07-16 21:41:23 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 SplitJoinIter;
@@ -19,13 +19,52 @@ import streamit.scheduler.Schedule;
 
 abstract public class SplitJoin
     extends streamit.scheduler.base.SplitJoin
-    implements StreamInterface
+    implements StreamInterfaceWithSnJ
 {
-    final private StreamAlgorithm algorithm = new StreamAlgorithm(this);
+    final private StreamAlgorithmWithSnJ algorithm = new StreamAlgorithmWithSnJ(this);
+
+    final private PhasingSchedule splitPhases[];
+    final private PhasingSchedule joinPhases[];
 
     public SplitJoin(SplitJoinIter iterator, StreamFactory factory)
     {
         super(iterator, factory);
+
+        // pre-compute the splitter phases:
+        {
+            splitPhases = new PhasingSchedule[splitjoin.getSplitterNumWork()];
+
+            int nPhase;
+            for (nPhase = 0;
+                nPhase < splitjoin.getSplitterNumWork();
+                nPhase++)
+            {
+                Schedule sched =
+                    new Schedule(
+                        splitjoin.getSplitterWork(nPhase),
+                        splitjoin.getUnspecializedIter());
+                int popAmount = splitjoin.getSplitPop(nPhase);
+                splitPhases[nPhase] =
+                    new PhasingSchedule(this, sched, popAmount, popAmount, 0);
+            }
+        }
+
+        // pre-compute the joiner phases
+        {
+            joinPhases = new PhasingSchedule[splitjoin.getJoinerNumWork()];
+
+            int nPhase;
+            for (nPhase = 0; nPhase < splitjoin.getJoinerNumWork(); nPhase++)
+            {
+                Schedule sched =
+                    new Schedule(
+                        splitjoin.getJoinerWork(nPhase),
+                        splitjoin.getUnspecializedIter());
+                int pushAmount = splitjoin.getJoinPush(nPhase);
+                joinPhases[nPhase] =
+                    new PhasingSchedule(this, sched, 0, 0, pushAmount);
+            }
+        }
     }
 
     /**
@@ -52,54 +91,28 @@ abstract public class SplitJoin
         return (StreamInterface) child;
     }
 
-    /**
-     * Get the number of phases that the split of this SplitJoin has.
-     * @return number of split's phases
-     */
     public int getNumSplitPhases()
     {
         return splitjoin.getSplitterNumWork();
     }
 
-    /**
-     * Get the appropriate phase for the split of this SplitJoin.
-     * @return phase of the split
-     */
     public PhasingSchedule getSplitPhase(int nPhase)
     {
         ASSERT(nPhase >= 0 && nPhase < getNumSplitPhases());
-        Schedule sched =
-            new Schedule(
-                splitjoin.getSplitterWork(nPhase),
-                splitjoin.getUnspecializedIter());
-        int popAmount = splitjoin.getSplitPop(nPhase);
-        return new PhasingSchedule(this, sched, popAmount, popAmount, 0);
+        return splitPhases[nPhase];
     }
 
-    /**
-     * Get the number of phases that the join of this SplitJoin has.
-     * @return number of split's join
-     */
     public int getNumJoinPhases()
     {
         return splitjoin.getJoinerNumWork();
     }
 
-    /**
-     * Get the appropriate phase for the join of this SplitJoin.
-     * @return phase of the join
-     */
     public PhasingSchedule getJoinPhase(int nPhase)
     {
         ASSERT(nPhase >= 0 && nPhase < getNumJoinPhases());
-        Schedule sched =
-            new Schedule(
-                splitjoin.getJoinerWork(nPhase),
-                splitjoin.getUnspecializedIter());
-        int pushAmount = splitjoin.getJoinPush(nPhase);
-        return new PhasingSchedule(this, sched, 0, 0, pushAmount);
+        return joinPhases[nPhase];
     }
-
+    
     public streamit.scheduler.base.StreamInterface getTop()
     {
         return this;
@@ -254,5 +267,29 @@ abstract public class SplitJoin
     public PhasingSchedule getChildNextSteadyPhase(StreamInterface child)
     {
         return algorithm.getChildSteadyPhase(child, 0);
+    }
+
+    // These functions implement wrappers for StreamAlgorithmWithSnJ
+    // I have to use this stupid style of coding to accomodate
+    // Java with its lack of multiple inheritance
+
+    public void advanceSplitSchedule(int numPhases)
+    {
+        algorithm.advanceSplitSchedule(numPhases);
+    }
+
+    public void advanceJoinSchedule(int numPhases)
+    {
+        algorithm.advanceJoinSchedule(numPhases);
+    }
+
+    public PhasingSchedule getSplitSteadyPhase(int nPhase)
+    {
+        return algorithm.getSplitSteadyPhase(nPhase);
+    }
+
+    public PhasingSchedule getJoinSteadyPhase(int nPhase)
+    {
+        return algorithm.getJoinSteadyPhase(nPhase);
     }
 }

@@ -1,6 +1,6 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: FeedbackLoop.java,v 1.2 2002-07-16 01:09:53 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.3 2002-07-16 21:41:23 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 FeedbackLoopIter;
@@ -19,13 +19,56 @@ import streamit.scheduler.Schedule;
 
 abstract public class FeedbackLoop
     extends streamit.scheduler.base.FeedbackLoop
-    implements StreamInterface
+    implements StreamInterfaceWithSnJ
 {
-    final private StreamAlgorithm algorithm = new StreamAlgorithm(this);
+    final private StreamAlgorithmWithSnJ algorithm =
+        new StreamAlgorithmWithSnJ(this);
+
+    final private PhasingSchedule splitPhases[];
+    final private PhasingSchedule joinPhases[];
 
     public FeedbackLoop(FeedbackLoopIter iterator, StreamFactory factory)
     {
         super(iterator, factory);
+
+        // pre-compute the splitter phases:
+        {
+            splitPhases =
+                new PhasingSchedule[feedbackLoop.getSplitterNumWork()];
+
+            int nPhase;
+            for (nPhase = 0;
+                nPhase < feedbackLoop.getSplitterNumWork();
+                nPhase++)
+            {
+                Schedule sched =
+                    new Schedule(
+                        feedbackLoop.getSplitterWork(nPhase),
+                        feedbackLoop.getUnspecializedIter());
+                int pushAmount = feedbackLoop.getSplitPushWeights(nPhase)[0];
+                splitPhases[nPhase] =
+                    new PhasingSchedule(this, sched, 0, 0, pushAmount);
+            }
+        }
+
+        // pre-compute the joiner phases
+        {
+            joinPhases = new PhasingSchedule[feedbackLoop.getJoinerNumWork()];
+
+            int nPhase;
+            for (nPhase = 0;
+                nPhase < feedbackLoop.getJoinerNumWork();
+                nPhase++)
+            {
+                Schedule sched =
+                    new Schedule(
+                        feedbackLoop.getJoinerWork(nPhase),
+                        feedbackLoop.getUnspecializedIter());
+                int popAmount = feedbackLoop.getJoinPopWeights(nPhase)[0];
+                joinPhases[nPhase] =
+                    new PhasingSchedule(this, sched, popAmount, popAmount, 0);
+            }
+        }
     }
 
     /**
@@ -64,52 +107,26 @@ abstract public class FeedbackLoop
         return (StreamInterface) getLoop();
     }
 
-    /**
-     * Get the number of phases that the split of this FeedbackLoop has.
-     * @return number of split's phases
-     */
     public int getNumSplitPhases()
     {
         return feedbackLoop.getSplitterNumWork();
     }
 
-    /**
-     * Get the appropriate phase for the split of this FeedbackLoop.
-     * @return phase of the split
-     */
     public PhasingSchedule getSplitPhase(int nPhase)
     {
         ASSERT(nPhase >= 0 && nPhase < getNumSplitPhases());
-        Schedule sched =
-            new Schedule(
-                feedbackLoop.getSplitterWork(nPhase),
-                feedbackLoop.getUnspecializedIter());
-        int pushAmount = feedbackLoop.getSplitPushWeights(nPhase)[0];
-        return new PhasingSchedule(this, sched, 0, 0, pushAmount);
+        return splitPhases[nPhase];
     }
 
-    /**
-     * Get the number of phases that the join of this FeedbackLoop has.
-     * @return number of split's join
-     */
     public int getNumJoinPhases()
     {
         return feedbackLoop.getJoinerNumWork();
     }
 
-    /**
-     * Get the appropriate phase for the join of this FeedbackLoop.
-     * @return phase of the join
-     */
     public PhasingSchedule getJoinPhase(int nPhase)
     {
         ASSERT(nPhase >= 0 && nPhase < getNumJoinPhases());
-        Schedule sched =
-            new Schedule(
-                feedbackLoop.getJoinerWork(nPhase),
-                feedbackLoop.getUnspecializedIter());
-        int popAmount = feedbackLoop.getJoinPopWeights(nPhase)[0];
-        return new PhasingSchedule(this, sched, popAmount, popAmount, 0);
+        return joinPhases[nPhase];
     }
 
     public streamit.scheduler.base.StreamInterface getTop()
@@ -266,5 +283,29 @@ abstract public class FeedbackLoop
     public PhasingSchedule getChildNextSteadyPhase(StreamInterface child)
     {
         return algorithm.getChildSteadyPhase(child, 0);
+    }
+
+    // These functions implement wrappers for StreamAlgorithmWithSnJ
+    // I have to use this stupid style of coding to accomodate
+    // Java with its lack of multiple inheritance
+
+    public void advanceSplitSchedule(int numPhases)
+    {
+        algorithm.advanceSplitSchedule(numPhases);
+    }
+
+    public void advanceJoinSchedule(int numPhases)
+    {
+        algorithm.advanceJoinSchedule(numPhases);
+    }
+
+    public PhasingSchedule getSplitSteadyPhase(int nPhase)
+    {
+        return algorithm.getSplitSteadyPhase(nPhase);
+    }
+
+    public PhasingSchedule getJoinSteadyPhase(int nPhase)
+    {
+        return algorithm.getJoinSteadyPhase(nPhase);
     }
 }

@@ -1,6 +1,6 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: SplitJoin.java,v 1.4 2002-07-16 02:18:49 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.5 2002-07-16 21:41:28 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 SplitJoinIter;
@@ -19,7 +19,7 @@ import streamit.scheduler.hierarchical.PhasingSchedule;
 
 public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
 {
-    PhasingSchedule splitSched, joinSched;
+    final private PhasingSchedule splitSched, joinSched;
 
     public SplitJoin(SplitJoinIter iterator, StreamFactory factory)
     {

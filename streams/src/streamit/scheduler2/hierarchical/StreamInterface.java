@@ -1,6 +1,6 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: StreamInterface.java,v 1.3 2002-07-16 01:09:54 karczma Exp $ */
+/* $Id: StreamInterface.java,v 1.4 2002-07-16 21:41:24 karczma Exp $ */
 
 import streamit.scheduler.Schedule;
 
@@ -130,68 +130,4 @@ public interface StreamInterface
      */
     public PhasingSchedule getInitScheduleStage(int stage);
 
-    /**
-     * Add a stage to the initialization schedule
-     */
-    public void addInitScheduleStage(PhasingSchedule newStage);
-
-    /**
-     * Advance the child's init schedule by one stage.
-     */
-    public void advanceChildInitSchedule(StreamInterface child);
-
-    /**
-     * Advance the child's init schedule by numStages.
-     */
-    public void advanceChildInitSchedule(
-        StreamInterface child,
-        int numStages);
-
-    /**
-     * Advance the child's steady schedule by one phase.
-     */
-    public void advanceChildSteadySchedule(StreamInterface child);
-
-    /**
-     * Advance the child's steady schedule by numPhases.
-     * Makes sure that the child has already executed its full init schedule.
-     */
-    public void advanceChildSteadySchedule(
-        StreamInterface child,
-        int numPhases);
-
-    /**
-     * Get an init stage for a child.  This stage is computed relative
-     * to how much of the init schedule has already been consumed.
-     * @return init stage of a child
-     */
-    public PhasingSchedule getChildInitStage(
-        StreamInterface child,
-        int nStage);
-
-    /**
-     * Get the next init stage for a child.  This stage is the next stage 
-     * after all the stages that have been consumed.
-     * @return next init stage of a child
-     */
-    public PhasingSchedule getChildNextInitStage(StreamInterface child);
-
-    /**
-     * Get a steady state phase  for a child.  This phase is computed relative
-     * to how much of the init and steady schedule has already been consumed.
-     * The init schedule must have consumed all of the real init stages already!
-     * @return steady state phase of a child
-     */
-    public PhasingSchedule getChildSteadyPhase(
-        StreamInterface child,
-        int nPhase);
-
-    /**
-     * Get the next steady state phase for a child.  This phase is the next 
-     * phase after all the phases that have been consumed.
-     * The init schedule must have consumed all of the real init stages already!
-     * @return next init stage of a child
-     */
-    public PhasingSchedule getChildNextSteadyPhase(
-        StreamInterface child);
 }

@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.14 2004-04-13 20:09:57 sitij Exp $
+ * $Id: LinearAnalyzer.java,v 1.15 2004-08-16 02:48:03 sitij Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -636,11 +636,13 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	
 	LinearPrinter.println(" transform successful.");
 	// check for debugging so we don't waste time producing output if not needed
+	/*
 	if (LinearPrinter.getOutput()) {
 	            	    LinearPrinter.println("Linear splitjoin found: " + self + 
 						  " " + newRep);
 	    
 	}
+	*/
 	// add a mapping from this split join to the new linear representation
 	addLinearRepresentation(self, newRep);
     }

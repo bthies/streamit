@@ -97,14 +97,34 @@ public class LinearOptimizer {
 	    removeUnreachableStates(s2); 
 	}  
 		
+	cleanAll();
+	
 	// minimally parametrize the system
-	cleanAll();
-	transposeSystem();
-	minParametrize(false);
-	transposeSystem();
+	
+	    minParametrize(true);      // put in reachable canonical form
+	    cleanAll();
+	    
+	    LinearFilterRepresentation tempReachableRep = extractRep();
+	    LinearCost tempReachableCost = tempReachableRep.getCost();
 
-	cleanAll();
-	return extractRep();
+	    transposeSystem();
+	    minParametrize(false);     // put in observable cononical form
+	    transposeSystem();
+	    cleanAll();
+	
+	    LinearFilterRepresentation tempObservableRep = extractRep();
+	    LinearCost tempObservableCost = tempObservableRep.getCost();
+
+	    if(tempObservableCost.lessThan(tempReachableCost)) {
+		LinearPrinter.println("Observable rep is better");
+		return tempObservableRep;
+	    }
+	    else {
+		LinearPrinter.println("Reachable rep is better");
+		return tempReachableRep;
+	    }
+		  
+	    //        	return extractRep();
     }
 
 
@@ -480,6 +500,8 @@ public class LinearOptimizer {
 	boolean found;
 
 	int max_index; double max_val, temp_val;
+	double temp, val, curr;
+	ComplexNumber tempComplex;
 
 	while(i > 0) {
 	    
@@ -503,18 +525,6 @@ public class LinearOptimizer {
 
 	    LinearPrinter.println("hello " + totalMatrix.getElement(i,j));
 
-	    /*
-	    if(totalMatrix.getElement(i,j).equals(ComplexNumber.ZERO)) { 		
-		LinearPrinter.println("here " + i + " " + j);
-		r = i-1;
-		while((r >= 0)&&(totalMatrix.getElement(r,j).equals(ComplexNumber.ZERO)))
-		    r--;
-		
-		if(r >= 0) 
-		    swap(r,i);		
-	    } 
-	    */
-
 
 	    //partial pivoting
 	    max_index = i;
@@ -528,19 +538,27 @@ public class LinearOptimizer {
 	    }
 	    swap(max_index,i);
 
-	    double curr = totalMatrix.getElement(i,j).getReal();
+	    curr = totalMatrix.getElement(i,j).getReal();
 	    
 	    LinearPrinter.println("i,j,curr " + i + " " + j + " " + curr);
 
-	    if(curr != 0.0) {
+	    if(!totalMatrix.getElement(i,j).equals(ComplexNumber.ZERO)) {
 		//scale(i,1/curr);
 		for(int k=0; k<i; k++) {
-		    if((!totalMatrix.getElement(k,j).equals(ComplexNumber.ZERO))) {
-			double temp = totalMatrix.getElement(k,j).getReal();
-			double val = -temp/curr;
-			
-			addMultiple(i,k,val,normal);					       
+		    tempComplex = totalMatrix.getElement(k,j);
+		    if((!tempComplex.equals(ComplexNumber.ZERO))) {
+			// do NOT do row operations with values too close to MAX_PRECISION
+			// therefore, we will use MAX_PRECISION_BUFFER, which is greater			    
+			if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {			
+			    temp = tempComplex.getReal();
+			    val = -temp/curr;
+			    addMultiple(i,k,val,normal);
+		       
+			    // set the value to be exactly zero (in case it is very small but non-zero)
+			    totalMatrix.setElement(k,j,ComplexNumber.ZERO);
+			}
 		    }
+	    
 		}
 	    }
 
@@ -572,14 +590,8 @@ public class LinearOptimizer {
 	    found = false;
 	    searchRow = currRow;
 
-	    // find a non-zero entry in the B matrix and swap with the current row
-	    /*
-	    while((!found)&&(searchRow < states)) {
-		if(!totalMatrix.getElement(searchRow,states+currStage).equals(ComplexNumber.ZERO))
-		    found = true;
-		searchRow++;
-	    }
-	    */
+	    // find largest non-zero entry in the B matrix column and swap with the current row
+	    // (partial pivoting)
 
 	    max_index = currRow;
 	    max_val = Math.abs(totalMatrix.getElement(currRow,states+currStage).getReal());
@@ -598,7 +610,6 @@ public class LinearOptimizer {
 
 	    
 	    if(found) { 
-		//		swap(currRow,searchRow-1);
 
 		temp_val = totalMatrix.getElement(currRow,states+currStage).getReal();
 		scale(currRow,1.0/temp_val,normal);
@@ -607,8 +618,15 @@ public class LinearOptimizer {
 		for(int i=0; i<states; i++) { 
 		    if(i!=currRow) {
 			tempComplex = totalMatrix.getElement(i,states+currStage);
-			if(!tempComplex.equals(ComplexNumber.ZERO))
-			    addMultiple(currRow,i,-tempComplex.getReal(),normal);	
+			if(!tempComplex.equals(ComplexNumber.ZERO)) {
+			    // do NOT do row operations with values too close to MAX_PRECISION
+			    // therefore, we will use MAX_PRECISION_BUFFER, which is greater			    
+			    if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
+				addMultiple(currRow,i,-tempComplex.getReal(),normal);
+			    }
+			// set the value to be exactly zero (in case it is very small but non-zero)
+			totalMatrix.setElement(i,states+currStage,ComplexNumber.ZERO);
+			}
 		    }
 		}
 	    }
@@ -623,15 +641,8 @@ public class LinearOptimizer {
 		found = false;
 		searchRow = currRow;
 
-		// find a non-zero entry in the A matrix and swap with the current row
-		/*
-		while((!found)&&(searchRow < states)) {
-		    if(!totalMatrix.getElement(searchRow,currCol).equals(ComplexNumber.ZERO))
-			found = true;
-		    searchRow++;
-		}
-		*/
-
+		// find largest non-zero entry in the A matrix column and swap with the current row
+		// (partial pivoting)
                 max_index = currRow;
 		max_val = Math.abs(totalMatrix.getElement(currRow,currCol).getReal());
 		for(int i=currRow+1; i<states; i++) {
@@ -650,9 +661,9 @@ public class LinearOptimizer {
 
 
 		if(found) {
-		    //		    swap(currRow,searchRow-1);
 		    
 		    temp_val = totalMatrix.getElement(currRow,currCol).getReal(); 
+		    
 		    scale(currRow,1.0/temp_val,normal);
 		    
 		    // make all entries above and below it to zero
@@ -660,8 +671,14 @@ public class LinearOptimizer {
 			if(i!=currRow) {
 			    tempComplex = totalMatrix.getElement(i,currCol);
 			    if(!tempComplex.equals(ComplexNumber.ZERO))
-			    	addMultiple(currRow,i,-tempComplex.getReal(),normal);
-			    LinearPrinter.println("VALUE: " + totalMatrix.getElement(i,currCol).getReal());		
+				// do NOT do row operations with values too close to MAX_PRECISION
+				// therefore, we will use MAX_PRECISION_BUFFER, which is greater
+				if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
+				    addMultiple(currRow,i,-tempComplex.getReal(),normal);	
+				    LinearPrinter.println("VALUE: " + totalMatrix.getElement(i,currCol).getReal());
+				}
+			    // set the value to be exactly zero (in case it is very small but non-zero)
+			    totalMatrix.setElement(i,currCol,ComplexNumber.ZERO);
 			}
 		    }
 		    currRow++;

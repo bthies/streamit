@@ -372,9 +372,16 @@ public class FusePipe {
 	// for all the filters...
 	for (int i=0; i<filterInfo.size(); i++) {
 	    FilterInfo cur = (FilterInfo)filterInfo.get(i);
-	    FilterInfo next = (FilterInfo)filterInfo.get(i);
 	    PhaseInfo curPhase = init ? cur.init : cur.steady;
-	    PhaseInfo nextPhase = init ? next.init : next.steady;
+	    // we'll only need the "next" fields if we're not at the
+	    // end of a pipe.
+	    FilterInfo next = null;
+	    PhaseInfo nextPhase = null;
+	    // get the next fields
+	    if (i<filterInfo.size()-1) {
+		next = (FilterInfo)filterInfo.get(i+1);
+		nextPhase = init ? next.init : next.steady;
+	    }
 
 	    // if the current filter doesn't execute at all, continue
 	    // (FIXME this is part of some kind of special case for 
@@ -882,8 +889,11 @@ class FusingVisitor extends SLIRReplacingVisitor {
 				   new JLocalVariableExpression(null,
 								nextInfo.
 								pushCounter));
-	// return a new array access expression
-	return new JArrayAccessExpression(null, lhs, rhs);
+	// return a new array assignment to the right spot
+	return new JAssignmentExpression(
+		  null,
+		  new JArrayAccessExpression(null, lhs, rhs),
+		  self.getArg());
     }
 }
 

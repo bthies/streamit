@@ -150,8 +150,11 @@ issue_commands() {
     command="cp $benchmark $working_dir;"
     #change to the working dir
     command="$command cd $working_dir;"
+    #setup environment variables
+    command="$command setenv STREAMIT_HOME $STREAMIT_HOME;"
+    command="$command source \$STREAMIT_HOME/include/dot-cshrc;"
     #compile
-    command="$command $nice java -cp $CLASSPATH -Xmx1509M at.dms.kjc.Main -s -raw $config $options $bench_file;"
+    command="$command $nice java -Xmx1509M at.dms.kjc.Main -s -raw $config $options $bench_file;"
     #run
     command="$command $nice gmake -f Makefile.streamit run;"
     
@@ -187,9 +190,9 @@ echo "waiting for remote runs to finish..."
 wait
 
 #remove the working directories
-for machine in "${machines[@]}"; do
-   rm -rf "$rootdir/$machine"
-done 
+#for machine in "${machines[@]}"; do
+#   rm -rf "$rootdir/$machine"
+#done 
 
 #call condense
 echo -en "\033[1m\e[32;40mCondensing the various numbers into $outputfile...\033[0m\n"; tput sgr0

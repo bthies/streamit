@@ -50,8 +50,7 @@ public class SIRBuilder {
 	JStatement[] work1body = { 
 	 new JExpressionStatement(
           null,
-	  new SIRPushExpression(/* tokref */ null,
-				/* arg */ 
+	  new SIRPushExpression(/* arg */ 
 				new JPostfixExpression ( 
 				    /* tokref */ null,
 				    Constants.OPE_POSTINC,

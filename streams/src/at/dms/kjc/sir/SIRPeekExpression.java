@@ -37,8 +37,13 @@ public class SIRPeekExpression extends JExpression {
      */
     public SIRPeekExpression(JExpression arg)
     {
+	this(arg, null);
+    }
+
+    public SIRPeekExpression(JExpression arg, CType tapeType)
+    {
 	super(null);
-        this.tapeType = null;
+        this.tapeType = tapeType;
 	this.arg = arg;
     }
 

@@ -23,22 +23,15 @@ public class SIRPushExpression extends JExpression {
      * @param	where		the line of this node in the source code
      * @param	arg		the argument of the call
      */
-    public SIRPushExpression(TokenReference where, JExpression arg)
-    {
-	super(where);
-        this.tapeType = null;
-	this.arg = arg;
-    }
-
-    /**
-     * Construct a node in the parsing tree
-     * @param	where		the line of this node in the source code
-     * @param	arg		the argument of the call
-     */
     public SIRPushExpression(JExpression arg)
     {
+	this(arg, null);
+    }
+
+    public SIRPushExpression(JExpression arg, CType tapeType)
+    {
 	super(null);
-        this.tapeType = null;
+        this.tapeType = tapeType;
 	this.arg = arg;
     }
 

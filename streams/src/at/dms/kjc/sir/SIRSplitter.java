@@ -160,6 +160,18 @@ public class SIRSplitter extends SIROperator {
     }
 
     /**
+     * Returns the sum of all weights in this.
+     */
+    public int getSumOfWeights() {
+	int[] weights = getWeights();
+	int sum = 0;
+	for (int i=0; i<weights.length; i++) {
+	    sum += weights[i];
+	}
+	return sum;
+    }
+
+    /**
      * Return int weights array of this.
      */
     public int[] getWeights() {

@@ -281,7 +281,7 @@ fn gather_numbers_init()
   //register the cache miss counter
   EventManager_RegisterHandler("clock", "__event_clock_cache_miss");
   //register the deadlock detection event
-  EventManager_RegisterHandler("clock", "__check_deadlock");
+  //EventManager_RegisterHandler("clock", "__check_deadlock");
   return 1;
 }
 

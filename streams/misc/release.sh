@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.21 2003-10-05 00:49:00 dmaze Exp $
+# $Id: release.sh,v 1.22 2003-10-06 22:06:13 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -91,7 +91,7 @@ rm -rf $WORKING/streams/src/at/dms/kjc/raw2
 rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
 
 # Build interesting bits of the documentation; they go in both releases.
-for d in cookbook manual release syntax; do
+for d in cookbook release syntax; do
   make -C $WORKING/streams/docs/$d
 done
 find $WORKING/streams/docs \( -name '*.aux' -o -name '*.log' \

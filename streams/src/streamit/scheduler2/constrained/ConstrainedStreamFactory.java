@@ -4,6 +4,9 @@ import streamit.misc.DestroyedClass;
 import streamit.scheduler2.iriter.Iterator;
 import streamit.scheduler2.base.StreamInterface;
 
+import java.util.Map;
+import java.util.HashMap;
+
 /**
  * This class basically implements the StreamFactory interface.  In the 
  * current, first draft, this class will just create single appearance
@@ -16,20 +19,31 @@ public class ConstrainedStreamFactory
 {
     private LatencyGraph latencyGraph = new LatencyGraph();
 
+    private final Map iter2stream = new HashMap();
+
     public StreamInterface newFrom(Iterator streamIter, Iterator parent)
     {
+        if (iter2stream.containsKey(streamIter))
+        {
+            return (StreamInterface) iter2stream.get(streamIter);
+        }
+        
+        StreamInterface newStream;
+
         if (streamIter.isFilter() != null)
         {
-            return new Filter(streamIter.isFilter(), this);
+            newStream = new Filter(streamIter.isFilter(), parent, this);
         }
-
-        if (streamIter.isPipeline() != null)
+        else if (streamIter.isPipeline() != null)
         {
-            return new Pipeline(streamIter.isPipeline(), this);
+            newStream = new Pipeline(streamIter.isPipeline(), parent, this);
+        } else {
+            ERROR("Unsupported type passed to StreamFactory!");
+            newStream = null;
         }
 
-        ERROR("Unsupported type passed to StreamFactory!");
-        return null;
+        iter2stream.put(streamIter, newStream);
+        return newStream;
     }
 
     public LatencyGraph getLatencyGraph()

@@ -2,6 +2,8 @@ package streamit.scheduler2.constrained;
 
 import streamit.scheduler2.iriter./*persistent.*/
 FilterIter;
+import streamit.scheduler2.iriter./*persistent.*/
+Iterator;
 
 public class Filter
     extends streamit.scheduler2.hierarchical.Filter
@@ -9,22 +11,27 @@ public class Filter
 {
     final private LatencyGraph graph;
     
-    final private LatencyNode latencyNode;
+    private LatencyNode latencyNode;
     
-    public Filter(FilterIter iterator, StreamFactory factory)
+    public Filter(FilterIter iterator, Iterator parent, StreamFactory factory)
     {
         super(iterator);
         
         graph = factory.getLatencyGraph();
-        
+    }
+    
+    public void initiateConstrained()
+    {
         latencyNode = graph.addNode (this);
+        
+        // create a schedule for this 
     }
 
     public void computeSchedule()
     {
         ERROR("Not implemented yet.");
     }
-
+    
     public LatencyNode getBottomLatencyNode()
     {
         return latencyNode;

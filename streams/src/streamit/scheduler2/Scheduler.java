@@ -49,7 +49,7 @@ abstract public class Scheduler extends AssertedClass
     {
         if (optimizer == null)
         {
-            optimizer = new ScheduleOptimizer(initSchedule, steadySchedule);
+            optimizer = new ScheduleOptimizer(initSchedule, steadySchedule, this);
             optimizer.optimize();
             optimizedInitSchedule = optimizer.getOptimizedInitSched();
             optimizedSteadySchedule = optimizer.getOptimizedSteadySched();
@@ -77,8 +77,8 @@ abstract public class Scheduler extends AssertedClass
         if (scheduleBuffers == null)
         {
             scheduleBuffers = new ScheduleBuffers(root);
-            scheduleBuffers.computeBuffersFor(initSchedule);
-            scheduleBuffers.computeBuffersFor(steadySchedule);
+            scheduleBuffers.computeBuffersFor(getOptimizedInitSchedule ());
+            scheduleBuffers.computeBuffersFor(getOptimizedSteadySchedule ());
         }
     }
 

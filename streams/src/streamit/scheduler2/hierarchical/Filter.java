@@ -40,6 +40,78 @@ abstract public class Filter
         return this;
     }
 
+    public int getNumDeclaredSteadyPhases()
+    {
+        return filterIter.getNumWorkPhases();
+    }
+
+    public int getDeclaredSteadyPhasePeek(int nPhase)
+    {
+        return filterIter.getPeekPhase(nPhase);
+    }
+
+    public int getDeclaredSteadyPhasePop(int nPhase)
+    {
+        return filterIter.getPopPhase(nPhase);
+    }
+
+    public int getDeclaredSteadyPhasePush(int nPhase)
+    {
+        return filterIter.getPushPhase(nPhase);
+    }
+
+    public PhasingSchedule getDeclaredSteadyPhase(int nPhase)
+    {
+        Schedule workFunction =
+            new Schedule(
+                filterIter.getWorkFunctionPhase(nPhase),
+                filterIter.getUnspecializedIter());
+        PhasingSchedule phase =
+            new PhasingSchedule(
+                this,
+                workFunction,
+                filterIter.getPeekPhase(nPhase),
+                filterIter.getPopPhase(nPhase),
+                filterIter.getPushPhase(nPhase));
+        return phase;
+    }
+
+    public int getNumDeclaredInitPhases()
+    {
+        return filterIter.getNumInitStages();
+    }
+
+    public int getDeclaredInitPhasePeek(int nPhase)
+    {
+        return filterIter.getInitPeekStage(nPhase);
+    }
+
+    public int getDeclaredInitPhasePop(int nPhase)
+    {
+        return filterIter.getInitPopStage(nPhase);
+    }
+
+    public int getDeclaredInitPhasePush(int nPhase)
+    {
+        return filterIter.getInitPushStage(nPhase);
+    }
+
+    public PhasingSchedule getDeclaredInitPhase(int nPhase)
+    {
+        Schedule initCall =
+            new Schedule(
+                filterIter.getInitFunctionStage(nPhase),
+                filterIter.getUnspecializedIter());
+        PhasingSchedule initPhase =
+            new PhasingSchedule(
+                this,
+                initCall,
+                filterIter.getInitPeekStage(nPhase),
+                filterIter.getInitPopStage(nPhase),
+                filterIter.getInitPushStage(nPhase));
+        return initPhase;
+    }
+
     // These functions implement wrappers for StreamAlgorithm
     // I have to use this stupid style of coding to accomodate
     // Java with its lack of multiple inheritance

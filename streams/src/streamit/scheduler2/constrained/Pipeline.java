@@ -2,6 +2,8 @@ package streamit.scheduler2.constrained;
 
 import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
+import streamit.scheduler2.iriter./*persistent.*/
+Iterator;
 
 /**
  * streamit.scheduler2.constrained.Pipeline is the pipeline constrained 
@@ -17,12 +19,30 @@ public class Pipeline
     
     public Pipeline(
         PipelineIter iterator,
+        Iterator parent,
         streamit.scheduler2.constrained.StreamFactory factory)
     {
         super(iterator, factory);
-
+        
         latencyGraph = factory.getLatencyGraph();
-
+        
+        if (parent == null) 
+        {
+            latencyGraph.registerParent(this, null);
+            initiateConstrained ();
+        }
+    }
+    
+    public void initiateConstrained ()
+    {
+        // register all children
+        for (int nChild = 0; nChild < getNumChildren (); nChild++)
+        {
+            StreamInterface child = getConstrainedChild (nChild);
+            latencyGraph.registerParent(child, this);
+            child.initiateConstrained();
+        }
+        
         // add all children to the latency graph
         for (int nChild = 0; nChild + 1 < getNumChildren(); nChild++)
         {

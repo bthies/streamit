@@ -110,7 +110,7 @@ public class ScheduleOptimizer extends AssertedClass
 
         return (Integer)integers.get(key);
     }
-
+    
     // this will store a map of Schedule -> Integer
     // Integer stores an index into a Vector which stores the
     // details of the specific symbolic phase
@@ -518,18 +518,15 @@ public class ScheduleOptimizer extends AssertedClass
 
     private void printSymbolicSchedule(Integer symbolicIdx)
     {
-        System.out.println("[");
-        printSymbolicSchedule(symbolicIdx, new HashSet());
-        System.out.println("]");
+        System.out.println ("[");
+        printSymbolicSchedule (symbolicIdx, new HashSet ());
+        System.out.println ("]");
     }
 
-    private void printSymbolicSchedule(
-        Integer symbolicIdx,
-        Set printedScheds)
+    private void printSymbolicSchedule(Integer symbolicIdx, Set printedScheds)
     {
-        if (printedScheds.contains(symbolicIdx))
-            return;
-
+        if (printedScheds.contains(symbolicIdx)) return;
+        
         System.out.print("$" + symbolicIdx + " = ");
 
         Vector self = (Vector)symbolicIdx2symbolic.get(symbolicIdx);
@@ -542,7 +539,7 @@ public class ScheduleOptimizer extends AssertedClass
         }
         else
         {
-            Integer scheds[] = new Integer[self.size() / 2];
+            Integer scheds [] = new Integer [self.size () / 2];
             System.out.print("{ ");
 
             Vector symbolicSched =
@@ -552,20 +549,20 @@ public class ScheduleOptimizer extends AssertedClass
             {
                 int times = ((Integer)symbolicSched.get(i)).intValue();
                 int idx = ((Integer)symbolicSched.get(i + 1)).intValue();
-                scheds[i / 2] = (Integer)symbolicSched.get(i + 1);
+                scheds [i/2] = (Integer)symbolicSched.get(i + 1);
                 if (times > 1)
                     System.out.print("{" + times + " $" + idx + "} ");
                 else
                     System.out.print("$" + idx + " ");
             }
-
-            System.out.println("}");
-
+            
+            System.out.println ("}");
+            
             printedScheds.add(symbolicIdx);
-
-            for (int i = 0; i < symbolicSched.size() / 2; i++)
+            
+            for (int i = 0; i < symbolicSched.size () / 2; i++)
             {
-                printSymbolicSchedule(scheds[i], printedScheds);
+                printSymbolicSchedule (scheds [i], printedScheds);
             }
         }
     }

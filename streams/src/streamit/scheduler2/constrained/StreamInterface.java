@@ -1,5 +1,7 @@
 package streamit.scheduler2.constrained;
 
+import streamit.scheduler2.iriter.Iterator;
+
 /**
  * streamit.scheduler2.constrained.StreamInteraface is an interface for 
  * constrained scheduler. All implementors of this interface assume that
@@ -11,4 +13,6 @@ public interface StreamInterface
 {
     public LatencyNode getBottomLatencyNode ();
     public LatencyNode getTopLatencyNode ();
+    
+    public void initiateConstrained ();
 }

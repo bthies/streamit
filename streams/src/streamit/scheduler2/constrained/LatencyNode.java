@@ -36,35 +36,64 @@ public class LatencyNode extends streamit.misc.AssertedClass
 
         {
             steadyNodePhases =
-                new OperatorPhases(filter.getNumSteadyPhases(), 1, 1);
+                new OperatorPhases(
+                    filter.getNumDeclaredSteadyPhases(),
+                    1,
+                    1);
 
             int nPhase;
-            for (nPhase = 0; nPhase < filter.getNumSteadyPhases(); nPhase++)
+            for (nPhase = 0;
+                nPhase < filter.getNumDeclaredSteadyPhases();
+                nPhase++)
             {
                 steadyNodePhases.setPhaseInput(
-                    filter.getSteadyPhaseNumPeek(nPhase),
-                    filter.getSteadyPhaseNumPop(nPhase),
+                    filter.getDeclaredSteadyPhasePeek(nPhase),
+                    filter.getDeclaredSteadyPhasePop(nPhase),
                     nPhase,
                     0);
 
                 steadyNodePhases.setPhaseOutput(
-                    filter.getSteadyPhaseNumPush(nPhase),
+                    filter.getDeclaredSteadyPhasePush(nPhase),
                     nPhase,
                     0);
 
                 steadyNodePhases.setOperatorPhase(
-                    filter.getSteadySchedulePhase(nPhase),
+                    filter.getDeclaredSteadyPhase(nPhase),
                     nPhase);
             }
         }
 
         {
             initNodePhases =
-                new OperatorPhases(filter.getNumInitStages(), 1, 1);
+                new OperatorPhases(filter.getNumDeclaredInitPhases(), 1, 1);
+
+            int nInitPhase;
+            for (nInitPhase = 0;
+                nInitPhase < filter.getNumDeclaredInitPhases();
+                nInitPhase++)
+            {
+                steadyNodePhases.setPhaseInput(
+                    filter.getDeclaredInitPhasePeek(nInitPhase),
+                    filter.getDeclaredInitPhasePop(nInitPhase),
+                    nInitPhase,
+                    0);
+
+                steadyNodePhases.setPhaseOutput(
+                    filter.getDeclaredInitPhasePush(nInitPhase),
+                    nInitPhase,
+                    0);
+
+                steadyNodePhases.setOperatorPhase(
+                    filter.getDeclaredInitPhase(nInitPhase),
+                    nInitPhase);
+            }
         }
     }
-    
-    public int getInitNumPhases () { return initNodePhases.getNumPhases(); }
+
+    public int getInitNumPhases()
+    {
+        return initNodePhases.getNumPhases();
+    }
 
     public int getSteadyStatePeek(int nChannel)
     {

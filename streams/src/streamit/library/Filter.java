@@ -58,7 +58,7 @@ public abstract class Filter extends Stream
     public abstract void work();
 
     // provide some empty functions to make writing filters a bit easier
-    public void init () { }
+    public void init () { invalidInitError (); }
 
     // some constants necessary for calculating a steady flow:
     public int popCount = 0, pushCount = 0, peekCount = 0;

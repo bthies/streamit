@@ -44,7 +44,7 @@ public class Operator extends DestroyedClass
 
     void invalidInitError ()
     {
-        ERROR ("You didn't provide a valid init function.\nPerhaps you're passing parameters that don't have a valid prototype yet?\nCheck streams/docs/implementation-notes/library-init-functions.txt for instructions on adding new signatures to init functions.");
+        ERROR ("You didn't provide a valid init function in class " + getClass ().getName () + ".\nFilters now need init functions, even if they're empty.\nPerhaps you're passing parameters that don't have a valid prototype yet?\nCheck streams/docs/implementation-notes/library-init-functions.txt for instructions on adding new signatures to init functions.");
     }
 
     // initializatoin functions, to be over-ridden

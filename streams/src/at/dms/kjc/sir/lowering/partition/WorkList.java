@@ -10,7 +10,7 @@ import java.io.*;
  * A wrapper for a linked list to save ourself a lot of casting with
  * work entries.
  */
-class WorkList extends java.util.LinkedList {
+public class WorkList extends java.util.LinkedList {
 
     public WorkList(Collection c) {
 	super(c);

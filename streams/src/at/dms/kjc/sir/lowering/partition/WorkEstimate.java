@@ -142,7 +142,7 @@ public class WorkEstimate {
               demonstrate that the "Magnitude" filters are not fused
               with anyone because their icode is too big.	
 	if (filter.getIdent().startsWith("Mag")) {
-	    return 101;
+	    return 16001;
 	}
 	return 1;
 	*/

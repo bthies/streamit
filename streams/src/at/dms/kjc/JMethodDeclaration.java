@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.11 2001-10-30 17:32:36 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.12 2002-03-07 13:21:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -423,6 +423,21 @@ public class JMethodDeclaration extends JMemberDeclaration {
     }
 
     /**
+     * Returns the body of this.
+     */
+    public JBlock getBody() {
+	return body;
+    }
+
+    /**
+     * Sets the body of this
+     */
+    public void setBody(JBlock body) {
+	this.body = body;
+    }
+    
+
+    /**
      * Returns list of statements in this.  
      */
     public List getStatements() {
@@ -436,8 +451,11 @@ public class JMethodDeclaration extends JMemberDeclaration {
 	return parameters;
     }
 
-    // bft:  added for streamit passes
-    public static final JMethodDeclaration[] EMPTY = new JMethodDeclaration[0];
+    // need a different method array for every method in case people
+    // start to add methods; can't just have a constant.
+    public static JMethodDeclaration[] EMPTY() {
+	return new JMethodDeclaration[0];
+    }
 
   // $$$ MOVE TO BE PRIVATE
   protected int				modifiers;

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldDeclaration.java,v 1.4 2001-11-10 21:40:35 thies Exp $
+ * $Id: JFieldDeclaration.java,v 1.5 2002-03-07 13:21:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -235,8 +235,11 @@ public class JFieldDeclaration extends JMemberDeclaration {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-    // bft:  added for streamit passes
-    public static final JFieldDeclaration[] EMPTY = new JFieldDeclaration[0];
+    // need a different method array for every method in case people
+    // start to add methods; can't just have a constant.
+    public static JFieldDeclaration[] EMPTY() {
+	return new JFieldDeclaration[0];
+    }
 
   protected JVariableDefinition		variable;
 }

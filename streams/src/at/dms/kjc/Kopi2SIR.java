@@ -112,8 +112,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 					     new JIntLiteral(null, 1),
 					     null, 
 					     "");
-	fr.setMethods(JMethodDeclaration.EMPTY);
-	fr.setFields(JFieldDeclaration.EMPTY);
+	fr.setMethods(JMethodDeclaration.EMPTY());
+	fr.setFields(JFieldDeclaration.EMPTY());
 	addVisitedOp("FileReader", fr);
 	
 	SIRFileWriter fw = new SIRFileWriter(null, 
@@ -123,8 +123,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 					     new JIntLiteral(null, 0),
 					     null, 
 					     "");
-	fw.setMethods(JMethodDeclaration.EMPTY);
-	fw.setFields(JFieldDeclaration.EMPTY);
+	fw.setMethods(JMethodDeclaration.EMPTY());
+	fw.setFields(JFieldDeclaration.EMPTY());
 	addVisitedOp("FileWriter", fw);
     }	
 		     
@@ -198,16 +198,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	if (TYPE.equals("Pipeline") || TYPE.equals("StreamIt")) {
 	    SIRPipeline current = new SIRPipeline((SIRContainer)parentStream, 
 						  clazz.getIdent(),
-				   JFieldDeclaration.EMPTY,
-				   JMethodDeclaration.EMPTY);
+				   JFieldDeclaration.EMPTY(),
+				   JMethodDeclaration.EMPTY());
 	    parentStream = current;
 	    return current;
 	}
 	if (TYPE.equals("Filter")) {
 	    SIRFilter current = new SIRFilter();
 	    current.setParent((SIRContainer)parentStream);
-	    current.setFields(JFieldDeclaration.EMPTY);
-	    current.setMethods(JMethodDeclaration.EMPTY);
+	    current.setFields(JFieldDeclaration.EMPTY());
+	    current.setMethods(JMethodDeclaration.EMPTY());
 	    current.setIdent(clazz.getIdent());
 	    current.setInputType(CStdType.Void);
 	    current.setOutputType(CStdType.Void);
@@ -217,8 +217,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	if (TYPE.equals("FeedbackLoop")) {
 	    SIRFeedbackLoop current = new SIRFeedbackLoop();
 	    current.setParent((SIRContainer)parentStream);
-	    current.setFields(JFieldDeclaration.EMPTY);
-	    current.setMethods(JMethodDeclaration.EMPTY);
+	    current.setFields(JFieldDeclaration.EMPTY());
+	    current.setMethods(JMethodDeclaration.EMPTY());
 	    current.setIdent(clazz.getIdent());
 	    parentStream = current;
 	    return current;
@@ -226,8 +226,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	if (TYPE.equals("SplitJoin")) {
 	    SIRSplitJoin current = new SIRSplitJoin((SIRContainer)parentStream,
 						    clazz.getIdent(),
-						     JFieldDeclaration.EMPTY,
-						     JMethodDeclaration.EMPTY);
+						     JFieldDeclaration.EMPTY(),
+						   JMethodDeclaration.EMPTY());
 	    parentStream = current;
 	    return current;
 	}

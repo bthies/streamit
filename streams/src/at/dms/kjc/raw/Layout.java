@@ -593,7 +593,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    return new HashSet();
 	
 	if (node.contents instanceof SIRFilter) {
-	    if (!isAssigned(node))
+	    if (identities.contains(node))
 		return getDownStreamHelper(node.edges[0]);
 	    HashSet ret = new HashSet();
 	    ret.add(node);

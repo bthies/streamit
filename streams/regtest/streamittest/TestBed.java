@@ -2,7 +2,7 @@
  * This should help you test your bed. Next version.
  * Currently used as scratch space for testing a small
  * subset of the total test cases.
- * $Id: TestBed.java,v 1.11 2002-08-09 16:42:22 aalamb Exp $
+ * $Id: TestBed.java,v 1.12 2002-08-30 20:11:20 aalamb Exp $
  **/
 package streamittest;
 
@@ -27,41 +27,8 @@ public class TestBed extends StreamITTestCase {
 
 	TestSuite suite = new TestSuite();
 
-	//suite.addTest(new TestApps("testAppsFM", flags));
-	//suite.addTest(new TestExamples("testNokiaFine", flags));
+	suite.addTest(new TestExamples("testAutoCor", flags));
 
-	//suite.addTest(new TestExamples("testFib", flags));
-	//suite.addTest(new TestExamples("testFib2", flags));
-	//suite.addTest(new TestExamples("testFir", flags));
-	//suite.addTest(new TestExamples("testFm", flags));
-
- 	suite.addTest(TestExamples.suite(CompilerInterface.NONE |
- 					 CompilerInterface.RAW4));
- 	suite.addTest(TestExamples.suite(CompilerInterface.NONE |
- 					 CompilerInterface.RAW4 |
- 					 CompilerInterface.PARTITION));
- 	suite.addTest(TestExamples.suite(CompilerInterface.NONE |
- 					 CompilerInterface.RAW4 |
- 					 CompilerInterface.CONSTPROP));
-	
-	
-	//suite.addTest(new TestExamples("testFFT3", flags));
-	// suite.addTest(new TestExamples("testNokiaFine", CompilerInterface.NONE));
-// 	suite.addTest(new TestExamples("testNokiaFine", (CompilerInterface.NONE |
-// 							 CompilerInterface.CONSTPROP)));
-// 	suite.addTest(new TestExamples("testNokiaFine", flags));
-
-	//suite.addTest(new TestExamples("testFm", (CompilerInterface.NONE)));
-	//suite.addTest(new TestExamples("testFm", (CompilerInterface.NONE |
-	//				  CompilerInterface.RAW4 |
-	//				  CompilerInterface.PARTITION)));
-	//
-	//suite.addTest(new TestExamples("testFuse", flags));
-	//suite.addTest(new TestExamples("testFFT_inlined", flags));
-	//suite.addTest(new TestExamples("testVectAdd", CompilerInterface.NONE));
-	//suite.addTest(new TestExamples("testVectAdd", flags));
-		      
-	//suite.addTest(new TestBed("testStatic", flags));
 	
 	return suite;
 	//return TestAll.makeTestSuite(flags);

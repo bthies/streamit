@@ -2,16 +2,17 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.44 2003-09-25 17:54:15 dmaze Exp $
+# $Id: knit,v 1.45 2003-09-25 20:09:16 dmaze Exp $
 #
 
 use strict;
-use vars qw(%opts $java $javac $cc);
+use vars qw(%opts $java $javac $cc $have_fftw);
 
 # AUTOCONFISCATE $var = "@VAR@";
 $java = "java";
 $javac = "javac";
 $cc = "gcc";
+$have_fftw = 1;
 # END AUTOCONFISCATE
 
 use Getopt::Long;
@@ -330,13 +331,16 @@ sub c_to_out
     if ($opts{profile})
       {
 	$gcc = "$cc -pg -a";
-	$libs = "-nodefaultlibs -lstreamit_p -lsrfftw -lssftw -lm_p " .
-	  "-lc_p -lgcc";
+	$libs = "-nodefaultlibs -lstreamit_p ";
+	$libs .= "-lsrfftw -lssftw " if $have_fftw;
+	$libs .= "-lm_p -lc_p -lgcc";
       }
     else
       {
 	$gcc = "$cc";
-	$libs = "-lstreamit -lsrfftw -lsfftw -lm";
+	$libs = "-lstreamit ";
+	$libs .= "-lsrfftw -lsfftw " if $have_fftw;
+	$libs .= "-lm";
       }
     call("$gcc -g -O2 $target -I$sh/library/c " . join(' ', @$fns) .
 	 " -L$sh/library/c $libs");

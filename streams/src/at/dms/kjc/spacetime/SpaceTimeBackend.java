@@ -12,6 +12,8 @@ import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.lir.*;
+import java.util.*;
+
 /**
  * The entry to the space time backend for raw.
  **/
@@ -79,8 +81,84 @@ public class SpaceTimeBackend
 	//System.out.println(FlattenGraph.getFilterCount());
 	
 	//this is here just to test things!!
-	Trace[] init = new Trace[2];
-	Trace[] steady = new Trace[2];
+	//Trace[] init = new Trace[2];
+	//Trace[] steady = new Trace[2];
+	
+	//Test Code with traces (Just for pipelines on raw greater than 1x1)
+	ArrayList initTraces=new ArrayList();
+	ArrayList steadyTraces=new ArrayList();
+	HashMap[] executionCounts=SIRScheduler.getExecutionCounts(str);
+	UnflatFilter currentFilter=topNodes[0];
+	TraceNode currentNode=new FilterTraceNode(new FilterContent(currentFilter.filter,executionCounts),0,0);
+	initTraces.add(new Trace(currentNode));
+	steadyTraces.add(new Trace(currentNode));
+	int curX=1;
+	int forward=1;
+	while(currentFilter!=null&&currentFilter.outWeights.length>0) {
+	    currentFilter=currentFilter.out[0][0].dest;
+	    if(currentFilter!=null) {
+		TraceNode newNode=new FilterTraceNode(new FilterContent(currentFilter.filter,executionCounts),curX,0);
+		currentNode.setNext(newNode);
+		currentNode=newNode;
+		if(curX>=rawColumns-1&&forward>0) {
+		    if(currentFilter.outWeights.length>0&&currentFilter.out[0][0].dest!=null) {
+			forward=-1;
+			OutputTraceNode out=new OutputTraceNode(new int[]{1});
+			InputTraceNode in=new InputTraceNode(new int[]{1});
+			out.setDests(new InputTraceNode[][]{new InputTraceNode[]{in}});
+			in.setSources(new OutputTraceNode[]{out});
+			currentNode.setNext(out);
+			currentNode=in;
+			initTraces.add(new Trace(currentNode));
+			steadyTraces.add(new Trace(currentNode));
+		    }
+		} else if(curX<=0&&forward<0) {
+		    if(currentFilter.outWeights.length>0&&currentFilter.out[0][0].dest!=null) {
+			forward=1;
+			OutputTraceNode out=new OutputTraceNode(new int[]{1});
+			InputTraceNode in=new InputTraceNode(new int[]{1});
+			out.setDests(new InputTraceNode[][]{new InputTraceNode[]{in}});
+			in.setSources(new OutputTraceNode[]{out});
+			currentNode.setNext(out);
+			currentNode=in;
+			initTraces.add(new Trace(currentNode));
+			steadyTraces.add(new Trace(currentNode));
+		    }
+		} else
+		    curX+=forward;
+	    }
+	}
+	Trace[] init=new Trace[initTraces.size()];
+	Trace[] steady=new Trace[steadyTraces.size()];
+	initTraces.toArray(init);
+	steadyTraces.toArray(steady);
+	for(int i=1;i<init.length;i++) {
+	    init[i-1].setEdges(new Trace[]{init[i]});
+	    init[i].setDepends(new Trace[]{init[i-1]});
+	    steady[i-1].setEdges(new Trace[]{steady[i]});
+	    steady[i].setDepends(new Trace[]{steady[i-1]});
+	}
+	/*System.out.println(initTraces);
+	  for(int i=0;i<initTraces.size();i++) {
+	  TraceNode head=((Trace)initTraces.get(i)).getHead();
+	  if(head instanceof FilterTraceNode)
+	  System.out.println(((FilterTraceNode)head).getFilter()+" "+((FilterTraceNode)head).getX()+" "+((FilterTraceNode)head).getY());
+	  else
+	  System.out.println("Input! "+((FilterTraceNode)head.getNext()).getX()+" "+((FilterTraceNode)head.getNext()).getY());
+	  //System.out.println(((Trace)initTraces.get(i)).getHead());
+	  }
+	  System.out.println(steadyTraces);
+	  for(int i=0;i<steadyTraces.size();i++) {
+	  TraceNode head=((Trace)steadyTraces.get(i)).getHead();
+	  if(head instanceof FilterTraceNode)
+	  System.out.println(((FilterTraceNode)head).getFilter()+" "+((FilterTraceNode)head).getX()+" "+((FilterTraceNode)head).getY());
+	  else
+	  System.out.println("Input! "+((FilterTraceNode)head.getNext()).getX()+" "+((FilterTraceNode)head.getNext()).getY());
+	  //System.out.println(((Trace)steadyTraces.get(i)).getHead());
+	  }*/
+	initTraces=null;
+	steadyTraces=null;
+	executionCounts=null;
 
 	//mgordon's stuff
 	ListIterator initTrav = TraceTraversal.getTraversal(init).listIterator();    

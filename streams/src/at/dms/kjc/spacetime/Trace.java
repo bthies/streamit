@@ -15,6 +15,10 @@ public class Trace
 	this.head = head;
     }
 
+    public Trace(TraceNode head) {
+	this.head=head;
+    }
+
     public void setHead(TraceNode node) 
     {
 	head = node;
@@ -34,4 +38,13 @@ public class Trace
     {
 	return depends;
     }
+
+    public void setEdges(Trace[] edges) {
+	this.edges=edges;
+    }
+
+    public void setDepends(Trace[] depends) {
+	this.depends=depends;
+    }
 }
+

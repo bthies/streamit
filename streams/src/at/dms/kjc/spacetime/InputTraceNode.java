@@ -18,11 +18,19 @@ public class InputTraceNode extends TraceNode
 	    Utils.fail("Add comment later");
     }
 
+    public InputTraceNode(int[] weight) {
+	this.weights=weights;
+    }
+
     public int[] getWeight() {
 	return weights;
     }
 
     public OutputTraceNode[] getSources() {
 	return sources;
+    }
+
+    public void setSources(OutputTraceNode[] sources) {
+	this.sources=sources;
     }
 }

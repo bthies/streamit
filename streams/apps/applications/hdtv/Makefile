@@ -10,7 +10,9 @@ clean:
 	rm -rf Makefile.streamit
 	rm -rf kernel
 	rm -rf tile.rbf
-	rm -rf hdtv_writeup.aux hdtv_writeup.dvi hdtv_writeup.log hdtv_writeup.ps hdtv_writeup.pdf
+	rm -rf hdtv_writeup.aux hdtv_writeup.dvi hdtv_writeup.log 
+	rm -rf hdtv_writeup.ps hdtv_writeup.pdf
+	rm -rf hdtv_writeup.bbl hdtv_writeup.blg
 
 java:
 	jikes HDTV.java

@@ -46,6 +46,15 @@ public class SIRWorkFunction extends Utils
         this.work = work;
     }
 
+    public SIRWorkFunction(int peek, int pop, int push,
+                           JMethodDeclaration work)
+    {
+        this(new JIntLiteral(peek),
+             new JIntLiteral(pop),
+             new JIntLiteral(push),
+             work);
+    }
+
     public void setPeek(JExpression p)
     {
         this.peek = p;

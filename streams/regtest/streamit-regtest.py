@@ -74,7 +74,7 @@ class RegTest:
                             "java at.dms.kjc.Main -s %s > reg-out.c" %
                             string.join(self.sources))
             self.runCommand("gcc compilation",
-                            "gcc -o reg-out %s reg-out.c -lstreamit" %
+                            "gcc -o reg-out %s reg-out.c -lstreamit -lm" %
                             opts.get_cflags())
             # Stop here if there was an explicit request to not run the test.
             if (not opts.run): return 0

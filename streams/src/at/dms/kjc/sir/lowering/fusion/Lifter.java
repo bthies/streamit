@@ -17,14 +17,28 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 
 public class Lifter implements StreamVisitor {
+    /**
+     * Whether or not we're removing sync points.
+     */
+    private boolean removeSync;
 
-    private Lifter() {}
+    private Lifter(boolean removeSync) {
+	this.removeSync = removeSync;
+    }
 
     /**
      * Lift everything we can in <str> and its children
      */
     public static void lift(SIRStream str) {
-	IterFactory.createIter(str).accept(new Lifter());
+	IterFactory.createIter(str).accept(new Lifter(true));
+    }
+
+    /**
+     * Lift everything we can, but don't eliminate matching sync
+     * points.
+     */
+    public static void liftPreservingSync(SIRStream str) {
+	IterFactory.createIter(str).accept(new Lifter(false));
     }
 
     /**
@@ -49,7 +63,9 @@ public class Lifter implements StreamVisitor {
     public void preVisitPipeline(SIRPipeline self,
 				 SIRPipelineIter iter) {
 	liftChildren(self);
-	RefactorSplitJoin.removeMatchingSyncPoints(self);
+	if (removeSync) {
+	    RefactorSplitJoin.removeMatchingSyncPoints(self);
+	}
     }
 
     /* pre-visit a splitjoin */
@@ -76,7 +92,9 @@ public class Lifter implements StreamVisitor {
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
 				  SIRPipelineIter iter) {
-	RefactorSplitJoin.removeMatchingSyncPoints(self);
+	if (removeSync) {
+	    RefactorSplitJoin.removeMatchingSyncPoints(self);
+	}
     }
 
     /* post-visit a splitjoin */

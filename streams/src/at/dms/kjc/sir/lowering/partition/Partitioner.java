@@ -28,6 +28,11 @@ public class Partitioner {
 	int count = new RawFlattener(str).getNumTiles();
 	System.out.println("found "+count+" tiles.");
 
+	// for statistics gathering
+	if (KjcOptions.dpscaling) {
+	    DynamicProgPartitioner.saveScalingStatistics(str, 256);
+	}
+
 	// do the partitioning
 	if (count < target) {
 	    // need fission

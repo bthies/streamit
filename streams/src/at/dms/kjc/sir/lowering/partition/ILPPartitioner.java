@@ -61,7 +61,6 @@ public class ILPPartitioner extends ListPartitioner {
 	buildNodesList();
 	double[] sol = calcSolution();
 	HashMap result = buildPartitionMap(sol);
-	PartitionUtil.printTileWork(result, work, numTiles);
 	return result;
     }
 
@@ -125,7 +124,7 @@ public class ILPPartitioner extends ListPartitioner {
     /**
      * Constructs <nodes>, <first> and <last> out of <str>.
      */
-    protected void buildNodesList() {
+    private void buildNodesList() {
 	// add dummy start node
 	nodes.add(new DummyNode());
 

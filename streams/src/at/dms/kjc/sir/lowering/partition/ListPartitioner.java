@@ -66,7 +66,7 @@ public abstract class ListPartitioner {
     /**
      * Constructs <nodes>, <first> and <last> out of <str>.
      */
-    protected void buildNodesList() {
+    private void buildNodesList() {
 	// add dummy start node
 	nodes.add(new DummyNode());
 

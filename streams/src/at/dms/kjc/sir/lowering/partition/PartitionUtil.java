@@ -15,60 +15,79 @@ import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 
 public class PartitionUtil {
-    /** output stream to send data to. **/
-    static PrintStream outputStream = System.out;
-    /** gets the current output stream. **/
-    public static PrintStream getOutputStream() {return outputStream;}
-    /** sets the current output stream. **/
-    public static void setOutputStream(PrintStream newStream) {outputStream=newStream;}
-    
 
     /**
-     * Prints a listing of the work for each tile, given that
-     * <partitions> is a mapping from every stream structure in <str>
-     * to an integer partition number, from -1...(numTiles-1).  If a
-     * stream structure is entirely contained on a given tile, then it
-     * has that tile number.  If it is split across multiple tiles,
-     * then it has a target of -1.
+     * Prints work summaries to the screen.
      */
-    public static void printTileWork(HashMap partitions, WorkEstimate work, int numTiles) {
-
-	int[] tileWork = new int[numTiles];
-
-	String[] tileContents = new String[numTiles];
-	for (int i=0; i<numTiles; i++) {
-	    tileContents[i] = "";
-	}
-
-	int maxWork = -1;
-	for (Iterator it = partitions.keySet().iterator(); it.hasNext(); ) {
-	    Object node = it.next();
-	    int tile = ((Integer)partitions.get(node)).intValue();
-	    if (tile == -1) { continue; }
-	    tileContents[tile] += "  " + ((SIROperator)node).getName() + "\n";
-	    if (node instanceof SIRFilter) {
-		// for filter, add work estimate of filter
-		tileWork[tile] += work.getWork((SIRFilter)node);
-	    } else if (node instanceof SIRJoiner) {
-		// for joiners, add JOINER_WORK_ESTIMATE
-		tileWork[tile] += ILPPartitioner.JOINER_WORK_ESTIMATE;
-	    }
-	    // keep track of max work
-	    if (tileWork[tile]>maxWork) {
-		maxWork = tileWork[tile];
-	    }
-	}
-
-	// print each tile's work
-	double totalUtil = 0;
-	for (int i=0; i<tileWork.length; i++) {
-	    double util = ((double)tileWork[i]) / ((double)maxWork);
-	    totalUtil += util / ((double)tileWork.length);
-	    outputStream.println("tile " + i + " has work:\t" + tileWork[i] 
+    public static void printTileWork(LinkedList partitions, int numTiles) {
+	int maxWork = getMaxWork(partitions);
+	double totalUtil = getTotalUtilization(partitions, numTiles);
+	for (int i=0; i<partitions.size(); i++) {
+	    PartitionRecord pr = (PartitionRecord)partitions.get(i);
+	    double util = ((double)pr.getWork()) / ((double)maxWork);
+	    System.out.println("partition " + i + " has work:\t" + pr.getWork() 
 			       + "\t Estimated utilization:\t" + Utils.asPercent(util));
-	    //System.out.print(tileContents[i]);
 	}
-
-	outputStream.println("Estimated total utilization: " + Utils.asPercent(totalUtil));
+	System.out.println("Estimated total utilization: " + Utils.asPercent(totalUtil));
     }
+
+
+    /**
+     * Gets max work out of <partitions>.
+     */
+    public static int getMaxWork(LinkedList partitions) {
+	int maxWork = -1;
+	for (int tile=0; tile<partitions.size(); tile++) {
+	    PartitionRecord pr = (PartitionRecord)partitions.get(tile);
+	    if (pr.getWork()>maxWork) {
+		maxWork = pr.getWork();
+	    }
+	}
+	return maxWork;
+    }
+
+    /**
+     * Estimates total utilization (as fraction, e.g. 0.5023) for
+     * <partitions> running on <numTiles>.  (Not just running on the
+     * number of occupied tiles!  That is, empty tiles hurt the
+     * utilization.)
+     */
+    private static double getTotalUtilization(LinkedList partitions, int numTiles) {
+	double totalUtil = 0;
+	int maxWork = getMaxWork(partitions);
+	for (int i=0; i<partitions.size(); i++) {
+	    PartitionRecord pr = (PartitionRecord)partitions.get(i);
+	    double util = ((double)pr.getWork()) / ((double)maxWork);
+	    totalUtil += util / ((double)numTiles);
+	}
+	return totalUtil;
+    }
+
+    /**
+     * The following functions are for saving data to disk.
+     */
+    static private PrintStream out;
+    static void setupScalingStatistics() {
+	try {
+	    out = new PrintStream(new FileOutputStream("dp_scaling.txt"));	
+	    out.println("Number of tiles" + "\t" + 
+			"Number of tiles used" + "\t" + 
+			"maxWork" + "\t" + 
+			"Utilization");
+	} catch (FileNotFoundException e) {
+	    e.printStackTrace();
+	}
+    }
+
+    static void doScalingStatistics(LinkedList partitions, int numTiles) {
+	out.println(numTiles + "\t" + 
+		    partitions.size() + "\t" + 
+		    getMaxWork(partitions) + "\t" + 
+		    getTotalUtilization(partitions, numTiles));
+    }
+
+    static void stopScalingStatistics() {
+	out.close();
+    }
+
 }

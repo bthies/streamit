@@ -35,86 +35,62 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	this.configMap = new HashMap();
 	this.uniformSJ = new HashSet();
     }
+
+    /**
+     * Collect scaling statistics for all partitions 1...<maxTiles>.
+     */
+    public static void saveScalingStatistics(SIRStream str, int maxTiles) {
+	PartitionUtil.setupScalingStatistics();
+	for (int i=1; i<maxTiles; i++) {
+	    LinkedList partitions = new LinkedList();
+	    new DynamicProgPartitioner(str, i).calcPartitions(partitions);
+	    PartitionUtil.doScalingStatistics(partitions, i);
+	}
+	PartitionUtil.stopScalingStatistics();
+    }
     
     public void toplevelFusion() {
-	// first, we want calculate partitions for the various different tile sizes (for the paper)
-	// then we will calculate the actual transform that we want to do.
-
-	try {
-	    // save old numtiles and old output stream from partition utils
-	    int oldNumTiles = numTiles;
-	    PrintStream oldStream = PartitionUtil.getOutputStream();
-	    
-	    // redirect output from PartitionUtil to a file
-	    FileOutputStream fos = new FileOutputStream("dp_scaling.txt");
-	    PrintStream outStream = new PrintStream(fos);
-	    PartitionUtil.setOutputStream(outStream);
-	    
-	    // try the transform for tile partitionings of 1-10 tiles.
-	    for (int i=1; i<256; i++) {
-		outStream.println("Partitioning with " + i + " partitions:");
-		System.out.println("Partitioning with " + i + " partitions:");
-		numTiles = i;
-		long start = System.currentTimeMillis();
-		StreamTransform st = calcPartitions(outStream);
-		long end = System.currentTimeMillis();
-		outStream.println("Dynamic programming partitioner took " + 
-				  ((end-start)/1000) + ":" + ((end-start)%1000) + " sec:ms to calculate partitions.");
-	    	
-		// reset the configMap and the uniformSJ fields
-		this.str = str;
-		this.numTiles = numTiles;
-		this.nodes = new LinkedList();
-		this.first = new HashMap();
-		this.last = new HashMap();
-		this.work = WorkEstimate.getWorkEstimate(str);
-		buildNodesList();
-		this.configMap = new HashMap();
-		this.uniformSJ = new HashSet();
-		// flush the output stream
-		outStream.flush();
-		
-	    }
-
-	    // restore the old output stream
-	    PartitionUtil.setOutputStream(oldStream);
-	    // restore the numTiles
-	    numTiles = oldNumTiles;
-	} catch (IOException e) {e.printStackTrace(); throw new RuntimeException("fileio error: " + e.getMessage());}
-
-	// now, run the partitioning that we actually care about.
+	// debug setup
 	long start = System.currentTimeMillis();
-	StreamTransform st = calcPartitions(System.err);
-	System.err.println("Dynamic programming partitioner took " + 
+	LinkedList partitions = new LinkedList();
+
+	// calculate partitions
+	StreamTransform st = calcPartitions(partitions);
+
+	// debug output
+	PartitionUtil.printTileWork(partitions, numTiles);
+	PartitionDot.printGraph(str, "partitions.dot", PartitionRecord.asMap(partitions));
+	Utils.assert(partitions.size()<=numTiles, "Assigned " + partitions.size() + " tiles, but we only have " + numTiles);
+	System.out.println("Dynamic programming partitioner took " + 
 			   (System.currentTimeMillis()-start)/1000 + " secs to calculate partitions.");
+
+	// perform partitioning transformations
 	st.doTransform(str);
     }
 
-
-    
     /**
      * Returns a stream transform that will perform the partitioning
-     * for <str>.
+     * for <str>.  <partitions> must be a non-null linked list; it is
+     * cleared and then filled with PartitionRecords representing the
+     * partitions.
      */
-    private StreamTransform calcPartitions(PrintStream pStream) {
-	this.work = WorkEstimate.getWorkEstimate(str);
-
+    private StreamTransform calcPartitions(LinkedList partitions) {
 	// build stream config
 	DPConfig topConfig = buildStreamConfig();
 	// build up tables
 	int bottleneck = topConfig.get(numTiles);
-	pStream.println("Found bottleneck work is " + bottleneck + ".  Tracing back...");
+	//System.err.println("Found bottleneck work is " + bottleneck + ".  Tracing back...");
 	// expand config stubs that were shared for symmetry optimizations
 	expandSharedConfigs();
 	
-	// build up assignment (map and tilecounter are for historical reasons)
-	HashMap map = new HashMap();
-	int[] tileCounter = { 0 };
-	StreamTransform result = topConfig.traceback(map, tileCounter, numTiles);
-	Utils.assert(tileCounter[0]<numTiles, "Assigned " + tileCounter[0] + " tiles, but we only have " + numTiles);
+	// build up list of partitions 
+	partitions.clear();
+	PartitionRecord curPartition = new PartitionRecord();
+	partitions.add(curPartition);
 
-	PartitionUtil.printTileWork(map, work, numTiles);
-	PartitionDot.printGraph(str, "partitions.dot", map);
+	StreamTransform result = topConfig.traceback(partitions, curPartition, numTiles);
+
+	Utils.assert(bottleneck==PartitionUtil.getMaxWork(partitions));
 	return result;
     }
 
@@ -267,13 +243,14 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	abstract protected int get(int tileLimit);
 
 	/**
-	 * Traceback through a pre-computed optimal solution, storing
-	 * the optimal tile assignment to <map> and returning stream
+	 * Traceback through a pre-computed optimal solution, keeping
+	 * track of new partitions in <partitions> and adding to
+	 * current partition <curPartition>, and returning stream
 	 * transform to perform best partitioning.  <tileCounter> is a
 	 * one-element array holding the value of the current tile we
 	 * are assigning to filters (in a depth-first way).
 	 */
-	abstract public StreamTransform traceback(HashMap map, int[] tileCounter, int tileLimit);
+	abstract public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit);
 
 	/**
 	 * Returns the stream this config is wrapping.
@@ -393,21 +370,19 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	/**
 	 * Traceback function.
 	 */
-	public StreamTransform traceback(HashMap map, int[] tileCounter, int tileLimit) {
+	public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit) {
 	    // only support fusion for now.
 	    FusionTransform st = new FusionTransform();
 	    // add partitions at beginning and end
 	    st.addPartition(0);
 	    st.addPartition(cont.size());
 
-	    traceback(st, map, tileCounter, 0, cont.size()-1, tileLimit);
+	    traceback(st, partitions, curPartition, 0, cont.size()-1, tileLimit);
 	    // if the whole container is assigned to one tile, record
-	    // it as such.  otherwise record as -1
+	    // it as such.
 	    if (tileLimit==1) {
-		map.put(cont, new Integer(tileCounter[0]));
-	    } else {
-		map.put(cont, new Integer(-1));
-	    }
+		curPartition.add(cont);
+	    } 
 	    return st;
 	}
 	
@@ -416,13 +391,13 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	 * tileLimit are as above.  The stream transform <st> is the
 	 * one we're building up to carry out the final partitioning.
 	 */
-	protected void traceback(FusionTransform st, HashMap map, int[] tileCounter,
+	protected void traceback(FusionTransform st, LinkedList partitions, PartitionRecord curPartition,
 				 int child1, int child2, int tileLimit) {
 	    // if we only have one tile left, or if we are only
 	    // looking at one child, then just recurse into children
 	    if (child1==child2 || tileLimit==1) {
 		for (int i=child1; i<=child2; i++) {
-		    st.add(childConfig(i).traceback(map, tileCounter, tileLimit));
+		    st.add(childConfig(i).traceback(partitions, curPartition, tileLimit));
 		}
 		return;
 	    }
@@ -443,10 +418,11 @@ public class DynamicProgPartitioner extends ListPartitioner {
 			// if we found our best cost, then the
 			// division is at this <i> with <j> partitions
 			// on the left.  First recurse left, then
-			// increment tile counter, then recurse right.
-			traceback(st, map, tileCounter, child1, i, j);
-			tileCounter[0]++;
-			traceback(st, map, tileCounter, i+1, child2, tileLimit-j);
+			// start new partition, then recurse right.
+			traceback(st, partitions, curPartition, child1, i, j);
+			curPartition = new PartitionRecord();
+			partitions.add(curPartition);
+			traceback(st, partitions, curPartition, i+1, child2, tileLimit-j);
 			// remember that we had a partition here
 			st.addPartition(i+1);
 			return;
@@ -516,7 +492,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	}
 	*/
 
-	public StreamTransform traceback(HashMap map, int[] tileCounter, int tileLimit) {
+	public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit) {
 	    /*
 	    if (uniformSJ.contains(cont)) {
 		// optimize uniform splitjoins
@@ -526,21 +502,18 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	    StreamTransform result = null;
 	    if (tileLimit==1 || (cont.getParent()!=null && 
 				 cont.getParent().getSuccessor(cont) instanceof SIRJoiner)) {
-		result = super.traceback(map, tileCounter, tileLimit);
+		result = super.traceback(partitions, curPartition, tileLimit);
 	    } else {
 		// if we're not fusing into a single tile, need to:
-		// 1) decrease the tileLimit since one will be reserved for the joiner
-		result = super.traceback(map, tileCounter, tileLimit-1);
-		// 2) unless we have a tileLimit of 2 (in which case
-		//    the joiner should just as well be fused in with
-		//    the parallel streams) increment the tile count
-		//    before adding the joiner
-		if (tileLimit!=2) {
-		    tileCounter[0]++;
-		}
+		// 1. decrease the tileLimit since one will be
+		// reserved for the joiner
+		result = super.traceback(partitions, curPartition, tileLimit-1);
+		// 2. add the joiner to the partition record
+		curPartition = new PartitionRecord();
+		curPartition.add(((SIRSplitJoin)cont).getJoiner(), 0);
+		partitions.add(curPartition);
 	    }
-	    // add the joiner
-	    map.put(((SIRSplitJoin)cont).getJoiner(), new Integer(tileCounter[0]));
+
 	    return result;
 	}
     }
@@ -603,22 +576,31 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	/**
 	 * Add this to the map and return.
 	 */
-	public StreamTransform traceback(HashMap map, int[] tileCounter, int tileLimit) {
-	    // increment the tile counter by the number of extra
-	    // filters assigned to this
-	    tileCounter[0] += (tileLimit - 1);
-	    // remember the last of these in the tile map
-	    map.put(filter, new Integer(tileCounter[0]));
-
+	public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit) {
 	    // do fission if we can
-	    /*
-	    System.err.println("For " + filter.getName() + 
-			       ", traceback allocated " + tileLimit + " tiles; allocated " + tilesForFission(tileLimit)
-			       + " for parallel streams.  isFissable=" + isFissable);
-	    */
-	    if (tilesForFission(tileLimit)>1 && isFissable) {
+	    int tff = tilesForFission(tileLimit);
+	    if (tff>1 && isFissable) {
+		// record fission tiles
+		for (int i=0; i<tff; i++) {
+		    curPartition.add(filter, work.getWork(filter) / tff + FISSION_OVERHEAD);
+		    // only draw new partitions BETWEEN the elements
+		    // of the fissed splitjoin -- not at the end
+		    if (i!=tff-1) {
+			partitions.add(curPartition);
+			curPartition = new PartitionRecord();
+		    }
+		}
+		// record joiner tile if we need one
+		if (tff<tileLimit) {
+		    curPartition = new PartitionRecord();
+		    // just record the filter as the contents since
+		    // it's responsible for this joiner node
+		    curPartition.add(SIRJoiner.createUniformRR(filter.getParent(), new JIntLiteral(1)), 0);
+		    partitions.add(curPartition);
+		}
 		return new FissionTransform(tilesForFission(tileLimit));
 	    } else {
+		curPartition.add(filter, work.getWork(filter));
 		return new IdentityTransform();
 	    }
 	}

@@ -38,7 +38,8 @@ class PartitionDot extends StreamItDot {
         // Return a name pair with both ends pointing to this.
 	//        return new NamePair(makeLabelledNode(self.getRelativeName()));
 	String label = self.getName();
-	label += "\\ntile=" + ((Integer)partitions.get(self)).intValue();
+	Utils.assert(partitions.containsKey(self), "Not assigned to tile: " + self.getName());
+	label += "\\npartition=" + partitions.get(self);
 	return new NamePair(makeLabelledNode(label));
     }
 
@@ -60,7 +61,7 @@ class PartitionDot extends StreamItDot {
 	    }
 	    label += ")";
 	} catch (Exception e) {}
-	label += "\\ntile=" + ((Integer)partitions.get(self)).intValue();
+	label += "\\ntile=" + partitions.get(self);
         return new NamePair(makeLabelledNode(label));
     }
     
@@ -68,14 +69,14 @@ class PartitionDot extends StreamItDot {
      * Override to show partitions.
      */
     public String getClusterString(SIRStream self) {
-	// if we have a linear rep of this object, color the resulting dot graph rose.
-	Utils.assert(partitions.containsKey(self), "No partition for " + self);
-	int tile = ((Integer)partitions.get(self)).intValue();
-	if (tile!=-1) {
+	// if we have a linear rep of this object, label it
+	if (partitions.containsKey(self)) {
+	    String tile = "" + partitions.get(self);
 	    return "subgraph cluster_" + getName() + " {" + 
 		"\n label=\"" + self.getIdent() + "\\n tile=" + tile + "\";\n";
 	} else {
-	    // otherwise, return boring white
+	    // return no label for containers spread over multiple
+	    // tiles
 	    return "subgraph cluster_" + getName() + " {" + 
 		"\n label=\"" + self.getIdent() + "\";\n";
 	}

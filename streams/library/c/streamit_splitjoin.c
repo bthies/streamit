@@ -157,13 +157,7 @@ void run_splitter(stream_context *c)
   assert(c->type == SPLIT_JOIN ||
          c->type == FEEDBACK_LOOP);
 
-  if (c->type == SPLIT_JOIN)
-    input_tape = c->input_tape;
-  else if (c->type == FEEDBACK_LOOP)
-  {
-    input_tape = c->type_data.splitjoin_data.splitter.one_tape;
-    c->type_data.splitjoin_data.splitter.tape[0] = c->output_tape;
-  }
+  input_tape = c->type_data.splitjoin_data.splitter.one_tape;
 
   /* Make the splitter tape cache valid if it's needed. */
   if (c->type_data.splitjoin_data.splitter.type == ROUND_ROBIN &&
@@ -208,13 +202,7 @@ void run_joiner(stream_context *c)
   assert(c->type == SPLIT_JOIN ||
          c->type == FEEDBACK_LOOP);
 
-  if (c->type == SPLIT_JOIN)
-    output_tape = c->output_tape;
-  else if (c->type == FEEDBACK_LOOP)
-  {
-    output_tape = c->type_data.splitjoin_data.joiner.one_tape;
-    c->type_data.splitjoin_data.joiner.tape[0] = c->input_tape;
-  }
+  output_tape = c->type_data.splitjoin_data.joiner.one_tape;
 
   /* Make the splitter tape cache valid if it's needed. */
   if (c->type_data.splitjoin_data.joiner.type == ROUND_ROBIN &&

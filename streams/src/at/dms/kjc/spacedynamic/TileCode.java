@@ -24,8 +24,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     private static final int MAX_LOOKAHEAD = 20;
 
     //Hash set of tiles mapped to filters or joiners
-    //all other tiles are routing tiles
     public static HashSet realTiles;
+    //hash map of all tiles that either compute or route
     public static HashSet tiles;
 
     private static StreamGraph streamGraph;
@@ -45,10 +45,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	streamGraph = sg;
 	layout = sg.getLayout();
 
-	//create a set containing all the coordinates of all
+	//create a set containing all the ComputeNodes of all
 	//the nodes in the FlatGraph plus all the tiles involved
 	//in switching
-	//generate the code for all tiles containing filters and joiners
+	HashSet computeNodes = new HashSet();
 	
 	//tiles that are assigned to streams (filters or joiners)
 	realTiles = new HashSet();
@@ -61,14 +61,21 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    
 	    //for decoupled execution the scheduler does not run
 	    if (!(KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM)) {
-		tiles.addAll(staticGraph.simulator.initSchedules.keySet());
-		tiles.addAll(staticGraph.simulator.steadySchedules.keySet());
+		computeNodes.addAll(staticGraph.simulator.initSchedules.keySet());
+		computeNodes.addAll(staticGraph.simulator.steadySchedules.keySet());
 	    }
 	}
 
+	//add only tiles to the <tiles> Set
+	Iterator cns = computeNodes.iterator();
+	while(cns.hasNext()) {
+	    ComputeNode cn = (ComputeNode)cns.next();
+	    if (cn.isTile())
+		tiles.add(cn);
+	}
 
-	//for the tiles that are only involved in routing just create a dummy main function
 	Iterator tileIterator = tiles.iterator();
+
 	while(tileIterator.hasNext()) {
 	    RawTile tile = (RawTile)tileIterator.next();
 	    //do not generate code for this tile
@@ -357,7 +364,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     private static void noFilterCode(RawTile tile) 
     {
 	//do not generate code for file manipulators
-	if (streamGraph.getFileVisitor().fileNodes.contains(layout.getNode(tile)))
+	if (streamGraph.getFileState().fileNodes.contains(layout.getNode(tile)))
 	    return;
 	
 	try {
@@ -394,30 +401,20 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     //remember which tiles we have generated code for
     public void visitNode(FlatNode node) 
     {
-	//this is a mapped joiner, we do not want to generate code for
-	//joiners in the decoupled case
-	if (layout.getJoiners().contains(node) && !KjcOptions.decoupled) {
-	    realTiles.add(layout.getTile(node.contents));
-	    joinerCode(node);
-	    //After done with node drops its contents for garbage collection
-	    //node.contents=null;
-	    //node.edges=null;
-	    //for(int i=0;i<node.incoming.length;i++) {
-	    //node.incoming[i].contents=null;
-	    //}
-	    //node.incoming=null;
-	}
-	if (node.contents instanceof SIRFilter) {
-	    //do not generate code for the file manipulators
-	    if (streamGraph.getFileVisitor().fileNodes.contains(node))
-		return;
-	    if (!layout.isAssigned(node))
-		return;
-	    realTiles.add(layout.getTile(node.contents));
-	    FlatIRToC.generateCode(ssg, node);
-	    //After done with node drops its contents for garbage collection
-	    //Need to keep contents for filter type checking but dropping methods
-	    ((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());
+	if (Layout.assignToATile(node)) {
+	    realTiles.add(layout.getTile(node));
+	    
+	    if (node.isJoiner()) {
+		//generate the tile joiner code for mapped joiners
+		joinerCode(node);
+	    }
+	    else if (node.isFilter()) {
+		//generate the c code for filter
+		FlatIRToC.generateCode(ssg, node);
+		//After done with node drops its contents for garbage collection
+		//Need to keep contents for filter type checking but dropping methods
+		((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());
+	    }
 	}
     }
 }

@@ -11,7 +11,8 @@ public class RawChip {
     public static final int cacheLineBytes = 32;
     public static final int cacheLineWords = 8;
     public static final int dCacheSizeBytes = 32768;
-    
+    private IOPort[] ports;
+
     public RawChip(int xSize, int ySize) {
 	gXSize = xSize;
 	gYSize = ySize;
@@ -20,7 +21,51 @@ public class RawChip {
 	for (int x = 0; x < xSize; x++)
 	    for (int y = 0; y < ySize; y++)
 		tiles[x][y] = new RawTile(x, y, this);
+	
+	ports = new IOPort[2*gXSize + 2*gYSize];
+	addIOPorts();
+    }
 
+    public int getNumPorts() 
+    {
+	return 2*gXSize + 2*gYSize;
+    }
+
+    public IOPort getIOPort(int i) 
+    {
+	return ports[i];
+    }
+
+    public void connectDevice(IODevice dev, IOPort port) 
+    {
+	port.addDevice(dev);
+	dev.connect(port);
+    }
+    
+    
+    private void addIOPorts() 
+    {
+	int i, index = 0;
+	//add the north ioports
+	for (i = 0; i < this.gXSize; i++) {
+	    ports [index] = new IOPort(this, index);						
+	    index ++;
+	}
+	//add the east ioports
+	for (i = 0; i < this.gYSize; i++) {
+	    ports [index] = new IOPort(this, index);
+	    index ++;
+	}	
+	//add the south ioports
+	for (i = this.gXSize - 1; i >= 0; i--) {
+	    ports [index] = new IOPort(this, index);
+	    index ++;
+	}
+	//add the west ioports
+	for (i = this.gYSize - 1; i >= 0; i--) {
+	    ports [index] = new IOPort(this, index);
+	    index ++;
+	}	
     }
 
     public RawTile getTile(int tileNumber) 
@@ -129,20 +174,4 @@ public class RawChip {
 	Utils.fail("calling getDirection on non-neighbors");
 	return "";
     }
-    
-    /**
-     * Returns the numbers of tiles of the raw chip that 
-     * have compute code at the given tile
-     **/
-    public int computingTiles() 
-    {
-	int sum = 0;
-
-	for (int i = 0; i < this.gXSize; i++)
-	    for (int j = 0; j < this.gYSize; j++)
-		if (getTile(i, j).hasComputeCode())
-		    sum++;
-	return sum;
-    }
-    
 }

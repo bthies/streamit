@@ -108,9 +108,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	if (node.isFilter()){
 	    SIRFilter filter = (SIRFilter)node.contents;
 	    //Skip Identities now
-	    if(filter instanceof SIRIdentity ||
-	       filter instanceof SIRFileWriter ||
-	       filter instanceof SIRFileReader)
+	    if(!Layout.assignToATile(node))
 		return;
 	    if (!KjcOptions.decoupled)
 		calculateItems(filter);
@@ -219,7 +217,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	
 	if (node.inputs > 0) {
 	    previous = node.incoming[0];
-	    //okay the number of items produced by the upstream splitter may not 
+	    //the number of items produced by the upstream splitter may not 
 	    //equal the number of items that produced by the filter feeding the splitter
 	    //now, since I do not map splitter, this discrepancy must be accounted for.  
 	    //We do not have an incoming buffer for ths splitter, so the data must

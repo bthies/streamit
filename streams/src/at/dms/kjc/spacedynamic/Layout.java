@@ -24,19 +24,19 @@ public class Layout extends at.dms.util.Utils implements
     public Router router;
     
     /** SIRStream -> RawTile **/
-    private  HashMap SIRassignment;
+    private HashMap SIRassignment;
     /* RawTile -> flatnode */
-    private  HashMap tileAssignment;
+    private HashMap tileAssignment;
     /** set of all flatnodes that are assigned to tiles **/
-    private  HashSet assigned;
+    private HashSet assigned;
     //set of all the identity filters not mapped to tiles
-    private   HashSet identities;
+    private HashSet identities;
     /** map of flatNode -> Integer that stores the memory footprint of fields (in bytes) 
 	of the filter, used for memory cost analysis, it is populated in visitNode **/
     private HashMap memoryFP;
 
-    private  BufferedReader inputBuffer;
-    private  Random random;
+    private BufferedReader inputBuffer;
+    private Random random;
     
     private StreamGraph streamGraph;
 
@@ -49,29 +49,23 @@ public class Layout extends at.dms.util.Utils implements
     public static int ANNEALITERATIONS = 10000;
     public static double TFACTR = 0.9;
 
-    private FileWriter filew;
-    
+    private FileWriter filew;    
     private RawChip rawChip;
-
+    private FileState fileState;
+    
     private double oldCost = 0.0;
+
+
 
     public Layout(StreamGraph streamGraph) 
     {
 	this.streamGraph = streamGraph;
+	fileState = streamGraph.getFileState();
 	joiners = new HashSet();
 	rawChip = streamGraph.getRawChip();	
 
-	int rows = rawChip.getYSize();
-	int columns = rawChip.getXSize();
-	
 	//router = new YXRouter();
 	router = new FreeTileRouter();
-	
-	if (streamGraph.getFileVisitor().foundReader || 
-	    streamGraph.getFileVisitor().foundWriter){
-	    assert false;
-	    columns++;
-	}
 
 	SIRassignment = new HashMap();
 	tileAssignment = new HashMap();
@@ -103,7 +97,14 @@ public class Layout extends at.dms.util.Utils implements
     }
 
     public int getTilesAssigned() {
-	return assigned.size();
+	int totalAssToTile = 0;
+	
+	Iterator assignedNodes = tileAssignment.values().iterator();
+	while (assignedNodes.hasNext()) {
+	    if (assignToATile((FlatNode)assignedNodes.next()))
+		totalAssToTile++;
+	}
+	return totalAssToTile;
     }
 
     public boolean isAssigned(RawTile tile) 
@@ -135,48 +136,94 @@ public class Layout extends at.dms.util.Utils implements
     
 
     /**
-     * Returns the tile number assignment for <str>, or null if none has been layout.assigned.
+     * Returns the tile number assignment for <str>, or null if none has been layout
+     * It will die if this str should not be assigned to RawTile
      */
     public RawTile getTile(SIROperator str) 
     {
-	if (SIRassignment == null) return null;
+	if (SIRassignment == null) 
+	    return null;
+	
+	assert SIRassignment.get(str) != null ||
+	    !(SIRassignment.get(str) instanceof RawTile) : 
+	    "Calling getTile() on a stream that is not mapped to tile";
 	return (RawTile)SIRassignment.get(str);
     }
     
+    /**
+     * Returns the tile number assignment for <str>, or null if none has been layout
+     * It will die if <str> should not be assigned to RawTile
+     */
     public RawTile getTile(FlatNode str) 
     {
 	if (SIRassignment == null){
 	    return null;
 	}
+	
 	return (RawTile)SIRassignment.get(str.contents);
     }
 
-    
+    /** Return the tile number for the <node>
+	it will die if the node has not been assigned to a tile **/
     public int getTileNumber(FlatNode node)
     {
 	return getTile(node).getTileNumber();
     }	
     
+    /** Return the tile number for the <str>
+	it will die if the node has not been assigned to a tile **/
     public int getTileNumber(SIROperator str)
     {
 	return getTile(str).getTileNumber();
     }	
     
+    /** Return the flatNode assigned to this <tile> **/
     public FlatNode getNode(RawTile tile) 
     {
 	return (FlatNode)tileAssignment.get(tile);
     }
+
+    /** return the compute node (tile or ioport) assigned to <node> **/
+    public ComputeNode getComputeNode(FlatNode node) 
+    {
+	return getComputeNode(node.contents);
+    }
+    /** return the compute node (tile or ioport) assigned to <str> **/
+    public ComputeNode getComputeNode(SIROperator str) 
+    {
+	if (SIRassignment == null) 
+	    return null;
+	
+	assert SIRassignment.get(str) != null : 
+	    "calling getComputeNode() on str that is not assigned to a compute node";
+	return (ComputeNode)SIRassignment.get(str);
+    }
     
     
-    private void assign(RawTile tile, FlatNode node) 
+    private void assign(ComputeNode cn, FlatNode node) 
     {
 	//if node == null, remove assignment
 	if (node == null) {
-	    tileAssignment.remove(tile);
+	    tileAssignment.remove(cn);
 	    return;
 	}
-	tileAssignment.put(tile, node);
-	SIRassignment.put(node.contents, tile);
+	tileAssignment.put(cn, node);
+	SIRassignment.put(node.contents, cn);
+    }
+
+    //place the file filter assignment in the hashmaps, assigning them to ports
+    private void assignFileFilters()
+    {
+	Iterator fileReaders = fileState.getFileReaderDevs().iterator();
+	while (fileReaders.hasNext()) {
+	    FileReaderDevice dev = (FileReaderDevice)fileReaders.next();
+	    assign(dev.getPort(), dev.getFlatNode());
+	}
+	Iterator fileWriters = fileState.getFileWriterDevs().iterator();
+	while (fileWriters.hasNext()) {
+	    FileWriterDevice dev = (FileWriterDevice)fileWriters.next();
+	    assign(dev.getPort(), dev.getFlatNode());
+	}
     }
 
     public RawChip getRawChip() 
@@ -184,15 +231,7 @@ public class Layout extends at.dms.util.Utils implements
 	return rawChip;
     }
 
-    private void assign(HashMap sir, HashMap tileAss, RawTile tile, FlatNode node) 
-    {
-	if (node == null) {
-	    tileAss.remove(tile);
-	    return;
-	}
-	tileAss.put(tile, node);
-	sir.put(node.contents, tile);
-    }    
+ 
     
     public void dumpLayout(String fileName) {
 	StringBuffer buf = new StringBuffer();
@@ -221,7 +260,7 @@ public class Layout extends at.dms.util.Utils implements
 	Iterator it = tileAssignment.values().iterator();
 	while(it.hasNext()) {
 	    FlatNode node = (FlatNode) it.next();
-	    if (streamGraph.getFileVisitor().fileNodes.contains(node))
+	    if (streamGraph.getFileState().fileNodes.contains(node))
 		continue;
 	    buf.append("tile" +   getTileNumber(node) + "[label=\"" + 
 		       //getTileNumber(node) + "\"];\n");
@@ -234,7 +273,7 @@ public class Layout extends at.dms.util.Utils implements
 	     int y=getTile(node).getY();
 	     while(downstream.hasNext()) {
 		 FlatNode n = (FlatNode)downstream.next();
-		 if (!tileAssignment.values().contains(n))
+		 if (!assignToATile(n))
 		     continue;
 		 //		 System.out.println(" " + n);
 		 buf.append("tile" + getTileNumber(node) + 
@@ -330,6 +369,7 @@ public class Layout extends at.dms.util.Utils implements
 
     public void handAssign() 
     {
+	assignFileFilters();
 	System.out.println("Enter desired tile for each filter of " + 
 			   streamGraph.getStaticSubGraphs().length + " subgraphs: ");
 	inputBuffer = new BufferedReader(new InputStreamReader(System.in));
@@ -477,54 +517,52 @@ public class Layout extends at.dms.util.Utils implements
 	    if (!(assigned.contains(src)))
 		continue;
 	    
-	    RawTile srcTile = getTile(src);
+	    ComputeNode srcNode = getComputeNode(src);
 
-	    assert srcTile != null;
+	    assert srcNode != null;
 
 	    //add the src tile to the list of tiles used by this SSG
-	    tiles.add(srcTile);
+	    if (srcNode.isTile())
+		tiles.add(srcNode);
 	    
 	    //make sure we have not previously tried to route through this tile
 	    //in a previous SSG
-	    if (usedTiles.contains(srcTile)) {
-		//System.out.println(srcTile);
+	    if (usedTiles.contains(srcNode)) {
+		//System.out.println(srcNode);
 		//return -1.0;
 		cost += 1E6;
 	    }
 	    
-	    //don't worry about nodes that aren't assigned tiles
-	    if (!assigned.contains(src))
-		continue;
 	    //get all the dests for this node that are assigned tiles
 	    Iterator dsts = getDownStream(src).iterator();
-
 
 	    while (dsts.hasNext()) {
 		FlatNode dst = (FlatNode)dsts.next();
 		assert assigned.contains(dst);
-		RawTile dstTile = getTile(dst);
+		ComputeNode dstNode = getComputeNode(dst);
 		
-		assert dstTile != null;
+		assert dstNode != null;
 		
 		//add the dst tile to the list of tiles used by this SSG
-		tiles.add(dstTile);
+		if (dstNode.isTile())
+		    tiles.add(dstNode);
 		
 		//make sure we have not previously (in another SSG) tried to route 
 		//thru the tile assigned to the dst
-		if (usedTiles.contains(dstTile)) {
-		    //System.out.println(dstTile);
+		if (usedTiles.contains(dstNode)) {
+		    //System.out.println(dstNode);
 		    cost += 1E6;
 		    //return -1.0;
 		}
 		
-		RawTile[] route = 
-		    (RawTile[])router.getRoute(ssg, srcTile, dstTile).toArray(new RawTile[0]);
+		ComputeNode[] route = 
+		    (ComputeNode[])router.getRoute(ssg, srcNode, dstNode).toArray(new ComputeNode[0]);
 		
 		//check if we cannot find a route from src to dst that does not go 
 		//thru another ssg
 		if (route.length == 0) {
 		    //System.out.println("Cannot find route from src to dst within SSG " + 
-		    //		       src + "(" + srcTile + ") -> " + dst + "(" + dstTile + ")");
+		    //		       src + "(" + srcNode + ") -> " + dst + "(" + dstNode + ")");
 		    cost += 1E6;
 		    //return -1.0;
 		}
@@ -536,6 +574,7 @@ public class Layout extends at.dms.util.Utils implements
 		double numAssigned = 0.0;
 		
 		for (int i = 1; i < route.length - 1; i++) {
+		    assert route[i].isTile();
 		    //make sure that this route does not pass thru any tiles assigned to other SSGs
 		    //otherwise we have a illegal layout!!!!
 		    if (usedTiles.contains(route[i])) {
@@ -546,7 +585,7 @@ public class Layout extends at.dms.util.Utils implements
 		    //add this tile to the set of tiles used by this SSG
 		    tiles.add(route[i]);
 		    
-		    if (getNode(route[i]) != null) //assigned tile
+		    if (getNode((RawTile)route[i]) != null) //assigned tile
 			numAssigned += 100.0;
 		    else {
 			//router tile, only penalize it if we have routed through it before
@@ -629,8 +668,8 @@ public class Layout extends at.dms.util.Utils implements
 	for (int j = 0; j < ssg.getOutputs().length; j++) {
 	    FlatNode src = ssg.getOutputs()[j];
 	    FlatNode dst = ssg.getNext(src);
-	    RawTile srcTile = getTile(src);
-	    RawTile dstTile = getTile(dst);
+	    ComputeNode srcTile = getComputeNode(src);
+	    ComputeNode dstTile = getComputeNode(dst);
 
 	    Iterator route = XYRouter.getRoute(ssg, srcTile, dstTile).iterator();
 	    //System.out.print("Dynamic Route: ");
@@ -654,39 +693,7 @@ public class Layout extends at.dms.util.Utils implements
 	    }
 	}
 	return cost;
-    }
-    
-    
-    //return true if the node should be assigned to a tile
-    //keep this consistent with visitNode!!!
-    public static boolean assignedNode(FlatNode node)
-    {
-	//if this is a filter and not an file reader/write/identity/predefined
-	if (node.contents instanceof SIRFilter && 
-	    !(node.contents instanceof SIRIdentity  ||
-	      node.contents instanceof SIRPredefinedFilter))
-	    return true;
-	
-	if (node.contents instanceof SIRJoiner) {
-	    if (node.edges.length == 0)
-		return false;
-	    if (node.edges[0] == null || !(node.edges[0].contents instanceof SIRJoiner)) {
-		//do not assign the joiner if JoinerRemoval wants is removed...
-		//if (JoinerRemoval.unnecessary != null && 
-		//   JoinerRemoval.unnecessary.contains(node))
-		//   return false;
-		//do not assign the joiner if it is a null joiner, so if we find a 
-		//no null weight return true..
-		for (int i = 0; i < node.inputs;i++) {
-		    if (node.incomingWeights[i] != 0) {
-			return true;
-		    }
-		} 
-	    }
-	}
-	return false;
-    }
-    
+    }    
 
     public void simAnnealAssign()
     {
@@ -698,6 +705,7 @@ public class Layout extends at.dms.util.Utils implements
 
 	try {
 	    random = new Random(17);
+	    assignFileFilters();
 	    //create an initial placement
 	    initialPlacement();
 	    
@@ -798,7 +806,7 @@ public class Layout extends at.dms.util.Utils implements
 
 	//build the list of nodes that we have to assign to tiles
 	//and build it in data-flow order for each SSG
-	LinkedList assignMe = new LinkedList();
+	LinkedList assignMeToATile = new LinkedList();
 	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
 	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
 	    Iterator flatNodes = ssg.getFlatNodes().iterator();
@@ -806,18 +814,18 @@ public class Layout extends at.dms.util.Utils implements
 		FlatNode node = (FlatNode)flatNodes.next();
 		//if we should assign this node to a tile
 		//then add it to the traversal
-		if (assigned.contains(node))
-		    assignMe.add(node);
+		if (assignToATile(node))
+		    assignMeToATile.add(node);
 	    }
 	    
 	}
 	
-	Iterator traversal = assignMe.iterator();
+	Iterator traversal = assignMeToATile.iterator();
 
 	int row = 0;
 	int column = 0;
 
-	//start laying out at top right corner because of file reader
+	//start laying out at top right corner 
 	for (row = 0; row < rawChip.getYSize(); row ++) {
 	    if (row % 2 == 0) {
 		for (column = rawChip.getXSize() -1; column >= 0;) {
@@ -966,13 +974,46 @@ public class Layout extends at.dms.util.Utils implements
 	return random.nextInt(rawChip.getTotalTiles());
     }
     
+    /** return true if this flatnode is or should be assigned to  **/
+    public static boolean assignToATile(FlatNode node) 
+    {
+	if (node.isFilter() && 
+	    !(node.contents instanceof SIRIdentity ||
+	      node.contents instanceof SIRFileReader ||
+	      node.contents instanceof SIRFileWriter))
+	    return true;
+	else if (node.isJoiner())
+	    return assignedJoiner(node);
+	
+	return false;
+    }
+    
+    public static boolean assignedJoiner(FlatNode node) 
+    {
+	assert node.isJoiner();
+	if (node.edges.length == 0) {
+	    assert node.getTotalIncomingWeights() == 0;
+	    return false;
+	}
+	//do not assign joiners directly connected to other joiners or null joiners
+	if (node.edges[0] != null || !(node.edges[0].contents instanceof SIRJoiner)) {
+	    for (int i = 0; i < node.inputs;i++) {
+		if (node.incomingWeights[i] != 0) {
+		    return true;
+		}
+	    } 
+	}
+	return false;
+    }
+    
+
+    
     /** END simulated annealing methods **/
 
     /** visit each flatnode and decide whether is should be assigned **/
     public void visitNode(FlatNode node) 
     {
-	if (node.isFilter() &&
-	    ! (streamGraph.getFileVisitor().fileNodes.contains(node))) {
+	if (node.isFilter()) {
 	    //create an entry in the memory foot print map
 	    memoryFP.put(node, 
 			 new Integer(DataEstimate.computeFilterGlobalsSize(node.getFilter())));
@@ -982,37 +1023,14 @@ public class Layout extends at.dms.util.Utils implements
 		identities.add(node);
 		return;
 	    }
-	    //now check for predefined filters because we want to skip them...
-	    //but not identities, see above...
-	    if (node.contents instanceof SIRPredefinedFilter) 
-		return;
-	    
 	    assigned.add(node);
 	    return;
 	}
-	if (node.contents instanceof SIRJoiner) {
-	    //don't assign a null joiner that does not have an output
-	    if (node.edges.length == 0) {
-		assert node.getTotalIncomingWeights() == 0;
-		return;
-	    }
-	    //do not assign joiners directly connected to other joiners or null joiners
-	    if (node.edges[0] == null || !(node.edges[0].contents instanceof SIRJoiner)) {
-		//do not assign the joiner if JoinerRemoval wants is removed...
-		//if (JoinerRemoval.unnecessary != null && 
-		//    JoinerRemoval.unnecessary.contains(node))
-		//    return;
-		//do not assign the joiner if it is a null joiner
-		for (int i = 0; i < node.inputs;i++) {
-		    if (node.incomingWeights[i] != 0) {
-			joiners.add(node);
-			assigned.add(node);
-			return;
-		    }
-		} 
-	    }
+	if (node.contents instanceof SIRJoiner && 
+	    assignedJoiner(node)) {
+	    joiners.add(node);
+	    assigned.add(node);
 	}
     }
-   
 }
 

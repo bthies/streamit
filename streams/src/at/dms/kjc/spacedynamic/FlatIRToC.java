@@ -56,6 +56,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
     public static void generateCode(StaticStreamGraph SSG, FlatNode node)
     {
+	assert Layout.assignToATile(node);
 	FlatIRToC toC = new FlatIRToC((SIRFilter)node.contents);
 	toC.flatNode = node;
 	toC.ssg = SSG;

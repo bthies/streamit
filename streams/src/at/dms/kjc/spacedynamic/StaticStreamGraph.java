@@ -903,7 +903,7 @@ public class StaticStreamGraph
 	
 	Iterator nodes = flatNodes.iterator();
 	while (nodes.hasNext()) {
-	    if (Layout.assignedNode((FlatNode)nodes.next()))
+	    if (Layout.assignToATile((FlatNode)nodes.next()))
 		assignedNodes++;
 	}
 	return assignedNodes;

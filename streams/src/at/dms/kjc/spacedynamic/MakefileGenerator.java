@@ -33,14 +33,6 @@ public class MakefileGenerator
 	    tiles.addAll(TileCode.realTiles);
 	    tiles.addAll(TileCode.tiles);
 	    
-	    //remove the tiles assigned to FileReaders
-	    //do not generate switchcode for Tiles assigned to file readers
-	    //they are just dummy tiles
-	    Iterator frs = sg.getFileVisitor().fileNodes.iterator();
-	    while (frs.hasNext()) {
-		tiles.remove(layout.getTile((FlatNode)frs.next()));
-	    }
-
 	    //remove joiners from the hashset if we are in decoupled mode, 
 	    //we do not want to simulate joiners
 	    if (KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM) 
@@ -89,7 +81,7 @@ public class MakefileGenerator
 	    fw.write("include $(TOPDIR)/Makefile.include\n\n");
 	    fw.write("RGCCFLAGS += -O3\n\n");
             fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");
-	    if (streamGraph.getFileVisitor().foundReader || streamGraph.getFileVisitor().foundWriter)
+	    if (streamGraph.getFileState().foundReader || streamGraph.getFileState().foundWriter)
 		createBCFile(true, tiles);
             else
                 createBCFile(false, tiles);
@@ -254,7 +246,7 @@ public class MakefileGenerator
             fw.write("  //printf(\"cycleHi %X, cycleLo %X\\n\", a, b);\n");
             // use the same format string that generating a printf causes so we can use
             // the same results script;
-            fw.write("  printf(\"[00: %08x%08x]: %d\\n\", a, b, val);\n");
+            fw.write("  printf(\"[00: %08x%08x]: %x\\n\", a, b, val);\n");
             fw.write("}\n\n");
 	    
 
@@ -286,23 +278,26 @@ public class MakefileGenerator
 
 	if (hasIO) {
 	    //generate the code for the fileReaders
-	    Iterator frs = streamGraph.getFileVisitor().fileReaders.iterator();
+	    Iterator frs = streamGraph.getFileState().getFileReaderDevs().iterator();
+	    if (frs.hasNext()) {
+		//include the file reader device
+		fw.write("\tlocal f_readerpath = malloc(strlen(streamit_home) + 30);\n");
+		fw.write("\tsprintf(f_readerpath, \"%s%s\", streamit_home, \"/include/from_file_raw.bc\");\n");
+		fw.write("\tinclude(f_readerpath);\n");
+	    }
 	    while (frs.hasNext()) {
-		FlatNode node = (FlatNode)frs.next();
-		SIRFileReader fr = (SIRFileReader)node.contents;
-		fw.write("\tdev_serial_rom_init(\"" + fr.getFileName() +
-			 "\", " + getIOPort(layout.getTile(node)) + 
-			 ", 1);\n");
+		FileReaderDevice dev  = (FileReaderDevice)frs.next();
+		fw.write("\tdev_from_file_raw(\"" + dev.getFileName() +
+			 "\", " + dev.getPort().getPortNumber() + ");\n");
 	    }
 	    //generate the code for the file writers
-	    Iterator fws = streamGraph.getFileVisitor().fileWriters.iterator();
+	    Iterator fws = streamGraph.getFileState().getFileWriterDevs().iterator();
 	    while (fws.hasNext()) {
-		FlatNode node = (FlatNode)fws.next();
-		SIRFileWriter sfw = (SIRFileWriter)node.contents;
-		int size = getTypeSize(((SIRFileWriter)node.contents).getInputType());
-		fw.write("\tdev_st_port_to_file_size(\"" + sfw.getFileName() +
+		FileWriterDevice dev = (FileWriterDevice)fws.next();
+		int size = getTypeSize(dev.getType());
+		fw.write("\tdev_st_port_to_file_size(\"" + dev.getFileName() +
 			 "\", " + size + ", " +
-			 getIOPort(layout.getTile(node)) + ");\n");
+			 dev.getPort().getPortNumber() + ");\n");
             }
 	}
 	

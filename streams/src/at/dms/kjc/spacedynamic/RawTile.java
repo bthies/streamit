@@ -16,6 +16,7 @@ public class RawTile extends ComputeNode {
     private boolean computes;
     //true if a filter has been mapped to it
     private boolean mapped;
+    private IOPort[] IOPorts;
     
     public RawTile(int x, int y, RawChip rawChip) {
 	super(rawChip);
@@ -25,12 +26,42 @@ public class RawTile extends ComputeNode {
 	computes = false;
 	mapped = false;
 	switches = false;
+	IOPorts = new IOPort[0];
     }
+
+    public void addIOPort(IOPort io)
+    {
+	assert IOPorts.length < 2 : "Trying to add too many neighboring IO devices";
+	IOPort[] newIOs = new IOPort[IOPorts.length + 1];
+	for (int i = 0; i < IOPorts.length; i++)
+	    newIOs[i] = IOPorts[i];
+	newIOs[newIOs.length - 1] = io;
+	IOPorts = newIOs;
+    }
+    
+    /** Function that returns the device connected to this tile
+	it will die if there isn't a device or if there is two devices **/
+    public IODevice getAttachedDevice() 
+    {
+	assert IOPorts.length > 0 : "Calling getAttachedDevice() on a non-border tile";
+	IODevice dev1 = IOPorts[0].getDevice();
+	IODevice dev2 = IOPorts.length > 1 ? IOPorts[1].getDevice() : null;
+	
+	assert !(dev1 == null && dev2 == null) : "Calling getAttachedDevice() on tile with no devices";
+	assert !(dev1 != null && dev2 != null) : "Calling getAttachedDevice() on tile with two devices";
+	
+	return dev1 != null ? dev1 : dev2;
+    }
+    
 
     public String toString() {
 	return "Tile["+X+", "+Y+"]";
     }
     
+    public IOPort[] getIOPorts() 
+    {
+	return IOPorts;
+    }
     
     private void setTileNumber() {
 	tileNumber = (Y * rawChip.getXSize()) + X;
@@ -59,36 +90,6 @@ public class RawTile extends ComputeNode {
 
     public int getTileNumber() {
 	return tileNumber;
-    }
-
-    public boolean hasComputeCode() {
-	return computes;
-    }
-
-    public boolean hasSwitchCode() {
-	return switches;
-    }
-
-    //this is set by SwitchCodeStore
-    public void setSwitches() {
-	switches = true;
-    }
-
-    public void setMapped() 
-    {
-	mapped = true;
-	setComputes();
-    }
-    
-    public boolean isMapped() 
-    {
-	return mapped;
-    }
-    
-
-    //this is set by ComputeCodeStore
-    public void setComputes() {
-	computes = true;
     }
 
     public List getSouthAndEastNeighbors() 

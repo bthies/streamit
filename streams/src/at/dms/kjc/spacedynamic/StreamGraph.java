@@ -34,7 +34,7 @@ public class StreamGraph
     /** the tile assignment for the stream graph **/
     private Layout layout;
     /** Information on all the file readers and writer of the graph **/
-    private FileVisitor fileVisitor;
+    private FileState fileState;
     /** map of flat nodes to parent ssg **/
     public HashMap parentMap;
     /** schedules of sending for all the joiners of the stream graph **/
@@ -313,7 +313,7 @@ public class StreamGraph
 
     public void handTileAssignment() 
     {
-	BufferedReader inputBuffer = new BufferedReader(new InputStreamReader(System.in));;
+	BufferedReader inputBuffer = new BufferedReader(new InputStreamReader(System.in));
 	int numTilesToAssign = rawChip.getTotalTiles(), num;
 	StaticStreamGraph current = topLevel;
 	
@@ -387,9 +387,9 @@ public class StreamGraph
     }
     
 
-    public FileVisitor getFileVisitor() 
+    public FileState getFileState() 
     {
-	return fileVisitor;
+	return fileState;
     }
     
     public Layout getLayout() 
@@ -411,7 +411,7 @@ public class StreamGraph
 
 	
 	//gather the information on file readers and writers in the graph
-	fileVisitor = new FileVisitor(this);
+	fileState = new FileState(this);
 
 	//now ready to layout	
 	layout = new Layout(this);

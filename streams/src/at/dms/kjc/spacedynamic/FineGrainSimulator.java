@@ -294,17 +294,17 @@ public class FineGrainSimulator extends Simulator
 	    assert dest != null;
 	    assert !(layout.getIdentities().contains(dest));
 	    //System.out.println("  Dest: " + dest + " " + layout.getTile(dest));
- 	    RawTile[] hops = 
- 		(RawTile[])layout.router.
-		getRoute(ssg, layout.getTile(fire), layout.getTile(dest)).toArray(new RawTile[0]);
+ 	    ComputeNode[] hops = 
+ 		(ComputeNode[])layout.router.
+		getRoute(ssg, layout.getComputeNode(fire), layout.getComputeNode(dest)).toArray(new ComputeNode[0]);
 
 	    //for (int i = 0; i < hops.length; i++)
 	    //System.out.println("     " + hops[i]);
 	    
 	    //add to fire's next
-	    if (!next.containsKey(layout.getTile(fire))) 
-		next.put(layout.getTile(fire), new HashSet());
-	    ((HashSet)next.get(layout.getTile(fire))).add(hops[1]);
+	    if (!next.containsKey(layout.getComputeNode(fire))) 
+		next.put(layout.getComputeNode(fire), new HashSet());
+	    ((HashSet)next.get(layout.getComputeNode(fire))).add(hops[1]);
 	    //add to all other previous, next
 	    for (int i = 1; i < hops.length -1; i++) {
 		if (prev.containsKey(hops[i]))
@@ -328,10 +328,10 @@ public class FineGrainSimulator extends Simulator
 	//create the appropriate amount of routing instructions
 	int elements = Util.getTypeSize(Util.getOutputType(fire));
 	for (int i = 0; i < elements; i++)
-	    asm(layout.getTile(fire), prev, next);
+	    asm(layout.getComputeNode(fire), prev, next);
     }
     
-    private void asm(RawTile fire, HashMap previous, HashMap next) 
+    private void asm(ComputeNode fire, HashMap previous, HashMap next) 
     {
 	assert fire != null;
 	//generate the sends
@@ -341,7 +341,7 @@ public class FineGrainSimulator extends Simulator
 	Iterator it = ((HashSet)next.get(fire)).iterator();
 	buf.append("route ");
 	while (it.hasNext()) {
-	    RawTile dest = (RawTile)it.next();
+	    ComputeNode dest = (ComputeNode)it.next();
 	    buf.append("$csto->" + "$c" + 
 		       rawChip.getDirection(fire, dest) + 
 		       "o,");
@@ -352,17 +352,17 @@ public class FineGrainSimulator extends Simulator
 	//generate all the other 
 	Iterator tiles = next.keySet().iterator();
 	while (tiles.hasNext()) {
-	    RawTile tile = (RawTile)tiles.next();
+	    ComputeNode tile = (ComputeNode)tiles.next();
 	    assert tile != null;
 	    if (tile == fire) 
 		continue;
 	    if (!switchSchedules.containsKey(tile))
 		switchSchedules.put(tile, new StringBuffer());
 	    buf = (StringBuffer)switchSchedules.get(tile);
-	    RawTile prevTile = (RawTile)previous.get(tile);
+	    ComputeNode prevTile = (ComputeNode)previous.get(tile);
 	    buf.append("route ");	    Iterator nexts = ((HashSet)next.get(tile)).iterator();
 	    while(nexts.hasNext()) {
-		RawTile nextTile = (RawTile)nexts.next();
+		ComputeNode nextTile = (ComputeNode)nexts.next();
 		if (!nextTile.equals(tile))
 		    buf.append("$c" + rawChip.getDirection(tile, prevTile) + "i->$c" +
 			       rawChip.getDirection(tile, nextTile) + "o,");

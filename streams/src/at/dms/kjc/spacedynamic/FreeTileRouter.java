@@ -58,21 +58,42 @@ public class FreeTileRouter implements Router
 	
 	Layout layout = ssg.getStreamGraph().getLayout();
 
+	//if the source or dest is an iodevice we have to 
+	//route the item to/from neighboring tiles
+	RawTile srcTile, dstTile;
+	if (src.isPort())
+	    srcTile = ((IOPort)src).getNeighboringTile();
+	else
+	    srcTile = (RawTile)src;
+	if (dst.isPort())
+	    dstTile = ((IOPort)dst).getNeighboringTile();
+	else
+	    dstTile = (RawTile)dst;
+
+
 	//only try this scheme if the rawchip isn't too filled with assigned tiles
 	//if (((double)layout.getTilesAssigned()) / ((double)layout.getRawChip().getTotalTiles()) >
 	//   .85)
 	//    return yxRouter.getRoute(ssg, src, dst);
 
-	//call the recursive function to find the route with the last amount of occupied tiles
+	//call the recursive function to find the route with the least amount of occupied tiles
 	RouteAndOccupiedCount bestRoute = 
-	    findBestRoute(ssg, layout, (RawTile)src, (RawTile)dst);
+	    findBestRoute(ssg, layout, srcTile, dstTile);
 	
 	//make sure that if we don't have a route, then that is because we cannot
 	//find a path that does not cross another ssg's node
 	assert !(bestRoute.route.size() == 0 &&
 		 !(bestRoute.occupied == Integer.MAX_VALUE));
 	
-	return bestRoute.route;
+	LinkedList route = bestRoute.route;
+
+	//if the src or the dst is a device, me must add them to the route
+	if (src.isPort())
+	    route.addFirst(src);
+	if (dst.isPort())
+	    route.addLast(dst);
+	
+	return route;
     }
 
     /** find the best route, remember of src is an occupied tile, then it will count it **/

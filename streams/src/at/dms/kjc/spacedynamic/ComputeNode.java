@@ -25,4 +25,14 @@ public abstract class ComputeNode
     public int getY() {
 	return Y;
     }
+    
+    public boolean isPort() 
+    {
+	return this instanceof IOPort;
+    }
+
+    public boolean isTile() 
+    {
+	return this instanceof RawTile;
+    }
 }

@@ -17,4 +17,6 @@ import java.util.Iterator;
 public interface Router 
 {
     public LinkedList getRoute(StaticStreamGraph ssg, ComputeNode src, ComputeNode dst);
+
+    
 }

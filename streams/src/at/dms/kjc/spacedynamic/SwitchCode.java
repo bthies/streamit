@@ -22,6 +22,7 @@ public class SwitchCode extends at.dms.util.Utils
     // recognize as a pattern for folding into a loop
     private static final int MAX_LOOKAHEAD = 10000;
     private static StreamGraph streamGraph;
+    private static RawChip rawChip;
     private static Layout layout;
     //the maximum number of repetitions allowed for a switch sequence
     //this is 2^16 because that is the largest immediate allowed 
@@ -30,6 +31,7 @@ public class SwitchCode extends at.dms.util.Utils
     public static void generate(final StreamGraph sg) 
     {
 	streamGraph = sg;
+	rawChip = sg.getRawChip();
 	layout = streamGraph.getLayout();
 
 	//create the joiner schedules before simulation
@@ -64,36 +66,34 @@ public class SwitchCode extends at.dms.util.Utils
 	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
 	    //get all the nodes that have either init switch code
 	    //or steady state switch code
-	    HashSet tiles = new HashSet();
+	    HashSet computeNodes = new HashSet();
 
-	    //SpaceDynamicBackend.addAll(tiles, layout.getTiles());
+	    //SpaceDynamicBackend.addAll(computeNodes, layout.getTiles());
 
 	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
-	    SpaceDynamicBackend.addAll(tiles, ssg.simulator.initSchedules.keySet());
-	    SpaceDynamicBackend.addAll(tiles, ssg.simulator.steadySchedules.keySet());
+	    SpaceDynamicBackend.addAll(computeNodes, ssg.simulator.initSchedules.keySet());
+	    SpaceDynamicBackend.addAll(computeNodes, ssg.simulator.steadySchedules.keySet());
 
 	    //now add any tiles that don't perform any switching and were assigned filters
 	    FlatNode node;
 	    Iterator flatNodes = ssg.getFlatNodes().iterator(); 
 	    while (flatNodes.hasNext()) {
 		node = (FlatNode)flatNodes.next();
-		if (node.isFilter() && tiles.contains(layout.getTile(node)))
-		    tiles.add(layout.getTile(node));
+		if (node.isFilter() && Layout.assignToATile(node) &&
+		    computeNodes.contains(layout.getTile(node)))
+		    computeNodes.add(layout.getTile(node));
 	    }
 
-	    //do not generate switchcode for Tiles assigned to file readers/writers
-	    //they are just dummy tiles
-	    Iterator fs = streamGraph.getFileVisitor().fileNodes.iterator();
-	    while (fs.hasNext()) {
-		tiles.remove(layout.getTile((FlatNode)fs.next()));
-	    }
-	    
-	    Iterator tileIterator = tiles.iterator();
+	    Iterator tileIterator = computeNodes.iterator();	    
 			
 	    //for each tiles dump the code
 	    while(tileIterator.hasNext()) {
-		RawTile tile = (RawTile) tileIterator.next();
-		assert tile != null;
+		ComputeNode cn = (ComputeNode)tileIterator.next();
+		assert cn != null;
+		//ignore ioports because we do not generate switch code for them
+		if (!cn.isTile())
+		    continue;
+		RawTile tile = (RawTile)cn;
 		
 		assert !tilesGenerated.contains(tile) : 
 		    "Trying to generated switch code for a tile that has already been seen";
@@ -170,12 +170,17 @@ public class SwitchCode extends at.dms.util.Utils
     }
     
     
-    //this this tile is the north neightbor of a bc file i/o device, we must send a
-    //dummy 
+    //this tile is the neightbor of a bc file reader device, we must send a
+    //dummy value to start the streaming of the file
     private static void printIOStartUp(RawTile tile, FileWriter fw) throws Exception 
     {
-	if (streamGraph.getFileVisitor().connectedToFR(tile))
-	    fw.write("\tnop\troute $csto->$cEo\n");
+	if (streamGraph.getFileState().isConnectedToFileReader(tile)) {
+	    FileReaderDevice dev = (FileReaderDevice)tile.getAttachedDevice();
+	    fw.write("\tnop\troute $csto->$c" +
+		     rawChip.getDirection(tile, dev.getPort()) + 
+		     "o\n");
+	}
+	
     }
 
     //receives the constants from the tile processor
@@ -429,7 +434,7 @@ public class SwitchCode extends at.dms.util.Utils
 	buf.append("\tla $3, sw_begin\n");
 	buf.append("\tmtsr SW_PC, $3\n");
 	buf.append("\tmtsri	SW_FREEZE, 0\n");
-	if (streamGraph.getFileVisitor().connectedToFR(tile))
+	if (streamGraph.getFileState().isConnectedToFileReader(tile))
 	    buf.append("\tori! $0, $0, 1\n");
 
 	if (compressInit != null) {

@@ -3,51 +3,33 @@
 The StreamIt Source Tree
 ========================
 
-$Id: README.source,v 1.1 2002-08-20 21:34:39 dmaze Exp $
+$Id: README.source,v 1.2 2003-01-20 12:58:55 thies Exp $
 
 Directory Layout
 ----------------
 
-The top-level directory contains several "project" subdirectories.
-Each of these then contains child directories that match the Java
-class path (with the exception of compiler/kopi).  These "project"
-directories are:
-
-  misc/java (package streamit.misc): Utility classes not specific to
-    StreamIt
-  scheduler/v2/java (package streamit.scheduler): Synchronous
-    data-flow scheduler, used to order work function firings
-  library/java (package streamit): Java run-time library, and support
-    classes needed to parse old syntax
-  compiler/frontend (package streamit.frontend): New-to-old syntax
-    converter, and new syntax front-end
-  compiler/kopi: The Kopi Java infrastructure, and StreamIt extensions
-
-An older version of the scheduler is in scheduler/v1/java.
+The main "streamit" package is split between the "compiler"
+and "library" directory.  The "library" contains classes that
+are specific to run-time interpretation of Java code, while
+"compiler" contains the frontend and scheduler that are used
+during the actual compilation process.
 
 The output of the compiler is a C file; this is built and linked
 against libstreamit.a, which is built from sources in library/c.
 misc/c contains a utility program to convert data files to be used
 with the CAG RAW simulator.
 
-Of the remaining directories: apps contains a number of applications,
-including examples, tests, and benchmarks; click contains an
-implementation of the click router; docs contains documentation for
-StreamIt and submitted papers; regtest contains two separate
-regression-test engines; and router contains more router stuff.
-
-
 Compiler Flow
 -------------
 
 Compilation with the new syntax begins with the front-end.  Currently
 there is only a converter to the old syntax, which is invoked via the
-class streamit.frontend.ToJava (under compiler/frontend).
+class streamit.frontend.ToJava (under compiler/streamit/frontend).
 
 The old-syntax compiler is entirely contained under compiler/kopi.
 Directories here correspond to sub-packages of at.dms; for example,
-source files for classes in at.dms.kjc are in compiler/kopi/kjc.  The
-main entry point to Kopi is in at.dms.kjc.Main, which calls
+source files for classes in at.dms.kjc are in compiler/at/dms/kjc.
+The main entry point to Kopi is in at.dms.kjc.Main, which calls
 at.dms.kjc.StreaMITMain.compile() after parsing the old-syntax file.
 
 The Kopi front-end will generate a series of JClassDeclarations.

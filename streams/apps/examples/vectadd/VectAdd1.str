@@ -1,0 +1,91 @@
+/** 
+ * VectAdd1.java - a very simple program -> add two vectors (C[] = A[] + B[])  
+ * 
+ * Same as VectAdd.java but the only difference is the class where the two 
+ * input arrays (A[] and B[]) reside.    
+ */ 
+
+/**
+ * The main kernel: i1 + i2 -> o1 (add two numbers to produce an output)  
+ */  
+int->int filter VectAddKernel {
+    work pop 2 push 1 {
+	int t1, t2;
+	t1 = pop();
+ 	t2 = pop();
+	push(t1 + t2);
+    }
+} 
+
+/** 
+ * A simple source that sends out elements from a vector repeatedly.  
+ */
+void->int filter VectSource(int N, int selsrc) {
+    int idx;  
+    int[N] Z;
+
+    init {
+	idx = 0;
+	
+	/* set up the input vectors */ 
+	int[N] A;
+	int[N] B;
+	for (int i = 0; i < N; i++) {
+	    A[i] = i; 
+	    B[i] = i; //N-i; 
+	}
+
+	if (selsrc == 1) Z = A;
+	else Z = B;
+    }
+ 
+    work push 1 {
+	push(Z[idx]);
+	idx++;
+	if (idx >= N) idx = 0; 
+    } 
+}
+
+/** 
+ * Sends out elements from the two input vectors 
+ */
+void->int splitjoin TwoVectSource(int N) {
+    /* generate and mix the two streams */
+    // this does not work in the new syntax because it was originally
+    // setSplitter(NULL());
+    split roundrobin;
+    add VectSource(N, 1);
+    add VectSource(N, 2);
+    join roundrobin;
+} 
+
+/** 
+ * Prints the output vector  
+ */
+int->void filter VectPrinter {
+    work pop 1 {
+	print(pop());
+    }
+} 
+
+/** 
+ * The driver class 
+ */
+void->void pipeline VectAdd1 {
+    int N = 10;
+
+    //OptionA: Use a single source
+    int[2*N] I;
+    for (int i = 0; i < N; i++) {
+        I[2*i] = 2*i;
+        I[2*i+1] = 2*i+1;
+    }
+    add VectSource(2*N, 1);
+
+    // TwoVectSource does not work in new syntax.  See above.
+    //add TwoVectSource(N);
+    add VectAddKernel();
+    add VectPrinter();
+} 
+
+

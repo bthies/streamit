@@ -9,7 +9,7 @@ class DelMat extends SplitJoin {// genrates the proper delays for the convolutio
 	setSplitter(DUPLICATE());
 	add(new Identity(Float.TYPE));
 	for(int i=1;i<N;i++){
-	    add(new Delay(i*Q));
+	    add(new DelayPipeline(i*Q));
 	}
 	setJoiner(ROUND_ROBIN());
     }

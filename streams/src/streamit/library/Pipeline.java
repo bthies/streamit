@@ -269,6 +269,8 @@ public class Pipeline extends Stream
                 int buffSize = buffers.getBufferSizeBetween (new Iterator(source), new Iterator(sink));
                 ASSERT (buffSize);
 
+                StreamIt.totalBuffer += buffSize;
+                
                 source.getOutputChannel ().makePassThrough ();
                 sink.getInputChannel ().setChannelSize (buffSize);
             }

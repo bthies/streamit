@@ -459,6 +459,8 @@ public class SplitJoin extends Stream
                         new Iterator(this),
                         new Iterator(child));
 
+                StreamIt.totalBuffer += splitBufferSize;
+                
                 // if the size of the buffer is zero, there is no corresponding
                 // channel, so don't try to set it.
                 if (splitBufferSize != 0)
@@ -472,6 +474,8 @@ public class SplitJoin extends Stream
                         new Iterator(child),
                         new Iterator(this));
 
+                StreamIt.totalBuffer += joinBufferSize;
+                
                 // if the size of the buffer is zero, there is no corresponding
                 // channel, so don't try to set it.
                 if (joinBufferSize != 0)

@@ -281,20 +281,29 @@ public class FeedbackLoop extends Stream
         loop.setupBufferLengths (buffers);
 
         // now setup the buffer sizes:
+        int s;
 
         // between joiner and body
+        s = buffers.getBufferSizeBetween (new Iterator(this), new Iterator(body));
+        StreamIt.totalBuffer += s;
         joiner.getIOField ("output", 0).makePassThrough ();
-        body.getInputChannel ().setChannelSize (buffers.getBufferSizeBetween (new Iterator(this), new Iterator(body)));
+        body.getInputChannel ().setChannelSize (s);
 
         // between body and splitter
-        splitter.getIOField ("input", 0).setChannelSize (buffers.getBufferSizeBetween (new Iterator(body), new Iterator(this)));
+        s = buffers.getBufferSizeBetween (new Iterator(body), new Iterator(this));
+        StreamIt.totalBuffer += s;
+        splitter.getIOField ("input", 0).setChannelSize (s);
         body.getOutputChannel ().makePassThrough ();
 
         // between splitter and loop
-        loop.getInputChannel ().setChannelSize (buffers.getBufferSizeBetween (new Iterator(this), new Iterator(loop)));
+        s = buffers.getBufferSizeBetween (new Iterator(this), new Iterator(loop));
+        StreamIt.totalBuffer += s;
+        loop.getInputChannel ().setChannelSize (s);
 
         // between loop and joiner
-        loop.getOutputChannel ().setChannelSize (buffers.getBufferSizeBetween (new Iterator(loop), new Iterator(this)));
+        s = buffers.getBufferSizeBetween (new Iterator(loop), new Iterator(this));
+        StreamIt.totalBuffer += s;
+        loop.getOutputChannel ().setChannelSize (s);
 
         // make sure that the input/output channels push data through right away:
         if (getInputChannel () != null) getInputChannel ().makePassThrough ();

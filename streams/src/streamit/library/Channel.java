@@ -98,6 +98,7 @@ public class Channel extends streamit.misc.DestroyedClass
         }
 
         // make sure that the channel isn't overflowing
+        //if (queue.size () == maxSize) System.out.print ("*");
         ASSERT (queue.size () <= maxSize || maxSize == -1,
 		"Expecting queue.size () <= maxSize || maxSize == -1,\n" +
 		"   but queue.size()==" + queue.size() + " and maxSize==" + 

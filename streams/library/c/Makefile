@@ -1,6 +1,6 @@
 #
 # Makefile: Build the StreaMIT C runtime library
-# $Id: Makefile,v 1.2 2001-10-11 14:04:21 dmaze Exp $
+# $Id: Makefile,v 1.3 2001-10-12 19:30:34 dmaze Exp $
 #
 
 CC =		cc
@@ -12,6 +12,10 @@ OBJS = 		stream_context.o streamit_run.o streamit_splitjoin.o \
 		streamit_tape.o
 
 all: $(LIBRARY)
+
+clean:
+	rm -f $(LIBRARY) $(OBJS)
+	rm -f *~
 
 $(LIBRARY): $(OBJS)
 	$(AR) r $@ $^

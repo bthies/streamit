@@ -1,7 +1,7 @@
 /*
  * MoveStreamParameters.java: make constructors and init functions
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: MoveStreamParameters.java,v 1.1 2002-09-13 18:27:22 dmaze Exp $
+ * $Id: MoveStreamParameters.java,v 1.2 2002-09-23 14:52:22 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
  * classes, and creates constructors and populates init functions as
  * necessary.
  */
-public class MoveStreamParameters extends FEReplacer
+public class MoveStreamParameters extends InitMunger
 {
     private Function makeConstructor(FEContext context, String name,
                                      List params)
@@ -42,21 +42,6 @@ public class MoveStreamParameters extends FEReplacer
                                new TypePrimitive(TypePrimitive.TYPE_VOID),
                                params, stmtBlock);
         return fn;
-    }
-
-    private Function findInit(FEContext context, List fns)
-    {
-        for (Iterator iter = fns.iterator(); iter.hasNext(); )
-        {
-            Function fn = (Function)iter.next();
-            if (fn.getCls() == Function.FUNC_INIT)
-                return fn;
-        }
-        
-        // No init function; create an empty one.
-        return Function.newInit(context,
-                                new StmtBlock(context,
-                                              Collections.EMPTY_LIST));
     }
 
     private Function addInitParams(Function init, List params)

@@ -1,7 +1,7 @@
 /*
  * InsertInitConstructors.java: insert object field constructors
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: InsertInitConstructors.java,v 1.1 2002-09-20 17:09:46 dmaze Exp $
+ * $Id: InsertInitConstructors.java,v 1.2 2002-09-23 14:52:22 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -18,25 +18,8 @@ import java.util.ArrayList;
  * Visitor class to insert statements in init functions that call
  * constructors for field declarations that map to Java objects.
  */
-public class InsertInitConstructors extends FEReplacer
+public class InsertInitConstructors extends InitMunger
 {
-    // Hmm, should probably put this in a shared helper class;
-    // this code copied verbatim from MoveStreamParamters.
-    private Function findInit(FEContext context, List fns)
-    {
-        for (Iterator iter = fns.iterator(); iter.hasNext(); )
-        {
-            Function fn = (Function)iter.next();
-            if (fn.getCls() == Function.FUNC_INIT)
-                return fn;
-        }
-        
-        // No init function; create an empty one.
-        return Function.newInit(context,
-                                new StmtBlock(context,
-                                              Collections.EMPTY_LIST));
-    }
-
     public Object visitStreamSpec(StreamSpec spec)
     {
         // Stop if there are no fields.

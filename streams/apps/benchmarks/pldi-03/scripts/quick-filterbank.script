@@ -1,0 +1,5 @@
+normal:--unroll 100000:FilterBank
+freq:--unroll 100000 --frequencyreplacement:FilterBank
+linear:--unroll 100000 --linearreplacement:FilterBank
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:FilterBank
+part:--unroll 100000 --linearpartition:FilterBank

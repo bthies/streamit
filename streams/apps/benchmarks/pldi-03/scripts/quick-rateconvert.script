@@ -1,0 +1,5 @@
+normal:--unroll 100000:SamplingRateConverter
+freq:--unroll 100000 --frequencyreplacement:SamplingRateConverter
+linear:--unroll 100000 --linearreplacement:SamplingRateConverter
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:SamplingRateConverter
+part:--unroll 100000 --linearpartition:SamplingRateConverter

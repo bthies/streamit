@@ -1,0 +1,47 @@
+normal:--unroll 100000:FilterBank
+freq:--unroll 100000 --frequencyreplacement:FilterBank
+linear:--unroll 100000 --linearreplacement:FilterBank
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:FilterBank
+part:--unroll 100000 --linearpartition:FilterBank
+
+normal:--unroll 100000:ChannelVocoder
+freq:--unroll 100000 --frequencyreplacement:ChannelVocoder
+linear:--unroll 100000 --linearreplacement:ChannelVocoder
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:ChannelVocoder
+part:--unroll 100000 --linearpartition:ChannelVocoder
+
+normal:--unroll 100000:TargetDetect
+freq:--unroll 100000 --frequencyreplacement:TargetDetect
+linear:--unroll 100000 --linearreplacement:TargetDetect
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:TargetDetect
+part:--unroll 100000 --linearpartition:TargetDetect
+
+normal:--unroll 100000:SamplingRateConverter
+freq:--unroll 100000 --frequencyreplacement:SamplingRateConverter
+linear:--unroll 100000 --linearreplacement:SamplingRateConverter
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:SamplingRateConverter
+part:--unroll 100000 --linearpartition:SamplingRateConverter
+
+normal:--unroll 100000:Oversampler
+freq:--unroll 100000 --frequencyreplacement:Oversampler
+linear:--unroll 100000 --linearreplacement:Oversampler
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:Oversampler
+part:--unroll 100000 --linearpartition:Oversampler
+
+normal:--unroll 100000:OneBitDToA
+freq:--unroll 100000 --frequencyreplacement:OneBitDToA
+linear:--unroll 100000 --linearreplacement:OneBitDToA
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:OneBitDToA
+part:--unroll 100000 --linearpartition:OneBitDToA
+
+normal:--unroll 100000:LinkedFMTest
+freq:--unroll 100000 --frequencyreplacement:LinkedFMTest
+linear:--unroll 100000 --linearreplacement:LinkedFMTest
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:LinkedFMTest
+part:--unroll 100000 --linearpartition:LinkedFMTest
+
+normal:--unroll 100000:FIRProgram
+freq:--unroll 100000 --frequencyreplacement:FIRProgram
+linear:--unroll 100000 --linearreplacement:FIRProgram
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:FIRProgram
+part:--unroll 100000 --linearpartition:FIRProgram

@@ -1,0 +1,5 @@
+normal:--unroll 100000:ChannelVocoder
+freq:--unroll 100000 --frequencyreplacement:ChannelVocoder
+linear:--unroll 100000 --linearreplacement:ChannelVocoder
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:ChannelVocoder
+part:--unroll 100000 --linearpartition:ChannelVocoder

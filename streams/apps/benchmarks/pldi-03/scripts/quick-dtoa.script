@@ -1,0 +1,5 @@
+normal:--unroll 100000:OneBitDToA
+freq:--unroll 100000 --frequencyreplacement:OneBitDToA
+linear:--unroll 100000 --linearreplacement:OneBitDToA
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:OneBitDToA
+part:--unroll 100000 --linearpartition:OneBitDToA

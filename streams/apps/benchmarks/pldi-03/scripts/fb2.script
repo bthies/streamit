@@ -1,0 +1,21 @@
+2normal::FilterBank
+2unroll:--unroll 100000:FilterBank
+
+2linearnc:--unroll 10000 --linearreplacement --nolinearcollapse:FilterBank
+2linearnc2:--unroll 10000 --linearreplacement2 --nolinearcollapse:FilterBank
+2linearnc3:--unroll 10000 --linearreplacement3 --nolinearcollapse:FilterBank
+
+2freqnc:--unroll 10000 --frequencyreplacement --nolinearcollapse:FilterBank
+2freq:--unroll 10000 --frequencyreplacement:FilterBank
+
+2linear:--unroll 10000 --linearreplacement:FilterBank
+2linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:FilterBank
+
+2part:--unroll 10000 --linearpartition:FilterBank
+2partatlas:--unroll 10000 --linearpartition --atlas:FilterBank
+
+2linear3:--unroll 100000 --linearreplacement3:FilterBank
+2linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:FilterBank
+
+2atlas:--unroll 100000 --atlas:FilterBank
+2atlasfreq:--unroll 100000 --atlas --frequencyreplacement:FilterBank

@@ -1,0 +1,5 @@
+normal:--unroll 100000:LinkedFMTest
+freq:--unroll 100000 --frequencyreplacement:LinkedFMTest
+linear:--unroll 100000 --linearreplacement:LinkedFMTest
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:LinkedFMTest
+part:--unroll 100000 --linearpartition:LinkedFMTest

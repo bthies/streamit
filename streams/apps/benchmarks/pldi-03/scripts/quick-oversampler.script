@@ -1,0 +1,5 @@
+normal:--unroll 100000:Oversampler
+freq:--unroll 100000 --frequencyreplacement:Oversampler
+linear:--unroll 100000 --linearreplacement:Oversampler
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:Oversampler
+part:--unroll 100000 --linearpartition:Oversampler

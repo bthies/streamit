@@ -1,0 +1,5 @@
+normal:--unroll 100000:FIRProgram
+freq:--unroll 100000 --frequencyreplacement:FIRProgram
+linear:--unroll 100000 --linearreplacement:FIRProgram
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:FIRProgram
+part:--unroll 100000 --linearpartition:FIRProgram

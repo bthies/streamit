@@ -1,0 +1,5 @@
+normal:--unroll 100000:TargetDetect
+freq:--unroll 100000 --frequencyreplacement:TargetDetect
+linear:--unroll 100000 --linearreplacement:TargetDetect
+linearfreq:--unroll 100000 --linearreplacement --frequencyreplacement:TargetDetect
+part:--unroll 100000 --linearpartition:TargetDetect

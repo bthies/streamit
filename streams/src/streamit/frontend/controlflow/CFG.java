@@ -28,7 +28,7 @@ import java.util.*;
  * can be used to build control-flow graphs from straight-line code.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: CFG.java,v 1.1 2004-01-16 21:32:25 dmaze Exp $
+ * @version $Id: CFG.java,v 1.2 2004-01-20 23:37:34 dmaze Exp $
  */
 public class CFG
 {
@@ -91,7 +91,9 @@ public class CFG
      */
     public List getSuccessors(CFGNode node)
     {
-        return (List)edges.get(node);
+        List result = (List)edges.get(node);
+        if (result == null) result = Collections.EMPTY_LIST;
+        return result;
     }
 
     /**

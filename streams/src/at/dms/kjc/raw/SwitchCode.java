@@ -43,7 +43,7 @@ public class SwitchCode extends at.dms.util.Utils
 		FileWriter fw =
 		    new FileWriter("sw" + Layout.getTileNumber(tile) 
 				   + ".s");
-		fw.write("#  Switch code");
+		fw.write("#  Switch code\n");
 		fw.write(getHeader());
 		//print the init switch code
 		if (Simulator.initSchedules.get(tile) != null)

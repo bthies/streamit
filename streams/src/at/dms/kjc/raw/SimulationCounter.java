@@ -13,19 +13,45 @@ import at.dms.util.Utils;
  */
 public class SimulationCounter {
     
+    public static HashMap maxJoinerBufferSize;
+    
     private HashMap arcCountsIncoming;
     private HashMap arcCountsOutgoing;
     
     private HashMap bufferCount;
     private HashSet fired;
 
-    public SimulationCounter() {
+    private HashMap currentJoinerScheduleNode;
+
+    private HashMap joinerBufferCounts;
+    
+    static 
+    {
+	maxJoinerBufferSize = new HashMap();
+    }
+    
+    public SimulationCounter(HashMap joinerSchedules) {
 	arcCountsIncoming = new HashMap();
 	arcCountsOutgoing = new HashMap();
 	bufferCount = new HashMap();
 	fired = new HashSet();
+	currentJoinerScheduleNode = (HashMap)joinerSchedules.clone();
+	joinerBufferCounts = new HashMap();
     }
 
+    public String getJoinerBuffer(FlatNode node) 
+    {
+	return ((JoinerScheduleNode)currentJoinerScheduleNode.get(node)).
+	    buffer;
+    }
+    
+    public void incrementJoinerSchedule(FlatNode node) 
+    {
+	currentJoinerScheduleNode.put(node, ((JoinerScheduleNode)
+				       currentJoinerScheduleNode.get(node)).
+				      next);
+    }
+    
     public boolean hasFired(FlatNode node) {
 	return fired.contains(node);
     }
@@ -56,43 +82,38 @@ public class SimulationCounter {
 			new Integer (getBufferCount(node) + 1));
     }
 
-    public int getArcCountIncoming(FlatNode node, int way) {
-	/* Create counters in the hashmap if this node has not
-	   been visited already 
-	*/
-	if (!arcCountsIncoming.containsKey(node)) {
-	    int[] nodeCounters = new int[node.inputs];
-	    for (int i = 0; i < node.inputs; i++) {
-		nodeCounters[i] = node.incomingWeights[i];
-	    }
-	    arcCountsIncoming.put(node, nodeCounters);
+    
+    public int getJoinerBufferCount(FlatNode node, String buf) 
+    {
+	if (!joinerBufferCounts.containsKey(node))
+	    joinerBufferCounts.put(node, new HashMap());
+	HashMap joinerBuffers = (HashMap)joinerBufferCounts.get(node);
+	if (!joinerBuffers.containsKey(buf))
+	    joinerBuffers.put(buf, new Integer(0));
+	return ((Integer)joinerBuffers.get(buf)).intValue();
+    }
+    
+    public void decrementJoinerBufferCount(FlatNode node, String buf) 
+    {
+	int old = getJoinerBufferCount(node, buf);
+	if (old  <= 0)
+	    Utils.fail("attempting to decrement a 0 joiner buffer");
+	((HashMap)joinerBufferCounts.get(node)).put(buf, new Integer(old - 1));
+    }
+    
+    public void incrementJoinerBufferCount(FlatNode node, String buf) 
+    {
+	int old = getJoinerBufferCount(node, buf);
+	((HashMap)joinerBufferCounts.get(node)).put(buf, new Integer(old + 1));
+	//record max buffer size
+	if (!maxJoinerBufferSize.containsKey(node))
+	    maxJoinerBufferSize.put(node, new Integer(1));
+	else {
+	    int max =  ((Integer)maxJoinerBufferSize.get(node)).intValue();
+	    if (old + 1 > max)
+		maxJoinerBufferSize.put(node, new Integer(old + 1));
 	}
-	//Get the counter and return the count for the given way
-	int[] currentArcCounts = (int[])arcCountsIncoming.get(node);
-	return currentArcCounts[way];
     }
-    
-    public void decrementArcCountIncoming(FlatNode node, int way) 
-    {
-	int[] currentArcCounts = (int[])arcCountsIncoming.get(node);
-	if (currentArcCounts[way] > 0)
-	    currentArcCounts[way]--;
-	else 
-	    System.err.println("Trying to decrement a way with a zero count.");
-	
-	arcCountsIncoming.put(node, currentArcCounts);
-    }
-    
-    public void resetArcCountIncoming(FlatNode node, int way) 
-    {
-	int[] currentArcCounts = (int[])arcCountsIncoming.get(node);
-	if (currentArcCounts[way] == 0)
-	    currentArcCounts[way] = node.incomingWeights[way];
-	else
-	    System.err.println("Trying to reset a non-zero counter.");
-	arcCountsIncoming.put(node, currentArcCounts);
-    }
-
     
 
     public int getArcCountOutgoing(FlatNode node, int way) {
@@ -135,3 +156,41 @@ public class SimulationCounter {
         
 }
 
+
+//older code may need later
+//     public int getArcCountIncoming(FlatNode node, int way) {
+// 	/* Create counters in the hashmap if this node has not
+// 	   been visited already 
+// 	*/
+// 	if (!arcCountsIncoming.containsKey(node)) {
+// 	    int[] nodeCounters = new int[node.inputs];
+// 	    for (int i = 0; i < node.inputs; i++) {
+// 		nodeCounters[i] = node.incomingWeights[i];
+// 	    }
+// 	    arcCountsIncoming.put(node, nodeCounters);
+// 	}
+// 	//Get the counter and return the count for the given way
+// 	int[] currentArcCounts = (int[])arcCountsIncoming.get(node);
+// 	return currentArcCounts[way];
+//     }
+    
+//     public void decrementArcCountIncoming(FlatNode node, int way) 
+//     {
+// 	int[] currentArcCounts = (int[])arcCountsIncoming.get(node);
+// 	if (currentArcCounts[way] > 0)
+// 	    currentArcCounts[way]--;
+// 	else 
+// 	    System.err.println("Trying to decrement a way with a zero count.");
+	
+// 	arcCountsIncoming.put(node, currentArcCounts);
+//     }
+    
+//     public void resetArcCountIncoming(FlatNode node, int way) 
+//     {
+// 	int[] currentArcCounts = (int[])arcCountsIncoming.get(node);
+// 	if (currentArcCounts[way] == 0)
+// 	    currentArcCounts[way] = node.incomingWeights[way];
+// 	else
+// 	    System.err.println("Trying to reset a non-zero counter.");
+// 	arcCountsIncoming.put(node, currentArcCounts);
+//     }

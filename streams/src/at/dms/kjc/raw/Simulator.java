@@ -25,7 +25,16 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     public static HashMap initSchedules;
     public static HashMap steadySchedules;
     
+    public static HashMap initJoinerCode;
+    public static HashMap steadyJoinerCode;
+    
     private HashMap switchSchedules;
+    
+    //the current joiner code we are working on (steady or init)
+    private static HashMap joinerCode;
+        
+    //the curent node in the joiner schedule we are working on
+    private HashMap currentJoinerCode;
     
     private FlatNode toplevel;
     private FlatNode bottom;
@@ -37,6 +46,12 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	HashMap initExecutionCounts = new HashMap();
 	HashMap steadyExecutionCounts = new HashMap();
 	
+	HashMap initJoinerCode = new HashMap();
+	HashMap steadyJoinerCode = new HashMap();
+	
+	//generate the joiner schedule
+	JoinerSimulator.createJoinerSchedules(top);
+	
 	//get the schedule for the graph
 	//first find the top most pipeline	
 	createExecutionCounts(schedule.getInitSchedule(),
@@ -44,7 +59,9 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	createExecutionCounts(schedule.getSteadySchedule(), 
 			      steadyExecutionCounts);
        
+	joinerCode = initJoinerCode;
 	initSchedules = (new Simulator(top)).go(initExecutionCounts);
+	joinerCode = steadyJoinerCode;
 	steadySchedules = (new Simulator(top)).go(steadyExecutionCounts);
     }
     
@@ -52,6 +69,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     private Simulator(FlatNode top) 
     {
 	switchSchedules = new HashMap();
+	currentJoinerCode = new HashMap();
 	toplevel = top;
 	//find the bottom (last) filter, used later to decide
 	//execution order
@@ -110,7 +128,8 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     /* the main simulation method */
     private HashMap go(HashMap counts) 
     {
-	SimulationCounter counters = new SimulationCounter();
+	SimulationCounter counters = 
+	    new SimulationCounter(JoinerSimulator.schedules);
 	FlatNode fire, dest;
 		
 	while(true) {
@@ -122,12 +141,19 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    //keep track of everything needed when a node fires
 	    fireMe(fire, counters, counts);
 	    //simulate the firings
-	    for (int i = 0; i < ((SIRFilter)fire.contents).getPushInt(); i++) {
+	    //1 item for a joiner, push items for a filter
+	    int items = 1;
+	    if (fire.contents instanceof SIRFilter)
+		items = ((SIRFilter)fire.contents).getPushInt();
+	    
+	    for (int i = 0; i < items; i++) {
 		
 		//get the destinations of this item
 		//could be multiple dests with duplicate splitters
 		//a filter always has one outgoing arc, so sent to way 0
-		generateSwitchCode(fire, getDestination(fire.edges[0], counters));
+		generateSwitchCode(fire, getDestination(fire.edges[0], 
+							counters, "", 
+							fire));
 	    }
 	    
 	}
@@ -251,28 +277,52 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     
     private void fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
-	//decrement the schedule execution counter
-	int oldVal = ((Integer)executionCounts.get(fire)).intValue();
-	if (oldVal - 1 < 0)
-	    Utils.fail("Executed too much");
-	executionCounts.put(fire, new Integer(oldVal - 1));
-	
-	//take the values off the buffer
-	//take off peek values on the first invocation
-	if (!counters.hasFired(fire))
-	    counters.decrementBufferCount(fire, ((SIRFilter)fire.contents).getPeekInt());
-	else 
-	    counters.decrementBufferCount(fire, ((SIRFilter)fire.contents).getPopInt());
-	
-	//now this node has fired
-	counters.setFired(fire);
+	if (fire.contents instanceof SIRFilter) {
+	    //decrement the schedule execution counter
+	    int oldVal = ((Integer)executionCounts.get(fire)).intValue();
+	    if (oldVal - 1 < 0)
+		Utils.fail("Executed too much");
+	    executionCounts.put(fire, new Integer(oldVal - 1));
+	    
+	    //take the values off the buffer
+	    //take off peek values on the first invocation
+	    if (!counters.hasFired(fire))
+		counters.decrementBufferCount(fire, 
+					      ((SIRFilter)fire.contents).
+					      getPeekInt());
+	    else 
+		counters.decrementBufferCount(fire, 
+					      ((SIRFilter)fire.contents).
+					      getPopInt());
+	    
+	    //now this node has fired
+	    counters.setFired(fire);
+	}
+	else if (fire.contents instanceof SIRJoiner) {
+	    System.out.println("Firing a joiner");
+	    
+	    JoinerScheduleNode previous = 
+		(JoinerScheduleNode)currentJoinerCode.get(fire);
+	    JoinerScheduleNode current = new JoinerScheduleNode();
+	    current.buffer = counters.getJoinerBuffer(fire);
+	    current.type = JoinerScheduleNode.FIRE;
+	    previous.next = current;
+	    //set current
+	    currentJoinerCode.put(fire, current);
+	    //decrement the buffer
+	    counters.decrementJoinerBufferCount(fire, counters.getJoinerBuffer(fire));
+	    //step the schedule
+	    counters.incrementJoinerSchedule(fire);
+	}
     }
+    
     
 	 
 	    
 
     //get the destination of the data item
-    private  List getDestination(FlatNode node, SimulationCounter counters) 
+    private  List getDestination(FlatNode node, SimulationCounter counters, String
+				 joinerBuffer, FlatNode previous) 
     {
 	//if we reached a node then this is a destination
 	//add to its buffer and
@@ -284,8 +334,43 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    return list;
 	}
 	else if (node.contents instanceof SIRJoiner) {
-	    //just pass thru joiners they only have one downstream connection
-	    return getDestination(node.edges[0], counters);
+	    //just pass thru joiners except the joiners that are the 
+	    //last joiner in a joiner group
+	    //this list is kept in the layout class
+	    if (Layout.joiners.contains(node)) {
+		joinerBuffer = joinerBuffer + getJoinerBuffer(node, previous);
+		
+		System.out.println("Destination is a buffer " + joinerBuffer);
+		
+		//add the item to the appropiate buffer
+		//as determined by the simulation
+		counters.incrementJoinerBufferCount(node, joinerBuffer);
+		LinkedList list = new LinkedList();
+		list.add(node);
+		//add to the joiner code for this node
+		JoinerScheduleNode prev = 
+		    (JoinerScheduleNode)currentJoinerCode.get(node);
+		JoinerScheduleNode current = new JoinerScheduleNode();
+		current.buffer = joinerBuffer;
+		current.type = JoinerScheduleNode.RECEIVE;
+		if (prev == null) {
+		    //first node in joiner code
+		    joinerCode.put(node, current);
+		}
+		else {
+		    //connect 
+		    prev.next = current;
+		}
+		//set current
+		currentJoinerCode.put(node, current);
+		return list;
+	    }
+	    else {
+		return getDestination(node.edges[0], counters, 
+				      joinerBuffer + getJoinerBuffer(node, 
+								     previous),
+				      node);
+	    }
 	}
 	else if (node.contents instanceof SIRSplitter) {
 	    //here is the meat
@@ -299,7 +384,9 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		    if (counters.getArcCountOutgoing(node, i) == 0)
 			counters.resetArcCountOutgoing(node, i);
 		    counters.decrementArcCountOutgoing(node, i);
-		    list.add(getDestination(node.edges[i], counters));
+		    list.add(getDestination(node.edges[i], 
+					    counters, joinerBuffer,
+					    previous));
 		}
 		return list;
 	    }
@@ -308,7 +395,9 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		for (int i = 0; i < node.ways; i++) {
 		    if (counters.getArcCountOutgoing(node, i) > 0) {
 			counters.decrementArcCountOutgoing(node, i);
-			return getDestination(node.edges[i], counters);
+			return getDestination(node.edges[i], 
+					      counters, joinerBuffer,
+					      previous);
 		    }
 		}
 		//none were greater than zero, reset all counters
@@ -317,7 +406,8 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		    counters.resetArcCountOutgoing(node, i);
 		}
 		counters.decrementArcCountOutgoing(node, 0);
-		return getDestination(node.edges[0], counters);
+		return getDestination(node.edges[0], counters,
+				      joinerBuffer, previous);
 	    }
 	    
 	}
@@ -356,31 +446,43 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 			    SimulationCounter counters) 
     {
 	//the only thing that can fire is a filter
-	if (!(node.contents instanceof SIRFilter))
-	    return false;
-	
-	//check if this node has fired the number of times given by
-	//the schedule
-	Integer count = (Integer)executionCounts.get(node);
-	if (count == null)
-	    return false;
-	if (count.intValue() == 0)
-	    return false;
-	
-	//on the first execution we must consume peek items
-	//counters.fired tells us if we have fired already
-	int requirement;
-	if (!counters.hasFired(node))
-	    requirement = ((SIRFilter)node.contents).getPeekInt();
-	else
-	    requirement = ((SIRFilter)node.contents).getPopInt();
-	
-	if (counters.getBufferCount(node) >= requirement) {
-	    return true;
+	if (node.contents instanceof SIRFilter) {
+	    //check if this node has fired the number of times given by
+	    //the schedule
+	    Integer count = (Integer)executionCounts.get(node);
+	    if (count == null)
+		return false;
+	    if (count.intValue() == 0)
+		return false;
+	    
+	    //on the first execution we must consume peek items
+	    //counters.fired tells us if we have fired already
+	    int requirement;
+	    if (!counters.hasFired(node))
+		requirement = ((SIRFilter)node.contents).getPeekInt();
+	    else
+		requirement = ((SIRFilter)node.contents).getPopInt();
+	    
+	    if (counters.getBufferCount(node) >= requirement) {
+		return true;
+	    }
+	    else
+		return false;
 	}
-	else
+	else if (node.contents instanceof SIRJoiner) {
+	    //determine if a joiner can fire
+	    //if the buffer associated with its current 
+	    //input has an item in it
+	    if (counters.getJoinerBufferCount(node, counters.
+					      getJoinerBuffer(node)) > 0)
+		return true;
+	    else
+		return false;
+	}
+	else 
 	    return false;
     }
+    
     
 	
     //look for bottom node
@@ -394,5 +496,15 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	}
     }
     
-    
+    private String getJoinerBuffer(FlatNode node, FlatNode previous) 
+    {
+	for (int i = 0; i < node.inputs; i++) {
+	    if (node.incoming[i] == previous)
+		return String.valueOf(i);
+	}
+	
+	Utils.fail("cannot find previous node in joiner list");
+	return null;
+    }
+        
 }

@@ -55,15 +55,15 @@ public class RawBackend {
 	System.out.println("Namer Begin...");
 	Namer.assignNames(str);
 	System.out.println("Namer End.");
-	// layout the components (assign filters to tiles)
-	System.out.println("Hand Assign Begin...");
-	Layout.handAssign(str);
-	System.out.println("Hand Assign End.");
 	//Flatten the graph
 	System.out.println("Flattener Begin...");
 	RawFlattener.flatten(str);
 	RawFlattener.dumpGraph();
 	System.out.println("Flattener End.");
+	// layout the components (assign filters to tiles)
+	System.out.println("Hand Assign Begin...");
+	Layout.handAssign(RawFlattener.top);
+	System.out.println("Hand Assign End.");
 	//Generate the switch code
 	System.out.println("Switch Code Begin...");
 	SwitchCode.generate(RawFlattener.top);

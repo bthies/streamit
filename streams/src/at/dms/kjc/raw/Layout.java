@@ -7,6 +7,7 @@ import at.dms.util.Utils;
 import java.io.*;
 import java.util.List;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 
 
@@ -14,18 +15,22 @@ import java.util.Iterator;
  *The Layout class generates mapping of filters to raw tiles.  It assumes that the 
  * namer has been run and that the stream graph has been partitioned.
  */
-public class Layout extends at.dms.util.Utils implements StreamVisitor {
+public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
     private static HashMap assignment;
     private static Coordinate[][] coordinates;
     private BufferedReader inputBuffer;
+    /* hashset of Flatnodes representing all the joiners
+       that are mapped to tiles */
+    public static HashSet joiners;
     
     public Layout() 
     {
 	inputBuffer = new BufferedReader(new InputStreamReader(System.in));
+	joiners = new HashSet();
     }
     
-    public static void handAssign(SIROperator str) 
+    public static void handAssign(FlatNode node) 
     {
 	//create the array of tile objects so that we can use them 
 	//in hashmaps
@@ -36,14 +41,10 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 		coordinates[row][column] = new Coordinate(row, column);
 		
 	assignment = new HashMap();
-	// find toplevel stream
-	SIROperator toplevel = str;
-	while (toplevel.getParent()!=null) {
-	    toplevel = toplevel.getParent();
-	}
+	
 	System.out.println("Enter desired tile for each filter...");
 	// assign raw tiles to filters
-	toplevel.accept(new Layout());
+	node.accept(new Layout(), new HashSet(), false);
     }
     /**
      * Returns the tile number assignment for <str>, or null if none has been assigned.
@@ -108,22 +109,16 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
     }	
 	
 
-    /* visit a filter */
-    public void visitFilter(SIRFilter self,
-			    SIRStream parent,
-			    JFieldDeclaration[] fields,
-			    JMethodDeclaration[] methods,
-			    JMethodDeclaration init,
-			    JMethodDeclaration work,
-			    CType inputType, CType outputType) {
-	//Assign a filter to a tile 
+    private void handAssignNode(FlatNode node) 
+    {
+	//Assign a filter, joiner to a tile 
 	//perform some error checking.
 	while (true) {
 	    try {
 		Integer row, column;
 		
 		//get row
-		System.out.print(Namer.getName(self) + "\nRow: ");
+		System.out.print(Namer.getName(node.contents) + "\nRow: ");
 		row = Integer.valueOf(inputBuffer.readLine());
 		if (row.intValue() < 0) {
 		    System.err.println("Negative Value: Try again.");
@@ -154,7 +149,7 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 		    continue;
 		}
 		
-		assignment.put(self, coordinates[row.intValue()][column.intValue()]);
+		assignment.put(node.contents, coordinates[row.intValue()][column.intValue()]);
 		return;
 	    }
 	    catch (Exception e) {
@@ -162,87 +157,19 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 	    }
 	}
     }
-
-    /** 
-     * visit a splitter 
-     */
-    public void visitSplitter(SIRSplitter self,
-			      SIRStream parent,
-			      SIRSplitType type,
-			      JExpression[] weights) {
-
-    }
-
-    /** 
-     * visit a joiner 
-     */
-    public void visitJoiner(SIRJoiner self,
-			    SIRStream parent,
-			    SIRJoinType type,
-			    JExpression[] weights) {
-
-    }
-
-	    
-    /* pre-visit a pipeline */
-    public void preVisitPipeline(SIRPipeline self,
-				 SIRStream parent,
-				 JFieldDeclaration[] fields,
-				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init,
-				 List elements) {
-
-    }
-
-    /* pre-visit a splitjoin */
-    public void preVisitSplitJoin(SIRSplitJoin self,
-				  SIRStream parent,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init) {
-
-    }
-
-    /* pre-visit a feedbackloop */
-    public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRStream parent,
-				     JFieldDeclaration[] fields,
-				     JMethodDeclaration[] methods,
-				     JMethodDeclaration init,
-				     int delay,
-				     JMethodDeclaration initPath) {
-
-    }
-
-	    
-    /* post-visit a pipeline */
-    public void postVisitPipeline(SIRPipeline self,
-				  SIRStream parent,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init,
-				  List elements) {
-
-    }
-
-    /* post-visit a splitjoin */
-    public void postVisitSplitJoin(SIRSplitJoin self,
-				   SIRStream parent,
-				   JFieldDeclaration[] fields,
-				   JMethodDeclaration[] methods,
-				   JMethodDeclaration init) {
-
-    }
-
-
-    /* post-visit a feedbackloop */
-    public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-				      SIRStream parent,
-				      JFieldDeclaration[] fields,
-				      JMethodDeclaration[] methods,
-				      JMethodDeclaration init,
-				      int delay,
-				      JMethodDeclaration initPath) {
-
+    
+    public void visitNode(FlatNode node) 
+    {
+	if (node.contents instanceof SIRFilter) {
+	    handAssignNode(node);
+	    return;
+	}
+	if (node.contents instanceof SIRJoiner) {
+	    if (!(node.edges[0].contents instanceof SIRJoiner)) {
+		joiners.add(node);
+		handAssignNode(node);
+		return;
+	    }
+	}
     }
 }  

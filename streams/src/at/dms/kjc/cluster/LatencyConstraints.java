@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.io.*;
 import java.lang.*;
 
+import streamit.misc.AssertedClass;
 import streamit.scheduler2.*;
 import streamit.scheduler2.iriter.*;
 
@@ -31,8 +32,14 @@ import streamit.scheduler2.iriter.*;
 
 public class LatencyConstraints {
 
+    // consists of SIRFilter(s)
     public static HashSet restrictedExecutionFilters = new HashSet();
+
+    // consists of SIRFilter(s) -> HashSet of LatencyConstraint(s)
     public static HashMap outgoingLatencyConstraints = new HashMap();
+
+    // Vector of SIRFilter(s) (sender, receiver) -> Boolean;
+    public static HashMap messageDirectionDownstream = new HashMap();
 
     public static boolean isRestricted(SIRFilter filter) {
 	return restrictedExecutionFilters.contains(filter);
@@ -47,6 +54,21 @@ public class LatencyConstraints {
 	    outgoingLatencyConstraints.put(filter, tmp);
 	    return tmp;
 	}
+    }
+
+    public static boolean isMessageDirectionDownstream(SIRFilter sender,
+						       SIRFilter receiver) {
+	Vector v = new Vector();
+	v.add(sender);
+	v.add(receiver);
+
+	Boolean b = (Boolean)messageDirectionDownstream.get(v);
+	
+	System.out.println("sender: "+sender+" receiver: "+receiver);
+
+	AssertedClass.ASSERT(sender, (b != null), "Information about message direction requested when no such data has been gathered");
+
+	return b.booleanValue();
     }
 
     public static void detectConstraints(streamit.scheduler2.iriter.Iterator topStreamIter,
@@ -131,6 +153,8 @@ public class LatencyConstraints {
 
 		HashSet constraints = new HashSet();
 
+		boolean upstream = false;
+
 		for (int i2 = 0; i2 < receivers.length; i2++) {
 		    SIRStream receiver = receivers[i2];
 		    
@@ -149,83 +173,122 @@ public class LatencyConstraints {
 
 		    try {
 			sdep2 = cscheduler2.computeSDEP(iter1, iter2);
-
-			System.out.println("      Source Init Phases: "+sdep2.getNumSrcInitPhases());
-			System.out.println("      Destn. Init Phases: "+sdep2.getNumDstInitPhases());
-			System.out.println("      Source Steady Phases: "+sdep2.getNumSrcSteadyPhases());
-			System.out.println("      Destn. Steady Phases: "+sdep2.getNumDstSteadyPhases());
 			
-			int sourceSteady = sdep2.getNumSrcSteadyPhases();
-			int destSteady = sdep2.getNumDstSteadyPhases();
-	    
-			for (int t2 = 0; t2 < 20; t2++) {
-			    int phase = sdep2.getSrcPhase4DstPhase(t2);
-			    int phaserev = sdep2.getDstPhase4SrcPhase(t2);
-			    System.out.println("      sdep ["+t2+"] = "+phase+
-					       " reverse_sdep["+t2+"] = "+phaserev);
-			}
+			// message is being sent downstream
 
-			if (min_latency < 0) {
-
-			    int last_dep;
-			    int iter;
-
-			    // add receiver to set of restricted filters
-
-			    restrictedExecutionFilters.add(receiver);
-
-			    for (iter = 0;; iter++) {
-				last_dep = sdep2.getDstPhase4SrcPhase(iter);
-
-				if (last_dep > 1) {
-
-				    break;
-				}
-			    }
-			 
-			    LatencyConstraint constraint = 
-				new LatencyConstraint(iter-min_latency-1,
-						      sourceSteady,
-						      destSteady,
-						      (SIRFilter)receiver);
+			Vector v = new Vector();
+			v.add(f1);
+			v.add(f2);
+			messageDirectionDownstream.put(v, new Boolean(true));
+			System.out.println("sender: "+f1+" receiver: "+f2);
 
 
-			    // add constraint to the senders 
-			    // list of constraints
-
-			    constraints.add(constraint);
-
-			    last_dep = 1;
-
-			    int ss = sdep2.getNumSrcSteadyPhases();
-
-			    for (int inc = 0; inc < ss; inc++) {
-				int current = sdep2.getDstPhase4SrcPhase(iter + inc);
-				if (current > last_dep) {
-
-				    System.out.println("Can exec "+last_dep+"-"+(current-1)+" at source iteration nr. "+(iter + inc + (-min_latency))+" array:"+(current-1));
-
-				    constraint.setDependencyData(inc, 
-								 current-1); 
-
-				    last_dep = current;
-				} else {
-				    
-				    System.out.println("Can not advance dest. at source iteration nr. "+(iter + inc + (-min_latency))+" array:-1");
-
-				    constraint.setDependencyData(inc, 
-								 0); 
-				}
-			    }
-
-			    constraint.output();
-			}
-
-			System.out.println();			
+			upstream = false;
 
 		    } catch (streamit.scheduler2.constrained.NoPathException ex) {
 			
+			try {
+			    sdep2 = cscheduler2.computeSDEP(iter2, iter1);
+
+			    Vector v = new Vector();
+			    v.add(f1);
+			    v.add(f2);
+			    messageDirectionDownstream.put(v, new Boolean(false));
+			    System.out.println("sender: "+f1+" receiver: "+f2);
+
+			    // message is being sent upstream
+
+			    upstream = true;
+
+			} catch (streamit.scheduler2.constrained.NoPathException ex2) {
+			    
+			    // no path between source and dest has been found
+			
+			    AssertedClass.ASSERT(cscheduler2, false, "no path found between source and destination of message");
+			    
+			    // never executed
+
+			    continue;
+
+			}
+
 		    }
+
+		    System.out.println("      Upstream Init Phases: "+sdep2.getNumSrcInitPhases());
+		    System.out.println("      Downstr. Init Phases: "+sdep2.getNumDstInitPhases());
+		    System.out.println("      Upstream Steady Phases: "+sdep2.getNumSrcSteadyPhases());
+		    System.out.println("      Downstr. Steady Phases: "+sdep2.getNumDstSteadyPhases());
+		    
+		    int sourceSteady = sdep2.getNumSrcSteadyPhases();
+		    int destSteady = sdep2.getNumDstSteadyPhases();
+		    
+		    for (int t2 = 0; t2 < 20; t2++) {
+			int phase = sdep2.getSrcPhase4DstPhase(t2);
+			int phaserev = sdep2.getDstPhase4SrcPhase(t2);
+			System.out.println("      sdep ["+t2+"] = "+phase+
+					   " reverse_sdep["+t2+"] = "+phaserev);
+		    }
+		    
+		    // take care of negative latency downstream messages
+
+		    if (min_latency < 0 && !upstream) {
+			    
+			int last_dep;
+			int iter;
+			
+			// add receiver to set of restricted filters
+			
+			restrictedExecutionFilters.add(receiver);
+			
+			for (iter = 0;; iter++) {
+			    last_dep = sdep2.getDstPhase4SrcPhase(iter);
+			    
+			    if (last_dep > 1) {
+				
+				break;
+			    }
+			}
+			
+			LatencyConstraint constraint = 
+			    new LatencyConstraint(iter-min_latency-1,
+						  sourceSteady,
+						  destSteady,
+						  (SIRFilter)receiver);
+			
+			
+			// add constraint to the senders 
+			// list of constraints
+			
+			constraints.add(constraint);
+			
+			last_dep = 1;
+			
+			int ss = sdep2.getNumSrcSteadyPhases();
+			
+			for (int inc = 0; inc < ss; inc++) {
+			    int current = sdep2.getDstPhase4SrcPhase(iter + inc);
+			    if (current > last_dep) {
+				
+				System.out.println("Can exec "+last_dep+"-"+(current-1)+" at source iteration nr. "+(iter + inc + (-min_latency))+" array:"+(current-1));
+				
+				constraint.setDependencyData(inc, 
+							     current-1); 
+				
+				last_dep = current;
+			    } else {
+				
+				System.out.println("Can not advance dest. at source iteration nr. "+(iter + inc + (-min_latency))+" array:-1");
+				
+				constraint.setDependencyData(inc, 
+							     0); 
+			    }
+			}
+			
+			constraint.output();
+		    }
+
+		    // for loop closes
+		    System.out.println();
 		}
 
 		outgoingLatencyConstraints.put(sender, constraints);

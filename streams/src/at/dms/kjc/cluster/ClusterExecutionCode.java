@@ -746,8 +746,8 @@ public class ClusterExecutionCode extends at.dms.util.Utils
     {
 	
 	//is we are rate matching generate the appropriate code
-	if (KjcOptions.ratematch) 
-	    return generateRateMatchSteadyState(filter, localVariables);
+	//if (KjcOptions.ratematch) 
+	//    return generateRateMatchSteadyState(filter, localVariables);
 
 	JBlock block = new JBlock(null, new JStatement[0], null);
 
@@ -794,17 +794,19 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	
 	//if we are in decoupled mode do not put the work function in a for loop
 	//and add the print statements
-	if (KjcOptions.decoupled) {
-	    block.addStatementFirst
-		(new SIRPrintStatement(null, 
-				       new JIntLiteral(0),
-				       null));
-	    block.addStatement(block.size(), 
-				    new SIRPrintStatement(null, 
-							  new JIntLiteral(1),
-							  null));
-	    return block;
-	}
+	
+
+	//if (KjcOptions.decoupled) {
+	//    block.addStatementFirst
+	//	(new SIRPrintStatement(null, 
+	//			       new JIntLiteral(0),
+	//			       null));
+	//    block.addStatement(block.size(), 
+	//			    new SIRPrintStatement(null, 
+	//						  new JIntLiteral(1),
+	//						  null));
+	//    return block;
+	//}
 
 	block.addStatement(new JExpressionStatement(null, new JMethodCallExpression(null, "send_credits", new JExpression[0]), null));
 	
@@ -833,13 +835,19 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 
 	JStatement incr_expr = new JExpressionStatement(null, new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var)), null);
 
-	return new JForStatement(null,  
-				 init_stmt, 
-				 relation,
-				 incr_expr,
-				 block,
-				 null);
 
+	JBlock for_block = new JBlock(null, new JStatement[0], null);
+
+	for_block.addStatement(new JExpressionStatement(null, new JMethodCallExpression(null, "send_credits", new JExpression[0]), null));
+	for_block.addStatement(new JForStatement(null,  
+					init_stmt, 
+					relation,
+					incr_expr,
+					block,
+					null));
+
+
+	return for_block;
 	//return the infinite loop
 	
 	//return new JWhileStatement(null, 

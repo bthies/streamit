@@ -625,48 +625,61 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    Iterator i = sends_to.iterator();
 	    while (i.hasNext()) {
 
-		SIRStream stream = (SIRStream)i.next();
+		SIRFilter sender = (SIRFilter)NodeEnumerator.getNode(selfID);
+  		SIRFilter receiver = (SIRFilter)i.next();
 
 		int fromID = selfID;
-		int toID = NodeEnumerator.getSIROperatorId(stream);
+		int toID = NodeEnumerator.getSIROperatorId(receiver);
+
+		boolean downstream = LatencyConstraints.isMessageDirectionDownstream(sender, receiver);
 
 		print("\n  //SDEP from: "+fromID+" to: "+toID+";\n");
+
 
 		streamit.scheduler2.constrained.Scheduler cscheduler =
 		    new streamit.scheduler2.constrained.Scheduler(ClusterBackend.topStreamIter);
 		
 		streamit.scheduler2.iriter.Iterator firstIter = 
-		    IterFactory.createIter((SIRStream)NodeEnumerator.getNode(selfID));
+		    IterFactory.createIter(sender);
 		streamit.scheduler2.iriter.Iterator lastIter = 
-		    IterFactory.createIter(stream);	
+		    IterFactory.createIter(receiver);	
 		
-		streamit.scheduler2.SDEPData sdep;
-		
-		try {
-		    sdep = cscheduler.computeSDEP(firstIter, lastIter);
-		    
-		    int srcInit = sdep.getNumSrcInitPhases();
-		    int srcSteady = sdep.getNumSrcSteadyPhases();
+		streamit.scheduler2.SDEPData sdep = null;
 
-		    int dstInit = sdep.getNumDstInitPhases();
-		    int dstSteady = sdep.getNumDstSteadyPhases();
+		if (downstream) {
+		    print("  //message sent downstream;\n");
 
-		    String sdepname = "sdep_"+fromID+"_"+toID;
+		    try {
+			sdep = cscheduler.computeSDEP(firstIter, lastIter);
+		    } catch (streamit.scheduler2.constrained.NoPathException ex) {
+		    }
 
-		    print("  "+sdepname+" = new sdep("+
-			  srcInit+","+dstInit+","+
-			  srcSteady+","+dstSteady+");\n");
+		} else {
+		    print("  //message sent upstream;\n");
 
-		    for (int y = 0; y < dstInit + dstSteady + 1; y++) {
-			print("  "+sdepname+"->setDst2SrcDependency("+y+","+sdep.getSrcPhase4DstPhase(y)+");\n");
+
+		    try {
+			sdep = cscheduler.computeSDEP(lastIter, firstIter);
+		    } catch (streamit.scheduler2.constrained.NoPathException ex) {
 		    }
 		    
-		} catch (streamit.scheduler2.constrained.NoPathException ex) {
-		    
 		}
-
-
-
+		
+		int srcInit = sdep.getNumSrcInitPhases();
+		int srcSteady = sdep.getNumSrcSteadyPhases();
+		
+		int dstInit = sdep.getNumDstInitPhases();
+		int dstSteady = sdep.getNumDstSteadyPhases();
+		
+		String sdepname = "sdep_"+fromID+"_"+toID;
+		
+		print("  "+sdepname+" = new sdep("+
+		      srcInit+","+dstInit+","+
+		      srcSteady+","+dstSteady+");\n");
+		
+		for (int y = 0; y < dstInit + dstSteady + 1; y++) {
+		    print("  "+sdepname+"->setDst2SrcDependency("+y+","+sdep.getSrcPhase4DstPhase(y)+");\n");
+		}
 	    }
 	}
 	
@@ -1912,7 +1925,20 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		    int max = ((SIRLatencyMax)latency).getMax();
 
 		    //print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+max+");");
-		    print("__msg_sock_"+selfID+"_"+dst+"out->write_int(sdep_"+selfID+"_"+dst+"->getDstPhase4SrcPhase(__counter_"+selfID+"+"+max+"));");
+
+		    SIRFilter sender = (SIRFilter)NodeEnumerator.getNode(selfID);
+		    SIRFilter receiver = (SIRFilter)NodeEnumerator.getNode(dst);
+
+		    if (LatencyConstraints.isMessageDirectionDownstream(sender, receiver)) {
+			
+			print("__msg_sock_"+selfID+"_"+dst+"out->write_int(sdep_"+selfID+"_"+dst+"->getDstPhase4SrcPhase(__counter_"+selfID+"+"+max+"));");
+
+		    } else {
+		    
+					    
+			print("__msg_sock_"+selfID+"_"+dst+"out->write_int(sdep_"+selfID+"_"+dst+"->getSrcPhase4DstPhase(__counter_"+selfID+"+"+max+"));");
+		    
+		    }
 
 		} else {
 

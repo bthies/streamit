@@ -10,7 +10,7 @@
  **/
 void->void pipeline FIRProgram {
   add FloatSource();
-  add LowPassFilter(1, pi/3, 100);
+  add LowPassFilter(1, pi/3, 256);
   add FloatPrinter();
 }
 

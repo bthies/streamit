@@ -37,14 +37,75 @@ public abstract class SIROperator extends Utils implements Finalizable {
 	this.parent = p;
     }
 
-    /**
-     * Accepts <v> at this node.
-     */
-    public abstract void accept(StreamVisitor v);
+     /**
+      * TO BE REMOVED once immutable stuff is in place.
+      *
+      * Returns list of all parents.  The first element of the list is
+      * the immediate parent of this, and the last element is the final
+      * non-null ancestor of this.
+      */
+    public SIRContainer[] getParents() {
+	LinkedList result = new LinkedList();
+	SIRContainer parent = getParent();
+	// make list of parents
+	while (parent!=null) {
+	    result.add(parent);
+	    parent = parent.getParent();
+	}
+	return (SIRContainer[])result.toArray(new SIRContainer[0]);
+    }
+
+     /**
+      * TO BE REMOVED once immutable IR is in place.
+      *
+      * Returns an expression that accesses the structure of the parent
+      * of this, assuming that the toplevel structure of the last
+      * parent is named as in LoweringConstants.getDataField()
+      */
+    public JExpression getParentStructureAccess() {
+	// get parents of <str>
+	SIRStream parents[] = getParents();
+	
+	// construct result expression
+	JExpression result = LoweringConstants.getDataField();
+	
+	// go through parents from top to bottom, building up the
+	// field access expression.
+	for (int i=parents.length-2; i>=0; i--) {
+	    // get field name for child context
+	    String childName = parents[i].getRelativeName();
+	    // build up cascaded field reference
+	    result = new JFieldAccessExpression(/* tokref */
+						null,
+						/* prefix is previous ref*/
+						result,
+						/* ident */
+						childName);
+	}
+	
+	// return result
+	return result;
+    }
 
     /**
-     * Accepts <v> at this node.
+     * TO BE REMOVED once immutable stuff is in place.
      */
+    public String getRelativeName() {
+	if (parent==null) {
+	    return null;
+	} else {
+	    if (parent instanceof SIRFeedbackLoop) {
+		if (this==((SIRFeedbackLoop)parent).getLoop()) {
+		    return "loop";
+		} else {
+		    return "body";
+		}
+	    } else {
+		return "child_" + parent.indexOf((SIRStream)this);
+	    }
+	}
+    }
+    
     public abstract Object accept(AttributeStreamVisitor v);
 
   // ----------------------------------------------------------------------
@@ -96,73 +157,12 @@ public abstract class SIROperator extends Utils implements Finalizable {
     public abstract String getIdent();
 
     /**
-     * Returns the relative name of this.  The relative name is the
-     * name by which the parent would refer to this child in a field
-     * of a structure, for instance.  Many different objects in the
-     * stream graph can have the same relative name.  If the parent is
-     * null, then this returns null, as well.
-     */
-    public String getRelativeName() {
-	if (parent==null) {
-	    return null;
-	} else {
-	    return parent.getChildName(this);
-	}
-    }
-
-    /**
      * Returns the parent of this.
      */
     public SIRContainer getParent() {
 	return parent;
     }
     
-    /**
-     * Returns list of all parents.  The first element of the list is
-     * the immediate parent of this, and the last element is the final
-     * non-null ancestor of this.
-     */
-    public SIRContainer[] getParents() {
-	LinkedList result = new LinkedList();
-	SIRContainer parent = getParent();
-	// make list of parents
-	while (parent!=null) {
-	    result.add(parent);
-	    parent = parent.getParent();
-	}
-	return (SIRContainer[])result.toArray(new SIRContainer[0]);
-    }
-
-    /**
-     * Returns an expression that accesses the structure of the parent
-     * of this, assuming that the toplevel structure of the last
-     * parent is named as in LoweringConstants.getDataField()
-     */
-    public JExpression getParentStructureAccess() {
-	// get parents of <str>
-	SIRStream parents[] = getParents();
-
-	// construct result expression
-	JExpression result = LoweringConstants.getDataField();
-
-	// go through parents from top to bottom, building up the
-	// field access expression.
-	for (int i=parents.length-2; i>=0; i--) {
-	    // get field name for child context
-	    String childName = parents[i].getRelativeName();
-	    // build up cascaded field reference
-	    result = new JFieldAccessExpression(/* tokref */
-						null,
-						/* prefix is previous ref*/
-						result,
-						/* ident */
-						childName);
-	}
-
-	// return result
-	return result;
-    }
-
     /**
      * This should be called in every mutator.
      */

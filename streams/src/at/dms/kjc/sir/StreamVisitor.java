@@ -1,6 +1,7 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import java.util.List;
 
 /**
@@ -12,61 +13,30 @@ import java.util.List;
  * automatic--one does not need to write code to visit the children.
  */
 public interface StreamVisitor {
+
     /**
      * PLAIN-VISITS 
      */
-    
-    /* visit a structure */
-    void visitStructure(SIRStructure self,
-                        SIRStream parent,
-                        JFieldDeclaration[] fields);
-
+	    
     /* visit a filter */
     void visitFilter(SIRFilter self,
-		     SIRStream parent,
-		     JFieldDeclaration[] fields,
-		     JMethodDeclaration[] methods,
-		     JMethodDeclaration init,
-		     JMethodDeclaration work,
-		     CType inputType, CType outputType);
+		     SIRFilterIter iter);
   
-    /* visit a splitter */
-    void visitSplitter(SIRSplitter self,
-		       SIRStream parent,
-		       SIRSplitType type,
-		       JExpression[] weights);
-    
-    /* visit a joiner */
-    void visitJoiner(SIRJoiner self,
-		     SIRStream parent,
-		     SIRJoinType type,
-		     JExpression[] weights);
-
     /**
      * PRE-VISITS 
      */
 	    
     /* pre-visit a pipeline */
     void preVisitPipeline(SIRPipeline self,
-			  SIRStream parent,
-			  JFieldDeclaration[] fields,
-			  JMethodDeclaration[] methods,
-			  JMethodDeclaration init);
+			  SIRPipelineIter iter);
 
     /* pre-visit a splitjoin */
     void preVisitSplitJoin(SIRSplitJoin self,
-			   SIRStream parent,
-			   JFieldDeclaration[] fields,
-			   JMethodDeclaration[] methods,
-			   JMethodDeclaration init);
+			   SIRSplitJoinIter iter);
 
     /* pre-visit a feedbackloop */
     void preVisitFeedbackLoop(SIRFeedbackLoop self,
-			      SIRStream parent,
-			      JFieldDeclaration[] fields,
-			      JMethodDeclaration[] methods,
-			      JMethodDeclaration init,
-			      JMethodDeclaration initPath);
+			      SIRFeedbackLoopIter iter);
 
     /**
      * POST-VISITS 
@@ -74,23 +44,13 @@ public interface StreamVisitor {
 	    
     /* post-visit a pipeline */
     void postVisitPipeline(SIRPipeline self,
-			   SIRStream parent,
-			   JFieldDeclaration[] fields,
-			   JMethodDeclaration[] methods,
-			   JMethodDeclaration init);
+			   SIRPipelineIter iter);
 
     /* post-visit a splitjoin */
     void postVisitSplitJoin(SIRSplitJoin self,
-			    SIRStream parent,
-			    JFieldDeclaration[] fields,
-			    JMethodDeclaration[] methods,
-			    JMethodDeclaration init);
+			    SIRSplitJoinIter iter);
 
     /* post-visit a feedbackloop */
     void postVisitFeedbackLoop(SIRFeedbackLoop self,
-			       SIRStream parent,
-			       JFieldDeclaration[] fields,
-			       JMethodDeclaration[] methods,
-			       JMethodDeclaration init,
-			       JMethodDeclaration initPath);
+			       SIRFeedbackLoopIter iter);
 }

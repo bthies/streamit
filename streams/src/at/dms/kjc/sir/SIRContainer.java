@@ -36,12 +36,6 @@ public abstract class SIRContainer extends SIRStream {
     }
 
     /**
-     * Returns the relative name by which this object refers to child
-     * <child>, or null if <child> is not a child of this.
-     */
-    public abstract String getChildName(SIROperator str);
-
-    /**
      * Returns a list of the children of this (does not return the
      * internal representation list of this.)  The children are stream
      * objects that are contained within this.  Should be over-ridden

@@ -162,34 +162,10 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Accepts visitor <v> at this node.
-     */
-    public void accept(StreamVisitor v) {
-	v.preVisitFeedbackLoop(this,
-			       parent,
-			       fields,
-			       methods,
-			       init,
-			       initPath);
-	/* visit components */
-	joiner.accept(v);
-	getBody().accept(v);
-	splitter.accept(v);
-	getLoop().accept(v);
-	v.postVisitFeedbackLoop(this,
-				parent,
-				fields,
-				methods,
-				init,
-				initPath);
-    }
-
-    /**
      * Accepts attribute visitor <v> at this node.
      */
     public Object accept(AttributeStreamVisitor v) {
 	return v.visitFeedbackLoop(this,
-				   parent,
 				   fields,
 				   methods,
 				   init,

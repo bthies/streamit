@@ -123,21 +123,10 @@ public class SIRSplitter extends SIROperator {
     }
     
     /**
-     * Accepts visitor <v> at this node.
-     */
-    public void accept(StreamVisitor v) {
-	v.visitSplitter(this,
-			parent,
-			type,
-			weights);
-    }
-
-    /**
      * Accepts attribute visitor <v> at this node.
      */
     public Object accept(AttributeStreamVisitor v) {
 	return v.visitSplitter(this,
-			       parent,
 			       type,
 			       weights);
     }
@@ -160,7 +149,7 @@ public class SIRSplitter extends SIROperator {
      * See doc in SIROperator.
      */
     public String getIdent() {
-	return type.toString() + " Splitter";
+	return type.toString() + "_Splitter";
     }
 
     /**

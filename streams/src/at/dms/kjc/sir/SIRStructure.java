@@ -65,17 +65,9 @@ public class SIRStructure extends SIRStream
     }
     */
 
-    public void accept(StreamVisitor v)
-    {
-        v.visitStructure(this,
-                         parent,
-                         fields);
-    }
-    
     public Object accept(AttributeStreamVisitor v)
     {
         return v.visitStructure(this,
-                                parent,
                                 fields);
     }
 }

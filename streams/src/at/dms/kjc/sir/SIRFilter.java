@@ -87,24 +87,10 @@ public class SIRFilter extends SIRStream implements Cloneable {
     }
 
     /**
-     * Accepts visitor <v> at this node.
-     */
-    public void accept(StreamVisitor v) {
-	v.visitFilter(this,
-		      parent,
-		      fields,
-		      methods,
-		      init,
-		      work,
-		      inputType, outputType);
-    }
-
-    /**
      * Accepts attribute visitor <v> at this node.
      */
     public Object accept(AttributeStreamVisitor v) {
 	return v.visitFilter(this,
-			     parent,
 			     fields,
 			     methods,
 			     init,

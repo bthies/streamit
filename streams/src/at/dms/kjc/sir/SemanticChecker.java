@@ -1,6 +1,7 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.util.*;
 import java.util.*;
 import java.io.*;
@@ -24,7 +25,7 @@ public class SemanticChecker {
 	    out.println("ERROR:  No Top-Level Stream defined!");
 	    System.exit(-1);
 	} else {
-	    str.accept(new StreamSemanticChecker(out));
+	    IterFactory.createIter(str).accept(new StreamSemanticChecker(out));
 	}
     }
 }
@@ -45,13 +46,9 @@ class StreamSemanticChecker extends EmptyStreamVisitor {
     
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRStream parent,
-				     JFieldDeclaration[] fields,
-				     JMethodDeclaration[] methods,
-				     JMethodDeclaration init,
-				     JMethodDeclaration initPath) {
+				     SIRFeedbackLoopIter iter) {
 	if (self.getLoop()==null) {
-	    out.println("ERROR:  Loop stream is null in " + self + ";\n" +
+	    out.println("ERROR:  Loop stream is null in " + iter + ";\n" +
 			"  should be set with setLoop(...) until we have internal" +
 			"  support for compiler-recognized Identity filters");
 	}

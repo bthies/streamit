@@ -47,20 +47,6 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Returns the relative name by which this object refers to child
-     * <child>, or null if <child> is not a child of this.
-     */
-    public String getChildName(SIROperator str) {
-	// return "stream" + (x+1), where x is the index of <str> in this pipe
-	int index = myChildren().indexOf(str);
-	if (index==-1) {
-	    return null;
-	} else {
-	    return "stream" + (index+1);
-	}
-    }
-    
-    /**
      * Returns a list of the children between <first> and <last>,
      * inclusive.  Assumes that <first> and <last> are both contained
      * in this, and that <first> comes before <last>.
@@ -145,32 +131,10 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Accepts visitor <v> at this node.
-     */
-    public void accept(StreamVisitor v) {
-	v.preVisitPipeline(this,
-			   parent,
-			   fields,
-			   methods,
-			   init);
-	/* visit components */
-	for (int i=0; i<size(); i++) {
-	    get(i).accept(v);
-	}
-	v.postVisitPipeline(this,
-			    parent,
-			    fields,
-			    methods,
-			    init);
-    }
-
-
-    /**
      * Accepts attribute visitor <v> at this node.
      */
     public Object accept(AttributeStreamVisitor v) {
 	return v.visitPipeline(this,
-			       parent,
 			       fields,
 			       methods,
 			       init);

@@ -130,27 +130,6 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Returns the relative name by which this object refers to child
-     * <child>, or null if <child> is not a child of this.
-     */
-    public String getChildName(SIROperator str) {
-	int index = myChildren().indexOf(str);
-	if (index>=0) {
-	    // return stream index if it's a stream
-	    return "stream" + (index+1);
-	} else if (str==joiner) {
-	    // return joiner if joiner
-	    return "joiner";
-	} else if (str==splitter) {
-	    // return splitter if splitter
-	    return "splitter";
-	} else {
-	    // otherwise, <str> is not a child--return null
-	    return null;
-	}
-    }
-
-    /**
      * Returns a list of the children of this.  The children are
      * stream objects that are contained within this (including the
      * splitter and joiner.
@@ -201,33 +180,10 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Accepts visitor <v> at this node.
-     */
-    public void accept(StreamVisitor v) {
-	v.preVisitSplitJoin(this,
-			    parent,
-			    fields,
-			    methods,
-			    init);
-	/* visit components */
-	splitter.accept(v);
-	for (int i=0; i<size(); i++) {
-	    get(i).accept(v);
-	}
-	joiner.accept(v);
-	v.postVisitSplitJoin(this,
-			     parent,
-			     fields,
-			     methods,
-			     init);
-    }
-
-    /**
      * Accepts attribute visitor <v> at this node.
      */
     public Object accept(AttributeStreamVisitor v) {
 	return v.visitSplitJoin(this,
-				parent,
 				fields,
 				methods,
 				init,

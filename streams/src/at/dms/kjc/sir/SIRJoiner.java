@@ -108,21 +108,10 @@ public class SIRJoiner extends SIROperator {
     }
 
     /**
-     * Accepts visitor <v> at this node.
-     */
-    public void accept(StreamVisitor v) {
-	v.visitJoiner(this,
-		      parent,
-		      type,
-		      weights);
-    }
-
-    /**
      * Accepts attribute visitor <v> at this node.
      */
     public Object accept(AttributeStreamVisitor v) {
 	return v.visitJoiner(this,
-			     parent,
 			     type,
 			     weights);
     }
@@ -155,7 +144,7 @@ public class SIRJoiner extends SIROperator {
      * See doc in SIROperator.
      */
     public String getIdent() {
-	return type.toString() + " Joiner";
+	return type.toString() + "_Joiner";
     }
 
     /**

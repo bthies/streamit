@@ -3,7 +3,7 @@
 # Library routines for the comparison scripts (eg the functionality common
 # between them.
 #
-# $Id: comparelib.pl,v 1.2 2002-07-22 20:42:29 aalamb Exp $
+# $Id: comparelib.pl,v 1.3 2002-07-23 18:09:08 aalamb Exp $
 #####################
 
 use strict;
@@ -32,7 +32,8 @@ sub compare_values {
     
     # if the expected output and the actual output are not the same, print a warning to std out
     if ($actual_output ne $expected_output) {
-	print stderr "warning($current_line): mismatch between actual:$actual_output and expected:$expected_output\n";
+	# this addes a rediculous amount of stuff to the error log
+	# print stderr "warning($current_line): mismatch between actual:$actual_output and expected:$expected_output\n";
     }
     
     # if the difference between expected and actual outputs are greater than

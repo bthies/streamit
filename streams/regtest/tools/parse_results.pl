@@ -14,7 +14,7 @@
 # Note: The contents of the error file are not acutally used at the present time. 
 #  error messages are parsed out of the log file instead.
 #
-# $Id: parse_results.pl,v 1.4 2002-07-03 19:31:51 aalamb Exp $
+# $Id: parse_results.pl,v 1.5 2002-07-23 18:09:08 aalamb Exp $
 
 use strict;
 
@@ -68,9 +68,9 @@ sub generate_executive_summary {
 }
 
 sub generate_failure_report {
-    my $log = shift || die ("no log passed");
-    my $errors = shift || die ("no error passed");
-    my $successes = shift || die ("no success file passed");
+    my $log = shift;
+    my $errors = shift;
+    my $successes = shift;
 
     # data structures for holding success/failures
     my %failed;    # keys=tests, values = options failed with

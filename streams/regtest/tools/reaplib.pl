@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 # library routines for reaping performance data from
 # the streamit compiler.
-# $Id: reaplib.pl,v 1.6 2002-07-18 22:02:45 aalamb Exp $
+# $Id: reaplib.pl,v 1.7 2002-07-23 18:09:08 aalamb Exp $
 
 use strict;
 
@@ -387,7 +387,7 @@ sub make_dot_page {
     my $web_dot_filename = "../" . $base_filename;
 
     # make a ps of the dot file (that we will then convert)
-    `dot -Tps $results_dir/$dot_filename > $results_dir/$dot_filename.ps`;
+    `/u/diego/bin/dot -Tps $results_dir/$dot_filename > $results_dir/$dot_filename.ps`;
     
     # make a gif of the file
     my $web_filename = "images/$dot_filename.gif";

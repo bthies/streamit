@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.16 2002-11-06 22:28:05 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.17 2002-11-19 20:28:53 dmaze Exp $
  */
 
 header {
@@ -137,9 +137,9 @@ statement returns [Statement s] { s = null; }
 
 streamit_statement returns [Statement s] { s = null; }
 	:	s=minic_statement
-	|	s=add_statement SEMI
-	|	s=body_statement SEMI
-	| 	s=loop_statement SEMI
+	|	s=add_statement
+	|	s=body_statement
+	| 	s=loop_statement
 	|	s=split_statement SEMI
 	|	s=join_statement SEMI
 	|	s=enqueue_statement SEMI
@@ -171,8 +171,8 @@ Statement body; List types = new ArrayList(); Type t; StreamSpec ss = null; }
 			{ sc = new SCAnon(getContext(ts), StreamSpec.STREAM_SPLITJOIN, body); }
 		| tl:TK_feedbackloop body=block
 			{ sc = new SCAnon(getContext(tl), StreamSpec.STREAM_FEEDBACKLOOP, body); }
-		)
-	| id:ID
+		) (SEMI)?
+	| id:ID SEMI
 		(LESS_THAN t=data_type MORE_THAN { types.add(t); })?
 		(params=func_call_params)?
 		{ sc = new SCSimple(getContext(id), id.getText(), types, params); }

@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * loops, though.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TranslateEnqueue.java,v 1.2 2003-02-12 15:53:57 dmaze Exp $
+ * @version $Id: TranslateEnqueue.java,v 1.3 2003-04-04 20:36:39 dmaze Exp $
  */
 public class TranslateEnqueue extends FEReplacer
 {
@@ -75,6 +75,12 @@ public class TranslateEnqueue extends FEReplacer
             name = "initPathInt";
             stmts.add(new StmtReturn(context,
                                      new ExprConstInt(context, 0)));
+        }
+        else if (tp.getType() == TypePrimitive.TYPE_COMPLEX)
+        {
+            name = "initPath";
+            stmts.add(new StmtReturn(context,
+                                     new ExprConstFloat(context, 0.0)));
         }
         // char, string don't have Types.  Yay corner cases.
         Parameter param =

@@ -1,6 +1,6 @@
 /*
  * UpDown.java: a counter that counts between 0 and 10, and back
- * $Id: UpDown.java,v 1.3 2001-10-17 13:59:59 dmaze Exp $
+ * $Id: UpDown.java,v 1.4 2001-10-19 18:42:32 dmaze Exp $
  */
 
 import streamit.*;
@@ -71,7 +71,7 @@ class IntPrinter extends Filter
     }
 }
 
-public class UpDown extends Pipeline
+public class UpDown extends StreamIt
 {
     public void init()
     {

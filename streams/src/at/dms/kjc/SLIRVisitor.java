@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.2 2001-10-02 19:58:45 thies Exp $
+ * $Id: SLIRVisitor.java,v 1.3 2001-10-02 23:20:33 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -61,12 +61,14 @@ public interface SLIRVisitor extends KjcVisitor
      * Visits a peek expression.
      */
     void visitPeekExpression(SIRPeekExpression self,
+                             CType tapeType,
 			     JExpression arg);
 
     /**
      * Visits a pop expression.
      */
-    void visitPopExpression(SIRPopExpression self);
+    void visitPopExpression(SIRPopExpression self,
+                            CType tapeType);
 
     /**
      * Visits a print statement.
@@ -78,6 +80,7 @@ public interface SLIRVisitor extends KjcVisitor
      * Visits a push expression.
      */
     void visitPushExpression(SIRPushExpression self,
+                             CType tapeType,
 			     JExpression arg);
 
     /**

@@ -9,12 +9,18 @@ import at.dms.compiler.*;
 public class SIRPopExpression extends JExpression {
 
     /**
+     * Type of the item to peek.
+     */
+    protected CType tapeType;
+
+    /**
      * Construct a node in the parsing tree
      * @param	where		the line of this node in the source code
      */
     public SIRPopExpression(TokenReference where)
     {
 	super(where);
+        this.tapeType = null;
     }
 
     /**
@@ -23,6 +29,16 @@ public class SIRPopExpression extends JExpression {
     public SIRPopExpression()
     {
 	super(null);
+        this.tapeType = null;
+    }
+
+    /**
+     * Sets the type of the tape being pushed to
+     * @param   type             the type of the tape
+     */
+    public void setTapeType(CType type)
+    {
+        this.tapeType = type;
     }
     
     // ----------------------------------------------------------------------
@@ -64,7 +80,7 @@ public class SIRPopExpression extends JExpression {
      */
     public void accept(KjcVisitor p) {
 	if (p instanceof SLIRVisitor) {
-	    ((SLIRVisitor)p).visitPopExpression(this); 
+	    ((SLIRVisitor)p).visitPopExpression(this, tapeType); 
 	} else {
 	    // otherwise, do nothing
 	}

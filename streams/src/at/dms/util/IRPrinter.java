@@ -1483,6 +1483,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a peek expression.
      */
     public void visitPeekExpression(SIRPeekExpression self,
+                                    CType tapeType,
 			     JExpression arg) {
 	blockStart("SIRPeekExpression");
 	attrStart("arg");
@@ -1495,7 +1496,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
     /**
      * Visits a pop expression.
      */
-    public void visitPopExpression(SIRPopExpression self) {
+    public void visitPopExpression(SIRPopExpression self,
+                                   CType tapeType) {
 	blockStart("SIRPopExpression");
 	blockEnd();
     }
@@ -1518,6 +1520,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a push expression.
      */
     public void visitPushExpression(SIRPushExpression self,
+                                    CType tapeType,
 			     JExpression arg) {
 	blockStart("SIRPushExpression");
 	attrStart("arg");

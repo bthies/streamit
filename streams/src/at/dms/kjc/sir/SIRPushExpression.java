@@ -14,6 +14,11 @@ public class SIRPushExpression extends JExpression {
     protected JExpression arg;
 
     /**
+     * Type of the item to push.
+     */
+    protected CType tapeType;
+
+    /**
      * Construct a node in the parsing tree
      * @param	where		the line of this node in the source code
      * @param	arg		the argument of the call
@@ -21,6 +26,7 @@ public class SIRPushExpression extends JExpression {
     public SIRPushExpression(TokenReference where, JExpression arg)
     {
 	super(where);
+        this.tapeType = null;
 	this.arg = arg;
     }
 
@@ -32,7 +38,17 @@ public class SIRPushExpression extends JExpression {
     public SIRPushExpression(JExpression arg)
     {
 	super(null);
+        this.tapeType = null;
 	this.arg = arg;
+    }
+
+    /**
+     * Sets the type of the tape being pushed to
+     * @param   type             the type of the tape
+     */
+    public void setTapeType(CType type)
+    {
+        this.tapeType = type;
     }
 
     // ----------------------------------------------------------------------
@@ -74,7 +90,7 @@ public class SIRPushExpression extends JExpression {
      */
     public void accept(KjcVisitor p) {
 	if (p instanceof SLIRVisitor) {
-	    ((SLIRVisitor)p).visitPushExpression(this, arg);
+	    ((SLIRVisitor)p).visitPushExpression(this, tapeType, arg);
 	} else {
 	    // otherwise, visit the argument
 	    arg.accept(p);

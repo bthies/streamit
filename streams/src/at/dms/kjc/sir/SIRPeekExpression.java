@@ -15,6 +15,11 @@ public class SIRPeekExpression extends JExpression {
     protected JExpression arg;
 
     /**
+     * Type of the item to peek.
+     */
+    protected CType tapeType;
+
+    /**
      * Construct a node in the parsing tree
      * @param	where		the line of this node in the source code
      * @param	arg		the argument of the call
@@ -22,6 +27,7 @@ public class SIRPeekExpression extends JExpression {
     public SIRPeekExpression(TokenReference where, JExpression arg)
     {
 	super(where);
+        this.tapeType = null;
 	this.arg = arg;
     }
 
@@ -32,7 +38,17 @@ public class SIRPeekExpression extends JExpression {
     public SIRPeekExpression(JExpression arg)
     {
 	super(null);
+        this.tapeType = null;
 	this.arg = arg;
+    }
+
+    /**
+     * Sets the type of the tape being peeked at
+     * @param   type             the type of the tape
+     */
+    public void setTapeType(CType type)
+    {
+        this.tapeType = type;
     }
 
     // ----------------------------------------------------------------------
@@ -74,7 +90,7 @@ public class SIRPeekExpression extends JExpression {
      */
     public void accept(KjcVisitor p) {
 	if (p instanceof SLIRVisitor) {
-	    ((SLIRVisitor)p).visitPeekExpression(this, arg);
+	    ((SLIRVisitor)p).visitPeekExpression(this, tapeType, arg);
 	} else {
 	    // visit the argument
 	    arg.accept(p);

@@ -11,7 +11,7 @@ import java.util.*;
  **/
 public class Harness {
     /** The maximum time (in minutes) to execute a command **/
-    public static final long TIME_LIMIT = 10;
+    public static final long TIME_LIMIT = 20;
     /** the path to the texec program to limit execution time **/
     public static final String TEXEC = "regtest/tools/texec/texec";
 

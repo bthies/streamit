@@ -1433,6 +1433,20 @@ public class IRPrinter extends Utils implements SLIRVisitor
     }
 
     /**
+     * Visits an interface table.
+     */
+    public void visitInterfaceTable(SIRInterfaceTable self)
+    {
+        blockStart("SIRInterfaceTable");
+        attrPrint("interface", self.getIface().getIdent());
+        attrStart("methods");
+        for (int i = 0; i < self.getMethods().length; i++)
+            printData(self.getMethods()[i].getName());
+        attrEnd();
+        blockEnd();
+    }
+
+    /**
      * Visits a latency.
      */
     public void visitLatency(SIRLatency self) {

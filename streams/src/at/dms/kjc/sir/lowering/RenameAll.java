@@ -2,6 +2,7 @@ package at.dms.kjc.sir.lowering;
 
 import at.dms.compiler.*;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
 import at.dms.util.*;
@@ -66,7 +67,11 @@ public class RenameAll extends SLIRReplacingVisitor
 
     private RASymbolTable symtab, classsymtab;
 
-    public RenameAll()
+    /**
+     * Make this private since it's dangerous to reuse the same
+     * renameall construct to rename across multiple filters
+     */
+    private RenameAll()
     {
         super();
         symtab = new RASymbolTable();
@@ -76,15 +81,35 @@ public class RenameAll extends SLIRReplacingVisitor
      * Renames the contents of <f1> but does not change the identity
      * of the filter itself.
      */
-    public void renameFilterContents(SIRFilter f1) {
-	    SIRFilter f2 = renameFilter(f1);
-	    f1.copyState(f2);
+    public static void renameFilterContents(SIRFilter f1) {
+	RenameAll ra = new RenameAll();
+	SIRFilter f2 = ra.renameFilter(f1);
+	f1.copyState(f2);
+    }
+
+    /**
+     * Renames the contents of all filters in that are connected to
+     * <str> or a parent of <str>.
+     */
+    public static void renameAllFilters(SIRStream str) {
+	SIRStream toplevel = str;
+	while (toplevel.getParent()!=null) {
+	    toplevel = toplevel.getParent();
+	}
+	// name the stream structure
+	IterFactory.createIter(toplevel).accept(new EmptyStreamVisitor() {
+		/* visit a filter */
+		public void visitFilter(SIRFilter self,
+					SIRFilterIter iter) {
+		    RenameAll.renameFilterContents(self);
+		}
+	    });
     }
 
     /**
      * Rename components of an arbitrary SIRStream in place.
      */
-    public SIRFilter renameFilter(SIRFilter str)
+    private SIRFilter renameFilter(SIRFilter str)
     {
         RASymbolTable ost = symtab;
         symtab = new RASymbolTable(ost);
@@ -161,7 +186,7 @@ public class RenameAll extends SLIRReplacingVisitor
         return nf;
     }
 
-    public void findDecls(JPhylum[] stmts)
+    private void findDecls(JPhylum[] stmts)
     {
         for (int i = 0; i < stmts.length; i++)
         {

@@ -15,6 +15,12 @@ import at.dms.kjc.flatgraph2.*;
  **/
 public class Rawify
 {
+    //if true try to compress the switch code by creating loops
+    public static boolean SWITCH_COMP = true;
+    //any switch loop with more than SC_THRESHOLD instruction will be 
+    //compressed
+    public static int SC_THRESHOLD = 3;
+    
     public static void run(SimpleScheduler scheduler, RawChip rawChip,
 			   boolean init) 
     {
@@ -56,7 +62,7 @@ public class Rawify
 						   (filterNode).getY());
 		    //create the filter info class
 		    FilterInfo filterInfo = FilterInfo.getFilterInfo(filterNode);
-			//add the dram command if this filter trace is an endpoint...
+		    //add the dram command if this filter trace is an endpoint...
 		    generateFilterDRAMCommand(filterNode, filterInfo, tile, init, primepump);
 		    
 		    if (filterInfo.isLinear()) {
@@ -65,11 +71,14 @@ public class Rawify
 			createSwitchCodeLinear(filterNode,
 					       trace,filterInfo,init,primepump,tile,rawChip);
 		    }
-		    else 
+		    else {
+			
 			createSwitchCode(filterNode, 
 					 trace, filterInfo, init, primepump, tile, rawChip);
+		    }
 		    //used for debugging, nothing more
 		    tile.addFilterTrace(init, false, filterNode);
+		    //this must come after createswitch code because of compression
 		    addComputeCode(init, primepump, tile, filterInfo);
 		}
 		else if (traceNode.isInputTrace() && !KjcOptions.magicdram) {
@@ -80,6 +89,7 @@ public class Rawify
 		    //create the switch code to perform the joining
 		    joinInputTrace((InputTraceNode)traceNode, init, primepump);
 		    //generate the dram command to execute the joining
+		    //this must come after joinInputTrace because of switch compression
 		    generateInputDRAMCommands((InputTraceNode)traceNode, init, primepump);
 		}
 		else if (traceNode.isOutputTrace() && !KjcOptions.magicdram) {
@@ -90,6 +100,7 @@ public class Rawify
 		    //create the switch code to perform the splitting
 		    splitOutputTrace((OutputTraceNode)traceNode, init, primepump);
 		    //generate the DRAM command
+		    //this must come after joinInputTrace because of switch compression
 		    outputDRAMCommands((OutputTraceNode)traceNode, init, primepump);
 		}
 		//get the next tracenode
@@ -1232,11 +1243,20 @@ public class Rawify
 	else 
 	    mult = filterInfo.steadyMult;
 
-	for (int i = 0; i < mult; i++) {
-	    //append the receive code
-	    createReceiveCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
-	    //append the send code 
-	    sentItems += createSendCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+	if (SWITCH_COMP && mult > SC_THRESHOLD && !init) {
+	    sentItems = filterInfo.push * mult;
+	    Label label = generateSwitchLoopHeader(mult, tile, false, primePump);
+	    createReceiveCode(0, node, parent, filterInfo, false, primePump, tile, rawChip);
+	    createSendCode(0, node, parent, filterInfo, false, primePump, tile, rawChip);
+	    generateSwitchLoopTrailer(label, tile, false, primePump);
+	}
+	else {
+	    for (int i = 0; i < mult; i++) {
+		//append the receive code
+		createReceiveCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+		//append the send code 
+		sentItems += createSendCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+	    }
 	}
 	
 	//now we must take care of the remaining items on the input tape 
@@ -1344,8 +1364,7 @@ public class Rawify
 	    if (KjcOptions.magicdram && node.getPrevious() != null &&
 		node.getPrevious().isInputTrace())
 		createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-				    node, (init || primePump), rawChip);
-	    
+				    node, (init || primePump), rawChip);	
 	}
     }
 
@@ -1353,8 +1372,8 @@ public class Rawify
 				       FilterInfo filterInfo, boolean init, boolean primePump, 
 				       RawTile tile, RawChip rawChip) 
     {
-	//get the items needed to fire and multiply it by the type 
-	//size
+	//get the number of items sending on this iteration, only matters
+	//if init and if twostage
 	int items = filterInfo.itemsFiring(iteration, init);
 	
 	int words = items * Util.getTypeSize(node.getFilter().getOutputType());
@@ -1378,7 +1397,6 @@ public class Rawify
 	    }
 	    
 	}
-	
 	for (int j = 0; j < words; j++) {
 	    RouteIns ins = new RouteIns(tile);
 	    //add the route from this tile to the next trace node
@@ -1393,9 +1411,45 @@ public class Rawify
 		node.getNext().isOutputTrace())
 		createMagicDramStore((OutputTraceNode)node.getNext(), 
 				     node, (init || primePump), rawChip);
-	}	
-	
+	}    
 	return items;
+    }
+
+    private static Label generateSwitchLoopHeader(int mult, RawTile tile, boolean init, boolean primePump)
+    {
+	assert mult > 1;
+	//add code on to send constant from tile, remember to subtract 1 because we 
+	//don't have a condition at the header of the loop
+	tile.getComputeCode().sendConstToSwitch(mult - 1, (init || primePump));
+	//add the code on the switch to receive the constant
+	MoveIns moveIns = new MoveIns(SwitchReg.R2, 
+				      SwitchIPort.CSTO);
+	tile.getSwitchCode().appendIns(moveIns, (init || primePump));
+	//add the label
+	Label label = new Label();
+	tile.getSwitchCode().appendIns(label, (init || primePump));	
+	return label;
+    }
+    
+    private static void generateSwitchLoopTrailer(Label label, RawTile tile, boolean init, boolean primePump)
+    {
+	//add the branch back
+	BnezdIns branch = new BnezdIns(SwitchReg.R2, SwitchReg.R2, 
+				       label.getLabel());
+	tile.getSwitchCode().appendIns(branch, (init || primePump));
+    }
+    
+
+    //create the actual switch instructions, but put a loop around them for 
+    //compression
+    private static void generateSwitchInsComp(int items, RouteIns ins, 
+					      RawTile tile, boolean init, boolean primePump)
+    {
+	Label label = generateSwitchLoopHeader(items, tile, init, primePump);
+	//add the instruction
+	tile.getSwitchCode().appendIns(ins, (init || primePump));
+	generateSwitchLoopTrailer(label, tile, init, primePump);
+
     }
     
     /* worry about magic stuff later

@@ -400,8 +400,8 @@ public class BufferDRAMAssignment
 	TreeSet sorted = new TreeSet();
 	StreamingDram src = IntraTraceBuffer.getBuffer(edge.getSrc().getPrevFilter(),
 						       edge.getSrc()).getDRAM();
-	System.out.println(IntraTraceBuffer.getBuffer(edge.getDest(), 
-						      edge.getDest().getNextFilter()));
+	//System.out.println(IntraTraceBuffer.getBuffer(edge.getDest(), 
+	//					      edge.getDest().getNextFilter()));
 	StreamingDram dst = IntraTraceBuffer.getBuffer(edge.getDest(), 
 						       edge.getDest().getNextFilter()).getDRAM();
 	//	System.out.println("Order for: " + OffChipBuffer.getBuffer(output,input) + ", " +

@@ -315,6 +315,21 @@ public class ComputeCodeStore {
 	}
     }
     
+    public void sendConstToSwitch(int constant, boolean init) 
+    {
+	//alt code gen is always enabled!
+	JAssignmentExpression send = 
+	    new JAssignmentExpression(null,
+				      new JFieldAccessExpression(null, new JThisExpression(null),
+								 Util.CSTOINTVAR),
+				      new JIntLiteral(constant));
+	
+	if (init)
+	    initBlock.addStatement(new JExpressionStatement(null, send, null));
+	else 
+	    steadyLoop.addStatement(new JExpressionStatement(null, send, null));	
+    }
+    
 
     /** Bill's code 
      * adds method <meth> to this, if <meth> is not already registered

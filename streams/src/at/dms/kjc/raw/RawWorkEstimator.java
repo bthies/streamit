@@ -26,7 +26,9 @@ public class RawWorkEstimator extends EmptyStreamVisitor
     {
 	// if we have an identity filter, just return 0 since these
 	// aren't mapped onto Raw
-	if (oldFilter instanceof SIRIdentity) {
+	if (oldFilter instanceof SIRIdentity || 
+	    oldFilter instanceof SIRFileWriter ||
+	    oldFilter instanceof SIRFileReader) {
 	    return 0;
 	}
 

@@ -23,18 +23,16 @@ public class RateMatch extends at.dms.util.Utils
     //keep this hashset of all tiles that are used to 
     //route items (excluding the source/dest of a route)
     HashSet routerTiles;
-    private static boolean overlappingRoutes;
+    private static boolean fail;
 
     public static boolean doit(FlatNode top) 
     {
 	//assume there are no overlapping routes
-	overlappingRoutes = false;
+	fail = false;
 
 	top.accept(new RateMatch(), null, true);
-	if (overlappingRoutes) 
-	    return false;
 	
-	return true;
+	return !fail;
     }
 
     public RateMatch() 
@@ -45,6 +43,13 @@ public class RateMatch extends at.dms.util.Utils
     public void visitNode(FlatNode node) 
     {
 	if (Layout.isAssigned(node)) {
+	    if (node.isFilter() &&
+		(((SIRFilter)node.contents).getInputType().isArrayType() ||
+		 ((SIRFilter)node.contents).getOutputType().isArrayType() ||
+		 ((SIRFilter)node.contents).getInputType().isClassType() ||
+		 ((SIRFilter)node.contents).getOutputType().isClassType()))
+		fail = true;
+		
 	    Iterator it = Util.getAssignedEdges(node).iterator();
 	    
 	    while (it.hasNext()) {
@@ -62,7 +67,7 @@ public class RateMatch extends at.dms.util.Utils
 			//to a filter or joiner
 			if (routerTiles.contains(current) ||
 			    (Layout.getNode(current) != null))
-			    overlappingRoutes = true;
+			    fail = true;
 			routerTiles.add(current);
 		    }
 		    

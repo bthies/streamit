@@ -63,21 +63,42 @@ interface Constants {
   public static final int DFT_LENGTH_NOM = 8; //
   public static final int DFT_LENGTH = DFT_LENGTH_NOM/2+1; //
 //    public static final int DFT_LENGTH = DFT_LENGTH_NOM+1; //
+  public static final float FREQUENCY_FACTOR_ARGS[] = {1f, 1f, 1f, 1.8f, 0.6f};
   public static final float FREQUENCY_FACTOR = 1f;
+  public static final float GLOTTAL_EXPANSION_ARGS[] = {1f, 1f, 1f, 1.2f, 1/1.2f};
   public static final float GLOTTAL_EXPANSION = 1f;
   public static final int NEW_LENGTH = (int) (DFT_LENGTH * GLOTTAL_EXPANSION / FREQUENCY_FACTOR);
-//    public static final int FILE_SIZE = 1906732;
+
+
+  //DFT_LENGTH_RED and NEW_LENGTH_RED correspond to the reduced ratio
+  //of DFT_LENGTH to NEW_LENGTH.  This ratio is needed to avoid
+  //interpolating and then decimating by redundant amounts.  Normally
+  //these numbers could be calculated by taking the GCD of DFT_L and
+  //NEW_L, but the loop unroller is having trouble with it, so they
+  //currently need to be set by hand.
+
+  //NOTE: it's very important that NEW_LENGTH_REDUCED * DFT_LENGTH is
+  //a multiple of DFT_LENGTH_REDUCED.  Otherwise the decimation will
+  //not finish completely each window, and the windows will no longer
+  //be distinct.
+  public static final int DFT_LENGTH_REDUCED_ARGS[] = {1,1,1,3,3};
+  public static final int DFT_LENGTH_REDUCED = 1;
+  public static final int NEW_LENGTH_REDUCED_ARGS[] = {1,1,1,2,4};
+  public static final int NEW_LENGTH_REDUCED = 1;
+
+  public static final float SPEED_FACTOR_ARGS[] = {1f, 2f, 0.5f, 1f, 1f};
   public static final float SPEED_FACTOR = 2f;
-  //i have no idea what's going on, i think i'm using these for speed
-  public static final int n_LENGTH = 1; //dft_length
-  public static final int m_LENGTH = 2; //new_length
 
-//    public static final int LARGE = 2147480000;
-//    public static final int LARGE = 852524;
-//    public static final int HEADER_S = 22; //
+  //n_LENGTH and m_LENGTH are similar to DFT_LENGTH_REDUCED and
+  //NEW_LENGHT_REDUCED above.  The difference is that these should be
+  //the reduced ratio of SPEED_FACTOR.  So if SPEED_FACTOR is 2,
+  //m_LENGTH should be 2, and n_LENGTH should be 1.  If SPEED_FACTOR
+  //is 2.5, m_LENGTH should be 5, and n_LENGTH should be 2.
+  public static final int n_LENGTH_ARGS[] = {1,1,2,1,1};
+  public static final int n_LENGTH = 1;
+  public static final int m_LENGTH_ARGS[] = {1,2,1,1,1};
+  public static final int m_LENGTH = 2;
 
-//    public static final String FILE_IN = "test2.wav";
-//    public static final String FILE_OUT = "test3.wav";
 }
 
 class Vocoder extends Pipeline implements Constants {
@@ -86,10 +107,6 @@ class Vocoder extends Pipeline implements Constants {
   public void init() {
     add(new FilterBank(DFT_LENGTH_NOM));
 
-    // adding the hanning window breaks the output when doing something
-    // other than the identity.  very weird
-//      add(new HanningWindow(DFT_LENGTH));
-    // the hanning window is not necessary for the correctness, however.
     add(new RectangularToPolar());
 
     add(new VocoderSystem(DFT_LENGTH, NEW_LENGTH, FREQUENCY_FACTOR, SPEED_FACTOR));
@@ -120,7 +137,7 @@ class Main extends StreamIt implements Constants {
 
     add(new Vocoder());
 
-    add(new InvDelay((DFT_LENGTH - 2) * m_LENGTH / n_LENGTH));
+    add(new InvDelay((DFT_LENGTH -2) * m_LENGTH / n_LENGTH));
 //      add(new InvDelay(DFT_LENGTH * m_LENGTH / n_LENGTH));
 
     /**

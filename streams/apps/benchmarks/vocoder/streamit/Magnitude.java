@@ -13,6 +13,7 @@ class MagnitudeStuff extends Pipeline implements Constants {
 	    setSplitter(DUPLICATE());
 	    add(new FIRSmoothingFilter(DFTLen));
 	    add(new IdentityFloat());
+//  	    add(new Identity(Float.TYPE));
 	    setJoiner(ROUND_ROBIN());
 	  }
 	});
@@ -20,8 +21,8 @@ class MagnitudeStuff extends Pipeline implements Constants {
       add(new SplitJoin() {
 	  public void init() {
 	    setSplitter(ROUND_ROBIN());
-	    add(new Duplicator(DFTLen, newLen));
-	    add(new Remapper(DFTLen, newLen));
+	    add(new Duplicator(DFT_LENGTH_REDUCED, NEW_LENGTH_REDUCED));
+	    add(new Remapper(DFT_LENGTH_REDUCED, NEW_LENGTH_REDUCED));
 	    setJoiner(ROUND_ROBIN());
 	  }
 	});
@@ -32,7 +33,6 @@ class MagnitudeStuff extends Pipeline implements Constants {
 	  public void init() {
 	    setSplitter(ROUND_ROBIN());
 	    for(int i=0; i < DFTLen; i++) {
-//  	      add(new Remapper(1,  2));
 //  	      add(new Remapper(10,  (int) ((speed * 10) + 0.5f)));
 	      add(new Remapper(n_LENGTH,  m_LENGTH));
 	    }
@@ -41,6 +41,7 @@ class MagnitudeStuff extends Pipeline implements Constants {
 	});
     } else {
       add(new IdentityFloat());
+//        add(new Identity(Float.TYPE));
     }
 
   }

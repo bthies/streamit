@@ -74,6 +74,7 @@ class Remapper extends Pipeline {
 
     if (newLen == oldLen) {
       add(new IdentityFloat());
+//        add(new Identity(Float.TYPE));
     } else {
       if (newLen != 1)
 	add(new LinearInterpolator(newLen));

@@ -10,8 +10,8 @@ import streamit.io.*;
 //      public void init(int N) {
 //  	setSplitter(ROUND_ROBIN());
 //  	setDelay(N);
-//  	setBody(new IdentityFloat());
-//  	setLoop(new IdentityFloat());
+//  	setBody(new IdentityFloat(Float.TYPE));
+//  	setLoop(new IdentityFloat(Float.TYPE));
 //  	setJoiner(ROUND_ROBIN());
 //      }
 
@@ -469,6 +469,7 @@ class IdentityFloat extends Filter {
   public void work() {output.pushFloat(input.popFloat());}
   public void init() {input = new Channel(Float.TYPE, 1);
   output = new Channel(Float.TYPE, 1);}
+//    IdentityFloat() { super(1); }
 }
 
 class ShortVoid extends Filter {

@@ -238,9 +238,11 @@ class SumRealsRealHandler extends Pipeline {
 	public void init() {
 	  setSplitter(WEIGHTED_ROUND_ROBIN(1,DFT_LENGTH - 2, 1));
 	  add(new IdentityFloat());
+//  	  add(new Identity(Float.TYPE));
 	  add(new Doubler());
 //  	  add(new ConstMultiplier(2.0f));
 	  add(new IdentityFloat());
+//  	  add(new Identity(Float.TYPE));
 	  setJoiner(WEIGHTED_ROUND_ROBIN(1, DFT_LENGTH - 2, 1));
 	}
       });

@@ -72,19 +72,16 @@ class InnerPhaseStuff extends Pipeline implements Constants {
     }
     if (speed != 1.0) {
       add(new Remapper(n_LENGTH, m_LENGTH));
-//  //        add(new FloatPrinter());
 //  //        add(new Remapper(10, (int) (speed * 10)));
-//  //        add(new Remapper(1, 2));
     }
     add(new Accumulator());
-    //  		  add(new FloatPrinter("(phase " + fi + "):", "\n"));
   }
   public InnerPhaseStuff(float c, float speed) {
     super(c, speed);
   }
 }
 
-class PhaseStuff extends Pipeline {
+class PhaseStuff extends Pipeline implements Constants {
 
   public void init(final int DFTLen, final int newLen, final float c,
 		   final float speed) {
@@ -100,96 +97,12 @@ class PhaseStuff extends Pipeline {
 	  }
 	});
       if (newLen != DFTLen) {
-	add(new Duplicator(DFTLen, newLen));
+	add(new Duplicator(DFT_LENGTH_REDUCED, NEW_LENGTH_REDUCED));
       }
     } else {
       add(new IdentityFloat());
+//        add(new Identity(Float.TYPE));
     }
-  }
-
-  PhaseStuff(int DFTLen, int newLen, float c, float speed) {
-    super(DFTLen, newLen, c, speed);
-  }
-}
-
-/**/
-/**
-class FirstDifference extends Filter {
-  private float prev;
-  private boolean first;
-
-  public FirstDifference() {
-    super();
-  }
-
-  public void init() {
-    input = new Channel(Float.TYPE, 1, 2);
-    output = new Channel(Float.TYPE, 1);
-//      prev = 0f;//input.peekFloat(0);
-    first = false;
-  }
-
-  public void work() {
-    float base = input.popFloat();
-    if (first) {
-      first = false;
-      prev = base;
-    }
-    output.pushFloat(base - prev);
-    prev = base;
-  }
-}
-/**/
-/**
-class FirstDifference extends Filter {
-  private float c, prev, next;
-  private boolean first = true;
-
-  public FirstDifference(float c) {
-    super(c);
-  }
-
-  public void init(float c) {
-    this.c = c;
-
-    input = new Channel(Float.TYPE, 1, 1);
-    output = new Channel(Float.TYPE, 1);
-    prev = 0f;//input.peekFloat(0);
-  }
-
-  public void work() {
-    float base = input.popFloat();
-    if (first) {
-      next = base; prev = base; first = false;
-    }
-    next = next + ((base - prev) * c);
-    prev = base;
-    output.pushFloat(next);
-  }
-}
-
-class PhaseStuff extends Pipeline {
-
-  public void init(final int DFTLen, final int newLen, final float c,
-		   final float speed) {
-    add(new SplitJoin() {
-	public void init() {
-	  setSplitter(ROUND_ROBIN());
-	  for(int i=0; i < DFTLen; i++) {
-	    final int fi = i;
-	    add(new Pipeline() {
-		public void init() {
-		  add(new PhaseUnwrapper());
-		  add(new FirstDifference(c));
-	 	  add(new FloatPrinter("(phase " + fi + "):", "\n"));
-		}
-	      });
-	  }
-	  setJoiner(ROUND_ROBIN());
-	}
-      });
-//      add(new FloatPrinter("(phase):\n"));
-    add(new Duplicator(DFTLen, newLen));
   }
 
   PhaseStuff(int DFTLen, int newLen, float c, float speed) {

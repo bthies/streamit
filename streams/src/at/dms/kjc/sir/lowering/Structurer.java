@@ -34,19 +34,21 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      * state structures used within <toplevel>.  Also mutates the
      * stream structure within <toplevel> so that each function within
      * a stream takes its state as the first parameter, and references
-     * fields via the state.
+     * fields via the state.  Finally, puts interface declarations
+     * <inners> in toplevel structure.
      */
-    public static JClassDeclaration structure(SIROperator toplevel) {
+    public static JClassDeclaration structure(SIROperator toplevel,
+					      JInterfaceDeclaration[] inners) {
 	Structurer structurer = new Structurer();
 	toplevel.accept(structurer);
-	return structurer.toFlatClass();
+	return structurer.toFlatClass(inners);
     }
 
     /**
      * Returns a flattened class representing the stream structure
      * that was traversed.
      */
-    private JClassDeclaration toFlatClass() {
+    private JClassDeclaration toFlatClass(JInterfaceDeclaration[] inners) {
 	// construct resulting class
 	return new JClassDeclaration(/* TokenReference where */
 				     null,
@@ -65,8 +67,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				     flatMethods.toArray(JMethodDeclaration.
 							 EMPTY),
 				     /* JTypeDeclaration[] inners */
-				     (JTypeDeclaration[])
-				     structs.toArray(JClassDeclaration.EMPTY),
+				     inners,
 				     /* JPhylum[] initializers */
 				     null,
 				     /* JavadocComment javadoc */

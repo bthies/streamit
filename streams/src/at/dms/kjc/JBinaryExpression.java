@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBinaryExpression.java,v 1.3 2001-10-29 12:53:51 thies Exp $
+ * $Id: JBinaryExpression.java,v 1.4 2001-11-02 17:35:30 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -58,6 +58,10 @@ public abstract class JBinaryExpression extends JExpression {
   public CType getType() {
     return type;
   }
+
+    public void setType(CType t) {
+	this.type = t;
+    }
 
   // ----------------------------------------------------------------------
   // CODE GENERATION

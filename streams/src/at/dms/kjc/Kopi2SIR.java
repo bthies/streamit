@@ -33,6 +33,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     private Object trash;
 
     private int num = 0;
+    /* the current source line number (set as part of blockstart) */
+    private int lineNumber = -1;
     
     //Global state holding the current method we are processing if any 
     //set/reset in visitMethodCall
@@ -60,6 +62,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     private SIRJoinType joinType;
 
 
+    //Uncomment the println for debugging
+    private void printMe(String str) {
+	//System.out.println(str);
+    }
 
     public Kopi2SIR() {
 	parentStream = null;
@@ -72,7 +78,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	interfaceTableList = new Vector(100);
     }
 
-    private void addVisitedOp(String className, SIROperator sirop) {
+    private String printLine(JPhylum l) {
+	return (String.valueOf(l.getTokenReference().getLine()) + ": ");
+    }
+
+    private void addVisitedOp(String className, SIROperator sirop)  {
 	if (visitedSIROps.get(className) != null)
 	    at.dms.util.Utils.fail("Duplicate Definition of " + className);
 	visitedSIROps.put(className, sirop);
@@ -83,18 +93,18 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	return ret;
     }
     
-    private void blockStart(String str) {
-	//System.out.println("attribute_visit" + str +"\n");
+    private void blockStart(String str)  {
+	printMe(str);
     }
 
-    private void printMe(String str) {
-	//System.out.println(str);
+    private void blockStart(String str, JPhylum getLineFromMe)  {
+	lineNumber = getLineFromMe.getTokenReference().getLine();
+	printMe("attribute_visit" + str +"\n");
     }
-
     
     /* creates a new SIROperator setting parentStream to this object
        also, if the SIROperator is one to one, parentStream is set */
-    private SIROperator newSIROP(JClassDeclaration clazz) {
+    private SIROperator newSIROP(JClassDeclaration clazz)  {
 	String TYPE = clazz.getSourceClass().getSuperClass().getIdent();
     
 	if (TYPE.equals("Pipeline") || TYPE.equals("StreamIt")) {
@@ -128,7 +138,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    return current;
 	}
 						    
-	at.dms.util.Utils.fail("You are creating an unsupported streaMIT Operator: "
+	at.dms.util.Utils.fail(printLine(clazz) + 
+			       "You are creating an unsupported streaMIT Operator: "
 			       + TYPE + ".");
 	return null;
     }
@@ -137,7 +148,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * Returns true if the given JStatement defines a call to 
      * an SIR expression
      **/
-    private boolean isSIRExp(JMethodCallExpression exp) {
+    private boolean isSIRExp(JMethodCallExpression exp)  
+    {
 
 	if (exp.getIdent().startsWith("push") ||
 	    exp.getIdent().startsWith("pop")  ||
@@ -150,11 +162,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
     /* Given a method call expression, this function will create/return a 
        SIR Expression if the method call orignally denoted one. */
-    private JPhylum newSIRExp(JMethodCallExpression exp, JExpression[] args) {
+    private JPhylum newSIRExp(JMethodCallExpression exp, JExpression[] args)  
+    {
 	JPhylum newExp = null;
 	printMe("In newSIRExp");
 	if (args.length > 1)
-	    at.dms.util.Utils.fail("Too many args to SIR call.");
+	    at.dms.util.Utils.fail(printLine(exp) +
+				   "Too many args to SIR call.");
 	
 	if (args.length == 0)
 	    args = JExpression.EMPTY;
@@ -181,7 +195,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
    
     //Perform any post visiting operations after a class is declared
-    private void postVisit(SIROperator current) {
+    private void postVisit(SIROperator current) 
+    {
 	if (current instanceof SIRFilter) {
 	    //Check for init statement
 	    if (!((SIRFilter)current).hasMethod("init"))
@@ -210,7 +225,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
        
     }
 
-    private boolean supportedType(String type) {
+    private boolean supportedType(String type) 
+    {
 	if (type.equals("Integer") ||
 	    type.equals("Character") ||
 	    type.equals("Boolean") ||
@@ -226,7 +242,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
 	  
 
-    private JMethodDeclaration[] buildPortalMethodArray(JClassDeclaration portal, JClassDeclaration clazz) 
+    private JMethodDeclaration[] buildPortalMethodArray(JClassDeclaration portal, 
+							JClassDeclaration clazz) 
     {
 	JMethodDeclaration[] portalMethods = portal.getMethods();
 	JMethodDeclaration[] clazzMethods = clazz.getMethods();
@@ -244,7 +261,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		    handlerMethod = clazzMethods[j];
 	    }
 	    if (handlerMethod == null)
-		at.dms.util.Utils.fail("Cannot find a method declaration for portal method " + 
+		at.dms.util.Utils.fail(printLine(portal) +
+				       "Cannot find a method declaration for portal method " + 
 				       portalMethods[i].getName() + " in class " + 
 				       clazz.getSourceClass().getIdent());
 	    handlerMethods[i] = handlerMethod;
@@ -264,7 +282,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                       JPhylum[] body,
 					     JFieldDeclaration[] fields,
                                       JMethodDeclaration[] methods,
-                                      JTypeDeclaration[] decls)
+                                      JTypeDeclaration[] decls) 
     {
 	/* The current SIR Operator we are creating */
 	SIROperator current;
@@ -272,7 +290,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	/* true if this class was created with an anonymous creation */
 	boolean anonCreation = false;
 	
-	blockStart("ClassDeclaration");
+	blockStart("ClassDeclaration", self);
 	printMe("Class Name: " + ident);
 	printMe(self.getSourceClass().getSuperClass().getIdent());
 	
@@ -292,7 +310,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    if (topLevel == null)
 		topLevel = (SIRStream) current;
 	    else
-		at.dms.util.Utils.fail("Toplevel Stream already set");	
+		at.dms.util.Utils.fail(printLine(self) +
+				       "Toplevel Stream already set");	
 	}
 	if (current == null) 
 	    printMe("Null");
@@ -328,25 +347,36 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
 	/* The beginning of the visit! */
 	
-	blockStart("CompilationUnit");
-
-        /*if (packageName.getName().length() > 0)
-	  packageName.accept(this);*/
-
-        /*for (int i = 0; i < importedPackages.length ; i++)
-	  importedPackages[i].accept(this);*/
-
-	/*  for (int i = 0; i < importedClasses.length ; i++)
-	    importedClasses[i].accept(this);*/
-
+	//install a try to catch all runtime errors and report the line
+	//number
+	try {
+	    blockStart("CompilationUnit", self);
+	    
+	    /*if (packageName.getName().length() > 0)
+	      packageName.accept(this);*/
+	    
+	    /*for (int i = 0; i < importedPackages.length ; i++)
+	      importedPackages[i].accept(this);*/
+	    
+	    /*  for (int i = 0; i < importedClasses.length ; i++)
+		importedClasses[i].accept(this);*/
+	    
 	
-
-        for (int i = 0; i < typeDeclarations.length ; i++)
-	    trash = typeDeclarations[i].accept(this);
-
-	
-
-	/* the end of the visit */
+	    
+	    for (int i = 0; i < typeDeclarations.length ; i++)
+		trash = typeDeclarations[i].accept(this);
+	    
+	    
+	    
+	    /* the end of the visit */
+	}
+	catch (Throwable t) {
+	    System.err.println("Unknown error at or around line " + lineNumber);
+	    System.err.println("Stack Trace:\n");
+	    t.printStackTrace();
+	    System.exit(-1);
+	}
+			
 	return topLevel;
     }
 
@@ -354,7 +384,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitClassBody(JTypeDeclaration[] decls,
 				 JFieldDeclaration[] fields,
                                JMethodDeclaration[] methods,
-                               JPhylum[] body)
+                               JPhylum[] body) 
     {
 	blockStart("ClassBody");
 	for (int i = 0; i < decls.length ; i++)
@@ -390,7 +420,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                            JTypeDeclaration[] decls,
                                            JPhylum[] body,
 					     JFieldDeclaration[] fields,
-                                           JMethodDeclaration[] methods)
+                                           JMethodDeclaration[] methods) 
     {
 	printMe("visitInnerClassDeclaration");
         trash = visitClassBody(decls, fields, methods, body);
@@ -399,7 +429,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     
 
     //return the Ctype based on the string type
-    private CType getType(String type) {
+    private CType getType(String type) 
+    {
 	if (type.equals("Integer"))
 	    return CStdType.Integer;
 	else if (type.equals("Character"))
@@ -434,13 +465,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                       int modifiers,
                                       CType type,
                                       String ident,
-                                      JExpression expr)
+                                      JExpression expr) 
     {
 	printMe("FieldDeclaration " + ident);
 	/* Input declaration set the fields for the current
 	   stream */ 
 	if (CModifier.contains(CModifier.ACC_STATIC, modifiers))
-	    at.dms.util.Utils.fail("Cannot declare fields static");
+	    at.dms.util.Utils.fail(printLine(self) +
+				   "Cannot declare fields static");
 
 	/* Output declaration set the fields for the current
 	   stream */
@@ -450,7 +482,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    if (o instanceof JExpression) {
 		expr = (JExpression)expr.accept(this);
 	    } else {
-		at.dms.util.Utils.fail("Found a Channel declaration as a field -- new StreamIt syntax requires definition in init function instead.");
+		at.dms.util.Utils.fail(printLine(self) +
+				       "Found a Channel declaration as a field -- new StreamIt syntax requires definition in init function instead.");
 	    }
 	}
 	parentStream.addField(new JFieldDeclaration(null, new JVariableDefinition(null,
@@ -463,7 +496,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
 
 
-    private boolean ignoreMethodDeclaration(String ident) {
+    private boolean ignoreMethodDeclaration(String ident) 
+    {
 	if (ident.equals("work") ||
 	    ident.equals("add") ||
 	    ident.equals("initIO") ||
@@ -481,9 +515,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                        String ident,
                                        JFormalParameter[] parameters,
                                        CClassType[] exceptions,
-                                       JBlock body)
+                                       JBlock body) 
     {
-        printMe("MethodDeclaration: " + ident);
+        blockStart("MethodDeclaration: " + ident, self);
 	//ignore main method
 	if (ident.equals("main") && CModifier.contains(CModifier.ACC_STATIC, modifiers)
 		 && CModifier.contains(CModifier.ACC_PUBLIC, modifiers)) {
@@ -513,7 +547,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 									 null));
 	    }
 	    else
-		at.dms.util.Utils.fail("Work Function Declared for Non-Filter");
+		at.dms.util.Utils.fail(printLine(self) +
+				       "Work Function Declared for Non-Filter");
 	}
 	
 	/*Install init function for filter*/
@@ -530,7 +565,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	}
 	else if (ident.startsWith("initPath")) {
 	    if (!(parentStream instanceof SIRFeedbackLoop))
-		at.dms.util.Utils.fail("initPath declared for non-Feedbackloop");
+		at.dms.util.Utils.fail(printLine(self) +
+				       "initPath declared for non-Feedbackloop");
 	    ((SIRFeedbackLoop)parentStream).setInitPath(new JMethodDeclaration(null,
 									       modifiers,
 									       returnType,
@@ -563,9 +599,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                             String ident,
                                             JFormalParameter[] parameters,
                                             CClassType[] exceptions,
-                                            JConstructorBlock body)
+                                            JConstructorBlock body) 
     {
-        blockStart("ConstructorDeclaration");
+        blockStart("ConstructorDeclaration", self);
 	if (parameters.length == 0)
 	    parameters = JFormalParameter.EMPTY;
 	for (int i = 0; i < parameters.length; i++)
@@ -585,11 +621,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitWhileStatement(JWhileStatement self,
                                     JExpression cond,
-                                    JStatement body)
+                                    JStatement body) 
     {
-        blockStart("WhileStatement");
-        JExpression newCond = (JExpression)cond.accept(this);
-        JStatement newBody = (JStatement)body.accept(this);
+        blockStart("WhileStatement", self);
+        JExpression newCond = null;
+	if (cond != null)
+	    newCond = (JExpression)cond.accept(this);
+        JStatement newBody = null;
+	if (body != null)
+	    newBody = (JStatement)body.accept(this);
 	return new JWhileStatement(null, newCond, newBody, null);
     }
 
@@ -598,9 +638,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
    */
     public Object visitVariableDeclarationStatement
         (JVariableDeclarationStatement self,
-         JVariableDefinition[] vars)
+         JVariableDefinition[] vars) 
     {
-        blockStart("VariableDeclarationStatement");
+        blockStart("VariableDeclarationStatement", self);
         
 	for (int i = 0; i < vars.length; i++) {
             vars[i] = (JVariableDefinition)vars[i].accept(this);	
@@ -618,42 +658,60 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                         int modifiers,
                                         CType type,
                                         String ident,
-                                        JExpression expr)
+                                        JExpression expr) 
     {
-        blockStart("VariableDefinition: " + self.getIdent());
+        blockStart("VariableDefinition: " + self.getIdent(), self);
 	printMe(type.toString());
 
-	if (expr != null) 
-	    expr = (JExpression)expr.accept(this);
+	//The attribute returned from visiting the expression of the variable def
+	Object retObj = null;
+	//visit the expression
+	if (expr != null)
+	    retObj = expr.accept(this);
 
 	//we are defining a new variable with a "new" in the code
- 	if (expr instanceof JUnqualifiedInstanceCreation) {
+	if (retObj instanceof JUnqualifiedInstanceCreation) {
+	    //Portal creation (normal unqualified instance creation)
 	    if (type.toString().endsWith("Portal")) {
 		//Portal Definition , SIRCreatePortal add to symbol Table
 		//make the SIRCreatePortal the new expression in the definition
 		SIRCreatePortal cp = new SIRCreatePortal();
 		return new JVariableDefinition(null, modifiers, type, ident, cp);
 	    }
+	    //defining a variable to be a named stream
 	    //If the class of this variable is in the SIR table then
 	    //we need to add this definition to the symbol table
 	    else if (getVisitedOp(type.toString()) != null) {
-		SIRStream ST = (SIRStream)ObjectDeepCloner.deepCopy(getVisitedOp(type.toString()));
+		SIRStream ST = (SIRStream)ObjectDeepCloner.
+		    deepCopy(getVisitedOp(type.toString()));
 		printMe("Adding " + ident + " to symbol table");
 		
-		SIRInitStatement newSIRInit = new SIRInitStatement(null, 
-								   null, 
-								   ((JUnqualifiedInstanceCreation)expr).
-								   getParams(), 
-								   ST);
+		SIRInitStatement newSIRInit = 
+		    new SIRInitStatement(null, 
+					 null, 
+					 ((JUnqualifiedInstanceCreation)retObj).
+					 getParams(), 
+					 ST);
 		symbolTable.put(self, newSIRInit);
 		return null;
 		//return new JVariableDefinition(null, modifiers, type, ident, expr);
 	    }
+	    
 	    else 
-		at.dms.util.Utils.fail("Definition of Stream " + type.toString() + 
+		at.dms.util.Utils.fail(printLine(self) +
+				       "Definition of Stream " + type.toString() + 
 				       " not seen before definition of " + ident);
 	}
-	return new JVariableDefinition(null, modifiers, type, ident, expr);
+	// defining the var to be a anonymous class
+	// visitUnqualifiedAnonymousCreation will return an SIRInitStatement
+	else if (retObj instanceof SIRInitStatement) {
+	    //just add the SIRInitStatement to the symbol table
+	    printMe("Adding " + ident+ " to symbol table");
+	    symbolTable.put(self, retObj);
+	    return null;
+	}
+
+	return new JVariableDefinition(null, modifiers, type, ident, (JExpression)retObj);
     }
     
     /**
@@ -661,10 +719,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitSwitchStatement(JSwitchStatement self,
                                      JExpression expr,
-                                     JSwitchGroup[] body)
+                                     JSwitchGroup[] body) 
     {
-        blockStart("SwitchStatement");
-        expr = (JExpression)expr.accept(this);
+        blockStart("SwitchStatement", self);
+	if (expr != null)
+	    expr = (JExpression)expr.accept(this);
         for (int i = 0; i < body.length; i++)
             body[i] = (JSwitchGroup)body[i].accept(this);
         return new JSwitchStatement(null, expr, body, null);
@@ -674,9 +733,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a return statement
      */
     public Object visitReturnStatement(JReturnStatement self,
-                                     JExpression expr)
+                                     JExpression expr) 
     {
-        blockStart("Return");
+        blockStart("Return", self);
         if (expr != null) 
 	    expr = (JExpression)expr.accept(this);
         return new JReturnStatement(null, expr, null);
@@ -687,10 +746,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitLabeledStatement(JLabeledStatement self,
                                       String label,
-                                      JStatement stmt)
+                                      JStatement stmt) 
     {
-        blockStart("LabeledStatement");
-	stmt = (JStatement)stmt.accept(this);
+        blockStart("LabeledStatement", self);
+	if (stmt != null)
+	    stmt = (JStatement)stmt.accept(this);
         return new JLabeledStatement(null, label, stmt, null);
     }
 
@@ -700,11 +760,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitIfStatement(JIfStatement self,
                                  JExpression cond,
                                  JStatement thenClause,
-                                 JStatement elseClause)
+                                 JStatement elseClause) 
     {
-        blockStart("IfStatement");
-        cond = (JExpression)cond.accept(this);
-        thenClause= (JStatement)thenClause.accept(this);
+        blockStart("IfStatement", self);
+	if (cond != null)
+	    cond = (JExpression)cond.accept(this);
+	if (thenClause != null)
+	    thenClause = (JStatement)thenClause.accept(this);
         if (elseClause != null) 
 	    elseClause = (JStatement)elseClause.accept(this);
         return new JIfStatement(null, cond, thenClause, elseClause, null);
@@ -717,10 +779,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                   JStatement init,
                                   JExpression cond,
                                   JStatement incr,
-                                  JStatement body)
+                                  JStatement body) 
     {
-        blockStart("ForStatement");
-	body = (JStatement)body.accept(this);
+        blockStart("ForStatement", self);
+	if (body != null)
+	    body = (JStatement)body.accept(this);
 	if (init != null)
 	    init = (JStatement)init.accept(this);
 	if (cond != null)
@@ -734,9 +797,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
    * visits a compound statement
    */
     public Object visitCompoundStatement(JCompoundStatement self,
-                                       JStatement[] body)
+                                       JStatement[] body) 
     {
-        blockStart("CompoundStatement");
+        blockStart("CompoundStatement", self);
         for (int i = 0; i < body.length; i++)
             body[i] = (JStatement)body[i].accept(this);
         return new JCompoundStatement(null, body);
@@ -746,11 +809,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits an expression statement
      */
     public Object visitExpressionStatement(JExpressionStatement self,
-                                         JExpression expr)
+                                         JExpression expr) 
     {
-        blockStart("ExpressionStatement");
+        blockStart("ExpressionStatement", self);
 	
-	JPhylum attrib = (JPhylum)expr.accept(this);
+	JPhylum attrib = null;
+	if (expr != null)
+	    attrib = (JPhylum)expr.accept(this);
 	
 
 	if (attrib instanceof JExpression)
@@ -765,9 +830,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits an expression list statement
      */
     public Object visitExpressionListStatement(JExpressionListStatement self,
-                                             JExpression[] expr)
+                                             JExpression[] expr) 
     {
-        blockStart("ExpressionListStatement");
+        blockStart("ExpressionListStatement", self);
         for (int i = 0; i < expr.length; i++)
             expr[i] = (JExpression)expr[i].accept(this);
         return new JExpressionListStatement(null, expr, null);
@@ -776,9 +841,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
    * visits a empty statement
    */
-    public Object visitEmptyStatement(JEmptyStatement self)
+    public Object visitEmptyStatement(JEmptyStatement self) 
     {
-        blockStart("EmptyStatement");
+        blockStart("EmptyStatement", self);
         return self;
     }
 
@@ -787,21 +852,23 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
    */
     public Object visitDoStatement(JDoStatement self,
                                  JExpression cond,
-                                 JStatement body)
+                                 JStatement body) 
     {
-        blockStart("DoStatement");
-	JExpression newCond = (JExpression)cond.accept(this);
-	JStatement newBody = (JStatement)body.accept(this);
-	return new JDoStatement(null, newCond, newBody, null);
+        blockStart("DoStatement", self);
+	if (cond != null) 
+	    cond = (JExpression)cond.accept(this);
+	if (body != null)
+	    body = (JStatement)body.accept(this);
+	return new JDoStatement(null, cond, body, null);
     }
 
     /**
      * visits a continue statement
      */
     public Object visitContinueStatement(JContinueStatement self,
-                                       String label)
+                                       String label) 
     {
-        blockStart("ContinueStatement");	
+        blockStart("ContinueStatement", self);	
 	return self;
     }
 
@@ -809,9 +876,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a break statement
      */
     public Object visitBreakStatement(JBreakStatement self,
-                                    String label)
-    {
-        blockStart("BreakStatement");
+                                    String label) 
+    { 
+        blockStart("BreakStatement", self);
 	return self;
     }
 
@@ -819,13 +886,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits an expression statement
      */
     public Object visitBlockStatement(JBlock self,
-                                    JavaStyleComment[] comments)
+                                    JavaStyleComment[] comments) 
     {
 	JStatement[] body = self.getStatementArray();
 	JTryCatchStatement removeFlag = new JTryCatchStatement(null, null,
 							       null, null);
 	
-	blockStart("BlockStatement");
+	blockStart("BlockStatement", self);
         for (int i = 0; i < body.length; i++) {
 	    Object st = body[i].accept(this);
 	    if (st == null)
@@ -852,10 +919,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a type declaration statement
      */
     public Object visitTypeDeclarationStatement(JTypeDeclarationStatement self,
-						JTypeDeclaration decl)
+						JTypeDeclaration decl) 
     {
-        blockStart("TypeDeclarationStatement");
-        trash = decl.accept(this);
+        blockStart("TypeDeclarationStatement", self);
+        if (decl != null)
+	    trash = decl.accept(this);
 	return self;
     }
 
@@ -867,53 +935,57 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits an unary plus expression
      */
     public Object visitUnaryPlusExpression(JUnaryExpression self,
-                                         JExpression expr)
+                                         JExpression expr) 
     {
-        blockStart("UnaryPlusExpression");
-        JExpression newExpr = (JExpression)expr.accept(this);   
-	return new JUnaryPlusExpression(null, newExpr);
+        blockStart("UnaryPlusExpression", self);
+	if (expr != null)
+	    self.setExpr((JExpression)expr.accept(this));   
+	return self;
     }
 
     /**
      * visits an unary minus expression
      */
     public Object visitUnaryMinusExpression(JUnaryExpression self,
-                                          JExpression expr)
+                                          JExpression expr) 
     {
-        blockStart("UnaryMinusExpression");
-	JExpression newExpr = (JExpression)expr.accept(this);   
-	return new JUnaryMinusExpression(null, newExpr);
+        blockStart("UnaryMinusExpression", self);
+	if (expr != null)
+	    self.setExpr((JExpression)expr.accept(this));   
+	return self;
     }
 
     /**
      * visits a bitwise complement expression
      */
     public Object visitBitwiseComplementExpression(JUnaryExpression self,
-                                                 JExpression expr)
+                                                 JExpression expr) 
     {
-        blockStart("BitwiseComplementExpression");
-	JExpression newExpr = (JExpression)expr.accept(this);   
-	return new JBitwiseComplementExpression(null, newExpr);
+        blockStart("BitwiseComplementExpression", self);
+	if (expr != null)
+	    self.setExpr((JExpression)expr.accept(this));   
+	return self;
     }
 
     /**
      * visits a logical complement expression
      */
     public Object visitLogicalComplementExpression(JUnaryExpression self,
-                                                 JExpression expr)
+                                                 JExpression expr) 
     {
-        blockStart("LogicalComplementExpression");
-	JExpression newExpr = (JExpression)expr.accept(this);   
-	return new JLogicalComplementExpression(null, newExpr);
+        blockStart("LogicalComplementExpression", self);
+	if (expr != null)
+	    self.setExpr((JExpression)expr.accept(this));   
+	return self;
     }
 
     /**
      * visits a type name expression
      */
     public Object visitTypeNameExpression(JTypeNameExpression self,
-                                        CType type)
+                                        CType type) 
     {
-        blockStart("TypeNameExpression");
+        blockStart("TypeNameExpression", self);
 	return self;
     }
 
@@ -921,20 +993,24 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a this expression
      */
     public Object visitThisExpression(JThisExpression self,
-                                    JExpression prefix)
+                                    JExpression prefix) 
     {
-        blockStart("ThisExpression");
-	if (prefix != null)
+        blockStart("ThisExpression", self);
+	//never need to visit a this expression
+	return self;
+	/*if (prefix != null) {
 	    prefix = (JExpression)prefix.accept(this);
+	    }
 	return new JThisExpression(null, prefix);
+	*/
     }
 
     /**
      * visits a super expression
      */
-    public Object visitSuperExpression(JSuperExpression self)
+    public Object visitSuperExpression(JSuperExpression self) 
     {
-        blockStart("SuperExpression");
+        blockStart("SuperExpression", self);
 	return self;
     }
 
@@ -944,12 +1020,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitShiftExpression(JShiftExpression self,
                                      int oper,
                                      JExpression left,
-                                     JExpression right)
+                                     JExpression right) 
     {
-        blockStart("ShiftExpression");
-	JExpression newLeft = (JExpression)left.accept(this);
-	JExpression newRight = (JExpression)right.accept(this);
-	return new JShiftExpression(null, oper, newLeft, newRight);
+        blockStart("ShiftExpression", self);
+	if (left != null)
+	    self.setLeft((JExpression)left.accept(this));
+	if (right != null)
+	    self.setRight((JExpression)right.accept(this));
+	return self;
     }
 
     /**
@@ -958,12 +1036,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitRelationalExpression(JRelationalExpression self,
                                           int oper,
                                           JExpression left,
-                                          JExpression right)
+                                          JExpression right) 
     {
-        blockStart("RelationalExpression");
-	JExpression newLeft = (JExpression)left.accept(this);
-	JExpression newRight = (JExpression)right.accept(this);
-	return new JRelationalExpression(null, oper, newLeft, newRight);
+        blockStart("RelationalExpression", self);
+	if (left != null)
+	    self.setLeft((JExpression)left.accept(this));
+	if (right != null)
+	    self.setRight((JExpression)right.accept(this));
+	return self;
     }
 
     /**
@@ -971,11 +1051,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitPrefixExpression(JPrefixExpression self,
                                       int oper,
-                                      JExpression expr)
+                                      JExpression expr) 
     {
-        blockStart("PrefixExpression");
-        expr = (JExpression)expr.accept(this);
-	return new JPrefixExpression(null, oper, expr);
+        blockStart("PrefixExpression", self);
+	if (expr != null)
+	    self.setExpr((JExpression)expr.accept(this));
+	return self;
     }
 
     /**
@@ -983,23 +1064,24 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitPostfixExpression(JPostfixExpression self,
                                        int oper,
-                                       JExpression expr)
+                                       JExpression expr) 
     {
-        blockStart("PostfixExpression");
-	expr = (JExpression)expr.accept(this);
-	return new JPostfixExpression(null, oper, expr);
+        blockStart("PostfixExpression", self);
+	if (expr != null)
+	    self.setExpr((JExpression)expr.accept(this));
+	return self;
     }
 
     /**
      * visits a parenthesed expression
      */
     public Object visitParenthesedExpression(JParenthesedExpression self,
-                                           JExpression expr)
+                                           JExpression expr) 
     {
         // Not parenthesized?
-        blockStart("ParenthesedExpression");
-	JExpression newExpr = (JExpression)expr.accept(this);   
-	return new JParenthesedExpression(null, newExpr);
+	if (expr != null)
+	    self.setExpr((JExpression)expr.accept(this));
+	return self;
     }
 
     /**
@@ -1010,9 +1092,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
          JExpression prefix,
          String ident,
          JExpression[] params,
-         JClassDeclaration decl)
+         JClassDeclaration decl) 
     {
-        blockStart("QualifiedAnonymousCreation");
+        blockStart("QualifiedAnonymousCreation", self);
 	if (prefix != null)
 	    prefix = (JExpression)prefix.accept(this);
 	for (int i = 0; i < params.length; i++)
@@ -1029,9 +1111,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitQualifiedInstanceCreation(JQualifiedInstanceCreation self,
                                                JExpression prefix,
                                                String ident,
-                                               JExpression[] params)
+                                               JExpression[] params) 
     {
-        blockStart("QualifiedInstanceCreation");
+        blockStart("QualifiedInstanceCreation", self);
 	if (prefix != null)
 	    prefix = (JExpression)prefix.accept(this);
 	for (int i = 0; i < params.length; i++)
@@ -1046,13 +1128,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
         (JUnqualifiedAnonymousCreation self,
          CClassType type,
          JExpression[] params,
-         JClassDeclaration decl)
+         JClassDeclaration decl) 
     {
-        blockStart("UnqualifiedAnonymousCreation");
+        blockStart("UnqualifiedAnonymousCreation", self);
 	//Get the SIR Operator back from the Class Declaration
 	SIROperator SIROp = (SIROperator)decl.accept(this);
 	if (!(SIROp instanceof SIRStream))
-	    at.dms.util.Utils.fail("Trying to anonymously create non-Stream");
+	    at.dms.util.Utils.fail(printLine(self) +
+				   "Trying to anonymously create non-Stream");
      	for (int i = 0; i < params.length; i++)
             params[i] = (JExpression)params[i].accept(this);
 	if (params.length == 0)
@@ -1074,24 +1157,20 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitUnqualifiedInstanceCreation
         (JUnqualifiedInstanceCreation self,
          CClassType type,
-         JExpression[] params)
+         JExpression[] params) 
     {
-        blockStart("UnqualifiedInstanceCreation");
+        blockStart("UnqualifiedInstanceCreation", self);
 	printMe("  Declaring: " + type.getIdent());
 	if (params.length == 0)
 	    params = JExpression.EMPTY;
 	if (type.getIdent().equals("Channel")) 
 	    /*Channel declaration, treat the args as special */
 	{
-	    String channelType = (String)params[0].accept(this);
-	    JIntLiteral num = (JIntLiteral)params[1].accept(this);
 	    Vector v = new Vector(3);
-	    v.add(channelType);
-	    v.add(num);
-	    JIntLiteral num2;
+	    v.add((String)params[0].accept(this));
+	    v.add((JExpression)params[1].accept(this));
 	    if (params.length > 2) { 
-		num2 = (JIntLiteral)params[2].accept(this);
-		v.add(num2);
+		v.add((JExpression)params[2].accept(this));
 	    }
 	    return v;
 	}
@@ -1108,9 +1187,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitNewArrayExpression(JNewArrayExpression self,
                                         CType type,
                                         JExpression[] dims,
-                                        JArrayInitializer init)
+                                        JArrayInitializer init) 
     {
-        blockStart("NewArrayExpression");
+        blockStart("NewArrayExpression", self);
 	if (dims.length == 0)
 	    dims = JExpression.EMPTY;
 	for (int i = 0; i < dims.length; i++)
@@ -1123,12 +1202,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitNameExpression(JNameExpression self,
                                     JExpression prefix,
-                                    String ident)
+                                    String ident) 
     {
-        blockStart("NameExpression");
+        blockStart("NameExpression", self);
 	if (prefix != null)
-	    prefix = (JExpression)prefix.accept(this);
-	return new JNameExpression(null, prefix, ident);
+	    self.setPrefix((JExpression)prefix.accept(this));
+	return self;
     }
 
     /**
@@ -1137,33 +1216,22 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitBinaryExpression(JBinaryExpression self,
                                       String oper,
                                       JExpression left,
-                                      JExpression right)
+                                      JExpression right) 
     {
-        blockStart("BinaryExpression");
-	JExpression newLeft = (JExpression)left.accept(this);
-        JExpression newRight = (JExpression)right.accept(this);
-	if (oper.equals("+"))
-	    return new JAddExpression(null, newLeft, newRight);
-	else if (oper.equals("||"))
-	    return new JConditionalOrExpression(null, newLeft, newRight);
-	else if (oper.equals("/"))
-	    return new JDivideExpression(null, newLeft, newRight);
-	else if (oper.equals("-"))
-	    return new JMinusExpression(null, newLeft, newRight);
-	else if (oper.equals("%"))
-	    return new JModuloExpression(null, newLeft, newRight);
-	else if (oper.equals("*"))
-	    return new JMultExpression(null, newLeft, newRight);
-	else
-	    at.dms.util.Utils.fail("Unknown binary expression");
-	return new JDivideExpression(null, newLeft, newRight);
+	blockStart("BinaryExpression", self);
+	if (left != null)
+	    self.setLeft((JExpression)left.accept(this));
+	if (right != null)
+	    self.setRight((JExpression)right.accept(this));
+	return self;
     }
 
 
     private SIRMessageStatement createMessageStatement(JMethodCallExpression methCall,
 						       CType portal, 
 						       JExpression prefix, 
-						       JExpression[] args) {
+						       JExpression[] args)  
+    {
 	//index of the method in the portal interface
 	int index = -1;
 	//Process the args
@@ -1175,7 +1243,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    portal.getCClass().getInterfaces();
 	
 	if (interfaces.length > 1)
-	    at.dms.util.Utils.fail("A portal can only implement one interface at this time");
+	    at.dms.util.Utils.fail(printLine(methCall) +
+				   "A portal can only implement one interface at this time");
 	
 	//Get the portal methods of the portal Interface
         // Save this code; we're not using it now, but it might be useful
@@ -1205,7 +1274,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     private SIRRegReceiverStatement createRegReceiver(JMethodCallExpression methCall,
 						      CType portal,
 						      JExpression prefix,
-						      SIRStream st) {
+						      SIRStream st) 
+    {
 	CMethod meth = methCall.getMethod();
 	//the index of the method in the interface
 	
@@ -1214,7 +1284,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    portal.getCClass().getInterfaces();
 	
 	if (interfaces.length > 1)
-	    at.dms.util.Utils.fail("A portal can only implement one interface at this time");
+	    at.dms.util.Utils.fail(printLine(methCall) +
+				   "A portal can only implement one interface at this time");
 	
 	//Get the portal methods of the portal Interface
 	CMethod[] portalMethods = interfaces[0].getCClass().getMethods();
@@ -1236,7 +1307,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		}
 	    }
 	    if (currentMethod == null)
-		at.dms.util.Utils.fail("Cannot find portal method in portal interface (RegReceiver)");
+		at.dms.util.Utils.fail(printLine(methCall) +
+				       "Cannot find portal method in portal interface (RegReceiver)");
 	    matchedMethods[i] = currentMethod;
 	}
 	
@@ -1251,19 +1323,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	return new SIRRegReceiverStatement(prefix,st, itable);
     }
 
-
-	    	/*
-	//Find the method index 
-	for (int i = 0; i < methods.length; i++)
-	    if (methods[i].equals(meth)) {
-		index = i;
-		break;
-	    }
-	if (index == -1)
-	    at.dms.util.Utils.fail("Cannot find portal method in portal interface");
-	*/
-
-						      
+		      
 
 
     //This method creates an initStatement from the underlying arguments
@@ -1311,7 +1371,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	}
 	//Die if it is none of the above case
 	if (newST == null)
-	    at.dms.util.Utils.fail("Illegal Arg to Stream Add Construct");
+	    at.dms.util.Utils.fail(
+				   "Illegal Arg to Stream Add Construct");
 	
 	//now find the registration method
 	if (regMethod.equals("add")) {
@@ -1346,11 +1407,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitMethodCallExpression(JMethodCallExpression self,
                                           JExpression prefix,
                                           String ident,
-                                          JExpression[] args)
+                                          JExpression[] args) 
     {
 	//Save method we were processing
 	String parentMethod = currentMethod;
-	blockStart("MethodCallExpression: " + self.getIdent());
+	blockStart("MethodCallExpression: " + self.getIdent(), self);
         //Set currentMethod to this method, we are processing it!
 	currentMethod = self.getIdent();
 	
@@ -1363,7 +1424,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	}
 	else if (ident.equals("regReceiver")) { 
 	    if (args.length > 1)
-		at.dms.util.Utils.fail("Exactly one arg to add() allowed");
+		at.dms.util.Utils.fail(printLine(self) + 
+				       "Exactly one arg to add() allowed");
 	    SIRStream st = ((SIRInitStatement)args[0].accept(this)).getTarget();
 	    currentMethod = parentMethod;
 	    //prefix can either be a field or a local var, extract type
@@ -1374,15 +1436,18 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		return createRegReceiver(self, ((JFieldAccessExpression)prefix).getType(),
 					 prefix, st);
 	    else
-		at.dms.util.Utils.fail("regReceiver all must have a portal prefix");
+		at.dms.util.Utils.fail(printLine(self) + 
+				       "regReceiver all must have a portal prefix");
 	    return null;
 	}
 	else if (ident.equals("add")) {            //Handle an add call in a pipeline
 	    //Parent must be a pipeline
 	    if (!((parentStream instanceof SIRPipeline) || parentStream instanceof SIRSplitJoin)) 
-		at.dms.util.Utils.fail("Add not called on Pipeline or SplitJoin");
+		at.dms.util.Utils.fail(printLine(self) + 
+				       "Add not called on Pipeline or SplitJoin");
 	    if (args.length > 1)
-		at.dms.util.Utils.fail("Exactly one arg to add() allowed");
+		at.dms.util.Utils.fail(printLine(self) + 
+				       "Exactly one arg to add() allowed");
 	    //Visit the argument (Exactly one))
 	    Object SIROp = args[0].accept(this);
 	    	    
@@ -1393,9 +1458,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    
 	} else if (ident.equals("setDelay")) {
 	    if (!(parentStream instanceof SIRFeedbackLoop))
-		at.dms.util.Utils.fail("SetDelay called on Non-FeedbackLoop");
+		at.dms.util.Utils.fail(printLine(self) + 
+				       "SetDelay called on Non-FeedbackLoop");
 	    if (args.length > 1)
-		at.dms.util.Utils.fail("Too many args to setDelay");
+		at.dms.util.Utils.fail(printLine(self) + 
+				       "Too many args to setDelay");
 	    int delay  = ((JIntLiteral)args[0].accept(this)).intValue();
 	    ((SIRFeedbackLoop)parentStream).setDelay(delay);
 	    //reset currentMethod on all returns
@@ -1405,9 +1472,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	}
 	else if (ident.equals("setBody")) {
 	    if (!(parentStream instanceof SIRFeedbackLoop)) 
-		at.dms.util.Utils.fail("setBody called on non-FeedbackLoop");
+		at.dms.util.Utils.fail(printLine(self) + 
+				       "setBody called on non-FeedbackLoop");
 	    if (args.length > 1)
-		at.dms.util.Utils.fail("Exactly one arg to setBody() allowed");
+		at.dms.util.Utils.fail(printLine(self) + 
+				       "Exactly one arg to setBody() allowed");
 	    //Visited the argument
 	    Object SIROp = args[0].accept(this);
 	    //reset currentMethod on all returns
@@ -1417,9 +1486,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	}
 	else if (ident.equals("setLoop")) {
 	    if (!(parentStream instanceof SIRFeedbackLoop)) 
-		at.dms.util.Utils.fail("setLoop called on non-FeedbackLoop");
+		at.dms.util.Utils.fail(printLine(self) + 
+				       "setLoop called on non-FeedbackLoop");
 	    if (args.length > 1)
-		at.dms.util.Utils.fail("Exactly one arg to setLoop() allowed");
+		at.dms.util.Utils.fail(printLine(self) + 
+				       "Exactly one arg to setLoop() allowed");
 	    //Visited the argument
 	    Object SIROp = args[0].accept(this);
 	     //reset currentMethod on all returns
@@ -1465,17 +1536,21 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    prefix = (JExpression)prefix.accept(this);
 	    for (int i = 0; i < args.length; i++)
 		args[i] = (JExpression) args[i].accept(this);
+	    //reset currentMethod
+	    currentMethod = parentMethod;
+	    self.setArgs(args);
+	    self.setPrefix(prefix);
+	    return self;
 	}
-	//reset currentMethod
-	currentMethod = parentMethod;
-	return new JMethodCallExpression(null, prefix, ident, args);
+
     }
     
 
     private void buildSplitter(JExpression type) 
     {
 	if (!(type instanceof JMethodCallExpression))
-	    at.dms.util.Utils.fail("arg to setSplitter must be a method call");
+	    at.dms.util.Utils.fail(printLine(type) + 
+				   "arg to setSplitter must be a method call");
 
 	JMethodCallExpression splitter = (JMethodCallExpression)type;
 	
@@ -1502,14 +1577,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    splitType = null;
 	}
 	else
-	    at.dms.util.Utils.fail("Unsupported Split Type");
+	    at.dms.util.Utils.fail(printLine(type) + 
+				   "Unsupported Split Type");
 	
     }
 
     private void buildJoiner(JExpression type) 
     {
 	if (!(type instanceof JMethodCallExpression))
-	    at.dms.util.Utils.fail("arg to setJoiner must be a method call");
+	    at.dms.util.Utils.fail(printLine(type) + 
+				   "arg to setJoiner must be a method call");
 
 	JMethodCallExpression joiner = (JMethodCallExpression)type;
 	
@@ -1547,9 +1624,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
    * visits a local variable expression
    */
     public Object visitLocalVariableExpression(JLocalVariableExpression self,
-                                             String ident)
+                                             String ident) 
     {
-        blockStart("LocalVariableExpression");
+        blockStart("LocalVariableExpression", self);
 	//Lookup the current local variable in the symbol table
 	//if it exists then this is a variable of a streamit type
 	if (symbolTable.get(self.getVariable()) != null) {
@@ -1566,14 +1643,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitEqualityExpression(JEqualityExpression self,
                                         boolean equal,
                                         JExpression left,
-                                        JExpression right)
+                                        JExpression right) 
     {
-        blockStart("EqualityExpression");
+        blockStart("EqualityExpression", self);
 	if (left != null)
-	    left = (JExpression)left.accept(this);
+	    self.setLeft((JExpression)left.accept(this));
 	if (right != null)
-	    right = (JExpression)right.accept(this);
-	return new JEqualityExpression(null, equal, left, right);
+	    self.setRight((JExpression)right.accept(this));
+	return self;
     }
 
     /**
@@ -1582,17 +1659,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitConditionalExpression(JConditionalExpression self,
                                            JExpression cond,
                                            JExpression left,
-                                           JExpression right)
+                                           JExpression right) 
     {
-        blockStart("ConditionalExpression");
+        blockStart("ConditionalExpression", self);
 	if (cond != null)
-	    cond = (JExpression)cond.accept(this);
+	    self.setCond((JExpression)cond.accept(this));
 	if (left != null)
-	    left = (JExpression)left.accept(this);
+	    self.setLeft((JExpression)left.accept(this));
 	if (right != null)
-	    right = (JExpression)right.accept(this);
-	
-	return new JConditionalExpression(null, cond, left, right);
+	    self.setRight((JExpression)right.accept(this));
+	return self;
     }
 
     /**
@@ -1602,14 +1678,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
         (JCompoundAssignmentExpression self,
          int oper,
          JExpression left,
-         JExpression right)
+         JExpression right) 
     {
-        blockStart("CompoundAssignmentExpression");
+        blockStart("CompoundAssignmentExpression", self);
 	if (left != null)
-	    left = (JExpression)left.accept(this);
+	    self.setLeft((JExpression)left.accept(this));
 	if (right != null)
-	    right = (JExpression)right.accept(this);
-	return new JCompoundAssignmentExpression(null, oper, left, right);
+	    self.setRight((JExpression)right.accept(this));
+	return self;
     }
 
     /**
@@ -1617,23 +1693,25 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitFieldExpression(JFieldAccessExpression self,
                                      JExpression left,
-                                     String ident)
+                                     String ident) 
     {
-        blockStart("FieldExpression");
-	if (supportedType(left.getType().getCClass().getIdent()))
+        blockStart("FieldExpression", self);
+	//return a string if this is a field expression that accesses the type
+	//argument in a channel instaniation
+	if (supportedType(left.getType().getCClass().getIdent())) {
 	    return left.getType().getCClass().getIdent();
-	else 
-	    left = (JExpression)left.accept(this);
-	return new JFieldAccessExpression(null, left, ident);
+	}
+	//Never need to visit a field expression
+	return self;
     }
 
     /**
    * visits a class expression
    */
     public Object visitClassExpression(JClassExpression self,
-                                     CType type)
+                                     CType type) 
     {
-        blockStart("ClassExpression");
+        blockStart("ClassExpression", self);
 	return self;
     }
 
@@ -1642,11 +1720,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitCastExpression(JCastExpression self,
                                     JExpression expr,
-                                    CType type)
+                                    CType type) 
     {
-        blockStart("CastExpression");
-	expr = (JExpression)expr.accept(this);
-	return new JCastExpression(null, expr, type);
+        blockStart("CastExpression", self);
+	if (expr != null)
+	    self.setExpr((JExpression)expr.accept(this));
+	return self;
     }
 
     /**
@@ -1654,11 +1733,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitUnaryPromoteExpression(JUnaryPromote self,
                                             JExpression expr,
-                                            CType type)
+                                            CType type) 
     {
-        blockStart("UnaryPromoteExpression");
-	expr = (JExpression)expr.accept(this);
-	return new JUnaryPromote(expr, type);
+        blockStart("UnaryPromoteExpression", self);
+	if (expr != null)
+	    self.setExpr((JExpression)expr.accept(this));
+	return self;
     }
 
     /**
@@ -1667,14 +1747,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitBitwiseExpression(JBitwiseExpression self,
                                        int oper,
                                        JExpression left,
-                                       JExpression right)
+                                       JExpression right) 
     {
-        blockStart("BitwiseExpression");
+        blockStart("BitwiseExpression", self);
 	if (left != null)
-	    left = (JExpression)left.accept(this);
+	    self.setLeft((JExpression)left.accept(this));
 	if (right != null)
-	    right = (JExpression)right.accept(this);
-	return new JBitwiseExpression(null, oper, left, right);
+	    self.setRight((JExpression)right.accept(this));
+	return self;
     }
     
     /**
@@ -1682,16 +1762,17 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitAssignmentExpression(JAssignmentExpression self,
                                           JExpression left,
-                                          JExpression right)
+                                          JExpression right) 
     {
-        blockStart("AssignmentExpression");
+        blockStart("AssignmentExpression", self);
 	
 	//must check for an assignment to input or output inside of
 	//an init statement...
 	if (left instanceof JFieldAccessExpression) {
 	    if (((JFieldAccessExpression)left).getIdent().equals("input")) {
 		if (!(parentStream instanceof SIRFilter))
-		    at.dms.util.Utils.fail("Input declaration on non-Filter");
+		    at.dms.util.Utils.fail(printLine(self) + 
+					   "Input declaration on non-Filter");
 		SIRFilter filter = (SIRFilter)parentStream;
 		Vector v = (Vector)right.accept(this);
 		filter.setInputType(getType((String)v.elementAt(0)));
@@ -1699,9 +1780,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		//If a peek value is given, and it is greater than pops
 		//set the peek
 		if (v.size() > 2) {
-		    if (((JIntLiteral)v.elementAt(2)).intValue() < 
-			((JIntLiteral)v.elementAt(1)).intValue())
-			at.dms.util.Utils.fail("Peeks less than Pops!");
 		    filter.setPeek((JExpression)v.elementAt(2));
 		}
 		else  //Otherwise set the peeks to the number of pops
@@ -1710,30 +1788,32 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    }
        	    else if (((JFieldAccessExpression)left).getIdent().equals("output")) {
 		if (!(parentStream instanceof SIRFilter))
-		    at.dms.util.Utils.fail("Output declaration on non-Filter");
+		    at.dms.util.Utils.fail(printLine(self) + 
+					   "Output declaration on non-Filter");
 		SIRFilter filter = (SIRFilter)parentStream;
 		Vector v = (Vector)right.accept(this);
-		filter.setPush((JIntLiteral)v.elementAt(1));
+		filter.setPush((JExpression)v.elementAt(1));
 		filter.setOutputType(getType((String)v.elementAt(0)));
 		return null;
 	    }
 
 	}
-       	if (left != null)
-	    left = (JExpression)left.accept(this);
+	if (left != null)
+	    self.setLeft((JExpression)left.accept(this));
 	if (right != null)
-	    right = (JExpression)right.accept(this);
-	return new JAssignmentExpression(null, left, right);
+	    self.setRight((JExpression)right.accept(this));
+	return self;
     }
 
     /**
      * visits an array length expression
      */
     public Object visitArrayLengthExpression(JArrayLengthExpression self,
-                                           JExpression prefix)
+                                           JExpression prefix) 
     {
-        blockStart("ArrayLengthExpression");
-        prefix = (JExpression)prefix.accept(this);
+        blockStart("ArrayLengthExpression", self);
+	if (prefix != null)
+	    prefix = (JExpression)prefix.accept(this);
         return new JArrayLengthExpression(null, prefix);
     }
 
@@ -1742,14 +1822,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitArrayAccessExpression(JArrayAccessExpression self,
                                            JExpression prefix,
-                                           JExpression accessor)
+                                           JExpression accessor) 
     {
-        blockStart("ArrayAccessExpression");
+        blockStart("ArrayAccessExpression", self);
 	if (prefix != null)
-	    prefix = (JExpression)prefix.accept(this);
+	    self.setPrefix((JExpression)prefix.accept(this));
 	if (accessor != null)
-	    accessor = (JExpression)accessor.accept(this);
-	return new JArrayAccessExpression(null, prefix, accessor);
+	    self.setAccessor((JExpression)accessor.accept(this));
+	return self;
     }
 
   
@@ -1761,10 +1841,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits an array length expression
      */
     public Object visitSwitchLabel(JSwitchLabel self,
-                                 JExpression expr)
+                                 JExpression expr) 
     {
-        blockStart("SwitchLabel");
-        expr = (JExpression)expr.accept(this);
+        blockStart("SwitchLabel", self);
+	if (expr != null)
+	    expr = (JExpression)expr.accept(this);
         return new JSwitchLabel(null, expr);
     }
 
@@ -1773,9 +1854,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitSwitchGroup(JSwitchGroup self,
                                  JSwitchLabel[] labels,
-                                 JStatement[] stmts)
+                                 JStatement[] stmts) 
     {
-        blockStart("SwitchGroup");
+        blockStart("SwitchGroup", self);
 	for (int i = 0; i < labels.length; i++)
             labels[i] = (JSwitchLabel)labels[i].accept(this);
 	for (int i = 0; i < stmts.length; i++)
@@ -1790,9 +1871,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitFormalParameters(JFormalParameter self,
                                       boolean isFinal,
                                       CType type,
-                                      String ident)
+                                      String ident) 
     {
-        blockStart("FormalParameter");
+        blockStart("FormalParameter", self);
 	return self;
     }
 
@@ -1801,9 +1882,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitConstructorCall(JConstructorCall self,
                                      boolean functorIsThis,
-                                     JExpression[] params)
+                                     JExpression[] params) 
     {
-        blockStart("ConstructorCall");
+        blockStart("ConstructorCall", self);
 	if (params.length == 0)
 	    params = JExpression.EMPTY;
 	for (int i = 0; i < params.length; i++)
@@ -1815,11 +1896,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits an array initializer expression
      */
     public Object visitArrayInitializer(JArrayInitializer self,
-                                      JExpression[] elems)
+                                      JExpression[] elems) 
     {
-        blockStart("ArrayInitializer");
-	if (elems.length == 0)
-	    elems = JExpression.EMPTY;
+        blockStart("ArrayInitializer", self);
         for (int i = 0; i < elems.length; i++)
             elems[i] = (JExpression)elems[i].accept(this);
         return new JArrayInitializer(null, elems);
@@ -1829,9 +1908,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a boolean literal
      */
   public Object visitBooleanLiteral(JBooleanLiteral self,
-			     boolean value)
+			     boolean value) 
     {
-        blockStart("BooleanLiteral");
+        blockStart("BooleanLiteral", self);
 	return new JBooleanLiteral(null, value);
     }
 
@@ -1839,9 +1918,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a byte literal
      */
   public Object visitByteLiteral(JByteLiteral self,
-			  byte value)
+			  byte value) 
     {
-        blockStart("ByteLiteral");
+        blockStart("ByteLiteral", self);
 	return new JByteLiteral(null, value);
     }
 
@@ -1849,9 +1928,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a character literal
      */
   public Object visitCharLiteral(JCharLiteral self,
-			  char value)
+			  char value) 
     {
-        blockStart("CharLiteral");
+        blockStart("CharLiteral", self);
 	return new JCharLiteral(null, value);
     }
 
@@ -1859,9 +1938,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a double literal
      */
   public Object visitDoubleLiteral(JDoubleLiteral self,
-			    double value)
+			    double value) 
     {
-        blockStart("DoubleLiteral");
+        blockStart("DoubleLiteral", self);
 	return new JDoubleLiteral(null, value);
     }
 
@@ -1869,9 +1948,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a float literal
      */
   public Object visitFloatLiteral(JFloatLiteral self,
-			   float value)
+			   float value) 
     {
-        blockStart("FloatLiteral");
+        blockStart("FloatLiteral", self);
 	return new JFloatLiteral(null, value);
     }
 
@@ -1879,9 +1958,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a int literal
      */
   public Object visitIntLiteral(JIntLiteral self,
-			 int value)
+			 int value) 
     {
-        blockStart("IntLiteral");
+        blockStart("IntLiteral", self);
 	return new JIntLiteral(null,value);
     }
 
@@ -1889,9 +1968,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a long literal
      */
   public Object visitLongLiteral(JLongLiteral self,
-			  long value)
+			  long value) 
     {
-        blockStart("LongLiteral");
+        blockStart("LongLiteral", self);
 	return new JLongLiteral(null, value);
     }
 
@@ -1899,9 +1978,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a short literal
      */
   public Object visitShortLiteral(JShortLiteral self,
-			   short value)
+			   short value) 
     {
-        blockStart("ShortLiteral");
+        blockStart("ShortLiteral", self);
 	return new JShortLiteral(null, value);
     }
 
@@ -1909,18 +1988,18 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a string literal
      */
   public Object visitStringLiteral(JStringLiteral self,
-			    String value)
+			    String value) 
     {
-        blockStart("StringLiteral");
+        blockStart("StringLiteral", self);
 	return new JStringLiteral(null, value);
     }
 
     /**
      * visits a null literal
      */
-  public Object visitNullLiteral(JNullLiteral self)
+  public Object visitNullLiteral(JNullLiteral self) 
     {
-        blockStart("NullLiteral");
+        blockStart("NullLiteral", self);
 	return new JNullLiteral(null);
     }
 
@@ -1931,7 +2010,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a package name declaration
      */
-    public Object visitPackageName(String name)
+    public Object visitPackageName(String name) 
     {
         blockStart("PackageName");
 	return null;
@@ -1940,7 +2019,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a package import declaration
      */
-    public Object visitPackageImport(String name)
+    public Object visitPackageImport(String name) 
     {
         blockStart("PackageImport");
 	return null;
@@ -1949,7 +2028,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a class import declaration
      */
-    public Object visitClassImport(String name)
+    public Object visitClassImport(String name) 
     {
         blockStart("ClassImport");
 	return null;
@@ -1959,7 +2038,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * Returns a vector of all the JInterfaceDeclarations for the
      * toplevel stream
      */
-    public JInterfaceDeclaration[] getInterfaces() {
+    public JInterfaceDeclaration[] getInterfaces()  {
 	JInterfaceDeclaration[] ret = (JInterfaceDeclaration[])interfaceList.toArray(new JInterfaceDeclaration[0]);
 	return ret;
     }
@@ -1968,7 +2047,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * Returns a vector of all the SIRInterfaceTables that were
      * constructed in traversing the toplevel stream
      */
-    public SIRInterfaceTable[] getInterfaceTables() {
+    public SIRInterfaceTable[] getInterfaceTables()  {
 	SIRInterfaceTable[] ret = (SIRInterfaceTable[])interfaceTableList.toArray(new SIRInterfaceTable[0]);
 	return ret;
     }
@@ -1982,9 +2061,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                           String ident,
                                           CClassType[] interfaces,
                                           JPhylum[] body,
-                                          JMethodDeclaration[] methods)
+                                          JMethodDeclaration[] methods) 
     {
-	blockStart("visitInterfaceDeclaration");
+	blockStart("visitInterfaceDeclaration", self);
 	interfaceList.add(self);
 	/*visitClassBody(new JTypeDeclaration[0], methods, body);*/
 	return self;
@@ -1995,9 +2074,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitTryCatchStatement(JTryCatchStatement self,
                                        JBlock tryClause,
-                                       JCatchClause[] catchClauses)
+                                       JCatchClause[] catchClauses) 
     {
-        blockStart("TryCatchStatement");
+        blockStart("TryCatchStatement", self);
         /*tryClause.accept(this);
 	  for (int i = 0; i < catchClauses.length; i++)
 	  catchClauses[i].accept(this);*/  
@@ -2010,9 +2089,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitTryFinallyStatement(JTryFinallyStatement self,
                                          JBlock tryClause,
-                                         JBlock finallyClause)
+                                         JBlock finallyClause) 
     {
-        blockStart("TryFinallyStatement");
+        blockStart("TryFinallyStatement", self);
 	/* tryClause.accept(this);
 	   finallyClause.accept(this);*/
         return self;
@@ -2022,9 +2101,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits a throw statement
      */
     public Object visitThrowStatement(JThrowStatement self,
-                                    JExpression expr)
+                                    JExpression expr) 
     {
-        blockStart("ThrowStatement");
+        blockStart("ThrowStatement", self);
 	/*expr.accept(this);*/
         return self;
     }
@@ -2034,9 +2113,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitSynchronizedStatement(JSynchronizedStatement self,
                                            JExpression cond,
-                                           JStatement body)
+                                           JStatement body) 
     {
-        blockStart("SynchronizedStatement");
+        blockStart("SynchronizedStatement", self);
         /*cond.accept(this);
 	  body.accept(this);*/
         return self;
@@ -2048,9 +2127,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
    */
     public Object visitInstanceofExpression(JInstanceofExpression self,
                                           JExpression expr,
-                                          CType dest)
+                                          CType dest) 
     {
-        blockStart("InstanceOfExpression");
+        blockStart("InstanceOfExpression", self);
 	trash = expr.accept(this);
 	return self;
     }
@@ -2058,7 +2137,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
       /**
      * visits an array length expression
      */
-    public Object visitComments(JavaStyleComment[] comments) {
+    public Object visitComments(JavaStyleComment[] comments)  
+    {
 	blockStart("Comments");
 	return comments;
     }
@@ -2066,7 +2146,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits an array length expression
      */
-    public Object visitComment(JavaStyleComment comment) {
+    public Object visitComment(JavaStyleComment comment)  
+    {
 	blockStart("Comment");
 	return comment;
     }
@@ -2074,7 +2155,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits an array length expression
      */
-    public Object visitJavadoc(JavadocComment comment) {
+    public Object visitJavadoc(JavadocComment comment) 
+    {
 	blockStart("Javadoc");
 	return null;
     }
@@ -2084,9 +2166,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      */
     public Object visitCatchClause(JCatchClause self,
                                  JFormalParameter exception,
-                                 JBlock body)
+                                 JBlock body) 
     {
-        blockStart("CatchClause");
+        blockStart("CatchClause", self);
         trash = exception.accept(this);
         trash = body.accept(this);
 	return self;

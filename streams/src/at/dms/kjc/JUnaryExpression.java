@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnaryExpression.java,v 1.1 2001-08-30 16:32:53 thies Exp $
+ * $Id: JUnaryExpression.java,v 1.2 2001-11-02 17:35:30 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -52,6 +52,10 @@ public abstract class JUnaryExpression extends JExpression {
   public CType getType() {
     return type;
   }
+
+    public void setExpr(JExpression e) {
+	this.expr = e;
+    }
 
   // ----------------------------------------------------------------------
   // DATA MEMBERS

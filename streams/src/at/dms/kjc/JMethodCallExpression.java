@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodCallExpression.java,v 1.4 2001-10-26 00:51:35 mgordon Exp $
+ * $Id: JMethodCallExpression.java,v 1.5 2001-11-02 17:35:30 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -254,6 +254,14 @@ public class JMethodCallExpression extends JExpression {
 
     public JExpression[] getArgs() {
 	return args;
+    }
+
+    public void setArgs(JExpression[] a) {
+	this.args = a;
+    }
+
+    public void setPrefix(JExpression p) {
+	prefix = p;
     }
 
   // ----------------------------------------------------------------------

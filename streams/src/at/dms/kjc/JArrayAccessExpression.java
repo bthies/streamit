@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayAccessExpression.java,v 1.3 2001-10-29 10:26:02 thies Exp $
+ * $Id: JArrayAccessExpression.java,v 1.4 2001-11-02 17:35:30 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -199,7 +199,12 @@ public class JArrayAccessExpression extends JExpression {
     /**
      * Set the accessor of this.
      */
-    public void setAccessor(JExpression accessor) {
+    public void setAccessor(JExpression a) {
+	accessor = a;
+    }
+    
+    public void setPrefix(JExpression p) {
+	prefix = p;
     }
 
   // ----------------------------------------------------------------------

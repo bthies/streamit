@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPrefixExpression.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
+ * $Id: JPrefixExpression.java,v 1.3 2001-11-02 17:35:30 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -163,6 +163,11 @@ public class JPrefixExpression extends JExpression {
       expr.genEndStoreCode(code, discardValue);
     }
   }
+
+    public void setExpr(JExpression e)
+    {
+	expr = e;
+    }
 
   // ----------------------------------------------------------------------
   // DATA MEMBERS

@@ -39,10 +39,10 @@ public class RawBackend {
 	RawBackend.rawColumns = KjcOptions.raw;
 	RawBackend.rawRows = KjcOptions.raw;
 
-	if (KjcOptions.ratematch)
-	    simulator = new RateMatchSim();
-	else 
-	    simulator = new FineGrainSimulator();
+	//	if (KjcOptions.ratematch)
+	//    simulator = new RateMatchSim();
+	//else 
+	simulator = new FineGrainSimulator();
 
 	//this must be run now, FlatIRToC relies on it!!!
 	Renamer.renameAll(str);
@@ -112,19 +112,20 @@ public class RawBackend {
 	RawFlattener rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("flatgraph.dot");
 	System.out.println("Flattener End.");
+
 	//create the execution counts for other passes
 	createExecutionCounts(str, rawFlattener);
+
 	//see if we can remove any joiners
 	JoinerRemoval.run(rawFlattener.top);
 
-	// layout the components (assign filters to tiles)
-	
+	// layout the components (assign filters to tiles)	
 	Layout.simAnnealAssign(rawFlattener.top);
 	
 	//Layout.handAssign(rawFlattener.top);
 	System.out.println("Assign End.");
-	//Generate the switch code
-	
+
+	//Generate the switch code	
 	CalcBufferSize.createBufferSizePow2(rawFlattener.top);
 	System.out.println("Switch Code Begin...");
 	SwitchCode.generate(rawFlattener.top);
@@ -139,6 +140,10 @@ public class RawBackend {
 	else 
 	    RawExecutionCode.doit(rawFlattener.top);
 
+	if (KjcOptions.removeglobals) {
+	    RemoveGlobals.doit(rawFlattener.top);
+	}
+	
 	System.out.println("Tile Code begin...");
 	TileCode.generateCode(rawFlattener.top);
 	System.out.println("Tile Code End.");

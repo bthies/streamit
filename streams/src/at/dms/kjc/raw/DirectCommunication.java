@@ -41,10 +41,100 @@ public class DirectCommunication extends at.dms.util.Utils
 	    return false;
 	//all tests pass
 	
+	//convert the communication
+	//all the communication is in the work function
+	filter.getWork().accept(new DirectConvertCommunication());
+	
+	rawMainFunction(filter);
 	return true;
     }
     
+    private static void rawMainFunction(SIRFilter filter) 
+    {
+	JBlock statements = new JBlock();
+
+	//create the params list, for some reason 
+	//calling toArray() on the list breaks a later pass
+	List paramList = filter.getParams();
+	JExpression[] paramArray;
+	if (paramList == null || paramList.size() == 0)
+	    paramArray = new JExpression[0];
+	else
+	    paramArray = (JExpression[])paramList.toArray(new JExpression[0]);
+	
+	//add the call to the init function
+	statements.addStatement
+	    (new 
+	     JExpressionStatement(null,
+				  new JMethodCallExpression
+				  (null,
+				   new JThisExpression(null),
+				   filter.getInit().getName(),
+				   paramArray),
+				  null));
+	
+	//inline the work function in a while loop
+	JBlock workBlock = 
+	    (JBlock)ObjectDeepCloner.
+	    deepCopy(filter.getWork().getBody());
+
+	statements.addStatement
+	    (new JWhileStatement(null, 
+				 new JBooleanLiteral(null, true),
+				 workBlock, 
+				 null));
+	
+	JMethodDeclaration rawMainFunct = 
+	    new JMethodDeclaration(null, 
+				   at.dms.kjc.Constants.ACC_PUBLIC,
+				   CStdType.Void,
+				   RawExecutionCode.rawMain,
+				   JFormalParameter.EMPTY,
+				   CClassType.EMPTY,
+				   statements,
+				   null,
+				   null);
+	filter.addMethod(rawMainFunct);
+	     
+    }
 }
+
+class DirectConvertCommunication extends SLIRReplacingVisitor 
+{
+    public Object visitPopExpression(SIRPopExpression oldSelf,
+				     CType oldTapeType) {
+	
+	// do the super
+	SIRPopExpression self = 
+	    (SIRPopExpression)
+	    super.visitPopExpression(oldSelf, oldTapeType);  
+
+	String floatSuffix = "";
+	//append the _f if this pop expression pops floats
+	if (self.getType().equals(CStdType.Float) ||
+	    self.getType().equals(CStdType.Double))
+	    floatSuffix = "_f";
+	
+	//create the method call for static_receive()
+	JMethodCallExpression static_receive = 
+	    new JMethodCallExpression(null, new JThisExpression(null),
+				      "static_receive" + floatSuffix, 
+				      new JExpression[0]);
+	//store the type in a var that I added to methoddeclaration
+	static_receive.setTapeType(self.getType());
+	
+	return static_receive;
+    }
+    
+    public Object visitPeekExpression(SIRPeekExpression oldSelf,
+				      CType oldTapeType,
+				      JExpression oldArg) {
+	Utils.fail("Should not see a peek expression when generating " +
+		   "direct communication");
+	return null;
+    }
+}
+
 
 class CommunicationOutsideWork extends SLIREmptyVisitor 
 {

@@ -85,14 +85,25 @@ public class RawExecutionCode extends at.dms.util.Utils
 	       filter instanceof SIRFileWriter ||
 	       filter instanceof SIRFileReader)
 		return;
-
+	    
+	    calculateItems(filter);
 	    System.out.print("Generating Raw Code: " + 
 			     node.contents.getName() + " ");
 	    
+	    //attempt to generate direct communication code
+	    //(no buffer), if this returns true it was sucessful
+	    //and the code was produced 
+	    if (bottomPeek == 0 && 
+		remaining == 0 &&
+		DirectCommunication.doit((SIRFilter)node.contents)) {
+		System.out.println("(Direct Communication)");
+		return;
+	    }
+	    
+	    //otherwise generate code the old way
 	    LocalVariables localVariables = new LocalVariables();
 	    
 	    JBlock block = new JBlock(null, new JStatement[0], null);
-	    calculateItems(filter);
 	    
 	    if (isSimple(filter))
 		System.out.print("(simple) ");

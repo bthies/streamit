@@ -78,9 +78,16 @@ public class StatelessDuplicate {
 	// set the splitter, joiner
 	result.setSplitter(SIRSplitter.
 			   create(result, SIRSplitType.DUPLICATE, reps));
-	JExpression[] joinWeight = { new JIntLiteral(1) } ;
-	result.setJoiner(SIRJoiner.
-			 createUniformRR(result, joinWeight));
+	int pushCount = origFilter.getPushInt();
+	if (pushCount > 0) {
+	    JExpression[] joinWeight = { new JIntLiteral(pushCount) } ;
+	    result.setJoiner(SIRJoiner.
+			     createUniformRR(result, joinWeight));
+	} else {
+	    result.setJoiner(SIRJoiner.create(result,
+					      SIRJoinType.NULL, 
+					      reps));
+	}
 	// set the init function
 	result.setInit(init);
 	// set the child filters
@@ -128,6 +135,7 @@ public class StatelessDuplicate {
 	newFilters.add(ObjectDeepCloner.deepCopy(origFilter));
 	for (int i=1; i<reps; i++) {
 	    newFilters.add(makeDuplicate(i));
+	    System.err.println("making a duplicate of " + origFilter + " " + origFilter.getName());
 	}
     }
 

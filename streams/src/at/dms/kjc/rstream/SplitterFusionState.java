@@ -18,31 +18,63 @@ public class SplitterFusionState extends FusionState
 	super(node);
 	
 	assert node.isSplitter();
-	
-	checkSplitter(false);
-	checkSplitter(true);
+
+	calculateRemaining();
 
 	splitter = (SIRSplitter)node.contents;
 
 	necessary = setNecessary();
 	
-	if (!necessary)
-	    System.out.println("** Found unnecessary splitter");
-
 	bufferVar = new JVariableDefinition[1];
-	bufferVarInit = new JVariableDefinition[1];
 	
-	bufferVar[0] = makeBuffer(false);
-	bufferVarInit[0] = makeBuffer(true);
+	bufferVar[0] = makeBuffer();
     }
 
+    //calculate the remaining items store in peekBufferSize 
+    private void calculateRemaining() 
+    {
+	int itemsSent = 0;  //the number of items sent to the splitter
+	int itemsReceived = 0; //the number of items this splitter will receive
+	
+	if (node.inputs < 1) {
+	    return;
+	}
+	
+	assert node.inputs == 1;
+
+	if (node.incoming[0] != null)
+	    itemsSent += StrToRStream.getMult(node.incoming[0], true) *
+		Util.getItemsPushed(node.incoming[0], node);
+	
+	
+	itemsReceived = StrToRStream.getMult(node, true) * 
+	    distinctRoundItems();
+	
+
+	remaining[0] =  itemsSent - itemsReceived;
+
+	if (remaining[0] > 0) 
+	    System.out.println("** Items remaining on an incoming splitter buffer");
+	
+	assert remaining[0] >= 0 : "Error calculating remaing for splitter";
+    }
+    
+
+    //return true if we must generate code for this splitter
     private boolean setNecessary() 
     {
+	if (StrToRStream.GENERATE_UNNECESSARY)
+	    return true;
+
 	if (node.isDuplicateSplitter() && node.ways > 0) {
 	    //check that all the down stream buffersize are equal for both init and steady, 
 	    //there is no peek buffer for immediate downstream 
 	    int bufferSizeSteady = FusionState.getFusionState(node.edges[0]).getBufferSize(node, false);
 	    int bufferSizeInit = FusionState.getFusionState(node.edges[0]).getBufferSize(node, true);
+
+	    //make sure there are no items remaining on the incoming buffer after initialization
+	    if (remaining[0] > 0)
+		return true;
 
 	    //make sure that the downstream buffersizes equal the buffer size incoming to this splitter
 	    if (this.getBufferSize(null, true) !=  bufferSizeInit) {
@@ -58,7 +90,9 @@ public class SplitterFusionState extends FusionState
 		//System.out.println("Downstream not filter");
 		return true;
 	    }
-	    if (FusionState.getFusionState(node.edges[0]).getPeekBufferSize() != 0) {
+
+	    //make sure there is no remaining items
+	    if (FusionState.getFusionState(node.edges[0]).getRemaining(node, true) > 0) {
 		//System.out.println("Downstream peek buffer > 0");
 		return true;
 	    }
@@ -70,7 +104,7 @@ public class SplitterFusionState extends FusionState
 		    return true;
 		}
 		//check the peek buffer, it must be zero
-		if (FusionState.getFusionState(node.edges[0]).getPeekBufferSize() != 0) {
+		if (FusionState.getFusionState(node.edges[0]).getRemaining(node, true) > 0) {
 		    //System.out.println("Downstream peek buffer > 0");
 		    return true;
 		}
@@ -86,37 +120,11 @@ public class SplitterFusionState extends FusionState
 		
 	    }
 	    //got here, so everything passed! it is not true that this splitter needs to be generated
+	    System.out.println("** Found unnecessary splitter " + splitter);
 	    return false;
 	}   
 	//not a duplicate splitter
 	return true;
-    }
-    
-    
-
-    /**
-     * Check that all the data received from the splitter
-     * from its inputs i.e, the splitter executes enough to 
-     * account for all the data coming into it
-     */
-    private void checkSplitter(boolean isInit) 
-    {
-	int itemsSent = 0;  //the number of items sent to the splitter
-	int itemsReceived = 0; //the number of items this splitter will receive
-	
-	if (node.inputs < 1)
-	    return;
-	
-	if (node.incoming[0] != null)
-	    itemsSent += StrToRStream.getMult(node.incoming[0], isInit) *
-		Util.getItemsPushed(node.incoming[0], node);
-	
-	
-	itemsReceived = StrToRStream.getMult(node, isInit) * 
-	    distinctRoundItems();
-	    
-	assert itemsSent == itemsReceived : "CheckSplitter(" + isInit + "): " + 
-	    itemsReceived + " = " + itemsSent;
     }
 
     public void initTasks(Vector fields, Vector functions,
@@ -127,7 +135,7 @@ public class SplitterFusionState extends FusionState
 	if (!necessary) {
 	    for (int i = 0; i < node.ways; i++)
 		((FilterFusionState)FusionState.getFusionState(node.edges[i])).
-		    sharedBufferVar(bufferVarInit[0], bufferVar[0]);
+		    sharedBufferVar(bufferVar[0]);
 	}
     }
     
@@ -156,6 +164,24 @@ public class SplitterFusionState extends FusionState
 	else {
 	    enclosingBlock.addStatement(getRRCode(enclosingBlock, mult, isInit));
 	}
+
+	//either way, we have to generate code to save the non-pop'ed items now
+	//by moving them to beginning of the buffer
+	if (remaining[0] > 0) {
+	    //create the loop counter
+	    JVariableDefinition loopCounterBackup = 
+		GenerateCCode.newIntLocal(BACKUPCOUNTER, myUniqueID, 0);
+	    //add the declaration of the counter
+	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
+					     (null, loopCounterBackup, null));
+	    //make the back up loop, move peekBufferItems starting at mult*weight
+	    //to the beginning 
+	    statements.addStatement 
+		(remainingBackupLoop(bufferVar[0],
+				     loopCounterBackup,
+				     StrToRStream.getMult(node, isInit) * distinctRoundItems(),
+				     remaining[0]));
+	}
 	
 	return statements.getStatementArray();
     }
@@ -172,6 +198,10 @@ public class SplitterFusionState extends FusionState
 					(null, induction, null));
 
 	for (int i = 0; i < node.ways; i++) {
+	    //do nothing if this has 0 weight
+	    if (node.weights[i] == 0)
+		continue;
+	    
 	    JVariableDefinition innerVar = 
 		GenerateCCode.newIntLocal(RRINNERVAR + myUniqueID + "_", i, 0);
 	    
@@ -185,6 +215,7 @@ public class SplitterFusionState extends FusionState
 		new JLocalVariableExpression(null,
 					     getBufferVar(null, isInit));
 
+	    	    
 	    JLocalVariableExpression outgoingBuffer = 
 		new JLocalVariableExpression
 		(null,
@@ -199,10 +230,10 @@ public class SplitterFusionState extends FusionState
 						       new JIntLiteral(node.weights[i])),
 				   new JLocalVariableExpression(null, innerVar));
 	    
-	    if (!isInit && downstream.getPeekBufferSize() > 0) 
+	    if (!isInit && downstream.getRemaining(node, isInit) > 0) 
 		outgoingIndex = new JAddExpression(null,
 						   outgoingIndex,
-						   new JIntLiteral(downstream.getPeekBufferSize()));
+						   new JIntLiteral(downstream.getRemaining(node, isInit)));
 
 	    //incoming[induction * totalWeights + partialSum + innerVar]
 	    JAddExpression incomingIndex = 
@@ -244,7 +275,7 @@ public class SplitterFusionState extends FusionState
 				 
     public JVariableDefinition getBufferVar(FlatNode prev, boolean init) 
     {
-	return init ? bufferVarInit[0] : bufferVar[0];
+	return bufferVar[0];
     }
     
 
@@ -285,10 +316,10 @@ public class SplitterFusionState extends FusionState
 	    
 	    JExpression outgoingIndex = new JLocalVariableExpression(null, induction);
 	    
-	    if (!isInit && downstream.getPeekBufferSize() > 0) 
+	    if (!isInit && downstream.getRemaining(node, isInit) > 0) 
 		outgoingIndex = new JAddExpression(null,
 						   outgoingIndex,
-						   new JIntLiteral(downstream.getPeekBufferSize()));
+						   new JIntLiteral(downstream.getRemaining(node, isInit)));
 
 	    JArrayAccessExpression lhs =
 		new JArrayAccessExpression(null, outgoingBuffer,
@@ -308,11 +339,15 @@ public class SplitterFusionState extends FusionState
     }
     
 
-    private JVariableDefinition makeBuffer(boolean isInit) 
+    private JVariableDefinition makeBuffer() 
     {
-	int mult = StrToRStream.getMult(node, isInit);
+	int mult = Math.max(StrToRStream.getMult(node, false),
+			    StrToRStream.getMult(node, true));
+
 	
 	int itemsAccessed = mult * distinctRoundItems();
+
+	itemsAccessed += remaining[0];
 
 	if (itemsAccessed == 0) {
 	    return null;
@@ -332,6 +367,12 @@ public class SplitterFusionState extends FusionState
 				       BUFFERNAME + myUniqueID,
 				       initializer);
     }
+
+    public int getRemaining(FlatNode prev, boolean isInit) 
+    {
+	return remaining[0];
+    }
+    
     
     /**
      * return the number of distinct items sent/received it a round

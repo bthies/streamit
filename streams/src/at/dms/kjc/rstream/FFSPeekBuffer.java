@@ -30,8 +30,13 @@ public class FFSPeekBuffer extends FilterFusionState
     
     private void setNecessary() 
     {
+	if (StrToRStream.GENERATE_UNNECESSARY) {
+	    necessary = true;
+	    return;
+	}
+
 	if (filter instanceof SIRIdentity &&
-	    peekBufferSize == 0) {
+	    remaining[0] == 0) {
 	    necessary = false;
 	}
 	else
@@ -51,13 +56,12 @@ public class FFSPeekBuffer extends FilterFusionState
 	myConsume = StrToRStream.getMult(node, true) * filter.getPopInt();
 
 
-	peekBufferSize = getLastProducedInit() - myConsume;
+	remaining[0] = getLastProducedInit() - myConsume;
 	
-	assert peekBufferSize >= (filter.getPeekInt() - filter.getPopInt()) &&
-	    peekBufferSize >= 0 : peekBufferSize + " " + (filter.getPeekInt() - filter.getPopInt());
+	assert remaining[0] >= (filter.getPeekInt() - filter.getPopInt()) &&
+	    remaining[0] >= 0 : remaining[0] + " " + (filter.getPeekInt() - filter.getPopInt());
 
 	//do it for init, then do it for steady
-	bufferVarInit[0] = makePopBuffer(StrToRStream.getMult(node, true));
 	bufferVar[0] = makePopBuffer(StrToRStream.getMult(node, false));
 
 	popCounterVar = new JVariableDefinition(null,
@@ -81,7 +85,7 @@ public class FFSPeekBuffer extends FilterFusionState
 						     0,
 						     CStdType.Integer,
 						     PUSHCOUNTERNAME + myUniqueID,
-						     new JIntLiteral(next.peekBufferSize - 1));
+						     new JIntLiteral(next.getRemaining(node, false) - 1));
 	    
 	    pushCounterVarInit = new JVariableDefinition(null,
 							 0,
@@ -91,7 +95,7 @@ public class FFSPeekBuffer extends FilterFusionState
 	    
 	}
 	
-	JExpression[] dims = { new JIntLiteral(null, peekBufferSize)};
+	JExpression[] dims = { new JIntLiteral(null, remaining[0])};
 	
 	
 	peekBufferVar = new JVariableDefinition(null, 
@@ -109,8 +113,9 @@ public class FFSPeekBuffer extends FilterFusionState
     
     public int getBufferSize(FlatNode prev, boolean init)
     {
-        return StrToRStream.getMult(node, init) * filter.getPopInt() + peekBufferSize;
+        return StrToRStream.getMult(node, init) * filter.getPopInt() + remaining[0];
     }
+    
     
     private JStatement[] getIndexDecls(boolean isInit) 
     {
@@ -134,11 +139,9 @@ public class FFSPeekBuffer extends FilterFusionState
     
     //this is called by an unnecesary duplicate splitters to make sure that 
     //all its downstream neighbors share the same incoming buffer
-    public void sharedBufferVar(JVariableDefinition bufInit,
-				JVariableDefinition buf)
+    public void sharedBufferVar(JVariableDefinition buf)
     {
 	dontGeneratePopDecl = true;
-	bufferVarInit[0] = bufInit;
 	bufferVar[0] = buf;
     }
     
@@ -158,7 +161,7 @@ public class FFSPeekBuffer extends FilterFusionState
 	if (dontGeneratePopDecl)
 	    return null;
 	
-	JVariableDefinition buf = isInit ? bufferVarInit[0] : bufferVar[0];
+	JVariableDefinition buf = bufferVar[0];
 	
 	if (buf == null)
 	    return null;
@@ -172,7 +175,7 @@ public class FFSPeekBuffer extends FilterFusionState
     private JStatement getPeekBufDecl()
     {
 	//if we need a peek buffer return the var decl
-	if (peekBufferSize > 0)
+	if (remaining[0] > 0)
 	    return new JVariableDeclarationStatement(null,
 						     peekBufferVar,
 						     null);
@@ -181,7 +184,7 @@ public class FFSPeekBuffer extends FilterFusionState
 
     private JVariableDefinition makePopBuffer(int mult)
     {
-	int itemsAccessed = mult * filter.getPopInt() + peekBufferSize;
+	int itemsAccessed = mult * filter.getPopInt() + remaining[0];
 	
 	if (itemsAccessed == 0)
 	    return null;
@@ -207,12 +210,12 @@ public class FFSPeekBuffer extends FilterFusionState
     {
 	assert !isInit : "Calling peekRestore when in initialization schedule";
 	
-	if (peekBufferSize == 0) 
+	if (remaining[0] == 0) 
 	    return new JEmptyStatement(null, null);
 
 
 	// make a statement that will copy peeked items into the pop
-	// buffer, assuming the counter will count from 0 to peekBufferSize
+	// buffer, assuming the counter will count from 0 to remaining[0]
 
 	// the lhs of the source of the assignment
 	JExpression sourceLhs = 
@@ -251,7 +254,7 @@ public class FFSPeekBuffer extends FilterFusionState
 	// return a for loop that executes (peek-pop) times.
 	return GenerateCCode.makeDoLoop(body,
 			   loopCounterRestore, 
-			   new JIntLiteral(peekBufferSize));
+			   new JIntLiteral(remaining[0]));
     }
 
 
@@ -262,11 +265,11 @@ public class FFSPeekBuffer extends FilterFusionState
     private JStatement peekBackupLoop(JVariableDefinition loopCounterBackup,
 				     boolean isInit) 
     {
-	if (peekBufferSize == 0)
+	if (remaining[0] == 0)
 	    return new JEmptyStatement(null, null);
 
 	// make a statement that will copy unpopped items into the
-	// peek buffer, assuming the counter will count from 0 to peekBufferSize
+	// peek buffer, assuming the counter will count from 0 to remaining[0]
 
 	// the lhs of the destination of the assignment
 	JExpression destLhs = 
@@ -279,8 +282,7 @@ public class FFSPeekBuffer extends FilterFusionState
 
 	// the lhs of the source of the assignment
 	JExpression sourceLhs = 
-	    new JLocalVariableExpression(null,
-					 isInit ? bufferVarInit[0] : bufferVar[0]);
+	    new JLocalVariableExpression(null, bufferVar[0]);
 	    
 
 	JExpression sourceRhs = 
@@ -308,7 +310,7 @@ public class FFSPeekBuffer extends FilterFusionState
 	// return a for loop that executes (peek-pop) times.
 	return GenerateCCode.makeDoLoop(body,
 					 loopCounterBackup, 
-					 new JIntLiteral(peekBufferSize));
+					 new JIntLiteral(remaining[0]));
     }
     
     public void initTasks(Vector fields, Vector functions,
@@ -389,7 +391,7 @@ public class FFSPeekBuffer extends FilterFusionState
 
 	//create the loop counter to restore the peeked items from 
 	//the last firings of the filter to the pop buffer
-	if (!isInit && peekBufferSize > 0) {
+	if (!isInit && remaining[0] > 0) {
 	    //create the loop counter
 	    JVariableDefinition loopCounterRestore = 
 		GenerateCCode.newIntLocal(RESTORECOUNTER, myUniqueID, 0);
@@ -423,8 +425,9 @@ public class FFSPeekBuffer extends FilterFusionState
 	    //see if can generate MIV buffer indices, if true, then the conversion 
 	    //was performed
 	    ConvertChannelExprsMIV tryMIV = new ConvertChannelExprsMIV(this, isInit);
-	    if (!tryMIV.tryMIV((JDoLoopStatement)body)) {
-		System.out.println("Could not generate MIV indices for " + getNode().contents);
+	    if (!StrToRStream.GENERATE_MIVS || !tryMIV.tryMIV((JDoLoopStatement)body)) {
+		if (StrToRStream.GENERATE_MIVS)
+		    System.out.println("Could not generate MIV indices for " + getNode().contents);
 		body.accept(new ConvertChannelExprs(this, isInit));
 	    }
 	    
@@ -433,7 +436,7 @@ public class FFSPeekBuffer extends FilterFusionState
 
 	//create the loop to back up the unpop'ed items from the pop buffer
 	//and store them into the peek buffer
-	if (peekBufferSize > 0) {
+	if (remaining[0] > 0) {
 	    //create the loop counter
 	    JVariableDefinition loopCounterBackup = 
 		GenerateCCode.newIntLocal(BACKUPCOUNTER, myUniqueID, 0);

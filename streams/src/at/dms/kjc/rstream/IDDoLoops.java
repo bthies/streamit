@@ -388,7 +388,7 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
 		    break;
 		    */
 		default:
-		    assert false;
+		    return;
 		}
 	    }
 	}

@@ -36,6 +36,8 @@ public class StrToRStream {
     public static final boolean CONVERT_FOR_TO_DO_LOOPS = true;
     /** generate MIV buffer index expressions if possible **/
     public static final boolean GENERATE_MIVS = true;
+    /** generate code for superfluous identites and splitter **/
+    public static final boolean GENERATE_UNNECESSARY = false;
     
     /** if true, generate a separate peek buffer for peeking filters
      * before execution, restore the peek buffer to the pop buffer,
@@ -229,9 +231,12 @@ public class StrToRStream {
 		     obj.getName().startsWith("Fused_FilterBank")))
 		    val++;
 	       */
-		if (graphFlattener.getFlatNode(obj) != null)
+		if (graphFlattener.getFlatNode(obj) != null) {
+		    //System.out.println("Mult (" + i + ") for " + graphFlattener.getFlatNode(obj) + 
+		    //		       " = " + val);
 		    result[i].put(graphFlattener.getFlatNode(obj), 
 				  new Integer(val));
+		}
 	    }
 	}
 	
@@ -282,33 +287,8 @@ public class StrToRStream {
 		    result[1].put(node,new Integer(((int[])executionCounts[1].get(node.oldContents))[0]));
 	    }
 	}
-	/*	
-	//now, in the above calculation, an execution of a joiner node is 
-	//considered one cycle of all of its inputs.  For the remainder of the
-	//raw backend, I would like the execution of a joiner to be defined as
-	//the joiner passing one data item down stream
-	for (int i=0; i < 2; i++) {
-	    Iterator it = result[i].keySet().iterator();
-	    while(it.hasNext()){
-		FlatNode node = (FlatNode)it.next();
-		if (node.contents instanceof SIRJoiner) {
-		    int oldVal = ((Integer)result[i].get(node)).intValue();
-		    int cycles=oldVal*((SIRJoiner)node.contents).oldSumWeights;
-		    if((node.schedMult!=0)&&(node.schedDivider!=0))
-			cycles=(cycles*node.schedMult)/node.schedDivider;
-		    result[i].put(node, new Integer(cycles));
-		}
-		if (node.contents instanceof SIRSplitter) {
-		    int sum = 0;
-		    for (int j = 0; j < node.ways; j++)
-			sum += node.weights[j];
-		    int oldVal = ((Integer)result[i].get(node)).intValue();
-		    result[i].put(node, new Integer(sum*oldVal));
-		    //System.out.println("SchedSplit:"+node+" "+i+" "+sum+" "+oldVal);
-		}
-	    }
-	}
-	*/
+	
+	//	dumpExecutionCounts();
     }
     
     
@@ -320,10 +300,27 @@ public class StrToRStream {
 	else 
 	    mult = (Integer)steadyExecutionCounts.get(node);
 
-	if (mult == null)
+	if (mult == null) {
+	    //System.out.println("** Mult HashMap (" + init + ") does not contain " + node);
 	    return 0;
+	}
 	
 	return mult.intValue();
     }
-    
+
+
+    public static void dumpExecutionCounts() 
+    {
+	for (int i = 0; i < 2; i++) {
+	    HashMap exeCounts = i == 0 ? 
+		initExecutionCounts : steadyExecutionCounts;
+	    System.out.println("** Execution Counts for " + i);
+	    
+	    Iterator nodes = exeCounts.keySet().iterator();
+	    while (nodes.hasNext()) {
+		FlatNode node = (FlatNode)nodes.next();
+		System.out.println(node + " = " +  exeCounts.get(node));
+	    }
+	}
+    }
 }

@@ -18,9 +18,10 @@ public abstract class FusionState
     protected boolean necessary = true;
 
     protected FlatNode node;
-    protected int peekBufferSize;
+    //the number of items remaining on the tape after the 
+    //init stage has completed for each incoming channel of the node
+    protected int remaining[];
     protected JVariableDefinition[] bufferVar;
-    protected JVariableDefinition[] bufferVarInit;
     protected static HashMap fusionState;
     
     protected int myUniqueID;
@@ -36,11 +37,12 @@ public abstract class FusionState
     {
 	this.node = node;
 	this.myUniqueID = uniqueID++;
-	peekBufferSize = 0;
+	remaining = new int[Math.max(1, node.inputs)];
+	remaining[0] = 0;
     }
 
     public abstract int getBufferSize(FlatNode prev, boolean init);
-    
+    public abstract int getRemaining(FlatNode prev, boolean init);
 
     public boolean isNecesary() 
     {
@@ -75,10 +77,6 @@ public abstract class FusionState
     
     public abstract JVariableDefinition getBufferVar(FlatNode prev, boolean init);
     
-    public int getPeekBufferSize() 
-    {
-	return peekBufferSize;
-    }
     
     public FlatNode getNode() 
     {
@@ -95,5 +93,66 @@ public abstract class FusionState
 	      new JIntLiteral(value)),
 	     null);
     }
+
+      /**
+     * Given that a phase has already executed, move the un-pop'ed items
+     * to the front of the pop buffer.
+     */
+    protected JStatement remainingBackupLoop(JVariableDefinition buffer,
+					   JVariableDefinition loopCounterBackup,
+					   int offset, 
+					   int remainingItems)
+				    
+    {
+	if (remainingItems == 0)
+	    return new JEmptyStatement(null, null);
+
+	// make a statement that will copy unpopped items into the
+	// peek buffer, assuming the counter will count from 0 to peekBufferSize
+
+	// the lhs of the destination of the assignment
+	JExpression destLhs = 
+	    new JLocalVariableExpression(null,
+					 buffer);
+	// the rhs of the destination of the assignment
+	JExpression destRhs = 
+	    new JLocalVariableExpression(null, 
+					 loopCounterBackup);
+
+	// the lhs of the source of the assignment
+	JExpression sourceLhs = 
+	    new JLocalVariableExpression(null,
+					 buffer);
+	    
+
+	JExpression sourceRhs = 
+	    new
+	    JAddExpression(null, 
+			   new JLocalVariableExpression(null, 
+							loopCounterBackup),
+			   new JIntLiteral(offset));
+	
+	// the expression that copies items from the pop buffer to the
+	// peek buffer
+	JExpression copyExp = 
+	    new JAssignmentExpression(null,
+				      new JArrayAccessExpression(null,
+								 destLhs,
+								 destRhs),
+				      new JArrayAccessExpression(null,
+								 sourceLhs,
+								 sourceRhs));
+
+	// finally we have the body of the loop
+	JStatement body = new JExpressionStatement(null, copyExp, null);
+
+	// return a for loop that executes (peek-pop) times.
+	return GenerateCCode.makeDoLoop(body,
+					loopCounterBackup, 
+					new JIntLiteral(remainingItems));
+    }
+
+    protected static String BACKUPCOUNTER = "__backup_counter_";
+    
 }
 

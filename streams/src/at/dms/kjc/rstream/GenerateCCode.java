@@ -2,8 +2,7 @@ package at.dms.kjc.rstream;
 
 import java.util.Vector;
 import at.dms.kjc.common.*;
-import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
+import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
@@ -19,7 +18,6 @@ import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import java.util.Hashtable;
 import at.dms.util.SIRPrinter;
-import at.dms.kjc.raw.*;
 
 /**
 
@@ -31,6 +29,7 @@ public class GenerateCCode
     private JBlock main;
     private JMethodDeclaration mainMethod;
     private Vector functions;
+    /** init function calls and initPath calls for joiners **/
     private JBlock initFunctionCalls;
     private JBlock steady;
     private JBlock init;
@@ -76,8 +75,10 @@ public class GenerateCCode
 	top.accept(new FlatVisitor() {
 		public void visitNode(FlatNode node) 
 		{
-		    if (node.isFilter())
+		    if (node.isFilter()) {
 			RenameAll.renameFilterContents((SIRFilter)node.contents);
+		    }
+		    
 		}
 	    }, null, true);
     }
@@ -206,11 +207,11 @@ public class GenerateCCode
 
     private void visitGraph(FlatNode top, boolean isInit) 
     {
-	Iterator traversal = BreadthFirstTraversal.getTraversal(top).iterator();
+	Iterator traversal = DataFlowTraversal.getTraversal(top).iterator();
 
 	while (traversal.hasNext()) {
 	    FlatNode node = (FlatNode)traversal.next();
-	    //	    System.out.println("Generating Code for  " + node.contents);
+	    //System.out.println("Generating Code (" + isInit + ") for  " + node.contents);
 	    generateCode(node, isInit);
 
 	}

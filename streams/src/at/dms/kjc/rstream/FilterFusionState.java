@@ -16,8 +16,7 @@ public abstract class FilterFusionState extends FusionState
     protected static String PUSHCOUNTERNAME = "__PUSH_COUNTER_";
 
     protected static String FORINDEXNAME = "__work_counter_";
-    protected static String BACKUPCOUNTER = "__backup_counter_";
-
+ 
     protected JVariableDefinition popCounterVar;
     protected JVariableDefinition pushCounterVar;
     protected JVariableDefinition pushCounterVarInit;
@@ -45,9 +44,19 @@ public abstract class FilterFusionState extends FusionState
 	assert node.ways <= 1 : "Filter FlatNode with more than one outgoing buffer";	    
 	
 	bufferVar = new JVariableDefinition[1];
-	bufferVarInit = new JVariableDefinition[1];
     }
     
+    public int getRemaining(FlatNode prev, boolean isInit) 
+    {
+	//if this filter is not necessary then return the downstream's
+	//remaining count
+	if (!necessary && node.ways > 0)
+	    return FusionState.getFusionState(node.edges[0]).getRemaining(node, isInit);
+	
+	return remaining[0];
+    }
+    
+
     public JVariableDefinition getPopCounterVar() 
     {
 	return popCounterVar;
@@ -64,19 +73,17 @@ public abstract class FilterFusionState extends FusionState
 
     public JVariableDefinition getBufferVar(FlatNode prev, boolean init) 
     {
-	if (!necessary) {
+	if (!necessary && node.ways > 0) {
 	    return FusionState.getFusionState(node.edges[0]).getBufferVar(node, init);
 	}
-	return init ? bufferVarInit[0] : bufferVar[0];
+	return bufferVar[0];
     }
     
     //this is called by an unnecesary duplicate splitters to make sure that 
     //all its downstream neighbors share the same incoming buffer
-    public void sharedBufferVar(JVariableDefinition bufInit,
-				JVariableDefinition buf)
+    public void sharedBufferVar(JVariableDefinition buf)
     {
 	dontGeneratePopDecl = true;
-	bufferVarInit[0] = bufInit;
 	bufferVar[0] = buf;
     }
     

@@ -286,11 +286,14 @@ public class FlatIRToRS extends ToC
 	// print(CModifier.toString(modifiers));
 	print(returnType);
 	print(" ");
+	
 	//just print initPath() instead of initPath<Type>
-	if (ident.startsWith("initPath"))
-	    print("initPath"); 
-	else 
-	    print(ident);
+	//if (ident.startsWith("initPath"))
+	//    print("initPath"); 
+	//else
+	
+	print(ident);
+	
 	print("(");
 	int count = 0;
 	

@@ -47,7 +47,7 @@ public class ConvertChannelExprsMIV {
 	    //if this is not the init, then remember to push after the items saved,
 	    //by the downstream filter (these items were not pop'ed and they were copied to 
 	    //the beginning of the downstream buffer)
-	    this.pushOffset = isInit ? 0 :  next.getPeekBufferSize();
+	    this.pushOffset = isInit ? 0 :  next.getRemaining(current.getNode(), isInit);
 	}
 	
 	this.popBuffer = current.getBufferVar(null /*this is a filter, so only one previous */,
@@ -72,8 +72,8 @@ public class ConvertChannelExprsMIV {
 				       popBuffer, pushBuffer, pushOffset);
 	    phase2.run();
 	}
-	else 
-	    System.out.println("** Could not generate MIVs for " + fusionState.getNode().contents);
+	//	else 
+	//    System.out.println("** Could not generate MIVs for " + fusionState.getNode().contents);
 	
 	return passed;
     }    

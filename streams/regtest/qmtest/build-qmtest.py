@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.2 2003-11-19 16:15:22 dmaze Exp $
+# $Id: build-qmtest.py,v 1.3 2003-11-20 18:11:46 dmaze Exp $
 #
 
 import os
@@ -146,7 +146,7 @@ def DirToQMDir(path):
     returns -- Name of the directory for QMTest's benefit."""
 
     parts = SplitAll(path)
-    parts = map(lambda p: p + '.qms', parts)
+    parts = map(lambda p: QMSanitize(p) + '.qms', parts)
     path = apply(os.path.join, parts)
     return path
 
@@ -400,7 +400,10 @@ def MakeOptionName(target, opts):
 
     name = target
     if opts: name = "%s %s" % (target, opts)
-    # Well, that was simple.  But now we need to sanitize it.
+    return QMSanitize(name)
+
+def QMSanitize(name):
+    """Turn an arbitrary string into a QMTest test name."""
     # A test name can only contain lowercase letters, numbers,
     # and _.  So, let's sanitize a little:
     name = name.lower()

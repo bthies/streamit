@@ -87,10 +87,26 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         }
     }
 
-    LatencyNode addNode(Filter filter)
+    LatencyNode addFilter(Filter filter)
     {
         LatencyNode newNode =
             new LatencyNode(filter, getAncestorList(filter));
+        nodes.pushBack(newNode);
+        return newNode;
+    }
+
+    LatencyNode addSplitter(SplitJoin sj)
+    {
+        LatencyNode newNode =
+            new LatencyNode(sj, true, getAncestorList(sj));
+        nodes.pushBack(newNode);
+        return newNode;
+    }
+
+    LatencyNode addJoiner(SplitJoin sj)
+    {
+        LatencyNode newNode =
+            new LatencyNode(sj, false, getAncestorList(sj));
         nodes.pushBack(newNode);
         return newNode;
     }
@@ -216,7 +232,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         {
             OSetIterator nodesToVisitIter = nodesToVisit.begin();
             LatencyNode node = (LatencyNode)nodesToVisitIter.get();
-            nodesToVisit.erase (nodesToVisitIter);
+            nodesToVisit.erase(nodesToVisitIter);
 
             DLList_const dependants = node.getDependants();
             DLListIterator dependantIter = dependants.begin();

@@ -55,7 +55,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
      * Get the number of children this SplitJoin has.
      * @return number of children
      */
-    protected int getNumChildren()
+    public int getNumChildren()
     {
         return nChildren;
     }

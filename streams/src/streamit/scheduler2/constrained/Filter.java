@@ -22,7 +22,7 @@ public class Filter
     
     public void initiateConstrained()
     {
-        latencyNode = graph.addNode (this);
+        latencyNode = graph.addFilter (this);
         
         // create a schedule for this 
     }

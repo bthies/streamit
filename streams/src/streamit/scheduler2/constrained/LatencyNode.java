@@ -82,8 +82,83 @@ public class LatencyNode extends streamit.misc.AssertedClass
             }
         }
     }
-    
-    public DLList_const getAncestors ()
+
+    LatencyNode(SplitJoin sj, boolean isSplitter, DLList _ancestors)
+    {
+        ancestors = _ancestors;
+
+        if (isSplitter)
+        {
+            initNodePhases = new OperatorPhases(0, 1, sj.getNumChildren());
+
+            steadyNodePhases =
+                new OperatorPhases(
+                    sj.getNumSplitPhases(),
+                    1,
+                    sj.getNumChildren());
+
+            int nPhase;
+            for (nPhase = 0; nPhase < sj.getNumSplitPhases(); nPhase++)
+            {
+                steadyNodePhases.setPhaseInput(
+                    sj.getSplitFlow(nPhase).getPopWeight(),
+                    sj.getSplitFlow(nPhase).getPopWeight(),
+                    nPhase,
+                    0);
+
+                for (int nOutChannel = 0;
+                    nOutChannel < sj.getNumChildren();
+                    nOutChannel++)
+                {
+                    steadyNodePhases.setPhaseOutput(
+                        sj.getSplitFlow(nPhase).getPushWeight(nOutChannel),
+                        nPhase,
+                        nOutChannel);
+
+                    steadyNodePhases.setOperatorPhase(
+                        sj.getSplitPhase(nPhase),
+                        nPhase);
+                }
+            }
+        }
+        else
+        {
+            initNodePhases = new OperatorPhases(0, sj.getNumChildren(), 1);
+
+            steadyNodePhases =
+                new OperatorPhases(
+                    sj.getNumJoinPhases(),
+                    sj.getNumChildren(),
+                    1);
+
+            int nPhase;
+            for (nPhase = 0; nPhase < sj.getNumJoinPhases(); nPhase++)
+            {
+                steadyNodePhases.setPhaseOutput(
+                    sj.getJoinFlow(nPhase).getPushWeight(),
+                    nPhase,
+                    0);
+
+                for (int nOutChannel = 0;
+                    nOutChannel < sj.getNumChildren();
+                    nOutChannel++)
+                {
+                    steadyNodePhases.setPhaseInput(
+                        sj.getJoinFlow(nPhase).getPopWeight(nOutChannel),
+                        sj.getJoinFlow(nPhase).getPopWeight(nOutChannel),
+                        nPhase,
+                        nOutChannel);
+
+                    steadyNodePhases.setOperatorPhase(
+                        sj.getSplitPhase(nPhase),
+                        nPhase);
+                }
+            }
+        }
+
+    }
+
+    public DLList_const getAncestors()
     {
         return ancestors;
     }
@@ -92,10 +167,10 @@ public class LatencyNode extends streamit.misc.AssertedClass
     {
         return initNodePhases.getNumPhases();
     }
-    
-    public int getSteadyNumPhases ()
+
+    public int getSteadyNumPhases()
     {
-        return steadyNodePhases.getNumPhases ();
+        return steadyNodePhases.getNumPhases();
     }
 
     public int getSteadyStatePeek(int nChannel)
@@ -166,12 +241,12 @@ public class LatencyNode extends streamit.misc.AssertedClass
     {
         if (dependency.getSrc() == this)
         {
-            dependants.pushBack (dependency);
+            dependants.pushBack(dependency);
         }
         else
         {
             ASSERT(dependency.getDst() == this);
-            dependsOn.pushBack (dependency);
+            dependsOn.pushBack(dependency);
         }
     }
 
@@ -184,20 +259,20 @@ public class LatencyNode extends streamit.misc.AssertedClass
     {
         return dependsOn;
     }
-    
+
     public boolean hasAncestor(StreamInterface ancestor)
     {
         DLListIterator ancestorIter = ancestors.begin();
-        DLListIterator lastAncestorIter = ancestors.end ();
-        
-        for ( ;!ancestorIter.equals(lastAncestorIter); ancestorIter.next())
+        DLListIterator lastAncestorIter = ancestors.end();
+
+        for (; !ancestorIter.equals(lastAncestorIter); ancestorIter.next())
         {
             if (((StreamInterface)ancestorIter.get()) == ancestor)
             {
                 return true;
             }
         }
-        
+
         return false;
     }
 }

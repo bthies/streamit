@@ -38,6 +38,10 @@ public class ConstrainedStreamFactory
         {
             newStream = new Pipeline(streamIter.isPipeline(), parent, this);
         }
+        else if (streamIter.isSplitJoin() != null)
+        {
+            newStream = new SplitJoin(streamIter.isSplitJoin(), parent, this);
+        }
         else
         {
             ERROR("Unsupported type passed to StreamFactory!");

@@ -11,7 +11,7 @@ import at.dms.kjc.sir.*;
 //into the next filters popBuffer.
 public abstract class FusionState 
 {
-    protected static int uniqueID = 0;
+    private static int uniqueID = 0;
     
     //true if this node *needs* to code generated for correctness
     //false for some identity's and duplicate splitters
@@ -39,6 +39,7 @@ public abstract class FusionState
 	this.myUniqueID = uniqueID++;
 	remaining = new int[Math.max(1, node.inputs)];
 	remaining[0] = 0;
+	System.out.println("UniqueID " + myUniqueID + " = " + node);
     }
 
     public abstract int getBufferSize(FlatNode prev, boolean init);

@@ -195,6 +195,12 @@ public class FFSPeekBuffer extends FilterFusionState
 				    Utils.voidToInt(filter.getInputType()),
 				    dims,
 				    null);
+
+
+	//make sure that we generate a new array expression for the
+	//buffer if we are passing arrays over channels...
+	
+	
 	// make a buffer for all the items looked at in a round
 	return new JVariableDefinition(null,
 				       at.dms.kjc.Constants.ACC_FINAL,

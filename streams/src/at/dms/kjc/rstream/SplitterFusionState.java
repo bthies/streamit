@@ -137,6 +137,12 @@ public class SplitterFusionState extends FusionState
 		((FilterFusionState)FusionState.getFusionState(node.edges[i])).
 		    sharedBufferVar(bufferVar[0]);
 	}
+
+	//add the buffer declaration to the main method
+	if (getBufferVar(null, true) != null)
+	    main.addStatementFirst(new JVariableDeclarationStatement(null,
+								     getBufferVar(null, true),
+								     null));
     }
     
     
@@ -149,13 +155,6 @@ public class SplitterFusionState extends FusionState
 
 	if (mult == 0)
 	    return statements.getStatementArray();
-	
-	//add the buffer declaration
-	if (getBufferVar(null, isInit) != null)
-	    enclosingBlock.addStatementFirst
-		(new JVariableDeclarationStatement(null, 
-						   getBufferVar(null, isInit),
-						   null));
 	
 	//add the block to do the data reordering
 	if (node.isDuplicateSplitter()) {

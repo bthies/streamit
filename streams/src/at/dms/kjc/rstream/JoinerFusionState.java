@@ -122,7 +122,7 @@ public class JoinerFusionState extends FusionState
  
 	    JMethodDeclaration initPath = loop.getInitPath();
 	    //create the induction variable
-	    JVariableDefinition index = GenerateCCode.newIntLocal(INIT_PATH_INDEX, uniqueID, 0);
+	    JVariableDefinition index = GenerateCCode.newIntLocal(INIT_PATH_INDEX, myUniqueID, 0);
 	    //declare the induction variable
 	    initFunctionCalls.addStatementFirst(new JVariableDeclarationStatement(null,
 										  index,

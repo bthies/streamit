@@ -41,6 +41,8 @@ public class FlatIRToRS extends ToC
     public int doLoops = 0;
     public int staticDoLoops = 0;
     
+
+    private static final String ARRAY_COPY = "__array_copy__";
     
     public FlatIRToRS() 
     {
@@ -60,6 +62,7 @@ public class FlatIRToRS extends ToC
     }
     
     
+   
     /**
      * prints an assignment expression
      */
@@ -73,7 +76,17 @@ public class FlatIRToRS extends ToC
 	    passParentheses(right) instanceof JQualifiedAnonymousCreation ||
 	    passParentheses(right) instanceof JUnqualifiedAnonymousCreation)
 	    return;
+
+	//we are assigning an array to an array in C, we want to do 
+	//element-wise copy!!
 	
+	if (!StrToRStream.GENERATE_ABSARRAY && 
+	    left.getType() != null && left.getType().isArrayType() &&
+	    right.getType() != null && right.getType().isArrayType()) {
+	    arrayCopy(left, right);
+	    return;
+	}
+
 	lastLeft=left;
         print("(");
         left.accept(this);
@@ -107,18 +120,7 @@ public class FlatIRToRS extends ToC
 	    int dim = handleArrayDecl(ident, type);
 	    //now, get the new array expression
 	    if (expr == null) { //if their isn't a new array expression in the declaration
-		//maybe it was assigned on later, so look for it in newArrayExprs
-		if (newArrayExprs.getNewArr(ident) != null) 
-		    expr = newArrayExprs.getNewArr(ident);
-		else {  //otherwise, this array was assinged another array,
-		    Object current = ident; //so look for that array's new array expression
-		    while (expr == null) {  //keep going until we find the new array expression
-			if (newArrayExprs.getNewArr(newArrayExprs.getArrAss(current)) != null)
-			    expr = newArrayExprs.getNewArr(newArrayExprs.getArrAss(current));
-			else 
-			    current = newArrayExprs.getArrAss(current);
-		    }
-		}
+		expr = getNewArrayExpr(ident);
 	    }
 	    //make sure we found a new array expression
 	    if (expr instanceof JNewArrayExpression) {
@@ -131,7 +133,10 @@ public class FlatIRToRS extends ToC
 		    "Trying to initialize array with something other than NewArrayExpression";
 	    }
 	    
-	    print(" = ");
+	    //print the = for the absarray();
+	    if (StrToRStream.GENERATE_ABSARRAY)
+		print(" = ");
+	    
 	    //visit the new array expression
 	    expr.accept(this);
 	}
@@ -153,33 +158,75 @@ public class FlatIRToRS extends ToC
 	print(";");
     }
 
+    /** return the dimensionality of this type **/
+    private int getDim(CType type) 
+    {
+	int dim = 1;
+	CType currentType = ((CArrayType)type).getElementType();
+	
+	while (currentType.isArrayType()) {
+	    dim++;
+	    currentType = ((CArrayType)currentType).getElementType();
+	}    
+	
+	return dim;
+    }
+    
+
     /**
      * print an abstract array declaration and return the number of dimensions
      **/
     private int handleArrayDecl(String ident, CType type) 
     {
 	
-	String brackets = "[[";
+	String brackets = StrToRStream.GENERATE_ABSARRAY ? "[[" : "";
 	int dim = 1;
 
 	CType currentType = ((CArrayType)type).getElementType();
 	//keep stripping off array types until we get a base type
 	while (currentType.isArrayType()) {
 	    dim++;
-	    brackets = brackets + ",";
+	    brackets = brackets + 
+		(StrToRStream.GENERATE_ABSARRAY ? "," : "[]");
 	    currentType = ((CArrayType)currentType).getElementType();
 	}
 	
-	brackets = brackets + "]]";
+	if (StrToRStream.GENERATE_ABSARRAY)
+	    brackets = brackets + "]]";
 	
 	//current type should now be the base type
 	print(currentType);
 	print(" ");
 	print(ident);
-	print(brackets);
+	if (StrToRStream.GENERATE_ABSARRAY) 
+	    print(brackets);
 	return dim;
     }
     
+    
+    /** 
+     * given a string (for field) or a JVariableDefinition (for locals)
+     * find the corresponding JNewArrayExpression, return null if none was found
+    **/
+    private JNewArrayExpression getNewArrayExpr(Object var) 
+    {
+	JNewArrayExpression expr = null; 
+
+	if (newArrayExprs.getNewArr(var) != null) 
+	    expr = newArrayExprs.getNewArr(var);
+	else {  //otherwise, this array was assinged another array,
+	    Object current = var; //so look for that array's new array expression
+	    while (expr == null) {  //keep going until we find the new array expression
+		if (newArrayExprs.getNewArr(newArrayExprs.getArrAss(current)) != null)
+		    expr = newArrayExprs.getNewArr(newArrayExprs.getArrAss(current));
+		else 
+		    current = newArrayExprs.getArrAss(current);
+	    }
+	}
+	return expr;
+    }
+    
+
     /**
      * prints a variable declaration statement
      */
@@ -200,18 +247,7 @@ public class FlatIRToRS extends ToC
 	    int dim = handleArrayDecl(ident, type);
 	    //now, get the new array expression
 	    if (expr == null) {//if their isn't a new array expression in the declaration
-		//maybe it was assigned on later, so look for it in newArrayExprs
-		if (newArrayExprs.getNewArr(self) != null) 
-		    expr = newArrayExprs.getNewArr(self);
-		else { //otherwise, this array was assinged another array,
-		    Object current = self;//so look for that array's new array expression
-		    while (expr == null) { //keep going until we find the new array expression
-			if (newArrayExprs.getNewArr(newArrayExprs.getArrAss(current)) != null)
-			    expr = newArrayExprs.getNewArr(newArrayExprs.getArrAss(current));
-			else 
-			    current = newArrayExprs.getArrAss(current);
-		    }
-		}
+		expr = getNewArrayExpr(self);
 	    }
 	    //make sure we found a new array expression
 	    if (expr instanceof JNewArrayExpression) {
@@ -225,10 +261,12 @@ public class FlatIRToRS extends ToC
 	    }
 	    
 	    
-	    if (expr != null) {
+	    if (StrToRStream.GENERATE_ABSARRAY) {
 		print(" = ");
-		expr.accept(this);
 	    }
+	    
+	    if (expr != null)
+		expr.accept(this);
 
 	}
 	else {
@@ -262,16 +300,39 @@ public class FlatIRToRS extends ToC
 	assert dims.length > 0 : "Zero Dimension array" ;
 	//and no initializer
 	assert init == null : "Initializers of Abstract Arrays not supported in RStream yet";
-	//print the absarray call with the dimensions...
-	print(" absarray" + dims.length + "(");
-	dims[0].accept(this);
-	for (int i = 1; i < dims.length; i++) {
-	    print(",");
-	    dims[i].accept(this);
+	if (StrToRStream.GENERATE_ABSARRAY) {
+	    //we are generating abstract arrays
+	    //print the absarray call with the dimensions...
+	    print(" absarray" + dims.length + "(");
+	    dims[0].accept(this);
+	    for (int i = 1; i < dims.length; i++) {
+		print(",");
+		dims[i].accept(this);
+	    }
+	    print(")");
 	}
-	print(")");
+	else {
+	    //normal c arrays
+	    for (int i = 0; i < dims.length; i++) {
+		print("[");
+		dims[i].accept(this);
+		print("]");
+	    }
+	}
     }
     
+    private int[] getDims(JNewArrayExpression newArray) 
+    {
+	int dims[] = new int[newArray.getDims().length];
+	
+	for (int i = 0; i < dims.length; i++) {
+	    assert newArray.getDims()[i] instanceof JIntLiteral;
+	    dims[i] = ((JIntLiteral)newArray.getDims()[i]).intValue();
+	}
+	return dims;
+    }
+    
+
     /**
      * prints a method declaration
      */
@@ -424,25 +485,45 @@ public class FlatIRToRS extends ToC
     public void visitArrayAccessExpression(JArrayAccessExpression self,
                                            JExpression prefix,
                                            JExpression accessor) {
-	
-	String access = "[[";
-	JExpression exp = prefix;
-	
-	//if this is a multidimensional access, convert to the 
-	//comma'ed form
-	while (exp instanceof JArrayAccessExpression) {
-	    JArrayAccessExpression arr = (JArrayAccessExpression)exp;
-	    FlatIRToRS toRS = new FlatIRToRS(newArrayExprs);
-	    arr.getAccessor().accept(toRS);
+	if (StrToRStream.GENERATE_ABSARRAY) {
+	    String access = "[[";
+	    JExpression exp = prefix;
 	    
-	    access = access + toRS.getString() + ", ";
-	    exp = arr.getPrefix();
+	    //if this is a multidimensional access, convert to the 
+	    //comma'ed form
+	    while (exp instanceof JArrayAccessExpression) {
+		JArrayAccessExpression arr = (JArrayAccessExpression)exp;
+		FlatIRToRS toRS = new FlatIRToRS(newArrayExprs);
+		arr.getAccessor().accept(toRS);
+		
+		access = access + toRS.getString() + ", ";
+		exp = arr.getPrefix();
+	    }
+	    //visit the var access
+	    exp.accept(this);
+	    print(access);
+	    accessor.accept(this);
+	    print("]]");
 	}
-	//visit the var access
-	exp.accept(this);
-	print(access);
-	accessor.accept(this);
-	print("]]");
+	
+	else {
+	    //normal c arrays
+	    String access = "";
+	    JExpression exp = prefix;
+	    while (exp instanceof JArrayAccessExpression) {
+		JArrayAccessExpression arr = (JArrayAccessExpression)exp;
+		FlatIRToRS toRS = new FlatIRToRS(newArrayExprs);
+		arr.getAccessor().accept(toRS);
+		
+		access = access + "[" + toRS.getString() + "]";
+		exp = arr.getPrefix();
+	    }
+	    exp.accept(this);
+	    print(access);
+	    print("[");
+	    accessor.accept(this);
+	    print("]");
+	}
     }
     
 
@@ -585,7 +666,63 @@ public class FlatIRToRS extends ToC
 	else
             print(s.toString());
     }
+    
 
+    /** This function is called if we have an assignment expression of array types 
+	and we are generating C code.  This will generate code to perform an 
+	element-wise copy **/
+    private void arrayCopy(JExpression left, 
+			   JExpression right) 
+    {
+	String ident = "";
+	//this is used to find the new array expression
+	//it is either a string for fields or JVarDef for locals
+	Object var = null;
+	
+	if (left instanceof JFieldAccessExpression) {
+	    var = ((JFieldAccessExpression)left).getIdent();
+	    ident = ((JFieldAccessExpression)left).getIdent();
+	}
+	else if (left instanceof JLocalVariableExpression) {
+	    var = ((JLocalVariableExpression)left).getVariable();
+	    ident = ((JLocalVariableExpression)left).getVariable().getIdent();
+	}
+	else 
+	    Utils.fail("Assigning an array to an unsupported expression of type " + left.getClass() + ": " + left);
+	
+	assert getDim(left.getType()) == getDim(right.getType()) :
+	    "Array dimensions of variables of array assignment do not match";
+	
+	//find the number of dimensions
+	int bound = getDim(left.getType());
+	//find the extent of each dimension
+	int[] dims = getDims(getNewArrayExpr(var));
+
+	assert bound > 0;
+
+	//print out a loop that will perform the element-wise copy
+	print("{\n");
+	print("int ");
+	//print the index var decls
+	for (int i = 0; i < bound -1; i++)
+	    print(FlatIRToRS.ARRAY_COPY + i + ", ");
+	print(FlatIRToRS.ARRAY_COPY + (bound - 1));
+	print(";\n");
+	for (int i = 0; i < bound; i++) {
+	    print("for (" + FlatIRToRS.ARRAY_COPY + i + " = 0; " + FlatIRToRS.ARRAY_COPY + i +  
+		  " < " + dims[i] + "; " + FlatIRToRS.ARRAY_COPY + i + "++)\n");
+	}
+	left.accept(this);
+	for (int i = 0; i < bound; i++)
+	    print("[" + FlatIRToRS.ARRAY_COPY + i + "]");
+	print(" = ");
+	right.accept(this);
+	for (int i = 0; i < bound; i++)
+	    print("[" + FlatIRToRS.ARRAY_COPY + i + "]");
+	print(";\n}\n");
+	return;
+    }
+    
 
 
     // ----------------------------------------------------------------------

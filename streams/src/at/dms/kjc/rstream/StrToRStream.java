@@ -38,6 +38,8 @@ public class StrToRStream {
     public static final boolean GENERATE_MIVS = true;
     /** generate code for superfluous identites and splitter **/
     public static final boolean GENERATE_UNNECESSARY = false;
+    /** generate code for superfluous identites and splitter **/
+    public static final boolean GENERATE_ABSARRAY = false;
     
     /** if true, generate a separate peek buffer for peeking filters
      * before execution, restore the peek buffer to the pop buffer,

@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.30 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.31 2003-12-01 21:44:19 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -393,6 +393,8 @@ public class FEReplacer implements FEVisitor
         return new StmtDoWhile(stmt.getContext(), newBody, newCond);
     }
     
+    public Object visitStmtEmpty(StmtEmpty stmt) { return stmt; }
+
     public Object visitStmtEnqueue(StmtEnqueue stmt)
     {
         Expression newValue = doExpression(stmt.getValue());

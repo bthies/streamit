@@ -1,0 +1,61 @@
+/** 
+ * Test out combining pipelines of FIR filters (eg not replacing them with 
+ * their combination when the cost of doing so is 
+ * higher.
+ **/
+void->void pipeline LinearTest21 {
+   add FloatSource();
+   add FIRPipelineBad();
+   add FIRPipelineGood();
+   add FloatSink();
+ }
+
+ void->float filter FloatSource {
+   float x;
+   init {
+     x = 0;
+   }
+   work push 1 {
+     push(x);
+     x = x + 1;
+   }
+ }
+
+ float->void filter FloatSink {
+   work pop 1 {
+     println(pop());
+   }
+ }
+
+/** A linear pipeline that incurs more calculation if combined. **/
+float->float pipeline FIRPipelineBad {
+   add LinearFilterOne();
+   add LinearFilterTwo();
+ }
+
+/** A linear pipeline that incurs less calculation if combined. **/
+float->float pipeline FIRPipelineGood {
+  add LinearFilterTwo();
+  add LinearFilterOne();
+ }
+
+ float->float filter LinearFilterOne {
+   work push 1 pop 4 peek 4 {
+     push(4*peek(0) +
+	  3*peek(1) +
+	  2*peek(2) +
+	  1*peek(3));
+     pop();
+   }
+ }
+
+
+ float->float filter LinearFilterTwo {
+   work push 4 pop 1 peek 1 {
+     float t = pop();
+     push(8*t);
+     push(7*t);
+     push(6*t);
+     push(5*t);
+   }
+ }

@@ -1,5 +1,5 @@
 /** Program to test the infrastructure of the linear analysis routines for pipeline combination. **/
-void->void pipeline SimpleStreamItProgram {
+void->void pipeline LinearTest9 {
   add FloatSource();
   add LinearPipe();
   add FloatSink();

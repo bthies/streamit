@@ -1,5 +1,5 @@
 /** Test out combining splitjoins. **/
-void->void pipeline SimpleStreamItProgram {
+void->void pipeline LinearTest14 {
   add FloatSource();
   add LinearSJ();
   add LinearSJ2();

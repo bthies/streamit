@@ -1,0 +1,47 @@
+/** 
+ * Test out combining pipelines of FIR filters (eg not replacing them with 
+ * their combination when the cost of doing so is 
+ * higher.
+ **/
+void->void pipeline LinearTest22 {
+   add FloatSource();
+   add SimpleDFT(8);
+   add FloatSink();
+ }
+
+ void->float filter FloatSource {
+   float x;
+   init {
+     x = 0;
+   }
+   work push 1 {
+     push(x);
+     x = x + 1;
+   }
+ }
+
+ float->void filter FloatSink {
+   work pop 1 {
+     println(pop());
+   }
+ }
+
+/* simple filter which implements an N point DFT on N items of the input. */
+complex->complex filter SimpleDFT(int N) {
+  work pop N peek N push N {
+    /* work on output k: */
+    for (int k=0; k<N; k++) {
+      complex sum;
+      sum = 0;
+      /* do the summation from 0 to N-1 of the DFT */
+      for (int n=0; n<N; n++) {
+	complex W;
+	W.real = cos(((-1*2*pi)/N)*k*n);
+	W.imag = sin(((-1*2*pi)/N)*k*n);
+	sum = sum + W;
+      }
+      push(sum);
+    }
+  }
+}
+    

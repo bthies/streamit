@@ -1,5 +1,5 @@
 /** Test combining pipelines when they don't rate match, and when they have constant vector components. **/
-void->void pipeline SimpleStreamItProgram {
+void->void pipeline LinearTest12 {
   add FloatSource();
   add LinearPipe();
   add LinearPipe2();

@@ -2,7 +2,7 @@
  * Test out combining splitjoins, with multiple split 
  * joins in weighted roundrobin fashion.
  **/
-void->void pipeline SimpleStreamItProgram {
+void->void pipeline LinearTest18 {
   add FloatSource();
   add LinearSJ();
   add FloatSink();

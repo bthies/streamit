@@ -1,0 +1,68 @@
+/** 
+ * Test out combining pipelines of FIR filters (eg not replacing them with 
+ * their combination when the cost of doing so is 
+ * higher.
+ **/
+void->void pipeline LinearTest23 {
+   add FloatSource();
+   add SimpleAverageFIR(8);
+   //add LowPassFilter(10);
+   add FloatSink();
+ }
+
+ void->float filter FloatSource {
+   float x;
+   init {
+     x = 0;
+   }
+   work push 1 {
+     push(x);
+     x = x + 1;
+   }
+ }
+
+ float->void filter FloatSink {
+   work pop 1 {
+     println(pop());
+   }
+ }
+
+/* simple filter that computes an N point moving average. */
+float->float filter SimpleAverageFIR(int N) {
+  work push 1 pop 1 peek N {
+    float sum = 0;
+    for (int i=0; i<N; i++) {
+      sum += peek(i);
+    }
+    push(sum / N);
+    pop();
+  }
+}
+
+/* /\* generate a straightforward, rectangularly windowed low pass filter *\/ */
+/* float->float filter LowPassFilter(int N) { */
+/*   float[N] h; */
+
+/*   /\* since the impulse response is symmetric, I don't have to worry about reversing h[n] *\/ */
+/*   init { */
+/*     int OFFSET = N/2; */
+
+/*     for (int i=0; i<N; i++) { */
+/*       int idx = i + 1; */
+/*       // generate real part */
+/*       if (idx == OFFSET)  */
+/* 	h[i] = 0.3; /\* take care of div by 0 error *\/ */
+/*       else  */
+/* 	h[i] = sin(0.3 * pi * (idx-OFFSET)) / (pi*(idx-OFFSET)); */
+/*     } */
+/*   } */
+/*   work peek N pop 1 push 1 { */
+/*     float sum = 0; */
+/*     for (int i=0; i<N; i++) {  */
+/*       sum += h[i]*peek(i); */
+/*     } */
+/*     push(sum); */
+/*     pop(); */
+/*   } */
+/* } */
+

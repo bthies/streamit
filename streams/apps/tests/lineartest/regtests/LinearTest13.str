@@ -2,7 +2,7 @@
  * Test recognizing the special "Identity" filters 
  * that are recognized as a special stream construct.
  **/
-void->void pipeline SimpleStreamItProgram {
+void->void pipeline LinearTest13 {
   add FloatSource();
   add LinearPipe();
   add FloatSink();

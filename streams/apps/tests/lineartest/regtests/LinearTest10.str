@@ -1,5 +1,5 @@
 /** Test Linear pipeline combinations a little more strenously, by using larger matricies. **/
-void->void pipeline SimpleStreamItProgram {
+void->void pipeline LinearTest10 {
   add FloatSource();
   add LinearPipe();
   add LinearPipe();

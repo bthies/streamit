@@ -1,5 +1,5 @@
 /** Test combining pipelines when they don't rate match**/
-void->void pipeline SimpleStreamItProgram {
+void->void pipeline LinearTest11 {
   add FloatSource();
   add LinearPipe();
   add LinearPipe2();

@@ -1,7 +1,7 @@
 /** 
  * Test out combining pipelines of FIR filters with constants
  **/
-void->void pipeline SimpleStreamItProgram {
+void->void pipeline LinearTest20 {
   add FloatSource();
   add FIRPipeline();
   add FloatSink();

@@ -21,16 +21,11 @@ import streamit.*;
  */
 class FloatSubtract extends Filter
 {
-    Channel input = new Channel (Float.TYPE, 2);
-    Channel output = new Channel (Float.TYPE, 1);
-
-    public void initIO ()
+    public void init ()
     {
-        streamInput = input;
-        streamOutput = output;
+        input = new Channel (Float.TYPE, 2);
+        output = new Channel (Float.TYPE, 1);
     }
-
-    public void init () { }
 
     public void work() {
         //subtract one from the other, round robin.

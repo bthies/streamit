@@ -20,53 +20,53 @@ import streamit.*;
  * Implements a Matrix Multiplication
  */
 
-class vRamp extends Filter {
+public class vMatMul extends Filter {
 
     int numberOfRowsA;
     int numberOfColARowB;
     int numberOfColumnsB;
-    Float matrixA[];
-    Float matrixB[];
+    float matrixA[];
+    float matrixB[];
 
-    public vRamp (int numRowsA, int numColRow, int numColsB, Float mat[])
+    public vMatMul (int numRowsA, int numColRow, int numColsB, float mat[])
     {
-	super ();
-	numberOfRawsA = numRawsA;
-	numberOfColARowB = numColRow;
-	numberOfColumnsB = numColsB;
-	matrixB = mat;
-	matrixA = new int(numberOfRawsA*numberOfColARawB);
-	
+        super ();
+        numberOfRowsA = numRowsA;
+        numberOfColARowB = numColRow;
+        numberOfColumnsB = numColsB;
+        matrixB = mat;
+        matrixA = new float [numberOfRowsA*numberOfColARowB];
+
     }
 
-    Channel input = new Channel (Float.TYPE, numberOfRowsA*numberOfColARawB);
+    Channel input = new Channel (Float.TYPE, numberOfRowsA*numberOfColARowB);
     Channel output = new Channel (Float.TYPE, numberOfRowsA*numberOfColumnsB);
 
     public void initIO ()
     {
-	streamInput  = input;
-	streamOutput = output;
+        streamInput  = input;
+        streamOutput = output;
     }
 
 
     public void work() {
-	int i, j, k;
-	int v = 0;
-	for (i=0; i<numberOfRawsA; i++) {
-	    for (j=0; j<numberOfColARowB; j++) {
-		matrixA[v++] = input.popFloat();
-	    }
-	}
+        int i, j, k;
+        int v = 0;
+        for (i=0; i<numberOfRowsA; i++) {
+            for (j=0; j<numberOfColARowB; j++) {
+                matrixA[v++] = input.popFloat ();
+            }
+        }
 
-	for (i=0; i<numberOfRowsA; i++) {
-	    for (j=0; i<numberOfColumnsB; i++) {
-		Float out = 0;
-		for (k=0; k<numberOfColARowB; i++) {
-		    out += matrixA[i*numberOfColARowB+k]*matrixB[k*numberOfColumnsB+j];
-		}
-		output.pushFloat(out);
-	    }
-	}
+        for (i=0; i<numberOfRowsA; i++) {
+            for (j=0; i<numberOfColumnsB; i++) {
+                float out = 0;
+                for (k=0; k<numberOfColARowB; i++) {
+                    out += matrixA[i*numberOfColARowB+k]*matrixB[k*numberOfColumnsB+j];
+                }
+                output.pushFloat(out);
+            }
+        }
     }
 }
 

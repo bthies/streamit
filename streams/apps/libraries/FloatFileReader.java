@@ -30,47 +30,42 @@ class FloatFileReader extends Filter {
 
     public FloatFileReader (String input)
     {
-	super ();
-	try{
-	    inputFile = new File(input);
-	    in = new FileReader(inputFile);
-	}
-	catch(FileNotFoundException e)
-	    {
-		System.err.println("File not found: " + input + " exception: " + e);
-	    }
+        super ();
+        try{
+            inputFile = new File(input);
+            in = new FileReader(inputFile);
+        }
+        catch(FileNotFoundException e)
+            {
+                System.err.println("File not found: " + input + " exception: " + e);
+            }
     }
 
-    Channel output = new Channel (Float.TYPE, 1);
-
-    public void initIO ()
+    public void init()
     {
-	streamOutput = output;
-    }
-
-    public void init() {
+        output = new Channel (Float.TYPE, 1);
     }
 
     public void work() {
-	try{
-	    //each read only does 1 byte.... take in four, and meld em
-	    c = 0; //clear c
-	    for(int i = 0; i<4; i++)
-		if((d = in.read()) != -1)
-		    {
-			c += (d << ((3-i)<<3));
-		    }
-		else{
-		    //System.err.println("End of file reached.");
-		}
-	    
-	    System.err.println(Float.intBitsToFloat(c));
-	    output.pushFloat(Float.intBitsToFloat(c));
-	}
-	catch(IOException e)
-	    {
-		System.err.println("IO Exception: " + e);
-	    }
+        try{
+            //each read only does 1 byte.... take in four, and meld em
+            c = 0; //clear c
+            for(int i = 0; i<4; i++)
+                if((d = in.read()) != -1)
+                    {
+                        c += (d << ((3-i)<<3));
+                    }
+                else{
+                    //System.err.println("End of file reached.");
+                }
+
+            System.err.println(Float.intBitsToFloat(c));
+            output.pushFloat(Float.intBitsToFloat(c));
+        }
+        catch(IOException e)
+            {
+                System.err.println("IO Exception: " + e);
+            }
     }
 }
 

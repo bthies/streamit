@@ -17,52 +17,45 @@ import streamit.*;
 /**
  * Class FirFilter
  *
- * Implements an FIR Filter 
+ * Implements an FIR Filter
  */
 
 class FirFilter extends Filter {
 
     int numberOfTaps;
-    float COEFF[]; 
+    float COEFF[];
 
     public FirFilter (int numTaps)
     {
-	super ();
-	numberOfTaps = numTaps;
-	COEFF = new float[numTaps];
-    }
-
-    Channel input = new Channel (Float.TYPE, 1);
-    Channel output = new Channel (Float.TYPE, 1);
-
-    public void initIO ()
-    {
-	streamInput = input;
-	streamOutput = output;
+        super ();
+        numberOfTaps = numTaps;
+        COEFF = new float[numTaps];
     }
 
     public void init() {
-	//Build the FIR Coefficients
-	//NEED TO DO THIS
-	//XXXMJB
+        input = new Channel (Float.TYPE, 1);
+        output = new Channel (Float.TYPE, 1);
+        //Build the FIR Coefficients
+        //NEED TO DO THIS
+        //XXXMJB
     }
 
     public void init(float taps[])
     //in case someone wants to specify the taps explicitly
     //anyone who uses this function has to be very careful.
     {
-	COEFF = taps;
-	numberOfTaps = taps.length;
+        COEFF = taps;
+        numberOfTaps = taps.length;
     }
 
     public void work() {
-	float sum = 0;
-	for (int i=0; i<numberOfTaps; i++) {
-	    sum += input.peekFloat(i)*COEFF[i];
-	}
+        float sum = 0;
+        for (int i=0; i<numberOfTaps; i++) {
+            sum += input.peekFloat(i)*COEFF[i];
+        }
 
-	input.popFloat();
-	output.pushFloat(sum);
+        input.popFloat();
+        output.pushFloat(sum);
     }
 }
 

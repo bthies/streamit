@@ -29,49 +29,44 @@ class FloatFileWriter extends Filter {
 
     public FloatFileWriter (String output)
     {
-	super ();
-	try{
-	    outputFile = new File(output);
-	    out = new FileWriter(outputFile);
-	}
-	catch(FileNotFoundException e)
-	    {
-		System.err.println("File not found: " + input + " exception: " + e);
-	    }
-	catch(IOException e)
-	    {
-		System.err.println("IO Exception: " + e);
-	    }
+        super ();
+        try{
+            outputFile = new File(output);
+            out = new FileWriter(outputFile);
+        }
+        catch(FileNotFoundException e)
+            {
+                System.err.println("File not found: " + input + " exception: " + e);
+            }
+        catch(IOException e)
+            {
+                System.err.println("IO Exception: " + e);
+            }
     }
 
-    Channel input = new Channel (Float.TYPE, 1);
-
-    public void initIO ()
+    public void init()
     {
-	streamInput = input;
-    }
-
-    public void init() {
+        input = new Channel (Float.TYPE, 1);
     }
 
     public void work() {
-	try{
-	    //crude, but it'll do.
-	    c = input.popFloat();
-	    int d = Float.floatToIntBits(c);
-	    int out1 = (d&0xff000000)>>24;
-	    int out2 = (d&0x00ff0000)>>16;
-	    int out3 = (d&0x0000ff00)>>8;
-	    int out4 = (d&0x000000ff);
-	    out.write(out1);
-	    out.write(out2);
-	    out.write(out3);
-	    out.write(out4);
-	}
-	catch(IOException e)
-	    {
-		System.err.println("IO Exception: " + e);
-	    }
+        try{
+            //crude, but it'll do.
+            c = input.popFloat();
+            int d = Float.floatToIntBits(c);
+            int out1 = (d&0xff000000)>>24;
+            int out2 = (d&0x00ff0000)>>16;
+            int out3 = (d&0x0000ff00)>>8;
+            int out4 = (d&0x000000ff);
+            out.write(out1);
+            out.write(out2);
+            out.write(out3);
+            out.write(out4);
+        }
+        catch(IOException e)
+            {
+                System.err.println("IO Exception: " + e);
+            }
     }
 }
 

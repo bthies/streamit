@@ -20,7 +20,7 @@ import streamit.*;
  * Implements a Ramp Function given, start, stride and num-elems
  */
 
-class vRamp extends Filter {
+public class vRamp extends Filter {
 
     int numberOfElems;
     int start;

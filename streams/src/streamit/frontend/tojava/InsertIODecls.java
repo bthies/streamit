@@ -15,7 +15,7 @@ import java.util.ArrayList;
  * inserted in <code>NodesToJava</code>.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertIODecls.java,v 1.4 2003-02-19 18:44:14 dmaze Exp $
+ * @version $Id: InsertIODecls.java,v 1.5 2003-02-19 18:50:06 dmaze Exp $
  */
 public class InsertIODecls extends InitMunger
 {
@@ -65,8 +65,9 @@ public class InsertIODecls extends InitMunger
     {
         spec = (StreamSpec)super.visitStreamSpec(spec);
 
-        // Only visit filters.
-        if (spec.getType() != StreamSpec.STREAM_FILTER)
+        // Only visit (phased) filters.
+        if (spec.getType() != StreamSpec.STREAM_FILTER &&
+            spec.getType() != StreamSpec.STREAM_PHASEDFILTER)
             return spec;
 
         if (libraryFormat)
@@ -129,19 +130,25 @@ public class InsertIODecls extends InitMunger
         FuncWork work = (FuncWork)findWork(fns);
         StreamType st = spec.getStreamType();
         List newStmts = new ArrayList();
-        newStmts.add(new StmtSetTypes(work.getContext(), st));
-        if (!(st.getIn() instanceof TypePrimitive) ||
-            ((TypePrimitive)st.getIn()).getType() != TypePrimitive.TYPE_VOID)
+        if (spec.getType() == StreamSpec.STREAM_PHASEDFILTER)
+            newStmts.add(new StmtSetTypes(work.getContext(), st));
+        if (spec.getType() == StreamSpec.STREAM_FILTER)
         {
-            newStmts.add(new StmtIODecl(work.getContext(), "input",
-                                        st.getIn(), work.getPopRate(),
-                                        work.getPeekRate()));
-        }
-        if (!(st.getOut() instanceof TypePrimitive) ||
-            ((TypePrimitive)st.getOut()).getType() != TypePrimitive.TYPE_VOID)
-        {
-            newStmts.add(new StmtIODecl(work.getContext(), "output",
-                                        st.getOut(), work.getPushRate()));
+            if (!(st.getIn() instanceof TypePrimitive) ||
+                ((TypePrimitive)st.getIn()).getType() !=
+                TypePrimitive.TYPE_VOID)
+            {
+                newStmts.add(new StmtIODecl(work.getContext(), "input",
+                                            st.getIn(), work.getPopRate(),
+                                            work.getPeekRate()));
+            }
+            if (!(st.getOut() instanceof TypePrimitive) ||
+                ((TypePrimitive)st.getOut()).getType() !=
+                TypePrimitive.TYPE_VOID)
+            {
+                newStmts.add(new StmtIODecl(work.getContext(), "output",
+                                            st.getOut(), work.getPushRate()));
+            }
         }
         if (newStmts.isEmpty())
             return spec;

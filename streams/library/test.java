@@ -18,6 +18,11 @@ class PrintInt extends Filter
         input = new Channel (Integer.TYPE);
         output = new Channel (Integer.TYPE);
     }
+    public void InitCount ()
+    {
+        inCount = 1;
+        outCount = 1;
+    }
     public void Work ()
     {
         int data = input.PopInt ();
@@ -45,6 +50,11 @@ public class test extends FeedbackLoop
                     output = new Channel (Integer.TYPE);
                 }
 
+                public void InitCount ()
+                {
+                    inCount = 1;
+                    outCount = 1;
+                }
                 public void Work ()
                 {
                     output.PushInt (input.PeekInt (0) + input.PeekInt (1));

@@ -50,4 +50,10 @@ public class AssertedClass
     {
         ASSERT (cond != null);
     }
+
+    public static void ERROR (String error)
+    {
+        System.err.println (error);
+        ASSERT (false);
+    }
 }

@@ -1,5 +1,7 @@
 package streamit;
 
+import streamit.scheduler.*;
+
 // a filter is the lowest-level block of streams
 public abstract class Filter extends Stream
 {
@@ -53,5 +55,24 @@ public abstract class Filter extends Stream
 
     // provide some empty functions to make writing filters a bit easier
     public void Init () { }
-}
 
+    // some constants necessary for calculating a steady flow:
+    public int inCount = 0, outCount = 0;
+
+    // and the function that is supposed to initialize the constants above
+    public abstract void InitCount ();
+
+    // construct a schedule - construct an appropriate filter schedule
+    // and return it
+    SchedStream constructSchedule ()
+    {
+        InitCount ();
+        ASSERT (inCount >= 0 && outCount >= 0);
+        ASSERT (inCount > 0 || outCount > 0);
+
+        SchedFilter self = new SchedFilter ();
+        self.setProduction (outCount);
+        self.setConsumption (inCount);
+        return self;
+    }
+}

@@ -3,6 +3,8 @@ package streamit;
 import java.util.*;
 import java.lang.reflect.*;
 
+import streamit.scheduler.*;
+
 // creates a split/join
 public class SplitJoin extends Stream
 {
@@ -11,7 +13,7 @@ public class SplitJoin extends Stream
 
     SplitJoinType splitType, joinType;
 
-    List outputStreams;
+    List childrenStreams;
 
     public SplitJoin()
     {
@@ -119,6 +121,11 @@ public class SplitJoin extends Stream
         return new SplitJoinType (2).AddWeight (w1).AddWeight (w2).AddWeight (w3);
     }
 
+    public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3, int w4)
+    {
+        return new SplitJoinType (2).AddWeight (w1).AddWeight (w2).AddWeight (w3).AddWeight (w4);
+    }
+
     public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3, int w4, int w5, int w6, int w7)
     {
         return new SplitJoinType (2).AddWeight (w1).AddWeight (w2).AddWeight (w3).AddWeight (w4).AddWeight (w5).AddWeight (w6).AddWeight (w7);
@@ -151,7 +158,7 @@ public class SplitJoin extends Stream
         joiner = type.GetJoiner ();
 
         ListIterator iter;
-        iter = outputStreams.listIterator ();
+        iter = childrenStreams.listIterator ();
         while (iter.hasNext ())
         {
             Stream s = (Stream) iter.next ();
@@ -175,11 +182,11 @@ public class SplitJoin extends Stream
         }
 
         // save the stream to add to the Join
-        if (outputStreams == null)
+        if (childrenStreams == null)
         {
-            outputStreams = new LinkedList ();
+            childrenStreams = new LinkedList ();
         }
-        outputStreams.add (s);
+        childrenStreams.add (s);
     }
 
     public void ConnectGraph ()
@@ -187,7 +194,7 @@ public class SplitJoin extends Stream
         // setup all children of this splitjoin
         {
             ListIterator iter;
-            iter = outputStreams.listIterator ();
+            iter = childrenStreams.listIterator ();
             while (iter.hasNext ())
             {
                 Stream s = (Stream) iter.next ();
@@ -210,6 +217,49 @@ public class SplitJoin extends Stream
             output = joiner.GetIOField ("output", 0);
             ASSERT (output != null);
         }
+    }
+
+    // ----------------------------------------------------------------
+    // This code constructs an independent graph for the scheduler
+    // ----------------------------------------------------------------
+
+    SchedStream constructSchedule ()
+    {
+        // create a new splitjoin
+        SchedSplitJoin splitJoin = new SchedSplitJoin ();
+
+        // setup the splitter
+        if (splitter != null)
+        {
+            SchedSplitType splitType;
+            splitType = splitter.getSchedType ();
+            splitJoin.setSplitType (splitType);
+        }
+
+        // setup the joiner
+        if (joiner != null)
+        {
+            SchedJoinType joinType;
+            joinType = joiner.getSchedType ();
+            splitJoin.setJoinType (joinType);
+        }
+
+        // add all the children:
+        {
+            ListIterator iter;
+            iter = childrenStreams.listIterator ();
+
+            while (iter.hasNext ())
+            {
+                Stream child = (Stream) iter.next ();
+                ASSERT (child);
+
+                SchedStream schedChild = child.constructSchedule ();
+                splitJoin.addChild (schedChild);
+            }
+        }
+
+        return splitJoin;
     }
 
 }

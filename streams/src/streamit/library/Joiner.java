@@ -1,11 +1,13 @@
 package streamit;
 
+import streamit.scheduler.SchedJoinType;
+
 import java.util.*;
 
 // many inputs, 1 output
 public class Joiner extends Operator
 {
-    LinkedList srcs = new LinkedList ();
+    List srcs = new ArrayList ();
     int inputIndex = 0;
 
     public Channel input [] = null;
@@ -78,6 +80,17 @@ public class Joiner extends Operator
     public void Work ()
     {
         ASSERT (false);
+    }
+
+    // ----------------------------------------------------------------
+    // This code constructs an independent graph for the scheduler
+    // ----------------------------------------------------------------
+
+    SchedJoinType getSchedType ()
+    {
+        // you must override this function!
+        ASSERT (false);
+        return null;
     }
 }
 

@@ -188,7 +188,7 @@ public class Stream extends Operator
     // This code constructs an independent graph for the scheduler
     // ----------------------------------------------------------------
 
-    Scheduler scheduler;
+    static Scheduler scheduler;
 
     SchedStream constructSchedule ()
     {
@@ -206,7 +206,7 @@ public class Stream extends Operator
 
             SchedStream childStream;
             childStream = child.constructSchedule ();
-            stream.addStream (childStream);
+            stream.addChild (childStream);
         }
 
         return stream;

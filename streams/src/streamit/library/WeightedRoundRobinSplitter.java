@@ -1,5 +1,6 @@
 package streamit;
 
+import streamit.scheduler.SchedSplitType;
 import java.util.*;
 
 public class WeightedRoundRobinSplitter extends Splitter
@@ -39,5 +40,14 @@ public class WeightedRoundRobinSplitter extends Splitter
 
         PassOneData (input, output [outputIndex]);
         outputCount++;
+    }
+
+    // ----------------------------------------------------------------
+    // This code constructs an independent graph for the scheduler
+    // ----------------------------------------------------------------
+
+    SchedSplitType getSchedType ()
+    {
+        return new SchedSplitType (SchedSplitType.WEIGHTED_ROUND_ROBIN, destWeight);
     }
 }

@@ -51,20 +51,20 @@ public class HelloWorld3 extends Stream
     /* here is an alternative way to write the above code:
 
     public void init() {
-	add(new CharGenerator(".....Hello World!.....\0"));
-	add(new XORLoop());
-	add(new SplitJoin() {
-		public void init() {
-		    splitter(Splitter.DUPLICATE_SPLITTER);
-		    add(new BufferedCharPrinter());
-		    add(new Stream() {
-		            public void init() {
-			        add(new XORLoop());
-			        add(new BufferedCharPrinter());
-			    }
-		        });
-		}
-	    });
+        add(new CharGenerator(".....Hello World!.....\0"));
+        add(new XORLoop());
+        add(new SplitJoin() {
+                public void init() {
+                    splitter(Splitter.DUPLICATE_SPLITTER);
+                    add(new BufferedCharPrinter());
+                    add(new Stream() {
+                            public void init() {
+                                add(new XORLoop());
+                                add(new BufferedCharPrinter());
+                            }
+                        });
+                }
+            });
     }
 
      */
@@ -88,6 +88,11 @@ class XORFilter extends Filter
         input = new Channel(Character.TYPE);
         output = new Channel(Character.TYPE);
     }
+    public void InitCount ()
+    {
+        inCount = 2;
+        outCount = 1;
+    }
 
     public void Work()
     {
@@ -104,6 +109,11 @@ class BufferedCharPrinter extends Filter
     public void InitIO ()
     {
         input = new Channel(Character.TYPE);
+    }
+    public void InitCount ()
+    {
+        inCount = 1;
+        outCount = 0;
     }
 
     // string it's queueing up

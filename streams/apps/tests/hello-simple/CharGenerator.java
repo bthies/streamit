@@ -17,6 +17,11 @@ public class CharGenerator extends Filter
         output = new Channel (Character.TYPE);
     }
 
+    public void InitCount ()
+    {
+        outCount = 1;
+    }
+
     // <message> is string to output, one char at a time
     public void Init(String message)
     {

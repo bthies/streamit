@@ -6,7 +6,12 @@ class RandomSource extends Filter
     {
         output = new Channel (Float.TYPE);
     }
-    
+
+    public void InitCount ()
+    {
+        inCount = 1;
+    }
+
     public void Work ()
     {
         /*
@@ -27,10 +32,15 @@ class Butterfly extends Stream {
          public void Init() {
             SetSplitter(WEIGHTED_ROUND_ROBIN(N, N));
             Add(new Filter() {
-                public void InitIO () 
+                public void InitIO ()
                 {
                     input = new Channel(Float.TYPE);
                     output = new Channel(Float.TYPE);
+                }
+                public void InitCount ()
+                {
+                    inCount = 1;
+                    outCount = 1;
                 }
                 float calcWeight (int i, int N, int W)
                 {
@@ -47,7 +57,7 @@ class Butterfly extends Stream {
                public void Work() {
                   output.PushFloat(input.PopFloat()*weights[curr++]);
                   if(curr>= W) curr = 0;
-               }    
+               }
             });
             Add(new Identity(Float.TYPE));
             SetJoiner(ROUND_ROBIN ());
@@ -55,22 +65,32 @@ class Butterfly extends Stream {
       Add(new SplitJoin() {
          public void Init() {
             SetSplitter(DUPLICATE ());
-            Add(new Filter() {   
+            Add(new Filter() {
                 public void InitIO ()
                 {
                    input = new Channel(Float.TYPE);
                    output = new Channel(Float.TYPE);
+                }
+                public void InitCount ()
+                {
+                    inCount = 2;
+                    outCount = 1;
                 }
                public void Work() {
                   float val = input.PopFloat();
                   output.PushFloat(val - input.PopFloat());
                }
             });
-            Add(new Filter() {   
+            Add(new Filter() {
                 public void InitIO ()
                 {
                    input = new Channel(Float.TYPE);
                    output = new Channel(Float.TYPE);
+                }
+                public void InitCount ()
+                {
+                    inCount = 2;
+                    outCount = 1;
                 }
                public void Work() {
                   float val = input.PopFloat();
@@ -89,8 +109,8 @@ class FFT extends Stream {
          public void Init() {
             System.out.println ("K2 = " + K);
             SetSplitter(WEIGHTED_ROUND_ROBIN(K/2, K/2));
-            for(int i=0; i<2; i++) 
-            
+            for(int i=0; i<2; i++)
+
                Add(new SplitJoin() {
                   public void Init() {
                      SetSplitter(ROUND_ROBIN ());
@@ -115,9 +135,14 @@ class FIR extends Filter {
        input = new Channel(Float.TYPE);
        output = new Channel(Float.TYPE);
     }
-    
+    public void InitCount ()
+    {
+        inCount = 1;
+        outCount = 1;
+    }
+
    float FIR_COEFF[][];
-   
+
    int N;
    public void Init(int N) {
       this.N = N;
@@ -148,16 +173,21 @@ class RFtoIF extends Filter {
        input = new Channel(Float.TYPE);
        output = new Channel(Float.TYPE);
     }
+    public void InitCount ()
+    {
+        inCount = 1;
+        outCount = 1;
+    }
    int size, count;
    int CARRIER_FREQ, N;
    double PI;
    float weight[];
-   
+
    RFtoIF (float f)
    {
        super (f);
    }
-   
+
    public void Init(float f) {
       setf(f);
    }
@@ -187,6 +217,11 @@ class CheckFreqHop extends SplitJoin {
                       input = new Channel(Float.TYPE);
                       output = new Channel(Float.TYPE);
                    }
+                    public void InitCount ()
+                    {
+                        inCount = 1;
+                        outCount = 1;
+                    }
                   public void Work() {
                      float val = input.PopFloat();
                      output.PushFloat(val);
@@ -206,9 +241,14 @@ class CheckQuality extends Filter {
        input = new Channel(Float.TYPE);
        output = new Channel(Float.TYPE);
     }
+    public void InitCount ()
+    {
+        inCount = 1;
+        outCount = 1;
+    }
    float aveHi, aveLo;
    float QUAL_BAD_THRESHOLD, QUAL_GOOD_THRESHOLD;
-   
+
    boolean boosterOn;
    public void Init(boolean boosterOn) {
       aveHi = 0; aveLo = 1;
@@ -230,13 +270,17 @@ class CheckQuality extends Filter {
    }
 }
 
-class FloatPrinter extends Filter 
+class FloatPrinter extends Filter
 {
     public void InitIO ()
     {
         input = new Channel(Float.TYPE);
     }
 
+    public void InitCount ()
+    {
+        inCount = 1;
+    }
     public void Work()
     {
         System.out.println(input.PopFloat() + ", ");
@@ -269,11 +313,11 @@ public class radio extends Stream
     // presumably some main function invokes the stream
     public static void main(String args[])
     {
-    	new radio().Run();
+        new radio().Run();
     }
-    
+
     // this is the defining part of the stream
-    public void Init() 
+    public void Init()
     {
         Add (new TrunkedRadio ());
     }

@@ -1,5 +1,6 @@
 package streamit;
 
+import streamit.scheduler.SchedJoinType;
 import java.util.*;
 
 public class WeightedRoundRobinJoiner extends Joiner {
@@ -36,5 +37,14 @@ public class WeightedRoundRobinJoiner extends Joiner {
 
         PassOneData (input [inputIndex], output);
         inputCount++;
+    }
+
+    // ----------------------------------------------------------------
+    // This code constructs an independent graph for the scheduler
+    // ----------------------------------------------------------------
+
+    SchedJoinType getSchedType ()
+    {
+        return new SchedJoinType (SchedJoinType.WEIGHTED_ROUND_ROBIN, srcsWeight);
     }
 }

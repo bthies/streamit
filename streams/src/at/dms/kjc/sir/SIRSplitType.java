@@ -4,8 +4,6 @@ import at.dms.kjc.*;
 import at.dms.util.Utils;
 import java.io.Serializable;
 
-import streamit.scheduler1.SchedSplitType;
-
 /**
  * This class enumerates the types of splitters.
  */
@@ -55,26 +53,6 @@ public class SIRSplitType implements Serializable {
 	    throw new Exception();
     }
     
-
-    /**
-     * Returns an <int> that represents this type to the library/scheduler.
-     */
-    public int toSchedType() {
-	if (this==ROUND_ROBIN) {
-	    // there is no round_robin type in scheduler
-	    return SchedSplitType.WEIGHTED_ROUND_ROBIN;
-	} else if (this==WEIGHTED_RR) {
-	    return SchedSplitType.WEIGHTED_ROUND_ROBIN;
-	} else if (this==DUPLICATE) {
-	    return SchedSplitType.DUPLICATE;
-	} else if (this==NULL) {
-	    return SchedSplitType.NULL;
-	} else {
-	    Utils.fail("Type of splitter unsupported in library?");
-	    return -1;
-	}
-    }
-
     public String toString() {
 	return name;
     }

@@ -238,6 +238,24 @@ public abstract class SIRContainer extends SIRStream {
 	return false;
     }
 
+    /**
+     * Returns a wrapper for <str>.  Also mutates parent of <str> to
+     * contain the wrapper in between itself and <str>.
+     */
+    public static SIRContainer makeWrapper(SIRStream str) {
+	SIRPipeline wrapper = new SIRPipeline(str.getParent(),
+					      "wrapper_" + str.getName(), 
+					      JFieldDeclaration.EMPTY(), 
+					      JMethodDeclaration.EMPTY());
+	wrapper.setInit(SIRStream.makeEmptyInit());
+	wrapper.add(str);
+	if (str.getParent()!=null) {
+	    str.getParent().replace(str, wrapper);
+	}
+	return wrapper;
+    }
+
+
     private class MutableList extends ConstList implements Serializable {
 
 	/** Inserts the specified element at the specified position in

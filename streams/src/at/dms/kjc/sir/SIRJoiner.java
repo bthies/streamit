@@ -2,12 +2,28 @@ package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
 import at.dms.util.*;
+import at.dms.kjc.sir.lowering.LoweringConstants;
 
 /**
  * This represents a stream construct with a single output and multiple
  * inputs.
  */
 public class SIRJoiner extends SIROperator {
+    /**
+     * This is a dummy work function that is used to represent the
+     * work of a joiner to the scheduling package.  In the future this
+     * could be replaced with a custom, instance-wise work function.
+     */
+    public static final JMethodDeclaration WORK_FUNCTION = 
+	new JMethodDeclaration(/* tokref     */ null,
+			       /* modifiers  */ at.dms.kjc.Constants.ACC_PUBLIC,
+			       /* returntype */ CStdType.Void,
+			       /* identifier -- important for uniprocessor */ LoweringConstants.JOINER_WORK_NAME,
+			       /* parameters */ JFormalParameter.EMPTY, 
+			       /* exceptions */ CClassType.EMPTY,
+			       /* body       */ new JBlock(),
+			       /* javadoc    */ null,
+			       /* comments   */ null);
     /** 
      * The type of this joiner.
      */

@@ -13,7 +13,7 @@ public class LinearFFT {
     public static final int BITS_PER_WORD = 4 * 8;
     public static final int FORWARD = 0;
     public static final int REVERSE = 1;
-    public static final double DDC_PI  = 3.14159265358979323846;	
+    public static final double DDC_PI  = -3.14159265358979323846;
 
     public static boolean IsPowerOfTwo ( int x )
     {

@@ -39,7 +39,24 @@ public class StatelessDuplicate {
      * the filter with the new construct in the parent.
      */
     public static void doit(SIRFilter origFilter, int reps) {
-	new StatelessDuplicate(origFilter, reps).doit();
+	if (isFissable(origFilter)) {
+	    new StatelessDuplicate(origFilter, reps).doit();
+	} else {
+	    Utils.fail("Trying to split an un-fissable filter: " + origFilter);
+	}
+    }
+
+    /**
+     * We don't yet support fission of two-stage filters that peek.
+     */
+    private static boolean isFissable(SIRFilter filter) {
+	if (filter instanceof SIRTwoStageFilter) {
+	    SIRTwoStageFilter twoStage = (SIRTwoStageFilter)filter;
+	    if (twoStage.getPeekInt()-twoStage.getPopInt()>0) {
+		return false;
+	    }
+	}
+	return true;
     }
 
     /**

@@ -1,6 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import java.io.FileWriter;
+import at.dms.kjc.*;
 
 public class GenerateSwitchCode {
     private static RawChip rawChip;
@@ -18,7 +19,18 @@ public class GenerateSwitchCode {
 			
 			fw.write("#  Switch code\n");
 			fw.write(getHeader());
-			fw.write(startIO(chip, tile));
+			if (KjcOptions.magicdram) 
+			    fw.write(startIO(chip, tile));
+			else {
+			    //normal streaming dram operation
+			    //just write out the instructions...
+			    //write the initialization code
+			    for (int i = 0; i < tile.getSwitchCode().commAddrSize(); i++) {
+				fw.write("\t" + 
+					 tile.getSwitchCode().getCommAddrIns(i).toString() + "\n");
+			    }
+			}
+			
 			//write the initialization code
 			for (int i = 0; i < tile.getSwitchCode().size(true); i++) {
 			    fw.write("\t" + 

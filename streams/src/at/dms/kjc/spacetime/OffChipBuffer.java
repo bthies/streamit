@@ -3,7 +3,7 @@ package at.dms.kjc.spacetime;
 import at.dms.util.Utils;
 import java.util.Vector;
 import java.util.HashMap;
-
+import at.dms.kjc.*;
 
 public class OffChipBuffer 
 {
@@ -16,6 +16,7 @@ public class OffChipBuffer
     private TraceNode dest;
     private static HashMap bufferStore;
     private Address size;
+    private CType type;
 
     static 
     {
@@ -25,15 +26,41 @@ public class OffChipBuffer
     
     protected OffChipBuffer(TraceNode source, TraceNode dest)
     {
+	if ((source.isFilterTrace() && !dest.isOutputTrace()) ||
+	    (source.isOutputTrace() && !dest.isInputTrace()) ||
+	    (source.isInputTrace() && !dest.isFilterTrace()))
+	    Utils.fail("invalid buffer type");
+	
 	this.source = source;
 	this.dest = dest;
 	users = new Vector();
 	ident = "__buf_" + owner.getIODevice().getPort() + "_" + unique_id + "__";
 	unique_id++;
-	
+	setType();
 	calculateSize();
     }
     
+    public String getIdent() 
+    {
+	return ident;
+    }
+    
+    
+    public CType getType() 
+    {
+	return type;
+    }
+    
+    private void setType() 
+    {
+	if (source.isFilterTrace())
+	    type = ((FilterTraceNode)source).getFilter().getOutputType();
+	else if (dest.isFilterTrace()) 
+	    type = ((FilterTraceNode)dest).getFilter().getInputType();
+	else 
+	    type = ((OutputTraceNode)source).getType();
+    }
+
     //return the buffer from src, to dst
     //if it does not exist, create it
     public static OffChipBuffer getBuffer(TraceNode src, TraceNode dst) 
@@ -53,6 +80,12 @@ public class OffChipBuffer
 	return buf;
     }
     
+    public Address getSize() 
+    {
+	return size;
+    }
+    
+
     private void calculateSize() 
     {
 	//we'll make it 32 byte aligned
@@ -97,10 +130,15 @@ public class OffChipBuffer
     public void setOwner(RawTile tile) 
     {
 	this.owner = tile;
+	tile.addBuffer(this);
     }
 
     public void addUser(RawTile tile) 
     {
+	//don't add owner to the user list
+	if (tile == owner)
+	    return;
+	
 	users.add(tile);
     }
     

@@ -59,6 +59,15 @@ public class SwitchCodeStore {
 	return new Label(LABEL_PREFIX+(labelId++));
     }
     
+    public SwitchIns getCommAddrIns(int i) 
+    {
+	return (SwitchIns)commAddrIns.get(i);
+    }
+    
+    public int commAddrSize()
+    {
+	return commAddrIns.size();
+    }
     //add route from this tile to the dest and all intermediate
     //tiles
     public void addCommAddrRoute(RawTile[] dests)

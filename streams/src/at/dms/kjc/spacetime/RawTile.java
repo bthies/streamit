@@ -2,7 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
 import at.dms.util.Utils;
-
+import java.util.HashSet;
 
 public class RawTile extends ComputeNode {
     private int tileNumber;
@@ -18,6 +18,8 @@ public class RawTile extends ComputeNode {
     //private String[] ioDevDirection;
     //private int numIODevices;
 
+    private HashSet offChipBuffers;
+
     public RawTile(int x, int y, RawChip rawChip) {
 	super(rawChip);
 	X = x;
@@ -28,6 +30,7 @@ public class RawTile extends ComputeNode {
 	switchCode = new SwitchCodeStore(this);
 	computeCode = new ComputeCodeStore(this);
 	ioDevice = null;
+	offChipBuffers = new HashSet();
     }
 
     public String toString() {
@@ -44,6 +47,16 @@ public class RawTile extends ComputeNode {
 	ioDevice = io;
     }
 
+    public void addBuffer(OffChipBuffer buf) 
+    {
+	offChipBuffers.add(buf);
+    }
+    
+    public HashSet getBuffers() 
+    {
+	return offChipBuffers;
+    }
+    
 
     public IODevice getIODevice() 
     {

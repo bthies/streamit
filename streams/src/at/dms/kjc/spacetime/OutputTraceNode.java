@@ -1,6 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
+import at.dms.kjc.*;
 
 /** 
  *
@@ -86,4 +87,19 @@ public class OutputTraceNode extends TraceNode
 	}
 	return sum;
     }
+
+    public CType getType() 
+    {
+	//keep search backwards until you find a filtertrace node
+	//and return its type
+	TraceNode current = this;
+	while (!current.isFilterTrace()){
+	    //check this
+	    if (current.isInputTrace())
+		Utils.fail("previous of outputnode is inputnode, where is the filter");
+	    current = current.getPrevious();
+	}
+	return ((FilterTraceNode)current).getFilter().getOutputType();
+    }
+    
 }

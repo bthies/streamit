@@ -217,7 +217,7 @@ public class Util {
 				 OutputTraceNode out) 
     {
 	//i don't remember why I have the + down there,
-	//but i am not going to change it now
+	//but i am not going to change
 	return Math.max(steadyBufferSize(in, out),
 			initBufferSize(in, out)) + 
 	    primePumpBufferSize(in, out);

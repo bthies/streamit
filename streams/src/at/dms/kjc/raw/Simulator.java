@@ -61,6 +61,8 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	HashMap steadyExecutionCounts = (HashMap)RawBackend.steadyExecutionCounts.clone();
 
 	joinerCode = initJoinerCode;
+	//RawBackend.printCounts(RawBackend.initExecutionCounts, 
+	//RawBackend.steadyExecutionCounts);
 	initSchedules = (new Simulator(top, true)).goInit(initExecutionCounts, counters, null);
 	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");
@@ -218,6 +220,8 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	ListIterator destsIt = dests.listIterator();
 	while (destsIt.hasNext()) {
  	    FlatNode dest = (FlatNode)destsIt.next();
+	    if (dest == null) 
+		System.out.println("Yup dest is null");
  	    Coordinate[] hops = 
  		(Coordinate[])Router.getRoute(fire, dest).toArray(new Coordinate[0]);
 	    //add to fire's next
@@ -290,8 +294,18 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     private int itemsNeededToFire(FlatNode fire, SimulationCounter counters) 
     {
 	if (!counters.hasFired(fire)) {
-	    if (fire.contents instanceof SIRTwoStageFilter && initSimulation)
+	    if (fire.contents instanceof SIRTwoStageFilter && initSimulation){
+		//if the twostage does nothing in its initWork()
+		//then the initWork should not count as an execution
+		//return peek items as the needed items
+		SIRTwoStageFilter two = (SIRTwoStageFilter)fire.contents;
+		if (two.getInitPeek() == 0 &&
+		    two.getInitPush() == 0 &&
+		    two.getInitPop() == 0) {
+		    return two.getPeekInt();
+		}
 		return ((SIRTwoStageFilter)fire.contents).getInitPeek();
+	    }
 	    else 
 		return ((SIRFilter)fire.contents).getPeekInt();
 	}
@@ -311,6 +325,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     private int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
 	if (fire.contents instanceof SIRFilter) {
+	    //	    System.out.println("Firing " + fire.contents.getName());
 	    //decrement the schedule execution counter
 	    decrementExecutionCounts(fire, executionCounts);
 	    
@@ -321,11 +336,15 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    //for a steady state execution return the normal push
 	    int ret = ((SIRFilter)fire.contents).getPushInt();
 	    //if the filter is a two stage, and it has not fired
-	    //return the initPush()
+	    //return the initPush() unless the initWork does nothing
 	    if (fire.contents instanceof SIRTwoStageFilter)
-		if (!counters.hasFired(fire) && initSimulation)
-		    ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
-	    
+		if (!counters.hasFired(fire) && initSimulation) {
+		    SIRTwoStageFilter two = (SIRTwoStageFilter)fire.contents;
+		    if (!(two.getInitPeek() == 0 &&
+			  two.getInitPush() == 0 &&
+			  two.getInitPop() == 0))
+			ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
+		}
 	    //now this node has fired
 	    counters.setFired(fire);
 	    return ret;
@@ -378,6 +397,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    return 0; 
 	}
 	else {
+	    //	    System.out.println("Firing " + fire.contents.getName());
 	    //The joiner is passing a data item, record this as an execution
 	    decrementExecutionCounts(fire, executionCounts);
 
@@ -525,6 +545,13 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    return false;
 
 	if (node.contents instanceof SIRFilter) {
+	    if (node.contents instanceof SIRTwoStageFilter) {
+		//		System.out.println(node.contents.getName() + ": " +
+		//	   counters.getBufferCount(node) + " >= " +
+		//	   itemsNeededToFire(node, counters) );
+	    }
+
+
 	    //check if this node has fired the number of times given by
 	    //the schedule
 	    Integer count = (Integer)executionCounts.get(node);

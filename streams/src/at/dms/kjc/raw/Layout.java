@@ -582,8 +582,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    return new HashSet();
 	
 	if (node.contents instanceof SIRFilter) {
-	    if (node.contents.getName().indexOf("Identity") != -1)
-		return getDownStreamHelper(node.edges[0]);
+	    //	    if (node.contents.getName().indexOf("Identity") != -1)
+	    //		return getDownStreamHelper(node.edges[0]);
 	    HashSet ret = new HashSet();
 	    ret.add(node);
 	    return ret;
@@ -713,8 +713,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     public void visitNode(FlatNode node) 
     {
 	if (node.contents instanceof SIRFilter &&
-	    ! (FileVisitor.fileNodes.contains(node)) &&
-	    ! (node.contents.getName().indexOf("Identity") != -1)) {
+	    ! (FileVisitor.fileNodes.contains(node))){// &&
+	    //	    ! (node.contents.getName().indexOf("Identity") != -1)) {
 	    assigned.add(node);
 	    return;
 	}

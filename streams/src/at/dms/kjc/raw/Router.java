@@ -25,13 +25,15 @@ public class Router {
 	Coordinate fromCoord, toCoord;
 	fromCoord = Layout.getTile(from);
 	toCoord = Layout.getTile(to);
-	
+
 	route.add(Layout.getTile(from));
 	
 	int row = fromCoord.getRow();
 	int column = fromCoord.getColumn();
 	//For now just route the packets in a stupid manner
 	//row then column
+
+
 	if (fromCoord.getRow() != toCoord.getRow()) {
 	    if (fromCoord.getRow() < toCoord.getRow()) {
 		for (row = fromCoord.getRow() + 1; 

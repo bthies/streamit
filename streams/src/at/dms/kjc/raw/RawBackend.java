@@ -170,7 +170,7 @@ public class RawBackend {
     
     //debug function
     //run me after layout please
-    public static void printJoinerCounts(HashMap init, HashMap steady) {
+    public static void printCounts(HashMap init, HashMap steady) {
 	HashMap[] result = { init, 
 			     steady	};
 		

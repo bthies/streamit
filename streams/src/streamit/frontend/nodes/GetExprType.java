@@ -1,10 +1,12 @@
 /*
  * GetExprType.java: get the type of an expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: GetExprType.java,v 1.4 2002-09-06 16:07:36 dmaze Exp $
+ * $Id: GetExprType.java,v 1.5 2002-10-31 21:45:52 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
+
+import java.util.List;
 
 /**
  * Visitor that returns the type of an expression.  This needs to be created
@@ -77,7 +79,20 @@ public class GetExprType extends FENullVisitor
     {
         // Errk.  We need to keep track of function type signatures here,
         // huh.  Need this for complex propagation, actually.
-        return null;
+
+        // As a cheap shortcut, though, we can assume that the only
+        // function calls are calls to built-in functions in the
+        // absence of helper function support in the parser.  These
+        // by and large have a signature like
+        //
+        //   template<T> T foo(T);
+        //
+        // So, if there's any arguments, return the type of the first
+        // argument; otherwise, return float as a default.
+        List params = exp.getParams();
+        if (params.isEmpty())
+            return new TypePrimitive(TypePrimitive.TYPE_FLOAT);
+        return ((Expression)params.get(0)).accept(this);
     }
     
     public Object visitExprPeek(ExprPeek exp)

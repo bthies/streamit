@@ -55,12 +55,13 @@ KOPI_TOOL_SRCS = \
 JAVA_TARGET = \
   $(KOPI_TARGET) \
   $(KOPI_TOOL_TARGET) \
-  streamit_library
+  $(STREAMIT_HOME)/library/java/streamit/StreamIt.class
 
 JAVA_SRCS = \
   $(KOPI_SRCS) \
   $(KOPI_GENERATED) \
-  $(KOPI_TOOL_SRCS)
+  $(KOPI_TOOL_SRCS) \
+  $(STREAMIT_HOME)/library/java/streamit/StreamIt.java
 
 DEBUG_OPT = -g
 
@@ -87,5 +88,4 @@ at/dms/kjc/KjcParser.java : at/dms/kjc/Kjc.g at/dms/kjc/KjcTokenTypes.java $(KOP
 
 at/dms/kjc/KjcOptions.java : at/dms/kjc/KjcOptions.opt $(KOPI_OPTGEN_TARGET)
 
-streamit_library:
-	make -C $(STREAMIT_HOME)/library/java/streamit
+

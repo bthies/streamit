@@ -32,6 +32,8 @@ public final class LinearReplaceTransform extends StreamTransform {
 	LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, lfa);
 	if (KjcOptions.linearreplacement2) {
 	    LinearIndirectReplacer.doReplace(lfa, str);
+	} else if (KjcOptions.linearreplacement3) {
+	    LinearDiagonalReplacer.doReplace(lfa, str);
 	} else {
 	    LinearDirectReplacer.doReplace(lfa, str);
 	}

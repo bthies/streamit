@@ -34,17 +34,21 @@ public class Flattener {
 	// propagate constants and unroll loops
 	ConstantProp.propagateAndUnroll(str);
 
-	/*
-	Fusion.fuse((SIRPipeline)str, 
-		    (SIRFilter)((SIRPipeline)str).get(0), 
-		    (SIRFilter)((SIRPipeline)str).get(1));
-	*/
-
+	if (StreamItOptions.fusion) {
+	    System.out.println("Running Fusion");
+	    Fusion.fuse((SIRPipeline)str, 
+			(SIRFilter)((SIRPipeline)str).get(0), 
+			(SIRFilter)((SIRPipeline)str).get(1));
+	}
+	
         // flatten split/joins with duplicate splitters and RR joiners
-        str = DupRR.doFlatten(str);
+        //str = DupRR.doFlatten(str);
 
         // do constant propagation on fields
-        FieldProp.doPropagate(str);
+        if (StreamItOptions.constprop) {
+	    System.out.println("Running Constant Propagation of Fields");
+	    FieldProp.doPropagate(str);
+	}
 
 	// DEBUGGING PRINTING
 	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");

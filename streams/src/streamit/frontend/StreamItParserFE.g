@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.44 2003-10-14 19:10:40 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.45 2003-12-01 22:16:41 dmaze Exp $
  */
 
 header {
@@ -394,10 +394,12 @@ for_statement returns [Statement s]
 for_init_statement returns [Statement s] { s = null; }
 	:	(variable_decl) => s=variable_decl
 	|	(expr_statement) => s=expr_statement
+	|   (SEMI) /* empty */ => { s = new StmtEmpty(null); }
 	;
 
 for_incr_statement returns [Statement s] { s = null; }
 	:	s=expr_statement
+	|   /* empty */ { s = new StmtEmpty(null); }
 	;
 
 expr_statement returns [Statement s] { s = null; Expression x; }

@@ -4,6 +4,8 @@ import java.util.Vector;
 import at.dms.kjc.spacetime.switchIR.*;
 import java.util.LinkedList;
 import java.util.Iterator;
+import java.util.HashMap;
+import java.util.List;
 
 public class SwitchCodeStore {
     protected RawTile parent;
@@ -82,6 +84,70 @@ public class SwitchCodeStore {
 	generateSwitchCode(source, dests, stage);
     }
     */
+
+
+    //create the header of a switch loop on all the tiles in <tiles> and 
+    //first send mult from the compute processor to the switch
+    //returns map of tile->Label
+    public static HashMap switchLoopHeader(List tiles, int mult, boolean init, boolean primePump) 
+    {
+	assert mult > 1;
+	HashMap labels = new HashMap();
+	Iterator it = tiles.iterator();
+	while (it.hasNext()) {
+	    RawTile tile = (RawTile)it.next();
+	    //send the const - 1
+	    tile.getComputeCode().sendConstToSwitch(mult - 1, init || primePump);
+	    //add the code to receive the const
+	    MoveIns moveIns = new MoveIns(SwitchReg.R2, 
+				      SwitchIPort.CSTO);
+	    tile.getSwitchCode().appendIns(moveIns, (init || primePump));
+	    //add the label
+	    Label label = new Label();
+	    tile.getSwitchCode().appendIns(label, (init || primePump));	
+	    //remember the label
+	    labels.put(tile, label);
+	}
+	return labels;
+    }
+    
+    //create the trailer of the loop for all tiles in the key set of <lables>
+    //labels maps RawTile->label
+    public static void switchLoopTrailer(HashMap labels, boolean init, boolean primePump) 
+    {
+	Iterator tiles = labels.keySet().iterator();
+	while (tiles.hasNext()) {
+	    RawTile tile = (RawTile)tiles.next();
+	    Label label = (Label)labels.get(tile);
+	    //add the branch back
+	    BnezdIns branch = new BnezdIns(SwitchReg.R2, SwitchReg.R2, 
+					   label.getLabel());
+	    tile.getSwitchCode().appendIns(branch, (init || primePump));
+	}
+    }
+    
+    
+    //return a list of all the raw tiles used in routing from source to dests
+    public static List getTilesInRoutes(ComputeNode source, ComputeNode[] dests) 
+    {
+	LinkedList tiles = new LinkedList();
+
+	for (int i = 0; i < dests.length; i++) {
+	    ComputeNode dest = dests[i];
+
+	    LinkedList route = Router.getRoute(source, dest);
+
+	    Iterator it = route.iterator();
+	    while (it.hasNext()) {
+		ComputeNode current = (ComputeNode)it.next();
+		if (current instanceof RawTile) {
+		    tiles.add(current);
+		}
+	    }
+	}
+	return tiles;
+    }
+    
 
     /**
      give a source and an array of dests, generate the code to 

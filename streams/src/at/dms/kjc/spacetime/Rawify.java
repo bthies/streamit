@@ -17,9 +17,9 @@ public class Rawify
 {
     //if true try to compress the switch code by creating loops
     public static boolean SWITCH_COMP = true;
-    //any switch loop with more than SC_THRESHOLD instruction will be 
-    //compressed
-    public static int SC_THRESHOLD = 3;
+    //any filter that executes more than SC_THRESHOLD times in the primepump
+    //or steady will have its switch instructions placed in a loop
+    public static int SC_THRESHOLD = 5;
     
     public static void run(SimpleScheduler scheduler, RawChip rawChip,
 			   boolean init) 

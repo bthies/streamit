@@ -68,7 +68,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
 	    JMethodDeclaration method=((SIRFilter)node.contents).getMethods()[i];
 	    
-	    if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork"))) { //Already in __RAWMAIN__
+	    if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork"))) { 
+		//Already in __RAWMAIN__
 		if (!KjcOptions.nofieldprop) {
 		
 		    Unroller unroller;
@@ -97,7 +98,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	}
 	if(KjcOptions.destroyfieldarray)
-	    arrayDest.destroyFieldArrays((SIRFilter)node.contents);
+	   arrayDest.destroyFieldArrays((SIRFilter)node.contents);
 	/*	
 	  try {
 	    SIRPrinter printer1 = new SIRPrinter();
@@ -108,7 +109,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    {
 	    }
 	*/
-
         IterFactory.createIter((SIRFilter)node.contents).accept(toC);
     }
     
@@ -1042,6 +1042,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     //for rate matching, we want to store the value of the item pushed  
     //into the output buffer and increment the sendbufferindex
     //args[0] is the item we want to push...
+    /*
     private void rateMatchPush(JExpression[] args) 
     {
 	print("(" + RawExecutionCode.sendBuffer);
@@ -1049,7 +1050,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	args[0].accept(this);
 	print(")");
     }
-    
+    */
     
 
     /**
@@ -1087,12 +1088,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    popArray(args[0]);
 	    return;
 	}
-	
+	/*
 	if (ident.equals(RawExecutionCode.rateMatchSendMethod)) {
 	    rateMatchPush(args);
 	    return;
 	}
-          
+	*/
         print(ident);
 	
 	//we want single precision versions of the math functions

@@ -854,7 +854,16 @@ public class RawExecutionCode extends at.dms.util.Utils
 				     localVariables),
 			 localVariables.exeIndex,
 			 new JIntLiteral(filter.getPopInt() * steady)));
-
+	if (filter.getPushInt() > 0) {
+	    //reset the send buffer index
+	    block.addStatement
+		(new JExpressionStatement(null,
+					  new JAssignmentExpression(null,
+								    new JLocalVariableExpression
+								    (null, localVariables.sendBufferIndex),
+								    new JIntLiteral(-1)),
+					  null));
+	}
 	
 	//now, run the work function steady times...
 	JBlock workBlock = 
@@ -863,7 +872,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 
 	//convert all of the push expressions in the steady state work block into
 	//stores to the output buffer
-	workBlock.accept(new RateMatchConvertPush());
+	workBlock.accept(new RateMatchConvertPush(localVariables));
 
 	//if we are in debug mode, print out that the filter is firing
 	if (RawBackend.FILTER_DEBUG_MODE) {
@@ -902,14 +911,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 		(makeForLoop(send, localVariables.exeIndex,
 			 new JIntLiteral(steady * filter.getPushInt() * 
 					 Util.getTypeSize(filter.getOutputType()))));
-	    //reset the send buffer index
-	    block.addStatement
-		(new JExpressionStatement(null,
-					  new JAssignmentExpression(null,
-								    new JLocalVariableExpression
-								    (null, localVariables.sendBufferIndex),
-								    new JIntLiteral(-1)),
-					  null));
+	   
 	}
 	
 
@@ -1329,9 +1331,9 @@ public class RawExecutionCode extends at.dms.util.Utils
 	LocalVariables localVariables;
 	
 	
-	public RateMatchConvertPush() 
+	public RateMatchConvertPush(LocalVariables localVariables) 
 	{
-	    
+	    this.localVariables = localVariables;
 	}
   
 	/**
@@ -1341,8 +1343,21 @@ public class RawExecutionCode extends at.dms.util.Utils
 					  CType tapeType,
 					  JExpression arg) {
 	    JExpression newExp = (JExpression)arg.accept(this);
-	    //the expression is the argument of the call
-	    JExpression[] args = new JExpression[1];
+	    return new JAssignmentExpression
+		(null,
+		 new JArrayAccessExpression(null, 
+					   new JLocalVariableExpression
+					   (null, localVariables.sendBuffer),
+					   new JPrefixExpression(null, OPE_PREINC,
+								 new JLocalVariableExpression
+								 (null, 
+								  localVariables.sendBufferIndex))),
+		 newExp);
+
+	    
+	    
+	    /*
+	      JExpression[] args = new JExpression[1];
 	    args[0] = newExp;
 	    
 	    JMethodCallExpression ratematchsend = 
@@ -1351,6 +1366,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 					  args);
 	    
 	    return ratematchsend;
+	    */
 	}
     }
 }

@@ -22,7 +22,7 @@ import java.util.HashMap;
  *
  * @see     streamit.frontend.passes.SymbolTableVisitor
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTable.java,v 1.7 2003-04-15 20:48:54 dmaze Exp $
+ * @version $Id: SymbolTable.java,v 1.8 2003-07-07 21:19:55 dmaze Exp $
  */
 public class SymbolTable
 {
@@ -131,6 +131,25 @@ public class SymbolTable
         if (info != null)
             return info.type;
         throw new UnrecognizedVariableException(name);
+    }
+
+    /**
+     * Looks up the type for a variable expression.  If the named
+     * symbol is not in the current symbol table, search in the
+     * parent.
+     *
+     * @param   var  variable expression to search for
+     * @return  the front-end type of the variable, if defined
+     * @throws  UnrecognizedVariableException if the variable is
+     *          defined in neither this nor any of its ancestor
+     *          symbol tables
+     */
+    public Type lookupVar(ExprVar var)
+    {
+        VarInfo info = lookupVarInfo(var.getName());
+        if (info != null)
+            return info.type;
+        throw new UnrecognizedVariableException(var);
     }
 
     /**

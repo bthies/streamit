@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.1 2002-06-12 19:38:04 dmaze Exp $
+# $Id: knit,v 1.2 2002-07-02 13:12:33 dmaze Exp $
 #
 
 use strict;
@@ -96,5 +96,5 @@ sub c_to_out
     my ($fns, $target) = @_;
     my $sh = $opts{home};
     call("gcc -o$target -I$sh/library/c " . join(' ', @$fns) .
-	 " -L$sh/library/c -lstreamit");
+	 " -L$sh/library/c -lstreamit -lm");
   }

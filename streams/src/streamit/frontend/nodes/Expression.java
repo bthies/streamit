@@ -1,12 +1,25 @@
 /*
  * Expression.java: a generic front-end expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: Expression.java,v 1.1 2002-07-10 18:03:31 dmaze Exp $
+ * $Id: Expression.java,v 1.2 2002-08-19 20:48:14 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
 
-abstract public class Expression
+/**
+ * A generic expression tree, as created in the front-end.  Expression
+ * nodes often will contain other Expressions as recursive children.
+ */
+abstract public class Expression extends FENode
 {
-    abstract public Object accept(FEVisitor v);
+    public Expression(FEContext context)
+    {
+        super(context);
+    }
+
+    // Temporary hack:
+    public Expression()
+    {
+        super(null);
+    }
 }

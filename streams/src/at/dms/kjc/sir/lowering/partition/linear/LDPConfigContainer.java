@@ -619,7 +619,13 @@ abstract class LDPConfigContainer extends LDPConfig {
 			// found the optimum...
 			debugMessage(" Found uniform cut on traceback.");
 			// generate transform
-			StreamTransform result = new IdentityTransform();
+			// have to remove sync if there is any
+			StreamTransform result;
+			if (y1<y2) {
+			    result = new RemoveSyncTransform();
+			} else {
+			    result = new IdentityTransform();
+			}
 			// recurse
 			for (int i=x1; i<=x2; i++) {
 			    result.addSucc(traceback(i, i, y1, y2, LinearPartitioner.COLLAPSE_ANY, verticalObj.get(i)));

@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.25 2003-04-18 14:44:29 dmaze Exp $
+# $Id: knit,v 1.26 2003-04-18 14:53:21 dmaze Exp $
 #
 
 use strict;
@@ -84,6 +84,13 @@ Options specific to RAW backend:
 Options specific to uniprocessor backend:
   --poptopeek, -P     Convert all pop expressions into peeks
   --profile           Compile with profiling information
+
+Options specific to Java library backend:
+  --iterations, -i    Specify number of iterations to run
+  --norun             Schedule but do not run the program
+  --nosched           Run the program in pull mode, not under the scheduler
+  --printdot          Print . at each steady-state execution
+  --printsched        Dump the program schedule
 EOT
     if ($more) {
       $text =~ s/^\*/ /mg;
@@ -110,6 +117,7 @@ sub get_options
 	       "frequencyreplacement|F",
 	       "fusion|f",
 	       "ilppartition|A",
+	       "iterations|i=i",
 	       "library",
 	       "linearpartition|B",
 	       "linearreplacement|I",
@@ -117,9 +125,13 @@ sub get_options
 	       "memory|Xmx=s",
 	       "noanneal|W",
 	       "nofieldprop|L",
+	       "norun",
+	       "nosched",
 	       "numbers|N=i",
 	       "partition|a",
 	       "poptopeek|P",
+	       "printdot",
+	       "printsched",
 	       "profile",
 	       "ptraccess|Q",
 	       "ratematch|x",
@@ -198,7 +210,7 @@ sub run_in_library
       {
 	  my $class = remove_extension($java, "java");
 	  call("javac $java");
-	  call("java $class");
+	  call("java $class " . get_lib_opts());
       }
   }
 
@@ -253,3 +265,14 @@ sub get_kjc_opts
     $opts{viram} && ($kjcopts .= " -V");
     return $kjcopts;
 }
+
+sub get_lib_opts
+  {
+    my $libopts = '';
+    $opts{iterations} && ($libopts .= " -i " . $opts{iterations});
+    $opts{nosched} && ($libopts .= " -nosched");
+    $opts{norun} && ($libopts .= " -norun");
+    $opts{printdot} && ($libopts .= " -printdot");
+    $opts{printsched} && ($libopts .= " -printsched");
+    return $libopts;
+  }

@@ -12,22 +12,22 @@ public class Operator extends DestroyedClass
 
     public Operator(float x1, float y1, int z1)
     {
-	initParams = new ParameterContainer ("float-float-int")
-	    .add("x1", x1)
-	    .add("y1", y1)
-	    .add("z1", z1);
+        initParams = new ParameterContainer ("float-float-int")
+            .add("x1", x1)
+            .add("y1", y1)
+            .add("z1", z1);
     }
 
     public Operator(float x2, float y2, float z2, int a2, float b2)
     {
-	initParams = new ParameterContainer ("float-float-float-int-float")
-	    .add("x2", x2)
-	    .add("y2", y2)
-	    .add("z2", z2)
-	    .add("a2", a2)
-	    .add("b2", b2);
+        initParams = new ParameterContainer ("float-float-float-int-float")
+            .add("x2", x2)
+            .add("y2", y2)
+            .add("z2", z2)
+            .add("a2", a2)
+            .add("b2", b2);
     }
-    
+
     public Operator()
     {
         initParams = new ParameterContainer ("");
@@ -180,7 +180,7 @@ public class Operator extends DestroyedClass
     public static void passOneData (Channel from, Channel to)
     {
         Class type = from.getType ();
-        ASSERT (type == to.getType ());
+        SASSERT (type == to.getType ());
 
         if (type == Integer.TYPE)
         {
@@ -205,7 +205,7 @@ public class Operator extends DestroyedClass
     public static void duplicateOneData (Channel from, Channel [] to)
     {
         Class type = from.getType ();
-        ASSERT (to != null && type == to[0].getType ());
+        SASSERT (to != null && type == to[0].getType ());
 
         if (type == Integer.TYPE)
         {
@@ -282,20 +282,19 @@ public class Operator extends DestroyedClass
 
         ASSERT (initParams != null);
 
-        initIO ();
-	if(initParams.getParamName().equals("float-float-int")) 
-	    init (initParams.getFloatParam("x1"),
-		  initParams.getFloatParam("y1"),
-		  initParams.getIntParam("z1"));
-	else
-	if(initParams.getParamName().equals("float-float-float-int-float")) 
-	    init (initParams.getFloatParam("x2"),
-		  initParams.getFloatParam("y2"),
-		  initParams.getFloatParam("z2"),
-		  initParams.getIntParam("a2"),
-		  initParams.getFloatParam("b2"));
-	else
-	    
+        if(initParams.getParamName().equals("float-float-int"))
+            init (initParams.getFloatParam("x1"),
+                  initParams.getFloatParam("y1"),
+                  initParams.getIntParam("z1"));
+        else
+        if(initParams.getParamName().equals("float-float-float-int-float"))
+            init (initParams.getFloatParam("x2"),
+                  initParams.getFloatParam("y2"),
+                  initParams.getFloatParam("z2"),
+                  initParams.getIntParam("a2"),
+                  initParams.getFloatParam("b2"));
+        else
+
         if (initParams.getParamName ().equals("int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y")); else
         if (initParams.getParamName ().equals("")) init (); else
         if (initParams.getParamName ().equals("int")) init (initParams.getIntParam ("n")); else
@@ -307,6 +306,7 @@ public class Operator extends DestroyedClass
             ERROR ("You didn't provide a correct if-else statement in setupOperator.\nPlease read streams/docs/implementation-notes/library-init-functions.txt for instructions.");
         }
 
+        initIO ();
         connectGraph ();
         initialized = true;
     }

@@ -56,7 +56,7 @@ public class SplitJoin extends Stream
                     break;
                 default:
                     // passed an illegal parameter to the constructor!
-                    ASSERT (false);
+                    SASSERT (false);
             }
 
             type = myType;
@@ -64,7 +64,7 @@ public class SplitJoin extends Stream
 
         SplitJoinType addWeight (int weight)
         {
-            ASSERT (weights != null);
+            SASSERT (weights != null);
             weights.add (new Integer (weight));
             return this;
         }
@@ -85,7 +85,7 @@ public class SplitJoin extends Stream
                 case 3:
                     return new DuplicateSplitter ();
                 default:
-                    ASSERT (false);
+                    SASSERT (false);
             }
             return null;
         }
@@ -105,7 +105,7 @@ public class SplitJoin extends Stream
                     return joiner;
                 case 3: // there are no duplicate joiners!
                 default:
-                    ASSERT (false);
+                    SASSERT (false);
             }
             return null;
         }

@@ -28,7 +28,7 @@ public class QuadratureDemod extends Filter {
   
     public QuadratureDemod (int firingRate, float g)
     {
-        super ();
+        super (firingRate, g);
     }
 
     public void init(final int firingRate, float g) {

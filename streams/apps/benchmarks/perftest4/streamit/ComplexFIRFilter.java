@@ -35,7 +35,7 @@ public class ComplexFIRFilter extends Filter {
     public ComplexFIRFilter (int sampFreq, int dec, int t,
 			     float freq, float g)
     {
-        super ();
+        super (sampFreq, dec, t, freq, g);
 	
     }
 

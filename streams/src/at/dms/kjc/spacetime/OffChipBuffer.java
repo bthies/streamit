@@ -34,12 +34,33 @@ public class OffChipBuffer
 	
 	this.source = source;
 	this.dest = dest;
+
 	users = new Vector();
 	ident = "__buf_" + owner.getIODevice().getPort() + "_" + unique_id + "__";
 	unique_id++;
 	setType();
 	calculateSize();
     }
+
+    public boolean redundant() 
+    {
+	//two cases
+	if (source.isInputTrace() && dest.isFilterTrace()) {
+	    //if only one source to the input and the dram for the
+	    //previous buffer is the same then redunant
+	    if (((InputTraceNode)source).oneInput() &&
+		OffChipBuffer.getBuffer
+		(((InputTraceNode)source).getParent().getDepends()[0].getTail(), 
+		 source).getDRAM() == dram)
+		return true;
+	} else if (source.isOutputTrace() && dest.isInputTrace()) {
+	    if (((OutputTraceNode)source).oneOutput() &&
+		OffChipBuffer.getBuffer(source.getPrevious(), source).getDRAM() == dram)
+		return true;
+	}
+	return false;	
+    }
+    
 
     public void setDRAM(StreamingDram DRAM) 
     {

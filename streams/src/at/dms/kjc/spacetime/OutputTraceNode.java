@@ -17,11 +17,13 @@ public class OutputTraceNode extends TraceNode
     private static int unique = 0;
     private static int[] EMPTY_WEIGHTS=new int[0];
     private static InputTraceNode[][] EMPTY_DESTS=new InputTraceNode[0][0];
+    private Trace parent;
 
     public OutputTraceNode(int[] weights,
 			   InputTraceNode[][] dests) {
-	if (weights.length != dests.length)
-	    Utils.fail("Add comment later");
+	this.parent = parent;
+	assert weights.length == dests.length : 
+	    "weights must equal sources";
 	ident = "output" + unique;
 	unique++;
 	this.weights=weights;
@@ -29,6 +31,7 @@ public class OutputTraceNode extends TraceNode
     }
     
     public OutputTraceNode(int[] weights) {
+	this.parent = parent;
 	ident = "output" + unique;
 	unique++;
 	this.weights=weights;
@@ -36,12 +39,24 @@ public class OutputTraceNode extends TraceNode
     }
 
     public OutputTraceNode() {
+	this.parent = parent;
 	ident = "output" + unique;
 	unique++;
 	weights=EMPTY_WEIGHTS;
 	dests=EMPTY_DESTS;
     }
 
+    public void setParent(Trace parent) 
+    {
+	this.parent = parent;
+    }
+    
+    
+    public Trace getParent() 
+    {
+	assert parent != null : "parent not set for output trace node";
+	return parent;
+    }
     public int[] getWeights() {
 	return weights;
     }
@@ -116,4 +131,9 @@ public class OutputTraceNode extends TraceNode
 	return set;
     }
     
+    public boolean oneOutput() 
+    {
+	return (weights.length == 1 &&
+		dests[0].length == 1);
+    }
 }

@@ -1,7 +1,7 @@
 /*
  * GetExprType.java: get the type of an expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: GetExprType.java,v 1.8 2003-06-30 21:15:35 dmaze Exp $
+ * $Id: GetExprType.java,v 1.9 2003-07-31 18:44:34 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -128,6 +128,11 @@ public class GetExprType extends FENullVisitor
         // Again, should do type unification on the two sides.
         // And might not want to blindly assert ?:.
         return exp.getB().accept(this);
+    }
+
+    public Object visitExprTypeCast(ExprTypeCast exp)
+    {
+        return exp.getType();
     }
 
     public Object visitExprUnary(ExprUnary exp)

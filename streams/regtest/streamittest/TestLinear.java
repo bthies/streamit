@@ -2,12 +2,12 @@ package streamittest;
 
 import junit.framework.*;
 import at.dms.kjc.linear.FilterMatrix;
-
+import at.dms.kjc.linear.ComplexNumber;
 
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.1 2002-08-09 16:42:22 aalamb Exp $
+ * $Id: TestLinear.java,v 1.2 2002-08-12 19:07:57 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -18,6 +18,8 @@ public class TestLinear extends TestCase {
     public static Test suite() {
 	TestSuite suite = new TestSuite();
 	suite.addTest(new TestLinear("testSimple"));
+	suite.addTest(new TestLinear("testComplexNumberCreationAndAccess"));
+	suite.addTest(new TestLinear("testComplexNumberEquality"));
 	suite.addTest(new TestLinear("testFilterMatrixConstructor"));
 	suite.addTest(new TestLinear("testFilterMatrixAccessor"));
 	suite.addTest(new TestLinear("testFilterMatrixModifier"));
@@ -29,6 +31,58 @@ public class TestLinear extends TestCase {
 	assertTrue("was true", true);
     }
 
+    /** Simple complex number tests **/
+    public void testComplexNumberCreationAndAccess() {
+	ComplexNumber cn;
+
+	double MAX = 5;
+	double STEP = .1;
+	
+	
+	cn = new ComplexNumber(0,0);
+	cn = new ComplexNumber(0,1);
+	cn = new ComplexNumber(1,0);
+	cn = new ComplexNumber(5,4);
+	cn = new ComplexNumber(1.2,-94.43);
+
+	// test access
+	for (double i=-MAX; i<MAX; i+= STEP) {
+	    for (double j=-MAX; j<MAX; j+= STEP) {
+		cn = new ComplexNumber(i,j);
+		assertTrue("real part", cn.getReal() == i);
+		assertTrue("im part", cn.getImaginary() == j);
+	    }
+	}
+    }
+    
+    /** Simple tests for equality **/
+    public void testComplexNumberEquality() {
+	ComplexNumber cn1;
+	ComplexNumber cn2;
+
+	cn1 = new ComplexNumber(.32453252342142523, .78881282845324);
+	cn2 = new ComplexNumber(.32453252342142523, .78881282845324);
+
+	// test for self equality
+	assertTrue("self", cn1.equals(cn1));
+	assertTrue("self", cn2.equals(cn2));
+	
+	// test for numerical equality
+	assertTrue("numerical equality", cn1.equals(cn2));
+	assertTrue("numerical equality", cn2.equals(cn1));
+
+	// make sure we aren't just always doing true
+	cn2 = new ComplexNumber(.8572983475029834, .78881282845324);
+	assertTrue("not always equal", !cn1.equals(cn2));
+	assertTrue("not always equal", !cn2.equals(cn1));
+
+	cn2 = new ComplexNumber(-.32453252342142523, .78881282845324);
+	assertTrue("not always equal", !cn1.equals(cn2));
+	assertTrue("not always equal", !cn2.equals(cn1));
+
+    }
+
+    
     /** FilterMatrix tests **/
     public void testFilterMatrixConstructor() {
 	int MAX = 10;
@@ -45,8 +99,9 @@ public class TestLinear extends TestCase {
 		for (int a=0; a<i; a++) {
 		    for (int b=0; b<j; b++) {
 			// check that the elt is 0
+			ComplexNumber zero = new ComplexNumber(0,0);
 			assertTrue(("(" + a + "," + b + ")=0"),
-				   (fm.getElement(a,b) == 0));
+				   zero.equals(fm.getElement(a,b)));
 		    }
 		}
 	    }
@@ -87,7 +142,8 @@ public class TestLinear extends TestCase {
 	    for (int j=0; j<MAX; j++) {
 		// if we are within the bounds, expect no error
 		if ((i<ROW_MAX) && (j<COL_MAX)) {
-		    assertTrue("elt is 0", fm.getElement(i,j) == 0);
+		    ComplexNumber zero = new ComplexNumber(0,0);
+		    assertTrue("elt is 0", zero.equals(fm.getElement(i,j)));
 		} else {
 		    // we expect an exception
 		    try {fm.getElement(i,j); fail("no exception on illegal access");}
@@ -104,15 +160,17 @@ public class TestLinear extends TestCase {
 	// matrix, set its elements to be particular values and then
 	// verify that the appropriate numbers were stored.
 	FilterMatrix fm;
-	int MAX = 100;
+	int MAX = 10;
 	for (int i=0; i<MAX; i++) {
 	    for (int j=0; j<MAX;j++) {
 		fm = new FilterMatrix(i+1,j+1);
 		for (int a=0; a<=i; a++) {
 		    for (int b=0; b<=j; b++) {
-			float val = a*b;
-			fm.setElement(a,b,val);
-			assertTrue("value matches", fm.getElement(a,b) == val);
+			double re_val = Math.random();
+			double im_val = Math.random();
+			fm.setElement(a,b,new ComplexNumber(re_val, im_val));
+			ComplexNumber value = new ComplexNumber(re_val, im_val);
+			assertTrue("value matches", value.equals(fm.getElement(a,b)));
 		    }
 		}
 	    }

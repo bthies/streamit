@@ -1,0 +1,5 @@
+As of 10/14/03, this C version is **NOT** in sync with the StreamIt
+version.  I believe the answer stopped matching a while ago, but I
+just toggled some parameters on the StreamIt version that I didn't
+immediately see how to toggle here... so before any more number
+comparisons are done, the C version should be updated.  --bft

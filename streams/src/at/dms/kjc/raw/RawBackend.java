@@ -226,6 +226,7 @@ public class RawBackend {
 	//Generate the tile code
 	RawExecutionCode.doit(graphFlattener.top);
 
+
 	if (KjcOptions.removeglobals) {
 	    RemoveGlobals.doit(graphFlattener.top);
 	}

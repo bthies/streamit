@@ -200,18 +200,27 @@ public class MagicNetworkSchedule
 	fw.write("tile" + tileNumber + op + " = hms_new();\n");
 	fw.write("temp = tile" + tileNumber + op + ";\n");
 
+	int index = 0, reps;
 	if (init != null) {
 	    //there exists an init schedule
-	    Iterator it = init.listIterator(0);
-	   
-	    while (it.hasNext()) {
-		generateMagicRoute(it.next(), fw);
-		//fw.write("temp.magic = " + routesString(it.next()) + ";\n");
-		if (it.hasNext()) {
+	    while(index < init.size()) {
+		reps = getReps(index, init);
+		if (reps > 1) {
+		    fw.write ("for (rep = 0; rep < " + reps + "; rep++) {\n");
+		}
+		generateMagicRoute(init.get(index), fw);	    
+		//don't create a new sched object if we are 
+		//at the end of the schedule
+		if (index < init.size() - 1) {
 		    fw.write("temp.next = hms_new();\n");
 		    fw.write("temp = temp.next;\n");
 		}
+		if (reps > 1)
+		    fw.write ("}\n");
+		//increment the index
+		index += reps;
 	    }
+	    
 	    fw.write("start_of_steady = hms_new();\n");
 	    fw.write("temp.next = start_of_steady;\n");
 	    fw.write("temp = start_of_steady;\n");
@@ -222,7 +231,8 @@ public class MagicNetworkSchedule
 	}
 	
 	//steady schedule
-	int index = 0, reps;
+	index = 0;
+	reps = 0;
 	while(index < steady.size()) {
 	    reps = getReps(index, steady);
 	    if (reps > 1) {

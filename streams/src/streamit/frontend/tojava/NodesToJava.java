@@ -11,7 +11,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.74 2003-09-16 20:10:50 dmaze Exp $
+ * @version $Id: NodesToJava.java,v 1.75 2003-10-08 21:45:53 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -590,7 +590,9 @@ public class NodesToJava implements FEVisitor
             Statement s = (Statement)iter.next();
             String line = indent;
             line += (String)s.accept(this);
-            line += ";";
+	    if (!(s instanceof StmtIfThen)) {
+		line += ";";
+	    }
             if (s.getContext() != null)
                 line += " // " + s.getContext();
             line += "\n";

@@ -57,8 +57,8 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 
 
 	joinerCode = initJoinerCode;
-	//	System.out.println("\n\nInit Execution Counts");
-	//RawBackend.printCounts(RawBackend.initExecutionCounts);
+		System.out.println("\n\nInit Execution Counts");
+	RawBackend.printCounts(RawBackend.initExecutionCounts);
 	initSchedules = (new FineGrainSimulator(top, true)).goInit(initExecutionCounts, counters, null);
 	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");
@@ -349,7 +349,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    //if the filter is a two stage, and it has not fired
 	    //return the initPush() unless the initWork does nothing
 	    if (fire.contents instanceof SIRTwoStageFilter)
-		if (!counters.hasFired(fire)) {
+		if (!counters.hasFired(fire) && initSimulation) {
 		    SIRTwoStageFilter two = (SIRTwoStageFilter)fire.contents;
 		    if (!(two.getInitPeek() == 0 &&
 			  two.getInitPush() == 0 &&

@@ -147,7 +147,7 @@ public class SchedPipeline extends SchedStream
                 SchedStream child = (SchedStream) iter.previous ();
                 ASSERT (child);
 
-                setConsumption (child.getProduction () * (child.getNumExecutions ().intValue ()));
+                setProduction (child.getProduction () * (child.getNumExecutions ().intValue ()));
             }
         }
     }

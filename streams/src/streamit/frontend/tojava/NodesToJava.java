@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.76 2003-10-09 19:51:02 dmaze Exp $
+ * @version $Id: NodesToJava.java,v 1.77 2003-12-01 21:44:28 dmaze Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -640,6 +640,11 @@ public class NodesToJava implements FEVisitor
         result += (String)stmt.getBody().accept(this);
         result += "while (" + (String)stmt.getCond().accept(this) + ")";
         return result;
+    }
+
+    public Object visitStmtEmpty(StmtEmpty stmt)
+    {
+        return "";
     }
 
     public Object visitStmtEnqueue(StmtEnqueue stmt)

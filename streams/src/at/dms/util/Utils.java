@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.21 2004-03-31 20:54:29 thies Exp $
+ * $Id: Utils.java,v 1.22 2004-07-12 19:02:01 mgordon Exp $
  */
 
 package at.dms.util;
@@ -419,14 +419,17 @@ public abstract class Utils implements Serializable, DeepCloneable {
 	// make the for statement
 	JStatement forStatement = 
 	    new JForStatement(/* tokref */ null,
-			      /* init */ new JEmptyStatement(null, null),
+			      //for rstream put the vardecl in the init of the for loop
+			      /* init */ (KjcOptions.rstream ? (JStatement) varDecl : 
+			       (JStatement) new JEmptyStatement(null, null)),
 			      cond,
 			      incr,
 			      body,
 			      /* comments */ null);
 	// return the block
 	JStatement[] statements = {varDecl, forStatement};
-	return new JBlock(null, statements, null);
+	//return just the for statement for rstream
+	return (KjcOptions.rstream ? forStatement : new JBlock(null, statements, null));
     }
 
     /**

@@ -93,6 +93,10 @@ public class Flattener {
 	    System.err.println("done.");
 	}
 
+	System.err.print("Raising variable declarations... ");
+	new VarDeclRaiser().raiseVars(str);
+	System.err.println("done.");
+
 	// move field initializations into init function
 	System.err.print("Moving initial assignments... ");
 	FieldInitMover.moveStreamInitialAssignments(str);

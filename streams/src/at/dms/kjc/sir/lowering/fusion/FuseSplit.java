@@ -845,6 +845,8 @@ public class FuseSplit {
         // from each of the component filters.
         JBlock newStatements = new JBlock();
 
+	FindVarDecls findVarDecls = new FindVarDecls();
+
 	// do peeking/popping
 	newStatements.addStatement(doPeeking(sj.getSplitter(), childInfo, rep, rate, sj.getInputType(), false));
 
@@ -852,6 +854,8 @@ public class FuseSplit {
 	for (int i=0; i<childInfo.length; i++) {
             // Get the statements of the old work function
             JBlock statements = childInfo[i].filter.getWork().getBody().copy();
+	    //replace variable accesses with numbered variables
+	    statements = (JBlock)findVarDecls.findAndReplace(statements);
 	    // adjust statements to access arrays instead of peek/pop/push
 	    statements.accept(new FuseSplitVisitor(childInfo[i]));
             // Make a for loop that repeats these statements according
@@ -863,6 +867,9 @@ public class FuseSplit {
 
 	// do pushing
 	newStatements.addStatement(doPushing(sj.getJoiner(), childInfo, rep, rate, sj.getOutputType()));
+
+	//add variable declarations calculated by FindVarDecls
+	findVarDecls.addVariableDeclarations(newStatements);
 
         // make the work function based on statements
         JMethodDeclaration newWork =

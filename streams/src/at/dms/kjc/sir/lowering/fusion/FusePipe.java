@@ -579,6 +579,9 @@ public class FusePipe {
     private static void makeWorkBody(List filterInfo, 
 				     JBlock statements,
 				     boolean init) {
+
+	FindVarDecls findVarDecls = new FindVarDecls();
+
 	// for all the filters...
 	for (int i=0; i<filterInfo.size(); i++) {
 	    FilterInfo cur = (FilterInfo)filterInfo.get(i);
@@ -608,6 +611,9 @@ public class FusePipe {
 		// take a deep breath and clone the body of the work function
 		JBlock oldBody = new JBlock(null, work.getStatements(), null);
 		JBlock body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
+
+		body = (JBlock)findVarDecls.findAndReplace(body);
+
 		// move variable declarations from front of <body> to
 		// front of <statements> -- SUBSUMED by varDeclRaiser
 		//moveVarDecls(body, statements);
@@ -660,6 +666,10 @@ public class FusePipe {
 		statements.addStatement(makePeekBackup(cur, curPhase));
 	    }
 	}
+
+	//add variable declarations calculated by FindVarDecls
+	findVarDecls.addVariableDeclarations(statements);
+
     }
 
     /**

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.16 2002-08-09 21:00:48 aalamb Exp $
+ * $Id: TestExamples.java,v 1.17 2002-08-09 21:11:32 aalamb Exp $
  **/
 package streamittest;
 
@@ -52,6 +52,7 @@ public class TestExamples extends StreamITTestCase {
 
 	suite.addTest(new TestExamples("testFib", flags));
 	suite.addTest(new TestExamples("testFib2", flags));
+	suite.addTest(new TestExamples("testFile", flags));
 	suite.addTest(new TestExamples("testHello", flags));
 
 	//suite.addTest(new TestExamples("testMatrixMult", flags));
@@ -62,12 +63,16 @@ public class TestExamples extends StreamITTestCase {
 	    suite.addTest(new TestExamples("testLattice", flags));
 	}
 
+	suite.addTest(new TestExamples("testVectAdd", flags));
+	suite.addTest(new TestExamples("testVectAdd1", flags));
+
+	
 	return suite;
     }
 
 
-    public void testAutoCorr() {
-	doCompileRunVerifyTest(EXAMPLE_ROOT + "autocorr/",
+    public void testAutoCor() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "autocor/",
 			       "AutoCor.java",
 			       "AutoCor.out",
 			       0, 8);
@@ -110,6 +115,11 @@ public class TestExamples extends StreamITTestCase {
 			       0,1);
     }
 
+    public void testFile() {
+	doCompileTest(EXAMPLE_ROOT + "file/",
+		      "FileTest.java");
+    }
+
     public void testHello() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "hello/",
 			       "HelloWorld6.java",
@@ -141,4 +151,19 @@ public class TestExamples extends StreamITTestCase {
 			       0,16);
     }
 
+    public void testVectAdd() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "vectadd/",
+			       "VectAdd.java",
+			       "VectAdd.out",
+			       0,1);
+    }
+
+    public void testVectAdd1() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "vectadd/",
+			       "VectAdd1.java",
+			       "VectAdd1.out",
+			       0,1);
+    }
+
+    
 }

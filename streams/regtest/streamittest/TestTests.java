@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestTests.java,v 1.1 2002-08-09 21:00:48 aalamb Exp $
+ * $Id: TestTests.java,v 1.2 2002-08-09 21:11:32 aalamb Exp $
  **/
 package streamittest;
 
@@ -12,6 +12,11 @@ import junit.framework.*;
 public class TestTests extends StreamITTestCase {
     static String STREAM_ROOT = null;
     static String TESTS_ROOT = null;
+
+    public TestTests(String name) {
+	super(name, DEFAULT_FLAGS);
+    }
+    
     /**
      * Creates a new TestTests which will use the compiler options
      * specified by flags (defined in CompilerInterface.java).
@@ -24,6 +29,12 @@ public class TestTests extends StreamITTestCase {
 	}
     }
 
+    /** return a suite with the default flags **/
+    public static Test suite() {
+	return suite(DEFAULT_FLAGS);
+    }
+
+    
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
 	suite.addTest(new TestTests("testSimple", flags));
@@ -39,7 +50,6 @@ public class TestTests extends StreamITTestCase {
 	suite.addTest(new TestTests("testSimpleSplit", flags));
 	suite.addTest(new TestTests("testUnroll", flags));
 
-	suite.addTest(new TestTests("testFile", flags));
 	suite.addTest(new TestTests("testFieldProp", flags));
 	suite.addTest(new TestTests("testFieldProp2", flags));
 	suite.addTest(new TestTests("testFieldInit", flags));
@@ -49,8 +59,6 @@ public class TestTests extends StreamITTestCase {
 
 	//suite.addTest(new TestTests("testMergeSort", flags));
 	//suite.addTest(new TestTests("testUpDown", flags));
-	suite.addTest(new TestTests("testVectAdd", flags));
-	suite.addTest(new TestTests("testVectAdd1", flags));
 	suite.addTest(new TestTests("testWeightedRR", flags));
 	suite.addTest(new TestTests("testTwoWeightedRR", flags));
 	
@@ -118,11 +126,6 @@ public class TestTests extends StreamITTestCase {
 			       0,1);
     }
 
-    public void testFile() {
-	doCompileTest(TESTS_ROOT + "file/",
-		      "FileTest.java");
-    }
-
     public void testFieldProp() {
 	doCompileRunVerifyTest(TESTS_ROOT + "field-prop/",
 			       "FieldPropTest.java",
@@ -169,20 +172,6 @@ public class TestTests extends StreamITTestCase {
 	doCompileRunVerifyTest(TESTS_ROOT + "updown/",
 			       "UpDown.java",
 			       "UpDown.out");
-    }
-
-    public void testVectAdd() {
-	doCompileRunVerifyTest(TESTS_ROOT + "vectadd/",
-			       "VectAdd.java",
-			       "VectAdd.out",
-			       0,1);
-    }
-
-    public void testVectAdd1() {
-	doCompileRunVerifyTest(TESTS_ROOT + "vectadd/",
-			       "VectAdd1.java",
-			       "VectAdd1.out",
-			       0,1);
     }
 
     public void testWeightedRR() {

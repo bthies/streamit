@@ -22,9 +22,12 @@
 
 template<class iType,class oType> 
 class VrSimpleFilter : public VrSigProc<iType,oType> {
+protected:
+  int id;
 public: 
   virtual void work(int n);
-  VrSimpleFilter();
+  VrSimpleFilter(int i);
+  VrSimpleFilter(int output, int i);
 };
 
 template<class iType,class oType> void
@@ -34,7 +37,7 @@ VrSimpleFilter<iType,oType>::work(int n)
   
   for (int i=0; i < n; i++) {
     c = inputRead(i);
-    printf("%f\n", c);
+    printf("%d %f\n", id, c);
     outputWrite(c);
     incInput(1);
   }
@@ -42,9 +45,17 @@ VrSimpleFilter<iType,oType>::work(int n)
 }
 
 template<class iType,class oType> 
-VrSimpleFilter<iType,oType>::VrSimpleFilter()
+VrSimpleFilter<iType,oType>::VrSimpleFilter(int i):id(i)
 {
 }
+
+
+template<class iType,class oType> 
+VrSimpleFilter<iType,oType>::VrSimpleFilter(int outputs, int i):
+  VrSigProc<iType, oType>(outputs), id(i)
+{
+}
+
 
 #endif
 

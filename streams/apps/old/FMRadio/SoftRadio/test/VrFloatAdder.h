@@ -1,4 +1,4 @@
-/* -*- Mode: c++ -*-
+/* -*- Mode: c++ -*- 
  *
  *  Copyright 1997 Massachusetts Institute of Technology
  * 
@@ -14,33 +14,42 @@
  * 
  */
 
-#ifndef _VRFLOATSINK_H_
-#define _VRFLOATSINK_H_
 
-#include <VrSink.h>
+#ifndef _VRFLOATADDER_H_
+#define _VRFLOATADDER_H_
 
-class VrFloatSink : public VrSink<float> {
+#include <VrSigProc.h>
+
+class VrFloatAdder : public VrSigProc<float,float> {
 protected:
-  int it;
   int id;
-public :
-  virtual void work(int i) {
-    for (int n = 0; n < i; n++) {
-      float t;
-      t = inputRead(0);
-      incInput(1);
-      it++;
-      if (it > 100000)
-	exit(0);
-      //printf("%d %f\n", id, t);
-    }
-  }
-  VrFloatSink(int i):id(i) {
-    it = 0;
-  }
-  VrFloatSink():id(0) {
-    it = 0;
-  }
+public: 
+  virtual void work(int n);
+  VrFloatAdder();
+  virtual void initialize();
 };
-#endif
 
+void
+VrFloatAdder::work(int n)
+{
+  for (int i=0; i < n; i++) {
+    outputWrite(inputReadN(0, 0)+inputReadN(1, 0) +
+		inputReadN(2, 0) + inputReadN(3, 0));
+    incInputN(0, 1);
+    incInputN(1, 1);
+    incInputN(2, 1);
+    incInputN(3, 1);
+  }
+  return;
+}
+
+void
+VrFloatAdder::initialize() {
+}
+
+VrFloatAdder::VrFloatAdder()
+{
+}
+
+
+#endif

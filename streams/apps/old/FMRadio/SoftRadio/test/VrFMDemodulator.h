@@ -22,6 +22,7 @@
 
 class VrFMDemodulator : public VrDecimatingSigProc<float, float> {
 protected:
+  int outputs;
   float mGain;
   float sampleRate;
   float maxAmplitude;
@@ -37,15 +38,15 @@ public :
         //if using complex, use atan2
         temp = (float)(mGain * atan(temp));
 
-        incInput(1);
-        outputWrite(temp);
-	//printf("%d %f\n", n, temp);
+	incInput(1);
+	for (int p = 0; p < outputs; p++)
+	  outputWriteN(p, temp);
       }
       return;
     }
 
-  VrFMDemodulator(float sampRate, float max, float bandwidth):
-    VrDecimatingSigProc<float, float>(1, 1)
+  VrFMDemodulator(int outs, float sampRate, float max, float bandwidth):
+    VrDecimatingSigProc<float, float>(outs, 1), outputs(outs)
     {
       sampleRate = sampRate;
       maxAmplitude = max;
@@ -54,6 +55,8 @@ public :
       mGain = maxAmplitude*(sampleRate
                             /(modulationBandwidth*(float)M_PI));
     }
+
+
   
   virtual void initialize() {
     setHistory(2);

@@ -22,6 +22,7 @@
 
 class VrLowPassFilter : public VrDecimatingSigProc<float, float> {
 protected:
+  int outputs;
   int numberOfTaps;
   float* COEFF;
   float cutoffFreq, samplingRate, tapTotal;
@@ -39,23 +40,22 @@ public :
 	  sum += inputArray[i] * COEFF[i];
 	}
 	incInput(mDecimation+1);
-	outputWrite(sum);
+	for (int p = 0; p < outputs; p++)
+	  outputWriteN(p, sum);
       }
       return;
     }
 
-  VrLowPassFilter(float sampleRate, float cutFreq,
+  
+  VrLowPassFilter(int outs, float sampleRate, float cutFreq,
 		  int numTaps, int decimation):
-    VrDecimatingSigProc<float, float>(1, decimation)
+    VrDecimatingSigProc<float, float>(outs, decimation), outputs(outs),
+    numberOfTaps(numTaps), cutoffFreq(cutFreq), samplingRate(sampleRate)
     {
       float pi, m, w;
       float* temptaps;
       int i;
-  
-      samplingRate = sampleRate;
-      cutoffFreq = cutFreq;
-      numberOfTaps = numTaps;
-  
+    
       pi = M_PI;
       temptaps =  new float[numberOfTaps];
   
@@ -103,8 +103,8 @@ public :
 	}
       }
       COEFF = temptaps;
-    }
-  
+    } 
+
   virtual void initialize() {
     setHistory(numberOfTaps);
   }

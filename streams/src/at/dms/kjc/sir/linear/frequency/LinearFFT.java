@@ -1,13 +1,14 @@
 package at.dms.kjc.sir.linear.frequency;
 
 /**
- * This class contains the same code, "javafied", do take the FFT
- * as does the external call that actually gets executed at runtime. This
- * version of the FFT is used for calculating the filter's weights at compile time.<p>
+ * This class contains a "javafied" version of an FFT code
+ * that I found on the internet. Originally I used it for
+ * computing the coefficients at compile time. Now we compute the
+ * coefficients at runtime with fftw.<p>
  *
  * This code is taken from http://www.intersrv.com/~dcross/fft.html
  * originally written by Don Cross (dcross@intersrv.com) and
- * javafied by AAL (aalamb@mit.edu) 10/28/2002
+ * javafied by AAL (aalamb@mit.edu) 10/28/2002.
  **/
 public class LinearFFT {
     public static final int BITS_PER_WORD = 4 * 8;

@@ -109,6 +109,11 @@ public class StrToRStream {
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
 
+	if (Flattener.hasDynamicRates(str)) {
+	    System.err.println("Failure: Dynamic rates are not yet supported in the RStream backend.");
+	    System.exit(1);
+	}
+
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
 

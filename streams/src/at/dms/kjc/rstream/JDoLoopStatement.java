@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoLoopStatement.java,v 1.6 2004-08-26 19:19:51 mgordon Exp $
+ * $Id: JDoLoopStatement.java,v 1.7 2005-02-17 00:09:29 thies Exp $
  */
 
 package at.dms.kjc.rstream;
@@ -215,25 +215,26 @@ new JLocalVariableExpression(null, induction),
 	
     }
     
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.rstream.JDoLoopStatement other = new at.dms.kjc.rstream.JDoLoopStatement();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
 
-    /** Returns a deep clone of this object. */
-    public Object deepClone() {
-	at.dms.kjc.rstream.JDoLoopStatement other = new at.dms.kjc.rstream.JDoLoopStatement();
-	at.dms.kjc.AutoCloner.register(this, other);
-	deepCloneInto(other);
-	return other;
-    }
-    
-    /** Clones all fields of this into *other* */
-    protected void deepCloneInto(at.dms.kjc.rstream.JDoLoopStatement other) {
-	super.deepCloneInto(other);
-	other.initValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.initValue);
-	other.incrValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.incrValue);
-	other.condValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.condValue);
-	other.countUp = countUp;
-	other.zeroInit = zeroInit;
-	other.induction = (at.dms.kjc.JLocalVariable)at.dms.kjc.AutoCloner.cloneToplevel(this.induction);
-    }
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.rstream.JDoLoopStatement other) {
+  super.deepCloneInto(other);
+  other.induction = (at.dms.kjc.JLocalVariable)at.dms.kjc.AutoCloner.cloneToplevel(this.induction);
+  other.initValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.initValue);
+  other.incrValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.incrValue);
+  other.condValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.condValue);
+  other.countUp = this.countUp;
+  other.zeroInit = this.zeroInit;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

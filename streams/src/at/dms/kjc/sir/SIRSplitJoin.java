@@ -173,6 +173,36 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
 
     /**
+     * If all the streams in this are the same "height" (see
+     * getComponentHeight), returns this length.  Otherwise returns
+     * -1.
+     */
+    public int getUniformHeight() {
+	int height = getComponentHeight(get(0));
+	// for now, only deal with splitjoins that are rectangular.
+	// should extend with identities for the general case.
+	for (int i=1; i<size(); i++) {
+	    if (height!=getComponentHeight(get(i))) {
+		return -1;
+	    }
+	}
+	return height;
+    }
+
+    /**
+     * Helper function for getHeight - returns the height of <str>.
+     * Everything but pipelines have a height of 1 since they are
+     * treated as a hierarchical unit.
+     */
+    private static int getComponentHeight(SIRStream str) {
+	if (str instanceof SIRPipeline) {
+	    return ((SIRPipeline)str).size();
+	} else {
+	    return 1;
+	}
+    }
+
+    /**
      * Returns a list of tuples (two-element arrays) of SIROperators,
      * representing a tape from the first element of each tuple to the
      * second.

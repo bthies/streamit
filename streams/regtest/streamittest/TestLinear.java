@@ -2,13 +2,14 @@ package streamittest;
 
 import junit.framework.*;
 import at.dms.kjc.sir.linear.*;
+import at.dms.kjc.sir.linear.frequency.*;
 
 import java.util.*;
 
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.12 2002-10-28 22:31:55 aalamb Exp $
+ * $Id: TestLinear.java,v 1.13 2002-11-25 15:16:51 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {

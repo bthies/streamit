@@ -67,12 +67,26 @@ class Propagator extends SLIRReplacingVisitor {
     public Object visitWhileStatement(JWhileStatement self,
 				      JExpression cond,
 				      JStatement body) {
-	JExpression newExp = (JExpression)cond.accept(this);
-	// reset if we found a constant
-	if (newExp.isConstant()) {
-	    self.setCondition(newExp);
+	if(!write) {
+	    cond.accept(this);
+	    body.accept(this);
+	} else {
+	    Propagator newProp=new Propagator((Hashtable)constants.clone(),false);
+	    cond.accept(newProp);
+	    body.accept(newProp);
+	    Enumeration remove=newProp.removed.keys();
+	    while(remove.hasMoreElements()) {
+		JLocalVariable var=(JLocalVariable)remove.nextElement();
+		constants.remove(var);
+		removed.put(var,Boolean.TRUE);
+	    }
+	    JExpression newExp = (JExpression)cond.accept(this);
+	    // reset if we found a constant
+	    if (newExp.isConstant()) {
+		self.setCondition(newExp);
+	    }
+	    body.accept(this);
 	}
-	body.accept(this);
 	return self;
     }
     
@@ -88,7 +102,7 @@ class Propagator extends SLIRReplacingVisitor {
 	    JExpression newExp = (JExpression)expr.accept(this);
 	    // if we have a constant AND it's a final variable...
 	    if (newExp.isConstant() && CModifier.contains(modifiers,
-				      ACC_FINAL)) {
+							  ACC_FINAL)) {
 		// reset the value
 		self.setExpression(newExp);
 		// remember the value for the duration of our visiting
@@ -105,13 +119,37 @@ class Propagator extends SLIRReplacingVisitor {
     public Object visitSwitchStatement(JSwitchStatement self,
 				       JExpression expr,
 				       JSwitchGroup[] body) {
-	JExpression newExp = (JExpression)expr.accept(this);
-	// reset if constant
-	if (newExp.isConstant()) {
-	    self.setExpression(newExp);
-	}
-	for (int i = 0; i < body.length; i++) {
-	    body[i].accept(this);
+	if(!write) {
+	    expr.accept(this);
+	    for(int i = 0; i < body.length; i++) {
+		body[i].accept(this);
+	    }
+	} else {
+	    JExpression newExp = (JExpression)expr.accept(this);
+	    // reset if constant
+	    if (newExp.isConstant()) {
+		self.setExpression(newExp);
+	    }
+	    Propagator[] propagators=new Propagator[body.length];
+	    for (int i = 0; i < body.length; i++) {
+		Propagator prop=new Propagator((Hashtable)constants.clone(),true);
+		propagators[i]=prop;
+		body[i].accept(prop);
+	    }
+	    if(body.length>0)
+		constants=propagators[0].constants;
+	    for(int i=1;i<propagators.length;i++) {
+		Propagator prop=propagators[i];
+		LinkedList remove=new LinkedList();
+		Enumeration enum=constants.keys();
+		while(enum.hasMoreElements()) {
+		    Object key=enum.nextElement();
+		    if(!prop.constants.containsKey(key))
+			remove.add(key);
+		}
+		for(int j=0;i<remove.size();j++)
+		    constants.remove(remove.get(j));
+	    }
 	}
 	return self;
     }
@@ -137,23 +175,44 @@ class Propagator extends SLIRReplacingVisitor {
 				   JExpression cond,
 				   JStatement thenClause,
 				   JStatement elseClause) {
-	JExpression newExp = (JExpression)cond.accept(this);
-	if (newExp.isConstant()) {
-	    self.setCondition(newExp);
-	}
-        if (newExp instanceof JBooleanLiteral)
-        {
-            JBooleanLiteral bval = (JBooleanLiteral)newExp;
-            if (bval.booleanValue())
-                return thenClause.accept(this);
-            else if (elseClause != null)
-                return elseClause.accept(this);
-            else
-                return new JEmptyStatement(self.getTokenReference(), null);
-        }
-	thenClause.accept(this);
-	if (elseClause != null) {
-	    elseClause.accept(this);
+	if(!write) {
+	    cond.accept(this);
+	    thenClause.accept(this);
+	    if(elseClause!=null)
+		elseClause.accept(this);
+	} else {
+	    JExpression newExp = (JExpression)cond.accept(this);
+	    if (newExp.isConstant()) {
+		self.setCondition(newExp);
+	    }
+	    if (newExp instanceof JBooleanLiteral)
+		{
+		    JBooleanLiteral bval = (JBooleanLiteral)newExp;
+		    if (bval.booleanValue())
+			return thenClause.accept(this);
+		    else if (elseClause != null)
+			return elseClause.accept(this);
+		    else
+			return new JEmptyStatement(self.getTokenReference(), null);
+		}
+	    if (elseClause != null) {
+		Propagator thenProp=new Propagator((Hashtable)constants.clone(),true);
+		thenClause.accept(thenProp);
+		Propagator elseProp=new Propagator((Hashtable)constants.clone(),true);
+		elseClause.accept(elseProp);
+		constants=thenProp.constants;
+		Enumeration enum=constants.keys();
+		LinkedList remove=new LinkedList();
+		while(enum.hasMoreElements()) {
+		    Object key=enum.nextElement();
+		    if(!elseProp.constants.containsKey(key))
+			remove.add(key);
+		}
+		for(int i=0;i<remove.size();i++)
+		    constants.remove(remove.get(i));
+	    } else {
+		thenClause.accept(this);
+	    }
 	}
 	return self;
     }

@@ -238,29 +238,25 @@ class SumRealsRealHandler extends Pipeline {
 	public void init() {
 	  setSplitter(WEIGHTED_ROUND_ROBIN(1,DFT_LENGTH - 2, 1));
 	  add(new IdentityFloat());
-	  add(new Pipeline() {
-	      public void init() {
-		add(new Doubler());
-//  		add(new ConstMultiplier(2.0f));
-		if (DFT_LENGTH % 2 != 0) {
-		  add(new FrontPadder(DFT_LENGTH - 2,1));
-		}
-		add(new SplitJoin() {
-		    public void init() {
-		      setSplitter(ROUND_ROBIN());
-		      add(new Adder((DFT_LENGTH - 1)/2));
-		      add(new Adder((DFT_LENGTH - 1)/2));
-		      setJoiner(ROUND_ROBIN());
-		    }
-		  });
-		add(new Subtractor());
-	      }
-	    });
+	  add(new Doubler());
+//  	  add(new ConstMultiplier(2.0f));
 	  add(new IdentityFloat());
-	  setJoiner(WEIGHTED_ROUND_ROBIN(1, 1, 1));
+	  setJoiner(WEIGHTED_ROUND_ROBIN(1, DFT_LENGTH - 2, 1));
 	}
       });
-    add(new Adder(3));
+    if (DFT_LENGTH % 2 != 0) {
+      add(new Padder(DFT_LENGTH,0,1));
+    }
+    add(new SplitJoin() {
+	public void init() {
+	  setSplitter(ROUND_ROBIN());
+	  add(new Adder((DFT_LENGTH + 1)/2));
+	  add(new Adder((DFT_LENGTH + 1)/2));
+	  setJoiner(ROUND_ROBIN());
+	}
+      });
+    add(new Subtractor());
+    add(new ConstMultiplier((float)(1f / ((DFT_LENGTH - 1) * 2))));
   }
 }
 
@@ -290,7 +286,7 @@ class SumReals2 extends Filter {
 	sum -= input.popFloat();
       input.popFloat();
     }
-    sum *= 2; //double the internal ones
+    sum += sum; //double the internal ones
     sum += first; 
     if (i % 2 == 0)
       sum += input.popFloat(); 

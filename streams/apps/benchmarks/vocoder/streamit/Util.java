@@ -63,7 +63,34 @@ class FrontPadder extends Filter {
       output.pushFloat(0f);
 
     for(int i=0; i < length; i++)
-      output.pushFloat(output.popFloat());
+      output.pushFloat(input.popFloat());
+  }
+}
+
+class Padder extends Filter {
+  int length, front, back;
+
+    public Padder(int N, int i, int j) {
+	super(N, i, j);
+    }
+
+    public void init(int N, int i, int j) {
+      length = N;
+      front = i;
+      back = j;
+      input = new Channel(Float.TYPE, N);
+      output = new Channel(Float.TYPE, N+i+j);
+    }
+
+  public void work() {
+    for(int i=0;i < front; i++)
+      output.pushFloat(0f);
+
+    for(int i=0; i < length; i++)
+      output.pushFloat(input.popFloat());
+
+    for(int i=0; i < back; i++)
+      output.pushFloat(0);
   }
 }
 

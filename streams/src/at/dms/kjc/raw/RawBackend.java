@@ -115,6 +115,7 @@ public class RawBackend {
 	    }
 	    
 	    Lifter.liftAggressiveSync(str);
+	    NumberDot.printGraph(str, "numbered.dot");
 	    StreamItDot.printGraph(str, "before-partition.dot");
 	    
 	    // gather application-characterization statistics
@@ -143,8 +144,9 @@ public class RawBackend {
 	    // the filters
 	    int count = new GraphFlattener(str).getNumTiles();
 	    int numTiles = RawBackend.rawRows * RawBackend.rawColumns;
-	    boolean partitioning = KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_greedier || KjcOptions.partition_ilp;
-	    if (count>numTiles && !partitioning) {
+	    boolean manual = !KjcOptions.manual.equals("null");
+	    boolean partitioning = !manual && (KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_greedier || KjcOptions.partition_ilp);
+	    if (count>numTiles && !partitioning && !manual) {
 		System.out.println("Need " + count + " tiles, so turning on partitioning...");
 		KjcOptions.partition_dp = true;
 		partitioning = true;
@@ -154,6 +156,12 @@ public class RawBackend {
 		System.err.println("Running Partitioning...");
 		str = Partitioner.doit(str, count, numTiles, true);
 		System.err.println("Done Partitioning...");
+	    }
+
+	    if (manual) {
+		System.err.println("Running Manual Partitioning...");
+		str = ManualPartition.doit(str);
+		System.err.println("Done Manual Partitioning...");
 	    }
 
 	    if (KjcOptions.sjtopipe) {

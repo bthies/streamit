@@ -43,14 +43,14 @@ public abstract class SIRStream extends SIROperator {
     /*
      * Set the fields member variable 
      */
-    protected void setFields (JFieldDeclaration[] f) {
+    public void setFields (JFieldDeclaration[] f) {
 	this.fields = f;
     }
 
     /*
      * Set the methods member variable 
      */
-    protected void setMethods (JMethodDeclaration[] m) {
+    public void setMethods (JMethodDeclaration[] m) {
 	this.methods = m;
     }
 

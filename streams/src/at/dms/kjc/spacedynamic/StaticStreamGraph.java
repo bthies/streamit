@@ -846,8 +846,9 @@ public class StaticStreamGraph
     public int getMult(FlatNode node, boolean init)
     {
 	assert !(!init && !steadyExecutionCounts.containsKey(node)) :
-	    "Asking for steady mult for a filter that is not in the steady schedule";
+	    "Asking for steady mult for a filter that is not in the steady schedule " + node;
 	
+
 	Integer val = 
 	    ((Integer)(init ? initExecutionCounts.get(node) : steadyExecutionCounts.get(node)));
 	if (val == null)

@@ -69,7 +69,9 @@ public class MakefileGenerator
 		fw.write("EXTRA_BTL_ARGS += -magic_instruction\n ");
 	    }
 	    else {
-		fw.write("ATTRIBUTES += USES_PRINT_SERVICE\n");
+		//we don't need the print service anymore because we
+		//use raw_test_pass_reg() to print from the simulator
+		//fw.write("ATTRIBUTES += USES_PRINT_SERVICE\n");
 	    }
 	    
 	    //fw.write("SIM-CYCLES = 500000\n\n");

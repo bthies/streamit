@@ -7,20 +7,39 @@ template <class dataType>
 class VrWeightedSplit : public VrSigProc<dataType, dataType>
 {
     int roundInput;
-	int nInputs;
+	int nOutputs;
 	int *outputWeights;
 
-	VrWeightSplit () : roundInput (0), nInputs (0), outputWeights (NULL) { }
+public:
+
+	VrWeightSplit () : roundInput (0), nOutputs (0), outputWeights (NULL),
+   					   VrSigProc (0) { }
 
     void connect_dest (VrSigProc<dataType> *dst, int weight)
     {
-		nInputs++;
-		outputWeights = (int*) realloc (outputWeights, nInputs * sizeof (int));
-		outputWeights [nInputs - 1] = weight;
+		nOutputs++;
+		outputWeights = (int*) realloc (outputWeights, nOutputs * sizeof (int));
+		outputWeights [nOutputs - 1] = weight;
 		roundInput += weight;
 
 		// connect the output to this stream
-		dst->connect (getOutputBuffer ());
+		// first add a new output buffer to this filter
+		{
+			oldOutBuffer = outBuffer;
+			outBuffer = new (VrBuffer<oType> *[nOutputs]);
+
+			memcpy (outBuffer, oldOutBuffer, (nOutputs-1) * sizeof (dataType*));
+			delete [] oldOutBuffer;
+
+			outBuffer[i] = new VrBuffer<dataType>(this);
+#ifdef PERFMON
+			outBuffer[i]->us_cycles=cycles;
+#endif
+		}
+
+		// setup the connection and increase the necessary buffering
+		dst->connect (getOutputBufferN (nOutputs - 1));
+		setHistory (roundInput);
     }
 
     void work (int n)

@@ -205,7 +205,7 @@ public class RawBackend {
 	    createExecutionCounts(str, graphFlattener);
 
 	    //dump the flatgraph of the application, must be called after createExecutionCounts
-	    graphFlattener.dumpGraph("flatgraph.dot");
+	    graphFlattener.dumpGraph("flatgraph.dot", initExecutionCounts, steadyExecutionCounts);
 
 
 	    //Generate number gathering simulator code

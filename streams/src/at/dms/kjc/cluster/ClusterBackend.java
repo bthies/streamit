@@ -19,6 +19,8 @@ import java.util.*;
 import java.io.*;
 import at.dms.util.Utils;
 
+//import streamit.scheduler2.*;
+//import streamit.scheduler2.constrained.*;
 
 public class ClusterBackend {
 
@@ -66,9 +68,9 @@ public class ClusterBackend {
 	System.out.println("done.");
 	
 	// propagate constants and unroll loop
-	System.out.println("Running Constant Prop and Unroll...");
+	System.out.print("Running Constant Prop and Unroll...");
 	ConstantProp.propagateAndUnroll(str);
-	System.out.println("Done Constant Prop and Unroll...");
+	System.out.println(" done.");
 
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
@@ -83,9 +85,9 @@ public class ClusterBackend {
         // do constant propagation on fields
         if (KjcOptions.nofieldprop) {
 	} else {
-	    System.out.println("Running Constant Field Propagation...");
+	    System.out.print("Running Constant Field Propagation...");
 	    FieldProp.doPropagate(str);
-	    System.out.println("Done Constant Field Propagation...");
+	    System.out.println(" done.");
 	    //System.out.println("Analyzing Branches..");
 	    //new BlockFlattener().flattenBlocks(str);
 	    //new BranchAnalyzer().analyzeBranches(str);
@@ -135,6 +137,41 @@ public class ClusterBackend {
 	if (KjcOptions.print_partitioned_source) {
 	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createIter(str));
 	}
+
+	//run constrained scheduler
+
+       	System.out.print("Constrained Scheduler Begin...");
+
+	streamit.scheduler2.iriter.Iterator selfIter = 
+	    IterFactory.createIter(str);
+
+	streamit.scheduler2.constrained.Scheduler cscheduler =
+	    new streamit.scheduler2.constrained.Scheduler(selfIter);
+
+	//cscheduler.computeSchedule(); //"Not Implemented"
+
+	int pipe_size = ((SIRPipeline)str).size();
+	
+	SIRFilter first = (SIRFilter)((SIRPipeline)str).get(0);
+	SIRFilter last = (SIRFilter)((SIRPipeline)str).get(pipe_size-1);
+
+	streamit.scheduler2.iriter.Iterator firstIter = 
+	    IterFactory.createIter(first);
+	streamit.scheduler2.iriter.Iterator lastIter = 
+	    IterFactory.createIter(last);	
+
+	streamit.scheduler2.SDEPData sdep = cscheduler.computeSDEP(firstIter, lastIter);
+
+	for (int t = 0; t < 20; t++) {
+	    int phase = sdep.getSrcPhase4DstPhase(t);
+	    int phaserev = sdep.getDstPhase4SrcPhase(t);
+	    System.out.println("sdep ["+t+"] = "+phase+
+			       " reverse_sdep["+t+"] = "+phaserev);
+	}
+
+       	System.out.println(" done.");
+
+	// end constrained scheduler
 
        	System.out.println("Flattener Begin...");
 	executionCounts = SIRScheduler.getExecutionCounts(str);

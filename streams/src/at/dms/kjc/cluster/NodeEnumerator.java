@@ -38,11 +38,13 @@ public class NodeEnumerator implements FlatVisitor {
 
     public void visitNode(FlatNode node) {
 
+	/*
 	System.out.print("NodeEnumerator: Visiting node name:" + 
 			 node.getName() + 
 			 " id:"+
 			 (counter)+
 			 "\n");
+	*/
 
 	nodeIds.put(node.contents, new Integer(counter));
 

@@ -19,14 +19,17 @@ public class RegisterStreams implements FlatVisitor {
 
     public void visitNode(FlatNode node) {
 
+	/*
 	System.out.println();
-    
+
+	
 	System.out.print("RegisterStreams: Visiting node name:" + 
 			 node.getName() + 
 			 " getNodeid:"+
 			 NodeEnumerator.getNodeId(node)+
 			 "\n");
-
+	*/
+			 
 	if (node.contents instanceof SIRFilter) {
 
 	    SIRFilter f = (SIRFilter)node.contents;
@@ -38,9 +41,11 @@ public class RegisterStreams implements FlatVisitor {
 		int dest = NodeEnumerator.getNodeId(node);
 
 
+		/*
 		System.out.print("Registering Filter In stream from:"+
 				   source+" to:"+dest); 
 		System.out.println(" type:"+f.getInputType().toString()); 
+		*/
 
 		filterInStreams.put(node.contents, new NetStream(source, dest));
 	    }
@@ -51,10 +56,12 @@ public class RegisterStreams implements FlatVisitor {
 		int source = NodeEnumerator.getNodeId(node);
 		int dest = NodeEnumerator.getNodeId(node.edges[0]);
 
+		/*
 		System.out.print("Registering Filter Out stream from:"+
 				   source+" to:"+dest); 
 		System.out.println(" type:"+f.getOutputType().toString()); 
-
+		*/
+		
 		filterOutStreams.put(node.contents, new NetStream(source, dest));
 	    }
 	}
@@ -64,7 +71,7 @@ public class RegisterStreams implements FlatVisitor {
 	
 	    CType baseType = Util.getBaseType(Util.getOutputType(node));
 
-	    System.out.println(" basetype:"+baseType.toString()); 
+	    //System.out.println(" basetype:"+baseType.toString()); 
 	    
 	    if (node.incoming != null && node.incoming.length == 1) {
 
@@ -72,8 +79,8 @@ public class RegisterStreams implements FlatVisitor {
 		int dest = NodeEnumerator.getNodeId(node);
 
 
-		System.out.println("Registering Filter In stream from:"+
-				   source+" to:"+dest); 
+		//System.out.println("Registering Filter In stream from:"+
+		//		   source+" to:"+dest); 
 
 		filterInStreams.put(node.contents, new NetStream(source, dest));
 	    }
@@ -85,8 +92,8 @@ public class RegisterStreams implements FlatVisitor {
 		int source = NodeEnumerator.getNodeId(node);
 		int dest = NodeEnumerator.getNodeId(node.edges[i]);
 
-		System.out.println("Registering Filter Out stream from:"+
-				   source+" to:"+dest); 
+		//System.out.println("Registering Filter Out stream from:"+
+		//		   source+" to:"+dest); 
 
 		v.add(new NetStream(source, dest));
 		
@@ -101,7 +108,7 @@ public class RegisterStreams implements FlatVisitor {
 	
 	    CType baseType = Util.getBaseType(Util.getJoinerType(node));
 
-	    System.out.println(" basetype:"+baseType.toString()); 
+	    //System.out.println(" basetype:"+baseType.toString()); 
 
 	    Vector v = new Vector();
 	    
@@ -111,8 +118,8 @@ public class RegisterStreams implements FlatVisitor {
 		int dest = NodeEnumerator.getNodeId(node);
 
 
-		System.out.println("Registering Filter In stream from:"+
-				   source+" to:"+dest); 
+		//System.out.println("Registering Filter In stream from:"+
+		//		   source+" to:"+dest); 
 		
 		v.add(new NetStream(source, dest));
 		
@@ -125,8 +132,8 @@ public class RegisterStreams implements FlatVisitor {
 		int source = NodeEnumerator.getNodeId(node);
 		int dest = NodeEnumerator.getNodeId(node.edges[0]);
 
-		System.out.println("Registering Filter Out stream from:"+
-				   source+" to:"+dest); 
+		//System.out.println("Registering Filter Out stream from:"+
+		//		   source+" to:"+dest); 
 
 		filterOutStreams.put(node.contents, new NetStream(source, dest));
 	    }

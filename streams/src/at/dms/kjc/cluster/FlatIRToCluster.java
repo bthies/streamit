@@ -151,7 +151,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 			    SIRFilterIter iter) {
 
 
-	System.out.print("filter.equals(self): "+(filter.equals(self))+"\n");
+	//System.out.print("filter.equals(self): "+(filter.equals(self))+"\n");
 
 	//Entry point of the visitor
 

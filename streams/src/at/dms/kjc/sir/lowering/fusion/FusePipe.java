@@ -128,6 +128,22 @@ public class FusePipe {
     }
 
     /**
+     * Fuses two filters starting from <start> in <pipe>, returning 1
+     * if they were fused and 0 otherwise.
+     */ 
+    public static int fuseTwo(SIRPipeline pipe, int start) {
+	if (isFusable(pipe.get(start), pipe.getChildren()) &&
+	    isFusable(pipe.get(start+1), pipe.getChildren())) {
+		fuse((SIRFilter)pipe.get(start),
+		     (SIRFilter)pipe.get(start+1));
+		return 1;
+	} else {
+	    return 0;
+	}
+    }
+
+
+    /**
      * Returns how many filters in this can be eliminated in a fusion
      * operation.
      */

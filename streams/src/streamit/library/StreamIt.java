@@ -17,7 +17,7 @@ public class StreamIt extends Pipeline
     int numExecutions = 0;
     void runSchedule (Object schedule)
     {
-        if (schedule instanceof Operator)
+        if (schedule instanceof Filter)
         {
             numExecutions ++;
             if (numExecutions == 10000)
@@ -62,6 +62,7 @@ public class StreamIt extends Pipeline
         boolean scheduledRun = true;
         boolean printGraph = false;
         boolean doRun = true;
+        int nIters = -1;
 
         // read the args:
         if (args != null)
@@ -77,6 +78,11 @@ public class StreamIt extends Pipeline
                 if (args [index].equals ("-printgraph"))
                 {
                     printGraph = true;
+                } else
+                if (args [index].equals ("-i"))
+                {
+                    index++;
+                    nIters = Integer.valueOf (args[index]);
                 } else
                 if (args [index].equals ("-norun"))
                 {
@@ -126,9 +132,10 @@ public class StreamIt extends Pipeline
             runSchedule (scheduler.getSchedule ().getInitSchedule ());
 
             // and run the steady schedule forever:
-            while (true)
+            while (nIters != 0)
             {
                 runSchedule (scheduler.getSchedule ().getSteadySchedule ());
+                if (nIters > 0) nIters--;
             }
         } else {
             while (true)

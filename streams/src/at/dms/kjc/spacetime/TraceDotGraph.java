@@ -19,17 +19,24 @@ public class TraceDotGraph
 	    Iterator it = Util.traceNodeTraversal(steadyTrav);
 	    while (it.hasNext()) {
 		TraceNode node = (TraceNode)it.next();		
-		fw.write(node.hashCode() + "[ label=\"" + node.toString() + "\"];\n");
+		fw.write(node.hashCode() + "[ label=\"" + node.toString());
+		if (node.isFilterTrace()) {
+		    FilterInfo filter = FilterInfo.getFilterInfo((FilterTraceNode)node);
+		    fw.write("\\nMult: (" + filter.initMult + ", " + filter.primePump + ", " + filter.steadyMult + ")");
+		    fw.write("\\nPre-peek, pop, push: (" + filter.prePeek + ", " + filter.prePop + ", " + filter.prePush + ")");
+		    fw.write("\\npeek, pop, push: (" + filter.peek + ", " + filter.pop + ", " + filter.push + ")");
+		}
+		fw.write("\"];\n");
 	    }
 	    Iterator buffers = OffChipBuffer.getBuffers().iterator();
 	    while (buffers.hasNext()) {
 		OffChipBuffer buffer = (OffChipBuffer)buffers.next();
 		fw.write(buffer.getSource().hashCode() + " -> " + buffer.getDest().hashCode() + 
-			 "[label=\"" + buffer.getDRAM() + "\"");
+			 "[label=\"" + buffer.getDRAM());
 		if (buffer.redundant())
-		    fw.write(", style=dashed");
+		    fw.write("\", style=dashed");
 		else
-		    fw.write(", style=bold");
+		    fw.write(buffer.getSize() + "\", style=bold");
 		fw.write("];\n");
 	    }
 	    fw.write("}\n");

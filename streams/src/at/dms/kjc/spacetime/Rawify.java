@@ -86,7 +86,6 @@ public class Rawify
 		    
 		}
 		else if (traceNode.isInputTrace() && !KjcOptions.magicdram) {
-		    System.out.println("Length: " + ((InputTraceNode)traceNode).getSources().length);
 		    assert StreamingDram.differentDRAMs((InputTraceNode)traceNode) :
 			"inputs for a single InputTraceNode coming from same DRAM";
 		    //create the switch code to perform the joining
@@ -192,8 +191,18 @@ public class Rawify
 	}
     }
     
-
+    //generate the dram commands for the input for a filter and the output from a filter
+    //after it is joined and before it is split, respectively
     private static void generateFilterDRAMCommand(FilterTraceNode filterNode, FilterInfo filterInfo,
+					    RawTile tile, boolean init, boolean primepump) 
+    {
+	generateInputFilterDRAMCommand(filterNode, filterInfo, tile, init, primepump);
+	generateFilterOutputDRAMCommand(filterNode, filterInfo, tile, init, primepump);
+    }
+    
+    //generate the dram command for the input for a filter from the dram after it is joined 
+    //into the proper dram
+    private static void generateInputFilterDRAMCommand(FilterTraceNode filterNode, FilterInfo filterInfo,
 					    RawTile tile, boolean init, boolean primepump) 
     {
 	//only generate a DRAM command for filters connected to input or output trace nodes
@@ -203,30 +212,43 @@ public class Rawify
 	    OffChipBuffer buffer = OffChipBuffer.getBuffer(filterNode.getPrevious(),
 							   filterNode).getNonRedundant();
 	    
-	    if (buffer == null)
+	    if (buffer == null)		
 		return;
 	    
 	    //get the number of items received
 	    int items = filterInfo.totalItemsReceived(init, primepump); 
 	    
+	    //return if there is nothing to receive
+	    if (items == 0)
+		return;
+	    
 	    //the transfer size rounded up to by divisible by a cacheline
 	    int bytes = 
 		Util.cacheLineDiv((items * Util.getTypeSize(filterNode.getFilter().getInputType())) *
 				  4);
-	    
+
 	    tile.getComputeCode().addDRAMCommand(true, init || primepump, bytes, buffer);
 	} 
-	else if (filterNode.getNext() != null &&
+    }
+
+    //generate the streaming dram command to send the output from the filter tile to the
+    //dram before it is split
+    private static void generateFilterOutputDRAMCommand(FilterTraceNode filterNode, FilterInfo filterInfo,
+					    RawTile tile, boolean init, boolean primepump) 
+    {
+	if (filterNode.getNext() != null &&
 		 filterNode.getNext().isOutputTrace()) {
 	    //get this buffer or null if there are no outputs
 	    OffChipBuffer buffer = OffChipBuffer.getBuffer(filterNode,
 							   filterNode.getNext()).getNonRedundant();
-
 	    if (buffer == null)
 		return;
 	    
 	    //get the number of items sent
 	    int items = filterInfo.totalItemsSent(init, primepump);	    
+	    //return if there is nothing to send
+	    if (items == 0)
+		return;
 
 	    int bytes = 
 		Util.cacheLineDiv((items * Util.getTypeSize(filterNode.getFilter().getOutputType())) *

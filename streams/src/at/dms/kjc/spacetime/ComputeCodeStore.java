@@ -91,7 +91,8 @@ public class ComputeCodeStore {
 	
 	JAssignmentExpression assExp = 
 	    new JAssignmentExpression(null, dynNetSend, bufAccess);
-
+	
+	SpaceTimeBackend.println("Adding DRAM Command to " + parent + " " + buffer + " " + cacheLines);
 	//add the statements to the appropriate stage
 	if (init) {
 	    initBlock.addStatement(new JExpressionStatement(null, call, null));

@@ -49,7 +49,7 @@ public class StatelessDuplicate {
     /**
      * We don't yet support fission of two-stage filters that peek.
      */
-    private static boolean isFissable(SIRFilter filter) {
+    public static boolean isFissable(SIRFilter filter) {
 	if (filter instanceof SIRTwoStageFilter) {
 	    SIRTwoStageFilter twoStage = (SIRTwoStageFilter)filter;
 	    if (twoStage.getInitPop()>0) {

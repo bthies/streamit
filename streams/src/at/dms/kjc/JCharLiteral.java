@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCharLiteral.java,v 1.4 2002-06-24 00:45:38 thies Exp $
+ * $Id: JCharLiteral.java,v 1.5 2003-04-23 09:29:42 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -157,7 +157,7 @@ public class JCharLiteral extends JLiteral {
    * changes the type of this expression to an other
    * @param  dest the destination type
    */
-  public JExpression convertType(CType dest, CExpressionContext context) throws PositionedError {
+  public JExpression convertType(CType dest, CExpressionContext context) {
     switch (dest.getTypeID()) {
     case TID_BYTE:
       return new JByteLiteral(getTokenReference(), (byte)value);

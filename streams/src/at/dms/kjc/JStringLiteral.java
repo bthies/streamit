@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JStringLiteral.java,v 1.4 2002-06-24 00:45:39 thies Exp $
+ * $Id: JStringLiteral.java,v 1.5 2003-04-23 09:29:42 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -219,5 +219,11 @@ public class JStringLiteral extends JLiteral {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private	String		value;
+    private	String		value;
+    
+    public JExpression convertType(CType dest, CExpressionContext context) {
+	if(dest.getTypeID()!=TID_CLASS)
+	    throw new InconsistencyException("cannot convert StringType");
+	return this;
+    }
 }

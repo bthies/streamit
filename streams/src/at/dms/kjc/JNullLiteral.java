@@ -15,12 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNullLiteral.java,v 1.4 2002-06-24 00:45:39 thies Exp $
+ * $Id: JNullLiteral.java,v 1.5 2003-04-23 09:29:42 jasperln Exp $
  */
 
 package at.dms.kjc;
 
 import at.dms.compiler.TokenReference;
+import at.dms.util.InconsistencyException;
 
 /**
  * A simple character constant
@@ -125,4 +126,8 @@ public class JNullLiteral extends JLiteral {
       code.plantNoArgInstruction(opc_aconst_null);
     }
   }
+
+    public JExpression convertType(CType dest, CExpressionContext context) {
+	throw new InconsistencyException("cannot convert NullType");
+    }
 }

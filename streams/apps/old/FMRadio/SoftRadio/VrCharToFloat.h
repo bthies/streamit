@@ -25,8 +25,15 @@ protected:
   int rate;
 public: 
   virtual void work(int n);
+  virtual void initialize();
 };
-
+/*
+void 
+VrCharToFloat::initialize() 
+{
+  setHistory(4);
+}
+*/
 void
 VrCharToFloat::work(int n)
 {

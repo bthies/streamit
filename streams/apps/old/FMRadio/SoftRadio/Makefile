@@ -21,10 +21,10 @@ CLASSES = $(shell ls *.java | mawk 'gsub ( ".java$$", ".class" )')
 OBJS = $(shell ls *.cc | mawk 'gsub ( ".cc$$", ".o" )')  
 EXECS = $(shell ls *.cc | mawk 'gsub ( ".cc$$", "" )' | grep -v specui)
 DEBUG_EXECS = $(shell ls *.cc | mawk 'gsub ( ".cc$$", ".debug" )' | grep -v specui)
-INC	= -I$(LD_LIBRARY_PATH)/vr -I$(LD_LIBRARY_PATH)/vrio -I$(LD_LIBRARY_PATH)/vrp -I$(LD_LIBRARY_PATH)/vrvoice -I$(LD_LIBRARY_PATH)/vrgui -I$(LD_LIBRARY_PATH)/fftw/src -I/usr/local/jdk/include -I/usr/local/jdk/include/genunix -I$(LD_LIBRARY_PATH)/libpperf
-LIBS	= -lm  -L$(LD_LIBRARY_PATH)/ -lspectra -lspecvoice -L$(LD_LIBRARY_PATH)/fftw/src -lfftw $(LD_LIBRARY_PATH)/libsls.a $(LD_LIBRARY_PATH)/libsls_util.a
-DEBUG_LIBS = $(LD_LIBRARY_PATH)/libspectra.a $(LD_LIBRARY_PATH)/libspecvoice.a $(LD_LIBRARY_PATH)/fftw/src/libfftw.a $(LD_LIBRARY_PATH)/libsls.a $(LD_LIBRARY_PATH)/libsls_util.a
-LD_FLAGS = -Xlinker -rpath -Xlinker $(LD_LIBRARY_PATH)/vr -Xlinker -rpath -Xlinker $(LD_LIBRARY_PATH)/vrgui
+INC	= -I$(SPECTRA_HOME)/lib/vr -I$(SPECTRA_HOME)/lib/vrio -I$(SPECTRA_HOME)/lib/vrp -I$(SPECTRA_HOME)/lib/vrvoice -I$(SPECTRA_HOME)/lib/vrgui -I$(SPECTRA_HOME)/lib/fftw/src -I/usr/local/jdk/include -I/usr/local/jdk/include/genunix -I$(SPECTRA_HOME)/lib/libpperf
+LIBS	= -lm  -L$(SPECTRA_HOME)/lib/ -lspectra -lspecvoice -L$(SPECTRA_HOME)/lib/fftw/src -lfftw $(SPECTRA_HOME)/lib/libsls.a $(SPECTRA_HOME)/lib/libsls_util.a
+DEBUG_LIBS = $(SPECTRA_HOME)/lib/libspectra.a $(SPECTRA_HOME)/lib/libspecvoice.a $(SPECTRA_HOME)/lib/fftw/src/libfftw.a $(SPECTRA_HOME)/lib/libsls.a $(SPECTRA_HOME)/lib/libsls_util.a
+LD_FLAGS = -Xlinker -rpath -Xlinker $(SPECTRA_HOME)/lib/vr -Xlinker -rpath -Xlinker $(SPECTRA_HOME)/lib/vrgui
 
 all: $(EXECS)
 

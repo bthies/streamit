@@ -1542,6 +1542,14 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	blockEnd();
     }
 
+    /**
+     * Visits a message-receiving portal.
+     */
+    public void visitPortal(SIRPortal self)
+    {
+        blockStart("SIRPortal");
+        blockEnd();
+    }
 
     /**
      * Visits a print statement.

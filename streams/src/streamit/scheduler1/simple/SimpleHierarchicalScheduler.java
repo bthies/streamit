@@ -6,7 +6,17 @@ import java.math.BigInteger;
 
 public class SimpleHierarchicalScheduler extends Scheduler
 {
-    final Schedule schedule = new Schedule ();
+    final Schedule schedule;
+
+    private Schedule getNewSchedule ()
+    {
+        return new Schedule ();
+    }
+
+    public SimpleHierarchicalScheduler ()
+    {
+        schedule = getNewSchedule ();
+    }
 
     /**
      * Construct a new filter object

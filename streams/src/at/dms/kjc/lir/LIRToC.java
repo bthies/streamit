@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.69 2002-07-12 20:13:39 jasperln Exp $
+ * $Id: LIRToC.java,v 1.70 2002-07-20 15:38:02 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -131,7 +131,16 @@ public class LIRToC
                                JFieldDeclaration[] fields,
                                JMethodDeclaration[] methods,
                                JPhylum[] body) {
+        // Visit type declarations that happen to be for StreamIt
+        // structure types first.
         for (int i = 0; i < decls.length ; i++) {
+            if (decls[i] instanceof JClassDeclaration &&
+                (decls[i].getModifiers() & ACC_STATIC) == ACC_STATIC)
+                decls[i].accept(this);
+        }        
+        for (int i = 0; i < decls.length ; i++) {
+            if (!(decls[i] instanceof JClassDeclaration &&
+                  (decls[i].getModifiers() & ACC_STATIC) == ACC_STATIC))
             decls[i].accept(this);
         }
         if (body != null) {

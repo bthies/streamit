@@ -27,4 +27,8 @@ endif
 # include extra LaTeX packages
 # (Note that this *always* DTRT: the TeX path-searching stuff interprets
 # a blank entry as "the default path".)
-setenv TEXINPUTS ${STREAMIT_HOME}/include/tex:${TEXINPUTS}
+if ($?TEXINPUTS) then
+  setenv TEXINPUTS ${STREAMIT_HOME}/include/tex:${TEXINPUTS}
+else
+  setenv TEXINPUTS .:/usr/share/texmf/tex::${STREAMIT_HOME}/include/tex
+endif

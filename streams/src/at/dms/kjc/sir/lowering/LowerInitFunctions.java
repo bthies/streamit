@@ -139,9 +139,25 @@ public class LowerInitFunctions implements StreamVisitor {
 					     /* type on tape */
 					     tapeType,
 					     /* size of buffer */
-	   schedule.getBufferSizeBetween(pair[0], pair[1]).intValue()
-					     ));
+					     myGetBufferSizeBetween(pair[0], pair[1])));
 	}
+    }
+
+    /**
+     * For getting buffer sizes.  Have to use this function to account
+     * for initPush.
+     */
+    private int myGetBufferSizeBetween(SIROperator op1, SIROperator op2) {
+	// call scheduler
+	int result = schedule.getBufferSizeBetween(op1, op2).intValue();
+	// TERRIBLE HACK to account for extra buffer size needed by
+	// non-zero initPush on uniprocessor (will not work on RAW).
+	// Just augment the buffer size by initPush if the previous
+	// filter is an SIRTwoStageFilter
+	if (op1 instanceof SIRTwoStageFilter) {
+	    result += ((SIRTwoStageFilter)op1).getInitPush();
+	}
+	return result;
     }
 
     /**
@@ -159,12 +175,12 @@ public class LowerInitFunctions implements StreamVisitor {
 	    LoweringConstants.getStreamContext(LoweringConstants.
 					       getChildStruct(body));
 	// get the input tape size
-	int bodyInputSize = schedule.getBufferSizeBetween(str.getJoiner(), 
-							  body).intValue();
+	int bodyInputSize = myGetBufferSizeBetween(str.getJoiner(), 
+						   body);
 	// get the output tape size
-	int bodyOutputSize = schedule.getBufferSizeBetween(body,
-							   str.getSplitter() 
-							   ).intValue();
+	int bodyOutputSize = myGetBufferSizeBetween(body,
+						    str.getSplitter());
+
 	// register tape
 	init.addStatement(new LIRSetBodyOfFeedback(parentContext,
                                                    bodyContext,
@@ -179,12 +195,12 @@ public class LowerInitFunctions implements StreamVisitor {
 	    LoweringConstants.getStreamContext(LoweringConstants.
 					       getChildStruct(loop));
 	// get the input tape size
-	int loopInputSize = schedule.getBufferSizeBetween(str.getSplitter(), 
-							  loop).intValue();
+	int loopInputSize = myGetBufferSizeBetween(str.getSplitter(), 
+						   loop);
 	// get the output tape size
-	int loopOutputSize = schedule.getBufferSizeBetween(loop,
-							   str.getJoiner() 
-							   ).intValue();
+	int loopOutputSize = myGetBufferSizeBetween(loop,
+						    str.getJoiner());
+
 	// register tape
 	init.addStatement(new LIRSetLoopOfFeedback(parentContext,
                                                    loopContext,
@@ -211,12 +227,12 @@ public class LowerInitFunctions implements StreamVisitor {
 						   getChildStruct(child
 								  ));
 	    // get the input tape size
-	    int inputSize = schedule.getBufferSizeBetween(str.getSplitter(), 
-							  child).intValue();
+	    int inputSize = myGetBufferSizeBetween(str.getSplitter(), 
+						   child);
 	    // get the output tape size
-	    int outputSize = schedule.getBufferSizeBetween(child,
-							   str.getJoiner() 
-							   ).intValue();
+	    int outputSize = myGetBufferSizeBetween(child,
+						    str.getJoiner());
+
 	    // register an LIR node to <init>
 	    Utils.assert(child.getInputType()!=null,
 			 "null child: " + child.getName() + " " +

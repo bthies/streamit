@@ -39,8 +39,7 @@ public abstract class SIRStream extends SIROperator {
 	this.methods = null;
     }
 
-
-    /*
+       /*
      * Set the fields member variable 
      */
     public void setFields (JFieldDeclaration[] f) {
@@ -57,10 +56,23 @@ public abstract class SIRStream extends SIROperator {
     /**
      * sets the init function
      */
-    public void setInit(JMethodDeclaration init) {
-	this.init = init;
-	
-	addMethod(init);
+    public void setInit(JMethodDeclaration newInit) {
+	//Check if we already have an init function
+	if (this.init != null) {
+	    //if so swap the old init function with new
+	    for (int i=0; i<methods.length; i++) {
+		if (methods[i]==init) { 
+		    methods[i]=newInit;
+		    break;
+		}
+	    }
+	}
+	else {
+	    //no old init just add
+	    addMethod(newInit);
+	}
+	//set the init
+	this.init = newInit;
     }
 
     /**

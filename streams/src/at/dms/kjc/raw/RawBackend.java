@@ -20,14 +20,24 @@ public class RawBackend {
 			interfaceTables) {
 	// DEBUGGING PRINTING
 	System.out.println("Entry to RAW Backend");
-	//SIRPrinter printer1 = new SIRPrinter();
-	//str.accept(printer1);
-	//printer1.close();
+
 	
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
 	ConstantProp.propagateAndUnroll(str);
+	FieldProp.doPropagate(str);
 	System.out.println("Done Constant Prop and Unroll...");
+
+	//rename 
+	Renamer.renameAll(str);
+	
+	//SIRPrinter printer1 = new SIRPrinter();
+	//str.accept(printer1);
+	//printer1.close();
+	
+	//SIRPrinter printer1 = new SIRPrinter();
+	//str.accept(printer1);
+	//printer1.close();
 	/*	
 		if (StreamItOptions.fusion) {
 		System.out.println("Running Fusion");

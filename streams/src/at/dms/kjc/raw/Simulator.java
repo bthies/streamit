@@ -58,14 +58,19 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 			      initExecutionCounts);
 	createExecutionCounts(schedule.getSteadySchedule(), 
 			      steadyExecutionCounts);
-       
+
+	SimulationCounter counters = 
+	    new SimulationCounter(JoinerSimulator.schedules);
+
 	joinerCode = initJoinerCode;
-	initSchedules = (new Simulator(top)).go(initExecutionCounts);
+	initSchedules = (new Simulator(top)).go(initExecutionCounts, counters);
 	joinerCode = steadyJoinerCode;
-	steadySchedules = (new Simulator(top)).go(steadyExecutionCounts);
+	steadySchedules = (new Simulator(top)).go(steadyExecutionCounts, counters);
     }
     
+   
     
+
     private Simulator(FlatNode top) 
     {
 	switchSchedules = new HashMap();
@@ -126,10 +131,9 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     }
     
     /* the main simulation method */
-    private HashMap go(HashMap counts) 
+    private HashMap go(HashMap counts, SimulationCounter counters) 
     {
-	SimulationCounter counters = 
-	    new SimulationCounter(JoinerSimulator.schedules);
+	
 	FlatNode fire, dest;
 		
 	while(true) {
@@ -277,6 +281,9 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     
     private void fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
+	//System.out.println("Firing " + Namer.getName(fire.contents));
+	
+
 	if (fire.contents instanceof SIRFilter) {
 	    //decrement the schedule execution counter
 	    int oldVal = ((Integer)executionCounts.get(fire)).intValue();
@@ -299,7 +306,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    counters.setFired(fire);
 	}
 	else if (fire.contents instanceof SIRJoiner) {
-	    System.out.println("Firing a joiner");
+	    //System.out.println("Firing a joiner");
 	    
 	    JoinerScheduleNode previous = 
 		(JoinerScheduleNode)currentJoinerCode.get(fire);
@@ -340,7 +347,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    if (Layout.joiners.contains(node)) {
 		joinerBuffer = joinerBuffer + getJoinerBuffer(node, previous);
 		
-		System.out.println("Destination is a buffer " + joinerBuffer);
+		//System.out.println("Destination is a buffer " + joinerBuffer);
 		
 		//add the item to the appropiate buffer
 		//as determined by the simulation
@@ -449,6 +456,10 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	if (node.contents instanceof SIRFilter) {
 	    //check if this node has fired the number of times given by
 	    //the schedule
+	    
+	    //System.out.println("Checking execution count: " + 
+	    //Namer.getName(node.contents));
+	    
 	    Integer count = (Integer)executionCounts.get(node);
 	    if (count == null)
 		return false;
@@ -463,6 +474,11 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    else
 		requirement = ((SIRFilter)node.contents).getPopInt();
 	    
+	    //System.out.println("canFire: " + Namer.getName(node.contents) +
+	    //		       " req: " + requirement + " buf: " + 
+	    //		       counters.getBufferCount(node));
+	    
+
 	    if (counters.getBufferCount(node) >= requirement) {
 		return true;
 	    }
@@ -506,5 +522,19 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	Utils.fail("cannot find previous node in joiner list");
 	return null;
     }
-        
+ 
+    private static void printExecutionCounts(HashMap map) 
+    {
+	System.out.println();
+
+	Iterator it = map.keySet().iterator();
+	while(it.hasNext()) {
+	    FlatNode node = (FlatNode)it.next();
+	    System.out.println(Namer.getName(node.contents) + " " + 
+			       ((Integer)map.get(node)).toString());
+	}
+	System.out.println();
+	
+    }
+       
 }

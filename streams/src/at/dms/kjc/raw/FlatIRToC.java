@@ -5,6 +5,7 @@ import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.HashMap;
 import java.io.*;
@@ -37,7 +38,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         ((SIRFilter)node.contents).accept(toC);
     }
     
-  
+    public FlatIRToC() 
+    {
+	this.str = new StringWriter();
+        this.p = new TabbedPrintWriter(str);
+    }
+    
 
     public FlatIRToC(TabbedPrintWriter p) {
         this.p = p;
@@ -57,7 +63,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         else
             return null;
     }
-
+    
     /**
      * Close the stream at the end
      */
@@ -99,8 +105,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	
 	print("void begin(void) {\n");
 	print("  raw_init();\n");
-	print("  init();\n");
-	print("  work();\n");
+	print("  " + init.getName() + "(");
+	print(InitArgument.getInitArguments(self));
+	print (");\n");
+	print("  " + work.getName() + "();\n");
 	print("}\n");
 	
 	System.out.println("Code for " + Namer.getName(self) +
@@ -117,6 +125,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	}
     }
     
+   			
+
     /**
      * prints a field declaration
      */
@@ -181,12 +191,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
         print(" ");
         if (body != null) {
-	    if (ident.equals("work")) {
-		printWorkHeader();
-		body.accept(this);
-		printWorkTrailer();
+	    //see if this is the work function
+	    //if it is print the work header and trailer
+	    if (filter != null) {
+		if (filter.getWork() == self) {
+		    printWorkHeader();
+		    body.accept(this);
+		    printWorkTrailer();
+		}
 	    }
-	    else
+	    else //not the work function
 		body.accept(this);
         } else {
             print(";");

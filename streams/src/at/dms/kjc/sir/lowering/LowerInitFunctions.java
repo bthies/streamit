@@ -352,6 +352,24 @@ public class LowerInitFunctions implements StreamVisitor {
 					 getWorkName(self))));*/
     }
 
+    public void visitPhasedFilter(SIRPhasedFilter self,
+                                  SIRPhasedFilterIter iter) {
+	JMethodDeclaration init = self.getInit();
+	// set stream type to filter
+	init.addStatement(new LIRSetStreamType(LoweringConstants.
+					       getStreamContext(),
+					       LIRStreamType.LIR_FILTER));
+
+	// set work function
+	init.addStatement(new LIRSetWork(LoweringConstants.
+					 getStreamContext(),
+					 new LIRFunctionPointer(
+					 self.getWork().getName())));
+					 /*
+					 LoweringConstants.
+					 getWorkName(self))));*/
+    }
+
     /**
      * Visits an SIRContainer to lower its init function.
      */

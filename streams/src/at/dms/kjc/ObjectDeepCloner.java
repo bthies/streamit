@@ -299,6 +299,12 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 	// visit node
 	visitStream(self);
     }
+
+    /* visit a phased filter */
+    public void visitPhasedFilter(SIRPhasedFilter self,
+                                  SIRPhasedFilterIter iter) {
+        visitStream(self);
+    }
   
     /**
      * PRE-VISITS 

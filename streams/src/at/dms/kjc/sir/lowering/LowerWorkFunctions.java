@@ -83,6 +83,19 @@ public class LowerWorkFunctions implements StreamVisitor
             removeStructureNew(((SIRTwoStageFilter)self).getInitWork());
 	}
     }
+
+    /* visit a phased filter */
+    public void visitPhasedFilter(SIRPhasedFilter self,
+                                  SIRPhasedFilterIter iter) {
+        // This actually depends a little more on what the LIR representation
+        // of phased filters will be.  Mostly punt for now, but copy
+        // things out of visitFilter() that look productive:
+
+        // add entry/exit nodes to work function
+        addEntryExit(self.getWork());
+        // prune structure creation statements
+        removeStructureNew(self.getWork());
+    }
   
     /**
      * PRE-VISITS 

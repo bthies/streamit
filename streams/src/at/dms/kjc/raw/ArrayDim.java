@@ -123,6 +123,26 @@ public class ArrayDim extends SLIREmptyVisitor implements StreamVisitor{
 	    methods[i].accept(this);
     }
   
+    /* visit a filter */
+    public void visitPhasedFilter(SIRPhasedFilter self,
+                                  SIRPhasedFilterIter iter) {
+
+	//Visit fields declared in the filter class
+	JFieldDeclaration[] fields = self.getFields();
+	for (int i = 0; i < fields.length; i++)
+	   fields[i].accept(this);
+
+	//visit methods
+	JMethodDeclaration[] methods = self.getMethods();
+	for (int i =0; i < methods.length; i++)
+	    methods[i].accept(this);
+
+        //visit phases
+        SIRWorkFunction[] phases = self.getPhases();
+        for (int i = 0; i < phases.length; i++)
+            phases[i].getWork().accept(this);
+    }
+  
     /**
      * PRE-VISITS 
      */

@@ -779,16 +779,17 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 
 	/*Install work functio*/
 	if (ident.equals("work")) {
-	    if (parentStream instanceof SIRFilter) {
-		((SIRFilter)parentStream).setWork(new JMethodDeclaration(null,
-									 modifiers,
-									 returnType,
-									 ident,
-									 parameters,
-									 exceptions,
-									 body,
-									 null,
-									 null));
+	    if (parentStream instanceof SIRFilter ||
+                parentStream instanceof SIRPhasedFilter) {
+		parentStream.setWork(new JMethodDeclaration(null,
+                                                            modifiers,
+                                                            returnType,
+                                                            ident,
+                                                            parameters,
+                                                            exceptions,
+                                                            body,
+                                                            null,
+                                                            null));
 	    }
 	    else
 		at.dms.util.Utils.fail(printLine(self) +
@@ -1826,6 +1827,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    //we want to ignore remove this method from the block
 	     return null;
 	}
+        else if (ident.equals("phase")) {
+            // This is special.  There should be one parameter, which
+            // is an anonymous stream creator; we need to get information
+            // out of this.
+            return null;
+        }
 	//There are two cases for portal calls
 	//Message send to a portal using a local var to store the portal
 	//I think that this is the only case when prefix will not be null??? Keep the check any way

@@ -69,6 +69,37 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 	blockEnd();
     }
 	    
+    /* visit a filter */
+    public void visitPhasedFilter(SIRPhasedFilter self,
+                                  SIRPhasedFilterIter iter) {
+	blockStart("PhasedFilter");
+	attrStart("Parent");
+	if (iter.getParent() == null)
+	    printData("null");
+	attrEnd();
+	JFieldDeclaration[] fields = self.getFields();
+	for (int i = 0; i < fields.length; i++)
+	    fields[i].accept(this);
+	JMethodDeclaration[] methods = self.getMethods();
+	for (int i = 0; i < methods.length; i++)
+	    methods[i].accept(this);
+        SIRWorkFunction[] phases = self.getPhases();
+        blockStart("phases");
+        for (int i = 0; i < phases.length; i++)
+        {
+            attrPrint("peek", phases[i].getPeek());
+            attrPrint("pop", phases[i].getPop());
+            attrPrint("push", phases[i].getPush());
+            phases[i].getWork().accept(this);
+        }
+        blockEnd();
+	if (self.getInputType() != null)
+	    attrPrint("InputType", self.getInputType().toString());
+	if (self.getOutputType() != null)
+	    attrPrint("OutputType", self.getOutputType().toString());
+	blockEnd();
+    }
+	    
     String getSplitString(SIRSplitType s) {
 	if (s == SIRSplitType.ROUND_ROBIN)
 	    return "Round-Robin";

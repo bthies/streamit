@@ -43,6 +43,14 @@ public class FuseAll implements StreamVisitor {
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
     }
+
+    /* visit a phased filter */
+    public void visitPhasedFilter(SIRPhasedFilter self,
+                                  SIRPhasedFilterIter iter) {
+        // There's an argument to be made that this should flatten the
+        // phases into a single work function, but this isn't necessarily
+        // correct.  So do nothing instead.
+    }
   
     /**
      * PRE-VISITS 

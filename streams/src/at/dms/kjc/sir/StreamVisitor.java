@@ -22,6 +22,10 @@ public interface StreamVisitor {
     void visitFilter(SIRFilter self,
 		     SIRFilterIter iter);
   
+    /* visit a phased filter */
+    void visitPhasedFilter(SIRPhasedFilter self,
+                           SIRPhasedFilterIter iter);
+
     /**
      * PRE-VISITS 
      */

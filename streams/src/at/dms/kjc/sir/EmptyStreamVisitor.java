@@ -36,6 +36,13 @@ public class EmptyStreamVisitor implements StreamVisitor {
 	preVisitStream(self, iter);
 	postVisitStream(self, iter);
     }
+
+    /* visit a phased filter */
+    public void visitPhasedFilter(SIRPhasedFilter self,
+                                  SIRPhasedFilterIter iter) {
+        preVisitStream(self, iter);
+        postVisitStream(self, iter);
+    }
   
     /**
      * PRE-VISITS 

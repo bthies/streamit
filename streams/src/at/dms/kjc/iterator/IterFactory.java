@@ -25,6 +25,10 @@ public class IterFactory {
 	return new SIRFilterIter(obj);
     }
 
+    public static SIRPhasedFilterIter createIter(SIRPhasedFilter obj) {
+        return new SIRPhasedFilterIter(obj);
+    }
+
     public static SIRSplitJoinIter createIter(SIRSplitJoin obj) {
 	return new SIRSplitJoinIter(obj);
     }
@@ -40,6 +44,8 @@ public class IterFactory {
     public static SIRIterator createIter(SIRStream obj) { 
 	if (obj instanceof SIRFilter) {
 	    return createIter((SIRFilter)obj);
+        } else if (obj instanceof SIRPhasedFilter) {
+            return createIter((SIRPhasedFilter)obj);
 	} else if (obj instanceof SIRPipeline) {
 	    return createIter((SIRPipeline)obj);
 	} else if (obj instanceof SIRSplitJoin) {

@@ -374,6 +374,17 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	// add closure-referencing to methods
 	flattenMethods(self.getTypeNameInC(), self.getMethods());
     }
+
+    /* visit a phased filter */
+    public void visitPhasedFilter(SIRPhasedFilter self,
+                                  SIRPhasedFilterIter iter) {
+	// create struct type
+	createStruct(self.getTypeNameInC(), self.getFields(), EMPTY_LIST);
+	// add tape parameters to work function
+	//addTapeParameters(work);
+	// add closure-referencing to methods
+	flattenMethods(self.getTypeNameInC(), self.getMethods());
+    }
   
     /**
      * PRE-VISITS 

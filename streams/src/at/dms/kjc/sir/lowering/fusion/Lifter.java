@@ -38,6 +38,11 @@ public class Lifter implements StreamVisitor {
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
     }
+
+    /* visit a phased filter */
+    public void visitPhasedFilter(SIRPhasedFilter self,
+                                  SIRPhasedFilterIter iter) {
+    }
   
     /**
      * PRE-VISITS 

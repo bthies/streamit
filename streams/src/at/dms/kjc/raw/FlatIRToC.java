@@ -246,7 +246,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	createFile();
     }
 
-    
+    public void visitPhasedFilter(SIRPhasedFilter self,
+                                  SIRPhasedFilterIter iter) {
+        // This is a stub; it'll get filled in once we figure out how phased
+        // filters should actually work.
+    }
+
     private void createFile() {
 	System.out.println("Code for " + filter.getName() +
 			   " written to tile" + Layout.getTileNumber(filter) +

@@ -1,5 +1,6 @@
 package at.dms.kjc.sir;
 
+import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.lir.LIRStreamType;
 import java.util.List;
@@ -128,6 +129,33 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      */
     public void add(SIRStream str) {
 	elements.add(str);
+    }
+
+    /**
+     * Replaces the sequence of <start> ... <end> within this pipeline with
+     * the single stream <newStream>.  Requires that <start> and <end> are
+     * both in this, with <start> coming before <end>.
+     */
+    public void replace(SIRStream start, SIRStream end, SIRStream newStream) {
+	// get positions of start and ending streams
+	int index1 = elements.indexOf(start);
+	int index2 = elements.indexOf(end);
+	Utils.assert(index1!=-1 && index1!=-1 && index1 <= index2,
+		     "Trying to replace with bad parameters, from start at "
+		     + "position " + index1 + " to end at position " + index2);
+	// remove the old streams
+	for (int i=index1; i<=index2; i++) {
+	    elements.remove(index1);
+	}
+	// add the new stream
+	elements.add(index1, newStream);
+    }
+
+    /**
+     * Remove a stream from the pipeline.
+     */
+    public void remove(SIRStream str) {
+	elements.remove(str);
     }
 
     /**

@@ -60,6 +60,20 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     }
 
     /**
+     * Gets the field decl's of this stream.
+     */
+    public JFieldDeclaration[] getFields() {
+	return fields;
+    }
+
+    /**
+     * Gets the method decl's of this stream.
+     */
+    public JMethodDeclaration[] getMethods() {
+	return methods;
+    }
+
+    /**
      * Sets the identifier of this.
      */
     public void setIdent(String ident) {
@@ -199,13 +213,6 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
 	    }
 	}
 	return false;
-    }
-
-    /**
-     * gets the methods of this stream
-     */
-    public JMethodDeclaration[] getMethods() {
-	return methods;
     }
 
     /**

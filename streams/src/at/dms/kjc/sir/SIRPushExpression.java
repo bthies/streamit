@@ -51,6 +51,14 @@ public class SIRPushExpression extends JExpression {
         this.tapeType = type;
     }
 
+    /**
+     * Gets the type of the tape.
+     */
+    public CType getTapeType()
+    {
+        return tapeType;
+    }
+
     // ----------------------------------------------------------------------
     // ACCESSORS
     // ----------------------------------------------------------------------
@@ -60,6 +68,10 @@ public class SIRPushExpression extends JExpression {
      */
     public CType getType() {
 	return CStdType.Void;
+    }
+
+    public JExpression getArg() {
+	return this.arg;
     }
 
     /**

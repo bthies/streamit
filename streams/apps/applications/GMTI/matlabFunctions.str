@@ -500,8 +500,8 @@ float->float pipeline sum_cols(int m, int n) {
 // input: m*n complex (m by n matrix)
 // output: n complex (n length vector)
 
-float->float pipeline sum_colsComplex(int m, int n) {
-
+complex->complex pipeline sum_colsComplex(int m, int n) {
+   
   add transposeComplex(m,n);  // simply sum rows of transpose
   add sum_rowsComplex(n,m);
 }

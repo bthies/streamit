@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayInitializer.java,v 1.8 2004-01-28 16:55:35 dmaze Exp $
+ * $Id: JArrayInitializer.java,v 1.9 2004-04-02 00:44:13 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -43,6 +43,13 @@ public class JArrayInitializer extends JExpression {
 
     this.elems = elems;
   }
+
+    public JExpression[] getElems() 
+    {
+	return elems;
+    }
+    
+
 
   // ----------------------------------------------------------------------
   // ACCESSORS

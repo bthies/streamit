@@ -4,17 +4,127 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
+import java.util.*;
 
 class IncreaseFilterMult implements StreamVisitor {
 
-    private int mult;
+    class WorkInfo {
+	public JMethodDeclaration work;
+	public int push, pop, peek;
+    }
 
+    private int mult;
+    private int sj_counter;
+    private boolean start_of_pipeline;
+
+    // SIRStream -> WorkInfo
+    private static HashMap previous_work = new HashMap(); 
+    
     public IncreaseFilterMult(int mult) {
 	this.mult = mult;
+	this.sj_counter = 0;
+	this.start_of_pipeline = false;
     }
+
+    public void preVisitPipeline(SIRPipeline self, 
+				 SIRPipelineIter iter) {
+	start_of_pipeline = true;
+    }
+
+    public void preVisitSplitJoin(SIRSplitJoin self,
+				  SIRSplitJoinIter iter) {
+	sj_counter++;
+	start_of_pipeline = true;
+    }
+
+    public void postVisitSplitJoin(SIRSplitJoin self,
+				   SIRSplitJoinIter iter) {
+	sj_counter--;
+    }
+
 
     static public void inc(SIRStream str, int mult) {
 	IterFactory.createFactory().createIter(str).accept(new IncreaseFilterMult(mult));
+    }
+
+
+    private static boolean isFusedWith(SIROperator oper1, SIROperator oper2, 
+				HashMap partitionMap) {
+	assert(oper2 instanceof SIRPhasedFilter);
+	if (oper1 instanceof SIRPhasedFilter) {
+	    return partitionMap.get(oper1).equals(partitionMap.get(oper2));
+	}
+	if (oper1 instanceof SIRPipeline) {
+	    SIRPipeline pipe = (SIRPipeline)oper1;
+	    return isFusedWith(pipe.get(pipe.size()-1),oper2,partitionMap);
+	}
+	if (oper1 instanceof SIRSplitJoin) {
+	    SIRSplitJoin sj = (SIRSplitJoin)oper1;
+	    return isFusedWith(sj.get(0),oper2,partitionMap);
+	}
+	assert(0==1);//fail
+	return false;
+    }
+
+
+    private static boolean fusedWithPrev(SIROperator oper, HashMap partitionMap) {
+	SIRStream child = (SIRStream)oper;
+	SIRContainer parent = oper.getParent();
+
+	assert(!(parent instanceof SIRFeedbackLoop)); 
+
+	while (parent instanceof SIRSplitJoin) {
+	    child = (SIRStream)parent;
+	    parent = parent.getParent();
+	    
+	    assert(!(parent instanceof SIRFeedbackLoop)); 
+	    if (parent == null) return false;
+	}
+
+	if (parent instanceof SIRPipeline) {
+	    int child_index = parent.indexOf(child);
+	    if (child_index == 0) {
+		return false;
+	    } else {
+		return isFusedWith(parent.get(child_index-1),oper,partitionMap);
+	    }
+	}
+
+	return false;
+    }
+
+    public static boolean decreaseMult(HashMap partitionMap) {
+
+	boolean decreased = false;
+
+	Set keys = partitionMap.keySet();
+	Iterator iter = keys.iterator();
+	
+	while (iter.hasNext()) {
+	    SIROperator oper = (SIROperator)iter.next();
+
+	    if (oper instanceof SIRFilter) {
+		if (!fusedWithPrev(oper, partitionMap)) {
+		    
+		    //System.out.println("Filter: "+oper+" not fused with previous operator!");
+
+		    if (previous_work.containsKey(oper)) {
+
+			WorkInfo w = 
+			    (WorkInfo)previous_work.get(oper);
+
+			System.out.println("Filter: "+oper+" Restoring mult to 1");
+			((SIRFilter)oper).setWork(w.work);
+			((SIRFilter)oper).setPop(w.pop);
+			((SIRFilter)oper).setPush(w.push);
+			((SIRFilter)oper).setPeek(w.peek);
+			previous_work.remove(oper);
+			decreased = true;
+		    }
+		}
+	    }
+	}
+	return decreased;
     }
 
 
@@ -42,13 +152,18 @@ class IncreaseFilterMult implements StreamVisitor {
 	
 	int _mult = calcMult(filter);
 
+	// only increase mult if not inside a split join
+	//if (sj_counter != 0) _mult = 1; 
+
+	if (_mult == 1) return;
+
 	System.out.print("IncMult visiting: "+filter.getName()+
 			 " mult: "+_mult);
 
-	if (_mult == 1) {
-	    System.out.println(" No change!");
-	    return;
-	}
+	//if (_mult == 1) {
+	//    System.out.println(" No change!");
+	//    return;
+	//}
 
 	JMethodDeclaration work = filter.getWork();
 
@@ -119,7 +234,7 @@ class IncreaseFilterMult implements StreamVisitor {
 	// mark the for loop as unrolled
 	// since unrolling it may cause code explosion
 	
-	if (_mult > 2) {
+	if (_mult > 16) {
 	    for_stmt.setUnrolled(true);
 	} 
 
@@ -162,6 +277,16 @@ class IncreaseFilterMult implements StreamVisitor {
 				   null,
 				   null);
 
+	// store the original work function
+
+	WorkInfo w = new WorkInfo();
+	w.work = filter.getWork();
+	w.pop = filter.getPopInt();
+	w.push = filter.getPushInt();
+	w.peek = filter.getPeekInt();
+
+	previous_work.put(filter, w);
+
 	filter.setWork(new_work); 
 
 	//
@@ -193,10 +318,10 @@ class IncreaseFilterMult implements StreamVisitor {
      */
 	    
     /* pre-visit a pipeline */
-    public void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {}
+    //public void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {}
     
     /* pre-visit a splitjoin */
-    public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {}
+    //public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {}
     
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {}
@@ -209,7 +334,7 @@ class IncreaseFilterMult implements StreamVisitor {
     public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {}
    
     /* post-visit a splitjoin */
-    public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {}
+    //public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {}
 
     /* post-visit a feedbackloop */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {}

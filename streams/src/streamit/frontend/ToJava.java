@@ -11,6 +11,11 @@ import java.util.ArrayList;
 import streamit.frontend.nodes.*;
 import streamit.frontend.passes.*;
 import streamit.frontend.tojava.*;
+import at.dms.kjc.*;
+import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.iterator.*;
+import at.dms.util.*;
 
 class ToJava
 {
@@ -39,6 +44,7 @@ class ToJava
     private boolean printHelp = false;
     private boolean libraryFormat = false;
     private String outputFile = null;
+  private boolean straightToSIR = false;
     private List inputFiles = new ArrayList();
 
     public void doOptions(String[] args)
@@ -59,6 +65,8 @@ class ToJava
                 outputFile = args[++i];
             else if (args[i].equals("--library"))
                 libraryFormat = true;
+	    else if (args[i].equals("--ziggy"))
+	      straightToSIR = true;
             else
                 // Maybe check for unrecognized options.
                 inputFiles.add(args[i]);
@@ -118,12 +126,20 @@ class ToJava
                     prog = (Program)prog.accept(new NoticePhasedFilters());
                 prog = (Program)prog.accept(new DoComplexProp(varGen));
                 prog = (Program)prog.accept(new TranslateEnqueue());
-                prog = (Program)prog.accept(new InsertIODecls(libraryFormat));
+		prog = (Program)prog.accept(new InsertIODecls(libraryFormat));
                 prog = (Program)prog.accept(new InsertInitConstructors());
                 prog = (Program)prog.accept(new MoveStreamParameters());
                 prog = (Program)prog.accept(new NameAnonymousFunctions());
-                String javaOut = (String)prog.accept(new NodesToJava(null));
-                outWriter.write(javaOut);
+		if (straightToSIR) {
+		  SIRStream s = (SIRStream) prog.accept(new FEIRToSIR());
+		  SIRPrinter sirPrinter = new SIRPrinter();
+		  IterFactory.createIter(s).accept(sirPrinter);
+		  sirPrinter.close();
+		  Flattener.flatten(s, new JInterfaceDeclaration[0], new SIRInterfaceTable[0], new SIRStructure[0]);
+		} else {
+		  String javaOut = (String)prog.accept(new NodesToJava(null));
+		  outWriter.write(javaOut);
+		}
             }
             outWriter.flush();
         }

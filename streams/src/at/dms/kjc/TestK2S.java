@@ -118,7 +118,7 @@ public class TestK2S extends Main
 	
 	genCode();
 
-	Kopi2SIR k2s = new Kopi2SIR();
+	Kopi2SIR k2s = new Kopi2SIR(tree);
 	SIRStream[] topLevel = new SIRStream[tree.length];
 	
 	for (int count = 0; count < tree.length; count++)

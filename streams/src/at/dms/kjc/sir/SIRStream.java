@@ -90,6 +90,16 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     public abstract CType getInputType();
 
     /**
+     * Returns whether or not this class needs a call to an init
+     * function to be generated.  Special library functions like
+     * FileReader's and FileWriter's do not need an init call.
+     */
+    public boolean needsInit() {
+	return true;
+    }
+    
+
+    /**
      * sets the init function
      */
     public void setInit(JMethodDeclaration newInit) {

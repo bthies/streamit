@@ -104,19 +104,18 @@ void->float filter Read_From_AtoD(int N)
 }
 
 
-float->float filter RFtoIF(int _N, float _start_freq)
+float->float filter RFtoIF(int N, float _start_freq)
 {
     // CONSTANTS {
     float CARRIER_FREQ = 1.0;
     float MIN_FREQ     = 1.0;
-    int   MAX_WEIGHTS  = (int) (CARRIER_FREQ / MIN_FREQ * _N);
+    int   MAX_WEIGHTS  = (int) (CARRIER_FREQ / MIN_FREQ * N);
     // } CONSTANTS
 
     float[MAX_WEIGHTS] weights;
-    int  size, count, N;
+    int  size, count;
 
     init {
-	  N = _N;
 	  set_frequency(_start_freq);
     }
     
@@ -132,7 +131,7 @@ float->float filter RFtoIF(int _N, float _start_freq)
 	  count  = 0;
 	  size   = (int) (CARRIER_FREQ / _freq * N);
 	  for (int i = 0; i < size; i++) {
-		weights[i] = /* sin */ (i * pi / size);
+		weights[i] = sin (i * pi / size);
 	  }
     }
 }
@@ -150,7 +149,8 @@ float->float splitjoin Check_Freq_Hop(int N, portal<RFtoIF> port)
     // } CONSTANTS
 
     split roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
-    for (int i = 1, k = 0; i < 6; i++) {
+    int k=0;
+    for (int i = 1; i < 6; i++) {
 	  if ((i == 2) || (i == 4)) {
 		for (int j = 0; j < 2; j++) {
 		    add float->float filter {
@@ -167,17 +167,19 @@ float->float splitjoin Check_Freq_Hop(int N, portal<RFtoIF> port)
 		if (k >= MAX_FREQS) k = 0;
 	  }
 	  else {
-		add Identity<float>;
+		add FloatIdentity();
 	  }
     }
     join roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
 }
 
+// we need this now since the cluster backend doesn't deal with identities
+float->float filter FloatIdentity { work pop 1 push 1 {push(pop());}}
 
 void->void pipeline FHR
 {
     // CONSTANTS {
-    int N          = 64;
+    int N          = 32;
     int START_FREQ = 1;
     // } CONSTANTS
 

@@ -157,7 +157,6 @@ float->float filter distribute_samples(int num_mics, int num_beams, int max_dela
     work pop num_mics push (2 * num_beams * num_mics) {
 	int   low_index;
 	int   high_index;
-	float interpolated_value;
 	
 	queue_head = queue_head + 1;
 	if (queue_head > max_delay) {
@@ -170,7 +169,7 @@ float->float filter distribute_samples(int num_mics, int num_beams, int max_dela
 	
 	for (int beam = 0; beam < num_beams; beam++) {
 	    for (int mic = 0; mic < num_mics; mic++) {
-		  int delay_floor = delay_floor[beam][mic];
+		  int delay_floor = delays_floor[beam][mic];
 		  
 		  // low index gets index of sample right before desired sample
 		  low_index = queue_head + delay_floor;
@@ -208,9 +207,10 @@ float->float pipeline do_beamforming(int num_mics, int beam,
 			  float sample_low_index   = pop();
 			  float sample_high_index  = pop();
 			  float delay_offset       = delays_diff[beam][mic];
-			  float interpolated_value = (((sample_high_index - sample_low_index) * 
-								 delay_offset) + 
-								sample_low_index);
+			  float interpolated_value = (((sample_high_index 
+								  - sample_low_index) 
+								 * delay_offset) 
+								+ sample_low_index);
 			  
 			  push(interpolated_value * weights[mic]);
 		    }

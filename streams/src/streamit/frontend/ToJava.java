@@ -66,7 +66,7 @@ class ToJava
 "\n");
     }
 
-    private boolean useNewPath = false;
+    private boolean useNewPath = true;
     private boolean printHelp = false;
     private String outputFile = null;
     private List inputFiles = new ArrayList();

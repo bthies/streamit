@@ -15,45 +15,147 @@
 import java.lang.Math.*;
 import streamit.*;
 
-/**
- * A local adder class.  It adds four floats.  It has input = 4 and
- * output = 1.
+/*
+ * Software equalizer.  This version uses n+1 low-pass filters directly,
+ * as opposed to n band-pass filters, each with two low-pass filters.
+ * The important observation is that we have bands 1-2, 2-4, 4-8, ...
+ * This means that we should run an LPF for each intermediate frequency,
+ * rather than two per band.  Calculating this in StreamIt isn't that bad.
+ * For a four-band equalizer:
+ *
+ *              |
+ *             DUP
+ *    +---------+---------+
+ *    |         |         |
+ *    |        DUP        |
+ *    |    +----+----+    |
+ *    |    |    |    |    |
+ *   16    8    4    2    1
+ *    |    |    |    |    |
+ *    |  (dup)(dup)(dup)  |
+ *    |    |    |    |    |
+ *    |    +----+----+    |
+ *    |       RR(2)       |
+ *    |         |         |
+ *    +---------+---------+
+ *       WRR(1,2(n-1),1)
+ *              |
+ *            (a-b)
+ *              |
+ *            SUM(n)
+ *              |
+ *
+ * It's straightforward to change the values of 1, 16, and n.  Coming out
+ * of the EqualizerSplitJoin is 16 8 8 4 4 2 2 1; we can subtract and scale
+ * these as appropriate to equalize.
  */
-class FloatAdder extends Filter
+
+class FloatNAdder extends Filter
 {
-    public void init ()
+    int N;
+
+    public FloatNAdder(int count)
     {
-        // input = new Channel (Float.TYPE, 4, 4);
-        input = new Channel (Float.TYPE, 2, 2);
+        super(count);
+    }
+    public void init (final int count)
+    {
+        N = count;
+        input = new Channel (Float.TYPE, count, count);
         output = new Channel (Float.TYPE, 1);
     }
 
     public void work() {
-        //subtract one from the other, round robin.
-         output.pushFloat((float)(input.popFloat()+input.popFloat()/*+input.popFloat()+input.popFloat()*/));
+        float sum = 0.0f;
+        int i;
+        for (i = 0; i < N; i++)
+            sum += input.popFloat();
+        output.pushFloat(sum);
+    }
+}
+
+class FloatDiff extends Filter
+{
+    public void init()
+    {
+        input = new Channel(Float.TYPE, 2, 2);
+        output = new Channel(Float.TYPE, 1);
+    }
+    public void work() 
+    {
+        output.pushFloat(input.popFloat() - input.popFloat());
+    }
+}
+
+class FloatDup extends Filter
+{
+    public void init()
+    {
+        input = new Channel(Float.TYPE, 1, 1);
+        output = new Channel(Float.TYPE, 2);
+    }
+    public void work()
+    {
+        float val = input.popFloat();
+        output.pushFloat(val);
+        output.pushFloat(val);
+    }
+}
+
+class EqualizerInnerPipeline extends Pipeline 
+{
+    public EqualizerInnerPipeline(float rate, float freq)
+    {
+        super(rate, freq);
+    }
+    public void init(final float rate, final float freq)
+    {
+        add(new LowPassFilter(rate, freq, 50, 0));
+        add(new FloatDup());
+    }
+}
+
+class EqualizerInnerSplitJoin extends SplitJoin
+{
+    public EqualizerInnerSplitJoin(float rate, float low, float high, int bands)
+    {
+        super(rate, low, high, bands);
+    }
+    public void init(final float rate, final float low, final float high,
+                     final int bands)
+    {
+        float incr =
+            (float)java.lang.Math.exp((java.lang.Math.log(high) -
+                                       java.lang.Math.log(low)) / bands);
+        float freq = low;
+        int i;
+        setSplitter(DUPLICATE());
+        for (i = 1; i < bands; i++)
+        {
+            freq = freq * incr;
+            add(new EqualizerInnerPipeline(rate, freq));
+        }
+        setJoiner(ROUND_ROBIN(2));
     }
 }
 
 class EqualizerSplitJoin extends SplitJoin {
 
-    public EqualizerSplitJoin(float rate)
+    public EqualizerSplitJoin(float rate, float low, float high, int bands)
     {
-        super(rate);
+        super(rate, low, high, bands);
     }
 
-    public void init(final float rate)
+    public void init(final float rate, final float low, final float high,
+                     final int bands)
     {
-	final float mGain1 = 1;
-	final float mGain2 = 1;
-	final float mGain3 = 1;
-	final float mGain4 = 1;
+        // To think about: gains.
 	
 	setSplitter(DUPLICATE());
-	//add(new BandPassFilter(rate, 1250, 2500, 50, mGain1));
-	//add(new BandPassFilter(rate, 2500, 5000, 50, mGain2));
-	add(new BandPassFilter(rate, 5000, 10000, 50, mGain3));
-	add(new BandPassFilter(rate, 10000, 20000, 50, mGain4));
-	setJoiner(ROUND_ROBIN());
+        add(new LowPassFilter(rate, high, 50, 0));
+        add(new EqualizerInnerSplitJoin(rate, low, high, bands));
+        add(new LowPassFilter(rate, low, 50, 0));
+	setJoiner(WEIGHTED_ROUND_ROBIN(1, (bands-1)*2, 1));
     }
 }
 
@@ -70,10 +172,19 @@ public class Equalizer extends Pipeline {
         super(rate);
     }
 
-    public void init(float rate)
+    public void init(final float rate)
     {
-	add(new EqualizerSplitJoin(rate));
-	add(new FloatAdder());
+        /*
+        final int bands = 4;
+        final float low = 1250;
+        final float high = 20000;
+        */
+        final int bands = 2;
+        final float low = 5000;
+        final float high = 20000;
+	add(new EqualizerSplitJoin(rate, low, high, bands));
+        add(new FloatDiff());
+	add(new FloatNAdder(bands));
     }
 }
     

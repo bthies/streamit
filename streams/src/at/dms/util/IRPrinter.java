@@ -1471,7 +1471,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a message statement.
      */
     public void visitMessageStatement(SIRMessageStatement self,
-			       SIRPortal portal,
+			       String portal,
 			       String ident,
 			       JExpression[] args,
 			       SIRLatency latency) {

@@ -342,9 +342,7 @@ class FieldResolver extends KjcEmptyVisitor {
 				     String ident) {
 	// for <this> expressions, replace the LHS with a refernce to
 	// the structure
-	System.out.println("found a field");
 	if (self.isThisAccess()) {
-	    System.out.println("found a this");
 	    self.setPrefix(new JNameExpression(/* tokref */ 
 					       null,
 					       /* ident */

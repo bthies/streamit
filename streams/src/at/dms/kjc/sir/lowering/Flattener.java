@@ -24,6 +24,7 @@ public class Flattener {
 	printer.close();
 
 	// build schedule as set of higher-level work functions
+	
 
 	// add LIR hooks to init functions
 

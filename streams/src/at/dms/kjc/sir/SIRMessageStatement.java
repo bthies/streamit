@@ -13,7 +13,7 @@ public class SIRMessageStatement extends JStatement {
     /**
      * The portal that is the target of the message.
      */
-    private SIRPortal portal;
+    private String portal;
     /**
      * The name of the method to invoke in the portal.
      */
@@ -34,7 +34,7 @@ public class SIRMessageStatement extends JStatement {
     /**
      * Construct a node in the parsing tree
      */
-    public SIRMessageStatement(TokenReference where, JavaStyleComment[] comments, SIRPortal portal, String ident, JExpression[] args, SIRLatency latency) {
+    public SIRMessageStatement(TokenReference where, JavaStyleComment[] comments, String portal, String ident, JExpression[] args, SIRLatency latency) {
 	super(where, comments);
 
 	this.portal = portal;
@@ -56,7 +56,7 @@ public class SIRMessageStatement extends JStatement {
 	this.latency = null;
     }
 
-    public void setPortal (SIRPortal p) {
+    public void setPortal (String p) {
 	this.portal = p;
     }
 

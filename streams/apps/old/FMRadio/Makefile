@@ -6,7 +6,10 @@ IMPORTS   = 	"import streamit.*; \
 LIB_FILES = 	${LIBRARIES}/FloatFileReader.java \
 		${LIBRARIES}/FloatFileWriter.java \
 		${LIBRARIES}/LowPassFilter.java \
-		${LIBRARIES}/BandPassFilter.java 
+		${LIBRARIES}/BandPassFilter.java \
+		Equalizer.java \
+		FMDemodulator.java \
+		FMRadio.java
 
 MAIN	  = 	FMTest
 

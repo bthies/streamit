@@ -56,9 +56,6 @@ public class Equalizer extends Pipeline {
 
     public void init(float rate)
     {
-        input = new Channel (Float.TYPE, 1);
-        output = new Channel (Float.TYPE, 1);
-
 	samplingRate = rate;
 	mGain1 = 1;
 	mGain2 = 1;

@@ -16,7 +16,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.23 2003-04-03 09:39:42 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.24 2003-04-04 07:13:13 thies Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from streams to linear representations. never would have guessed that, would you? **/
@@ -148,7 +148,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    // now do unrolling
 	    int origUnroll = KjcOptions.unroll;
 	    KjcOptions.unroll = 100000;
-	    Flattener.flattenBeforePartition(result);
+	    FieldProp.doPropagate(result);
 	    KjcOptions.unroll = origUnroll;
 	}
 	return result;

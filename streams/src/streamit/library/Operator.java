@@ -1516,7 +1516,7 @@ public class Operator extends DestroyedClass
         {
             // this is all the other errors:
             error.getClass ();
-            assert false : error;
+            assert false : error.toString ();
         }
 
         return fieldsInstance;
@@ -1570,7 +1570,7 @@ public class Operator extends DestroyedClass
         catch (Throwable error)
         {
             // this is all the other errors:
-            assert false : error;
+            assert false : error.toString ();
         }
     }
 

@@ -89,10 +89,11 @@ public class Linear extends RawExecutionCode implements Constants {
 	  inline.add("mul.s "+tempRegs[times]+",\\t$csti,\\t"+regs[offset]);
 	  inline.add("add.s "+getInterReg(false,popNum,elem)+",\\t"+getInterReg(true,popNum,elem)+",\\t"+tempRegs[l]);
 	  }*/
-	inline.add(getLabel()+": #LOOP");
+	//inline.add(getLabel()+": #LOOP");
 	int times=0;
 	int[] oldIdx=new int[4];
 	int[] oldPop=new int[4];
+	for(int turn=0;turn<3;turn++) {
 	for(int i=0;i<mult;i++)
 	    for(int j=0;j<popCount;j++)
 		for(int k=idx.length-1;k>=0;k--) {
@@ -110,6 +111,9 @@ public class Linear extends RawExecutionCode implements Constants {
 			}
 		    }
 		}
+	if(turn==0)
+	    inline.add(getLabel()+": #LOOP");
+	}
 	inline.add("j "+getLabel());
 	inline.add(".set at");
 	return new JBlock(null,body,null);

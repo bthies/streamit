@@ -23,6 +23,8 @@ public class FeedbackLoop extends Stream
         super();
     }
 
+    public FeedbackLoop(float f) { super(f); }
+
     // set delay of feedback loop--that is, difference in original
     // stream position between items that arrive to joiner at same time,
     // assuming that all blocks in loop are 1-to-1 (otherwise we need to

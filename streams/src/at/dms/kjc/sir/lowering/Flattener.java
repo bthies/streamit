@@ -191,7 +191,6 @@ public class Flattener {
      **/
     static void runLinearAnalysis(SIRStream str,
 				  boolean transform) {
-	System.out.println("Running Linear Analysis");
 	// run the linear analysis and stores the information garnered in the lfa
 	LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug);
 
@@ -202,7 +201,6 @@ public class Flattener {
 	// if we are supposed to transform the graph
 	// by replacing work functions with their linear forms, do so now 
 	if (transform == true) {
-	    System.out.println("Running Linear Transformation");
 	    LinearFilterDirectReplacer replacer;
 	    // make a new replacer with the information contained in the analyzer
 	    replacer = new LinearFilterDirectReplacer(lfa);

@@ -555,21 +555,13 @@ public abstract class Stream extends Operator
             }
             else if (oper instanceof SplitJoin)
             {
-                if (finegrained)
-                {
-                    ASSERT(function instanceof Pair);
-                    Pair pair = (Pair)function;
-                    ASSERT(pair.getFirst() instanceof Operator);
-                    Operator sORj = (Operator)pair.getFirst();
-                    int funcNum = ((Integer)pair.getSecond()).intValue();
+                ASSERT(function instanceof Pair);
+                Pair pair = (Pair)function;
+                ASSERT(pair.getFirst() instanceof Operator);
+                Operator sORj = (Operator)pair.getFirst();
+                int funcNum = ((Integer)pair.getSecond()).intValue();
 
-                    sORj.work();
-                }
-                else
-                {
-                    ASSERT(function instanceof Operator);
-                    ((Operator)function).work();
-                }
+                sORj.work();
             }
             else if (oper instanceof FeedbackLoop)
             {
@@ -737,7 +729,10 @@ public abstract class Stream extends Operator
                 for (int n = 0; n < sdep.getNumDstInitPhases(); n++)
                 {
                     System.out.println(
-                        "  " + sdep.getSrcPhase4DstPhase(n) + "         " + n);
+                        "  "
+                            + sdep.getSrcPhase4DstPhase(n)
+                            + "         "
+                            + n);
                 }
                 System.out.println(
                     "Total: "

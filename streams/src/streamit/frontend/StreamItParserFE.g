@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.4 2002-09-04 15:12:37 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.5 2002-09-11 18:51:17 dmaze Exp $
  */
 
 header {
@@ -57,17 +57,16 @@ program	returns [Program p]
 		{ p = new Program(null, streams, structs); }
 	;
 
-stream_decl returns [StreamSpec ss] { ss = null; }
-	:	(stream_type_decl TK_filter) => ss=filter_decl
-	|	ss=struct_stream_decl
+stream_decl returns [StreamSpec ss] { ss = null; StreamType st; }
+	:	st=stream_type_decl
+		(ss=filter_decl[st] | ss=struct_stream_decl[st])
 	;
 
-filter_decl returns [StreamSpec ss]
-{ ss = null; StreamType st; List params = Collections.EMPTY_LIST;
+filter_decl[StreamType st] returns [StreamSpec ss]
+{ ss = null; List params = Collections.EMPTY_LIST;
 	List vars = new ArrayList(); List funcs = new ArrayList();
 	Function fn; Statement decl; }
-	: 	st=stream_type_decl
-		TK_filter
+	:	TK_filter
 		id:ID
 		(params=param_decl_list)?
 		LCURLY
@@ -88,11 +87,10 @@ stream_type_decl returns [StreamType st] { st = null; Type in, out; }
 		{ st = new StreamType(getContext(t), in, out); }
 	;
 
-struct_stream_decl returns [StreamSpec ss]
-{ ss = null; int type = 0; StreamType st;
+struct_stream_decl[StreamType st] returns [StreamSpec ss]
+{ ss = null; int type = 0;
 	List params = Collections.EMPTY_LIST; Statement body; }
-	:	st=stream_type_decl
-		( TK_pipeline { type = StreamSpec.STREAM_PIPELINE; }
+	:	( TK_pipeline { type = StreamSpec.STREAM_PIPELINE; }
 		| TK_splitjoin { type = StreamSpec.STREAM_SPLITJOIN; }
 		| TK_feedbackloop { type = StreamSpec.STREAM_FEEDBACKLOOP; }
 		)

@@ -14,7 +14,21 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.io.*;
 
+/** A class with useful functions that span classes **/
 public class Util {
+
+    public static int nextPow2(int i) {
+	String str = Integer.toBinaryString(i);
+	if  (str.indexOf('1') == -1)
+	    return 0;
+	int bit = str.length() - str.indexOf('1');
+	int ret = (int)Math.pow(2, bit);
+	if (ret == i * 2)
+	    return i;
+	return ret;
+	
+    }
+    
     /*
       for a given CType return the size (number of elements that need to be sent
       when routing).
@@ -54,60 +68,10 @@ public class Util {
 	return ret;
     }
 
-    public static int calculateRemaining(FilterTraceNode node, FilterTraceNode previous) 
+    public static CType getBaseType (CType type) 
     {
-	SIRFilter filter = node.getFilter();
-	
-	int pop = filter.getPopInt();
-	int peek = filter.getPeekInt();
-	
-	//set up prePop, prePeek
-	int prePop = 0;
-	int prePeek = 0;
-	
-	if (filter instanceof SIRTwoStageFilter) {
-	    prePop = ((SIRTwoStageFilter)filter).getInitPop();
-	    prePeek = ((SIRTwoStageFilter)filter).getInitPeek();
-	}
-	
-	//the number of times this filter fires in the initialization
-	//schedule
-	int initFire = node.getInitMult();
-	
-	//if this is not a twostage, fake it by adding to initFire,
-	//so we always think the preWork is called
-	if (!(filter instanceof SIRTwoStageFilter))
-	    initFire++;
-	
-	//the number of items produced by the upstream filter in
-	//initialization
-	int upStreamItems = 0;
-	
-	if (previous != null) {
-	    //calculate upstream items received during init  FILL ME IN!!!
-	    upStreamItems = previous.getFilter().getPushInt() * 
-		previous.getInitMult();
-	    if (previous.getFilter() instanceof SIRTwoStageFilter) {
-		upStreamItems -= ((SIRTwoStageFilter)previous.getFilter()).getPushInt();
-		upStreamItems += ((SIRTwoStageFilter)previous.getFilter()).getInitPush();
-	    }
-	}
-	
-	int bottomPeek = 0, remaining = 0;
-
-	//see my thesis for an explanation of this calculation
-	if (initFire  - 1 > 0) {
-	    bottomPeek = Math.max(0, 
-				  peek - (prePeek - prePop));
-	}
-	else
-	    bottomPeek = 0;
-	
-	remaining = upStreamItems -
-	    (prePeek + 
-	     bottomPeek + 
-	     Math.max((initFire - 2), 0) * pop);
-	
-	return remaining;
+	if (type.isArrayType())
+	    return ((CArrayType)type).getBaseType();
+	return type;
     }
 }

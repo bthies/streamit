@@ -2,14 +2,17 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
 import at.dms.util.Utils;
+import at.dms.kjc.sir.*;
 
 public class ComputeCodeStore {
     public static String main = "__RAWMAIN__";
 
     protected JFieldDeclaration[] fields;
     protected JMethodDeclaration[] methods;
+    //this method calls all the initialization routines
+    //and the steady state routines...
     protected JMethodDeclaration rawMain;
-    
+
     protected RawTile parent;
 
     public ComputeCodeStore(RawTile parent) {
@@ -23,8 +26,24 @@ public class ComputeCodeStore {
 					 new JBlock(), null, null);
 	
     }
+
+    public void addTrace(FilterInfo filterInfo)
+    {
+	//generate the block to add
+	JBlock block = new JBlock();
+
+	//check if we can use direct communication, easy check because
+	//no crossed routes
+	//	if (filterInfo.bottomPeek == 0 && filterInfo.remaining == 0 &&
+	
+	//add the fields of the trace
+
+	//add the initialization routine of the phase
+	
+	//add the work function of the phase
+    }
     
-    
+
     /** Bill's code 
      * adds method <meth> to this, if <meth> is not already registered
      * as a method of this.  Requires that <method> is non-null.

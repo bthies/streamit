@@ -37,7 +37,7 @@ public class SpaceTimeBackend
 	RawChip rawChip = new RawChip(rawRows, rawColumns);
 
 	//this must be run now, other pass rely on it...
-	RenameAll.renameAllFilters(str);
+	RenameAll.renameOverAllFilters(str);
 	
 	// move field initializations into init function
 	FieldInitMover.moveStreamInitialAssignments(str);

@@ -24,11 +24,16 @@ public class Rawify
 	    TraceNode traceNode = trace.getHead();
 	    while (traceNode != null) {
 		//do the appropiate code generation
-		if (!(traceNode instanceof FilterTraceNode))
-		    continue;
-		else {
-		    createSwitchCode((FilterTraceNode)traceNode, trace, init, rawChip);
+		if (traceNode instanceof FilterTraceNode) {
+		    //create the filter info class
+		    FilterInfo filterInfo = new FilterInfo((FilterTraceNode)traceNode);
+		    
+		    createSwitchCode((FilterTraceNode)traceNode, 
+				     trace, filterInfo, init, rawChip);
 		}
+		else 
+		    continue;
+		
 		//get the next tracenode
 		traceNode = traceNode.getNext();;
 	    }
@@ -41,7 +46,8 @@ public class Rawify
 	    EndSteadyState(rawChip);
     }
 
-    private static void createSwitchCode(FilterTraceNode node, Trace parent,
+    private static void createSwitchCode(FilterTraceNode node, Trace parent, 
+					 FilterInfo filterInfo,
 					 boolean init, RawChip rawChip) 
     {
 	RawTile tile = rawChip.getTile(node.getX(), node.getY());
@@ -54,7 +60,7 @@ public class Rawify
 		//if this is the init and it is the first time executing
 		//and a twostage filter, use initpop and multiply this
 		//by the size of the type it is receiving
-		int itemsReceiving = itemsNeededToFire(node.getFilter(), i, init) *
+		int itemsReceiving = itemsNeededToFire(filterInfo, i, init) *
 		    Util.getTypeSize(node.getFilter().getInputType());
 
 		for (int j = 0; j < itemsReceiving; j++) {
@@ -71,7 +77,7 @@ public class Rawify
 	    if (node.getNext() != null && node.getNext() instanceof FilterTraceNode) {
 		//get the items needed to fire and multiply it by the type 
 		//size
-		int items = itemsFiring(node.getFilter(), i, init) * 
+		int items = itemsFiring(filterInfo, i, init) * 
 		    Util.getTypeSize(node.getFilter().getOutputType());
 		
 		for (int j = 0; j < items; j++) {
@@ -91,10 +97,9 @@ public class Rawify
 	//we consume in init
 	if (init) {
 	    if (node.getPrevious() instanceof FilterTraceNode) {		
-		int remaining = Util.calculateRemaining(node, (FilterTraceNode)node.getPrevious());
-		if (remaining > 0) {
+		if (filterInfo.remaining > 0) {
 		    for (int i = 0; 
-			 i < remaining * Util.getTypeSize(node.getFilter().getInputType()); 
+			 i < filterInfo.remaining * Util.getTypeSize(node.getFilter().getInputType()); 
 			 i++) {
 			RouteIns ins = new RouteIns(tile);
 			//add the route from the source tile to this
@@ -109,27 +114,27 @@ public class Rawify
 	}
     }
     
-    private static int itemsFiring(SIRFilter filter, int exeCount, boolean init) 
+    private static int itemsFiring(FilterInfo filterInfo, int exeCount, boolean init) 
     {
-	int items = filter.getPushInt();
+	int items = filterInfo.push;
 	
-	if (init && exeCount == 0 && (filter instanceof SIRTwoStageFilter))
-	    items = ((SIRTwoStageFilter)filter).getInitPush();
+	if (init && exeCount == 0 && (filterInfo.isTwoStage()))
+	    items = filterInfo.prePush;
 	
 	return items;
     }
     
 
-    private static int itemsNeededToFire(SIRFilter filter, int exeCount, boolean init) 
+    private static int itemsNeededToFire(FilterInfo filterInfo, int exeCount, boolean init) 
     {
-	int items = filter.getPopInt();
+	int items = filterInfo.pop;
 	
 	//if we and this is the first execution we need either peek or initPeek
 	if (init && exeCount == 0) {
-	    if (filter instanceof SIRTwoStageFilter)
-		items = ((SIRTwoStageFilter)filter).getInitPeek();
+	    if (filterInfo.isTwoStage())
+		items = filterInfo.prePeek;
 	    else
-		items = filter.getPeekInt();
+		items = filterInfo.peek;
 	}
 	
 	return items;

@@ -32,8 +32,29 @@ public class LinearRedundancyAnalyzer {
 	    // add the redundancy to our data structure
 	    this.filtersToRedundancy.put(filter, filterRedundancy);
 	}
+	// print out redundancy information string via the linear printer.
+	LinearPrinter.println(this.toString());
     }
 
+
+    /**
+     * Returns true if this linear redundancy analyzer has redundancy information
+     * for the passed SIRStream.
+     **/
+    public boolean hasRedundancy(SIRStream str) {
+	return this.filtersToRedundancy.containsKey(str);
+    }
+
+    /**
+     * Returns the LinearRedundancy opject associated with the
+     * SIRStream str.
+     **/
+    public LinearRedundancy getRedundancy(SIRStream str) {
+	if (!(hasRedundancy(str))) {
+	    throw new IllegalArgumentException("no redundancy information for " + str);
+	}
+	return (LinearRedundancy)this.filtersToRedundancy.get(str);
+    }
 
 
     /**

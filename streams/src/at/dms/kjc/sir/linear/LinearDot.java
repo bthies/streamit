@@ -7,20 +7,37 @@ import at.dms.kjc.sir.*;
 
 /**
  * This class extends the main streamit dot printer to annotate the dot graphs with
- * linear analysis information. It colors linear nodes grey currently. Perhaps
- * more useful stuff will come later.
+ * linear analysis information. It colors linear nodes blue, linear nodes with
+ * a constant component violet red and linear structures pink. <p>
+ *
+ * It also adds linear redundancy information
  **/
 public class LinearDot extends StreamItDot {
     private LinearAnalyzer linearData;
+    private LinearRedundancyAnalyzer linearRedundancy;
+
     /**
      * Make a LinearDot printer that prints out the dot graph using information
      * from the linear filter analyzer to annotate the graph (eg color it silly).
+     * Also include redundancy information.
      **/
     public LinearDot(PrintStream outputstream,
-		     LinearAnalyzer anal) {
+		     LinearAnalyzer anal, LinearRedundancyAnalyzer lra) {
 	super(outputstream);
 	this.linearData = anal;
+	this.linearRedundancy = lra;
     }
+
+    
+    /**
+     * returns true if we have redundancy information. (eg if we are going to include
+     * redundancy percentages in the titles.
+     **/
+    public boolean hasRedundancyInformation() {return (this.linearRedundancy != null);}
+
+
+    //------------------ Override some of the key methods ------------------
+    
 
     /** Create the dot code for a node with a constant component (red). **/
     String makeConstantLabelledNode(String label)
@@ -39,12 +56,28 @@ public class LinearDot extends StreamItDot {
         return name;
     }
 
-
-    
-    /*
-     * Override visitFilter to color filters that compute linear functions grey.
+    /**
+     * Creates a string that represents the linear redundancy of this
+     * str. If no redundancy information is present in this LinearDot
+     * or if there is no information about str, then a blank string
+     * is returned.
      **/
+    public String makeRedundancyString(SIRStream str) {
+	// end if LinearDot has no redundancy information.
+	if (!(this.hasRedundancyInformation())) {return "";}
+	
+	// end if this str has no linear redundancy information
+	if (!this.linearRedundancy.hasRedundancy(str)) {return "";}
 
+	// otherwise, actually return the percent string
+	LinearRedundancy strRedundancy = this.linearRedundancy.getRedundancy(str);
+	
+	return strRedundancy.makeShortRedundancyString();
+    }
+    
+    /**
+     * Override visitFilter to color filters that compute linear functions.
+     **/
      public Object visitFilter(SIRFilter self,
                               JFieldDeclaration[] fields,
                               JMethodDeclaration[] methods,
@@ -58,6 +91,7 @@ public class LinearDot extends StreamItDot {
 	    label += "\\npush=" + self.getPushInt();
 	    label += "\\npop=" + self.getPopInt();
 	    label += "\\npeek=" + self.getPeekInt();
+	    label += "\\n" + this.makeRedundancyString(self);
 	    if (self instanceof SIRTwoStageFilter) {
 		SIRTwoStageFilter two = (SIRTwoStageFilter)self;
 		label += "\\ninitPush=" + two.getInitPush();
@@ -95,7 +129,12 @@ public class LinearDot extends StreamItDot {
     public String getClusterString(SIRStream self) {
 	// if we have a linear rep of this object, color the resulting dot graph rose.
 	if (linearData.hasLinearRepresentation(self)) {
-	    return "subgraph cluster_" + getName() + " {\n color=pink2;\n style=filled;\n label=\"" + self.getIdent() + "\";\n";
+	    return ("subgraph cluster_" +
+		    getName() +
+		    " {\n color=pink2;\n style=filled;\n label=\"" +
+		    self.getIdent() +
+		    "\\n" + this.makeRedundancyString(self) + 
+		    "\";\n");
 	} else {
 	    // otherwise, return boring white
 	    return "subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n";
@@ -103,17 +142,19 @@ public class LinearDot extends StreamItDot {
     }
 
 
-
+    //----------------------- These are more or less factory methods -----------
     
 
     /**
-     * Prints dot graph of <str> to <filename>, using LinearAnalyzer lfa.
+     * Prints dot graph of <str> to <filename>, using LinearAnalyzer lfa
+     * and LinearRedundancyAnalyzer lra.
      */
     public static void printGraph(SIRStream str, String filename,
-				  LinearAnalyzer lfa) {
+				  LinearAnalyzer lfa,
+				  LinearRedundancyAnalyzer lra) {
 	try {
 	    FileOutputStream out = new FileOutputStream(filename);
-	    StreamItDot dot = new LinearDot(new PrintStream(out), lfa);
+	    StreamItDot dot = new LinearDot(new PrintStream(out), lfa, lra);
 	    dot.print("digraph streamit {\n");
 	    str.accept(dot);
 	    dot.print("}\n");
@@ -124,7 +165,12 @@ public class LinearDot extends StreamItDot {
 	}
     }
 
-
+    /**
+     * Prints dot graph of <str> to <filename>, using LinearAnalyzer lfa.
+     */
+    public static void printGraph(SIRStream str, String filename, LinearAnalyzer lfa){
+	printGraph(str, filename, lfa, null);
+    }
     
 }
 

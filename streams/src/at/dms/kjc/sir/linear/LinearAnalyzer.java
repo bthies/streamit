@@ -14,7 +14,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.16 2003-01-22 15:27:24 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.17 2003-02-14 01:24:50 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -91,10 +91,6 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// generate a report and print it.
 	LinearPrinter.println(lfa.generateReport());
 	
-	// now, run a redundancy analysis pass and print the results
-	LinearRedundancyAnalyzer redundancy = new LinearRedundancyAnalyzer(lfa);
-	LinearPrinter.println(redundancy.toString());
-
 	return lfa;
     }
     

@@ -4,7 +4,7 @@
 # in perl because I don't know how to use all of the crazy unix command
 # line utilities necessary to do this stuff.
 #
-# $Id: run_reg_tests.pl,v 1.1 2002-12-05 03:24:52 aalamb Exp $
+# $Id: run_reg_tests.pl,v 1.2 2002-12-06 18:17:29 aalamb Exp $
 
 use strict;
 
@@ -40,7 +40,7 @@ print MHMAIL saved_execute("cd $working_dir; cvs -d /projects/raw/cvsroot co str
 
 # Set up the compilation path
 my $streamit_home = "$working_dir/streams";
-$ENV{"STREAMIT_HOME"} = $streamit_home;
+$ENV{"STREAMIT_HOME"} = "$streamit_home/";
 $ENV{"PATH"} = "/projects/raw/current/rawcc/compiler/bin:/usr/ccs/bin:/u/diego/bin/:$streamit_home:/usr/local/bin:/usr/uns/bin:/usr/bin/X11:/usr/ucb:/bin:/usr/bin:/usr/etc:/etc:/usr/games:";
 my $class_path = ".:/usr/local/jdk1.3/jre/lib/rt.jar:$streamit_home/compiler/kopi/3rdparty/JFlex/lib:$streamit_home/compiler/kopi/3rdparty/getopt:$streamit_home/compiler/kopi/classes/:$streamit_home/apps/libraries:$streamit_home/misc/java:$streamit_home/scheduler/:/usr/uns/java/antlr-2.7.1/:$streamit_home/compiler/frontend:$streamit_home/compiler/kopi/3rdparty/cplex/cplex.jar";
 $ENV{"CLASSPATH"} = $class_path;
@@ -86,7 +86,7 @@ close(MHMAIL);
 `/bin/date >> $REG_LOG`;
 
 ## run the makefile which executes the regression test
-`/usr/local/bin/make -C $streamit_home/regtest test-all >& $REG_LOG`;
+`/usr/local/bin/make -C $streamit_home/regtest test-bed >& $REG_LOG`;
 
 ## (date/time stamp the end of the run)
 `echo \"Regression Test Run Done\" >> $REG_LOG`;
@@ -97,14 +97,23 @@ close(MHMAIL);
 `cat $REG_LOG | mhmail $ADMINS -s \"Streamit Regression Test Log\"`; 
 
 # open the mhmail program to print the execuative summary to
-open(MHMAIL, "|mhmail $USERS -s \"Streamit Regression Test Summary\"");
-#open(MHMAIL, "|mhmail $ADMINS -s \"Streamit Regression Test Summary\"");
-print MHMAIL saved_execute("$streamit_home/regtest/tools/parse_results.pl $REG_LOG $REG_ERR $SUCCESS");
+#open(MHMAIL, "|mhmail $USERS -s \"Streamit Regression Test Summary\"");
+open(MHMAIL, "|mhmail $ADMINS -s \"Streamit Regression Test Summary\"");
+my $email_body = saved_execute("$streamit_home/regtest/tools/parse_results.pl $REG_LOG $REG_ERR $SUCCESS");
+print MHMAIL $email_body;
+print MHMAIL "\n-----------------\n";
+# write the email body to a file so that we can run the "which apps are in regtest" script
+write_file($email_body, "$streamit_home/parsed_results.txt");
+# figure out what applications are in and out of the regtest
+my $apps_executed = saved_execute("/bin/sh $streamit_home/regtest/tools/apps_directory.sh $streamit_home/parsed_results.txt");
+# remove the full path (and leave only the relative paths) (so it is easier to see what apps are missing)
+$apps_executed =~ s/$streamit_home//gi;
+print MHMAIL $apps_executed;
+#send the email.
 close(MHMAIL);
 
-# append a tally of which applications are in and out of the regtest
-#/bin/sh $streamit_home/regtest/tools/apps_directory.sh $TEMP | mail -s "Which applications are in regtest" thies@mit.edu aalamb@mit.edu
-# send mail to with the results of the test to the streamit mailing list
+
+
 
 
 # returns a clean time date stamp without any spaces or
@@ -163,3 +172,14 @@ sub read_file {
     return $file_contents;
 }
     
+# writes the contents of the first scalar argument to the 
+# filename in the second argument
+# usage: write_file($data, $filename)
+sub write_file {
+    my $data = shift || die("No data passed to write_file");
+    my $filename = shift || die("No filename passed to write_file");
+    
+    open(OUTFILE, ">$filename");
+    print OUTFILE $data;
+    close(OUTFILE);
+}

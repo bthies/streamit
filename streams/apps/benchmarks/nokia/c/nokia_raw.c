@@ -5,16 +5,16 @@
 
 
 
-const int K=4;
-const int N=20;
-const int Q=15;
-const int W=7;
+const int K=2;
+const int N=2;
+const int Q=2;
+const int W=2;
 //const int m=N*Q+W-1;
 //const int n=K*N;
 // can't do the above in c, calculate
 // by hand.
-const int m=306;
-const int n=80;
+const int m=5;
+const int n=4;
 
 void Decode(float C[Q][K], float h[W][K], float *r);
 void AddSigma(int n,float sigma,float AhA[K*N][K*N],float AhAsig[K*N][K*N]);
@@ -68,7 +68,7 @@ doDecode() {
 	}
 
 	Decode(C,h,r);
-	raw_test_pass_reg("done");
+	print_string("done");
 
   return 0;
 }

@@ -63,6 +63,36 @@ We want cycles/iteration:
 =  0.061038416 outputs/10^5 cycles
 
 
+-------------------------------------------
+7/30/2002
+(K,N,Q,W) = (2,2,2,2)
+
+first  iteration done at 0x000006397 (25495 cycles)
+second iteration done at 0x00000bdcb (48587 cycles) (delta=23092)
+third  iteration done at 0x0000117ff (71679 cycles) (delta=23092)
 
 
+==> iter takes 23092/23092 cycles (average = 23092)
 
+we are producing a 4 element output array, 23092 cycles, so normalized to 10^5 cycles, 4*(100000/23092) = 17.322016
+
+flops reported are 979 flops, which is (979/23092) * 250 = 10.598909 MFLOPS
+
+workCount = 398659 / 407920 = 0.97729702
+workCount = 362267 / 369472 = 0.9804992
+workCount = 362267 / 369472 = 0.9804992
+
+
+Uniprocessor (7/30/2002):
+(Xenon 2.2 GHz, 512MB cache)
+1 4 element array outputs / iteration = 4 outputs/iteration)
+100% utilization
+runtime for 10000000 (ten million) iterations = 112.09 seconds
+
+We want cycles/iteration:
+10^7 iterations/ 112.09 sec * 
+4 outputs/1 iteration
+1 second / 2.2x10^9 cycles
+* 10^5 cycles 
+
+=  16.220732 outputs/10^5 cycles

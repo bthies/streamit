@@ -119,12 +119,12 @@ complex->float filter magnitude() {
 }
 
 complex->complex pipeline FFTKernel(int N) {
-  add bitreverse(8);
-  for(int i=1;i<4;i++) add FFTstage(8,i);
+  add bitreverse(16);
+  for(int i=1;i<4;i++) add FFTstage(16,i);
 }  
 void->void pipeline FFT5 {
   add source();
-  add FFTKernel(8);
+  add FFTKernel(16);
   add magnitude();
   add sink();
 }

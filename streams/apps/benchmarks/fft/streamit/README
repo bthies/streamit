@@ -1,24 +1,32 @@
 There are several implementations of FFT in this directory.
 
+FFT2:
+ - A blocked, coarse-grained version that we've been using as a
+   benchmark for publications
+ - Conceptually it is just a pipeline, but the data-parallel segment
+   is duplicated into a splitjoin to improve performance on 4x4 Raw
+ - inputs in natural order, outputs in natural order (that is, unlike
+   FFT3, it includes a bit-reverse stage)
+
 FFT3:
- - reliable version that gets the right answer (checks with fftref)
  - inputs in natural order, outputs in bit-reversed order
+ - written by Mani Narayanan for comparison with UC Berkeley VIRAM
  - fine-grained decimation-in-time implementation
+ - answer verifies with C version in fftref
  - properly handles real/imag parts and roots of unity weights
 
 fftref:
  - reference implementation in C, corresponding to FFT3
 
-FFT2:
- - A blocked version that we've been using as a benchmark for
-   publications (appears also in benchmarks directory.)
- - inputs in natural order, outputs in natural order (that is, unlike
-   FFT3, it includes a bit-reverse stage)
- - FFT2_opt.java just duplicates the main pipeline in a splitjoin to
-   improve performance on Raw
-
-FFT:
+FFT4:
  - Derived from our original, very fine-grained implementation in the
    CC paper, but without the bit-reverse stage (which had a bug)
+ - Not a high-performance implementation; more to demonstrate
+   aspects of the language design.
  - Now inputs in bit-reversed order, outputs in natural order
  - Has dummy weights -- doesn't actually compute the FFT.
+
+FFT5: 
+ - fine-grained version, more elegant than FFT4 (and with correct weights)
+ - inputs in natural order, outputs in natural order (that is, it
+   includes a bit-reverse stage).

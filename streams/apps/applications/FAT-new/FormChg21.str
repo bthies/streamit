@@ -1,5 +1,5 @@
 // This filter takes  dimesional arrays and recreats the three dimentional version
-complex[N_srg]->complex[N_ch][N_srg][N_pri] filter FormChg21(N_ch,N_srg,N_pri) {
+complex[N_srg]->complex[N_ch][N_srg][N_pri] filter FormChg21(int N_ch,int N_srg,int N_pri) {
 
     init{}
 

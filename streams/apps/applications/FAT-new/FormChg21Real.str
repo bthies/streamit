@@ -1,5 +1,5 @@
 // This filter takes  dimesional arrays and recreats the three dimentional version
-float[N_srg]->float[N_ch][N_srg][N_pri] filter FormChg21Real(N_ch,N_srg,N_pri) {
+float[N_srg]->float[N_ch][N_srg][N_pri] filter FormChg21Real(int N_ch,int N_srg,int N_pri) {
 
     init{}
     

@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.16 2002-08-13 21:11:24 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.17 2002-08-15 19:20:38 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -212,6 +212,9 @@ public class NodesToJava implements FEVisitor
         case ExprBinary.BINOP_LE:  op = "<="; break;
         case ExprBinary.BINOP_GT:  op = ">"; break;
         case ExprBinary.BINOP_GE:  op = ">="; break;
+        case ExprBinary.BINOP_BAND:op = "&"; break;
+        case ExprBinary.BINOP_BOR: op = "|"; break;
+        case ExprBinary.BINOP_BXOR:op = "^"; break;
         }
         result += " " + op + " ";
         result += (String)exp.getRight().accept(this);

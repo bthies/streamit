@@ -24,6 +24,68 @@ public class Lifter implements StreamVisitor {
     private Lifter() {}
 
     /**
+     * Lift everything we can in <str> and its children
+     */
+    public static void lift(SIRStream str) {
+	IterFactory.createIter(str).accept(new Lifter());
+    }
+
+    /**
+     * PLAIN-VISITS 
+     */
+	    
+    /* visit a filter */
+    public void visitFilter(SIRFilter self,
+			    SIRFilterIter iter) {
+    }
+  
+    /**
+     * PRE-VISITS 
+     */
+	    
+    /* pre-visit a pipeline */
+    public void preVisitPipeline(SIRPipeline self,
+				 SIRPipelineIter iter) {
+	liftPipelineChildren(self);
+    }
+
+    /* pre-visit a splitjoin */
+    public void preVisitSplitJoin(SIRSplitJoin self,
+				  SIRSplitJoinIter iter) {
+	boolean changing;
+	do {
+	    changing = false;
+	    changing = liftPipelineChildren(self) || changing;
+	    changing = liftIntoSplitJoin(self) || changing;
+	} while (changing);
+    }
+
+    /* pre-visit a feedbackloop */
+    public void preVisitFeedbackLoop(SIRFeedbackLoop self,
+				     SIRFeedbackLoopIter iter) {
+	liftPipelineChildren(self);
+    }
+
+    /**
+     * POST-VISITS (empty)
+     */
+	    
+    /* post-visit a pipeline */
+    public void postVisitPipeline(SIRPipeline self,
+				  SIRPipelineIter iter) {
+    }
+
+    /* post-visit a splitjoin */
+    public void postVisitSplitJoin(SIRSplitJoin self,
+				   SIRSplitJoinIter iter) {
+    }
+
+    /* post-visit a feedbackloop */
+    public void postVisitFeedbackLoop(SIRFeedbackLoop self,
+				      SIRFeedbackLoopIter iter) {
+    }
+
+    /**
      * If <str> is a pipeline that either:
      *  1) Has a pipeline parent, or
      *  2) Contains only a single stream
@@ -62,72 +124,34 @@ public class Lifter implements StreamVisitor {
     }
 
     /**
-     * Lift everything we can in <str> and its children
+     * Returns whether or not something changed.
      */
-    public static void lift(SIRStream str) {
-	IterFactory.createIter(str).accept(new Lifter());
-    }
-
-    /**
-     * PLAIN-VISITS 
-     */
-	    
-    /* visit a filter */
-    public void visitFilter(SIRFilter self,
-			    SIRFilterIter iter) {
-    }
-  
-    /**
-     * PRE-VISITS 
-     */
-	    
-    /* pre-visit a pipeline */
-    public void preVisitPipeline(SIRPipeline self,
-				 SIRPipelineIter iter) {
-	liftChildren(self);
-    }
-
-    /* pre-visit a splitjoin */
-    public void preVisitSplitJoin(SIRSplitJoin self,
-				  SIRSplitJoinIter iter) {
-	liftChildren(self);
-        RefactorSplitJoin.raiseDupDupSJChildren(self);
-    }
-
-    /* pre-visit a feedbackloop */
-    public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRFeedbackLoopIter iter) {
-	liftChildren(self);
-    }
-
-    /**
-     * POST-VISITS 
-     */
-	    
-    /* post-visit a pipeline */
-    public void postVisitPipeline(SIRPipeline self,
-				  SIRPipelineIter iter) {
-	liftChildren(self);
-    }
-
-    /* post-visit a splitjoin */
-    public void postVisitSplitJoin(SIRSplitJoin self,
-				   SIRSplitJoinIter iter) {
-	liftChildren(self);
-    }
-
-    /* post-visit a feedbackloop */
-    public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-				      SIRFeedbackLoopIter iter) {
-	liftChildren(self);
-    }
-
-    private void liftChildren(SIRContainer str) {
-	for (int i=0; i<str.size(); i++) {
-	    SIROperator child = (SIROperator)str.get(i);
-	    if (child instanceof SIRPipeline) {
-		eliminatePipe((SIRPipeline)child);
+    private boolean liftPipelineChildren(SIRContainer str) {
+	boolean anyChange = false;
+	boolean changing;
+	do {
+	    changing = false;
+	    for (int i=0; i<str.size(); i++) {
+		SIROperator child = (SIROperator)str.get(i);
+		if (child instanceof SIRPipeline) {
+		    changing = eliminatePipe((SIRPipeline)child) || changing;
+		}
 	    }
-	}
+	    anyChange = anyChange || changing;
+	} while (changing);
+	return anyChange;
+    }
+
+    /**
+     * Returns whether or not something changed.
+     */
+    private boolean liftIntoSplitJoin(SIRSplitJoin sj) {
+	boolean anyChange = false;
+	boolean changing;
+	do {
+	    changing = RefactorSplitJoin.raiseDupDupSJChildren(sj);
+	    anyChange = anyChange || changing;
+	} while (changing);
+	return anyChange;
     }
 }

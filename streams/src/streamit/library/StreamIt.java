@@ -18,7 +18,7 @@ public class StreamIt extends Pipeline
     boolean printdot = false;
     void runSchedule (Object schedule)
     {
-        if (schedule instanceof Filter)
+        if (schedule instanceof Operator)
         {
             numExecutions ++;
             if (numExecutions == 10000)
@@ -121,7 +121,7 @@ public class StreamIt extends Pipeline
         // setup the scheduler
         if (scheduledRun)
         {
-            scheduler = new SimpleHierarchicalSchedulerPow2 ();
+            scheduler = new SimpleHierarchicalScheduler ();
 
             SchedStream stream;
             stream = (SchedStream) constructSchedule ();

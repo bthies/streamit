@@ -16,7 +16,7 @@
 
 package streamit.misc;
 
-/* $Id: HashComperator.java,v 1.4 2004-01-28 21:17:13 dmaze Exp $ */
+/* $Id: HashComperator.java,v 1.5 2004-10-17 08:27:04 thies Exp $ */
 
 public class HashComperator implements Comperator
 {
@@ -25,7 +25,10 @@ public class HashComperator implements Comperator
 		int leftHash = left.hashCode ();
 		int rightHash = right.hashCode ();
 		
-		assert left == right || leftHash != rightHash;
+		assert left == right || leftHash != rightHash : 
+		    "Hash error on Objects " + left + " and " + right + " of types + " + 
+		    (left==null ? "null" : ""+left.getClass()) + " and " + 
+		    (right==null ? "null" : ""+right.getClass());
 		return left.hashCode () < right.hashCode ();
 	}
 }

@@ -11,7 +11,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.71 2003-08-26 19:31:41 dmaze Exp $
+ * @version $Id: NodesToJava.java,v 1.72 2003-08-29 21:34:50 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -866,7 +866,7 @@ public class NodesToJava implements FEVisitor
                 TypePrimitive.TYPE_VOID)
             {
                 result += "public class " + spec.getName() +
-                    " extends StreamIt" + ifaces + "\n";
+                    " extends StreamIt" + spec.getTypeString() + ifaces + "\n";
                 result += indent + "{\n";
                 addIndent();
                 result += indent + "public static void main(String[] args) {\n";

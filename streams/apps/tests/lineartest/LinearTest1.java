@@ -5,9 +5,9 @@ import streamit.*;
  * that we can hopefully identify with the linear analysis pass
  * that I am going to be writing.
  **/
-public class LinearTest extends StreamIt {
+public class LinearTest1 extends StreamIt {
     public static void main(String[] args) {
-	StreamIt app = new LinearTest();
+	StreamIt app = new LinearTest1();
 	app.run(args);
     }
     public void init() {

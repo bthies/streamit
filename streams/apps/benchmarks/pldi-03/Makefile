@@ -6,6 +6,16 @@ ANALYSIS-OPTIONS = --debug --linearanalysis --unroll 10000
 BEAMFORMER-HOME = $(STREAMIT_HOME)/apps/benchmarks/beamformer/streamit
 FM-HOME = $(STREAMIT_HOME)/apps/benchmarks/fm/streamit
 
+SCRIPTS = scripts/fir.script \
+	  scripts/sample.script \
+	  scripts/target.script \
+	  scripts/fm.script \
+	  scripts/fb.script \
+	  scripts/bf.script \
+	  scripts/vocoder.script \
+	  scripts/oversamp.script \
+
+
 all: clean benchmarks
 
 benchmarks: FIRProgram.java \
@@ -46,7 +56,7 @@ clean:
 	rm -f FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java 
 	rm -f CoarseSerializedBeamFormer.java LinkedFMTest.java OneBitDToA.java
 	rm -f ChannelVocoder.java
-	rm -rf streamgraphs
+	rm -rf streamgraphs scripts/overall.script
 
 report_clean:
 	rm -rf linear_report.* workingfiles
@@ -58,26 +68,8 @@ report: report_clean
 	dvips -Ppdf linear_report.dvi -o linear_report.ps
 	ps2pdf linear_report.ps
 
-#redundancy data gathering
-redundant-fir: benchmarks
-	$(COMPILER) $(ANALYSIS-OPTIONS) FIRProgram.java > redundant/fir.output
-	./parse_redundant_output.pl redundant/fir.output
-redundant-target: benchmarks
-	$(COMPILER) $(ANALYSIS-OPTIONS) TargetDetect.java > redundant/target.output
-	./parse_redundant_output.pl redundant/target.output
-redundant-filterbank: benchmarks
-	$(COMPILER) $(ANALYSIS-OPTIONS) FilterBank.java > redundant/filterbank.output
-	./parse_redundant_output.pl redundant/filterbank.output
-redundant-sampling: benchmarks
-	$(COMPILER) $(ANALYSIS-OPTIONS) SamplingRateConverter.java > redundant/sample.output
-	./parse_redundant_output.pl redundant/sample.output
-redundant-fm: benchmarks
-	$(COMPILER) $(ANALYSIS-OPTIONS) LinkedFMTest.java > redundant/fm.output
-	./parse_redundant_output.pl redundant/fm.output
-
-redundant-beamformer: benchmarks
-	$(COMPILER) $(ANALYSIS-OPTIONS) CoarseSerializedBeamFormer.java > redundant/beam.output
-	./parse_redundant_output.pl redundant/beam.output
+overall-script:
+	cat $(SCRIPTS) > scripts/overall.script
 
 
 test: ChannelVocoder.java

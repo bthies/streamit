@@ -13,7 +13,7 @@ my $OUTPUTDIR = "timing";
 # input is "postfix:options:filename"
 
 if (not @ARGV) {
-    print "usage: do_timing_programs.pl inputscript\n";
+    print "usage: do_operation_programs.pl inputscript\n";
     print "  input script has on separate lines: postfix:options:filename\n";
     die();
 }
@@ -22,7 +22,7 @@ if (not @ARGV) {
 my @input_lines = split("\n", read_file(shift(@ARGV)));
 
 # place to put the results line
-my @result_lines = ("Name\tOptions\ttime1(sec)\ttime2(sec)\toutputs");
+my @result_lines = ("Name\tOptions\tflops\tfadds\tfmuls\toutputs");
 
 #loop on the tests
 foreach (@input_lines) {
@@ -41,18 +41,12 @@ foreach (@input_lines) {
     
     print "$filename-$postfix:";
     # run the program for the specified number of iterations until we find a number of iterations
-    # that takes greater than a second. Then scale the number up for a total running time
-    # of around 10 seconds.
+    # around a second
     my $iters = 1;
-    my $one_sec_iters = 0; # use to save the number of iters that takes a second (to produce output)
     my $flag = 1; # 0 is true
     while ($flag == 1) {
-	my $current_time = time_execution($OUTPUTDIR, "$filename-$postfix-np", $iters);
+	my $current_time = time_execution($OUTPUTDIR, "$filename-$postfix", $iters);
 	if ($current_time > 1) {
-	    # remember the number of iters that takes a second
-	    $one_sec_iters = $iters;
-	    # scale iters to total expected time is 10 seconds
-	    $iters = int(10 * ($iters/$current_time));
 	    # set the flag that we are done
 	    $flag = 0;
 	} else {
@@ -61,26 +55,24 @@ foreach (@input_lines) {
 	}
     }
 
-    print "\nRunning for $iters iterations:";
+    print "\nRunning dynamo for $iters iterations:";
+    # run the dynamo rio test and get back the results
+    my $report = run_rio($OUTPUTDIR, "$filename-$postfix", $iters);
+    
+    # extract the flops, fadds and fmul count from the report
+    my ($flops) =  $report =~ m/saw (.*) flops/;
+    my ($fadds) =  $report =~ m/saw (.*) fadds/;
+    my ($fmuls) =  $report =~ m/saw (.*) fmuls/;
 
-    # now time the execution for iters
-    my $overall_time1 = time_execution($OUTPUTDIR, "$filename-$postfix-np", $iters);
-    my $overall_time2 = time_execution($OUTPUTDIR, "$filename-$postfix-np", $iters);
-    # now, get the output count for this program 
+    # figure out how many outputs there are
     my $overall_outputs = get_output_count($OUTPUTDIR, "$filename-$postfix", $iters);
     
     # add a result line
-    push(@result_lines, "$filename-$postfix\t$options\t$overall_time1\t$overall_time2\t$overall_outputs");
-
-    # now, run for approximately one 100 milliseconds..
-    $one_sec_iters = int($one_sec_iters / 10);
-    if ($one_sec_iters == 0) {$one_sec_iters = 1;} # make sure always more than zero (filterbank...)
-    print "\nSaving output of $one_sec_iters iterations...";
-    print `$OUTPUTDIR/$filename-$postfix.exe -i $one_sec_iters > $OUTPUTDIR/$filename-$postfix.out`;
+    push(@result_lines, "$filename-$postfix\t$options\t$flops\t$fadds\t$fmuls\t$overall_outputs");
 
     print "done.\n";
 }
 
 # write the results to a tsv file
-save_tsv("timingResults.tsv", "timing results", @result_lines);
+save_tsv("operationResults.tsv", "operations results", @result_lines);
 	

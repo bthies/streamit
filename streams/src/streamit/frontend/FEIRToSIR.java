@@ -281,42 +281,46 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
     setStreamFields(result, fields, spec.getVars());
 
-    Function[] funcs = new Function[spec.getFuncs().size()];
-    list = spec.getFuncs();
-    for (i = 0; i < funcs.length; i++) {
-      funcs[i] = (Function) list.get(i);
-    }
-    JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
-    CMethod[] cmethods = new CMethod[funcs.length];
+    List meths = new ArrayList();
+    List cmeths = new ArrayList();
 
-    for (i = 0; i < funcs.length; i++) {
-      methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
-      cmethods[i] = jMethodToCMethod(methods[i], cclass);
-      // To consider: phase functions.  --dzm
-      if (funcs[i].getCls() == Function.FUNC_WORK) {
-	result.setWork(methods[i]);
-	if (spec.getWorkFunc().getPopRate() != null) {
-	  result.setPop((JExpression) spec.getWorkFunc().getPopRate().accept(this));
-	} else {
-	  result.setPop(0);
-	}
-	if (spec.getWorkFunc().getPeekRate() != null) {
-	  result.setPeek((JExpression) spec.getWorkFunc().getPeekRate().accept(this));
-	} else {
-	  result.setPeek(result.getPop());
-	}
-	if (spec.getWorkFunc().getPushRate() != null) {
-	  result.setPush((JExpression) spec.getWorkFunc().getPushRate().accept(this));
-	} else {
-	  result.setPush(0);
-	}
-      }
-      if (funcs[i].getCls() == Function.FUNC_INIT) {
-	result.setInit(methods[i]);
-      }
+    for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
+    {
+        Function func = (Function)iter.next();
+        JMethodDeclaration jdecl = (JMethodDeclaration)visitFunction(func);
+        if (jdecl == null)
+            continue;
+        meths.add(jdecl);
+        cmeths.add(jMethodToCMethod(jdecl, cclass));
+        // To consider: phase functions.  --dzm
+        if (func.getCls() == Function.FUNC_WORK) {
+            result.setWork(jdecl);
+            FuncWork fw = (FuncWork)func;
+            if (fw.getPopRate() != null) {
+                result.setPop((JExpression) fw.getPopRate().accept(this));
+            } else {
+                result.setPop(0);
+            }
+            if (fw.getPeekRate() != null) {
+                result.setPeek((JExpression) fw.getPeekRate().accept(this));
+            } else {
+                result.setPeek(result.getPop());
+            }
+            if (fw.getPushRate() != null) {
+                result.setPush((JExpression) fw.getPushRate().accept(this));
+            } else {
+                result.setPush(0);
+            }
+        }
+        if (func.getCls() == Function.FUNC_INIT) {
+            result.setInit(jdecl);
+        }
     }
+    JMethodDeclaration[] methods =
+        (JMethodDeclaration[])meths.toArray(new JMethodDeclaration[0]);
     result.setMethods(methods);
 
+    CMethod[] cmethods = (CMethod[])cmeths.toArray(new CMethod[0]);
     cclass.close(CClassType.EMPTY, // interfaces
                  null, // superclass
                  fields,
@@ -342,23 +346,26 @@ public class FEIRToSIR implements FEVisitor, Constants {
     
     setStreamFields(result, fields, spec.getVars());
 
-    Function[] funcs = new Function[spec.getFuncs().size()];
-    list = spec.getFuncs();
-    for (i = 0; i < funcs.length; i++) {
-      funcs[i] = (Function) list.get(i);
-    }
-    JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
-    CMethod[] cmethods = new CMethod[funcs.length];
+    List meths = new ArrayList();
+    List cmeths = new ArrayList();
 
-    for (i = 0; i < funcs.length; i++) {
-      methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
-      cmethods[i] = jMethodToCMethod(methods[i], cclass);
-      if (funcs[i].getCls() == Function.FUNC_INIT) {
-	result.setInit(methods[i]);
+    for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
+    {
+        Function func = (Function)iter.next();
+        JMethodDeclaration jdecl = (JMethodDeclaration)visitFunction(func);
+        if (jdecl == null)
+            continue;
+        meths.add(jdecl);
+        cmeths.add(jMethodToCMethod(jdecl, cclass));
+        if (func.getCls() == Function.FUNC_INIT) {
+            result.setInit(jdecl);
       }
     }
+    JMethodDeclaration[] methods =
+        (JMethodDeclaration[])meths.toArray(new JMethodDeclaration[0]);
     result.setMethods(methods);
 
+    CMethod[] cmethods = (CMethod[])cmeths.toArray(new CMethod[0]);
     cclass.close(CClassType.EMPTY, // interfaces
                  null, // superclass
                  fields,
@@ -696,20 +703,9 @@ public class FEIRToSIR implements FEVisitor, Constants {
     if (parent.getIdent() != null &&
         parent.getIdent().equals(func.getName()))
     {
-        // In a constructor.  We need to do slightly special things
-        // to handle the function body.
-        JStatement[] newBody = new JStatement[1];
-        newBody[0] = (JStatement)func.getBody().accept(this);
-        result =
-            new JConstructorDeclaration(contextToReference(func),
-                                        ACC_PUBLIC,
-                                        func.getName(),
-                                        sirParams,
-                                        CClassType.EMPTY,
-                                        null, /* constructor call */
-                                        newBody,
-                                        null, /* javadoc */
-                                        null); /* comments */
+        // In a constructor.  Ignore.  (Kopi2SIR does some processing
+        // but fails to add to the parent stream.)
+        result = null;
     }
     else
         result =
@@ -762,23 +758,26 @@ public class FEIRToSIR implements FEVisitor, Constants {
     
     setStreamFields(result, fields, spec.getVars());
     
-    Function[] funcs = new Function[spec.getFuncs().size()];
-    list = spec.getFuncs();
-    for (i = 0; i < funcs.length; i++) {
-      funcs[i] = (Function) list.get(i);
-    }
-    JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
-    CMethod[] cmethods = new CMethod[funcs.length];
+    List meths = new ArrayList();
+    List cmeths = new ArrayList();
 
-    for (i = 0; i < funcs.length; i++) {
-      methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
-      cmethods[i] = jMethodToCMethod(methods[i], cclass);
-      if (funcs[i].getCls() == Function.FUNC_INIT) {
-	result.setInit(methods[i]);
+    for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
+    {
+        Function func = (Function)iter.next();
+        JMethodDeclaration jdecl = (JMethodDeclaration)visitFunction(func);
+        if (jdecl == null)
+            continue;
+        meths.add(jdecl);
+        cmeths.add(jMethodToCMethod(jdecl, cclass));
+        if (func.getCls() == Function.FUNC_INIT) {
+            result.setInit(jdecl);
       }
     }
+    JMethodDeclaration[] methods =
+        (JMethodDeclaration[])meths.toArray(new JMethodDeclaration[0]);
     result.setMethods(methods);
 
+    CMethod[] cmethods = (CMethod[])cmeths.toArray(new CMethod[0]);
     cclass.close(CClassType.EMPTY, // interfaces
                  null, // superclass
                  fields,
@@ -805,23 +804,26 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
     setStreamFields(result, fields, spec.getVars());
     
-    Function[] funcs = new Function[spec.getFuncs().size()];
-    list = spec.getFuncs();
-    for (i = 0; i < funcs.length; i++) {
-      funcs[i] = (Function) list.get(i);
-    }
-    JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
-    CMethod[] cmethods = new CMethod[funcs.length];
+    List meths = new ArrayList();
+    List cmeths = new ArrayList();
 
-    for (i = 0; i < funcs.length; i++) {
-      methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
-      cmethods[i] = jMethodToCMethod(methods[i], cclass);
-      if (funcs[i].getCls() == Function.FUNC_INIT) {
-	result.setInit(methods[i]);
+    for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
+    {
+        Function func = (Function)iter.next();
+        JMethodDeclaration jdecl = (JMethodDeclaration)visitFunction(func);
+        if (jdecl == null)
+            continue;
+        meths.add(jdecl);
+        cmeths.add(jMethodToCMethod(jdecl, cclass));
+        if (func.getCls() == Function.FUNC_INIT) {
+            result.setInit(jdecl);
       }
     }
+    JMethodDeclaration[] methods =
+        (JMethodDeclaration[])meths.toArray(new JMethodDeclaration[0]);
     result.setMethods(methods);
 
+    CMethod[] cmethods = (CMethod[])cmeths.toArray(new CMethod[0]);
     cclass.close(CClassType.EMPTY, // interfaces
                  null, // superclass
                  fields,
@@ -853,23 +855,26 @@ public class FEIRToSIR implements FEVisitor, Constants {
     
     setStreamFields(result, fields, spec.getVars());
     
-    Function[] funcs = new Function[spec.getFuncs().size()];
-    list = spec.getFuncs();
-    for (i = 0; i < funcs.length; i++) {
-      funcs[i] = (Function) list.get(i);
-    }
-    JMethodDeclaration[] methods = new JMethodDeclaration[funcs.length];
-    CMethod[] cmethods = new CMethod[funcs.length];
+    List meths = new ArrayList();
+    List cmeths = new ArrayList();
 
-    for (i = 0; i < funcs.length; i++) {
-      methods[i] = (JMethodDeclaration) visitFunction(funcs[i]);
-      cmethods[i] = jMethodToCMethod(methods[i], cclass);
-      if (funcs[i].getCls() == Function.FUNC_INIT) {
-	result.setInit(methods[i]);
+    for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
+    {
+        Function func = (Function)iter.next();
+        JMethodDeclaration jdecl = (JMethodDeclaration)visitFunction(func);
+        if (jdecl == null)
+            continue;
+        meths.add(jdecl);
+        cmeths.add(jMethodToCMethod(jdecl, cclass));
+        if (func.getCls() == Function.FUNC_INIT) {
+            result.setInit(jdecl);
       }
     }
+    JMethodDeclaration[] methods =
+        (JMethodDeclaration[])meths.toArray(new JMethodDeclaration[0]);
     result.setMethods(methods);
 
+    CMethod[] cmethods = (CMethod[])cmeths.toArray(new CMethod[0]);
     cclass.close(CClassType.EMPTY, // interfaces
                  null, // superclass
                  fields,

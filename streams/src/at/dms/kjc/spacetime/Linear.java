@@ -41,6 +41,8 @@ public class Linear extends BufferedCommunication implements Constants {
 	//assert filterInfo.remaining<=0:"Items remaining in buffer not supported for linear filters.";
 	FilterTraceNode node=filterInfo.traceNode;
 	System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Linear.");
+	assert filterInfo.initMult<1:"Still need to create init function";
+	assert filterInfo.primePump<1:"Still need to create primePump";
 	FilterContent content=filterInfo.filter;
 	array=content.getArray();
 	begin=content.getBegin();
@@ -172,7 +174,9 @@ public class Linear extends BufferedCommunication implements Constants {
 	    turns+=extra;
 	}
 	final int mult=getMult(array.length);
-	final int newSteadyMult=(filterInfo.steadyMult-2-extra)/mult; //2 iterations start before innerloop
+	final int target=filterInfo.steadyMult-2-extra; //2 iterations start before innerloop
+	final int newSteadyMult=target/mult;
+	final int remainingExec=target-newSteadyMult*mult;
 	assert newSteadyMult>0:"SteadyMult on linear filter not high enough!";
 	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+newSteadyMult); //Send steadyMult to switch
 	//TODO: Save registers here
@@ -190,11 +194,6 @@ public class Linear extends BufferedCommunication implements Constants {
 	    body[body.length-6]=inline;
 	}
 
-	//TEST: Send start
-	/*if(begin) {
-	  inline.add("addu $csto, $0, "+regs[0]);
-	  }*/
-
 	//Start Template
 	inline=new InlineAssembly();
 	body[body.length-5]=inline;
@@ -204,7 +203,6 @@ public class Linear extends BufferedCommunication implements Constants {
 	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
 	    inline.add("la "+tempReg+", %0");
 	    int index=0;
-	    //if(turns>0) {
 	    int bufferRemaining=bufferSize; //Use peek buffer while bufferRemaining>0 else use net
 	    for(int i=0;i<=topPopNum;i++)
 		for(int j=0;j<popCount;j++)
@@ -237,12 +235,6 @@ public class Linear extends BufferedCommunication implements Constants {
 			    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
 			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
 			}
-	    /*} else
-	      for(int j=0;j<popCount;j++)
-	      for(int k=topPopNum;k>=0;k--) {
-	      inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-	      inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
-	      }*/
 	} else {
 	    for(int i=0;i<=topPopNum;i++)
 		for(int j=0;j<popCount;j++)
@@ -264,28 +256,32 @@ public class Linear extends BufferedCommunication implements Constants {
 	//Innerloop
 	inline=new InlineAssembly();
 	body[body.length-3]=inline;
-	inline.add(getLabel()+": #LOOP");
-	int times=0;
-	int[] oldPopNum=new int[4];
-	int[] oldElem=new int[4];
-	for(int i=0;i<mult;i++)
-	    for(int j=0;j<popCount;j++)
-		for(int k=topPopNum;k>=0;k--) {
-		    int offset=idx[k]+j;
-		    inline.add("mul.s "+tempRegs[times]+",\\t$csti,\\t"+regs[offset]);
-		    oldPopNum[times]=k;
-		    oldElem[times]=j;
-		    times++;
-		    if(times==4) {
-			times=0;
-			for(int l=0;l<4;l++) {
-			    int popNum=oldPopNum[l];
-			    int elem=oldElem[l];
-			    inline.add("add.s "+getInterReg(false,popNum,elem)+",\\t"+getInterReg(true,popNum,elem)+",\\t"+tempRegs[l]);
+	for(int repeat=0;repeat<2+remainingExec;repeat++) {
+	    if(repeat==1)
+		inline.add(getLabel()+": #LOOP");
+	    int times=0;
+	    int[] oldPopNum=new int[4];
+	    int[] oldElem=new int[4];
+	    for(int i=0;i<mult;i++)
+		for(int j=0;j<popCount;j++)
+		    for(int k=topPopNum;k>=0;k--) {
+			int offset=idx[k]+j;
+			inline.add("mul.s "+tempRegs[times]+",\\t$csti,\\t"+regs[offset]);
+			oldPopNum[times]=k;
+			oldElem[times]=j;
+			times++;
+			if(times==4) {
+			    times=0;
+			    for(int l=0;l<4;l++) {
+				int popNum=oldPopNum[l];
+				int elem=oldElem[l];
+				inline.add("add.s "+getInterReg(false,popNum,elem)+",\\t"+getInterReg(true,popNum,elem)+",\\t"+tempRegs[l]);
+			    }
 			}
 		    }
-		}
-	inline.add("bnea "+tempReg+",\\t"+zeroReg+",\\t"+getLabel());
+	    if(repeat==1)
+		inline.add("bnea "+tempReg+",\\t"+zeroReg+",\\t"+getLabel());
+	}
 	//Remainder InnerLoop
 	inline=new InlineAssembly();
 	body[body.length-2]=inline;

@@ -993,7 +993,7 @@ public class Rawify
 	if(filterInfo.initMult>0)
 	    bufferRemaining+=peek-pop;
 	int turns=pos*numCoeff; //Default number of turns
-	int extra; //Extra turns needed
+	int extra=0; //Extra turns needed
 	int excess=bufferRemaining-pop*(int)Math.ceil(((double)peek)/pop);//pop*(numCoeff+turns);
 	if(excess>0) { //Handle excess items on peekbuffer
 	    extra=(int)Math.ceil(((double)excess)/pop);
@@ -1131,11 +1131,14 @@ public class Rawify
 	//Innerloop
 	Label label = code.getFreshLabel();
 	final int numTimes=Linear.getMult(numCoeff);
+	final int target=filterInfo.steadyMult-2-extra; //2 iterations start before innerloop
+	final int newSteadyMult=target/numTimes;
+	final int remainingExec=target-newSteadyMult*numTimes;
 	int pendingSends=0;
 	//int pendingReceives=0;
 	int deferredSends=0; //Add a delay
 	FullIns ins=null;
-	for(int repeat=0;repeat<2;repeat++) {
+	for(int repeat=0;repeat<2+remainingExec;repeat++) {
 	    int times=0;
 	    if(repeat==1)
 		code.appendIns(label,false);
@@ -1214,8 +1217,20 @@ public class Rawify
 		    }
 		}
 	    }
+	    if(repeat==1)
+		ins.setProcessorIns(new BnezdIns(SwitchReg.R3,SwitchReg.R3,label.getLabel()));
 	}
-	ins.setProcessorIns(new BnezdIns(SwitchReg.R3,SwitchReg.R3,label.getLabel()));
+	if(pendingSends>0) {
+	    for(int l=0;l<pendingSends;l++) {
+		ins=new FullIns(tile);
+		if(end)
+		    ins.addRoute(SwitchIPort.CSTO,dest); //Final sum goes to static1
+		else
+		    ins.addRoute(SwitchIPort.CSTO,dest2);
+		code.appendIns(ins,false);
+	    }
+	    pendingSends=0;
+	}
 	//Postloop
     }
 

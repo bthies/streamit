@@ -82,6 +82,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     //Keeps track if current class is anonymous
     private boolean anonCreation;
 
+    //The latency of the next message to be sent
+    private SIRLatency nextLatency;
+
     //Uncomment the println for debugging
     private void printMe(String str) {
 	// System.out.println(str);
@@ -101,6 +104,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	application = null;
 	initBuiltinFilters();
 	finalVars=new LinkedList();
+        nextLatency = SIRLatency.BEST_EFFORT;
     }
 
     public Kopi2SIR(JCompilationUnit[] app) {
@@ -117,6 +121,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	this.application = app;
 	initBuiltinFilters();
 	finalVars=new LinkedList();
+        nextLatency = SIRLatency.BEST_EFFORT;
     }
 
     private String printLine(JPhylum l) {
@@ -1542,9 +1547,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         */
         String interfaceName = interfaces[0].getIdent();
         
-	//Assuming all messages best effort
-	return new SIRMessageStatement(prefix, interfaceName, methCall.getIdent(),
-				       args, SIRLatency.BEST_EFFORT);
+	return new SIRMessageStatement(prefix, interfaceName,
+                                       methCall.getIdent(),
+				       args, nextLatency);
     }
 		
 
@@ -1733,6 +1738,25 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 				       "regReceiver all must have a portal prefix");
 	    return null;
 	}
+        else if (ident.equals("setAnyLatency")) {
+            nextLatency = SIRLatency.BEST_EFFORT;
+            return null;
+        }
+        else if (ident.equals("setMaxLatency")) {
+            if (args.length > 1)
+                at.dms.util.Utils.fail(printLine(self) +
+                                       "Exactly one arg to setMaxLatency() allowed");
+            nextLatency = new SIRLatencyMax(args[0].intValue());
+            return null;
+        }
+        else if (ident.equals("setLatency")) {
+            if (args.length > 2)
+                at.dms.util.Utils.fail(printLine(self) +
+                                       "Exactly two args to setLatency() allowed");
+            nextLatency = new SIRLatencyRange(args[0].intValue(),
+                                              args[1].intValue());
+            return null;
+        }
 	else if (ident.equals("add")) {            //Handle an add call in a pipeline
 	    //Parent must be a pipeline
 	    if (!((parentStream instanceof SIRPipeline) || parentStream instanceof SIRSplitJoin)) 
@@ -2674,6 +2698,7 @@ protected void deepCloneInto(at.dms.kjc.Kopi2SIR other) {
   other.paramNames = (java.lang.String[])at.dms.kjc.AutoCloner.cloneToplevel(this.paramNames);
   other.finalVars = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.finalVars);
   other.anonCreation = this.anonCreation;
+  other.nextLatency = this.nextLatency;
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

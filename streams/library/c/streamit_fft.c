@@ -1,7 +1,7 @@
 /* 
  * contains all of the code necessary to do implement multiplication in frequency
  * and then do a reverse FFT.
- * $Id: streamit_frequency.c,v 1.1 2002-10-29 20:38:23 aalamb Exp $
+ * $Id: streamit_fft.c,v 1.1 2002-11-20 19:30:31 aalamb Exp $
  */
 
 #include<stdio.h>
@@ -21,10 +21,10 @@
 /* Implementation */
 
 /* multiply two float vectors(a and b), pairwise, consisting of real,im pairs of floats. */
-void element_multiply(float* a_r, float* a_i, 
-		      float* b_r, float* b_i, 
-		      float* result_r, float* result_i, 
-		      int size) {
+static void element_multiply(float* a_r, float* a_i, 
+			     float* b_r, float* b_i, 
+			     float* result_r, float* result_i, 
+			     int size) {
   int i;
   for (i=0; i<size; i++) {
     // result: real part = a.re*b.re - a.im*b.im
@@ -36,7 +36,7 @@ void element_multiply(float* a_r, float* a_i,
   }
 }
 
-int IsPowerOfTwo ( unsigned x )
+static int IsPowerOfTwo ( unsigned x )
 {
     if ( x < 2 )
         return FALSE;
@@ -48,7 +48,7 @@ int IsPowerOfTwo ( unsigned x )
 }
 
 
-unsigned NumberOfBitsNeeded ( unsigned PowerOfTwo )
+static unsigned NumberOfBitsNeeded ( unsigned PowerOfTwo )
 {
     unsigned i;
 
@@ -71,7 +71,7 @@ unsigned NumberOfBitsNeeded ( unsigned PowerOfTwo )
 
 
 
-unsigned ReverseBits ( unsigned index, unsigned NumBits )
+static unsigned ReverseBits ( unsigned index, unsigned NumBits )
 {
     unsigned i, rev;
 
@@ -85,7 +85,7 @@ unsigned ReverseBits ( unsigned index, unsigned NumBits )
 }
 
 
-double Index_to_frequency ( unsigned NumSamples, unsigned Index )
+static double Index_to_frequency ( unsigned NumSamples, unsigned Index )
 {
     if ( Index >= NumSamples )
         return 0.0;
@@ -97,7 +97,7 @@ double Index_to_frequency ( unsigned NumSamples, unsigned Index )
 
 #define CHECKPOINTER(p)  CheckPointer(p,#p)
 
-void CheckPointer ( void *p, char *name )
+static void CheckPointer ( void *p, char *name )
 {
     if ( p == NULL )
     {
@@ -107,13 +107,12 @@ void CheckPointer ( void *p, char *name )
 }
 
 
-void fft_float (
-    unsigned  NumSamples,
-    int       InverseTransform,
-    float    *RealIn,
-    float    *ImagIn,
-    float    *RealOut,
-    float    *ImagOut )
+static void fft_float (unsigned  NumSamples,
+		       int       InverseTransform,
+		       float    *RealIn,
+		       float    *ImagIn,
+		       float    *RealOut,
+		       float    *ImagOut )
 {
     unsigned NumBits;    /* Number of bits needed to store indices */
     unsigned i, j, k, n;
@@ -220,8 +219,11 @@ void fft_float (
 /* 
  * takes an input array of floats (in the time domain) 
  * and produces an output array of floats in the same array.
+ *
+ * This uses the fft implementation found on the web from: 
+ * Don Cross (dcross@intersrv.com)
  */
-do_fast_convolution(float* x, float* H_r, float* H_i, int size) {
+do_fast_convolution_std(float* x, float* H_r, float* H_i, int size) {
   int i;
   float *X_r,  *X_i;
   float *Y_r, *Y_i;

@@ -1,6 +1,7 @@
 /*
- * interface to the fftw library to replace streamit_frequency.c
- * $Id: streamit_fftw.c,v 1.1 2002-11-16 02:04:17 dmaze Exp $
+ * interface to the fftw library to replace streamit_fft.c (which 
+ * contians a simple non optimized implementation of fft)
+ * $Id: streamit_fftw.c,v 1.2 2002-11-20 19:30:31 aalamb Exp $
  */
 
 #include <sfftw.h>
@@ -46,6 +47,7 @@ static struct rfftw_plan_list *get_plan(int size)
   return plan;
 }
 
+
 /* Multiplies (in place) an FFTW halfcomplex array by a known set of
  * constants, in place.  The array is Hermitian, meaning that for all
  * i 0<=i<n, x[i] = conj(x[n-i]).  FFTW then stores this in a single
@@ -80,7 +82,7 @@ static void do_halfcomplex_multiply(float *buff, float *H_r, float *H_i,
  * takes an input array of floats (in the time domain) 
  * and produces an output array of floats in the same array.
  */
-do_fast_convolution(float* x, float* H_r, float* H_i, int size) {
+do_fast_convolution_fftw(float* x, float* H_r, float* H_i, int size) {
   struct rfftw_plan_list *plan;
 
   /* Start off by finding the plan pair, or creating one. */
@@ -88,7 +90,7 @@ do_fast_convolution(float* x, float* H_r, float* H_i, int size) {
   
   /* Run the forward FFT. */
   rfftw_one(plan->rtoc_plan, (fftw_real *)x, (fftw_real *)plan->buff);
-  
+
   /* Do the multiplication element-wise in frequency.  Note that this
    * is a little weird because of the ordering; see the FFTW documentation.
    * This happens in place. */

@@ -13,6 +13,13 @@ import java.util.*;
  * This flattens any set of filters into a single splitjoin.
  */
 public class FuseSplit {
+    /**
+     * The number statements in an unrolled piece of code for a
+     * splitter or joiner before it is put in a loop instead of being
+     * unrolled.
+     */
+    public static final int SPLITTER_JOINER_LOOP_THRESHOLD() { return KjcOptions.unroll; }
+
     private static SIRStream lastFused;
     
     /**
@@ -497,7 +504,18 @@ public class FuseSplit {
 		}
 	    }
 	} else {
-		/* here is original version, for reference
+	    // see how many statements we would generate
+	    int numStatements = 0;
+	    for (int k=0; k<weights.length; k++) {
+		for (int i=0; i<numExec; i++) {
+		    for (int j=0; j<weights[k]; j++) {	    
+			numStatements++;
+		    }
+		}
+	    }
+	    if (numStatements<=SPLITTER_JOINER_LOOP_THRESHOLD()) {
+		//System.err.println("FuseSplit: unrolling " + numStatements + " ( <= " + SPLITTER_JOINER_LOOP_THRESHOLD());
+		// if only have a few, generate them plain
 		for (int k=0; k<weights.length; k++) {
 		    for (int i=0; i<numExec; i++) {
 			for (int j=0; j<weights[k]; j++) {
@@ -512,50 +530,53 @@ public class FuseSplit {
 			    JExpression peekVal = new SIRPeekExpression(new JIntLiteral(index), type);
 			    // make an assignment to the proper peek array
 			    JAssignmentExpression assign = makeBufferPush(childInfo[k].peekBuffer, peekVal);
+			    list.add(new JExpressionStatement(null, assign, null));
 			}
 		    }
 		}
-		*/
-	    // here is version optimized for imem...
-	    // _weights[N] = { , , }
-	    JArrayInitializer _weightsInit = new JArrayInitializer(null, weightsExpression);
-	    JVariableDefinition _weights = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_weights", _weightsInit);
-	    list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_weights}, null));
-	    // _partialSum[N] = { , , }
-	    JArrayInitializer _partialSumInit = new JArrayInitializer(null, partialSumExpression);
-	    JVariableDefinition _partialSum = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_partialSum", _partialSumInit);
-	    list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_partialSum}, null));
-	    // it's non-trivial to move the k loop into dynamically-generated code because we reference childInfo[k]
-	    for (int k=0; k<weights.length; k++) {
-		// make loop variables
-		JVariableDefinition _i = new JVariableDefinition(null, 0, CStdType.Integer, "_i", new JIntLiteral(0));
-		JVariableDefinition _j = new JVariableDefinition(null, 0, CStdType.Integer, "_j", new JIntLiteral(0));
-		JExpression index;
-		if (isDup) {
-		    index = new JAddExpression(null, 
-					       new JLocalVariableExpression(null, _i),
-					       new JAddExpression(null,
-								  new JLocalVariableExpression(null, _j),
-								  new JIntLiteral(rate.initPeek)));
-		} else {
-		    index = new JAddExpression(null,
-					       new JMultExpression(null,
-								   new JLocalVariableExpression(null, _i),
-								   new JIntLiteral(sumOfWeights)),
-					       new JAddExpression(null,
-								  new JAddExpression(null, 
-										     new JArrayAccessExpression(null, 
-														new JLocalVariableExpression(null, _partialSum),
-														new JIntLiteral(k)),
-										     new JLocalVariableExpression(null, _j)),
-								  new JIntLiteral(rate.initPeek)));
+	    } else {
+		//System.err.println("FuseSplit: compacting " + numStatements + " ( > " + SPLITTER_JOINER_LOOP_THRESHOLD());
+		// otherwise, optimize for imem...
+		// _weights[N] = { , , }
+		JArrayInitializer _weightsInit = new JArrayInitializer(null, weightsExpression);
+		JVariableDefinition _weights = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_weights", _weightsInit);
+		list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_weights}, null));
+		// _partialSum[N] = { , , }
+		JArrayInitializer _partialSumInit = new JArrayInitializer(null, partialSumExpression);
+		JVariableDefinition _partialSum = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_partialSum", _partialSumInit);
+		list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_partialSum}, null));
+		// it's non-trivial to move the k loop into dynamically-generated code because we reference childInfo[k]
+		for (int k=0; k<weights.length; k++) {
+		    // make loop variables
+		    JVariableDefinition _i = new JVariableDefinition(null, 0, CStdType.Integer, "_i", new JIntLiteral(0));
+		    JVariableDefinition _j = new JVariableDefinition(null, 0, CStdType.Integer, "_j", new JIntLiteral(0));
+		    JExpression index;
+		    if (isDup) {
+			index = new JAddExpression(null, 
+						   new JLocalVariableExpression(null, _i),
+						   new JAddExpression(null,
+								      new JLocalVariableExpression(null, _j),
+								      new JIntLiteral(rate.initPeek)));
+		    } else {
+			index = new JAddExpression(null,
+						   new JMultExpression(null,
+								       new JLocalVariableExpression(null, _i),
+								       new JIntLiteral(sumOfWeights)),
+						   new JAddExpression(null,
+								      new JAddExpression(null, 
+											 new JArrayAccessExpression(null, 
+														    new JLocalVariableExpression(null, _partialSum),
+														    new JIntLiteral(k)),
+											 new JLocalVariableExpression(null, _j)),
+								      new JIntLiteral(rate.initPeek)));
+		    }
+		    JExpression peekVal = new SIRPeekExpression(index, type);
+		    JStatement assign = new JExpressionStatement(null, makeBufferPush(childInfo[k].peekBuffer, peekVal), null);
+		    // add i loop
+		    JStatement jLoop = Utils.makeForLoop(assign, new JArrayAccessExpression(null, new JLocalVariableExpression(null, _weights), new JIntLiteral(k)), _j);
+		    JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(numExec), _i);
+		    list.add(iLoop);
 		}
-		JExpression peekVal = new SIRPeekExpression(index, type);
-		JStatement assign = new JExpressionStatement(null, makeBufferPush(childInfo[k].peekBuffer, peekVal), null);
-		// add i loop
-		JStatement jLoop = Utils.makeForLoop(assign, new JArrayAccessExpression(null, new JLocalVariableExpression(null, _weights), new JIntLiteral(k)), _j);
-		JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(numExec), _i);
-		list.add(iLoop);
 	    }
 	}
 	// pop items at end
@@ -624,12 +645,22 @@ public class FuseSplit {
 	*/
 
 	// do pushing
+
 	for (int k=0; k<rep.joiner; k++) {
 	    for (int i=0; i<weights.length; i++) {
 		JExpression rhs = makeBufferPop(childInfo[i].pushBuffer);
 		JExpression push = new SIRPushExpression(rhs, type);
-		list.add(Utils.makeForLoop(new JExpressionStatement(null, push, null),
-					   weights[i]));
+		// only unroll
+		if (weights[i]<=SPLITTER_JOINER_LOOP_THRESHOLD()) {
+		    //System.err.println("FuseSplit: unrolling joiner " + weights[i] + " ( <= " + SPLITTER_JOINER_LOOP_THRESHOLD());
+		    for (int j=0; j<weights[i]; j++) {
+			list.add(new JExpressionStatement(null, push, null));
+		    }
+		} else {
+		    //System.err.println("FuseSplit: compacting joiner " + weights[i] + " ( > " + SPLITTER_JOINER_LOOP_THRESHOLD());
+		    list.add(Utils.makeForLoop(new JExpressionStatement(null, push, null),
+					       weights[i]));
+		}
 	    }
 	}
 	return new JBlock(null, list, null);

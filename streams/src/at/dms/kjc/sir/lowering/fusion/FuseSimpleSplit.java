@@ -257,55 +257,69 @@ public class FuseSimpleSplit {
 	int sumOfWeights = split.getSumOfWeights();
 	// make list of statements for work function
 	LinkedList list = new LinkedList();
-	/* here is the conceptual version:
+
+	// see how many statements we would generate
+	int numStatements = 0;
 	for (int k=0; k<weights.length; k++) {
 	    for (int i=0; i<rep.splitter; i++) {
-		for (int j=0; j<weights[k]; j++) {
-		    // calculate index of this peek
-		    int index = i*sumOfWeights + partialSum[k] + j;
-		    // make a peek expression
-		    JExpression peek = new SIRPeekExpression(new JIntLiteral(index), type);
-		    // make a push expression
-		    JExpression push = new SIRPushExpression(peek, type);
-		    // make an expression statement
-		    list.add(new JExpressionStatement(null, push, null));
+		for (int j=0; j<weights[k]; j++) {	    
+		    numStatements++;
 		}
 	    }
-	*/
-	// here is a version optimized for code size...
-	// _weights[N] = { , , }
-	JArrayInitializer _weightsInit = new JArrayInitializer(null, weightsExpression);
-	JVariableDefinition _weights = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_weights", _weightsInit);
-	list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_weights}, null));
-	// _partialSum[N] = { , , }
-	JArrayInitializer _partialSumInit = new JArrayInitializer(null, partialSumExpression);
-	JVariableDefinition _partialSum = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_partialSum", _partialSumInit);
-	list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_partialSum}, null));
-	// make loop variables
-	JVariableDefinition _i = new JVariableDefinition(null, 0, CStdType.Integer, "_i", new JIntLiteral(0));
-	JVariableDefinition _j = new JVariableDefinition(null, 0, CStdType.Integer, "_j", new JIntLiteral(0));
-	JVariableDefinition _k = new JVariableDefinition(null, 0, CStdType.Integer, "_k", new JIntLiteral(0));
-	// make loop body
-	JStatement inner = new JExpressionStatement(null,
-						    new SIRPushExpression(new SIRPeekExpression(new JAddExpression(null, 
-														   new JMultExpression(null, 
-																       new JLocalVariableExpression(null, _i),
-																       new JIntLiteral(sumOfWeights)),
-														   new JAddExpression(null,
-																      new JArrayAccessExpression(null,
-																				 new JLocalVariableExpression(null, _partialSum),
-																				 new JLocalVariableExpression(null, _k),
-																				 CStdType.Integer),
-																      new JLocalVariableExpression(null, _j))),
-												type),
-									  
-									  type),
-						    null);
-	// add k loop
-	JStatement jLoop = Utils.makeForLoop(inner, new JArrayAccessExpression(null, new JLocalVariableExpression(null, _weights), new JLocalVariableExpression(null, _k)), _j);
-	JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(rep.splitter), _i);
-	JStatement kLoop = Utils.makeForLoop(iLoop, new JIntLiteral(weights.length), _k);
-	list.add(kLoop);
+	}
+	if (numStatements<=FuseSplit.SPLITTER_JOINER_LOOP_THRESHOLD()) {	// here is the conceptual version:
+	    //System.err.println("FuseSimpleSplit: unrolling splitter " + numStatements + " ( <= " + FuseSplit.SPLITTER_JOINER_LOOP_THRESHOLD());
+	    for (int k=0; k<weights.length; k++) {
+		for (int i=0; i<rep.splitter; i++) {
+		    for (int j=0; j<weights[k]; j++) {
+			// calculate index of this peek
+			int index = i*sumOfWeights + partialSum[k] + j;
+			// make a peek expression
+			JExpression peek = new SIRPeekExpression(new JIntLiteral(index), type);
+			// make a push expression
+			JExpression push = new SIRPushExpression(peek, type);
+			// make an expression statement
+			list.add(new JExpressionStatement(null, push, null));
+		    }
+		}
+	    }
+	} else {
+	    //System.err.println("FuseSimpleSplit: compacting joiner " + numStatements + " ( > " + FuseSplit.SPLITTER_JOINER_LOOP_THRESHOLD());
+	    // here is a version optimized for code size...
+	    // _weights[N] = { , , }
+	    JArrayInitializer _weightsInit = new JArrayInitializer(null, weightsExpression);
+	    JVariableDefinition _weights = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_weights", _weightsInit);
+	    list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_weights}, null));
+	    // _partialSum[N] = { , , }
+	    JArrayInitializer _partialSumInit = new JArrayInitializer(null, partialSumExpression);
+	    JVariableDefinition _partialSum = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_partialSum", _partialSumInit);
+	    list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_partialSum}, null));
+	    // make loop variables
+	    JVariableDefinition _i = new JVariableDefinition(null, 0, CStdType.Integer, "_i", new JIntLiteral(0));
+	    JVariableDefinition _j = new JVariableDefinition(null, 0, CStdType.Integer, "_j", new JIntLiteral(0));
+	    JVariableDefinition _k = new JVariableDefinition(null, 0, CStdType.Integer, "_k", new JIntLiteral(0));
+	    // make loop body
+	    JStatement inner = new JExpressionStatement(null,
+							new SIRPushExpression(new SIRPeekExpression(new JAddExpression(null, 
+														       new JMultExpression(null, 
+																	   new JLocalVariableExpression(null, _i),
+																	   new JIntLiteral(sumOfWeights)),
+														       new JAddExpression(null,
+																	  new JArrayAccessExpression(null,
+																				     new JLocalVariableExpression(null, _partialSum),
+																				     new JLocalVariableExpression(null, _k),
+																				     CStdType.Integer),
+																	  new JLocalVariableExpression(null, _j))),
+												    type),
+									      
+									      type),
+							null);
+	    // add k loop
+	    JStatement jLoop = Utils.makeForLoop(inner, new JArrayAccessExpression(null, new JLocalVariableExpression(null, _weights), new JLocalVariableExpression(null, _k)), _j);
+	    JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(rep.splitter), _i);
+	    JStatement kLoop = Utils.makeForLoop(iLoop, new JIntLiteral(weights.length), _k);
+	    list.add(kLoop);
+	}
 	// pop the right number of items at the end
 	list.add(Utils.makeForLoop(new JExpressionStatement(null,
 							    new SIRPopExpression(type),
@@ -336,58 +350,71 @@ public class FuseSimpleSplit {
 	int sumOfWeights = join.getSumOfWeights();
 	// make list of statements for work function
 	LinkedList list = new LinkedList();
-	/* here is the conceptual version:
+
+	// see how many statements we would generate
+	int numStatements = 0;
 	for (int k=0; k<rep.joiner; k++) {
 	    for (int i=0; i<weights.length; i++) {
-		for (int j=0; j<weights[i]; j++) {
-		    int index = partialSum[i] + k*weights[i] + j;
-		    // make a peek expression
-		    JExpression peek = new SIRPeekExpression(new JIntLiteral(index),
-							     type);
-		    // make a push expression
-		    JExpression push = new SIRPushExpression(peek, type);
-		    // make an expression statement
-		    list.add(new JExpressionStatement(null, push, null));
+		for (int j=0; j<weights[i]; j++) {	    
+		    numStatements++;
 		}
 	    }
 	}
-	*/
-	// here is a version optimized for code size...
-	// _weights[N] = { , , }
-	JArrayInitializer _weightsInit = new JArrayInitializer(null, weightsExpression);
-	JVariableDefinition _weights = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_weights", _weightsInit);
-	list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_weights}, null));
-	// _partialSum[N] = { , , }
-	JArrayInitializer _partialSumInit = new JArrayInitializer(null, partialSumExpression);
-	JVariableDefinition _partialSum = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_partialSum", _partialSumInit);
-	list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_partialSum}, null));
-	// make loop variables
-	JVariableDefinition _i = new JVariableDefinition(null, 0, CStdType.Integer, "_i", new JIntLiteral(0));
-	JVariableDefinition _j = new JVariableDefinition(null, 0, CStdType.Integer, "_j", new JIntLiteral(0));
-	JVariableDefinition _k = new JVariableDefinition(null, 0, CStdType.Integer, "_k", new JIntLiteral(0));
-	// make loop body
-	JStatement inner = new JExpressionStatement(null,
-						    new SIRPushExpression(new SIRPeekExpression(new JAddExpression(null, 
-														   new JMultExpression(null, 
-																       new JLocalVariableExpression(null, _k),
-																       new JArrayAccessExpression(null,
-																				  new JLocalVariableExpression(null, _weights),
-																				  new JLocalVariableExpression(null, _i))),
-														   new JAddExpression(null,
-																      new JArrayAccessExpression(null,
-																				 new JLocalVariableExpression(null, _partialSum),
-																				 new JLocalVariableExpression(null, _i),
-																				 CStdType.Integer),
-																      new JLocalVariableExpression(null, _j))),
-												type),
+	if (numStatements<=FuseSplit.SPLITTER_JOINER_LOOP_THRESHOLD()) {	// here is the conceptual version:
+	    //System.err.println("FuseSimpleSplit: unrolling joiner " + numStatements + " ( <= " + FuseSplit.SPLITTER_JOINER_LOOP_THRESHOLD());
+	    for (int k=0; k<rep.joiner; k++) {
+		for (int i=0; i<weights.length; i++) {
+		    for (int j=0; j<weights[i]; j++) {
+			int index = partialSum[i] + k*weights[i] + j;
+			// make a peek expression
+			JExpression peek = new SIRPeekExpression(new JIntLiteral(index),
+								 type);
+			// make a push expression
+			JExpression push = new SIRPushExpression(peek, type);
+			// make an expression statement
+			list.add(new JExpressionStatement(null, push, null));
+		    }
+		}
+	    }
+	} else {
+	    //System.err.println("FuseSimpleSplit: compacting joiner " + numStatements + " ( > " + FuseSplit.SPLITTER_JOINER_LOOP_THRESHOLD());
+	    // here is a version optimized for code size...
+	    // _weights[N] = { , , }
+	    JArrayInitializer _weightsInit = new JArrayInitializer(null, weightsExpression);
+	    JVariableDefinition _weights = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_weights", _weightsInit);
+	    list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_weights}, null));
+	    // _partialSum[N] = { , , }
+	    JArrayInitializer _partialSumInit = new JArrayInitializer(null, partialSumExpression);
+	    JVariableDefinition _partialSum = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_partialSum", _partialSumInit);
+	    list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_partialSum}, null));
+	    // make loop variables
+	    JVariableDefinition _i = new JVariableDefinition(null, 0, CStdType.Integer, "_i", new JIntLiteral(0));
+	    JVariableDefinition _j = new JVariableDefinition(null, 0, CStdType.Integer, "_j", new JIntLiteral(0));
+	    JVariableDefinition _k = new JVariableDefinition(null, 0, CStdType.Integer, "_k", new JIntLiteral(0));
+	    // make loop body
+	    JStatement inner = new JExpressionStatement(null,
+							new SIRPushExpression(new SIRPeekExpression(new JAddExpression(null, 
+														       new JMultExpression(null, 
+																	   new JLocalVariableExpression(null, _k),
+																	   new JArrayAccessExpression(null,
+																				      new JLocalVariableExpression(null, _weights),
+																				      new JLocalVariableExpression(null, _i))),
+														       new JAddExpression(null,
+																	  new JArrayAccessExpression(null,
+																				     new JLocalVariableExpression(null, _partialSum),
+																				     new JLocalVariableExpression(null, _i),
+																				     CStdType.Integer),
+																	  new JLocalVariableExpression(null, _j))),
+												    type),
 									  
-									  type),
-						    null);
-	// add k loop
-	JStatement jLoop = Utils.makeForLoop(inner, new JArrayAccessExpression(null, new JLocalVariableExpression(null, _weights), new JLocalVariableExpression(null, _i)), _j);
-	JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(weights.length), _i);
-	JStatement kLoop = Utils.makeForLoop(iLoop, new JIntLiteral(rep.joiner), _k);
-	list.add(kLoop);
+									      type),
+							null);
+	    // add k loop
+	    JStatement jLoop = Utils.makeForLoop(inner, new JArrayAccessExpression(null, new JLocalVariableExpression(null, _weights), new JLocalVariableExpression(null, _i)), _j);
+	    JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(weights.length), _i);
+	    JStatement kLoop = Utils.makeForLoop(iLoop, new JIntLiteral(rep.joiner), _k);
+	    list.add(kLoop);
+	}
 	// pop the right number of items at the end
 	list.add(Utils.makeForLoop(new JExpressionStatement(null,
 							    new SIRPopExpression(type),

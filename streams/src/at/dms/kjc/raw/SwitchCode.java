@@ -124,8 +124,6 @@ public class SwitchCode extends at.dms.util.Utils
 	if (FileVisitor.connectedToFR(tile))
 	    fw.write("\tnop\troute $csto->$cEo\n");
     }
-    
-	   
 
     //receives the constants from the tile processor
     private static void getRepetitionCounts(Repetition[] compressMe, FileWriter fw) throws Exception

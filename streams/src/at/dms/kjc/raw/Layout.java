@@ -219,7 +219,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	System.out.println("Simulated Annealing Assignment");
 	int nsucc =0, j = 0, currentCost = 0, minCost = 0;
 	//number of paths tried at an iteration
-	int nover = 100 ;//* StreamItOptions.rawRows * StreamItOptions.rawColumns;
+	int nover = 100; //* StreamItOptions.rawRows * StreamItOptions.rawColumns;
 
 	try {
 	    init(node);
@@ -236,10 +236,13 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    HashMap sirMin = (HashMap)SIRassignment.clone();
 	    HashMap tileMin = (HashMap)tileAssignment.clone();
 	    minCost = currentCost;
+	    
+	    if (currentCost == 0)
+		return;
 
 	    //run the annealing twice.  The first iteration is really just to get a 
 	    //good initial layout.  Some random layouts really kill the algorithm
-	    for (int two = 0; two < 2; two++) {
+	    for (int two = 0; two < StreamItOptions.rawRows; two++) {
 		double t = annealMaxTemp(); 
 		double tFinal = annealMinTemp();
 		while (true) {
@@ -484,7 +487,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 			push;
 	    }
 	    sum += (items * hops) + (items * Util.getTypeSize(Util.getOutputType(node))) * 
-				     Math.pow(numAssigned * 2.0, 3.0);
+				     Math.pow(numAssigned * 4.0, 3.0);
 	}
 	return sum;
     }
@@ -783,6 +786,10 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	}
 	if (node.contents instanceof SIRJoiner) {
 	    if (node.edges[0] == null || !(node.edges[0].contents instanceof SIRJoiner)) {
+		//do not assign the joiner if JoinerRemoval wants is removed...
+		if (JoinerRemoval.unnecessary != null && 
+		    JoinerRemoval.unnecessary.contains(node))
+		    return;
 		//do not assign the joiner if it is a null joiner
 		for (int i = 0; i < node.inputs;i++) {
 		    if (node.incomingWeights[i] != 0) {

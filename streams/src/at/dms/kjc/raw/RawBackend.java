@@ -97,6 +97,8 @@ public class RawBackend {
 	System.out.println("Flattener End.");
 	//create the execution counts for other passes
 	createExecutionCounts(str, rawFlattener);
+	//see if we can remove any joiners
+	JoinerRemoval.run(rawFlattener.top);
 
 	// layout the components (assign filters to tiles)
 	
@@ -154,11 +156,11 @@ public class RawBackend {
 		 System.err.println("Warning: catching scheduler bug with special-value "
 		 + "overwrite in RawBackend");
 		 val=26;
-		    }
+		 }
 		*/
 		if (rawFlattener.getFlatNode(obj) != null)
 		    result[i].put(rawFlattener.getFlatNode(obj), 
-				      new Integer(val));
+				  new Integer(val));
 	    }
 	}
 	

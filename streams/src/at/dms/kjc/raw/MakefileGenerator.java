@@ -90,8 +90,100 @@ public class MakefileGenerator
 	FileWriter fw = new FileWriter("fileio.bc");
 	
 	fw.write("include(\"<dev/basic.bc>\");\n");
-
-        fw.write
+	
+	fw.write(
+		 "fn dev_quick_print_init(ioPort, portInfo, toFile, fileName)\n" +
+		 "{\n" +
+		 "	//ioPort the port to listen on\n" +
+		 "	//portInfo whether to print extended info such as whom it is\n" +
+		 "	//	from\n" +
+		 "	//toFile a 1 if we are printing to a file 0 if we are printing\n" +
+		 "	//	to stdout\n" +
+		 "	//fileName the name of the file if we are printing to a file\n" +
+		 "	local result;\n" +
+		 "	local fp0;\n" +
+		 "	local devQuickPrintStruct;\n" +
+		 "	fp0 = 0;\n" +
+		 "	devQuickPrintStruct = hms_new();\n" +
+		 "	// fopen the files\n" +
+		 "	if(toFile)\n" +
+		 "	{\n" +
+		 "		fp0 = fopen(fileName, \"w\");\n" +
+		 "	}\n" +
+		 "	else\n" +
+		 "	{\n" +
+		 "		fp0 = stdout;\n" +
+		 "	}\n" +
+		 "	devQuickPrintStruct.fileHandle = fp0;\n" +
+		 "	devQuickPrintStruct.ioPort = ioPort;\n" +
+		 "	devQuickPrintStruct.portInfo = portInfo;\n" +
+		 "	result = SimAddDevice(\"Quick Print Device\", \"dev_quick_print_reset\", \"dev_quick_print_calc\", devQuickPrintStruct);\n" +
+		 "	if(result == 0)\n" +
+		 "	{\n" +
+		 "		printf(\"// **** dev_quick_print: error adding device\\n\");\n" +
+		 "		return 0;\n" +
+		 "	}\n" +
+		 "	return 1;\n" +
+		 "}\n" +
+		 "\n" +
+		 "fn dev_quick_print_reset(devQuickPrintStruct)\n" +
+		 "{\n" +
+		 "	//this is currently just a stub.  In the future it \n" +
+		 "	//might reinitialize the file streams.\n" +
+		 "	return 1;\n" +
+		 "}\n" +
+		 "\n" +
+		 "fn dev_quick_print_calc(devQuickPrintStruct)\n" +
+		 "{\n" +
+		 "	local readHeaderValue;\n" +
+		 "	local readDataValue;\n" +
+		 "	local bogus;\n" +
+		 "	local requestLength;\n" +
+		 "	local opcode;\n" +
+		 "	local sender_y;\n" +
+		 "	local sender_x;\n" +
+		 "	local our_y;\n" +
+		 "	local our_x;\n" +
+		 "	local time_hi;\n" +
+		 "	local time_lo;\n" +
+		 "	while(1)\n" +
+		 "	{\n" +
+		 "		//read header word\n" +
+		 "		readHeaderValue = threaded_general_io_receive(machine, devQuickPrintStruct.ioPort);\n" +
+		 "		Proc_GetCycleCounter(Machine_GetProc(machine, 0), &time_hi, &time_lo);\n" +
+		 "		yield;\n" +
+		 "		DecodeDynHdr(readHeaderValue, &bogus, &requestLength, &opcode, &sender_y, &sender_x, &our_y, &our_x);\n" +
+		 "		//read Data word\n" +
+		 "		readDataValue = threaded_general_io_receive(machine, devQuickPrintStruct.ioPort);\n" +
+		 "		yield;\n" +
+		 "		//fprintf it to the file\n" +
+		 "		if(devQuickPrintStruct.portInfo)\n" +
+		 "		{\n" +
+		 "			fprintf(devQuickPrintStruct.fileHandle, \"Recv. from tile X = %d Y = %d \", sender_x, sender_y);\n" +
+		 "			if(opcode == 0)\n" +
+		 "			{\n" +
+		 "				fprintf(devQuickPrintStruct.fileHandle, \"in float format: \");\n" +
+		 "			}\n" +
+		 "			else\n" +
+		 "			{\n" +
+		 "				fprintf(devQuickPrintStruct.fileHandle, \"in int format: \");\n" +
+		 "			}\n" +
+		 "		}\n" +
+		 "		fprintf(devQuickPrintStruct.fileHandle, \"[%x%x: %x%08x]: \", sender_y, sender_x, time_hi, time_lo);\n" +
+		 "		//opcode zero is for float\n" +
+		 "		if(opcode == 0)\n" +
+		 "		{\n" +
+		 "			fprintf(devQuickPrintStruct.fileHandle, \"%e\\n\", double(readDataValue));\n" +
+		 "		}\n" +
+		 "		else\n" +
+		 "		{\n" +
+		 "			fprintf(devQuickPrintStruct.fileHandle, \"%d\\n\", readDataValue);\n" +
+		 "		}\n" +
+		 "	}\n" +
+		 "}\n");
+	
+	
+	fw.write
             ("global gFLOPS = 0;\n" +
              "fn __clock_handler(hms)\n" +
              "{\n" +
@@ -113,12 +205,11 @@ public class MakefileGenerator
              "}\n" +
              "\n");
 	
-        if (hasIO)
-        {
-            // create preamble
-            fw.write("if (FindFunctionInSymbolHash(gSymbolTable, \"dev_data_transmitter_init\",3) == NULL)\n");
-            fw.write("include(\"<dev/data_transmitter.bc>\");\n\n");
-
+        if (hasIO){
+	    // create preamble
+	    fw.write("if (FindFunctionInSymbolHash(gSymbolTable, \"dev_data_transmitter_init\",3) == NULL)\n");
+	    fw.write("include(\"<dev/data_transmitter.bc>\");\n\n");
+	    
             // create the instrumentation function
             fw.write("// instrumentation code\n");
             fw.write("fn streamit_instrument(val){\n");
@@ -130,7 +221,7 @@ public class MakefileGenerator
             // the same results script;
             fw.write("  printf(\"[00: %08x%08x]: %d\\n\", a, b, val);\n");
             fw.write("}\n\n");
-
+	    
 
             //create the function to write the data
             fw.write("fn dev_st_port_to_file_size(filename, size, port)\n{\n");
@@ -151,62 +242,66 @@ public class MakefileGenerator
             fw.write("};\n");
             fw.write("return dev_data_transmitter_init(\"st_port_to_file\", port,0,receive_device_descriptor);\n");
             fw.write("}");
-
-            fw.write("\n{\n");
-
-            //generate the code for the fileReaders
-            Iterator frs = FileVisitor.fileReaders.iterator();
-            while (frs.hasNext()) {
-                FlatNode node = (FlatNode)frs.next();
-                SIRFileReader fr = (SIRFileReader)node.contents;
-                fw.write("\tdev_serial_rom_init(\"" + fr.getFileName() +
-                         "\", " + getIOPort(Layout.getTile(node)) + 
-                         ", 1);\n");
+	}
+	//
+	fw.write("\n{\n");	
+	fw.write("dev_quick_print_init(11, 0, 0, 0);\n");
+		
+	if (hasIO) {
+	    //generate the code for the fileReaders
+	    Iterator frs = FileVisitor.fileReaders.iterator();
+	    while (frs.hasNext()) {
+		FlatNode node = (FlatNode)frs.next();
+		SIRFileReader fr = (SIRFileReader)node.contents;
+		fw.write("\tdev_serial_rom_init(\"" + fr.getFileName() +
+			 "\", " + getIOPort(Layout.getTile(node)) + 
+			 ", 1);\n");
+	    }
+	    //generate the code for the file writers
+	    Iterator fws = FileVisitor.fileWriters.iterator();
+	    while (fws.hasNext()) {
+		FlatNode node = (FlatNode)fws.next();
+		SIRFileWriter sfw = (SIRFileWriter)node.contents;
+		int size = getTypeSize(((SIRFileWriter)node.contents).getInputType());
+		fw.write("\tdev_st_port_to_file_size(\"" + sfw.getFileName() +
+			 "\", " + size + ", " +
+			 getIOPort(Layout.getTile(node)) + ");\n");
             }
-            //generate the code for the file writers
-            Iterator fws = FileVisitor.fileWriters.iterator();
-            while (fws.hasNext()) {
-                FlatNode node = (FlatNode)fws.next();
-                SIRFileWriter sfw = (SIRFileWriter)node.contents;
-                int size = getTypeSize(((SIRFileWriter)node.contents).getInputType());
-                fw.write("\tdev_st_port_to_file_size(\"" + sfw.getFileName() +
-                         "\", " + size + ", " +
-                         getIOPort(Layout.getTile(node)) + ");\n");
-            }
-            fw.write("\n}\n");
-        }
-        
+	}
+	
+	fw.write("\n}\n");
 	fw.close();
     }
+
     
     private static int getTypeSize(CType type) {
-	if (type.equals(CStdType.Boolean))
-	    return 1;
-	else if (type.equals(CStdType.Byte))
-	    return 1;
-	else if (type.equals(CStdType.Integer))
-	    return 4;
-	else if (type.equals(CStdType.Short))
-	    return 4;
-	else if (type.equals(CStdType.Char))
-	    return 1;
-	else if (type.equals(CStdType.Float))
-	    return 4;
-        else if (type.equals(CStdType.Long))
-	    return 4;
-       else
-	   {
+    if (type.equals(CStdType.Boolean))
+	return 1;
+    else if (type.equals(CStdType.Byte))
+	return 1;
+    else if (type.equals(CStdType.Integer))
+	return 4;
+    else if (type.equals(CStdType.Short))
+	return 4;
+    else if (type.equals(CStdType.Char))
+	return 1;
+    else if (type.equals(CStdType.Float))
+	return 4;
+    else if (type.equals(CStdType.Long))
+	return 4;
+    else
+	{
 	       Utils.fail("Cannot write type to file: " + type);
-	   }
-	return 0;
-    }
+	}
+    return 0;
+}
 
-    private static int getIOPort(Coordinate tile) 
-    {
-	return StreamItOptions.rawColumns + 
-	    + tile.getRow();
-    }
-    
+private static int getIOPort(Coordinate tile) 
+{
+    return StreamItOptions.rawColumns + 
+	+ tile.getRow();
+}
+
 
 }
 

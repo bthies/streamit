@@ -169,10 +169,7 @@ public class Util extends at.dms.util.Utils {
 
     public static String staticNetworkReceiveSuffix(CType tapeType) {
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-	    if(tapeType.isFloatingPoint())
-		return "= csti.fp;";
-	    else
-		return " = csti.integer;";
+	    return "= csti;";
 	}
 	else 
 	    return "));";
@@ -182,10 +179,7 @@ public class Util extends at.dms.util.Utils {
 	StringBuffer buf = new StringBuffer();
 	
 	if (KjcOptions.altcodegen || KjcOptions.decoupled) {
-	    if(tapeType.isFloatingPoint()) 
-		buf.append("csto.fp = ");
-	    else 
-		buf.append("csto.integer = ");
+	    buf.append("csto = ");
 	    //temporary fix for type changing filters
 	    buf.append("(" + tapeType + ")");
 	} 

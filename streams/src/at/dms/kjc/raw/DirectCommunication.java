@@ -191,7 +191,7 @@ class DirectConvertCommunication extends SLIRReplacingVisitor
 	JLocalVariableExpression csti = 
 	    new JLocalVariableExpression(null,
 					 new JGeneratedLocalVariable(null, 0, type, 
-							    "csti." + variable,
+							    "csti",
 							    null));
 							    
 	return csti;

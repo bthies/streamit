@@ -99,22 +99,18 @@ public class MakefileGenerator
 	    if (KjcOptions.altcodegen) {
 		fw.write("\nDMEM_PORTS  = 1\n");
 		fw.write("ISSUE_WIDTH = 1\n\n");
-
 		fw.write("EXTRA_BTL_ARGS += -issue_width $(ISSUE_WIDTH) -dmem_ports $(DMEM_PORTS\n");
 		fw.write("RGCCFLAGS += -missue_width=$(ISSUE_WIDTH) -mdmem_ports=$(DMEM_PORTS)\n");
 
-		fw.write("\ntile%.s: tile%.c\n");
-		fw.write("\t$(RGCC) $(RGCCFLAGS) $(INCLUDES) $(DEFS) -S $< -o tile$%.S\n");
-		fw.write("\t/u/slarsen/tmp/fixnw.pl tile$%.S $@\n");
+		//fw.write("\ntile%.s: tile%.c\n");
+		//fw.write("\t$(RGCC) $(RGCCFLAGS) $(INCLUDES) $(DEFS) -S $< -o tile$%.S\n");
+		//fw.write("\t/u/slarsen/tmp/fixnw.pl tile$%.S $@\n");
 	    }
 
 	    fw.write("\ninclude $(COMMONDIR)/Makefile.all\n\n");
 	    fw.write("clean:\n");
 	    fw.write("\trm -f *.o\n");
 	    fw.write("\trm -f tile*.s\n\n");
-	    if(KjcOptions.altcodegen) {
-		//do something
-	    }
 	    fw.close();
 	}
 	catch (Exception e) 

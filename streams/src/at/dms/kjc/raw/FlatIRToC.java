@@ -164,27 +164,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-	    print("union static_network {\n");
-	    print("  int integer;\n");
-	    print("  float fp;\n");
-	    print("};\n\n");
+	    print("register float csto asm(\"$csto\");\n");
+	    print("register float csti asm(\"$csti\");\n");
 	}
 	
-	if (KjcOptions.altcodegen) {
-	    print("extern volatile union static_network csto;\n");
-	    print("extern volatile union static_network csti;\n");
-	}
-    
-	if (KjcOptions.decoupled) {
-	    print("volatile union static_network csto;\n");
-	    print("volatile union static_network csti;\n");
-	}
-	   
-	
-
-	//print the inline asm 
-	//        print("static inline void static_send_from_mem(void *val) instr_one_input(\"lw $csto,0(%0)\");\n");
-	//        print("static inline void static_receive_to_mem(void *val) instr_one_input(\"sw $csti,0(%0)\");\n");
 
 	//print the extern for the function to init the 
 	//switch, do not do this if we are compiling for
@@ -237,9 +220,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//initialize the dummy network receive value
 	if (KjcOptions.decoupled) {
 	    if (self.getInputType().isFloatingPoint()) 
-		print("  csti.fp = 1.0;\n");
+		print("  csti = 1.0;\n");
 	    else 
-		print("  csti.integer = 1;\n");
+		print("  csti = 1;\n");
 	}
 
 	//call the raw_init() function for the static network
@@ -1514,12 +1497,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
 	    print("{\n");
-	    if(tapeType.isFloatingPoint()) {
-		print("csto.fp = ");
-	    }
-	    else {
-		print("csti.integer = ");
-	    }
+	    print("csto = ");
 	    val.accept(this);
 	    for (int i = 0; i < dims.length; i++) {
 		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");

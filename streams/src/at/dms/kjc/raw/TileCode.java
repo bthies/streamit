@@ -63,26 +63,12 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    fw.write("/* " + joiner.contents.getName() + "*/\n");
 	    fw.write("#include <raw.h>\n");
 	    fw.write("#include <math.h>\n\n");
-	    //	    fw.write("static inline void static_send_from_mem(void *val) instr_one_input(\"lw $csto,0(%0)\");\n");
-	    //fw.write("static inline void static_receive_to_mem(void *val) instr_one_input(\"sw $csti,0(%0)\");\n");
 
 	    if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-		fw.write("union static_network {\n");
-		fw.write("  int integer;\n");
-		fw.write("  float fp;\n");
-		fw.write("};\n\n");
+		fw.write("register float csto asm(\"$csto\");\n");
+		fw.write("register float csti asm(\"$csti\");\n");
 	    }
 	    
-	    if (KjcOptions.altcodegen) {
-		fw.write("extern volatile union static_network csto;\n");
-		fw.write("extern volatile union static_network csti;\n");
-	    }
-	    
-	    if (KjcOptions.decoupled) {
-		fw.write("volatile union static_network csto;\n");
-		fw.write("volatile static_network csti;\n");
-	    }
-
 	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)
 		fw.write(createInitPath(joiner) + "\n");	    
 	    fw.write(createJoinerWork(joiner));
@@ -103,9 +89,9 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    //initialize the dummy network receive value
 	    if (KjcOptions.decoupled) {
 		if (Util.getJoinerType(joiner).isFloatingPoint()) 
-		    fw.write("  csti.fp = 1.0;\n");
+		    fw.write("  csti = 1.0;\n");
 		else 
-		    fw.write("  csti.integer = 1;\n");
+		    fw.write("  csti = 1;\n");
 	    }
 	    
 	    fw.write("  work();\n");

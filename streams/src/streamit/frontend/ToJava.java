@@ -163,6 +163,7 @@ class ToJava
                 TempVarGen varGen = new TempVarGen();
                 prog = (Program)prog.accept(new MakeBodiesBlocks());
                 prog = (Program)prog.accept(new DoComplexProp(varGen));
+                prog = (Program)prog.accept(new InsertInitConstructors());
                 prog = (Program)prog.accept(new MoveStreamParameters());
                 prog = (Program)prog.accept(new NameAnonymousFunctions());
                 String javaOut = (String)prog.accept(new NodesToJava(null));

@@ -3,6 +3,8 @@ package at.dms.kjc.spacedynamic;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
 
+/** This class represents the RawChip we are compiling to **/
+
 public class RawChip {
     //the indices are x, y
     private RawTile[][] tiles;

@@ -20,6 +20,13 @@ import at.dms.util.Utils;
 import java.io.*;
 
 /**
+ * This class represents the entire stream graph of the application we are compiling.
+ * It is composed of StaticStreamGraphs in which all filters communicate over
+ * static rate channels.  The connections between StaticStreamGraphs (SSGs) are
+ * dynamic rate.  
+ 
+ * The StreamGraph includes objects (passes) that operate on it and store information
+ * for compilation, such as layout, FileState, etc.
 
 */
 
@@ -45,6 +52,10 @@ public class StreamGraph
     public HashMap steadySwitchSchedules;
     private RawChip rawChip;
 
+    /**
+     * Create the static stream graph for the application that has <top>
+     * as the top level FlatNode, and compile it to <rawChip>
+     **/
     public StreamGraph(FlatNode top, RawChip rawChip) 
     {
 	this.rawChip = rawChip;
@@ -54,6 +65,9 @@ public class StreamGraph
 	steadySwitchSchedules = new HashMap();
     }
     
+    /** This method creates the static subgraphs of the StreamGraph but
+	cutting the stream graph at dynamic rate boundaries,
+	right now the top level flat node has to be a filter **/
     public void createStaticStreamGraphs() 
     {
 	//flat nodes at a dynamic rate boundary that may constitute the
@@ -71,12 +85,13 @@ public class StreamGraph
 	    //we don't want to create a new SSG for something we have already added
 	    assert !visited.contains(top);
 	    //dynamic boundaries can only be filters!
-	    assert top.isFilter();
+	    assert top.isFilter() : "Error: Toplevel node for a static subgraph is not filter";
 	    StaticStreamGraph ssg = new StaticStreamGraph(this, top);
-	    //set topleve 
+	    //set topleve; 
 	    if (topLevel == null)
 		topLevel = ssg;
 	    ssgs.add(ssg);
+	    //search downstream for what should be added to this SSG
 	    searchDownstream(top, ssg, visited, dynamicBoundary);
 	}
 
@@ -84,14 +99,11 @@ public class StreamGraph
 	staticSubGraphs = 
 	    (StaticStreamGraph[])ssgs.toArray(new StaticStreamGraph[0]);
 
-	
-	
 	//clean up the flat graph so that is can be converted to an SIR
 	for (int i = 0; i < staticSubGraphs.length; i++)
 	    staticSubGraphs[i].cleanUp();
 	
-	
-	//create the connections of the graph!!!
+	//create the inter-SSG connections of the graph!!!
 	for (int i = 0; i < staticSubGraphs.length; i++)
 	    staticSubGraphs[i].connect();
 
@@ -103,7 +115,10 @@ public class StreamGraph
 	}
     }
 
-    /** recursive function to cut the graph into ssgs */
+    /** recursive function to cut the graph into ssgs, it searchs downstream starting
+	at <current> and adds nodes to <ssg> that are connected by static rate channels
+	or it remember entry points to new SSGs in <dynamicBoundary> 
+    **/
     private void searchDownstream(FlatNode current, StaticStreamGraph ssg, HashSet visited, 
 				  List dynamicBoundary) 
     {
@@ -113,8 +128,6 @@ public class StreamGraph
 	if (visited.contains(current)) {
 	    return;
 	}
-
-
 	//record that it has been visited...
 	visited.add(current);
 	//current has not been added yet
@@ -161,6 +174,7 @@ public class StreamGraph
 	    }
 	}	
 	else if (current.isSplitter()) {
+	    //if a aplitter continue downstream search for each way...
 	    for (int i = 0; i < current.ways; i++) {
 		assert current.edges[i] != null;
 		searchDownstream(current.edges[i], ssg, visited, dynamicBoundary);
@@ -168,9 +182,8 @@ public class StreamGraph
 	}
 	else {
 	    assert current.isJoiner();
-
 	    assert current.incoming.length == current.inputs;
-	    //search backwards if we haven't seen this joiner and it is not a null joiner
+	    //first search backwards if we haven't seen this joiner and it is not a null joiner
 	    if (!(((SIRJoiner)current.contents).getType().isNull() || 
 		((SIRJoiner)current.contents).getSumOfWeights() == 0)) {
 		for (int i = 0; i < current.inputs; i++) {
@@ -178,7 +191,7 @@ public class StreamGraph
 		    searchUpstream(current.incoming[i], ssg, visited, dynamicBoundary);
 		}
 	    }
-	    
+	    //now resume the downstream search
 	    if (current.edges.length > 0) {
 		assert current.edges[0] != null;
 		searchDownstream(current.edges[0], ssg, visited, dynamicBoundary);
@@ -186,6 +199,11 @@ public class StreamGraph
 	}
     }
     
+    /**
+       This method cuts the connects from <upstream> to <downstream> in the flatgraph
+       and in the SIR graph,sets the types of the input of <downstream> and
+       output of <upstream> to void, and sets the appropriate rates to 0
+    **/
     private void cutGraph(FlatNode upstream, FlatNode downstream) 
     {
 	//System.out.println("*** Cut Graph ***");
@@ -207,6 +225,13 @@ public class StreamGraph
 	downstream.removeIncoming();
     }
     
+    /**
+       This method search upstream from <current> for nodes that it should add to <ssg>.
+       It will add nodes that are connected thru static rate channels.  <dynamicBoundary>
+       stores all the entries for SSGs we haven't constructed yet
+       
+       It is necessary in order to ensure a cut across a splitjoin contruct
+    **/
     private void searchUpstream(FlatNode current, StaticStreamGraph ssg, HashSet visited, 
 				List dynamicBoundary) 
     {
@@ -227,15 +252,16 @@ public class StreamGraph
 	    return;
 	}
 	
-	//we have not seen this flatnode before
+	//we have not seen this flatnode before so add it
 	ssg.addFlatNode(current);
 	visited.add(current);
 	
 	if (current.isFilter()) {
 	    SIRFilter filter = (SIRFilter)current.contents;
-	    //if this filter has dynamic input, and we hav
+	    //if this filter has dynamic input
 	    if (filter.getPop().isDynamic() || filter.getPeek().isDynamic()) {
 		assert current.inputs == 1;
+		//cut the graph and add another entry point for the SSG
 		cutGraph(current.incoming[0], current);
 		ssg.addTopLevelFlatNode(current);
 		return;
@@ -247,6 +273,7 @@ public class StreamGraph
 		if (current.incoming[0].isFilter()) {
 		    SIRFilter upstream = (SIRFilter)current.incoming[0].contents;
 		    if (upstream.getPush().isDynamic()) { 
+			//cut the graph and add another entry point for the SSG
 			cutGraph(current.incoming[0], current);
 			ssg.addTopLevelFlatNode(current);
 			return;
@@ -256,13 +283,14 @@ public class StreamGraph
 		searchUpstream(current.incoming[0], ssg, visited, dynamicBoundary);
 	    }
 	} else if (current.isSplitter()) {
+	    //continue upstream search...
 	    if (current.inputs > 0) {
 		assert current.incoming[0] != null && current.inputs == 1;
 		searchUpstream(current.incoming[0], ssg, visited, dynamicBoundary);
 	    }
 	} else {
 	    assert current.isJoiner();
-	    
+	    //continue upstream search..
 	    for (int i = 0; i < current.inputs; i++) {
 		assert current.incoming[i] != null;
 		searchUpstream(current.incoming[i], ssg, visited, dynamicBoundary);
@@ -270,6 +298,9 @@ public class StreamGraph
 	}
     }
 
+
+    /** Return true if the source of this stream, <stream> has dynamic
+	rate input **/
     public boolean dynamicEntry(SIRStream stream) 
     {
 	if (stream instanceof SIRFilter) {
@@ -284,6 +315,8 @@ public class StreamGraph
 	    return false;
     }
     
+     /** Return true if the sink of this stream, <stream> has dynamic
+	 rate output **/
     public boolean dynamicExit(SIRStream stream) 
     {
 	if (stream instanceof SIRFilter) {
@@ -297,6 +330,7 @@ public class StreamGraph
 	    return false;
     }
     
+    
     /** This will automatically assign the single tile of the raw chip
 	to the one filter of the one SSG, all these conditions must be true **/
     public void tileAssignmentOneFilter() 
@@ -306,11 +340,11 @@ public class StreamGraph
 	
 	StaticStreamGraph ssg = staticSubGraphs[0];
 	assert ssg.filterCount() == 1;
-	
+	//set the number of tiles of the static sub graph
 	ssg.setNumTiles(1);
     }
     
-
+    /** Ask the user for the number of tiles to assign to each SSG **/
     public void handTileAssignment() 
     {
 	BufferedReader inputBuffer = new BufferedReader(new InputStreamReader(System.in));
@@ -347,7 +381,6 @@ public class StreamGraph
 		break;
 	    }
 	}
-	//	checkAssignment();
     }
     
 
@@ -371,33 +404,35 @@ public class StreamGraph
 		}); 
 	    current.setNumTiles(filters[0]);
 	}
-	//	checkAssignment();
     }
 
+    /** Add the mapping node->ssg to the parent map to remember that <ssg> is
+	the parent of <node>
+    **/
     public void putParentMap(FlatNode node, StaticStreamGraph ssg) 
     {
 	parentMap.put(node, ssg);
     }
     
-
+    /** get the parent SSG of <node> **/
     public StaticStreamGraph getParentSSG(FlatNode node) 
     {
 	assert parentMap.containsKey(node) : node;
 	return (StaticStreamGraph)parentMap.get(node);
     }
     
-
+    /** return the FileState object for this stream graph **/
     public FileState getFileState() 
     {
 	return fileState;
     }
-    
+    /** return the layout object for this stream graph **/
     public Layout getLayout() 
     {
 	return layout;
     }
     
-    
+    /** layout the entire Stream Graph on the RawChip **/
     public void layoutGraph() 
     {
 	//set up the parent map for other passes
@@ -415,48 +450,32 @@ public class StreamGraph
 
 	//now ready to layout	
 	layout = new Layout(this);
-	//for right now just handAssign!!
+	//call the appropriate layout function
 	if (KjcOptions.noanneal)
 	    layout.handAssign();
 	else 
 	    layout.simAnnealAssign();
     }
-
-
-    /** make sure that we have every tile of the raw chip assigned
-	the sum of tiles assigned to ssg's equals the number of raw tiles 
-    **/
-    private void checkAssignment() 
-    {
-	StaticStreamGraph current = topLevel;
-	int totalTiles = 0;
-	//for right now just assign exactly the number of tiles as filters!	
-	for (int i = 0; i < staticSubGraphs.length; i++) {
-	    current = staticSubGraphs[i];
-	    totalTiles += current.getNumTiles();
-	}
-	assert totalTiles == rawChip.getTotalTiles() :
-	    "Error: some tiles not assigned";
-    }
     
-    
+    /** return the array of SSGs of this Stream Graph in no particular order **/
     public StaticStreamGraph[] getStaticSubGraphs() 
     {
 	return staticSubGraphs;
     }
     
+    /** get the toplevel (source) SSG **/
     public StaticStreamGraph getTopLevel() 
     {
 	return topLevel;
     }
 
+    /** return the Raw Chip we are compiling to **/
     public RawChip getRawChip() 
     {
 	return rawChip;
     }
-
-
-
+    
+    /** print out some stats on each SSG to STDOUT **/
     public void dumpStaticStreamGraph() 
     {
 	StaticStreamGraph current = topLevel;

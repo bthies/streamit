@@ -20,17 +20,20 @@ import java.io.*;
 import at.dms.util.Utils;
 
 /**
-
+ * A StaticStreamGraph represents a subgraph of the application's StreamGraph 
+ * where communication within the SSG is over static rate channels.  The input/output
+ * (if either exists) of an SSG is dynamic, but the sources and sinks have their input/output
+ * rates zeroed, repectively.
 */
 
 public class StaticStreamGraph 
 {
-    /** these Hashmaps map flatnode -> flatnode
-       of different static stream graphs, note that these are only valid 
-       for the first flatgraph of the SSG, they become outdates as
-       soon as one calls setTopLevelSIR() **/
+    /** these Hashmaps map flatnode -> flatnode **/
+    /**	prevs maps the input of this SSG to the output of its upstream SSG **/
+    /** nexts stores the converse **/
     private HashMap prevs, nexts;
-
+    
+    /** the inter-SSG communication edges of this SSG, both incoming and outgoing **/
     private SSGEdge[] inputSSGEdges, outputSSGEdges;
 
     private List prevSSGs, nextSSGs;
@@ -43,18 +46,23 @@ public class StaticStreamGraph
     //the output type of the ssg output
     private CType[] outputTypes;
 
+    //the top level SIR node
     private SIRStream topLevelSIR;
+    //the top level FlatNode
     private FlatNode topLevel;
+    //the graph flattener used to convert SIR to FlatGraph
     private GraphFlattener graphFlattener;
 
-    //given a flatnode map to the execution count
+    //given a flatnode map to the execution count for desired stage
     private HashMap initExecutionCounts;
     private HashMap steadyExecutionCounts;
 
     // stores the multiplicities as returned by the scheduler...
     private HashMap[] executionCounts;
 
+    //the rate declaration of the output of this SSG
     public JExpression pushRate;
+    //the rate declarations of the input of this SSG
     public JExpression popRate;
     public JExpression peekRate;
 
@@ -73,9 +81,10 @@ public class StaticStreamGraph
 
     //used to construct a valid SIR graph
     private int splitterBalance;
-    
+    //the id of this SSG
     private static int nextID = 0;
     public int id;
+    //the parent stream graph
     private StreamGraph streamGraph;
 
     /** create a static stream graph with realTop as the first node 
@@ -140,7 +149,7 @@ public class StaticStreamGraph
 	topLevel.addEdges(topLevel, node);
     }
     
-
+    /** when constructing this SSG, add <node> to it **/
     public void addFlatNode(FlatNode node) 
     {
 	//System.out.println("Adding " + node + " to " + id);
@@ -150,7 +159,8 @@ public class StaticStreamGraph
     }
     
 
-    /** remove toplevel splitter if not needed!!! **/
+    /** remove toplevel splitter if not needed!!! and perform some other
+	checks on the SSG**/
     public void cleanUp() 
     {
 	assert topLevel.isSplitter();
@@ -224,7 +234,7 @@ public class StaticStreamGraph
 	    }, null, true);
 
 
-	//check if the number of splitters and joiners is balance (==)
+	//check if the number of splitters and joiners is balanced (==)
 	splitterBalance = 0;
 
 	topLevel.accept(new FlatVisitor() {
@@ -252,7 +262,7 @@ public class StaticStreamGraph
 	    flatNodes.remove(oldTopLevel);
 	}   
 
-	//set up the next SSG's prev hashmap
+	//set up the downstream SSG's prevs hashmap
 	Iterator nextsIt = nexts.keySet().iterator();
 	while (nextsIt.hasNext()) {
 	    FlatNode source = (FlatNode)nextsIt.next();
@@ -262,7 +272,7 @@ public class StaticStreamGraph
 	}
 	
 
-	//build the prevSSGs and nextSSGs list
+	//build the prevSSGs and nextSSGs list, the upstream and downstream SSGs
 	nextsIt = nexts.values().iterator();
 	while (nextsIt.hasNext()) {
 	    StaticStreamGraph ssg = streamGraph.getParentSSG(((FlatNode)nextsIt.next()));
@@ -278,6 +288,8 @@ public class StaticStreamGraph
 	}
     }
     
+    /** after SSG construction is complete, create the inter-SSG connections for
+	this SSG **/
     public void connect() 
     {
 	//build the inputSSGEdges and outputSSGEdges arrays
@@ -311,6 +323,10 @@ public class StaticStreamGraph
 	updateSSGEdges();
     }
 
+    /** given an output node for this SSG, get the SSGEdge that
+	represents the connection, <source> is the source of the 
+	SSG edge. 
+    **/
     public SSGEdge getOutputSSGEdgeSource(FlatNode source) 
     {
 	for (int i = 0; i < outputSSGEdges.length; i++)
@@ -321,6 +337,8 @@ public class StaticStreamGraph
 	return null;
     }
     
+    /** Given <dest> a source of a direct downstream SSG,
+	get the SSGEdge that represents the connection **/
     public SSGEdge getOutputSSEdgeDest(FlatNode dest) 
     {
 	for (int i = 0; i < outputSSGEdges.length; i++)
@@ -330,7 +348,13 @@ public class StaticStreamGraph
 	return null;
     }
     
+    /** after we have changed the flatgraph and updated 
+	outputs[] and inputs[], update the SSGEdges to reflect
+	the new input and output FlatNodes 
 
+	Remember that the number of inputs and outputs has
+	to remain the same
+    **/
     private void updateSSGEdges() 
     {
 	for (int i = 0; i < outputs.length; i++) {
@@ -343,6 +367,9 @@ public class StaticStreamGraph
 	
     }
     
+    /** given an output (sink) for this SSG, get the 
+	output number, index to outputs[] and outputSSGEdges[]
+    **/
     public int getOutputNum(FlatNode node) 
     {
 	for (int i = 0; i < outputs.length; i++) {
@@ -353,13 +380,14 @@ public class StaticStreamGraph
 	return -1;
     }
     
-
+    /** get the output type for this output, <node>, of this SSG **/
     public CType getOutputType(FlatNode node) 
     {
 	return outputTypes[getOutputNum(node)];
     }
     
-
+    /** given an input, source, for this SSG, get the input number,
+	index to inputs[] and inputSSGEdges[] **/
     public int getInputNum(FlatNode node) 
     {
 	System.out.println(inputs.length);
@@ -371,47 +399,57 @@ public class StaticStreamGraph
 	return -1;
     }
     
-
+    /** After the underlying flatgraph has changed, we have to update the
+	inputs and outputs arrays and the input and output edges **/
     private void updateIOArrays() 
     {
 	assert topLevel != null && bottomLevel != null;
-	
+
+	//set input[] to store the new inputs (sources) for this SSG
 	if (prevs.size() > 0) {
+	    //if a filter, then just set the inputs[0] to it
 	    if (topLevel.isFilter()) {
 		assert prevs.size() == 1 && inputs.length == 1;
 		inputs[0] = topLevel;
 	    }
 	    else if (topLevel.isSplitter()) {
+		//if a splitter, then set the input[] to the direct downstream
+		//node of the splitter...
 		assert prevs.size() == topLevel.edges.length &&
 		    topLevel.edges.length == ((SIRSplitter)topLevel.contents).getWays() &&
-		    inputs.length == prevs.size();
+		    inputs.length == prevs.size() : 
+		    "Partitioning problem: The partition changed the number of inputs of SSG " + 
+		    this.toString();
 		for (int i = 0; i < inputs.length; i++) {
 		    inputs[i] = topLevel.edges[i];
 		}
 	    } 
 	    else  //can't be a joiner
-		assert false;
+		assert false : "Entry point to SSG cannot be a joiner";
 	}
     
+	//set output[] to store the new outputs of the SSG
 	if (nexts.size() > 0) {
 	    if (bottomLevel.isFilter()) {
 		assert nexts.size() == 1 && outputs.length == 1;
 		outputs[0] = bottomLevel;
 	    }
 	    else if (bottomLevel.isJoiner()) {
+		//if a joiner set outputs[] to be the upstream nodes of the joiner
 		assert nexts.size() == bottomLevel.incoming.length &&
 		    bottomLevel.incoming.length == ((SIRJoiner)bottomLevel.contents).getWays() &&
 		    outputs.length == nexts.size() : 
-		    "Partitioning problem: The partition changed the number of inputs or outputs of SSG " + 
+		    "Partitioning problem: The partition changed the number of outputs of SSG " + 
 		    this.toString();
 		for (int i = 0; i < outputs.length; i++) 
 		    outputs[i] = bottomLevel.incoming[i];
 	    }
 	    else //can't be a splitter
-		assert false;
+		assert false : "Exit of SSG cannot be a splitter";
 	}
     }
-	    
+
+    /** get all the SIRFilters that are either sinks or sources of this SSG **/
     public HashSet getIOFilters() 
     {
 	HashSet filters = new HashSet();
@@ -428,7 +466,7 @@ public class StaticStreamGraph
     }
     
 
-    /** set a new TopLevelSIR stream and flatten it **/
+    /** set a new TopLevelSIR stream and flatten it, can only be called before layout!**/
     public void setTopLevelSIR(SIRStream newTop) 
     {
 	//can only call this before layout!!
@@ -437,7 +475,7 @@ public class StaticStreamGraph
 	System.out.println(" ****  CALLING SETTOPLEVELSIR **** ");
 	
 	topLevelSIR = newTop;
-	
+	//dump the graph
 	StreamItDot.printGraph(topLevelSIR, 
 			      SpaceDynamicBackend.makeDotFileName("setTLSIR", topLevelSIR));
      
@@ -446,11 +484,14 @@ public class StaticStreamGraph
 	while (fns.hasNext()) {
 	    streamGraph.parentMap.remove(fns.next());
 	}
-	
+	//flatten the graph
 	graphFlattener = new GraphFlattener(topLevelSIR);
 	topLevel = graphFlattener.top;
+	//reset bottom level, the sink of this SSG
 	setBottomLevel();
+	//update inputs[] and outputs[] to point to the new flatnodes
 	updateIOArrays();
+	//update the inter-SSG connections to reference the new flatnodes
 	updateSSGEdges();
 	flatNodes = new LinkedList();
 	//update the flatnodes of this SSG list
@@ -469,6 +510,7 @@ public class StaticStreamGraph
 	
     }
     
+    /** Schedule the static communication of this SSG, given the schedule of joiner firing, <js> **/
     public void scheduleCommunication(JoinerSimulator js) 
     {
 	simulator = new FineGrainSimulator(this, js);
@@ -486,7 +528,7 @@ public class StaticStreamGraph
 	//topLevelSIR = (new FlatGraphToSIR(topLevel)).getTopLevelSIR();
     }
     
-
+    /** return the graph flattener object that was used to flatten **/
     public GraphFlattener getGraphFlattener() 
     {
 	return graphFlattener;
@@ -509,19 +551,22 @@ public class StaticStreamGraph
 	return parentMap;
     }
     
-
-    public void scheduleAndFlattenGraph() 
+    /** call the scheduler on the toplevel SIR node and create the execution counts **/
+    public void scheduleAndCreateMults() 
     {
+	//get the multiplicities from the scheduler
 	executionCounts = SIRScheduler.getExecutionCounts(topLevelSIR);
 	PartitionDot.printScheduleGraph(topLevelSIR, 
 					SpaceDynamicBackend.makeDotFileName("schedule", topLevelSIR), 
 					executionCounts);	
 	
-	
+	//create the multiplicity maps
 	createExecutionCounts();
+	//print the flat graph
 	dumpFlatGraph();
     }
 
+    /** after the underlying flatgraph has changed, find the new bottom level **/
     private void setBottomLevel() 
     {
 	bottomLevel = null;
@@ -529,6 +574,7 @@ public class StaticStreamGraph
 	topLevel.accept(new FlatVisitor() {
 		public void visitNode(FlatNode node)  
 		{
+		    //if the node has no edges, it is a bottom level...
 		    if (node.edges.length == 0) {
 			assert bottomLevel == null : node;
 			bottomLevel = node;
@@ -537,7 +583,7 @@ public class StaticStreamGraph
 	    }, null, true);
     }
     
-
+    /** dump a dot rep of the flat graph **/
     public void dumpFlatGraph() 
     {
 	//dump the flatgraph of the application, must be called after createExecutionCounts
@@ -547,28 +593,19 @@ public class StaticStreamGraph
     }
     
     
-    //make assertions about construction when we make flat nodes!!!
-    
+    /** set the number of tiles that this SSG should occupy on the raw chip **/    
     public void setNumTiles(int i) {
 	this.numTilesAssigned = i;
 	this.tilesAssigned = new RawTile[i];
     }
 
-    public void addTile(RawTile tile) 
-    {
-	int i = 0;
-	
-	while (tilesAssigned[i] != null)
-	    i++;
-	
-	tilesAssigned[i] = tile;
-    }
-    
-
+    /** return the number of tiles that this SSG was assigned to occupy **/
     public int getNumTiles() {
 	return this.numTilesAssigned;
     }
 
+    /** when constructing this SSG, add a new connection from node->source to 
+	the prevs hash map and add <node> to the inputs array **/
     public void addPrev(FlatNode node, FlatNode source) 
     {
 	assert flatNodes.contains(node);
@@ -582,6 +619,8 @@ public class StaticStreamGraph
 	prevs.put(node, source);
     }
     
+    /** when constructing this SSG, add a new connection from node->next to 
+	the nexts hash map and add the <node> to the outputs array **/
     public void addNext(FlatNode node, FlatNode next) 
     {
 	assert flatNodes.contains(node);
@@ -605,11 +644,13 @@ public class StaticStreamGraph
 	nexts.put(node, next);
     }
     
+    /** does this ssg have dynamic output **/
     public boolean hasOutput() 
     {
 	return outputSSGEdges.length > 0;
     }
     
+    /** is <node> a dynamic source for this SSG **/
     public boolean isInput(FlatNode node) 
     {
 	assert flatNodes.contains(node);
@@ -619,6 +660,7 @@ public class StaticStreamGraph
 	return false;
     }
 
+    /** is <node> a dynamic sink for this SSG **/
     public boolean isOutput(FlatNode node) 
     {
 	assert flatNodes.contains(node);
@@ -634,7 +676,8 @@ public class StaticStreamGraph
 	return outputs;
     }
     
-
+    /** given a dynamic sink for this SSG, get the node in the downstream
+	SSG that it connects to **/
     public FlatNode getNext(FlatNode flatNode) {
 	assert flatNodes.contains(flatNode) :
 	    "Trying to get downstream SSG for a flatNode not in SSG";
@@ -644,10 +687,13 @@ public class StaticStreamGraph
 		return outputSSGEdges[i].inputNode;
 	}
 	
-	assert false;
+	assert false : 
+	    "Error: calling getNext() on non-dynamic sink of: " + this + " " + flatNode;
 	return null;
     }
 
+    /** give a dynamic source for this SSG, get the node in the upstream 
+	SSG that it connects to **/
     public FlatNode getPrev(FlatNode flatNode) {
 	assert flatNodes.contains(flatNode) :
 	    "Trying to get upstream SSG for a FlatNode not in SSG";
@@ -657,21 +703,24 @@ public class StaticStreamGraph
 		return inputSSGEdges[i].outputNode;
 	}
 	
-	assert false;
+	assert false : 
+	    "Error: calling getPrev() on non-dynamic source of: " + this + " " + flatNode ;
 	return null;
     }
 
+    /** return a list of the flatnodes of this SSG **/
     public List getFlatNodes() 
     {
 	return flatNodes;
     }
     
-
+    
+    /** get the top level flatnode of this SSG**/
     public FlatNode getTopLevel() {
 	assert topLevel != null : this.toString();
 	return topLevel;
     }
-
+    /** get the toplevel SIR of this SSG **/
     public SIRStream getTopLevelSIR() {
 	assert topLevelSIR != null : this.toString();
 	return topLevelSIR;
@@ -687,6 +736,8 @@ public class StaticStreamGraph
     }
 
 
+    /** given the multiplicities created by the scheduler, put them into 
+	a format that is more easily used **/
     private void createExecutionCounts() 
     {
 					      
@@ -836,13 +887,14 @@ public class StaticStreamGraph
 	}
     }
 
+    /** get the multiplicity map for the give stage **/
     public HashMap getExecutionCounts(boolean init)
     {
 	return init ? initExecutionCounts : steadyExecutionCounts;
     }
     
 	
-
+    /** get the multiplicity for <node> in the given stage, if <init> then init stage **/
     public int getMult(FlatNode node, boolean init)
     {
 	assert !(!init && !steadyExecutionCounts.containsKey(node)) :
@@ -857,6 +909,7 @@ public class StaticStreamGraph
 	    return val.intValue();
     }
 
+    /** accept a stream graph visitor **/
     public void accept(StreamGraphVisitor s, HashSet visited, boolean newHash) 
     {
 	if (newHash)
@@ -894,11 +947,13 @@ public class StaticStreamGraph
 	sink.setPush(new JIntLiteral(0));
     }
 
+    /** get the parent stream graph of SSG **/
     public StreamGraph getStreamGraph() 
     {
 	return streamGraph;
     }
 
+    /** count the number of nodes of the flatgraph that are assigned to tiles by layout **/
     public int countAssignedNodes() 
     {
 	int assignedNodes = 0;
@@ -911,7 +966,7 @@ public class StaticStreamGraph
 	return assignedNodes;
     }
     
-
+    /** get the number of filters of this SSG **/
     public int filterCount() 
     {
 	final int[] filters = {0};

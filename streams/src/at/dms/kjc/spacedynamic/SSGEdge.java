@@ -20,12 +20,14 @@ import java.io.*;
 import at.dms.util.Utils;
 
 /**
-
+ * This class represents inter-SSG edges.
 */
 
 public class SSGEdge 
 {
+    //the source and dest SSGs
     private StaticStreamGraph fromSSG, toSSG;
+    //the exact nodes of the SSGs
     public FlatNode outputNode, inputNode;
     /** the connection numbers, so we can rebuild the
 	SSGEdges if the flatgraph changes **/
@@ -40,19 +42,25 @@ public class SSGEdge
 	this.from = from;
 	this.to = to;
     }
-
+    
+    /** get the index into the input array for the downstream SSG **/
     public int getInputNum() 
     {
 	return to;
     }
+    
+    /** get the index into the output array of the upstream SSG **/
     public int getOutputNum() 
     {
 	return from;
     }
+
+    /** the downstream SSG of edge **/
     public StaticStreamGraph getInput() 
     {
 	return toSSG;
     }
+    /** the upstream SSG of edge **/
     public StaticStreamGraph getOutput()
     {
 	return fromSSG;

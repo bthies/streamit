@@ -236,7 +236,7 @@ public class SpaceDynamicBackend {
 		
 		/** Flatten the subgraph and create the flat node representation 
 		 now we can use the flatgraph representation **/
-		ssg.scheduleAndFlattenGraph();
+		ssg.scheduleAndCreateMults();
 
 		// see if we are going to overflow IMEM
 		if (scaleUnrollFactor) {

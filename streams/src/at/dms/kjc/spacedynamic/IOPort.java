@@ -3,6 +3,8 @@ package at.dms.kjc.spacedynamic;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
 
+/** This class represents an IOPort on the chip in which devices can 
+    be connected to, it extends ComputeNode for easy routing.**/
 public class IOPort extends ComputeNode
 {
     //the port number of this io device

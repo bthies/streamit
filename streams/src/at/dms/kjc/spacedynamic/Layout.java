@@ -16,8 +16,8 @@ import java.util.Iterator;
 import at.dms.kjc.cluster.DataEstimate;
 
 /**
- *The Layout class generates mapping of filters to raw tiles.  It assumes that the Sis
- * namer has been run and that the stream graph has been partitioned.
+ * The Layout class generates mapping of filters to raw tiles.  
+ * It operates on the entire StreamGraph.
  */
 public class Layout extends at.dms.util.Utils implements 
 						  StreamGraphVisitor, FlatVisitor {    

@@ -18,8 +18,7 @@ import java.util.Iterator;
 
 /**
  * This class generates a schedule for the switch code by simulating the 
- * init schedule and one
- * steady state execution of the schedule
+ * init schedule and one steady state execution of the schedule
  */
 public class FineGrainSimulator extends Simulator 
 {

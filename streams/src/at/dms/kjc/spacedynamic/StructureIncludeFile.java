@@ -15,6 +15,10 @@ import java.io.*;
 import at.dms.util.Utils;
 import at.dms.kjc.flatgraph.*;
 
+/** This class will create any necessary c type definitions that represent the
+    structures of the application.  Also it will create functions to send/receive
+    the structures over the static/dynamic network **/
+
 public class StructureIncludeFile
 {
     private StreamGraph streamGraph;
@@ -109,6 +113,7 @@ public class StructureIncludeFile
 	}
     }
 
+    /** create the push/pop functions for the structs, over <network> **/
     private void createPushPopFunctions(SIRStructure[] structs,
 					FileWriter fw,
 					String network) throws Exception

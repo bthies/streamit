@@ -2,7 +2,7 @@
  * cfar.c: C implementation of the CFAR kernel
  * From "PCA Kernel-Level Benchmarks", item 3.3
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: cfar.c,v 1.1 2002-11-13 18:26:35 dmaze Exp $
+ * $Id: cfar.c,v 1.2 2003-10-28 20:57:49 dmaze Exp $
  */
 
 /* Implementation of the CFAR algorithm.  The documentation talks
@@ -62,9 +62,11 @@ void begin(void)
   float in[N_rg * 2];
   float out[N_rg];
 
-  get_input(in);
-  do_cfar(in, out);
-  print_output(out);
+  while (numiters == -1 || numiters-- > 0) {
+    get_input(in);
+    do_cfar(in, out);
+    print_output(out);
+  }
 }
 
 /* The input array is pairs of real and imaginary numbers.  Helpers: */

@@ -27,7 +27,7 @@ public class FilterIter
     public int getInitPeekStage (int phase)
     {
         // library has only one phase!
-        ASSERT (phase == 1);
+        ASSERT (phase == 0);
         
         // library doesn't access the tape in init
         return 0;
@@ -36,7 +36,7 @@ public class FilterIter
     public int getInitPopStage (int phase)
     {
         // library has only one phase!
-        ASSERT (phase == 1);
+        ASSERT (phase == 0);
         
         // library doesn't access the tape in init
         return 0;
@@ -45,7 +45,7 @@ public class FilterIter
     public int getInitPushStage (int phase)
     {
         // library has only one phase!
-        ASSERT (phase == 1);
+        ASSERT (phase == 0);
         
         // library doesn't access the tape in init
         return 0;
@@ -54,7 +54,7 @@ public class FilterIter
     public Object getInitFunctionStage (int phase)
     {
         // library has only one phase!
-        ASSERT (phase == 1);
+        ASSERT (phase == 0);
         
         // just return null
         // it doesn't matter what gets returned, because init
@@ -71,7 +71,7 @@ public class FilterIter
     public int getPeekPhase (int phase)
     {
         // library has only one phase!
-        ASSERT (phase == 1);
+        ASSERT (phase == 0);
         
         return filter.peekCount;
     }
@@ -79,7 +79,7 @@ public class FilterIter
     public int getPopPhase (int phase)
     {
         // library has only one phase!
-        ASSERT (phase == 1);
+        ASSERT (phase == 0);
         
         return filter.popCount;
     }
@@ -87,7 +87,7 @@ public class FilterIter
     public int getPushPhase (int phase)
     {
         // library has only one phase!
-        ASSERT (phase == 1);
+        ASSERT (phase == 0);
         
         return filter.pushCount;
     }
@@ -95,7 +95,7 @@ public class FilterIter
     public Object getWorkFunctionPhase (int phase)
     {
         // library has only one phase!
-        ASSERT (phase == 1);
+        ASSERT (phase == 0);
         
         // just return the filter
         // since the library has only one stage, the filter

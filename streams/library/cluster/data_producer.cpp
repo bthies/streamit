@@ -33,7 +33,7 @@ void data_producer::write_chunk(void *data, int size, int nitems) {
 
     while (buf_offset + size >= __out_data_buffer) {
       int fits = __out_data_buffer - buf_offset;
-      memcpy(data_buffer + buf_offset, data, fits);
+      memcpy(data_buffer + buf_offset, ptr, fits);
       sock->write_chunk((char*)data_buffer, __out_data_buffer);      
       buf_offset = 0;
       ptr += fits;
@@ -41,7 +41,7 @@ void data_producer::write_chunk(void *data, int size, int nitems) {
     }
 
     if (size > 0) {
-      memcpy(data_buffer + buf_offset, data, size);
+      memcpy(data_buffer + buf_offset, ptr, size);
       buf_offset += size;
     }
   }  

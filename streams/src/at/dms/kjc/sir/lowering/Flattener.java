@@ -340,9 +340,9 @@ public class Flattener {
 		LinearDot.printGraph(str, "linear-redundant-replace.dot", lfa);
 	    }
 
+	    Lifter.liftAggressiveSync(str);
+	    StreamItDot.printGraph(str, "after-linear.dot");
 	}
-	Lifter.liftAggressiveSync(str);
-	StreamItDot.printGraph(str, "linear-total-post-lift.dot");
 	return str;
     }
     

@@ -56,7 +56,7 @@ class TestDetector extends Filter
 
   public void work()
   {
-    System.out.println("Detecting...");
+    //System.out.println("Detecting...");
     // No noise in input data -> no need for cfar filter -> detection is elementwise
     float inputData = input.popFloat();
     if (inputData == 0)

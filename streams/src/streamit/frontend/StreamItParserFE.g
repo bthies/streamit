@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.27 2003-05-13 19:35:11 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.28 2003-05-13 21:19:18 dmaze Exp $
  */
 
 header {
@@ -236,7 +236,8 @@ data_type returns [Type t] { t = null; Expression x; }
 	;
 
 primitive_type returns [Type t] { t = null; }
-	:	TK_bit { t = new TypePrimitive(TypePrimitive.TYPE_BIT); }
+	:	TK_boolean { t = new TypePrimitive(TypePrimitive.TYPE_BOOLEAN); }
+	|	TK_bit { t = new TypePrimitive(TypePrimitive.TYPE_BIT); }
 	|	TK_int { t = new TypePrimitive(TypePrimitive.TYPE_INT); }
 	|	TK_float { t = new TypePrimitive(TypePrimitive.TYPE_FLOAT); }
 	|	TK_double { t =  new TypePrimitive(TypePrimitive.TYPE_DOUBLE); }
@@ -515,6 +516,10 @@ constantExpr returns [Expression x] { x = null; }
 			{ x = new ExprConstStr(getContext(s), s.getText()); }
 	|	pi:TK_pi
 			{ x = new ExprConstFloat(getContext(pi), Math.PI); }
+	|	t:TK_true
+			{ x = new ExprConstInt(getContext(t), 1); }
+	|	f:TK_false
+			{ x = new ExprConstInt(getContext(f), 0); }
 	;
 
 struct_decl returns [TypeStruct ts]

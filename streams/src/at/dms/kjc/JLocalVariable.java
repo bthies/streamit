@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLocalVariable.java,v 1.3 2002-02-22 13:20:55 thies Exp $
+ * $Id: JLocalVariable.java,v 1.4 2002-02-27 22:07:24 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -27,7 +27,8 @@ import at.dms.compiler.CWarning;
  * This class represents a local variable declaration
  */
 public abstract class JLocalVariable extends JPhylum {
-
+   
+    
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------

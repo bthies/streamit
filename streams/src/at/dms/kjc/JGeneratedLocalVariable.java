@@ -15,19 +15,35 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JGeneratedLocalVariable.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JGeneratedLocalVariable.java,v 1.3 2002-02-27 22:07:24 mgordon Exp $
  */
 
 package at.dms.kjc;
 
 import at.dms.compiler.TokenReference;
 import at.dms.util.InconsistencyException;
+import java.io.*;
+
 
 /**
  * This class represents a local variable declaration
  */
 public class JGeneratedLocalVariable extends JLocalVariable {
-
+   private Integer serializationIndex;
+    
+    private void writeObject(ObjectOutputStream oos)
+	throws IOException {
+	this.serializationIndex = SerializationVector.addObject(this);
+	oos.defaultWriteObject();
+    }
+    
+    private Object readResolve() throws Exception {
+	//if we want to deep clone the vars then just return this
+	if (ObjectDeepCloner.deepCloneVars)
+	    return this;
+	else      //otherwise find the original object in the vector
+	    return SerializationVector.getObject(serializationIndex);
+    }
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------

@@ -317,7 +317,8 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	    new JClassDeclaration(/* TokenReference where */
 				  null,
 				  /* int modifiers, */
-				  at.dms.kjc.Constants.ACC_PUBLIC,
+				  at.dms.kjc.Constants.ACC_PUBLIC |
+                                  at.dms.kjc.Constants.ACC_STATIC,
 				  /* String ident,  */
 				  self.getIdent(),
 				  /* CClassType superClass, */

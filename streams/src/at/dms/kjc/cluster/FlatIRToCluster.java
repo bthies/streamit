@@ -1671,7 +1671,9 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	  if (init != null) {
 	  init.accept(this);
 	  }*/
-	print("("+ type +"*) calloc(");
+	print("("+ type);
+	for (int y=0; y<dims.length;y++) {print("*");}
+	print(")calloc(");
         dims[0].accept(this);
         print(", sizeof(");
         print(type);
@@ -1687,7 +1689,10 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		    print(",\n");
 		    //If lastLeft null then didn't come right after an assignment
 		    lastLeft.accept(this);
-		    print("["+i+"]=calloc(");
+		    print("["+i+"]=(");
+		    print(type);
+		    for (int y=0; y<(dims.length-1-off);y++) {print("*");}
+		    print(")calloc(");
 		    dims[off+1].accept(this);
 		    print(", sizeof(");
 		    print(type);

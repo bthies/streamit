@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.10 2002-09-30 21:55:47 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.11 2002-09-30 22:05:41 dmaze Exp $
  */
 
 header {
@@ -460,6 +460,9 @@ value returns [Expression x] { x = null; Expression array; List l; }
 constantExpr returns [Expression x] { x = null; }
 	:	n:NUMBER
 			{ x = ExprConstant.createConstant(getContext(n), n.getText()); }
+	|	t:MINUS m:NUMBER
+			{ x = ExprConstant.createConstant(getContext(t),
+				t.getText() + m.getText()); }
 	|	c:CHAR_LITERAL
 			{ x = new ExprConstChar(getContext(c), c.getText()); }
 	|	s:STRING_LITERAL

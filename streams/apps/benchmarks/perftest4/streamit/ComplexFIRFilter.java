@@ -97,12 +97,11 @@ public class ComplexFIRFilter extends Filter {
 	int i, t;
 
 	for (t = 0; t < numtaps; t++) {
-	    inputArray[t] = input.peekFloat(t);
+	    inputArray[t] = input.popFloat();
 	}
 	
-	for (t = 0; t < 2*decimation; t++) {
-	    input.popFloat();
-	    input.popFloat();
+	for (t = 0; t < (decimation - numtaps); t++) {
+	  input.popFloat();
 	}
 	
 	for(t = 0; t < numtaps; t++) {
@@ -111,7 +110,7 @@ public class ComplexFIRFilter extends Filter {
 	}
 	
 	if (center_freq != 0.0){
-	    phase_correctionReal = (phase_correctionReal *  phase_corr_incrReal) -
+	   phase_correctionReal = (phase_correctionReal *  phase_corr_incrReal) -
 		(phase_correctionImag * phase_corr_incrImag);
 	    phase_correctionImag = (phase_correctionReal * phase_corr_incrImag) -
 		(phase_correctionImag * phase_corr_incrReal);
@@ -123,8 +122,6 @@ public class ComplexFIRFilter extends Filter {
 	    resultImag =  (resultReal * phase_correctionImag) -
 		(resultImag * 
 		 phase_correctionReal);
-
-	    
 	}
 	
 	output.pushFloat(resultReal);

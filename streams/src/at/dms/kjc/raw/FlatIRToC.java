@@ -23,7 +23,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     private boolean DEBUG = false;
     private boolean NOCOMM = false;
 
-    //protected boolean			forInit;	// is on a for init
     protected int				TAB_SIZE = 2;
     protected int				WIDTH = 80;
     protected int				pos;
@@ -516,18 +515,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                   JStatement incr,
                                   JStatement body) {
         print("for (");
-        //forInit = true;
         if (init != null) {
             init.accept(this);
-	} else
-	    print(";");
-	//print(";");
-        //forInit = false;
+	    //the ; will print in a statement visitor
+	}
 
         print(" ");
         if (cond != null) {
             cond.accept(this);
         }
+	//cond is an expression so print the ;
         print("; ");
 	if (incr != null) {
 	    FlatIRToC l2c = new FlatIRToC(filter);

@@ -17,12 +17,23 @@ public class StreamingDram extends IODevice
 				       2*chip.getYSize());
     }
     
-    StreamingDram(RawChip chip, int port, RawTile tile, 
-		  String dir) 
+    StreamingDram(RawChip chip, int port)
     {
-	super(chip, port, tile);
-	tile.addIODevice(this, dir);
+	super(chip, port);
+	//	tile.addIODevice(this, dir);
     }
+
+    public static StreamingDram getStrDram(Address addr, RawChip chip) 
+    {
+	for (int i = 0; i < chip.getDevices().length; i++) {
+	    StreamingDram dram = ((StreamingDram)chip.getDevices()[i]);
+	    if (Address.inRange(addr, dram.lb, dram.ub))
+		return dram;
+	}
+	Utils.fail("Cannot find a streaming dram for this address");
+	return null;
+    }
+    
     
     public Address getUB() 
     {
@@ -43,8 +54,112 @@ public class StreamingDram extends IODevice
     {
 	index = index.add(size);
     }
+
+    //call this after setBounds and setSize
+    //a bunch of this code was ripped from four-sides.bc
+    public static void setTiles(RawChip chip)
+    {
+	int dimY = chip.getYSize();
+	int dimX = chip.getXSize();
+	Address halfAddrSpace = Address.MAX_ADDRESS.div(2);
+	Address addrPerTile = (halfAddrSpace.div(dimY *dimX)).mult(2);
+	
+	int i, j, x, y, xOff, yOff;
+	Address startAddr;
+		
+	for (i = 0; i < dimY; i++) {
+	    y = i;
+	    
+	    if (y < dimY/4 || y>= 3*dimY/4)
+		xOff = 3*dimX/4;
+	    else
+		xOff = dimX/2;
+	    
+	    //	    startAddr = ((halfAddrSpace / 2) / dimY) * y;
+	    startAddr = ((halfAddrSpace.div(2)).div(dimY)).mult(y);
+	    for (j = 0; j < dimX/4; j++) {
+		x = xOff + j;
+		Address lb = startAddr.add(addrPerTile.mult(x - xOff));
+		chip.getTile(dimX*y + x).setIODevice(StreamingDram.getStrDram(lb, chip));
+		//Address ub = lb.add(addrPerTile);
+		//System.out.println("Tile: " + (dimX*y + x) + 
+		//		   " lb: " + lb + 
+		//		   " ub: " + ub);
+		//lbs[dimX*y + x] = startAddr + (x - xOff) * addrPerTile;
+		//ubs[dimX*y + x] = lbs[dimX*y + x] + addrPerTile - 4;
+	    }
+	}
+	
+	for (i = 0; i < dimY; i++) {
+	    y = i;
+	    if (y >= 3*dimY/4 || y < dimY/4)
+		xOff = dimX/4-1;
+	    else
+		xOff = dimX/2-1;
+	    startAddr = (halfAddrSpace.div(2)).add(((halfAddrSpace.div(2)).div(dimY)).mult(y));
+	    // startAddr = halfAddrSpace/2 + ((halfAddrSpace/2) / dimY) * y ;
+	    for (j = 0; j < dimX/4; j++) {
+		x = xOff - j;
+		Address lb = startAddr.add(addrPerTile.mult(xOff - x));
+		chip.getTile(dimX*y + x).setIODevice(StreamingDram.getStrDram(lb, chip));
+		//Address ub = lb.add(addrPerTile);
+		//System.out.println("Tile: " + (dimX*y + x) + 
+		//		   " lb: " + lb + 
+		//		   " ub: " + ub);
+		//lbs[dimX*y + x] = startAddr + (xOff-x) * addrPerTile;
+		//ubs[dimX*y + x] = lbs[dimX*y + x] + addrPerTile - 4;
+	    }
+	}
+	
+	for (i = 0; i < dimX; i++) {
+	    x = i;
+	    
+	    if (x >= 3*dimX/4 || x < dimX/4)
+		yOff = dimY/2;
+	    else
+		yOff = 3*dimY/4;
+	    startAddr = halfAddrSpace.add(((halfAddrSpace.div(2)).div(dimX)).mult(x));
+	    //startAddr = halfAddrSpace + ((halfAddrSpace/2) / dimX)  * x ;
+	    for (j = 0; j < dimY/4; j++) {
+		y = yOff + j;
+		Address lb = startAddr.add(addrPerTile.mult(y-yOff));
+		chip.getTile(dimX*y + x).setIODevice(StreamingDram.getStrDram(lb, chip));
+		//Address ub = lb.add(addrPerTile);
+		//System.out.println("Tile: " + (dimX*y + x) + 
+		//		   " lb: " + lb + 
+		//		   " ub: " + ub);
+		//lbs[dimX*y + x] = startAddr + (y - yOff) * addrPerTile;
+		//ubs[dimX*y + x] = lbs[dimX*y + x] + addrPerTile - 4;
+	    }
+	}
+
+
+	for (i = 0; i < dimX; i++) {
+	    x = i;
+	    
+	    if (x < dimX/4 || x >= 3*dimX/4)
+		yOff = dimY/2-1;
+	    else
+		yOff = dimY/4-1;
+	    startAddr = ((halfAddrSpace.div(2)).mult(3)).add(((halfAddrSpace.div(2)).div(dimX)).mult(x));
+	    // startAddr = ((halfAddrSpace)/2 * 3) + ((halfAddrSpace/2) / dimX ) * x;
+	    for (j=0; j < dimY/4; j++) {
+		y = yOff - j;
+		Address lb = startAddr.add(addrPerTile.mult(yOff-y));
+		chip.getTile(dimX*y + x).setIODevice(StreamingDram.getStrDram(lb, chip));
+		//Address ub = lb.add(addrPerTile);
+		//System.out.println("Tile: " + (dimX*y + x) + 
+		//		   " lb: " + lb + 
+		//		   " ub: " + ub);
+		//lbs[dimX*y + x] = startAddr + (yOff - y) * addrPerTile;
+		//ubs[dimX*y + x] = lbs[dimX*y + x] + addrPerTile - 4;
+	    }
+	}
+    }
     
-    //set the address range for all the drams    
+    
+    //set the address range for all the drams
+    //call this after set size
     public static void setBounds(RawChip chip) 
     {
 	Address addr = Address.ZERO;

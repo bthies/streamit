@@ -11,14 +11,14 @@ public class RawChip {
     private int gXSize;
     private int gYSize;
     
-    public RawChip(int rows, int columns) {
-	tiles = new RawTile[rows][columns];
-	for (int row = 0; row < rows; row++)
-	    for (int col = 0; col < columns; col++)
-		tiles[row][col] = new RawTile(row, col, this);
+    public RawChip(int xSize, int ySize) {
+	gXSize = xSize;
+	gYSize = ySize;
 
-	gXSize = rows;
-	gYSize = columns;
+	tiles = new RawTile[xSize][ySize];
+	for (int x = 0; x < xSize; x++)
+	    for (int y = 0; y < ySize; y++)
+		tiles[x][y] = new RawTile(x, y, this);
 
 	devices = new IODevice[2*gXSize + 2*gYSize];
 
@@ -31,6 +31,15 @@ public class RawChip {
 	System.exit(1);
     }
 
+    public RawTile getTile(int tileNumber) 
+    {
+	int y = tileNumber / gXSize;
+	int x = tileNumber % gXSize;
+	if (y >= gYSize) 
+	    Utils.fail("out of bounds in getTile() of RawChip");
+	return tiles[x][y];
+    }
+    
     public RawTile getTile(int x, int y) {
 	if (x >= gXSize || y >= gYSize)
 	    Utils.fail("out of bounds in getTile() of RawChip");
@@ -212,33 +221,32 @@ public class RawChip {
 	//add the north streaming drams
 	String dir = "N";	
 	for (i = 0; i < this.gXSize; i++) {
-	    devices [index] = new StreamingDram(this, index,
-						tiles[i][0], dir);
+	    devices [index] = new StreamingDram(this, index);
+						
 	    index ++;
 	}
 	//add the east streaming drams
 	dir = "E";	
 	for (i = 0; i < this.gYSize; i++) {
-	    devices [index] = new StreamingDram(this, index,
-						tiles[this.gXSize - 1][i], dir);
+	    devices [index] = new StreamingDram(this, index);
 	    index ++;
 	}	
 	//add the south streaming drams
 	dir = "S";	
 	for (i = this.gXSize - 1; i >= 0; i--) {
-	    devices [index] = new StreamingDram(this, index,
-						tiles[i][this.gYSize - 1], dir);
+	    devices [index] = new StreamingDram(this, index);
 	    index ++;
 	}
 	//add the west streaming drams
 	dir = "W";	
 	for (i = this.gYSize - 1; i >= 0; i--) {
-	    devices [index] = new StreamingDram(this, index,
-						tiles[0][i], dir);
+	    devices [index] = new StreamingDram(this, index);
 	    index ++;
 	}	
 	StreamingDram.setSize(this);
 	StreamingDram.setBounds(this);
+	StreamingDram.setTiles(this);
+
     }
     
     private void addMagicDrams() 
@@ -259,7 +267,9 @@ public class RawChip {
 
     public void printChip() 
     {
-	if (!KjcOptions.magicdram) 
+	if (!KjcOptions.magicdram) {
 	    StreamingDram.printSetup(this);
+	    RawTile.printDramSetup(this);
+	}
     }
 }

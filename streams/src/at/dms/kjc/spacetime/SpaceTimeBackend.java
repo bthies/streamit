@@ -49,7 +49,7 @@ public class SpaceTimeBackend
 	    rawColumns = KjcOptions.raw;
 
 	//create the RawChip
-	RawChip rawChip = new RawChip(rawRows, rawColumns);
+	RawChip rawChip = new RawChip(rawColumns, rawRows);
 
 	// move field initializations into init function
 	FieldInitMover.moveStreamInitialAssignments(str);

@@ -7,15 +7,12 @@ public abstract class IODevice extends ComputeNode
     protected int port;
     protected RawTile tile;
 
-    public IODevice(RawChip chip, int port, RawTile tile) 
+    public IODevice (RawChip chip, int port) 
     {
 	super(chip);
-	
 	if (port < 0 || port >= (2 * rawChip.getXSize() + 2 *rawChip.getYSize()))
 	    Utils.fail("invalid port number for io device");
-	
 	this.port = port;
-	this.tile = tile;
 	if (port >= 0 && port < rawChip.getXSize()) {
 	    Y = -1;
 	    X = port;
@@ -31,6 +28,13 @@ public abstract class IODevice extends ComputeNode
 	    X = -1;
 	    Y = (rawChip.getYSize() - 1) - (port - (2 * rawChip.getXSize() + rawChip.getYSize()));
 	}
+    }
+    
+
+    public IODevice(RawChip chip, int port, RawTile tile) 
+    {
+	this(chip, port);
+	this.tile = tile;
     }
 
     public int getPort() 

@@ -80,5 +80,34 @@ public class Address
 	    Utils.fail("Remainder of Address divide not zero");
 	return new Address(address / (long)i);	
     }
+
+    public Address mult(int i) 
+    {
+	return new Address((long)i * this.address);
+	
+    }
     
+    public static boolean inRange(Address addr, Address lb, Address ub) 
+    {
+	if (addr.address >= lb.address && addr.address < ub.address)
+	    return true;
+	return false;
+    }
+    
+    /*
+    public boolean lt(Address comp) 
+    {
+	if (comp.address < this.address)
+	    return true;
+	return false;
+    }
+
+    public boolean gte(Address comp) 
+    {
+	if (comp.address >= this.address)
+	    return true;
+	return false;
+    }
+    */
 }
+

@@ -14,22 +14,20 @@ public class RawTile extends ComputeNode {
     private SwitchCodeStore switchCode;
     private ComputeCodeStore computeCode;
 
-    private IODevice[] ioDevices;
-    private String[] ioDevDirection;
-    private int numIODevices;
+    private IODevice ioDevice;
+    //private String[] ioDevDirection;
+    //private int numIODevices;
 
-    public RawTile(int row, int col, RawChip rawChip) {
+    public RawTile(int x, int y, RawChip rawChip) {
 	super(rawChip);
-	X = row;
-	Y = col;
+	X = x;
+	Y = y;
 	setTileNumber();
 	computes = false;
 	switches = false;
 	switchCode = new SwitchCodeStore(this);
 	computeCode = new ComputeCodeStore(this);
-	numIODevices = 0;
-	ioDevices = new IODevice[2];
-	ioDevDirection = new String[2];
+	ioDevice = null;
     }
 
     public String toString() {
@@ -38,48 +36,30 @@ public class RawTile extends ComputeNode {
 
     public boolean hasIODevice() 
     {
-	return (numIODevices > 0);
+	return (ioDevice != null);
     }
     
     public void setIODevice(IODevice io) 
     {
-	ioDevices[0] = io;
+	ioDevice = io;
     }
 
-    public void addIODevice(IODevice io, String dir) 
-    {
-	ioDevices[numIODevices] = io;
-	ioDevDirection[numIODevices] = dir;
-	numIODevices++;
-    }
 
     public IODevice getIODevice() 
     {
-	return ioDevices[0];
+	return ioDevice;
     }
-    public IODevice getIODevice(int i) 
-    {
-	return ioDevices[i];
-    }
-
-    public IODevice getIODevice(String dir) 
-    {
-	for (int i = 0; i < numIODevices; i++) {
-	    if (ioDevDirection[i].equals(dir)) 
-		return ioDevices[i];
-	}
-	Utils.fail("Cannot find io device in that direction.");
-	return null;
-    }
-    
     
     private void setTileNumber() {
+	tileNumber = (Y * rawChip.getXSize()) + X;
+	/*
 	//because the simulator only simulates 4x4 or 8x8 we
 	//have to translate the tile number according to these layouts
 	int columns = 4;
 	if (rawChip.getYSize() > 4 || rawChip.getXSize() > 4)
 	    columns = 8;
 	tileNumber = (Y * columns) + X;
+	*/
     }
 
 
@@ -112,6 +92,41 @@ public class RawTile extends ComputeNode {
     public void setComputes() {
 	computes = true;
     }
+    /*
+      public void addIODevice(IODevice io, String dir) 
+    {
+	ioDevices[numIODevices] = io;
+	ioDevDirection[numIODevices] = dir;
+	numIODevices++;
+    }
+    */    
+ /*
+    public IODevice getIODevice(String dir) 
+    {
+	for (int i = 0; i < numIODevices; i++) {
+	    if (ioDevDirection[i].equals(dir)) 
+		return ioDevices[i];
+	}
+	Utils.fail("Cannot find io device in that direction.");
+	return null;
+    }
+    */   
     
-   
+    public void printDram() 
+    {
+	if (ioDevice != null) 
+	    System.out.println("Tile: " + getTileNumber() + " -> port: " + ioDevice.getPort());
+	else
+	    System.out.println("Tile: " + getTileNumber() + " -> null ");
+    }
+    
+    public static void printDramSetup(RawChip chip) 
+    {
+	System.out.println("Memory Mapping:");
+	if (!KjcOptions.magicdram)
+	    for (int x = 0; x < chip.getXSize(); x++)
+		for (int y = 0; y < chip.getYSize(); y++)
+		    chip.getTile(x, y).printDram();
+    }
+    
 }

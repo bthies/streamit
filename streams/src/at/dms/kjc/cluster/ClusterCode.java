@@ -54,7 +54,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	if (node.contents instanceof SIRFilter) {
 
-	    //DetectConst.detect(node);
+	    DetectConst.detect(node);
 	    FlatIRToCluster.generateCode(node);
 	    ((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());
 
@@ -457,6 +457,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.println();
 
 	p.print("int __max_iteration;\n");
+	p.print("int __timer_enabled = 0;\n");
 	p.print("int __frequency_of_chkpts;\n");
 	p.print("int __out_data_buffer;\n");
 
@@ -538,7 +539,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("  master_pid = getpid();\n");
 
-	p.print("  for (int a = 1; a < argc; a++) {");
+	p.print("  for (int a = 1; a < argc; a++) {\n");
 
 	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-init\") == 0) {\n"); 
 	p.print("       int tmp;\n");
@@ -552,6 +553,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("       sscanf(argv[a + 1], \"%d\", &tmp);\n");
 	p.print("       printf(\"Number of Iterations: %d\\n\", tmp);\n"); 
 	p.print("       __max_iteration = tmp;"); 
+	p.print("    }\n");
+
+	p.print("    if (strcmp(argv[a], \"-t\") == 0) {\n"); 
+	p.print("       printf(\"Timer enabled.\\n\");\n"); 
+	p.print("       __timer_enabled = 1;"); 
 	p.print("    }\n");
 
 	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-ccp\") == 0) {\n");

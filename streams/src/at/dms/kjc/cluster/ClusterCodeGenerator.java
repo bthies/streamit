@@ -120,6 +120,7 @@ class ClusterCodeGenerator {
 	r.add("\n");
 
 	r.add("extern int __max_iteration;\n");
+	r.add("extern int __timer_enabled;\n");
 	r.add("extern int __frequency_of_chkpts;\n");
 	r.add("message *__msg_stack_"+id+";\n");
 	r.add("int __number_of_iterations_"+id+";\n");
@@ -204,6 +205,10 @@ class ClusterCodeGenerator {
 	for (int f = 0; f < fields.length; f++) {
 	    CType type = fields[f].getType();
 	    String ident = fields[f].getVariable().getIdent();
+
+	    DetectConst dc = DetectConst.getInstance((SIRFilter)oper);
+	    if (dc != null && dc.isConst(ident)) continue;
+
 	    if (type.isArrayType()) {
 		int size = 0;
 		String dims[] = ArrayDim.findDim((SIRFilter)oper, ident);
@@ -239,6 +244,10 @@ class ClusterCodeGenerator {
 	for (int f = 0; f < fields.length; f++) {
 	    CType type = fields[f].getType();
 	    String ident = fields[f].getVariable().getIdent();
+
+	    DetectConst dc = DetectConst.getInstance((SIRFilter)oper);
+	    if (dc != null && dc.isConst(ident)) continue;
+
 	    if (type.isArrayType()) {
 		int size = 0;
 		String dims[] = ArrayDim.findDim((SIRFilter)oper, ident);
@@ -451,7 +460,17 @@ class ClusterCodeGenerator {
 	
 	r.add("  __number_of_iterations_"+id+" = __max_iteration - __steady_"+id+";\n");
 
+	if (!data_out.iterator().hasNext()) {
+	    r.add("  timer t1;\n");
+	    r.add("  t1.start();\n");
+	}
+
 	if (main_f != null) r.add("  "+main_f+"();\n");
+
+	if (!data_out.iterator().hasNext()) {
+	    r.add("  t1.stop();\n");
+	    r.add("  if (__timer_enabled) t1.output(stderr);\n");
+	}
 
 	r.add("  sleep(3);\n");
 

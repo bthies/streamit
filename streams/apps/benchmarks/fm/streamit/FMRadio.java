@@ -13,7 +13,8 @@ public class FMRadio extends Pipeline
 
     public void init()
     {
-	final float samplingRate = 200000; //200khz sampling rate according to jeff at vanu
+	// final float samplingRate = 200000; //200khz sampling rate according to jeff at vanu
+        final float samplingRate = 250000000; //250 MHz sampling rate much more sensible, though
 	final float cutoffFrequency = 108000000; //guess... doesn't FM freq max at 108 Mhz? 
 	final int numberOfTaps = 64;
 	final float maxAmplitude = 27000;

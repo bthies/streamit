@@ -1,7 +1,7 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref_raw.c,v 1.2 2002-07-31 03:53:00 aalamb Exp $
+ * $Id: fmref_raw.c,v 1.3 2003-10-02 21:11:26 dmaze Exp $
  */
 
 #include <raw.h>
@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <math.h>
 
-#define SAMPLING_RATE 200000
+#define SAMPLING_RATE 250000000
 #define CUTOFF_FREQUENCY 108000000
 #define NUM_TAPS 64
 #define MAX_AMPLITUDE 27000.0

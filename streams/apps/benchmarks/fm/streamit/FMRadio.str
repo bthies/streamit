@@ -231,7 +231,8 @@ float->void filter FloatPrinter {
 
 float->float pipeline FMRadio {
 
-    float samplingRate = 200000; //200khz sampling rate according to jeff at vanu
+    // float samplingRate = 200000; //200khz sampling rate according to jeff at vanu
+    float samplingRate = 250000000; // 250 MHz sampling rate much more sensible, though
     float cutoffFrequency = 108000000; //guess... doesn't FM freq max at 108 Mhz? 
     int numberOfTaps = 64;
     float maxAmplitude = 27000;

@@ -180,6 +180,12 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 	return result;
     }
 
+    public void reclaimChildren() {
+	super.reclaimChildren();
+	splitter.setParent(this);
+	joiner.setParent(this);
+    }
+
     /**
      * Overrides SIRStream.getSuccessor.  The loop stream should have
      * the joiner as its successor.  All others are in order set by

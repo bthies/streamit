@@ -209,6 +209,12 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 	return result;
     }
 
+    public void reclaimChildren() {
+	super.reclaimChildren();
+	splitter.setParent(this);
+	joiner.setParent(this);
+    }
+
     /**
      * Returns a list of the parallel streams in this.
      */

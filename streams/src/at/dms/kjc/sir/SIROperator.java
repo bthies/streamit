@@ -100,6 +100,8 @@ public abstract class SIROperator implements Finalizable, Serializable {
 		    return "body";
 		}
 	    } else {
+		Utils.assert(parent.indexOf((SIRStream)this)!=-1, 
+			     "Stream's parent doesn't contain it.  Stream is " + this + ", parent is " + parent);
 		return "child_" + parent.indexOf((SIRStream)this);
 	    }
 	}

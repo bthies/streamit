@@ -16,7 +16,7 @@ public class LinearFission {
 	//System.out.println("NUM: "+num);
 	//System.out.println("LEN: "+len);
 	//System.out.println("REALNUM: "+realNum);
-	//content.setTotal(num);
+	content.setTotal(realNum);
 	FilterContent[] out=new FilterContent[realNum];
 	for(int i=0;i<realNum;i++)
 	    out[i]=new FilterContent(content);

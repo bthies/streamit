@@ -47,13 +47,22 @@ public class Linear extends BufferedCommunication implements Constants {
 	constant=content.getConstant();
 	popCount=content.getPopCount();
 	peek=content.getPeek();
-	bufferSize=filterInfo.remaining;
+	pos=content.getPos();
+	int index=content.getTotal()-pos-1;
+	if(index==0) //If first tile
+	    bufferSize=filterInfo.remaining;
+	else { //Find first tile
+	    TraceNode curNode=node;
+	    for(int i=index;i>0;i--)
+		curNode=curNode.getPrevious();
+	    FilterInfo parentInfo=FilterInfo.getFilterInfo((FilterTraceNode)curNode);
+	    bufferSize=parentInfo.remaining;
+	}
 	if(filterInfo.initMult>0)
 	    bufferSize+=peek-popCount;
 	//Can be made better
 	assert array.length<=regs.length-array.length/popCount-1:"Not enough registers for coefficients";
 	num=array.length/popCount;
-	pos=content.getPos();
 	System.out.println("POS: "+pos);
 	idx=new int[num];
 	topPopNum=num-1;
@@ -154,7 +163,18 @@ public class Linear extends BufferedCommunication implements Constants {
 	//Filling register with Constants
 	InlineAssembly inline=new InlineAssembly();
 	inline.add(".set noat");
-	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+filterInfo.steadyMult); //Send steadyMult to switch
+	int turns=pos*num; //Default number of turns
+	int extra=0; //Extra turns needed
+	int excess=bufferSize-popCount*(int)Math.ceil(((double)peek)/popCount);//popCount*(num+turns);
+	if(excess>0) { //Handle excess items on peekbuffer
+	    System.err.println("WARNING: EXCESS ITEMS ON PEEKBUFFER DETECTED!");
+	    extra=(int)Math.ceil(((double)excess)/popCount);
+	    turns+=extra;
+	}
+	final int mult=getMult(array.length);
+	final int newSteadyMult=(filterInfo.steadyMult-1-extra)/mult;
+	assert newSteadyMult>0:"SteadyMult on linear filter not high enough!";
+	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+newSteadyMult); //Send steadyMult to switch
 	//TODO: Save registers here
 	body[0]=inline;
 	for(int i=0;i<array.length;i++) {
@@ -179,12 +199,6 @@ public class Linear extends BufferedCommunication implements Constants {
 	inline=new InlineAssembly();
 	body[body.length-4]=inline;
 	//Preloop
-	int turns=pos*num; //Default number of turns
-	int excess=bufferSize-popCount*(num+turns);
-	if(excess>0) { //Handle excess items on peekbuffer
-	    System.err.println("WARNING: EXCESS ITEMS ON PEEKBUFFER DETECTED!");
-	    turns+=Math.ceil(((double)excess)/popCount);
-	}
 	if(begin) {
 	    System.out.println("EXTRA: "+bufferSize);
 	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
@@ -246,11 +260,10 @@ public class Linear extends BufferedCommunication implements Constants {
 	//Loop Counter
 	inline=new InlineAssembly();
 	body[body.length-3]=inline;
-	inline.add("addiu "+tempReg+",\\t"+zeroReg+",\\t-"+filterInfo.steadyMult);
+	inline.add("addiu "+tempReg+",\\t"+zeroReg+",\\t-"+newSteadyMult);
 	//Innerloop
 	inline=new InlineAssembly();
 	body[body.length-2]=inline;
-	final int mult=getMult(array.length);
 	inline.add(getLabel()+": #LOOP");
 	int times=0;
 	int[] oldPopNum=new int[4];

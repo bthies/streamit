@@ -979,13 +979,26 @@ public class Rawify
 	final boolean begin=content.getBegin();
 	final boolean end=content.getEnd();
 	final int pos=content.getPos();
-	int bufferRemaining=filterInfo.remaining; //Use peek buffer while bufferRemaining>0 else use net
+	int bufferRemaining; //Use peek buffer while bufferRemaining>0 else use net
+	int index=content.getTotal()-pos-1;
+	if(index==0) //If first tile
+	    bufferRemaining=filterInfo.remaining;
+	else { //Find first tile
+	    TraceNode curNode=node;
+	    for(int i=index;i>0;i--)
+		curNode=curNode.getPrevious();
+	    FilterInfo parentInfo=FilterInfo.getFilterInfo((FilterTraceNode)curNode);
+	    bufferRemaining=parentInfo.remaining;
+	}
 	if(filterInfo.initMult>0)
 	    bufferRemaining+=peek-pop;
 	int turns=pos*numCoeff; //Default number of turns
-	int excess=bufferRemaining-pop*(numCoeff+turns);
-	if(excess>0) //Handle excess items on peekbuffer
-	    turns+=Math.ceil(((double)excess)/pop);
+	int extra; //Extra turns needed
+	int excess=bufferRemaining-pop*(int)Math.ceil(((double)peek)/pop);//pop*(numCoeff+turns);
+	if(excess>0) { //Handle excess items on peekbuffer
+	    extra=(int)Math.ceil(((double)excess)/pop);
+	    turns+=extra;
+	}
 	//System.out.println("SRC: "+src);
 	//System.out.println("DEST: "+dest);
 	//Begin codegen

@@ -34,7 +34,7 @@ public class FilterContent {
     private boolean begin;
     private boolean end;
     private int pos;
-    //private int total; Unneeded
+    private int total;
 
     public FilterContent(FilterContent content) {
 	name=content.name;
@@ -57,7 +57,7 @@ public class FilterContent {
 	begin=content.begin;
 	end=content.end;
 	pos=content.pos;
-	//total=content.total;
+	total=content.total;
     }
 
     public FilterContent(SIRPhasedFilter filter) {
@@ -98,7 +98,7 @@ public class FilterContent {
 	    begin=true;
 	    end=true;
 	    pos=0;
-	    //total=1;
+	    total=1;
 	    //methods=filter.getMethods(); //Keep nonlinear rep
 	    //steady=filter.getPhases(); //Keep nonlinear rep
 	    //fields=filter.getFields(); //Keep nonlinear rep
@@ -157,13 +157,13 @@ public class FilterContent {
 	return pos;
     }
 
-    /*public void setTotal(int total) {
-      this.total=total;
-      }*/
+    public void setTotal(int total) {
+	this.total=total;
+    }
 
-    /*public int getTotal() {
-      return total;
-      }*/
+    public int getTotal() {
+	return total;
+    }
 
     public double[] getArray() {
 	return array;

@@ -152,6 +152,13 @@ public class SIRJoiner extends SIROperator {
     }
 
     /**
+     * See doc in SIROperator.
+     */
+    public String getIdent() {
+	return type.toString() + " Joiner";
+    }
+
+    /**
      * Returns JExpression weights of this.
      */
     public JExpression[] getInternalWeights() {

@@ -157,6 +157,13 @@ public class SIRSplitter extends SIROperator {
     }
 
     /**
+     * See doc in SIROperator.
+     */
+    public String getIdent() {
+	return type.toString() + " Splitter";
+    }
+
+    /**
      * Returns JExpression weights of this.
      */
     public JExpression[] getInternalWeights() {

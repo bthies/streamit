@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.25 2002-06-15 06:48:07 thies Exp $
+## $Id: Makefile,v 1.26 2002-06-27 22:18:09 thies Exp $
 ##
 
 TOPDIR =	../..
@@ -66,10 +66,10 @@ JAVAFILES +=	StreamVisitor \
 		Finalizer \
 		Memoizer \
 		EmptyStreamVisitor \
+		Namer \
 		lowering/AdjustGranularity \
 		lowering/LoweringConstants \
 		lowering/Structurer \
-		lowering/Namer \
 		lowering/Flattener \
 		lowering/SIRScheduler \
 		lowering/LowerInitFunctions \

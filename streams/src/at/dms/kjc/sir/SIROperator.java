@@ -3,7 +3,6 @@ package at.dms.kjc.sir;
 import at.dms.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
-import at.dms.kjc.sir.lowering.Namer;
 import at.dms.kjc.sir.lowering.LoweringConstants;
 
 import java.util.List;
@@ -81,13 +80,20 @@ public abstract class SIROperator extends Utils implements Finalizable {
   // ----------------------------------------------------------------------
 
     /**
-     * Returns the name of this, or null if a name has not yet been
-     * assigned.  This name should be unique for all objects in the
-     * stream graph.
+     * Returns a UNIQUE name for this.  That is, if a given stream
+     * operator was added in multiple positions of the stream graph,
+     * then this will return a different name for each instantiation.
      */
     public String getName() {
 	return Namer.getName(this);
     }
+
+    /**
+     * Returns an identifier for this which is NOT unique.  This will
+     * return the same string for a given type of filter that was
+     * added to the stream graph.
+     */
+    public abstract String getIdent();
 
     /**
      * Returns the relative name of this.  The relative name is the

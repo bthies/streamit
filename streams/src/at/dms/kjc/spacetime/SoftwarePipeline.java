@@ -35,7 +35,7 @@ public class SoftwarePipeline {
 		    if(found) {
 			trace.setPrimePump(srcPrimePump);
 		    } else {
-			trace.addDependency(srcTrace);
+			srcTrace.addDependency(trace);
 			globalPrimePump++;
 			trace.setPrimePump(srcPrimePump-1);
 		    }

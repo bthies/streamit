@@ -400,6 +400,7 @@ public class SpaceTimeBackend
 	    for(int i=0;i<traces.length;i++)
 		traces[i].doneDependencies();
 	    traceForrest=PruneTopTraces.prune(traceForrest);
+	    //System.err.println("TOPNODE IN FOREST: "+traceForrest.length+" "+traceForrest[0].getHead().getNext());
 	}
 	
 	//traceList=null;

@@ -69,6 +69,10 @@ public class AdjustGranularity {
 	    doBigBeam620(str);
 	} else if (app.equals("crc32")) {
 	    doCRC32(str);
+	} else if (app.equals("vectadd")) {
+	    doVectAdd(str);
+	} else if (app.equals("fft3")) {
+	    doFFT3(str);
 	} else {
 	    Utils.fail("no custom procedure for app \"" + app + "\" on " +
 		       "granularity of " + num + ".");
@@ -932,4 +936,53 @@ public class AdjustGranularity {
 	WorkEstimate.getWorkEstimate(str).printWork();
 	StreamItDot.printGraph(str, "after.dot");
     }
+
+    //for testing SyncRemovalSJPair and place-holder for other stuff 
+    private static void doVectAdd(SIRStream str) { 
+	SIRPipeline topPipe = (SIRPipeline)str; 
+	System.err.println("Working on VectAdd...");
+	
+	Utils.assert(!(topPipe.get(0) instanceof SIRSplitJoin), 
+	             "Custom transformations for \"VectAdd with a splitjoin source\" not supported now!"); 
+	
+	SIRFilter src = (SIRFilter) topPipe.get(0); 
+	SIRFilter add = (SIRFilter) topPipe.get(1); 
+	SIRFilter sink = (SIRFilter) topPipe.get(2); 
+		
+	//Do a 4-way stateless duplicate 
+        //(since src and snk have a field ('idx') whose value persists across invocations, they 
+        //couldn't fissioned in the current code). So test SyncRemovalSJPair using other dummy kernels 
+        //between src, add and add, snk.   
+	//StatelessDuplicate.doit(src, 4); 
+	StatelessDuplicate.doit(add, 4); 
+	//StatelessDuplicate.doit(sink, 4);
+
+	StreamItDot.printGraph(topPipe, "after-stateless.dot"); 
+
+	//Do a sync-removal transformation 
+	//first do the first and second (src and add) 
+	//SyncRemovalSJPair.diffuseSJPair((SIRSplitJoin)topPipe.get(0), (SIRSplitJoin)topPipe.get(1)); 
+	//StreamItDot.printGraph(topPipe, "after-syncremov1.dot"); 
+	//then the resultant diffused SJ and the third (sink).  
+	//SyncRemovalSJPair.diffuseSJPair((SIRSplitJoin)topPipe.get(0), (SIRSplitJoin)topPipe.get(1)); 
+	//StreamItDot.printGraph(topPipe, "after-syncremov2.dot"); 
+    } 	
+
+    //for testing SyncRemovalSJPair but needs hierarchical SJ reorderer before that could be done. place-holder for other stuff too.  
+    private static void doFFT3(SIRStream str) { 
+	SIRPipeline topPipe = (SIRPipeline)str; 
+	System.err.println("Working on FFT3...");
+	
+	//SIRFilter src = (SIRFilter) topPipe.get(0); 
+	//SIRFilter add = (SIRFilter) topPipe.get(1); 
+	//SIRFilter sink = (SIRFilter) topPipe.get(2); 
+		
+	//Do a sync-removal transformation 
+	//first do the first and second (src and add) 
+	//SyncRemovalSJPair.diffuseSJPair((SIRSplitJoin)topPipe.get(0), (SIRSplitJoin)topPipe.get(1)); 
+	//StreamItDot.printGraph(topPipe, "after-syncremov1.dot"); 
+	//then the resultant diffused SJ and the third (sink).  
+	//SyncRemovalSJPair.diffuseSJPair((SIRSplitJoin)topPipe.get(0), (SIRSplitJoin)topPipe.get(1)); 
+	//StreamItDot.printGraph(topPipe, "after-syncremov2.dot"); 
+    } 	
 }

@@ -79,6 +79,30 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 					/* javadoc comment */ null,
 					/* comments */ null);
 	}
+
+        /* addition of dummy field to struct Main */ 
+        //Required for passing the C code through certain C compilers like MIPS/VIRAM cc. 
+        //Those C compilers bail out with error if a struct is without any field.) - nmani 
+        if (fields.length == 0)
+        { 
+	    fields = new JFieldDeclaration[1];
+          
+	    // define the dummy variable 
+	    JVariableDefinition dummyvar = 
+		new JVariableDefinition(/* tokenref */ null, 
+					/* modifiers */ at.dms.kjc.
+					Constants.ACC_PUBLIC,
+					/* type - any type would do */ CStdType.Integer,
+					/* identifier */ "__dummy__",
+					/* initializer */ null);
+	    // define the field for the dummyvar 
+	    fields[0] = 
+		new JFieldDeclaration(/* tokenref */ null, 
+				      /* variable */ dummyvar, 
+				      /* javadoc  */ null, 
+				      /* comments */ null);
+        } 
+
 	// construct resulting class
 	return new JClassDeclaration(/* TokenReference where */
 				     null,

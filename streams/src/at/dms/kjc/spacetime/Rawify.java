@@ -67,17 +67,18 @@ public class Rawify
 		    //add the dram command if this filter trace is an endpoint...
 		    generateFilterDRAMCommand(filterNode, filterInfo, tile, init, primepump);
 		    
-		    if (filterInfo.isLinear()) {
-			//assert FilterInfo.getFilterInfo(filterNode).remaining == 0 :
-			//"Items remaining on buffer for init for linear filter";
-			createSwitchCodeLinear(filterNode,
-					       trace,filterInfo,init,primepump,tile,rawChip);
-		    }
-		    else {
+		    /*if (filterInfo.isLinear()) {
+		      //assert FilterInfo.getFilterInfo(filterNode).remaining == 0 :
+		      //"Items remaining on buffer for init for linear filter";
+		      createSwitchCodeLinear(filterNode,
+		      trace,filterInfo,init,primepump,tile,rawChip);
+		      }
+		      else {*/
 			
-			createSwitchCode(filterNode, 
-					 trace, filterInfo, init, primepump, tile, rawChip);
-		    }
+		    createSwitchCode(filterNode, 
+				     trace, filterInfo, init, primepump,filterInfo.isLinear(), tile, rawChip);
+		    //}
+		    
 		    //used for debugging, nothing more
 		    tile.addFilterTrace(init, false, filterNode);
 		    //this must come after createswitch code because of compression
@@ -932,20 +933,11 @@ public class Rawify
     }
     
 
-    private static void createSwitchCodeLinear(FilterTraceNode node, Trace parent, 
+    /*private static void createSwitchCodeLinear(FilterTraceNode node, Trace parent, 
 					       FilterInfo filterInfo, boolean init, boolean primePump, 
-					       RawTile tile, RawChip rawChip) {
+					       RawTile tile, RawChip rawChip) {*/
+    private static void createLinearSwitchCode(FilterTraceNode node,boolean init,boolean primePump,int mult,RawTile tile,RawChip rawChip) {
 	System.err.println("Creating switchcode linear: "+node);
-
-	//if we are in the init or primepump call the regular create switch code
-	if (init || primePump) {
-	    createSwitchCode(node, parent, filterInfo, init, primePump, tile, rawChip);
-	    return;
-	}
-	
-	//******START Copy Gordo
-	//******STOP Copy from Gordo
-
 	ComputeNode sourceNode = null;
 
 	//int mult;
@@ -1280,16 +1272,14 @@ public class Rawify
 	
 	//ins.setProcessorIns(new JumpIns(label.getLabel()));
 	ins.setProcessorIns(new BnezdIns(SwitchReg.R3,SwitchReg.R3,label.getLabel()));
-
-	//******START Copy from Gordo
-	//******STOP Copy From Gordo
     }
 
 
     //create the intra-trace filter switch code...
     private static void createSwitchCode(FilterTraceNode node, Trace parent, 
 					 FilterInfo filterInfo,
-					 boolean init, boolean primePump, RawTile tile,
+					 boolean init, boolean primePump, boolean linear,
+					 RawTile tile,
 					 RawChip rawChip) 
     {
 	int mult, sentItems = 0;
@@ -1334,7 +1324,10 @@ public class Rawify
 	else 
 	    mult = filterInfo.steadyMult;
 
-	if (SWITCH_COMP && mult > SC_THRESHOLD && !init) {
+	if(linear) { //Linear switch code
+	    createLinearSwitchCode(node,init,primePump,mult,tile,rawChip);
+	    sentItems+=mult;
+	} else if (SWITCH_COMP && mult > SC_THRESHOLD && !init) {
 	    assert mult > 1;
 	    sentItems = filterInfo.push * mult;
 	    //add code on to send constant from tile, remember to subtract 1 because we 
@@ -1404,8 +1397,10 @@ public class Rawify
 	if (primePump && filterInfo.push > 0 && 
 	    filterInfo.primePumpItemsNotConsumed() / filterInfo.push > 0) {
 	    int ppSteadyMult = (filterInfo.primePumpItemsNotConsumed() / filterInfo.push);
+	    if(linear) //Linear switch code
+		createLinearSwitchCode(node,init,primePump,ppSteadyMult,tile,rawChip);
 	    //make sure mult > SC_THRESHOLD because we need to send the const above
-	    if (SWITCH_COMP && mult > SC_THRESHOLD && ppSteadyMult > 1) {
+	    else if (SWITCH_COMP && mult > SC_THRESHOLD && ppSteadyMult > 1) {
 		//add the label
 		Label label = new Label();
 		tile.getSwitchCode().appendIns(label, (init || primePump));	

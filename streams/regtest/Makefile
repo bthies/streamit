@@ -78,12 +78,20 @@ do-test-checkin-raw: compile
 # linear framework tests (lower level than the regression
 # testing framework for testing the entire compiler path.
 test-linear: compile
-	jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/*.java
+	make -C $(STREAMIT_HOME)/compiler
 	$(TESTER) streamittest.TestLinear
 
 
+# test the pldi-03 benchmarks (eg the ones Andrew used for the
+# Linear optimizations.
+test-pldi: compile
+	make -C $(STREAMIT_HOME)/compiler
+	$(TESTER) streamittest.TestPldi03Benchmarks
 
-# Base functionality
+
+
+# Base functionality -- build the regression test library,
+# rebuild the c library (for uniprocessor support).
 compile:
 	$(COMPILER) streamittest/*.java
 	rm -f ../library/c/libstreamit.a
@@ -92,4 +100,6 @@ compile:
 clean:
 	rm -rf streamittest/*.class
 	rm -rf *.dot
-	rm -rf regtest_errors.txt
+	rm -rf regtest_errors.txt regtest_perf_test.txt regtest_success.txt regtest_log.txt 
+
+

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.17 2003-09-29 15:25:34 dmaze Exp $
+# $Id: release.sh,v 1.18 2003-09-30 16:09:47 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -58,7 +58,7 @@ builddirs() {
 
 # Get a checked-out copy of the source tree.
 mkdir $WORKING/streams
-DIRS="streams/knit streams/README.source"
+DIRS="streams/strc streams/README.source"
 builddirs streams 3rdparty src library include misc configure.in Makefile.in
 builddirs streams/apps benchmarks examples libraries sorts
 builddirs streams/docs cookbook implementation-notes manual runtime-interface
@@ -71,7 +71,7 @@ autoconf $WORKING/streams/configure.in > $WORKING/streams/configure
 chmod 0755 $WORKING/streams/configure
 
 # Generate .in files.  (See also the tail of configure.in.)
-INFILES="knit Makefile library/c/Makefile misc/Makefile.vars"
+INFILES="strc Makefile library/c/Makefile misc/Makefile.vars"
 for f in $INFILES; do
   if test -f "$WORKING/streams/$f"; then
     $WORKING/streams/misc/make-dot-in.pl "$WORKING/streams/$f"

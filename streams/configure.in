@@ -1,7 +1,7 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.6 2003-09-29 19:49:42 dmaze Exp $
+dnl $Id: configure.in,v 1.7 2003-09-30 16:09:59 dmaze Exp $
 dnl
 
 AC_INIT([streamit], [0.0])
@@ -48,5 +48,5 @@ CAG_BUILD=0
 AC_SUBST([CAG_BUILD])
 
 AC_CONFIG_FILES([Makefile library/c/Makefile misc/Makefile.vars])
-AC_CONFIG_FILES([knit], [chmod +x knit])
+AC_CONFIG_FILES([strc], [chmod +x strc])
 AC_OUTPUT

@@ -18,8 +18,13 @@ retain internal state.  This facilitates some compiler analyses, but
 causes the I/O rates of the filters to be much larger.
   </description>
   <implementations>
+    <impl lang="C" dir="c">
+      <file>beamformer.c</file>
+      <desc>Reference implementation, based on the StreamIt version.  Always serializes outputs and is fine-grained -- does not provide "coarse" option.</desc>
+    </impl>
     <impl lang="StreamIt" dir="streamit">
       <file>TemplateBeamFormer.str</file>
+      <desc>StreamIt benchmark as described above.</desc>
     </impl>
   </implementations>
 </benchmark>

@@ -398,6 +398,41 @@ class Propagator extends SLIRReplacingVisitor {
 	}
     }
 
+    public Object visitEqualityExpression(JEqualityExpression self,
+                                          boolean equal,
+                                          JExpression left,
+                                          JExpression right) {
+        // Wow, doesn't Kopi just suck?  This is the *exact* same code
+        // as in doBinaryArithmeticExpression, but JEqualityExpression
+        // is a different type.
+	JExpression newLeft = (JExpression)left.accept(this);
+	JExpression newRight = (JExpression)right.accept(this);
+        // promote constants if needed
+        if (newLeft instanceof JFloatLiteral &&
+            newRight instanceof JDoubleLiteral)
+            newLeft = new JDoubleLiteral(newLeft.getTokenReference(),
+                                         newLeft.floatValue());
+        else if (newLeft instanceof JDoubleLiteral &&
+                 newRight instanceof JFloatLiteral)
+            newRight = new JDoubleLiteral(newRight.getTokenReference(),
+                                          newRight.floatValue());
+        
+	// set any constants that we have (just to save at runtime)
+	if (newLeft.isConstant()) {
+	    self.setLeft(newLeft);
+	}
+	if (newRight.isConstant()) {
+	    self.setRight(newRight);
+	}
+	// do constant-prop if we have both as constants
+	if (newLeft.isConstant() && newRight.isConstant()) {
+	    return self.constantFolding();
+	} else {
+	    // otherwise, return self
+	    return self;
+	}
+    }
+
     /**
      * Visits an array length expression
      */

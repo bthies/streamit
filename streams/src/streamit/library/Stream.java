@@ -15,6 +15,16 @@ public class Stream extends Operator
     LinkedList streamElements = new LinkedList ();
 
     // CONSTRUCTORS --------------------------------------------------------------------
+    public Stream(float a, float b, int c)
+    { 
+	super(a, b, c);
+    }
+
+    public Stream(float x, float y, float z, int a, float b)
+    {
+	super(x,y,z,a,b);
+    }
+
     public Stream ()
     {
         super ();

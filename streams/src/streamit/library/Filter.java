@@ -5,6 +5,17 @@ import streamit.scheduler.*;
 // a filter is the lowest-level block of streams
 public abstract class Filter extends Stream
 {
+
+    public Filter(float a, float b, int c)
+    {
+        super(a, b, c);
+    }
+
+    public Filter(float x, float y, float z, int a, float b)
+    {
+	super(x,y,z,a,b);
+    }
+    
     public Filter()
     {
         super();

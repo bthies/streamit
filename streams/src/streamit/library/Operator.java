@@ -10,6 +10,24 @@ public class Operator extends DestroyedClass
     ParameterContainer initParams;
     boolean initialized = false;
 
+    public Operator(float x1, float y1, int z1)
+    {
+	initParams = new ParameterContainer ("float-float-int")
+	    .add("x1", x1)
+	    .add("y1", y1)
+	    .add("z1", z1);
+    }
+
+    public Operator(float x2, float y2, float z2, int a2, float b2)
+    {
+	initParams = new ParameterContainer ("float-float-float-int-float")
+	    .add("x2", x2)
+	    .add("y2", y2)
+	    .add("z2", z2)
+	    .add("a2", a2)
+	    .add("b2", b2);
+    }
+    
     public Operator()
     {
         initParams = new ParameterContainer ("");
@@ -46,6 +64,12 @@ public class Operator extends DestroyedClass
     {
         ERROR ("You didn't provide a valid init function in class " + getClass ().getName () + ".\nFilters now need init functions, even if they're empty.\nPerhaps you're passing parameters that don't have a valid prototype yet?\nCheck streams/docs/implementation-notes/library-init-functions.txt for instructions on adding new signatures to init functions.");
     }
+
+    // initializatoin functions, to be over-ridden
+    public void init(float x, float y, float z, int a, float b) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(float x, float y, int z) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
     public void init() { invalidInitError (); }
@@ -259,7 +283,19 @@ public class Operator extends DestroyedClass
         ASSERT (initParams != null);
 
         initIO ();
-
+	if(initParams.getParamName().equals("float-float-int")) 
+	    init (initParams.getFloatParam("x1"),
+		  initParams.getFloatParam("y1"),
+		  initParams.getIntParam("z1"));
+	else
+	if(initParams.getParamName().equals("float-float-float-int-float")) 
+	    init (initParams.getFloatParam("x2"),
+		  initParams.getFloatParam("y2"),
+		  initParams.getFloatParam("z2"),
+		  initParams.getIntParam("a2"),
+		  initParams.getFloatParam("b2"));
+	else
+	    
         if (initParams.getParamName ().equals("int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y")); else
         if (initParams.getParamName ().equals("")) init (); else
         if (initParams.getParamName ().equals("int")) init (initParams.getIntParam ("n")); else

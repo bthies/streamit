@@ -7,6 +7,8 @@ import at.dms.kjc.*;
 import at.dms.kjc.spacetime.switchIR.*;
 import at.dms.util.Utils;
 import java.util.LinkedList;
+import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Vector;
 import at.dms.kjc.flatgraph2.*;
 
@@ -571,7 +573,21 @@ public class Rawify
 	}
 	//end of comments 
 
-	for (int i = 0; i < iterations; i++) {
+
+	if (SWITCH_COMP && iterations > SC_THRESHOLD) {
+	    //create a loop to compress the switch code
+	    
+	    //find all the tiles used in this join
+	    HashSet tiles = new HashSet();
+	    for (int j = 0; j < traceNode.getWeights().length; j++) {
+		//get the source buffer, pass thru redundant buffer(s)
+		StreamingDram source = 
+		    InterTraceBuffer.getBuffer(traceNode.getSources()[j]).getNonRedundant().getDRAM();
+		tiles.addAll(SwitchCodeStore.getTilesInRoutes(source, dest));
+	    }
+	    //generate the loop header on all tiles involved
+	    HashMap labels = SwitchCodeStore.switchLoopHeader(tiles, iterations, init, primepump);
+	    //generate the switch instructions
 	    for (int j = 0; j < traceNode.getWeights().length; j++) {
 		//get the source buffer, pass thru redundant buffer(s)
 		StreamingDram source = 
@@ -581,7 +597,23 @@ public class Rawify
 			SwitchCodeStore.generateSwitchCode(source, dest, stage);
 		}
 	    }
+	    //generate the loop trailer
+	    SwitchCodeStore.switchLoopTrailer(labels, init, primepump);
 	}
+	else {
+	    for (int i = 0; i < iterations; i++) {
+		for (int j = 0; j < traceNode.getWeights().length; j++) {
+		    //get the source buffer, pass thru redundant buffer(s)
+		    StreamingDram source = 
+			InterTraceBuffer.getBuffer(traceNode.getSources()[j]).getNonRedundant().getDRAM();
+		    for (int k = 0; k < traceNode.getWeights()[j]; k++) {
+			for (int q = 0; q < typeSize; q++)
+			    SwitchCodeStore.generateSwitchCode(source, dest, stage);
+		    }
+		}
+	    }
+	}
+	
 	//because transfers must be cache line size divisible...
 	//generate dummy values to fill the cache line!
 	if ((items * typeSize) % RawChip.cacheLineWords != 0 &&
@@ -686,10 +718,93 @@ public class Rawify
 	//	SpaceTimeBackend.println("Split Output Trace: " + traceNode + "it: " + iterations + " ppSteadyIt: " + 
 	//ppSteadyIt);
     //	System.out.println(traceNode.debugString());
-	performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, iterations);
+
+	//see if we want to compress (loop) the switch instructions, we cannot
+	if (SWITCH_COMP && iterations > SC_THRESHOLD) {
+	    assert iterations > 1;
+	    Iterator tiles = 
+		getTilesUsedInSplit(traceNode, 
+				    IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM()).iterator();
+	    
+	    HashMap labels = new HashMap();
+	    while (tiles.hasNext()) {
+		RawTile tile = (RawTile)tiles.next();
+		//loop me
+		//send over both constants
+		Util.sendConstFromTileToSwitch(tile, iterations - 1, init, primepump, SwitchReg.R2);
+		if (primepump && ppSteadyIt > 1) 
+		    Util.sendConstFromTileToSwitch(tile, ppSteadyIt - 1, init, primepump, SwitchReg.R3);
+		//label 1
+		Label label = new Label();
+		tile.getSwitchCode().appendIns(label, (init || primepump));
+		labels.put(tile, label);
+	    }
+	    
+	    performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, 1);    
+
+	    //now generate the jump back
+	    tiles = 
+		getTilesUsedInSplit(traceNode, 
+				    IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM()).iterator();
+	    while (tiles.hasNext()) {
+		RawTile tile = (RawTile)tiles.next();
+		Label label = (Label)labels.get(tile);
+		//add the branch back
+		BnezdIns branch = new BnezdIns(SwitchReg.R2, SwitchReg.R2, 
+					       label.getLabel());
+		tile.getSwitchCode().appendIns(branch, (init || primepump));
+	    }
+
+	    //end loop
+	    
+	    fillCacheLineSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, iterations);
+	    
+	    if (primepump && ppSteadyIt > 0) {
+		if (ppSteadyIt > 1) {
+		    tiles = 
+			getTilesUsedInSplit(traceNode, 
+					    IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM()).iterator();
+		    labels = new HashMap();
+		    while (tiles.hasNext()) {
+			RawTile tile = (RawTile)tiles.next();
+			Label label = new Label();
+			tile.getSwitchCode().appendIns(label, (init || primepump));
+			labels.put(tile, label);
+		    }
+		}
+		
+		
+		performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, 1);
+		
+		if (ppSteadyIt > 1) {
+		    //bnezd r3
+		    tiles = 
+			getTilesUsedInSplit(traceNode, 
+					    IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM()).iterator();
+		    while (tiles.hasNext()) {
+			RawTile tile = (RawTile)tiles.next();
+			Label label = (Label)labels.get(tile);
+			//add the branch back
+			BnezdIns branch = new BnezdIns(SwitchReg.R3, SwitchReg.R3, 
+						       label.getLabel());
+			tile.getSwitchCode().appendIns(branch, (init || primepump));
+		    }
+		}
+
+		fillCacheLineSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, ppSteadyIt);
+	    }
+	    
+	}
+	else {
+	    performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, iterations);    
+	    fillCacheLineSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, iterations);
+	    
+	    if (primepump && ppSteadyIt > 0) {
+		performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, ppSteadyIt);
+		fillCacheLineSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, ppSteadyIt);
+	    }
+	}
 	
-	if (primepump && ppSteadyIt > 0)
-	    performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, ppSteadyIt);
 	
 	//because transfers must be cache line size divisible...
 	//disregard the dummy values coming out of the dram
@@ -723,7 +838,9 @@ public class Rawify
 
     private static void performSplitOutputTrace(OutputTraceNode traceNode, FilterTraceNode filter,
 						FilterInfo filterInfo, boolean init, boolean primepump,
-						int iterations)
+						int iterations) 
+	//ppSteady is true if we are in the pp stage but sending to the steady-state buffers
+	//in this case we do not want to loop thw switch code 
     {
 	if (iterations > 0) {
 	    int stage = 1, typeSize;
@@ -735,11 +852,28 @@ public class Rawify
 	    
 	    SpaceTimeBackend.println("Generating Switch Code for " + traceNode +
 				     " iterations " + iterations);
-	    
-	    //is there a load immediate in the switch instruction set?!
-	    //I guess not, if switch instruction memory is a problem
-	    //this naive implementation will have to change
+
 	    StreamingDram sourcePort = IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM();
+	    /*
+	    if (SWITCH_COMP && iterations > SC_THRESHOLD) {
+		HashSet tiles = 
+		    getTilesUsedInSplit(traceNode, 
+					IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM());
+		HashMap labels = SwitchCodeStore.switchLoopHeader(tiles, iterations, init, primepump);
+		for (int j = 0; j < traceNode.getWeights().length; j++) {
+		    for (int k = 0; k < traceNode.getWeights()[j]; k++) {
+			//generate the array of compute node dests
+			ComputeNode dests[] = new ComputeNode[traceNode.getDests()[j].length];
+			for (int d = 0; d < dests.length; d++) 
+			    dests[d] = InterTraceBuffer.getBuffer(traceNode.getDests()[j][d]).getDRAM();
+			for (int q = 0; q < typeSize; q++)
+			    SwitchCodeStore.generateSwitchCode(sourcePort, 
+							       dests, stage);
+		    }
+		}
+		SwitchCodeStore.switchLoopTrailer(labels, init, primepump);
+	    }
+	    */
 	    for (int i = 0; i < iterations; i++) {
 		for (int j = 0; j < traceNode.getWeights().length; j++) {
 		    for (int k = 0; k < traceNode.getWeights()[j]; k++) {
@@ -753,7 +887,16 @@ public class Rawify
 		    }
 		}
 	    }
-	    
+	}
+    }
+
+    //
+    private static void fillCacheLineSplitOutputTrace(OutputTraceNode traceNode, FilterTraceNode filter,
+						FilterInfo filterInfo, boolean init, boolean primepump,
+						int iterations)
+    { 
+	if (iterations > 0) {
+	    int typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
 	    //write dummy values into each temp buffer with a remainder
 	    Iterator it = traceNode.getDestSet().iterator();
 	    while (it.hasNext()) {
@@ -770,6 +913,25 @@ public class Rawify
 	}
     }
     
+    public static HashSet getTilesUsedInSplit(OutputTraceNode traceNode,
+					      StreamingDram sourcePort) 
+    {
+	//find all the tiles used in the split
+	HashSet tiles = new HashSet();
+	for (int j = 0; j < traceNode.getWeights().length; j++) {
+	    for (int k = 0; k < traceNode.getWeights()[j]; k++) {
+		//generate the array of compute node dests
+		ComputeNode dests[] = new ComputeNode[traceNode.getDests()[j].length];
+		for (int d = 0; d < dests.length; d++) 
+		    dests[d] = InterTraceBuffer.getBuffer(traceNode.getDests()[j][d]).getDRAM();
+		tiles.addAll(SwitchCodeStore.getTilesInRoutes(sourcePort, 
+							      dests));
+	    }
+	}	
+	return tiles;
+    }
+    
+
     private static void createSwitchCodeLinear(FilterTraceNode node, Trace parent, 
 					       FilterInfo filterInfo, boolean init, boolean primePump, 
 					       RawTile tile, RawChip rawChip) {
@@ -1244,10 +1406,34 @@ public class Rawify
 	    mult = filterInfo.steadyMult;
 
 	if (SWITCH_COMP && mult > SC_THRESHOLD && !init) {
+	    assert mult > 1;
 	    sentItems = filterInfo.push * mult;
-	    Label label = generateSwitchLoopHeader(mult, tile, false, primePump);
+	    //add code on to send constant from tile, remember to subtract 1 because we 
+	    //don't have a condition at the header of the loop
+	    tile.getComputeCode().sendConstToSwitch(mult - 1, (init || primePump));
+	    //add the code on the switch to receive the constant
+	    MoveIns moveIns = new MoveIns(SwitchReg.R2, 
+					  SwitchIPort.CSTO);
+	    tile.getSwitchCode().appendIns(moveIns, (init || primePump));
+	    //send the const for the primepump items that are placed in steady buffers
+	    if (primePump && filterInfo.push > 0 &&
+		filterInfo.primePumpItemsNotConsumed() / filterInfo.push > 1) {
+		tile.getComputeCode().sendConstToSwitch
+		    ((filterInfo.primePumpItemsNotConsumed() / filterInfo.push) - 1,
+		     (init || primePump));
+		MoveIns moveIns2 = new MoveIns(SwitchReg.R3, 
+					       SwitchIPort.CSTO);
+		tile.getSwitchCode().appendIns(moveIns2, (init || primePump));
+	    }
+	    
+
+	    //add the label
+	    Label label = new Label();
+	    tile.getSwitchCode().appendIns(label, (init || primePump));	
+
 	    createReceiveCode(0, node, parent, filterInfo, false, primePump, tile, rawChip);
 	    createSendCode(0, node, parent, filterInfo, false, primePump, tile, rawChip);
+	    
 	    generateSwitchLoopTrailer(label, tile, false, primePump);
 	}
 	else {
@@ -1286,15 +1472,35 @@ public class Rawify
 	    cacheAlignDest)
 	    fillCacheLine(node, init, primePump, sentItems);
 
-	if (primePump && filterInfo.push > 0 &&
+	if (primePump && filterInfo.push > 0 && 
 	    filterInfo.primePumpItemsNotConsumed() / filterInfo.push > 0) {
-	    mult = (filterInfo.primePumpItemsNotConsumed() / filterInfo.push);
-	    for (int i = 0; i < mult; i++) {
+	    int ppSteadyMult = (filterInfo.primePumpItemsNotConsumed() / filterInfo.push);
+	    //make sure mult > SC_THRESHOLD because we need to send the const above
+	    if (SWITCH_COMP && mult > SC_THRESHOLD && ppSteadyMult > 1) {
+		//add the label
+		Label label = new Label();
+		tile.getSwitchCode().appendIns(label, (init || primePump));	
+		
 		//append the receive code
-		createReceiveCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+		createReceiveCode(0, node, parent, filterInfo, false, primePump, tile, rawChip);
 		//append the send code 
-		createSendCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+		createSendCode(0, node, parent, filterInfo, false, primePump, tile, rawChip);
+		
+		//generate the branch back
+		//add the branch back
+		BnezdIns branch = new BnezdIns(SwitchReg.R3, SwitchReg.R3, 
+					       label.getLabel());
+		tile.getSwitchCode().appendIns(branch, (init || primePump));
 	    }
+	    else {
+		for (int i = 0; i < ppSteadyMult; i++) {
+		    //append the receive code
+		    createReceiveCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+		    //append the send code 
+		    createSendCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+		}
+	    }
+	    
 	    //handle filling the cache line for the steady buffer of the primepump 
 	    //stage
 	    if (!KjcOptions.magicdram && node.getNext().isOutputTrace() && cacheAlignDest)

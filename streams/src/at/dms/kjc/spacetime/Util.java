@@ -14,6 +14,7 @@ import java.util.TreeSet;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.io.*;
+import at.dms.kjc.spacetime.switchIR.*;
 
 /** A class with useful functions that span classes **/
 public class Util {
@@ -251,4 +252,17 @@ public class Util {
 	}
 	return trav.listIterator();
     }
+
+    public static void sendConstFromTileToSwitch(RawTile tile, int c, 
+						 boolean init, boolean primePump,
+						 SwitchReg reg)
+    {
+
+	tile.getComputeCode().sendConstToSwitch(c, init || primePump);
+	//add the code to receive the const
+	MoveIns moveIns = new MoveIns(reg, 
+				      SwitchIPort.CSTO);
+	tile.getSwitchCode().appendIns(moveIns, (init || primePump));	
+    }
+    
 }

@@ -5,6 +5,7 @@ import at.dms.kjc.spacetime.switchIR.*;
 import java.util.LinkedList;
 import java.util.Iterator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 public class SwitchCodeStore {
@@ -89,19 +90,14 @@ public class SwitchCodeStore {
     //create the header of a switch loop on all the tiles in <tiles> and 
     //first send mult from the compute processor to the switch
     //returns map of tile->Label
-    public static HashMap switchLoopHeader(List tiles, int mult, boolean init, boolean primePump) 
+    public static HashMap switchLoopHeader(HashSet tiles, int mult, boolean init, boolean primePump) 
     {
 	assert mult > 1;
 	HashMap labels = new HashMap();
 	Iterator it = tiles.iterator();
 	while (it.hasNext()) {
 	    RawTile tile = (RawTile)it.next();
-	    //send the const - 1
-	    tile.getComputeCode().sendConstToSwitch(mult - 1, init || primePump);
-	    //add the code to receive the const
-	    MoveIns moveIns = new MoveIns(SwitchReg.R2, 
-				      SwitchIPort.CSTO);
-	    tile.getSwitchCode().appendIns(moveIns, (init || primePump));
+	    Util.sendConstFromTileToSwitch(tile, mult - 1, init, primePump, SwitchReg.R2);
 	    //add the label
 	    Label label = new Label();
 	    tile.getSwitchCode().appendIns(label, (init || primePump));	
@@ -128,9 +124,9 @@ public class SwitchCodeStore {
     
     
     //return a list of all the raw tiles used in routing from source to dests
-    public static List getTilesInRoutes(ComputeNode source, ComputeNode[] dests) 
+    public static HashSet getTilesInRoutes(ComputeNode source, ComputeNode[] dests) 
     {
-	LinkedList tiles = new LinkedList();
+	HashSet tiles = new HashSet();
 
 	for (int i = 0; i < dests.length; i++) {
 	    ComputeNode dest = dests[i];

@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * This class also holds initial matrices initA, initB that are to be used to 
  * update the state exactly ONCE (for a prework function).
  *
- * $Id: LinearFilterRepresentation.java,v 1.11 2004-03-15 21:36:02 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.12 2004-03-17 20:34:38 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -358,7 +358,7 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	newInit.copyAt(0,addVars-removeVars,init);
 		
 
-	LinearPrinter.println("after changePeek init " + newInit);
+	//	LinearPrinter.println("after changePeek init " + newInit);
 
 
 	
@@ -447,7 +447,7 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	//System.err.println("old pop: "  + oldPop);
 	//System.err.println("num copies: " + numCompleteCopies);
 	
-
+	/*
 	LinearPrinter.println("Matrix oldA:");
 	LinearPrinter.println(oldA.toString());
 	LinearPrinter.println("Matrix oldB:");
@@ -465,7 +465,7 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	LinearPrinter.println(newC.toString());
 	LinearPrinter.println("Matrix D:");
 	LinearPrinter.println(newD.toString());
-
+	*/
 
 	// initial vector is the same
 	FilterVector newInitVec = (FilterVector)this.getInit().copy();
@@ -595,7 +595,7 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	//System.err.println("old pop: "  + oldPop);
 	//System.err.println("num copies: " + numCompleteCopies);
 	
-
+	/*
 	LinearPrinter.println("Matrix A:");
 	LinearPrinter.println(newA.toString());
 	LinearPrinter.println("Matrix B:");
@@ -604,7 +604,7 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	LinearPrinter.println(newC.toString());
 	LinearPrinter.println("Matrix D:");
 	LinearPrinter.println(newD.toString());
-
+	*/
 
 	// initial vector is the same
 	FilterVector newInitVec = (FilterVector)this.getInit().copy();
@@ -745,6 +745,16 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	// if we get here, there are only real elements in this rep
 	return true;
     }
+
+    public String toString() {
+	String retString = new String("Matrix A:\n" + A + 
+				      "\n Matrix B:\n" + B + 
+				      "\n Matrix C:\n" + C + 
+				      "\n Matrix D:\n" + D);
+	return retString;
+    }
+
+
 }
 
 

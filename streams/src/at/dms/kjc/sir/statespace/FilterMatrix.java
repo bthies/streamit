@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.8 2004-03-15 21:36:02 sitij Exp $
+ * $Id: FilterMatrix.java,v 1.9 2004-03-17 20:34:38 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -217,7 +217,6 @@ public class FilterMatrix {
 	}
 
 	return sum;
-
     }
 
 
@@ -274,7 +273,6 @@ public class FilterMatrix {
 
 		    if(j < length-1)
 			temp2.copyColumnsAt(j,temp,j,1);
-
 
 		}
 	    }
@@ -474,9 +472,9 @@ public class FilterMatrix {
     }
 
 
-    /** add scalar * row val1 to col val2 and scalar * col val1 to col val2 **/
+    /** add scalar * row val1 to row val2 and subtract scalar * col val2 from col val1 **/
 
-    public void AddRowAndCol(int val1, int val2, double scalar) {
+    public void addRowAndCol(int val1, int val2, double scalar) {
 
 	int totalRows = this.getRows();
 	int totalCols = this.getCols();
@@ -487,7 +485,7 @@ public class FilterMatrix {
 	    throw new IllegalArgumentException("invalid parameter val2 = " + val2);
 
 	this.addRow(val1,val2,scalar);
-	this.addCol(val1,val2,scalar);
+	this.addCol(val2,val1,-scalar);
 
     }
 

@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.12 2003-07-30 20:31:55 dmaze Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.13 2003-07-31 20:08:33 dmaze Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
@@ -167,7 +167,8 @@ public class InsertInitConstructors extends InitMunger
         // the initializer.)
         boolean needed = false;
         for (int i = 0; i < decl.getNumVars(); i++)
-            if (needsConstructor(decl.getType(i)))
+            if (needsConstructor(decl.getType(i)) &&
+                !decl.getName(i).startsWith("_final_"))
                 needed = true;
         if (!needed)
             return decl;
@@ -182,7 +183,8 @@ public class InsertInitConstructors extends InitMunger
         for (int i = 0; i < decl.getNumVars(); i++)
         {
             Type type = decl.getType(i);
-            if (needsConstructor(type))
+            if (needsConstructor(type) &&
+                !decl.getName(i).startsWith("_final_"))
             {
                 FEContext ctx = decl.getContext();
                 Expression lhs = new ExprVar(ctx, decl.getName(i));

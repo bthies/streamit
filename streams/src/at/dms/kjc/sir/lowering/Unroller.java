@@ -89,6 +89,10 @@ public class Unroller extends SLIRReplacingVisitor {
     public void setContainerInit(boolean init) {
 	inContainerInit=init;
     }
+
+    public boolean getContainerInit() {
+	return inContainerInit;
+    }
     
     public static void unroll(SIRStream str) {
 	if (str instanceof SIRFeedbackLoop)
@@ -616,8 +620,9 @@ public class Unroller extends SLIRReplacingVisitor {
 		    initVal=((JIntLiteral)values.get(var)).intValue();
 		else if(constants.containsKey(var))
 		    initVal=((JIntLiteral)constants.get(var)).intValue();
-		else
+		else {
 		    throw new Exception("Not Constant!");
+		}
 	    } else if(values.containsKey(var))
 		initVal=((JIntLiteral)values.get(var)).intValue();
 	    else {

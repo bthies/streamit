@@ -171,6 +171,8 @@ public class Propagator extends SLIRReplacingVisitor {
 		constants.put(self,((JLiteral)newExp).convertType(self.getType(),null));
 		added=true;
 		changed.put(self,Boolean.TRUE);
+		if(write)
+		    self.setExpression(newExp);
 	    } else if (newExp!=expr) /*&& CModifier.contains(modifiers,
 				      ACC_FINAL)*/ {
 		// reset the value
@@ -430,7 +432,6 @@ public class Propagator extends SLIRReplacingVisitor {
 	    if (newInit!=null && newInit!=init) {
 		self.setInit(newInit);
 	    }
-	    
 	    Propagator newProp=construct(cloneTable(constants),false);
 	    //init.accept(newProp);
 	    incr.accept(newProp);

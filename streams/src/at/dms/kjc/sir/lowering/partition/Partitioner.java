@@ -61,6 +61,7 @@ public class Partitioner {
 	int pos = sorted.size()-1;
 
 	while (pos>=0) {
+	    StreamItDot.printGraph(str, "during-fission.dot");
 	    // make raw flattener for latest version of stream graph
 	    RawFlattener flattener = new RawFlattener(str);
 	    // get work at <pos>

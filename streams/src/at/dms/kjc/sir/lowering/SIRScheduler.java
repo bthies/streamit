@@ -550,6 +550,9 @@ public class SIRScheduler implements Constants {
 	} else if (schedObject instanceof SIRFileWriter) {
 	    // if file reader, take file reader name
 	    return LoweringConstants.FILE_WRITER_WORK_NAME;
+        } else if (schedObject instanceof SIRIdentity) {
+            // if identity, take identity name
+            return LoweringConstants.IDENTITY_WORK_NAME;
 	} else {
 	    // otherwise, have a list or filter--need to make a work function
 	    JMethodDeclaration work = makeWork(schedObject, toplevel);

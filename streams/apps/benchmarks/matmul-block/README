@@ -1,0 +1,62 @@
+-*- Text -*-
+
+StreamIt Blocked Matrix Multiply
+--------------------------------
+
+The programs in this directory implement a blocked matrix multiply.
+If we were multiplying 4x4 matrices:
+
+  [ A B C D ] [ a b c d ]
+  [ E F G H ] [ e f g h ]
+  [ I J K L ] [ i j k l ]
+  [ M N O P ] [ m n o p ]
+
+The top-left entry of the result, for example, would be Aa + Be + Ci +
+Dm.  The two matrices would be streamed in order, A, B, C, ..., O, P,
+a, b, c, ..., o, p.
+
+This implementation tries to split the matrices into smaller parts for
+better performance.  This is more relevant for large matrices, where
+we might want to split matrices into blocks that fit on a single RAW
+tile.
+
+MatrixBlockMultiply multiplies an x0-by-y0 matrix by an x1-by-y1
+matrix, producing an x1-by-y0 matrix; each dimension is divided
+blockDiv ways.  For the above example, let x0=y0=x1=y1=4, and
+blockDiv=2.
+
+The first matrix is passed through BlockSplit and then Duplicate,
+producing a series of sub-matrices:
+
+  A B C D E F G H I J K L M N O P  (One 4x4 matrix)
+             BlockSplit
+  A B E F C D G H I J M N K L O P  (Four 2x2 matrices)
+             Duplicate
+  A B E F C D G H A B E F C D G H I J ...  (Eight 2x2 matrices)
+
+The second passes through Transpose, then BlockSplit and Duplicate.
+Note that the duplication happens on different-sized blocks.
+
+  a b c d e f g h i j k l m n o p  (One 4x4 matrix)
+             Transpose
+  a e i m b f j n c g k o d h l p  (One 4x4 matrix)
+             BlockSplit
+  a e b f i m j n c g d h k o l p  (Four 2x2 matrices)
+             Duplicate
+  a e b f i m j n c g d h k o l p a e ...  (Eight 2x2 matrices)
+
+The results are joined in submatrices:
+
+  A B E F a e b f C D G H i m j n ...  (Eight pairs of 2x2 matrices)
+
+Now, this stream is split blockDiv ways.  Each split goes through
+BlockMultiply, then BlockAdd.
+
+  A B E F a e b f C D G H i m j n ...  (Eight pairs of 2x2 matrices)
+              BlockMultiply
+  Aa+Be Ab+Bf Ea+Fe Eb+Ff Ci+Dm ...    (Eight 2x2 matrices)
+              BlockAdd
+  Aa+Be+Ci+Dm Ab+Bf+Cj+Dn ...          (Four 2x2 matrices)
+
+The results are round-robin joined, and then passed through
+BlockCombine.

@@ -1,9 +1,13 @@
 /**
+ * This version is the same as FIRBank (with same I/O formats) but
+ * strips away the splitjoin to perform all the computation in a
+ * pipeline.
+ *
  * Remaining inefficiency in this benchmark (extra FLOPS still!): the
  * IFFT should integrate the conjugate and divide-by-n stages with the
  * butterfly.
  */
-void->void pipeline FIRBank {
+void->void pipeline FIRBankPipeline {
     int M = 20;   // number of FIR's
     int N = 1024; // number of input samples
     int K = 12;   // number of taps per FIR
@@ -11,19 +15,11 @@ void->void pipeline FIRBank {
 
     add FileReader<float>("input.dat");
 
-    add splitjoin {
-	split roundrobin(N);
-	for (int i=0; i<M; i++) {
-	    add pipeline {
-		add Expand(N, B);
-		add FFTKernel2(B);
-		add Multiply(M, B, i);
-		add IFFTKernel2(B);
-		add Contract(N, B);
-	    }
-	}
-	join roundrobin(N);
-    }
+    add Expand(N, B);
+    add FFTKernel2(B);
+    add Multiply(M, B);
+    add IFFTKernel2(B);
+    add Contract(N, B);
 
     /* transpose only to test correctness with column-major output */
     //add Transpose(M, N);
@@ -71,7 +67,8 @@ float->void filter Printer {
     }
 }
 
-float->float filter Multiply(int M, int B, int row) {
+float->float filter Multiply(int M, int B) {
+    int row = 0;
 
     init {
 	// dummy coefficient generation -- if you want real
@@ -82,8 +79,10 @@ float->float filter Multiply(int M, int B, int row) {
 	// this filter should hold coefficients from row <row> of the
 	// coefficient matrix.
 	for (int i = 0; i<B; i++) {
-	    coeff[i][0] = i;
-	    coeff[i][1] = i;
+	    for (int j = 0; j<M; j++) {
+		coeff[i][2*j] = i;
+		coeff[i][2*j+1] = i;
+	    }
 	}
     }
 
@@ -93,8 +92,8 @@ float->float filter Multiply(int M, int B, int row) {
 	    float real1 = pop();
 	    float imag1 = pop();
 	    // get in2
-	    float real2 = coeff[j][0];
-	    float imag2 = coeff[j][1];
+	    float real2 = coeff[j][2*row];
+	    float imag2 = coeff[j][2*row+1];
 	    // compute product
 	    float real3 = real1*real2 - imag1*imag2;
 	    float imag3 = real1*imag2 + imag1*real2;
@@ -102,14 +101,14 @@ float->float filter Multiply(int M, int B, int row) {
 	    push(real3);
 	    push(imag3);
 	}
+	row++;
+	if (row==M) {
+	    row = 0;
+	}
     }
 
-    // there are really [B][2*M] coefficients, but each filter will
-    // use only 2 indices of the second dimension.  To prevent the
-    // array from being duplicated across all parallel streams, only
-    // store the relevant piece here.  This filter accesses
-    // coeff[B][2*i] and coeff[B][2*i+1] in the expanded version.
-    float [B][2] coeff;
+    // generated as dummy for now
+    float [B][2*M] coeff;
 
     /* float[B][2*M] coeff;  = {{1.005111e+00,
                             0.000000e+00,
@@ -82140,7 +82139,6 @@ float->float pipeline FFTReorder(int n) {
     add FFTReorderSimple(n/i);
 
 }
-
 
 float->float pipeline FFTKernel2(int n) {
     add FFTReorder(n);

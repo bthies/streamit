@@ -1,10 +1,18 @@
-void->void pipeline FIRBank {
+/**
+ * This version is the same as the main one but has column-major
+ * inputs and outputs.
+ *
+ * Remaining inefficiency in this benchmark (extra FLOPS still!): the
+ * IFFT should integrate the conjugate and divide-by-n stages with the
+ * butterfly.
+ */
+void->void pipeline FIRBankColumnMajor {
     int M = 20;   // number of FIR's
     int N = 1024; // number of input samples
     int K = 12;   // number of taps per FIR
     int B = 2048; // largest power of 2 above (N+K)
 
-    add FileReader<float>("input.dat");
+    add FileReader<float>("input-columnmajor.dat");
     add splitjoin {
         split roundrobin;
         for (int i=0; i<M; i++) {
@@ -53,7 +61,21 @@ float->void filter Printer {
     }
 }
 
-float->float filter Multiply(int M, int B, int i) {
+float->float filter Multiply(int M, int B, int row) {
+
+    init {
+	// dummy coefficient generation -- if you want real
+	// coefficients, comment this out and use static initializer
+	// declared below.  The real coefficients will be easy to
+	// calculate once Lincoln Labs releases C version of this
+	// benchmark in late May, 2005.  In terms of the matlab code,
+	// this filter should hold coefficients from row <row> of the
+	// coefficient matrix.
+	for (int i = 0; i<B; i++) {
+	    coeff[i][0] = i;
+	    coeff[i][1] = i;
+	}
+    }
 
     work pop 2*B push 2*B { 
 	for (int j=0; j<B; j++) {
@@ -61,8 +83,8 @@ float->float filter Multiply(int M, int B, int i) {
 	    float real1 = pop();
 	    float imag1 = pop();
 	    // get in2
-	    float real2 = coeff[j][2*i];
-	    float imag2 = coeff[j][2*i+1];
+	    float real2 = coeff[j][0];
+	    float imag2 = coeff[j][1];
 	    // compute product
 	    float real3 = real1*real2 - imag1*imag2;
 	    float imag3 = real1*imag2 + imag1*real2;
@@ -72,7 +94,14 @@ float->float filter Multiply(int M, int B, int i) {
 	}
     }
 
-    float[B][2*M] coeff = {{1.005111e+00,
+    // there are really [B][2*M] coefficients, but each filter will
+    // use only 2 indices of the second dimension.  To prevent the
+    // array from being duplicated across all parallel streams, only
+    // store the relevant piece here.  This filter accesses
+    // coeff[B][2*i] and coeff[B][2*i+1] in the expanded version.
+    float [B][2] coeff;
+
+    /* float[B][2*M] coeff;  = {{1.005111e+00,
                             0.000000e+00,
 			    1.041721E+00,
 			    0.000000E+00,
@@ -81992,23 +82021,34 @@ float->float filter Multiply(int M, int B, int i) {
 			    -3.522434e-04,
 			    -2.309410e-02,
 			    -4.251589e-04}};        
+			 */
 }
 
 // FFT -------------------------------------------------------------------
 
 float->float filter CombineDFT(int n) {
 
-  float wn_r, wn_i;
+  // coefficients, real and imaginary interleaved
+  float[n] w;
 
   init {
-    wn_r = (float)cos(2 * 3.141592654 / n);
-    wn_i = (float)sin(-2 * 3.141592654 / n);
+      float wn_r = (float)cos(2 * 3.141592654 / n);
+      float wn_i = (float)sin(-2 * 3.141592654 / n);
+      float real = 1;
+      float imag = 0;
+      float next_real, next_imag;
+      for (int i=0; i<n; i+=2) {
+	  w[i] = real;
+	  w[i+1] = imag;
+	  next_real = real * wn_r - imag * wn_i;
+	  next_imag = real * wn_i + imag * wn_r;
+	  real = next_real;
+	  imag = next_imag;
+      }
   }
 
   work push 2*n pop 2*n {
         int i;
-        float w_r = 1;
-        float w_i = 0;
 	float[2*n] results;
 
         for (i = 0; i < n; i += 2)
@@ -82022,25 +82062,27 @@ float->float filter CombineDFT(int n) {
             
             // removed nWay, just using n  --sitij 9/26/03
 
+	    int i_plus_1 = i+1;
+
 	    float y0_r = peek(i);
-            float y0_i = peek(i+1);
+            float y0_i = peek(i_plus_1);
             
 	    float y1_r = peek(n + i);
-            float y1_i = peek(n + i + 1);
+            float y1_i = peek(n + i_plus_1);
 
-            float y1w_r = y1_r * w_r - y1_i * w_i;
-            float y1w_i = y1_r * w_i + y1_i * w_r;
+	    // load into temps to make sure it doesn't got loaded
+	    // separately for each load
+	    float weight_real = w[i];
+	    float weight_imag = w[i_plus_1];
+
+            float y1w_r = y1_r * weight_real - y1_i * weight_imag;
+            float y1w_i = y1_r * weight_imag + y1_i * weight_real;
 
             results[i] = y0_r + y1w_r;
             results[i + 1] = y0_i + y1w_i;
 
 	    results[n + i] = y0_r - y1w_r;
             results[n + i + 1] = y0_i - y1w_i;
-
-            float w_r_next = w_r * wn_r - w_i * wn_i;
-            float w_i_next = w_r * wn_i + w_i * wn_r;
-            w_r = w_r_next;
-            w_i = w_i_next;
         }
 
         for (i = 0; i < 2 * n; i++)
@@ -82051,7 +82093,6 @@ float->float filter CombineDFT(int n) {
     }
 
 }
-
 
 float->float filter FFTReorderSimple(int n) {
 
@@ -82091,21 +82132,6 @@ float->float pipeline FFTReorder(int n) {
     add FFTReorderSimple(n/i);
 
 }
-
-
-float->float pipeline FFTKernel1(int n) {
-
-  if(n>2) {
-    add splitjoin {
-      split roundrobin(2);
-      add FFTKernel1(n/2);
-      add FFTKernel1(n/2);
-      join roundrobin(n);
-    }
-  }
-  add CombineDFT(n);
-}
-
 
 float->float pipeline FFTKernel2(int n) {
     add FFTReorder(n);

@@ -1,6 +1,6 @@
 /*
  * HelloWorld6.java: Hello, World example
- * $Id: HelloWorld6.str,v 1.1 2001-09-25 15:08:19 dmaze Exp $
+ * $Id: HelloWorld6.str,v 1.2 2001-09-25 15:14:27 dmaze Exp $
  */
 
 class HelloWorld6 extends Pipeline
@@ -24,7 +24,7 @@ class HelloWorld6 extends Pipeline
                 output.pushInt (x++);
             }
         });
-        add (new AmplifyByN (3));
+        /* add (new AmplifyByN (3)); */
         add (new Filter ()
         {
             Channel input = new Channel (Integer.TYPE, 1);     /* pop [peek] */

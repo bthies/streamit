@@ -275,6 +275,21 @@ public class SplitJoin extends Stream
         int w2,
         int w3,
         int w4,
+	int w5)
+    {
+        return new SplitJoinType(2)
+            .addWeight(w1)
+            .addWeight(w2)
+            .addWeight(w3)
+            .addWeight(w4)
+            .addWeight(w5);
+    }
+
+    public static SplitJoinType WEIGHTED_ROUND_ROBIN(
+        int w1,
+        int w2,
+        int w3,
+        int w4,
         int w5,
         int w6,
         int w7)

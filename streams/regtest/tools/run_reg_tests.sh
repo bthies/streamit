@@ -2,7 +2,7 @@
 # AAL 6/25/2002 Script that runs regression tests every evening
 # (gets called from cron job on cagfram-46.lcs.mit.edu user
 # aalamb).
-# $Id: run_reg_tests.sh,v 1.7 2002-07-15 21:42:48 aalamb Exp $
+# $Id: run_reg_tests.sh,v 1.8 2002-07-17 18:35:52 aalamb Exp $
 
 # Environmental Variables
 # home directory for CVS
@@ -17,7 +17,7 @@ setenv CLASSPATH .:/usr/local/jdk1.3/jre/lib/rt.jar:$STREAMIT_HOME/compiler/kopi
 # set up automatic testing so that the text tester gets used
 setenv AUTOMATIC_TEST true
 
-# temporary file
+# temporary file use to generate body of the messages
 setenv TEMP /tmp/regtest.temp
 # directory where the log files should be stored
 setenv LOG_DIR $STREAMIT_HOME/regtest/logs/
@@ -60,25 +60,8 @@ echo "**********" >>& $REG_LOG
 touch $REG_ERR
 
 
-############# Assemble the Logfile 
-# collect all output and send it to andrew
-echo "Regression Run Output:" > $TEMP;
-cat $REG_LOG >> $TEMP
-echo "\n\n####################\nError Messages:" >> $TEMP;
-cat $REG_ERR >> $TEMP
-# send the log file as a mail message to Andrew
-cat $TEMP | mail -s "Full StreamIT Regression Test Output" aalamb@mit.edu
-# copy the log file to standard 
+############# Assemble the Emails 
 setenv LOG_FILENAME `$STREAMIT_HOME/regtest/tools/make_daily_log.pl $TEMP $LOG_DIR `
-
-
-
-
-# create a summary message that contains performance numbers
-$STREAMIT_HOME/regtest/tools/parse_results.pl $REG_LOG $REG_ERR $SUCCESS $RESULTS > $TEMP
-
-# send mail to with the results of the test to andrew
-cat $TEMP | mail -s "StreamIT Regression Test Summary (with performance)" aalamb@mit.edu
 
 
 # create an executive message that doesn't contain performance numbers
@@ -90,6 +73,29 @@ $STREAMIT_HOME/regtest/tools/parse_results.pl $REG_LOG $REG_ERR $SUCCESS >> $TEM
 # send mail to with the results of the test to the streamit mailing list
 cat $TEMP | mail -s "StreamIT Regression Test Summary" aalamb@mit.edu commit-stream@cag.lcs.mit.edu nmani@cag.lcs.mit.edu
 #cat $TEMP | mail -s "StreamIT Regression Test Summary" aalamb@mit.edu 
+
+
+
+## Send stuff to Andrew
+# collect all output and send it to andrew
+echo "Regression Run Output:" > $TEMP;
+cat $REG_LOG >> $TEMP
+echo "\n\n####################\nError Messages:" >> $TEMP;
+cat $REG_ERR >> $TEMP
+# send the log file as a mail message to Andrew
+cat $TEMP | mail -s "Full StreamIT Regression Test Output" aalamb@mit.edu
+
+# create a summary message that contains performance numbers
+$STREAMIT_HOME/regtest/tools/parse_results.pl $REG_LOG $REG_ERR $SUCCESS $RESULTS > $TEMP
+# send mail to with the results of the test to andrew
+cat $TEMP | mail -s "StreamIT Regression Test Summary (with performance)" aalamb@mit.edu
+
+
+# now, run the performance number generator (which will also send 
+# random stuff to andrew.
+$STREAMIT_HOME/regtest/tools/run_results.sh
+
+
 
 # clean up temp file
 rm -rf $TEMP

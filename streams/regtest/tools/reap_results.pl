@@ -4,7 +4,7 @@
 # become more general purpose (eg integrated into regtest).
 #
 # Usage: reap_results.pl [tests file]
-# $Id: reap_results.pl,v 1.4 2002-07-15 21:42:48 aalamb Exp $
+# $Id: reap_results.pl,v 1.5 2002-07-17 18:35:52 aalamb Exp $
 
 # The basic idea is for each directory and file, 
 # run the streamit compiler targeting raw, run the
@@ -43,12 +43,12 @@ if ($input_file_name ne "") {
 		       #"$examples_dir/fft:FFT_inlined.java:--raw 8 --fusion:0:32",
 		       #"$examples_dir/fft:FFT_inlined.java:--raw 8 --constprop:0:32",
 		       #"$examples_dir/fft:FFT_inlined.java:--raw 8 --constprop --fusion:0:32",
-		       #"$examples_dir/fib:Fib.java:--raw 4:0:1",
-		       #"$examples_dir/fib:Fib.java:--raw 4 --partition:0:1",
-		       #"$examples_dir/fib:Fib.java:--raw 4 --partition --fusion:0:1",
+		       "$examples_dir/fib:Fib.java:--raw 4:0:1",
+		       "$examples_dir/fib:Fib.java:--raw 4 --partition:0:1",
+		       "$examples_dir/fib:Fib.java:--raw 4 --partition --fusion:0:1",
 		       #"$examples_dir/fib:Fib.java:--raw 4 --partition --fusion --constprop:0:1",
 
-		       "$examples_dir/nokia-fine/:Linkeddcalc.java:--raw 8:0:72",
+		       #"$examples_dir/nokia-fine/:Linkeddcalc.java:--raw 8:0:72",
 		       
 		       #"$apps_dir/FMRadio:LinkedFMTest.java:--raw 8 --partition"
 		       );
@@ -71,36 +71,47 @@ print `mkdir -p $result_directory`;
 
 # process each entry in our results wanted list
 my $temp_num = 1;
-my $current_test;
-foreach $current_test (@results_wanted) {
-    # skip if we have a blank line
-    if ($current_test eq "") {
-	next;
-    }
-    my ($dir, $filename, $options, $init_output_count, $ss_output_count) = split(/:/, $current_test);    
 
-    # fork the process to run the simulator as its own process (and take advantage
-    # of the crazy cag machines
-    if (fork() == 0) {
-	# we are the child
-	do_child_work($temp_num, $dir, $filename, $options, 
-		      $result_directory, $init_output_count, $ss_output_count);
-    } # otherwise we are the parent, and continue spawining kids
-    
-    print "parent: spawned child number ($temp_num)\n";
+# while we still have tests to run
+while(@results_wanted) {
+    # only launch 2 children at a time
+    my $i;
+    for($i=0; $i<2; $i++) {
+	my $current_test;
+	# shift off the current test
+	$current_test = shift(@results_wanted);
 	
-    # Increment count
-    $temp_num++;
+	# skip if we have a blank line or no test
+	if ($current_test eq "") {
+	    next;
+	}
+	
+	# break up the script command into its constituent parts
+	# (split on colon)
+	my ($dir, $filename, $options, $init_output_count, $ss_output_count) = split(/:/, $current_test);    
+	
+	# fork the process to run the simulator as its own process (and take advantage
+	# of the crazy cag machines.
+	if (fork() == 0) {
+	    # we are the child
+	    do_child_work($temp_num, $dir, $filename, $options, 
+			  $result_directory, $init_output_count, $ss_output_count);
+	} # otherwise we are the parent, and continue spawining kids
+	print "parent: spawned child number ($temp_num)\n";
+	# Increment count
+	$temp_num++;
+    }    
+    
+    # wait for both children to be done
+    print "parent: waiting for children.\n";
+    my $child_pid = wait();
+    while ($child_pid != -1) {
+	print "parent: child ($child_pid) finished.\n";
+	$child_pid = wait();
+    }
 }
 
-# wait for all children to be done
-print "parent: waiting for children.\n";
-my $child_pid = wait();
-while ($child_pid != -1) {
-    print "parent: child ($child_pid) finished.\n";
-    $child_pid = wait();
-}
-print "parent: done waiting.\n";
+print "parent: done waiting for all $temp_num children.\n";
 # generate a summary
 print "parent: generating summary.\n";
 generate_summary($result_directory, "$result_directory/summary.txt");

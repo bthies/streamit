@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 # library routines for reaping performance data from
 # the streamit compiler.
-# $Id: reaplib.pl,v 1.3 2002-07-15 21:42:48 aalamb Exp $
+# $Id: reaplib.pl,v 1.4 2002-07-17 18:35:52 aalamb Exp $
 
 use strict;
 
@@ -170,10 +170,6 @@ sub generate_summary {
     # place where we are going to store the summary.
     # each element is a tab delimited list of numbers
     my @summary_table;
-    # add heading
-    push(@summary_table,
-	 "File\tOptions\tThroughput\tUtilization(percent)\tMFLOPS");
-
 
     # get a listing of all the report files in the result directory
     my @files = split("\n", `ls $results_directory/*.report`);
@@ -193,9 +189,15 @@ sub generate_summary {
 	# add a line in the summary
 	push(@summary_table,
 	     "$filename\t$options\t$avg_tput\t$util_pct\t$mflops_count");
-
-	
     }
+
+    # sort the summaries by filename (first characters in the string)
+    @summary_table = sort(@summary_table);
+
+    # add heading to the table
+    push(@summary_table,
+	 "File\tOptions\tThroughput\tUtilization(percent)\tMFLOPS");
+    
     # write the results out to the summary file
     write_file(join("\n", @summary_table), 
 	       $summary_file);

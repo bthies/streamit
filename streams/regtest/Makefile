@@ -57,10 +57,10 @@ test-bed: compile
 
 # run "tests"
 test-tests: compile
-	$(TESTER) streamittest.TestTests
+	$(TESTER) streamittest.TestOnlyTests
 # run application tests
 test-apps: compile
-	$(TESTER) streamittest.TestApps
+	$(TESTER) streamittest.TestOnlyApps
 # run example tests
 test-examples: compile
 	$(TESTER) streamittest.TestOnlyExamples

@@ -14,7 +14,8 @@ NAMES =		sock_dscr \
 		open_socket \
 		message \
 		init_instance \
-		node_server
+		node_server \
+		master_server
 
 OBJS = 		$(NAMES:%=%.o)
 OBJSP =         $(NAMES:%=%_p.o)

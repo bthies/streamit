@@ -1,6 +1,7 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.lir.LIRStreamType;
+import at.dms.kjc.sir.lowering.LoweringConstants;
 import at.dms.kjc.*;
 import at.dms.util.*;
 
@@ -61,6 +62,13 @@ public class SIRFileReader extends SIRFilter implements Cloneable {
      */
     public boolean needsInit() {
 	return false;
+    }
+
+    /**
+     * Returns the C type of the object, which is always a stream_context.
+     */
+    public String getName() {
+        return LoweringConstants.CONTEXT_TYPE_NAME;
     }
 }
 

@@ -15,15 +15,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavaStyleComment.java,v 1.1 2001-08-30 16:32:31 thies Exp $
+ * $Id: JavaStyleComment.java,v 1.2 2001-10-25 00:41:52 mgordon Exp $
  */
 
 package at.dms.compiler;
 
+import java.io.*;
+
 /**
  * A simple character constant
  */
-public class JavaStyleComment {
+public class JavaStyleComment implements Serializable {
 
   // ----------------------------------------------------------------------
   // CONSTRUCTORS

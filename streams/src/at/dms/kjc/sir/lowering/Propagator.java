@@ -16,6 +16,10 @@ import at.dms.compiler.TokenReference;
  */
 public class Propagator extends SLIRReplacingVisitor {
     /**
+     * Base for new const. prop temp variables.
+     */
+    public static final String TEMP_VARIABLE_BASE = "__constpropvar_";
+    /**
      * Map of known constants/Overloaded for copy prop (JLocalVariable -> JLiteral/JLocalVariableExpr/Array)
      * When storing information about an array JLiteral/JLocalVariablesExpr are stored in the Array being mapped to
      */
@@ -1310,18 +1314,18 @@ public class Propagator extends SLIRReplacingVisitor {
 	}*/
 
     private String propName() {
-	return "__constpropvar_"+propNum++;
+	return TEMP_VARIABLE_BASE+propNum++;
     }
 
     private boolean propVarLocal(JLocalVariable var) {
-	return var.getIdent().startsWith("__constpropvar_");
+	return var.getIdent().startsWith(TEMP_VARIABLE_BASE);
     }
 
     private boolean propVar(Object var) {
 	if(!(var instanceof JExpression))
 	    System.err.println("WARNING:popVar:"+var);
 	if(var instanceof JLocalVariableExpression)
-	    return ((JLocalVariableExpression)var).getVariable().getIdent().startsWith("__constpropvar_");
+	    return ((JLocalVariableExpression)var).getVariable().getIdent().startsWith(TEMP_VARIABLE_BASE);
 	return false;
     }
 		

@@ -5,6 +5,7 @@ import streamit.iriter.StreamFactory;
 import streamit.scheduler2.base.StreamInterface;
 import streamit.scheduler2.ScheduleBuffers;
 import streamit.scheduler2.Schedule;
+import streamit.StreamIt;
 
 import at.dms.util.IRPrinter;
 import at.dms.util.Utils;
@@ -92,6 +93,7 @@ public class SIRScheduler implements Constants {
 
 	// debug
 	//printSchedules(schedInterface);
+	//printSchedulesViaLibrary(schedInterface);
 	//printExecutionCounts(result);
 
 	return result;
@@ -253,6 +255,20 @@ public class SIRScheduler implements Constants {
 				    /* body       */ mainBlock,
 				    /* javadoc    */ null,
 				    /* comments   */ null));
+    }
+
+    /**
+     * Calls the library's mechanism for printing a schedule.  Should
+     * give the same results as the other printSchedules if everything
+     * is sane.
+     */
+    private static void printSchedulesViaLibrary(StreamInterface schedInterface) {
+	StreamIt s = new StreamIt ();
+	System.out.println ("\nInit schedule:");
+	s.computeSize(schedInterface.getInitSchedule(), true);
+	System.out.println("\nSteady schedule:");
+	s.computeSize(schedInterface.getSteadySchedule(), true);
+	System.out.println();
     }
 
     /**

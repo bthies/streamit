@@ -1,7 +1,7 @@
 /*
  * DoComplexProp.java: perform constant propagation on function bodies
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.2 2002-09-17 20:40:13 dmaze Exp $
+ * $Id: DoComplexProp.java,v 1.3 2002-09-17 21:09:27 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -80,6 +80,13 @@ public class DoComplexProp extends FEReplacer
         getExprType = new GetExprType(symTab, streamType);
     }
 
+    private Expression doExprProp(Expression expr)
+    {
+        expr = (Expression)expr.accept(varToComplex);
+        expr = (Expression)expr.accept(cplxProp);
+        return expr;
+    }
+
     public Object visitFunction(Function func)
     {
         pushSymTab();
@@ -101,9 +108,7 @@ public class DoComplexProp extends FEReplacer
     public Object visitStmtAssign(StmtAssign stmt)
     {
         Expression lhs = stmt.getLHS();
-        Expression rhs = stmt.getRHS();
-        rhs = (Expression)rhs.accept(varToComplex);
-        rhs = (Expression)rhs.accept(cplxProp);
+        Expression rhs = doExprProp(stmt.getRHS());
         if (rhs instanceof ExprComplex)
         {
             ExprComplex cplx = (ExprComplex)rhs;
@@ -143,6 +148,42 @@ public class DoComplexProp extends FEReplacer
         Statement result = (Statement)super.visitStmtBlock(block);
         popSymTab();
         return result;
+    }
+
+    public Object visitStmtDoWhile(StmtDoWhile stmt)
+    {
+        Statement newBody = (Statement)stmt.getBody().accept(this);
+        Expression newCond = doExprProp(stmt.getCond());
+        if (newBody == stmt.getBody() && newCond == stmt.getCond())
+            return stmt;
+        return new StmtDoWhile(stmt.getContext(), newBody, newCond);
+    }
+
+    public Object visitStmtEnqueue(StmtEnqueue stmt)
+    {
+        // NB: here, as well as in function calls, we want to break out
+        // immediate complex values.  Punt on that for now.
+        // (but, enqueue(1i) needs a temporary, for example.)
+        Expression newValue = doExprProp(stmt.getValue());
+        // TODO: if newValue is complex, create a temporary.
+        if (newValue == stmt.getValue())
+            return stmt;
+        return new StmtEnqueue(stmt.getContext(), newValue);
+    }
+
+    public Object visitStmtExpr(StmtExpr stmt)
+    {
+        Expression newExpr = doExprProp(stmt.getExpression());
+        if (newExpr instanceof ExprComplex)
+        {
+            ExprComplex cplx = (ExprComplex)newExpr;
+            addStatement(new StmtExpr(stmt.getContext(), cplx.getReal()));
+            addStatement(new StmtExpr(stmt.getContext(), cplx.getImag()));
+            return null;
+        }
+        if (newExpr == stmt.getExpression())
+            return stmt;
+        return new StmtExpr(stmt.getContext(), newExpr);
     }
 
     public Object visitStmtVarDecl(StmtVarDecl stmt)

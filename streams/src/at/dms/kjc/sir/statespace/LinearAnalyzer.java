@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.9 2004-03-09 21:43:07 sitij Exp $
+ * $Id: LinearAnalyzer.java,v 1.10 2004-03-12 23:48:28 sitij Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -341,14 +341,15 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	LinearPrinter.println(" transform successful.");
 	// check for debugging so we don't waste time producing output if not needed
 	if (LinearPrinter.getOutput()) {
-	    LinearPrinter.println("Linear feedbackloop found: " + self +
+	     LinearPrinter.println("Linear feedbackloop found: " + self +
 				  "\n-->MatrixA:\n" + newRep.getA() +
 				  "\n-->MatrixB:\n" + newRep.getB() +
 				  "\n-->MatrixC:\n" + newRep.getC() +
 				  "\n-->MatrixD:\n" + newRep.getD() +
 				  "\n-->Initial:\n" + newRep.getInit());
+	    
 	}
-	// add a mapping from this split join to the new linear representation
+	// add a mapping from this feedback to the new linear representation
 	addLinearRepresentation(self, newRep);
 
 	}
@@ -633,12 +634,13 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	LinearPrinter.println(" transform successful.");
 	// check for debugging so we don't waste time producing output if not needed
 	if (LinearPrinter.getOutput()) {
-	    LinearPrinter.println("Linear splitjoin found: " + self +
+	    	    LinearPrinter.println("Linear splitjoin found: " + self +
 				  "\n-->MatrixA:\n" + newRep.getA() +
 				  "\n-->MatrixB:\n" + newRep.getB() +
 				  "\n-->MatrixC:\n" + newRep.getC() +
 				  "\n-->MatrixD:\n" + newRep.getD() +
 				  "\n-->Initial:\n" + newRep.getInit());
+	    
 	}
 	// add a mapping from this split join to the new linear representation
 	addLinearRepresentation(self, newRep);

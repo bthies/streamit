@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.6 2004-03-09 21:43:07 sitij Exp $
+ * $Id: FilterMatrix.java,v 1.7 2004-03-12 23:48:28 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -28,7 +28,7 @@ public class FilterMatrix {
     private double internalMatrixReal[][] = null;
     /** Internal representation of the matrix (imag). **/
     private double internalMatrixImag[][] = null;
-    /** This flag is used to easily differentiate between real amd complex matrices. **/
+    /** This flag is used to easily differentiate between real and complex matrices. **/
     private boolean realFlag = true;
     private int internalSizeRows = -1;
     private int internalSizeCols = -1;
@@ -267,6 +267,213 @@ public class FilterMatrix {
 	}
 
 	return returnMatrix;
+    }
+
+
+
+    /** swap row1, row2 with each other */
+
+    public void swapRows(int row1, int row2) {
+
+	int totalRows = this.getRows();
+
+	if((row1 < 0)||(row1 >= totalRows)) 
+	   throw new IllegalArgumentException("invalid parameter row1 = " + row1);
+	if((row2 < 0)||(row2 >= totalRows)) 
+	   throw new IllegalArgumentException("invalid parameter row2 = " + row2);
+
+	int totalCols = this.getCols();
+	double swap_r, swap_i;
+
+	for(int j=0; j<totalCols; j++) {
+	    swap_r = this.internalMatrixReal[row1][j];
+	    this.internalMatrixReal[row1][j] = this.internalMatrixReal[row2][j];
+	    this.internalMatrixReal[row2][j] = swap_r;
+	}
+
+	if(!this.realFlag) {
+	    for(int j=0; j<totalCols; j++) {
+		swap_i = this.internalMatrixImag[row1][j];
+		this.internalMatrixImag[row1][j] = this.internalMatrixImag[row2][j];
+		this.internalMatrixImag[row2][j] = swap_i;
+	    }
+	}
+    }
+
+
+
+    /** swap col1, col2 with each other */
+
+    public void swapCols(int col1, int col2) {
+
+	int totalCols = this.getCols();
+
+	if((col1 < 0)||(col1 >= totalCols)) 
+	   throw new IllegalArgumentException("invalid parameter col1 = " + col1);
+	if((col2 < 0)||(col2 >= totalCols)) 
+	   throw new IllegalArgumentException("invalid parameter col2 = " + col2);
+
+	int totalRows = this.getRows();
+	double swap_r, swap_i;
+
+	for(int i=0; i<totalRows; i++) {
+	    swap_r = this.internalMatrixReal[i][col1];
+	    this.internalMatrixReal[i][col1] = this.internalMatrixReal[i][col2];
+	    this.internalMatrixReal[i][col2] = swap_r;
+	}
+	if(!realFlag) {
+	    for(int i=0; i<totalRows; i++) {
+		swap_i = this.internalMatrixImag[i][col1];
+		this.internalMatrixImag[i][col1] = this.internalMatrixImag[i][col2];
+		this.internalMatrixImag[i][col2] = swap_i;
+	    }
+	}
+    }
+
+
+    /** swap rows val1, val2 and swap cols val1, val2 - Note that order does not matter **/
+
+    public void swapRowsAndCols(int val1, int val2) {
+
+	int totalRows = this.getRows();
+	int totalCols = this.getCols();
+
+	// do checks in case swapRows works but swapCols doesn't
+
+	if((val1 < 0)||(val1 >= totalRows)||(val1 >= totalCols))
+	    throw new IllegalArgumentException("invalid parameter val1 = " + val1);
+	if((val2 < 0)||(val2 >= totalRows)||(val2 >= totalCols))
+	    throw new IllegalArgumentException("invalid parameter val2 = " + val2);
+
+	swapRows(val1,val2);
+	swapCols(val1,val2);
+    }
+
+
+    /** multiplies row by specified scalar **/
+
+    public void multiplyRow(int row, double scalar) {
+
+	int totalRows = this.getRows();
+
+       	if((row < 0)||(row >= totalRows))
+	    throw new IllegalArgumentException("invalid parameter row = " + row);
+
+	int totalCols = this.getCols();
+
+	for(int j=0; j<totalCols; j++) 
+	    this.internalMatrixReal[row][j] *= scalar;
+
+	if(!this.realFlag) {
+	    for(int j=0; j<totalCols; j++) {
+		this.internalMatrixImag[row][j] *= scalar;
+	    }
+	}
+    }
+
+
+   /** multiplies column by specified scalar **/
+
+    public void multiplyCol(int col, double scalar) {
+
+	int totalCols = this.getCols();
+
+       	if((col < 0)||(col >= totalCols))
+	    throw new IllegalArgumentException("invalid parameter col = " + col);
+
+	int totalRows = this.getRows();
+
+	for(int i=0; i<totalRows; i++) 
+	    this.internalMatrixReal[i][col] *= scalar;
+
+	if(!this.realFlag) {
+	    for(int i=0; i<totalRows; i++) {
+		this.internalMatrixImag[i][col] *= scalar;
+	    }
+	}
+    }
+
+    /** multiplies row and col by specified scalar **/
+
+    public void multiplyRowAndCol(int val, double scalar) {
+
+	int totalRows = this.getRows();
+	int totalCols = this.getCols();
+
+       	if((val < 0)||(val >= totalRows))
+	    throw new IllegalArgumentException("Parameter val exceeds row bounds = " + val);
+
+       	if((val < 0)||(val >= totalCols))
+	    throw new IllegalArgumentException("Parameter val exceeds col bounds = " + val);
+	
+	this.multiplyRow(val,scalar);
+	this.multiplyCol(val,scalar);
+    }
+
+
+
+    /** add scalar*row1 to row2 **/
+
+    public void addRow(int row1, int row2, double scalar) {
+
+	int totalRows = this.getRows();
+
+	if((row1 < 0)||(row1 >= totalRows)) 
+	   throw new IllegalArgumentException("invalid parameter row1 = " + row1);
+	if((row2 < 0)||(row2 >= totalRows)) 
+	   throw new IllegalArgumentException("invalid parameter row2 = " + row2);
+
+	int totalCols = this.getCols();
+
+	for(int j=0; j<totalCols; j++) 
+	    this.internalMatrixReal[row2][j] += scalar*this.internalMatrixReal[row1][j];
+
+	if(!this.realFlag) {
+	    for(int j=0; j<totalCols; j++) {
+		this.internalMatrixImag[row2][j] += scalar*this.internalMatrixImag[row1][j];
+	    }
+	}
+    }
+
+
+    /** add scalar*col1 to col2 **/
+
+    public void addCol(int col1, int col2, double scalar) {
+
+	int totalCols = this.getCols();
+
+	if((col1 < 0)||(col1 >= totalCols)) 
+	   throw new IllegalArgumentException("invalid parameter col1 = " + col1);
+	if((col2 < 0)||(col2 >= totalCols)) 
+	   throw new IllegalArgumentException("invalid parameter col2 = " + col2);
+
+	int totalRows = this.getRows();
+
+	for(int i=0; i<totalRows; i++) 
+	    this.internalMatrixReal[i][col2] += scalar*this.internalMatrixReal[i][col1];
+
+	if(!this.realFlag) {
+	    for(int i=0; i<totalCols; i++) {
+		this.internalMatrixImag[i][col2] += scalar*this.internalMatrixImag[i][col1];
+	    }
+	}
+    }
+
+
+    /** add scalar * row val1 to col val2 and scalar * col val1 to col val2 **/
+
+    public void AddRowAndCol(int val1, int val2, double scalar) {
+
+	int totalRows = this.getRows();
+	int totalCols = this.getCols();
+
+	if((val1 < 0)||(val1 >= totalRows)||(val1 >= totalCols))
+	    throw new IllegalArgumentException("invalid parameter val1 = " + val1);
+	if((val2 < 0)||(val2 >= totalRows)||(val2 >= totalCols))
+	    throw new IllegalArgumentException("invalid parameter val2 = " + val2);
+
+	this.addRow(val1,val2,scalar);
+	this.addCol(val1,val2,scalar);
 
     }
 
@@ -292,76 +499,6 @@ public class FilterMatrix {
 	    }
 	}
 	return copyMatrix;
-    }
-
-
-    /** swap row1, row2 with each other */
-
-    public void swapRows(int row1, int row2) {
-
-	int totalRows = this.getRows();
-
-	if((row1 < 0)||(row1 >= totalRows)) 
-	   throw new IllegalArgumentException("invalid parameter row1 = " + row1);
-	if((row2 < 0)||(row2 >= totalRows)) 
-	   throw new IllegalArgumentException("invalid parameter row1 = " + row1);
-
-	int totalCols = this.getCols();
-	double swap_r, swap_i;
-
-	for(int j=0; j<totalCols; j++) {
-	    swap_r = this.internalMatrixReal[row1][j];
-	    this.internalMatrixReal[row1][j] = this.internalMatrixReal[row2][j];
-	    this.internalMatrixReal[row2][j] = swap_r;
-
-	    swap_i = this.internalMatrixImag[row1][j];
-	    this.internalMatrixImag[row1][j] = this.internalMatrixImag[row2][j];
-	    this.internalMatrixImag[row2][j] = swap_r;
-	}
-    }
-
-
-
-    /** swap col1, col2 with each other */
-
-    public void swapCols(int col1, int col2) {
-
-	int totalCols = this.getCols();
-
-	if((col1 < 0)||(col1 >= totalCols)) 
-	   throw new IllegalArgumentException("invalid parameter col1 = " + col1);
-	if((col2 < 0)||(col2 >= totalCols)) 
-	   throw new IllegalArgumentException("invalid parameter col1 = " + col1);
-
-	int totalRows = this.getRows();
-	double swap_r, swap_i;
-
-	for(int i=0; i<totalRows; i++) {
-	    swap_r = this.internalMatrixReal[i][col1];
-	    this.internalMatrixReal[i][col1] = this.internalMatrixReal[i][col2];
-	    this.internalMatrixReal[i][col2] = swap_r;
-
-	    swap_i = this.internalMatrixImag[i][col1];
-	    this.internalMatrixImag[i][col1] = this.internalMatrixImag[i][col2];
-	    this.internalMatrixImag[i][col2] = swap_r;
-	}
-    }
-
-
-    /** swap rows val1, val2 and swap cols val1, val2 - Note that order does not matter **/
-
-    public void swapRowsAndCols(int val1, int val2) {
-
-	int totalRows = this.getRows();
-	int totalCols = this.getCols();
-
-	if((val1 < 0)||(val1 > totalRows)||(val1 > totalCols))
-	    throw new IllegalArgumentException("invalid parameter val1 = " + val1);
-	if((val2 < 0)||(val2 > totalRows)||(val2 > totalCols))
-	    throw new IllegalArgumentException("invalid parameter val2 = " + val2);
-
-	swapRows(val1,val2);
-	swapCols(val1,val2);
     }
 
 
@@ -487,11 +624,13 @@ public class FilterMatrix {
      **/
     public void copyRowsAndColsAt(int thisRowOffset, int thisColOffset, FilterMatrix source, int sourceRowOffset, int sourceColOffset, int numRows, int numCols) { 
 
-	FilterMatrix tempMatrix = new FilterMatrix(numRows,source.getCols());
-	tempMatrix.copyRowsAt(0,source,sourceRowOffset,numRows);
-	FilterMatrix tempMatrix2 = new FilterMatrix(numRows,numCols);
-	tempMatrix2.copyColumnsAt(0,tempMatrix,sourceColOffset,numCols);
-	this.copyAt(thisRowOffset,thisColOffset,tempMatrix2);
+	if((numRows > 0)&&(numCols > 0)) {
+	    FilterMatrix tempMatrix = new FilterMatrix(numRows,source.getCols());
+	    tempMatrix.copyRowsAt(0,source,sourceRowOffset,numRows);
+	    FilterMatrix tempMatrix2 = new FilterMatrix(numRows,numCols);
+	    tempMatrix2.copyColumnsAt(0,tempMatrix,sourceColOffset,numCols);
+	    this.copyAt(thisRowOffset,thisColOffset,tempMatrix2);
+	}
     }
      
 

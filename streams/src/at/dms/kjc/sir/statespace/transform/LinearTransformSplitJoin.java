@@ -15,7 +15,7 @@ import java.util.*;
  * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
  * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformSplitJoin.java,v 1.4 2004-03-08 18:39:50 sitij Exp $
+ * $Id: LinearTransformSplitJoin.java,v 1.5 2004-03-12 23:48:40 sitij Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;
@@ -82,6 +82,9 @@ public class LinearTransformSplitJoin extends LinearTransform{
 		expandedReps[i] = tempRep;
 
 	    totalOutputs += expandedReps[i].getPushCount();
+
+	    LinearPrinter.println("i,states: " + i + " " + expandedReps[i].getStateCount());
+
 	    totalStates += expandedReps[i].getStateCount();
 	}
 

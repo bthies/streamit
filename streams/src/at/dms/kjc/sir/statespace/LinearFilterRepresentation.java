@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * This class also holds initial matrices initA, initB that are to be used to 
  * update the state exactly ONCE (for a prework function).
  *
- * $Id: LinearFilterRepresentation.java,v 1.9 2004-03-08 18:39:39 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.10 2004-03-12 23:48:28 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -260,31 +260,27 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 		newB.setElement(i,i+popCount-addVars,ComplexNumber.ONE);
 	}
 
-	//LinearPrinter.println("newA " + newA);
-	//LinearPrinter.println("newB" + newB);
 
+	newPreA = new FilterMatrix(newStateCount,newStateCount);
+	newPreB = new FilterMatrix(newStateCount,newPeek-popCount);
 
 	if(this.preworkNeeded()) {
 	    preA = this.getPreWorkA();
 	    preB = this.getPreWorkB();
 
-	    newPreA = new FilterMatrix(newStateCount,newStateCount);
 	    newPreA.copyRowsAndColsAt(addVars,addVars,preA,removeVars,removeVars,oldStateCount-removeVars,oldStateCount-removeVars);
 	    newPreA.copyRowsAndColsAt(0,addVars,preA,0,removeVars,removeVars,oldStateCount-removeVars);
 
-
-	    newPreB = new FilterMatrix(newStateCount,newPeek-popCount);
 	    newPreB.copyRowsAndColsAt(0,0,preB,0,0,removeVars,removeVars);
 	    newPreB.copyRowsAndColsAt(addVars,0,preB,removeVars,0,oldStateCount-removeVars,removeVars);
-
-	    for(int i=removeVars; i<addVars; i++)
-		newPreB.setElement(i,i,ComplexNumber.ONE);
-
 	}
 	else {
-	    newPreA = null;
-	    newPreB = null;
+	    for(int i=0; i<newStateCount; i++)
+		newPreA.setElement(i,i,ComplexNumber.ONE);
 	}
+	
+	for(int i=removeVars; i<addVars; i++)
+	    newPreB.setElement(i,i,ComplexNumber.ONE);
 	
 	newC = new FilterMatrix(pushCount,newStateCount);
 	newC.copyColumnsAt(addVars,C,removeVars,oldStateCount-removeVars);
@@ -294,19 +290,28 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	newD = new FilterMatrix(pushCount,popCount);
 	newD.copyColumnsAt(0,D,addVars-removeVars,removeVars);
 
+
+	LinearPrinter.println("after changePeek A " + newA);
+	LinearPrinter.println("after changePeek B" + newB);
+	LinearPrinter.println("after changePeek C " + newC);
+	LinearPrinter.println("after changePeek D" + newD);
+	LinearPrinter.println("after changePeek preA " + newPreA);
+	LinearPrinter.println("after changePeek preB " + newPreB);
+
+
 	FilterVector init = this.getInit();
 	FilterVector newInit = new FilterVector(newStateCount);
 	newInit.copyAt(0,addVars-removeVars,init);
-			
-	LinearFilterRepresentation newRep; 
+		
 
-	if(preworkNeeded())
-	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreA,newPreB,newInit);
-	else
-	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newInit,newPeek);
+	LinearPrinter.println("after changePeek init " + newInit);
+
+
+	
+	LinearFilterRepresentation newRep; 
+	newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreA,newPreB,newInit);
 
 	return newRep;
-
     }
 
 
@@ -388,6 +393,15 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	//System.err.println("old pop: "  + oldPop);
 	//System.err.println("num copies: " + numCompleteCopies);
 	
+
+	LinearPrinter.println("Matrix oldA:");
+	LinearPrinter.println(oldA.toString());
+	LinearPrinter.println("Matrix oldB:");
+	LinearPrinter.println(oldB.toString());
+	LinearPrinter.println("Matrix oldC:");
+	LinearPrinter.println(oldC.toString());
+	LinearPrinter.println("Matrix oldD:");
+	LinearPrinter.println(oldD.toString());
 
 	LinearPrinter.println("Matrix A:");
 	LinearPrinter.println(newA.toString());

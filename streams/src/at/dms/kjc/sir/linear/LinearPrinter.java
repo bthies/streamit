@@ -1,7 +1,7 @@
 package at.dms.kjc.sir.linear;
 
 /** Control point for printing messages **/
-class LinearPrinter {
+public class LinearPrinter {
     /** flag to control output generation. **/
     private static boolean outputEnabled = false;
     public static boolean getOutput() {

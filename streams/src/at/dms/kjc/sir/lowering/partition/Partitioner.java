@@ -210,8 +210,7 @@ public class Partitioner {
 		// get the containers in the order of work for filters
 		// immediately contained
 		StreamItDot.printGraph(str, "partition.dot");
-		WorkEstimate work = WorkEstimate.getWorkEstimate(str);
-		WorkList list = work.getSortedContainerWork();
+		WorkList list = WorkEstimate.getWorkEstimate(str).getSortedContainerWork();
 		//System.out.println(list);
 		// work up through this list until we fuse something
 		for (int i=0; i<list.size(); i++) {
@@ -269,39 +268,7 @@ public class Partitioner {
 		    } else if (cont instanceof SIRPipeline) {
 			System.out.println("trying to fuse " + (count-target) + " from " 
 					   + cont.size() + "-long pipe " + ((SIRPipeline)cont).getName());
-			// fuse the two lightest filters
-
-			int num = -1;
-			if (cont.size()>1) {
-			int[] childWork = new int[((SIRPipeline)cont).size()-1];
-			childWork[0] += work.getWork((SIRFilter)cont.get(0));
-			for (int j=1; j<cont.size()-1; j++) {
-			    childWork[j-1] += work.getWork((SIRFilter)cont.get(j-1));
-			    childWork[j] += work.getWork((SIRFilter)cont.get(j));
-			}
-			List tried = new LinkedList();
-			while (true) {
-			    // try fusing the lightest two
-			    int selection = -1;
-			    for (int j=0; j<cont.size()-1;j++) {
-				int min = Integer.MAX_VALUE;
-				SIRFilter f = (SIRFilter)((SIRPipeline)cont).get(j);
-				int fWork = work.getWork(f);
-				if (fWork < min && !tried.contains((""+j).intern())) {
-				    min = fWork;
-				    selection = j;
-				}
-			    }
-			    tried.add((""+selection).intern());
-			    num = FusePipe.fuseTwo((SIRPipeline)cont, selection);
-			    if (num!=0 || tried.size()==cont.size()-1) {
-				break;
-			    }
-			}
-			} else {
-			    // just do this to lift?
-			    FusePipe.fuse((SIRPipeline)cont, 1);
-			}
+			int num = FusePipe.fuse((SIRPipeline)cont, count-target);
 			if (num!=0) {
 			    aggressive=0;
 			    break;

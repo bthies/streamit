@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.4 2002-07-10 20:11:14 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.5 2002-07-11 21:02:50 dmaze Exp $
  */
 
 header {
@@ -28,7 +28,7 @@ options {
 	StreamType cur_type = null;
 	List cur_class_params = null;
 	String cur_class_name = null;
-	NodesToJava n2j = new NodesToJava();
+	NodesToJava n2j = null;
 	ComplexProp cplx_prop = new ComplexProp();
 	TempVarGen varGen;
 	TJSymTab symTab = null;
@@ -75,13 +75,14 @@ filter_decl returns [String t]
 	t = "";
 	StreamType type;
 	StreamType last_type = cur_type;
+	NodesToJava last_n2j = n2j;
 	String body = "";
 	List params = null;
 	symTab = new TJSymTab(symTab);
 }
 	: #(
 			TK_filter 
-			type=stream_type { cur_type = type; }
+			type=stream_type { cur_type = type; n2j = new NodesToJava(cur_type); }
 			name:ID
 			{
 				t += getIndent() + "class " + name.getText() +
@@ -107,6 +108,7 @@ filter_decl returns [String t]
 			{
 				indent--;
 				cur_type = last_type;
+				n2j = last_n2j;
 				cur_class_params = null;
 				cur_class_name = null;
 				symTab = symTab.getParent();
@@ -250,14 +252,15 @@ inline_filter returns [String t]
 	String body = "";
 	StreamType type = null;
 	StreamType last_type = cur_type;
+	NodesToJava last_n2j = n2j;
 }
 	:
 		#(	TK_filter
 			type=stream_type
 			LCURLY
-			{ indent++; cur_type = type; }
+			{ indent++; cur_type = type; n2j = new NodesToJava(cur_type); }
 			body=filter_body
-			{ indent--; cur_type = last_type; }
+			{ indent--; cur_type = last_type; n2j = last_n2j; }
 		)
 		{
 			t = "new Filter () {\n" +
@@ -460,7 +463,7 @@ enqueue_statement returns [String t] {t=""; Expression x; String v;}
 	: #(TK_enqueue x=expression_reduced)
 		{
 			Decomplexifier.Result result;
-			result = Decomplexifier.decomplexify(x, varGen);
+			result = Decomplexifier.decomplexify(x, varGen, n2j);
 			v = (String)result.exp.accept(n2j);
 			t = result.statements;
 			t += "enqueue(" + v + ")";
@@ -471,7 +474,7 @@ push_statement returns [String t] {t = null; Expression x; String v;}
 	: #(TK_push x=expression_reduced)
 		{
 			Decomplexifier.Result result;
-			result = Decomplexifier.decomplexify(x, varGen);
+			result = Decomplexifier.decomplexify(x, varGen, n2j);
 			v = (String)result.exp.accept(n2j);
 			t = result.statements;
 			t += cur_type.pushFunction() + "(" + v + ")";
@@ -482,32 +485,34 @@ print_statement returns [String t] {t = null;}
 	: #(TK_print t=expr) { t = "System.out.println(" + t + ")"; }
 	;
 
-assign_statement returns [String t] {t=null; Expression x;}
-	: #(ASSIGN name:ID x=expression_reduced)
+assign_statement returns [String t] {t=null; Expression l, x;}
+	: #(ASSIGN l=value_expression x=expression_reduced)
 		{
+			String lhs = (String)l.accept(n2j);
 			// Check to see if the name is a Complex variable.
-			String type = symTab.lookup(name.getText());
-			if (type.equals("Complex"))
+			String type = symTab.lookup(lhs);
+			// NB: this fails badly on array refs and the like.
+			if (type != null && type.equals("Complex"))
 			{
 				if (x instanceof ExprComplex)
 				{
 					ExprComplex cplx = (ExprComplex)x;
-					t = name.getText() + ".real = " +
+					t = lhs + ".real = " +
 						(String)cplx.getReal().accept(n2j) + ";\n";
-					t += name.getText() + ".imag = " +
+					t += lhs + ".imag = " +
 						(String)cplx.getImag().accept(n2j);
 				}
 				else
 				{
-					t = name.getText() + ".real = " +
+					t = lhs + ".real = " +
 						(String)x.accept(n2j) + ";\n";
-					t += name.getText() + ".imag = 0";
+					t += lhs + ".imag = 0";
 				}
 			}
 			else
 			{
 				// Assert that RHS is purely real.
-				t = name.getText() + " = " + (String)x.accept(n2j);
+				t = lhs + " = " + (String)x.accept(n2j);
 			}
 		}
 	;
@@ -555,8 +560,7 @@ expr_statement returns [String t] { t = ""; }
  */
 
 expr returns [String t] {t=null; Expression x;}
-	: t=streamit_expr
-	| x=expression_reduced { t = (String)x.accept(n2j); }
+	: x=expression_reduced { t = (String)x.accept(n2j); }
 	;
 
 expression_reduced returns [Expression x] {x=null;}
@@ -569,18 +573,19 @@ expression_reduced returns [Expression x] {x=null;}
 
 expression returns [Expression x] {x=null;}
 	: x=minic_expr
+	| x=streamit_expr
 	;
 
-streamit_expr returns [String t] {t=null;}
-	: (t=pop_expr | t=peek_expr)
+streamit_expr returns [Expression x] {x=null;}
+	: (x=pop_expr | x=peek_expr)
 	;
 
-pop_expr returns [String t] {t=null;}
-	: TK_pop { t = cur_type.popFunction() + "()"; }
+pop_expr returns [Expression x] {x=null;}
+	: TK_pop { x = new ExprPop(); }
 	;
 
-peek_expr returns [String t] {t=null;}
-	: #(TK_peek t=expr) { t = cur_type.peekFunction() + "(" + t + ")"; }
+peek_expr returns [Expression x] {x=null;}
+	: #(TK_peek x=expression) { x = new ExprPeek(x); }
 	;
 
 variable_list returns [String t]
@@ -674,7 +679,7 @@ value_expression returns [Expression x]
 	: id:ID { x = new ExprVar(id.getText()); }
 	| #(DOT left=expression field:ID)
 		{ x = new ExprField(left, field.getText()); }
-	| #(LSQUARE left=expression right=expression)
+	| #(LSQUARE left=expression #(LSQUARE right=expression))
 		{ x = new ExprArray(left, right); }
 	| #(LPAREN fn:ID l=func_param_list)
 		{ x = new ExprFunCall(fn.getText(), l); }

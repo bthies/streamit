@@ -85,7 +85,7 @@ public class LinearPartitioner {
 	if (DEBUG) { st.printHierarchy(); }
 
 	// debug output
-	System.out.println("Linear partitioner took " + 
+	System.err.println("Linear partitioner took " + 
 			   (System.currentTimeMillis()-start)/1000 + " secs to calculate partitions.");
 
 	// perform partitioning transformations
@@ -108,7 +108,8 @@ public class LinearPartitioner {
 	// identities that we added to the stream
 	this.counts = SIRScheduler.getExecutionCounts(str);
 	// build up tables.
-	int bottleneck = topConfig.get(COLLAPSE_ANY);
+	int savings = topConfig.get(COLLAPSE_ANY);
+	if (DEBUG) { System.err.println("Expected savings from linear transforms (ops / steady state): " + savings); }
 	StreamTransform result = topConfig.traceback(COLLAPSE_ANY);
 	return result;
     }

@@ -21,6 +21,7 @@ import streamit.frontend.nodes.*;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Convert anonymous streams into named streams.  Anonymous streams
@@ -33,17 +34,16 @@ import java.util.List;
  * stream.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NameAnonymousStreams.java,v 1.1 2003-12-01 20:29:55 dmaze Exp $
+ * @version $Id: NameAnonymousStreams.java,v 1.2 2003-12-01 21:20:45 dmaze Exp $
  */
 public class NameAnonymousStreams extends SymbolTableVisitor
 {
-    List freeVars, newStreams;
+    List newStreams;
     TempVarGen varGen;
     
     public NameAnonymousStreams(TempVarGen varGen)
     {
         super(null);
-        freeVars = null;
         newStreams = new java.util.ArrayList();
         this.varGen = varGen;
     }
@@ -71,23 +71,23 @@ public class NameAnonymousStreams extends SymbolTableVisitor
         return new Program(prog.getContext(), streams, prog.getStructs());
     }
 
-    public Object visitExprVar(ExprVar expr)
-    {
-        Object result = super.visitExprVar(expr);
-        if (!(symtab.hasVar(expr.getName())))
-            freeVars.add(expr.getName());
-        return result;
-    }
-
     public Object visitSCAnon(SCAnon creator)
     {
-        List oldFreeVars = freeVars;
-        freeVars = new java.util.ArrayList();
-        // Wrap this in an empty symbol table.
-        SymbolTable oldSymTab = symtab;
-        symtab = new SymbolTable(null);
+        // First, replace things in children.
         StreamSpec newSpec = (StreamSpec)creator.getSpec().accept(this);
-        symtab = oldSymTab;
+        
+        // Wrap this in an empty symbol table, and look for free
+        // variables.
+        final Set freeVars = new java.util.TreeSet();
+        newSpec.accept(new SymbolTableVisitor(null) {
+                public Object visitExprVar(ExprVar expr)
+                {
+                    Object result = super.visitExprVar(expr);
+                    if (!(symtab.hasVar(expr.getName())))
+                        freeVars.add(expr.getName());
+                    return result;
+                }
+            });
 
         // Create a top-level StreamSpec for this.
         String specName = "Anon_" + varGen.nextVar();
@@ -121,12 +121,10 @@ public class NameAnonymousStreams extends SymbolTableVisitor
         
         // Also replace the stream creator.  The only thing we
         // need to create here is the list of parameters.
-        StreamCreator result = new SCSimple(creator.getContext(),
-                                            specName,
-                                            Collections.EMPTY_LIST,
-                                            params,
-                                            Collections.EMPTY_LIST);
-        freeVars = oldFreeVars;
-        return result;
+        return new SCSimple(creator.getContext(),
+                            specName,
+                            Collections.EMPTY_LIST,
+                            params,
+                            Collections.EMPTY_LIST);
     }
 }

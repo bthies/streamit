@@ -1,6 +1,6 @@
 /*
  * StreamItParser.g: A grammar for StreamIt
- * $Id: StreamItParser.g,v 1.6 2002-08-12 18:56:47 dmaze Exp $
+ * $Id: StreamItParser.g,v 1.7 2002-08-12 19:00:59 dmaze Exp $
  */
 
 header {
@@ -347,7 +347,7 @@ constantExpr
 	:	NUMBER
 	|	CHAR_LITERAL
 	|	STRING_LITERAL
-	|	TK_pi { #constantExpr = #([NUMBER, Double.toString(Math.PI)]); }
+	|!	TK_pi { #constantExpr = #([NUMBER, Double.toString(Math.PI)]); }
 	;
 
 struct_decl

@@ -220,7 +220,26 @@ public class FlatNode {
 	return false;
     }
     
+    /** true if this is the joiner of a feedbackloop **/
+    public boolean isFeedbackJoiner() 
+    {
+	if (contents instanceof SIRJoiner && 
+	    contents.getParent() instanceof SIRFeedbackLoop) {
+	    assert inputs == 2 : "Feedback Joiner without 2 inputs in flat graph";
+	    return true;
+	}
+	
+	return false;
+    }
     
+    /** return true if this is a feedbackloop joiner and if the 
+     * i^th incoming edge is the feedback edge of the joiner **/
+    public boolean isFeedbackIncomingEdge(int i) 
+    {
+	return isFeedbackJoiner() && i == 1;
+    }
+    
+
     public String toString() {
 	return "FlatNode:"+getName();
     }
@@ -295,5 +314,26 @@ public class FlatNode {
 	assert false : "Node " + this + " not connected to " + to;
 	return -1;
     }
+
+    public int getWay(FlatNode to) 
+    {
+	for (int i = 0; i < ways; i++) {
+	    if (edges[i] == to)
+		return i;
+	}
+	assert false : "Node " + this + " not connected to " + to;
+	return -1;
+    }
+
+    public int getIncomingWay(FlatNode prev) 
+    {
+	for (int i = 0; i < inputs; i++) {
+	    if (incoming[i] == prev)
+		return i;
+	}
+	assert false : "Node " + prev + " not connected to " + this;
+	return -1;
+    }
+     
 }
 

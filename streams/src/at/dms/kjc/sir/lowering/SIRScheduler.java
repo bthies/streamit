@@ -252,7 +252,7 @@ public class SIRScheduler {
 
 	// go through parents from top to bottom, building up the
 	// field access expression.
-	for (int i=parents.length-1; i>=-1; i--) {
+	for (int i=parents.length-2; i>=-1; i--) {
 	    // get the child of interest (either the next parent,
 	    // or <str>)
 	    SIROperator child = (i>=0 ? parents[i] : str);

@@ -645,7 +645,27 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
     public void visitAssignmentExpression(JAssignmentExpression self,
 					  JExpression left,
 					  JExpression right) {
-	super.visitAssignmentExpression(self, left, right);
+	// try to leave out const prop remnants
+	/*
+	if (!(left instanceof JLocalVariableExpression &&
+	      ((JLocalVariableExpression)left).getVariable().getIdent().indexOf(Propagator.TEMP_VARIABLE_BASE)!=-1)) {
+	    super.visitAssignmentExpression(self, left, right);
+	    work += ASSIGN;
+	}
+	*/
 	work += ASSIGN;
     }
+
+    /**
+     * prints an array length expression
+     */
+    public void visitArrayAccessExpression(JArrayAccessExpression self,
+					   JExpression prefix,
+					   JExpression accessor) {
+	super.visitArrayAccessExpression(self, prefix, accessor);
+	// the work estimate gets worse (e.g. for beamformer 4x4) if
+	// we include array expressions, oddly enough.
+	work += 0;
+    }
+
 }

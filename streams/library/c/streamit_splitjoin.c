@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
+
 #include <memory.h>
 
 #include "streamit.h"
@@ -167,7 +168,7 @@ void run_splitter(stream_context *c)
     switch(c->type_data.splitjoin_data.splitter.type)
     {
     case NULL_SJ:
-      // do nothing
+      /* do nothing */
       break;
     case DUPLICATE:
         /* Read one item and distribute it. */
@@ -219,10 +220,10 @@ void run_splitter(stream_context *c)
                         break;
                     }
                 } else {
-                    // there will be four cases here:
-                    // one will not need to break up any tapes
-                    // another will need to break up both tapes
-                    // and two for breaking one tape each
+                  /* there will be four cases here:
+                     one will not need to break up any tapes
+                     another will need to break up both tapes
+                     and two for breaking one tape each */
                     tape *output_tape = tapes[nTape];
                     int read_mask = input_tape->mask;
                     int write_mask = output_tape->mask;
@@ -235,10 +236,10 @@ void run_splitter(stream_context *c)
                     
                     if (read_pos + data_size <= read_max)
                     {
-                        // don't break the read tape
+                      /* don't break the read tape */
                         if (write_pos + data_size <= write_max)
                         {
-                            // no breaking of tapes!
+                          /* no breaking of tapes! */
                             memcpy (output_tape->data + write_pos, 
                                 input_tape->data + read_pos, 
                                 data_size);
@@ -246,7 +247,7 @@ void run_splitter(stream_context *c)
                             input_tape->read_pos = read_pos + data_size - size;
                             output_tape->write_pos = write_pos + data_size - size;
                         } else {
-                            // break the write tape
+                          /* break the write tape */
                             int copy_first = write_max - write_pos;
                             memcpy (output_tape->data + write_pos,
                                 input_tape->data + read_pos,
@@ -260,10 +261,10 @@ void run_splitter(stream_context *c)
                         }
                     } else
                     {
-                        // break the read tape
+                      /* break the read tape */
                         if (write_pos + data_size <= write_max)
                         {
-                            // don't break the write tape
+                          /* don't break the write tape */
                             int copy_first = read_max - read_pos;
                             memcpy (output_tape->data + write_pos,
                                 input_tape->data + read_pos,
@@ -288,21 +289,21 @@ void run_splitter(stream_context *c)
 
                             if (write_max - write_pos > read_max - read_pos)
                             {
-                                // there is more data on the write tape - break the
-                                // read tape first
+                              /* there is more data on the write tape - break the
+                                 read tape first */
                                 int copy_second, copy_third;
                                 int copy_first = read_max - read_pos;
                                 memcpy (output_tape->data + write_pos,
                                     input_tape->data + read_pos,
                                     copy_first);
                                 
-                                // break the read tape
+                                /* break the read tape */
                                 copy_second = write_max - write_pos - copy_first;
                                 memcpy (output_tape->data + write_pos + copy_first,
                                     input_tape->data,
                                     copy_second);
                                 
-                                // break the write tape
+                                /* break the write tape */
                                 copy_third = data_size - copy_second - copy_first;
                                 memcpy (output_tape->data,
                                     input_tape->data + copy_second,
@@ -311,21 +312,21 @@ void run_splitter(stream_context *c)
                                 input_tape->read_pos = copy_second + copy_third - size;
                                 output_tape->write_pos = copy_third - size;
                             } else {
-                                // there is more data on the read tape - break the
-                                // write tape first
+                              /* there is more data on the read tape - break the
+                                 write tape first */
                                 int copy_first = write_max - write_pos;
                                 int copy_second, copy_third;
                                 memcpy (output_tape->data + write_pos,
                                     input_tape->data + read_pos,
                                     copy_first);
                                 
-                                // break the write tape
+                                /* break the write tape */
                                 copy_second = read_max - read_pos - copy_first;
                                 memcpy (output_tape->data,
                                     input_tape->data + read_pos + copy_first,
                                     copy_second);
                                 
-                                // break the read tape
+                                /* break the read tape */
                                 copy_third = data_size - copy_first - copy_second;
                                 memcpy (output_tape->data + copy_second,
                                     input_tape->data,
@@ -365,7 +366,7 @@ void run_joiner(stream_context *c)
   switch (c->type_data.splitjoin_data.joiner.type)
   {
   case NULL_SJ:
-    // do nothing
+    /* do nothing */
     break;
   case ROUND_ROBIN:
     for (slot = 0; slot < c->type_data.splitjoin_data.joiner.fan; slot++)

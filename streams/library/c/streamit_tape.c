@@ -14,7 +14,7 @@ void create_tape (stream_context *src, stream_context *dst, int data_size, int t
 
     new_tape = create_tape_internal(data_size, tape_length);
     
-    // and tell the source and sink that they have a new tape
+    /* and tell the source and sink that they have a new tape */
     src->output_tape = new_tape;
     dst->input_tape = new_tape;
 }
@@ -27,16 +27,16 @@ tape *create_tape_internal(int data_size, int tape_length)
     new_tape = (tape*) malloc (sizeof (tape));
     assert (new_tape);
 
-    // initialize the fields in the new tape
+    /* initialize the fields in the new tape */
     new_tape->read_pos = 0;
     new_tape->write_pos = 0;
     new_tape->data_size = data_size;
 
-	// allocate the buffer and compute the mask
+    /* allocate the buffer and compute the mask */
 	{
 		int totalSize = data_size * tape_length;
 
-		// make sure that totalSize is a pow of 2
+		/* make sure that totalSize is a pow of 2 */
 		assert (totalSize > 0 && (totalSize & (totalSize - 1)) == 0);
 
 		new_tape->mask = totalSize - 1;

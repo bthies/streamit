@@ -11,11 +11,11 @@ stream_context *create_context(void *p)
 {
     stream_context *c = NULL;
 
-    // allocate the space
+    /* allocate the space */
     c = (stream_context*) malloc (sizeof (stream_context));
 
-    // and fill in the default fields
-    // there's nothing I can do for the stream_type_data
+    /* and fill in the default fields
+       there's nothing I can do for the stream_type_data */
     c->input_tape = NULL;
     c->output_tape = NULL;
     c->parent = NULL;
@@ -25,10 +25,10 @@ stream_context *create_context(void *p)
     c->type = INVALID_STREAM_TYPE;
     c->work_function = NULL;
 
-    // initialize the stream_data
+    /* initialize the stream_data */
     c->stream_data = p;
 
-    // done
+    /* done */
     return c;
 }
 
@@ -71,11 +71,11 @@ void set_stream_type(stream_context *c, stream_type type)
 
     c->type = type;
 
-    // now initialize the type_data
+    /* now initialize the type_data */
     switch (type)
     {
     case FILTER:
-        // no data to initialize
+      /* no data to initialize */
         break;
     case PIPELINE:
         c->type_data.pipeline_data.first_child = NULL;
@@ -99,15 +99,15 @@ void register_child(stream_context *c, stream_context *child)
     assert (c);
     assert (child);
 
-    // do some general house keeping
+    /* do some general house keeping */
     child->parent = c;
 
-    // enter the child into the actual parent's data structures
-    // those depend on the parent's type
+    /* enter the child into the actual parent's data structures
+       those depend on the parent's type */
     switch (c->type)
     {
     case FILTER:
-        // filter cannot register children!
+      /* filter cannot register children! */
         assert (0);
         break;
     case PIPELINE:
@@ -132,23 +132,23 @@ static void add_child_to_list(stream_context *child,
                               stream_context_list **last)
 {
     stream_context_list *new_child;
-    // allocate the new node
+    /* allocate the new node */
     new_child = (stream_context_list*) malloc (sizeof (stream_context_list));
     assert (new_child);
         
-    // initialize the new node
+    /* initialize the new node */
     new_child->context = child;
     new_child->next = NULL;
         
-    // insert the new node into the list
+    /* insert the new node into the list */
     if (*last != NULL)
     {
-        // add the node to the list
+      /* add the node to the list */
         assert (*first);
         (*last)->next = new_child;
         *last = new_child;
     } else {
-        // this is the first node in the list
+      /* this is the first node in the list */
         *first = new_child;
         *last = new_child;
     }

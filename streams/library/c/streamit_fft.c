@@ -1,7 +1,7 @@
 /* 
  * contains all of the code necessary to do implement multiplication in frequency
  * and then do a reverse FFT.
- * $Id: streamit_fft.c,v 1.1 2002-11-20 19:30:31 aalamb Exp $
+ * $Id: streamit_fft.c,v 1.2 2002-12-19 19:18:32 dmaze Exp $
  */
 
 #include<stdio.h>
@@ -27,8 +27,8 @@ static void element_multiply(float* a_r, float* a_i,
 			     int size) {
   int i;
   for (i=0; i<size; i++) {
-    // result: real part = a.re*b.re - a.im*b.im
-    //         imag part = a.re*b.im + a.im*b.re
+    /* result: real part = a.re*b.re - a.im*b.im
+       imag part = a.re*b.im + a.im*b.re */
     result_r[i] = (a_r[i]*b_r[i]-
 		   a_i[i]*b_i[i]);
     result_i[i] = (a_r[i]*b_i[i]+
@@ -41,7 +41,7 @@ static int IsPowerOfTwo ( unsigned x )
     if ( x < 2 )
         return FALSE;
 
-    if ( x & (x-1) )        // Thanks to 'byang' for this cute trick!
+    if ( x & (x-1) )        /* Thanks to 'byang' for this cute trick! */
         return FALSE;
 
     return TRUE;

@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.7 2003-12-23 17:37:45 dmaze Exp $
+# $Id: run-reg-tests.py,v 1.8 2003-12-24 15:06:44 dmaze Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -22,7 +22,6 @@ users = 'streamit-regtest@cag.lcs.mit.edu'
 cvs_root = '/projects/raw/cvsroot'
 # regtest_root = '/home/bits7/NO_BACKUP/streamit/regtest_working'
 regtest_root = '/home/bits8/streamit/regtest'
-rt_root = '/projects/streamit/www/rt'
 smtp_server = 'catfish.lcs.mit.edu'
 
 # TODO: determine distinctions between "nightly" and "all" regtests.
@@ -124,9 +123,6 @@ class RunRegTests:
 
         self.run_and_log('cvs -d %s co streams' % cvs_root, 'cvslog',
                          'CVS checkout')
-        self.run_and_log('make -C %s/regtest/tools/texec' % \
-                         self.streamit_home, 'texeclog',
-                         'Building texec')
         self.run_and_log('make -C %s/src' % self.streamit_home, 'makelog',
                          'Building the compiler')
         self.run_and_log('make -C %s/library/c' % self.streamit_home,
@@ -188,10 +184,11 @@ and load 'results.qmr'.
         self.mail_all(header + summary)
 
     def rt_report(self):
+        rt_root = os.path.join(self.working_dir, 'rt')
         os.mkdir(rt_root)
         # Ignore errors (but hope it works).
         os.spawnl(os.P_WAIT,
-                  os.path.join(regtest_root,
+                  os.path.join(self.streamit_home,
                                'regtest/qmtest/rt-results.py'),
                   'rt-results.py',
                   os.path.join(self.streamit_home, 'results.qmr'),

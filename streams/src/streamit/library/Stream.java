@@ -247,6 +247,10 @@ public abstract class Stream extends Operator
         super(n1, n2, f1, f2);
     }
 
+    public Stream(short s1, short s2, short s3) {
+	super(s1, s2, s3);
+    }
+
     // RESET FUNCTIONS
 
     public MessageStub reset()

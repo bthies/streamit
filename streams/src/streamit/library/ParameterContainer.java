@@ -44,6 +44,12 @@ public class ParameterContainer extends AssertedClass
             primitive = true;
         }
         
+        ParamData (short s)
+        {
+            data = new Short (s);
+            primitive = true;
+        }
+        
         int getInt ()
         {
             ASSERT (primitive);
@@ -82,6 +88,16 @@ public class ParameterContainer extends AssertedClass
             ASSERT (boolData != null);
             
             return boolData.booleanValue ();
+        }
+        
+        short getShort ()
+        {
+            ASSERT (primitive);
+            
+            Short shortData = (Short) data;
+            ASSERT (shortData != null);
+            
+            return shortData.shortValue ();
         }
         
         Object getObj ()
@@ -132,6 +148,13 @@ public class ParameterContainer extends AssertedClass
         return this;
     }
     
+    public ParameterContainer add (String paramName, short shortParam)
+    {
+        ParamData data = new ParamData (shortParam);
+        parameters.put (paramName, data);
+        return this;
+    }
+    
     public String getParamName () { return paramName; }
     
     public char getCharParam (String paramName)
@@ -172,6 +195,16 @@ public class ParameterContainer extends AssertedClass
         ASSERT (paramData != null);
         
         return paramData.getBool ();
+    }
+
+    public short getShortParam (String paramName)
+    {
+        ASSERT (parameters.containsKey (paramName));
+        
+        ParamData paramData = (ParamData) parameters.get (paramName);
+        ASSERT (paramData != null);
+        
+        return paramData.getShort ();
     }
 
     public Object getObjParam (String paramName)

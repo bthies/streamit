@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime;
 import at.dms.util.Utils;
 import java.util.HashSet;
 import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.*;
 
 /** 
  *
@@ -168,6 +169,11 @@ public class InputTraceNode extends TraceNode
     {
 	return (oneInput() &&
 		sources[0].getSrc().isFileReader());
+    }
+
+    public CType getType() 
+    {
+	return getNextFilter().getFilter().getInputType();
     }
     
 }

@@ -106,16 +106,7 @@ public class OutputTraceNode extends TraceNode
 
     public CType getType() 
     {
-	//keep search backwards until you find a filtertrace node
-	//and return its type
-	TraceNode current = this;
-	while (!current.isFilterTrace()){
-	    //check this
-	    if (current.isInputTrace())
-		Utils.fail("previous of outputnode is inputnode, where is the filter");
-	    current = current.getPrevious();
-	}
-	return ((FilterTraceNode)current).getFilter().getOutputType();
+	return getPrevFilter().getFilter().getOutputType();
     }
     
     //return a set containing the destinations for this input trace node

@@ -71,7 +71,7 @@ public class TraceExtractor {
 			    node.setNext(filterNode);
 			    filterNode.setPrevious(node);
 			    node=filterNode;
-			    //filter=newFilter;
+			    //filter=newFilter;;
 			}
 		    } else {
 			FilterTraceNode filterNode=new FilterTraceNode(content);

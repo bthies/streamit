@@ -9,6 +9,8 @@
 #  error_file is the file containing the error messages from the tests, and
 #  results_file contains the results (eg speed) of running the various 
 #   different configurations of the compiler.)
+#
+# $Id: parse_results.pl,v 1.2 2002-06-28 22:23:26 aalamb Exp $
 use strict;
 
 # entry point

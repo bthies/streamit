@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.26 2003-10-15 18:13:14 dmaze Exp $
+# $Id: release.sh,v 1.27 2003-10-15 18:21:05 thies Exp $
 #
 
 # Interesting/configurable variables:
@@ -90,9 +90,6 @@ rm -rf $WORKING/streams/apps/examples/phase
 rm -rf $WORKING/streams/apps/examples/sample-trellis
 rm -rf $WORKING/streams/apps/examples/toy-trellis
 rm -rf $WORKING/streams/apps/examples/updown
-
-# phases don't work for this release
-rm -rf $WORKING/streams/apps/examples/phase
 
 # Some parts of the compiler aren't useful to release; trim those here.
 rm -rf $WORKING/streams/src/at/dms/kjc/cluster

@@ -46,6 +46,11 @@ public class SplitJoin extends Stream
         super(i1, i2, f);
     }
 
+    public SplitJoin(float f1, float f2, float f3)
+    {
+        super(f1, f2, f3);
+    }
+
     public SplitJoin(int i1, int i2, float f1, float f2)
     {
         super(i1, i2, f1, f2);

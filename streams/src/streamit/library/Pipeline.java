@@ -40,6 +40,16 @@ public class Pipeline extends Stream
     public Pipeline (float x1, float x2) { super(x1, x2);}
     
     /** 
+     * Constructor with a float, float.
+     */
+    public Pipeline (float x1, int x2) { super(x1, x2);}
+    
+    /** 
+     * Constructor with a float, float.
+     */
+    public Pipeline (float x1, float x2, float x3) { super(x1, x2, x3);}
+    
+    /** 
      * Constructor with a int , float [].
      */
     public Pipeline (int x1, float[] x2) { super(x1, x2);}

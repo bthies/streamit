@@ -21,6 +21,7 @@ public class StreamIt extends Pipeline
 {
     int numExecutions = 0;
     boolean printdot = false;
+    boolean printsched = false;
     
     int totalSize = 0;
     HashMap sizeMap = new HashMap();
@@ -60,7 +61,9 @@ public class StreamIt extends Pipeline
             {
                 usefulSet.add (sched);
                 //System.out.print("X");
-                System.out.println ("$" + index + " = " + sched.getStream().getObject() + "." + sched.getWorkFunc());
+		if (printsched) {
+		    System.out.println ("$" + index + " = " + sched.getStream().getObject() + "." + sched.getWorkFunc());
+		}
                 if (top) totalSize++;
                 return;
             }
@@ -95,14 +98,18 @@ public class StreamIt extends Pipeline
                 if (other != null)
                 {
                     sizeMap.put (s,other);
-                    System.out.println ("$" + index + " = $" + other.intValue());
+		    if (printsched) {
+			System.out.println ("$" + index + " = $" + other.intValue());
+		    }
                     return;
                 } else {
                     sizeMap.put(pos2phase, getInteger (index));
                 }
             }
         
-            System.out.print ("$" + index + " = ");
+	    if (printsched) {
+		System.out.print ("$" + index + " = ");
+	    }
         
             int reps = 0;
             for (nSched = 0; useful && nSched < sched.getNumPhases(); nSched++)
@@ -113,9 +120,11 @@ public class StreamIt extends Pipeline
                 
                 if (nextIndx != lastIndx && reps != 0)
                 {
-                    System.out.print ("{");
-                    if (reps > 1) System.out.print (reps + " ");
-                    System.out.print ("$" + lastIndx.intValue() + "}");
+		    if (printsched) {
+			System.out.print ("{");
+			if (reps > 1) System.out.print (reps + " ");
+			System.out.print ("$" + lastIndx.intValue() + "}");
+		    }
                     reps = 0;
                 }
                 
@@ -130,11 +139,15 @@ public class StreamIt extends Pipeline
             
             if (lastIndx != null)
             {
-                System.out.print ("{");
-                if (reps > 1) System.out.print (reps + " ");
-                System.out.println ("$" + lastIndx.intValue() + "}");
+		if (printsched) {
+		    System.out.print ("{");
+		    if (reps > 1) System.out.print (reps + " ");
+		    System.out.println ("$" + lastIndx.intValue() + "}");
+		}
             } else {
-                System.out.println ("{}");
+		if (printsched) {
+		    System.out.println ("{}");
+		}
             }
             
             
@@ -242,6 +255,10 @@ public class StreamIt extends Pipeline
                 {
                     printdot = true;
                 }
+                else if (args[index].equals("-printsched"))
+                {
+                    printsched = true;
+                }
                 else if (args[index].equals("-norun"))
                 {
                     doRun = false;
@@ -330,17 +347,22 @@ public class StreamIt extends Pipeline
             // setup the buffer lengths for the stream setup here:
             setupBufferLengths(buffers);
 
-            
-            System.out.print ("[");
+	    if (printsched) {
+		System.out.print ("[");
+	    }
             this.computeSize(initSched, true);
-            System.out.println ("]");
-            System.out.println ("[");
+	    if (printsched) {
+		System.out.println ("]");
+		System.out.println ("[");
+	    }
             this.computeSize(steadySched, true);
-            System.out.println ("]");
-            System.out.println ("sched size = " + totalSize);
-            System.out.println ("buff size = " + totalBuffer);
-            System.out.println ("nodex = " + selfStream.getNumNodes());
-            System.out.println ("node firings = " + selfStream.getNumNodeFirings());
+	    if (printsched) {
+		System.out.println ("]");
+		System.out.println ("sched size = " + totalSize);
+		System.out.println ("buff size = " + totalBuffer);
+		System.out.println ("nodex = " + selfStream.getNumNodes());
+		System.out.println ("node firings = " + selfStream.getNumNodeFirings());
+	    }
             
             
             // run the init schedule:

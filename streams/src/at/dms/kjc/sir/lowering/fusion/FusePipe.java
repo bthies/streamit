@@ -577,8 +577,8 @@ public class FusePipe {
 		JBlock oldBody = new JBlock(null, work.getStatements(), null);
 		JBlock body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
 		// move variable declarations from front of <body> to
-		// front of <statements>
-		moveVarDecls(body, statements);
+		// front of <statements> -- SUBSUMED by varDeclRaiser
+		//moveVarDecls(body, statements);
 		// mutate <statements> to make them fit for fusion
 		FusingVisitor fuser = 
 		    new FusingVisitor(curPhase, nextPhase, i!=0,
@@ -593,8 +593,8 @@ public class FusePipe {
 		    JBlock oldInitBody = new JBlock(null, initWork.getStatements(), null);
 		    JBlock initBody = (JBlock)ObjectDeepCloner.deepCopy(oldInitBody);
 		    // move variable declarations from front of <body> to
-		    // front of <statements>
-		    moveVarDecls(initBody, statements);
+		    // front of <statements> -- SUBSUMED by varDeclRaiser
+		    //moveVarDecls(initBody, statements);
 		    // mutate <statements> to make them fit for fusion
 		    fuser = 
 			new FusingVisitor(curPhase, nextPhase, i!=0,

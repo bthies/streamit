@@ -453,9 +453,15 @@ public class FuseSplit {
 	int[] weights = split.getWeights();
 	boolean isDup = split.getType()==SIRSplitType.DUPLICATE;
 	int[] partialSum = new int[weights.length];
+	JExpression[] partialSumExpression = new JExpression[weights.length];
+	JExpression[] weightsExpression = new JExpression[weights.length];
 	// calculate partial sums of weights
+	partialSumExpression[0] = new JIntLiteral(0);
+	weightsExpression[0] = new JIntLiteral(weights[0]);
 	for (int i=1; i<weights.length; i++) {
 	    partialSum[i] = partialSum[i-1] + weights[i-1];
+	    partialSumExpression[i] = new JIntLiteral(partialSum[i]);
+	    weightsExpression[i] = new JIntLiteral(weights[i]);
 	}
 	// get total weights
 	int sumOfWeights = split.getSumOfWeights();
@@ -468,27 +474,88 @@ public class FuseSplit {
 	}
 	// make list of statements for work function
 	LinkedList list = new LinkedList();
-	for (int k=0; k<weights.length; k++) {
-	    for (int i=0; i<numExec; i++) {
-		for (int j=0; j<weights[k]; j++) {
-		    // calculate index of this peek
-		    int index = i * (isDup ? 1 : sumOfWeights) + (isDup ? 0 : partialSum[k]) + j;
-		    if (!initMode) {
-			index += rate.initPeek;
-		    }
-		    // if we're in initmode, then don't look past an index of <rate.initPeek>
-		    if (!initMode || index<rate.initPeek) {
-			//&& (childInfo[i].filter instanceof SIRTwoStageFilter) &&
-			//	      i*weights[k]+j < ((SIRTwoStageFilter)childInfo[i].filter).getInitPeek())) {
-			// make a peek expression
-			JExpression peekVal = new SIRPeekExpression(new JIntLiteral(index), type);
-			// make an assignment to the proper peek array
-			JAssignmentExpression assign = makeBufferPush(childInfo[k].peekBuffer,
-								      peekVal);
-			// make an expression statement
-			list.add(new JExpressionStatement(null, assign, null));
+	// in initMode, don't worry about code size
+	if (initMode) {
+	    for (int k=0; k<weights.length; k++) {
+		for (int i=0; i<numExec; i++) {
+		    for (int j=0; j<weights[k]; j++) {
+			// calculate index of this peek
+			int index = i * (isDup ? 1 : sumOfWeights) + (isDup ? 0 : partialSum[k]) + j;
+			// if we're in initmode, then don't look past an index of <rate.initPeek>
+			if (index<rate.initPeek) {
+			    //&& (childInfo[i].filter instanceof SIRTwoStageFilter) &&
+			    //	      i*weights[k]+j < ((SIRTwoStageFilter)childInfo[i].filter).getInitPeek())) {
+			    // make a peek expression
+			    JExpression peekVal = new SIRPeekExpression(new JIntLiteral(index), type);
+			    // make an assignment to the proper peek array
+			    JAssignmentExpression assign = makeBufferPush(childInfo[k].peekBuffer,
+									  peekVal);
+			    // make an expression statement
+			    list.add(new JExpressionStatement(null, assign, null));
+			}
 		    }
 		}
+	    }
+	} else {
+		/* here is original version, for reference
+		for (int k=0; k<weights.length; k++) {
+		    for (int i=0; i<numExec; i++) {
+			for (int j=0; j<weights[k]; j++) {
+			    int index;
+			    if (isDup) {
+				// calculate index of this peek
+				index = i + j + rate.initPeek;
+			    } else {
+				index = i * sumOfWeights + partialSum[k] + j + rate.initPeek;
+			    }
+			    // make a peek expression
+			    JExpression peekVal = new SIRPeekExpression(new JIntLiteral(index), type);
+			    // make an assignment to the proper peek array
+			    JAssignmentExpression assign = makeBufferPush(childInfo[k].peekBuffer, peekVal);
+			}
+		    }
+		}
+		*/
+	    // here is version optimized for imem...
+	    // _weights[N] = { , , }
+	    JArrayInitializer _weightsInit = new JArrayInitializer(null, weightsExpression);
+	    JVariableDefinition _weights = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_weights", _weightsInit);
+	    list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_weights}, null));
+	    // _partialSum[N] = { , , }
+	    JArrayInitializer _partialSumInit = new JArrayInitializer(null, partialSumExpression);
+	    JVariableDefinition _partialSum = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_partialSum", _partialSumInit);
+	    list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_partialSum}, null));
+	    // it's non-trivial to move the k loop into dynamically-generated code because we reference childInfo[k]
+	    for (int k=0; k<weights.length; k++) {
+		// make loop variables
+		JVariableDefinition _i = new JVariableDefinition(null, 0, CStdType.Integer, "_i", new JIntLiteral(0));
+		JVariableDefinition _j = new JVariableDefinition(null, 0, CStdType.Integer, "_j", new JIntLiteral(0));
+		JExpression index;
+		if (isDup) {
+		    index = new JAddExpression(null, 
+					       new JLocalVariableExpression(null, _i),
+					       new JAddExpression(null,
+								  new JLocalVariableExpression(null, _j),
+								  new JIntLiteral(rate.initPeek)));
+		} else {
+		    index = new JAddExpression(null,
+					       new JMultExpression(null,
+								   new JLocalVariableExpression(null, _i),
+								   new JIntLiteral(sumOfWeights)),
+					       new JAddExpression(null,
+								  new JAddExpression(null, 
+										     new JArrayAccessExpression(null, 
+														new JLocalVariableExpression(null, _partialSum),
+														new JIntLiteral(k)),
+										     new JLocalVariableExpression(null, _j)),
+								  new JIntLiteral(rate.initPeek)));
+		}
+		JExpression peekVal = new SIRPeekExpression(index, type);
+		JStatement assign = new JExpressionStatement(null, makeBufferPush(childInfo[k].peekBuffer, peekVal), null);
+		// add i loop
+		JStatement jLoop = Utils.makeForLoop(assign, new JArrayAccessExpression(null, new JLocalVariableExpression(null, _weights), new JIntLiteral(k)), _j);
+		JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(numExec), _i);
+		list.add(iLoop);
 	    }
 	}
 	// pop items at end
@@ -501,8 +568,8 @@ public class FuseSplit {
 	}
 	return new JBlock(null, list, null);
     }
-
-
+    
+    
     /**
      * Returns an expression that inrements the read index of
      * <buffer> by <amount>, wrapping it around the edge of the
@@ -536,7 +603,7 @@ public class FuseSplit {
 				    RepInfo rep,
 				    Rate rate,
 				    CType type) {
-	// get splitter weights
+	// get joiner weights
 	int[] weights = join.getWeights();
 	int[] partialSum = new int[weights.length];
 	// calculate partial sums of outputs
@@ -559,12 +626,10 @@ public class FuseSplit {
 	// do pushing
 	for (int k=0; k<rep.joiner; k++) {
 	    for (int i=0; i<weights.length; i++) {
-		for (int j=0; j<weights[i]; j++) {
-		    JExpression rhs = makeBufferPop(childInfo[i].pushBuffer);
-		    JExpression push = new SIRPushExpression(rhs, type);
-		    // make an expression statement
-		    list.add(new JExpressionStatement(null, push, null));
-		}
+		JExpression rhs = makeBufferPop(childInfo[i].pushBuffer);
+		JExpression push = new SIRPushExpression(rhs, type);
+		list.add(Utils.makeForLoop(new JExpressionStatement(null, push, null),
+					   weights[i]));
 	    }
 	}
 	return new JBlock(null, list, null);

@@ -23,7 +23,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.
  * <p>
- * $Id: LinearReplacer.java,v 1.4 2002-10-25 17:08:37 aalamb Exp $
+ * $Id: LinearReplacer.java,v 1.5 2002-10-25 17:22:44 aalamb Exp $
  **/
 public class LinearReplacer extends EmptyStreamVisitor implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -445,7 +445,7 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
 	    if (!linearInformation.hasLinearRepresentation(self)) {
 		Iterator childIter = self.getChildren().iterator();
 		while (childIter.hasNext()) {
-		    ((SIRStream)childIter.next()).accept(this);
+		    ((SIROperator)childIter.next()).accept(this);
 		}
 		return self;
 	    }

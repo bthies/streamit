@@ -113,6 +113,7 @@ class ToJava
                 TempVarGen varGen = new TempVarGen();
                 prog = (Program)prog.accept(new MakeBodiesBlocks());
                 prog = (Program)prog.accept(new RenameBitVars());
+                prog = (Program)prog.accept(new FindFreeVariables());
                 if (!libraryFormat)
                     prog = (Program)prog.accept(new NoticePhasedFilters());
                 prog = (Program)prog.accept(new DoComplexProp(varGen));

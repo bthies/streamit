@@ -4,7 +4,7 @@ import streamit.scheduler.iriter.SplitJoinIter;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: SplitJoin.java,v 1.3 2002-06-13 22:43:25 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.4 2002-06-14 15:28:47 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for SplitJoins.
@@ -17,10 +17,10 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
 {
     SplitJoinIter splitjoin;
 
-    int nChildren;
-    StreamInterface children[];
+    private int nChildren;
+    private StreamInterface children[];
 
-    SplitJoin(SplitJoinIter _splitjoin, StreamFactory factory)
+    public SplitJoin(SplitJoinIter _splitjoin, StreamFactory factory)
     {
         ASSERT(_splitjoin);
         splitjoin = _splitjoin;
@@ -47,6 +47,25 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             // so I just have to do mine
             computeSteadyState();
         }
+    }
+
+    /**
+     * Get the number of children this SplitJoin has.
+     * @return number of children
+     */
+    protected int getNumChildren()
+    {
+        return nChildren;
+    }
+
+    /**
+     * Get the a child of this splitjoin.
+     * @return nth child
+     */
+    protected StreamInterface getChild(int nChild)
+    {
+        ASSERT(nChild >= 0 && nChild < nChildren);
+        return children[nChild];
     }
 
     /**

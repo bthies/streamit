@@ -1,14 +1,14 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: Pipeline.java,v 1.2 2002-06-14 15:28:49 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.1 2002-06-14 15:28:49 karczma Exp $ */
 
-import streamit.scheduler.iriter.PipelineIter;
+import streamit.scheduler.iriter.SplitJoinIter;
 import streamit.scheduler.base.StreamFactory;
 import streamit.scheduler.Schedule;
 
 /**
  * This class provides the required functions to implement a schduler
- * for a Pipeline.  Mostly, it simply implements wrappers for functions
+ * for a SplitJOin.  Mostly, it simply implements wrappers for functions
  * in StreamInterface and passes them on to the StreamAlgorithm.  This
  * is necessary, 'cause Java doesn't support multiple inheritance.
  * 
@@ -16,13 +16,13 @@ import streamit.scheduler.Schedule;
  * @author  Michal Karczmarek
  */
 
-abstract public class Pipeline
-    extends streamit.scheduler.base.Pipeline
+abstract public class SplitJoin
+    extends streamit.scheduler.base.SplitJoin
     implements StreamInterface
 {
     final protected StreamAlgorithm algorithm = new StreamAlgorithm(this);
 
-    public Pipeline(PipelineIter iterator, StreamFactory factory)
+    public SplitJoin(SplitJoinIter iterator, StreamFactory factory)
     {
         super(iterator, factory);
     }
@@ -34,9 +34,9 @@ abstract public class Pipeline
 
     /**
      * Return an apporpriate hierarchical child.  All children of a 
-     * hierarchical pipeline must be hierarchical as well.  This function
+     * hierarchical splitjoin must be hierarchical as well.  This function
      * asserts if a child is not hierarchical.
-     * @return hierarchical child of the pipeline
+     * @return hierarchical child of the splitjoin
      */
     protected StreamInterface getHierarchicalChild(int nChild)
     {
@@ -45,20 +45,44 @@ abstract public class Pipeline
         
         if (!(child instanceof StreamInterface))
         {
-            ERROR("This pipeline contains a child that is not hierarchical");
+            ERROR("This splitjoin contains a child that is not hierarchical");
         }
         
         return (StreamInterface) child;
     }
+    
+    /**
+     * Get the number of phases that the split of this SplitJoin has.
+     * @return number of split's phases
+     */
+    abstract public int getNumSplitPhases();
+    
+    /**
+     * Get the appropriate phase for the split of this SplitJoin.
+     * @return phase of the split
+     */
+    abstract public PhasingSchedule getSplitPhase(int nPhase);
+
+    /**
+     * Get the number of phases that the join of this SplitJoin has.
+     * @return number of split's join
+     */
+    abstract public int getNumJoinPhases();
+
+    /**
+     * Get the appropriate phase for the join of this SplitJoin.
+     * @return phase of the join
+     */
+    abstract public PhasingSchedule getJoinPhase(int nPhase);
 
     public streamit.scheduler.base.StreamInterface getTop()
     {
-        return getChild(0);
+        return this;
     }
 
     public streamit.scheduler.base.StreamInterface getBottom()
     {
-        return getChild(getNumChildren() - 1);
+        return this;
     }
 
     // These functions implement wrappers for StreamAlgorithm

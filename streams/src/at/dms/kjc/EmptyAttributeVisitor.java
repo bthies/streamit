@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: EmptyAttributeVisitor.java,v 1.5 2001-10-30 17:32:36 thies Exp $
+ * $Id: EmptyAttributeVisitor.java,v 1.6 2001-10-30 18:03:34 thies Exp $
  */
 
 package at.dms.kjc;
@@ -828,22 +828,22 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
     /**
      * prints an array length expression
      */
-    public Object visitComments(JavaStyleComment[] comments) {
-	return null;
+    public Object visitComments(JavaStyleComment[] self) {
+	return self;
     }
 
     /**
      * prints an array length expression
      */
-    public Object visitComment(JavaStyleComment comment) {
-	return null;
+    public Object visitComment(JavaStyleComment self) {
+	return self;
     }
 
     /**
      * prints an array length expression
      */
-    public Object visitJavadoc(JavadocComment comment) {
-	return null;
+    public Object visitJavadoc(JavadocComment self) {
+	return self;
     }
 
     // ----------------------------------------------------------------------
@@ -893,7 +893,7 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
     public Object visitBooleanLiteral(JBooleanLiteral self,
 				      boolean value)
     {
-	return new JBooleanLiteral(null, value);
+	return self;
     }
 
     /**
@@ -902,7 +902,7 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
     public Object visitByteLiteral(JByteLiteral self,
 				   byte value)
     {
-	return new JByteLiteral(null, value);
+	return self;
     }
 
     /**
@@ -987,14 +987,14 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
      * prints an array length expression
      */
     public Object visitPackageImport(String name) {
-	return null;
+	return name;
     }
 
     /**
      * prints an array length expression
      */
     public Object visitClassImport(String name) {
-	return null;
+	return name;
     }
 
     /**

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JForStatement.java,v 1.4 2001-10-29 19:22:23 thies Exp $
+ * $Id: JForStatement.java,v 1.5 2001-10-30 18:03:34 thies Exp $
  */
 
 package at.dms.kjc;
@@ -204,6 +204,20 @@ public class JForStatement extends JLoopStatement {
      */
     public void setBody(JStatement body) {
 	this.body = body;
+    }
+
+    /**
+     * Sets the init of this.
+     */
+    public void setInit(JStatement init) {
+	this.init = init;
+    }
+
+    /**
+     * Sets the increment statement of this.
+     */
+    public void setIncr(JStatement incr) {
+	this.incr = incr;
     }
 
   // ----------------------------------------------------------------------

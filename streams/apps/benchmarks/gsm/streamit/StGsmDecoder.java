@@ -2,6 +2,10 @@
  *  StGsmDecoder:  
  *  Decoder portion of GSM Vocoder, java/streamit implementation
  *  Uses GSM Spec 06.10
+ *  REVISED ON 3/15:  For bottleneck reasons, splits
+ *  Short Term Synthesis into to portions:
+ *  the reflection coefficient portion, and the short term
+ *  synthesis filtering section
  *  - J. Wong
  */
 
@@ -173,9 +177,8 @@ class LTPFilter extends Filter
     public void work()  //output:  drpp
     {
 	short i, nr, brp, drpp;
-	short mBcr, mNcr;
-        mBcr = input.popShort();  //mLtpGain
-	mNcr = input.popShort();  //mLtpOffset
+	short mBcr = input.popShort();  //mLtpGain
+	short mNcr = input.popShort();  //mLtpOffset
 	//do it!
 	for (i = 0; i < 160; i++)
 	    {
@@ -249,7 +252,7 @@ class AdditionUpdateFilter extends Filter
     }
 }
 
-class ShortTermSynthFilter extends Filter 
+class ReflectionCoeffFilter extends Filter 
 {
 
     short[] INVA;
@@ -257,30 +260,26 @@ class ShortTermSynthFilter extends Filter
     short[] B;
     
     short[] mdrpin; //input
-    short[] mdrp;   //shortened input
+    short[] mdrp;   //output
     short[] mLARc;  //input
     short[] mLARpp; //intermediary
     short[] mprevLARpp; //intermediary
     short[] mLARp;  //intermediary
-    short[] mrrp; //intermediary
-    short[] wt; //temporary array
-    short[] v; //temporary array
-    short[] sr; //output!
+    short[] mrrp; //output
 
 #include "Helper.java"
 #define MPREVLARPP_LENGTH 8
-#define V_LENGTH 9
 #define MDRPIN_LENGTH 160
 #define MDRP_LENGTH 40
 #define MLARC_LENGTH 8
 #define MLARPP_LENGTH 8
-#define SR_LENGTH 160
+#define MRRP_LENGTH 8
 
     public void init() 
     {
 	short i;
 	input = new Channel(Short.TYPE, 168);
-	output = new Channel(Short.TYPE, 160);
+	output = new Channel(Short.TYPE, 48);
 	mdrpin = new short[MDRPIN_LENGTH];
 	mdrp = new short[MDRP_LENGTH];
 	mLARc = new short[MLARC_LENGTH];
@@ -291,14 +290,8 @@ class ShortTermSynthFilter extends Filter
 		mprevLARpp[i] = 0;
 	    }
 	mLARp = new short[8];
-	mrrp = new short[8];
-	wt = new short[160];
-	v = new short[V_LENGTH];
-	for (i = 0; i < V_LENGTH; i++)
-	    {
-		v[i] = 0;
-	    }
-	sr = new short[SR_LENGTH];
+	mrrp = new short[MRRP_LENGTH];
+
 
 	//////////////////////////////////////////////////
 	// assign elements of INVA array
@@ -431,8 +424,63 @@ class ShortTermSynthFilter extends Filter
 		    {
 			mrrp[i] = gsm_sub((short) 0, mrrp[i]);
 		    }
+		//push out outputs:
+		for (j = 0; j < MDRP_LENGTH; j++)
+		{
+		    output.pushShort(mdrp[j]);
+		}
+		for (j = 0; j < MRRP_LENGTH; j++)
+		{
+		    output.pushShort(mrrp[j]);
+		}
 	    }
+    }
 
+
+}//ReflectionCoeffFilter
+class ShortTermSynthFilter extends Filter
+{
+    short[] mdrp;   //input
+    short[] mrrp; //input
+    short[] wt; //temporary array
+    short[] v; //temporary array
+    short[] sr; //output!
+
+#include "Helper.java"
+#define V_LENGTH 9
+#define MDRP_LENGTH 40
+#define MRRP_LENGTH 8
+#define WT_LENGTH 160
+#define SR_LENGTH 160
+    
+    public void init()
+    {
+	int i;
+	input = new Channel(Short.TYPE, 48);
+	output = new Channel(Short.TYPE, 160);
+	mdrp = new short[MDRP_LENGTH];
+	mrrp = new short[MRRP_LENGTH];
+	wt = new short[WT_LENGTH];
+	v = new short[V_LENGTH];
+	for (i = 0; i < V_LENGTH; i++)
+	{
+	    v[i] = 0;
+	}
+	sr = new short[SR_LENGTH];
+
+    }
+    public void work()
+    {
+	int i;
+	short j, temp, temp1, temp2, k, sri;
+	for (i = 0; i < MDRP_LENGTH; i++)
+	{
+	    mdrp[i] = input.popShort();
+	}
+	for (i = 0; i < MRRP_LENGTH; i++)
+	{
+	    mrrp[i] = input.popShort();
+	}
 	//Short term synthesis filtering:  uses drp[0..39] and rrp[0...7] 
 	// to produce sr[0...159].  A temporary array wt[0..159] is used.
 	for (k = 0; k < 40; k++)
@@ -507,7 +555,8 @@ class ShortTermSynthFilter extends Filter
 	    }
 	//System.err.println("Got to ShortTermSynth Filter!");
     }
-}
+}//ShortTermSynthFilter
+
 
 class LARInputFilter extends Filter
 {
@@ -685,7 +734,7 @@ class LTPPipeline extends Pipeline
     {
 	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
 	this.add(new LTPInputFilter());
-	//this.add(new ShortPrinter('g'));
+	this.add(new ShortPrinter('g'));
     }
 }
 class LARPipeline extends Pipeline
@@ -704,8 +753,8 @@ class LTPInputSplitJoin extends SplitJoin
     {
 	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));
 	this.add(new LTPPipeline());
-	this.add(new ShortIdentity());
-	//this.add(new ShortPrinter('d'));
+	//this.add(new ShortIdentity());
+	this.add(new ShortPrinter('d'));
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(2, 160)); //bcr, ncr, drp[0...159]
     }
 }
@@ -715,15 +764,15 @@ class LTPLoopStream extends Pipeline
     public void init()
     {
 	this.add(new LTPInputSplitJoin());
-	//this.add(new Pipeline() 
-	//    {
-	//	public void init()
-	//	{
-	//	    this.add(new ShortPrinter('e'));
+	this.add(new Pipeline() 
+	    {
+		public void init()
+		{
+		    this.add(new ShortPrinter('e'));
 		    this.add(new LTPFilter());
-	//	    this.add(new ShortPrinter('b')); 
-	//	}
-	//   });
+		    this.add(new ShortPrinter('b')); 
+		}
+	    });
     }
 }
 class DecoderFeedback extends FeedbackLoop
@@ -733,7 +782,7 @@ class DecoderFeedback extends FeedbackLoop
 	this.setDelay(1);
 	this.setJoiner(WEIGHTED_ROUND_ROBIN (40, 1));  //sequence: ep[0....39], drpp
   	//this.setBody(new AdditionUpdateFilter());
-	this.setBody(new AdditionUpdateFilter()); //debug 
+	this.setBody(new StupidStream()); //debug 
 	this.setSplitter(DUPLICATE ());   
 	//note:  although drp[120...159] are all that are
 	//       required for ShortTermSynth, this is currently
@@ -908,6 +957,7 @@ public class StGsmDecoder extends StreamIt
 	//this.add(new ShortPrinter());
 	this.add(new HoldFilter());
 	this.add(new LARInputSplitJoin());
+	this.add(new ReflectionCoeffFilter());
 	this.add(new ShortTermSynthFilter());
 	this.add(new PostProcessingFilter());
 	//this.add(new ShortPrinter());

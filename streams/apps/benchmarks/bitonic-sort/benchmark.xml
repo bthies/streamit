@@ -1,0 +1,21 @@
+<benchmark>
+  <name>bitonic-sort</name>
+  <desc>Bitonic sorting network</desc>
+  <description>
+  High performance sorting network (by definition of sorting network, comparison
+  sequence not data-dependent).  Sorts in O(n*log(n)^2) comparisons.  Implementation
+  works only for power-of-2 sizes starting from 2.  
+  </description>
+  <reference>http://www.iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/bitonicen.htm</reference>
+  <implementations>
+    <impl lang="C" dir="c">
+      <file>bitonic.c</file>
+    </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <file>BitonicSort.str</file>
+    </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <file>BitonicSortRecursive.str</file>
+    </impl>
+  </implementations>
+</benchmark>

@@ -4,12 +4,15 @@ import streamit.scheduler.*;
 
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
+import at.dms.kjc.sir.lowering.reordering.*; 
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
+
+import java.util.*; 
 
 /**
  * This is the main class for decomposing the high SIR into
@@ -61,6 +64,12 @@ public class Flattener {
 			     StreamItOptions.rawRows *
 			     StreamItOptions.rawColumns);
 	}
+
+	/* Not general code: Just a test for sync-removal on TwoWeightedRR.java */ 
+	/* StreamItDot.printGraph(str, "before-syncremov.dot");
+	SIRPipeline parentPipe = (SIRPipeline)str; 
+	SyncRemovalSJPair.diffuseSJPair((SIRSplitJoin)parentPipe.get(1), (SIRSplitJoin)parentPipe.get(2)); 
+	StreamItDot.printGraph(str, "after-syncremov.dot"); */ 
 
 	/*
 	SIRFilter toDuplicate = ((SIRFilter)

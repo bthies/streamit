@@ -15,8 +15,8 @@ public class PCMSynthesis extends Pipeline
         {
             public void init()
             {
-                input = new Channel(Float.TYPE, 32);
-                output = new Channel(Float.TYPE, 64);
+                this.input = new Channel(Float.TYPE, 32);
+                this.output = new Channel(Float.TYPE, 64);
             }
 
             public void work()
@@ -29,13 +29,13 @@ public class PCMSynthesis extends Pipeline
                     {
                         sum
                             += (((float) ((Math.cos((double) ((16 + i) * (2 * j + 1)) * Math.PI / 64.0))))
-                                * input.peekFloat(j));
+                                * this.input.peekFloat(j));
                     }
-                    output.pushFloat(sum);
+                    this.output.pushFloat(sum);
                 }
 
                 for (i = 0; i < 32; i++)
-                    input.popFloat();
+                    this.input.popFloat();
             }
         });
         
@@ -44,8 +44,8 @@ public class PCMSynthesis extends Pipeline
         {
             public void init()
             {
-                input = new Channel(Float.TYPE, 64, 1024);
-                output = new Channel(Float.TYPE, 512);
+                this.input = new Channel(Float.TYPE, 64, 1024);
+                this.output = new Channel(Float.TYPE, 512);
             }
 
             public void work()
@@ -58,13 +58,13 @@ public class PCMSynthesis extends Pipeline
                     for (j = 0; j < 32; j++)
                     {
                         int peekIndex = ((15 - i) * 2 + (i & 1)) * 32 + j;
-                        output.pushFloat(input.peekFloat(peekIndex));
+                        this.output.pushFloat(this.input.peekFloat(peekIndex));
                     }
                 }
 
                 for (i = 0; i < 64; i++)
                 {
-                    input.popFloat();
+                    this.input.popFloat();
                 }
             }
         });
@@ -75,8 +75,8 @@ public class PCMSynthesis extends Pipeline
             float d[] = new float[512];
             public void init()
             {
-                input = new Channel(Float.TYPE, 512);
-                output = new Channel(Float.TYPE, 512);
+                this.input = new Channel(Float.TYPE, 512);
+                this.output = new Channel(Float.TYPE, 512);
                 init_d();
             }
             public void work()
@@ -84,7 +84,7 @@ public class PCMSynthesis extends Pipeline
                 int i;
                 for (i = 0; i < 512; i++)
                 {
-                    output.pushFloat(input.popFloat() * d[i]);
+                    this.output.pushFloat(this.input.popFloat() * d[i]);
                 }
             }
             void init_d()
@@ -614,12 +614,12 @@ public class PCMSynthesis extends Pipeline
                     int i;
                     for (i = 0; i < 32; i++)
                     {
-                        add(new Filter()
+                        this.add(new Filter()
                         {
                             public void init()
                             {
-                                input = new Channel(Float.TYPE, 16);
-                                output = new Channel(Float.TYPE, 1);
+                                this.input = new Channel(Float.TYPE, 16);
+                                this.output = new Channel(Float.TYPE, 1);
                             }
                             public void work()
                             {
@@ -627,9 +627,9 @@ public class PCMSynthesis extends Pipeline
                                 int i;
                                 for (i = 0; i < 16; i++)
                                 {
-                                    sum += input.popFloat();
+                                    sum += this.input.popFloat();
                                 }
-                                output.pushFloat(sum);
+                                this.output.pushFloat(sum);
                             }
                         });
                     }
@@ -643,17 +643,17 @@ public class PCMSynthesis extends Pipeline
         {
             public void init()
             {
-                input = new Channel(Float.TYPE, 1);
-                output = new Channel(Short.TYPE, 1);
+                this.input = new Channel(Float.TYPE, 1);
+                this.output = new Channel(Short.TYPE, 1);
             }
 
             public void work()
             {
-                float fs = input.popFloat() * 32767;
+                float fs = this.input.popFloat() * 32767;
                 fs = (fs > 32767.0f ? 32767.0f : (fs < -32767.0f ? -32767.0f : fs));
 
                 short s = (short) fs;
-                output.pushShort(s);
+                this.output.pushShort(s);
             }
 
         });

@@ -32,8 +32,8 @@ public class FilterBank extends Pipeline
         {
             public void init()
             {
-                input = new Channel(Float.TYPE, 36, 36 + 1152);
-                output = new Channel(Float.TYPE, 18);
+                this.input = new Channel(Float.TYPE, 36, 36 + 1152);
+                this.output = new Channel(Float.TYPE, 18);
             }
 
             public void work()
@@ -41,14 +41,14 @@ public class FilterBank extends Pipeline
                 int i;
                 for (i = 0; i < 18; i++)
                 {
-                    float future1 = input.peekFloat(1152);
-                    float future2 = input.peekFloat(18);
-                    output.pushFloat(future1 + future2);
-                    input.popFloat();
+                    float future1 = this.input.peekFloat(1152);
+                    float future2 = this.input.peekFloat(18);
+                    this.output.pushFloat(future1 + future2);
+                    this.input.popFloat();
                 }
                 for (i = 0; i < 18; i++)
                 {
-                    input.popFloat();
+                    this.input.popFloat();
                 }
             }
         });
@@ -58,35 +58,35 @@ public class FilterBank extends Pipeline
         {
             public void init()
             {
-                setSplitter(ROUND_ROBIN());
+                this.setSplitter(ROUND_ROBIN());
                 int x;
 
                 for (x = 0; x < 18; x++)
                 {
                     if (x % 2 == 0)
                     {
-                        add(new FloatIdentity());
+                        this.add(new FloatIdentity());
                     } else
                     {
-                        add(new SplitJoin()
+                        this.add(new SplitJoin()
                         {
                             public void init()
                             {
-                                setSplitter(ROUND_ROBIN());
-                                add(new FloatIdentity());
-                                add(new Filter()
+                                this.setSplitter(ROUND_ROBIN());
+                                this.add(new FloatIdentity());
+                                this.add(new Filter()
                                 {
                                     public void init()
                                     {
-                                        input = new Channel(Float.TYPE, 1);
-                                        output = new Channel(Float.TYPE, 1);
+                                        this.input = new Channel(Float.TYPE, 1);
+                                        this.output = new Channel(Float.TYPE, 1);
                                     }
                                     public void work()
                                     {
-                                        output.pushFloat(-input.popFloat());
+                                        this.output.pushFloat(-this.input.popFloat());
                                     }
                                 });
-                                setJoiner(ROUND_ROBIN());
+                                this.setJoiner(ROUND_ROBIN());
                             }
                         });
                     }

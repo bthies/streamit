@@ -385,8 +385,8 @@ class FusionCode {
 	p.print("  if ("+implicit_mult+" > 1) {\n");
 	p.print("    printf(\"Implicit multiplicity: "+implicit_mult+"\\n\");\n");
 	p.print("    int tmp;\n");
-	p.print("    tmp = __max_iteration / implicit_mult;\n");
-	p.print("    if (____max_iteration % implicit_mult > 0) tmp++;\n");
+	p.print("    tmp = __max_iteration / "+implicit_mult+";\n");
+	p.print("    if (__max_iteration % "+implicit_mult+" > 0) tmp++;\n");
 	p.print("    __max_iteration = tmp;\n");
 	p.print("    printf(\"Number of Iterations: %d\\n\", __max_iteration);\n");
 	p.print("  }\n");

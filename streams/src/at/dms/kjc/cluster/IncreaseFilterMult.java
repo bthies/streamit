@@ -54,6 +54,7 @@ class IncreaseFilterMult implements StreamVisitor {
 
 	    int ratio = i2[0] / i1[0];
 	    assert(i2[0] % i1[0] == 0);
+
 	    //System.out.println(ss+
 	    //		       " s1: "+i1[0]+
 	    //		       " s2: "+i2[0]+

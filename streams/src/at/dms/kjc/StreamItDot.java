@@ -217,7 +217,7 @@ public class StreamItDot implements AttributeStreamVisitor
         NamePair pair = new NamePair();
         
         // Print this within a subgraph.
-        print("subgraph cluster_" + getName() + " {\n");
+        print("subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n");
         
         // Walk through each of the elements in the pipeline.
         Iterator iter = self.getChildren().iterator();
@@ -247,7 +247,7 @@ public class StreamItDot implements AttributeStreamVisitor
         NamePair pair = new NamePair();
         
         // Create a subgraph again...
-        print("subgraph cluster_" + getName() + " {\n");
+        print("subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n");
 
         // Visit the splitter and joiner to get their node names...
         NamePair np;
@@ -280,7 +280,7 @@ public class StreamItDot implements AttributeStreamVisitor
         NamePair np;
         
         // Create a subgraph again...
-        print("subgraph cluster_" + getName() + " {\n");
+        print("subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n");
 
         // Visit the splitter and joiner.
         np = (NamePair)self.getJoiner().accept(this);

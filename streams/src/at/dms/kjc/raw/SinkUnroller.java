@@ -41,7 +41,11 @@ public class SinkUnroller extends at.dms.util.Utils
 	    if (((SIRFilter)node.contents).getPushInt() == 0) {
 		System.out.println("Propagating and Unrolling Sink " + 
 				   ((SIRFilter)node.contents).getName()+"...");
+		// unroll maximally
+		int oldUnroll = KjcOptions.unroll;
+		KjcOptions.unroll = 100000;
 		FieldProp.doPropagate((SIRStream)node.contents);
+		KjcOptions.unroll = KjcOptions.unroll;
 		/*
 		Unroller unroller;
 		do {

@@ -97,10 +97,10 @@ public class MakefileGenerator
 	FileWriter fw = new FileWriter("fileio.bc");
 	
 	//number gathering code
-	if (KjcOptions.numbers && NumberGathering.successful) {
+	if (KjcOptions.numbers > 0 && NumberGathering.successful) {
 	    fw.write("global printsPerSteady = " + NumberGathering.printsPerSteady + ";\n");
 	    fw.write("global skipPrints = " + NumberGathering.skipPrints + ";\n");
-	    fw.write("global quitAfter = 5;\n\n");
+	    fw.write("global quitAfter = " + KjcOptions.numbers + ";\n\n");
 	    
 	    fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");	
 	    fw.write("global path = malloc(strlen(streamit_home) + 30);\n");

@@ -133,7 +133,7 @@ public class RawBackend {
 	System.out.println("Switch Code End.");
 	
 	//Generate number gathering simulator code
-	if (KjcOptions.numbers)
+	if (KjcOptions.numbers > 0)
 	    NumberGathering.doit(rawFlattener.top);
 	
 	//Generate the tile code

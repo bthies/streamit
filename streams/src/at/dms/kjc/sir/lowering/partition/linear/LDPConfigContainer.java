@@ -230,8 +230,16 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    // might have either pipeline or splitjoin at this point...
 		    if (str instanceof SIRSplitJoin) {
 			factored = RefactorSplitJoin.addSyncPoints((SIRSplitJoin)str, pg);
-		    } else {
+		    } else if (str instanceof SIRPipeline) {
 			factored = RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, pg);
+		    } else if (str instanceof SIRFeedbackLoop) {
+			// if we have a feedbackloop, then factored is
+			// just the original, since it will have only
+			// two children
+			factored = (SIRContainer)str;
+		    } else {
+			factored = null;
+			Utils.fail("Unrecognized stream type: " + str);
 		    }
 		    savings = Math.max( savings, 
 					get(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, factored.get(0)) +
@@ -346,8 +354,16 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    // might have either pipeline or splitjoin at this point...
 		    if (str instanceof SIRSplitJoin) {
 			cont = RefactorSplitJoin.addSyncPoints((SIRSplitJoin)str, pg);
-		    } else {
+		    } else if (str instanceof SIRPipeline) {
 			cont = RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, pg);
+		    } else if (str instanceof SIRFeedbackLoop) {
+			// if we have a feedbackloop, then factored is
+			// just the original, since it will have only
+			// two children
+			cont = (SIRContainer)str;
+		    } else {
+			cont = null;
+			Utils.fail("Unrecognized stream type: " + str);
 		    }
 
 		    // generate transform

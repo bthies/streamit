@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.52 2001-11-11 03:19:27 thies Exp $
+ * $Id: LIRToC.java,v 1.53 2001-11-12 18:33:38 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -812,8 +812,10 @@ public class LIRToC
     public void visitUnaryPlusExpression(JUnaryExpression self,
                                          JExpression expr)
     {
+	print("(");
         print("+");
         expr.accept(this);
+	print(")");
     }
 
     /**
@@ -822,8 +824,10 @@ public class LIRToC
     public void visitUnaryMinusExpression(JUnaryExpression self,
                                           JExpression expr)
     {
+	print("(");
         print("-");
         expr.accept(this);
+	print(")");
     }
 
     /**
@@ -832,8 +836,10 @@ public class LIRToC
     public void visitBitwiseComplementExpression(JUnaryExpression self,
 						 JExpression expr)
     {
+	print("(");
         print("~");
         expr.accept(this);
+	print(")");
     }
 
     /**
@@ -842,8 +848,10 @@ public class LIRToC
     public void visitLogicalComplementExpression(JUnaryExpression self,
 						 JExpression expr)
     {
+	print("(");
         print("!");
         expr.accept(this);
+	print(")");
     }
 
     /**
@@ -851,7 +859,9 @@ public class LIRToC
      */
     public void visitTypeNameExpression(JTypeNameExpression self,
                                         CType type) {
+	print("(");
         print(type);
+	print(")");
     }
 
     /**
@@ -881,6 +891,7 @@ public class LIRToC
                                      int oper,
                                      JExpression left,
                                      JExpression right) {
+	print("(");
         left.accept(this);
         if (oper == OPE_SL) {
             print(" << ");
@@ -890,6 +901,7 @@ public class LIRToC
             print(" >>> ");
         }
         right.accept(this);
+	print(")");
     }
 
     /**
@@ -899,6 +911,7 @@ public class LIRToC
                                           int oper,
                                           JExpression left,
                                           JExpression right) {
+	print("(");
         left.accept(this);
         switch (oper) {
         case OPE_LT:
@@ -917,6 +930,7 @@ public class LIRToC
             throw new InconsistencyException();
         }
         right.accept(this);
+	print(")");
     }
 
     /**
@@ -925,12 +939,14 @@ public class LIRToC
     public void visitPrefixExpression(JPrefixExpression self,
                                       int oper,
                                       JExpression expr) {
+	print("(");
         if (oper == OPE_PREINC) {
             print("++");
         } else {
             print("--");
         }
         expr.accept(this);
+	print(")");
     }
 
     /**
@@ -939,12 +955,14 @@ public class LIRToC
     public void visitPostfixExpression(JPostfixExpression self,
                                        int oper,
                                        JExpression expr) {
+	print("(");
         expr.accept(this);
         if (oper == OPE_POSTINC) {
             print("++");
         } else {
             print("--");
         }
+	print(")");
     }
 
     /**
@@ -1037,11 +1055,13 @@ public class LIRToC
     public void visitNameExpression(JNameExpression self,
                                     JExpression prefix,
                                     String ident) {
+	print("(");
         if (prefix != null) {
             prefix.accept(this);
             print("->");
         }
         print(ident);
+	print(")");
     }
 
     /**
@@ -1051,11 +1071,13 @@ public class LIRToC
                                       String oper,
                                       JExpression left,
                                       JExpression right) {
+	print("(");
         left.accept(this);
         print(" ");
         print(oper);
         print(" ");
         right.accept(this);
+	print(")");
     }
 
     /**
@@ -1110,9 +1132,11 @@ public class LIRToC
                                         boolean equal,
                                         JExpression left,
                                         JExpression right) {
+	print("(");
         left.accept(this);
         print(equal ? " == " : " != ");
         right.accept(this);
+	print(")");
     }
 
     /**
@@ -1122,11 +1146,13 @@ public class LIRToC
                                            JExpression cond,
                                            JExpression left,
                                            JExpression right) {
+	print("(");
         cond.accept(this);
         print(" ? ");
         left.accept(this);
         print(" : ");
         right.accept(this);
+	print(")");
     }
 
     /**
@@ -1136,6 +1162,7 @@ public class LIRToC
                                                   int oper,
                                                   JExpression left,
                                                   JExpression right) {
+	print("(");
         left.accept(this);
         switch (oper) {
         case OPE_STAR:
@@ -1173,6 +1200,7 @@ public class LIRToC
             break;
         }
         right.accept(this);
+	print(")");
     }
 
     /**
@@ -1190,8 +1218,10 @@ public class LIRToC
         if (index != -1) {
             print(ident.substring(0, index));      // local var
         } else {
+	    print("(");
             left.accept(this);
             print("->" + ident);
+	    print(")");
         }
     }
 
@@ -1210,10 +1240,12 @@ public class LIRToC
                                     JExpression expr,
                                     CType type)
     {
+	print("(");
         print("(");
         print(type);
         print(")");
         expr.accept(this);
+	print(")");
     }
 
     /**
@@ -1223,11 +1255,13 @@ public class LIRToC
                                             JExpression expr,
                                             CType type)
     {
+	print("(");
         print("(");
         print(type);
         print(")");
         print("(");
         expr.accept(this);
+        print(")");
         print(")");
     }
 
@@ -1238,6 +1272,7 @@ public class LIRToC
                                        int oper,
                                        JExpression left,
                                        JExpression right) {
+        print("(");
         left.accept(this);
         switch (oper) {
         case OPE_BAND:
@@ -1253,6 +1288,7 @@ public class LIRToC
             throw new InconsistencyException();
         }
         right.accept(this);
+        print(")");
     }
 
     /**
@@ -1268,9 +1304,11 @@ public class LIRToC
           }
         */
 
+        print("(");
         left.accept(this);
         print(" = ");
         right.accept(this);
+        print(")");
     }
 
     /**
@@ -1288,10 +1326,12 @@ public class LIRToC
     public void visitArrayAccessExpression(JArrayAccessExpression self,
                                            JExpression prefix,
                                            JExpression accessor) {
+        print("(");
         prefix.accept(this);
         print("[");
         accessor.accept(this);
         print("]");
+        print(")");
     }
 
     /**
@@ -1527,25 +1567,25 @@ public class LIRToC
                                     CType tapeType,
                                     JExpression num)
     {
-        print("PEEK(data->context, ");
+        print("(PEEK(data->context, ");
         if (tapeType != null)
             print(tapeType);
         else
             print("/* null tapeType! */ int");
         print(", ");
         num.accept(this);
-        print(")");
+        print("))");
     }
     
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-        print("POP(data->context, ");
+        print("(POP(data->context, ");
         if (tapeType != null)
             print(tapeType);
         else
             print("/* null tapeType! */ int");
-        print(")");
+        print("))");
     }
     
     public void visitPrintStatement(SIRPrintStatement self,
@@ -1598,14 +1638,14 @@ public class LIRToC
                                     CType tapeType,
                                     JExpression val)
     {
-        print("PUSH(data->context, ");
+        print("(PUSH(data->context, ");
         if (tapeType != null)
             print(tapeType);
         else
             print("/* null tapeType! */ int");
         print(", ");
         val.accept(this);
-        print(")");
+        print("))");
     }
     
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,
@@ -2058,7 +2098,7 @@ public class LIRToC
      * prints a byte literal
      */
     public void visitByteLiteral(byte value) {
-        print("(byte)" + value);
+        print("((byte)" + value + ")");
     }
 
     /**
@@ -2099,7 +2139,7 @@ public class LIRToC
      * prints a double literal
      */
     public void visitDoubleLiteral(double value) {
-        print("(double)" + value);
+        print("((double)" + value + ")");
     }
 
     /**
@@ -2120,14 +2160,14 @@ public class LIRToC
      * prints a long literal
      */
     public void visitLongLiteral(long value) {
-        print(value + "L");
+        print("(" + value + "L)");
     }
 
     /**
      * prints a short literal
      */
     public void visitShortLiteral(short value) {
-        print("(short)" + value);
+        print("((short)" + value + ")");
     }
 
     /**

@@ -7,11 +7,13 @@
 void->void pipeline Transcoder {
     add FileReader<int>("./input.jpg.int");
     add JPEGByteStream_Parser;
+    add Identity<int>();
     add ChannelUnencoding;
     add YCbCrtoRGB;
-    add WriteRawData;
+    //    add WriteRawData;
     add RGBtoYCbCr;
     add ChannelEncoding;
+    add Identity<int>();
     add JPEGByteStream_Creator;
     add FileWriter<int>("./output.jpg.int");
 }
@@ -89,7 +91,8 @@ float->int filter staticQuantization(int[64] quantizationTable) {
         for (int i = 0; i < 64; i++) {
 		// TODO - Hack to increase compression
             float val = pop() / (5*quantizationTable[i]);
-            push((int) (round(val)));
+		//            push((int) (round(val)));
+            push((int) ((val)));
         }
     }
 }
@@ -545,7 +548,7 @@ int->int filter JPEGByteStream_Creator {
 
     // Actually we have no idea how much we are popping, or pushing
     // Right now this is coded to only run once.
-    work pop * push * {
+    work pop [192, 230400,*] push [48, 100000,*] {
 	  if (!ran) {
 		print("Reencoding JPEG...");
 		ran = true;
@@ -1039,7 +1042,7 @@ int->int filter JPEGByteStream_Parser {
 
     // Actually we have no idea how much we are popping, or pushing
     // Right now this is coded to only run once.
-    work pop * push * {
+    work pop [48,100000,*] push [192,230400,*] {
 	  if (!ran) {
     		print("Processing JPEG...");
     		ran = true;

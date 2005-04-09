@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.55 2005-04-04 20:05:10 thies Exp $
+# $Id: strc,v 1.56 2005-04-09 03:05:21 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -147,6 +147,7 @@ Options available for all backends:
 +                     Do linear replacement using a level of indirection
 + --linearreplacement3
 +                     Do linear replacement using diagonal replacement
++ --macros            Convert small functions to macros (inlining them)
 * --modfusion         Use wraparound buffers (vs. copying) for fusion
 + --nofieldprop       Do not propagate constant field values
 + --nolinearcollapse
@@ -250,6 +251,7 @@ sub get_options
 			    "linearreplacement2",
 			    "linearreplacement3",
 			    "magic-net|magic_net|M",
+			    "macros",
 			    "manual=s",
 			    "memory|Xmx=s",
 			    "modfusion",
@@ -323,6 +325,8 @@ sub get_options
 	    $opts{unroll} = 256 unless exists $opts{unroll};
 	    $opts{removeglobals} = 1 unless exists $opts{removeglobals};
 	    $opts{partition} = "dp" unless $opts{partition};
+            # macros don't work yet in the cluster backend
+            $opts{macros} = 1 unless (exists $opts{macros} || exists $opts{cluster});
 	  }
 	if ($opts{optimize} >= 1)
 	  {
@@ -526,6 +530,7 @@ sub get_kjc_opts
     $opts{linearreplacement2} && ($kjcopts .= " --linearreplacement2");
     $opts{linearreplacement3} && ($kjcopts .= " --linearreplacement3");
     $opts{'magic-net'} && ($kjcopts .= " --magic_net");
+    $opts{macros} && ($kjcopts .= " --macros ");
     $opts{manual} && ($kjcopts .= " --manual " . $opts{manual});
     $opts{modfusion} && ($kjcopts .= " --modfusion");
     $opts{noanneal} && ($kjcopts .= " --noanneal");

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.97 2005-03-18 18:16:59 rabbah Exp $
+ * $Id: LIRToC.java,v 1.98 2005-04-09 03:06:53 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.List;
 import java.util.Map;
+import at.dms.kjc.common.MacroConversion;
+import at.dms.kjc.common.CodeGenerator;
 import at.dms.util.InconsistencyException;
 
 import at.dms.kjc.sir.lowering.LoweringConstants;
@@ -19,7 +21,7 @@ import at.dms.compiler.*;
 
 public class LIRToC
     extends at.dms.util.Utils
-    implements Constants, SLIRVisitor
+    implements Constants, CodeGenerator
 {
     /** >0 if in for loop header */
     private int forLoopHeader;
@@ -507,6 +509,13 @@ public class LIRToC
                                        JFormalParameter[] parameters,
                                        CClassType[] exceptions,
                                        JBlock body) {
+
+	// try converting to macro
+	if (MacroConversion.shouldConvert(self)) {
+	    MacroConversion.doConvert(self, declOnly, this);
+	    return;
+	}
+
         newLine();
         // Treat main() specially.
         if (ident.equals("main"))
@@ -2708,7 +2717,7 @@ public class LIRToC
         print(s.toString());
     }
 
-    protected void print(String s) {
+    public void print(String s) {
         p.setPos(pos);
         p.print(s);
     }

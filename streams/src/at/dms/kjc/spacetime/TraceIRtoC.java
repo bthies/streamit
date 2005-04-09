@@ -314,6 +314,12 @@ public class TraceIRtoC extends ToC
 	
 	//If this is the raw Main function then set is work to true
 	//used for stack allocating arrays
+
+	// try converting to macro
+	if (MacroConversion.shouldConvert(self)) {
+	    MacroConversion.doConvert(self, declOnly, this);
+	    return;
+	}
 	   
         newLine();
 	// print(CModifier.toString(modifiers));

@@ -1,5 +1,7 @@
 package at.dms.kjc.cluster;
 
+import at.dms.kjc.common.MacroConversion;
+import at.dms.kjc.common.CodeGenerator;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
@@ -23,7 +25,7 @@ import at.dms.kjc.raw.*;
  * This class dumps the tile code for each filter into a file based 
  * on the tile number assigned 
  */
-public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
+public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, CodeGenerator
 {
     private boolean DEBUG = false;
 
@@ -1118,6 +1120,12 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	      ((SIRTwoStageFilter)filter).getInitWork().equals(self))))
             return;
 	*/
+
+	// try converting to macro
+	if (MacroConversion.shouldConvert(self)) {
+	    MacroConversion.doConvert(self, declOnly, this);
+	    return;
+	}
 
         newLine();
 	// print(CModifier.toString(modifiers));
@@ -2848,7 +2856,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
         print(s.toString());
     }
 
-    protected void print(String s) {
+    public void print(String s) {
         p.setPos(pos);
         p.print(s);
     }

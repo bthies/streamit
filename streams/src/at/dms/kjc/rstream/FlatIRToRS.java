@@ -416,6 +416,12 @@ public class FlatIRToRS extends ToC
                                        JFormalParameter[] parameters,
                                        CClassType[] exceptions,
                                        JBlock body) {
+	// try converting to macro
+	if (MacroConversion.shouldConvert(self)) {
+	    MacroConversion.doConvert(self, declOnly, this);
+	    return;
+	}
+
         newLine();
 	// print(CModifier.toString(modifiers));
 	print(returnType);

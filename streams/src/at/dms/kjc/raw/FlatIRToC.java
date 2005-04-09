@@ -369,6 +369,12 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	      ((SIRTwoStageFilter)filter).getInitWork().equals(self))))
 	    return;
 
+	// try converting to macro
+	if (MacroConversion.shouldConvert(self)) {
+	    MacroConversion.doConvert(self, declOnly, this);
+	    return;
+	}
+
         newLine();
 	// print(CModifier.toString(modifiers));
 	print(returnType);

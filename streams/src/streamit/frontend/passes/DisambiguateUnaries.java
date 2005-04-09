@@ -27,12 +27,17 @@ import java.util.List;
  * a temporary variable.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DisambiguateUnaries.java,v 1.7 2003-10-14 15:30:33 dmaze Exp $
+ * @version $Id: DisambiguateUnaries.java,v 1.8 2005-04-09 00:01:09 thies Exp $
  */
 public class DisambiguateUnaries extends SymbolTableVisitor
 {
     private TempVarGen varGen;
     private List successors;
+    /**
+     * Whether or not we should disambiguate pops/peeks on the current
+     * descent.
+     */
+    private boolean visitPopPeek;
     
     public DisambiguateUnaries(TempVarGen varGen)
     {
@@ -43,10 +48,41 @@ public class DisambiguateUnaries extends SymbolTableVisitor
     protected void doStatement(Statement stmt)
     {
         successors = new java.util.ArrayList();
+	visitPopPeek = calcVisitPopPeek(stmt);
         Statement result = (Statement)stmt.accept(this);
         if (result != null)
             addStatement(result);
         addStatements(successors);
+    }
+
+    /**
+     * Determines whether or not we need to replace pops and peeks for
+     * a given statement.  We should replace them if either of the
+     * following conditions are met:
+     *
+     *  1) there is more than one pop
+     *  2) there is at least one pop and at least one peek
+     *
+     * These are the cases where the pop has to be well-ordered with
+     * the other pops or peeks.
+     */
+    private boolean calcVisitPopPeek(Statement stmt) {
+	final int[] popCount = { 0 };
+	final int[] peekCount = { 0 };
+	stmt.accept(new FENullVisitor() {
+		public Object visitExprPop(ExprPop expr) {
+		    popCount[0]++;
+		    return null;
+		}
+		public Object visitExprPeek(ExprPop expr) {
+		    peekCount[0]++;
+		    return null;
+		}
+	    });
+	return (// more than one pop, or
+		popCount[0] > 1 ||  
+		// at least one pop and at least one peek
+		popCount[0] >= 1 && peekCount[0] >= 1);
     }
 
     public Object visitExprUnary(ExprUnary expr)
@@ -84,16 +120,22 @@ public class DisambiguateUnaries extends SymbolTableVisitor
      */
     private Object visitPeekOrPop(Expression expr)
     {
-        // Create a temporary variable...
-        FEContext ctx = expr.getContext();
-        String name = varGen.nextVar();
-        Type type = getType(expr);
-        addStatement(new StmtVarDecl(ctx, type, name, null));
-        // Generate an assignment to that..
-        Expression var = new ExprVar(ctx, name);
-        addStatement(new StmtAssign(ctx, var, expr, 0));
-        // ...and return the variable.
-        return var;
+	// don't change anything if we're not to be visiting pops or
+	// peeks
+	if (!visitPopPeek) {
+	    return expr;
+	}
+
+	// Create a temporary variable...
+	FEContext ctx = expr.getContext();
+	String name = varGen.nextVar();
+	Type type = getType(expr);
+	addStatement(new StmtVarDecl(ctx, type, name, null));
+	// Generate an assignment to that..
+	Expression var = new ExprVar(ctx, name);
+	addStatement(new StmtAssign(ctx, var, expr, 0));
+	// ...and return the variable.
+	return var;
     }
 
     public Object visitExprPeek(ExprPeek expr)

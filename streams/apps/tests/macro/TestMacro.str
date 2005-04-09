@@ -1,0 +1,31 @@
+/**
+ *  The interpolate function below should be converted to a macro
+ *  using "strc --macros TestMacro.str".
+ */
+void->void pipeline TestMacro {
+  add gen();
+  add sink();
+}
+
+void->float filter gen() {
+    float i;
+    work push 1 {
+	push(i);
+	i = i + 1.0;
+    }
+}
+
+float->void filter sink() {
+
+    work pop 1 {
+	float f = interpolate(1.0, 2.0, 3.0, 4.0, 5.0, pop());
+	print(f);
+    }
+
+    // this should become a macro
+    float interpolate( float interpX, float interpY, float interpZ,
+		       float ndcX, float ndcY, float w ) {
+	return( ( interpX * ndcX + interpY * ndcY + interpZ ) * w );
+    }
+
+}

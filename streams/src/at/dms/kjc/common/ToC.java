@@ -24,7 +24,7 @@ import at.dms.util.SIRPrinter;
  *
  * @author Michael Gordon
  */
-public abstract class ToC extends SLIREmptyVisitor 
+public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
 {
     /** tabbing / spacing variables **/
     protected int TAB_SIZE = 2;
@@ -1113,7 +1113,7 @@ public abstract class ToC extends SLIREmptyVisitor
         print(s.toString());
     }
 
-    protected void print(String s) {
+    public void print(String s) {
         p.setPos(pos);
         p.print(s);
     }

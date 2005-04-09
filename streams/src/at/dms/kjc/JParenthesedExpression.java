@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JParenthesedExpression.java,v 1.10 2003-11-13 10:46:11 thies Exp $
+ * $Id: JParenthesedExpression.java,v 1.11 2005-04-09 03:05:50 thies Exp $
  */
 
 package at.dms.kjc;
@@ -40,6 +40,9 @@ public class JParenthesedExpression extends JExpression {
   public JParenthesedExpression(TokenReference where, JExpression expr) {
     super(where);
     this.expr = expr;
+  }
+  public JParenthesedExpression(JExpression expr) {
+      this(null, expr);
   }
 
   // ----------------------------------------------------------------------

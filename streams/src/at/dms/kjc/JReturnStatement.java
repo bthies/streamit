@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JReturnStatement.java,v 1.9 2003-11-13 10:46:11 thies Exp $
+ * $Id: JReturnStatement.java,v 1.10 2005-04-09 03:05:50 thies Exp $
  */
 
 package at.dms.kjc;
@@ -114,6 +114,13 @@ public class JReturnStatement extends JStatement {
      */
     public void setExpression(JExpression expr) {
 	this.expr = expr;
+    }
+
+    /**
+     * Gets expression of this.
+     */
+    public JExpression getExpression() {
+	return expr;
     }
 
 

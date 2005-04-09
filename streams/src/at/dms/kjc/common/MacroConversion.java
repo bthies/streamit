@@ -149,139 +149,138 @@ public class MacroConversion {
 	return expr;
     }
 
-}
-
-class MacroLegalityTest extends SLIREmptyVisitor {
-    /**
-     * Whether or not conversion is legal.
-     */
-    private boolean isLegal;
-    /**
-     * Count of number of expressions seen.
-     */
-    private int exprCount;
-    /**
-     * Set of JLocalVariables that have been referenced so far. 
-     */
-    private HashSet varRefs;
+    static class MacroLegalityTest extends SLIREmptyVisitor {
+	/**
+	 * Whether or not conversion is legal.
+	 */
+	private boolean isLegal;
+	/**
+	 * Count of number of expressions seen.
+	 */
+	private int exprCount;
+	/**
+	 * Set of JLocalVariables that have been referenced so far. 
+	 */
+	private HashSet varRefs;
     
-    public MacroLegalityTest() {
-	isLegal = true;
-	exprCount = 0;
-	varRefs = new HashSet();
-    }
-
-    /**
-     * Returns whether or not a given JExpression is legal to convert
-     * to a macro, using rules stipulated in
-     * MacroConversion.shouldConvert().
-     */
-    public boolean test(JExpression expr) {
-	doVisit(expr);
-	isLegal = isLegal && exprCount <= MacroConversion.MAX_SIZE;
-	return isLegal;
-    }
-
-    /**
-     * The visit primitive.  If it hits a disallowed expression type,
-     * marks <isLegal> as false.  Otherwise increments expression
-     * count and descends.
-     */
-    private void doVisit(JExpression expr) {
-	boolean allowed = (expr instanceof JParenthesedExpression ||
-			   expr instanceof JConditionalExpression ||
-			   expr instanceof JBinaryArithmeticExpression ||
-			   expr instanceof JConditionalAndExpression ||
-			   expr instanceof JConditionalOrExpression ||
-			   expr instanceof JEqualityExpression ||
-			   expr instanceof JRelationalExpression ||
-			   expr instanceof JArrayAccessExpression ||
-			   expr instanceof JFieldAccessExpression ||
-			   expr instanceof JLocalVariableExpression ||
-			   expr instanceof JCastExpression ||
-			   expr instanceof JLiteral);
-	if (allowed) {
-	    exprCount++;
-	    expr.accept(this);
-	} else {
-	    isLegal = false;
+	public MacroLegalityTest() {
+	    isLegal = true;
+	    exprCount = 0;
+	    varRefs = new HashSet();
 	}
-    }
 
-    // ---------------------------------------------------------------
-    // Now for each of the legal types, we need to call doVisit() on
-    // children instead of calling accept directly.
-    // ---------------------------------------------------------------
-    
-    public void visitParenthesedExpression(JParenthesedExpression self,
-					   JExpression expr) {
-	doVisit(expr);
-    }
+	/**
+	 * Returns whether or not a given JExpression is legal to convert
+	 * to a macro, using rules stipulated in
+	 * MacroConversion.shouldConvert().
+	 */
+	public boolean test(JExpression expr) {
+	    doVisit(expr);
+	    isLegal = isLegal && exprCount <= MacroConversion.MAX_SIZE;
+	    return isLegal;
+	}
 
-    public void visitBinaryExpression(JBinaryExpression self,
-				      String oper,
-				      JExpression left,
-				      JExpression right) {
-	doVisit(left);
-	doVisit(right);
-    }
+	/**
+	 * The visit primitive.  If it hits a disallowed expression type,
+	 * marks <isLegal> as false.  Otherwise increments expression
+	 * count and descends.
+	 */
+	private void doVisit(JExpression expr) {
+	    boolean allowed = (expr instanceof JParenthesedExpression ||
+			       expr instanceof JConditionalExpression ||
+			       expr instanceof JBinaryArithmeticExpression ||
+			       expr instanceof JConditionalAndExpression ||
+			       expr instanceof JConditionalOrExpression ||
+			       expr instanceof JEqualityExpression ||
+			       expr instanceof JRelationalExpression ||
+			       expr instanceof JArrayAccessExpression ||
+			       expr instanceof JFieldAccessExpression ||
+			       expr instanceof JLocalVariableExpression ||
+			       expr instanceof JCastExpression ||
+			       expr instanceof JLiteral);
+	    if (allowed) {
+		exprCount++;
+		expr.accept(this);
+	    } else {
+		isLegal = false;
+	    }
+	}
 
-    public void visitConditionalExpression(JConditionalExpression self,
-					   JExpression cond,
-					   JExpression left,
-					   JExpression right) {
-	doVisit(cond);
-	doVisit(left);
-	doVisit(right);
-    }
+	// ---------------------------------------------------------------
+	// Now for each of the legal types, we need to call doVisit() on
+	// children instead of calling accept directly.
+	// ---------------------------------------------------------------
     
-    public void visitEqualityExpression(JEqualityExpression self,
-					boolean equal,
-					JExpression left,
-					JExpression right) {
-	doVisit(left);
-	doVisit(right);
-    }
-    
-    public void visitRelationalExpression(JRelationalExpression self,
-					  int oper,
+	public void visitParenthesedExpression(JParenthesedExpression self,
+					       JExpression expr) {
+	    doVisit(expr);
+	}
+
+	public void visitBinaryExpression(JBinaryExpression self,
+					  String oper,
 					  JExpression left,
 					  JExpression right) {
-	doVisit(left);
-	doVisit(right);
-    }
-
-    public void visitArrayAccessExpression(JArrayAccessExpression self,
-					   JExpression prefix,
-					   JExpression accessor) {
-	doVisit(prefix);
-	doVisit(accessor);
-    }
-
-    public void visitFieldExpression(JFieldAccessExpression self,
-				     JExpression left,
-				     String ident)
-    {
-	doVisit(left);
-    }
-
-    public void visitLocalVariableExpression(JLocalVariableExpression self,
-					     String ident) {
-	
-	JLocalVariable var = self.getVariable();
-	if (varRefs.contains(var)) {
-	    // referenced a variable twice -- illegal
-	    isLegal = false;
-	} else {
-	    // remember that we referenced this var
-	    varRefs.add(var);
+	    doVisit(left);
+	    doVisit(right);
 	}
-    }
 
-    public void visitCastExpression(JCastExpression self,
-				    JExpression expr,
-				    CType type)
-    {
-	doVisit(expr);
+	public void visitConditionalExpression(JConditionalExpression self,
+					       JExpression cond,
+					       JExpression left,
+					       JExpression right) {
+	    doVisit(cond);
+	    doVisit(left);
+	    doVisit(right);
+	}
+    
+	public void visitEqualityExpression(JEqualityExpression self,
+					    boolean equal,
+					    JExpression left,
+					    JExpression right) {
+	    doVisit(left);
+	    doVisit(right);
+	}
+    
+	public void visitRelationalExpression(JRelationalExpression self,
+					      int oper,
+					      JExpression left,
+					      JExpression right) {
+	    doVisit(left);
+	    doVisit(right);
+	}
+
+	public void visitArrayAccessExpression(JArrayAccessExpression self,
+					       JExpression prefix,
+					       JExpression accessor) {
+	    doVisit(prefix);
+	    doVisit(accessor);
+	}
+
+	public void visitFieldExpression(JFieldAccessExpression self,
+					 JExpression left,
+					 String ident)
+	{
+	    doVisit(left);
+	}
+
+	public void visitLocalVariableExpression(JLocalVariableExpression self,
+						 String ident) {
+	
+	    JLocalVariable var = self.getVariable();
+	    if (varRefs.contains(var)) {
+		// referenced a variable twice -- illegal
+		isLegal = false;
+	    } else {
+		// remember that we referenced this var
+		varRefs.add(var);
+	    }
+	}
+
+	public void visitCastExpression(JCastExpression self,
+					JExpression expr,
+					CType type)
+	{
+	    doVisit(expr);
+	}
     }
 }

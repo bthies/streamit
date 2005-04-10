@@ -1047,7 +1047,9 @@ public class Layout extends at.dms.util.Utils implements
 		identities.add(node);
 		return;
 	    }
-	    assigned.add(node);
+	    if (assignToATile(node)) {
+		assigned.add(node);
+	    }
 	    return;
 	}
 	if (node.contents instanceof SIRJoiner && 

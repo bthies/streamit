@@ -1047,7 +1047,9 @@ public class Layout extends at.dms.util.Utils implements
 		identities.add(node);
 		return;
 	    }
-	    if (assignToATile(node)) {
+	    // this if statement possibly breaks automatic layout (?)
+	    // so only perform test for manual
+	    if (!KjcOptions.noanneal || assignToATile(node)) {
 		assigned.add(node);
 	    }
 	    return;

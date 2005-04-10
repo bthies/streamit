@@ -34,7 +34,12 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
 
     public SIRPhasedFilter(String ident)
     {
-        super(null, ident, JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
+        this(null, ident, 
+	     JFieldDeclaration.EMPTY(), 
+	     JMethodDeclaration.EMPTY(),
+	     SIRWorkFunction.EMPTY(),
+	     SIRWorkFunction.EMPTY(),
+	     null, null, null);
     }
     
     public SIRPhasedFilter(SIRContainer parent,

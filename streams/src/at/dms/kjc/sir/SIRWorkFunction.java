@@ -208,6 +208,12 @@ public class SIRWorkFunction extends Utils
         return v.visitWorkFunction(this, this.work);
     }
 
+    // need a different method array for every method in case people
+    // start to add methods; can't just have a constant.
+    public static SIRWorkFunction[] EMPTY() {
+	return new SIRWorkFunction[0];
+    }
+
 /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
 /** Returns a deep clone of this object. */

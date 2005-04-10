@@ -36,7 +36,6 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     public SIRSplitJoin(SIRContainer parent,
 			String ident) {
 	super(parent, ident, JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY() );
-	if (ident.startsWith("BandPassFilter")) new RuntimeException().printStackTrace();
     }
 
     /**

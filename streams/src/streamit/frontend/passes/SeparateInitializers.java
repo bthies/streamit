@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Separate variable initializers into separate statements.  Given
- * initialized variables like
+ * Separate local variable initializers into separate statements.
+ * Given initialized variables like
  *
  * <pre>
  * int c = 4;
@@ -37,7 +37,7 @@ import java.util.ArrayList;
  * </pre>
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SeparateInitializers.java,v 1.4 2004-07-08 05:45:39 thies Exp $
+ * @version $Id: SeparateInitializers.java,v 1.5 2005-04-10 07:34:47 thies Exp $
  */
 public class SeparateInitializers extends FEReplacer
 {

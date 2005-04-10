@@ -52,10 +52,15 @@ public class SeparateFieldInitializers extends streamit.frontend.tojava.InitMung
      * List of assignments to be added to init function.
      */
     private ArrayList fieldInits;
+    /**
+     * Whether or not we're targeting the Java library.
+     */
+    private boolean libraryFormat;
     
-    public SeparateFieldInitializers() {
+    public SeparateFieldInitializers(boolean libraryformat) {
 	super();
 	fieldInits = new ArrayList();
+	this.libraryFormat = libraryFormat;
     }
 
     public Object visitStreamSpec(StreamSpec spec) {
@@ -91,8 +96,11 @@ public class SeparateFieldInitializers extends streamit.frontend.tojava.InitMung
         for (int i = 0; i < field.getNumFields(); i++)
         {
             Expression init = field.getInit(i);
-	    // don't move array initializers, they need to stay
-            if (init!=null && !(init instanceof ExprArrayInit)) {
+	    // don't move array initializers, they need to stay.
+            if (init!=null && !(init instanceof ExprArrayInit) &&
+		// Also, don't move anything of type array if we're going
+		// through the compiler path.
+		(libraryFormat || !(field.getType(i) instanceof TypeArray))) {
 		// move assignment to init function
 		FEContext context = init.getContext();
 		Expression lhs = new ExprVar(context, field.getName(i));

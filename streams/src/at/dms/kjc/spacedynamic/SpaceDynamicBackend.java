@@ -65,12 +65,6 @@ public class SpaceDynamicBackend {
 	//this must be run now, FlatIRToC relies on it!!!
 	RenameAll.renameAllFilters(str);
 	
-	// move field initializations into init function
-	System.out.print("Moving initializers into init functions... ");
-	FieldInitMover.moveStreamInitialAssignments(str,
-	      FieldInitMover.IGNORE_ARRAY_INITIALIZERS);
-	System.out.println("done.");
-	
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
 	ConstantProp.propagateAndUnroll(str);

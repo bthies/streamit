@@ -55,10 +55,6 @@ public class SpaceTimeBackend
 	//create the RawChip
 	RawChip rawChip = new RawChip(rawColumns, rawRows);
 
-	// move field initializations into init function
-	FieldInitMover.moveStreamInitialAssignments(str,
-	      FieldInitMover.IGNORE_ARRAY_INITIALIZERS);
-		
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
 	ConstantProp.propagateAndUnroll(str);

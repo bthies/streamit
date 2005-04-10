@@ -59,17 +59,26 @@ public class SeparateFieldInitializers extends streamit.frontend.tojava.InitMung
     }
 
     public Object visitStreamSpec(StreamSpec spec) {
+	// maintain a separate list of field inits per stream
+	ArrayList oldFieldInits = fieldInits;
+	fieldInits = new ArrayList();	    
+
         spec = (StreamSpec)super.visitStreamSpec(spec);
 	
 	// now that we've visited whole thing, replace init with
 	// version that has field assigments
 	List fns = new ArrayList(spec.getFuncs());
-        fns = replaceInitWithPrepended(spec.getContext(), fns, fieldInits);
+        fns = replaceInitWithPrepended(spec.getContext(), 
+				       fns, 
+				       fieldInits);
 
 	// And create the new stream spec.
 	spec = new StreamSpec(spec.getContext(), spec.getType(),
 			      spec.getStreamType(), spec.getName(),
 			      spec.getParams(), spec.getVars(), fns);
+
+	// restore old field inits for parent stream
+	fieldInits = oldFieldInits;
 
 	return spec;
     }

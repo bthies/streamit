@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.98 2005-04-09 03:06:53 thies Exp $
+ * $Id: LIRToC.java,v 1.99 2005-04-10 18:38:42 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1220,9 +1220,14 @@ public class LIRToC
                                                   JExpression[] params,
                                                   JClassDeclaration decl)
     {
+	/* It appears this only occurs in dead cody ("new Complex()",
+	 * FFT6) and it doesn't make sense in C, so just removing
+	 * this.
+
         print("new " + type + "(");
         visitArgs(params, 0);
         print(")");
+	*/
         // decl.genInnerJavaCode(this);
     }
 
@@ -1233,9 +1238,14 @@ public class LIRToC
                                                  CClassType type,
                                                  JExpression[] params)
     {
+	/* It appears this only occurs in dead cody ("new Complex()",
+	 * FFT6) and it doesn't make sense in C, so just removing
+	 * this.
+
         print("new " + type + "(");
         visitArgs(params, 0);
         print(")");
+	*/
     }
 
     /**

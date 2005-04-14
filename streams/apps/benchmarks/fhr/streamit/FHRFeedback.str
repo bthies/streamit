@@ -113,7 +113,8 @@ void->float filter Read_From_AtoD(int N)
 {
     work pop 0 push N {
 	  for(int i = 1; i <= N; i++) {
-		push((float) pow((float) sin(i * pi / N), 2.0));
+		float val = (float) sin(i * pi / N);
+		push(val * val);
 	  }
     }
 }
@@ -133,8 +134,7 @@ float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
     work peek 1 pop N*3 push N*2 {
 	for (int i=0; i<2*N; i++) {
 	  push(pop() * weights[count++]);
-	  // there are two of these iterations per iteration of the
-	  // original source, so increment in both places
+
 	  iter++;
 
 	  if (count == size) {
@@ -146,7 +146,6 @@ float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
 	  // check for freqhop from around feedbackloop
 	  float freqHop = pop();
 	  if (freqHop!=0) {
-	      // prints the iteration where a message was received
 	      set_frequency(freqHop);
 	  }
 	}
@@ -202,7 +201,6 @@ float->float filter Inject_Hop(int N, float hop_threshold)
 		push(pop());
 	  }
 
-	  hop_index++;
 	  hop_index = ((hop_index + 1) & 0x11);
     }
 }

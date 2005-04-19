@@ -4,6 +4,7 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.util.*;
 import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
 import java.util.List;
@@ -92,6 +93,8 @@ public class RawExecutionCode extends at.dms.util.Utils
     {
 	this.ssg = ssg;
 	this.layout = ssg.getStreamGraph().getLayout();
+
+
     }
     
 
@@ -100,6 +103,11 @@ public class RawExecutionCode extends at.dms.util.Utils
 	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
 	    streamGraph.getStaticSubGraphs()[i].getTopLevel().
 		accept(new RawExecutionCode(streamGraph.getStaticSubGraphs()[i]), null, true);
+	    /*
+	    SIRPrinter printer1 = new SIRPrinter("sir" + streamGraph.getStaticSubGraphs()[i].toString() + ".out");
+	    IterFactory.createFactory().createIter(streamGraph.getStaticSubGraphs()[i].getTopLevelSIR()).accept(printer1);
+	    printer1.close();
+	    */
 	}
     }
     
@@ -122,6 +130,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 		remaining == 0 &&
 		DirectCommunication.doit(ssg, node)) {
 		System.out.println("(Direct Communication)");
+		
+				
 		return;
 	    }
 	    

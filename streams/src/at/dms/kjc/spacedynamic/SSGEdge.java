@@ -25,9 +25,11 @@ import at.dms.util.Utils;
 
 public class SSGEdge 
 {
-    //the source and dest SSGs
+    //the source and dest SSG
+    //fromSSG->toSSG
     private StaticStreamGraph fromSSG, toSSG;
-    //the exact nodes of the SSGs
+    //the exact nodes of the SSGs,
+    // outputNode -> inputNode
     public FlatNode outputNode, inputNode;
     /** the connection numbers, so we can rebuild the
 	SSGEdges if the flatgraph changes **/

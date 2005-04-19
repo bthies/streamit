@@ -127,8 +127,20 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    }
 	*/
 	//	RemoveUnusedVars.doit(node);
+	
+	//remove dead code       
 	DeadCodeElimination.doit((SIRFilter)node.contents);
 
+	//convert pop() statements that aren't assigned to anything to be 
+	//assigned to a dummy variable
+	ConvertLonelyReceives.doit(toC.ssg, toC.flatNode);
+
+
+	/*	
+	SIRPrinter printer1 = new SIRPrinter("sir" + node + ".out");
+	IterFactory.createFactory().createIter(node.getFilter()).accept(printer1);
+	printer1.close();
+	*/
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
     
@@ -711,7 +723,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    return;
 	}
            
-
+	
 	
 	lastLeft=left;
         print("(");
@@ -758,11 +770,18 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//generate the inline asm instruction to execute the 
 	//receive if this is a receive instruction
 	if (ident.equals(RawExecutionCode.receiveMethod)) {
-	    print(Util.networkReceivePrefix(dynamicInput));
-	    visitArgs(args,0);
-	    print(Util.networkReceiveSuffix
-		  (dynamicInput, Util.getBaseType(filter.getInputType())));
-	    return;  
+	    if (args.length > 0) {
+		visitArgs(args,0);
+		print(" = ");
+		print(Util.networkReceive
+		      (dynamicInput, Util.getBaseType(filter.getInputType())));
+		
+	    }
+	    else {
+		print(Util.networkReceive
+		      (dynamicInput, Util.getBaseType(filter.getInputType())));
+	    }
+	    return;
 	}
 
 	/*	

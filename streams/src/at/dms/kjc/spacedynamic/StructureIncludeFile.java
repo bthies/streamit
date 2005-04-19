@@ -145,9 +145,10 @@ public class StructureIncludeFile
 			     " = pop" + network + current.getFields()[j].getType() + "();\n");
 		}
 		else {
-		    fw.write("\t" + Util.networkReceivePrefix(dynamic));
+		    fw.write("\t");
 		    fw.write("temp->" + current.getFields()[j].getVariable().getIdent());
-		    fw.write(Util.networkReceiveSuffix(dynamic, current.getFields()[j].getType()) + "\n");
+		    fw.write(" = ");
+		    fw.write(Util.networkReceive(dynamic, current.getFields()[j].getType()) + ";\n");
 		}
 	    }
 	    fw.write("\treturn *temp;\n}\n");
@@ -169,9 +170,10 @@ public class StructureIncludeFile
 			     ");\n");
 		}
 		else {
-		    fw.write("\t" + Util.networkReceivePrefix(dynamic));
+		    fw.write("\t");
 		    fw.write("temp->" + current.getFields()[j].getVariable().getIdent());
-		    fw.write(Util.networkReceiveSuffix(dynamic, current.getFields()[j].getType()) + "\n");
+		    fw.write(" = ");
+		    fw.write(Util.networkReceive(dynamic, current.getFields()[j].getType()) + ";\n");
 		}
 	    }
 	    fw.write("}\n");

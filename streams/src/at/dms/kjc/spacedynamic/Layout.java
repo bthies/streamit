@@ -211,7 +211,7 @@ public class Layout extends at.dms.util.Utils implements
 	    return null;
 	
 	assert SIRassignment.get(str) != null : 
-	    "calling getComputeNode() on str that is not assigned to a compute node";
+	    "calling getComputeNode() on str that is not assigned to a compute node: " + str;
 	return (ComputeNode)SIRassignment.get(str);
     }
     
@@ -286,8 +286,8 @@ public class Layout extends at.dms.util.Utils implements
 	     //only one output
 	     Iterator downstream = getDownStream(node).iterator();
 	     //	     System.out.println("Getting downstream of " + node);
-	     int y=getTile(node).getY();
 	     while(downstream.hasNext()) {
+		 int y=getTile(node).getY();
 		 FlatNode n = (FlatNode)downstream.next();
 		 if (!assignToATile(n))
 		     continue;
@@ -309,7 +309,8 @@ public class Layout extends at.dms.util.Utils implements
 	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
 	    StaticStreamGraph ssg =  streamGraph.getStaticSubGraphs()[i];
 	    for (int out = 0; out < ssg.getOutputs().length; out++) {
-		assert getTile(ssg.getOutputs()[out]) != null;
+		assert getTile(ssg.getOutputs()[out]) != null :
+		    ssg.toString() + " has an output not assigned to a tile " + out;
 		buf.append("tile" + getTileNumber(ssg.getOutputs()[out]) + " -> tile" +
 			   getTileNumber(ssg.getNext(ssg.getOutputs()[out])) + "[weight = 1];");
 	    }
@@ -334,7 +335,7 @@ public class Layout extends at.dms.util.Utils implements
     }
 
 
-    /** get all the downstream *assigned* nodes of <node> **/
+    /** get all the downstream *assigned* nodes and file writers (!!) of <node> **/
     private HashSet getDownStream(FlatNode node) 
     {
 	if (node == null)
@@ -353,9 +354,11 @@ public class Layout extends at.dms.util.Utils implements
     {
 	if (node == null)
 	    return new HashSet();
-	//if this node must be assigned to a tile, return it
+	//if this node must be assigned to a tile
+	//or is a file writer..., return it
 	HashSet ret = new HashSet();	
-	if (assigned.contains(node)) {
+	if (assigned.contains(node) || 
+	    node.contents instanceof SIRFileWriter) {
 	    ret.add(node);
 	    return ret;
 	}
@@ -530,7 +533,7 @@ public class Layout extends at.dms.util.Utils implements
 	//the ssg
 	while (nodes.hasNext()) {
 	    FlatNode src = (FlatNode)nodes.next();
-	    if (!(assigned.contains(src)))
+	    if (!assignToAComputeNode(src))
 		continue;
 	    
 	    ComputeNode srcNode = getComputeNode(src);
@@ -543,7 +546,7 @@ public class Layout extends at.dms.util.Utils implements
 	    
 	    //make sure we have not previously tried to route through this tile
 	    //in a previous SSG
-	    if (usedTiles.contains(srcNode)) {
+	    if (srcNode.isTile() && usedTiles.contains(srcNode)) {
 		//System.out.println(srcNode);
 		//return -1.0;
 		cost += ILLEGAL_WEIGHT;
@@ -554,7 +557,8 @@ public class Layout extends at.dms.util.Utils implements
 
 	    while (dsts.hasNext()) {
 		FlatNode dst = (FlatNode)dsts.next();
-		assert assigned.contains(dst);
+		if (!assignToAComputeNode(dst))
+		    continue;
 		ComputeNode dstNode = getComputeNode(dst);
 		
 		assert dstNode != null;
@@ -565,7 +569,7 @@ public class Layout extends at.dms.util.Utils implements
 		
 		//make sure we have not previously (in another SSG) tried to route 
 		//thru the tile assigned to the dst
-		if (usedTiles.contains(dstNode)) {
+		if (dstNode.isTile() && usedTiles.contains(dstNode)) {
 		    //System.out.println(dstNode);
 		    cost += ILLEGAL_WEIGHT;
 		    //return -1.0;
@@ -998,7 +1002,17 @@ public class Layout extends at.dms.util.Utils implements
 	return random.nextInt(rawChip.getTotalTiles());
     }
     
-    /** return true if this flatnode is or should be assigned to  **/
+    /** Return true if this flatnode is or should be assigned to 
+       a compute node (a tile or a port) **/
+    public static boolean assignToAComputeNode(FlatNode node) 
+    {
+	return assignToATile(node) ||
+	    node.contents instanceof SIRFileReader ||
+	    node.contents instanceof SIRFileWriter;
+    }
+    
+
+    /** return true if this flatnode is or should be assigned to tile **/
     public static boolean assignToATile(FlatNode node) 
     {
 	if (node.isFilter() && 
@@ -1047,11 +1061,15 @@ public class Layout extends at.dms.util.Utils implements
 		identities.add(node);
 		return;
 	    }
+	    /*
 	    // this if statement possibly breaks automatic layout (?)
 	    // so only perform test for manual
 	    if (!KjcOptions.noanneal || assignToATile(node)) {
 		assigned.add(node);
 	    }
+	    */
+	    if (assignToATile(node))
+		assigned.add(node);
 	    return;
 	}
 	if (node.contents instanceof SIRJoiner && 

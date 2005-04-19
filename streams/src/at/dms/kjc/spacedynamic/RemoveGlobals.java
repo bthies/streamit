@@ -487,14 +487,21 @@ public class RemoveGlobals extends at.dms.util.Utils
 						    new JThisExpression(null),
 						    "sizeof",
 						    sizeofArgs);
-		
-		JExpressionStatement zeroArray = 
+		JExpressionStatement memset = 
 		    new JExpressionStatement(null,
 					     new JMethodCallExpression(null,
 								       new JThisExpression(null), 
 								       "memset",
 								       args),
 					     null);
+		JEqualityExpression isZero = 
+		    new JEqualityExpression(null, false,
+					    new JLocalVariableExpression(null, def),
+					    new JIntLiteral(0));
+
+		JIfStatement zeroArray = new JIfStatement(null, isZero, memset, 
+							  new JEmptyStatement(null, null),
+							  null);
 		
 		//place the statement after the variable defs
 		rawMainBlock.addStatement(fields.length, zeroArray);

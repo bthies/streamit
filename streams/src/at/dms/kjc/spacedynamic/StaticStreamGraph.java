@@ -306,7 +306,7 @@ public class StaticStreamGraph
 	    
 	    FlatNode dest = (FlatNode)nexts.get(outputs[i]);
 	    StaticStreamGraph input = streamGraph.getParentSSG(dest);
-	    outputSSGEdges[i] = new SSGEdge(this, null, i, input.getInputNum(dest));
+	    outputSSGEdges[i] = new SSGEdge(this, input, i, input.getInputNum(dest));
 	    outputSSGEdges[i].outputNode = outputs[i];
 	    outputSSGEdges[i].inputNode = dest;
 	}
@@ -321,6 +321,15 @@ public class StaticStreamGraph
 
 	//update the connections
 	updateSSGEdges();
+	
+	for (int i = 0; i < outputs.length; i++)
+	    assert outputs[i] != null : this.toString() + 
+		" has null output " + i;
+
+	for (int i = 0; i < inputs.length; i++)
+	    assert inputs[i] != null : this.toString() + 
+		" has null input " + i;
+	
     }
 
     /** given an output node for this SSG, get the SSGEdge that
@@ -378,12 +387,6 @@ public class StaticStreamGraph
 	}
 	assert false : node + " not an output";
 	return -1;
-    }
-    
-    /** get the output type for this output, <node>, of this SSG **/
-    public CType getOutputType(FlatNode node) 
-    {
-	return outputTypes[getOutputNum(node)];
     }
     
     /** given an input, source, for this SSG, get the input number,
@@ -964,6 +967,47 @@ public class StaticStreamGraph
 		assignedNodes++;
 	}
 	return assignedNodes;
+    }
+    
+    /** Get an input SSGEdge coming into this SSG given the <dest>
+	of the edge, so <dest> is in this SSG
+    **/
+    public SSGEdge getInputSSGEdgeDest(FlatNode dest) 
+    {
+	SSGEdge edge = null;
+	
+	for (int i = 0; i < inputSSGEdges.length; i++)
+	    if (inputSSGEdges[i].inputNode == dest)
+		edge = inputSSGEdges[i];
+	assert edge != null : "Calling getInputSSGEdgeDest(FlatNode dest) with a node that is not an input to SSG";
+	
+	return edge;
+    }
+    
+
+    /**get the input type for a node of this SSG, we want to use this because
+     * we set the input type of the head of this SSG to null, even though it may 
+     * receive data over the dynamic network **/
+    public CType getInputType(FlatNode node) 
+    {
+	assert flatNodes.contains(node) : "Calling getInputType(node) and node is not in SSG";
+	if (isInput(node)) {
+	    //get the type from the source SSG of this edge
+	    SSGEdge edge = getInputSSGEdgeDest(node);
+	    return edge.getOutput().getOutputType(edge.outputNode);
+	}
+	else
+	    return node.getFilter().getInputType();
+    }
+    
+    /** get the output type for <node> of this SSG **/
+    public CType getOutputType(FlatNode node) 
+    {
+	assert flatNodes.contains(node) : "Calling getOutputType(node) and node is not in SSG";
+	if (isOutput(node))
+	    return outputTypes[getOutputNum(node)];
+	else
+	    return node.getFilter().getOutputType();
     }
     
     /** get the number of filters of this SSG **/

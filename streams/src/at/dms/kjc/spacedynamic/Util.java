@@ -198,24 +198,26 @@ public class Util extends at.dms.util.Utils {
 	return ret;
     }
 
+    /*
     public static String networkReceivePrefix(boolean dynamic) {
 	assert KjcOptions.altcodegen;
 	return "";
     }
+    */
 
-    public static String networkReceiveSuffix(boolean dynamic, CType tapeType) {
+    public static String networkReceive(boolean dynamic, CType tapeType) {
 	assert KjcOptions.altcodegen;
 	if (dynamic) {
 	    if (tapeType.isFloatingPoint())
-		return "= " + CGNIFPVAR + ";";
+		return CGNIFPVAR;
 	    else
-		return "= " + CGNIINTVAR + ";";    
+		return CGNIINTVAR;    
 	}
 	else {
 	    if (tapeType.isFloatingPoint())
-		return "= " + CSTIFPVAR + ";";
+		return CSTIFPVAR;
 	    else
-		return "= " + CSTIINTVAR + ";";
+		return CSTIINTVAR;
 	}
     }
     

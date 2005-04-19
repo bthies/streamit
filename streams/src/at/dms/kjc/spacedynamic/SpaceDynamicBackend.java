@@ -109,10 +109,6 @@ public class SpaceDynamicBackend {
 	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[k];
 	    System.out.println(" ****** Static Sub-Graph = " + ssg.toString() + " ******");
 	    
-	    //SIRPrinter printer1 = new SIRPrinter();
-	    //subStr.accept(printer1);
-	    //printer1.close();
-	    
 	    //VarDecl Raise to move array assignments up
 	    new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
 
@@ -173,13 +169,19 @@ public class SpaceDynamicBackend {
 		//partition this sub graph based on the number of tiles it is assigned...
 		int numTiles = ssg.getNumTiles();//SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns;
 		boolean manual = KjcOptions.manual != null;
+		//we may automatically turn dynamic programming partitioning on, so remember the old val of the option
+		boolean oldKjcDP = KjcOptions.partition_dp;
 		boolean partitioning = ((KjcOptions.standalone || !manual) // still fuse graph if both manual and standalone enabled
-					&& (KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_greedier || KjcOptions.partition_ilp));
+					&& (KjcOptions.partition_dp || 
+					    KjcOptions.partition_greedy || 
+					    KjcOptions.partition_greedier || 
+					    KjcOptions.partition_ilp));
 		// want to turn on partitioning for standalone; in this
 		// case, manual is for manual optimizations, not manual
 		// partitioning
-		if (count>numTiles && !partitioning && !manual) { //
+		if (count > numTiles && !partitioning && !manual) { //
 		    System.out.println("Need " + count + " tiles, so turning on partitioning...");
+		    
 		    KjcOptions.partition_dp = true;
 		    partitioning = true;
 		}
@@ -201,6 +203,8 @@ public class SpaceDynamicBackend {
 		    ssg.setTopLevelSIR(Partitioner.doit(ssg.getTopLevelSIR(), count, 
 							numTiles, true, false, doNotHorizFuse));
 		    System.err.println("Done Partitioning...");
+		    //restore user specified partition_dp val
+		    KjcOptions.partition_dp = oldKjcDP;
 		}
 		
 		if (KjcOptions.sjtopipe) {
@@ -224,7 +228,7 @@ public class SpaceDynamicBackend {
 			(IterFactory.createFactory().createIter(ssg.getTopLevelSIR()));
 		}
 		
-		//SIRPrinter printer1 = new SIRPrinter();
+		//SIRPrinter printer1 = new SIRPrinter("sir" + ssg.toString() + ".out");
 		//IterFactory.createFactory().createIter(ssg.getTopLevelSIR()).accept(printer1);
 		//printer1.close();
 		
@@ -311,13 +315,14 @@ public class SpaceDynamicBackend {
 	}
 	
 	//VarDecl Raise to move array assignments down?
-	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++)
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
 	    new VarDeclRaiser().raiseVars
 		(streamGraph.getStaticSubGraphs()[i].getTopLevelSIR());
+	}
 	
 	//create the structure include file for the application
 	StructureIncludeFile.doit(structures, streamGraph);
-
+	
 	
 	System.out.println("Tile Code begin...");
 	TileCode.generateCode(streamGraph);

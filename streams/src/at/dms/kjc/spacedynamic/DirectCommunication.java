@@ -66,21 +66,11 @@ public class DirectCommunication extends at.dms.util.Utils
 	    return false;
 	if (PeekFinder.findPeek(filter.getWork()))
 	    return false;
-	if (PushBeforePop.check(filter.getWork()))
+	//for a filter with dynamic input we don't care if the pushes and
+	//pops are intermixed, because the pops will use the dynamic network
+	// and the switch will only be used for the pushes...
+	if (!dynamicInput && PushBeforePop.check(filter.getWork()))
 	    return false;
-
-	/* I don't think that these checks are necessary,
-    ****** confirm!!!! *******
-
-	//must popping a scalar
-	if (filter.getInputType().isClassType() ||
-	    filter.getInputType().isArrayType())
-	    return false;
-	//must be pushing a scalar
-	if (filter.getOutputType().isClassType() ||
-	    filter.getOutputType().isArrayType())
-	    return false;
-	*/
 	//all tests pass
 	return true;
     }
@@ -230,7 +220,12 @@ public class DirectCommunication extends at.dms.util.Utils
 		return null;
 	    }
 	    else {
-		//direct communcation is only generated if the input/output types are scalar
+		return new JMethodCallExpression(null, new JThisExpression(null),
+						 RawExecutionCode.receiveMethod,
+						 new JExpression[0]);
+	    }
+	    /*
+	      else {
 		if (self.getType().isFloatingPoint())
 		    return 
 			new JLocalVariableExpression
@@ -247,7 +242,8 @@ public class DirectCommunication extends at.dms.util.Utils
 						     CStdType.Integer,
 						     dynamic ? Util.CGNIINTVAR : Util.CSTIINTVAR,
 						     null));
-	    }
+						     }
+	    */
 	}
 
 	public Object visitPeekExpression(SIRPeekExpression oldSelf,

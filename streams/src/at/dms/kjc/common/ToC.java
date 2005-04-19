@@ -141,6 +141,10 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
 	    print (" = 0");
 	else if (type.isFloatingPoint())
 	    print(" = 0.0f");
+	else if (type.isArrayType()) {
+	    print(" = 0");
+	}
+	
 
         print(";");
     }
@@ -1134,4 +1138,11 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
         print("" + s);
     }
 
+    /** clear the internal String that represents the code generated so far **/
+    public void clear() 
+    {
+	this.str = new StringWriter();
+        this.p = new TabbedPrintWriter(str);
+    }
+    
 }

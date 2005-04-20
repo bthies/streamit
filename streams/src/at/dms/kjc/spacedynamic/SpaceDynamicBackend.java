@@ -314,6 +314,10 @@ public class SpaceDynamicBackend {
 		RemoveGlobals.doit(streamGraph.getStaticSubGraphs()[i].getTopLevel());
 	}
 	
+	//create code to zero stack allocated arrays
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++)
+	    ZeroArrayCode.doit(streamGraph.getStaticSubGraphs()[i]);
+	
 	//VarDecl Raise to move array assignments down?
 	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
 	    new VarDeclRaiser().raiseVars

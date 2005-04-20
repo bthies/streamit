@@ -29,9 +29,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
     //the filter we are currently visiting
     private SIRFilter filter;
 
-    // ALWAYS!!!!
-    //true if we are using the second buffer management scheme 
-    //circular buffers with anding
     public boolean debug = false;//true;
     /** > 0 if in a for loop header during visit **/
     private int forLoopHeader = 0;
@@ -555,8 +552,8 @@ public class FlatIRToC extends ToC implements StreamVisitor
 		print(";");
 		return;
 	    }
-	    else if (dims != null)
-		return;
+	    else if (dims != null) //we will stack allocate the array when we encounter the new 
+		return;            //array expression in an assignment, so don't do anything here!
 	    else if (expr instanceof JArrayInitializer) {
 		declareInitializedArray(type, ident, expr);
 		return;
@@ -650,7 +647,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//print the correct code for array assignment
 	//this must be run after renaming!!!!!!
 	if (left.getType() == null || right.getType() == null) {
-	    lastLeft=left;
+	    lastLeft = left;
 	    print("(");
 	    left.accept(this);
 	    print(" = ");
@@ -725,7 +722,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
            
 	
 	
-	lastLeft=left;
+	lastLeft = left;
         print("(");
         left.accept(this);
         print(" = ");

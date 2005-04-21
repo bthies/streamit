@@ -1077,11 +1077,12 @@ public class RawExecutionCode extends at.dms.util.Utils
 	 
 	//the method call expression, for scalars, flatIRtoC
 	//changes this into c code thatw will perform the receive...
-	JExpression exp =
+	JMethodCallExpression exp =
 	    new JMethodCallExpression(null,  new JThisExpression(null),
 				      receiveMethodName,
 				      bufferAccess);
 
+	exp.setTapeType(type);
 	//return a statement
 	return new JExpressionStatement(null, exp, null);
     }
@@ -1115,6 +1116,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 				      new JThisExpression(null),
 				      receiveMethod,
 				      args);
+
+	methodCall.setTapeType(type);
 	//now generate the nested for loops	
 
 	//get the dimensions of the array as set by kopi2sir

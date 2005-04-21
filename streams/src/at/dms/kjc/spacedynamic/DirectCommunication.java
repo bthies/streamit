@@ -183,11 +183,14 @@ public class DirectCommunication extends at.dms.util.Utils
 		    JExpression[] arg = 
 			{left};
 		
-		    return new JMethodCallExpression(null, new JThisExpression(null), 
-						     RawExecutionCode.structReceivePrefix + 
-						     (dynamic ? "Dynamic" : "Static") + 
-						     pop.getType(),
-						     arg);
+		    JMethodCallExpression receive = 
+			new JMethodCallExpression(null, new JThisExpression(null), 
+						  RawExecutionCode.structReceivePrefix + 
+						  (dynamic ? "Dynamic" : "Static") + 
+						  pop.getType(),
+						  arg);
+		    receive.setTapeType(pop.getType());
+		    return receive;
 		} 
 		if (pop.getType().isArrayType()) {
 		    return null;
@@ -220,9 +223,12 @@ public class DirectCommunication extends at.dms.util.Utils
 		return null;
 	    }
 	    else {
-		return new JMethodCallExpression(null, new JThisExpression(null),
-						 RawExecutionCode.receiveMethod,
-						 new JExpression[0]);
+		JMethodCallExpression receive = 
+		    new JMethodCallExpression(null, new JThisExpression(null),
+					      RawExecutionCode.receiveMethod,
+					      new JExpression[0]);
+		receive.setTapeType(self.getType());
+		return receive;
 	    }
 	    /*
 	      else {

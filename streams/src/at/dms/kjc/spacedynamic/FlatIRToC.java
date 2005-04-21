@@ -872,7 +872,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    return;
 	}
 
-	    
 	if (type.equals(CStdType.Boolean))
 	    {
 		Utils.fail("Cannot print a boolean");

@@ -504,7 +504,7 @@ public class Layout extends at.dms.util.Utils implements
 	    //and add this for each word that does not fit in the cache...
 	    if (memReq > RawChip.dCacheSizeBytes) {
 		RawTile tile = getTile(node);
-		System.out.println(node + " has memory fp of " + memReq + " > " + RawChip.dCacheSizeBytes);
+		//System.out.println(node + " has memory fp of " + memReq + " > " + RawChip.dCacheSizeBytes);
 		
 		//divide by 4 because we send 4 bytes over the network at a time
 		memCost += ((memReq - RawChip.dCacheSizeBytes) / 4) * tile.hopsToEdge();

@@ -35,6 +35,9 @@ public class Layout extends at.dms.util.Utils implements
 	of the filter, used for memory cost analysis, it is populated in visitNode **/
     private HashMap memoryFP;
 
+    /** work estimates for the filters and joiner of the graph **/
+    private WorkEstimatesMap workEstimates;
+
     private BufferedReader inputBuffer;
     private Random random;
     
@@ -53,7 +56,7 @@ public class Layout extends at.dms.util.Utils implements
     //the weights assigned to a static hop that goes thru an assigned tile
     public static double ASSIGNED_WEIGHT = 1000;
     //the weight assigned to routing an item through a router tile
-    public static double ROUTER_WEIGHT = 0.5;
+    public static double ROUTER_WEIGHT = 0.0;//0.5;
     //scaling factor for the memory cost of the layout (for tiles that allocate more 
     //than the dcache size
     public static double MEMORY_SCALE = 1.0;
@@ -88,7 +91,7 @@ public class Layout extends at.dms.util.Utils implements
 	assigned = new HashSet();
 	identities = new HashSet();
 	memoryFP = new HashMap();
-	
+	workEstimates = new WorkEstimatesMap(streamGraph);
 
 	//find out exactly what we should layout !!!
 	streamGraph.getTopLevel().accept(this, null, true);
@@ -501,7 +504,7 @@ public class Layout extends at.dms.util.Utils implements
 	    //and add this for each word that does not fit in the cache...
 	    if (memReq > RawChip.dCacheSizeBytes) {
 		RawTile tile = getTile(node);
-		//System.out.println(node + " has memory fp of " + memReq + " > " + RawChip.dCacheSizeWords);
+		System.out.println(node + " has memory fp of " + memReq + " > " + RawChip.dCacheSizeBytes);
 		
 		//divide by 4 because we send 4 bytes over the network at a time
 		memCost += ((memReq - RawChip.dCacheSizeBytes) / 4) * tile.hopsToEdge();
@@ -606,7 +609,8 @@ public class Layout extends at.dms.util.Utils implements
 		    tiles.add(route[i]);
 		    
 		    if (getNode((RawTile)route[i]) != null) //assigned tile
-			numAssigned += ASSIGNED_WEIGHT;
+			numAssigned += ASSIGNED_WEIGHT * 
+			    (1.0 / workEstimates.getEstimate(getNode((RawTile)route[i])));
 		    else {
 			//router tile, only penalize it if we have routed through it before
 			if (routers.contains(route[i]))
@@ -1055,7 +1059,8 @@ public class Layout extends at.dms.util.Utils implements
 	    //create an entry in the memory foot print map
 	    memoryFP.put(node, 
 			 new Integer(DataEstimate.computeFilterGlobalsSize(node.getFilter())));
-	    
+	    //create an entry in the work estimation map
+	    workEstimates.addEstimate(node);
 	    //do not map layout.identities, but add them to the layout.identities set
 	    if (node.contents instanceof SIRIdentity) {
 		identities.add(node);
@@ -1074,6 +1079,8 @@ public class Layout extends at.dms.util.Utils implements
 	}
 	if (node.contents instanceof SIRJoiner && 
 	    assignedJoiner(node)) {
+	    //create an entry in the work estimation map
+	    workEstimates.addEstimate(node);
 	    joiners.add(node);
 	    assigned.add(node);
 	}

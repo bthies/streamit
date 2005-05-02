@@ -347,6 +347,13 @@ public class StreamGraph
     /** Ask the user for the number of tiles to assign to each SSG **/
     public void handTileAssignment() 
     {
+	//if there is just one ssg, give all the tiles to it...
+	if (staticSubGraphs.length == 1) {
+	    staticSubGraphs[0].setNumTiles(rawChip.getTotalTiles());
+	    return;
+	}
+	
+
 	BufferedReader inputBuffer = new BufferedReader(new InputStreamReader(System.in));
 	int numTilesToAssign = rawChip.getTotalTiles(), num;
 	StaticStreamGraph current = topLevel;

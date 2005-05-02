@@ -21,32 +21,12 @@ import java.util.Iterator;
  * init schedule and one steady state execution of the schedule
  */
 public class FineGrainSimulator extends Simulator 
-{
-    
-    private HashMap switchSchedules;
-    
-    //the current joiner code we are working on (steady or init)
-    private HashMap joinerCode;
-        
-    //the curent node in the joiner schedule we are working on
-    private HashMap currentJoinerCode;
-    
-    private FlatNode bottom;
-
-    //true if we are simulating the init schedule
-    private boolean initSimulation;
-
-    private Layout layout;
-
-    private RawChip rawChip;
-
+{    
+ 
     public void simulate() 
     {
 	System.out.println("FineGrainSimulator Running...");
 	
-	layout = ssg.getStreamGraph().getLayout();
-	rawChip = ssg.getStreamGraph().getRawChip();
-
 	initJoinerCode = new HashMap();
         steadyJoinerCode = new HashMap();
 
@@ -95,9 +75,6 @@ public class FineGrainSimulator extends Simulator
 	switchSchedules = new HashMap();
 	currentJoinerCode = new HashMap();
 	toplevel = ssg.getTopLevel();
-	//find the bottom (last) filter, used later to decide
-	//execution order
-	bottom = null;
 	initSimulation = init;
     }
     
@@ -272,225 +249,8 @@ public class FineGrainSimulator extends Simulator
 	sourceSendSchedule.add(destsRawTile);
     }
     */
-
-    //generate the switch code for 1 data item given the list of destinations
-    //we do not want to duplicate items until neccessary, so we have to keep track 
-    //of all the routes and then generate the switch code
-    //this way we can route multiple dests per route instruction
-    private void generateSwitchCode(FlatNode fire, List dests) 
-    {
-	assert !(layout.getIdentities().contains(fire));
-	
-	//should only have one previous
-	HashMap prev = new HashMap();
-	HashMap next = new HashMap();
-
-	//	System.out.println("Firing: " + fire + " " + layout.getComputeNode(fire));
-
-	ListIterator destsIt = dests.listIterator();
-	while (destsIt.hasNext()) {
- 	    FlatNode dest = (FlatNode)destsIt.next();
-	    assert dest != null;
-	    assert !(layout.getIdentities().contains(dest));
-	    //  System.out.println("  Dest: " + dest + " " + layout.getTile(dest));
- 	    ComputeNode[] hops = 
- 		(ComputeNode[])layout.router.
-		getRoute(ssg, layout.getComputeNode(fire), layout.getComputeNode(dest)).toArray(new ComputeNode[0]);
-
-	    assert hops.length > 1 : "Error: Bad Layout (could not find route from " + fire.toString() + " -> " +
-		dest.toString();
-
-	    //for (int i = 0; i < hops.length; i++)
-	    //		System.out.println("     " + hops[i]);
-	    
-	    //add to fire's next
-	    if (!next.containsKey(layout.getComputeNode(fire))) 
-		next.put(layout.getComputeNode(fire), new HashSet());
-	    ((HashSet)next.get(layout.getComputeNode(fire))).add(hops[1]);
-	    //add to all other previous, next
-	    for (int i = 1; i < hops.length -1; i++) {
-		if (prev.containsKey(hops[i]))
-		    if (prev.get(hops[i]) != hops[i-1])
-			Utils.fail("More than one previous tile for a single data item");
-		prev.put(hops[i], hops[i-1]);
-		if (!next.containsKey(hops[i]))
-		    next.put(hops[i], new HashSet());
-		((HashSet)next.get(hops[i])).add(hops[i+1]);
-	    }
-	    //add the last step, plus the dest to the dest map
-	    if (prev.containsKey(hops[hops.length - 1]))
-		if (prev.get(hops[hops.length - 1]) != hops[hops.length - 2])
-		    Utils.fail("More than one previous tile for a single data item (2)");
-	    prev.put(hops[hops.length-1], hops[hops.length - 2]);
-	    if (!next.containsKey(hops[hops.length-1]))
-		next.put(hops[hops.length - 1], new HashSet());
-	    ((HashSet)next.get(hops[hops.length - 1])).add(hops[hops.length -1]);
-	}
-	
-	//create the appropriate amount of routing instructions
-	int elements = Util.getTypeSize(Util.getOutputType(fire));
-	for (int i = 0; i < elements; i++)
-	    asm(layout.getComputeNode(fire), prev, next);
-    }
     
-    private void asm(ComputeNode fire, HashMap previous, HashMap next) 
-    {
-	assert fire != null;
-	//generate the sends
-	if (!switchSchedules.containsKey(fire))
-	    switchSchedules.put(fire, new StringBuffer());
-	StringBuffer buf = (StringBuffer)switchSchedules.get(fire);
-	Iterator it = ((HashSet)next.get(fire)).iterator();
-	buf.append("route ");
-	while (it.hasNext()) {
-	    ComputeNode dest = (ComputeNode)it.next();
-	    buf.append("$csto->" + "$c" + 
-		       rawChip.getDirection(fire, dest) + 
-		       "o,");
-	}
-	//erase the trailing ,
-	buf.setCharAt(buf.length() - 1, '\n');
-	
-	//generate all the other 
-	Iterator tiles = next.keySet().iterator();
-	while (tiles.hasNext()) {
-	    ComputeNode tile = (ComputeNode)tiles.next();
-	    assert tile != null;
-	    if (tile == fire) 
-		continue;
-	    if (!switchSchedules.containsKey(tile))
-		switchSchedules.put(tile, new StringBuffer());
-	    buf = (StringBuffer)switchSchedules.get(tile);
-	    ComputeNode prevTile = (ComputeNode)previous.get(tile);
-	    buf.append("route ");	    Iterator nexts = ((HashSet)next.get(tile)).iterator();
-	    while(nexts.hasNext()) {
-		ComputeNode nextTile = (ComputeNode)nexts.next();
-		if (!nextTile.equals(tile))
-		    buf.append("$c" + rawChip.getDirection(tile, prevTile) + "i->$c" +
-			       rawChip.getDirection(tile, nextTile) + "o,");
-		else 
-		    buf.append("$c" + rawChip.getDirection(tile, prevTile) + "i->$c" +
-			       rawChip.getDirection(tile, nextTile) + "i,");
-	    }
-	    buf.setCharAt(buf.length() - 1, '\n');
-	}
-    }
-    
-    private int itemsNeededToFire(FlatNode fire, SimulationCounter counters,
-				  HashMap executionCounts) 
-    {
-	//if this is the first time a two stage initpeek is needed to execute
-	if (initSimulation &&
-	    !counters.hasFired(fire) &&
-	    fire.contents instanceof SIRTwoStageFilter) {
-	    return ((SIRTwoStageFilter)fire.contents).getInitPeek();
-	}
-	else if (!initSimulation && KjcOptions.ratematch && 
-		 fire.contents instanceof SIRFilter) {
-	    //we are ratematching filters
-	    return (((SIRFilter)fire.contents).getPopInt() *
-		    ssg.getMult(fire, false) +
-		    (((SIRFilter)fire.contents).getPeekInt() -
-		     ((SIRFilter)fire.contents).getPopInt()));
-	}
-	//otherwise peek items are needed
-	return ((SIRFilter)fire.contents).getPeekInt();
-    }
-   
-    private void decrementExecutionCounts(FlatNode fire, HashMap executionCounts, SimulationCounter counters) 
-    {
-	//decrement one from the execution count
-	int oldVal = ((Integer)executionCounts.get(fire)).intValue();
-	if (oldVal - 1 < 0)
-	    Utils.fail("Executed too much");
-	
-	//if we are ratematching the node only fires once but only do this
-	//for filters
-	if (!initSimulation && KjcOptions.ratematch && 
-	    fire.contents instanceof SIRFilter) { 
-	    executionCounts.put(fire, new Integer(0));
-	} 
-	else 
-	    executionCounts.put(fire, new Integer(oldVal - 1));
-    }
-    
-    private int consumedItems(FlatNode fire, SimulationCounter counters,
-			      HashMap executionCounts) {
-	//if this is the first time a two stage fires consume initpop
-	if (initSimulation &&
-	    !counters.hasFired(fire) &&
-	    fire.contents instanceof SIRTwoStageFilter)
-	    return ((SIRTwoStageFilter)fire.contents).getInitPop();
-	else if (!initSimulation && KjcOptions.ratematch &&
-		 fire.contents instanceof SIRFilter) {
-	    //we are ratematching on the filter
-	    //it consumes for the entire steady state
-	    return ((SIRFilter)fire.contents).getPopInt() *
-		ssg.getMult(fire, false);
-	}
-	//otherwise just consume pop
-	return ((SIRFilter)fire.contents).getPopInt();
-    }
-    
-    //consume the data and return the number of items produced
-    private int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
-    {
-	if (fire.contents instanceof SIRFilter) {
-	    //decrement the schedule execution counter
-	    decrementExecutionCounts(fire, executionCounts, counters);
-	    
-	    //consume the date from the buffer
-	    counters.decrementBufferCount(fire, 
-					  consumedItems(fire, counters, executionCounts));	 
-
-	    //for a steady state execution return the normal push
-	    int ret = ((SIRFilter)fire.contents).getPushInt();
-	    
-	    //if the filter is a two stage, and it has not fired
-	    //return the initPush() unless the initWork does nothing
-	    if (initSimulation &&
-		!counters.hasFired(fire) &&
-		fire.contents instanceof SIRTwoStageFilter)
-		ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
-	    else if (!initSimulation && KjcOptions.ratematch) {
-		//we are ratematching so produce all the data on the one firing.
-		ret *= ssg.getMult(fire, false);
-	    }
-	    //now this node has fired
-	    counters.setFired(fire);
-	    return ret;
-	}
-	else if (fire.contents instanceof SIRJoiner) {
-	    return fireJoiner(fire, counters, executionCounts);
-	}
-    
-	Utils.fail("Trying to fire a non-filter or joiner");
-	return -1;
-    }
-    
-    /*
-      add the joiner code to the code schedule for the given joiner
-    */
-    private void addJoinerCode(FlatNode fire, JoinerScheduleNode code) 
-    {
-	//add to the joiner code for this fire
-	    JoinerScheduleNode prev = 
-		(JoinerScheduleNode)currentJoinerCode.get(fire);
-	    if (prev == null) {
-		//first node in joiner code
-		joinerCode.put(fire, code);
-	    }
-	    else {
-		//connect 
-		prev.next = code;
-	    }
-	    //set code
-	    currentJoinerCode.put(fire, code);
-    }
-    
-    
-    
-    private int fireJoiner(FlatNode fire, SimulationCounter counters, HashMap executionCounts)
+    protected int fireJoiner(FlatNode fire, SimulationCounter counters, HashMap executionCounts)
     {
 	//	System.out.println("Firing " + fire.contents.getName());
 	//The joiner is passing a data item, record this as an execution
@@ -637,7 +397,7 @@ public class FineGrainSimulator extends Simulator
 				    SimulationCounter counters) 
     {
 	FlatNode start = current;
-	//breadth first search from bottom
+
 	if (start == null)
 	    start = toplevel;
 	HashSet visited = new HashSet();

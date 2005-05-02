@@ -65,6 +65,8 @@ public class SpaceDynamicBackend {
 	//this must be run now, FlatIRToC relies on it!!!
 	RenameAll.renameAllFilters(str);
 	
+	
+		
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
 	ConstantProp.propagateAndUnroll(str);
@@ -77,6 +79,11 @@ public class SpaceDynamicBackend {
 	ConstructSIRTree.doit(str);
 
 	FieldProp.doPropagate(str);
+
+	SIRPrinter printer1 = new SIRPrinter("sir_AFTER_FIELD_PROP_.out");
+	IterFactory.createFactory().createIter(str).accept(printer1);
+	printer1.close();
+
 
 	// expand array initializers loaded from a file
 	ArrayInitExpander.doit(str);
@@ -227,11 +234,11 @@ public class SpaceDynamicBackend {
 		    new streamit.scheduler2.print.PrintProgram().printProgram
 			(IterFactory.createFactory().createIter(ssg.getTopLevelSIR()));
 		}
-		
-		//SIRPrinter printer1 = new SIRPrinter("sir" + ssg.toString() + ".out");
-		//IterFactory.createFactory().createIter(ssg.getTopLevelSIR()).accept(printer1);
-		//printer1.close();
-		
+		/*
+		SIRPrinter printer1 = new SIRPrinter("sir" + ssg.toString() + ".out");
+		IterFactory.createFactory().createIter(ssg.getTopLevelSIR()).accept(printer1);
+		printer1.close();
+		*/
 		/** Flatten the subgraph and create the flat node representation 
 		 now we can use the flatgraph representation **/
 		ssg.scheduleAndCreateMults();
@@ -277,7 +284,7 @@ public class SpaceDynamicBackend {
 	
 	
 	if (KjcOptions.ratematch) {
-	    assert false;
+	    System.out.println("WARNING: Rate Matching non-operational for Space Dynamic.");
 	    /*
 	    if (RateMatch.doit(ssg.getTopLevel()))
 		System.out.println("Rate Matching Test Successful.");

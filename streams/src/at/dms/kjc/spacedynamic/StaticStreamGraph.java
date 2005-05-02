@@ -516,7 +516,10 @@ public class StaticStreamGraph
     /** Schedule the static communication of this SSG, given the schedule of joiner firing, <js> **/
     public void scheduleCommunication(JoinerSimulator js) 
     {
-	simulator = new FineGrainSimulator(this, js);
+	if (KjcOptions.wbs) 
+	    simulator = new WorkBasedSimulator(this, js);
+	else 
+	    simulator = new FineGrainSimulator(this, js);
 	simulator.simulate();
     }
 

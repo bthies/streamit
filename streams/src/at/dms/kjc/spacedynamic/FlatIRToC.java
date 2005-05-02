@@ -132,8 +132,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//assigned to a dummy variable
 	ConvertLonelyReceives.doit(toC.ssg, toC.flatNode);
 
-
-	/*	
+	/*
 	SIRPrinter printer1 = new SIRPrinter("sir" + node + ".out");
 	IterFactory.createFactory().createIter(node.getFilter()).accept(printer1);
 	printer1.close();

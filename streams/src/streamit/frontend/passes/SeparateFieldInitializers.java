@@ -57,7 +57,7 @@ public class SeparateFieldInitializers extends streamit.frontend.tojava.InitMung
      */
     private boolean libraryFormat;
     
-    public SeparateFieldInitializers(boolean libraryformat) {
+    public SeparateFieldInitializers(boolean libraryFormat) {
 	super();
 	fieldInits = new ArrayList();
 	this.libraryFormat = libraryFormat;

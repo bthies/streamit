@@ -1,0 +1,85 @@
+void->void pipeline ComplexFIR {
+    int N=16;
+    //add FileReader<float>("input.dat");
+    add Input();
+    add FIR(N);
+    //add FileWriter<float>("output.dat");
+    add Printer();
+}
+
+void->float filter Input() {
+    float[2048] input = init_array_1D_float("input.txt", 2048);
+    int i=0;
+    work push 1 {
+	push(input[i]);
+	i++;
+    }
+}
+
+float->float filter FIR(int N) {
+    float[16] coeff_real;
+    float[16] coeff_imag;
+
+    init {
+	// ian's weights for 16-case.  don't make them static
+	// initializers because linear analysis seems not to recognize
+	// them then.
+	coeff_real[15] = 9.980292;
+	coeff_real[14] = 6.467147;
+	coeff_real[13] = 8.173388;
+	coeff_real[12] = 0.255656;
+	coeff_real[11] = 0.911332;
+	coeff_real[10] = -6.625836;
+	coeff_real[9]= -1.361192;
+	coeff_real[8] = 8.983362;
+	coeff_real[7] = 9.621704;
+	coeff_real[6] = 4.036057;
+	coeff_real[5] = -0.631137;
+	coeff_real[4] = -0.308623;
+	coeff_real[3] = 6.231595;
+	coeff_real[2] = -1.412280;
+	coeff_real[1] = -6.305478;
+	coeff_real[0] = 7.632966;
+
+
+	coeff_imag[15] = 10.000000;
+	coeff_imag[14] = 9.167380;
+	coeff_imag[13] = 2.707955;
+	coeff_imag[12] = 8.154047;
+	coeff_imag[11] = -0.535006;
+	coeff_imag[10] = 5.336431;
+	coeff_imag[9] = -8.634630;
+	coeff_imag[8] = -1.121887;
+	coeff_imag[7] = -5.341023;
+	coeff_imag[6] = 4.952805;
+	coeff_imag[5] = -7.519617;
+	coeff_imag[4] = -8.405219;
+	coeff_imag[3] = -6.208589;
+	coeff_imag[2] = -7.726289;
+	coeff_imag[1] = 8.464509;
+	coeff_imag[0] = -9.697820;
+    }
+    
+    // (a + bi) * (c + di) = (ac - bd) + (ad + bc)i
+    work push 2 pop 2 peek 2*N {
+	float real_sum = 0;
+	float imag_sum = 0;
+	for (int i=0; i<N; i++) {
+	    float real = peek(2*i);
+	    float imag = peek(2*i+1);
+	    real_sum += real*coeff_real[i] - imag*coeff_imag[i];
+	    imag_sum += real*coeff_imag[i] + imag*coeff_real[i];
+	}
+	pop();
+	pop();
+	push(real_sum);
+	push(imag_sum);
+    }
+}
+
+float->void filter Printer() {
+    work pop 2 {
+	print(pop());
+	print(pop());
+    }
+}

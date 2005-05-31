@@ -1,0 +1,6 @@
+Ian Bratt authored a C version that he used for comparison to the
+StreamIt version in his Master's thesis.  At one point it lived here:
+
+/u/bratt/bits8/old_rawgrok/benchmarks/work/reptile/HDSP/cfir/
+
+but Ian planned to add it to the Reptile CVS or to starsearch.

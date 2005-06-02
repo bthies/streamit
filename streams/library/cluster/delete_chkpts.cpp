@@ -2,7 +2,7 @@
 #include <delete_chkpts.h>
 #include <save_state.h>
 #include <unistd.h>
-#include <dirent.h>
+//#include <dirent.h>
 #include <stdio.h>
 
 int delete_chkpts::max_iter = 0;

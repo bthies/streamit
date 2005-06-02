@@ -1,6 +1,8 @@
 
 #include <open_socket.h>
 
+#ifndef ARM
+
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -14,8 +16,15 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+#endif //ARM
 
 netsocket *open_socket::listen(short port) {
+
+#ifdef ARM
+
+  return NULL;
+
+#else //ARM
 
   int listenfd;
   int retval;
@@ -124,11 +133,20 @@ netsocket *open_socket::listen(short port) {
       }
     }
   }
+
+#endif //ARM
+
 }
 
 
 
 netsocket *open_socket::connect(unsigned ipaddr, short port) {
+
+#ifdef ARM
+
+  return NULL;
+
+#else //ARM
 
   int sock;
   int retval;
@@ -170,6 +188,9 @@ netsocket *open_socket::connect(unsigned ipaddr, short port) {
   //printf("done\n");
  
   return new netsocket(sock);
+
+#endif //ARM
+
 }
 
 

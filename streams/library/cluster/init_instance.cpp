@@ -1,9 +1,20 @@
 
 #include <init_instance.h>
-
 #include <open_socket.h>
 #include <netsocket.h>
 #include <memsocket.h>
+
+#ifdef ARM
+
+void init_instance::add_incoming(int from, int to, int type) {assert(1==0);}
+void init_instance::add_outgoing(int from, int to, int type) {assert(1==0);}
+
+mysocket* init_instance::get_incoming_socket(int from, int to, int type) {assert(1==0);}
+mysocket* init_instance::get_outgoing_socket(int from, int to, int type) {assert(1==0);}
+
+unsigned init_instance::get_thread_start_iter(int thread) {assert(1==0);}
+
+#else //ARM
 
 #include <pthread.h>
 #include <sys/time.h>
@@ -208,7 +219,6 @@ void init_instance::initialize_sockets() {
       out_done[sd] = true;
       in_done[sd] = true;
       */
-
       
       memsocket *ms = new memsocket();
 
@@ -515,4 +525,5 @@ void init_instance::close_sockets() {
 
 }
 
+#endif // ARM
 

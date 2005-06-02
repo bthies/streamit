@@ -1,6 +1,24 @@
 
 #include <netsocket.h>
 
+#ifdef ARM
+
+unsigned get_myip() { return 0; }
+unsigned lookup_ip(const char *hostname) { return 0; }
+void print_ip(FILE *f, unsigned ip) {}
+netsocket::netsocket(int s) { fd = s; }
+void netsocket::close() { fd = -1; }
+void netsocket::set_item_size(int size) {}
+int netsocket::eof() { if (fd == -1) return -1; return 0; }
+int netsocket::get_fd() { return fd; }
+bool netsocket::data_available() { return false; }
+int netsocket::write_OOB(char val) { return -1; }
+int netsocket::check_OOB(char *val) { return -1; }
+int netsocket::write_chunk(char *buf, int len) { return -1; }
+int netsocket::read_chunk(char *buf, int len) { return -1; }
+
+#else  //ARM
+
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -24,7 +42,6 @@ unsigned get_myip() {
   pclose(p);
 
   return lookup_ip(me);
-
 }
 
 unsigned lookup_ip(const char *hostname) {
@@ -228,4 +245,4 @@ int netsocket::read_chunk(char *buf, int len) {
 
 }
 
-
+#endif //ARM

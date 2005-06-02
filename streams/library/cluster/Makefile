@@ -1,6 +1,7 @@
 
 CC =		gcc34
 CC_IA64 =       ecc
+CC_ARM = 	arm343 #arm-linux-gcc
 
 CFLAGS = 	-O2 -I.
 
@@ -8,6 +9,7 @@ AR =            ar
 RANLIB =        ranlib
 LIBRARY =       libcluster.a
 LIBRARY_IA64 =  libcluster_ia64.a
+LIBRARY_ARM =   libcluster_arm.a
 LIBRARYP =      libcluster_p.a
 
 NAMES =		sock_dscr \
@@ -43,11 +45,14 @@ SOURCES = 	$(NAMES:%=%.cpp)
 DEPS = 		$(NAMES:%=%.d)
 OBJS = 		$(NAMES:%=%.o)
 OBJS_IA64 = 	$(NAMES:%=%_ia64.o)
+OBJS_ARM = 	$(NAMES:%=%_arm.o)
 OBJSP =         $(NAMES:%=%_p.o)
 
 all: $(LIBRARY)
 
 ia64: $(LIBRARY_IA64)
+
+arm: $(LIBRARY_ARM)
 
 profile: $(LIBRARYP)
 
@@ -65,6 +70,10 @@ $(LIBRARY_IA64): $(OBJS_IA64)
 	$(AR) r $@ $^
 	$(RANLIB) $@
 
+$(LIBRARY_ARM): $(OBJS_ARM)
+	$(AR) r $@ $^
+	$(RANLIB) $@
+
 $(LIBRARYP): $(OBJSP)
 	$(AR) r $@ $^
 	$(RANLIB) $@
@@ -75,6 +84,9 @@ $(LIBRARYP): $(OBJSP)
 
 %_ia64.o: %.cpp
 	$(CC_IA64) $(CFLAGS) -c -o $@ $<
+
+%_arm.o: %.cpp
+	$(CC_ARM) $(CFLAGS) -DARM -c -o $@ $<
 
 %_p.o: %.c
 	$(CC) $(CFLAGS) -g -pg -a -c -o $@ $<

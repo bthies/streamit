@@ -7,8 +7,12 @@ void producer2<int>::init() {
 
   if (is_mem_socket) {
 
+#ifndef ARM
+
     ((memsocket*)sock)->set_buffer_size(PRODUCER_BUFFER_SIZE * sizeof(int));
     buf = (int*)((memsocket*)sock)->get_free_buffer();
+
+#endif //ARM
 
   } else {
   
@@ -21,8 +25,12 @@ void producer2<float>::init() {
 
   if (is_mem_socket) {
 
+#ifndef ARM
+
     ((memsocket*)sock)->set_buffer_size(PRODUCER_BUFFER_SIZE * sizeof(float));
     buf = (float*)((memsocket*)sock)->get_free_buffer();
+
+#endif //ARM
 
   } else {
   
@@ -36,12 +44,16 @@ void producer2<int>::send_buffer() {
 
   if (is_mem_socket) {
 
+#ifndef ARM
+
     while (((memsocket*)sock)->queue_full()) {
       ((memsocket*)sock)->wait_for_space();
     }
     ((memsocket*)sock)->push_buffer(buf);
     buf = (int*)((memsocket*)sock)->get_free_buffer();
     offs = 0;
+
+#endif //ARM
 
   } else {
     
@@ -55,12 +67,16 @@ void producer2<float>::send_buffer() {
 
   if (is_mem_socket) {
 
+#ifndef ARM
+
     while (((memsocket*)sock)->queue_full()) {
       ((memsocket*)sock)->wait_for_space();
     }
     ((memsocket*)sock)->push_buffer(buf);
     buf = (float*)((memsocket*)sock)->get_free_buffer();
     offs = 0;
+
+#endif //ARM
 
   } else {
     

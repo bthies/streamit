@@ -9,7 +9,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+
+#ifndef ARM
+
 #include <dirent.h>
+
+#endif
 
 void save_state::save_to_file(thread_info *t_info, 
 			      int steady_iter, 
@@ -71,7 +76,7 @@ int save_state::load_from_file(int thread,
   char fname[256];
   sprintf(fname, "%s%d.%d", PATH, thread, steady_iter);
   
-  //printf("thread: %d file: %s\n", thread, fname);
+  printf("thread: %d file: %s\n", thread, fname);
   
   int fd = open(fname, O_RDONLY);
   
@@ -121,6 +126,12 @@ int save_state::load_state(int thread, int *steady, void (*read_object)(object_w
 
 int save_state::find_max_iter(int n_threads) {
 
+#ifdef ARM  
+
+  return 0;
+
+#else // ARM
+
   int *max_iter = (int*)malloc(n_threads * sizeof(int));
   memset(max_iter, 0, n_threads * sizeof(int));
 
@@ -168,6 +179,9 @@ int save_state::find_max_iter(int n_threads) {
   }
 
   return result;
+
+
+#endif // ARM
 }
 
 /*
@@ -187,6 +201,8 @@ int save_state::test_iter(int iter, int n_threads) {
 */
 
 void save_state::delete_checkpoints(int max_iter) {
+
+#ifndef ARM  
   
   struct dirent *dent;
   DIR *dir;
@@ -229,4 +245,7 @@ void save_state::delete_checkpoints(int max_iter) {
   }
    
   closedir(dir);
+
+#endif //ARM
+
 }

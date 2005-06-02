@@ -3,6 +3,7 @@
 
 #include <socket_holder.h>
 #include <serializable.h>
+#include <netsocket.h>
 
 #define PRODUCER_BUFFER_SIZE 10000
 
@@ -30,7 +31,9 @@ class producer2 : public socket_holder, public serializable {
   virtual void read_object(object_write_buffer *) {}
 
   inline void push_items(T *data, int num) {
-    
+
+    //((netsocket*)sock)->write_chunk((char*)data, sizeof(T)*num);
+
   __start: 
     
     if (num < PRODUCER_BUFFER_SIZE - offs) {
@@ -53,6 +56,8 @@ class producer2 : public socket_holder, public serializable {
   }
 
   inline void push(T data) {
+
+    //((netsocket*)sock)->write_chunk((char*)&data, sizeof(T));    
 
     buf[offs++] = data;
     //item_count++;

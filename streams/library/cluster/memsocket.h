@@ -10,7 +10,7 @@
 
 using namespace std;
 
-#define NUMBER_OF_BLOCKS 10
+#define NUMBER_OF_BLOCKS 4 // 4-10
 
 class memsocket : public mysocket {
 
@@ -21,7 +21,7 @@ class memsocket : public mysocket {
   queue<void*> data_queue;
   pthread_mutex_t queue_lock;
   pthread_cond_t queue_push_cond;
-  pthread_cond_t queue_pop_cond;
+  //pthread_cond_t queue_pop_cond;
 
   int buffer_size;
 
@@ -33,7 +33,7 @@ class memsocket : public mysocket {
     pthread_cond_init(&free_buffer_release_cond, NULL);
     pthread_mutex_init(&queue_lock, NULL);
     pthread_cond_init(&queue_push_cond, NULL);
-    pthread_cond_init(&queue_pop_cond, NULL);
+    //pthread_cond_init(&queue_pop_cond, NULL);
   }
 
 
@@ -61,10 +61,28 @@ class memsocket : public mysocket {
   virtual bool is_net_socket() { return false; }
   virtual void close() {}
 
+  /*
+
+  void my_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex, int per_sec) {
+    struct timespec t;
+    t.tv_sec = 0;
+    t.tv_nsec = 1000*1000*1000/per_sec ; // 1/20th second 
+    int res;
+    for (;;) {
+      res = pthread_cond_timedwait(cond, mutex, &t);
+      if (res == 0) break;
+      //assert (res == ETIMEDOUT);
+      if (check_thread_fptr != NULL) check_thread_fptr();    
+    }
+  }
+
+  */
+
   void *get_free_buffer() {
     void *res;
     pthread_mutex_lock(&free_buffer_lock);
-    if (free_buffers.size() == 0) {
+    while (free_buffers.size() == 0) {
+      //my_cond_wait(&free_buffer_release_cond, &free_buffer_lock, 10);
       pthread_cond_wait(&free_buffer_release_cond, &free_buffer_lock);
     }
     res = free_buffers.front();
@@ -79,6 +97,8 @@ class memsocket : public mysocket {
     pthread_cond_signal(&free_buffer_release_cond);
     pthread_mutex_unlock(&free_buffer_lock);
   }
+
+  /*
 
   inline int queue_size() {
     int size;
@@ -98,6 +118,7 @@ class memsocket : public mysocket {
   
   inline void wait_for_data() {
     pthread_mutex_lock(&queue_lock);
+    //my_cond_wait(&queue_push_cond, &queue_lock, 10);
     pthread_cond_wait(&queue_push_cond, &queue_lock);
     pthread_mutex_unlock(&queue_lock);
     return;
@@ -105,11 +126,16 @@ class memsocket : public mysocket {
 
   inline void wait_for_space() {
     pthread_mutex_lock(&queue_lock);
+    //my_cond_wait(&queue_pop_cond, &queue_lock, 10);
     pthread_cond_wait(&queue_pop_cond, &queue_lock);
     pthread_mutex_unlock(&queue_lock);
     return;
   }  
   
+  */
+
+  // push_buffer always succeeds!
+
   inline void push_buffer(void *ptr) {
     pthread_mutex_lock(&queue_lock);
     data_queue.push(ptr);
@@ -117,20 +143,20 @@ class memsocket : public mysocket {
     pthread_mutex_unlock(&queue_lock);
   }
 
+  // pop_buffer can block until data available!
+
   inline void* pop_buffer() {
     void *res;
     pthread_mutex_lock(&queue_lock);
+    while (data_queue.size() == 0) {
+      pthread_cond_wait(&queue_push_cond, &queue_lock);
+    }
     res = data_queue.front();
     data_queue.pop();
-    pthread_cond_signal(&queue_pop_cond);
+    //pthread_cond_signal(&queue_pop_cond);
     pthread_mutex_unlock(&queue_lock);
     return res;
   }  
-
-  
-  
-  
-
 
 };
 

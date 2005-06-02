@@ -3,6 +3,7 @@
 
 #include <socket_holder.h>
 #include <serializable.h>
+#include <netsocket.h>
 
 #define CONSUMER_BUFFER_SIZE 10000
 
@@ -31,6 +32,8 @@ class consumer2 : public socket_holder, public serializable {
 
   inline void pop_items(T *data, int num) {
 
+    //((netsocket*)sock)->read_chunk((char*)data, sizeof(T)*num);
+
   __start:
     
     if (num <= CONSUMER_BUFFER_SIZE - offs) {
@@ -53,7 +56,11 @@ class consumer2 : public socket_holder, public serializable {
   }
   
   inline T pop() {
-    
+
+    //T tmp;
+    //((netsocket*)sock)->read_chunk((char*)&tmp, sizeof(T));
+    //return tmp;
+
     //item_count++;
 
     if (offs == CONSUMER_BUFFER_SIZE) {

@@ -5,6 +5,8 @@
 
 void consumer2<int>::init() {
 
+  buf = NULL;
+
   if (is_mem_socket) {
 
 #ifndef ARM
@@ -21,6 +23,8 @@ void consumer2<int>::init() {
 }
 
 void consumer2<float>::init() {
+
+  buf = NULL;
 
   if (is_mem_socket) {
 
@@ -45,9 +49,9 @@ void consumer2<int>::recv_buffer() {
 #ifndef ARM
 
     if (buf != NULL) ((memsocket*)sock)->release_buffer(buf);
-    while (((memsocket*)sock)->queue_empty()) {
-      ((memsocket*)sock)->wait_for_data();
-    }
+    //while (((memsocket*)sock)->queue_empty()) {
+    //  ((memsocket*)sock)->wait_for_data();
+    //}
     buf = (int*)((memsocket*)sock)->pop_buffer();
     offs = 0;
 
@@ -68,9 +72,9 @@ void consumer2<float>::recv_buffer() {
 #ifndef ARM
 
     if (buf != NULL) ((memsocket*)sock)->release_buffer(buf);
-    while (((memsocket*)sock)->queue_empty()) {
-      ((memsocket*)sock)->wait_for_data();
-    }
+    //while (((memsocket*)sock)->queue_empty()) {
+    //  ((memsocket*)sock)->wait_for_data();
+    //}
     buf = (float*)((memsocket*)sock)->pop_buffer();
     offs = 0;
 
@@ -82,4 +86,7 @@ void consumer2<float>::recv_buffer() {
     offs = 0;
   }
 }
+
+
+
 

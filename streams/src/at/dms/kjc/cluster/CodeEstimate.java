@@ -112,6 +112,11 @@ public class CodeEstimate extends SLIREmptyVisitor {
 	JMethodDeclaration init = self.getInit();
 	JMethodDeclaration[] methods = self.getMethods();
 
+	if (work == null) {
+	    System.out.println("WARNING! Filter ["+self+"] has no work function!");
+	    return;
+	}
+
 	methodsToVisit = new HashMap();
 	methodsToVisit.put(work.getName(), new Boolean(false));
 

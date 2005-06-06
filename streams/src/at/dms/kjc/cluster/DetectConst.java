@@ -68,7 +68,9 @@ public class DetectConst extends SLIREmptyVisitor {
 	fieldIsModified = new HashSet();
 	int old_size = 0;
 
-	methodsToVisit.put("__CLUSTERMAIN__", new Boolean(false));
+	//methodsToVisit.put("__CLUSTERMAIN__", new Boolean(false));
+
+	methodsToVisit.put(work.getName(), new Boolean(false));
 
 	while (methodsToVisit.size() != old_size) {
 	    old_size = methodsToVisit.size();

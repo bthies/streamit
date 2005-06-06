@@ -47,6 +47,10 @@ class CConfigPipeline extends CConfigContainer {
 
     }
 
+    public boolean getPeek() {
+	return childConfig(0).getPeek();
+    }
+
     public int numberOfTiles() {
 	if (num_tiles > 0) return num_tiles; // check if we have precomputed
 
@@ -209,19 +213,17 @@ class CConfigPipeline extends CConfigContainer {
 		    //double amortize_break = f_extra / ClusterBackend.getExecCounts(filter);
 		    //double amortize_fuse = f_extra / mult[i];
 		
-		    // break if peek rate < 25% of (peek-pop)
-		    
 		    System.out.print("[refactor extra:"+f_extra+"("+(f_pop * mult[i] * 4)+") pop:"+f_pop+" m:"+mult[i]+" ]");
 		    
-		    //System.out.print("[ a_b: "+amortize_break+" a_f: "+amortize_break+"]");
 
-		    if (f_extra > f_pop * mult[i] * 4) {
-			//work += fi.getWorkEstimate()/2;
-			//work += 1500;
-			System.out.print("Cutting partition!!");
+		    // break if peek rate < 25% of (peek-pop)
+		    //if (f_extra > f_pop * mult[i] * 4) {
+			
+		        System.out.print("Cutting partition!!");
 			greedyCuts[i-1] = true;
 			new_cuts++;
-		    } 
+			//} 
+
 		    /*
 		    else if (amortize_break * 2 < amortize_fuse) {
 

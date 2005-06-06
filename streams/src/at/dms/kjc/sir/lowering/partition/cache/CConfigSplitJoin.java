@@ -28,8 +28,22 @@ class CConfigSplitJoin extends CConfigContainer {
     }
 
     public boolean getPeek() {
-	return sj_peek;
+	boolean duplicate = split_join.getSplitter().getType().isDuplicate();
+
+	if (!duplicate) return false; // round robin splitter
+
+	// duplicate splitter
+
+	for (int i = 0; i < cont.size(); i++) {
+	    if (childConfig(i).getPeek()) return true;
+	}
+
+	return false;
     }
+
+    //public boolean getPeek() {
+    //	return sj_peek;
+    //}
 
     public static int gcd(int x, int y) {
 	while (y != 0) {
@@ -44,10 +58,24 @@ class CConfigSplitJoin extends CConfigContainer {
  
 	FusionInfo fi = getFusionInfo();
 
-	if (fi.getCost().getCost() == fi.getWorkEstimateNoPenalty()) {
+	boolean penalty = (fi.getCost().getCost() > fi.getWorkEstimateNoPenalty());
 
-	    // no fusion penalty 
-	    num_tiles = 1;
+	System.out.println("SplitJoin num.chan("+cont.size()+") penalty:"+penalty);
+
+	if (fi.getCost().getCost() == fi.getWorkEstimateNoPenalty()) {
+	    
+	    // no fusion penalty
+	    num_tiles = 0;
+	    for (int i = 0; i < cont.size(); i++) {
+		num_tiles += childConfig(i).numberOfTiles();
+	    }
+	    
+	    if (num_tiles <= cont.size()) {
+		num_tiles = 1; // all branches require at most one tile - fuse all
+	    } else {
+		fi.addPenalty(1000); // HACK !!!
+	    }
+
 	} else {    
 
 	    // positive fusion penalty
@@ -335,40 +363,17 @@ class CConfigSplitJoin extends CConfigContainer {
 
 	    if (KjcOptions.peekratio >= 1024) { 
 
-		if (child instanceof CConfigFilter) {
-		    CConfigFilter fc = (CConfigFilter)child;
-		    SIRFilter filter = (SIRFilter)fc.getStream();
-		    if (filter.getPeekInt() > filter.getPopInt()) {
+		if (child.getPeek()) {
+		    if (!duplicate || cont.size() > 2) {
 
-			if (!duplicate) {
-			    work += fi.getWorkEstimate() / 2;
-			} else {
-			    sj_peek = true;
-			}
-
+			//System.out.println("Round Robin Splitter: Channel peek!");
+			
+			work += 1000;
+		    } else {
+			sj_peek = true;
 		    }
+		    
 		}
-		
-		if (child instanceof CConfigPipeline) {
-		    CConfigPipeline pipe = (CConfigPipeline)child;
-		    if (pipe.childConfig(1) instanceof CConfigFilter) {
-			CConfigFilter cfilter = (CConfigFilter)pipe.childConfig(1);
-			SIRFilter filter = (SIRFilter)cfilter.getStream();
-			if (filter.getPeekInt() > filter.getPopInt()) {
-
-			    if (!duplicate) {
-				work += cfilter.getFusionInfo().getWorkEstimate() / 2;
-			    } else {
-				sj_peek = true;
-			    }
-
-			}
-		    }
-		}
-
-		// WARNING!!!
-		// Currently do not support multiple nested pipelines!
-
 	    }
 	}
 

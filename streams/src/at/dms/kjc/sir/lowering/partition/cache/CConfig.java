@@ -22,6 +22,8 @@ abstract class CConfig implements Cloneable {
 	this.partitioner = partitioner;
     }
 
+    abstract public boolean getPeek();
+
     /**
      * Returns information about the config if everything is fused.
      */

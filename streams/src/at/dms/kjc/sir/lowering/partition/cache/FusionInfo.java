@@ -32,7 +32,10 @@ class FusionInfo {
 	int cost = work_estimate;
 
 	// ICode > (L1 Instruction Cache) / 0.8 
-	if (code_size > (CachePartitioner.getCodeCacheSize()*10/8)) {
+
+	//if (code_size > 200*1000) { // 200 Kb instruction limit
+
+	if (code_size > (CachePartitioner.getCodeCacheSize()*10/8)) {	    
 	    cost += cost/2; 
 	}
 	
@@ -42,6 +45,10 @@ class FusionInfo {
 	}
 	
 	return new CCost(cost);
+    }
+
+    void addPenalty(int amount) {
+	work_estimate += amount;
     }
 
     int getWorkEstimate() {

@@ -36,6 +36,11 @@ class CConfigFilter extends CConfig {
 	fusion_info = new FusionInfo(work_estimate, work_estimate, code_size, data_size, filter.getPopInt(), filter.getPeekInt(), filter.getPushInt(), input, output);	
     }
 
+    public boolean getPeek() {
+	return filter.getPeekInt() > filter.getPopInt();
+    }
+
+
     public int numberOfTiles() {
 	return 1;
     }

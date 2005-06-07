@@ -1,4 +1,6 @@
 
+#ifndef ARM
+
 #include <ccp.h>
 
 #include <node_server.h>
@@ -29,12 +31,14 @@ void ccp::set_init_iter(int iter) {
   initial_iteration = iter;
 }
 
-void ccp::read_config_file() {
+int ccp::read_config_file(char *file_name) {
 
   int id, m_id, max;
   char buf[128];
 
-  FILE *f = fopen("cluster-config.txt", "r");
+  FILE *f = fopen(file_name, "r");
+
+  if (f == NULL) return -1;
 
   number_of_threads = 0;
   max = 0;
@@ -59,6 +63,8 @@ void ccp::read_config_file() {
 
   printf("Number of nodes in partition: (%d)\n", max);
   machines_in_partition = max;
+
+  return 0;
 }
 
 
@@ -71,7 +77,8 @@ int ccp::run_ccp() {
 
   int last_latest_chkpt = 0;
 
-  read_config_file();
+  int res = read_config_file("cluster-config.txt");
+  assert (res != -1);  
 
   struct sockaddr_in serveraddr;
 
@@ -137,7 +144,7 @@ int ccp::run_ccp() {
       }
 
     rwait.tv_sec = 0;
-    rwait.tv_usec = 1000000 / 4; // 1/4th second
+    rwait.tv_usec = 1000000 / 10; // 1/10th second
 
     retval = select(maxfd + 1, &set, NULL, NULL, &rwait);
 
@@ -311,10 +318,23 @@ void ccp::handle_change_in_number_of_nodes() {
 
       }
 
+      printf("Sleep 5 seconds...");
+      sleep(5);
+      printf("Done.\n");
 
-      execute_partitioner(count);
+      //execute_partitioner(count);
 
-      read_config_file();
+      char name[64];
+      sprintf(name, "cluster-config.txt.%d", count);
+      printf("Trying to open file [%s] ...", name); 
+
+      int res = read_config_file(name);
+      if (res == -1) {
+	printf("Failed!\n"); 
+	return;
+      } else {
+	printf("Success!\n");
+      }
 
       assign_nodes_to_partition();
       
@@ -410,3 +430,4 @@ void ccp::assign_nodes_to_partition() {
   }
 }
 
+#endif //ARM

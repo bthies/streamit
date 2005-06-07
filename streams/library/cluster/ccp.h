@@ -22,7 +22,7 @@ class ccp {
 
   vector <ccp_session*> sessions;
   
-  void read_config_file();
+  int read_config_file(char *fname);
   void assign_nodes_to_partition();
 
   void send_cluster_config(int iter = 0);

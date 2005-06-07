@@ -59,6 +59,7 @@ profile: $(LIBRARYP)
 clean:
 	rm -f $(LIBRARY) $(OBJS)
 	rm -f $(LIBRARY_IA64) $(OBJS_IA64)
+	rm -f $(LIBRARY_ARM) $(OBJS_ARM)
 	rm -f $(LIBRARYP) $(OBJSP)
 	rm -f *~
 

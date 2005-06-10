@@ -1995,11 +1995,15 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
             print(ident.substring(0, index));      // local var
         } else {
 	    print("(");
-            left.accept(this);
-	    if (!(left instanceof JThisExpression))
+
+	    if (left instanceof JThisExpression) {
+		print(ident+"__"+selfID);
+	    } else {
+		left.accept(this);
 		print(".");
-            print(ident);
-	    print("__"+selfID);
+		print(ident);
+	    }
+
 	    print(")");
         }
     }
@@ -2160,11 +2164,16 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 	}
            
 
+	// do not initialize class variables
+
+	if (right instanceof JUnqualifiedInstanceCreation) return;
+
 	
 	lastLeft=left;
         print("(");
         left.accept(this);
         print(" = ");
+
         right.accept(this);
         print(")");
 
@@ -2514,12 +2523,12 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 			    JExpression val) 
     {
 	
-	NetStream out = RegisterStreams.getFilterOutStream(filter);
-
-	//print(out.producer_name()+".push(");
 	print("__push__"+selfID+"(");
 	val.accept(this);
 	print(")");
+
+	//NetStream out = RegisterStreams.getFilterOutStream(filter);
+	//print(out.producer_name()+".push(");
 
 	//print(Util.staticNetworkSendPrefix(tapeType));
 	//print(Util.staticNetworkSendSuffix());
@@ -2531,11 +2540,17 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 			  CType tapeType,
 			  JExpression val) 
     {
-	//turn the push statement into a call of
-	//the structure's push method
-	print("push" + tapeType + "(&");
+
+	print("__push__"+selfID+"(");
 	val.accept(this);
 	print(")");
+
+
+	//turn the push statement into a call of
+	//the structure's push method
+	//print("push" + tapeType + "(&");
+	//val.accept(this);
+	//print(")");
     }
     
 

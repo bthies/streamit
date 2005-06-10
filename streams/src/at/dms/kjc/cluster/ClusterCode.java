@@ -1320,13 +1320,14 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p = new TabbedPrintWriter(str);
 	
 	p.println();
-	
+	p.print("LIB_CLUSTER = $(STREAMIT_HOME)/library/cluster\n");
+
+	p.println();	
 	p.print("CC = gcc34 #gcc34\n"); // gcc34
 	p.print("CC_IA64 = ecc\n");
 	p.print("CC_ARM = /u/janiss/bin/arm343 #arm-linux-gcc\n");
 
 	p.println();
-
 	p.print("CCFLAGS = -O3 #-O3\n");
 	p.print("CCFLAGS_IA64 = -O3\n");
 	p.print("CCFLAGS_ARM = -O3\n");
@@ -1382,7 +1383,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	// =============== run_cluster
 
 	p.print("run_cluster: master.o $(OBJS)\n");
-	p.print("\t$(CC) $(CCFLAGS) -o $@ $^ -L$(STREAMIT_HOME)/library/cluster -lpthread -lcluster -lstdc++\n");
+	p.print("\t$(CC) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++\n");
 	p.println();
 
 	// =============== fusion
@@ -1390,13 +1391,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("fusion: fusion.o $(OBJS)\n");
 	p.print("\tar r objects.a $^\n");
 	p.print("\tranlib objects.a\n");
-	p.print("\t$(CC) $(CCFLAGS) -o $@ objects.a -L$(STREAMIT_HOME)/library/cluster -lpthread -lcluster -lstdc++\n");
+	p.print("\t$(CC) $(CCFLAGS) -o $@ objects.a -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++\n");
 	p.println();
 	
 	// =============== %.o : %.cpp
 	
 	p.print("%.o: %.cpp fusion.h cluster.h\n");
-	p.print("\t$(CC) $(CCFLAGS) -I$(STREAMIT_HOME)/library/cluster -c -o $@ $<\n");
+	p.print("\t$(CC) $(CCFLAGS) -I$(LIB_CLUSTER) -c -o $@ $<\n");
 	p.println();
 
 	p.println();
@@ -1404,20 +1405,20 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	// =============== run_cluster_ia64
 
 	p.print("run_cluster_ia64: master_ia64.o $(OBJS_IA64)\n");
-	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -o $@ $^ -L$(STREAMIT_HOME)/library/cluster -lpthread -lcluster_ia64\n");
+	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster_ia64\n");
 	p.println();
 
 	// =============== fusion_ia64
 
 	p.print("fusion_ia64: fusion_ia64.o $(OBJS_IA64)\n");
-	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -o $@ $^ -L$(STREAMIT_HOME)/library/cluster -lpthread -lcluster_ia64\n");
+	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster_ia64\n");
 
 	p.println();
 
 	// =============== %_ia64.o : %.cpp
 
 	p.print("%_ia64.o: %.cpp fusion.h cluster.h\n");
-	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -I$(STREAMIT_HOME)/library/cluster -c -o $@ $<\n");
+	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -I$(LIB_CLUSTER) -c -o $@ $<\n");
 	p.println();
 
 
@@ -1428,14 +1429,14 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("fusion_arm: fusion_arm.o $(OBJS_ARM)\n");
 	p.print("\tar r objects_arm.a $^\n");
 	p.print("\tranlib objects_arm.a\n");
-	p.print("\t$(CC_ARM) $(CCFLAGS_ARM) -o $@ objects_arm.a -L$(STREAMIT_HOME)/library/cluster -lstdc++ -lm -lcluster_arm #-lpthread\n");
+	p.print("\t$(CC_ARM) $(CCFLAGS_ARM) -o $@ objects_arm.a -L$(LIB_CLUSTER) -lstdc++ -lm -lcluster_arm #-lpthread\n");
 
 	p.println();
 
 	// =============== %_arm.o : %.cpp
 
 	p.print("%_arm.o: %.cpp fusion.h cluster.h\n");
-	p.print("\t$(CC_ARM) $(CCFLAGS_ARM) -I$(STREAMIT_HOME)/library/cluster -c -o $@ $<\n");
+	p.print("\t$(CC_ARM) $(CCFLAGS_ARM) -I$(LIB_CLUSTER) -c -o $@ $<\n");
 	p.println();
 
 

@@ -32,9 +32,7 @@ NAMES =		sock_dscr \
 		read_setup \
 		mysocket \
 		netsocket \
-		memsocket \
-		producer2 \
-		consumer2
+		memsocket 
 
 #               data_consumer
 #               data_producer

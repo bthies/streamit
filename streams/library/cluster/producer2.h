@@ -4,6 +4,7 @@
 #include <socket_holder.h>
 #include <serializable.h>
 #include <netsocket.h>
+#include <memsocket.h>
 
 #define PRODUCER_BUFFER_SIZE 10000
 
@@ -24,8 +25,46 @@ class producer2 : public socket_holder, public serializable {
     item_count = 0;
   }
 
-  void init();
-  void send_buffer(); 
+
+  void init() {
+#ifndef ARM
+    
+    if (is_mem_socket) {
+
+      ((memsocket*)sock)->set_buffer_size(PRODUCER_BUFFER_SIZE*sizeof(T));
+      buf = (T*)((memsocket*)sock)->get_free_buffer();
+      
+    } else {
+      
+      buf = (T*)malloc(PRODUCER_BUFFER_SIZE*sizeof(T));
+      
+    }
+#endif //ARM
+  }
+
+
+  void send_buffer() {
+#ifndef ARM
+    if (is_mem_socket) {
+      
+      //while (((memsocket*)sock)->queue_full()) {
+      //  ((memsocket*)sock)->wait_for_space();
+      //}
+      
+      ((memsocket*)sock)->push_buffer(buf);
+      buf = (T*)((memsocket*)sock)->get_free_buffer();
+      offs = 0;
+      
+    } else {
+      
+      ((netsocket*)sock)->write_chunk((char*)buf, 
+				      PRODUCER_BUFFER_SIZE*sizeof(T));
+      offs = 0;
+      
+    }
+#endif //ARM
+  }
+
 
   virtual void write_object(object_write_buffer *) {}
   virtual void read_object(object_write_buffer *) {}

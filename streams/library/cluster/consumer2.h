@@ -36,7 +36,7 @@ class consumer2 : public socket_holder, public serializable {
       
     } else {
       
-      buf =  (float*)malloc(CONSUMER_BUFFER_SIZE * sizeof(T));
+      buf =  (T*)malloc(CONSUMER_BUFFER_SIZE * sizeof(T));
       
     }
 #endif //ARM
@@ -108,13 +108,13 @@ class consumer2 : public socket_holder, public serializable {
     return buf[offs++];
   }
 
-  inline T peek(int index) {
+  inline void peek(int index) {
     
     if (offs == CONSUMER_BUFFER_SIZE) {
       recv_buffer();
     }
     
-    return 0;
+    return;
   }
 
 };

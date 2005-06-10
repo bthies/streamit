@@ -169,9 +169,12 @@ public class ClusterBackend implements FlatVisitor {
 	filter_steady_counts = exec_counts1[1]; 
 
 	// Increasing filter Multiplicity
-	if ( doCacheOptimization && KjcOptions.peekratio != 1024) {
+	//if ( doCacheOptimization && KjcOptions.peekratio < 1024) {
+
+	if (!(KjcOptions.peekratio >= 256)) {
 	    IncreaseFilterMult.inc(str, 1, code_cache);
 	}
+	    //}
 
 	/* for cluster backend, fusion means to fuse segments on same cluster
 	if (KjcOptions.fusion) {
@@ -369,6 +372,8 @@ public class ClusterBackend implements FlatVisitor {
 	FusionCode.generateFusionFile(d_sched, implicit_mult);
 
 	ClusterCode.generateMasterFile();
+	ClusterCode.generateClusterHeader();
+
 	ClusterCode.generateMakeFile();
 	ClusterCode.generateConfigFile();
 	ClusterCode.generateSetupFile();

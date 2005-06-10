@@ -37,7 +37,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
     protected TabbedPrintWriter		p;
     protected StringWriter                str; 
     protected boolean			nl = true;
-    public boolean                   declOnly = true;
+    public boolean                   declOnly = false;
     public SIRFilter               filter;
     protected JMethodDeclaration   method;
 
@@ -191,7 +191,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
     }
     */
 
-    private int selfID;
+    private int selfID = -1;
     
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
@@ -343,7 +343,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 
 	    int extra = peek_n - pop_n;
 	    
-	    assert (extra >= 0);
+	    //assert (extra >= 0);
+	    if (extra < 0) extra = 0;
 
 	    print("inline void __init_pop_buf__"+selfID+"() {\n");
 			
@@ -391,20 +392,63 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 	    print("}\n");
 	    print("\n");
 
+	    print("void save_peek_buffer__"+selfID+"(object_write_buffer *buf) {\n");
+	    print("  int i = 0, offs = __tail__"+selfID+";\n");
+	    print("  while (offs != __head__"+selfID+") {\n");
+	    print("    buf->write_"+input_type.toString()+"(__pop_buf__"+selfID+"[offs]);\n    offs++;\n    offs&="+(peek_buf_size-1)+";\n    i++;\n");
+	    print("  }\n");
+	    //print("  printf(\"buf size: %d\\n\", i);\n"); 
+	    print("  assert(i == "+extra+");\n");
+	    print("}\n");
+	    print("\n");
+
+	    print("void load_peek_buffer__"+selfID+"(object_write_buffer *buf) {\n");
+	    print("  for (int i = 0; i < "+extra+"; i++) {\n");
+	    print("    __pop_buf__"+selfID+"[i] = buf->read_"+input_type.toString()+"();\n");
+	    print("  }\n");
+	    print("  __tail__"+selfID+"=0;\n");
+	    print("  __head__"+selfID+"="+extra+";\n");
+	    print("}\n");
+	    print("\n");
+
+
 	    print("inline void __update_pop_buf__"+selfID+"() {\n");
 	    
-	    for (int i = 0; i < pop_n; i++) {
-		
-		print("  __pop_buf__"+selfID+"[__head__"+selfID+"]=");
+	    if (peek_n <= pop_n) {
 
-		if (source_fused) { 
-		    print(in.pop_name()+"();");
-		} else {
-		    print(in.consumer_name()+".pop();");
+		// no peek beyond pop
+
+		for (int i = 0; i < pop_n; i++) {
+		    print("  __pop_buf__"+selfID+"["+i+"]=");
+		    
+		    if (source_fused) { 
+			print(in.pop_name()+"();");
+		    } else {
+			print(in.consumer_name()+".pop();");
+		    }
+		    print("\n");
 		}
 
-		print("__head__"+selfID+"++;");
-		print("__head__"+selfID+"&="+(peek_buf_size-1)+";\n");
+		print("  __tail__"+selfID+" = 0;\n");
+		print("  __head__"+selfID+" = "+pop_n+";\n");
+
+	    } else {
+
+		// peek beyond pop => circular buffer
+
+		for (int i = 0; i < pop_n; i++) {
+		    
+		    print("  __pop_buf__"+selfID+"[__head__"+selfID+"]=");
+		    
+		    if (source_fused) { 
+			print(in.pop_name()+"();");
+		    } else {
+			print(in.consumer_name()+".pop();");
+		    }
+		    
+		    print("__head__"+selfID+"++;");
+		    print("__head__"+selfID+"&="+(peek_buf_size-1)+";\n");
+		}
 	    }
 
 	    /*
@@ -466,7 +510,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 
 	    print("    "+input_type.toString()+" res=BUFFER_"+s+"_"+d+"[TAIL_"+s+"_"+d+"];\n");
 	    print("    TAIL_"+s+"_"+d+"++;\n");
-	    print("    #ifndef __NOPEEK_"+s+"_"+d+"\n");
+	    print("    #ifndef __NOMOD_"+s+"_"+d+"\n");
 	    print("    TAIL_"+s+"_"+d+"&=__BUF_SIZE_MASK_"+s+"_"+d+";\n");
 	    print("    #endif\n");
 	    print("    return res;\n");
@@ -477,7 +521,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 	    // peek from fusion buffer
 
 	    print("  inline "+input_type.toString()+" __peek__"+selfID+"(int offs) {\n");
-	    print("    #ifdef __NOPEEK_"+s+"_"+d+"\n");
+	    print("    #ifdef __NOMOD_"+s+"_"+d+"\n");
 	    print("    return BUFFER_"+s+"_"+d+"[TAIL_"+s+"_"+d+"+offs];\n");
 	    print("    #else\n");
 	    print("    return BUFFER_"+s+"_"+d+"[(TAIL_"+s+"_"+d+"+offs)&__BUF_SIZE_MASK_"+s+"_"+d+"];\n");
@@ -493,18 +537,27 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 
 	    print("  inline "+input_type.toString()+" __pop__"+selfID+"() {\n");
 
-	    print("    "+input_type.toString()+" res=__pop_buf__"+selfID+"[__tail__"+selfID+"];");
-	    print("__tail__"+selfID+"++;");
-	    print("__tail__"+selfID+"&="+(peek_buf_size-1)+";\n");
-	    print("    return res;\n");
+	    if (peek_n <= pop_n) {
+		print("    return __pop_buf__"+selfID+"[__tail__"+selfID+"++];\n");
+	    } else {
+		print("    "+input_type.toString()+" res=__pop_buf__"+selfID+"[__tail__"+selfID+"];");
+		print("__tail__"+selfID+"++;");
+		print("__tail__"+selfID+"&="+(peek_buf_size-1)+";\n");
+		print("    return res;\n");
+	    }
 
 	    //print("  return __pop_buf__"+selfID+"[__pop_index__"+selfID+"++];\n");
 	    print("  }\n");
 	    print("\n");
 
 	    print("  inline "+input_type.toString()+" __peek__"+selfID+"(int offs) {\n");
-	    print("    return __pop_buf__"+selfID+"[(__tail__"+selfID+"+offs)&"+(peek_buf_size-1)+"];\n");
-	    
+
+	    if (peek_n <= pop_n) {
+		print("    return __pop_buf__"+selfID+"[(__tail__"+selfID+"+offs)];\n");
+	    } else {
+		print("    return __pop_buf__"+selfID+"[(__tail__"+selfID+"+offs)&"+(peek_buf_size-1)+"];\n");
+	    }
+
 	    //print("  return __pop_buf__"+selfID+"[__pop_index__"+selfID+" + offs];\n");
  	    print("  }\n");
 	    print("\n");
@@ -516,6 +569,10 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
        
 	    print("inline "+input_type.toString()+" __init_pop_buf__"+selfID+"() {}\n");
 	    print("inline "+input_type.toString()+" __update_pop_buf__"+selfID+"() {}\n");
+
+	    print("void save_peek_buffer__"+selfID+"(object_write_buffer *buf) {}\n");
+	    print("void load_peek_buffer__"+selfID+"(object_write_buffer *buf) {}\n");
+
 	    print("\n");
 	}
 
@@ -546,7 +603,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 
 	    print("    BUFFER_"+s+"_"+d+"[HEAD_"+s+"_"+d+"]=data;\n");
 	    print("    HEAD_"+s+"_"+d+"++;\n");
-	    print("    #ifndef __NOPEEK_"+s+"_"+d+"\n");
+	    print("    #ifndef __NOMOD_"+s+"_"+d+"\n");
 	    print("    HEAD_"+s+"_"+d+"&=__BUF_SIZE_MASK_"+s+"_"+d+";\n");
 	    print("    #endif\n");
 
@@ -659,12 +716,17 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 				    "____n",
 				    new JIntLiteral(0));
 
+	/*
+
 	JVariableDefinition tmp = 
 	    new JVariableDefinition(null, 
 				    0, 
 				    CStdType.Integer,
 				    "____tmp",
 				    new JLocalVariableExpression(null, counter)); // int ____tmp = ____n;
+
+	*/
+
 
 	JVariableDefinition iter_counter = 
 	    new JVariableDefinition(null, 
@@ -674,14 +736,16 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 				    null);
 	
 
-	JStatement init = new JVariableDeclarationStatement(null, tmp, null);
+	JStatement init = new JEmptyStatement(null, null);
+
+	//VariableDeclarationStatement(null, tmp, null);
 
 
 	JExpression decrExpr = 
 	    new JPostfixExpression(null, 
 				   Constants.OPE_POSTDEC, 
 				   new JLocalVariableExpression(null,
-								   tmp));
+								   counter));
 
 	JStatement decr = 
 	    new JExpressionStatement(null, decrExpr, null);
@@ -690,13 +754,15 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 	    new JRelationalExpression(null,
 				      Constants.OPE_LT,
 				      new JIntLiteral(0),
-				      new JLocalVariableExpression(null,tmp));
+				      new JLocalVariableExpression(null,counter));
 
 
 	block.addStatement(new JForStatement(null, init, cond, decr, work.getBody(),
 					     null));
 
 	// __counter_X = __counter_X + ____n;
+
+	/*
 	block.addStatement(new JExpressionStatement(
 						    null,
 						    new JAssignmentExpression
@@ -711,7 +777,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 						    null));
 	
 							       
-
+	*/
 	
 	
 	JFormalParameter param = new JFormalParameter(null, 0, CStdType.Integer, "____n", true);

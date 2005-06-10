@@ -32,7 +32,7 @@ class FusionCode {
 	    // if dws < .8 * data_cahce1
 
 	    if ((dws + io) / 8 * 10 < data_cache1) {
-		avail = (data_cache1 - dws) * 2 / 3;
+		avail = (data_cache1 - dws);// * 2 / 3;
 	    } else {
 		avail = (data_cache2 - dws) * 2 / 3;
 	    }
@@ -42,7 +42,13 @@ class FusionCode {
 
 	    if (mult <= 0) mult = 1;
 
-	    System.out.println("DWS: "+dws+" Avail: "+avail+" IO: "+io+" Mult: "+mult);
+
+	    int globals = 0;
+	    if (oper instanceof SIRFilter) {
+		globals = DataEstimate.filterGlobalsSize((SIRFilter)oper);
+	    }
+
+	    System.out.println("DWS: "+dws+" (g="+globals+") Avail: "+avail+" IO: "+io+" Mult: "+mult);
 
 	    /*
 	    if (oper instanceof SIRFilter) {
@@ -107,7 +113,7 @@ class FusionCode {
 	//p.print("#define __ITERS 10000\n");
 
 	//int mult = bestMult(16000,65000,work_est); // estimating best multiplicity 
-	int mult = bestMult(16000,65000); // estimating best multiplicity 
+	int mult = bestMult(8500,65000); // estimating best multiplicity 
 
 	if (KjcOptions.nomult) mult = 1;
 
@@ -154,12 +160,14 @@ class FusionCode {
 		}
 
 
-		if (KjcOptions.peekratio == 1024 || no_peek) {
-		    p.print("#define __NOPEEK_"+src+"_"+dst+"\n");
+		//if (KjcOptions.peekratio == 1024 || no_peek) {
+		
+		if (no_peek || KjcOptions.modfusion == false) {
+		    p.print("#define __NOMOD_"+src+"_"+dst+"\n");
 		}
 		
-		//if (no_peek) p.print("#define __NOPEEK_"+src+"_"+dst+"\n");
-		//p.print("#define __NOPEEK_"+src+"_"+dst+"\n");
+		//if (no_peek) p.print("#define __NOMOD_"+src+"_"+dst+"\n");
+		//p.print("#define __NOMOD_"+src+"_"+dst+"\n");
 
 		int source_init_items = 0;
 		int source_steady_items = 0;
@@ -338,7 +346,7 @@ class FusionCode {
 	
 	p.print("#include <pthread.h>\n");
 	p.print("#include <unistd.h>\n");
-	p.print("#include <signal.h>\n");
+	//p.print("#include <signal.h>\n");
 	p.print("#include <string.h>\n");
 	p.print("#include <stdlib.h>\n");
 	p.print("#include <stdio.h>\n");
@@ -361,6 +369,7 @@ class FusionCode {
 	p.print("int __max_iteration;\n");
 	p.print("int __timer_enabled = 0;\n");
 	p.print("int __frequency_of_chkpts;\n");
+	p.print("volatile int __vol;\n");
 	p.print("proc_timer tt;\n");
 	p.println();
 
@@ -583,7 +592,7 @@ class FusionCode {
 			NetStream s = (NetStream)out.elementAt(i);
 			int _s = s.getSource();
 			int _d = s.getDest();
-			p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+			p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
 			p.print("    #ifdef __PEEK_BUF_SIZE_"+_s+"_"+_d+"\n");
 
 			p.print("      for (int __y = 0; __y < __PEEK_BUF_SIZE_"+_s+"_"+_d+"; __y++) {\n");
@@ -623,7 +632,8 @@ class FusionCode {
 
 
 
-	p.print("  for (int n = 0; n < (__max_iteration % __MULT); n++) {\n");
+	//p.print("  for (int n = 0; n < (__max_iteration % __MULT); n++) {\n");
+	p.print("  int rem = (__max_iteration % __MULT);\n\n");
 
 	for (int ph = 0; ph < n_phases; ph++) {
 	
@@ -643,6 +653,7 @@ class FusionCode {
 		int steady_int = 0;
 		if (steady != null) steady_int = (steady).intValue();
 
+
 		if (steady_int > 0) {
 
 		    Vector out = RegisterStreams.getNodeOutStreams(oper);
@@ -650,19 +661,62 @@ class FusionCode {
 			NetStream s = (NetStream)out.elementAt(i);
 			int _s = s.getSource();
 			int _d = s.getDest();
-			p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+			p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
+			p.print("    #ifdef __PEEK_BUF_SIZE_"+_s+"_"+_d+"\n");
+
+			p.print("      for (int __y = 0; __y < __PEEK_BUF_SIZE_"+_s+"_"+_d+"; __y++) {\n");
+			p.print("        BUFFER_"+_s+"_"+_d+"[__y] = BUFFER_"+_s+"_"+_d+"[__y + TAIL_"+_s+"_"+_d+"];\n");
+			p.print("      }\n");
+			p.print("      HEAD_"+_s+"_"+_d+" -= TAIL_"+_s+"_"+_d+";\n");
+			p.print("      TAIL_"+_s+"_"+_d+" = 0;\n");
+			
+			p.print("    #else\n");
+
+			p.print("      HEAD_"+_s+"_"+_d+" = 0;\n");
+			p.print("      TAIL_"+_s+"_"+_d+" = 0;\n");
+
+			p.print("    #endif\n");
+			p.print("    #endif\n");
+		      
+			/*
+
+			p.print("    if (HEAD_"+_s+"_"+_d+" - TAIL_"+_s+"_"+_d+" != __PEEK_BUF_SIZE_"+_s+"_"+_d+") {\n");
+			p.print("      printf(\"head: %d\\n\", HEAD_"+_s+"_"+_d+");\n");
+			p.print("      printf(\"tail: %d\\n\", TAIL_"+_s+"_"+_d+");\n");
+			p.print("      assert(1 == 0);\n");
+			p.print("    }\n");
+			*/
+		    }
+		    
+		    p.print("    "+get_work_function(oper)+"("+steady_int+"*rem);");
+		}
+
+		/*
+
+		if (steady_int > 0) {
+
+		    Vector out = RegisterStreams.getNodeOutStreams(oper);
+		    for (int i = 0; i < out.size(); i++) {
+			NetStream s = (NetStream)out.elementAt(i);
+			int _s = s.getSource();
+			int _d = s.getDest();
+
+
+
+			p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
 			p.print("    HEAD_"+_s+"_"+_d+" = 0; TAIL_"+_s+"_"+_d+" = 0;\n");
 			p.print("    #endif\n");
 		    }
 		    
 		    p.print("    "+get_work_function(oper)+"("+steady_int+");");
 		}
+		*/
 
 		p.println();
 	    }
 	}
 	
-	p.print("  }\n");
+	//p.print("  }\n");
 
 	p.print("  tt.stop();\n");
 	p.print("  tt.output(stderr);\n");

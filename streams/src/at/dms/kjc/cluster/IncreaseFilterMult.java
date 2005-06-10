@@ -316,8 +316,7 @@ class IncreaseFilterMult implements StreamVisitor {
 
 	int code_size = CodeEstimate.estimateCode(filter)*_mult;
 
-	if ( (_mult <= 4 && code_size < CODE_CACHE_SIZE*10/8) || 
-	     (code_size < CODE_CACHE_SIZE/2) ) {
+	if ((_mult <= 8 && code_size < CODE_CACHE_SIZE / 2)) {
 
 	    for_stmt.setUnrolled(false); // allow unrolling
 

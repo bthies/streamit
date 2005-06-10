@@ -128,6 +128,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print(pre.elementAt(i).toString());
 	}
 
+	p.print("void save_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}\n");
+	p.print("void load_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}\n");
+	p.print("\n");
+
 	//  +=============================+
 	//  | Splitter Push               |
 	//  +=============================+
@@ -272,7 +276,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("\n");
 
 	    p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
-	    p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+	    p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
 	    p.print("    tmp = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;\n");
 	    p.print("    #else\n");
 	    p.print("    tmp = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
@@ -297,7 +301,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 		p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
 
-		p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+		p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
 		p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp;HEAD_"+_s+"_"+_d+"++;\n");
 		p.print("    #else\n");
 		p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp;HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
@@ -336,7 +340,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			// Destination
 			
 			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
-			p.print("    #ifdef __NOPEEK_"+_s2+"_"+_d2+"\n");
+			p.print("    #ifdef __NOMOD_"+_s2+"_"+_d2+"\n");
 			p.print("      BUFFER_"+_s2+"_"+_d2+"[HEAD_"+_s2+"_"+_d2+" + "+y+"] = \n");
 			p.print("    #else\n");
 			p.print("      BUFFER_"+_s2+"_"+_d2+"[(HEAD_"+_s2+"_"+_d2+" + "+y+") & __BUF_SIZE_MASK_"+_s2+"_"+_d2+"] = \n");
@@ -348,7 +352,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			// Source
 			
 			p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
-			p.print("    #ifdef __NOPEEK_"+_s1+"_"+_d1+"\n");
+			p.print("    #ifdef __NOMOD_"+_s1+"_"+_d1+"\n");
 			p.print("      BUFFER_"+_s1+"_"+_d1+"[TAIL_"+_s1+"_"+_d1+" + "+y+"]\n");
 			p.print("    #else\n");
 			p.print("      BUFFER_"+_s1+"_"+_d1+"[(TAIL_"+_s1+"_"+_d1+" + "+y+") & __BUF_SIZE_MASK_"+_s1+"_"+_d1+"]\n");
@@ -375,14 +379,14 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    
 		    p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
 		    p.print("    HEAD_"+_s2+"_"+_d2+" += 32;\n");
-		    p.print("    #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
+		    p.print("    #ifndef __NOMOD_"+_s2+"_"+_d2+"\n");
 		    p.print("    HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
 		    p.print("    #endif\n");
 		    p.print("  #endif\n");
 		    
 		    p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
 		    p.print("    TAIL_"+_s1+"_"+_d1+" += 32;\n");
-		    p.print("    #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
+		    p.print("    #ifndef __NOMOD_"+_s1+"_"+_d1+"\n");
 		    p.print("    TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
 		    p.print("    #endif\n");
 		    p.print("  #endif\n");
@@ -398,7 +402,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			// Destination
 			
 			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
-			p.print("    #ifdef __NOPEEK_"+_s2+"_"+_d2+"\n");
+			p.print("    #ifdef __NOMOD_"+_s2+"_"+_d2+"\n");
 			p.print("      BUFFER_"+_s2+"_"+_d2+"[HEAD_"+_s2+"_"+_d2+" + "+y+"] = \n");
 			p.print("    #else\n");
 			p.print("      BUFFER_"+_s2+"_"+_d2+"[(HEAD_"+_s2+"_"+_d2+" + "+y+") & __BUF_SIZE_MASK_"+_s2+"_"+_d2+"] = \n");
@@ -410,7 +414,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			// Source
 			
 			p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
-			p.print("    #ifdef __NOPEEK_"+_s1+"_"+_d1+"\n");
+			p.print("    #ifdef __NOMOD_"+_s1+"_"+_d1+"\n");
 			p.print("      BUFFER_"+_s1+"_"+_d1+"[TAIL_"+_s1+"_"+_d1+" + "+y+"]\n");
 			p.print("    #else\n");
 			p.print("      BUFFER_"+_s1+"_"+_d1+"[(TAIL_"+_s1+"_"+_d1+" + "+y+") & __BUF_SIZE_MASK_"+_s1+"_"+_d1+"]\n");
@@ -437,14 +441,14 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    
 		    p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
 		    p.print("    HEAD_"+_s2+"_"+_d2+" += "+rem+";\n");
-		    p.print("    #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
+		    p.print("    #ifndef __NOMOD_"+_s2+"_"+_d2+"\n");
 		    p.print("    HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
 		    p.print("    #endif\n");
 		    p.print("  #endif\n");
 		    
 		    p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
 		    p.print("    TAIL_"+_s1+"_"+_d1+" += "+rem+";\n");
-		    p.print("    #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
+		    p.print("    #ifndef __NOMOD_"+_s1+"_"+_d1+"\n");
 		    p.print("    TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
 		    p.print("    #endif\n");
 		    p.print("  #endif\n");
@@ -466,7 +470,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			// Destination
 			
 			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
-			p.print("    #ifdef __NOPEEK_"+_s2+"_"+_d2+"\n");
+			p.print("    #ifdef __NOMOD_"+_s2+"_"+_d2+"\n");
 			p.print("      BUFFER_"+_s2+"_"+_d2+"[HEAD_"+_s2+"_"+_d2+" + "+y+"] = \n");
 			p.print("    #else\n");
 			p.print("      BUFFER_"+_s2+"_"+_d2+"[(HEAD_"+_s2+"_"+_d2+" + "+y+") & __BUF_SIZE_MASK_"+_s2+"_"+_d2+"] = \n");
@@ -478,7 +482,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			// Source
 			
 			p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
-			p.print("    #ifdef __NOPEEK_"+_s1+"_"+_d1+"\n");
+			p.print("    #ifdef __NOMOD_"+_s1+"_"+_d1+"\n");
 			p.print("      BUFFER_"+_s1+"_"+_d1+"[TAIL_"+_s1+"_"+_d1+" + "+offs+"]\n");
 			p.print("    #else\n");
 			p.print("      BUFFER_"+_s1+"_"+_d1+"[(TAIL_"+_s1+"_"+_d1+" + "+offs+") & __BUF_SIZE_MASK_"+_s1+"_"+_d1+"]\n");
@@ -506,7 +510,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    
 		    p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
 		    p.print("    HEAD_"+_s2+"_"+_d2+" += "+num+";\n");
-		    p.print("    #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
+		    p.print("    #ifndef __NOMOD_"+_s2+"_"+_d2+"\n");
 		    p.print("    HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
 		    p.print("    #endif\n");
 		    p.print("  #endif\n");
@@ -515,7 +519,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		
 		p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
 		p.print("    TAIL_"+_s1+"_"+_d1+" += "+sum+";\n");
-		p.print("    #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
+		p.print("    #ifndef __NOMOD_"+_s1+"_"+_d1+"\n");
 		p.print("    TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
 		p.print("    #endif\n");
 		p.print("  #endif\n");
@@ -534,7 +538,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    for (int y = 0; y < sum; y++) {
 
-		p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+		p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
 		p.print("    tmp["+y+"] = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;\n");
 		p.print("    #else\n");
 		p.print("    tmp["+y+"] = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
@@ -566,7 +570,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 		for (int y = 0; y < num; y++) {
 
-		    p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+		    p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
 		    p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp["+(offs+y)+"];HEAD_"+_s+"_"+_d+"++;\n");
 		    p.print("    #else\n");
 		    p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp["+(offs+y)+"];HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
@@ -592,33 +596,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 
 	//  +=============================+
-	//  | Splitter Work 1k            |
-	//  +=============================+
-
-	p.print("void __splitter_"+thread_id+"_work_1k() {\n");
-
-	/*
-	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
-	    
-	    p.print("  "+baseType.toString()+" tmp[1000 * "+steady_counts+"];\n");
-	    p.print("  "+in.consumer_name()+".pop_items(tmp, 1000 * "+steady_counts+");\n");		
-	    for (int i = 0; i < out.size(); i++) {
-        	NetStream s = (NetStream)out.elementAt(i);		
-		p.print("  "+s.producer_name()+".push_items(tmp, 1000 * "+steady_counts+");\n");
-	    }
-	} else {
-	*/	
-	
-	p.print("  for (int i = 0; i < 1000 * "+steady_counts+"; i++) __splitter_"+thread_id+"_work(1);\n");
-	
-	p.print("}\n");
-	p.print("\n");
-
-
-	//  +=============================+
 	//  | Splitter Main               |
 	//  +=============================+
-	
+
+	/*
 	p.print("void __splitter_"+thread_id+"_main() {\n");
 	p.print("  int i, ii;\n");
 	
@@ -649,6 +630,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  }\n");
 
 	p.print("}\n");
+
+	*/
 
 	//  +=============================+
 	//  | Run Function                |
@@ -727,6 +710,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print(pre.elementAt(i).toString());
 	}
 
+
+	p.print("void save_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}\n");
+	p.print("void load_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}\n");
+	p.print("\n");
+
 	//  +=============================+
 	//  | Joiner Pop                  |
 	//  +=============================+
@@ -763,6 +751,33 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  return "+out.pop_buffer()+"["+out.pop_index()+"++];\n");
 	p.print("}\n");
 	p.print("\n");
+
+	//  +=============================+
+	//  | Init Path                   |
+	//  +=============================+
+
+
+	if (joiner.getParent() instanceof SIRFeedbackLoop) {
+	    
+	    p.print("int __init_counter_"+thread_id+" = 0;\n"); // INVALID
+	    p.print("\n");
+
+	    SIRFeedbackLoop floop = (SIRFeedbackLoop)joiner.getParent();
+
+	    p.print("//delay = "+((JIntLiteral)floop.getDelay()).intValue());
+	    p.print("\n");
+
+	    JMethodDeclaration ipath = floop.getInitPath();
+
+	    ipath.setName("__Init_Path_"+thread_id);
+	    FlatIRToCluster fir = new FlatIRToCluster();
+	    ipath.accept(fir);
+	    p.print(fir.getString());
+
+	    p.print("\n");
+	    p.print("\n");
+
+	}
 
 	//  +=============================+
 	//  | Joiner Work                 |
@@ -855,7 +870,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			// Destination
 	    
 			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
-			p.print("    #ifdef __NOPEEK_"+_s2+"_"+_d2+"\n");
+			p.print("    #ifdef __NOMOD_"+_s2+"_"+_d2+"\n");
 			p.print("      BUFFER_"+_s2+"_"+_d2+"[HEAD_"+_s2+"_"+_d2+" + "+offs+"] = \n");
 			p.print("    #else\n");
 			p.print("      BUFFER_"+_s2+"_"+_d2+"[(HEAD_"+_s2+"_"+_d2+" + "+offs+") & __BUF_SIZE_MASK_"+_s2+"_"+_d2+"] = \n");
@@ -873,7 +888,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			// Source
 			
 			p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
-			p.print("    #ifdef __NOPEEK_"+_s1+"_"+_d1+"\n");
+			p.print("    #ifdef __NOMOD_"+_s1+"_"+_d1+"\n");
 			p.print("      BUFFER_"+_s1+"_"+_d1+"[TAIL_"+_s1+"_"+_d1+" + "+y+"]\n");
 			p.print("    #else\n");
 			p.print("      BUFFER_"+_s1+"_"+_d1+"[(TAIL_"+_s1+"_"+_d1+" + "+y+") & __BUF_SIZE_MASK_"+_s1+"_"+_d1+"]\n");
@@ -895,7 +910,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    
 		    p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
 		    p.print("    TAIL_"+_s1+"_"+_d1+" += "+num+";\n");
-		    p.print("    #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
+		    p.print("    #ifndef __NOMOD_"+_s1+"_"+_d1+"\n");
 		    p.print("    TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
 		    p.print("    #endif\n");
 		    p.print("  #endif\n");
@@ -904,7 +919,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		
 		p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
 		p.print("    HEAD_"+_s2+"_"+_d2+" += "+sum+";\n");
-		p.print("    #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
+		p.print("    #ifndef __NOMOD_"+_s2+"_"+_d2+"\n");
 		p.print("    HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
 		p.print("    #endif\n");
 		p.print("  #endif\n");
@@ -929,7 +944,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 		    for (int y = 0; y < num; y++) {
 
-			p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+			p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
 			p.print("    tmp["+(offs+y)+"] = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;\n");
 			p.print("    #else\n");
 			p.print("    tmp["+(offs+y)+"] = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
@@ -956,7 +971,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 		for (int y = 0; y < sum; y++) {
 
-		    p.print("    #ifdef __NOPEEK_"+_s+"_"+_d+"\n");
+		    p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
 		    p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp["+y+"];HEAD_"+_s+"_"+_d+"++;\n");
 		    p.print("    #else\n");
 		    p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp["+y+"];HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
@@ -1189,6 +1204,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("       sscanf(argv[a + 1], \"%d\", &tmp);\n");
 	p.print("       printf(\"Initial Iteration: %d\\n\", tmp);\n"); 
 	p.print("       __init_iter = tmp;"); 
+	p.print("       init_instance::set_start_iter(__init_iter);"); 
 	p.print("    }\n");
 
 	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-i\") == 0) {\n"); 
@@ -1267,6 +1283,32 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
     }
 
 
+
+    public static void generateClusterHeader() {
+
+	TabbedPrintWriter p;
+	StringWriter str; 
+	
+	str = new StringWriter();
+        p = new TabbedPrintWriter(str);
+
+	p.println();
+	p.println();
+
+	p.print("#define __CHECKPOINT_FREQ 10000");
+	p.println();
+	p.println();
+
+	try {
+	    FileWriter fw = new FileWriter("cluster.h");
+	    fw.write(str.toString());
+	    fw.close();
+	}
+	catch (Exception e) {
+	    System.err.println("Unable to write cluster.h");
+	}	
+    }
+
     public static void generateMakeFile() {
 
 	int threadNumber = NodeEnumerator.getNumberOfNodes();
@@ -1279,19 +1321,15 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	
 	p.println();
 	
-	p.print("CC = gcc34"); // gcc34
-	p.println();
-
-	p.print("CC_IA64 = ecc");
-	p.println();
+	p.print("CC = gcc34 #gcc34\n"); // gcc34
+	p.print("CC_IA64 = ecc\n");
+	p.print("CC_ARM = /u/janiss/bin/arm343 #arm-linux-gcc\n");
 
 	p.println();
 
-	p.print("CCFLAGS = -O3");
-	p.println();
-
-	p.print("CCFLAGS_IA64 = -O1");
-	p.println();
+	p.print("CCFLAGS = -O3 #-O3\n");
+	p.print("CCFLAGS_IA64 = -O3\n");
+	p.print("CCFLAGS_ARM = -O3\n");
 
 	p.println();
 	p.print("NAMES = ");
@@ -1311,6 +1349,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("SOURCES = \t$(NAMES:%=%.cpp)\n");
 	p.print("OBJS = \t$(NAMES:%=%.o)\n");
 	p.print("OBJS_IA64 = \t$(NAMES:%=%_ia64.o)\n");
+	p.print("OBJS_ARM = \t$(NAMES:%=%_arm.o)\n");
 
 	p.println();
 
@@ -1329,6 +1368,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 
 	p.println();
+	
+	p.print("arm: fusion_arm\n");
+         
+	p.println();
 
 	p.print("clean:\n");
 	p.print("\trm -f run_cluster fusion master*.o fusion*.o thread*.o\n");
@@ -1339,18 +1382,20 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	// =============== run_cluster
 
 	p.print("run_cluster: master.o $(OBJS)\n");
-	p.print("\t$(CC) $(CCFLAGS) -o $@ $^ -L$(STREAMIT_HOME)/library/cluster -lpthread -lstdc++ -lcluster\n");
+	p.print("\t$(CC) $(CCFLAGS) -o $@ $^ -L$(STREAMIT_HOME)/library/cluster -lpthread -lcluster -lstdc++\n");
 	p.println();
 
 	// =============== fusion
 
 	p.print("fusion: fusion.o $(OBJS)\n");
-	p.print("\t$(CC) $(CCFLAGS) -o $@ $^ -L$(STREAMIT_HOME)/library/cluster -lpthread -lstdc++ -lcluster\n");
+	p.print("\tar r objects.a $^\n");
+	p.print("\tranlib objects.a\n");
+	p.print("\t$(CC) $(CCFLAGS) -o $@ objects.a -L$(STREAMIT_HOME)/library/cluster -lpthread -lcluster -lstdc++\n");
 	p.println();
 	
 	// =============== %.o : %.cpp
 	
-	p.print("%.o: %.cpp fusion.h\n");
+	p.print("%.o: %.cpp fusion.h cluster.h\n");
 	p.print("\t$(CC) $(CCFLAGS) -I$(STREAMIT_HOME)/library/cluster -c -o $@ $<\n");
 	p.println();
 
@@ -1371,8 +1416,26 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	// =============== %_ia64.o : %.cpp
 
-	p.print("%_ia64.o: %.cpp fusion.h\n");
+	p.print("%_ia64.o: %.cpp fusion.h cluster.h\n");
 	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -I$(STREAMIT_HOME)/library/cluster -c -o $@ $<\n");
+	p.println();
+
+
+
+
+	// =============== fusion_arm
+
+	p.print("fusion_arm: fusion_arm.o $(OBJS_ARM)\n");
+	p.print("\tar r objects_arm.a $^\n");
+	p.print("\tranlib objects_arm.a\n");
+	p.print("\t$(CC_ARM) $(CCFLAGS_ARM) -o $@ objects_arm.a -L$(STREAMIT_HOME)/library/cluster -lstdc++ -lm -lcluster_arm #-lpthread\n");
+
+	p.println();
+
+	// =============== %_arm.o : %.cpp
+
+	p.print("%_arm.o: %.cpp fusion.h cluster.h\n");
+	p.print("\t$(CC_ARM) $(CCFLAGS_ARM) -I$(STREAMIT_HOME)/library/cluster -c -o $@ $<\n");
 	p.println();
 
 

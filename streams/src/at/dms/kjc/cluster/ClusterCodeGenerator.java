@@ -150,6 +150,7 @@ class ClusterCodeGenerator {
 	r.add("#include <thread_info.h>\n");
 	r.add("#include <consumer2.h>\n");
 	r.add("#include <producer2.h>\n");
+	r.add("#include \"cluster.h\"\n");
 	r.add("#include \"fusion.h\"\n");
 	r.add("#include \"structs.h\"\n");
 	r.add("\n");
@@ -159,8 +160,10 @@ class ClusterCodeGenerator {
 	//r.add("#include <data_producer.h>\n");
 	
 	r.add("extern int __max_iteration;\n");
+	r.add("extern int __init_iter;\n");
 	r.add("extern int __timer_enabled;\n");
 	r.add("extern int __frequency_of_chkpts;\n");
+	r.add("extern volatile int __vol;\n");
 	r.add("message *__msg_stack_"+id+";\n");
 	r.add("int __number_of_iterations_"+id+";\n");
 	r.add("int __counter_"+id+" = 0;\n");
@@ -258,6 +261,11 @@ class ClusterCodeGenerator {
 	//  | Read / Write Thread         |
 	//  +=============================+
 
+
+	r.add("void save_peek_buffer__"+id+"(object_write_buffer *buf);\n");
+	r.add("void load_peek_buffer__"+id+"(object_write_buffer *buf);\n");
+	r.add("\n");
+
 	r.add("void __write_thread__"+id+"(object_write_buffer *buf) {\n");
 
 	i = data_in.iterator();
@@ -265,12 +273,15 @@ class ClusterCodeGenerator {
 	    NetStream in = (NetStream)i.next();
 	    r.add("  "+in.consumer_name()+".write_object(buf);\n");
 	    
+
 	    /*
 	    if (oper instanceof SIRFilter) {
 	       r.add("  "+in.name()+"in.write_object(buf);\n");
 	    }
 	    */
 	}
+
+	r.add("  save_peek_buffer__"+id+"(buf);\n");
 
 	for (int f = 0; f < fields.length; f++) {
 	    CType type = fields[f].getType();
@@ -313,6 +324,8 @@ class ClusterCodeGenerator {
 	    }
 	    */
 	}
+
+	r.add("  load_peek_buffer__"+id+"(buf);\n");
 
 	for (int f = 0; f < fields.length; f++) {
 	    CType type = fields[f].getType();
@@ -652,7 +665,7 @@ class ClusterCodeGenerator {
 	}
 
 	if (init_f != null) r.add("  "+init_f+"();\n");
-	r.add("  save_state::load_state("+id+", &__steady_"+id+", __read_thread__"+id+");\n");
+	r.add("  if (save_state::load_state("+id+", &__steady_"+id+", __read_thread__"+id+") == -1) pthread_exit(NULL);\n");
 
 
 	//r.add("  __number_of_iterations_"+id+" = __max_iteration - __steady_"+id+";\n");
@@ -670,22 +683,29 @@ class ClusterCodeGenerator {
 	r.add("  int _number = __max_iteration;\n");
 	r.add("\n");
 
+	 
+	if (msg_to.size() > 0) {
+	    r.add("  send_credits__"+id+"();\n");
+	}
+	r.add("  if (_steady == 0) {\n");
+	
 	if (oper instanceof SIRFilter) {
 	    r.add("  __init_pop_buf__"+id+"();\n");
 	}
+	
+	if (oper instanceof SIRTwoStageFilter) {
+	    r.add("    "+((SIRTwoStageFilter)oper).getInitWork().getName()+"__"+id+"();\n");
+	    init_counts--;
+	}
 
 	if (init_counts > 0) {
-	 
-	    r.add("  if (_steady == 0) {\n");
-	
-	    if (oper instanceof SIRTwoStageFilter) {
-		r.add("    "+((SIRTwoStageFilter)oper).getInitWork().getName()+"__"+id+"();\n");
-		init_counts--;
-	    }
 
 	    r.add("    for (_tmp = 0; _tmp < "+init_counts+"; _tmp++) {\n");
 	    if (oper instanceof SIRFilter) {
 		r.add("      //check_status__"+id+"();\n");
+
+		r.add("      if (*__state_flag_"+id+" == EXIT_THREAD) exit_thread(__thread_"+id+");\n");
+
 		if (msg_from.size() > 0) {
 		    r.add("      check_messages__"+id+"();\n");
 		}
@@ -693,52 +713,53 @@ class ClusterCodeGenerator {
 	    }
 	    r.add("      "+work_function+"(1);\n");
 	    if (oper instanceof SIRFilter) {
+		if (msg_to.size() > 0 || msg_from.size() > 0) {
+		    r.add("      __counter_"+id+"++;"); 
+		}
 		if (msg_to.size() > 0) {
 		    r.add("      send_credits__"+id+"();\n");
 		}
 	    }
 	    r.add("    }\n");
-	    r.add("  }\n");
-
 	}
+
+	r.add("  }\n");
 
 	r.add("  _steady++;\n");
 	r.add("  for (; _steady <= _number; _steady++) {\n");
 
 	if (steady_counts > 1) {
-
 	    r.add("    for (_tmp = 0; _tmp < "+steady_counts+"; _tmp++) {\n");
-	    if (oper instanceof SIRFilter) {
-		r.add("      //check_status__"+id+"();\n");
-		if (msg_from.size() > 0) {
-		    r.add("      check_messages__"+id+"();\n");
-		}
-		r.add("      __update_pop_buf__"+id+"();\n");
-	    }
-	    r.add("      "+work_function+"(1);\n");
-	    if (oper instanceof SIRFilter) {
-		if (msg_to.size() > 0) {
-		    r.add("      send_credits__"+id+"();\n");
-		}
-	    }
-	    r.add("    }\n");
+	}
 
-	} else {
+	if (oper instanceof SIRFilter) {
+	    r.add("      //check_status__"+id+"();\n");
 
-	    if (oper instanceof SIRFilter) {
-		r.add("    //check_status__"+id+"();\n");
-		if (msg_from.size() > 0) {
-		    r.add("    check_messages__"+id+"();\n");
-		}
-		r.add("    __update_pop_buf__"+id+"();\n");
+	    r.add("      if (*__state_flag_"+id+" == EXIT_THREAD) exit_thread(__thread_"+id+");\n");
+
+	    if (msg_from.size() > 0) {
+		r.add("      check_messages__"+id+"();\n");
 	    }
-	    r.add("    "+work_function+"(1);\n");
-	    if (oper instanceof SIRFilter) {
-		if (msg_to.size() > 0) {
-		    r.add("    send_credits__"+id+"();\n");
-		}
+	    r.add("      __update_pop_buf__"+id+"();\n");
+	}
+	r.add("      "+work_function+"(1);\n");
+	if (oper instanceof SIRFilter) {
+	    if (msg_to.size() > 0 || msg_from.size() > 0) {
+		r.add("      __counter_"+id+"++;"); 
+	    }
+	    if (msg_to.size() > 0) {
+		r.add("      send_credits__"+id+"();\n");
 	    }
 	}
+
+	if (steady_counts > 1) {
+	    r.add("    }\n");
+	}
+
+	r.add("#ifdef __CHECKPOINT_FREQ\n");
+	r.add("    if (_steady % __CHECKPOINT_FREQ == 0)\n");
+	r.add("      save_state::save_to_file(__thread_"+id+", _steady, __write_thread__"+id+");\n");
+	r.add("#endif\n");
 	
 	r.add("  }\n");
 	r.add("}\n");
@@ -807,6 +828,7 @@ class ClusterCodeGenerator {
 	    }
 	}
 
+	//r.add("  __steady_"+id+" = __init_iter;\n");
 	r.add("  __init_state_"+id+"();\n");
 
 	r.add("\n");

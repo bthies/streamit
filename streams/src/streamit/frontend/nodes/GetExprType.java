@@ -25,7 +25,7 @@ import java.util.Map;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.20 2005-04-06 12:03:13 thies Exp $
+ * @version $Id: GetExprType.java,v 1.21 2005-06-11 02:19:34 janiss Exp $
  */
 public class GetExprType extends FENullVisitor
 {
@@ -140,6 +140,9 @@ public class GetExprType extends FENullVisitor
         Type base = (Type)exp.getLeft().accept(this);
         // If the base is a complex type, a field of it is float.
         if (base.isComplex())
+            return new TypePrimitive(TypePrimitive.TYPE_FLOAT);
+        // If the base is a composite type, a field of it is float.
+        if (base.isComposite())
             return new TypePrimitive(TypePrimitive.TYPE_FLOAT);
         else if (base instanceof TypeStruct)
             return ((TypeStruct)base).getType(exp.getName());

@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.27 2005-04-06 12:03:16 thies Exp $
+ * @version $Id: SemanticChecker.java,v 1.28 2005-06-11 02:19:38 janiss Exp $
  */
 public class SemanticChecker
 {
@@ -707,6 +707,32 @@ public class SemanticChecker
                             report(expr,
                                    "complex variables have only "+
                                    "'real' and 'imag' fields");
+                    }
+                    else if (lt.isComposite())
+                    {
+                        String rn = expr.getName();
+			TypePrimitive pt = (TypePrimitive)lt;
+
+			if (pt.getType() == TypePrimitive.TYPE_FLOAT2) {
+			    if (!rn.equals("x") &&
+				!rn.equals("y"))
+				report(expr,
+				       "invalid field access");
+			} else if (pt.getType() == TypePrimitive.TYPE_FLOAT3) {
+			    if (!rn.equals("x") &&
+				!rn.equals("y") &&
+				!rn.equals("z"))
+				report(expr,
+				       "invalid field access");
+			} else if (pt.getType() == TypePrimitive.TYPE_FLOAT4) {
+			    if (!rn.equals("x") &&
+				!rn.equals("y") &&
+				!rn.equals("z") &&
+				!rn.equals("w"))
+				report(expr,
+				       "invalid field access");
+			} else report(expr, "unknown composite data type");
+
                     }
                     else if (lt instanceof TypeStruct)
                     {

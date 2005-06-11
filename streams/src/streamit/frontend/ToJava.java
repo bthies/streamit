@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.60 2005-04-10 19:05:27 thies Exp $
+ * @version $Id: ToJava.java,v 1.61 2005-06-11 02:19:28 janiss Exp $
  */
 public class ToJava
 {
@@ -99,6 +99,39 @@ public class ToJava
         TypeStruct complexStruct =
             new TypeStruct(null, "Complex", fields, ftypes);
         structs.add(complexStruct);
+
+	// float2
+        fields = new java.util.ArrayList();
+        ftypes = new java.util.ArrayList();
+        fields.add("x");
+        ftypes.add(floattype);
+        fields.add("y");
+        ftypes.add(floattype);
+        structs.add(new TypeStruct(null, "float2", fields, ftypes));
+
+	// float3
+        fields = new java.util.ArrayList();
+        ftypes = new java.util.ArrayList();
+        fields.add("x");
+        ftypes.add(floattype);
+        fields.add("y");
+        ftypes.add(floattype);
+        fields.add("z");
+        ftypes.add(floattype);
+        structs.add(new TypeStruct(null, "float3", fields, ftypes));
+
+	// float4
+        fields = new java.util.ArrayList();
+        ftypes = new java.util.ArrayList();
+        fields.add("x");
+        ftypes.add(floattype);
+        fields.add("y");
+        ftypes.add(floattype);
+        fields.add("z");
+        ftypes.add(floattype);
+        fields.add("w");
+        ftypes.add(floattype);
+        structs.add(new TypeStruct(null, "float4", fields, ftypes));
         
         return new Program(null, streams, structs);
     }

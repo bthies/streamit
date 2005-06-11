@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.53 2005-03-02 00:43:50 madrake Exp $
+ * $Id: StreamItParserFE.g,v 1.54 2005-06-11 02:19:28 janiss Exp $
  */
 
 header {
@@ -368,6 +368,9 @@ primitive_type returns [Type t] { t = null; }
 	|	TK_float { t = new TypePrimitive(TypePrimitive.TYPE_FLOAT); }
 	|	TK_double { t =  new TypePrimitive(TypePrimitive.TYPE_DOUBLE); }
 	|	TK_complex { t = new TypePrimitive(TypePrimitive.TYPE_COMPLEX); }
+	|	TK_float2 { t = new TypePrimitive(TypePrimitive.TYPE_FLOAT2); }
+	|	TK_float3 { t = new TypePrimitive(TypePrimitive.TYPE_FLOAT3); }
+	|	TK_float4 { t = new TypePrimitive(TypePrimitive.TYPE_FLOAT4); }
 	;
 
 variable_decl returns [Statement s] { s = null; Type t; Expression x = null; 

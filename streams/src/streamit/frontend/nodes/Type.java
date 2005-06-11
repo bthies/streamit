@@ -20,12 +20,15 @@ package streamit.frontend.nodes;
  * Base class for variable data types.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: Type.java,v 1.4 2003-12-18 18:34:30 dmaze Exp $
+ * @version $Id: Type.java,v 1.5 2005-06-11 02:19:34 janiss Exp $
  */
 public abstract class Type
 {
     /** Returns true if this type is a complex type. */
     public boolean isComplex() { return false; }
+
+    /** Returns true if this type is a composite type. */
+    public boolean isComposite() { return false; }
 
     /**
      * Check if this type can be promoted to some other type.

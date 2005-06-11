@@ -16,7 +16,7 @@
 
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.20 2005-03-02 00:43:50 madrake Exp $
+ * $Id: StreamItLex.g,v 1.21 2005-06-11 02:19:28 janiss Exp $
  */
 
 header {
@@ -53,8 +53,9 @@ tokens {
 	"peek"; "pop"; "push";
 	// Basic types:
 	"boolean"; "float"; "bit"; "int"; "void"; "double"; "complex";
+	TK_float2 = "float2"; TK_float3 = "float3"; TK_float4 = "float4"; 
 	// Complicated types:
-	"struct"; "template";
+	"struct"; "template"; "native";
 	// Control flow:
 	"if"; "else"; "while"; "for"; "switch"; "case"; "default"; "break";
 	"continue"; "return";
@@ -193,7 +194,7 @@ HEXNUMBER
 	;
 
 NUMBER
-	:	 (DIGIT)+ (DOT (DIGIT)+ )? (('e' | 'E') ('+'|'-')? (DIGIT)+ )? ('i')?
+	:	 (DIGIT)+ (DOT (DIGIT)+ )? (('e' | 'E') ('+'|'-')? (DIGIT)+ )? ('i'|'f')?
 	;
 
 ID

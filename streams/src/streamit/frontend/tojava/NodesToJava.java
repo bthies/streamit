@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.97 2005-04-06 12:03:30 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.98 2005-06-11 02:19:43 janiss Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -86,6 +86,9 @@ public class NodesToJava implements FEVisitor
             case TypePrimitive.TYPE_FLOAT: return "float";
             case TypePrimitive.TYPE_DOUBLE: return "double";
             case TypePrimitive.TYPE_COMPLEX: return "Complex";
+            case TypePrimitive.TYPE_FLOAT2: return "float2";
+            case TypePrimitive.TYPE_FLOAT3: return "float3";
+            case TypePrimitive.TYPE_FLOAT4: return "float4";
             case TypePrimitive.TYPE_VOID: return "void";
             default: assert false : type; return null;
             }

@@ -21,7 +21,7 @@ package streamit.frontend.nodes;
  * the specified type parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypePrimitive.java,v 1.11 2005-04-06 12:03:13 thies Exp $
+ * @version $Id: TypePrimitive.java,v 1.12 2005-06-11 02:19:34 janiss Exp $
  */
 public class TypePrimitive extends Type
 {
@@ -41,6 +41,12 @@ public class TypePrimitive extends Type
     public static final int TYPE_BOOLEAN = 7;
     /** Type constant for char types. */
     public static final int TYPE_CHAR = 8;
+    /** Type constant for float vector. */
+    public static final int TYPE_FLOAT2 = 9;
+    /** Type constant for float vector. */
+    public static final int TYPE_FLOAT3 = 10;
+    /** Type constant for float vector. */
+    public static final int TYPE_FLOAT4 = 11;
     /** Type constant for string types. */
     public static final int TYPE_STRING = 0;
 
@@ -92,6 +98,12 @@ public class TypePrimitive extends Type
     public boolean isComplex()
     {
         return type == TYPE_COMPLEX;
+    }
+
+    public boolean isComposite() {
+	return type == TYPE_FLOAT2 ||
+	    type == TYPE_FLOAT3 ||
+	    type == TYPE_FLOAT4;
     }
 
     public String toString()

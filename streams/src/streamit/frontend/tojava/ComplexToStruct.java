@@ -28,16 +28,31 @@ import java.util.List;
  * parameters with the correct actual structure type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ComplexToStruct.java,v 1.3 2003-10-09 19:51:02 dmaze Exp $
+ * @version $Id: ComplexToStruct.java,v 1.4 2005-06-11 02:19:43 janiss Exp $
  */
 public class ComplexToStruct extends FEReplacer
 {
     private TypeStruct cplxType;
+    private TypeStruct float2Type;
+    private TypeStruct float3Type;
+    private TypeStruct float4Type;
 
     private Type remapType(Type type)
     {
         if (type.isComplex())
             return cplxType;
+
+	if (type.isComposite()) {
+	    int ty = ((TypePrimitive)type).getType();
+	    switch(ty) {
+	    case TypePrimitive.TYPE_FLOAT2: return float2Type;
+	    case TypePrimitive.TYPE_FLOAT3: return float3Type;
+	    case TypePrimitive.TYPE_FLOAT4: return float4Type;
+	    default:
+		return null;
+	    }
+	}	
+
         if (type instanceof TypeArray)
         {
             TypeArray ta = (TypeArray)type;
@@ -63,6 +78,13 @@ public class ComplexToStruct extends FEReplacer
             TypeStruct struct = (TypeStruct)iter.next();
             if (struct.getName().equals("Complex"))
                 cplxType = struct;
+	    else if (struct.getName().equals("float2"))
+		float2Type = struct;
+	    else if (struct.getName().equals("float3"))
+		float3Type = struct;
+	    else if (struct.getName().equals("float4"))
+		float4Type = struct;
+
         }
         // Pass 2: rewrite existing structures.
         for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )

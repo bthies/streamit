@@ -395,7 +395,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 	    print("void save_peek_buffer__"+selfID+"(object_write_buffer *buf) {\n");
 	    print("  int i = 0, offs = __tail__"+selfID+";\n");
 	    print("  while (offs != __head__"+selfID+") {\n");
-	    print("    buf->write_"+input_type.toString()+"(__pop_buf__"+selfID+"[offs]);\n    offs++;\n    offs&="+(peek_buf_size-1)+";\n    i++;\n");
+	    print("    buf->write(&__pop_buf__"+selfID+"[offs], sizeof("+input_type.toString()+"));\n    offs++;\n    offs&="+(peek_buf_size-1)+";\n    i++;\n");
 	    print("  }\n");
 	    //print("  printf(\"buf size: %d\\n\", i);\n"); 
 	    print("  assert(i == "+extra+");\n");
@@ -404,7 +404,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 
 	    print("void load_peek_buffer__"+selfID+"(object_write_buffer *buf) {\n");
 	    print("  for (int i = 0; i < "+extra+"; i++) {\n");
-	    print("    __pop_buf__"+selfID+"[i] = buf->read_"+input_type.toString()+"();\n");
+	    print("     buf->read(&__pop_buf__"+selfID+"[i] , sizeof("+input_type.toString()+"));\n");
 	    print("  }\n");
 	    print("  __tail__"+selfID+"=0;\n");
 	    print("  __head__"+selfID+"="+extra+";\n");

@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.34 2005-02-17 00:12:58 thies Exp $
+ * @version $Id: FEReplacer.java,v 1.35 2005-06-20 22:40:56 janiss Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -179,6 +179,22 @@ public class FEReplacer implements FEVisitor
             return exp;
         else
             return new ExprComplex(exp.getContext(), real, imag);
+    }
+
+    public Object visitExprComposite(ExprComposite exp) {
+	Expression x = exp.getX();
+	if (x != null) x = doExpression(x);
+	Expression y = exp.getY();
+	if (y != null) y = doExpression(y);
+	Expression z = exp.getZ();
+	if (z != null) z = doExpression(z);
+	Expression w = exp.getW();
+	if (w != null) w = doExpression(w);
+	if (x == exp.getX() && y == exp.getY() && 
+	    z == exp.getZ() && w == exp.getW() )
+	    return exp;
+	else
+	    return new ExprComposite(exp.getContext(), x, y, z, w);
     }
     
     public Object visitExprConstBoolean(ExprConstBoolean exp) { return exp; }
@@ -380,7 +396,7 @@ public class FEReplacer implements FEVisitor
     }
     
     public Object visitStmtAssign(StmtAssign stmt)
-    {
+    {    
         Expression newLHS = doExpression(stmt.getLHS());
         Expression newRHS = doExpression(stmt.getRHS());
         if (newLHS == stmt.getLHS() && newRHS == stmt.getRHS())

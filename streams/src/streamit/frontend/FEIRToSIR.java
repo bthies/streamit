@@ -576,6 +576,13 @@ public class FEIRToSIR implements FEVisitor, Constants {
     return null;
   }
 
+  public Object visitExprComposite(ExprComposite exp) {
+    debug("In visitExprComposite\n");
+    debug("  UNIMPLEMENTED\n");
+    /* unimplemented */
+    return null;
+  }
+
   public Object visitFieldDecl(FieldDecl decl) {
     debug("In visitFieldDecl\n");
     debug("  UNIMPLEMENTED\n");

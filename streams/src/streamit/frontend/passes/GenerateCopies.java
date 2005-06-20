@@ -28,7 +28,7 @@ import java.util.Collections;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.7 2004-11-03 06:32:53 thies Exp $
+ * @version $Id: GenerateCopies.java,v 1.8 2005-06-20 22:40:59 janiss Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -58,7 +58,9 @@ public class GenerateCopies extends SymbolTableVisitor
             return structNeedsCopy((TypeStruct)type);
         if (type instanceof TypeStructRef)
             return true;
-        if (type.isComplex())
+        if (type.isComplex()) 
+            return true;
+        if (type.isComposite()) 
             return true;
         return false;
     }
@@ -91,6 +93,7 @@ public class GenerateCopies extends SymbolTableVisitor
 	if (expr instanceof ExprArrayInit) {
 	    return false;
 	} else {
+	    if (getType(expr) == null) return false;
 	    return needsCopy(getType(expr));
 	}
     }
@@ -132,6 +135,8 @@ public class GenerateCopies extends SymbolTableVisitor
             makeCopyStruct(from, to, (TypeStruct)type);
         else if (type.isComplex())
             makeCopyComplex(from, to);
+        else if (type.isComposite())
+            makeCopyComposite(from, to, ((TypePrimitive)type).getType());
         else
             addStatement(new StmtAssign(to.getContext(), to, from));
     }
@@ -193,6 +198,34 @@ public class GenerateCopies extends SymbolTableVisitor
                             new ExprField(from.getContext(), from, "imag")));
     }
 
+    
+    private void makeCopyComposite(Expression from, Expression to, int type)
+    {
+	addStatement
+	    (new StmtAssign(to.getContext(),
+			    new ExprField(to.getContext(), to, "x"),
+			    from instanceof ExprComposite ? 
+			    ((ExprComposite)from).getX() : new ExprField(from.getContext(), from, "x")));
+	addStatement
+	    (new StmtAssign(to.getContext(),
+			    new ExprField(to.getContext(), to, "y"),
+			    from instanceof ExprComposite ? 
+			    ((ExprComposite)from).getY() : new ExprField(from.getContext(), from, "y")));
+	if (type == TypePrimitive.TYPE_FLOAT3 ||
+	    type == TypePrimitive.TYPE_FLOAT4)
+	    addStatement
+		(new StmtAssign(to.getContext(),
+				new ExprField(to.getContext(), to, "z"),
+				from instanceof ExprComposite ? 
+				((ExprComposite)from).getZ() : new ExprField(from.getContext(), from, "z")));
+	if (type == TypePrimitive.TYPE_FLOAT4)
+	    addStatement
+		(new StmtAssign(to.getContext(),
+				new ExprField(to.getContext(), to, "w"),
+				from instanceof ExprComposite ? 
+				((ExprComposite)from).getW() : new ExprField(from.getContext(), from, "w")));
+    }
+
     public Object visitExprPeek(ExprPeek expr)
     {
         Expression result = (Expression)super.visitExprPeek(expr);
@@ -211,17 +244,37 @@ public class GenerateCopies extends SymbolTableVisitor
 
     public Object visitStmtAssign(StmtAssign stmt)
     {
+
+	System.out.println("GenCopies::visitStmtAssign"+
+			   " lhs: "+getType(stmt.getLHS())+
+			   " rhs: "+getType(stmt.getRHS())+" \n");
+
         // recurse:
         Statement result = (Statement)super.visitStmtAssign(stmt);
         if (result instanceof StmtAssign) // it probably is:
         {
             stmt = (StmtAssign)result;
+
+	    
+	    System.out.println("GenCopies::visitStmtAssign take2 "+
+			       " lhs: "+getType(stmt.getLHS())+
+			       " rhs: "+getType(stmt.getRHS())+
+			       " needs-copy: "+needsCopy(stmt.getRHS())+" \n");
+
             if (needsCopy(stmt.getRHS()))
             {
-		// make a copy of the RHS in the event that it is a
-		// function call.  We don't want to call the function
-		// multiple times for each element.
-		Expression copy = assignToTemp(stmt.getRHS(), 
+
+		if (!(stmt.getRHS() instanceof ExprFunCall)) {
+
+		    makeCopy(stmt.getRHS(), stmt.getLHS());
+		    
+		} else {
+
+		    // make a copy of the RHS in the event that it is a
+		    // function call.  We don't want to call the function
+		    // multiple times for each element.
+
+		    Expression copy = assignToTemp(stmt.getRHS(), 
 					       // "true" as deep
 					       // argument will cause
 					       // bugs; need more
@@ -230,13 +283,17 @@ public class GenerateCopies extends SymbolTableVisitor
 					       // nested structures
 					       // correctly
 					       false);
-                // drops op!  If there are compound assignments
-                // like "a += b" here, we lose.  There shouldn't be,
-                // though, since those operators aren't well-defined
-                // for structures and arrays and this should be run
-                // after complex prop.
-                makeCopy(copy, stmt.getLHS());
-                return null;
+		    
+		    // drops op!  If there are compound assignments
+		    // like "a += b" here, we lose.  There shouldn't be,
+		    // though, since those operators aren't well-defined
+		    // for structures and arrays and this should be run
+		    // after complex prop.
+                
+		    makeCopy(copy, stmt.getLHS());                
+		}
+		
+		return null;
             }
         }
         return result;

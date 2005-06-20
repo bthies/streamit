@@ -25,7 +25,7 @@ import java.util.Map;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.21 2005-06-11 02:19:34 janiss Exp $
+ * @version $Id: GetExprType.java,v 1.22 2005-06-20 22:40:56 janiss Exp $
  */
 public class GetExprType extends FENullVisitor
 {
@@ -98,6 +98,15 @@ public class GetExprType extends FENullVisitor
     public Object visitExprComplex(ExprComplex exp)
     {
         return new TypePrimitive(TypePrimitive.TYPE_COMPLEX);
+    }
+
+    public Object visitExprComposite(ExprComposite exp)
+    {
+	int dim = exp.getDim();
+	assert (dim >= 2 && dim <= 4); 
+	if (dim == 2) return new TypePrimitive(TypePrimitive.TYPE_FLOAT2);
+	if (dim == 3) return new TypePrimitive(TypePrimitive.TYPE_FLOAT3);
+	return new TypePrimitive(TypePrimitive.TYPE_FLOAT4);
     }
     
     public Object visitExprConstBoolean(ExprConstBoolean exp)

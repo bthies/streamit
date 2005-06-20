@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.54 2005-06-11 02:19:28 janiss Exp $
+ * $Id: StreamItParserFE.g,v 1.55 2005-06-20 22:40:50 janiss Exp $
  */
 
 header {
@@ -502,6 +502,24 @@ left_expr returns [Expression x] { x = null; }
 
 right_expr returns [Expression x] { x = null; }
 	:	x=ternaryExpr
+	| x=float2_initializer
+        | x=float3_initializer
+        | x=float4_initializer
+	;
+	
+float2_initializer returns [Expression x] { x = null; Expression p1, p2; }
+	:	lc:TK_float2 LPAREN p1=right_expr COMMA p2=right_expr RPAREN 
+	    { x = new ExprComposite(getContext(lc), p1, p2, null, null); } 
+	;	
+
+float3_initializer returns [Expression x] { x = null; Expression p1, p2, p3; }
+	:	lc:TK_float3 LPAREN p1=right_expr COMMA p2=right_expr COMMA p3=right_expr RPAREN 
+	    { x = new ExprComposite(getContext(lc), p1, p2, p3, null); } 
+	;	
+	
+float4_initializer returns [Expression x] { x = null; Expression p1, p2, p3, p4; }
+	:	lc:TK_float4 LPAREN p1=right_expr COMMA p2=right_expr COMMA p3=right_expr COMMA p4=right_expr RPAREN 
+	    { x = new ExprComposite(getContext(lc), p1, p2, p3, p4); } 
 	;
 
 var_initializer returns [Expression x] { x = null; }

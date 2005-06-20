@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.98 2005-06-11 02:19:43 janiss Exp $
+ * @version $Id: NodesToJava.java,v 1.99 2005-06-20 22:41:03 janiss Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -285,6 +285,31 @@ public class NodesToJava implements FEVisitor
                     rhs.accept(this) + ";\n" +
                     imag.accept(this) + " = 0.0";
         }
+	else if (lhsType.isComposite()) 
+	{
+	    Expression x = new ExprField(lhs.getContext(), lhs, "x");
+	    Expression y = new ExprField(lhs.getContext(), lhs, "y");
+	    Expression z = new ExprField(lhs.getContext(), lhs, "z");
+	    Expression w = new ExprField(lhs.getContext(), lhs, "w");
+	    // If the right hand side is composite too, then we 
+	    // should do field copies.
+	    if (rhs instanceof ExprComposite) {
+		ExprComposite cpst = (ExprComposite)rhs;
+		String result = x.accept(this) + " = " +
+		    cpst.getX().accept(this) + ";\n" +
+		    y.accept(this) + " = " +
+		    cpst.getY().accept(this); 
+		Expression z1 = cpst.getZ();
+		if (z1 != null) result +=  ";\n" + z.accept(this) + " = " +
+				    z1.accept(this); 
+		Expression w1 = cpst.getW();
+		if (w1 != null) result +=  ";\n" + w.accept(this) + " = " +
+				    w1.accept(this); 
+		return result;
+	    } 
+	    else
+		throw new RuntimeException("type not compatible");
+	}
         else
         {
             // Might want to special-case structures and arrays;
@@ -369,6 +394,14 @@ public class NodesToJava implements FEVisitor
         if (exp.getReal() != null) r = (String)exp.getReal().accept(this);
         if (exp.getImag() != null) i = (String)exp.getImag().accept(this);
         return "/* (" + r + ")+i(" + i + ") */";
+    }
+
+    public Object visitExprComposite(ExprComposite exp)
+    {
+        // We should never see one of these at this point.
+        //assert false : exp;
+        // If we do, print something vaguely intelligent:
+        return "/* " + exp.toString() + " */";
     }
 
     public Object visitExprConstBoolean(ExprConstBoolean exp)

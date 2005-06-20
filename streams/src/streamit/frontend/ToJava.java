@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.61 2005-06-11 02:19:28 janiss Exp $
+ * @version $Id: ToJava.java,v 1.62 2005-06-20 23:27:53 janiss Exp $
  */
 public class ToJava
 {
@@ -225,11 +225,17 @@ public class ToJava
         prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new EnqueueToFunction());
         prog = (Program)prog.accept(new InsertIODecls(libraryFormat));
-        prog = (Program)prog.accept(new InsertInitConstructors(varGen));
+
+        //prog = (Program)prog.accept(new InsertInitConstructors(varGen));
 	// separate field initializers after init constructors so that
 	// constructor doesn't get generated for fields that already
 	// have an initializer
         prog = (Program)prog.accept(new SeparateFieldInitializers(libraryFormat));
+
+	// janiss: moved GenerateCopies and InsInitConstructors down
+        prog = (Program)prog.accept(new GenerateCopies(varGen)); 
+        prog = (Program)prog.accept(new InsertInitConstructors(varGen));
+
         prog = (Program)prog.accept(new MoveStreamParameters());
         prog = (Program)prog.accept(new NameAnonymousFunctions());
         prog = (Program)prog.accept(new AssembleInitializers());

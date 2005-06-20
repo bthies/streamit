@@ -28,7 +28,7 @@ import java.util.Collections;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.8 2005-06-20 22:40:59 janiss Exp $
+ * @version $Id: GenerateCopies.java,v 1.9 2005-06-20 23:12:48 janiss Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -245,21 +245,20 @@ public class GenerateCopies extends SymbolTableVisitor
     public Object visitStmtAssign(StmtAssign stmt)
     {
 
-	System.out.println("GenCopies::visitStmtAssign"+
-			   " lhs: "+getType(stmt.getLHS())+
-			   " rhs: "+getType(stmt.getRHS())+" \n");
+	//System.out.println("GenCopies::visitStmtAssign"+
+	//		   " lhs: "+getType(stmt.getLHS())+
+	//		   " rhs: "+getType(stmt.getRHS())+" \n");
 
         // recurse:
         Statement result = (Statement)super.visitStmtAssign(stmt);
         if (result instanceof StmtAssign) // it probably is:
         {
             stmt = (StmtAssign)result;
-
 	    
-	    System.out.println("GenCopies::visitStmtAssign take2 "+
-			       " lhs: "+getType(stmt.getLHS())+
-			       " rhs: "+getType(stmt.getRHS())+
-			       " needs-copy: "+needsCopy(stmt.getRHS())+" \n");
+	    //System.out.println("GenCopies::visitStmtAssign take2 "+
+	    //		       " lhs: "+getType(stmt.getLHS())+
+	    //		       " rhs: "+getType(stmt.getRHS())+
+	    //		       " needs-copy: "+needsCopy(stmt.getRHS())+" \n");
 
             if (needsCopy(stmt.getRHS()))
             {

@@ -28,7 +28,7 @@ import java.util.Collections;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.9 2005-06-20 23:12:48 janiss Exp $
+ * @version $Id: GenerateCopies.java,v 1.10 2005-06-21 23:44:10 janiss Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -263,17 +263,11 @@ public class GenerateCopies extends SymbolTableVisitor
             if (needsCopy(stmt.getRHS()))
             {
 
-		if (!(stmt.getRHS() instanceof ExprFunCall)) {
-
-		    makeCopy(stmt.getRHS(), stmt.getLHS());
-		    
-		} else {
-
-		    // make a copy of the RHS in the event that it is a
-		    // function call.  We don't want to call the function
-		    // multiple times for each element.
-
-		    Expression copy = assignToTemp(stmt.getRHS(), 
+		// make a copy of the RHS in the event that it is a
+		// function call.  We don't want to call the function
+		// multiple times for each element.
+		
+		Expression copy = assignToTemp(stmt.getRHS(), 
 					       // "true" as deep
 					       // argument will cause
 					       // bugs; need more
@@ -282,15 +276,14 @@ public class GenerateCopies extends SymbolTableVisitor
 					       // nested structures
 					       // correctly
 					       false);
-		    
-		    // drops op!  If there are compound assignments
-		    // like "a += b" here, we lose.  There shouldn't be,
-		    // though, since those operators aren't well-defined
-		    // for structures and arrays and this should be run
-		    // after complex prop.
-                
-		    makeCopy(copy, stmt.getLHS());                
-		}
+		
+		// drops op!  If there are compound assignments
+		// like "a += b" here, we lose.  There shouldn't be,
+		// though, since those operators aren't well-defined
+		// for structures and arrays and this should be run
+		// after complex prop.
+		
+		makeCopy(copy, stmt.getLHS());                
 		
 		return null;
             }

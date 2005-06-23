@@ -356,8 +356,8 @@ public class StreamGraph
 
 	BufferedReader inputBuffer = new BufferedReader(new InputStreamReader(System.in));
 	int numTilesToAssign = rawChip.getTotalTiles(), num;
-	StaticStreamGraph current = topLevel;
-	
+	StaticStreamGraph current;
+
 	for (int i = 0; i < staticSubGraphs.length; i++) {
 	    current = staticSubGraphs[i];
 	    int assignedNodes = current.countAssignedNodes();
@@ -394,22 +394,22 @@ public class StreamGraph
     /** for each sub-graph, assign a certain number of tiles to it **/
     public void tileAssignment() 
     {
-	StaticStreamGraph current = topLevel;
-	//for right now just assign exactly the number of tiles as filters!
+	//if there is just one ssg, give all the tiles to it...
+	if (staticSubGraphs.length == 1) {
+	    staticSubGraphs[0].setNumTiles(rawChip.getTotalTiles());
+	    return;
+	}
+
+	int numTilesToAssign = rawChip.getTotalTiles();
+	StaticStreamGraph current;
+
+	//for right now just assign exactly the number of tiles as needed
 	for (int i = 0; i < staticSubGraphs.length; i++) {
 	    current = staticSubGraphs[i];
-	    final int[] filters = {0};
-	    
-	    IterFactory.createFactory().createIter(current.getTopLevelSIR()).accept(new EmptyStreamVisitor() {
-		    public void visitFilter(SIRFilter self,
-					    SIRFilterIter iter) {
-			if (!(self instanceof SIRDummySource || self instanceof SIRDummySink)) {
-			    filters[0]++;
-			}
-			
-		    }
-		}); 
-	    current.setNumTiles(filters[0]);
+	    int assignedNodes = current.countAssignedNodes();
+	    current.setNumTiles(assignedNodes);
+	    numTilesToAssign -= assignedNodes;
+	    assert numTilesToAssign >= 0 : "Error: Not enough tiles for unpartitioned graph, can't use --nopartition";
 	}
     }
 
@@ -458,7 +458,9 @@ public class StreamGraph
 	//now ready to layout	
 	layout = new Layout(this);
 	//call the appropriate layout function
-	if (KjcOptions.noanneal)
+	if (KjcOptions.layoutfile != null)
+	    layout.fileAssign();
+	else if (KjcOptions.noanneal)
 	    layout.handAssign();
 	else 
 	    layout.simAnnealAssign();

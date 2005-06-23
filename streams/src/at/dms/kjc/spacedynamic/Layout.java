@@ -39,6 +39,7 @@ public class Layout extends at.dms.util.Utils implements
     private WorkEstimatesMap workEstimates;
 
     private BufferedReader inputBuffer;
+
     private Random random;
     
     private StreamGraph streamGraph;
@@ -388,13 +389,24 @@ public class Layout extends at.dms.util.Utils implements
 	       (FlatNode)(assigned.toArray()[0]));
     }
     
-
-    public void handAssign() 
+    /** read the layout from a new-line separated file **/
+    public void fileAssign() 
     {
-	assignFileFilters();
-	System.out.println("Enter desired tile for each filter of " + 
-			   streamGraph.getStaticSubGraphs().length + " subgraphs: ");
-	inputBuffer = new BufferedReader(new InputStreamReader(System.in));
+	assert KjcOptions.layoutfile != null : "Error: Null file in layout file assign";
+	BufferedReader in = null;
+	FileReader fr = null;
+	try {
+	    fr = new FileReader(KjcOptions.layoutfile);
+	    in = new BufferedReader(fr);
+	    
+	    
+	    assignFileFilters();
+	    System.out.println("Tile Assignment from file " + KjcOptions.layoutfile);
+	}
+	catch (Exception e) {
+	    System.err.println("Error while reading layout from file " + KjcOptions.layoutfile);
+	    System.exit(1);
+	}
 
 	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
 	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
@@ -405,36 +417,94 @@ public class Layout extends at.dms.util.Utils implements
 		//do not try to assign a node that should not be assigned
 		if (!assigned.contains(node))
 		    continue;
-		//Assign a filter, joiner to a tile 
-		//perform some error checking.
-		while (true) {
-		    int tileNumber;
-		    String str = null;
-		    
-		    System.out.print(node.getName() + " of " + ssg + ": ");
-		    try {
-			str = inputBuffer.readLine();			
-			tileNumber = Integer.valueOf(str).intValue();
-		    }
-		    catch (Exception e) {
-			System.out.println("Bad number " + str);
-			continue;
-		    }
-		    if (tileNumber < 0 || tileNumber >= rawChip.getTotalTiles()) {
-			System.out.println("Bad tile number!");
-			continue;
-		    }
-		    RawTile tile = rawChip.getTile(tileNumber);
-		    if (SIRassignment.values().contains(tile)) {
-			System.out.println("Tile Already Assigned!");
-			continue;
-		    }
-		    //other wise the assignment is valid, assign and break!!
-		    assign(tile, node);
-		    break;
-		}
+		assignFromReader(in, ssg, node);
 	    }    
 	}
+	try {
+	    in.close();
+	    fr.close();
+	}
+	catch (Exception e) {
+	    System.err.println("Error closing layout file");
+	    System.exit(1);
+	}
+	
+	double cost = placementCost(true);
+	dumpLayout("file_layout.dot");
+	System.out.println("Layout cost: " + cost);
+	assert cost >= 0.0 : "Illegal Layout";
+	
+    }
+    
+    /** Given a Buffered reader, get the tile number assignment 
+	from the reader for <node>
+    **/
+    private void assignFromReader(BufferedReader inputBuffer, 
+				  StaticStreamGraph ssg, FlatNode node) 
+    {
+	//Assign a filter, joiner to a tile 
+	//perform some error checking.
+	while (true) {
+	    int tileNumber;
+	    String str = null;
+	    
+	    System.out.print(node.getName() + " of " + ssg + ": ");
+	    try {
+		str = inputBuffer.readLine();			
+		tileNumber = Integer.valueOf(str).intValue();
+	    }
+	    catch (Exception e) {
+		System.out.println("Bad number " + str);
+		continue;
+	    }
+	    if (tileNumber < 0 || tileNumber >= rawChip.getTotalTiles()) {
+		System.out.println("Bad tile number!");
+		continue;
+	    }
+	    RawTile tile = rawChip.getTile(tileNumber);
+	    if (SIRassignment.values().contains(tile)) {
+		System.out.println("Tile Already Assigned!");
+		continue;
+	    }
+	    //other wise the assignment is valid, assign and break!!
+	    System.out.println("Assigning " + node.getName() + " to tile " + tileNumber);
+	    assign(tile, node);
+	    break;
+	}
+    }
+    
+					
+					
+
+    public void handAssign()
+    {
+	assignFileFilters();
+	System.out.println("Enter desired tile for each filter of " + 
+			   streamGraph.getStaticSubGraphs().length + " subgraphs: ");
+	BufferedReader
+	    inputBuffer = new BufferedReader(new InputStreamReader(System.in));
+
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+	    Iterator flatNodes = ssg.getFlatNodes().iterator();
+	    while (flatNodes.hasNext()) {
+		FlatNode node = (FlatNode)flatNodes.next();
+	    
+		//do not try to assign a node that should not be assigned
+		if (!assigned.contains(node))
+		    continue;
+		assignFromReader(inputBuffer, ssg, node);
+	    }    
+	}
+	try {
+	    inputBuffer.close();
+	}
+	catch (Exception e) {
+	    System.err.println("Error closing layout input stream.");
+	    System.exit(1);
+	}
+	
+	
 	double cost = placementCost(true);
 	dumpLayout("hand_layout.dot");
 	System.out.println("Layout cost: " + cost);

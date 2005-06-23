@@ -106,8 +106,10 @@ public class SpaceDynamicBackend {
 	streamGraph.createStaticStreamGraphs();
 
 	//assign tiles to each static stream graph
-	//	streamGraph.tileAssignment();
-	streamGraph.handTileAssignment();
+	if (KjcOptions.nopartition)  //if we don't want to partition the SSGs just ass the necc tiles to each
+	    streamGraph.tileAssignment();
+	else  //otherwise ask user...
+	    streamGraph.handTileAssignment();
 		
 	//dump a dot representation of the graph
 	streamGraph.dumpStaticStreamGraph();

@@ -31,6 +31,8 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
     
     private RawChip rawChip;
     private StreamGraph streamGraph;
+    //the buffered reader from where we get the assignment
+    private BufferedReader inputBuffer;
 
     public void visitStaticStreamGraph(StaticStreamGraph ssg) 
     {
@@ -46,8 +48,31 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
 	fileReaders = new HashMap();
 	fileWriters = new HashMap();
 	fileNodes = new HashSet();
+
+	if (KjcOptions.devassignfile != null) {
+	    try { //read from the file specified...
+		inputBuffer = 
+		    new BufferedReader(new FileReader(KjcOptions.devassignfile));
+	    }
+	    catch (Exception e) {
+		System.err.println("Error opening device-to-port assignment file " + 
+				   KjcOptions.devassignfile);
+		System.exit(1);
+	    }
+	}
+	else  //otherwise read for standard input
+	    inputBuffer = new BufferedReader(new InputStreamReader(System.in));
+
 	
 	streamGraph.getTopLevel().accept(this, null, true);
+	
+	try {
+	    inputBuffer.close();
+	}
+	catch (Exception e) {
+	    System.err.println("Error closing device-to-port assignment stream");
+	    System.exit(1);
+	}
 
 	//add everything to the fileNodes hashset
 	SpaceDynamicBackend.addAll(fileNodes, fileReaders.keySet());
@@ -78,16 +103,19 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
 
     private IOPort getPortFromUser(IODevice dev) 
     {
-	BufferedReader inputBuffer = new BufferedReader(new InputStreamReader(System.in));
 	int num;
 	
 	while (true) {
+	    String str = null;
+	    
 	    System.out.print("Enter port number for " + dev.toString() + ": ");
 	    try {
-		num = Integer.valueOf(inputBuffer.readLine()).intValue();
+		str = inputBuffer.readLine();
+		num = Integer.valueOf(str).intValue();
 	    }
 	    catch (Exception e) {
-		System.out.println("Bad number!");
+		e.printStackTrace();
+		System.out.println("Bad number! (" + str + ")");
 		continue;
 	    }
 
@@ -104,6 +132,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
 	    break;
 	}
 	
+	System.out.println(dev.toString() + " assigned to port " + num);
 	return rawChip.getIOPort(num);
     }
 

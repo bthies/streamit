@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.67 2005-04-09 03:05:50 thies Exp $
+ * $Id: KjcOptions.opt,v 1.68 2005-06-23 19:22:48 mgordon Exp $
  */
 
 prefix Kjc
@@ -464,14 +464,32 @@ longname		"dynamicnet"
 longname 		"spacedynamic"
 	type		boolean
 	default		"false"
-	help		"Use the space multiplexing Raw backend with dynamic rate support"
+	help		"Use the space multiplexing Raw backend with dynamic rate support."
 
 longname		"malloczeros"
 	type		boolean
 	default		"false"
-	help 		"Use mallocs instead of callocs to initial memory (malloc will zero memory)"
+	help 		"Use mallocs instead of callocs to initial memory (malloc will zero memory)."
 
 longname		"macros"
 	type		boolean
 	default		"false"
 	help 		"Convert small functions to macros, effectively inlining them."
+
+longname 		"nopartition"
+	type		boolean
+	default		"false"
+	help		"For the space-dynamic backend, do not attempt to partition each static subgraph."
+
+longname 		"layoutfile"
+	type		String
+	default		"null"
+	requireArgument
+	help		"For the space-dynamic backend, specify a layout file (a new-line separated list of tiles)."
+	
+longname 		"devassignfile"
+	type		String
+	default		"null"
+	requireArgument
+	help		"For the space-dynamic backend, specify a file that assigns devices to ports (a new-line separated list of tiles)."
+	

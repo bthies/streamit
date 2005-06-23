@@ -66,8 +66,9 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
 	
 	streamGraph.getTopLevel().accept(this, null, true);
 	
-	try {
-	    inputBuffer.close();
+	try { //close the file
+	    if (KjcOptions.devassignfile != null)
+		inputBuffer.close();
 	}
 	catch (Exception e) {
 	    System.err.println("Error closing device-to-port assignment stream");

@@ -496,14 +496,6 @@ public class Layout extends at.dms.util.Utils implements
 		assignFromReader(inputBuffer, ssg, node);
 	    }    
 	}
-	try {
-	    inputBuffer.close();
-	}
-	catch (Exception e) {
-	    System.err.println("Error closing layout input stream.");
-	    System.exit(1);
-	}
-	
 	
 	double cost = placementCost(true);
 	dumpLayout("hand_layout.dot");

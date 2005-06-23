@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.56 2005-04-09 03:05:21 thies Exp $
+# $Id: strc,v 1.57 2005-06-23 19:20:37 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -191,6 +191,9 @@ Options specific to Raw backend:
   --forceplacement    For the SpaceTime RAW backend, use try to minimize communication in layout
   --scheduler         For the SpaceTime RAW backend, either work, dep, or comm
   --malloczeros       For spacedynamic, generate malloc instead of calloc (malloc will zero)
+  --nopartition       For spacedynamic, do not attempt to partition each static subgraph
+  --layoutfile        For spacedynamic, specify a layout file (a new-line separated list of tiles)
+  --devassignfile     For spacedynamic, specify a device-to-port assignment file (a new-line separated list of tiles)
 
 Options specific to uniprocessor backend:
   --frequencyreplacement, -F
@@ -300,6 +303,9 @@ sub get_options
 			    "steadymult=i",
 			    "forceplacement!",
 			    "malloczeros!",
+			    "nopartition!",
+			    "layoutfile=s",
+			    "devassignfile=s",
 			    "scheduler=s",
 			    "destroyfieldarray!",
 			    "cacheopt!",
@@ -569,8 +575,11 @@ sub get_kjc_opts
     $opts{doloops} && ($kjcopts .= " --doloops");
     $opts{forceplacement} && ($kjcopts .= " --forceplacement");
     $opts{malloczeros} && ($kjcopts .= " --malloczeros");
+    $opts{nopartition} && ($kjcopts .= " --nopartition");
     $opts{steadymult} && ($kjcopts .= " --steadymult ". $opts{steadymult});
     $opts{scheduler} && ($kjcopts .= " --scheduler ". $opts{scheduler});
+    $opts{layoutfile} && ($kjcopts .= " --layoutfile ". $opts{layoutfile});
+    $opts{devassignfile} && ($kjcopts .= " --devassignfile ". $opts{devassignfile});
     return $kjcopts;
 }
 

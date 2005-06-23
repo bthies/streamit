@@ -325,12 +325,12 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
 	// otherwise, create new fields array
 	JFieldDeclaration[] newFields = new JFieldDeclaration[fields.length
 								+ 1];
-	// copy in new field
-	newFields[0] = field;
 	// copy in old fields
 	for (int i=0; i<fields.length; i++) {
-	    newFields[i+1] = fields[i];
+	    newFields[i] = fields[i];
 	}
+	// copy in new field
+	newFields[fields.length] = field;	
 	// reset old to new
 	this.fields = newFields;
     }

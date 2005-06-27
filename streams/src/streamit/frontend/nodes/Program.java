@@ -25,19 +25,20 @@ import java.util.List;
  * of structures (as {@link streamit.frontend.nodes.TypeStruct} objects).
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: Program.java,v 1.3 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: Program.java,v 1.4 2005-06-27 21:08:51 janiss Exp $
  */
 public class Program extends FENode
 {
-    private List streams, structs;
+    private List streams, structs, helpers;
     
     /** Creates a new StreamIt program, given lists of streams and
      * structures. */
-    public Program(FEContext context, List streams, List structs)
+    public Program(FEContext context, List streams, List structs, List helpers)
     {
         super(context);
         this.streams = streams;
         this.structs = structs;
+        this.helpers = helpers;
     }
     
     /** Returns the list of streams declared in this. */
@@ -50,6 +51,12 @@ public class Program extends FENode
     public List getStructs()
     {
         return structs;
+    }
+
+    /** Returns the list of helpers declared in this. */
+    public List getHelpers()
+    {
+        return helpers;
     }
     
     /** Accepts a front-end visitor. */

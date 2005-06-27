@@ -27,7 +27,7 @@ import java.util.List;
  * than helper functions), and a body.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: Function.java,v 1.7 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: Function.java,v 1.8 2005-06-27 21:08:51 janiss Exp $
  */
 public class Function extends FENode
 {
@@ -40,6 +40,7 @@ public class Function extends FENode
     public static final int FUNC_BUILTIN_HELPER = 6;
     public static final int FUNC_PHASE = 7;
     public static final int FUNC_PREWORK = 8;
+    public static final int FUNC_NATIVE = 9;
     
     private int cls;
     private String name; // or null

@@ -45,7 +45,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
     private Type getType(Expression expr)
     {
         // To think about: should we cache GetExprType objects?
-        return (Type)expr.accept(new GetExprType(symtab, null, new HashMap())); // streamType
+        return (Type)expr.accept(new GetExprType(symtab, null, new HashMap(), new HashMap())); // streamType
     }
     private TokenReference contextToReference(FEContext ctx)
     {
@@ -647,6 +647,12 @@ public class FEIRToSIR implements FEVisitor, Constants {
     }
     return new JMethodCallExpression(null, exp.getName(), args);
   }
+    
+  public Object visitExprHelperCall(ExprHelperCall exp) {
+    debug("In visitExprHelperCall\n");
+    /* unimplemented */
+    return null;
+  }
 
   public Object visitExprPeek(ExprPeek exp) {
     debug("In visitExprPeek\n");
@@ -1213,6 +1219,13 @@ public class FEIRToSIR implements FEVisitor, Constants {
     public Object visitStmtSendMessage(StmtSendMessage stmt) 
     {
         debug("In visitStmtSendMessage\n");
+        /* unimplemented */
+        return null;
+    }
+
+    public Object visitStmtHelperCall(StmtHelperCall stmt) 
+    {
+        debug("In visitStmtHelperCall\n");
         /* unimplemented */
         return null;
     }

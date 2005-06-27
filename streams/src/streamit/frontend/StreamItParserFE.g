@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.55 2005-06-20 22:40:50 janiss Exp $
+ * $Id: StreamItParserFE.g,v 1.56 2005-06-27 21:08:46 janiss Exp $
  */
 
 header {
@@ -77,14 +77,19 @@ options {
 }
 
 program	returns [Program p]
-{ p = null; List structs = new ArrayList(); List streams = new ArrayList();
-	TypeStruct ts; StreamSpec ss; }
+{ p = null; 
+	List structs = new ArrayList(); 
+	List streams = new ArrayList();
+	List helpers = new ArrayList();
+	TypeStruct ts; StreamSpec ss; TypeHelper th; }
 	:	( ts=struct_decl { structs.add(ts); }
 		| ss=stream_decl { streams.add(ss); }
+		| th=native_decl { helpers.add(th); }
+		| th=helper_decl { helpers.add(th); }
 		)*
 		EOF
 		// Can get away with no context here.
-		{ if (!hasError) p = new Program(null, streams, structs); }
+		{ if (!hasError) p = new Program(null, streams, structs, helpers); }
 	;
 
 stream_decl returns [StreamSpec ss] { ss = null; StreamType st; }
@@ -228,6 +233,11 @@ push_statement returns [Statement s] { s = null; Expression x; }
 		{ s = new StmtPush(getContext(t), x); }
 	;
 
+helper_call_statement	returns [Statement s] { s = null; List l; }
+	:	p:ID DOT m:ID l=func_call_params
+		{ s = new StmtHelperCall(getContext(p), p.getText(), m.getText(), l); }
+	;
+
 msg_statement returns [Statement s] { s = null; List l;
   Expression minl = null, maxl = null; }
 	:	p:ID DOT m:ID l=func_call_params
@@ -255,6 +265,7 @@ statement returns [Statement s] { s = null; }
 	|	s=while_statement
 	|	s=do_while_statement SEMI
 	|	s=for_statement
+	|       s=helper_call_statement SEMI
 	|	s=msg_statement SEMI
 	|   SEMI
 	;
@@ -488,6 +499,11 @@ func_call returns [Expression x] { x = null; List l; }
 		{ x = new ExprFunCall(getContext(name), name.getText(), l); }
 	;
 
+helper_call	returns [Expression x] { x = null; List l; }
+	:	p:ID DOT m:ID l=func_call_params
+		{ x = new ExprHelperCall(getContext(p), p.getText(), m.getText(), l); }
+	;
+
 func_call_params returns [List l] { l = new ArrayList(); Expression x; }
 	:	LPAREN
 		(	x=right_expr { l.add(x); }
@@ -659,6 +675,7 @@ streamit_value_expr returns [Expression x] { x = null; }
 minic_value_expr returns [Expression x] { x = null; }
 	:	LPAREN x=right_expr RPAREN
 	|	(func_call) => x=func_call
+	|	(helper_call) => x=helper_call
 	|	x=value
 	|	x=constantExpr
 	;
@@ -710,3 +727,32 @@ struct_decl returns [TypeStruct ts]
 		RCURLY
 		{ ts = new TypeStruct(getContext(t), id.getText(), names, types); }
 	;
+
+native_function_decl returns [Function f] { Type t; List l; Statement s; f = null;
+int cls = Function.FUNC_NATIVE; }
+	:	t=data_type id:ID l=param_decl_list SEMI
+		{ f = new Function(getContext(id), cls, id.getText(), t, l, null); }
+	;
+	
+native_decl returns [TypeHelper th]
+{ th = null; List funcs = new ArrayList(); Function fn; int cls = TypeHelper.NATIVE_HELPERS; }
+	:	t:TK_native id:ID
+		LCURLY
+		(
+		  (data_type ID LPAREN) => (fn=native_function_decl) { funcs.add(fn); }
+		)*
+		RCURLY
+		{ th = new TypeHelper(getContext(t), id.getText(), funcs, cls); }
+	;
+		
+helper_decl returns [TypeHelper th]
+{ th = null; List funcs = new ArrayList(); Function fn; }
+	:	t:TK_helper id:ID
+		LCURLY
+		(
+		  (data_type ID LPAREN) => (fn=function_decl) { funcs.add(fn); }
+		)*
+		RCURLY
+		{ th = new TypeHelper(getContext(t), id.getText(), funcs); }
+	;
+

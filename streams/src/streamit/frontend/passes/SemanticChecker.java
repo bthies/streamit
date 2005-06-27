@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.28 2005-06-11 02:19:38 janiss Exp $
+ * @version $Id: SemanticChecker.java,v 1.29 2005-06-27 21:08:56 janiss Exp $
  */
 public class SemanticChecker
 {
@@ -575,6 +575,12 @@ public class SemanticChecker
                             new TypePrimitive(TypePrimitive.TYPE_COMPLEX);
                         Type floattype =
                             new TypePrimitive(TypePrimitive.TYPE_FLOAT);
+                        Type float2type =
+                            new TypePrimitive(TypePrimitive.TYPE_FLOAT2);
+                        Type float3type =
+                            new TypePrimitive(TypePrimitive.TYPE_FLOAT3);
+                        Type float4type =
+                            new TypePrimitive(TypePrimitive.TYPE_FLOAT4);
                         Type stringtype =
                             new TypePrimitive(TypePrimitive.TYPE_STRING);
                         if (ct == null)
@@ -589,8 +595,12 @@ public class SemanticChecker
                         // Arithmetic / concatenation operations:
                         case ExprBinary.BINOP_ADD:
 			    // can concatenate strings and characters
-                            if (!ct.promotesTo(cplxtype) && !ct.promotesTo(stringtype))
-                                report(expr,
+                            if (!ct.promotesTo(cplxtype) && 
+				!ct.promotesTo(stringtype) &&
+				!ct.promotesTo(float2type) && 
+				!ct.promotesTo(float3type) && 
+				!ct.promotesTo(float4type)) 
+				report(expr,
                                        "cannot perform + on " + ct);
                             break;
 
@@ -598,7 +608,10 @@ public class SemanticChecker
                         case ExprBinary.BINOP_DIV:
                         case ExprBinary.BINOP_MUL:
                         case ExprBinary.BINOP_SUB:
-                            if (!ct.promotesTo(cplxtype))
+                            if (!ct.promotesTo(cplxtype) &&
+				!ct.promotesTo(float2type) && 
+				!ct.promotesTo(float3type) && 
+				!ct.promotesTo(float4type))
                                 report(expr,
                                        "cannot perform arithmetic on " + ct);
                             break;
@@ -640,9 +653,10 @@ public class SemanticChecker
                         case ExprBinary.BINOP_GT:
                         case ExprBinary.BINOP_LE:
                         case ExprBinary.BINOP_LT:
-                            if (!ct.promotesTo(floattype))
+                            if (!ct.promotesTo(floattype) &&
+				!ct.promotesTo(float3type)) 
                                 report(expr,
-                                       "cannot compare non-real type " + ct);
+                                       "cannot compare type " + ct);
                             break;
                         
                         // Equality, can compare anything:

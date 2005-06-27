@@ -25,20 +25,22 @@ import java.util.Map;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.22 2005-06-20 22:40:56 janiss Exp $
+ * @version $Id: GetExprType.java,v 1.23 2005-06-27 21:08:51 janiss Exp $
  */
 public class GetExprType extends FENullVisitor
 {
     private SymbolTable symTab;
     private StreamType streamType;
     private Map structsByName;
+    private Map helpersByName;
     
     public GetExprType(SymbolTable symTab, StreamType streamType,
-                       Map structsByName)
+                       Map structsByName, Map helpersByName)
     {
         this.symTab = symTab;
         this.streamType = streamType;
         this.structsByName = structsByName;
+        this.helpersByName = helpersByName;
     }
     
     public Object visitExprArray(ExprArray exp)
@@ -92,6 +94,7 @@ public class GetExprType extends FENullVisitor
         // promote to, otherwise.
         Type tl = (Type)exp.getLeft().accept(this);
         Type tr = (Type)exp.getRight().accept(this);
+
         return tl.leastCommonPromotion(tr);
     }
 
@@ -168,6 +171,40 @@ public class GetExprType extends FENullVisitor
             return null;
         }
     }
+
+    public Object visitExprHelperCall(ExprHelperCall helper)
+    {
+
+	TypeHelper th = (TypeHelper)helpersByName.get(helper.getHelperPackage());
+	for (int i = 0; th != null && i < th.getNumFuncs(); i++) {
+	    Function func = th.getFunction(i);
+	    if (func.getName().equals(helper.getName()))
+		return func.getReturnType();
+	}
+	
+	if (helper.getHelperPackage().equals("StreamItVectorLib")) {
+	    String name = helper.getName();
+	    if (name.startsWith("dot") || 
+		name.startsWith("sqrtDist") )
+		return new TypePrimitive(TypePrimitive.TYPE_FLOAT);
+	    if (name.indexOf("Than") != -1 )
+		return new TypePrimitive(TypePrimitive.TYPE_BOOLEAN);
+	    Object o;
+
+	    if (name.indexOf("2") != -1)
+		return new TypePrimitive(TypePrimitive.TYPE_FLOAT2);
+	    if (name.indexOf("3") != -1)
+		return new TypePrimitive(TypePrimitive.TYPE_FLOAT3);
+	    if (name.indexOf("4") != -1)
+		return new TypePrimitive(TypePrimitive.TYPE_FLOAT4);
+
+	}
+
+	throw new RuntimeException("No such helper call exists:" + 
+				   helper.getHelperPackage() + '.' + 
+				   helper.getName());
+    }    
+
 
     public Object visitExprFunCall(ExprFunCall exp)
     {

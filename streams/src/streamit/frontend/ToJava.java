@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.62 2005-06-20 23:27:53 janiss Exp $
+ * @version $Id: ToJava.java,v 1.63 2005-06-27 21:08:46 janiss Exp $
  */
 public class ToJava
 {
@@ -87,6 +87,7 @@ public class ToJava
     {
         List streams = new java.util.ArrayList();
         List structs = new java.util.ArrayList();
+        List helpers = new java.util.ArrayList();
         
         // Complex structure type:
         List fields = new java.util.ArrayList();
@@ -133,7 +134,12 @@ public class ToJava
         ftypes.add(floattype);
         structs.add(new TypeStruct(null, "float4", fields, ftypes));
         
-        return new Program(null, streams, structs);
+	fields = new java.util.ArrayList(); 
+	ftypes = new java.util.ArrayList(); 
+	TypeStruct stringStruct = new TypeStruct(null, "String", fields, ftypes);
+	structs.add(stringStruct);
+
+        return new Program(null, streams, structs, helpers);
     }
 
     /**
@@ -174,14 +180,17 @@ public class ToJava
             Program pprog = parser.program();
             if (pprog != null)
             {
-                List newStreams, newStructs;
+                List newStreams, newStructs, newHelpers;
                 newStreams = new java.util.ArrayList();
                 newStreams.addAll(prog.getStreams());
                 newStreams.addAll(pprog.getStreams());
                 newStructs = new java.util.ArrayList();
                 newStructs.addAll(prog.getStructs());
                 newStructs.addAll(pprog.getStructs());
-                prog = new Program(null, newStreams, newStructs);
+                newHelpers = new java.util.ArrayList();
+                newHelpers.addAll(prog.getHelpers());
+                newHelpers.addAll(pprog.getHelpers());
+                prog = new Program(null, newStreams, newStructs, newHelpers);
             }
         }
         return prog;
@@ -221,6 +230,7 @@ public class ToJava
             prog = (Program)prog.accept(new NoticePhasedFilters());
         prog = (Program)prog.accept(new GenerateCopies(varGen));
         prog = (Program)prog.accept(new DoComplexProp(varGen));
+        prog = (Program)prog.accept(new DoCompositeProp(varGen));
         prog = (Program)prog.accept(new ComplexToStruct());
         prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new EnqueueToFunction());

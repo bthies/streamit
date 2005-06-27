@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.99 2005-06-20 22:41:03 janiss Exp $
+ * @version $Id: NodesToJava.java,v 1.100 2005-06-27 21:09:02 janiss Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -263,7 +263,8 @@ public class NodesToJava implements FEVisitor
         // We can use a null stream type here since the left-hand
         // side shouldn't contain pushes, pops, or peeks.
         GetExprType eType = new GetExprType(symtab, ss.getStreamType(),
-                                            new java.util.HashMap());
+                                            new java.util.HashMap(),
+					    new java.util.HashMap());
         Type lhsType = (Type)lhs.accept(eType);
         if (lhsType.isComplex())
         {
@@ -500,6 +501,21 @@ public class NodesToJava implements FEVisitor
         return result;
     }
 
+    public Object visitExprHelperCall(ExprHelperCall exp)
+    {
+	String result = exp.getHelperPackage() + '.' + exp.getName() + '(';
+	boolean first = true;
+	for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
+	    {
+		Expression param = (Expression)iter.next();
+		if (!first) result += ", ";
+		first = false;
+		result += (String)param.accept(this);
+	    }
+	result += ")";
+	return result;
+    }
+
     /**
      * Given a function call of the following form:
      *
@@ -683,6 +699,7 @@ public class NodesToJava implements FEVisitor
         for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
         {
             TypeStruct struct = (TypeStruct)iter.next();
+	    if (struct.getName().equals("String")) continue;
             result += indent + "class " + struct.getName() +
                 " extends Structure implements Serializable {\n";
             addIndent();
@@ -999,6 +1016,20 @@ public class NodesToJava implements FEVisitor
         }
         result += "})";
         return result;
+    }
+
+    public Object visitStmtHelperCall(StmtHelperCall stmt) 
+    {
+	String result = stmt.getHelperPackage() + '.' + stmt.getName() + '(';
+	boolean first = true;
+	for (Iterator iter = stmt.getParams().iterator(); iter.hasNext(); ) {
+	    Expression param = (Expression)iter.next();
+	    if (!first) result += ", ";
+	    first = false;
+	    result += (String)param.accept(this);
+	}
+	result += ")";
+	return result;
     }
 
     public Object visitStmtSplit(StmtSplit stmt)

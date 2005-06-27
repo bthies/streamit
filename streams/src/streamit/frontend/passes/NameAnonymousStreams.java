@@ -34,7 +34,7 @@ import java.util.Set;
  * stream.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NameAnonymousStreams.java,v 1.4 2004-02-12 21:35:54 dmaze Exp $
+ * @version $Id: NameAnonymousStreams.java,v 1.5 2005-06-27 21:08:56 janiss Exp $
  */
 public class NameAnonymousStreams extends SymbolTableVisitor
 {
@@ -68,7 +68,7 @@ public class NameAnonymousStreams extends SymbolTableVisitor
         List streams = new java.util.ArrayList();
         streams.addAll(prog.getStreams());
         streams.addAll(newStreams);
-        return new Program(prog.getContext(), streams, prog.getStructs());
+        return new Program(prog.getContext(), streams, prog.getStructs(), prog.getHelpers());
     }
 
     public Object visitSCAnon(SCAnon creator)

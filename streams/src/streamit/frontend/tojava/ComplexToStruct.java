@@ -28,7 +28,7 @@ import java.util.List;
  * parameters with the correct actual structure type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ComplexToStruct.java,v 1.4 2005-06-11 02:19:43 janiss Exp $
+ * @version $Id: ComplexToStruct.java,v 1.5 2005-06-27 21:09:02 janiss Exp $
  */
 public class ComplexToStruct extends FEReplacer
 {
@@ -103,7 +103,7 @@ public class ComplexToStruct extends FEReplacer
                                     newNames, newTypes);
             newStructs.add(struct);
         }
-        prog = new Program(prog.getContext(), prog.getStreams(), newStructs);
+        prog = new Program(prog.getContext(), prog.getStreams(), newStructs, prog.getHelpers());
         return super.visitProgram(prog);
     }
 

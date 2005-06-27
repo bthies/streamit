@@ -28,7 +28,7 @@ package streamit.frontend.nodes;
  * <code>FENode.accept()</code> method of the object in question.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEVisitor.java,v 1.17 2005-06-20 22:40:56 janiss Exp $
+ * @version $Id: FEVisitor.java,v 1.18 2005-06-27 21:08:51 janiss Exp $
  */
 public interface FEVisitor
 {
@@ -45,6 +45,7 @@ public interface FEVisitor
     public Object visitExprDynamicToken(ExprDynamicToken exp);
     public Object visitExprField(ExprField exp);
     public Object visitExprFunCall(ExprFunCall exp);
+    public Object visitExprHelperCall(ExprHelperCall exp);
     public Object visitExprPeek(ExprPeek exp);
     public Object visitExprPop(ExprPop exp);
     public Object visitExprRange(ExprRange exp);
@@ -79,6 +80,7 @@ public interface FEVisitor
     public Object visitStmtPush(StmtPush stmt);
     public Object visitStmtReturn(StmtReturn stmt);
     public Object visitStmtSendMessage(StmtSendMessage stmt);
+    public Object visitStmtHelperCall(StmtHelperCall stmt);
     public Object visitStmtSplit(StmtSplit stmt);
     public Object visitStmtVarDecl(StmtVarDecl stmt);
     public Object visitStmtWhile(StmtWhile stmt);

@@ -17,7 +17,7 @@
 package streamit.frontend.passes;
 
 import streamit.frontend.nodes.*;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * Generate code to copy structures and arrays elementwise.  In StreamIt,
@@ -28,7 +28,7 @@ import java.util.Collections;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.11 2005-06-22 00:35:34 janiss Exp $
+ * @version $Id: GenerateCopies.java,v 1.12 2005-06-27 21:08:56 janiss Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -240,6 +240,32 @@ public class GenerateCopies extends SymbolTableVisitor
         if (needsCopy(result))
             result = assignToTemp(result, false);
         return result;
+    }
+
+    public Object visitExprHelperCall(ExprHelperCall expr)
+    {
+	boolean hasChanged = false;
+	Expression result = expr;
+	List newParams = new ArrayList();
+	for (Iterator iter = expr.getParams().iterator(); iter.hasNext(); )
+	    {
+		Expression param = (Expression)iter.next();
+		Expression newParam = param;
+		/*
+		  if (needsCopy(newParam))
+		  newParam = assignToTemp(newParam, true, false);
+		*/
+		newParam = doExpression(newParam);
+		newParams.add(newParam);
+		if (param != newParam) hasChanged = true;
+	    }
+	if (hasChanged)
+	    result = new ExprHelperCall(expr.getContext(), 
+					expr.getHelperPackage(), 
+					expr.getName(), newParams);
+	if (needsCopy(result))
+	    result = assignToTemp(result, false);
+	return result;
     }
 
     public Object visitStmtAssign(StmtAssign stmt)

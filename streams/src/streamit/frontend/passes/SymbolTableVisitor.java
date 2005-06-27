@@ -28,7 +28,7 @@ import java.util.Map;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.15 2004-05-04 15:00:21 thies Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.16 2005-06-27 21:08:56 janiss Exp $
  */
 public class SymbolTableVisitor extends FEReplacer
 {
@@ -59,6 +59,12 @@ public class SymbolTableVisitor extends FEReplacer
     protected Map structsByName;
 
     /**
+     * Map resolving helper names to helpers.
+     */
+
+    protected Map helpersByName;
+
+    /**
      * Create a new symbol table visitor.
      *
      * @param symtab  Symbol table to use if no other is available,
@@ -81,6 +87,7 @@ public class SymbolTableVisitor extends FEReplacer
         this.symtab = symtab;
         this.streamType = st;
         this.structsByName = new java.util.HashMap();
+        this.helpersByName = new java.util.HashMap();
     }
 
     /**
@@ -93,7 +100,7 @@ public class SymbolTableVisitor extends FEReplacer
     public Type getType(Expression expr)
     {
         // To think about: should we cache GetExprType objects?
-        GetExprType get = new GetExprType(symtab, streamType, structsByName);
+        GetExprType get = new GetExprType(symtab, streamType, structsByName, helpersByName);
         Type type = (Type)expr.accept(get);
         return actualType(type);
     }
@@ -180,6 +187,11 @@ public class SymbolTableVisitor extends FEReplacer
             TypeStruct struct = (TypeStruct)iter.next();
             structsByName.put(struct.getName(), struct);
         }
+	for (Iterator iter = prog.getHelpers().iterator(); iter.hasNext(); )
+	{
+	    TypeHelper helper = (TypeHelper)iter.next();
+	    helpersByName.put(helper.getName(), helper);
+	}
         return super.visitProgram(prog);
     }
     

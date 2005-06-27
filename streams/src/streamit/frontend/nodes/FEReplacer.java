@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.35 2005-06-20 22:40:56 janiss Exp $
+ * @version $Id: FEReplacer.java,v 1.36 2005-06-27 21:08:51 janiss Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -228,6 +228,22 @@ public class FEReplacer implements FEVisitor
         return new ExprFunCall(exp.getContext(), exp.getName(), newParams);
     }
 
+    public Object visitExprHelperCall(ExprHelperCall exp)
+    {
+	boolean hasChanged = false;
+	List newParams = new ArrayList();
+	for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
+	    {
+		Expression param = (Expression)iter.next();
+		Expression newParam = doExpression(param);
+		newParams.add(newParam);
+		if (param != newParam) hasChanged = true;
+	    }
+	if (!hasChanged) return exp;
+	return new ExprHelperCall(exp.getContext(), exp.getHelperPackage(), 
+				  exp.getName(), newParams);
+    }
+
     public Object visitExprPeek(ExprPeek exp)
     {
         Expression expr = doExpression(exp.getExpr());
@@ -297,6 +313,7 @@ public class FEReplacer implements FEVisitor
 
     public Object visitFunction(Function func)
     {
+	if (func.getCls() == Function.FUNC_NATIVE) return func;
         Statement newBody = (Statement)func.getBody().accept(this);
         if (newBody == func.getBody()) return func;
         return new Function(func.getContext(), func.getCls(),
@@ -327,7 +344,16 @@ public class FEReplacer implements FEVisitor
         List newStreams = new ArrayList();
         for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
             newStreams.add(((FENode)(iter.next())).accept(this));
-        return new Program(prog.getContext(), newStreams, prog.getStructs());
+
+	List newHelpers = prog.getHelpers();
+	for (Iterator iter = newHelpers.iterator(); iter.hasNext(); ) {
+	    TypeHelper helper = (TypeHelper)iter.next();
+	    for (int i = 0; i < helper.getNumFuncs(); i++) {
+		helper.setFunction(i, (Function)helper.getFunction(i).accept(this));
+	    }
+	}
+
+        return new Program(prog.getContext(), newStreams, prog.getStructs(), newHelpers);
     }
     
     public Object visitSCAnon(SCAnon creator)
@@ -549,6 +575,21 @@ public class FEReplacer implements FEVisitor
         if (!hasChanged) return stmt;
         return new StmtSendMessage(stmt.getContext(), newReceiver,
                                    stmt.getName(), newParams, newMin, newMax);
+    }
+
+    public Object visitStmtHelperCall(StmtHelperCall stmt) 
+    {
+	boolean hasChanged = false;
+	List newParams = new ArrayList();
+	for (Iterator iter = stmt.getParams().iterator(); iter.hasNext(); ) {
+	    Expression param = (Expression)iter.next();
+	    Expression newParam = doExpression(param);
+	    newParams.add(newParam);
+	    if (param != newParam) hasChanged = true;
+	}
+	if (!hasChanged) return stmt;
+	return new StmtHelperCall(stmt.getContext(), stmt.getHelperPackage(),
+				  stmt.getName(), newParams);
     }
 
     public Object visitStmtSplit(StmtSplit stmt)

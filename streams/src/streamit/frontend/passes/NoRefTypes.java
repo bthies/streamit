@@ -31,7 +31,7 @@ import java.util.List;
  * type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NoRefTypes.java,v 1.7 2004-05-01 01:22:17 thies Exp $
+ * @version $Id: NoRefTypes.java,v 1.8 2005-06-27 21:08:56 janiss Exp $
  */
 public class NoRefTypes extends FEReplacer
 {
@@ -84,7 +84,7 @@ public class NoRefTypes extends FEReplacer
             newStructs.add(struct);
             structs.put(struct.getName(), struct);
         }
-        prog = new Program(prog.getContext(), prog.getStreams(), newStructs);
+        prog = new Program(prog.getContext(), prog.getStreams(), newStructs, prog.getHelpers());
         return super.visitProgram(prog);
     }
 

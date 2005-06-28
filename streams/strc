@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.58 2005-06-28 17:56:56 mstephen Exp $
+# $Id: strc,v 1.59 2005-06-28 18:27:11 mstephen Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -24,17 +24,17 @@ use vars qw(%opts $java $javac $cc $have_fftw);
 use POSIX qw(:sys_wait_h);
 
 # AUTOCONFISCATE $var = "@VAR@";
-$java = "rvm -X:opt:altruism_rate=0.95";
+$java = "java";
 $javac = "javac";
 $cc = "gcc";
 $have_fftw = "1";
 # END AUTOCONFISCATE
 
 # Turn on the server VM
-#$java = $java . " -server";
+$java = $java . " -server";
 
 # Enable assertions globally:
-#$java = $java . " -ea";
+$java = $java . " -ea";
 
 use Getopt::Long;
 Getopt::Long::Configure("bundling", "bundling_override", "no_ignore_case");

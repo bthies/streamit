@@ -397,7 +397,8 @@ public class RenameAll extends SLIRReplacingVisitor
 	
 	//only rename the field access if it is not embedded in a field
 	//access
-	if (!(newLeft instanceof JFieldAccessExpression))
+	if (!(newLeft instanceof JFieldAccessExpression) &&
+	    !(newLeft instanceof JLocalVariableExpression))
 	    newIdent = classsymtab.nameFor(ident);
 	
 

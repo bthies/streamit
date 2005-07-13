@@ -16,9 +16,18 @@
 
 // a channel is an I/O FIFO queue to go between filters
 
+// A number of modifications have been made to this class to make it
+// use WrappableGrowableArrays for passing basic data types between
+// components instead of the linked list implementation. The linked
+// list implementation is still part of the file and can be used for
+// objects or other special cases, but the primitive types - int, short
+// double, float, char, boolean, and bit, will work much faster with the
+// new objects. - Matthew Drake (madrake@gmail.com)
+
 package streamit.library;
 
 import java.util.*;
+import streamit.misc.*;
 
 public class Channel extends streamit.misc.DestroyedClass
 {
@@ -36,14 +45,38 @@ public class Channel extends streamit.misc.DestroyedClass
     
     int totalItemsPushed = 0, totalItemsPopped = 0;
 
+    WrappableGrowableQueue_int wgqueue_int, wgqueue_bit;
+    WrappableGrowableQueue_float wgqueue_float;
+    WrappableGrowableQueue_double wgqueue_double;
+    WrappableGrowableQueue_boolean wgqueue_boolean;
+    WrappableGrowableQueue_short wgqueue_short;
+    WrappableGrowableQueue_char wgqueue_char;
+
     // the channel should be constructed with a 0-length array
     // indicating the type that will be held in this channel.
     void setupChannel (Class channelType)
     {
         assert channelType != null;
         type = channelType;
-        queue = new LinkedList ();
+        if (type == Integer.TYPE) {
+            wgqueue_int =  new WrappableGrowableQueue_int();
+        } else if (type == Float.TYPE) {
+            wgqueue_float = new WrappableGrowableQueue_float(); 
+        } else if (type == Double.TYPE) {
+            wgqueue_double = new WrappableGrowableQueue_double();
+        } else if (type == Boolean.TYPE) {
+            wgqueue_boolean = new WrappableGrowableQueue_boolean();
+        } else if (type == Short.TYPE) {
+            wgqueue_short = new WrappableGrowableQueue_short();
+        } else if (type == Character.TYPE) {
+            wgqueue_char = new WrappableGrowableQueue_char();
+        } else if (type == Bit.TYPE) {
+            wgqueue_bit = new WrappableGrowableQueue_int();
+        } else {
+          queue = new LinkedList ();
+        }
     }
+    
     public Channel(Class channelType)
     {
         setupChannel (channelType);
@@ -53,11 +86,11 @@ public class Channel extends streamit.misc.DestroyedClass
     {
         setupChannel (channelType);
 
-	// if we detect a dynamic rate, make sure we're in unscheduled
-	// mode
-	if (!popPush.isStatic()) {
-	    Stream.ensureUnscheduled();
-	}
+        // if we detect a dynamic rate, make sure we're in unscheduled
+        // mode
+        if (!popPush.isStatic()) {
+            Stream.ensureUnscheduled();
+        }
 
         // store the popPush (use the maximum in case it's dynamic)
         popPushCount = new Integer (popPush.max);
@@ -67,18 +100,18 @@ public class Channel extends streamit.misc.DestroyedClass
      * with old Java benchmarks)
      */
     public Channel (Class channelType, int popPush) {
-	this(channelType, new RateStatic(popPush));
+        this(channelType, new RateStatic(popPush));
     }
 
     public Channel (Class channelType, Rate pop, Rate peek)
     {
         setupChannel (channelType);
 
-	// if we detect a dynamic rate, make sure we're in unscheduled
-	// mode
-	if (!pop.isStatic() || !peek.isStatic()) {
-	    Stream.ensureUnscheduled();
-	}
+        // if we detect a dynamic rate, make sure we're in unscheduled
+        // mode
+        if (!pop.isStatic() || !peek.isStatic()) {
+            Stream.ensureUnscheduled();
+        }
 
         // store the popPush (use the maximum in case it's dynamic)
         popPushCount = new Integer (pop.max);
@@ -89,13 +122,13 @@ public class Channel extends streamit.misc.DestroyedClass
      * with old Java benchmarks)
      */
     public Channel (Class channelType, int pop, int peek) {
-	this(channelType, new RateStatic(pop), new RateStatic(peek));
+        this(channelType, new RateStatic(pop), new RateStatic(peek));
     }
     public Channel (Class channelType, Rate pop, int peek) {
-	this(channelType, pop, new RateStatic(peek));
+        this(channelType, pop, new RateStatic(peek));
     }
     public Channel (Class channelType, int pop, Rate peek) {
-	this(channelType, new RateStatic(pop), peek);
+        this(channelType, new RateStatic(pop), peek);
     }
 
     public Channel (Channel original)
@@ -103,7 +136,24 @@ public class Channel extends streamit.misc.DestroyedClass
         assert original != null;
 
         type = original.getType ();
-        queue = new LinkedList ();
+
+        if (type == Integer.TYPE) {
+            wgqueue_int = new WrappableGrowableQueue_int();
+        } else if (type == Float.TYPE) {
+            wgqueue_float = new WrappableGrowableQueue_float(); 
+        } else if (type == Double.TYPE) {
+            wgqueue_double = new WrappableGrowableQueue_double();
+        } else if (type == Boolean.TYPE) {
+            wgqueue_boolean = new WrappableGrowableQueue_boolean();
+        } else if (type == Short.TYPE) {
+            wgqueue_short = new WrappableGrowableQueue_short();
+        } else if (type == Character.TYPE) {
+            wgqueue_char = new WrappableGrowableQueue_char();
+        } else if (type == Bit.TYPE) {
+            wgqueue_bit = new WrappableGrowableQueue_int();
+        } else {
+            queue = new LinkedList ();
+        }
 
         // copy pop/push/peek values
         popPushCount = original.popPushCount;
@@ -112,28 +162,63 @@ public class Channel extends streamit.misc.DestroyedClass
 
     void ensureData (int amount)
     {
-        while (queue.size () < amount)
+        boolean tempval;
+        if (type == Float.TYPE) {
+            tempval = (wgqueue_float.size() < amount);
+        } else if (type == Integer.TYPE) {
+            tempval = (wgqueue_int.size() < amount);
+        } else if (type == Double.TYPE) {
+            tempval = (wgqueue_double.size() < amount);
+        } else if (type == Boolean.TYPE) {
+            tempval = (wgqueue_boolean.size() < amount);
+        } else if (type == Short.TYPE) {
+            tempval = (wgqueue_short.size() < amount);
+        } else if (type == Character.TYPE) {
+            tempval = (wgqueue_char.size() < amount);
+        } else if (type == Bit.TYPE) {
+            tempval = (wgqueue_bit.size() < amount);
+        } else {
+            tempval = (queue.size() < amount);
+        }
+        while (tempval)
         {
             assert source != null;
 
-	    if (maxSize!=-1) {
-		// give a better error message
-		ERROR("ERROR:\n" + 
-		      "Trying to pop or peek beyond the declared rate in stream " + sink + "\n" +
-		      "Make sure that your pop/peek statements match the declared rates.\n" +
-		      "\n" +
-		      "Internal message:\n" +
-		      "maxSize should equal -1 " +
-		      "(representing not a scheduled buffer)\n" +
-		      "Queue: " + queue +
-		      ".size: " + queue.size() +
-		      " amount is: " + amount +
-		      " and maxSize is: " + maxSize);
-	    }
+            if (maxSize!=-1) {
+                // give a better error message
+                ERROR("ERROR:\n" + 
+                      "Trying to pop or peek beyond the declared rate in stream " + sink + "\n" +
+                      "Make sure that your pop/peek statements match the declared rates.\n" +
+                      "\n" +
+                      "Internal message:\n" +
+                      "maxSize should equal -1 " +
+                      "(representing not a scheduled buffer)\n" +
+                      "Queue: " + queue +
+                      ".size: " + queue.size() +
+                      " amount is: " + amount +
+                      " and maxSize is: " + maxSize);
+            }
 
-	    source.prepareToWork();
+            source.prepareToWork();
             source.work ();
-	    source.cleanupWork();
+            source.cleanupWork();
+            if (type == Float.TYPE) {
+                tempval = (wgqueue_float.size() < amount);
+            } else if (type == Integer.TYPE) {
+                tempval = (wgqueue_int.size() < amount);
+            } else if (type == Double.TYPE) {
+                tempval = (wgqueue_double.size() < amount);
+            } else if (type == Boolean.TYPE) {
+                tempval = (wgqueue_boolean.size() < amount);
+            } else if (type == Short.TYPE) {
+                tempval = (wgqueue_short.size() < amount);
+            } else if (type == Character.TYPE) {
+                tempval = (wgqueue_char.size() < amount);
+            } else if (type == Bit.TYPE) {
+                tempval = (wgqueue_bit.size() < amount);
+            } else {
+                tempval = (queue.size() < amount);
+            }
         }
     }
 
@@ -142,17 +227,94 @@ public class Channel extends streamit.misc.DestroyedClass
         ensureData (1);
     }
 
+    private void enqueue (int i) {
+        wgqueue_int.enqueue(i);
+        totalItemsPushed++;
+        source.registerPush();
+        if (passThrough) {
+            sink.prepareToWork();
+            sink.work ();
+            sink.cleanupWork();
+        }        
+    }
+
+    private void enqueue_bit (int i) {
+        wgqueue_bit.enqueue(i);
+        totalItemsPushed++;
+        source.registerPush();
+        if (passThrough) {
+            sink.prepareToWork();
+            sink.work();
+            sink.cleanupWork();
+        }
+    }
+
+    private void enqueue (float i) {
+        wgqueue_float.enqueue(i);
+        totalItemsPushed++;
+        source.registerPush();
+        if (passThrough) {
+            sink.prepareToWork();
+            sink.work ();
+            sink.cleanupWork();
+        }                
+    }
+
+    private void enqueue(double i) {
+        wgqueue_double.enqueue(i);
+        totalItemsPushed++;
+        source.registerPush();
+        if (passThrough) {
+            sink.prepareToWork();
+            sink.work();
+            sink.cleanupWork();
+        }
+    }
+
+    private void enqueue(boolean i) {
+        wgqueue_boolean.enqueue(i);
+        totalItemsPushed++;
+        source.registerPush();
+        if (passThrough) {
+            sink.prepareToWork();
+            sink.work();
+            sink.cleanupWork();
+        }
+    }
+
+    private void enqueue(short i) {
+        wgqueue_short.enqueue(i);
+        totalItemsPushed++;
+        source.registerPush();
+        if (passThrough) {
+            sink.prepareToWork();
+            sink.work();
+            sink.cleanupWork();
+        }
+    }
+
+    private void enqueue(char i) {
+        wgqueue_char.enqueue(i);
+        totalItemsPushed++;
+        source.registerPush();
+        if (passThrough) {
+            sink.prepareToWork();
+            sink.work();
+            sink.cleanupWork();
+        }
+    }     
+
     private void enqueue (Object o)
     {
         queue.addLast (o);
         
-		totalItemsPushed++;
-		source.registerPush();
+        totalItemsPushed++;
+        source.registerPush();
 
         // overflow at 50 chars in the queue
         if (queue.size () > 100 && !declaredFull)
         {
-                source.addFullChannel (this);
+            source.addFullChannel (this);
             declaredFull = true;
         }
 
@@ -164,10 +326,52 @@ public class Channel extends streamit.misc.DestroyedClass
             maxSize;
 		
         if (passThrough) {
-	    sink.prepareToWork();
-	    sink.work ();
-	    sink.cleanupWork();
-	}
+            sink.prepareToWork();
+            sink.work ();
+            sink.cleanupWork();
+        }
+    }
+
+    private int dequeue_int () {
+        totalItemsPopped++;
+        sink.registerPop();
+        return wgqueue_int.dequeue();
+    }
+
+    private float dequeue_float () {
+        totalItemsPopped++;
+        sink.registerPop();
+        return wgqueue_float.dequeue();
+    }
+
+    private double dequeue_double () {
+        totalItemsPopped++;
+        sink.registerPop();
+        return wgqueue_double.dequeue();
+    }
+
+    private boolean dequeue_boolean () {
+        totalItemsPopped++;
+        sink.registerPop();
+        return wgqueue_boolean.dequeue();
+    }
+
+    private short dequeue_short () {
+        totalItemsPopped++;
+        sink.registerPop();
+        return wgqueue_short.dequeue();
+    }
+
+    private char dequeue_char () {
+        totalItemsPopped++;
+        sink.registerPop();
+        return wgqueue_char.dequeue();
+    }
+
+    private int dequeue_bit () {
+        totalItemsPopped++;
+        sink.registerPop();
+        return wgqueue_bit.dequeue();
     }
 
     private Object dequeue ()
@@ -179,7 +383,7 @@ public class Channel extends streamit.misc.DestroyedClass
         }
 
         totalItemsPopped++;
-	sink.registerPop();
+        sink.registerPop();
 
         return queue.removeFirst ();
     }
@@ -194,11 +398,11 @@ public class Channel extends streamit.misc.DestroyedClass
     {
         assert o.getClass () == type;
 
-	// make a copy of structures in case they are subsequently
-	// modified -- the changes should not appear in the consumer
-	if (o instanceof Structure) {
-	    o = (Structure)Cloner.doCopy(o);
-	}
+        // make a copy of structures in case they are subsequently
+        // modified -- the changes should not appear in the consumer
+        if (o instanceof Structure) {
+            o = (Structure)Cloner.doCopy(o);
+        }
         
         enqueue (o);
     }
@@ -207,54 +411,48 @@ public class Channel extends streamit.misc.DestroyedClass
     public void pushBool (boolean b)
     {
         assert type == Boolean.TYPE;
-        
-        enqueue (new Boolean (b));
+        enqueue(b);
     }
 
     // push an int
     public void pushInt(int i)
     {
         assert type == Integer.TYPE;
-
-        enqueue (new Integer (i));
+        enqueue(i);
     }
 
     // push a short
     public void pushShort(short s)
     {
         assert type == Short.TYPE;
-
-        enqueue (new Short (s));
+        enqueue(s);
     }
     //push a bit
     public void pushBit(int i)
     {
-	assert type == Bit.TYPE;
-	enqueue(new Integer(i));
+        assert type == Bit.TYPE;
+        enqueue_bit(i);
     }
 
     // push a char
     public void pushChar(char c)
     {
         assert type == Character.TYPE;
-
-        enqueue (new Character  (c));
+        enqueue(c);
     }
 
     // push a double
     public void pushDouble(double d)
     {
         assert type == Double.TYPE;
-
-        enqueue (new Double (d));
+        enqueue(d);
     }
 
     // push a float
     public void pushFloat(float d)
     {
         assert type == Float.TYPE;
-
-        enqueue (new Float (d));
+        enqueue(d);
     }
 
     // push a 2-d float array
@@ -262,13 +460,13 @@ public class Channel extends streamit.misc.DestroyedClass
     {
         assert type == new float[0][0].getClass();
 	
-	// copy the array to maintain copy-semantics
-	float[][] copy = new float[d.length][d[0].length];
-	for (int i=0; i<d.length; i++) {
-	    for (int j=0; j<d[0].length; j++) {
-		copy[i][j] = d[i][j];
-	    }
-	}
+        // copy the array to maintain copy-semantics
+        float[][] copy = new float[d.length][d[0].length];
+        for (int i=0; i<d.length; i++) {
+            for (int j=0; j<d[0].length; j++) {
+                copy[i][j] = d[i][j];
+            }
+        }
 
         enqueue (copy);
     }
@@ -299,80 +497,55 @@ public class Channel extends streamit.misc.DestroyedClass
     public boolean popBool ()
     {
         assert type == Boolean.TYPE;
-        
-        Boolean data;
-        data = (Boolean) pop ();
-        assert data != null;
-        
-        return data.booleanValue ();
+        ensureData();
+        return dequeue_boolean();
     }
 
     // pop an int
     public int popInt()
     {
         assert type == Integer.TYPE;
-
-        Integer data;
-        data = (Integer) pop ();
-        assert data != null;
-
-        return data.intValue ();
+        ensureData ();
+        return dequeue_int();
     }
 
     // pop a short
     public short popShort()
     {
         assert type == Short.TYPE;
-
-        Short s;
-        s = (Short) pop ();
-        assert s != null;
-
-        return s.shortValue ();
+        ensureData();
+        return dequeue_short();
     }
 
     // pop a char
     public char popChar()
     {
         assert type == Character.TYPE;
-
-        Character c;
-        c = (Character) pop ();
-        assert c != null;
-
-        return c.charValue ();
+        ensureData();
+        return dequeue_char();
     }
+
     //pop a bit
     public int popBit(){
-	assert type == Bit.TYPE;
-	Integer data;
-	data = (Integer)pop();
-	assert data !=null;
-	return data.intValue();
+        assert type == Bit.TYPE;
+        ensureData();
+        return dequeue_bit();
     }
 
     // pop a double
     public double popDouble()
     {
         assert type == Double.TYPE;
-
-        Double data;
-        data = (Double) pop ();
-        assert data != null;
-
-        return data.doubleValue ();
+        ensureData ();
+        return dequeue_double();
     }
 
     // pop a float
     public float popFloat()
     {
         assert type == Float.TYPE;
-
-        Float data;
-        data = (Float) pop ();
-        assert data != null;
-
-        return data.floatValue ();
+        ensureData ();
+        return dequeue_float();
     }
 
     // pop a float
@@ -398,44 +571,49 @@ public class Channel extends streamit.misc.DestroyedClass
 
     // PEEK OPERATIONS ----------------------------------------------
 
+
+
     // peek at something of type <type>
     public Object peek(int index)
     {
-	sink.registerPeek(index);
+        sink.registerPeek(index);
         ensureData (index + 1);
 
-        Object data;
-        data = queue.get (index);
-        assert data != null;
+        if (type == Boolean.TYPE) {
+            return new Boolean(wgqueue_boolean.elem(index));
+        } else {
 
-	// make a copy of structures in case they are subsequently
-	// modified -- the changes should not appear in the producer
-	// or in subsequent peek / pop's
-	if (data instanceof Structure) {
-	    data = (Structure)Cloner.doCopy(data);
-	}
+            Object data;
+            data = queue.get (index);
+            assert data != null;
+            
+            // make a copy of structures in case they are subsequently
+            // modified -- the changes should not appear in the producer
+            // or in subsequent peek / pop's
+            if (data instanceof Structure) {
+                data = (Structure)Cloner.doCopy(data);
+            }
 
-        return data;
+            return data;
+        }
     }
 
     // peek at an int
     public int peekInt(int index)
     {
-        assert type == Integer.TYPE;
+        assert type == Integer.TYPE;   
+        ensureData (index + 1);
+        sink.registerPeek(index);
+        return wgqueue_int.elem(index);
 
-        Integer data;
-        data = (Integer) peek (index);
-        assert data != null;
-
-        return data.intValue ();
     }
+
     //peek a bit
     public int peekBit(int index){
-	assert type == Bit.TYPE;
-	Integer data;
-	data = (Integer) peek(index);
-	assert data!=null;
-	return data.intValue();
+        assert type == Bit.TYPE;
+        ensureData(index + 1);
+        sink.registerPeek(index);
+        return wgqueue_bit.elem(index);
     }
 
 
@@ -443,48 +621,36 @@ public class Channel extends streamit.misc.DestroyedClass
     public short peekShort (int index)
     {
         assert type == Short.TYPE;
-
-        Short data;
-        data = (Short) peek (index);
-        assert data != null;
-
-        return data.shortValue ();
+        ensureData(index+1);
+        sink.registerPeek(index);
+        return wgqueue_short.elem(index);
     }
 
     // peek at a char
     public char peekChar(int index)
     {
         assert type == Character.TYPE;
-
-        Character data;
-        data = (Character) peek (index);
-        assert data != null;
-
-        return data.charValue ();
+        ensureData(index+1);
+        sink.registerPeek(index);
+        return wgqueue_char.elem(index);
     }
 
     // peek at a double
     public double peekDouble(int index)
     {
         assert type == Double.TYPE;
-
-        Double data;
-        data = (Double) peek (index);
-        assert data != null;
-
-        return data.doubleValue ();
+        ensureData (index + 1);
+        sink.registerPeek(index);
+        return wgqueue_double.elem(index);
     }
 
     // peek at a float
     public float peekFloat(int index)
     {
         assert type == Float.TYPE;
-
-        Float data;
-        data = (Float) peek (index);
-        assert data != null;
-
-        return data.floatValue ();
+        ensureData (index + 1);
+        sink.registerPeek(index);
+        return wgqueue_float.elem(index);    
     }
 
     // peek at a float
@@ -572,9 +738,24 @@ public class Channel extends streamit.misc.DestroyedClass
     void setChannelSize (int size)
     {
         assert size > 0;
-
         maxSize = size;
-        assert queue.size () <= maxSize;
+        if (type == Integer.TYPE) {
+            wgqueue_int.setBufferSize(size);
+        } else if (type == Float.TYPE) {
+            wgqueue_float.setBufferSize(size);
+        } else if (type == Double.TYPE) {
+            wgqueue_double.setBufferSize(size);
+        } else if (type == Boolean.TYPE) {
+            wgqueue_boolean.setBufferSize(size);
+        } else if (type == Short.TYPE) {
+            wgqueue_short.setBufferSize(size);
+        } else if (type == Character.TYPE) {
+            wgqueue_char.setBufferSize(size);
+        } else if (type == Bit.TYPE) {
+            wgqueue_bit.setBufferSize(size);
+        } else {
+            assert queue.size () <= maxSize;
+        }
     }
 
     void makePassThrough ()
@@ -582,3 +763,18 @@ public class Channel extends streamit.misc.DestroyedClass
         passThrough = true;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

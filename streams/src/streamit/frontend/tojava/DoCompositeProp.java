@@ -34,6 +34,15 @@ import java.util.ArrayList;
 
 public class DoCompositeProp extends SymbolTableVisitor
 {
+
+    private static Type floattype =
+	new TypePrimitive(TypePrimitive.TYPE_FLOAT);
+    private static Type float2type =
+	new TypePrimitive(TypePrimitive.TYPE_FLOAT2);
+    private static Type float3type =
+	new TypePrimitive(TypePrimitive.TYPE_FLOAT3);
+    private static Type float4type =
+	new TypePrimitive(TypePrimitive.TYPE_FLOAT4);
     
     public DoCompositeProp(TempVarGen varGen)
     {
@@ -56,6 +65,33 @@ public class DoCompositeProp extends SymbolTableVisitor
     }
 
 
+    public Object visitExprUnary(ExprUnary unary) {
+
+        Expression expr = (Expression)unary.getExpr().accept(this);
+	FEContext ctx = unary.getContext();
+	Type t = getType(expr);
+
+
+	if (t.equals(float2type) || 
+	    t.equals(float3type) ||
+	    t.equals(float4type)) {
+	    
+	    int dim = 0;
+	    if (t.equals(float2type)) dim = 2;
+	    if (t.equals(float3type)) dim = 3;
+	    if (t.equals(float4type)) dim = 4;
+
+	    if (unary.getOp() == ExprUnary.UNOP_NEG) {
+		List params = new ArrayList();
+		params.add(expr);
+		return new ExprHelperCall(ctx, "StreamItVectorLib", "neg"+dim, params);
+	    }
+	}
+
+	return new ExprUnary(ctx, unary.getOp(), expr);
+    }
+
+
     public Object visitExprBinary(ExprBinary exp) {
 
         Expression left = (Expression)exp.getLeft().accept(this);
@@ -64,15 +100,6 @@ public class DoCompositeProp extends SymbolTableVisitor
 
 	Type lt = getType(left);
 	Type rt = getType(right);
-
-	Type floattype =
-	    new TypePrimitive(TypePrimitive.TYPE_FLOAT);
-	Type float2type =
-	    new TypePrimitive(TypePrimitive.TYPE_FLOAT2);
-	Type float3type =
-	    new TypePrimitive(TypePrimitive.TYPE_FLOAT3);
-	Type float4type =
-	    new TypePrimitive(TypePrimitive.TYPE_FLOAT4);
 
 	if ((lt.equals(float2type) && rt.equals(float2type)) ||
 	    (lt.equals(float3type) && rt.equals(float3type)) ||
@@ -175,8 +202,42 @@ public class DoCompositeProp extends SymbolTableVisitor
 
 	}
 
-    	return exp; // doExprProp(exp);
+    	return new ExprBinary(ctx, exp.getOp(), left, right); 
     }
+
+    public Object visitExprFunCall(ExprFunCall exp)
+    {
+	FEContext ctx = exp.getContext();
+
+        // Start by resolving all of the parameters.
+        List newParams = new ArrayList();
+        Iterator iter = exp.getParams().iterator();
+        while (iter.hasNext()) {
+	    Expression param = (Expression)iter.next();
+	    newParams.add(param.accept(this));
+	}
+
+	Type pt = null;
+	int dim = 0;
+
+	if (newParams.size() > 0) {
+	    pt = getType((Expression)newParams.get(0));
+	    if (pt.equals(float2type)) dim = 2;
+	    if (pt.equals(float3type)) dim = 3;
+	    if (pt.equals(float4type)) dim = 4;
+	}
+        
+	if (exp.getName().equals("floor") && newParams.size() == 1 & dim >= 2) {
+	    return new ExprHelperCall(ctx, "StreamItVectorLib", "floor" + dim, newParams);
+	}
+	if (exp.getName().equals("normalize") && newParams.size() == 1 & dim >= 2) {
+	    return new ExprHelperCall(ctx, "StreamItVectorLib", "normalize" + dim, newParams);
+	}
+
+        return new ExprFunCall(exp.getContext(), exp.getName(), newParams);
+    }
+
+
 }
 
 

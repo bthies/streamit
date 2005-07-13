@@ -65,7 +65,13 @@ STREAMIT_LIBRARIES = \
   streamit/library/io/FileReader.class \
   streamit/library/io/FileWriter.class \
   streamit/library/Structure.class \
-  streamit/library/Portal.class
+  streamit/library/Portal.class \
+  streamit/library/Global.class \
+  streamit/library/Helper.class \
+  streamit/library/NativeHelper.class \
+  streamit/library/float2.class \
+  streamit/library/float3.class \
+  streamit/library/float4.class
 
 # these are invoked by reflection from StreaMITMain
 STREAMIT_BACKENDS = \

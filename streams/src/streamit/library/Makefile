@@ -7,7 +7,12 @@ JAVA_TARGET = \
   StreamItPhasedFilter.class \
   StreamItPipeline.class \
   StreamItSplitJoin.class \
-  StreamItFeedbackLoop.class
+  StreamItFeedbackLoop.class \
+  Global.class \
+  Helper.class \
+  float2.class \
+  float3.class \
+  float4.class
 
 JAVA_SRCS = \
   Stream.java \
@@ -16,7 +21,12 @@ JAVA_SRCS = \
   StreamItPhasedFilter.java \
   StreamItPipeline.java \
   StreamItSplitJoin.java \
-  StreamItFeedbackLoop.java
+  StreamItFeedbackLoop.java \
+  Global.java \
+  Helper.java \
+  float2.java \
+  float3.java \
+  float4.java
 
 DEBUG_OPT = -g
 

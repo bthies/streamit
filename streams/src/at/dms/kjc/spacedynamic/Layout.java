@@ -51,16 +51,20 @@ public class Layout extends at.dms.util.Utils implements
     /** cost function constants **/
 
     //the multipler for the dynamic network cost
-    public static double DYN_MULT = 10;
+    public static double DYN_MULT = 1;
     //the weight of an ilegale static layout
     public static double ILLEGAL_WEIGHT = 1E6;
     //the weights assigned to a static hop that goes thru an assigned tile
-    public static double ASSIGNED_WEIGHT = 1000;
+    //public static double ASSIGNED_WEIGHT = 1000;
+
     //the weight assigned to routing an item through a router tile
-    public static double ROUTER_WEIGHT = 0.0;//0.5;
+    public static double ROUTER_WEIGHT = 1000.0;//0.5;
     //scaling factor for the memory cost of the layout (for tiles that allocate more 
     //than the dcache size
     public static double MEMORY_SCALE = 1.0;
+    //the weight assigned to routing an item through a tile that already
+    //has a dynamic route going through it
+    public static double DYN_CROSSED_ROUTE = 1000.0;
 
     //simualted annealing constants
     public static int MINTEMPITERATIONS = 200;
@@ -670,16 +674,18 @@ public class Layout extends at.dms.util.Utils implements
 		    //add this tile to the set of tiles used by this SSG
 		    tiles.add(route[i]);
 		    
-		    if (getNode((RawTile)route[i]) != null) //assigned tile
-			numAssigned += ASSIGNED_WEIGHT * 
-			    (1.0 / workEstimates.getEstimate(getNode((RawTile)route[i])));
-		    else {
-			//router tile, only penalize it if we have routed through it before
-			if (routers.contains(route[i]))
-			    numAssigned += ROUTER_WEIGHT;
-			else //now it is a router tile
-			    routers.add(route[i]);
-		    }
+		    /*		    
+			  if (getNode((RawTile)route[i]) != null) //assigned tile
+			  numAssigned += ASSIGNED_WEIGHT * 
+			  (1.0 / workEstimates.getEstimate(getNode((RawTile)route[i])));
+			  else {*/
+		    
+		    //router tile, only penalize it if we have routed through it before
+		    if (routers.contains(route[i]) || (getNode((RawTile)route[i]) != null))
+			numAssigned += ROUTER_WEIGHT;
+		    else //now it is a router tile
+			routers.add(route[i]);
+		    /*}*/
 		}
 		
 		int hops = route.length - 2;
@@ -727,7 +733,10 @@ public class Layout extends at.dms.util.Utils implements
 
 		items *= Util.getTypeSize(Util.getOutputType(src));
 		//calculate communication cost of this node and add it to the cost sum
-		cost += ((items * hops) + (items * numAssigned));
+		
+		//what we really want to do here is add to the latency the work 
+		//estimation sum of all the routes that this route crosses... um, yeah
+		cost += ((items * hops) + (/*items*/ numAssigned));
 	    }   
 	}
 	SpaceDynamicBackend.addAll(usedTiles, tiles);
@@ -772,14 +781,14 @@ public class Layout extends at.dms.util.Utils implements
 	    while (route.hasNext()) {
 		ComputeNode tile = (ComputeNode)route.next();
 		assert tile != null;
-		/*
-		if (usedTiles.contains(tile))
-		    return ILLEGAL_WEIGHT/(DYN_MULT * 100);
+		
+		if (usedTiles.contains(tile)) //this tile already used to dynamic route
+		    cost += DYN_CROSSED_ROUTE; //ILLEGAL_WEIGHT/(DYN_MULT * 100);
 		else
 		    usedTiles.add(tile);
-		*/
+		
 		//System.out.print(tile);
-		//add to cost only if these an no endpoints of the route
+		//add to cost only if these are not endpoints of the route
 		if (tile != srcTile && tile != dstTile) {
 		    cost += (1.0 * typeSize);
 		}		
@@ -827,7 +836,7 @@ public class Layout extends at.dms.util.Utils implements
 
 	    //The first iteration is really just to get a 
 	    //good initial layout.  Some random layouts really kill the algorithm
-	    for (int two = 0; two < 2/*rawChip.getYSize()*/; two++) {
+	    for (int two = 0; two < rawChip.getYSize(); two++) {
 		System.out.print("\nRunning Annealing Step (" + currentCost + ", " +
 				 minCost + ")");
 		double t = annealMaxTemp(); 
@@ -883,6 +892,7 @@ public class Layout extends at.dms.util.Utils implements
 	    if (minCost < currentCost) {
 		SIRassignment = sirMin;
 		tileAssignment = tileMin;
+		currentCost = minCost;
 	    }
 	    
 	    filew.close();

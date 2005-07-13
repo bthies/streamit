@@ -16,7 +16,7 @@
 
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.21 2005-06-11 02:19:28 janiss Exp $
+ * $Id: StreamItLex.g,v 1.22 2005-07-13 22:19:04 janiss Exp $
  */
 
 header {
@@ -55,7 +55,7 @@ tokens {
 	"boolean"; "float"; "bit"; "int"; "void"; "double"; "complex";
 	TK_float2 = "float2"; TK_float3 = "float3"; TK_float4 = "float4"; 
 	// Complicated types:
-	"struct"; "template"; "native";
+	"struct"; "template"; "native"; "global"; "helper";
 	// Control flow:
 	"if"; "else"; "while"; "for"; "switch"; "case"; "default"; "break";
 	"continue"; "return";

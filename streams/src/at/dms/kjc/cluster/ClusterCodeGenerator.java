@@ -40,10 +40,10 @@ class ClusterCodeGenerator {
     private int steady_counts;
     private String work_function;
 
-    private String TypeToC(CType t) {
-	if (t.toString().compareTo("int") == 0) return "int";
-	if (t.toString().compareTo("float") == 0) return "float";
+    public static String TypeToC(CType t) {
 	if (t.toString().compareTo("boolean") == 0) return "bool";
+	//if (t.toString().compareTo("int") == 0) return "int";
+	//if (t.toString().compareTo("float") == 0) return "float";
 	return t.toString();
     } 
     
@@ -152,7 +152,8 @@ class ClusterCodeGenerator {
 	r.add("#include <producer2.h>\n");
 	r.add("#include \"cluster.h\"\n");
 	r.add("#include \"fusion.h\"\n");
-	r.add("#include \"structs.h\"\n");
+	//r.add("#include \"structs.h\"\n");
+	r.add("#include \"global.h\"\n");
 	r.add("\n");
 
 	//r.add("#include <peek_stream.h>\n");

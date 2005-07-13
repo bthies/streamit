@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.63 2005-06-27 21:08:46 janiss Exp $
+ * @version $Id: ToJava.java,v 1.64 2005-07-13 22:19:04 janiss Exp $
  */
 public class ToJava
 {
@@ -213,6 +213,7 @@ public class ToJava
     public static Program lowerIRToJava(Program prog, boolean libraryFormat,
                                         TempVarGen varGen)
     {
+
         /* What's the right order for these?  Clearly generic
          * things like MakeBodiesBlocks need to happen first.
          * I don't think there's actually a problem running
@@ -228,7 +229,7 @@ public class ToJava
         prog = (Program)prog.accept(new NameAnonymousStreams(varGen));
         if (!libraryFormat)
             prog = (Program)prog.accept(new NoticePhasedFilters());
-        prog = (Program)prog.accept(new GenerateCopies(varGen));
+        //prog = (Program)prog.accept(new GenerateCopies(varGen));
         prog = (Program)prog.accept(new DoComplexProp(varGen));
         prog = (Program)prog.accept(new DoCompositeProp(varGen));
         prog = (Program)prog.accept(new ComplexToStruct());
@@ -250,6 +251,7 @@ public class ToJava
         prog = (Program)prog.accept(new NameAnonymousFunctions());
         prog = (Program)prog.accept(new AssembleInitializers());
         prog = (Program)prog.accept(new TrimDumbDeadCode());
+        prog = (Program)prog.accept(new RenameGlobals(libraryFormat));
         return prog;
     }
 

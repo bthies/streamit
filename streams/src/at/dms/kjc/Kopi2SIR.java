@@ -77,6 +77,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     //This vector stores all of the structure declarations.
     private Vector structureList;
 
+    //This vector stores all of the structure declarations.
+    private Vector helperList;
+
+    //stores the global structure
+    private SIRGlobal global;
+
     //The current dependency chain we are following when 
     //trying to resolve a class instantiation to a stream
     //stores strings of the stream names
@@ -115,6 +121,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	interfaceList = new Vector(100);
 	interfaceTableList = new Vector(100);
         structureList = new Vector(100);
+        helperList = new Vector(100);
+	global = null;
 	searchList = new LinkedList();
 	application = null;
 	initBuiltinFilters();
@@ -132,6 +140,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	interfaceList = new Vector(100);
 	interfaceTableList = new Vector(100);
         structureList = new Vector(100);
+        helperList = new Vector(100);
+	global = null;
 	searchList = new LinkedList();
 	this.application = app;
 	initBuiltinFilters();
@@ -281,6 +291,24 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 						  clazz.getIdent(),
 				   JFieldDeclaration.EMPTY(),
 				   JMethodDeclaration.EMPTY());
+	    parentStream = current;
+	    return current;
+	}
+        if (TYPE.equals("Global")) {
+	    SIRGlobal current = new SIRGlobal();
+            current.setIdent(clazz.getIdent());
+	    parentStream = current;
+	    return current;
+	}
+        if (TYPE.equals("Helper")) {
+	    SIRHelper current = new SIRHelper(false);
+            current.setIdent(clazz.getIdent());
+	    parentStream = current;
+	    return current;
+	}
+        if (TYPE.equals("NativeHelper")) {
+	    SIRHelper current = new SIRHelper(true);
+            current.setIdent(clazz.getIdent());
 	    parentStream = current;
 	    return current;
 	}
@@ -527,6 +555,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
                                       JTypeDeclaration[] decls) 
     {
 	/* The current SIR Operator we are creating */
+
 	SIROperator current;
 	SIRStream oldParentStream = parentStream;
 	
@@ -542,7 +571,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    anonCreation = true;
 	else
 	    anonCreation = false;
-	
+
 	// create a new SIROperator
 	current = newSIROP(self);
 
@@ -639,6 +668,24 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
                         SIRStructure sirStruct;
                         sirStruct = (SIRStructure)decl.accept(this);
                         structureList.add(sirStruct);
+                    }
+                    else if (decl.getSourceClass().getSuperClass().
+			     getIdent().equals("Helper") ||
+			     decl.getSourceClass().getSuperClass().
+			     getIdent().equals("NativeHelper")) {
+                        SIRHelper sirHelper;
+                        sirHelper = (SIRHelper)decl.accept(this);
+                        helperList.add(sirHelper);
+                    }
+                    else if (decl.getSourceClass().getSuperClass().
+                             getIdent().equals("Global")) {
+                        SIRGlobal sirGlobal;
+                        sirGlobal = (SIRGlobal)decl.accept(this);
+                        if (global != null)
+			    at.dms.util.Utils.fail(printLine(decl) + 
+						   "Global struct already set.");
+			global = sirGlobal;
+			
                     }
 		}
                 if (typeDeclarations[i] instanceof JInterfaceDeclaration) {
@@ -758,7 +805,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	/* if the field is static and not final, it could be used
 	   for message passing, so we flag an error */ 
 	if (CModifier.contains(CModifier.ACC_STATIC, modifiers) &&
-	    !CModifier.contains(CModifier.ACC_FINAL, modifiers))
+	    !CModifier.contains(CModifier.ACC_FINAL, modifiers) &&
+	    !(parentStream instanceof SIRGlobal))
 	    at.dms.util.Utils.fail(printLine(self) +
 				   "Cannot declare field " + ident +
 				   " static (only final static).");
@@ -835,7 +883,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	}
 
         
-	body = (JBlock)body.accept(this);
+	if (body != null) body = (JBlock)body.accept(this);
 	
 	if (exceptions.length == 0)
 	    exceptions = CClassType.EMPTY;
@@ -2645,6 +2693,22 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     public SIRStructure[] getStructures() {
         SIRStructure[] ret = (SIRStructure[])structureList.toArray(new SIRStructure[0]);
         return ret;
+    }
+
+    /**
+     * Returns a vector of all the SIRHelper that appeared in the
+     * program
+     */
+    public SIRHelper[] getHelpers() {
+        SIRHelper[] ret = (SIRHelper[])helperList.toArray(new SIRHelper[0]);
+        return ret;
+    }
+
+    /**
+     * Returns the global structure
+     */
+    public SIRGlobal getGlobal() {
+        return global;
     }
     
 

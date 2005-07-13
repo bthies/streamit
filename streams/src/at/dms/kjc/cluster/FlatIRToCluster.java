@@ -37,8 +37,15 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
     protected TabbedPrintWriter		p;
     protected StringWriter                str; 
     protected boolean			nl = true;
+
+    // true if generating code for global struct
+    protected boolean    global = false; 
+
+    public String                  helper_package = null;
     public boolean                   declOnly = false;
-    public SIRFilter               filter;
+    public SIRFilter               filter = null;
+    private Set                    method_names = new HashSet();
+
     protected JMethodDeclaration   method;
 
     // ALWAYS!!!!
@@ -66,6 +73,10 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 	if (type instanceof CFloatType) return 4;
 	if (type instanceof CDoubleType) return 8;
 	return 0;
+    }
+
+    public void setGlobal(boolean g) {
+	global = g;
     }
 
     public static void generateCode(FlatNode node) 
@@ -196,7 +207,14 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
 
+	filter = self;
 	selfID = NodeEnumerator.getSIROperatorId(self); // needed by the class
+
+	method_names = new HashSet();
+	JMethodDeclaration[] meth = self.getMethods();
+	for (int i = 0; i < meth.length; i++) {
+	    method_names.add(meth[i].getName());
+	}
 
 	HashSet sendsCreditsTo = LatencyConstraints.getOutgoingConstraints(self);
 	boolean restrictedExecution = LatencyConstraints.isRestricted(self); 
@@ -1193,13 +1211,17 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 	    return;
 	}
 
-        newLine();
+        if (helper_package == null) newLine();
+
 	// print(CModifier.toString(modifiers));
 	print(returnType);
 	print(" ");
+	if (global) print("__global__");
+	if (helper_package != null) print(helper_package+"_");
 	print(ident);
 	// this breaks initpath
-	if (!ident.startsWith("__Init_Path_")) {
+	if (helper_package == null && !global && 
+	    !ident.startsWith("__Init_Path_")) {
 	    print("__"+selfID);
 	}
 	print("(");
@@ -1932,13 +1954,20 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 	    return;  
 	}
 	
+	if (prefix instanceof JTypeNameExpression) {
+	    JTypeNameExpression nexp = (JTypeNameExpression)prefix;
+	    String name = nexp.getType().toString();
+	    if (!name.equals("java.lang.Math")) print(name+"_");
+	}
+
         print(ident);
 	
 	if (!Utils.isMathMethod(prefix, ident) && 
 	    ident.indexOf("::")==-1) {
 	    // don't rename the built-in math functions
 	    // don't rename calls to static functions
-	    print("__"+selfID);
+
+	    if (method_names.contains(ident)) print("__"+selfID);
 	}
         print("(");
 	
@@ -2062,8 +2091,20 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
         } else {
 	    print("(");
 
-	    if (left instanceof JThisExpression) {
+	    if (global) {
+		if (left instanceof JThisExpression) {
+		    print("__global__"+ident);
+		} else {
+		    left.accept(this);
+		    print(".");
+		    print(ident);
+		}
+	    } else if (left instanceof JThisExpression) {
 		print(ident+"__"+selfID);
+	    } else if (left instanceof JTypeNameExpression &&
+		  ((JTypeNameExpression)left).getType().toString().equals("TheGlobal")) {
+		print("__global__");
+		print(ident);
 	    } else {
 		left.accept(this);
 		print(".");
@@ -2832,7 +2873,11 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
                                       boolean isFinal,
                                       CType type,
                                       String ident) {
-        print(type);
+        String type_string = type.toString();
+	if (type_string.equals("java.lang.String")) 
+	    print("char*");
+	else 
+	    print(type);
         if (ident.indexOf("$") == -1) {
             print(" ");
             print(ident);

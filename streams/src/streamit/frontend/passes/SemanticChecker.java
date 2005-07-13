@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.29 2005-06-27 21:08:56 janiss Exp $
+ * @version $Id: SemanticChecker.java,v 1.30 2005-07-13 22:19:14 janiss Exp $
  */
 public class SemanticChecker
 {
@@ -252,7 +252,8 @@ public class SemanticChecker
                 public Object visitStreamSpec(StreamSpec ss)
                 {
                     StreamType st = ss.getStreamType();
-                    if (st != null &&
+                    if (ss.getType() != StreamSpec.STREAM_GLOBAL && 
+			st != null && 
                         st.getIn() instanceof TypePrimitive &&
                         st.getOut() instanceof TypePrimitive &&
                         ((TypePrimitive)st.getIn()).getType() ==
@@ -522,10 +523,20 @@ public class SemanticChecker
                             new TypePrimitive(TypePrimitive.TYPE_INT);
                         Type bittype =
                             new TypePrimitive(TypePrimitive.TYPE_BIT);
+                        Type float2type =
+                            new TypePrimitive(TypePrimitive.TYPE_FLOAT2);
+                        Type float3type =
+                            new TypePrimitive(TypePrimitive.TYPE_FLOAT3);
+                        Type float4type =
+                            new TypePrimitive(TypePrimitive.TYPE_FLOAT4);
 
                         switch(expr.getOp())
                         {
                         case ExprUnary.UNOP_NEG:
+			    if (ot.equals(float2type) ||
+				ot.equals(float3type) ||
+				ot.equals(float4type)) break; 
+
 			    // you can negate a bit, since 0 and 1
 			    // literals always count as bits.
 			    // However, the resulting negation will be

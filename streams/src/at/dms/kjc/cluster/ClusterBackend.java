@@ -70,12 +70,11 @@ public class ClusterBackend implements FlatVisitor {
     }
 
     public static void run(SIRStream str,
-			   JInterfaceDeclaration[] 
-			   interfaces,
-			   SIRInterfaceTable[]
-			   interfaceTables,
-			   SIRStructure[]
-			   structs) {
+			   JInterfaceDeclaration[] interfaces,
+			   SIRInterfaceTable[] interfaceTables,
+			   SIRStructure[] structs,
+			   SIRHelper[] helpers,
+			   SIRGlobal global) {
 
 	HashMap[] exec_counts1;
 	HashMap[] exec_counts2;
@@ -83,6 +82,8 @@ public class ClusterBackend implements FlatVisitor {
 	boolean doCacheOptimization = KjcOptions.cacheopt;
 	int code_cache = 16000;
 	int data_cache = 16000;
+
+	System.out.println("Cluster Backend SIRGlobal: "+global);
 
 	System.out.println("Entry to Cluster Backend");
 	System.out.println("  --cluster parameter is: "+KjcOptions.cluster);
@@ -371,10 +372,12 @@ public class ClusterBackend implements FlatVisitor {
 	FusionCode.generateFusionHeader(str);
 	FusionCode.generateFusionFile(d_sched, implicit_mult);
 
+	ClusterCode.generateGlobal(global, helpers);
+
 	ClusterCode.generateMasterFile();
 	ClusterCode.generateClusterHeader();
 
-	ClusterCode.generateMakeFile();
+	ClusterCode.generateMakeFile(helpers);
 	ClusterCode.generateConfigFile();
 	ClusterCode.generateSetupFile();
 

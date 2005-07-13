@@ -62,7 +62,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    DetectConst.detect(node);
 	    FlatIRToCluster.generateCode(node);
-	    ((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());
+
+	    //((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());
 
 	}
 
@@ -1050,6 +1051,134 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
     }
 
+    public static void generateGlobal(SIRGlobal global, SIRHelper[] helpers) {
+
+	String str = new String();
+	JFieldDeclaration fields[];
+
+	if (global == null) {
+	    fields = new JFieldDeclaration[0];
+	} else {
+	    fields = global.getFields();
+	}
+
+	// ================================
+	// Writing global.h
+	// ================================
+
+	str += "#include \"structs.h\"\n";
+	str += "#include <StreamItVectorLib.h>\n";
+	str += "\n";
+
+	str += "#define max(A,B) (((A)>(B))?(A):(B))\n";
+	str += "#define min(A,B) (((A)<(B))?(A):(B))\n";
+
+	str += "\n";
+	
+	for (int i = 0; i < helpers.length; i++) {
+	    JMethodDeclaration[] m = helpers[i].getMethods();
+	    for (int j = 0; j < m.length; j++) {
+		FlatIRToCluster f2c = new FlatIRToCluster();
+		f2c.helper_package = helpers[i].getIdent();
+		f2c.declOnly = true;
+		m[j].accept(f2c);
+		str += "extern "+f2c.getString()+"\n";
+	    }
+	}
+
+	str += "extern void __global__init();\n";
+	str += "\n";
+
+	for (int f = 0; f < fields.length; f++) {
+	    CType type = fields[f].getType();
+
+	    if (type.toString().endsWith("Portal")) continue;
+
+	    String ident = fields[f].getVariable().getIdent();
+	    str += "extern " + ClusterCodeGenerator.TypeToC(type) +
+		" __global__" + ident + ";\n";
+	}
+
+	try {
+	    FileWriter fw = new FileWriter("global.h");
+	    fw.write(str.toString());
+	    fw.close();
+	}
+	catch (Exception e) {
+	    System.err.println("Unable to write <global.h>");
+	}
+
+
+
+	// ================================
+	// Writing global.cpp
+	// ================================
+
+	str = ""; // reset string
+	str += "#include <stdlib.h>\n";
+	str += "#include <unistd.h>\n";
+	str += "#include <math.h>\n";
+	str += "#include \"global.h\"\n";
+	str += "\n";
+
+	for (int f = 0; f < fields.length; f++) {
+	    CType type = fields[f].getType();
+
+	    if (type.toString().endsWith("Portal")) continue;
+
+	    JExpression init_val = fields[f].getVariable().getValue();
+	    String ident = fields[f].getVariable().getIdent();
+
+	    str += (ClusterCodeGenerator.TypeToC(type)+" __global__"+ident);
+
+	    if (init_val == null) {
+		if (type.isOrdinal()) str += (" = 0");
+		if (type.isFloatingPoint()) str += (" = 0.0f");
+	    }
+
+	    if (init_val != null && init_val instanceof JIntLiteral) {
+		str += (" = "+((JIntLiteral)init_val).intValue());
+	    }
+
+	    if (init_val != null && init_val instanceof JFloatLiteral) {
+		str += (" = "+((JFloatLiteral)init_val).floatValue());
+	    }
+
+	    str += (";\n");
+	}
+
+	for (int i = 0; i < helpers.length; i++) {
+	    if (!helpers[i].isNative()) {
+		JMethodDeclaration[] m = helpers[i].getMethods();
+		for (int j = 0; j < m.length; j++) {
+		    FlatIRToCluster f2c = new FlatIRToCluster();
+		    f2c.helper_package = helpers[i].getIdent();
+		    f2c.declOnly = false;
+		    m[j].accept(f2c);
+		    str += f2c.getString()+"\n";
+		}
+	    }
+	}
+
+	if (global == null) {
+	    str += "void __global__init() { }\n";
+	} else {
+	    FlatIRToCluster f2c = new FlatIRToCluster();
+	    f2c.setGlobal(true);
+	    global.getInit().accept(f2c);
+	    str += f2c.getString();
+	}
+
+	try {
+	    FileWriter fw = new FileWriter("global.cpp");
+	    fw.write(str.toString());
+	    fw.close();
+	}
+	catch (Exception e) {
+	    System.err.println("Unable to write <global.cpp>");
+	}
+    }
+
 
     public static void generateMasterFile() {
 
@@ -1078,6 +1207,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <object_write_buffer.h>\n");
 	p.print("#include <read_setup.h>\n");
 	p.print("#include <ccp.h>\n");
+	p.print("#include \"global.h\"\n");
 	p.println();
 
 	p.print("int __max_iteration;\n");
@@ -1247,6 +1377,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("\n");
 
+	p.print("  __global__init();\n");
+	p.print("\n");
+
 	p.print("  thread_info *t_info;\n");
 
 	for (int i = 0; i < threadNumber; i++) {
@@ -1295,7 +1428,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.println();
 	p.println();
 
-	p.print("#define __CHECKPOINT_FREQ 10000");
+	p.print("//#define __CHECKPOINT_FREQ 10000");
 	p.println();
 	p.println();
 
@@ -1309,7 +1442,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}	
     }
 
-    public static void generateMakeFile() {
+    public static void generateMakeFile(SIRHelper[] helpers) {
 
 	int threadNumber = NodeEnumerator.getNumberOfNodes();
 
@@ -1382,7 +1515,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	// =============== run_cluster
 
-	p.print("run_cluster: master.o $(OBJS)\n");
+	p.print("run_cluster: master.o global.o ");
+	for (int y = 0; y < helpers.length; y++) {
+	    if (helpers[y].isNative()) {
+		p.print(helpers[y].getIdent()+".o ");
+	    }
+	}
+	p.print("$(OBJS)\n");
 	p.print("\t$(CC) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++\n");
 	p.println();
 
@@ -1396,7 +1535,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	
 	// =============== %.o : %.cpp
 	
-	p.print("%.o: %.cpp fusion.h cluster.h\n");
+	p.print("%.o: %.cpp fusion.h cluster.h global.h\n");
 	p.print("\t$(CC) $(CCFLAGS) -I$(LIB_CLUSTER) -c -o $@ $<\n");
 	p.println();
 

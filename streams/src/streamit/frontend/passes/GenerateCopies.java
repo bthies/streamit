@@ -28,7 +28,7 @@ import java.util.*;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.12 2005-06-27 21:08:56 janiss Exp $
+ * @version $Id: GenerateCopies.java,v 1.13 2005-07-13 22:19:14 janiss Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -61,7 +61,7 @@ public class GenerateCopies extends SymbolTableVisitor
         if (type.isComplex()) 
             return true;
         if (type.isComposite()) 
-            return true;
+            return false;
         return false;
     }
 
@@ -90,6 +90,10 @@ public class GenerateCopies extends SymbolTableVisitor
 	// don't generate copies for array initializers, since we
 	// currently assume that they specify every literal in the
 	// array (they don't contain variable references).
+	if (expr instanceof ExprComposite) {
+	    return true;
+	}
+
 	if (expr instanceof ExprArrayInit) {
 	    return false;
 	} else {

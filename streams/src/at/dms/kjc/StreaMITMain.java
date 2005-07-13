@@ -7,8 +7,8 @@ import java.lang.reflect.*;
  * This provides the toplevel interface for StreaMIT.
  */
 public class StreaMITMain {
-    private static Object params[] = new Object[4];
-    private static Class paramTypes[] = new Class[4];
+    private static Object params[] = new Object[6];
+    private static Class paramTypes[] = new Class[6];
     
     //Only use from backends after done with params
     public static void clearParams() {
@@ -16,11 +16,15 @@ public class StreaMITMain {
 	params[1]=null;
 	params[2]=null;
 	params[3]=null;
+	params[4]=null;
+	params[5]=null;
 	params=null;
 	paramTypes[0]=null;
 	paramTypes[1]=null;
 	paramTypes[2]=null;
 	paramTypes[3]=null;	
+	paramTypes[4]=null;	
+	paramTypes[5]=null;	
     }
 
     /**
@@ -107,26 +111,62 @@ public class StreaMITMain {
         params[1] = k2s.getInterfaces();
         params[2] = k2s.getInterfaceTables();
         params[3] = k2s.getStructures();
-	
-	stream=null;
-	k2s=null;
+        params[4] = k2s.getHelpers();
+        params[5] = k2s.getGlobal();
+
+	Method theMethod = null;
+	Class theBackend = null;
 	
         try {
             paramTypes[0] = Class.forName("at.dms.kjc.sir.SIRStream");
-            for (int i = 1; i < 4; i++)
+	    paramTypes[5] = Class.forName("at.dms.kjc.sir.SIRGlobal");
+            for (int i = 1; i < 5; i++)
                 paramTypes[i] = params[i].getClass();
-            Class theBackend = Class.forName(backendClass);
-            Method theMethod =
-                theBackend.getMethod(backendMethod, paramTypes);
-            theMethod.invoke(null, params);        
+	} catch (ClassNotFoundException e) {
+            System.err.println("*** The class " + e.getMessage() +
+                               " does not exist.");
+	    return;
+        }
+
+	try {
+            theBackend = Class.forName(backendClass);
         } catch (ClassNotFoundException e) {
             System.err.println("*** The class " + e.getMessage() +
                                " does not exist.");
+	    return;
+        }	    
+	    
+	try {
+            theMethod = theBackend.getMethod(backendMethod, paramTypes);
         } catch (NoSuchMethodException e) {
-            System.err.println("*** The backend method " +
-                               backendClass + "." + backendMethod + "()" +
-                               " does not exist.");
-        } catch (IllegalAccessException e) {
+
+	    //try the old calling convention
+
+	    Object old_params[] = new Object[4];
+	    Class old_paramTypes[] = new Class[4];
+	    for (int i = 0; i < 4; i++) {
+		old_params[i] = params[i];
+		old_paramTypes[i] = paramTypes[i];
+	    }
+	    params = old_params;
+	    paramTypes = old_paramTypes;
+
+	    try {
+		theMethod = theBackend.getMethod(backendMethod, paramTypes);
+	    } catch (NoSuchMethodException e2) {
+		System.err.println("*** The backend method " +
+				   backendClass + "." + backendMethod + "()" +
+				   " does not exist.");
+	    }
+	}
+
+	stream=null;
+	k2s=null;
+	System.gc();
+
+	try {
+            theMethod.invoke(null, params);
+	} catch (IllegalAccessException e) {
             System.err.println("*** Not allowed to invoke backend " +
                                backendClass);
         } catch (InvocationTargetException e) {
@@ -135,6 +175,7 @@ public class StreaMITMain {
             // not be a RuntimeException.  I hate Java.  Die as best we can.
 	    e.getTargetException().printStackTrace();
         }
+
     }
 }
 

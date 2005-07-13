@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.56 2005-06-27 21:08:46 janiss Exp $
+ * $Id: StreamItParserFE.g,v 1.57 2005-07-13 22:19:04 janiss Exp $
  */
 
 header {
@@ -86,6 +86,7 @@ program	returns [Program p]
 		| ss=stream_decl { streams.add(ss); }
 		| th=native_decl { helpers.add(th); }
 		| th=helper_decl { helpers.add(th); }
+		| ss=global_decl { streams.add(ss); }
 		)*
 		EOF
 		// Can get away with no context here.
@@ -96,6 +97,40 @@ stream_decl returns [StreamSpec ss] { ss = null; StreamType st; }
 	:	st=stream_type_decl
 		(ss=filter_decl[st] | ss=struct_stream_decl[st])
 	;
+
+global_decl returns [StreamSpec ss] { ss = null; FEContext context = null; StreamSpec body; }
+	:	tg:TK_global
+		{ context = getContext(tg); }
+		body=global_body[context]
+		{ ss = body; }
+	;
+
+global_body[FEContext context] returns [StreamSpec ss] { ss = null; List init = new ArrayList(); 
+	List vars = new ArrayList(); Statement s = null; FieldDecl decl; }
+	:	t:LCURLY
+		( (global_statement) => s=global_statement { if (s != null) init.add(s); } 
+		| decl=field_decl SEMI { vars.add(decl); }
+		)* 
+		RCURLY
+		{ 
+	StreamType st = new StreamType(context, 
+		new TypePrimitive(TypePrimitive.TYPE_VOID),
+		new TypePrimitive(TypePrimitive.TYPE_VOID));	
+	ss = new StreamSpec(context, StreamSpec.STREAM_GLOBAL,
+				st, "TheGlobal", Collections.EMPTY_LIST, vars,
+				Collections.singletonList(Function.newInit(context, new StmtBlock(getContext(t), init))));
+		}
+	;
+
+global_statement returns [Statement s] { s = null; }
+	:	(expr_statement) => s=expr_statement SEMI! 
+	|	s=if_else_statement
+	|	s=while_statement
+	|	s=do_while_statement SEMI
+	|	s=for_statement
+	|       (ID DOT ID LPAREN) => s=helper_call_statement SEMI
+	|	SEMI
+	;	
 
 filter_decl[StreamType st] returns [StreamSpec ss]
 { ss = null; List params = Collections.EMPTY_LIST; FEContext context = null; }
@@ -265,7 +300,7 @@ statement returns [Statement s] { s = null; }
 	|	s=while_statement
 	|	s=do_while_statement SEMI
 	|	s=for_statement
-	|       s=helper_call_statement SEMI
+	|       (ID DOT ID LPAREN) => s=helper_call_statement SEMI
 	|	s=msg_statement SEMI
 	|   SEMI
 	;

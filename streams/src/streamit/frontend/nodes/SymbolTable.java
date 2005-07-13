@@ -38,7 +38,7 @@ import java.util.HashMap;
  *
  * @see     streamit.frontend.passes.SymbolTableVisitor
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTable.java,v 1.9 2003-10-09 19:51:00 dmaze Exp $
+ * @version $Id: SymbolTable.java,v 1.10 2005-07-13 22:19:10 janiss Exp $
  */
 public class SymbolTable
 {
@@ -50,6 +50,8 @@ public class SymbolTable
     public static final int KIND_STREAM_PARAM = 3;
     /** Kind of a function parameter. */
     public static final int KIND_FUNC_PARAM = 4;
+    /** Kind of a global field. */
+    public static final int KIND_GLOBAL = 5;
     
     private Map vars, fns;
     private SymbolTable parent;

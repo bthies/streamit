@@ -34,7 +34,7 @@ import java.util.ArrayList;
  * will need to determine the stream type on its own.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StreamSpec.java,v 1.14 2003-10-09 19:51:00 dmaze Exp $
+ * @version $Id: StreamSpec.java,v 1.15 2005-07-13 22:19:10 janiss Exp $
  */
 public class StreamSpec extends FENode
 {
@@ -53,6 +53,8 @@ public class StreamSpec extends FENode
     public static final int STREAM_SPLITJOIN = 3;
     /** Stream type constant for a feedback loop. */
     public static final int STREAM_FEEDBACKLOOP = 4;
+    /** Stream type constant for globals. */
+    public static final int STREAM_GLOBAL = 5;
     
     /**
      * Creates a new stream specification given its name, a list of

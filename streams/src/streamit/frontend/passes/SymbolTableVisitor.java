@@ -28,10 +28,13 @@ import java.util.Map;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.16 2005-06-27 21:08:56 janiss Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.17 2005-07-13 22:19:15 janiss Exp $
  */
 public class SymbolTableVisitor extends FEReplacer
 {
+
+    protected StreamSpec global;
+
     /**
      * The current symbol table.  Functions in this class keep the
      * symbol table up to date; calling
@@ -191,6 +194,23 @@ public class SymbolTableVisitor extends FEReplacer
 	{
 	    TypeHelper helper = (TypeHelper)iter.next();
 	    helpersByName.put(helper.getName(), helper);
+	}
+        symtab = new SymbolTable(symtab); // table for globals
+        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
+	{
+	    StreamSpec spec = (StreamSpec)iter.next();
+	    if (spec.getType() == StreamSpec.STREAM_GLOBAL) {
+		for (Iterator _iter = spec.getVars().iterator(); _iter.hasNext(); ) {
+		    FieldDecl var = (FieldDecl)_iter.next();
+		    int num = var.getNumFields();
+		    for (int y = 0; y < num; y++) {
+			symtab.registerVar(var.getName(y),
+					   actualType(var.getType(y)),
+					   var,
+					   SymbolTable.KIND_GLOBAL);
+		    }
+		}
+	    }
 	}
         return super.visitProgram(prog);
     }

@@ -32,7 +32,7 @@ import java.util.ArrayList;
  * parameters as well.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: MoveStreamParameters.java,v 1.14 2003-12-15 22:49:34 dmaze Exp $
+ * @version $Id: MoveStreamParameters.java,v 1.15 2005-07-13 22:19:20 janiss Exp $
  */
 public class MoveStreamParameters extends InitMunger
 {
@@ -130,6 +130,8 @@ public class MoveStreamParameters extends InitMunger
         {
             List newFuncs = new ArrayList(spec.getFuncs());
             List newVars = new ArrayList(spec.getVars());
+
+	    if (spec.getType() == StreamSpec.STREAM_GLOBAL) assert false: "Global should have no params";
 
             if (spec.getType() == StreamSpec.STREAM_FILTER)
             {

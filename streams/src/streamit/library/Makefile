@@ -10,6 +10,7 @@ JAVA_TARGET = \
   StreamItFeedbackLoop.class \
   Global.class \
   Helper.class \
+  NativeHelper.class \
   float2.class \
   float3.class \
   float4.class
@@ -24,6 +25,7 @@ JAVA_SRCS = \
   StreamItFeedbackLoop.java \
   Global.java \
   Helper.java \
+  NativeHelper.java \
   float2.java \
   float3.java \
   float4.java

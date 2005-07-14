@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.57 2005-07-13 22:19:04 janiss Exp $
+ * $Id: StreamItParserFE.g,v 1.58 2005-07-14 22:42:01 janiss Exp $
  */
 
 header {
@@ -109,7 +109,33 @@ global_body[FEContext context] returns [StreamSpec ss] { ss = null; List init = 
 	List vars = new ArrayList(); Statement s = null; FieldDecl decl; }
 	:	t:LCURLY
 		( (global_statement) => s=global_statement { if (s != null) init.add(s); } 
-		| decl=field_decl SEMI { vars.add(decl); }
+		| decl=field_decl SEMI { 
+
+			// need to separate initializers from field
+			// declarations to ensure that initializations
+			// are performed in the correct order!
+
+			FEContext ctx = decl.getContext();
+			int num = decl.getNumFields();
+
+			List names = decl.getNames();
+			List types = decl.getTypes();
+			List inits = decl.getInits();
+			List new_inits = new ArrayList(num);
+
+			for (int i = 0; i < num; i++) {
+				Expression iexpr = (Expression)inits.get(i);
+				if (iexpr != null) {
+					init.add(new StmtAssign(ctx, 
+						new ExprVar(ctx, (String)names.get(i)),
+						iexpr));
+				}
+				new_inits.add(null);
+			}
+
+			vars.add(new FieldDecl(ctx, types, names, new_inits)); 
+
+		}
 		)* 
 		RCURLY
 		{ 

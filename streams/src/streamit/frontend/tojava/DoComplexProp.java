@@ -44,7 +44,7 @@ import java.util.ArrayList;
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DoComplexProp.java,v 1.25 2004-07-08 05:45:42 thies Exp $
+ * @version $Id: DoComplexProp.java,v 1.26 2005-07-15 00:21:06 janiss Exp $
  */
 public class DoComplexProp extends SymbolTableVisitor
 {
@@ -122,7 +122,7 @@ public class DoComplexProp extends SymbolTableVisitor
         Type type = getType(expr);
         addStatement(new StmtVarDecl(expr.getContext(), type, tempVar, expr));
         symtab.registerVar(tempVar, type);
-        return exprVar;
+        return (Expression)exprVar.accept(this);
     }
 
     /**

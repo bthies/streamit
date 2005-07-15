@@ -180,15 +180,18 @@ public class SpaceDynamicBackend {
 		boolean manual = KjcOptions.manual != null;
 		//we may automatically turn dynamic programming partitioning on, so remember the old val of the option
 		boolean oldKjcDP = KjcOptions.partition_dp;
-		boolean partitioning = ((KjcOptions.standalone || !manual) // still fuse graph if both manual and standalone enabled
-					&& (KjcOptions.partition_dp || 
-					    KjcOptions.partition_greedy || 
-					    KjcOptions.partition_greedier || 
-					    KjcOptions.partition_ilp));
+
+		boolean partitioning = !KjcOptions.nopartition && //don't partition if no partition specified...
+		    ((KjcOptions.standalone || !manual) // still fuse graph if both manual and standalone enabled
+		     && (KjcOptions.partition_dp || 
+			 KjcOptions.partition_greedy || 
+			 KjcOptions.partition_greedier || 
+			 KjcOptions.partition_ilp));
+
 		// want to turn on partitioning for standalone; in this
 		// case, manual is for manual optimizations, not manual
 		// partitioning
-		if (count > numTiles && !partitioning && !manual) { //
+		if (count > numTiles && !partitioning && !manual && !KjcOptions.nopartition) { //
 		    System.out.println("Need " + count + " tiles, so turning on partitioning...");
 		    
 		    KjcOptions.partition_dp = true;
@@ -286,7 +289,8 @@ public class SpaceDynamicBackend {
 	
 	
 	if (KjcOptions.ratematch) {
-	    System.out.println("WARNING: Rate Matching non-operational for Space Dynamic.");
+	    System.out.println("WARNING: Rate Matching non-operational for Space Dynamic, so disabling.");
+	    KjcOptions.ratematch = false;
 	    /*
 	    if (RateMatch.doit(ssg.getTopLevel()))
 		System.out.println("Rate Matching Test Successful.");

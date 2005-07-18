@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.36 2005-06-27 21:08:51 janiss Exp $
+ * @version $Id: FEReplacer.java,v 1.37 2005-07-18 22:09:15 janiss Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -299,15 +299,25 @@ public class FEReplacer implements FEVisitor
 
     public Object visitFieldDecl(FieldDecl field)
     {
-        List newInits = new ArrayList();
-        for (int i = 0; i < field.getNumFields(); i++)
+	int num = field.getNumFields();
+        List newInits = new ArrayList(num);
+        List newTypes = new ArrayList(num);
+        for (int i = 0; i < num; i++)
         {
             Expression init = field.getInit(i);
             if (init != null)
                 init = (Expression)init.accept(this);
             newInits.add(init);
+
+	    Type type = field.getType(i);
+	    if (type instanceof TypeArray) {
+		TypeArray ta = (TypeArray)type;
+		type = new TypeArray(ta.getBase(),
+				(Expression)ta.getLength().accept(this));
+	    }
+	    newTypes.add(type);
         }
-        return new FieldDecl(field.getContext(), field.getTypes(),
+        return new FieldDecl(field.getContext(), newTypes,
                              field.getNames(), newInits);
     }
 

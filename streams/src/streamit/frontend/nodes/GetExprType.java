@@ -25,7 +25,7 @@ import java.util.Map;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.23 2005-06-27 21:08:51 janiss Exp $
+ * @version $Id: GetExprType.java,v 1.24 2005-07-18 22:11:23 janiss Exp $
  */
 public class GetExprType extends FENullVisitor
 {
@@ -149,6 +149,10 @@ public class GetExprType extends FENullVisitor
 
     public Object visitExprField(ExprField exp)
     {
+	if (exp.getLeft().toString().equals("TheGlobal") ||
+	    exp.getLeft().toString().equals("TheGlobal.__get_instance()")) {
+	    return symTab.lookupVar(exp.getName());
+	}
         Type base = (Type)exp.getLeft().accept(this);
         // If the base is a complex type, a field of it is float.
         if (base.isComplex())

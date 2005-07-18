@@ -155,7 +155,11 @@ public class DataEstimate {
 		    size = getTypeSize(base);
 		    for (int y = 0; y < dims.length; y++) {
 			if (dims[y] == null) break;
-			size *= Integer.valueOf(dims[y]).intValue();
+			try {
+			    size *= Integer.valueOf(dims[y]).intValue();
+			} catch (NumberFormatException ex) {
+			    System.out.println("Warning! Could not estimate size of an array: "+ident);
+			}
 		    }
 		}
 

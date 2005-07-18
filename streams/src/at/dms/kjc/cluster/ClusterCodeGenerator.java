@@ -295,7 +295,11 @@ class ClusterCodeGenerator {
 		int size = 0;
 		String dims[] = ArrayDim.findDim((SIRFilter)oper, ident);
 		CType base = ((CArrayType)type).getBaseType();
-		size = Integer.valueOf(dims[0]).intValue();
+		try {
+		    size = Integer.valueOf(dims[0]).intValue();
+		} catch (NumberFormatException ex) {
+		    System.out.println("Warning! Could not estimate size of an array: "+ident);
+		}
 		r.add("  buf->write("+ident+"__"+id+", "+size+" * sizeof("+TypeToC(base)+"));\n");
 	    } else {
 		r.add("  buf->write(&"+ident+"__"+id+", sizeof("+TypeToC(type)+"));\n");
@@ -339,7 +343,11 @@ class ClusterCodeGenerator {
 		int size = 0;
 		String dims[] = ArrayDim.findDim((SIRFilter)oper, ident);
 		CType base = ((CArrayType)type).getBaseType();
-		size = Integer.valueOf(dims[0]).intValue();
+		try {
+		    size = Integer.valueOf(dims[0]).intValue();
+		} catch (NumberFormatException ex) {
+		    System.out.println("Warning! Could not estimate size of an array: "+ident);
+		}
 		r.add("  buf->read("+ident+"__"+id+", "+size+" *  sizeof("+TypeToC(base)+"));\n");
 	    } else {
 		r.add("  buf->read(&"+ident+"__"+id+", sizeof("+TypeToC(type)+"));\n");

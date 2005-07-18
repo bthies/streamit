@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.59 2005-07-18 18:52:37 thies Exp $
+ * $Id: StreamItParserFE.g,v 1.60 2005-07-18 20:31:39 janiss Exp $
  */
 
 header {
@@ -327,7 +327,7 @@ statement returns [Statement s] { s = null; }
 	|	s=do_while_statement SEMI
 	|	s=for_statement
 	|	s=msg_statement SEMI
-	|       (ID DOT ID LPAREN) => s=helper_call_statement SEMI
+/*	|       (ID DOT ID LPAREN) => s=helper_call_statement SEMI */
 	|   SEMI
 	;
 

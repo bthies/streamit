@@ -28,9 +28,13 @@ public class FileWriter extends Filter
     java.io.FileOutputStream fileOutputStream;
     DataOutputStream outputStream;
 
-    public FileWriter (String fileName, Class type)
+    public FileWriter (String fileName, Class type, boolean TREAT_AS_BITS)
     {
-        fileType = type;
+        // This is part of the hack to make FileReader/Writer<bit> work
+        if (TREAT_AS_BITS)
+            fileType = null;
+        else 
+            fileType = type;
 
         try
         {
@@ -44,9 +48,19 @@ public class FileWriter extends Filter
         }
     }
 
+    // This is part of the hack to make FileReader/Writer<bit> work
+    public FileWriter (String fileName, Class type) {
+        this(fileName, type, false);
+    }
+
     public void init ()
     {
-        input = new Channel (fileType, 1);
+        // This is part of the hack to make FileReader/Writer<bit> work
+        if (fileType == null)
+            input = new Channel (Integer.TYPE, 1);
+        else
+            input = new Channel (fileType, 1);
+        
     }
 
     int endianFlip (int x)
@@ -73,6 +87,15 @@ public class FileWriter extends Filter
     {
         try
         {
+            // This is part of the hack to make FileReader/Writer<bit> work
+            if (fileType == null) {
+                int temp = 0;
+                for (int i = 0; i < 8; i++) {
+                    temp = (temp << 1) | input.popInt();
+                }
+                outputStream.writeByte(temp);
+                
+            } else
             if (fileType == Integer.TYPE)
             {
                 outputStream.writeInt (endianFlip (input.popInt ()));

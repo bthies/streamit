@@ -29,11 +29,20 @@ public class FileReader extends Filter
     java.io.FileInputStream fileInputStream;
     DataInputStream inputStream;
 
-    public FileReader (String fileName, Class type)
+    public FileReader (String fileName, Class type, boolean TREAT_AS_BITS)
     {
-        this.fileType = type;
+        // This is part of the hack to make FileReader/Writer<bit> work
+        if (TREAT_AS_BITS)
+            this.fileType = null;
+        else
+            this.fileType = type;
         this.fileName = fileName;
         openFile();
+    }
+
+    // This is part of the hack to make FileReader/Writer<bit> work
+    public FileReader (String fileName, Class type) {
+        this(fileName, type, false);
     }
 
     private void closeFile() {
@@ -59,7 +68,11 @@ public class FileReader extends Filter
 
     public void init ()
     {
-        output = new Channel (fileType, 1);
+        // Hacked to make FileReader/Writer<bit> work
+        if (fileType == null)
+            output = new Channel (Integer.TYPE, 1);
+        else 
+            output = new Channel (fileType, 1);
     }
 
     int endianFlip (int x)
@@ -87,7 +100,14 @@ public class FileReader extends Filter
         boolean done = false;
         while (!done) {
             try {
-                if (fileType == Integer.TYPE) {
+                // Hacked to make FileReader/Writer<bit> work
+                if (fileType == null) { // fileType is a bit
+                    int temp = inputStream.readUnsignedByte();
+                    for (int i = 0; i < 8; i++) {
+                        output.pushInt((temp >> 7) & 1);
+                        temp <<= 1;
+                    }
+                } else if (fileType == Integer.TYPE) {
                     output.pushInt (endianFlip (inputStream.readInt ()));
                 } else if (fileType == Short.TYPE) {
                     output.pushShort (endianFlip (inputStream.readShort ()));
@@ -111,4 +131,5 @@ public class FileReader extends Filter
             }
         }
     }
+
 }

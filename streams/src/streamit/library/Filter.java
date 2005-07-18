@@ -16,6 +16,7 @@
 
 package streamit.library;
 
+import java.lang.reflect.Method;
 import streamit.scheduler2.Scheduler;
 import java.util.Vector;
 import java.util.HashMap;
@@ -604,9 +605,17 @@ public abstract class Filter extends Stream
         try
         {
 	    prepareToWork();
-            if (schedName.equals ("work")) work (); else
-            if (schedName.equals ("prework")) prework (); else
-            getClass().getMethod(phase.name, null).invoke(this, null);
+
+	    if (schedName.equals ("work")) {
+		work ();
+	    } else if (schedName.equals ("prework")) {
+		prework ();
+	    } else {
+		Method m = getClass().getMethod(phase.name, null);
+		m.setAccessible(true);
+		m.invoke(this, null);
+	    }
+
 	    cleanupWork();
         }
         catch (Throwable x)

@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.101 2005-07-13 22:19:20 janiss Exp $
+ * @version $Id: NodesToJava.java,v 1.102 2005-07-18 19:54:47 madrake Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -826,14 +826,19 @@ public class NodesToJava implements FEVisitor
     
     public Object visitSCSimple(SCSimple creator)
     {
+        // Hacked to make FileReader/Writer<bit> work
+        boolean hardcoded_BitFileFlag = (creator.getName().equals("FileReader") ||
+                                         creator.getName().equals("FileWriter"));
+        
         String result;
         if (libraryFormat)
         {
             // Magic for builtins.
             if (creator.getName().equals("Identity") ||
                 creator.getName().equals("FileReader") ||
-                creator.getName().equals("FileWriter"))
+                creator.getName().equals("FileWriter")) {
                 result = "new " + creator.getName() + "(";
+            }
             else
                 result = creator.getName() + ".__construct(";
         }
@@ -851,7 +856,14 @@ public class NodesToJava implements FEVisitor
         {
             Type type = (Type)iter.next();
             if (!first) result += ", ";
-            result += typeToClass(type);
+            // Hacked to make FileReader/Writer<bit> work
+            if ((type instanceof TypePrimitive) && 
+                (((TypePrimitive) type).getType() == TypePrimitive.TYPE_BIT) && 
+                hardcoded_BitFileFlag) {
+                result += "Bit.TYPE, Bit.TREAT_AS_BITS"; 
+            }
+            else
+                result += typeToClass(type);
             first = false;
         }
         result += ")";

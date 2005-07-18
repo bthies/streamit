@@ -100,13 +100,13 @@ public class LatencyNode extends streamit.misc.Misc
                 nPhase++)
             {
                 steadyNodePhases.setPhaseInput(
-                    filter.getDeclaredSteadyPhasePeek(nPhase),
-                    filter.getDeclaredSteadyPhasePop(nPhase),
+                    dynamicToStatic(filter.getDeclaredSteadyPhasePeek(nPhase)),
+                    dynamicToStatic(filter.getDeclaredSteadyPhasePop(nPhase)),
                     nPhase,
                     0);
 
                 steadyNodePhases.setPhaseOutput(
-                    filter.getDeclaredSteadyPhasePush(nPhase),
+                    dynamicToStatic(filter.getDeclaredSteadyPhasePush(nPhase)),
                     nPhase,
                     0);
 
@@ -126,13 +126,13 @@ public class LatencyNode extends streamit.misc.Misc
                 nInitPhase++)
             {
                 initNodePhases.setPhaseInput(
-                    filter.getDeclaredInitPhasePeek(nInitPhase),
+                    dynamicToStatic(filter.getDeclaredInitPhasePeek(nInitPhase)),
                     filter.getDeclaredInitPhasePop(nInitPhase),
                     nInitPhase,
                     0);
 
                 initNodePhases.setPhaseOutput(
-                    filter.getDeclaredInitPhasePush(nInitPhase),
+                    dynamicToStatic(filter.getDeclaredInitPhasePush(nInitPhase)),
                     nInitPhase,
                     0);
 
@@ -413,5 +413,20 @@ public class LatencyNode extends streamit.misc.Misc
         nIters += nSteadyStates * getSteadyNumPhases();
 
         return nIters;
+    }
+
+    // for SDEP calculations that are on a *boundary* of a dynamic
+    // rate, we need to represent that dynamic rate as a placeholder
+    // static rate for the pupose of the SDEP calculation.  This will
+    // not help for messages across dynamic rates, but if a dynamic
+    // rate input (pop *) is sending a message downstream (for
+    // example), this substition is needed for the analysis to
+    // terminate.
+    private int dynamicToStatic(int rate) {
+	if (rate==streamit.library.Rate.DYNAMIC_RATE) {
+	    return 1;
+	} else {
+	    return rate;
+	}
     }
 }

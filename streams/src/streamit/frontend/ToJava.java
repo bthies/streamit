@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.64 2005-07-13 22:19:04 janiss Exp $
+ * @version $Id: ToJava.java,v 1.65 2005-07-18 01:55:27 thies Exp $
  */
 public class ToJava
 {
@@ -227,7 +227,7 @@ public class ToJava
         prog = (Program)prog.accept(new DisambiguateUnaries(varGen));
         prog = (Program)prog.accept(new NoRefTypes());
         prog = (Program)prog.accept(new NameAnonymousStreams(varGen));
-        if (!libraryFormat)
+	if (!libraryFormat)
             prog = (Program)prog.accept(new NoticePhasedFilters());
         //prog = (Program)prog.accept(new GenerateCopies(varGen));
         prog = (Program)prog.accept(new DoComplexProp(varGen));
@@ -247,11 +247,11 @@ public class ToJava
         prog = (Program)prog.accept(new GenerateCopies(varGen)); 
         prog = (Program)prog.accept(new InsertInitConstructors(varGen));
 
+        prog = (Program)prog.accept(new RenameGlobals(libraryFormat));
         prog = (Program)prog.accept(new MoveStreamParameters());
         prog = (Program)prog.accept(new NameAnonymousFunctions());
         prog = (Program)prog.accept(new AssembleInitializers());
         prog = (Program)prog.accept(new TrimDumbDeadCode());
-        prog = (Program)prog.accept(new RenameGlobals(libraryFormat));
         return prog;
     }
 

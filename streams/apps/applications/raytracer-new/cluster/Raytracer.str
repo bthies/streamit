@@ -1,0 +1,528 @@
+/* raw triangle data read from vox file, when in use
+   it's broken into Triangle and ShadingInfo */
+struct Triangle9
+{
+	float3    v0;
+	float3    v1;
+	float3    v2;
+	float3    n0;
+	float3    n1;
+	float3    n2;
+	float3    c0;
+	float3    c1;
+	float3    c2;
+}	
+
+struct Triangle
+{
+    float3 v0;
+    float3 v1;
+    float3 v2;
+}
+
+struct ShadingInfo{
+    float3 n0;
+    float3 n1;
+    float3 n2;
+    float3 c0;
+    float3 c1;
+float3 c2;
+}
+
+struct GridInfo     //singleton
+{
+    float3      grid_dim; // int actually
+    float3      grid_min;
+    float3      grid_max;
+    float3      grid_vsize;
+    
+    int[2048]   trilist_offsets;
+    int[2048]   trilist;
+}
+
+struct traversaldatastatic_t{
+  float3 tDelta;
+  float3 step;   //actually -1 or 1 only
+  float3 outno;  //actually ints
+}
+
+struct traversaldatadyn_t{
+  float3 tMax;
+  float3 voxno;  //actually ints
+  float3 voxtouse; //ints
+}
+
+struct raystate_t{
+  float4 state; //x=trav, y=isect, z=shade, w=trinum
+}
+
+struct ray_t{
+  float3 o;
+  float3 d;
+  float tmax;
+}
+
+struct Pixel{
+  float4 data;  //rgba
+}
+
+struct hit_t{
+  float4 data;  //packed tt, uu, vv, id
+}
+
+struct RAY {
+    ray_t ray;
+    traversaldatastatic_t travdatstatic;
+    traversaldatadyn_t travdatdyn;
+    hit_t hits;
+    raystate_t raystates;
+    hit_t candidatehits;
+    Pixel pixel;
+    //padding
+    int patch1;
+    int patch2;
+    int patch3;
+    int patch4;
+    int patch5;    
+    int patch6;
+    int patch7;
+    int patch8;
+    int patch9;
+    int patch10;    
+    int patch11;
+    int patch12;
+    int patch13;
+    int patch14;
+    int patch15;    
+    int patch16;
+    int patch17;
+    int patch18;
+    int patch19;
+    int patch20;    
+    int patch21;
+    int patch22;
+    int patch23;
+}
+
+struct TimeData {
+    int time;
+}
+
+native RaytracerUtil
+{
+    GridInfo parseVox(String fname, int num_tris, Triangle9[num_tris] tris);
+    int beginPPMWriter(String fname, int width, int height);
+    void sendToPPMWriter(int fid, float4 data);
+    void endPPMWriter(int fid);
+    int currentTimeMillis();
+}
+
+
+global {
+    int numtris = 840;
+    
+    Triangle9[2048] tris9;
+    GridInfo ginfo = RaytracerUtil.parseVox("glassner04.vox", numtris, tris9);
+    
+    //triangle data 
+    Triangle[2048] tris;    
+    ShadingInfo[2048] shadinf;
+
+    for(int ii=0; ii < numtris; ii++){
+        tris[ii].v0 = float3(tris9[ii].v0.x, tris9[ii].v0.y, tris9[ii].v0.z);
+        tris[ii].v1 = float3(tris9[ii].v1.x, tris9[ii].v1.y, tris9[ii].v1.z);
+        tris[ii].v2 = float3(tris9[ii].v2.x, tris9[ii].v2.y, tris9[ii].v2.z);
+        shadinf[ii].n0 = float3(tris9[ii].n0.x, tris9[ii].n0.y, tris9[ii].n0.z);
+        shadinf[ii].n1 = float3(tris9[ii].n1.x, tris9[ii].n1.y, tris9[ii].n1.z);
+        shadinf[ii].n2 = float3(tris9[ii].n2.x, tris9[ii].n2.y, tris9[ii].n2.z);
+        shadinf[ii].c0 = float3(tris9[ii].c0.x, tris9[ii].c0.y, tris9[ii].c0.z);
+        shadinf[ii].c1 = float3(tris9[ii].c1.x, tris9[ii].c1.y, tris9[ii].c1.z);
+        shadinf[ii].c2 = float3(tris9[ii].c2.x, tris9[ii].c2.y, tris9[ii].c2.z);
+    }
+
+    int W = 640;
+    int H = 640;
+
+    float CONSTANT_PI = 3.1415926536;
+
+    float3 vup = float3(0, 0, 1);
+    float fov = 55;    
+
+    float3 pointlight = float3(-206.808, -16.2987, 297.281);
+    float3 lookfrom = float3(-7.610099, -339.653137, 237.733948);
+    float3 lookat = float3(23.224901, 980.535034, -321.560577);
+
+    TimeData startTime;
+    startTime.time = RaytracerUtil.currentTimeMillis();
+
+    float3 u, v, w;
+
+    w = StreamItVectorLib.normalize3(lookat - lookfrom);
+    u = StreamItVectorLib.normalize3(StreamItVectorLib.cross3(vup, w));
+    v = StreamItVectorLib.normalize3(StreamItVectorLib.cross3(w, u));
+
+    float tx, ty;
+    
+    ty = tan( (CONSTANT_PI/180.0*fov) / 2.0);
+    tx = ty*(W/H);
+
+    float2 txty = float2(tx, ty);
+    float2 txty2 = txty * 2.0f;
+
+
+}
+
+void->void pipeline Raytracer()
+{
+
+//some camera stuff, you can change them for different views
+
+    int P = 1; //how many parallel pipelines
+
+    print(W);
+    print(H);
+    add genEyeRays();
+
+    add splitjoin {
+        split roundrobin();
+        for (int ii = 0; ii < P; ii++) {
+            add pipeline {
+                add traceRays();
+                add shadeHits();
+            }
+        }
+        join roundrobin();
+    }
+    
+    add PPMWriter();
+}
+
+Pixel->void filter PPMWriter()
+{
+    int count;
+    float4[W*H] data;    
+    
+    init {count=0;}
+    work pop 1 {
+        Pixel d = pop();
+        data[count] = d.data;
+
+	count++;
+
+	if (count % 250 == 0) println(count);
+        
+        if (count == (W*H) ) {
+            int end = RaytracerUtil.currentTimeMillis();
+            int duration = end - startTime.time;
+            println(duration);
+                
+            int fid = RaytracerUtil.beginPPMWriter("out.ppm", W, H);
+            for (int i = 0; i < W*H; i++) {        
+                RaytracerUtil.sendToPPMWriter(fid, data[i]);
+            }
+            RaytracerUtil.endPPMWriter(fid);
+	    count = 0;	
+        }
+    }
+}
+
+
+void->RAY filter genEyeRays () 
+{
+    int countW;
+    int countH;
+    float stepW;
+    float stepH;
+    init {
+        countW = 0;
+        countH = 0;
+        stepW = 1.0f / (float)W;
+        stepH = 1.0f / (float)H;
+    }
+    
+    work push 1 {
+        RAY ray;
+        
+        float3 t1, t2, tmaxV, tminV;
+        float tnear, tfar;
+        float2 scale;
+        
+        if (countH == H && countW == W) {
+            countH = 0;
+            countW = 0;
+        } else {
+            if (countW++ == W) {
+                countW = 0;
+                ++countH;
+            }
+        }
+
+        float2 wpos_norm = float2(countW * stepW, countH * stepH);
+
+        ray.ray.o = lookfrom;
+		scale = txty - wpos_norm * txty2;
+        ray.ray.d = (w + (u * scale.x)) + (v * scale.y);
+        ray.ray.d = ray.ray.d / sqrt(StreamItVectorLib.dot3(ray.ray.d, ray.ray.d));
+        
+        ray.ray.tmax = -1;
+        t1 = (ginfo.grid_min - ray.ray.o) / ray.ray.d;
+        t2 = (ginfo.grid_max - ray.ray.o) / ray.ray.d;
+        tmaxV = StreamItVectorLib.max3(t1, t2);
+        tminV = StreamItVectorLib.min3(t1, t2);
+        tnear = max( max(tminV.x, tminV.y), max(tminV.x, tminV.z) );
+        tfar = min( min(tmaxV.x, tmaxV.y), min(tmaxV.x, tmaxV.z) );
+
+        ray.ray.tmax = (tnear > tfar) ? ray.ray.tmax  :
+                 (tfar  < 0.0) ? ray.ray.tmax  :
+                 (tnear < 0.0) ? 0.0 : tnear;
+
+        ray.hits.data.x = 999999;
+        ray.hits.data.y = 0;
+        ray.hits.data.z = 0;
+        ray.hits.data.w = -1;
+
+        push(ray);
+    }
+
+}
+
+RAY->RAY filter traceRays() 
+{
+    RAY ray;
+
+    work pop 1 push 1 {
+        ray = pop();
+
+        krnSetupTraversal(ginfo.grid_min, ginfo.grid_vsize, ginfo.grid_dim);
+
+        for (int i=0; i < 900; i++) {
+            if ((ray.raystates.state.x > 0) || (ray.raystates.state.y > 0)) {
+
+                krnTraverseVoxel(ginfo.grid_dim);
+
+                krnIntersectTriangle(ginfo.grid_min, ginfo.grid_vsize, ginfo.grid_dim);
+            } else {
+                i = 900;
+            }
+        }
+  
+        push(ray);
+    }
+
+    void krnSetupTraversal(float3 grid_min, float3 grid_vsize, float3 grid_dim)
+    {
+        float3 temp, curpos;
+        int i; 
+  
+        curpos = (ray.ray.o + ray.ray.d * ray.ray.tmax); 
+
+		ray.travdatdyn.voxno = StreamItVectorLib.floor3((curpos - grid_min) / grid_vsize);          
+
+        //these ? : should be made much smarter...
+
+        ray.travdatdyn.voxno.x = (ray.travdatdyn.voxno.x) >= grid_dim.x ? (ray.travdatdyn.voxno.x-1) : ray.travdatdyn.voxno.x;
+
+        ray.travdatdyn.voxno.y = (ray.travdatdyn.voxno.y) >= grid_dim.y ? (ray.travdatdyn.voxno.y-1) : ray.travdatdyn.voxno.y;
+        ray.travdatdyn.voxno.z = (ray.travdatdyn.voxno.z) >= grid_dim.z ? (ray.travdatdyn.voxno.z-1) : ray.travdatdyn.voxno.z;
+
+        temp.x = (ray.ray.d.x > 0.0) ? ((ray.travdatdyn.voxno.x+1)*grid_vsize.x + grid_min.x) : (ray.travdatdyn.voxno.x*grid_vsize.x + grid_min.x);        
+        temp.y = (ray.ray.d.y > 0.0) ? ((ray.travdatdyn.voxno.y+1)*grid_vsize.y + grid_min.y) : (ray.travdatdyn.voxno.y*grid_vsize.y + grid_min.y);
+        temp.z = (ray.ray.d.z > 0.0 ? (ray.travdatdyn.voxno.z+1)*grid_vsize.z + grid_min.z : ray.travdatdyn.voxno.z*grid_vsize.z + grid_min.z);        
+
+        ray.travdatdyn.tMax = ((temp - curpos) / ray.ray.d) + ray.ray.tmax;
+
+        ray.travdatstatic.tDelta = (grid_vsize / ray.ray.d); 
+        ray.travdatstatic.tDelta.x = ray.ray.d.x < 0.0 ? -ray.travdatstatic.tDelta.x : ray.travdatstatic.tDelta.x;
+        ray.travdatstatic.tDelta.y = ray.ray.d.y < 0.0 ? -ray.travdatstatic.tDelta.y : ray.travdatstatic.tDelta.y;
+        ray.travdatstatic.tDelta.z = ray.ray.d.z < 0.0 ? -ray.travdatstatic.tDelta.z : ray.travdatstatic.tDelta.z;
+
+        float3 minusone, one, zero;
+        minusone = float3(-1, -1, -1);
+        one = float3(1,1,1);
+        zero = float3(0,0,0);
+        
+        //TODO: ray.travdatstatic.step = ray.ray.d > zero ? one : minusone;
+        ray.travdatstatic.step.x = ray.ray.d.x > 0.0 ? 1 : -1;
+        ray.travdatstatic.step.y = ray.ray.d.y > 0.0 ? 1 : -1;
+        ray.travdatstatic.step.z = ray.ray.d.z > 0.0 ? 1 : -1;
+
+        ray.travdatstatic.outno.x = ray.ray.d.x > 0.0 ? grid_dim.x : -1;
+        ray.travdatstatic.outno.y = ray.ray.d.y > 0.0 ? grid_dim.y : -1;
+        ray.travdatstatic.outno.z = ray.ray.d.z > 0.0 ? grid_dim.z : -1;
+
+        ray.travdatdyn.voxtouse = float3(0,0,0); //needed?? 
+        if ( ray.travdatdyn.voxno.x >= grid_dim.x || ray.travdatdyn.voxno.x < -1 ||
+             ray.travdatdyn.voxno.y >= grid_dim.y || ray.travdatdyn.voxno.y < -1 ||
+             ray.travdatdyn.voxno.z >= grid_dim.z || ray.travdatdyn.voxno.z < -1
+           ) //wgs: opt
+            ray.raystates.state = float4(0,0,0,0);
+        else
+            ray.raystates.state = float4(1,0,0,0);
+    }
+
+
+    void krnTraverseVoxel(float3 grid_dim) 
+    {
+        float3 compmask;
+        float minval;
+        float offsetaddr;
+        float trilistpos;
+        int i; 
+    
+        if(ray.raystates.state.x > 0){
+            minval = min( min(ray.travdatdyn.tMax.x, ray.travdatdyn.tMax.y), ray.travdatdyn.tMax.z);  
+
+            if(minval == ray.travdatdyn.tMax.x) {
+                compmask.x = 1; compmask.y = 0; compmask.z = 0;  //compmask = float3(1,0,0);
+            } else if(minval == ray.travdatdyn.tMax.y) {
+                compmask.x = 0; compmask.y = 1; compmask.z = 0;  //compmask = float3(0,1,0);
+            } else if(minval == ray.travdatdyn.tMax.z) {
+                compmask.x = 0; compmask.y = 0; compmask.z = 1;  //compmask = float3(0,0,1);
+            }
+
+            if( ray.travdatdyn.voxno.x == ray.travdatstatic.outno.x ||
+                ray.travdatdyn.voxno.y == ray.travdatstatic.outno.y ||
+                ray.travdatdyn.voxno.z == ray.travdatstatic.outno.z ||
+                StreamItVectorLib.dot3(ray.travdatdyn.tMax, compmask) > 999999){ //should be tmax, but busted now...
+                
+                ray.raystates.state.x = 0; ray.raystates.state.y = 0; ray.raystates.state.z = 0; ray.raystates.state.w = 0;  
+            } else {
+                offsetaddr = grid_dim.z*(ray.travdatdyn.voxno.x*grid_dim.y + ray.travdatdyn.voxno.y) +  ray.travdatdyn.voxno.z;
+                ray.travdatdyn.voxtouse = ray.travdatdyn.voxno;
+                trilistpos = ginfo.trilist_offsets[(int)(offsetaddr)];
+                ray.travdatdyn.voxno = (ray.travdatdyn.voxno + (compmask * ray.travdatstatic.step));  
+                ray.travdatdyn.tMax = (ray.travdatdyn.tMax + (compmask * ray.travdatstatic.tDelta));
+                if(trilistpos >= 0) {
+                    ray.raystates.state.x = 0; ray.raystates.state.y = 1; ray.raystates.state.z = 0; ray.raystates.state.w = trilistpos;  
+                } else {
+                    ray.raystates.state.x = 1; ray.raystates.state.y = 0; ray.raystates.state.z = 0; ray.raystates.state.w = 0;  
+                }
+            }
+        } else {
+        }
+    }
+
+
+    void krnIntersectTriangle(float3 grid_min, float3 grid_vsize, float3 grid_dim) 
+    {
+
+        float idx, det, inv_det;
+        float3 edge1, edge2, pvec, tvec, qvec;
+        int i;
+        
+        float trinum;
+        float validhit;
+        float3 hitp, myvox;
+        float3 fudgeup, fudgedown;
+        
+        if(ray.raystates.state.y > 0){
+            idx = ginfo.trilist[(int)(ray.raystates.state.w)];
+            edge1 = (tris[(int)idx].v1 - tris[(int)idx].v0);
+            edge2 = (tris[(int)idx].v2 - tris[(int)idx].v0);
+            pvec = StreamItVectorLib.cross3(ray.ray.d, edge2);
+
+            det = StreamItVectorLib.dot3(edge1, pvec); 
+            inv_det = 1 / det;
+            tvec = (ray.ray.o - tris[(int)idx].v0);
+            ray.candidatehits.data.y = StreamItVectorLib.dot3( tvec, pvec ) * inv_det;
+            qvec = StreamItVectorLib.cross3(tvec, edge1);  
+            ray.candidatehits.data.z = StreamItVectorLib.dot3(ray.ray.d, qvec) * inv_det; 
+            ray.candidatehits.data.x = StreamItVectorLib.dot3(edge2, qvec) * inv_det; 
+            ray.candidatehits.data.w = idx; 
+            
+            // the following is originally from krnValidateIntersection
+            
+            if (ray.candidatehits.data.y >= 0 && ray.candidatehits.data.z >= 0 &&
+            	(ray.candidatehits.data.y+ray.candidatehits.data.z) <= 1 &&
+            	ray.candidatehits.data.x <= ray.hits.data.x && ray.candidatehits.data.x >= 0) {
+                validhit = 1;
+            } else {
+                validhit = 0;
+            }
+
+            if (validhit==1) {
+                hitp = (ray.ray.o + (ray.ray.d * (ray.candidatehits.data.x-0.01))); 
+                myvox = StreamItVectorLib.floor3(((hitp - grid_min) / grid_vsize));
+                if (myvox.x >= grid_dim.x) {myvox.x = myvox.x -1 ;} 
+                if (myvox.y >= grid_dim.y) {myvox.y = myvox.y -1 ;} 
+                if (myvox.z >= grid_dim.z) {myvox.z = myvox.z -1 ;} 
+                fudgeup = (ray.travdatdyn.voxtouse + 0.1); 
+                fudgedown = (ray.travdatdyn.voxtouse - 0.1); 
+
+                if (myvox.x >= fudgedown.x && myvox.x <= fudgeup.x &&
+                   myvox.y >= fudgedown.y && myvox.y <= fudgeup.y &&
+                   myvox.z >= fudgedown.z && myvox.z <= fudgeup.z ) {
+                    validhit = validhit;
+                } else {
+                    validhit = 0;
+                }
+            } 
+
+            if(validhit > 0) {
+                ray.hits.data = ray.candidatehits.data;
+            }
+
+            trinum = ginfo.trilist[(int)(ray.raystates.state.w+1)];
+            if(trinum < 0){
+                if(validhit > 0 || ray.hits.data.w >= 0){
+                    ray.raystates.state.x = 0;ray.raystates.state.y = 0;ray.raystates.state.z = 1;ray.raystates.state.w = 0; //raystate.state = float4(0,0,1,0);
+                } else {
+                    ray.raystates.state.x = 1;ray.raystates.state.y = 0;ray.raystates.state.z = 0;ray.raystates.state.w = 0; //raystate.state = float4(1,0,0,0);
+                }
+            } else {
+                ray.raystates.state.x=0;ray.raystates.state.y=1;ray.raystates.state.z=0;ray.raystates.state.w=ray.raystates.state.w+1;
+            }
+            
+        } else {
+            ray.candidatehits.data.x = 0;ray.candidatehits.data.y = 0;ray.candidatehits.data.z = 0;ray.candidatehits.data.w = -1; 
+        }
+    }
+
+}
+
+RAY->Pixel filter shadeHits()
+{
+    work pop 1 push 1 {
+        float3 hitpoint, lightdir, barycoord, N, C;
+        float NdotL;
+        float3 newcolor;
+        float3 n1, n2, n3;
+        
+        RAY ray = pop();
+
+        if(ray.raystates.state.z > 0){
+            
+            //might need to change ordering
+            barycoord = float3(ray.hits.data.y, ray.hits.data.z, 1.0 - ray.hits.data.y - ray.hits.data.z);            
+
+            n1 = (shadinf[(int)(ray.hits.data.w)].n0 * barycoord.x);
+            n2 = (shadinf[(int)(ray.hits.data.w)].n1 * barycoord.y);
+            n3 = (shadinf[(int)(ray.hits.data.w)].n2 * barycoord.z);
+            N = (n1 + n2 + n3);
+
+            n1 = (shadinf[(int)(ray.hits.data.w)].c0 * barycoord.x);
+            n2 = (shadinf[(int)(ray.hits.data.w)].c1 * barycoord.y);
+            n3 = (shadinf[(int)(ray.hits.data.w)].c2 * barycoord.z);
+            C = (n1 + n2 + n3);
+
+            hitpoint = (ray.ray.o + (ray.ray.d * ray.hits.data.x));
+            lightdir = pointlight - hitpoint;
+
+            lightdir = lightdir/sqrt(StreamItVectorLib.dot3(lightdir, lightdir)); //normalize
+            
+            NdotL = max(0,StreamItVectorLib.dot3(N, lightdir)); 
+
+            newcolor = C*NdotL;
+
+            if(ray.hits.data.w >= 0) {
+                ray.pixel.data = float4(newcolor.x, newcolor.y, newcolor.z, 1);
+            } else {
+                ray.pixel.data = float4(0,1,0,0);
+            }
+        } else {
+            ray.pixel.data = float4(0,0,0,0);
+        }
+        
+        push(ray.pixel);
+    }
+}

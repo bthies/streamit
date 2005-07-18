@@ -1,0 +1,19 @@
+
+This is a Raytracer implementation from Intel with 
+modifications by Janis Sermulins.
+
+The Raytracer.str is identical in the library and the 
+cluster version except that for the library the output 
+dimensions are 40*40 but for the cluster 640*640.
+
+To execute library version type:
+
+	strc --library -i 1600 Raytracer.str
+
+To execute cluster version type:
+
+	strc --cluster 1 Raytracer.str
+	make -f Makefile.cluster
+	// modify cluster-config.txt
+	./run_cluster -i 409600
+

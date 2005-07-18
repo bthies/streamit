@@ -10,10 +10,8 @@ int->int filter IntSelector(int count)
     int[count] values;
     work 
         {
-	    int i;
             readValues();
-            for (i = 0; i < count; i++)
-                copyValue();
+	    copyValue();
         }
     
     phase readValues pop count
@@ -23,9 +21,11 @@ int->int filter IntSelector(int count)
                 values[i] = pop();
         }
     
-    phase copyValue pop 1 push 1
+    phase copyValue pop count push count
         {
-            push(values[pop()]);
+	    for (int i=0; i<count; i++) {
+		push(values[pop()]);
+	    }
         }
 }
 

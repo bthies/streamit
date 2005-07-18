@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.65 2005-07-18 01:55:27 thies Exp $
+ * @version $Id: ToJava.java,v 1.66 2005-07-18 20:30:06 janiss Exp $
  */
 public class ToJava
 {
@@ -293,6 +293,7 @@ public class ToJava
             return 1;
         }
 
+	prog = (Program)prog.accept(new StmtSendToHelper());
         prog = (Program)prog.accept(new RenameBitVars());
         if (!SemanticChecker.check(prog))
             return 1;

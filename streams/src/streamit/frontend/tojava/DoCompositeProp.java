@@ -58,7 +58,7 @@ public class DoCompositeProp extends SymbolTableVisitor
 	Expression new_rhs = (Expression)stmt.getRHS().accept(this);
 
 	if (!new_rhs.equals(rhs)) {
-	    return new StmtAssign(stmt.getContext(), lhs, new_rhs);
+	    return new StmtAssign(stmt.getContext(), lhs, new_rhs, stmt.getOp());
 	} else {
 	    return stmt;
 	}

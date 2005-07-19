@@ -51,7 +51,6 @@ public abstract class PhasedFilter extends Filter implements Runnable
                 }
             }
         }
-        cleanupWork();
     }
 
     public void run() {
@@ -67,6 +66,7 @@ public abstract class PhasedFilter extends Filter implements Runnable
     protected void contextSwitch() {
         synchronized (this) {
             try {
+		cleanupWork();
                 notify();
                 wait();
             } catch (InterruptedException e) {

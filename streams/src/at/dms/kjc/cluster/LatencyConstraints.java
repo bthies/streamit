@@ -203,7 +203,7 @@ public class LatencyConstraints {
 		    SIRFilter f2 = (SIRFilter)receiver;
 
 		    streamit.scheduler2.constrained.Scheduler cscheduler2 =
-			new streamit.scheduler2.constrained.Scheduler(topStreamIter);
+			streamit.scheduler2.constrained.Scheduler.create(topStreamIter);
 
 		    streamit.scheduler2.iriter.Iterator iter1 = IterFactory.createFactory().createIter(f1);
 		    streamit.scheduler2.iriter.Iterator iter2 = IterFactory.createFactory().createIter(f2);

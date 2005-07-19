@@ -398,7 +398,7 @@ public class ClusterBackend implements FlatVisitor {
      */
     private static void debugOutput(SIRStream str) {
 	streamit.scheduler2.constrained.Scheduler cscheduler =
-	    new streamit.scheduler2.constrained.Scheduler(topStreamIter);
+	    streamit.scheduler2.constrained.Scheduler.createForSDEP(topStreamIter);
 
 	//cscheduler.computeSchedule(); //"Not Implemented"
 

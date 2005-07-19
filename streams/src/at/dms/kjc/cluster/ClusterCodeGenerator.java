@@ -796,7 +796,7 @@ class ClusterCodeGenerator {
 	    r.add("\n  //SDEP from: "+fromID+" to: "+toID+";\n");
 	    
 	    streamit.scheduler2.constrained.Scheduler cscheduler =
-		new streamit.scheduler2.constrained.Scheduler(ClusterBackend.topStreamIter);
+		streamit.scheduler2.constrained.Scheduler.createForSDEP(ClusterBackend.topStreamIter);
 		
 	    streamit.scheduler2.iriter.Iterator firstIter = 
 		IterFactory.createFactory().createIter(sender);

@@ -52,7 +52,7 @@ public class DoSchedules {
 	try {
 
 	    streamit.scheduler2.constrained.Scheduler scheduler =
-		new streamit.scheduler2.constrained.Scheduler(selfIter);
+		streamit.scheduler2.constrained.Scheduler.createForSDEP(selfIter);
 
 	    streamit.scheduler2.SDEPData sdep = scheduler.computeSDEP(firstNode, nodeIter);
 	    System.out.println("  Source Init & Steady Phases: "+sdep.getNumSrcInitPhases()+", "+sdep.getNumSrcSteadyPhases());

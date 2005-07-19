@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.103 2005-07-19 18:09:12 madrake Exp $
+ * @version $Id: NodesToJava.java,v 1.104 2005-07-19 19:44:05 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -65,45 +65,45 @@ public class NodesToJava implements FEVisitor
     {
         // This is So Wrong in the greater scheme of things.
         if (type instanceof TypeArray)
-        {
-            TypeArray array = (TypeArray)type;
-            String base = convertType(array.getBase());
-            return base + "[]";
-        }
+	    {
+		TypeArray array = (TypeArray)type;
+		String base = convertType(array.getBase());
+		return base + "[]";
+	    }
         else if (type instanceof TypeStruct)
-	{
-	    return ((TypeStruct)type).getName();
-	}
+	    {
+		return ((TypeStruct)type).getName();
+	    }
 	else if (type instanceof TypeStructRef)
-        {
-	    return ((TypeStructRef)type).getName();
-        }
+	    {
+		return ((TypeStructRef)type).getName();
+	    }
         else if (type instanceof TypePrimitive)
-        {
-            switch (((TypePrimitive)type).getType())
-            {
-            case TypePrimitive.TYPE_BOOLEAN: return "boolean";
-            case TypePrimitive.TYPE_BIT: return "int";
-            case TypePrimitive.TYPE_INT: return "int";
-            case TypePrimitive.TYPE_FLOAT: return "float";
-            case TypePrimitive.TYPE_DOUBLE: return "double";
-            case TypePrimitive.TYPE_COMPLEX: return "Complex";
-            case TypePrimitive.TYPE_FLOAT2: return "float2";
-            case TypePrimitive.TYPE_FLOAT3: return "float3";
-            case TypePrimitive.TYPE_FLOAT4: return "float4";
-            case TypePrimitive.TYPE_VOID: return "void";
-            default: assert false : type; return null;
-            }
-        }
+	    {
+		switch (((TypePrimitive)type).getType())
+		    {
+		    case TypePrimitive.TYPE_BOOLEAN: return "boolean";
+		    case TypePrimitive.TYPE_BIT: return "int";
+		    case TypePrimitive.TYPE_INT: return "int";
+		    case TypePrimitive.TYPE_FLOAT: return "float";
+		    case TypePrimitive.TYPE_DOUBLE: return "double";
+		    case TypePrimitive.TYPE_COMPLEX: return "Complex";
+		    case TypePrimitive.TYPE_FLOAT2: return "float2";
+		    case TypePrimitive.TYPE_FLOAT3: return "float3";
+		    case TypePrimitive.TYPE_FLOAT4: return "float4";
+		    case TypePrimitive.TYPE_VOID: return "void";
+		    default: assert false : type; return null;
+		    }
+	    }
         else if (type instanceof TypePortal)
-        {
-            return ((TypePortal)type).getName() + "Portal";
-        }
+	    {
+		return ((TypePortal)type).getName() + "Portal";
+	    }
         else
-        {
-            assert false : type;
-            return null;
-        }
+	    {
+		assert false : type;
+		return null;
+	    }
     }
 
     public String convertTypeFull(Type type) {
@@ -114,22 +114,22 @@ public class NodesToJava implements FEVisitor
     public String convertTypeFull(Type type, boolean includePrimitive)
     {
         if (type instanceof TypeArray)
-        {
-            TypeArray array = (TypeArray)type;
-	    String output = "";
-	    // first get primitive type
-	    if (includePrimitive) {
-		Type primitive = array;
-		while (primitive instanceof TypeArray) {
-		    primitive = ((TypeArray)primitive).getBase();
+	    {
+		TypeArray array = (TypeArray)type;
+		String output = "";
+		// first get primitive type
+		if (includePrimitive) {
+		    Type primitive = array;
+		    while (primitive instanceof TypeArray) {
+			primitive = ((TypeArray)primitive).getBase();
+		    }
+		    output = convertTypeFull(primitive);
 		}
-		output = convertTypeFull(primitive);
-	    }
-	    return output +
-		"[" + (String)array.getLength().accept(this) + "]"
-		+ convertTypeFull(array.getBase(), false);
+		return output +
+		    "[" + (String)array.getLength().accept(this) + "]"
+		    + convertTypeFull(array.getBase(), false);
 	    
-        }
+	    }
 	if (includePrimitive) {
 	    return convertType(type);
 	} else {
@@ -150,37 +150,37 @@ public class NodesToJava implements FEVisitor
     public String typeToClass(Type t)
     {
         if (t instanceof TypePrimitive)
-        {
-            switch (((TypePrimitive)t).getType())
-            {
-            case TypePrimitive.TYPE_BOOLEAN:
-                return "Boolean.TYPE";
-            case TypePrimitive.TYPE_BIT:
-                return "Integer.TYPE";
-            case TypePrimitive.TYPE_INT:
-                return "Integer.TYPE";
-            case TypePrimitive.TYPE_FLOAT:
-                return "Float.TYPE";
-            case TypePrimitive.TYPE_DOUBLE:
-                return "Double.TYPE";
-            case TypePrimitive.TYPE_VOID:
-                return "Void.TYPE";
-            case TypePrimitive.TYPE_COMPLEX:
-                return "Complex.class";
-            default:
-                assert false : t;
-                return null;
-            }
-        }
+	    {
+		switch (((TypePrimitive)t).getType())
+		    {
+		    case TypePrimitive.TYPE_BOOLEAN:
+			return "Boolean.TYPE";
+		    case TypePrimitive.TYPE_BIT:
+			return "Integer.TYPE";
+		    case TypePrimitive.TYPE_INT:
+			return "Integer.TYPE";
+		    case TypePrimitive.TYPE_FLOAT:
+			return "Float.TYPE";
+		    case TypePrimitive.TYPE_DOUBLE:
+			return "Double.TYPE";
+		    case TypePrimitive.TYPE_VOID:
+			return "Void.TYPE";
+		    case TypePrimitive.TYPE_COMPLEX:
+			return "Complex.class";
+		    default:
+			assert false : t;
+			return null;
+		    }
+	    }
         else if (t instanceof TypeStruct)
             return ((TypeStruct)t).getName() + ".class";
         else if (t instanceof TypeArray)
             return "(" + makeConstructor(t) + ").getClass()";
         else
-        {
-            assert false : t;
-            return null;
-        }
+	    {
+		assert false : t;
+		return null;
+	    }
     }
 
     // Helpers to get function names for stream types.
@@ -204,36 +204,36 @@ public class NodesToJava implements FEVisitor
         String prefix = "", suffix = "";
         // Check for known suffixes:
         if (type instanceof TypePrimitive)
-        {
-            switch (((TypePrimitive)type).getType())
-            {
-            case TypePrimitive.TYPE_BOOLEAN:
-                suffix = "Boolean";
-                break;
-            case TypePrimitive.TYPE_BIT:
-                suffix = "Int";
-                break;
-            case TypePrimitive.TYPE_INT:
-                suffix = "Int";
-                break;
-            case TypePrimitive.TYPE_FLOAT:
-                suffix = "Float";
-                break;
-            case TypePrimitive.TYPE_DOUBLE:
-                suffix = "Double";
-                break;
-            case TypePrimitive.TYPE_COMPLEX:
-                if (name.startsWith("input"))
-                    prefix  = "(Complex)";
-                break;
-            default:
-                assert false : type;
-            }
-        }
+	    {
+		switch (((TypePrimitive)type).getType())
+		    {
+		    case TypePrimitive.TYPE_BOOLEAN:
+			suffix = "Boolean";
+			break;
+		    case TypePrimitive.TYPE_BIT:
+			suffix = "Int";
+			break;
+		    case TypePrimitive.TYPE_INT:
+			suffix = "Int";
+			break;
+		    case TypePrimitive.TYPE_FLOAT:
+			suffix = "Float";
+			break;
+		    case TypePrimitive.TYPE_DOUBLE:
+			suffix = "Double";
+			break;
+		    case TypePrimitive.TYPE_COMPLEX:
+			if (name.startsWith("input"))
+			    prefix  = "(Complex)";
+			break;
+		    default:
+			assert false : type;
+		    }
+	    }
         else if (name.startsWith("input"))
-        {
-            prefix = "(" + convertType(type) + ")";
-        }
+	    {
+		prefix = "(" + convertType(type) + ")";
+	    }
         return prefix + name + suffix;
     }
 
@@ -243,15 +243,15 @@ public class NodesToJava implements FEVisitor
         String result = "(";
         boolean first = true;
         for (Iterator iter = params.iterator(); iter.hasNext(); )
-        {
-            Parameter param = (Parameter)iter.next();
-            if (!first) result += ", ";
-            if (prefix != null) result += prefix + " ";
-            result += convertType(param.getType());
-            result += " ";
-            result += param.getName();
-            first = false;
-        }
+	    {
+		Parameter param = (Parameter)iter.next();
+		if (!first) result += ", ";
+		if (prefix != null) result += prefix + " ";
+		result += convertType(param.getType());
+		result += " ";
+		result += param.getName();
+		first = false;
+	    }
         result += ")";
         return result;
     }
@@ -269,56 +269,56 @@ public class NodesToJava implements FEVisitor
 					    new java.util.HashMap());
         Type lhsType = (Type)lhs.accept(eType);
         if (lhsType.isComplex())
-        {
-            Expression real = new ExprField(lhs.getContext(), lhs, "real");
-            Expression imag = new ExprField(lhs.getContext(), lhs, "imag");
-            // If the right hand side is complex too (at this point
-            // just test the run-time type of the expression), then we
-            // should do field copies; otherwise we only have a real part.
-            if (rhs instanceof ExprComplex)
-            {
-                ExprComplex cplx = (ExprComplex)rhs;
-                return real.accept(this) + " = " +
-                    cplx.getReal().accept(this) + ";\n" +
-                    imag.accept(this) + " = " +
-                    cplx.getImag().accept(this);
-            }
-            else
-                return real.accept(this) + " = " +
-                    rhs.accept(this) + ";\n" +
-                    imag.accept(this) + " = 0.0";
-        }
+	    {
+		Expression real = new ExprField(lhs.getContext(), lhs, "real");
+		Expression imag = new ExprField(lhs.getContext(), lhs, "imag");
+		// If the right hand side is complex too (at this point
+		// just test the run-time type of the expression), then we
+		// should do field copies; otherwise we only have a real part.
+		if (rhs instanceof ExprComplex)
+		    {
+			ExprComplex cplx = (ExprComplex)rhs;
+			return real.accept(this) + " = " +
+			    cplx.getReal().accept(this) + ";\n" +
+			    imag.accept(this) + " = " +
+			    cplx.getImag().accept(this);
+		    }
+		else
+		    return real.accept(this) + " = " +
+			rhs.accept(this) + ";\n" +
+			imag.accept(this) + " = 0.0";
+	    }
 	else if (lhsType.isComposite()) 
-	{
-	    Expression x = new ExprField(lhs.getContext(), lhs, "x");
-	    Expression y = new ExprField(lhs.getContext(), lhs, "y");
-	    Expression z = new ExprField(lhs.getContext(), lhs, "z");
-	    Expression w = new ExprField(lhs.getContext(), lhs, "w");
-	    // If the right hand side is composite too, then we 
-	    // should do field copies.
-	    if (rhs instanceof ExprComposite) {
-		ExprComposite cpst = (ExprComposite)rhs;
-		String result = x.accept(this) + " = " +
-		    cpst.getX().accept(this) + ";\n" +
-		    y.accept(this) + " = " +
-		    cpst.getY().accept(this); 
-		Expression z1 = cpst.getZ();
-		if (z1 != null) result +=  ";\n" + z.accept(this) + " = " +
-				    z1.accept(this); 
-		Expression w1 = cpst.getW();
-		if (w1 != null) result +=  ";\n" + w.accept(this) + " = " +
-				    w1.accept(this); 
-		return result;
-	    } 
-	    else
-		throw new RuntimeException("type not compatible");
-	}
+	    {
+		Expression x = new ExprField(lhs.getContext(), lhs, "x");
+		Expression y = new ExprField(lhs.getContext(), lhs, "y");
+		Expression z = new ExprField(lhs.getContext(), lhs, "z");
+		Expression w = new ExprField(lhs.getContext(), lhs, "w");
+		// If the right hand side is composite too, then we 
+		// should do field copies.
+		if (rhs instanceof ExprComposite) {
+		    ExprComposite cpst = (ExprComposite)rhs;
+		    String result = x.accept(this) + " = " +
+			cpst.getX().accept(this) + ";\n" +
+			y.accept(this) + " = " +
+			cpst.getY().accept(this); 
+		    Expression z1 = cpst.getZ();
+		    if (z1 != null) result +=  ";\n" + z.accept(this) + " = " +
+					z1.accept(this); 
+		    Expression w1 = cpst.getW();
+		    if (w1 != null) result +=  ";\n" + w.accept(this) + " = " +
+					w1.accept(this); 
+		    return result;
+		} 
+		else
+		    throw new RuntimeException("type not compatible");
+	    }
         else
-        {
-            // Might want to special-case structures and arrays;
-            // ignore for now.
-            return lhs.accept(this) + " = " + rhs.accept(this);
-        }
+	    {
+		// Might want to special-case structures and arrays;
+		// ignore for now.
+		return lhs.accept(this) + " = " + rhs.accept(this);
+	    }
     }
 
     public Object visitExprArray(ExprArray exp)
@@ -360,27 +360,27 @@ public class NodesToJava implements FEVisitor
         result = "(";
         result += (String)exp.getLeft().accept(this);
         switch (exp.getOp())
-        {
-        case ExprBinary.BINOP_ADD: op = "+"; break;
-        case ExprBinary.BINOP_SUB: op = "-"; break;
-        case ExprBinary.BINOP_MUL: op = "*"; break;
-        case ExprBinary.BINOP_DIV: op = "/"; break;
-        case ExprBinary.BINOP_MOD: op = "%"; break;
-        case ExprBinary.BINOP_AND: op = "&&"; break;
-        case ExprBinary.BINOP_OR:  op = "||"; break;
-        case ExprBinary.BINOP_EQ:  op = "=="; break;
-        case ExprBinary.BINOP_NEQ: op = "!="; break;
-        case ExprBinary.BINOP_LT:  op = "<"; break;
-        case ExprBinary.BINOP_LE:  op = "<="; break;
-        case ExprBinary.BINOP_GT:  op = ">"; break;
-        case ExprBinary.BINOP_GE:  op = ">="; break;
-        case ExprBinary.BINOP_BAND:op = "&"; break;
-        case ExprBinary.BINOP_BOR: op = "|"; break;
-        case ExprBinary.BINOP_BXOR:op = "^"; break;
-        case ExprBinary.BINOP_LSHIFT: op = "<<"; break;
-        case ExprBinary.BINOP_RSHIFT: op = ">>"; break;
-        default: assert false : exp; break;
-        }
+	    {
+	    case ExprBinary.BINOP_ADD: op = "+"; break;
+	    case ExprBinary.BINOP_SUB: op = "-"; break;
+	    case ExprBinary.BINOP_MUL: op = "*"; break;
+	    case ExprBinary.BINOP_DIV: op = "/"; break;
+	    case ExprBinary.BINOP_MOD: op = "%"; break;
+	    case ExprBinary.BINOP_AND: op = "&&"; break;
+	    case ExprBinary.BINOP_OR:  op = "||"; break;
+	    case ExprBinary.BINOP_EQ:  op = "=="; break;
+	    case ExprBinary.BINOP_NEQ: op = "!="; break;
+	    case ExprBinary.BINOP_LT:  op = "<"; break;
+	    case ExprBinary.BINOP_LE:  op = "<="; break;
+	    case ExprBinary.BINOP_GT:  op = ">"; break;
+	    case ExprBinary.BINOP_GE:  op = ">="; break;
+	    case ExprBinary.BINOP_BAND:op = "&"; break;
+	    case ExprBinary.BINOP_BOR: op = "|"; break;
+	    case ExprBinary.BINOP_BXOR:op = "^"; break;
+	    case ExprBinary.BINOP_LSHIFT: op = "<<"; break;
+	    case ExprBinary.BINOP_RSHIFT: op = ">>"; break;
+	    default: assert false : exp; break;
+	    }
         result += " " + op + " ";
         result += (String)exp.getRight().accept(this);
         result += ")";
@@ -495,12 +495,12 @@ public class NodesToJava implements FEVisitor
 	}
         boolean first = true;
         for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
-        {
-            Expression param = (Expression)iter.next();
-            if (!first) result += ", ";
-            first = false;
-            result += (String)param.accept(this);
-        }
+	    {
+		Expression param = (Expression)iter.next();
+		if (!first) result += ", ";
+		first = false;
+		result += (String)param.accept(this);
+	    }
         result += ")";
         return result;
     }
@@ -621,13 +621,13 @@ public class NodesToJava implements FEVisitor
         String b = (String)exp.getB().accept(this);
         String c = (String)exp.getC().accept(this);
         switch (exp.getOp())
-        {
-        case ExprTernary.TEROP_COND:
-            return "(" + a + " ? " + b + " : " + c + ")";
-        default:
-            assert false : exp;
-            return null;
-        }
+	    {
+	    case ExprTernary.TEROP_COND:
+		return "(" + a + " ? " + b + " : " + c + ")";
+	    default:
+		assert false : exp;
+		return null;
+	    }
     }
 
     public Object visitExprTypeCast(ExprTypeCast exp)
@@ -640,16 +640,16 @@ public class NodesToJava implements FEVisitor
     {
         String child = (String)exp.getExpr().accept(this);
         switch(exp.getOp())
-        {
-        case ExprUnary.UNOP_NOT: return "!" + child;
-        case ExprUnary.UNOP_NEG: return "-" + child;
-        case ExprUnary.UNOP_PREINC: return "++" + child;
-        case ExprUnary.UNOP_POSTINC: return child + "++";
-        case ExprUnary.UNOP_PREDEC: return "--" + child;
-        case ExprUnary.UNOP_POSTDEC: return child + "--";
-        case ExprUnary.UNOP_COMPLEMENT: return "~" + child;
-        default: assert false : exp; return null;
-        }
+	    {
+	    case ExprUnary.UNOP_NOT: return "!" + child;
+	    case ExprUnary.UNOP_NEG: return "-" + child;
+	    case ExprUnary.UNOP_PREINC: return "++" + child;
+	    case ExprUnary.UNOP_POSTINC: return child + "++";
+	    case ExprUnary.UNOP_PREDEC: return "--" + child;
+	    case ExprUnary.UNOP_POSTDEC: return child + "--";
+	    case ExprUnary.UNOP_COMPLEMENT: return "~" + child;
+	    default: assert false : exp; return null;
+	    }
     }
 
     public Object visitExprVar(ExprVar exp)
@@ -666,12 +666,12 @@ public class NodesToJava implements FEVisitor
 	}
 	result += convertType(field.getType(0)) + " ";
         for (int i = 0; i < field.getNumFields(); i++)
-        {
-            if (i > 0) result += ", ";
-            result += field.getName(i);
-            if (field.getInit(i) != null)
-                result += " = " + (String)field.getInit(i).accept(this);
-        }
+	    {
+		if (i > 0) result += ", ";
+		result += field.getName(i);
+		if (field.getInit(i) != null)
+		    result += " = " + (String)field.getInit(i).accept(this);
+	    }
         result += ";";
         if (field.getContext() != null)
             result += " // " + field.getContext();
@@ -720,32 +720,32 @@ public class NodesToJava implements FEVisitor
         String result = "";
 
         for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
-        {
-            TypeStruct struct = (TypeStruct)iter.next();
+	    {
+		TypeStruct struct = (TypeStruct)iter.next();
 
-	    if (struct.getName().equals("String")) continue;
-	    if (libraryFormat && struct.getName().equals("float2")) continue;
-	    if (libraryFormat && struct.getName().equals("float3")) continue;
-	    if (libraryFormat && struct.getName().equals("float4")) continue;
+		if (struct.getName().equals("String")) continue;
+		if (libraryFormat && struct.getName().equals("float2")) continue;
+		if (libraryFormat && struct.getName().equals("float3")) continue;
+		if (libraryFormat && struct.getName().equals("float4")) continue;
 
-            result += indent + "class " + struct.getName() +
-                " extends Structure implements Serializable {\n";
-            addIndent();
-            for (int i = 0; i < struct.getNumFields(); i++)
-            {
-                String name = struct.getField(i);
-                Type type = struct.getType(name);
-                result += indent + convertType(type) + " " + name + ";\n";
-            }
-            unIndent();
-            result += indent + "}\n";
-        }
+		result += indent + "class " + struct.getName() +
+		    " extends Structure implements Serializable {\n";
+		addIndent();
+		for (int i = 0; i < struct.getNumFields(); i++)
+		    {
+			String name = struct.getField(i);
+			Type type = struct.getType(name);
+			result += indent + convertType(type) + " " + name + ";\n";
+		    }
+		unIndent();
+		result += indent + "}\n";
+	    }
 
         for (Iterator iter = prog.getHelpers().iterator(); iter.hasNext(); )
-        {
-            TypeHelper th = (TypeHelper)iter.next();
-	    result += visitTypeHelper(th);
-	}
+	    {
+		TypeHelper th = (TypeHelper)iter.next();
+		result += visitTypeHelper(th);
+	    }
 
 	if (!libraryFormat) {
 
@@ -1523,7 +1523,8 @@ public class NodesToJava implements FEVisitor
             else result = "addSteadyPhase";
             result += "(";
             if (ap.getPeek() == null)
-                result += "0, ";
+		// by default, peek==pop
+                result += (String)ap.getPop().accept(this) + ", ";
             else
                 result += (String)ap.getPeek().accept(this) + ", ";
             if (ap.getPop() == null)

@@ -604,19 +604,19 @@ public abstract class Filter extends Stream
         // execute the phase
         try
         {
-	    prepareToWork();
-
-	    if (schedName.equals ("work")) {
-		work ();
-	    } else if (schedName.equals ("prework")) {
-		prework ();
-	    } else {
-		Method m = getClass().getMethod(phase.name, null);
-		m.setAccessible(true);
-		m.invoke(this, null);
-	    }
-
-	    cleanupWork();
+            if (schedName.equals ("work")) {
+                doWork();
+            } else if (schedName.equals ("prework")) {
+                prepareToWork();
+                prework ();
+                cleanupWork();
+            } else {
+                prepareToWork();
+                Method m = getClass().getMethod(phase.name, null);
+                m.setAccessible(true);
+                m.invoke(this, null);
+                cleanupWork();
+            }
         }
         catch (Throwable x)
         {

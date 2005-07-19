@@ -199,9 +199,7 @@ public class Channel extends streamit.misc.DestroyedClass
                       " and maxSize is: " + maxSize);
             }
 
-            source.prepareToWork();
-            source.work ();
-            source.cleanupWork();
+            source.doWork();
             if (type == Float.TYPE) {
                 tempval = (wgqueue_float.size() < amount);
             } else if (type == Integer.TYPE) {
@@ -232,9 +230,7 @@ public class Channel extends streamit.misc.DestroyedClass
         totalItemsPushed++;
         source.registerPush();
         if (passThrough) {
-            sink.prepareToWork();
-            sink.work ();
-            sink.cleanupWork();
+            sink.doWork();
         }        
     }
 
@@ -243,9 +239,7 @@ public class Channel extends streamit.misc.DestroyedClass
         totalItemsPushed++;
         source.registerPush();
         if (passThrough) {
-            sink.prepareToWork();
-            sink.work();
-            sink.cleanupWork();
+            sink.doWork();
         }
     }
 
@@ -254,9 +248,7 @@ public class Channel extends streamit.misc.DestroyedClass
         totalItemsPushed++;
         source.registerPush();
         if (passThrough) {
-            sink.prepareToWork();
-            sink.work ();
-            sink.cleanupWork();
+            sink.doWork();
         }                
     }
 
@@ -265,9 +257,7 @@ public class Channel extends streamit.misc.DestroyedClass
         totalItemsPushed++;
         source.registerPush();
         if (passThrough) {
-            sink.prepareToWork();
-            sink.work();
-            sink.cleanupWork();
+            sink.doWork();
         }
     }
 
@@ -276,9 +266,7 @@ public class Channel extends streamit.misc.DestroyedClass
         totalItemsPushed++;
         source.registerPush();
         if (passThrough) {
-            sink.prepareToWork();
-            sink.work();
-            sink.cleanupWork();
+            sink.doWork();
         }
     }
 
@@ -287,9 +275,7 @@ public class Channel extends streamit.misc.DestroyedClass
         totalItemsPushed++;
         source.registerPush();
         if (passThrough) {
-            sink.prepareToWork();
-            sink.work();
-            sink.cleanupWork();
+            sink.doWork();
         }
     }
 
@@ -298,9 +284,7 @@ public class Channel extends streamit.misc.DestroyedClass
         totalItemsPushed++;
         source.registerPush();
         if (passThrough) {
-            sink.prepareToWork();
-            sink.work();
-            sink.cleanupWork();
+            sink.doWork();
         }
     }     
 
@@ -326,9 +310,7 @@ public class Channel extends streamit.misc.DestroyedClass
             maxSize;
 		
         if (passThrough) {
-            sink.prepareToWork();
-            sink.work ();
-            sink.cleanupWork();
+            sink.doWork();
         }
     }
 

@@ -34,7 +34,7 @@ import java.util.ArrayList;
  * will need to determine the stream type on its own.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StreamSpec.java,v 1.15 2005-07-13 22:19:10 janiss Exp $
+ * @version $Id: StreamSpec.java,v 1.16 2005-07-19 18:09:14 madrake Exp $
  */
 public class StreamSpec extends FENode
 {
@@ -229,6 +229,23 @@ public class StreamSpec extends FENode
                 return (FuncWork)func;
         }
         return null;
+    }
+
+    /** 
+     * Returns a list of the phased functions in this, an empty list if
+     * there are no phased functions.
+     *
+     * @return list of functions containing work code
+     */
+    public List getPhasedFuncs() {
+        List phaseList = new ArrayList();
+        for (Iterator iterFunctions = funcs.iterator(); iterFunctions.hasNext();) {
+            Function aFunction = (Function) iterFunctions.next();
+            if (aFunction.getCls() == Function.FUNC_PHASE) {
+                phaseList.add(aFunction);
+            }
+        }
+        return phaseList;
     }
 
     /**

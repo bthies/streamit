@@ -18,8 +18,64 @@ package streamit.library;
 
 import streamit.scheduler2.Scheduler;
 
-public abstract class PhasedFilter extends Filter
+// Last edited by Matthew Drake
+
+/** 
+ * A PhasedFilter is designed so that one phase executes per work execution.
+ * In practice, this means that a work cycle ends immediately following the
+ * execution of any phase. This phase could have been called within the work() 
+ * body. PhasedFilters run their work function in their own thread, and implementations
+ * of PhasedFilters are expected to call contextSwitch() after a phase execution.
+ */
+
+public abstract class PhasedFilter extends Filter implements Runnable
 {
     public PhasedFilter() { super(); }
     public PhasedFilter(int a) { super(a); }
+
+    private boolean firstWork = true;
+
+    public void doWork() {
+        prepareToWork();
+        if (firstWork) {
+            firstWork = false;
+            Thread t = new Thread(this);
+            t.start();
+        } else {
+            synchronized (this) {
+                try {
+                    notify();
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        cleanupWork();
+    }
+
+    public void run() {
+        while (true) {
+            work();
+        }
+    }
+
+    /**
+     * contextSwitch is called so that the PhasedFilter's work loop can pause
+     * and end a work cycle.
+     */
+    protected void contextSwitch() {
+        synchronized (this) {
+            try {
+                notify();
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }
+
+
+

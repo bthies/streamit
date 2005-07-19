@@ -31,7 +31,7 @@ import java.util.ArrayList;
  * inserted in <code>NodesToJava</code>.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertIODecls.java,v 1.9 2003-10-14 15:41:24 dmaze Exp $
+ * @version $Id: InsertIODecls.java,v 1.10 2005-07-19 18:09:12 madrake Exp $
  */
 public class InsertIODecls extends InitMunger
 {
@@ -114,29 +114,29 @@ public class InsertIODecls extends InitMunger
         // Do nothing if we didn't actually find the function.
         if (work == null)
             return;
-        
-        // We need to add phases.  Is this a phased filter?
-        if (work.getPopRate() == null && work.getPushRate() == null)
+
+        final List phaseList = new ArrayList(); 
+        final StreamSpec specfinal = spec;
         {
-            // Analyze the phased filter's work function's body to get the
-            // list of phases.
-            StmtBlock body = (StmtBlock)work.getBody();
-            for (Iterator iter = body.getStmts().iterator(); iter.hasNext(); )
-            {
-                Statement stmt = (Statement)iter.next();
-                // The statement should be a function call to a phase
-                // function, nothing else.  If you're looking at this
-                // code because you're getting an unexpected
-                // ClassCastException, it's probably because your
-                // code's work function contained something other than
-                // calls to phase functions.
-                StmtExpr se = (StmtExpr)stmt;
-                ExprFunCall fc = (ExprFunCall)se.getExpression();
-                FuncWork phase = (FuncWork)spec.getFuncNamed(fc.getName());
-                
-                // Now add the phase.
-                newStmts.add
-                    (new StmtAddPhase(work.getContext(), init, phase));
+            StmtBlock body = (StmtBlock) work.getBody();
+            body.accept(new FEReplacer() {
+                    public Object visitExprFunCall(ExprFunCall exp) {
+                        Function aFunction = specfinal.getFuncNamed(exp.getName());
+                        if (aFunction != null && aFunction.getCls() == Function.FUNC_PHASE) {
+                            phaseList.add(aFunction);
+                        }
+                        return exp;
+                    }
+                });    
+        }
+
+        // We need to add phases.  Is this a phased filter?
+        if (phaseList.size() > 0)
+        {
+            // This will ignore control flow in the work function which may cause
+            // problems outside of the library.
+            for (Iterator iter = phaseList.iterator(); iter.hasNext();) {
+                newStmts.add(new StmtAddPhase(work.getContext(), init, (FuncWork) iter.next())); 
             }
         }
         else

@@ -66,37 +66,37 @@ public class Operator extends DestroyedClass
      * rates.
      */
     public void prepareToWork() {
-	currentPopped = 0;
-	currentPushed = 0;
-	currentMaxPeek = -1;
-	deliverMessages();
+        currentPopped = 0;
+        currentPushed = 0;
+        currentMaxPeek = -1;
+        deliverMessages();
     }
     /**
      * Enqueues <message> for delivery to this.
      */
     public void enqueueMessage(Message m) {
-	// maintain messageQueue by order of delivery time
-	int time = m.getDeliveryTime();
-	for (int i=0; i<messageQueue.size(); i++) {
-	    int other = ((Message)messageQueue.get(i)).getDeliveryTime();
-	    if (other > time) {
-		messageQueue.add(i, m);
-		return;
-	    }
-	}
-	// otherwise add at end
-	messageQueue.add(m);
+        // maintain messageQueue by order of delivery time
+        int time = m.getDeliveryTime();
+        for (int i=0; i<messageQueue.size(); i++) {
+            int other = ((Message)messageQueue.get(i)).getDeliveryTime();
+            if (other > time) {
+                messageQueue.add(i, m);
+                return;
+            }
+        }
+        // otherwise add at end
+        messageQueue.add(m);
     }
     /**
      * Delivers all messages that should be processed before the next
      * execution.
      */
     private void deliverMessages() {
-	// deliver before the next execution
-	while (messageQueue.size()>0 && ((Message)messageQueue.get(0)).getDeliveryTime()==numExecutions+1) {
-	    Message m = (Message)messageQueue.removeFirst();
-	    m.deliver(this);
-	}
+        // deliver before the next execution
+        while (messageQueue.size()>0 && ((Message)messageQueue.get(0)).getDeliveryTime()==numExecutions+1) {
+            Message m = (Message)messageQueue.removeFirst();
+            m.deliver(this);
+        }
     }
     
     /**
@@ -104,24 +104,24 @@ public class Operator extends DestroyedClass
      * on the operator.
      */
     public void cleanupWork() {
-	numExecutions++;
+        numExecutions++;
     }
     /**
      * Register a pop, push, or peek.
      */
     public void registerPop() {
-	currentPopped++;
-	// update peek index in case we've popped items without
-	// peeking them.
-	if (currentPopped-1>currentMaxPeek) {
-	    currentMaxPeek = currentPopped-1;
-	}
+        currentPopped++;
+        // update peek index in case we've popped items without
+        // peeking them.
+        if (currentPopped-1>currentMaxPeek) {
+            currentMaxPeek = currentPopped-1;
+        }
     }
     public void registerPush() {
-	currentPushed++;
+        currentPushed++;
     }
     public void registerPeek(int i) {
-	currentMaxPeek = currentPopped + i;
+        currentMaxPeek = currentPopped + i;
     }
     /**
      * Returns the number of times this has executed a work or prework
@@ -130,9 +130,9 @@ public class Operator extends DestroyedClass
      * executions that are in progress.)
      */
     public int getNumExecutions() {
-	return numExecutions;
+        return numExecutions;
     }
-
+    
     public Operator(float x1, float y1, int z1)
     {
         initParams = new ParameterContainer ("float-float-int")
@@ -140,7 +140,7 @@ public class Operator extends DestroyedClass
             .add("y1", y1)
             .add("z1", z1);
     }
-
+    
     public Operator(int a, float b)
     {
         initParams = new ParameterContainer("int-float")
@@ -228,7 +228,7 @@ public class Operator extends DestroyedClass
             .add("c",copyFloatArray1D(c))
             .add("d",copyFloatArray1D(d));
     }
-
+    
     public Operator(int a, int b, float[][] c)
     {
         initParams = new ParameterContainer("int-int-float[][]")
@@ -236,7 +236,7 @@ public class Operator extends DestroyedClass
             .add("b", b)
             .add("c", copyFloatArray2D(c));
     }
-
+    
     public Operator(int i1, int i2, float f1, float f2)
     {
         initParams = new ParameterContainer("int-int-float-float")
@@ -250,7 +250,7 @@ public class Operator extends DestroyedClass
 
    public Operator(int i1, int i2, int i3, int i4, int i5, float f)
     {
-	initParams = new ParameterContainer("int-int-int-int-int-float")
+        initParams = new ParameterContainer("int-int-int-int-int-float")
             .add("i1",i1)
             .add("i2",i2)
             .add("i3",i3)
@@ -258,10 +258,10 @@ public class Operator extends DestroyedClass
             .add("i5",i5)
             .add("f",f);
     }
-
+    
     public Operator(int i1, int i2, int i3, int i4, int i5, int i6, float f1, float f2)
     {
-	initParams = new ParameterContainer("int-int-int-int-int-int-float-float")
+        initParams = new ParameterContainer("int-int-int-int-int-int-float-float")
             .add("i1",i1)
             .add("i2",i2)
             .add("i3",i3)
@@ -274,7 +274,7 @@ public class Operator extends DestroyedClass
 
     public Operator(int i1, int i2, int i3, int i4, int i5, int i6, int i7, float f1, float f2)
     {
-	initParams = new ParameterContainer("int-int-int-int-int-int-int-float-float")
+        initParams = new ParameterContainer("int-int-int-int-int-int-int-float-float")
             .add("i1",i1)
             .add("i2",i2)
             .add("i3",i3)
@@ -372,8 +372,8 @@ public class Operator extends DestroyedClass
             .add("a", a)
             .add("b", b)
             .add("c", c)
-	    .add("d", d)
-	    .add("e", e);
+            .add("d", d)
+            .add("e", e);
     }
 
     public Operator(float a, float b, float c, int d, int e, int f)
@@ -382,9 +382,9 @@ public class Operator extends DestroyedClass
             .add("a", a)
             .add("b", b)
             .add("c", c)
-	    .add("d", d)
-	    .add("e", e)
-	    .add("f", f);
+            .add("d", d)
+            .add("e", e)
+            .add("f", f);
     }
 
     public Operator(float a, float b, float c, float d, int e, int f)
@@ -393,11 +393,11 @@ public class Operator extends DestroyedClass
             .add("a", a)
             .add("b", b)
             .add("c", c)
-	    .add("d", d)
-	    .add("e", e)
-	    .add("f", f);
+            .add("d", d)
+            .add("e", e)
+            .add("f", f);
     }
-
+    
     public Operator(float a, float b, float c, float d)
     {
         initParams = new ParameterContainer("float-float-float-float")
@@ -461,17 +461,17 @@ public class Operator extends DestroyedClass
     }
 
     public Operator(float f1, int i1, float[] f2, float[] f3, int i2) {
-	initParams = new ParameterContainer("float-int-float[]-float[]-int")
-	    .add("f1", f1)
-	    .add("i1", i1)
-	    .add("f2", copyFloatArray1D(f2))
-	    .add("f3", copyFloatArray1D(f3))
-	    .add("i2", i2);
+        initParams = new ParameterContainer("float-int-float[]-float[]-int")
+            .add("f1", f1)
+            .add("i1", i1)
+            .add("f2", copyFloatArray1D(f2))
+            .add("f3", copyFloatArray1D(f3))
+            .add("i2", i2);
     }
 
     public Operator (int i1, int i2, int i3,
-		   int i4, int i5, int i6, int i7, int i8, 
-		   int i9, int i10, float f)
+                     int i4, int i5, int i6, int i7, int i8, 
+                     int i9, int i10, float f)
     {
         initParams = new ParameterContainer ("int-int-int-int-int-int-int-int-int-int-float")
             .add("i1", i1)
@@ -561,11 +561,11 @@ public class Operator extends DestroyedClass
     }
 
     public Operator(int i1,int i2,int i3,float f1) {
-	initParams = new ParameterContainer("int-int-int-float")
-	    .add("i1",i1)
-	    .add("i2",i2)
-	    .add("i3",i3)
-	    .add("f1",f1);
+        initParams = new ParameterContainer("int-int-int-float")
+            .add("i1",i1)
+            .add("i2",i2)
+            .add("i3",i3)
+            .add("f1",f1);
     }
 
     public Operator()
@@ -603,7 +603,7 @@ public class Operator extends DestroyedClass
     {
         initParams = new ParameterContainer ("int-int-int-int-int").add ("a", a).add ("b", b).add("c", c).add ("d", d).add ("e", e);
     }
-
+    
     public Operator (int x, int y, int z,
                      int a, float b)
     {
@@ -678,23 +678,23 @@ public class Operator extends DestroyedClass
     }
 
     public Operator(short s1, short s2, short s3) {
-	initParams = new ParameterContainer("short-short-short")
+        initParams = new ParameterContainer("short-short-short")
             .add("s1", s1)
             .add("s2", s2)
             .add("s3", s3);
     }
-
+    
     public Operator(Object o1) {
-	initParams = new ParameterContainer("Object")
-	    .add("o1", o1);
+        initParams = new ParameterContainer("Object")
+            .add("o1", o1);
     }
-
+    
     public Operator(Object o1, int i1) {
         initParams = new ParameterContainer("Object-int")
             .add("o1", o1)
             .add("i1", i1);
     }
-
+    
     public Operator(int i1, int i2, Object o1) {
         initParams = new ParameterContainer("int-int-Object")
             .add("i1", i1)
@@ -703,16 +703,16 @@ public class Operator extends DestroyedClass
     }
 
     public Operator(Object o1, Object o2) {
-	initParams = new ParameterContainer("Object-Object")
+        initParams = new ParameterContainer("Object-Object")
 	    .add("o1", o1)
 	    .add("o2", o2);
     }
 
     public Operator(Object o1, Object o2, Object o3) {
-	initParams = new ParameterContainer("Object-Object-Object")
-	    .add("o1", o1)
-	    .add("o2", o2)
-	    .add("o3", o3);
+        initParams = new ParameterContainer("Object-Object-Object")
+            .add("o1", o1)
+            .add("o2", o2)
+            .add("o3", o3);
     }
 
     // INIT FUNCTIONS ---------------------------------------------------------------------
@@ -720,15 +720,15 @@ public class Operator extends DestroyedClass
     void invalidInitError ()
     {
         ERROR ("You didn't provide a valid init function in class " + getClass ().getName () + ".\nFilters now need init functions, even if they're empty.\nPerhaps you're passing parameters that don't have a valid prototype yet?\nCheck streams/docs/implementation-notes/library-init-functions.txt for instructions on adding new signatures to init functions.\n" + 
-                "The init string you passed is: (" + initParams.getParamName() + ")." );
+               "The init string you passed is: (" + initParams.getParamName() + ")." );
     }
 
     // initializatoin functions, to be over-ridden
     public void init(float x, float y, float z, int a, float b) { invalidInitError (); }
-
+    
     // initializatoin functions, to be over-ridden
     public void init(float[] x) { invalidInitError (); }
-
+    
     // initializatoin functions, to be over-ridden
     public void init(float x, float y, float z, int a) { invalidInitError (); }
 
@@ -834,8 +834,8 @@ public class Operator extends DestroyedClass
     public void init(int a, int b, int c, int d, int e, int f, int g, float h){ invalidInitError (); }
 
     public void init (int n1, int n2, int n3,
-		   int n4, int n5, int n6, int n7, int n8, 
-	int n9, int n10, float f) { invalidInitError (); }
+                      int n4, int n5, int n6, int n7, int n8, 
+                      int n9, int n10, float f) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
     public void init(float x, float y, int z, int a) { invalidInitError (); }
@@ -902,51 +902,51 @@ public class Operator extends DestroyedClass
 
     // initializatoin functions, to be over-ridden
     public void init (int i1,
-		      int i2, 
-		      int i3, 
-		      int i4, 
-		      int i5, 
-		      int i6, 
-		      int i7, 
-		      int i8, 
-		      int i9, 
-		      float f)
+                      int i2, 
+                      int i3, 
+                      int i4, 
+                      int i5, 
+                      int i6, 
+                      int i7, 
+                      int i8, 
+                      int i9, 
+                      float f)
     { 
-	invalidInitError (); 
+        invalidInitError (); 
     }
 
     // initialization functions, to be over-ridden
     public void init (int i1,
-		      int i2, 
-		      int i3, 
-		      int i4, 
-		      int i5, 
-		      int i6, 
-		      int i7, 
-		      int i8, 
-		      int i9)
+                      int i2, 
+                      int i3, 
+                      int i4, 
+                      int i5, 
+                      int i6, 
+                      int i7, 
+                      int i8, 
+                      int i9)
     { 
-	invalidInitError (); 
+        invalidInitError (); 
     }
-
-
+    
+    
     // initializatoin functions, to be over-ridden
     public void init (int i1,
-		      int i2, 
-		      int i3, 
-		      int i4, 
-		      int i5, 
-		      int i6, 
-		      float f)
+                      int i2, 
+                      int i3, 
+                      int i4, 
+                      int i5, 
+                      int i6, 
+                      float f)
     { 
-	invalidInitError (); 
+        invalidInitError (); 
     }
-
+    
     public void init(Object o1) {
-	invalidInitError();
+        invalidInitError();
     }
-
-
+    
+    
     public void init(Object o1, int i1) {
         invalidInitError();
     }
@@ -956,53 +956,53 @@ public class Operator extends DestroyedClass
     }
 
     public void init(Object o1, Object o2) {
-	invalidInitError();
+        invalidInitError();
     }
-
+    
     public void init(Object o1, Object o2, Object o3) {
-	invalidInitError();
+        invalidInitError();
     }
-
+    
     // initializatoin functions, to be over-ridden
     public void init(ParameterContainer params) { invalidInitError (); }
-
+    
     public static MessageStub MESSAGE_STUB;
-
+    
     // initialize the MESSAGE_STUB
     static {
         MESSAGE_STUB = MessageStub.STUB;
     }
-
+    
     // allSinks is used for scheduling the streaming graph
     public static LinkedList allSinks;
     public static LinkedList allFilters;
     public static HashSet fullChannels;
-
+    
     static {
         allSinks = new LinkedList ();
         allFilters = new LinkedList ();
         fullChannels = new HashSet ();
     }
-
+    
     void addSink ()
     {
         allSinks.add (this);
     }
-
+    
     void addFilter ()
     {
         allFilters.add (this);
     }
-
+    
     void runSinks ()
     {
         ListIterator iter;
-
+        
         if (!allSinks.isEmpty ())
             iter = allSinks.listIterator ();
         else
             iter = allFilters.listIterator ();
-
+        
         // go over all the sinks
         while (iter.hasNext ())
         {
@@ -1014,9 +1014,7 @@ public class Operator extends DestroyedClass
             int i;
             for (i = 0; i < 10; i++)
             {
-		sink.prepareToWork();
-                sink.work ();
-		sink.cleanupWork();
+                sink.doWork();
             }
         }
     }
@@ -1025,17 +1023,15 @@ public class Operator extends DestroyedClass
     {
         while (!fullChannels.isEmpty ())
         {
-                // empty any full channels:
+            // empty any full channels:
             Iterator fullChannel;
-                fullChannel = fullChannels.iterator ();
-
+            fullChannel = fullChannels.iterator ();
+            
             Channel ch = (Channel) fullChannel.next ();
             assert ch != null;
-
-	    ch.getSink ().prepareToWork();
-            ch.getSink ().work ();
-	    ch.getSink ().cleanupWork();
-             }
+            
+            ch.getSink().doWork();
+        }
     }
 
 
@@ -1045,9 +1041,9 @@ public class Operator extends DestroyedClass
     }
 
     void removeFullChannel (Channel channel)
-        {
-                fullChannels.remove (channel);
-        }
+    {
+        fullChannels.remove (channel);
+    }
 
     public static void passOneData (Channel from, Channel to)
     {
@@ -1159,6 +1155,12 @@ public class Operator extends DestroyedClass
 
     // a prototype work function
     void work () { }
+
+    public void doWork() {
+        prepareToWork();
+        work();
+        cleanupWork();
+    }
 
     // this function will take care of all appropriate calls to init:
     void setupOperator ()

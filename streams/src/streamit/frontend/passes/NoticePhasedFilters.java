@@ -30,12 +30,17 @@ import java.util.ArrayList;
  * no declared I/O rates.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NoticePhasedFilters.java,v 1.5 2003-10-09 19:51:01 dmaze Exp $
+ * @version $Id: NoticePhasedFilters.java,v 1.6 2005-07-19 18:09:10 madrake Exp $
  */
 public class NoticePhasedFilters extends FEReplacer
 {
     private StreamSpec ss;
-    
+    private boolean libraryFormat;
+
+    public NoticePhasedFilters(boolean lib) {
+        this.libraryFormat = lib;
+    }
+
     public Object visitStreamSpec(StreamSpec spec)
     {
         if (spec.getType() != StreamSpec.STREAM_FILTER)
@@ -45,10 +50,8 @@ public class NoticePhasedFilters extends FEReplacer
         // count on StreamSpec to DTRT.
         FuncWork fw = spec.getWorkFunc();
         
-        if (fw.getPeekRate() == null &&
-            fw.getPopRate() == null &&
-            fw.getPushRate() == null)
-        {
+        if (spec.getPhasedFuncs().size() > 0) {
+
             // Check...we have a phased filter now.  We need to revisit
             // the functions and rewrite the work function...
             ss = spec;
@@ -82,8 +85,22 @@ public class NoticePhasedFilters extends FEReplacer
             return stmt;
         ExprFunCall fc = (ExprFunCall)expr;
         Function target = ss.getFuncNamed(fc.getName());
-        if (target.getCls() != Function.FUNC_PHASE)
-            return stmt;
-        return new StmtPhase(stmt.getContext(), fc);
+        if (libraryFormat) {
+            List stmtList = new ArrayList();
+            stmtList.add(stmt);
+            stmtList.add(new StmtExpr(stmt.getContext(), 
+                                      new ExprFunCall(stmt.getContext(), 
+                                                      "contextSwitch", 
+                                                      new ArrayList())));
+            return new StmtBlock(stmt.getContext(), stmtList);
+        } else {
+            if (target.getCls() != Function.FUNC_PHASE)
+                return stmt;
+            return new StmtPhase(stmt.getContext(), fc);
+        }
     }
 }
+
+
+
+

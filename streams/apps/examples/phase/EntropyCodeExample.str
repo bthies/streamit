@@ -1,0 +1,61 @@
+/**
+ * This example file performs some entropy coding using dynamic rate
+ * pop statements in the work body and static rate push statements from within
+ * a phase called by the work function.
+ * @author Matthew Drake (madrake@gmail.com)
+ */
+
+void->void pipeline EntropyCodeExample {
+  add void->int filter {
+    work push 10 {
+      push(1);
+      push(1);
+      push(1);
+      push(4);
+      push(4);
+      push(7);
+      push(7);
+      push(7);
+      push(7);
+      push(7);
+    }
+  }
+
+  add EntropyCoder();
+
+  add int->void filter {
+    work pop 1 {
+      print(pop());
+    }
+  }
+}
+
+int->int filter EntropyCoder {
+  int val, count;
+
+  work pop * peek * push * { // Should get ignored because of phases
+    while (count < 5) { // Will stop it after 10 pops
+      val = pop();
+      count = 1;
+      while (val == peek(0)) {
+        pop();
+        count++;
+      }
+      outputPhase();
+    }
+  }
+
+  phase outputPhase push 2 {
+    push(count);   
+    push(val);
+  }
+}
+
+
+
+
+
+
+
+
+

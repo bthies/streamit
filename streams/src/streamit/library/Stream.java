@@ -759,7 +759,7 @@ public abstract class Stream extends Operator
                 Iterator selfIter =
                     new streamit.library.iriter.Iterator(this);
                 streamit.scheduler2.constrained.Scheduler sched =
-                    new streamit.scheduler2.constrained.Scheduler(selfIter);
+                    streamit.scheduler2.constrained.Scheduler.create(selfIter);
                 streamit.scheduler2.SDEPData sdep =
                     sched.computeSDEP(
                         new streamit.library.iriter.Iterator(top),
@@ -813,14 +813,14 @@ public abstract class Stream extends Operator
             streamit.scheduler2.Scheduler scheduler;
             if (singeappsched)
                 scheduler =
-                    new streamit.scheduler2.singleappearance.Scheduler(
+                    streamit.scheduler2.singleappearance.Scheduler.create(
                         selfIter);
             else
                 scheduler =
-                    new streamit.scheduler2.minlatency.Scheduler(selfIter);
+                    streamit.scheduler2.minlatency.Scheduler.create(selfIter);
 
             /*scheduler =
-                new streamit.scheduler2.constrained.Scheduler(selfIter);*/
+                streamit.scheduler2.constrained.Scheduler.create(selfIter);*/
 
             scheduler.computeSchedule();
             scheduler.computeBufferUse();

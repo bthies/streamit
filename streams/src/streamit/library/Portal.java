@@ -30,7 +30,7 @@ import java.util.HashMap;
  * defined; that class is the portal object.  Receiver objects should
  * also implement the interface.
  *
- * @version $Id: Portal.java,v 1.6 2004-11-16 09:56:14 thies Exp $
+ * @version $Id: Portal.java,v 1.7 2005-07-19 22:25:22 thies Exp $
  */
 public abstract class Portal
 {
@@ -92,7 +92,7 @@ public abstract class Portal
 	// structure of stream graph, which is not ready at the time
 	// this is constructed.)
 	if (this.scheduler==null) {
-	    this.scheduler = new streamit.scheduler2.constrained.Scheduler(new Iterator(Stream.toplevel));
+	    this.scheduler = streamit.scheduler2.constrained.Scheduler.createForSDEP(new Iterator(Stream.toplevel));
 	}
 	// get SDEP to receivers
 	SDEPData[] sdep = getSDEP(sender);

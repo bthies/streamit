@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.104 2005-07-19 19:44:05 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.105 2005-07-19 19:45:18 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -1522,10 +1522,14 @@ public class NodesToJava implements FEVisitor
                 result = "addInitPhase";
             else result = "addSteadyPhase";
             result += "(";
-            if (ap.getPeek() == null)
+            if (ap.getPeek() == null) {
 		// by default, peek==pop
-                result += (String)ap.getPop().accept(this) + ", ";
-            else
+		if (ap.getPop() == null) {
+		    result += "0, ";
+		} else {
+		    result += (String)ap.getPop().accept(this) + ", ";
+		}
+            } else
                 result += (String)ap.getPeek().accept(this) + ", ";
             if (ap.getPop() == null)
                 result += "0, ";

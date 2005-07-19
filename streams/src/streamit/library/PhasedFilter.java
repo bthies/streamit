@@ -75,6 +75,11 @@ public abstract class PhasedFilter extends Filter implements Runnable
         }
     }
 
+    /**
+     * Placeholder so that java input to Kopi will compile.
+     */
+    public void phase(WorkFunction f) {
+    }
 }
 
 

@@ -420,7 +420,7 @@ public class LatencyNode extends streamit.misc.Misc
     // avoid assertion checks in the scheduler.  The output of the
     // SDEP calculation will never depend on the placeholder used.
     private int dynamicToStatic(int rate) {
-	if (rate==streamit.library.Rate.DYNAMIC_RATE) {
+	if (rate<0) { // e.g., for streamit.library.Rate.DYNAMIC_RATE
 	    return 0; // non-negative placeholder
 	} else {
 	    return rate;

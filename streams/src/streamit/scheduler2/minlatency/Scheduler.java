@@ -24,11 +24,16 @@ public class Scheduler extends streamit.scheduler2.Scheduler
     final StreamInterface rootStream;
     StreamFactory factory = new StreamFactory ();
      
-    public Scheduler(Iterator _root)
+    protected Scheduler(Iterator _root)
     {
         super (_root);
         
         rootStream = factory.newFrom(root, null); 
+    }
+
+    // static constructor for consistency with constrained.Scheduler
+    public static Scheduler create(Iterator _root) {
+	return new Scheduler(_root);
     }
     
     public void computeSchedule()

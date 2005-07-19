@@ -50,7 +50,9 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
         // compute my steady schedule
         // my children already have computed their steady schedules,
         // so I just have to do mine
-        computeSteadyState();
+	if (factory.needsSchedule()) {
+	    computeSteadyState();
+	}
     }
 
     /**

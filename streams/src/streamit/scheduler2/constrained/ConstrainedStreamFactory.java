@@ -34,9 +34,11 @@ public class ConstrainedStreamFactory
     implements streamit.scheduler2.constrained.StreamFactory
 {
     final Scheduler scheduler;
-    ConstrainedStreamFactory (Scheduler _scheduler)
+    final boolean needsSchedule;
+    ConstrainedStreamFactory (Scheduler _scheduler, boolean _needsSchedule)
     {
         scheduler = _scheduler;
+	needsSchedule = _needsSchedule;
     }
     
     private LatencyGraph latencyGraph = new LatencyGraph();
@@ -88,5 +90,9 @@ public class ConstrainedStreamFactory
     public Scheduler getScheduler ()
     {
         return scheduler;
+    }
+
+    public boolean needsSchedule() {
+	return needsSchedule;
     }
 }

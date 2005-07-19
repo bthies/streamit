@@ -28,11 +28,10 @@ public class Scheduler extends streamit.scheduler2.Scheduler
     final StreamInterface rootStream;
     final StreamFactory factory;
 
-    public Scheduler(Iterator _root)
-    {
+    protected Scheduler(Iterator _root, boolean needsSchedule) {
         super(_root);
 
-        factory = new ConstrainedStreamFactory(this);
+        factory = new ConstrainedStreamFactory(this, needsSchedule);
         rootStream =
             (
                 streamit
@@ -42,6 +41,22 @@ public class Scheduler extends streamit.scheduler2.Scheduler
                     .newFrom(
                 root,
                 null);
+    }
+
+    /**
+     * In usual scenario, creating a scheduler to perform scheduling.
+     */
+    public static Scheduler create(Iterator _root) {
+	return new Scheduler(_root, true);
+    }
+
+    /**
+     * The scheduler also can do SDEP calculations, in which case it
+     * does not need to build a schedule (can tolerate dynamic rates
+     * in some parts of graph).
+     */
+    public static Scheduler createForSDEP(Iterator _root) {
+	return new Scheduler(_root, false);
     }
 
     public void computeSchedule()

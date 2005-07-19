@@ -37,5 +37,12 @@ public interface StreamFactory
      * @return A stream corresponding to streamIter
      */
     public StreamInterface newFrom (Iterator streamIter, Iterator parent);
+    /**
+     * Whether a schedule should be computed for objects created by
+     * this factory.  For example, graphs constructed for SDEP
+     * calculations do not rely on a schedule.
+     */
+    public boolean needsSchedule();
+    
 }
 

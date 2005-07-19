@@ -61,7 +61,9 @@ abstract public class Pipeline extends Stream
             // compute my steady schedule
             // my children already have computed their steady schedules,
             // so I just have to do mine
-            computeSteadyState();
+	    if (factory.needsSchedule()) {
+		computeSteadyState();
+	    }
         }
     }
 

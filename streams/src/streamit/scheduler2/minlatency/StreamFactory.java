@@ -56,4 +56,6 @@ public class StreamFactory
         ERROR ("Unsupported type passed to StreamFactory!");
         return null;
     }
+
+    public boolean needsSchedule() { return true; }
 }

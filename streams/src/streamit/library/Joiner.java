@@ -119,8 +119,24 @@ abstract public class Joiner extends Operator
         flIter = fl;
     }
 
-    int nWork = 0;
 
+    public void prepareToWork() {
+	if (!Stream.scheduledRun) {
+	    // for the day when joiners can ever receive messages,
+	    // make sure that all inputs are ready before starting
+	    // execution, so that messages can be delivered in time
+	    int throughput[] =
+		(sjIter != null
+		 ? sjIter.getJoinPopWeights(nWork)
+		 : flIter.getJoinPopWeights(nWork));
+	    for (int i=0; i<input.length; i++) {
+		input[i].ensureData(throughput[i]);
+	    }
+	}
+	super.prepareToWork();
+    }
+
+    int nWork = 0;
     public void work()
     {
         int throughput[] =

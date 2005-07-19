@@ -48,8 +48,31 @@ abstract public class Splitter extends Operator
         flIter = fl;
     }
 
-    int nWork = 0;
+    public void prepareToWork() {
+	if (!Stream.scheduledRun) {
+	    // for the day when splitters can ever receive messages,
+	    // make sure that all inputs are ready before starting
+	    // execution, so that messages can be delivered in time
 
+	    // get output weights
+	    int throughput[] =
+		(sjIter != null
+		 ? sjIter.getSplitPushWeights(nWork)
+		 : flIter.getSplitPushWeights(nWork));
+
+	    // sum output weights to get input weights
+	    int totalData = 0;
+	    for (int i=0; i<throughput.length; i++) {
+		totalData += throughput[i];
+	    }
+
+	    // ensure data
+	    input.ensureData(totalData);
+	}
+	super.prepareToWork();
+    }
+
+    int nWork = 0;
     public void work()
     {
         int throughput[] =

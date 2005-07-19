@@ -565,12 +565,52 @@ public abstract class Filter extends Stream
         return ((PhaseInfo) steadyPhases.get(stage)).name;
     }
 
-    int initPhase = 0;
-    int steadyPhase = 0;
+    private int initPhase = 0;
+    private int steadyPhase = 0;
+    /**
+     * Advances to the next phase (for internal bookkeping, i.e., for
+     * checking or ensuring I/O rates).
+     */
+    private void advancePhase() {
+        if (initPhase < initPhases.size()) {
+            initPhase++;
+        } else {
+            steadyPhase = (steadyPhase + 1) % steadyPhases.size();
+        }
+    }
+    /**
+     * Returns record of current phase (for internal bookkeping, i.e.,
+     * for checking or ensuring I/O rates).
+     */
+    private PhaseInfo getCurrentPhase() {
+        if (initPhase < initPhases.size()) {
+            return (PhaseInfo) initPhases.get(initPhase);
+        } else {
+            return (PhaseInfo) steadyPhases.get(steadyPhase);
+        }
+    }
 
+    public void prepareToWork() {
+	if (!Stream.scheduledRun && !(this instanceof ChannelConnectFilter)) {
+	    // this is where phase is advanced for unscheduled run
+	    PhaseInfo phase = getCurrentPhase();
+	    advancePhase();
+	    
+	    // if the phase is static-rate, we require enough inputs
+	    // to execute the whole phase.  This ensures that all
+	    // upstream messages are sent (and hence received by this
+	    // filter) prior to execution.
+	    if (phase.e!=Rate.DYNAMIC_RATE && phase.e>0) {
+		input.ensureData(phase.e);
+	    }
+	}
+	super.prepareToWork();
+    }
+    
     public void executeNextPhase(String schedName)
     {
         assert multiPhaseStyle;
+	assert Stream.scheduledRun;  // this is only executed when there's a schedule
 
         int inputCount=0, outputCount=0;
         if (input != null)
@@ -582,17 +622,9 @@ public abstract class Filter extends Stream
             outputCount = output.getItemsPushed();
         }
 
-        PhaseInfo phase;
-        if (initPhase < initPhases.size())
-        {
-            phase = (PhaseInfo) initPhases.get(initPhase);
-            initPhase++;
-        }
-        else
-        {
-            phase = (PhaseInfo) steadyPhases.get(steadyPhase);
-            steadyPhase = (steadyPhase + 1) % steadyPhases.size();
-        }
+	// this is where phase is advanced for scheduled run
+        PhaseInfo phase = getCurrentPhase();
+	advancePhase();
 
         // make sure that the next phase to execute is the one asked for!
         assert schedName.equals(phase.name);

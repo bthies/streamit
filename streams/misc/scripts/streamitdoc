@@ -1,0 +1,234 @@
+#!/usr/bin/perl -w
+
+# Copyright 2005 by the Massachusetts Institute of Technology.
+#
+# Permission to use, copy, modify, and distribute this
+# software and its documentation for any purpose and without
+# fee is hereby granted, provided that the above copyright
+# notice appear in all copies and that both that copyright
+# notice and this permission notice appear in supporting
+# documentation, and that the name of M.I.T. not be used in
+# advertising or publicity pertaining to distribution of the
+# software without specific, written prior permission.
+# M.I.T. makes no representations about the suitability of
+# this software for any purpose.  It is provided "as is"
+# without express or implied warranty.
+
+# Written by Matthew Drake (madrake@gmail.com)
+
+# This file is a work in progress - basically I thought it would
+# be cool to have StreamItDocs the way Java has Javadocs. There
+# is not really a syntax set in stone yet, although I'm trying
+# to emulate Javadoc style comments. The program is also a bit of
+# a hack - it operates using regular expressions rather than
+# any sort of intelligent parsing, so it will break rather easily.
+
+# Also note that the HTML is based on actual Javadocs, and I refer
+# directly to the Javadoc stylesheet for now. If you want to generate
+# your own streamitdocs for publishing we'll need to touch up our
+# source code and use our own style sheet.
+
+$numArgs = $#ARGV + 1;
+if ($numArgs == 1) {
+    $precompile_file = $ARGV[0];
+    open(PRECOMPILE, $precompile_file) || die("Could not open $precompile_file for input!");
+    open(POSTCOMPILE, ">&STDOUT") || die("Could not output to STDOUT for output!");;
+    main();
+} elsif ($numArgs == 3 && ($ARGV[1] eq "-o")) {
+    $precompile_file = $ARGV[0];
+    $postcompile_file = $ARGV[2];
+    open(PRECOMPILE, $precompile_file) || die("Could not open $precompile_file for input!");
+    open(POSTCOMPILE, ">$postcompile_file") || die("Could not open $postcompile_file for output!");    
+    main();
+} else {
+    help();
+    exit(-1);
+}
+
+sub help {
+    print("Usage: streamitdocs.perl [INPUT_FILE] [OPTION]\n");
+    print("Compiles StreamItDocs from correctly annotated StreamIt source code.\n");
+    print("Default output is STDOUT.\n\n");
+    print("  -o [OUTPUTFILE]     Redirect output to a file\n");
+    print("\nReport bugs to Matthew Drake <madrake\@gmail.com>\n");
+}
+
+sub stripStarsWhitespace {
+    my $in = shift;
+    $in =~ s/\n//g;
+    $in =~ s/\*//g;
+    $in =~ s/ *//;
+    $in =~ s/ *$//;
+    $in =~ s/ +/ /g;  
+    return $in;
+}
+
+sub main {
+
+    $holdTerminator = $/;
+    undef $/;
+    $file_contents = <PRECOMPILE>;
+    $/ = $holdTerminator;
+
+    $author = "Unknown Author";
+    if ($file_contents =~ m/(\@author (.*))\n/) {
+      $author = $2;
+    }
+    $file = "Unknown File";
+    if ($file_contents =~ m/(\@file (.*))\n/) {
+      $file = $2;
+    }
+    $version = "0.0";
+    if ($file_contents =~ m/(\@version (.*))\n/) {
+      $version = $2
+    }
+    doc_header($file, $version);
+
+    $file_description = "NO DESCRIPTION";
+    if ($file_contents =~ m/(\@description(((.*)\n)*))(.*)\@author/) {
+       $file_description = $2;
+       $file_description = stripStarsWhitespace($file_description);
+    }
+
+    doc_pagetop($file, $version, $file_description);
+
+    $component_summary_body = "";
+    $detail_body = "";
+
+    while ($file_contents =~ s/(\/\*\*.*\n( \*.*\n)+(\w+)->(\w+) +(pipeline|filter|splitjoin|feedbackloop) +(\w+)(\((\w+ \w+ *,?? *)*\))*)//) {
+       $wholematch = $1;
+       $datatype_in = $3;
+       $datatype_out = $4;
+       $function_name = $6;
+       if ($7) {
+           $function_args = $7; 
+       } else {
+           $function_args = "";
+       }
+
+       if (!($wholematch =~ m/\@internal/)) {
+          
+           $wholematch =~ m/(( \* \w.*\n)+)/;
+           $description = stripStarsWhitespace($1);
+           $shortdescription = $description . "asdf";
+           if ($description =~ m/([^\.]*\.)/) {
+             $shortdescription = $1;
+           }
+           
+           $wholematch =~ m/\@input((.*\n)( \*  +.*\n)*)/;
+           $input_desc = stripStarsWhitespace($1);
+
+           $wholematch =~ m/\@output((.*\n)( \*  +.*\n)*)/;
+           $output_desc = stripStarsWhitespace($1);
+
+           $parameter_detail = "";
+           while ($wholematch =~ s/(\@param((.*\n)( \*  +.*\n)*))//) {
+               $param_match = $2;
+               $param_match =~ s/(\w+)//;
+               $param_name = $1;
+               $param_details = stripStarsWhitespace($param_match);
+               $parameter_detail .= 
+"                      <DD><CODE>$param_name</CODE> - $param_details\n";
+           }
+
+           $component_summary_body .= "    <TR BGCOLOR=\"white\" CLASS=\"TableRowColor\">
+      <TD ALIGN=\"right\" VALIGN=\"top\" WIDTH=\"1%\"><FONT SIZE=\"-1\">
+        <CODE>$datatype_in->$datatype_out</CODE></FONT>
+      </TD>
+      <TD><CODE><B><A HREF=\"#$function_name\">$function_name</A></B></CODE>
+
+        <BR>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$shortdescription
+      </TD>
+    </TR>\n";
+
+           $detail_body .= "  <A NAME=\"$function_name\"><!-- --></A>
+  <H3>$function_name</H3>
+  <PRE>$datatype_in->$datatype_out&nbsp;<B>$function_name</B>$function_args</PRE>
+  <DL>
+    <DD>$description
+    <P>
+    <DL><DD>
+    <DT><B>Input:</B><DD><CODE>&lt;$datatype_in&gt;</CODE> - $input_desc
+    <DT><B>Output:</B><DD><CODE>&lt;$datatype_out&gt;</CODE> - $output_desc";
+           if ($parameter_detail ne "") {
+               $detail_body .= "    <DT><B>Parameters:</B>$parameter_detail";
+           }
+           $detail_body .= "
+    </DD></DL>
+  </DD>
+  </DL>
+  <HR>\n";
+       }
+    }
+
+    doc_component_summary_header();
+    print POSTCOMPILE $component_summary_body;
+    doc_component_summary_footer();
+
+    doc_detail_header();
+
+    print POSTCOMPILE $detail_body;
+
+    doc_footer($author);    
+}
+
+sub doc_detail_header {
+  print POSTCOMPILE "  <P>
+  <A NAME=\"field_detail\"><!-- --></A>
+  <TABLE BORDER=\"1\" WIDTH=\"100%\" CELLPADDING=\"3\" CELLSPACING=\"0\" SUMMARY=\"\">
+    <TR BGCOLOR=\"#CCCCFF\" CLASS=\"TableHeadingColor\">
+      <TD COLSPAN=1><FONT SIZE=\"+2\"><B>Component Detail</B></FONT></TD>
+    </TR>
+  </TABLE>\n";
+}
+
+sub doc_component_summary_header {
+    print POSTCOMPILE "  <P>
+  <A NAME=\"field_summary\"><!-- --></A>
+  <TABLE BORDER=\"1\" WIDTH=\"100%\" CELLPADDING=\"3\" CELLSPACING=\"0\" SUMMARY=\"\">
+    <TR BGCOLOR=\"#CCCCFF\" CLASS=\"TableHeadingColor\">
+      <TD COLSPAN=2><FONT SIZE=\"+2\"><B>Component Summary</B></FONT></TD>
+    </TR>\n";
+}
+
+sub doc_component_summary_footer { 
+    print POSTCOMPILE "  </TABLE>\n";
+
+}
+
+sub doc_pagetop {
+    my $file = shift;
+    my $version = shift;
+print POSTCOMPILE "  <H2>
+    File $file<BR>
+    <FONT SIZE=\"-1\">Version $version</FONT>
+  </H2>
+  <HR>
+  <P>$file_description</P>
+  <HR>\n";
+}
+
+sub doc_header {
+    my $file = shift;
+    my $version = shift;
+
+    print POSTCOMPILE "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n";
+    print POSTCOMPILE "<!--NewPage-->\n";
+    print POSTCOMPILE "<HTML>\n";
+    print POSTCOMPILE "<HEAD>\n";
+    print POSTCOMPILE "<TITLE>\n";
+    print POSTCOMPILE "$file (Version $version)\n";
+    print POSTCOMPILE "</TITLE>\n";
+    print POSTCOMPILE "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"http://java.sun.com/j2se/1.4.2/docs/api/stylesheet.css\" TITLE=\"Style\">\n";
+    print POSTCOMPILE "</HEAD>\n";
+    print POSTCOMPILE "<BODY>\n";
+}
+
+sub doc_footer {
+    my $author = shift;
+    print POSTCOMPILE "  Please contact the author ($author) for more information.
+</BODY>\n";
+}
+
+

@@ -121,7 +121,7 @@ public class WrappableGrowableQueue_int {
         int new_sizeof_queue = 0;
         while (sizeof_queue > 0) {
             new_buffer[new_head] = buffer[tail];
-            new_head++;
+            new_head = (new_head + 1) % new_sizeof_buffer;
             tail = (tail + 1) % sizeof_buffer;
             sizeof_queue--;
             new_sizeof_queue++;

@@ -25,7 +25,7 @@ public class SplitJoinIter
     extends streamit.misc.DestroyedClass
     implements streamit.scheduler2.iriter.SplitJoinIter
 {
-    public static boolean fineGrained = true;
+    public static boolean fineGrained = false;
 
     final boolean splitterFineGrained;
 

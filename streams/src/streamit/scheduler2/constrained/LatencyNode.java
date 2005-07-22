@@ -202,6 +202,7 @@ public class LatencyNode extends streamit.misc.Misc
         {
             initNodePhases = new OperatorPhases(0, sj.getJoinFanIn(), 1);
 
+
             steadyNodePhases =
                 new OperatorPhases(
                     sj.getNumJoinPhases(),
@@ -295,6 +296,10 @@ public class LatencyNode extends streamit.misc.Misc
             // it's an init phase
             return initNodePhases.getPhasePeek(nPhase, nChannel);
         }
+	else if (steadyNodePhases.getNumPhases()==0) {
+	    // null splitters and joiners have 0 phases
+	    return 0;
+	}
         else
         {
             // it's a steady state
@@ -312,6 +317,10 @@ public class LatencyNode extends streamit.misc.Misc
             // it's an init phase
             return initNodePhases.getPhasePop(nPhase, nChannel);
         }
+	else if (steadyNodePhases.getNumPhases()==0) {
+	    // null splitters and joiners have 0 phases
+	    return 0;
+	}
         else
         {
             // it's a steady state
@@ -329,6 +338,10 @@ public class LatencyNode extends streamit.misc.Misc
             // it's an init phase
             return initNodePhases.getPhasePush(nPhase, nChannel);
         }
+	else if (steadyNodePhases.getNumPhases()==0) {
+	    // null splitters and joiners have 0 phases
+	    return 0;
+	}
         else
         {
             // it's a steady state

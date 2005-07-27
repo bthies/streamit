@@ -10,23 +10,21 @@
  */
 
 #include "DCT.str"
+#include "MPEG_block.str"
 
 void->void pipeline MPEGdecoder() {
   portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac;
   portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra;
   portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc;
-  portal<MotionPrediction> UpdatePortal_motion_vectors_lum;
-  portal<MotionPrediction> UpdatePortal_motion_vectors_cr;
-  portal<MotionPrediction> UpdatePortal_motion_vectors_cb;
+
+  int width=352;  // Hacked till we have reprogrammable splitjoins FEATURETODO
+  int height=240;
   
   add FileReader<bit>("../input/cact_015.m2v");
 
   add MPEGStreamParser(UpdatePortal_quantiser_data_ac,
                        UpdatePortal_quantiser_data_dc,
-                       UpdatePortal_macroblock_intra,
-                       UpdatePortal_motion_vectors_lum,
-                       UpdatePortal_motion_vectors_cr,
-                       UpdatePortal_motion_vectors_cb
+                       UpdatePortal_macroblock_intra
                       );
 
   // Note - Difference Decoding of DC actually happens in parser right now. With
@@ -41,34 +39,53 @@ void->void pipeline MPEGdecoder() {
                           UpdatePortal_quantiser_data_dc,
                           UpdatePortal_macroblock_intra);
 
-  add Saturation(-2048, 2047); 
+  add BlockSaturation(-2048, 2047); 
 
-  add MismatchControl;      
+  add BlockMismatchControl;      
 
-  add iDCT8x8_ieee;
+  add Block_iDCT8x8_ieee;
 
-  add Saturation(-256, 255);
+  add BlockSaturation(-256, 255);
 
   // This next step reorders the pixels and upsamples as neccesary.
   // Assumes 4:2:0 to 4:4:4 upsampling requested
   // Each output channel is ordered left to right, top to bottom
 
-  int width=352;
-  int height=240;
-
-  add int->int splitjoin {
-    split roundrobin(64*4, 64, 64);
-    add LuminanceChannelProcessing(width, height, UpdatePortal_motion_vectors_lum, 0);
-    add ChrominanceChannelProcessing(width, height, UpdatePortal_motion_vectors_cr, 1);
-    add ChrominanceChannelProcessing(width, height, UpdatePortal_motion_vectors_cb, 2);
+  add block->int splitjoin {
+    split roundrobin(4, 1, 1);
+    add LuminanceChannelProcessing(width, height, 0);
+    add ChrominanceChannelProcessing(width, height, 1);
+    add ChrominanceChannelProcessing(width, height, 2);
     join roundrobin(1,1,1);  
   }
 
   add ColorSpaceConversion;
-  add FlipVertically(352, 240); // Flip it to be correctly ordered for BMP processing
-  add BMPStreamCreator;
-  add FileWriter<bit>("./output.bmp");
+  add FlipVertically(width, height); // Flip it to be correctly ordered for BMP processing
 
+  add int->void splitjoin {
+    split roundrobin(width*height*3);
+    add int->void pipeline {
+      add BMPStreamCreator;
+      add FileWriter<bit>("./output000.bmp");
+    }
+    add int->void pipeline {
+      add BMPStreamCreator;
+      add FileWriter<bit>("./output001.bmp");
+    }
+    join roundrobin(0);
+  }
+
+}
+
+block->block pipeline Block_iDCT8x8_ieee {
+  add BlockStream_to_IntStream;
+  add int->int splitjoin {
+    split roundrobin(64, 9);
+    add iDCT8x8_ieee;
+    add Identity<int>;
+    join roundrobin(64, 9);
+  }
+  add IntStream_to_BlockStream;
 }
 
 int->int pipeline ColorSpaceConversion {
@@ -76,125 +93,201 @@ int->int pipeline ColorSpaceConversion {
   add Saturation(0,255);
 }
 
-int->int pipeline LuminanceChannelProcessing(int width, 
-                                             int height,
-                                             portal<MotionPrediction> UpdatePortal_motion_vectors,
-                                             int id) {
-  add MacroBlockDescrambler(width);
-  add BlockDescrambler(width);
-  add MotionPrediction(width, height, 1, id) to UpdatePortal_motion_vectors;
+// TODO think of a better name
+struct moving_pixel {
+  int data;
+  int picture_coding_type;
+  int[2][2][2] vectorp;
 }
 
-int->int pipeline ChrominanceChannelProcessing(int width, 
+block->moving_pixel filter Block_to_MovingPixel {
+  work pop 1 push 64 {
+    block oldBlock = pop();
+    moving_pixel new_Pixel;
+    new_Pixel.picture_coding_type = oldBlock.picture_coding_type;
+    for (int r = 0; r < 2; r++)
+      for (int s = 0; s < 2; s++) 
+        for (int t = 0; t < 2; t++) 
+          new_Pixel.vectorp[r][s][t] = oldBlock.vectorp[r][s][t];
+    for (int i = 0; i < 64; i++) {
+      new_Pixel.data = oldBlock.data[i];
+      push(new_Pixel);
+    }
+  }
+}
+
+block->int pipeline LuminanceChannelProcessing(int width, 
                                                int height,
-                                               portal<MotionPrediction> UpdatePortal_motion_vectors,
                                                int id) {
-  add BlockDescrambler(width/2);
+  add MacroBlockDescrambler(width);
+  add Block_to_MovingPixel;
+  add MovingPixelBlockDescrambler(width);
+  add MotionPrediction(width, height, 1, id);
+}
+
+block->int pipeline ChrominanceChannelProcessing(int width, 
+                                                 int height,
+                                                 int id) {
   // Assumes 4:2:0 to 4:4:4
-  add MotionPrediction(width, height, 2, id) to UpdatePortal_motion_vectors;
+  add Block_to_MovingPixel;
+  add MovingPixelBlockDescrambler(width/2);
+  add MotionPrediction(width/2, height/2, 2, id);
   add ChannelUpsample(width/2, height/2);
 }
 
-// Assumes 4:2:0 data TODO
-int->int filter MotionPrediction(int width, int height, int upsample_factor, int id) {
-  int datasize = ((width/upsample_factor)*(height/upsample_factor));
-  int[(width/upsample_factor)][(height/upsample_factor)] previous_pred_picture;
-  int[(width/upsample_factor)][(height/upsample_factor)] next_pred_picture;
-  int picture_coding_type;
-  boolean has_previous_picture, has_next_picture;
-  int[2][2][2] vector;  
+block->int pipeline DescrambleAndMotionCompensate(int width, int height, int upsample_factor, int id) {
+  add Block_to_MovingPixel;
+  add MovingPixelBlockDescrambler(width/upsample_factor);
+  add MotionPrediction(width/upsample_factor, height/upsample_factor, upsample_factor, id);
+}
 
-  int count;
-  
+moving_pixel->int pipeline MotionPrediction(int width, int height, int upsample_factor, int id) {     
+  // vectorp after this filter is actually vector
+  // (cite 1, P. 82) 
+  add moving_pixel->moving_pixel filter {
+    work pop 1 push 1 {
+      moving_pixel aPixel = pop();
+      for (int r = 0; r < 2; r++)
+        for (int s = 0; s < 2; s++)
+          for (int t = 0; t < 2; t++)
+            aPixel.vectorp[r][s][t] /= upsample_factor;
+      push(aPixel);
+    }
+  }
+  add MotionPredictionHelper(width, height, id);
+}
+
+moving_pixel->int filter MotionPredictionHelper(int width, int height, int id) {
+  int datarate = width*height;
+
+  int[width][height] prev_picture;
+  int[width][height] next_picture;
+  boolean prev_set;
+  boolean next_set;
+
   init {
-    count = 0;
-    picture_coding_type = -1;
-    has_previous_picture = false;
-    has_next_picture = false;
+    prev_set = false;
+    next_set = false;
   }
-  
-  work pop 64 push 64 {
-    for (int i = 0; i < 64; i++) {
-     push(pop());}
-   /* pop datasize
-       push datasize {
-    if (picture_coding_type == 1) { // I-Picture
-      if (has_previous_picture == false) {
-        has_previous_picture = true;
-        for (int x = 0; x < (width/upsample_factor); x++) {
-          for (int y = 0; y < (height/upsample_factor); y++) { 
-            int tempval = pop();
-            previous_pred_picture[x][y] = tempval;
-            push(tempval);
+
+  work pop datarate push datarate {  
+    if (prev_set == false) {
+      readFirstIPicture();
+      prev_set = true;
+    } else if (next_set == false) {
+      moving_pixel aPixel = peek(0);
+      if (aPixel.picture_coding_type == 1) {
+        readSecondIPicture();
+        // This has never been tested TODO
+      } else {
+        readPPicture();
+      }
+      next_set = true;
+    } else {
+      moving_pixel aPixel = peek(0);    
+      if (aPixel.picture_coding_type == 1 || aPixel.picture_coding_type == 2) {
+        for (int x = 0; x < width; x++) {
+          for (int y = 0; y < height; y++) {
+            prev_picture[x][y] = next_picture[x][y];
           }
         }
-      } else if (has_next_picture == false) {
-        has_next_picture = true;
-        for (int x = 0; x < (width/upsample_factor); x++) {
-          for (int y = 0; y < (height/upsample_factor); y++) { 
-            int tempval = pop();
-            next_pred_picture[x][y] = tempval;
-            push(tempval);
-          }
+        if (aPixel.picture_coding_type == 1) {
+          readIPicture();
+        } else {
+          readPPicture();
         }
       } else {
-        for (int x = 0; x < (width/upsample_factor); x++) {
-          for (int y = 0; y < (height/upsample_factor); y++) { 
-            int tempval = pop();
-            previous_pred_picture[x][y] = next_pred_picture[x][y];
-            next_pred_picture[x][y] = tempval;
-            push(tempval);
-          }
-        }
-      }
-      // Note - we always assume that P-pictures get sent after at least
-      // one I-picture. TODO verify that this is the case.
-    } else if (picture_coding_type == 2) { // P-Picture
-      if (has_next_picture == false) {
-        has_next_picture = true;
-        for (int x = 0; x < (width/upsample_factor); x++) {
-          for (int y = 0; y < (height/upsample_factor); y++) { 
-            int tempval = pop();
-            next_pred_picture[x][y] = tempval;
-            push(tempval);
-          }
-        }
-      } else {
-        for (int x = 0; x < (width/upsample_factor); x++) {
-          for (int y = 0; y < (height/upsample_factor); y++) { 
-            int tempval = pop();
-            previous_pred_picture[x][y] = next_pred_picture[x][y];
-            next_pred_picture[x][y] = tempval;
-            push(tempval);
-          }
-        }
-      }
-      // Note - B-pictures we don't store locally
-    } else if (picture_coding_type == 3) { // B-Picture
-      for (int x = 0; x < (width/upsample_factor); x++) {
-        for (int y = 0; y < (height/upsample_factor); y++) { 
-          int tempval = pop();
-          push(tempval);
-        }
-      }
-    } */
-    count++;
-  }
-  handler setPictureType(int new_picture_coding_type) {
-//    print(id + " " + count + " PictureType: " + new_picture_coding_type);
-    picture_coding_type = new_picture_coding_type;
-//    count = 0;
-  }
-  handler setMotionVectors(int[2][2][2] vectorp) {
-    print(id + " getting motion vectors " + count);
-    for (int r = 0; r < 2; r++) {
-      for (int s = 0; s < 2; s++) {
-        for (int t = 0; t < 2; t++) {
-          vector[r][s][t] = vectorp[r][s][t]/upsample_factor;
-        }
+        foo(); //readBPicture();
       }
     }
   }
+
+  phase readFirstIPicture pop datarate push datarate {
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        moving_pixel aPixel = pop();
+        if (aPixel.picture_coding_type != 1) 
+          print("Error - Expecting I Picture, got " + aPixel.picture_coding_type);
+        prev_picture[x][y] = aPixel.data;
+        push(aPixel.data);
+      }
+    }
+  }
+
+  phase readIPicture pop datarate push datarate {
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        moving_pixel aPixel = pop();
+        if (aPixel.picture_coding_type != 1) 
+          print("Error - Expecting I Picture, got " + aPixel.picture_coding_type);
+        next_picture[x][y] = aPixel.data;
+        push(aPixel.data);
+      }
+    }
+  }
+
+  phase readSecondIPicture pop datarate push datarate {
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        moving_pixel aPixel = pop();
+        if (aPixel.picture_coding_type != 1) 
+          print("Error - Expecting I Picture, got " + aPixel.picture_coding_type);
+        next_picture[x][y] = aPixel.data;
+        push(aPixel.data);
+      }
+    }
+  }
+
+  phase readPPicture pop datarate push datarate {
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        moving_pixel aPixel = pop();
+        if (aPixel.picture_coding_type != 2) 
+          print("Error - Expecting P Picture, got " + aPixel.picture_coding_type);
+        // Assume only 1 motion vector in motion block TODO
+        int horiz_vector = aPixel.vectorp[0][0][0] + (x*2);
+        int vert_vector = aPixel.vectorp[0][0][1] + (y*2);
+        int sample_data;
+        if (vert_vector < 0 || vert_vector >= (height*2-1) || 
+            horiz_vector < 0 || horiz_vector >= (width*2-1)) {
+          sample_data = 0;
+        } else if ((horiz_vector & 0x1) == 1) {
+          if ((vert_vector & 0x1) == 1) {
+            sample_data = (prev_picture[(horiz_vector-1)/2][(vert_vector-1)/2] +
+                           prev_picture[(horiz_vector-1)/2][(vert_vector+1)/2] +
+                           prev_picture[(horiz_vector+1)/2][(vert_vector-1)/2] +
+                           prev_picture[(horiz_vector+1)/2][(vert_vector+1)/2]) / 4;
+          } else {
+            sample_data = (prev_picture[(horiz_vector-1)/2][vert_vector/2] +
+                           prev_picture[(horiz_vector+1)/2][vert_vector/2]) / 2;
+
+          }
+        } else {
+          if ((vert_vector & 0x1) == 1) {
+            sample_data = (prev_picture[horiz_vector/2][(vert_vector-1)/2] +
+                           prev_picture[horiz_vector/2][(vert_vector+1)/2]) / 2;
+          } else {
+            sample_data = prev_picture[horiz_vector/2][vert_vector/2];
+          }
+        }
+//        print(id + " " + x + " " + y + " data " + aPixel.data + " sample " + sample_data);
+        next_picture[x][y] = aPixel.data + sample_data;
+//        next_picture[x][y] = aPixel.data;
+        push(next_picture[x][y]);
+        // TODO need saturation, see (1, P.87)
+      }
+    }
+  }
+
+  phase foo pop datarate push datarate {
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        moving_pixel aPixel = pop();
+        push(aPixel.data);
+      }
+    }
+  }
+
 }
 
 
@@ -234,17 +327,34 @@ int->int filter YCbCrtoRGB {
   }
 }
 
-int->int splitjoin MacroBlockDescrambler(int width) {
-  split roundrobin(64*2);
-  add Identity<int>;
-  add Identity<int>;
-  join roundrobin(width*8);
+block->block splitjoin MacroBlockDescrambler(int width) {
+  split roundrobin(2);
+  for (int i = 0; i < 2; i++) {
+    add block->block filter {
+      work pop 1 push 1 {
+        push(pop());
+      }
+    }
+  }
+  join roundrobin((width/8));
 }
 
 int->int splitjoin BlockDescrambler(int width) {
   split roundrobin(8);
   for (int i = 0; i < 8; i++) {
     add Identity<int>;
+  }
+  join roundrobin(width);
+}
+
+moving_pixel->moving_pixel splitjoin MovingPixelBlockDescrambler(int width) {
+  split roundrobin(8);
+  for (int i = 0; i < 8; i++) {
+    add moving_pixel->moving_pixel filter {
+       work pop 1 push 1 {
+         push(pop());
+       }
+    }
   }
   join roundrobin(width);
 }
@@ -330,6 +440,7 @@ int->bit filter BMPStreamCreator {
       pushs(32,0);
 
       // Now the actual data
+
       for (int i = 0; i < width*height*3; i++) {
         int val = pop();
         pushs(8,val);
@@ -382,39 +493,46 @@ int->int filter ChannelUpsample_1D(int sourcelen, float weight1, float weight2) 
   }    
 }
 
-int->int pipeline InverseQuantization(  
+block->block pipeline InverseQuantization(  
          portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac,
          portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc,
          portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra) {
 
-  // NOTE - This is a case for a programmable splitjoin or some such 
-  // right now we have macroblock_intra passed along with the data but it
-  // really should get passed as a message and used to reprogram a splitjoin
-  // or some such.
-  // The handling of the intra DC coefficient is described on (cite 1, P. 69)
+  add BlockStream_to_IntStream;
+
   add int->int splitjoin {
-    split duplicate;
-    // Intra Coded Macroblocks
-    add int->int splitjoin {
-      split roundrobin(1, 63); 
-      add InverseQuantization_DC_Intra_Coeff to UpdatePortal_quantiser_data_dc; // (cite 1, P.69)
-      add InverseQuantization_AC_Coeff(1) to UpdatePortal_quantiser_data_ac;
-      join roundrobin(1, 63); 
+    split roundrobin(64, 9);
+    add int->int pipeline {
+      // The handling of the intra DC coefficient is described on (cite 1, P. 69)
+      add int->int splitjoin {
+        split duplicate;
+        // Intra Coded Macroblocks
+        add int->int splitjoin {
+          split roundrobin(1, 63); 
+          add InverseQuantization_DC_Intra_Coeff to UpdatePortal_quantiser_data_dc; // (cite 1, P.69)
+          add InverseQuantization_AC_Coeff(1) to UpdatePortal_quantiser_data_ac;
+          join roundrobin(1, 63); 
+        }
+        // Non Intra Coded Macroblocks
+        add InverseQuantization_AC_Coeff(0) to UpdatePortal_quantiser_data_ac;
+        join roundrobin(64, 64);  
+      }
+  
+      // Selects which stream - FEATURETODO eventually programmable splitjoin and only one of the two
+      // above branches gets taken instead of both.
+  
+      add InverseQuantizationJoinerSubstitute() to UpdatePortal_macroblock_intra;
     }
-    // Non Intra Coded Macroblocks
-    add InverseQuantization_AC_Coeff(0) to UpdatePortal_quantiser_data_ac;
-    join roundrobin(64, 64);  
+    add Identity<int>;
+    join roundrobin(64, 9);
   }
-  
-  // Selects which stream - FEATURETODO eventually programmable splitjoin and only one of the two
-  // above branches gets taken instead of both.
-  
-  add InverseQuantizationJoinerSubstitute() to UpdatePortal_macroblock_intra;
+
+  add IntStream_to_BlockStream;
 }
 
 int->int filter InverseQuantizationJoinerSubstitute {
   int macroblock_intra;
-  
+ 
   init {
     macroblock_intra = -1;
   }
@@ -482,6 +600,8 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
   int[64] intra_quantiser_matrix;
   int[64] non_intra_quantiser_matrix;
 
+  int count;
+
   int[2][32] quantiser_scale =
     // Note that quantiser_scale[x][0] is a Forbidden Value
     {{ 0,  2,  4,  6,  8, 10, 12, 14,
@@ -495,6 +615,8 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
   // (cite 1, P.70 Table 7-6)
 
   init {
+    count = 0;
+
     quantiser_scale_code = 0; // Guarantees that this throws an error
                               // if it doesn't get a quantiser message
                               // before getting some data.
@@ -512,10 +634,13 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
         k = 0;
       } else {
         // TODO - I think I'm interpreting this part of the spec correctly, check though.
-        if (QF >= 0)
+        if (QF > 0) {
           k = 1;
-        else
+        } else if (QF < 0) {
           k = -1;
+        } else {
+          k = 0;
+        }          
       }
       int W = 0;
       if (macroblock_intra == 1) {
@@ -527,6 +652,7 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
               quantiser_scale[q_scale_type][quantiser_scale_code] / 32;
       push(F);
     }
+    count = count + 1;
   }
 
   handler setQuantiserScaleCode(int new_quantiser_scale_code) {
@@ -546,6 +672,23 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
   }
 } 
 
+block->block pipeline BlockSaturation(int min, int max) {
+  add BlockStream_to_IntStream;
+  add int->int splitjoin {
+    split roundrobin(64, 9);
+    add int->int splitjoin {
+      split roundrobin(1);
+      for (int i = 0; i < 64; i++) {
+        add Saturation(min, max);
+      }
+      join roundrobin(1);
+    }
+    add Identity<int>;
+    join roundrobin(64, 9);
+  }
+  add IntStream_to_BlockStream;
+}
+
 // (cite 1, P. 71)
 int->int filter Saturation(int min, int max) {
   work pop 1 push 1 {
@@ -558,6 +701,17 @@ int->int filter Saturation(int min, int max) {
       push(val);
     }
   }
+}
+
+block->block pipeline BlockMismatchControl {
+  add BlockStream_to_IntStream;
+  add int->int splitjoin {
+    split roundrobin(64, 9);
+    add MismatchControl();
+    add Identity<int>;
+    join roundrobin(64, 9);
+  }
+  add IntStream_to_BlockStream;
 }
 
 // (cite 1, P.71)
@@ -612,7 +766,7 @@ bit->int filter BitStream2IntStream() {
 
 /* Input: A sequence of 64 integers in a diagonalized order.
    Output: A sequence of 64 integers representing an 8x8 block. */
-int->int filter ZigZagUnordering {
+block->block filter ZigZagUnordering {
   int[64] Ordering = {00, 01, 05, 06, 14, 15, 27, 28,
                       02, 04, 07, 13, 16, 26, 29, 42,
 					            03, 08, 12, 17, 25, 30, 41, 43,
@@ -621,11 +775,19 @@ int->int filter ZigZagUnordering {
 					            20, 22, 33, 38, 46, 51, 55, 60,
 					            21, 34, 37, 47, 50, 56, 59, 61,
 					            35, 36, 48, 49, 57, 58, 62, 63};
-  work pop 64 push 64 {
-    for (int i = 0; i < 64; i++)
-      push(peek(Ordering[i]));
-    for (int i = 0; i < 64; i++)  
-      pop();
+  work pop 1 push 1 {
+    block oldBlock = pop();
+    block newBlock;
+    for (int i = 0; i < 64; i++) {
+      newBlock.data[i] = oldBlock.data[Ordering[i]];
+    }
+    // TODO - should be wrapped in a pipeline and not know about the block datatype
+    newBlock.picture_coding_type = oldBlock.picture_coding_type;
+    for (int r = 0; r < 2; r++)
+      for (int s = 0; s < 2; s++)
+        for (int t = 0; t < 2; t++)
+          newBlock.vectorp[r][s][t] = oldBlock.vectorp[r][s][t];
+    push(newBlock);
   }
 }
 
@@ -647,19 +809,18 @@ struct vlc_dct_table_entry { // See P. 135
 /* Input: The video bitstream
    Output: The QFS quantized coefficient data
 */
-bit->int filter MPEGStreamParser(
+bit->block filter MPEGStreamParser(
                         portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac,
                         portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc,
-                        portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra,
-                        portal<MotionPrediction> UpdatePortal_motion_vectors_lum,
-                        portal<MotionPrediction> UpdatePortal_motion_vectors_cr,
-                        portal<MotionPrediction> UpdatePortal_motion_vectors_cb
+                        portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra
                         ) {
   // FEATURETODO
   // When phases can take parameters, get rid of this definition and
   // uncomment the definition in the filter work function, and change
   // the phase PushMacroblock() to use the parameter. 
   int[64] QFS;
+  int picture_coding_type;
+  int[2][2][2] vectorp;
 
   boolean ran;
   int count;
@@ -1674,11 +1835,17 @@ bit->int filter MPEGStreamParser(
     const_dct_coefficients_table_zero[110].level = 1;
   }
 
-  phase PushMacroblock push 64 {
+  phase PushMacroblock push 1 {
+    block newBlock;
     for (int j = 0; j < 64; j++) {
-      push(QFS[j]);
+      newBlock.data[j] = QFS[j];
     }
-    count++;
+    newBlock.picture_coding_type = picture_coding_type;
+    for (int r = 0; r < 2; r++) 
+      for (int s = 0; s < 2; s++)
+        for (int t = 0; t < 2; t++)
+          newBlock.vectorp[r][s][t] = vectorp[r][s][t];
+    push(newBlock);
   }
 
   work pop * push * {  // Actually unknown pop/push rate
@@ -1891,25 +2058,21 @@ bit->int filter MPEGStreamParser(
             print("Error - Picture Start Code Expected, " + tempval);
           }
 
-          int temporal_reference, picture_coding_type, vbv_delay, full_pel_forward_vector,
+          int temporal_reference, /* picture_coding_type, */ vbv_delay, full_pel_forward_vector,
               forward_f_code, full_pel_backward_vector, backward_f_code;
           // (cite 1, P.50) for interpretation of the following fields
           pops(10,temporal_reference);
 //          print("  temporal_reference " + temporal_reference);   
           pops(3,picture_coding_type);
           if (picture_coding_type == 1) {
-//            print("  picture_coding_type = I-picture");
+            print("  picture_coding_type = I-picture");
           } else if (picture_coding_type == 2) {
-//            print("  picture_coding_type = P-picture");
+            print("  picture_coding_type = P-picture");
           } else if (picture_coding_type == 3) {
-//            print("  picture_coding_type = B-picture");
+            print("  picture_coding_type = B-picture");
           } else {
             print("  Error: Forbidden picture_coding_type " + picture_coding_type);
           }
-          print("parser Setting picture type " + picture_coding_type);
-          UpdatePortal_motion_vectors_lum.setPictureType(picture_coding_type);
-          UpdatePortal_motion_vectors_cr.setPictureType(picture_coding_type);
-          UpdatePortal_motion_vectors_cb.setPictureType(picture_coding_type);
           pops(16,vbv_delay);
           // TODO unknown interpretation for vbv_delay, (cite 1, P.50)
           // The following is not used by the MPEG-2 specification (cite 1, P.51)
@@ -2233,7 +2396,7 @@ bit->int filter MPEGStreamParser(
 
               // Section 7.6.3.1 covers this - this might eventually be moved out of the
               // parser TODO - pretty much verbatim (cite 1, P. 77)
-              int[2][2][2] vectorp, vector;
+/*              int[2][2][2] vectorp */ 
               for (int r = 0; r < 1; r++) {
                 // NOTE TODO - Hacked right now, don't know when we need the second motion vector.
                 for (int s = 0; s < 2; s++) {
@@ -2284,14 +2447,6 @@ bit->int filter MPEGStreamParser(
 //                     print("PMV = " + vectorp[r][s][0] + "," + vectorp[r][s][1]);
                   }
                 }
-              }
-
-              if (count == 0 || count == 6) {
-                // TODO ABOVE LINE HACK UNTIL FINE GRAINED WORKS
-                UpdatePortal_motion_vectors_lum.setMotionVectors(vectorp) [0:0];
-                UpdatePortal_motion_vectors_cr.setMotionVectors(vectorp) [0:0];
-                UpdatePortal_motion_vectors_cb.setMotionVectors(vectorp) [0:0];
-                print("UpdatePortal_motion_vectors getting called " + count);
               }
 
               if (macroblock_intra == 1 && concealment_motion_vectors == 1) {

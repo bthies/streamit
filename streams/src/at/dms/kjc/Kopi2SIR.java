@@ -462,7 +462,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     {
 	//set the file name and the type for the SIRFileReader
 	if (stream instanceof SIRFileReader) {
-	    if (args.length != 2 || args.length != 3) // can be 3 args with Bit hack
+	    if (args.length != 2 && args.length != 3) // can be 3 args with Bit hack
 		at.dms.util.Utils.fail(lineNumber + ": 2 or 3 args required for FileReader");
 	    ((SIRFileReader)stream).setFileName(args[0]);
 	    //the second arg will be turned into string by visitFieldExpression because it is a type
@@ -473,7 +473,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    return;
 	}
 	else if (stream instanceof SIRFileWriter) {
-	    if (args.length != 2 || args.length != 3)  // can be 3 args with Bit hack
+	    if (args.length != 2 && args.length != 3)  // can be 3 args with Bit hack
 		at.dms.util.Utils.fail(lineNumber + ": 2 or 3 args required for FileWriter");
 	    ((SIRFileWriter)stream).setFileName(args[0]);
 	    //the second arg will be turned into string by visitFieldExpression because it is a type

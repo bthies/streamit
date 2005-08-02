@@ -412,6 +412,7 @@ public class Pipeline extends Stream
                 Channel in = source.getOutputChannel ();
                 Channel out = sink.getInputChannel ();
                 connect.useChannels (in, out);
+		connect.setupOperator();
             }
             source = sink;
         }

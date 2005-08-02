@@ -25,7 +25,9 @@ public class ChannelConnectFilter extends Filter
         type = ioType;
     }
 
-    public ChannelConnectFilter () { super (); }
+    public ChannelConnectFilter () { 
+	super (); 
+    }
 
     public void init ()
     {
@@ -34,6 +36,7 @@ public class ChannelConnectFilter extends Filter
             input = new Channel (type, 1);
             output = new Channel (type, 1);
         }
+	addSteadyPhase(1, 1, 1, "work");
     }
 
     public void work()

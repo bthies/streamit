@@ -591,21 +591,41 @@ public abstract class Filter extends Stream
     }
 
     public void prepareToWork() {
-	if (!Stream.scheduledRun && !(this instanceof ChannelConnectFilter)) {
-	    // this is where phase is advanced for unscheduled run
-	    PhaseInfo phase = getCurrentPhase();
-	    advancePhase();
-	    
+	if (!Stream.scheduledRun) {
 	    // if the phase is static-rate, we require enough inputs
 	    // to execute the whole phase.  This ensures that all
 	    // upstream messages are sent (and hence received by this
 	    // filter) prior to execution.
+	    PhaseInfo phase = getCurrentPhase();
 	    if (phase.e!=Rate.DYNAMIC_RATE && phase.e>0) {
 		input.ensureData(phase.e);
 	    }
 	}
 	super.prepareToWork();
     }
+
+    public void doWork() {
+        prepareToWork();
+
+	// call work or prework, etc.
+	PhaseInfo phase = getCurrentPhase();
+	if (phase.name.equals("prework")) {
+	    prework();
+	} else if (phase.name.equals("work")) {
+	    work();
+	} else {
+	    throw new RuntimeException("Unrecognized phase name: " + phase.name);
+	}
+
+        cleanupWork();
+    }
+
+    public void cleanupWork() {
+	super.cleanupWork();
+	// this is where phase is advanced for unscheduled run
+	advancePhase();
+    }
+
     
     public void executeNextPhase(String schedName)
     {

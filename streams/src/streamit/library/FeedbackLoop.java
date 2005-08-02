@@ -528,6 +528,7 @@ public class FeedbackLoop extends Stream
                 Channel in = joiner.getIOField ("output", 0);
                 Channel out = body.getInputChannel ();
                 connect.useChannels (in, out);
+		connect.setupOperator();
             }
 
             // the splitter:
@@ -549,6 +550,7 @@ public class FeedbackLoop extends Stream
                 Channel in = body.getOutputChannel ();
                 Channel out = splitter.getIOField ("input", 0);
                 connect.useChannels (in, out);
+		connect.setupOperator();
             }
 
             // copy the input/output from the identities to the input/output

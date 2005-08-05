@@ -1,0 +1,18 @@
+<benchmark>
+  <name>fhr</name>
+  <desc>Frequency hopping radio</desc>
+  <description>
+Frequency-hopping radio, a case study of the teleport messaging system
+described in the PPoPP'05 paper.
+  </description>
+  <implementations>
+    <impl lang="StreamIt" dir="streamit">
+      <file>FHR.str</file>
+      <desc>StreamIt version using teleport messaging.</desc>
+    </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <file>FHRFeedback.str</file>
+      <desc>StreamIt version using a feedback loop instead of messaging.</desc>
+    </impl>
+  </implementations>
+</benchmark>

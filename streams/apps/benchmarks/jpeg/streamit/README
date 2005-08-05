@@ -1,0 +1,17 @@
+JPEG Benchmark
+
+Author: Matthew Drake (madrake@gmail.com)
+
+The JPEG Benchmark is a work in progress. Right now the Transcoder part of the benchmark works correctly. It takes as input a bitmap image and then decodes it, specifies a much higher level of JPEG compression, and then re-encodes it. 
+
+To run the benchmark:
+& cd streamit
+& make default
+(Wait till it tells you that it's finished reencoding the image, then wait a few seconds for it to finish writing to the file. In the current version of StreamIt, the use of -nosched requires you to manually kill the program)
+& make outputjpg
+The input jpeg is in input/input.jpg
+The output jpeg will be in streamit/output.jpg
+
+To run the JPEG Transcoder, you need a 640x480 JPEG file that uses the
+baseline quantization tables. The sample image in /input follows this spec. The c utilities in utils convert it to an integer format
+readable within StreamIt. 

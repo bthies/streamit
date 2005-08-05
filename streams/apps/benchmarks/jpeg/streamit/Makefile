@@ -1,6 +1,6 @@
-default: transcoder
+default: run_transcoder
 
-transcoder: Transcoder.str input.jpg.int
+run_transcoder: Transcoder.str input.jpg.int
 	strc Transcoder.str -library -nosched
 
 input.jpg.int: ../input/input.jpg ../utils/b2i

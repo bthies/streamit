@@ -1,0 +1,15 @@
+<benchmark>
+  <name>jpeg</name>
+  <desc>JPEG decoder/encoder</desc>
+  <description>
+The JPEG Transcoder takes as input a JPEG image and then decodes it,
+specifies a much higher level of JPEG compression, and then re-encodes
+it as a JPEG.
+  </description>
+  <implementations>
+    <impl lang="StreamIt" dir="streamit">
+      <file>Transcoder.str</file>
+      <desc>StreamIt version of JPEG decoder/encoder.</desc>
+    </impl>
+  </implementations>
+</benchmark>

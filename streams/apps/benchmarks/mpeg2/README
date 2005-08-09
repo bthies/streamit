@@ -1,0 +1,57 @@
+PACKAGE
+mpeg2
+
+AUTHOR
+Matthew Drake (madrake@gmail.com)
+
+COPYRIGHT
+
+Copyright 2003 by the Massachusetts Institute of Technology.
+Permission to use, copy, modify, and distribute this
+software and its documentation for any purpose and without
+fee is hereby granted, provided that the above copyright
+notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting
+documentation, and that the name of M.I.T. not be used in
+advertising or publicity pertaining to distribution of the
+software without specific, written prior permission.
+M.I.T. makes no representations about the suitability of
+this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+
+REQUIRES
+dct_ieee
+
+DESCRIPTION
+
+The mpeg2 package contains functions for encoding and decoding MPEG2 video files, converting to and from MPEG2 video formats, and generating video output. As much as possible this package complies with the MPEG-2 specification (ISO/IEC 13818-2) for MPEG-2 video. This package does not handle general MPEG-2 streams that contain audio. Right now the MPEG stream components in this package implement only a small subset of the overall MPEG-2 functionality, but the goal is to continue improving this functionality. 
+
+VALID TARGETS
+
+A number of targets can be made within this package:
+
+   player: Attempts to playback a sample MPEG-2 video file (.M2V). Playback is done using the ImageDisplay StreamIt component and will therefore probably only work in the library. This target is useful for a visual demonstration of the MPEG-2 decoder.
+   mpeg2bmp: Attempts to convert a sample MPEG-2 video file into a series of bitmaps. One bitmap is created for every frame of the video.
+
+DETAILED INSTRUCTIONS
+
+First, setup the dct_ieee package as neccesary. Refer to the README file in the dct_ieee package for instructions.
+
+Then change to the source code directory.
+$ cd streamit
+
+Make sure the DCT_HOME variable in the Makefile points to the correct location of the dct_ieee StreamIt package. If you got these packages through a StreamIt CVS checkout, you should only have to change the STREAMIT_HOME variable to point to your StreamIt source directory to fix the DCT_HOME variable. If you got these packages by some other means, it may be located elsewhere.
+
+Then make the target of your choice.
+$ make <target>
+
+If no target is specified, the target is assumed to be the player.
+
+Note that make is used to actually run the various programs.
+
+StreamIt programs which want to use this package as a library will probably want to link against all the targets listed under LIBMPEG2 in this package's Makefile. If programs wish to link against either the BMP.str or the BinaryFile.str files, then please notify me and I'll seperate those out into their own package, since they don't directly have anything to do with MPEG.
+
+This DCT library uses the experimental StreamItDocs program, which generates HTML code documentation similar to Javadocs. To generate these pages:
+$ make docs
+
+This will generate html files documenting the API for the various StreamIt files. For details on using functions in this library, please make the documentation and refer to that.

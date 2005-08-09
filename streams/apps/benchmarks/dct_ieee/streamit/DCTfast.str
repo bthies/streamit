@@ -1,0 +1,44 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that implement Discrete Cosine Transforms and
+ * their inverses.  When reference is made to the IEEE DCT specification, it
+ * is refering to the IEEE DCT specification used by both MPEG and JPEG.
+ * A definition of what makes an 8x8 DCT conform to the IEEE specification, as well
+ * as a pseudocode implementation, can be found in Appendix A of the MPEG-2 specification
+ * (ISO/IEC 13818-2) on P. 125. 
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file DCTfast.str
+ * @version 1.0
+ */
+
+/**
+ * Transforms an 8x8 signal from the frequency domain to the signal domain
+ * using an inverse Discrete Cosine Transform in accordance with
+ * the IEEE specification for a 2-dimensional 8x8 iDCT.
+ * @input 64 values representing an 8x8 array of values in the 
+ *        frequency domain, ordered
+ *        by row and then column. Vertical frequency increases 
+ *        along each row and horizontal frequency along each column.
+ * @output 64 values representing an 8x8 array of values in the
+ *        signal domain, ordered by row and then column.
+ */
+int->int pipeline iDCT8x8_ieee {
+  add iDCT_2D_int(8);
+}

@@ -1,0 +1,69 @@
+PACKAGE
+dct_ieee
+
+AUTHOR
+Matthew Drake (madrake@gmail.com)
+
+COPYRIGHT
+
+Copyright 2003 by the Massachusetts Institute of Technology.
+Permission to use, copy, modify, and distribute this
+software and its documentation for any purpose and without
+fee is hereby granted, provided that the above copyright
+notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting
+documentation, and that the name of M.I.T. not be used in
+advertising or publicity pertaining to distribution of the
+software without specific, written prior permission.
+M.I.T. makes no representations about the suitability of
+this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+
+DESCRIPTION
+
+The dct_ieee package contains functions that implement Discrete Cosine Transforms and Inverse Discrete Cosine Transforms in accordance with IEEE specifications for such operations. The IEEE specified DCT is used in both the MPEG and JPEG standards. A definition of what makes a DCT or inverse DCT implementation conform to the IEEE specification can be found in Appendix A of the MPEG-2 specification (ISO/IEC 13818-2) on P. 125.
+
+DCT VERSIONS
+
+This package does not include an executable pipeline itself; it's stream components are meant to be used within other stream graphs. There are three versions of the code which can be used:
+
+   reference: A reference implementation based on the DCT code found within the C reference MPEG implementation.
+
+   fast: An intuitive StreamIt DCT implementation based on the formula for the DCT and its natural representation in StreamIt. The 2-Dimensional DCT is broken down into 1-Dimensional DCTs in perpendicular directions. (Note: It may not actually be faster than the reference implementation. However, ideally it will be.)
+
+   comparison: Numerically equivalent to the reference implementation. However, this will run the numbers through both the reference DCT components and the fast DCT components and report discrepancies between the two. This version is substantially slower than either the reference or the fast DCT versions.
+
+For normal every day use, I recommend the fast version. It is not always numerically equivalent to the reference implementation; however, I believe it is still within the IEEE specification for the DCT (which is defined statistically with a margin of error). However, I have not formally checked this. If you are extremely concerned about the accuracy of results - for instance, if you are debugging a StreamIt program which uses a DCT and you are comparing your results against some known correct output - then I recommend the reference version. If you want to compare the fast version against the reference version to see whether their outputs deviate, use the comparision DCT.
+
+DETAILED INSTRUCTIONS
+
+First, change to the source code directory.
+$ cd streamit
+
+Make the implementation of the DCT library you wish to use (reference, fast, or comparison) 
+$ make <version>
+
+For example, to make the reference version type:
+$ make reference
+
+If no version is specified, the fast version is used.
+
+Only one version of the library may be used at a time. To change which version of the library your applications are using, just make the appropriate version.
+
+StreamIt programs which use the DCT library should link against [DCTinternal.str] and [DCTexternal.str]. DCTexternal.str will not exist until you make a version of the library.
+
+In addition to providing the IEEE compliant 8x8 DCT and iDCT functions, the DCT library contains a number of DCT and iDCT functions for transforming arbitrary 1D and 2D signals of any size. If one only wants to use these functions they need only link against the DCTinternal.str library.
+
+This DCT library uses the experimental StreamItDocs program, which generates HTML code documentation similar to Javadocs. To generate these pages:
+$ make docs
+
+This will generate html files documenting the API for the DCTinternal.str and DCTexternal.str (if it exists) files. For details on using functions in this DCT library, please make the documentation and refer to that.
+
+
+
+
+
+
+
+
+

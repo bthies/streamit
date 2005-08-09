@@ -1,15 +1,56 @@
 STREAMIT_HOME = ~/streams
+PREPROCESS = ${STREAMIT_HOME}/misc/scripts/preprocess.perl
+STREAMITDOC = ${STREAMIT_HOME}/misc/scripts/streamitdoc
+STRC_OPTIONS = -library -nosched
 
-default: run
+DCT_HOME = ${STREAMIT_HOME}/apps/benchmarks/dct_ieee/streamit
+LIBDCT = ${DCT_HOME}/DCTinternal.str ${DCT_HOME}/DCTexternal.str
+
+LIBMPEG2 = MPEGdecoder.str ColorSpace.str Misc.str 
+
+
+default: player
 
 clean:	
-	rm -f MPEGdecoder.str && rm -f *.java && rm -f *.class && rm -f *.dot && rm -f *.html && rm -f *.bmp
+	rm -f MPEGdecoder.str
+	rm -f BinaryFile.str
+	rm -f BMP.str
+	rm -f *.java
+	rm -f *.class
+	rm -f *.dot
+	rm -f *.html
+	rm -f *.bmp
 
-run:	MPEGdecoder.str
-	strc MPEGdecoder.str -library -nosched
+# NOTE: BinaryFile.str is actually only needed for compiling outside the library
+# where one must use the FileReader<int>
 
-MPEGdecoder.str: MPEGdecoder.str.pre ${STREAMIT_HOME}/misc/scripts/preprocess.perl DCT.str
-	${STREAMIT_HOME}/misc/scripts/preprocess.perl MPEGdecoder.str.pre -o MPEGdecoder.str
+player:	MPEGplayer.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT}
+	strc MPEGplayer.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
 
-docs:	DCT.str ${STREAMIT_HOME}/misc/scripts/streamitdoc
-	${STREAMIT_HOME}/misc/scripts/streamitdoc DCT.str -o DCT.html
+mpeg2bmp:	MPEGtoBMP.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT}
+	strc MPEGtoBMP.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
+
+MPEGdecoder.str: MPEGdecoder.str.pre ${PREPROCESS}
+	${PREPROCESS} MPEGdecoder.str.pre -o MPEGdecoder.str
+
+BinaryFile.str: BinaryFile.str.pre ${PREPROCESS}
+	${PREPROCESS} BinaryFile.str.pre -o BinaryFile.str
+
+BMP.str: BMP.str.pre ${PREPROCESS}
+	${PREPROCESS} BMP.str.pre -o BMP.str
+
+docs:	${STREAMITDOC}
+	${STREAMITDOC} BinaryFile.str.pre -o BinaryFile.str.pre.html
+	${STREAMITDOC} BMP.str.pre -o BMP.str.pre.html
+	${STREAMITDOC} ColorSpace.str -o ColorSpace.str.html
+	${STREAMITDOC} Misc.str -o Misc.str.html
+	${STREAMITDOC} MPEGdecoder.str.pre -o MPEGdecoder.str.pre.html
+	${STREAMITDOC} MPEGplayer.str -o MPEGplayer.str.html
+	${STREAMITDOC} MPEGtoBMP.str -o MPEGtoBMP.str.html
+
+
+
+
+
+
+

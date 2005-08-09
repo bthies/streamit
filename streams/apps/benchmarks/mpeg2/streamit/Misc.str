@@ -1,0 +1,72 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains various functions that are used by a variety of
+ * other stream components.
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file Misc.str
+ * @version 1.0
+ */
+
+/**
+ * Saturates a stream of integers, forcing them to lie within a specified range. Values
+ * greater than the maximum are saturated to have the max value, and values less than the
+ * minimum are saturated to have the minimum value.
+ * @param min The minimum value any integer in the stream is allowed to assume.
+ * @param max The maximum value any integer in the stream is allowed to assume.
+ * @input A stream of integers.
+ * @output A stream of integers lying between min and max, inclusive.
+ */
+int->int filter Saturation(int min, int max) {
+  work pop 1 push 1 {
+    int val = pop();
+    if (val > max) {
+      push(max); 
+    } else if (val < min) {
+      push(min);
+    } else {
+      push(val);
+    }
+  }
+}
+
+/** 
+ * Duplicates a sequence of data items a given number of times.
+ * @param numitems The number of items in a sequence.
+ * @param numtimes The number of times the sequence should be repeated.
+ * @input A sequence of numitems values.
+ * @output A sequence of numitems values repeated numtimes.
+int->int splitjoin Repeat(int numitems, int numtimes) {
+  split duplicate;
+  for (int i = 0; i < numtimes; i++)
+    add Identity<int>;
+  join roundrobin(numitems);
+}
+
+/** 
+ * Divide every value in the stream by a given number, truncating to the nearest
+ * integer.
+ * @param div The denominator in the division.
+ * @input An integer
+ * @output An integer related to the input by output = floor(input / div)
+int->int filter DivideBy(int div) {
+  work pop 1 push 1 {
+    push(pop()/div);
+  }
+}

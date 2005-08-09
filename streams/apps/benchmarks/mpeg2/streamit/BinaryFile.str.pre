@@ -1,0 +1,68 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that allow one to read and write binary files
+ * within StreamIt without the presence of a FileReader<bit> built-in stream.
+ * Instead, a FileReader/Writer<int> can be used, immediately followed by the 
+ * appropriate conversion. 
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file BinaryFile.str.pre
+ * @version 1.0
+ */
+
+/**
+ * Converts a sequence of integers read from a file with FileReader<int> into a bit stream
+ * matching the underlying bit representation of the original file. It does this by 
+ * reordering the bits back into their original order.
+ * @input An integer read from a file.
+ * @output 32 bits representing the original bit data that the integer was generated from.
+ */
+int->bit filter IntStream2BitStream() {
+  work pop 1 push 32 {
+    int some_int = pop();
+    int b0 = ((some_int >> 24) & 0x000000FF);
+    int b1 = (some_int & 0x00FF0000) >> 8;
+    int b2 = (some_int & 0x0000FF00) << 8;
+    int b3 = (some_int & 0x000000FF) << 24;
+    some_int = (b0 | b1 | b2 | b3);
+    pushs(32,some_int);
+  }
+}
+
+/** 
+ * Converts a bit stream into a sequence of integers suitable for writing to a file with a 
+ * FileWriter<int>. The integers written by the FileWriter will create a file matching the
+ * underlying representation of the bit stream. Note that if less than full 32 bits is 
+ * sent to this filter it won't generate output, so components which generate bit streams
+ * for use by this filter must be careful to generate output in multiples of 32 bits, or be
+ * aware of the truncation that will happen.
+ * @input 32 bits representing bit data to be stored in a file.
+ * @output An integer suitable for file writing equivalent to the original 32 bits.
+bit->int filter BitStream2IntStream() {
+  work pop 32 push 1 {
+    int some_int;
+    pops(32,some_int);
+    int b0 = ((some_int >> 24) & 0x000000FF);
+    int b1 = (some_int & 0x00FF0000) >> 8;
+    int b2 = (some_int & 0x0000FF00) << 8;
+    int b3 = (some_int & 0x000000FF) << 24;
+    some_int = (b0 | b1 | b2 | b3);
+    push(some_int);
+  }
+}

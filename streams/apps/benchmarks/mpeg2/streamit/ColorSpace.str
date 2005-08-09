@@ -1,0 +1,80 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains components for converting between various different
+ * color spaces.
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file ColorSpace.str
+ * @version 1.0
+ */
+
+int->int pipeline ColorSpaceConversion_YCbCrtoRGB {
+  add YCbCrtoRGB;
+  add Saturation(0,255);
+}
+
+/**
+ * Converts a pixel in YCbCr format to a pixel in RGB format according to Recommendation
+ * ITU-R BT.709 for color space transformations. This is the default transformation that should
+ * be used for MPEG-2 videos. This transformation is given in Table 6-9 on P.47 of the MPEG-2 13818-2
+ * IEEE specification (entry #1). The recommendation specifies the transform from RGB to YCbCR. This
+ * function's transformation coefficients were calculated using MATLAB and an inverse matrix transform
+ * based on the RGB to YCbCr conversion.
+ * @input Three integers in YCbCr color space and order.
+ * @output Three integers in RGB color space and order.
+ */
+int->int filter YCbCrtoRGB {
+  // My values are centered between +/- 128, and it expects values in the 
+  // 0 to 255 range, so we add first and then compute.
+  // Saturation of the output is performed downstream.
+  work pop 3 push 3 {
+    int Y = pop() + 128;
+    int Cb = pop() + 128;
+    int Cr = pop() + 128; 	
+
+    float Ey = (((float) Y) - 16)/219.0;
+    float Epb = (((float) Cb)-128)/224.0;
+    float Epr = (((float) Cr)-128)/224.0;
+   
+    float EG = 0.999813*Ey - 0.187227*Epb - 0.467983*Epr;
+    float EB = 1.001856*Ey + 1.855625*Epb + 0.001005*Epr;
+    float ER = 1.000001*Ey + 0.000715*Epb + 1.575164*Epr;
+   
+    int R = (int) round(ER*256);
+    int G = (int) round(EG*256);
+    int B = (int) round(EB*256);
+    
+    push(R);
+    push(G);
+    push(B);
+
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+

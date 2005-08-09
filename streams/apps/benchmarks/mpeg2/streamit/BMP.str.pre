@@ -1,0 +1,150 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that allow one to encode BMP images.
+ * This code is based on several Google searches for "BMP file format"
+ * and is based on no specification; nevertheless, it seems to work
+ * fairly well. 
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file BMP.str.pre
+ * @version 1.0
+ */
+
+/**
+ * Encodes an image to a bitmap (BMP) file.
+ * @param width The resolution width of the image. This variable is only needed until the StreamIt
+ *              language supports dynamically reconfiguring splijtoins.
+ * @param height The resolution height of the image. This variable is only needed until the StreamIt
+ *               language supports dynamically reconfiguring splitjoins.
+ * @input An image consisting of a number of pixels equal to its width * height * 3. The data
+ *        is ordered top to bottom, left to right, and RGB color order.
+ * @output Outputs a bitstream suitable for generating a .BMP file
+ */
+int->bit pipeline rawImageStream_to_BMPStream(int width, int height) {
+  add FlipVertically(width, height);
+  add BMPStreamCreator(width, height);
+}
+
+// Flip it to be correctly ordered for BMP processing
+/**
+ * @internal
+ */
+int->int splitjoin FlipVertically(int width, int height) {
+  split roundrobin(3);
+  for (int i = 0; i < width; i++) {
+    add ReversePixelOrder(height*3);
+  }
+  join roundrobin(3); 
+}
+
+/**
+ * @internal
+ */
+int->int filter ReversePixelOrder(int len) {
+  work pop len push len {
+    int[len] order;
+    for (int i = 0; i < len; i++) 
+      order[i] = pop();
+    for (int i = len-1; i >= 0; i--)
+      push(order[i]);
+  }
+}
+
+/**
+ * @internal
+ */
+int->bit filter BMPStreamCreator(int width, int height) {
+  boolean ran;
+
+  init {
+    ran = false;
+  }
+
+  work pop 1 push 1 {
+    if (!ran) {
+      print("Writing BMP File...");
+      ran = true;
+
+      int colordepth = 24;    
+
+      int tempval;
+      
+      tempval = 0x424D; // 'BM'
+ 
+      pushs(16, tempval);
+
+      // File Size
+      int filesize = (width*height*colordepth/8) + 54;
+      intpushs(filesize);
+
+      // Reserved, must be 0
+      pushs(32,0);
+  
+      // Offset to image data
+      tempval = 54; // Data starts 54 bytes into file
+      intpushs(tempval);
+      
+      // Header Size
+      tempval = 40; // Header is 40 bytes in size.
+      intpushs(tempval);
+
+      // Width
+      intpushs(width);
+
+      // Height
+      intpushs(height);
+
+      // # of Color Planes, 1
+      shortpushs(1);
+ 
+      // Bits per pixel
+      shortpushs(24);
+
+      // Compression Type, 0
+      pushs(32,0);
+
+      // Image Size
+      int image_size = width*height*3;
+      intpushs(image_size);
+
+      // Pixels per meter x, y, # of colors, important colors
+      // All rather unimportant.
+      intpushs(3780);
+      intpushs(3780);
+      pushs(32,0);
+      pushs(32,0);
+
+      // Now the actual data
+
+      int val = 1;
+      for (int i = 0; i < width*height*3; i++) {
+        val = pop();
+        pushs(8,val);
+      }
+
+      // This just makes sure all data gets flushed properly
+      // Since we currently write data as integers
+      pushs(32,0);
+      pushs(32,0);
+      pushs(32,0);
+      pushs(32,0);
+      print("Done Writing BMP File...");
+    }
+  }
+}

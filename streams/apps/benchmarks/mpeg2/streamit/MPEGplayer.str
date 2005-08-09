@@ -1,0 +1,41 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains a sample MPEG player which will play back a
+ * video file. It uses a number of experimental features and will
+ * probably only run in the library.
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file MPEGplayer.str
+ * @version 1.0
+ */
+
+void->void pipeline MPEGplayer() {
+
+  add FileReader<bit>("../input/cact_015.m2v");
+  // For compiling outside the library, if support has not yet been added for FileReader<bit>
+  // substitute the following, which will cause a slight performance hit.
+  // add FileReader<int>("../input/cact_015.m2v");
+  // add IntStream2BitStream();
+
+  int width=352;  // Hacked till we have reprogrammable splitjoins FEATURETODO
+  int height=240;
+  add MPEGStream_to_rawImageStream(width, height);
+
+  add ImageDisplay(width, height);
+}

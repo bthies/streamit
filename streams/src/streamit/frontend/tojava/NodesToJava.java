@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.105 2005-07-19 19:45:18 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.106 2005-08-09 01:41:36 madrake Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -838,7 +838,8 @@ public class NodesToJava implements FEVisitor
             // Magic for builtins.
             if (creator.getName().equals("Identity") ||
                 creator.getName().equals("FileReader") ||
-                creator.getName().equals("FileWriter")) {
+                creator.getName().equals("FileWriter") ||
+                creator.getName().equals("ImageDisplay")) {
                 result = "new " + creator.getName() + "(";
             }
             else

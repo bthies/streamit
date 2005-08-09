@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.30 2005-07-13 22:19:14 janiss Exp $
+ * @version $Id: SemanticChecker.java,v 1.31 2005-08-09 01:41:27 madrake Exp $
  */
 public class SemanticChecker
 {
@@ -93,6 +93,7 @@ public class SemanticChecker
         names.put("Identity", ctx);
         names.put("FileReader", ctx);
         names.put("FileWriter", ctx);
+        names.put("ImageDisplay", ctx);
 
         for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
         {

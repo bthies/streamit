@@ -52,6 +52,7 @@ int->int filter Saturation(int min, int max) {
  * @param numtimes The number of times the sequence should be repeated.
  * @input A sequence of numitems values.
  * @output A sequence of numitems values repeated numtimes.
+ */
 int->int splitjoin Repeat(int numitems, int numtimes) {
   split duplicate;
   for (int i = 0; i < numtimes; i++)
@@ -65,6 +66,7 @@ int->int splitjoin Repeat(int numitems, int numtimes) {
  * @param div The denominator in the division.
  * @input An integer
  * @output An integer related to the input by output = floor(input / div)
+ */
 int->int filter DivideBy(int div) {
   work pop 1 push 1 {
     push(pop()/div);

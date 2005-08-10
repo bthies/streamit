@@ -54,6 +54,7 @@ int->bit filter IntStream2BitStream() {
  * aware of the truncation that will happen.
  * @input 32 bits representing bit data to be stored in a file.
  * @output An integer suitable for file writing equivalent to the original 32 bits.
+ */
 bit->int filter BitStream2IntStream() {
   work pop 32 push 1 {
     int some_int;

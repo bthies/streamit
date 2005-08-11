@@ -1077,7 +1077,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	for (int i = 0; i < dims.length; i++) {
 	    if (dims[i] != null) {
 		JExpression newExp = (JExpression)dims[i].accept(this);
-		if (newExp!=dims[i]) {
+		if (write && newExp!=dims[i]) {
 		    dims[i] = newExp;
 		}
 	    }
@@ -1238,9 +1238,15 @@ public class Propagator extends SLIRReplacingVisitor {
                                             JExpression[] args)
     {
 	prefix.accept(this);
-        for (int i = 0; i < args.length; i++)
-            args[i] = (JExpression)args[i].accept(this);
+	for (int i = 0; i < args.length; i++) {
+	    if (args[i] != null) {
+		JExpression newArg = (JExpression)args[i].accept(this);
+		if (write && newArg != args[i])
+		    args[i] = newArg;
+	    }
+	}
 
+	
         // Look for known idempotent functions.
         if (args.length == 1 && args[0].isConstant())
         {

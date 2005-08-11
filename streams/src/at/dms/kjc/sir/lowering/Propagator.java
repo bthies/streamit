@@ -137,9 +137,11 @@ public class Propagator extends SLIRReplacingVisitor {
 	    body.accept(this);
 	} else {
 	    Propagator newProp=construct(cloneTable(constants),false);
+	   
 	    cond.accept(newProp);
 	    body.accept(newProp);
 	    Enumeration remove=newProp.changed.keys();
+	    //BUG!!!  visiting with newProp could replace references!
 	    while(remove.hasMoreElements()) {
 		JLocalVariable var=(JLocalVariable)remove.nextElement();
 		constants.remove(var);
@@ -214,11 +216,78 @@ public class Propagator extends SLIRReplacingVisitor {
 		    //System.out.println("\n[new Exp]Adding portal to constants, variable is: "+self.getIdent()+" constants: "+constants+" at: "+self.getTokenReference());
 		    constants.put(self, new SIRPortal(type));
 		}
+	    } else if (newExp instanceof JArrayInitializer) {
+		recordArrayInit((JArrayInitializer)newExp, 
+				self);
 	    }
+	    
 	}
 	return self;
     }
     
+
+    /*** create structures for array initializers in the hash table, 
+	 piggy back on Jasp's code for array propagation
+	 So, create an object array that will represent the array and populate it
+	 with the values of the array initializer, then add it to the hash table
+    **/
+    private void recordArrayInit(JArrayInitializer arrInit, 
+				 JVariableDefinition self) 
+    {
+	if (arrInit.getElems().length == 0)
+	    return;
+	
+	if (write)
+	    self.setExpression(arrInit);
+
+	
+	//NOTE: only handle 1 or 2 dimensional rectangular arrays right now
+	if (!(arrInit.getElems()[0] instanceof JArrayInitializer)) {
+	    Object[] array = new Object[arrInit.getElems().length];
+	    
+	    for (int i = 0; i < arrInit.getElems().length; i++) {
+		if (!(arrInit.getElems()[i] instanceof JLiteral)) {
+		    System.err.println("WARNING: Only rectangular one or two dimensional array" + 
+				       "initializers of literals supported in constant prop... ");
+		    return;
+		}
+		
+		array[i] = arrInit.getElems()[i];
+	    }
+	    constants.put(self, array);
+	    added = true;
+	    return;
+	}  //now look for 2 dimensional rectangular arrays
+	else if (arrInit.getElems()[0] instanceof JArrayInitializer &&
+		 ((JArrayInitializer)arrInit.getElems()[0]).getElems().length > 0 &&
+		 !(((JArrayInitializer)arrInit.getElems()[0]).getElems()[0] instanceof JArrayInitializer)) {
+	    Object[][] array = new Object[arrInit.getElems().length]
+		[((JArrayInitializer)arrInit.getElems()[0]).getElems().length];
+	    
+	    for (int i = 0; i < array.length; i++) {
+		//check each element of the 1st dim to make sure it is an array init and it has 
+		//the same number of elements...
+		if (!(arrInit.getElems()[i] instanceof JArrayInitializer) ||
+		    ((JArrayInitializer)arrInit.getElems()[i]).getElems().length != array[0].length) {
+		    System.err.println("WARNING: Only rectangular one or two dimensional array" + 
+				       "initializers of literals supported in constant prop... ");
+		    return;
+		}   
+		for (int j = 0; j < array[0].length; j++) {
+		    //now place each initial val in the array we are placing in the hash table
+		    array[i][j] = ((JArrayInitializer)arrInit.getElems()[i]).getElems()[j];
+		}
+	    }
+	    
+	    constants.put(self, array);
+	    added = true;
+	    return;
+	}
+	System.err.println("WARNING: Only rectangular one or two dimensional array" + 
+				       "initializers of literals supported in constant prop... ");
+    }
+    
+
     /**
      * Visits a switch statement
      */

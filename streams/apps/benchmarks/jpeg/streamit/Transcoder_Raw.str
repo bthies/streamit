@@ -1,0 +1,1480 @@
+// TODO - use faster DCT
+// TODO - i2b and b2i wrappers
+// TODO - try breaking up output encoding into chunks
+
+// --- The Main Loop ---
+
+void->void pipeline Transcoder_Raw {
+    add FileReader<int>("./input.jpg.int");
+    add DummyFilter();
+    add JPEGByteStream_Parser;
+    add DummyFilter();
+    //add Identity<int>();
+
+    add ChannelUnencoding;
+    add YCbCrtoRGB;
+
+    //    add WriteRawData;
+    add RGBtoYCbCr;
+
+    add ChannelEncoding;
+
+    add DummyFilter();
+    add JPEGByteStream_Creator;
+    add DummyFilter;
+    add FileWriter<int>("./output.jpg.int");
+}
+
+int->int filter DummyFilter() {
+    work push 1 pop 1 {
+	push(pop());
+    }
+}
+
+int->int filter DummyFilterPrint() {
+    work push 1 pop 1 {
+	int x;
+	x = pop();
+	print(x);
+	push(x);
+    }
+}
+
+
+float->float filter DummyFilterPrintFloat() {
+    work push 1 pop 1 {
+	float x;
+	x = pop();
+	print(x);
+	push(x);
+    }
+}
+
+int->int splitjoin WriteRawData {
+    split duplicate;
+    add Identity<int>;
+    add FileWriter<int>("./output.raw.int");
+    join roundrobin(1, 0);    
+}
+
+// --- The Channel Coding ---
+
+int->float splitjoin ChannelUnencoding {
+    split roundrobin(64);
+    add ChannelUnencoder_Y;
+    add ChannelUnencoder_C; // Cb
+    add ChannelUnencoder_C; // Cr
+    join roundrobin(1);
+}
+
+float->int splitjoin ChannelEncoding {
+    split roundrobin(1);
+    add ChannelEncoder_Y;
+    add ChannelEncoder_C; // Cb
+    add ChannelEncoder_C; // Cr
+    join roundrobin(64);	
+}
+
+int->float pipeline ChannelUnencoder_Y {
+    add ZigZagUnordering;
+    add BlockDCDifferenceDecoder;
+    add staticLosslessDeQuantization;
+    add iDCT_2D(8);
+    add Add(128);
+}
+
+float->int pipeline ChannelEncoder_Y {
+    add Add(-128);
+    add DCT_2D(8);
+    add staticLuminanceQuantization_20;
+    add BlockDCDifferenceEncoder;
+    add ZigZagOrdering;
+}
+
+int->float pipeline ChannelUnencoder_C {
+    add ZigZagUnordering;
+
+    add BlockDCDifferenceDecoder;
+    add staticLosslessDeQuantization;
+    add iDCT_2D(8);
+    add Add(128);
+}
+
+float->int pipeline ChannelEncoder_C {
+    add Add(-128);
+    add DCT_2D(8);
+    add staticLuminanceQuantization_20;
+    add BlockDCDifferenceEncoder;
+    add ZigZagOrdering;	
+}
+
+float->float filter Add(float n) {
+    work pop 1 push 1 {
+        push(pop() + n);
+    }
+}
+
+/* Parameters: quantizationTable is an array containing the quantization constants 
+   which the input data will be scaled by.
+   Input: A 64 entry array of floats representing an 8x8 array of DCT frequency values.
+   Output: The frequencies divided by the values in the quantizationTable and then rounded
+   to the nearest integer. */
+float->int filter staticQuantization(int[64] quantizationTable) {
+    work pop 64 push 64 {
+        for (int i = 0; i < 64; i++) {
+		// TODO - Hack to increase compression
+            float val = pop() / (5*quantizationTable[i]);
+		//            push((int) (round(val)));
+            push((int) ((val)));
+        }
+    }
+}
+
+/* Parameters: quantizationTable is an array containing the quantization constants 
+   which the input data will be scaled by.
+   Input: A 64 entry array of floats representing an 8x8 array of normalized DCT frequency values.
+   Output: The frequencies multiplied by the values in the quantizationTable and then rounded
+   to the nearest integer. */
+int->float filter staticDeQuantization(int[64] quantizationTable) {
+    work pop 64 push 64 {
+        for (int i = 0; i < 64; i++) {
+            int val = pop() * quantizationTable[i];
+            push((float) val);
+        }
+    }
+}
+
+float->int pipeline staticLosslessQuantization {
+    int[64] table_LosslessQuantizationTable =
+        {1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1};
+    add staticQuantization(table_LosslessQuantizationTable);
+}
+
+int->float pipeline staticLosslessDeQuantization {
+    int[64] table_LosslessQuantizationTable =
+        {1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1};
+    add staticDeQuantization(table_LosslessQuantizationTable);
+}
+
+float->int pipeline staticLuminanceQuantization_20 {
+    /* 06 04 05 06 05 04 06 06 
+       05 06 07 07 06 08 0a 10 
+       0a 0a 09 09 0a 14 0e 0f 
+       0c 10 17 14 18 18 17 14 
+       16 16 1a 1d 25 1f 1a 1b 
+       23 1c 16 16 20 2c 20 23 
+       26 27 29 2a 29 19 1f 2d 
+       30 2d 28 30 25 28 29 28 */
+    int[64] table_LuminanceQuantizationTable = 
+        {6, 4, 5, 6, 5, 4, 6, 6,
+         5, 6, 7, 7, 5, 8, 10, 16,
+         10, 10, 9, 9, 10, 20, 13, 15,
+         12, 16, 23, 20, 24, 24, 23, 20,
+         22, 22, 26, 29, 37, 31, 26, 27,
+         35, 28, 22, 22, 32, 44, 32, 35,
+         38, 39, 41, 43, 41, 25, 31, 45,
+         48, 45, 40, 48, 37, 40, 41, 40};
+    add staticQuantization(table_LuminanceQuantizationTable);
+}
+
+float->int pipeline staticChrominanceQuantization_20 {
+    /* 07 07 07 0a 08 0a 13 0a 
+       0a 13 28 1a 16 1a 28 28 
+       28 28 28 28 28 28 28 28 
+       28 28 28 28 28 28 28 28 
+       28 28 28 28 28 28 28 28 
+       28 28 28 28 28 28 28 28 
+       28 28 28 28 28 28 28 28 
+       28 28 28 28 28 28 28 28 */
+    int[64] table_ChrominanceQuantizationTable =
+        {7, 7, 7, 10, 8, 10, 19, 10,
+         10, 19, 40, 26, 22, 26, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40};
+    add staticQuantization(table_ChrominanceQuantizationTable);
+}
+
+// Works for this particular image
+int->float pipeline staticLuminanceDeQuantization_80 {
+    /* 06 04 04 06 0a 10 14 18
+	 05 05 06 08 0a 17 18 16
+	 06 05 06 0a 10 17 1c 16
+	 06 07 09 0c 14 23 20 19
+	 07 09 0f 16 1b 2c 29 1f
+	 0a 0e 16 1a 20 2a 2d 25
+	 14 1a 1f 23 29 30 30 28
+	 1d 25 26 27 2d 28 29 28 */
+    int[64] table_LuminanceQuantizationTable = 
+        {6, 4, 4, 6, 10, 16, 20, 24,
+         5, 5, 6, 8, 10, 23, 24, 22,
+         6, 5, 6, 10, 16, 23, 28, 22,
+         6, 7, 9, 12, 20, 35, 32, 25,
+         7, 9, 15, 22, 27, 44, 41, 31,
+         10, 14, 22, 26, 32, 42, 45, 37,
+         20, 26, 31, 35, 41, 48, 48, 40,
+         29, 37, 38, 39, 45, 40, 41, 40};
+    add staticDeQuantization(table_LuminanceQuantizationTable);	
+}
+
+float->int pipeline staticLuminanceQuantization_80 {
+    int[64] table_LuminanceQuantizationTable = 
+        {6, 4, 4, 6, 10, 16, 20, 24,
+         5, 5, 6, 8, 10, 23, 24, 22,
+         6, 5, 6, 10, 16, 23, 28, 22,
+         6, 7, 9, 12, 20, 35, 32, 25,
+         7, 9, 15, 22, 27, 44, 41, 31,
+         10, 14, 22, 26, 32, 42, 45, 37,
+         20, 26, 31, 35, 41, 48, 48, 40,
+         29, 37, 38, 39, 45, 40, 41, 40};
+    add staticQuantization(table_LuminanceQuantizationTable);
+}
+												
+int->float pipeline staticChrominanceDeQuantization_80 {
+    /* 07 07 0a 13 28 28 28 28
+       07 08 0a 1a 28 28 28 28 
+       0a 0a 16 28 28 28 28 28
+       13 1a 28 28 28 28 28 28
+       28 28 28 28 28 28 28 28
+       28 28 28 28 28 28 28 28
+       28 28 28 28 28 28 28 28
+       28 28 28 28 28 28 28 28 */
+    int[64] table_ChrominanceQuantizationTable = 
+        {7, 7, 10, 19, 40, 40, 40, 40,
+         7, 8, 10, 26, 40, 40, 40, 40,
+         10, 10, 23, 40, 40, 40, 40, 40,
+         19, 26, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40};
+    add staticDeQuantization(table_ChrominanceQuantizationTable);	
+}
+
+float->int pipeline staticChrominanceQuantization_80 {
+    int[64] table_ChrominanceQuantizationTable = 
+        {7, 7, 10, 19, 40, 40, 40, 40,
+         7, 8, 10, 26, 40, 40, 40, 40,
+         10, 10, 23, 40, 40, 40, 40, 40,
+         19, 26, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40};
+    add staticQuantization(table_ChrominanceQuantizationTable);
+}
+
+/* Input: An 8x8 integer block represented by 64 integers.
+   Output: The first integer of the block represents the DC component of an 8x8 block.
+   the DC component is treated specially and is encoded as the difference
+   from the previous block, rather than storing it directly. */
+int->int splitjoin BlockDCDifferenceEncoder {
+    split roundrobin(1, 63);
+    add IntegerDifferenceEncoder;
+    add Identity<int>;
+    join roundrobin(1, 63);
+}
+
+/* Performs the reverse operation as BlockDCDifferenceEncoder */
+int->int splitjoin BlockDCDifferenceDecoder {
+    split roundrobin(1, 63);
+    add IntegerDifferenceDecoder;
+    add Identity<int>;
+    join roundrobin(1, 63);
+}
+
+/* Input: A series of integers.
+   Output: The first integer input is output unchanged. Each subsequent 
+   value output is the difference between the input and the previous
+   input. Repeats every 64 integers. */
+int->int feedbackloop IntegerDifferenceEncoder_FL{
+    join roundrobin;
+    body int->int filter {
+	  work pop 2 push 2 {
+		push(peek(0) - peek(1));
+		push(peek(0));
+		pop(); pop();
+	  }
+    }
+    loop Identity<int>;
+    split roundrobin;
+    enqueue 0;
+}
+
+/* RMR { version of the above difference encoder that does not use a loop */
+int->int filter IntegerDifferenceEncoder{
+    int state = 0;
+
+    work peek 1 pop 1 push 1 {
+	  push(peek(0) - state);
+	  state = pop();
+    }
+}
+
+/* Performs the reverse operation as IntegerDifferenceEncoder */
+int->int feedbackloop IntegerDifferenceDecoder_FL {
+    join roundrobin;
+    body int->int filter {
+	  work pop 2 push 1 {
+		push(peek(0) + peek(1));
+		pop(); pop();
+	  }
+    }
+    loop Identity<int>;
+    split duplicate;
+    enqueue 0;
+}
+
+/* RMR { version of the above difference decoder that does not use a loop */
+int->int filter IntegerDifferenceDecoder {
+    int state = 0;
+
+    work peek 1 pop 1 push 1 {
+	  state += pop();
+	  push(state);
+    }
+}
+
+/* Input: A sequence of 64 integers representing an 8x8 block.
+   Output: Outputs the integers in a diagonalized ordering (starting
+   in the top left corner, and then, starting with a move to the 
+   right, working back and forth along diagonals down to the 
+   bottom right corner.) */
+int->int filter ZigZagOrdering {
+    int[64] Ordering = {00, 01, 08, 16, 09, 02, 03, 10, 
+				17, 24, 32, 25, 18, 11, 04, 05,
+				12, 19, 26, 33, 40, 48, 41, 34,
+				27, 20, 13, 06, 07, 14, 21, 28,
+				35, 42, 49, 56, 57, 50, 43, 36, 
+				29, 22, 15, 23, 30, 37, 44, 51, 
+				58, 59, 52, 45, 38, 31, 39, 46,
+				53, 60, 61, 54, 47, 55, 62, 63};
+    work pop 64 push 64 {
+	  for (int i = 0; i < 64; i++)
+		push(peek(Ordering[i]));
+	  for (int i = 0; i < 64; i++)
+		pop();
+    }
+}
+
+/* Input: A sequence of 64 integers in a diagonalized order.
+   Output: A sequence of 64 integers representing an 8x8 block. */
+int->int filter ZigZagUnordering {
+    int[64] Ordering = {00, 01, 05, 06, 14, 15, 27, 28,
+				02, 04, 07, 13, 16, 26, 29, 42,
+				03, 08, 12, 17, 25, 30, 41, 43,
+				09, 11, 18, 24, 31, 40, 44, 53,
+				10, 19, 23, 32, 39, 45, 52, 54,
+				20, 22, 33, 38, 46, 51, 55, 60,
+				21, 34, 37, 47, 50, 56, 59, 61,
+				35, 36, 48, 49, 57, 58, 62, 63};
+    work pop 64 push 64 {
+	  for (int i = 0; i < 64; i++)
+		push(peek(Ordering[i]));
+	  for (int i = 0; i < 64; i++)
+		pop();
+    }
+}
+
+// --- Colorspace Conversions ---
+
+int->float filter RGBtoYCbCr {
+    work pop 3 push 3 {
+	  int R = pop();
+	  int G = pop();
+	  int B = pop();
+	  float Y = 0.299*R+0.587*G+0.114*B;
+	  float Cb = 128 - 0.168736*R - 0.331264*G + 0.5*B;
+	  float Cr = 128 + 0.5*R - 0.41869*G - 0.08131*B;
+	  push(Y);
+	  push(Cb);
+	  push(Cr);
+    }
+}
+
+float->int filter YCbCrtoRGB {
+    work pop 3 push 3 {
+	  float Y = pop();
+	  float Cb = pop();
+	  float Cr = pop(); 	
+	  float R_float = Y + 1.402*(Cr-128);
+	  float G_float = Y - (0.33414*(Cb-128)) - (0.71414*(Cr-128));
+	  float B_float = Y + 1.772*(Cb-128);
+	  int R = (int) R_float;
+	  int G = (int) G_float;
+	  int B = (int) B_float;
+	  if (R < 0)
+		R = 0;
+	  if (R > 255)
+		R = 255;
+	  if (G < 0)
+		G = 0;
+	  if (G > 255)
+		G = 255;
+	  if (B < 0)
+		B = 0;
+	  if (B > 255)
+		B = 255;
+	  push(R);
+	  push(G);
+	  push(B);
+    }
+}
+
+// -- DCT Functions ---
+
+/* Parameters: size means that the DCT will assume the input will be 
+   interpreted as a size * size array of values.
+   Input:      size * size floating point values which represent a signal
+   Output:     size * size floating point values representing the 
+   2-Dimensional Discrete Cosine Transformation of the signal.*/
+float->float pipeline DCT_2D(int size) {
+    add helper_Parallel_8_DCT_1D_X(size);
+    add helper_Parallel_8_DCT_1D_Y(size); 
+}
+
+/* Parameters: size means that the iDCT will assume the input will be 
+   interpreted as a size * size array of values.
+   Input:      size * size floating point values which represent
+   the 2-D DCT of the signal.
+   Output:     size * size floating point values representing the signal.*/
+float->float pipeline iDCT_2D(int size) {
+    add helper_Parallel_8_iDCT_1D_Y(size);
+    add helper_Parallel_8_iDCT_1D_X(size);
+}
+
+/* Parameters: size means that the iDCT will assume the input will be 
+   interpreted as a size array of values.
+   Input:      size floating point values which represent
+   the 1-D DCT of the signal.
+   Output:     size floating point values representing the signal.*/
+float->float filter iDCT_1D(int size) {
+    work pop size push size {
+	  float Cu;
+	  for (int x = 0; x < size; x++) {
+		float tempsum = 0;
+		for (int u = 0; u < size; u++) {
+		    if (u == 0)
+			  Cu = 1/sqrt(2);
+		    else
+			  Cu = 1;
+		    tempsum += Cu*peek(u)*cos(u*pi*(2.0*x+1)/(2.0*size));
+		}
+		push((1.0/2.0)*tempsum);
+	  }
+	  for (int x = 0; x < size; x++) {
+		pop();
+	  }
+    }
+}
+
+float->float filter DCT_1D(int size) {
+    work pop size push size {
+	  float Cu;
+	  for (int u = 0; u < size; u++) {
+		if (u == 0) 
+		    Cu = 1/sqrt(2);
+		else
+		    Cu = 1;
+		float tempsum = 0;
+		for (int x = 0; x < size; x++) {
+		    tempsum += peek(x)*cos(u*pi*(2.0*x+1)/(2.0*size));
+		}
+		push((1.0/2.0)*Cu*tempsum);
+	  }
+	  for (int x = 0; x < size; x++) {
+		pop();
+	  }
+    }
+}
+
+/* -- Internally Used Function -- */
+float->float splitjoin helper_Parallel_8_DCT_1D_X(int size) {
+    split roundrobin(size);
+    for (int i = 0; i < size; i++) {
+	  add DCT_1D(size);
+    }
+    join roundrobin(size);
+}
+
+/* -- Internally Used Function -- */
+float->float splitjoin helper_Parallel_8_DCT_1D_Y(int size) {
+    split roundrobin(1);
+    for (int i = 0; i < size; i++) {
+	  add DCT_1D(size);
+    }
+    join roundrobin(1);
+}
+
+/* -- Internally Used Function -- */
+float->float splitjoin helper_Parallel_8_iDCT_1D_X(int size) {
+    split roundrobin(size);
+    for (int i = 0; i < size; i++) {
+	  add iDCT_1D(size);
+    }
+    join roundrobin(size);
+}
+
+/* -- Internally Used Function -- */
+float->float splitjoin helper_Parallel_8_iDCT_1D_Y(int size) {
+    split roundrobin(1);
+    for (int i = 0; i < size; i++) {
+	  add iDCT_1D(size);
+    }
+    join roundrobin(1);
+}
+
+// --- JPEG File Format Reading/Writing
+
+int->int filter JPEGByteStream_Creator {
+    boolean ran;
+    /* File Header: 0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 
+     * 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 
+     */
+    int[20] FileHeader = {255, 216, 255, 224, 0, 16, 74, 70, 73, 70, 0,
+				  1, 0, 0, 0, 1, 0, 1, 0, 0};
+
+    /* Comment Header: 0xff, 0xfe
+     */		 		       
+    int[2] CommentHeader = {255, 254};
+
+    /* DQT Header: 0xff, 0xdb
+     */
+    int[2] DQTHeader = {255, 219};
+
+    /* Start of Frame Header: 0xff, 0xc0, 0x00, 0x11
+     */
+    int[4] SOFHeader = {255, 192, 0, 17};
+
+    /* DHT Header: 0xff, 0xc4
+     */
+    int[2] DHTHeader = {255, 196};
+
+    /* Start of Scan Header: 0xff, 0xda, 0x00, 0x0c
+     */ 
+    int[4] SoSHeader = {255, 218, 0, 12};
+
+    /* EOI Header: 0xff, 0xd9
+     */
+    int[2] EOIHeader = {255, 217};
+
+    init {
+	  ran = false;
+    }
+
+    // Actually we have no idea how much we are popping, or pushing
+    // Right now this is coded to only run once.
+    work pop [192, 230400,*] push [48, 100000,*] {
+	  if (!ran) {
+	      //print("Reencoding JPEG...");
+		ran = true;
+		// First comes the SOI Marker and the JFIF Header
+		for (int i = 0; i < 20; i++) {
+		    push(FileHeader[i]);
+		}
+
+		// Then comes the comment
+		for (int i = 0; i < 2; i++)
+		    push(CommentHeader[i]);
+
+		//print("Writing Comment: Encoded with StreamIt");				
+		/* Comment = "Encoded with StreamIt"
+		   Hex is: 45 6e 63 6f 64 65 64 20 77 69 74 68 20 53 74 72 65 61 6d 49 74 */
+		int[21] comment_body = {69, 110, 99, 111, 100, 101, 100, 32, 119, 105, 116,
+						104, 32, 83, 116, 114, 101, 97, 109, 73, 116};
+			
+		// Then comes the two bytes representing the length of the comment
+
+		push(0);
+		push(23);
+		for (int i = 0; i < 21; i++) {
+		    push(comment_body[i]);	
+		}
+						
+		// Then comes the DQT Header
+		for (int i = 0; i < 2; i++)
+		    push(DQTHeader[i]);
+				
+		// The comes the two bytes telling us the length of the DQT table
+		// information.
+		push(0);
+		push(132);
+			
+		// Then comes the actual table
+
+		/*			int[2][64] dqt_tables = {{ 6,  4,  5,  6,  5,  4,  6,  6,
+					5,  6,  7,  7,  6,  8, 10, 16,
+					10, 10,  9,  9, 10, 20, 14, 15,
+					12, 16, 23, 20, 24, 24, 23, 20,
+					22, 22, 26, 29, 37, 31, 26, 27,
+					35, 28, 22, 22, 32, 44, 32, 35,
+					38, 39, 41, 42, 41, 25, 31, 45,
+					48, 45, 40, 48, 37, 40, 41, 40},
+					{ 7,  7,  7, 10,  8, 10, 19, 10,
+					10, 19, 40, 26, 22, 26, 40, 40,
+					40, 40, 40, 40, 40, 40, 40, 40,
+					40, 40, 40, 40, 40, 40, 40, 40,
+					40, 40, 40, 40, 40, 40, 40, 40,
+					40, 40, 40, 40, 40, 40, 40, 40,
+					40, 40, 40, 40, 40, 40, 40, 40,
+					40, 40, 40, 40, 40, 40, 40, 40}}; */
+		int[2][64] dqt_tables = {{6, 4, 5, 10, 6, 5, 6, 7, 10, 12, 22, 16, 9, 7, 5, 4, 5,
+						  9, 23, 22, 35, 38, 28, 26, 20, 10, 8, 6, 6, 10, 20, 24, 29, 22,
+ 						  39, 48, 45, 41, 22, 37, 24, 13, 16, 15, 23, 31, 32, 43, 40, 48,
+						  41, 44, 26, 20, 27, 32, 25, 37, 40, 31, 35, 45, 41, 40},
+						 {7, 7, 10, 40, 19, 7, 10, 40, 40, 40, 40, 40, 40, 26, 8, 10,
+						  22, 40, 40, 40, 40, 40, 40, 40, 40, 40, 26, 19, 10, 40, 40, 40,
+						  40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+						  40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40}};
+
+		for (int i = 0; i < 2; i++) {
+		    push(i);
+		    for (int j = 0; j < 64; j++) {
+			  push(dqt_tables[i][j]*5);
+		    }
+		}
+
+		// Then comes the Start of Frame Header
+		for (int i = 0; i < 4; i++) {
+		    push(SOFHeader[i]);
+		}
+
+		// The next byte is the precision of the JPEG
+		push(8);
+			
+		// The next two bytes are the image's height
+		// TODO TEMPORARY HACK
+		int image_height = 480;
+		push(1);
+		push(224);
+			
+		// The next two bytes are the image's width
+		// TODO TEMPORARY HACK
+		int image_width = 640;
+		push(2);
+		push(128);
+			
+		// The next byte represents the number of components in an image.
+		int num_components = 3;
+		push(num_components);
+			
+		// Next come some information about each component.
+		int[3] component_ID = {1, 2, 3};
+		int[3] horizontal_sampling_factor = {1, 1, 1};
+		int[3] vertical_sampling_factor = {1, 1, 1};
+		int[3] q_table_number = {0, 1, 1};
+
+		for (int i = 0; i < num_components; i++) {
+		    push(component_ID[i]);
+		    int tempval = horizontal_sampling_factor[i]*16 + vertical_sampling_factor[i];
+		    push(tempval);
+		    push(q_table_number[i]);
+		}
+	
+		// Then comes the DHT Header
+		for (int i = 0; i < 2; i++)
+		    push(DHTHeader[i]);
+				
+		// TODO Then comes the length of the Huffman table to follow
+		push(1);
+		push(162);
+
+		// The next part has more than a passing resemblence to the JpegEncoder.java code...
+		int[17] bitsDCluminance = {0,   0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0};
+		for (int i = 0; i < 17; i++)
+		    push(bitsDCluminance[i]);
+		int[12] valDCluminance = {0, 1, 2, 3,  4, 5, 6, 7, 8, 9, 10, 11};
+		for (int i = 0; i < 12; i++) 
+		    push(valDCluminance[i]);
+		int[17] bitsACluminance = {16   , 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125};
+		for (int i = 0; i < 17; i++)
+		    push(bitsACluminance[i]);
+		int[162] valACluminance = 
+		    { 1, 2, 3, 0, 4, 17, 5, 18, 33, 49, 65, 6, 19, 81, 97, 7,
+			34, 113, 20, 50, 129, 145, 161, 8, 35, 66, 177, 193, 21, 
+			82, 209, 240, 36, 51, 98, 114, 130, 9, 10, 22, 23, 24, 
+			25, 26, 37, 38, 39, 40, 41, 42, 52, 53, 54, 55, 56, 57,
+			58, 67, 68, 69, 70, 71, 72, 73, 74, 83, 84, 85, 86, 87, 88, 89,
+			90, 99, 100, 101, 102, 103, 104, 105, 106, 115, 116, 117,
+			118, 119, 120, 121, 122, 131, 132, 133, 134, 135, 136, 137,
+			138, 146, 147, 148, 149, 150, 151, 152, 153, 154, 162, 163, 
+			164, 165, 166, 167, 168, 169, 170, 178, 179, 180, 181, 182,
+			183, 184, 185, 186, 194, 195, 196, 197, 198, 199, 200, 201, 
+			202, 210, 211, 212, 213, 214, 215, 216, 217, 218, 225, 226,
+			227, 228, 229, 230, 231, 232, 233, 234, 241, 242, 243, 244, 
+			245, 246, 247, 248, 249, 250 };
+		for (int i = 0; i < 162; i++)
+		    push(valACluminance[i]);
+
+		int[17] bitsDCchrominance = {1,   0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0};
+		for (int i = 0; i < 17; i++)
+		    push(bitsDCchrominance[i]);
+		int[12] valDCchrominance = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+		for (int i = 0; i < 12; i++)
+		    push(valDCchrominance[i]);
+		int[17] bitsACchrominance = {17,   0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119};
+		for (int i = 0; i < 17; i++)
+		    push(bitsACchrominance[i]);
+		int[162] valACchrominance = 
+		    { 0, 1, 2, 3, 17, 4, 5, 33, 49, 6, 18, 65, 81, 7, 97, 113,
+			19, 34, 50, 129, 8, 20, 66, 145, 161, 177, 193, 9, 35, 51, 82, 240,
+			21, 98, 114, 209, 10, 22, 36, 52, 225, 37, 241, 23, 24, 25, 26, 38,
+			39, 40, 41, 42, 53, 54, 55, 56, 57, 58, 67, 68, 69, 70, 71, 72, 
+			73, 74, 83, 84, 85, 86, 87, 88, 89, 90, 99, 100, 101, 102, 103, 104, 
+			105, 106, 115, 116, 117, 118, 119, 120, 121, 122, 130, 131, 132, 133, 
+			134, 135, 136, 137, 138, 146, 147, 148, 149, 150, 151, 152, 153, 154, 
+			162, 163, 164, 165, 166, 167, 168, 169, 170, 178, 179, 180, 181, 182, 
+			183, 184, 185, 186, 194, 195, 196, 197, 198, 199, 200, 201, 202, 210,
+			211, 212, 213, 214, 215, 216, 217, 218, 226, 227, 228, 229, 230, 231, 
+			232, 233, 234, 242, 243, 244, 245, 246, 247, 248, 249, 250};
+		for (int i = 0; i < 162; i++)
+		    push(valACchrominance[i]);
+
+		// At this point we need to make sense of the huffman tables.
+		// Then come the Huffman tables
+		int num_huffman_tables = 2;
+		int[3][2][16] huffman_table_codes_of_length;
+		int[3][2] huffman_table_num_symbols;
+		for (int i = 0; i < 16; i++) {
+		    huffman_table_codes_of_length[0][0][i] = bitsDCluminance[i+1];
+		    huffman_table_num_symbols[0][0] += bitsDCluminance[i+1];
+		    huffman_table_codes_of_length[0][1][i] = bitsACluminance[i+1];
+		    huffman_table_num_symbols[0][1] += bitsACluminance[i+1];
+		    huffman_table_codes_of_length[1][0][i] = bitsDCchrominance[i+1];
+		    huffman_table_num_symbols[1][0] += bitsDCchrominance[i+1];
+		    huffman_table_codes_of_length[1][1][i] = bitsACchrominance[i+1];
+		    huffman_table_num_symbols[1][1] += bitsACchrominance[i+1];
+		}
+
+		int[3][2][5000] huffman_table_symbol_order;
+		for (int i = 0; i < 12; i++)
+		    huffman_table_symbol_order[0][0][i] = valDCluminance[i];
+		for (int i = 0; i < 162; i++)
+		    huffman_table_symbol_order[0][1][i] = valACluminance[i];
+		for (int i = 0; i < 12; i++)
+		    huffman_table_symbol_order[1][0][i] = valDCchrominance[i];
+		for (int i = 0; i < 162; i++) {
+		    huffman_table_symbol_order[1][1][i] = valACchrominance[i];
+		}
+
+		// Now to make real sense out of the tables.
+		int[3][2][2000] huffman_table_bits_in_symbol;
+		int[3][2][2000] huffman_table_symbol;
+		// TODO HACK The 2 is fine, since a table is AC (0) or DC (1)
+		// But we're assuming there are no more than 3 tables and
+		// that each table can be represented in 2000 bytes.
+			
+		for (int i = 0; i < num_huffman_tables; i++) {
+		    for (int j = 0; j < 2; j++) {
+			  int curspot = 0;
+			  for (int k = 0; k < 16; k++) {
+				for (int l = 0; l < huffman_table_codes_of_length[i][j][k]; l++) {
+				    huffman_table_bits_in_symbol[i][j][curspot] = k + 1;
+				    curspot++;
+				}
+			  }
+			  int lastsymbol = 0;
+			  for (int k = 0; k < huffman_table_num_symbols[i][j]; k++) {
+				if (k == 0) {
+				    huffman_table_symbol[i][j][k] = 0;	
+				    lastsymbol = 0;
+				} else {
+				    int cursymbol = lastsymbol + 1;
+				    cursymbol *= ((int) pow(2, huffman_table_bits_in_symbol[i][j][k] - huffman_table_bits_in_symbol[i][j][k-1]));
+				    huffman_table_symbol[i][j][k] = cursymbol;
+				    lastsymbol = cursymbol;
+				}
+			  }
+		    }	
+		}
+		
+		// Then comes the Start of Scan Header
+		for (int i = 0; i < 4; i++)
+		    push(SoSHeader[i]);
+				
+		push(num_components);
+			
+		int[3] dc_table_number = {0, 1, 1};
+		int[3] ac_table_number = {0, 1, 1};
+
+		for (int i = 0; i < num_components; i++) {
+		    push(i+1);				
+		    int tempval = dc_table_number[i]*16 + ac_table_number[i];
+		    push(tempval);
+		}
+
+		int[3] weirdbytes = {0, 63, 0}; 
+		// I don't know what these bytes do but I think
+		// they are always the same - TODO investigate
+		push(weirdbytes[0]);
+		push(weirdbytes[1]);
+		push(weirdbytes[2]);
+
+		int[3][2][5000] huffman_table_ordered_symbols;
+		int[3][2][5000] huffman_table_ordered_bits_in_symbol;
+		for (int i = 0; i < num_huffman_tables; i++) {
+		    for (int j = 0; j < 2; j++) {
+			  for (int k = 0; k < huffman_table_num_symbols[i][j]; k++) {
+				int rep = huffman_table_symbol_order[i][j][k];
+				huffman_table_ordered_symbols[i][j][rep] = huffman_table_symbol[i][j][k];
+				huffman_table_ordered_bits_in_symbol[i][j][rep] = huffman_table_bits_in_symbol[i][j][k];						
+			  }
+		    }
+		}
+
+		// Compressed Data goes here
+
+		int buffer = 0;
+		int buffer_pos = 7;
+						
+		for (int i = 0; i < (image_width / 8); i++) {
+		    for (int j = 0; j < (image_height / 8); j++) {
+			  for (int c = 0; c < 3; c++) {
+				int table = -1;
+				if (c > 0) {
+				    table = 1;
+				} else {
+				    table = 0;	
+				}
+						
+				// DC portion
+				int DCval = pop();
+				// should be a function
+				int temp = DCval;
+				int temp2 = DCval;
+				if(temp < 0) {
+				    temp = -temp;
+				    temp2--;
+				}
+				int nbits = 0;
+				while (temp != 0) {
+				    nbits++;
+				    temp = temp / 2;
+				}
+							
+				int writebuffer = huffman_table_ordered_symbols[table][0][nbits];
+				int writebits = huffman_table_ordered_bits_in_symbol[table][0][nbits];
+				//	should be a function - to write bits
+				while (writebits > 0) {
+				    writebuffer = writebuffer & (((int) pow(2, writebits)) - 1);
+				    int thebit = writebuffer / ((int) pow(2, writebits-1));
+				    thebit = thebit & 1;
+				    writebits--;
+				    buffer += thebit * ((int) pow(2, buffer_pos));
+				    buffer_pos--;
+				    if (buffer_pos == -1) {
+					  push(buffer);
+					  if (buffer == 255) {
+						push(0);	
+					  }
+					  buffer = 0;
+					  buffer_pos = 7;	
+				    }
+				}							
+						
+				writebuffer = temp2;
+				writebits = nbits;
+				//	should be a function - to write bits
+				while (writebits > 0) {
+				    writebuffer = writebuffer & (((int) pow(2, writebits)) - 1);
+				    int thebit = writebuffer / ((int) pow(2, writebits-1));
+				    thebit = thebit & 1;
+				    writebits--;
+				    buffer += thebit * ((int) pow(2, buffer_pos));
+				    buffer_pos--;
+				    if (buffer_pos == -1) {
+					  push(buffer);
+					  if (buffer == 255) {
+						push(0);	
+					  }
+					  buffer = 0;
+					  buffer_pos = 7;	
+				    }
+				}							
+				// AC portion
+				int zeroes = 0;
+				for (int k = 1; k < 64; k++) {
+				    int ACval = pop();
+				    if (ACval == 0) {
+					  zeroes++;	
+				    } else {
+					  while (zeroes > 15) {
+						writebuffer = huffman_table_ordered_symbols[table][1][240];
+						writebits = huffman_table_ordered_bits_in_symbol[table][1][240];
+						//	should be a function - to write bits
+						while (writebits > 0) {
+						    writebuffer = writebuffer & (((int) pow(2, writebits)) - 1);
+						    int thebit = writebuffer / ((int) pow(2, writebits-1));
+						    thebit = thebit & 1;
+						    writebits--;
+						    buffer += thebit * ((int) pow(2, buffer_pos));
+						    buffer_pos--;
+						    if (buffer_pos == -1) {
+							  push(buffer);
+							  if (buffer == 255) {
+								push(0);	
+							  }
+							  buffer = 0;
+							  buffer_pos = 7;	
+						    }
+						}						
+						zeroes -= 16;
+					  }
+					  temp2 = ACval;
+					  temp = ACval;
+					  if (temp < 0) {
+						temp = -temp;
+						temp2--;
+					  }
+					  nbits = 0;
+					  while (temp != 0) {
+						nbits++;
+						temp = temp / 2;
+					  }
+					  int n = (zeroes * 16) + nbits;
+					  zeroes = 0;
+					  writebuffer = huffman_table_ordered_symbols[table][1][n];
+					  writebits = huffman_table_ordered_bits_in_symbol[table][1][n];
+					  //	should be a function - to write bits
+					  while (writebits > 0) {
+						writebuffer = writebuffer & (((int) pow(2, writebits)) - 1);
+						int thebit = writebuffer / ((int) pow(2, writebits-1));
+						thebit = thebit & 1;
+						writebits--;
+						buffer += thebit * ((int) pow(2, buffer_pos));
+						buffer_pos--;
+						if (buffer_pos == -1) {
+						    push(buffer);
+						    if (buffer == 255) {
+							  push(0);	
+						    }
+						    buffer = 0;
+						    buffer_pos = 7;	
+						}
+					  }
+									
+					  writebuffer = temp2;
+					  writebits = nbits;
+					  //	should be a function - to write bits
+					  while (writebits > 0) {
+						writebuffer = writebuffer & (((int) pow(2, writebits)) - 1);
+						int thebit = writebuffer / ((int) pow(2, writebits-1));
+						thebit = thebit & 1;
+						writebits--;
+						buffer += thebit * ((int) pow(2, buffer_pos));
+						buffer_pos--;
+						if (buffer_pos == -1) {
+						    push(buffer);
+						    if (buffer == 255) {
+							  push(0);	
+						    }
+						    buffer = 0;
+						    buffer_pos = 7;	
+						}
+					  }
+				    }
+				}
+
+				if (zeroes > 0) {
+				    writebuffer = huffman_table_ordered_symbols[table][1][0];
+				    writebits = huffman_table_ordered_bits_in_symbol[table][1][0];
+				    //	should be a function - to write bits
+				    while (writebits > 0) {
+					  writebuffer = writebuffer & (((int) pow(2, writebits)) - 1);
+					  int thebit = writebuffer / ((int) pow(2, writebits-1));
+					  thebit = thebit & 1;
+					  writebits--;
+					  buffer += thebit * ((int) pow(2, buffer_pos));
+					  buffer_pos--;
+					  if (buffer_pos == -1) {
+						push(buffer);
+						if (buffer == 255) {
+						    push(0);	
+						}
+						buffer = 0;
+						buffer_pos = 7;	
+					  }
+				    }							
+				
+				}
+			  }
+		    }
+		}
+			
+		if (buffer_pos != 7) {
+		    push(buffer);
+		    if (buffer == 255) {
+			  push(0);	
+		    }
+		}
+				
+		for (int i = 0; i < 2; i++)
+		    push(EOIHeader[i]);
+				
+		//print("Done encoding image");
+
+	  }
+    }
+}			
+
+// These integers are being used to represent bytes - they should aways be
+// 0 through 255
+int->int filter JPEGByteStream_Parser {
+    boolean ran;
+	
+    /* File Header: 0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 
+     * 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 
+     */
+    int[20] FileHeader = {255, 216, 255, 224, 0, 16, 74, 70, 73, 70, 0,
+				  1, 0, 0, 0, 1, 0, 1, 0, 0};
+
+    /* Comment Header: 0xff, 0xfe
+     */		 		       
+    int[2] CommentHeader = {255, 254};
+
+    /* DQT Header: 0xff, 0xdb
+     */
+    int[2] DQTHeader = {255, 219};
+
+    /* Start of Frame Header: 0xff, 0xc0, 0x00, 0x11
+     */
+    int[4] SOFHeader = {255, 192, 0, 17};
+
+    /* DHT Header: 0xff, 0xc4
+     */
+    int[2] DHTHeader = {255, 196};
+
+    /* Start of Scan Header: 0xff, 0xda, 0x00, 0x0c
+     */ 
+    int[4] SoSHeader = {255, 218, 0, 12};
+
+    /* EOI Header: 0xff, 0xd9
+     */
+    int[2] EOIHeader = {255, 217};
+
+    init {
+	  ran = false;
+    }
+
+    // Actually we have no idea how much we are popping, or pushing
+    // Right now this is coded to only run once.
+    work pop [48,100000,*] push [192,230400,*] {
+	  if (!ran) {
+	      //print("Processing JPEG...");
+    		ran = true;
+		// First comes the SOI Marker and the JFIF Header
+		for (int i = 0; i < 20; i++) {
+		    int popval = pop();
+		    if (popval != FileHeader[i]) {
+			print(-1);
+			//print("Error - Unrecognized File Header at byte " + i);
+			//print("Encountered: " + popval);
+			//print("Expecting: " + FileHeader[i]);
+		    }
+		}
+			
+		// Then comes the comment
+		for (int i = 0; i < 2; i++)
+		    if (pop() != CommentHeader[i]) {
+			print(-2);
+			//print("Error - Unrecognized Comment Header");
+		    }
+		
+		// Then comes the two bytes representing the length of the comment
+		int comment_length = pop() * 256;
+		comment_length += pop();
+		comment_length -= 2;
+		//print("Comment Encountered of Length: " + comment_length);
+			
+		// Then comes the body of the comment
+		int[1000] comment_body; // TODO HACK for dynamic allocation
+		// assumes comment is 1000 chars or less
+
+		for (int i = 0; i < comment_length; i++) {
+		    comment_body[i] = pop();
+		} 
+		
+		// Then comes the DQT Header
+		for (int i = 0; i < 2; i++)
+		    if (pop() != DQTHeader[i]) {
+			print(-3);
+			//print("Error - Unrecognized DQT Header");
+		    }
+		
+		// The comes the two bytes telling us the length of the DQT table
+		// information.
+		int dqt_table_length = pop() * 256;
+		dqt_table_length += pop();
+		dqt_table_length -= 2;
+		//print("DQT Table Size: " + dqt_table_length);
+		int dqt_num_tables = dqt_table_length / 65; 
+		//print("Number of DQT Tables: " + dqt_num_tables);
+			
+		// Then comes the actual tables
+		int[2][64] dqt_tables; // TODO HACK for dynamic allocation
+		// assumes there are two or fewer tables
+
+		// TODO I assume the tables come in order, which is usually
+		// but not neccesarily true.			
+		for (int i = 0; i < dqt_num_tables; i++) {
+		    if (pop() != i) {
+			//print("Error - Unexpected DQT Table Number");
+			print(-4);
+		    }
+		    for (int j = 0; j < 64; j++) {
+			  dqt_tables[i][j] = pop();	
+		    }
+		}
+
+		// Then comes the Start of Frame Header
+		for (int i = 0; i < 4; i++)
+		    if (pop() != SOFHeader[i]) {	
+			print(-5);
+			//print("Error - Unrecognized Start of Frame Header");
+		    }
+		
+			
+		// The next byte is the precision of the JPEG
+		int jpeg_precision = pop();
+			
+		// The next two bytes are the image's height
+		int image_height = pop() * 256;
+		image_height += pop();
+		//print("Image Height: " + image_height);
+			
+		// The next two bytes are the image's width
+		int image_width = pop() * 256;
+		image_width += pop();
+		//print("Image Width: " + image_width);
+			
+		// The next byte represents the number of components in an image.
+		int num_components = pop();
+			
+		// TODO We make the assumption that all images have three components.
+		if (num_components != 3) {
+		    print(-6);
+		    //print("Error - Expected 3 Components, Found " + num_components);
+		}
+		
+		// Next come some information about each component.
+		// TODO HACK I assume there are always three components, for dynamic
+		// allocation reasons.
+		int[3] component_ID;
+		int[3] horizontal_sampling_factor;
+		int[3] vertical_sampling_factor;
+		int[3] q_table_number;
+
+		for (int i = 0; i < num_components; i++) {
+		    component_ID[i] = pop();
+				
+		    // TODO The components don't actually have to be in order
+		    // but this makes my life easier.
+		    if (component_ID[i] != i + 1) {
+			print(-7);
+			//print("Components Not In Order");
+		    }
+		    int tempval = pop();
+		    horizontal_sampling_factor[i] = tempval / 16;
+		    vertical_sampling_factor[i] = tempval & 15;
+		    q_table_number[i] = pop();
+		}
+			
+		// Then comes the DHT Header
+		for (int i = 0; i < 2; i++)
+		    if (pop() != DHTHeader[i]) {
+			print(-8);
+			//print("Error - Unrecognized DHT Header");
+		    }
+		
+					
+		int huffman_table_length = pop() * 256;
+		huffman_table_length += pop();
+		huffman_table_length -= 2;
+						
+		// At this point we need to make sense of the huffman tables.
+		int num_huffman_tables = 0;
+		int[3][2][16] huffman_table_codes_of_length;
+		int[3][2] huffman_table_num_symbols;
+		int[3][2][5000] huffman_table_symbol_order;
+		// TODO HACK The 2 is fine, since a table is AC (0) or DC (1)
+		// But we're assuming there are no more than 3 tables and
+		// that each table can be represented in 5000 bytes.
+		int counter = 0;
+		int status = 0;
+		int table = 0;
+		int ACDC = 0;
+		while (counter < huffman_table_length) {
+		    if (status == 0) {
+			  int tempval = pop();
+			  ACDC = tempval / 16;
+			  if (table > num_huffman_tables) {
+				num_huffman_tables = table + 1;
+			  }
+			  table = tempval & 1;
+			  counter++;
+			  status = 1;
+		    } else if (status == 1) {
+			  for (int j = 0; j < 16; j++) {
+				int tempval = pop();
+				huffman_table_codes_of_length[table][ACDC][j] = tempval;
+				huffman_table_num_symbols[table][ACDC] += tempval;
+			  }
+			  counter += 16;
+			  status = 2;
+		    } else  {
+			  for (int j = 0; j < huffman_table_num_symbols[table][ACDC]; j++) {
+				huffman_table_symbol_order[table][ACDC][j] = pop();
+			  }
+			  counter += huffman_table_num_symbols[table][ACDC];
+			  status = 0;
+		    }	
+		}
+
+		// Now to make real sense out of the tables.
+		int[3][2][2000] huffman_table_bits_in_symbol;
+		int[3][2][2000] huffman_table_symbol;
+		// TODO HACK The 2 is fine, since a table is AC (0) or DC (1)
+		// But we're assuming there are no more than 3 tables and
+		// that each table can be represented in 2000 bytes.
+			
+		for (int i = 0; i < num_huffman_tables; i++) {
+		    for (int j = 0; j < 2; j++) {
+			  int curspot = 0;
+			  for (int k = 0; k < 16; k++) {
+				for (int l = 0; l < huffman_table_codes_of_length[i][j][k]; l++) {
+				    huffman_table_bits_in_symbol[i][j][curspot] = k + 1;
+				    curspot++;
+				}
+			  }
+			  int lastsymbol = 0;
+			  for (int k = 0; k < huffman_table_num_symbols[i][j]; k++) {
+				if (k == 0) {
+				    huffman_table_symbol[i][j][k] = 0;	
+				    lastsymbol = 0;
+				} else {
+				    int cursymbol = lastsymbol + 1;
+				    cursymbol *= ((int) pow(2, huffman_table_bits_in_symbol[i][j][k] - huffman_table_bits_in_symbol[i][j][k-1]));
+				    /*							if (huffman_table_bits_in_symbol[i][j][k] == 1 + huffman_table_bits_in_symbol[i][j][k-1]) {
+												cursymbol *= 2;	
+												} */
+				    huffman_table_symbol[i][j][k] = cursymbol;
+				    lastsymbol = cursymbol;
+				}
+			  }
+		    }	
+		}
+
+		// Then comes the Start of Scan Header
+		for (int i = 0; i < 4; i++)
+		    if (pop() != SoSHeader[i]) {
+			print(-9);
+			//print("Error - Unrecognized Start of Scan Header");
+		    }
+		
+		// TODO I assume that the Scan Header and the Frame Header have the
+		// same number of components - but is this actually a requirement?
+		if (pop() != num_components) {
+		    print(-10);
+		    //print("Error - Different Number of Components");
+		}
+		
+				
+		// TODO HACK for dynamic memory allocation - assumes there are 3
+		// components.
+		int[3] dc_table_number;
+		int[3] ac_table_number;
+
+		for (int i = 0; i < num_components; i++) {
+				
+		    // TODO The components don't actually have to be in order
+		    // but this makes my life easier.
+		    if (pop() != i + 1) {
+			print(-11);
+			//print("Components Not In Order");
+		    }
+		    
+		    int tempval = pop();
+		    dc_table_number[i] = tempval / 16;
+		    ac_table_number[i] = tempval & 15;
+		    //print("Component ID: " + component_ID[i]);
+		    //print("DC Table Number: " + dc_table_number[i]);
+		    //print("AC Table Number: " + ac_table_number[i]);
+		}
+			
+		int[3] weirdbytes; // I don't know what these bytes do but I think
+		// they are always the same - TODO investigate
+		weirdbytes[0] = pop();
+		weirdbytes[1] = pop();
+		weirdbytes[2] = pop();
+	
+		// Now we need to interpret the compressed data.
+		// Not the best way to do this but hey...
+		// (random side note - the uncompression code that follows does not allow for 
+		// markers in the message. These are allowed, and is one of the big things keeping 
+		// this chunk of code from being a full baseline implementation.
+		int readbit_int = 0;
+		int readbit_position = 8;
+						
+		// I think this is how many numbers we are expecting
+		int num_expected = image_height * image_width * 3;
+		int num_found = 0;
+		int curcomponent = 0;
+		int curcell = 0;
+		while (num_found < num_expected) {
+
+		    int curACDC = 0;
+		    if (curcell == 0) {
+			  curACDC = 0;
+		    } else {
+			  curACDC = 1;	
+		    }
+				
+		    int usetable = dc_table_number[curcomponent];
+
+		    int cursymbol = 0;
+		    int curlength = 0;
+		    boolean notfound = true;
+		    boolean innernotfound = true;
+		    while (notfound) {
+			  int somebit = 0;
+			  if (readbit_position == 8) {
+				readbit_int = pop();
+				if (readbit_int == 255) {
+				    int temppop = pop();
+				    if (temppop != 0) {
+					print(-12);
+					//print("Error - Don't know how to handle markers");	
+					//print("Marker Symbol Detected: " + temppop);
+				    }	
+				}
+				readbit_position = 1;							
+			  } else {
+				readbit_position++;
+			  }
+			  somebit = (readbit_int / 128) & 1;
+			  readbit_int = readbit_int * 2;
+					
+			  cursymbol = (cursymbol * 2) + somebit;
+			  curlength++;
+					
+			  innernotfound = true;
+			  int i = 0;
+			  while (notfound && innernotfound && i < huffman_table_num_symbols[usetable][curACDC]) {
+				if (huffman_table_symbol[usetable][curACDC][i] == cursymbol && curlength == huffman_table_bits_in_symbol[usetable][curACDC][i]) {
+				    int symbolrep = huffman_table_symbol_order[usetable][curACDC][i];
+				    int bits_in_number;
+				    if (curACDC == 0) {
+					  bits_in_number = symbolrep;
+				    } else {
+					  if (symbolrep == 0) {
+						bits_in_number = 0;
+						while (num_found != (((num_found + 1) / 64) * 64) - 1) {
+						    push(0);
+						    num_found++;
+						    curcell++;
+						}
+					  } else {
+						int prepend_zeros = symbolrep / 16;
+						for (int z = 0; z < prepend_zeros; z++) {
+						    push(0);
+						    num_found++;
+						    curcell++;
+						}
+						bits_in_number = symbolrep & 15;
+					  }
+				    }
+				    // the next following bits can be used to get the actual symbol
+				    int pushval;
+				    if (bits_in_number == 0) {
+					  pushval = 0;
+				    } else {
+					  int number_generated = 0;
+					  boolean negative_number = false;
+					  for (int z = 0; z < bits_in_number; z++) {
+						int anotherbit = 0;
+						if (readbit_position == 8) {
+						    readbit_int = pop();
+						    if (readbit_int == 255) {
+							  int temppop = pop();
+							  if (temppop != 0) {
+							      print(-13);
+							      //print("Error - Don't know how to handle markers");	
+							      //print("Marker Symbol Detected: " + temppop);
+							  }	
+						    }
+						    readbit_position = 1;							
+						} else {
+						    readbit_position++;
+						}
+						anotherbit = (readbit_int / 128) & 1;
+						readbit_int = readbit_int * 2;
+						number_generated *= 2;
+						number_generated += anotherbit;
+						if (z == 0 && anotherbit == 0) {
+						    negative_number = true;
+						}
+					  }
+					  if (negative_number) {
+						int temp = (number_generated | (-1 * ((int) pow(2,bits_in_number)))) + 1;
+						pushval = temp;
+					  } else {
+						pushval = number_generated;
+					  }
+				    }
+
+				    push(pushval);
+				    innernotfound = false;
+				    notfound = false;
+				} else {
+				    i++;							
+				}
+			  }
+		    }	
+		    if (innernotfound == true) {
+			print(-14);
+			//print("Error - Incorrectly Formed Huffman Tables or Data Stream");
+		    }
+		    
+					
+		    num_found++;
+
+		    curcell++;
+		    if (curcell == 64) {
+			  curcell = 0;
+			  curcomponent++;
+		    }
+		    if (curcomponent == num_components) {
+			  curcomponent = 0;
+		    }
+
+		}
+									
+		for (int i = 0; i < 2; i++)
+		    if (pop() != EOIHeader[i]) {
+			print(-15);
+			//print("Error - Unrecognized EOI Header");
+		    }
+		
+					
+		//print("Done processing image");
+			
+	  }
+    }    
+}

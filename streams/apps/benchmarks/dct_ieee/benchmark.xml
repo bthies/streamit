@@ -1,0 +1,48 @@
+<benchmark>
+  <name>DCT</name>
+  <desc>IEEE-complaint DCT and IDCT.</desc>
+  <description>
+The dct_ieee package contains functions that implement Discrete Cosine
+Transforms and Inverse Discrete Cosine Transforms in accordance with
+IEEE specifications for such operations. The IEEE specified DCT is
+used in both the MPEG and JPEG standards. A definition of what makes a
+DCT or inverse DCT implementation conform to the IEEE specification
+can be found in Appendix A of the MPEG-2 specification (ISO/IEC
+13818-2) on P. 125.
+  </description>
+  <implementations>
+    <impl lang="StreamIt" dir="streamit">
+      <file>DCTreference.str</file>
+      <desc>
+      A reference implementation based on the DCT code found within
+the C reference MPEG implementation.
+      </desc>
+    </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <file>DCTcomparison.str</file>
+      <desc>
+Numerically equivalent to the reference
+implementation. However, this will run the numbers through both the
+reference DCT components and the fast DCT components and report
+discrepancies between the two. This version is substantially slower
+than either the reference or the fast DCT versions.
+      </desc>
+    </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <file>DCTfast.str</file>
+      <desc>
+An intuitive StreamIt DCT implementation based on the formula
+for the DCT and its natural representation in StreamIt. The
+2-Dimensional DCT is broken down into 1-Dimensional DCTs in
+perpendicular directions. (Note: It may not actually be faster than
+the reference implementation. However, ideally it will be.)
+      </desc>
+    </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <file>DCTinternal.str</file>
+      <desc>
+Contains library of functions used by above versions.
+      </desc>
+    </impl>
+  </implementations>
+</benchmark>

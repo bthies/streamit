@@ -97,4 +97,4 @@ $ make docs
 This will generate html files documenting the API for the
 DCTinternal.str and DCTexternal.str (if it exists) files. For details
 on using functions in this DCT library, please make the documentation
-and refer to that.
+and refer to that. 

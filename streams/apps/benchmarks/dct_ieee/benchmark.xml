@@ -41,7 +41,7 @@ the reference implementation. However, ideally it will be.)
     <impl lang="StreamIt" dir="streamit">
       <file>DCTinternal.str</file>
       <desc>
-Contains library of functions used by above versions. 
+Contains library of functions used by above versions.
       </desc>
     </impl>
   </implementations>

@@ -32,7 +32,7 @@ public class GLPKSolve extends MPSWriter implements LinearProgramSolver {
 	// run the solver
 	double[] result = null;
 	try {
-	    int status = Runtime.getRuntime().exec("glpsol partitions.mps -o partitions.sol").waitFor();
+	    int status = Runtime.getRuntime().exec("glpsol partitions.mps --wlpt partitions.lp -o partitions.sol").waitFor();
 	    if (status!=0) {
 		Utils.fail("Error running ILP solver.");
 	    }
@@ -49,7 +49,9 @@ public class GLPKSolve extends MPSWriter implements LinearProgramSolver {
     }
 
     /**
-     * Return results in format required by <solve> from <SOLUTION_FILE>
+     * Return results in format required by <solve> from
+     * <SOLUTION_FILE>.  Returns null if it finds status of
+     * "UNDEFINED".
      */
     private double[] parseResults() throws IOException {
 	BufferedReader in = new BufferedReader(new FileReader(SOLUTION_FILE));
@@ -58,6 +60,10 @@ public class GLPKSolve extends MPSWriter implements LinearProgramSolver {
 	String line;
 	do {
 	    line = in.readLine();
+	    // return null if undefined
+	    if (line.indexOf("UNDEFINED")>0) {
+		return null;
+	    }
 	} while (line.indexOf("Column name")==-1);
 	// read one more dummy line
 	in.readLine();
@@ -67,7 +73,7 @@ public class GLPKSolve extends MPSWriter implements LinearProgramSolver {
 	    String index = line.substring(8, 13).trim();
 	    String val = line.substring(23, 36).trim();
 	    int i = Integer.valueOf(index).intValue();
-	    double v = (double)Long.valueOf(val).longValue();
+	    double v = (double)Double.valueOf(val).doubleValue();
 	    result[i] = v;
 	}
 	

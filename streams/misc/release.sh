@@ -2,12 +2,19 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.44 2003-10-21 14:03:25 dmaze Exp $
+# $Id: release.sh,v 1.45 2005-08-15 00:50:07 thies Exp $
 #
 
 # Interesting/configurable variables:
-VERSION=2.0
-TAG=streamit-2-0
+
+# For a version release
+#VERSION=2.0
+#TAG=streamit-2-0
+
+# For a snapshot release
+VERSION=2.0.`date +%Y%m%d`
+TAG=HEAD
+
 test -z "$TMPDIR" && TMPDIR=/tmp
 PRECIOUS=
 
@@ -81,9 +88,17 @@ for f in $INFILES; do
 done
 
 # Don't release CPLEX jar file or anything that depends on it
-rm -rf $WORKING/3rdparty/cplex/
+rm -rf $WORKING/streams/3rdparty/cplex/
 rm -rf $WORKING/streams/src/at/dms/kjc/linprog/
 rm -rf $WORKING/streams/src/at/dms/kjc/sir/lowering/partition/ILPPartitioner.java
+
+# Remove .cvsignore files
+rm -rf `find $WORKING -name ".cvsignore"`
+# remove "calculations" from ASPLOS paper
+rm -rf `find $WORKING -name "calculations"`
+
+# remove PBS number gathering scripts
+rm -rf $WORKING/streams/misc/scripts/number-gathering
 
 # Some benchmarks we can't (or won't) export; trim those here.
 rm -rf $WORKING/streams/apps/benchmarks/beamformer/c
@@ -94,6 +109,21 @@ rm -rf $WORKING/streams/apps/benchmarks/nokia
 rm -rf $WORKING/streams/apps/benchmarks/perftest4
 rm -rf $WORKING/streams/apps/benchmarks/viram
 rm -rf $WORKING/streams/apps/benchmarks/vocoder
+rm -rf $WORKING/streams/apps/benchmarks/micro04
+rm -rf $WORKING/streams/apps/benchmarks/mpeg2
+rm -rf $WORKING/streams/apps/benchmarks/traces
+# JPEGtoBMP was not working at time of release
+rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/JPEGtoBMP.str
+# this is only relevant for spacedynamic backend, so don't release
+rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/Transcoder_Raw.str
+
+# complex FIR is fine but was a simple benchmarking exercise, 
+# seems redundant with "fir"
+rm -rf $WORKING/streams/apps/benchmarks/complex-fir
+# FIR bank might be proprietary, and besides it has 5 MB
+# of coefficients and we don't compile it well yet
+rm -rf $WORKING/streams/apps/benchmarks/firbank
+
 rm -rf $WORKING/streams/apps/examples/chol-para
 rm -rf $WORKING/streams/apps/examples/median
 rm -rf $WORKING/streams/apps/examples/phase
@@ -107,20 +137,25 @@ rm -rf $WORKING/streams/apps/sorts/BatcherSort/AutoBatcherSort.*
 # complicated param doesn't resolve
 rm -rf $WORKING/streams/apps/applications/DCT/IDCT.*
 
+# don't release some C++ software radio thing (?)
+rm -rf $WORKING/streams/apps/libraries/SoftRadio
+
 # Some parts of the compiler aren't useful to release; trim those here.
-rm -rf $WORKING/streams/src/at/dms/kjc/cluster
 rm -rf $WORKING/streams/src/at/dms/kjc/flatgraph2
 rm -rf $WORKING/streams/src/at/dms/kjc/raw2
 rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
+rm -rf $WORKING/streams/src/at/dms/kjc/spacedynamic
+rm -rf $WORKING/streams/src/at/dms/kjc/sir/stats
 rm -rf $WORKING/streams/src/com
+rm -rf $WORKING/streams/src/org
 rm -rf $WORKING/streams/src/streamit/eclipse
 rm -rf $WORKING/streams/src/streamit/stair
 
-# remove cluster library
-rm -rf $WORKING/streams/library/cluster
-
 # la la la
-rm -rf $WORKING/misc/release.sh
+rm -rf $WORKING/streams/misc/release.sh
+
+# remove PCA machine model
+rm -rf $WORKING/streams/misc/raw/pca-mm
 
 # Some parts of the language notes we don't want to be visible
 rm -f $WORKING/streams/docs/syntax/02-04-24-additions
@@ -130,6 +165,9 @@ rm -f $WORKING/streams/docs/implementation-notes/immutable-ir.txt
 rm -f $WORKING/streams/docs/implementation-notes/low-ir.txt
 rm -f $WORKING/streams/docs/implementation-notes/messaging-implementation.txt
 rm -f $WORKING/streams/docs/implementation-notes/portals.txt
+
+# Release 2.1 version of language
+mv $WORKING/streams/docs/syntax/streamit-lang-2.1.tex $WORKING/streams/docs/syntax/streamit-lang.tex 
 
 # Build interesting bits of the documentation; they go in both releases.
 for d in cookbook release syntax; do

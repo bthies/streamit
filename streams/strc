@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.59 2005-06-28 18:27:11 mstephen Exp $
+# $Id: strc,v 1.60 2005-08-15 00:49:03 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -29,9 +29,6 @@ $javac = "javac";
 $cc = "gcc";
 $have_fftw = "1";
 # END AUTOCONFISCATE
-
-# Turn on the server VM
-$java = $java . " -server";
 
 # Enable assertions globally:
 $java = $java . " -ea";
@@ -122,11 +119,11 @@ Options:
 + --java              Input file is "old" syntax (in Java)
   --output, -o file   Write a binary to given filename
   --uni               Compile for uniprocessor with C library (default)
-  --raw n, -r n       Compile for RAW, with an n-by-n grid
+  --raw n, -r n       Compile for Raw, with an n-by-n grid
   --standalone, -S    Generate C file without library dependencies
   --rstream, -R       Generate C file to be compiled by RStream compiler 
 * --streamit          Output of the compiler is a StreamIt program
-* --cluster n         Compile for a networked cluster with n nodes
++ --cluster n         Compile for a networked cluster with n nodes
 * --viram             Compile for VIRAM, a vector uniprocessor
 * --backend class     Explicitly specify the backend class
   --library           Run in the Java library instead of compiling
@@ -143,22 +140,23 @@ Options available for all backends:
 + --fission           Do vertical fission up to limit of argument
   --linearreplacement, -l
                       Perform linear transformations based on analysis
-+ --linearreplacement2
-+                     Do linear replacement using a level of indirection
-+ --linearreplacement3
-+                     Do linear replacement using diagonal replacement
+* --linearreplacement2
+*                     Do linear replacement using a level of indirection
+* --linearreplacement3
+*                     Do linear replacement using diagonal replacement
 + --macros            Convert small functions to macros (inlining them)
-* --modfusion         Use wraparound buffers (vs. copying) for fusion
-+ --nofieldprop       Do not propagate constant field values
-+ --nolinearcollapse
-+                     Do not combine filters with linear replacement
++ --modfusion         Use wraparound buffers (vs. copying) for fusion
+* --nofieldprop       Do not propagate constant field values
+* --nolinearcollapse
+*                     Do not combine filters with linear replacement
 + --print-partitioned-source
 +                     Print equivalent source after partitioning
-+ --redundantreplacement
-+                     Create linear filters without redundant computation
+* --redundantreplacement
+*                     Create linear filters without redundant computation
+* --server            Run with "java -server", faster for large programs
 * --simplesjfusion    Revert to the old, simple SplitJoin fusion algorithm
 + --sjtopipe          Convert split-joins to pipelines
-* --statespace        Use state-space representation for linear analyses
++ --statespace        Use state-space representation for linear analyses
 * --stats             Gather statistics for program characterization
 * --tokopi            Use experimental frontend-to-SIR conversion
 + --sync              Turn on sync removal
@@ -167,14 +165,14 @@ Options available for all backends:
 Options specific to Raw backend:
   --partition, -p     Automatically partition stream graph
 +   --partition-dp       Dynamic programming partitioner (default)
-+   --partition-greedy   Greedy partitioner
-+   --partition-greedier Greedier partitioner
-* --altcodegen        Alternate RAW communication code generation
++   --partition-greedy   Greedy partitioner (fuse lightest streams first)
++   --partition-greedier Greedier partitioner (fuse lightest filter pairs)
+* --altcodegen        Alternate Raw communication code generation
 * --decoupled         Generate dummy communication code
 * --dpscaling         Collect theoretical scaling statistics
 * --forceunroll       Force unroll to -u amount (even if overflows IMEM)
-* --manual            Specify Java class for performing manual optimizations
-  --magic-net, -M     Generate RAW "magic network" code
++ --manual            Specify Java class for performing manual optimizations
+  --magic-net, -M     Generate Raw "magic network" code
 * --noanneal          Do not run simulated annealing for layout
   --numbers n, -N     Automatically gather numbers and put in results.out
 + --ptraccess         Access buffers through a pointer
@@ -187,13 +185,13 @@ Options specific to Raw backend:
 * --dynamicnet        Use dynamic network for communication for space multplexing raw backend
 * --magicdram         Use magic DRAMs in the space-tile partitioner
   --wbs               Use work-based simulator for communication code
-  --steadymul n       For the SpaceTime RAW backend, multiply the steady-state multiplicities by n
-  --forceplacement    For the SpaceTime RAW backend, use try to minimize communication in layout
-  --scheduler         For the SpaceTime RAW backend, either work, dep, or comm
-  --malloczeros       For spacedynamic, generate malloc instead of calloc (malloc will zero)
-  --nopartition       For spacedynamic, do not attempt to partition each static subgraph
-  --layoutfile        For spacedynamic, specify a layout file (a new-line separated list of tiles)
-  --devassignfile     For spacedynamic, specify a device-to-port assignment file (a new-line separated list of tiles)
+* --steadymul n       For the SpaceTime Raw backend, multiply the steady-state multiplicities by n
+* --forceplacement    For the SpaceTime Raw backend, try to minimize communication in layout
+* --scheduler         For the SpaceTime Raw backend, either work, dep, or comm
+* --malloczeros       For spacedynamic, generate malloc instead of calloc (malloc will zero)
+* --nopartition       For spacedynamic, do not attempt to partition each static subgraph
+* --layoutfile        For spacedynamic, specify a layout file (a new-line separated list of tiles)
+* --devassignfile     For spacedynamic, specify a device-to-port assignment file (a new-line separated list of tiles)
 
 Options specific to uniprocessor backend:
   --frequencyreplacement, -F
@@ -226,6 +224,10 @@ sub get_options
   {
     $opts{home} = $ENV{STREAMIT_HOME};
     $opts{memory} = "1700M";
+    # Note: the exclamation points below indicate negatable options.  That is,
+    # for an option "myoption!", you can pass either "--myoption" or
+    # "--no-myoption" at the command line.  Only makes sense for boolean 
+    # options.
     my $result = GetOptions(\%opts,
 			    "help",
 			    "more-help|help-more",
@@ -291,6 +293,7 @@ sub get_options
 			    "magicdram!",
 			    "standalone|S",
 			    "rstream|R",
+			    "server!",
 			    "stats!",
 			    "streamit",
 			    "sync",
@@ -392,10 +395,11 @@ sub new_to_old
     my ($fns) = @_;
     return [] if !@$fns;
     my $xmx = "-Xmx" . $opts{memory};
+    my $server = $opts{server} ? "-server" : "";
     my $target = change_extension($fns->[0], "str", "java");
     my $libflag = "";
     $libflag = "--library" if $opts{library};
-    my $result = call("$java $xmx streamit.frontend.ToJava --output $target " .
+    my $result = call("$java $xmx $server streamit.frontend.ToJava --output $target " .
 		      "$libflag " . join(' ', @$fns));
     return undef if $result != 0;
     return [$target];
@@ -407,11 +411,12 @@ sub streamit_to_streamit
     return [] if !@$fns;
     my $kjcopts = get_kjc_opts();
     my $xmx = "-Xmx" . $opts{memory};
+    my $server = $opts{server} ? "-server" : "";
     my $jfiles = join(' ', @$fns);
     my $target = change_extension($fns->[0], "java", "str");
     # Add "_c" to the basename.
     $target =~ s/^([^.]*)/$1_c/;
-    my $result = call("$java $xmx at.dms.kjc.Main --streamit " .
+    my $result = call("$java $xmx $server at.dms.kjc.Main --streamit " .
 		      "--backend at.dms.kjc.sir.SIRToStreamIt " .
 		      "$kjcopts $jfiles > $target");
     return undef if $result != 0;
@@ -424,19 +429,20 @@ sub old_to_c
     return [] if !@$fns;
     my $kjcopts = get_kjc_opts();
     my $xmx = "-Xmx" . $opts{memory};
+    my $server = $opts{server} ? "-server" : "";
     my $jfiles = join(' ', @$fns);
     if (!$opts{raw} && !$opts{standalone} && !$opts{cluster} && !$opts{rstream})
       {
 	my $target = change_extension($fns->[0], "java", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
-	my $result = call("$java $xmx at.dms.kjc.Main --streamit $kjcopts " .
+	my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $kjcopts " .
 			  "$jfiles > $target");
 	return undef if $result != 0;
 	return [$target];
       }
     else
       {
-	my $result = call("$java $xmx at.dms.kjc.Main --streamit $kjcopts $jfiles");
+	my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $kjcopts $jfiles");
 	return undef if $result != 0;
 	return ["tile0.c"] if $opts{standalone};
 	return ["str.c"] if $opts{rstream};
@@ -450,17 +456,18 @@ sub new_to_c
     return [] if !@$fns;
     my $kjcopts = get_kjc_opts();
     my $xmx = "-Xmx" . $opts{memory};
+    my $server = $opts{server} ? "-server" : "";
     my $sfiles = join(' ', @$fns);
     if (!$opts{raw} && !$opts{cluster})
       {
 	my $target = change_extension($fns->[0], "str", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
-	call("$java $xmx streamit.frontend.ToKopi $kjcopts $sfiles > $target");
+	call("$java $xmx $server streamit.frontend.ToKopi $kjcopts $sfiles > $target");
 	return [$target];
       }
     else
       {
-	call("$java $xmx at.dms.kjc.Main --streamit $kjcopts $sfiles");
+	call("$java $xmx $server at.dms.kjc.Main --streamit $kjcopts $sfiles");
 	return [];
       }
   }
@@ -471,11 +478,12 @@ sub run_in_library
     return if !@$fns;
     my @out = ();
     my $xmx = "-Xmx" . $opts{memory};
+    my $server = $opts{server} ? "-server" : "";
     foreach my $jfile (@$fns)
       {
 	  my $class = remove_extension($jfile, "java");
 	  call("$javac $jfile");
-	  call("$java $xmx $class " . get_lib_opts());
+	  call("$java $xmx $server $class " . get_lib_opts());
       }
   }
 

@@ -159,6 +159,7 @@ public class FlatIRToRS extends ToC
 	print(";");
     }
 
+
     /** return the dimensionality of this type **/
     private int getDim(CType type) 
     {

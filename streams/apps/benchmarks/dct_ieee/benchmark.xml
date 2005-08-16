@@ -11,14 +11,14 @@ can be found in Appendix A of the MPEG-2 specification (ISO/IEC
 13818-2) on P. 125.
   </description>
   <implementations>
-    <impl lang="StreamIt" dir="streamit">
+    <impl lang="StreamIt" dir="streamit" regtest="skip">
       <file>DCTreference.str</file>
       <desc>
       A reference implementation based on the DCT code found within
 the C reference MPEG implementation.
       </desc>
     </impl>
-    <impl lang="StreamIt" dir="streamit">
+    <impl lang="StreamIt" dir="streamit" regtest="skip">
       <file>DCTcomparison.str</file>
       <desc>
 Numerically equivalent to the reference
@@ -28,7 +28,7 @@ discrepancies between the two. This version is substantially slower
 than either the reference or the fast DCT versions.
       </desc>
     </impl>
-    <impl lang="StreamIt" dir="streamit">
+    <impl lang="StreamIt" dir="streamit" regtest="skip">
       <file>DCTfast.str</file>
       <desc>
 An intuitive StreamIt DCT implementation based on the formula
@@ -38,7 +38,7 @@ perpendicular directions. (Note: It may not actually be faster than
 the reference implementation. However, ideally it will be.)
       </desc>
     </impl>
-    <impl lang="StreamIt" dir="streamit">
+    <impl lang="StreamIt" dir="streamit" regtest="skip">
       <file>DCTinternal.str</file>
       <desc>
 Contains library of functions used by above versions. 

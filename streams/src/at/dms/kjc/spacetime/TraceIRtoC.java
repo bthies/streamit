@@ -166,12 +166,9 @@ public class TraceIRtoC extends ToC
 	// print("#include \"structs.h\"\n");
 
 	//print the extern for the function to init the 
-	//switch, do not do this if we are compiling for
-	//a uniprocessor
-	if (!KjcOptions.standalone) {
-	    print("void raw_init();\n");
-	    print("void raw_init2();\n");
-	}
+	print("void raw_init();\n");
+	print("void raw_init2();\n");
+
 
 	if (SpaceTimeBackend.FILTER_DEBUG_MODE) {
 	    print("void static_send_print(");
@@ -615,13 +612,9 @@ public class TraceIRtoC extends ToC
 		 type.equals(CStdType.Integer) ||
 		 type.equals(CStdType.Short))
 	    {
-		if (!KjcOptions.standalone) {
-		    //print("print_int(");
-		    print("raw_test_pass_reg(");
-		}
-		
-		else
-		    print("printf(\"%d\\n\", "); 
+		//print("print_int(");
+		print("raw_test_pass_reg(");
+
 		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);
@@ -629,12 +622,9 @@ public class TraceIRtoC extends ToC
 	    }
 	else if (type.equals(CStdType.Char))
 	    {
-		if (!KjcOptions.standalone) {
-		    print("raw_test_pass_reg(");
-		    //print("print_int(");
-		}
-		else
-		    print("printf(\"%d\\n\", "); 
+		print("raw_test_pass_reg(");
+		//print("print_int(");
+
 		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);
@@ -642,12 +632,9 @@ public class TraceIRtoC extends ToC
 	    }
 	else if (type.equals(CStdType.Float))
 	    {
-		if (!KjcOptions.standalone) {
-		    print("raw_test_pass_reg(");
-		    //print("print_float(");
-		}
-		else 
-		    print("printf(\"%f\\n\", "); 
+		print("raw_test_pass_reg(");
+		//print("print_float(");
+
 		//print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);
@@ -655,13 +642,8 @@ public class TraceIRtoC extends ToC
 	    }
         else if (type.equals(CStdType.Long))
 	    {
-		if (!KjcOptions.standalone) {
-		    print("raw_test_pass_reg(");
-		    //print("print_int(");
-		}
-		
-		else
-		    print("printf(\"%d\\n\", "); 
+		print("raw_test_pass_reg(");
+		//print("print_int(");
 		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);
@@ -669,10 +651,7 @@ public class TraceIRtoC extends ToC
 	    }
 	else if (type.equals(CStdType.String)) 
 	    {
-		if (!KjcOptions.standalone)
-		    print("print_string(");
-		else
-		    print("printf(\"%s\\n\", "); 
+		print("print_string(");
 		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);

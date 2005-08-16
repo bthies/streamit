@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.5 2005-03-11 00:40:12 jasperln Exp $
+# $Id: build-qmtest.py,v 1.6 2005-08-16 19:10:04 thies Exp $
 #
 
 import os
@@ -99,6 +99,9 @@ def DoQMTestDir(path, control):
     impls = filter(lambda i: i.getAttribute('lang') == 'StreamIt', impls)
     seq = 0
     for impl in impls:
+        # If benchmark has regtest="skip" field, skip it
+        if (impl.getAttribute('regtest') == 'skip'): continue
+        
         # Where are the source files?  If the implementation has
         # a dir attribute, they're in that subdirectory.
         srcdir = path

@@ -39,6 +39,12 @@ public class FlatIRToC extends ToC implements StreamVisitor
     private final String FLOAT_HEADER_WORD = "__FLOAT_HEADER_WORD__";
     private final String INT_HEADER_WORD = "__INT_HEADER_WORD__";
 
+    //variable names for iteration counter for --standalone option...
+    public static String MAINMETHOD_ARGC    = "argc";
+    public static String MAINMETHOD_ARGV    = "argv";
+    public static String MAINMETHOD_COUNTER = "__iterationCounter";
+    public static String ARGHELPER_COUNTER  = "__setIterationCounter";
+
     private static int filterID = 0;
     
     public static void generateCode(FlatNode node) 
@@ -102,7 +108,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//	RemoveUnusedVars.doit(node);
 	DeadCodeElimination.doit((SIRFilter)node.contents);
 
-        IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
+	IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
     
     public FlatIRToC() 
@@ -212,6 +218,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	for (int i = 0; i < fields.length; i++)
 	   fields[i].accept(this);
 	
+	//add function for --standalone that will get the iteration
+	//count from the command-line
+	if (KjcOptions.standalone) 
+	    addIterCountFunction();
+
 	//visit methods of filter, print the declaration first
 	declOnly = true;
 	JMethodDeclaration[] methods = self.getMethods();
@@ -230,7 +241,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	}
 	else {
 	    //otherwise print a normal main()
-	    print("int main() {\n");
+	    print("int main(int argc, char** argv) {\n");
 	}
 	//not used at this time
 	//print(FLOAT_HEADER_WORD + 
@@ -238,6 +249,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//print(INT_HEADER_WORD + 
 	//" = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
 	
+	if (KjcOptions.standalone) {
+	    print("  " + ARGHELPER_COUNTER + "(argc, argv);\n");
+	}
+	
+
 	//if we are using the magic network, 
 	//use a magic instruction to initialize the magic fifos
 	if (KjcOptions.magic_net)
@@ -268,6 +284,23 @@ public class FlatIRToC extends ToC implements StreamVisitor
        
 	createFile();
     }
+
+    //generate a function that will get the iteration count from the 
+    //command-line, only generation this if --standalone is enabled...
+    private void addIterCountFunction() 
+    {
+	print("\n/* helper routines to parse command line arguments */\n");
+	print("#include <unistd.h>\n\n");
+
+	print("/* retrieve iteration count for top level driver */\n");
+	print("static void " + ARGHELPER_COUNTER + "(int argc, char** argv) {\n");
+	print("    int flag;\n");
+	print("    while ((flag = getopt(argc, argv, \"i:\")) != -1)\n");
+	print("       if (flag == \'i\') { " + MAINMETHOD_COUNTER + " =  atoi(optarg); return;}\n");
+	print("    " + MAINMETHOD_COUNTER + " = -1; /* default iteration count (run indefinitely) */\n");
+	print("}\n\n\n");
+    }
+    
 
     public void visitPhasedFilter(SIRPhasedFilter self,
                                   SIRPhasedFilterIter iter) {
@@ -505,12 +538,13 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    else if (type.isFloatingPoint()) {
 		print(" = " + ((float)Math.random()) + "f");
 	    }
-	} else {
-	    if (type.isOrdinal())
-		print (" = 0");
-	    else if (type.isFloatingPoint())
-		print(" = 0.0f");
-	}
+	} else if (type.isOrdinal())
+	    print (" = 0");
+	else if (type.isFloatingPoint())
+	    print(" = 0.0f");
+	else if (type.isArrayType()) 
+	    print(" = 0");
+	    
 
         print(";\n");
 
@@ -789,8 +823,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
 		 type.equals(CStdType.Integer) ||
 		 type.equals(CStdType.Short))
 	    {
-		if (!KjcOptions.standalone)
+		if (!KjcOptions.standalone) {
+		    //print("raw_test_pass_reg(");
 		    print("print_int(");
+		}
 		else
 		    print("printf(\"%d\\n\", "); 
 		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
@@ -800,8 +836,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    }
 	else if (type.equals(CStdType.Char))
 	    {
-		if (!KjcOptions.standalone)
+		if (!KjcOptions.standalone) {
+		    //print("raw_test_pass_reg(");
 		    print("print_int(");
+		}
 		else
 		    print("printf(\"%d\\n\", "); 
 		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
@@ -811,8 +849,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    }
 	else if (type.equals(CStdType.Float))
 	    {
-		if (!KjcOptions.standalone)
+		if (!KjcOptions.standalone) {
+		    //print("raw_test_pass_reg(");
 		    print("print_float(");
+		}
 		else 
 		    print("printf(\"%f\\n\", "); 
 		//print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
@@ -822,8 +862,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    }
         else if (type.equals(CStdType.Long))
 	    {
-		if (!KjcOptions.standalone)
+		if (!KjcOptions.standalone) {
+		    //print("raw_test_pass_reg(");
 		    print("print_int(");
+		}
 		else
 		    print("printf(\"%d\\n\", "); 
 		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");

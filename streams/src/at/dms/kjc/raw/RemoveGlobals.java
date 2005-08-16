@@ -258,7 +258,7 @@ public class RemoveGlobals extends at.dms.util.Utils
 	    //otherwise this will be a function call that we inline
 	    //I have decided to inline as much as possible
 	    
-	    //this should not be necessary, but just incase
+	    //this should not be necessary, but just in case
 	    prefix.accept(this);
 	    //the args may be function calls themselves, so we must visit 
 	    //the args, this was a fun bug to find!
@@ -439,6 +439,16 @@ public class RemoveGlobals extends at.dms.util.Utils
     {
 	private static SIRFilter filter;
 	private static HashSet localVariables;
+	//the fields that cannot be localized for one reason or another...
+	private static HashSet doNotLocalize;
+
+	//build the list of variables not to localize..
+	static 
+	{
+	    doNotLocalize = new HashSet();
+	    doNotLocalize.add(new String(FlatIRToC.MAINMETHOD_COUNTER));
+	}
+	
 
 	public static void doit(SIRFilter f) 
 	{
@@ -450,6 +460,10 @@ public class RemoveGlobals extends at.dms.util.Utils
 	    
 	    HashSet arrays = new HashSet();
 
+	    //fields that should not be localized and need to be added back
+	    //to the fields arrays
+	    HashSet fieldsToKeep = new HashSet();
+
 	    //move all globals var defs into the raw main function
 	    for (int i = 0; i < fields.length; i++) {
 		JVariableDefinition def = fields[i].getVariable();
@@ -458,9 +472,12 @@ public class RemoveGlobals extends at.dms.util.Utils
 		//zero them later
 		if (def.getType().isArrayType())
 		    arrays.add(def);
-
-		localVariables.add(def);
 		
+		if (!doNotLocalize.contains(def.getIdent()))
+		    localVariables.add(def);
+		else
+		    fieldsToKeep.add(fields[i]);
+		    
 		rawMainBlock.addStatementFirst
 		    (new JVariableDeclarationStatement
 		     (null, def, null));
@@ -488,20 +505,34 @@ public class RemoveGlobals extends at.dms.util.Utils
 						    "sizeof",
 						    sizeofArgs);
 		
-		JExpressionStatement zeroArray = 
+		JExpressionStatement memset = 
 		    new JExpressionStatement(null,
 					     new JMethodCallExpression(null,
 								       new JThisExpression(null), 
 								       "memset",
 								       args),
 					     null);
-		
+		JEqualityExpression isZero = 
+		    new JEqualityExpression(null, false,
+					    new JLocalVariableExpression(null, def),
+					    new JIntLiteral(0));
+
+		JIfStatement zeroArray = new JIfStatement(null, isZero, memset, 
+							  new JEmptyStatement(null, null),
+							  null);
+
 		//place the statement after the variable defs
 		rawMainBlock.addStatement(fields.length, zeroArray);
 	    }
 
 	    //remove the field defs from the filter
 	    filter.setFields(new JFieldDeclaration[0]);
+	    //add back the fields that should not be removed..
+	    Iterator ftk = fieldsToKeep.iterator();
+	    while (ftk.hasNext()) {
+		filter.addField((JFieldDeclaration)ftk.next());
+	    }
+	    
 
 	    //convert all access of globals into locals
 	    RemoveGlobals.getRawMain(filter).accept(new ConvertGlobalsToLocals());
@@ -555,7 +586,7 @@ public class RemoveGlobals extends at.dms.util.Utils
 	    //to a local variable access
 	    //otherwise it is accessing a field of a variable, so just
 	    //keep the name, it does not matter what it is...
-	    if (left instanceof JThisExpression) {
+	    if (left instanceof JThisExpression && !doNotLocalize.contains(ident)) {
 		return new JLocalVariableExpression(null, getVarDef(ident));
 	    }
 	    else {

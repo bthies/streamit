@@ -72,6 +72,18 @@ public class DirectCommunication extends at.dms.util.Utils
 	else
 	    paramArray = (JExpression[])paramList.toArray(new JExpression[0]);
 	
+	//if standalone, add a field for the iteration counter...
+	JFieldDeclaration iterationCounter = null;
+	if (KjcOptions.standalone) {
+	    iterationCounter = 
+		new JFieldDeclaration(new JVariableDefinition(0,
+							      CStdType.Integer, 
+							      FlatIRToC.MAINMETHOD_COUNTER,
+							      new JIntLiteral(-1)));
+	    filter.addField(iterationCounter);
+	}
+	
+
 	//add the call to the init function
 	statements.addStatement
 	    (new 
@@ -95,7 +107,7 @@ public class DirectCommunication extends at.dms.util.Utils
 				       null));
 	}
 
-	//if we are in decoupled mode do not put the work function in a for loop
+	//if we are in decoupled mode do not put the work function in a while loop
 	//and add the print statements
 	if (KjcOptions.decoupled) {
 	    workBlock.addStatementFirst
@@ -110,10 +122,16 @@ public class DirectCommunication extends at.dms.util.Utils
 	}
 	else {
 	    statements.addStatement
-		(new JWhileStatement(null, 
-				     new JBooleanLiteral(null, true),
-				     workBlock, 
-				     null));
+		(new JWhileStatement
+		 (null, 
+		  KjcOptions.standalone ?  
+		 (JExpression) new JPostfixExpression(null, 
+					 Constants.OPE_POSTDEC, 
+					 new JFieldAccessExpression(new JThisExpression(null), 
+								    FlatIRToC.MAINMETHOD_COUNTER)) :
+		  (JExpression)new JBooleanLiteral(null, true),
+		  workBlock, 
+		  null));
 	}
 	
 	JMethodDeclaration rawMainFunct = 

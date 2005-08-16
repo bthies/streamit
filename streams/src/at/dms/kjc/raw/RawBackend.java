@@ -49,6 +49,9 @@ public class RawBackend {
 	System.out.println("Entry to RAW Backend");
 
 	structures = structs;
+
+	if (KjcOptions.standalone)
+	    KjcOptions.ratematch = false;
 	
 	// set number of columns/rows
 	RawBackend.rawRows = KjcOptions.raw;

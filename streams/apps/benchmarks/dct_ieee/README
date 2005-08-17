@@ -31,9 +31,10 @@ can be found in Appendix A of the MPEG-2 specification (ISO/IEC
 
 DCT VERSIONS
 
-This package does not include an executable pipeline itself; it's
-stream components are meant to be used within other stream
-graphs. There are three versions of the code which can be used:
+The only executable pipeline in this package is a correctness 
+self-test. It's stream components are meant to be used within 
+other stream graphs. There are three versions of the library which 
+can be used:
 
 * reference: A reference implementation based on the DCT code found
 within the C reference MPEG implementation.
@@ -98,3 +99,17 @@ This will generate html files documenting the API for the
 DCTinternal.str and DCTexternal.str (if it exists) files. For details
 on using functions in this DCT library, please make the documentation
 and refer to that. 
+
+CORRECTNESS CHECK
+
+To perform the self-test for correctness:
+
+$ make check_correct
+
+This may or may not give a variety of Error messages. Basically this check takes a series of semi-random 8x8 integer blocks and transforms them and inverse transforms them using both the reference and fast versions and checks to make sure that the outputs match what they should. 
+
+This test is not particularly usefor developers using this library. However, if you are trying to modify this library or want to change the implementation of any of the routines, or add support for new implementations, you may want to use or extend this test.
+
+NOTE! The reference implementations included with this code are identical copies of the DCT and iDCT reference functions used by the MPEG Group's reference C encoder. These functions are not perfect inverses of each other - for most sample data input sets, the output of the iDCT does not correlate exactly with the input to the DCT. This means that the fast implementation may actually be more correct than the reference implementation, but these needs to be explored further.
+
+

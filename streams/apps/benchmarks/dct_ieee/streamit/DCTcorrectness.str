@@ -1,0 +1,145 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that check the correctness of various Discrete Cosine Transforms and
+ * their inverses.  When reference is made to the IEEE DCT specification, it
+ * is refering to the IEEE DCT specification used by both MPEG and JPEG.
+ * A definition of what makes an 8x8 DCT conform to the IEEE specification, as well
+ * as a pseudocode implementation, can be found in Appendix A of the MPEG-2 specification
+ * (ISO/IEC 13818-2) on P. 125. 
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file DCTcorrectness.str
+ * @version 1.0
+ */
+
+void->void pipeline DCTcorrectness {
+  add RandomDataSource;
+  add int->void splitjoin {
+    split duplicate();
+    add checkDCT_IDCT;
+    add checkrefDCT_IDCT;
+    add checkIDCTs;
+    add checkDCTs;
+    join roundrobin(0);
+  }
+}
+
+int->void pipeline checkIDCTs {
+  add iDCT8x8_ieee;
+  add int->void filter {
+    work pop 1 {
+      pop();
+    }
+  }
+}
+
+int->void pipeline checkDCTs {
+  add DCT8x8_ieee;
+  add int->void filter {
+    work pop 1 {
+      pop();
+    }
+  }
+}
+
+int->void pipeline checkDCT_IDCT {
+  add int->int splitjoin {
+    split duplicate();
+    add int->int pipeline {
+      add DCT_2D_int(8);
+      add iDCT_2D_int(8);
+    }
+    add Identity<int>;
+    join roundrobin(1, 1);
+  }
+  add int->void filter {
+    float count;
+    float errors;
+    init {
+      count = 0.0;
+      errors = 0.0;
+    }
+    work pop 2 {
+      count += 1.0;
+      int a, b;
+      b = pop();
+      a = pop();
+      if (a != b) {
+        errors += 1.0;
+        if ((a-b) > 1 || (a-b) < -1) {
+          print("Serious Error  - fast iDCT output off by more than 1 from fast DCT input.");
+        } else {
+          print("Possible Error - fast iDCT output off by 1 from fast DCT input.");
+        }
+        print("                 input: " + b + ", output: " + a);
+        float errorRate = errors/count;
+        print("                 Error Rate: " + errorRate);
+      }
+    }
+  }   
+}
+
+int->void pipeline checkrefDCT_IDCT {
+  add int->int splitjoin {
+    split duplicate();
+    add int->int pipeline {
+      add DCT_2D_ref;
+      add iDCT_2D_ref;
+    }
+    add Identity<int>;
+    join roundrobin(1, 1);
+  }
+  add int->void filter {
+    float count;
+    float errors;
+    init {
+      count = 0.0;
+      errors = 0.0;
+    }
+    work pop 2 {
+      count += 1.0;
+      int a, b;
+      a = pop();
+      b = pop();
+      if (a != b) {
+        errors += 1.0;
+        if ((a-b) > 1 || (a-b) < -1) {
+          print("Serious Error  - ref iDCT output off by more than 1 from ref DCT input.");
+        } else {
+          print("Possible Error - ref iDCT output off by 1 from ref DCT input.");
+        }
+        print("                 input: " + b + ", output: " + a);
+        float errorRate = errors/count;
+        print("                 Error Rate: " + errorRate);
+      }
+    }
+  }   
+}
+
+void->int filter RandomDataSource {
+  work push 64 {
+    for (int i = 0; i < 64; i++) {
+      push((int) (pow(3, i) % 75));
+    }
+  }
+}
+
+
+
+

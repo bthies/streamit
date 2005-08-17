@@ -47,12 +47,62 @@ int->int pipeline iDCT8x8_ieee {
     join roundrobin(1);
   }
   add int->int filter {
+    float count;
+    float errors;
+    init {
+      errors = 0.0;
+      count = 0.0;
+    }
     work pop 2 push 1 {
+      count += 1.0;
       int fastVal = pop();
       int refVal = pop();
       if (fastVal != refVal) {
         print("Error - Discrepancy between reference iDCT and fast iDCT");
         print("        Reference iDCT gives " + refVal + " and Fast iDCT gives " + fastVal);
+        errors += 1.0;
+        float errorRate = errors/count;
+        print("        Error Rate is " + errorRate);
+      }
+      push(refVal);
+    }
+  }
+}
+
+/**
+ * Transforms an 8x8 signal from the signal domain to the frequency domain
+ * using a Discrete Cosine Transform in accordance with the IEEE
+ * specification for a 2-dimensional 8x8 DCT.
+ * @input 64 values representing an 8x8 array of values in the signal
+ *        domain, ordered by row and then column.
+ * @output 64 values representing an 8x8 array of values in the 
+ *         frequency domain, ordered by row and then column. Vertical frequency
+ *         increases along each row and horizontal frequency along each column.
+ */
+int->int pipeline DCT8x8_ieee {
+  add int->int splitjoin {
+    split duplicate();
+    add DCT_2D_int(8);    
+    add DCT_2D_ref;
+    join roundrobin(1);
+  }
+  add int->int filter {
+    float count;
+    float errors;
+    init {
+      errors = 0.0;
+      count = 0.0;
+    }
+    work pop 2 push 1 {
+      count += 1.0;
+      int fastVal = pop();
+      int refVal = pop();
+      if (fastVal != refVal) {
+        print("Error - Discrepancy between reference DCT and fast DCT");
+        print("        Reference DCT gives " + refVal + " and Fast DCT gives " + fastVal);
+        errors += 1.0;
+        float errorRate = errors/count;
+        print("        Error Rate is " + errorRate);
       }
       push(refVal);
     }

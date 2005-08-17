@@ -31,6 +31,57 @@
 /**
  * @internal
  */
+int->int filter DCT_2D_ref {
+// Based on the implementation given in the C MPEG-2 reference implementation
+  float[8][8] c;
+  
+  init {
+    for (int i = 0; i < 8; i++) {
+      float s = (i == 0) ? sqrt(0.125) : 0.5;
+      for (int j = 0; j < 8; j++) {
+        c[i][j] = s*cos((pi/8.0)*i*(j+0.5));
+      }
+    }
+  }
+
+  work pop 64 push 64 {
+    int[8][8] block;
+    float[8][8] tmp;
+    int i, j, k;
+    for (i = 0; i < 8; i++) {
+      for (j = 0; j < 8; j++) {
+        block[i][j] = pop();
+      }
+    }
+    for (i = 0; i < 8; i++) {
+      for (j = 0; j < 8; j++) {
+        float s = 0.0;
+        for (k = 0; k < 8; k++) {
+          s += c[j][k] * block[i][k];
+        }
+      tmp[i][j] = s;
+      }
+    }
+    for (j = 0; j < 8; j++) {
+      for (i = 0; i < 8; i++) {
+        float s = 0.0;
+        for (k = 0; k < 8; k++) {
+          s += c[i][k] * tmp[k][j];
+        }
+        block[i][j] = (int) floor(s+0.5);
+      }
+    }
+    for (i = 0; i < 8; i++) {
+      for (j = 0; j < 8; j++) {
+        push(block[i][j]);
+      }      
+    }
+  }
+}
+
+/**
+ * @internal
+ */
 int->int filter iDCT_2D_ref {
 // Based on the implementation given in the C MPEG-2 reference implementation
   float[8][8] c;
@@ -77,20 +128,6 @@ int->int filter iDCT_2D_ref {
         push(block[i][j]);
       }
   }
-}
-
-/**
- * Transforms an 8x8 signal from the signal domain to the frequency domain
- * using a Discrete Cosine Transform in accordance with the IEEE
- * specification for a 2-dimensional 8x8 DCT.
- * @input 64 values representing an 8x8 array of values in the signal
- *        domain, ordered by row and then column.
- * @output 64 values representing an 8x8 array of values in the 
- *         frequency domain, ordered by row and then column. Vertical frequency
- *         increases along each row and horizontal frequency along each column.
- */
-int->int pipeline DCT8x8_ieee {
-  add DCT_2D_int(8);
 }
 
 /**
@@ -173,6 +210,15 @@ int->int pipeline DCT_2D_int(int size) {
 }
 
 /**
+ * @internal
+ */
+float->float filter DivideBy_float(float divisor) {
+  work pop 1 push 1 {
+    push(pop()/divisor);
+  }
+}
+
+/**
  * Transforms a 1D signal from the frequency domain to the signal domain
  * using an inverse Discrete Cosine Transform.
  * @param size The number of elements in each dimension of the signal.
@@ -182,23 +228,45 @@ int->int pipeline DCT_2D_int(int size) {
  * @output size values representing an array of values in the signal
  *         domain, ordered by row and then column.
  */
-float->float filter iDCT_1D(int size) {
-  work pop size push size {
-    float Cu;
+float->float pipeline iDCT_1D(int size) {
+  add float->float splitjoin {
+    split duplicate();
     for (int x = 0; x < size; x++) {
-      float tempsum = 0;
-      for (int u = 0; u < size; u++) {
-        if (u == 0)
-          Cu = 1/sqrt(2);
-        else
-          Cu = 1;
-        tempsum += Cu*peek(u)*cos(u*pi*(2.0*x+1)/(2.0*size));
+      add iDCT_1D_compute_value(x, size);    
+    }
+    join roundrobin(1);
+  }
+  add DivideBy_float(2.0);
+}
+
+/**
+ * @internal
+ */
+float->float pipeline iDCT_1D_compute_value(int x, int size) {
+  add float->float splitjoin {
+    split roundrobin(1);
+    for (int u = 0; u < size; u++) {
+      if (u == 0) {
+        add ComputeIntermediate(x, u, size, 1/sqrt(2));
+      } else {
+        add ComputeIntermediate(x, u, size, 1);
       }
-      push((1.0/2.0)*tempsum);
     }
-    for (int x = 0; x < size; x++) {
-      pop();
+    join roundrobin(1);
+  }
+  add Add_float(8);
+}
+
+/**
+ * @internal
+ */
+float->float filter Add_float(int num) {
+  work pop num push 1 {
+    float total = 0;
+    for (int i = 0; i < num; i++) {
+      total += pop();
     }
+    push(total);
   }
 }
 
@@ -212,23 +280,41 @@ float->float filter iDCT_1D(int size) {
  *         frequency domain, ordered by row and then column. Vertical frequency
  *         increases along each row and horizontal frequency along each column.
  */
-float->float filter DCT_1D(int size) {
-  work pop size push size {
-    float Cu;
+float->float pipeline DCT_1D(int size) {
+  add float->float splitjoin {
+    split duplicate();
     for (int u = 0; u < size; u++) {
-      if (u == 0) 
-        Cu = 1/sqrt(2);
-      else
-        Cu = 1;
-      float tempsum = 0;
-      for (int x = 0; x < size; x++) {
-        tempsum += peek(x)*cos(u*pi*(2.0*x+1)/(2.0*size));
-      }
-      push((1.0/2.0)*Cu*tempsum);
+      add DCT_1D_compute_value(u, size);
     }
+    join roundrobin(1);
+  }
+  add DivideBy_float(2.0);
+}
+
+/**
+ * @internal
+ */
+float->float pipeline DCT_1D_compute_value(int u, int size) {
+  add float->float splitjoin {
+    split roundrobin(1);
     for (int x = 0; x < size; x++) {
-      pop();
+      if (u == 0) {
+        add ComputeIntermediate(x, u, size, 1/sqrt(2));
+      } else {
+        add ComputeIntermediate(x, u, size, 1);    
+      }
     }
+    join roundrobin(1);
+  }
+  add Add_float(8);
+}
+
+/** 
+ * @internal
+ */
+float->float filter ComputeIntermediate(int x, int u, int size, float Cu) {
+  work pop 1 push 1 {
+    push(Cu*pop()*cos(u*pi*(2.0*x+1)/(2.0*size)));
   }
 }
 

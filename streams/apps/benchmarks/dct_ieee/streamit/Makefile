@@ -5,6 +5,9 @@ default: fast
 clean:
 	rm -f DCTexternal.str
 	rm -f *.html 
+	rm -f *.class
+	rm -f *.dot
+	rm -f *.java
 
 reference:	clean
 	ln -s DCTreference.str DCTexternal.str
@@ -14,6 +17,9 @@ fast:	clean
 
 comparison:	clean
 	ln -s DCTcomparison.str DCTexternal.str
+
+check_correct: comparison
+	strc DCTcorrectness.str DCTinternal.str DCTexternal.str -library -i 1
 
 docs: DCTinternal.str ${STREAMITDOC}
 	${STREAMITDOC} DCTinternal.str -o DCTinternal.html

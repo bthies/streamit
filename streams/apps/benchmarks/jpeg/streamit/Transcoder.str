@@ -54,7 +54,7 @@ int->float pipeline ChannelUnencoder_Y {
 float->int pipeline ChannelEncoder_Y {
     add Add(-128);
     add DCT_2D(8);
-    add staticLuminanceQuantization_20;
+    add staticLuminanceQuantization_100;
     add BlockDCDifferenceEncoder;
     add ZigZagOrdering;
 }
@@ -70,7 +70,7 @@ int->float pipeline ChannelUnencoder_C {
 float->int pipeline ChannelEncoder_C {
     add Add(-128);
     add DCT_2D(8);
-    add staticLuminanceQuantization_20;
+    add staticLuminanceQuantization_100;
     add BlockDCDifferenceEncoder;
     add ZigZagOrdering;	
 }
@@ -175,7 +175,33 @@ float->int pipeline staticChrominanceQuantization_20 {
          40, 40, 40, 40, 40, 40, 40, 40,
          40, 40, 40, 40, 40, 40, 40, 40,
          40, 40, 40, 40, 40, 40, 40, 40,
-         40, 40, 40, 40, 40, 40, 40, 40};
+         40, 40, 40, 40, 40, 40, 40, 40};  
+    add staticQuantization(table_ChrominanceQuantizationTable);
+}
+
+float->int pipeline staticLuminanceQuantization_100 {
+    int[64] table_LuminanceQuantizationTable =
+        {1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1};  
+    add staticQuantization(table_LuminanceQuantizationTable);
+}
+
+float->int pipeline staticChrominanceQuantization_100 {
+    int[64] table_ChrominanceQuantizationTable =
+        {1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1};  
     add staticQuantization(table_ChrominanceQuantizationTable);
 }
 
@@ -602,14 +628,31 @@ int->int filter JPEGByteStream_Creator {
 					40, 40, 40, 40, 40, 40, 40, 40,
 					40, 40, 40, 40, 40, 40, 40, 40,
 					40, 40, 40, 40, 40, 40, 40, 40}}; */
-		int[2][64] dqt_tables = {{6, 4, 5, 10, 6, 5, 6, 7, 10, 12, 22, 16, 9, 7, 5, 4, 5,
+	/*	int[2][64] dqt_tables = {{6, 4, 5, 10, 6, 5, 6, 7, 10, 12, 22, 16, 9, 7, 5, 4, 5,
 						  9, 23, 22, 35, 38, 28, 26, 20, 10, 8, 6, 6, 10, 20, 24, 29, 22,
  						  39, 48, 45, 41, 22, 37, 24, 13, 16, 15, 23, 31, 32, 43, 40, 48,
 						  41, 44, 26, 20, 27, 32, 25, 37, 40, 31, 35, 45, 41, 40},
 						 {7, 7, 10, 40, 19, 7, 10, 40, 40, 40, 40, 40, 40, 26, 8, 10,
 						  22, 40, 40, 40, 40, 40, 40, 40, 40, 40, 26, 19, 10, 40, 40, 40,
 						  40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
-						  40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40}};
+						  40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40}}; */
+      int[2][64] dqt_tables = {
+        {1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1}};
 
 		for (int i = 0; i < 2; i++) {
 		    push(i);

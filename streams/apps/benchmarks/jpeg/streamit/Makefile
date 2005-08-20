@@ -9,7 +9,7 @@ input.jpg.int: ../input/input.jpg ../utils/b2i
 ../utils/b2i: ../utils/b2i.c
 	g++ ../utils/b2i.c -o ../utils/b2i
 
-outputjpg: output.jpg.int ../utils/i2b
+output.jpg: output.jpg.int ../utils/i2b
 	../utils/i2b ../streamit/output.jpg.int ../streamit/output.jpg
 
 ../utils/i2b: ../utils/i2b.c
@@ -18,3 +18,9 @@ outputjpg: output.jpg.int ../utils/i2b
 jpegtobmp: JPEGtoBMP.str input.jpg.int
 	strc JPEGtoBMP.str -library -nosched
 
+clean:
+	rm -f *.class
+	rm -f *.dot
+	rm -f *.java
+	rm -f *.int
+	rm -f output.jpg

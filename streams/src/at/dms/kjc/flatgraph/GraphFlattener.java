@@ -2,7 +2,6 @@ package at.dms.kjc.flatgraph;
 
 import at.dms.kjc.*;
 import at.dms.kjc.raw.*;
-import at.dms.kjc.spacedynamic.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.util.Utils;

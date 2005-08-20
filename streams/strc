@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.60 2005-08-15 00:49:03 thies Exp $
+# $Id: strc,v 1.61 2005-08-20 00:53:51 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -100,7 +100,7 @@ exit(1) if !$fns;
 $fns = new_to_c($fns) if $opts{tokopi};
 exit(1) if !$fns;
 $fns = c_to_out($fns, $opts{output}) unless 
-    ($opts{raw} || $opts{cluster} || $opts{standalone} || $opts{rstream});
+    ($opts{raw} || $opts{cluster} || $opts{rstream});
 exit(1) if !$fns;
 exit(0);
 

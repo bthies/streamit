@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.45 2005-08-15 00:50:07 thies Exp $
+# $Id: release.sh,v 1.46 2005-08-20 02:12:10 thies Exp $
 #
 
 # Interesting/configurable variables:
@@ -145,7 +145,6 @@ rm -rf $WORKING/streams/src/at/dms/kjc/flatgraph2
 rm -rf $WORKING/streams/src/at/dms/kjc/raw2
 rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
 rm -rf $WORKING/streams/src/at/dms/kjc/spacedynamic
-rm -rf $WORKING/streams/src/at/dms/kjc/sir/stats
 rm -rf $WORKING/streams/src/com
 rm -rf $WORKING/streams/src/org
 rm -rf $WORKING/streams/src/streamit/eclipse
@@ -170,7 +169,7 @@ rm -f $WORKING/streams/docs/implementation-notes/portals.txt
 mv $WORKING/streams/docs/syntax/streamit-lang-2.1.tex $WORKING/streams/docs/syntax/streamit-lang.tex 
 
 # Build interesting bits of the documentation; they go in both releases.
-for d in cookbook release syntax; do
+for d in release cookbook syntax; do
   make -C $WORKING/streams/docs/$d
 done
 find $WORKING/streams/docs \( -name '*.aux' -o -name '*.log' \

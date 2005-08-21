@@ -30,7 +30,7 @@ import java.util.ArrayList;
  * no declared I/O rates.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NoticePhasedFilters.java,v 1.7 2005-07-20 03:35:39 madrake Exp $
+ * @version $Id: NoticePhasedFilters.java,v 1.8 2005-08-21 07:03:41 thies Exp $
  */
 public class NoticePhasedFilters extends FEReplacer
 {
@@ -96,7 +96,9 @@ public class NoticePhasedFilters extends FEReplacer
                                                       new ArrayList())));
             return new StmtBlock(stmt.getContext(), stmtList);
         } else {
-            return new StmtPhase(stmt.getContext(), fc);
+            //return new StmtPhase(stmt.getContext(), fc);
+	    // new phase format looks like library
+	    return stmt;
         }
     }
 }

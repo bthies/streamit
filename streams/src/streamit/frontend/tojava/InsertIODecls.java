@@ -31,7 +31,7 @@ import java.util.ArrayList;
  * inserted in <code>NodesToJava</code>.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertIODecls.java,v 1.10 2005-07-19 18:09:12 madrake Exp $
+ * @version $Id: InsertIODecls.java,v 1.11 2005-08-21 07:03:46 thies Exp $
  */
 public class InsertIODecls extends InitMunger
 {
@@ -86,15 +86,6 @@ public class InsertIODecls extends InitMunger
         if (spec.getType() != StreamSpec.STREAM_FILTER)
             return spec;
 
-        if (libraryFormat)
-            return ssLibrary(spec);
-        else
-            return ssCompiler(spec);
-    }
-    
-    /** Do the rewrite work for the library flow. */
-    private Object ssLibrary(StreamSpec spec)
-    {
         List fns = new ArrayList(spec.getFuncs());
         StreamType st = spec.getStreamType();
         List newStmts = new ArrayList();
@@ -139,51 +130,11 @@ public class InsertIODecls extends InitMunger
                 newStmts.add(new StmtAddPhase(work.getContext(), init, (FuncWork) iter.next())); 
             }
         }
-        else
-            // Add the work function as the only phase.
-            newStmts.add(new StmtAddPhase(work.getContext(), init, work));
-
-    }
-
-    /** Do the rewrite work for the compiler flow. */
-    private Object ssCompiler(StreamSpec spec)
-    {
-        List fns = new ArrayList(spec.getFuncs());
-        // Assert that this class cast works.
-        FuncWork work = (FuncWork)findWork(fns, false);
-        StreamType st = spec.getStreamType();
-        List newStmts = new ArrayList();
-        // This is a phased filter iff the work function has
-        // all null I/O rates.  In that case, use the setIOTypes
-        // call to set the types.
-        if (work.getPopRate() == null && work.getPushRate() == null)
-            newStmts.add(new StmtSetTypes(work.getContext(), st));
-        else
-        {
-            if (!(st.getIn() instanceof TypePrimitive) ||
-                ((TypePrimitive)st.getIn()).getType() !=
-                TypePrimitive.TYPE_VOID)
-            {
-                newStmts.add(new StmtIODecl(work.getContext(), "input",
-                                            st.getIn(), work.getPopRate(),
-                                            work.getPeekRate()));
-            }
-            if (!(st.getOut() instanceof TypePrimitive) ||
-                ((TypePrimitive)st.getOut()).getType() !=
-                TypePrimitive.TYPE_VOID)
-            {
-                newStmts.add(new StmtIODecl(work.getContext(), "output",
-                                            st.getOut(), work.getPushRate()));
-            }
-        }
-        
-        if (newStmts.isEmpty())
-            return spec;
-        
-        fns = replaceInitWithPrepended(spec.getContext(), fns, newStmts);
-        
-        return new StreamSpec(spec.getContext(), spec.getType(),
-                              spec.getStreamType(), spec.getName(),
-                              spec.getParams(), spec.getVars(), fns);
+	// Also add the work function as a phase.  Except in the
+	// library, for now (which only evaluates work() in phased
+	// filters in -nosched mode, as of 8/05.  This should change.)
+	if (!libraryFormat || phaseList.size()==0) {
+	    newStmts.add(new StmtAddPhase(work.getContext(), init, work));
+	}
     }
 }

@@ -56,7 +56,7 @@ public class SIRPhasedFilterIter extends SIRIterator implements FilterIter
     }
 
     public Object getInitFunctionStage(int phase) {
-        return obj.getInitPhases()[phase].getWork();
+        return obj.getInitPhases()[phase];
     }
 
     // In particular, everything from here on down we had better be able
@@ -79,7 +79,7 @@ public class SIRPhasedFilterIter extends SIRIterator implements FilterIter
     }
     
     public Object getWorkFunctionPhase(int phase) {
-	return obj.getPhases()[phase].getWork();
+	return obj.getPhases()[phase];
     }
     
     public void accept(StreamVisitor v) {

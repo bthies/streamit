@@ -156,9 +156,9 @@ public class ArrayDim extends SLIREmptyVisitor implements StreamVisitor{
 	    methods[i].accept(this);
 
         //visit phases
-        SIRWorkFunction[] phases = self.getPhases();
+        JMethodDeclaration[] phases = self.getPhases();
         for (int i = 0; i < phases.length; i++)
-            phases[i].getWork().accept(this);
+            phases[i].accept(this);
     }
   
     /**

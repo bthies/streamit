@@ -17,7 +17,7 @@ import at.dms.kjc.sir.linear.*;
  */
 public class FilterContent {
     private String name;
-    private SIRWorkFunction[] init,steady;
+    private JMethodDeclaration[] init,steady;
     private CType inputType,outputType;
     private int initMult, steadyMult;
     private JMethodDeclaration[] methods;
@@ -259,17 +259,17 @@ public class FilterContent {
 	return outputType;
     }
 
-    public SIRWorkFunction[] getSteadyList() {
+    public JMethodDeclaration[] getSteadyList() {
 	return steady;
     }
     
-    public SIRWorkFunction[] getInitList() {
+    public JMethodDeclaration[] getInitList() {
 	return init;
     }
 
     public JMethodDeclaration getWork() {
 	if(steady!=null)
-	    return steady[0].getWork();
+	    return steady[0];
 	else
 	    return null;
     }
@@ -329,7 +329,7 @@ public class FilterContent {
     }
     
     public JMethodDeclaration getInitWork() {
-        return init[0].getWork();
+        return init[0];
     }
     
     public List getParams() {

@@ -622,8 +622,11 @@ public abstract class Filter extends Stream
 
     public void cleanupWork() {
 	super.cleanupWork();
-	// this is where phase is advanced for unscheduled run
-	advancePhase();
+
+	if (!Stream.scheduledRun) {
+	    // this is where phase is advanced for unscheduled run
+	    advancePhase();
+	}
     }
 
     

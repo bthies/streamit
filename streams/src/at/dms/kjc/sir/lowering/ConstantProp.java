@@ -87,8 +87,8 @@ public class ConstantProp {
      * through the fields of <str>.
      */
     private void propagateFields(Propagator propagator, SIRStream str) {
-	if (str instanceof SIRFilter) {
-	    propagateFilterFields(propagator, (SIRFilter)str);
+	if (str instanceof SIRPhasedFilter) {
+	    propagateFilterFields(propagator, (SIRPhasedFilter)str);
 	} else if (str instanceof SIRSplitJoin) {
 	    // for split-joins, resolve the weights of splitters and
 	    // joiners
@@ -115,22 +115,27 @@ public class ConstantProp {
      * Use <propagator> to propagate constants into the fields of <filter>
      */
     private void propagateFilterFields(Propagator propagator, 
-				       SIRFilter filter) {
-	// propagate to pop expression
-	JExpression newPop = (JExpression)filter.getPop().accept(propagator);
-	if (newPop!=null && newPop!=filter.getPop()) {
-	    filter.setPop(newPop);
+				       SIRPhasedFilter filter) {
+	for (int i=0; i<filter.getMethods().length; i++) {
+	    JMethodDeclaration method = filter.getMethods()[i];
+	    
+	    // propagate to pop expression
+	    JExpression newPop = (JExpression)method.getPop().accept(propagator);
+	    if (newPop!=null && newPop!=method.getPop()) {
+		method.setPop(newPop);
+	    }
+	    // propagate to peek expression
+	    JExpression newPeek = (JExpression)method.getPeek().accept(propagator);
+	    if (newPeek!=null && newPeek!=method.getPeek()) {
+		method.setPeek(newPeek);
+	    }
+	    // propagate to push expression
+	    JExpression newPush = (JExpression)method.getPush().accept(propagator);
+	    if (newPush!=null && newPush!=method.getPush()) {
+		method.setPush(newPush);
+	    }
 	}
-	// propagate to peek expression
-	JExpression newPeek = (JExpression)filter.getPeek().accept(propagator);
-	if (newPeek!=null && newPeek!=filter.getPeek()) {
-	    filter.setPeek(newPeek);
-	}
-	// propagate to push expression
-	JExpression newPush = (JExpression)filter.getPush().accept(propagator);
-	if (newPush!=null && newPush!=filter.getPush()) {
-	    filter.setPush(newPush);
-	}
+
 	if (filter instanceof SIRPredefinedFilter) {
 	    // propagate predefined fields
 	    ((SIRPredefinedFilter)filter).propagatePredefinedFields(propagator);

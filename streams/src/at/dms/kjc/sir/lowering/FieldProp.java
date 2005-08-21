@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.25 2005-04-05 07:07:29 thies Exp $
+ * $Id: FieldProp.java,v 1.26 2005-08-21 07:02:35 thies Exp $
  */
 public class FieldProp implements Constants
 {
@@ -479,38 +479,44 @@ public class FieldProp implements Constants
 	    //meths[i].accept(new VarDeclRaiser());
         }
         // If this is a filter, also run on I/O rates and other field initializers
-        if (filter instanceof SIRFilter)
+        if (filter instanceof SIRPhasedFilter)
         {
-            SIRFilter filt = (SIRFilter)filter;
+            SIRPhasedFilter filt = (SIRPhasedFilter)filter;
             Propagator prop = new Propagator(new Hashtable());
-	    // pop
-            JExpression newPop = (JExpression)filt.getPop().accept(theVisitor);
-            newPop = (JExpression)newPop.accept(prop);
-            if (newPop!=null && newPop!=filt.getPop()) {
-                filt.setPop(newPop);
-            }
-	    // peek
-            JExpression newPeek = (JExpression)filt.getPeek().accept(theVisitor);
-            newPeek = (JExpression)newPeek.accept(prop);
-            if (newPeek!=null && newPeek!=filt.getPeek()) {
-                filt.setPeek(newPeek);
-            }
-	    // push
-            JExpression newPush = (JExpression)filt.getPush().accept(theVisitor);
-            newPush = (JExpression)newPush.accept(prop);
-            if (newPush!=null && newPush!=filt.getPush()) {
-                filt.setPush(newPush);
-            }
-	    // field initializers
-	    JFieldDeclaration[] fields = filter.getFields();
-	    for (int i=0; i<fields.length; i++) {
-		JVariableDefinition var = fields[i].getVariable();
-		if (var.hasInitializer()) {
-		    JExpression origInit = var.getValue();
-		    JExpression newInit = (JExpression)origInit.accept(theVisitor);
-		    newInit = (JExpression)newInit.accept(prop);
-		    if (newInit!=origInit) {
-			var.setValue(newInit);
+
+	    for (int j=0; j<filter.getMethods().length; j++) {
+		JMethodDeclaration method = filter.getMethods()[j];
+
+		// pop
+		JExpression newPop = (JExpression)method.getPop().accept(theVisitor);
+		newPop = (JExpression)newPop.accept(prop);
+		if (newPop!=null && newPop!=method.getPop()) {
+		    method.setPop(newPop);
+		}
+		// peek
+		JExpression newPeek = (JExpression)method.getPeek().accept(theVisitor);
+		newPeek = (JExpression)newPeek.accept(prop);
+		if (newPeek!=null && newPeek!=method.getPeek()) {
+		    method.setPeek(newPeek);
+		}
+		// push
+		JExpression newPush = (JExpression)method.getPush().accept(theVisitor);
+		newPush = (JExpression)newPush.accept(prop);
+		if (newPush!=null && newPush!=method.getPush()) {
+		    method.setPush(newPush);
+		}
+		
+		// field initializers
+		JFieldDeclaration[] fields = filter.getFields();
+		for (int i=0; i<fields.length; i++) {
+		    JVariableDefinition var = fields[i].getVariable();
+		    if (var.hasInitializer()) {
+			JExpression origInit = var.getValue();
+			JExpression newInit = (JExpression)origInit.accept(theVisitor);
+			newInit = (JExpression)newInit.accept(prop);
+			if (newInit!=origInit) {
+			    var.setValue(newInit);
+			}
 		    }
 		}
 	    }

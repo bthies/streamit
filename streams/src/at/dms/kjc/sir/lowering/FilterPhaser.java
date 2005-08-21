@@ -16,6 +16,11 @@ import java.util.*;
  * should consist only of a series of phase invocations.  The phases
  * array of the filter is populated with the referenced phases, in
  * order.
+ *
+ * !!! WARNING !!!  This class is obsolete.  SIRPhaseInvocations are
+ * not generated anymore.  This class should be updated to look for
+ * calls to JMethodDeclarations that have isPhase() true, and build a
+ * list of phases from that.
  */
 public class FilterPhaser extends EmptyStreamVisitor
 {
@@ -47,11 +52,11 @@ public class FilterPhaser extends EmptyStreamVisitor
     public void visitPhasedFilter(SIRPhasedFilter str, SIRPhasedFilterIter iter)
     {
     	JMethodDeclaration work = str.getWork();
-		work.accept(blockFlattener);
-		work.accept(varDeclRaiser);
-		promoteLocalsToFields(str, work);
-		createExtraPhases(str, work);
-		buildPhaseList(str, work);
+	work.accept(blockFlattener);
+	work.accept(varDeclRaiser);
+	promoteLocalsToFields(str, work);
+	//createExtraPhases(str, work);
+	//buildPhaseList(str, work);
     }
     
     /**
@@ -91,80 +96,84 @@ public class FilterPhaser extends EmptyStreamVisitor
      * 
      * @param str    Phased filter to create extra phases in
      * @param work   Work function to scan for excess code
+     *
+     * !!! WARNING !!! This method is obsolete.  Needs to be upgraded
+     * to operate in new model of phases (no SIRPhaseInvocations,
+     * possibly non-atomic filters)
      */
-    private void createExtraPhases(SIRPhasedFilter str,
-                                   JMethodDeclaration work)
-    {
-    	JBlock body = work.getBody();
-        int pos = 0;
-    	JBlock currentBody = null;
-    	JExpression zero = new JIntLiteral(0);
+//     private void createExtraPhases(SIRPhasedFilter str,
+//                                    JMethodDeclaration work)
+//     {
+//     	JBlock body = work.getBody();
+//         int pos = 0;
+//     	JBlock currentBody = null;
+//     	JExpression zero = new JIntLiteral(0);
     	
-    	// Loop through statements.
-    	while (pos < body.size())
-    	{
-            JStatement stmt = body.getStatement(pos);
-            // Is this a forbidden statement?  We only want to allow
-            // a couple of things...
-            if (stmt instanceof SIRPhaseInvocation)
-            {
-                pos++;
-                // Create currentBody as a block if it exists.
-                if (currentBody != null)
-                {
-                    String phaseName = createPhase(str, currentBody);
-                    JMethodCallExpression call =
-                        new JMethodCallExpression(null,
-                                                  new JThisExpression(null),
-                                                  phaseName,
-                                                  new JExpression[0]);
-                    SIRPhaseInvocation invocation =
-                        new SIRPhaseInvocation(null, call,
-                                               zero, zero, zero, null);
-                    body.addStatement(pos, invocation);
-                    pos++;
-                    currentBody = null;
-                }
-            }
-            else if (stmt instanceof JEmptyStatement ||
-                     stmt instanceof JExpressionListStatement ||
-                     stmt instanceof JExpressionStatement)
-            {
-                // Convert local variable expressions to field references.
-                stmt = (JStatement)stmt.accept(new ReplacingVisitor() {
-                        public Object visitLocalVariableExpression
-                            (JLocalVariableExpression self, String ident)
-                        {
-                            return new JFieldAccessExpression
-                                (self.getTokenReference(),
-                                 new JThisExpression(self.getTokenReference()),
-                                 ident);
-                        }
-                    });
-                // These are okay.  Create a block if we need to:
-                if (currentBody == null)
-                    currentBody = new JBlock(null, Collections.EMPTY_LIST,
-                                             null);
-                currentBody.addStatement(stmt);
-                body.removeStatement(pos);
-            }
-            else
-            {
-                at.dms.util.Utils.fail("Unexpected statement " + stmt + " in phased filter work function");
-            }
-    	}
-    	// Deal with a trailing block, if one exists.
-        if (currentBody != null)
-        {
-            String phaseName = createPhase(str, currentBody);
-            JMethodCallExpression call =
-                new JMethodCallExpression(null, new JThisExpression(null),
-                                          phaseName, new JExpression[0]);
-            SIRPhaseInvocation invocation =
-                new SIRPhaseInvocation(null, call, zero, zero, zero, null);
-            body.addStatement(invocation);
-        }
-    }
+//     	// Loop through statements.
+//     	while (pos < body.size())
+//     	{
+//             JStatement stmt = body.getStatement(pos);
+//             // Is this a forbidden statement?  We only want to allow
+//             // a couple of things...
+//             if (stmt instanceof SIRPhaseInvocation)
+//             {
+//                 pos++;
+//                 // Create currentBody as a block if it exists.
+//                 if (currentBody != null)
+//                 {
+//                     String phaseName = createPhase(str, currentBody);
+//                     JMethodCallExpression call =
+//                         new JMethodCallExpression(null,
+//                                                   new JThisExpression(null),
+//                                                   phaseName,
+//                                                   new JExpression[0]);
+//                     SIRPhaseInvocation invocation =
+//                         new SIRPhaseInvocation(null, call,
+//                                                zero, zero, zero, null);
+//                     body.addStatement(pos, invocation);
+//                     pos++;
+//                     currentBody = null;
+//                 }
+//             }
+//             else if (stmt instanceof JEmptyStatement ||
+//                      stmt instanceof JExpressionListStatement ||
+//                      stmt instanceof JExpressionStatement)
+//             {
+//                 // Convert local variable expressions to field references.
+//                 stmt = (JStatement)stmt.accept(new ReplacingVisitor() {
+//                         public Object visitLocalVariableExpression
+//                             (JLocalVariableExpression self, String ident)
+//                         {
+//                             return new JFieldAccessExpression
+//                                 (self.getTokenReference(),
+//                                  new JThisExpression(self.getTokenReference()),
+//                                  ident);
+//                         }
+//                     });
+//                 // These are okay.  Create a block if we need to:
+//                 if (currentBody == null)
+//                     currentBody = new JBlock(null, Collections.EMPTY_LIST,
+//                                              null);
+//                 currentBody.addStatement(stmt);
+//                 body.removeStatement(pos);
+//             }
+//             else
+//             {
+//                 at.dms.util.Utils.fail("Unexpected statement " + stmt + " in phased filter work function");
+//             }
+//     	}
+//     	// Deal with a trailing block, if one exists.
+//         if (currentBody != null)
+//         {
+//             String phaseName = createPhase(str, currentBody);
+//             JMethodCallExpression call =
+//                 new JMethodCallExpression(null, new JThisExpression(null),
+//                                           phaseName, new JExpression[0]);
+//             SIRPhaseInvocation invocation =
+//                 new SIRPhaseInvocation(null, call, zero, zero, zero, null);
+//             body.addStatement(invocation);
+//         }
+//     }
     
     /**
      * Scan a work function and produce a list of phases for a phased filter.
@@ -174,34 +183,35 @@ public class FilterPhaser extends EmptyStreamVisitor
      * 
      * @param str    Phased filter to create phase list in
      * @param work   Work function to scan for phases
+     *
+     * !!! WARNING !!! This method is obsolete.  Needs to be upgraded
+     * to operate in new model of phases (no SIRPhaseInvocations,
+     * possibly non-atomic filters)
      */
-    private void buildPhaseList(SIRPhasedFilter str, JMethodDeclaration work)
-    {
-		JBlock body = work.getBody();
-		JMethodDeclaration[] methods = str.getMethods();
-		SIRWorkFunction[] phases = new SIRWorkFunction[body.size()];
-		for (int i = 0; i < body.size(); i++)
-		{
-			SIRPhaseInvocation invocation = (SIRPhaseInvocation)(body.getStatement(i));
-			String target = invocation.getCall().getIdent();
-			// Look for the method:
-			JMethodDeclaration decl = null;
-			for (int j = 0; j < methods.length; j++)
-			{
-				if (methods[j].getName().equals(target))
-				{
-					decl = methods[j];
-					break;
-				}
-			}
-			assert decl != null;
-			SIRWorkFunction wf =
-				new SIRWorkFunction(invocation.getPeek(), invocation.getPop(),
-								    invocation.getPush(), decl);
-			phases[i] = wf;
-		}
-		str.setPhases(phases);
-    }
+//     private void buildPhaseList(SIRPhasedFilter str, JMethodDeclaration work)
+//     {
+// 		JBlock body = work.getBody();
+// 		JMethodDeclaration[] methods = str.getMethods();
+// 		JMethodDeclaration[] phases = new JMethodDeclaration[body.size()];
+// 		for (int i = 0; i < body.size(); i++)
+// 		{
+// 			SIRPhaseInvocation invocation = (SIRPhaseInvocation)(body.getStatement(i));
+// 			String target = invocation.getCall().getIdent();
+// 			// Look for the method:
+// 			JMethodDeclaration decl = null;
+// 			for (int j = 0; j < methods.length; j++)
+// 			{
+// 				if (methods[j].getName().equals(target))
+// 				{
+// 					decl = methods[j];
+// 					break;
+// 				}
+// 			}
+// 			assert decl != null;
+// 			phases[i] = decl;
+// 		}
+// 		str.setPhases(phases);
+//     }
     
     /**
      * Returns the name of the next phase to be generated, incrementing the
@@ -216,21 +226,25 @@ public class FilterPhaser extends EmptyStreamVisitor
     	return result;
     }
     
-	/**
+    /**
      * Actually do the work of creating a phase, given the stream to create the
      * phase in and the body of the phase.
      * 
      * @param body
+     *
+     * !!! WARNING !!! This method is obsolete.  Needs to be upgraded
+     * to operate in new model of phases (no SIRPhaseInvocations,
+     * possibly non-atomic filters)
      */
-    private String createPhase(SIRStream stream, JBlock body)
-    {
-    	String name = nextPhaseName();
-    	JMethodDeclaration phase =
-    		new JMethodDeclaration(null, 0, CStdType.Void, name, new JFormalParameter[0], new CClassType[0], body,
-    							   null, null);
-    	JMethodDeclaration[] newPhases = new JMethodDeclaration[1];
-    	newPhases[0] = phase;
-    	stream.addMethods(newPhases);
-    	return name;
-    }
+//     private String createPhase(SIRStream stream, JBlock body)
+//     {
+//     	String name = nextPhaseName();
+//     	JMethodDeclaration phase =
+//     		new JMethodDeclaration(null, 0, CStdType.Void, name, new JFormalParameter[0], new CClassType[0], body,
+//     							   null, null);
+//     	JMethodDeclaration[] newPhases = new JMethodDeclaration[1];
+//     	newPhases[0] = phase;
+//     	stream.addMethods(newPhases);
+//     	return name;
+//     }
 }

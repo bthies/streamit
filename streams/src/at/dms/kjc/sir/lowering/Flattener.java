@@ -211,7 +211,7 @@ public class Flattener {
 		public void visitPhasedFilter(SIRPhasedFilter self,
 				       SIRPhasedFilterIter iter) {
 		    // check init phases
-		    SIRWorkFunction[] init = self.getInitPhases();
+		    JMethodDeclaration[] init = self.getInitPhases();
 		    for (int i=0; i<init.length; i++) {
 			if (init[i].getPush().isDynamic() ||
 			    init[i].getPop().isDynamic() ||
@@ -220,7 +220,7 @@ public class Flattener {
 			}
 		    }
 		    // check work phases
-		    SIRWorkFunction[] work = self.getPhases();
+		    JMethodDeclaration[] work = self.getPhases();
 		    for (int i=0; i<work.length; i++) {
 			if (work[i].getPush().isDynamic() ||
 			    work[i].getPop().isDynamic() ||
@@ -260,7 +260,7 @@ public class Flattener {
 	 * probably want to form filter phases before fusing the world, but we need
 	 * to run field prop before forming phases. */
 	// resolve phases in phased filters
-	FilterPhaser.resolvePhasedFilters(str);    
+	//FilterPhaser.resolvePhasedFilters(str);
         
 	// expand array initializers loaded from a file
 	ArrayInitExpander.doit(str);

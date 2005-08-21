@@ -68,6 +68,16 @@ public class LowerWorkFunctions implements StreamVisitor
     /* visit a filter */
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
+	doGeneralFilter(self);
+    }
+
+    /* visit a phased filter */
+    public void visitPhasedFilter(SIRPhasedFilter self,
+                                  SIRPhasedFilterIter iter) {
+	doGeneralFilter(self);
+    }
+
+    private void doGeneralFilter(SIRPhasedFilter self) {
 	// only worry about actual SIRFilter's, not special cases like
 	// FileReader's and FileWriter's
 	if (!self.needsWork()) {
@@ -79,50 +89,46 @@ public class LowerWorkFunctions implements StreamVisitor
         {
             self.getMethods()[i].accept(new VarDeclRaiser());
         }
-	DeadCodeElimination.doit(self);
-        // add entry/exit nodes to work function
-        addEntryExit(self.getWork());
-        // prune structure creation statements
-        removeStructureNew(self.getInit());
-        removeStructureNew(self.getWork());
-	// add entry/exit nodes to initial work function, if there is one
-	if (self instanceof SIRTwoStageFilter) {
-	    addEntryExit(((SIRTwoStageFilter)self).getInitWork());
-            removeStructureNew(((SIRTwoStageFilter)self).getInitWork());
+	// current limitation: DeadCode only works for plain
+	// SIRFilters, not SIRPhasedFilters
+	if (self instanceof SIRFilter) {
+	    DeadCodeElimination.doit((SIRFilter)self);
 	}
+
+	addEntryExits(self);
     }
 
-    /* visit a phased filter */
-    public void visitPhasedFilter(SIRPhasedFilter self,
-                                  SIRPhasedFilterIter iter) {
-        // At the point we're here, all of the calls to direct phases
-        // have been directly inserted.  We want to nuke the
-        // work function and update the phase functions.
-        Set done = new HashSet();
-        SIRWorkFunction[] phases = self.getInitPhases();
-        for (int i = 0; phases != null && i < phases.length; i++)
-        {
-            JMethodDeclaration phase = phases[i].getWork();
-            if (!done.contains(phase))
-            {
-                done.add(phase);
-                addEntryExit(phase);
-                removeStructureNew(phase);
-            }
-        }
-        phases = self.getPhases();
-        for (int i = 0; phases != null && i < phases.length; i++)
-        {
-            JMethodDeclaration phase = phases[i].getWork();
-            if (!done.contains(phase))
-            {
-                done.add(phase);
-                addEntryExit(phase);
-                removeStructureNew(phase);
-            }
-        }
+    /**
+     * add entry/exit nodes to any function directly doing I/O
+     */
+    private void addEntryExits(SIRPhasedFilter self) {
+	// search for peek/pop statements instead of looking at
+	// declared I/O rates because we don't want decls for
+	// hierarchical functions.  Note: hierarchical functions still
+	// cause problems (those that call pop() and also call a
+	// phase.)
+	for (int i=0; i<self.getMethods().length; i++) {
+	    JMethodDeclaration method = self.getMethods()[i];
+	    final boolean[] IO = { false };
+	    method.accept(new SLIREmptyVisitor() {
+		    public void visitPopExpression(SIRPopExpression self, CType tapeType) {
+			IO[0] = true;
+		    }
+		    public void visitPeekExpression(SIRPeekExpression self, CType tapeType, JExpression arg) {
+			IO[0] = true;
+		    }
+		    public void visitPushExpression(SIRPushExpression self, CType tapeType, JExpression arg) {
+			IO[0] = true;
+		    }
+		});
+	    
+	    if (IO[0]) {
+                addEntryExit(method);
+                removeStructureNew(method);
+	    }
+	}
     }
-  
+    
     /**
      * PRE-VISITS 
      */

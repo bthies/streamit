@@ -24,7 +24,6 @@ import at.dms.kjc.sir.SIRSplitType;
 import at.dms.kjc.sir.SIRSplitter;
 import at.dms.kjc.sir.SIRStream;
 import at.dms.kjc.sir.SIRStructure;
-import at.dms.kjc.sir.SIRWorkFunction;
 
 /**
  * GraphEncoder "visits" the nodes SIRStream structures in order to build a GraphStructure
@@ -139,7 +138,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		{
 			
 			/** Get the work functions and add them to the GEPhasedFilter */
-			SIRWorkFunction[] phases = self.getPhases();
+			JMethodDeclaration[] phases = self.getPhases();
 			for (int i = 0; i < phases.length; i++)
 			{	
 				phFilter.addWorkFunction(new GEWorkFunction(work.getName(), 
@@ -204,8 +203,8 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                     JMethodDeclaration[] methods,
                                     JMethodDeclaration init,
                                     JMethodDeclaration work,
-                                    SIRWorkFunction[] initPhases,
-                                    SIRWorkFunction[] phases,
+                                    JMethodDeclaration[] initPhases,
+                                    JMethodDeclaration[] phases,
                                     CType inputType, CType outputType)
 	{
 		
@@ -222,7 +221,10 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			/** Get the init work functions and add them to the GEPhasedFilter */
 			for (int i = 0; i < initPhases.length; i++)
 			{   
-				GEWorkFunction wf = (GEWorkFunction) initPhases[i].accept(this);
+				GEWorkFunction wf = new GEWorkFunction(initPhases[i].getName(), 
+								       initPhases[i].getPushInt(), 
+								       initPhases[i].getPopInt(),
+								       initPhases[i].getPeekInt());
 				phFilter.addInitWorkFunction(wf);
 			}
 		}
@@ -231,7 +233,10 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			/** Get the work functions and add them to the GEPhasedFilter */
 	   		for (int i = 0; i < phases.length; i++)
 	   		{
-				GEWorkFunction wf = (GEWorkFunction) initPhases[i].accept(this);
+				GEWorkFunction wf = new GEWorkFunction(phases[i].getName(), 
+								       phases[i].getPushInt(), 
+								       phases[i].getPopInt(),
+								       phases[i].getPeekInt());
 				phFilter.addWorkFunction(wf);
 	   		}
 		}        
@@ -344,25 +349,6 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		
     }
     
-    /** 
-     * Visit a SIRWorkFunction
-     * @return Visited SIRWorkFunction encoded as a GEWorkFunction.
-     */
-    public Object visitWorkFunction(SIRWorkFunction self,
-                                    JMethodDeclaration work) 
-    {
-		try 
-		{
-			return new GEWorkFunction(work.getName(), self.getPushInt(), self.getPopInt(),self.getPeekInt());
-		} 
-		/** If constants not resolved for the ints, will get an exception */
-		catch (Exception e) 
-		{
-			System.out.println("Exception thrown " + e.toString() + " in visitWorkFunction");
-			return null;
-		}
-	}
-		
     /**
      * Visit a SIRPipeline in order to create its GEPipeline representation. 
      * @return Visited SIRPipeline encoded as a GEPipeline.

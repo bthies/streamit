@@ -31,8 +31,8 @@ public class LinearPreprocessor extends EmptyStreamVisitor {
 	    //lfa.addLinearRepresentation(newFilter,linRep);
 	    //lfa.removeLinearRepresentation(self);
 	    //Set initWork peek,pop,push amount
-	    //SIRWorkFunction init=newFilter.getInitPhases()[0];
-	    SIRWorkFunction steady=self.getPhases()[0];
+	    //JMethodDeclaration init=newFilter.getInitPhases()[0];
+	    JMethodDeclaration steady=self.getPhases()[0];
 	    int peek=steady.getPeekInt();
 	    int pop=steady.getPopInt();
 	    //int push=steady.getPushInt();

@@ -92,7 +92,7 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 	JMethodDeclaration[] methods = self.getMethods();
 	for (int i = 0; i < methods.length; i++)
 	    methods[i].accept(this);
-        SIRWorkFunction[] phases = self.getPhases();
+        JMethodDeclaration[] phases = self.getPhases();
         if (phases != null) {
             blockStart("phases");
             for (int i = 0; i < phases.length; i++)
@@ -100,7 +100,7 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
                 attrPrint("peek", phases[i].getPeek());
                 attrPrint("pop", phases[i].getPop());
                 attrPrint("push", phases[i].getPush());
-                phases[i].getWork().accept(this);
+                phases[i].accept(this);
             }
             blockEnd();
         }

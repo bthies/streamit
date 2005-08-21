@@ -41,7 +41,7 @@ public class CloneGenerator {
     /**
      * Call as with argument "replace" to do replacement in actual
      * java code.  NOTE that this should be run from
-     * $STREAMIT_HOME/compiler directory to do the right thing for
+     * $STREAMIT_HOME/src directory to do the right thing for
      * replacement.
      */
     public static void main(String[] args) {
@@ -582,7 +582,6 @@ public class CloneGenerator {
 	"at.dms.kjc.sir.SIRStream",
 	"at.dms.kjc.sir.SIRStructure",
 	"at.dms.kjc.sir.SIRTwoStageFilter",
-	"at.dms.kjc.sir.SIRWorkFunction",
 	//"at.dms.kjc.sir.StreamVisitor"  -- shouldn't have references to this,
 	"at.dms.kjc.rstream.JDoLoopStatement"
     };

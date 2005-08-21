@@ -141,7 +141,7 @@ public class StreamItDot implements AttributeStreamVisitor
     protected static String makeFilterLabel(SIRPhasedFilter self) {
 	String label = "";
 	try {
-            SIRWorkFunction[] phases = self.getPhases();
+            JMethodDeclaration[] phases = self.getPhases();
             for (int i = 0; i < phases.length; i++)
             {
                 label += "\\npush" + (phases.length>1 ? ""+i : "") + "=" + phases[i].getPushString();
@@ -178,8 +178,8 @@ public class StreamItDot implements AttributeStreamVisitor
                                     JMethodDeclaration[] methods,
                                     JMethodDeclaration init,
                                     JMethodDeclaration work,
-                                    SIRWorkFunction[] initPhases,
-                                    SIRWorkFunction[] phases,
+                                    JMethodDeclaration[] initPhases,
+                                    JMethodDeclaration[] phases,
                                     CType inputType, CType outputType)
     {
         NamePair pair = new NamePair();
@@ -191,7 +191,7 @@ public class StreamItDot implements AttributeStreamVisitor
         if (initPhases != null)
 			for (int i = 0; i < initPhases.length; i++)
 			{
-				NamePair p2 = (NamePair)initPhases[i].accept(this);
+				NamePair p2 = processWorkFunction(initPhases[i]);
 				printEdge(pair.last, p2.first);
 				// Update the known edges.
 				if (pair.first == null)
@@ -202,7 +202,7 @@ public class StreamItDot implements AttributeStreamVisitor
         if (phases != null)
             for (int i = 0; i < phases.length; i++)
             {
-                NamePair p2 = (NamePair)phases[i].accept(this);
+                NamePair p2 = processWorkFunction(phases[i]);
                 printEdge(pair.last, p2.first);
                 // Update the known edges.
                 if (pair.first == null)
@@ -257,15 +257,13 @@ public class StreamItDot implements AttributeStreamVisitor
         return new NamePair(makeLabelledInvisNode(label));
     }
     
-    /* visit a work function */
-    public Object visitWorkFunction(SIRWorkFunction self,
-                                    JMethodDeclaration work)
-    {
+    /* process a work function */
+    public NamePair processWorkFunction(JMethodDeclaration work) {
 	String label = work.getName();
 	try {
-	    label += "\\npush=" + self.getPushString();
-	    label += "\\npop=" + self.getPopString();
-	    label += "\\npeek=" + self.getPeekString();
+	    label += "\\npush=" + work.getPushString();
+	    label += "\\npop=" + work.getPopString();
+	    label += "\\npeek=" + work.getPeekString();
 	} catch (Exception e) {
 	    // if constants not resolved for the ints, will get an exception
 	}

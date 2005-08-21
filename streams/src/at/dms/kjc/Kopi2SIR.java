@@ -106,6 +106,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     //The latency of the next message to be sent
     private SIRLatency nextLatency;
 
+    // for methods that have I/O rate declarations, maps method name to push, pop, peek rate
+    // String -> JExpression
+    private HashMap methodToPushRate, methodToPopRate, methodToPeekRate;
+    
     //Uncomment the println for debugging
     private void printMe(String str) {
 	// System.out.println(str);
@@ -319,7 +323,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             parentStream = current;
             return current;
         }
-	if (TYPE.equals("Filter") || TYPE.equals("StreamItFilter")) {
+	if (TYPE.equals("Filter") || TYPE.equals("StreamItFilter") ||
+	    TYPE.equals("PhasedFilter") || TYPE.equals("StreamItPhasedFilter")) {
 	    SIRFilter current;
 	    if (hasMethod(clazz, "prework")) {
 		// this is a two-stage filter
@@ -335,6 +340,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    parentStream = current;
 	    return current;
 	}
+	/* Conversion from filter to phased filter should now be done within IR.
         if (TYPE.equals("PhasedFilter") || TYPE.equals("StreamItPhasedFilter")) {
 	    if (hasMethod(clazz, "prework")) {
 		// we don't yet support both stages and phases in the same filter
@@ -348,6 +354,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             parentStream = current;
             return current;
         }
+	*/
 	if (TYPE.equals("FeedbackLoop") || TYPE.equals("StreamItFeedbackLoop")) {
 	    SIRFeedbackLoop current = new SIRFeedbackLoop();
 	    current.setParent((SIRContainer)parentStream);
@@ -436,6 +443,23 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    ((SIRSplitJoin)current).rescale();
 	} else if (current instanceof SIRFeedbackLoop) {
 	    ((SIRFeedbackLoop)current).rescale();
+	}
+
+	// set I/O rates for functions
+	if (current instanceof SIRStream) {
+	    JMethodDeclaration[] methods = ((SIRStream)current).getMethods();
+	    for (int i=0; i<methods.length; i++) {
+		String name = methods[i].getName();
+		// only some functions are declared with I/O rates;
+		// set them if we saw a declaration in init function
+		JExpression push = (JExpression)methodToPushRate.get(name);
+		JExpression pop = (JExpression)methodToPopRate.get(name);
+		JExpression peek = (JExpression)methodToPeekRate.get(name);
+
+		if (push!=null) methods[i].setPush(push);
+		if (peek!=null) methods[i].setPeek(peek);
+		if (pop!=null) methods[i].setPop(pop);
+	    }
 	}
     }
 
@@ -558,6 +582,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 
 	SIROperator current;
 	SIRStream oldParentStream = parentStream;
+	
+	// clear the push, pop, peek rate records.  They will be
+	// tabulated in "init".
+	methodToPushRate = new HashMap();
+	methodToPopRate = new HashMap();
+	methodToPeekRate = new HashMap();
 	
 	blockStart("ClassDeclaration", self);
 	printMe("Class Name: " + ident);
@@ -721,7 +751,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             trash = decls[i].accept(this);
 	for (int i = 0; i < body.length ; i++)
             trash = body[i].accept(this);
-	
+
+
 	//force the init method to be visited first!
 	for (int i = 0; i < methods.length; i++) {
 	    if (methods[i].getName().equals("init")) {
@@ -729,13 +760,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 		break;
 	    }
 	}
-	    
-
-
         for (int i = 0; i < methods.length ; i++) {
-	    if (!(methods[i].getName().equals("init")))
+	    if (!methods[i].getName().equals("init"))
 		trash = methods[i].accept(this); 
 	}
+
+	
      	return null;
     }
 
@@ -890,18 +920,20 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 
 	/*Install work function*/
 	if (ident.equals("work")) {
-	    if (parentStream instanceof SIRFilter ||
-                parentStream instanceof SIRPhasedFilter) {
-		parentStream.setWork(new JMethodDeclaration(null,
-                                                            modifiers,
-                                                            returnType,
-                                                            ident,
-                                                            parameters,
-                                                            exceptions,
-                                                            body,
-                                                            null,
-                                                            null));
+	    if (parentStream instanceof SIRPhasedFilter && 
+		!(parentStream instanceof SIRFilter)) {
+		System.err.println("Current Kopi2SIR should not construct plain PhasedFilters.");
 	    }
+	    if (parentStream instanceof SIRFilter)
+		((SIRFilter)parentStream).setWork(new JMethodDeclaration(null,
+									 modifiers,
+									 returnType,
+									 ident,
+									 parameters,
+									 exceptions,
+									 body,
+									 null,
+									 null));
 	    else
 		at.dms.util.Utils.fail(printLine(self) +
 				       "Work Function Declared for Non-Filter");
@@ -1988,46 +2020,59 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    //we want to ignore remove this method from the block
 	     return null;
 	}
+        else if (ident.equals("addSteadyPhase") || ident.equals("addInitPhase")) {
+	    // parsing this:  addPhase(peek, pop, push, phaseName)
+            JExpression peek = (JExpression)args[0].accept(this);
+            JExpression pop = (JExpression)args[1].accept(this);
+            JExpression push = (JExpression)args[2].accept(this);
+            JExpression name = (JExpression)args[3].accept(this);
+	    
+	    methodToPeekRate.put(((JStringLiteral)name).stringValue(), peek);
+	    methodToPopRate.put(((JStringLiteral)name).stringValue(), pop);
+	    methodToPushRate.put(((JStringLiteral)name).stringValue(), push);
+
+	    return null;
+	}
         else if (ident.equals("setIOTypes")) {
             // Phased filter syntax for setting I/O types.  This has
             // two arguments, which are null or Class objects.
             args[0] = (JExpression)args[0].accept(this);
             args[1] = (JExpression)args[1].accept(this);
-            if (parentStream instanceof SIRFilter)
-            {
-                SIRFilter filter = (SIRFilter)parentStream;
-		System.out.println(args[0]);
-		
-                if (args[0] instanceof JClassExpression) 
-		    filter.setInputType(((JClassExpression)args[0]).getClassType());
-                else if (args[0] instanceof JStringLiteral)
-                    filter.setInputType(getType(((JStringLiteral)args[0]).stringValue()));
-		else 
-		    Utils.fail(printLine(self) + "Malformed input type on I/O declaration");
-
-                if (args[1] instanceof JClassExpression) 
-                    filter.setOutputType(((JClassExpression)args[1]).getClassType());
-		else if (args[1] instanceof JStringLiteral)
-                    filter.setOutputType(getType(((JStringLiteral)args[1]).stringValue()));
-		else 
-		    Utils.fail(printLine(self) + "Malformed output type on I/O declaration");
-            }
-            else if (parentStream instanceof SIRPhasedFilter)
+            if (parentStream instanceof SIRPhasedFilter)
             {
                 SIRPhasedFilter filter = (SIRPhasedFilter)parentStream;
-                if (args[0] instanceof JClassExpression)
-                    filter.setInputType(((JClassExpression)args[0]).getClassType());
-                else if (args[0] instanceof JStringLiteral)
-                    filter.setInputType(getType(((JStringLiteral)args[0]).stringValue()));
-		else 
-		    Utils.fail(printLine(self) + "Malformed input type on I/O declaration");
+		
+		// input type
+		if (args[0] instanceof JClassExpression) 
+		    filter.setInputType(((JClassExpression)args[0]).getClassType());
+		else if (args[0] instanceof JStringLiteral)
+		    filter.setInputType(getType(((JStringLiteral)args[0]).stringValue()));
+		else if (args[0] instanceof JFieldAccessExpression && 
+			 (((JFieldAccessExpression)args[0]).prefix instanceof JTypeNameExpression)) {
+		    JTypeNameExpression t = (JTypeNameExpression)((JFieldAccessExpression)args[0]).prefix;
+		    if (t.getType().toString().equals("java.lang.Void")) {
+			filter.setInputType(CStdType.Void);
+		    } else {
+			Utils.fail(printLine(self) + "Malformed input type on I/O declaration: " + args[0] + " " + t.getType());
+		    }
+		} else 
+		    Utils.fail(printLine(self) + "Malformed input type on I/O declaration: " + args[0]);
 
-                if (args[1] instanceof JClassExpression)
-                    filter.setOutputType(((JClassExpression)args[1]).getClassType());
-                else if (args[1] instanceof JStringLiteral)
-                    filter.setOutputType(getType(((JStringLiteral)args[1]).stringValue()));
-		else 
-		    Utils.fail(printLine(self) + "Malformed output type on I/O declaration");
+		// output type
+		if (args[1] instanceof JClassExpression) 
+		    filter.setOutputType(((JClassExpression)args[1]).getClassType());
+		else if (args[1] instanceof JStringLiteral)
+		    filter.setOutputType(getType(((JStringLiteral)args[1]).stringValue()));
+		else if (args[1] instanceof JFieldAccessExpression && 
+			 (((JFieldAccessExpression)args[1]).prefix instanceof JTypeNameExpression)) {
+		    JTypeNameExpression t = (JTypeNameExpression)((JFieldAccessExpression)args[1]).prefix;
+		    if (t.getType().toString().equals("java.lang.Void")) {
+			filter.setOutputType(CStdType.Void);
+		    } else {
+			Utils.fail(printLine(self) + "Malformed output type on I/O declaration: " + args[1] + " " + t.getType());
+		    }
+		} else 
+		    Utils.fail(printLine(self) + "Malformed output type on I/O declaration: " + args[1]);
             }
             else
                 at.dms.util.Utils.fail(printLine(self) +
@@ -2860,6 +2905,8 @@ protected void deepCloneInto(at.dms.kjc.Kopi2SIR other) {
   other.interfaceList = this.interfaceList;
   other.interfaceTableList = this.interfaceTableList;
   other.structureList = this.structureList;
+  other.helperList = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.helperList);
+  other.global = (at.dms.kjc.sir.SIRGlobal)at.dms.kjc.AutoCloner.cloneToplevel(this.global);
   other.searchList = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.searchList);
   other.params = (at.dms.kjc.JFormalParameter[])at.dms.kjc.AutoCloner.cloneToplevel(this.params);
   other.paramNames = (java.lang.String[])at.dms.kjc.AutoCloner.cloneToplevel(this.paramNames);

@@ -15,11 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.22 2005-01-23 00:33:01 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.23 2005-08-21 07:00:40 thies Exp $
  */
 
 package at.dms.kjc;
 
+import at.dms.util.Utils;
 import at.dms.compiler.PositionedError;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
@@ -40,7 +41,11 @@ public class JMethodDeclaration extends JMemberDeclaration {
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
 
-    protected JMethodDeclaration() {} // for cloner only
+    // Only for cloner, and as a placeholder for I/O rates.  Should
+    // not be used as a real method decl.
+    public JMethodDeclaration() {
+	initIORates();
+    }
 
   /**
    * Constructs a method declaration node in the syntax tree.
@@ -76,6 +81,8 @@ public class JMethodDeclaration extends JMemberDeclaration {
     this.exceptions = exceptions;
     assert parameters != null;
     assert exceptions != null;
+
+    initIORates();
   }
 
   public JMethodDeclaration(CType returnType,
@@ -148,6 +155,162 @@ public class JMethodDeclaration extends JMemberDeclaration {
      */
     public void addAllStatements(List lst) {
 	body.addAllStatements(lst);
+    }
+
+  // ----------------------------------------------------------------------
+  // StreamIt part
+  // ----------------------------------------------------------------------
+
+    /**
+     * The number of items that are peeked in each execution.
+     */
+    private JExpression peek;
+    /**
+     * The number of items that are popped in each execution.
+     */
+    private JExpression pop;
+    /**
+     * The number of items that are pushed in each execution.
+     */
+    private JExpression push;
+
+    private void initIORates() {
+	this.peek = new JIntLiteral(0);
+	this.push = new JIntLiteral(0);
+	this.pop = new JIntLiteral(0);
+    }
+
+    public void setPeek(JExpression p)
+    {
+        this.peek = p;
+    }
+    
+    public void setPop(JExpression p)
+    {
+        this.pop = p;
+    }
+    
+    public void setPush(JExpression p)
+    {
+        this.push = p;
+    }
+    
+    public void setPeek(int p)
+    {
+        setPeek(new JIntLiteral(p));
+    }
+    
+    public void setPop(int p)
+    {
+        setPop(new JIntLiteral(p));
+    }
+    
+    public void setPush(int p)
+    {
+        setPush(new JIntLiteral(p));
+    }
+    
+    public JExpression getPeek()
+    {
+        return this.peek;
+    }
+    
+    public JExpression getPop()
+    {
+        return this.pop;
+    }
+    
+    public JExpression getPush()
+    {
+        return this.push;
+    }
+
+    /**
+     * Returns how many items are popped.  This will throw an
+     * exception if the integral numbers haven't been calculated
+     * yet--in this case one can only get the JExpression, but calling
+     * getPop.
+     */
+    public int getPopInt() {
+      if (pop instanceof JFloatLiteral) { //clleger
+	pop = new JIntLiteral(null, (int) ((JFloatLiteral)pop).floatValue());
+      }
+	// need int literal to get number
+	if (!(pop instanceof JIntLiteral)) {
+	    Utils.fail("Trying to get integer value for pop value in work function " + getName() + ", but the constant hasn't been resolved yet. " + pop);
+	}
+	return ((JIntLiteral)pop).intValue();
+    }
+
+    /**
+     * Returns how many items are peeked.  This will throw an
+     * exception if the integral numbers haven't been calculated
+     * yet--in this case one can only get the JExpression, but calling
+     * getPeek.
+     */
+    public int getPeekInt() {
+      if (peek instanceof JFloatLiteral) { //clleger
+	peek = new JIntLiteral(null, (int) ((JFloatLiteral)peek).floatValue());
+      }
+	// need int literal to get number
+	if (!(peek instanceof JIntLiteral)) {
+	    Utils.fail("Trying to get integer value for peek value in work function " + getName() + ", but the constant hasn't been resolved yet. " + peek);
+	}
+	return ((JIntLiteral)peek).intValue();
+    }
+
+    /**
+     * Returns how many items are pushed.This will throw an
+     * exception if the integral numbers haven't been calculated
+     * yet--in this case one can only get the JExpression, but calling
+     * getPush.
+     */
+    public int getPushInt() {
+	// need int literal to get number
+      if (push instanceof JFloatLiteral) { //clleger
+	push = new JIntLiteral(null, (int) ((JFloatLiteral)push).floatValue());
+      }
+
+	if (!(push instanceof JIntLiteral)) {
+	    Utils.fail("Trying to get integer value for push value in work function " + getName() + ", but the constant hasn't been resolved yet. " + push);
+	}
+	return ((JIntLiteral)push).intValue();
+    }
+
+    /**
+     * Returns string representation of pop rate (either in literal or
+     * range, like [1,2,3]).
+     */
+    public String getPopString() {
+	if (pop instanceof JLiteral) {
+	    return ""+getPopInt();
+	} else {
+	    return pop.toString();
+	}
+    }
+
+    /**
+     * Returns string representation of peek rate (either in literal or
+     * range, like [1,2,3]).
+     */
+    public String getPeekString() {
+	if (peek instanceof JLiteral) {
+	    return ""+getPeekInt();
+	} else {
+	    return peek.toString();
+	}
+    }
+
+    /**
+     * Returns string representation of push rate (either in literal or
+     * range, like [1,2,3]).
+     */
+    public String getPushString() {
+	if (push instanceof JLiteral) {
+	    return ""+getPushInt();
+	} else {
+	    return push.toString();
+	}
     }
 
   // ----------------------------------------------------------------------
@@ -502,6 +665,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JMethodDeclaration other) {
   super.deepCloneInto(other);
+  other.peek = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.peek);
+  other.pop = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.pop);
+  other.push = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.push);
   other.modifiers = this.modifiers;
   other.returnType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.returnType);
   other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);

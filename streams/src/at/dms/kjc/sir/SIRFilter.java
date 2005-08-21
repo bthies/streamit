@@ -12,7 +12,7 @@ import java.util.HashMap;
  * (no prework function or phases), and only a single phase in its
  * work stage.
  *
- * @version $Id: SIRFilter.java,v 1.34 2005-02-17 00:11:26 thies Exp $
+ * @version $Id: SIRFilter.java,v 1.35 2005-08-21 07:01:51 thies Exp $
  */
 public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     /* Internal invariant: the init phases array is null or has zero
@@ -22,14 +22,13 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
 
     public SIRFilter() {
 	this(null);
-        setPhases(new SIRWorkFunction[1]);
-        getPhases()[0] = new SIRWorkFunction();
     }
 
     public SIRFilter(String ident) {
         super(ident);
-        setPhases(new SIRWorkFunction[1]);
-        getPhases()[0] = new SIRWorkFunction();
+        setPhases(new JMethodDeclaration[1]);
+	// placeholder for I/O rates
+        getPhases()[0] = new JMethodDeclaration();
     }
     
     public SIRFilter(SIRContainer parent,
@@ -41,11 +40,18 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
 		     CType inputType, 
 		     CType outputType) {
         super(parent, ident, fields, methods,
-              new SIRWorkFunction[0], // initPhases
-              new SIRWorkFunction[1], // phases
-              null, inputType, outputType);
+              new JMethodDeclaration[0], // initPhases
+              new JMethodDeclaration[1], // phases
+              inputType, outputType);
         // Create a single phase corresponding to the work function.
-        getPhases()[0] = new SIRWorkFunction(peek, pop, push, work);
+	// if work function is null, make a dummy one just to hold I/O rates
+	if (work == null) {
+	    work = new JMethodDeclaration();
+	}
+        getPhases()[0] = work;
+	work.setPeek(peek);
+	work.setPop(pop);
+	work.setPush(push);
         // Confirm that the work function is in the methods array.
         if (work != null)
             addReplacementMethod(work, work);
@@ -65,7 +71,6 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
             " declares push rate of 0 but has output type of " +
             outputType + " which should be Void instead.";
     }
-
     /**
      * Accepts attribute visitor <v> at this node.
      */
@@ -74,7 +79,7 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
 			     fields,
 			     methods,
 			     init,
-			     getPhases()[0].getWork(),
+			     getPhases()[0],
 			     getInputType(), getOutputType());
     }
 
@@ -184,14 +189,23 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     /* Overridden from SIRStream: */
     public JMethodDeclaration getWork() 
     {
-        return getPhases()[0].getWork();
+        return getPhases()[0];
     }
     
     /* Overridden from SIRStream: */
-    public void setWork(JMethodDeclaration work)
-    {
+    public void setWork(JMethodDeclaration work) {
+	// if new work function has no I/O rates and old one does,
+	// then transfer rates to new one.  This is an ugly remnant of
+	// the old mode of operation, where I/O rates were stored
+	// outside the function.
+	if (work.getPeek()==null && work.getPop()==null && work.getPush()==null) {
+	    work.setPeek(getWork().getPeek());
+	    work.setPop(getWork().getPop());
+	    work.setPush(getWork().getPush());
+	}
+
         addReplacementMethod(work, getWork());
-        getPhases()[0].setWork(work);
+        getPhases()[0] = work;
     }
 
     /* Overridden from SIRPhasedFilter: */
@@ -199,7 +213,7 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
      * being derived from SIRFilter.  Changing that is a Big Change,
      * since it involves making the entire world phase-aware.  Not
      * that this is actually a bad thing, but...
-    public void setInitPhases(SIRWorkFunction[] initPhases) 
+    public void setInitPhases(JMethodDeclaration[] initPhases) 
     {
         throw new UnsupportedOperationException
             ("SIRFilters can't have init phases");
@@ -207,7 +221,7 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     */
 
     /* Overridden from SIRPhasedFilter: */
-    public void setPhases(SIRWorkFunction[] phases)
+    public void setPhases(JMethodDeclaration[] phases)
     {
         if (phases.length != 1)
             throw new UnsupportedOperationException

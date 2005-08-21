@@ -25,7 +25,7 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
     /**
      * Array of phases run by the filter.
      */
-    private SIRWorkFunction[] initPhases, phases;
+    private JMethodDeclaration[] initPhases, phases;
 
     public SIRPhasedFilter() 
     {
@@ -37,18 +37,17 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
         this(null, ident, 
 	     JFieldDeclaration.EMPTY(), 
 	     JMethodDeclaration.EMPTY(),
-	     SIRWorkFunction.EMPTY(),
-	     SIRWorkFunction.EMPTY(),
-	     null, null, null);
+	     JMethodDeclaration.EMPTY(),
+	     JMethodDeclaration.EMPTY(),
+	     null, null);
     }
     
     public SIRPhasedFilter(SIRContainer parent,
                            String ident,
                            JFieldDeclaration[] fields,
                            JMethodDeclaration[] methods,
-                           SIRWorkFunction[] initPhases,
-                           SIRWorkFunction[] phases,
-                           JMethodDeclaration work,
+                           JMethodDeclaration[] initPhases,
+                           JMethodDeclaration[] phases,
                            CType inputType,
                            CType outputType)
     {
@@ -57,10 +56,6 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
         this.phases = phases;
         this.inputType = inputType;
         this.outputType = outputType;
-        if (work != null)
-        {
-            setWork(work);
-        }
     }
 
     /**
@@ -120,19 +115,19 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
 	return this.outputType;
     }
 
-    public SIRWorkFunction[] getInitPhases() {
+    public JMethodDeclaration[] getInitPhases() {
 	return initPhases;
     }
     
-    public void setInitPhases(SIRWorkFunction[] initPhases) {
+    public void setInitPhases(JMethodDeclaration[] initPhases) {
 	this.initPhases = initPhases;
     }
 	
-    public SIRWorkFunction[] getPhases() {
+    public JMethodDeclaration[] getPhases() {
         return phases;
     }
 
-    public void setPhases(SIRWorkFunction[] phases) {
+    public void setPhases(JMethodDeclaration[] phases) {
         this.phases = phases;
     }
 
@@ -171,8 +166,8 @@ protected void deepCloneInto(at.dms.kjc.sir.SIRPhasedFilter other) {
   super.deepCloneInto(other);
   other.inputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.inputType);
   other.outputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.outputType);
-  other.initPhases = (at.dms.kjc.sir.SIRWorkFunction[])at.dms.kjc.AutoCloner.cloneToplevel(this.initPhases);
-  other.phases = (at.dms.kjc.sir.SIRWorkFunction[])at.dms.kjc.AutoCloner.cloneToplevel(this.phases);
+  other.initPhases = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.initPhases);
+  other.phases = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.phases);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

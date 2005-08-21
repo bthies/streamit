@@ -44,8 +44,8 @@ public interface AttributeStreamVisitor {
                              JMethodDeclaration[] methods,
                              JMethodDeclaration init,
                              JMethodDeclaration work,
-                             SIRWorkFunction[] initPhases,
-                             SIRWorkFunction[] phases,
+                             JMethodDeclaration[] initPhases,
+                             JMethodDeclaration[] phases,
                              CType inputType, CType outputType);
   
     /* visit a splitter */
@@ -58,10 +58,6 @@ public interface AttributeStreamVisitor {
 			SIRJoinType type,
 			JExpression[] weights);
     
-    /* visit a work function */
-    Object visitWorkFunction(SIRWorkFunction self,
-                             JMethodDeclaration work);
-
     /* pre-visit a pipeline */
     Object visitPipeline(SIRPipeline self,
 			 JFieldDeclaration[] fields,

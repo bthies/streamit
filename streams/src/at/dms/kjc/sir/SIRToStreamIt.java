@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.11 2005-04-10 18:40:00 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.12 2005-08-21 07:01:51 thies Exp $
  */
 public class SIRToStreamIt
     extends at.dms.util.Utils
@@ -262,7 +262,7 @@ public class SIRToStreamIt
 	    ((SIRTwoStageFilter)self).getInitWork().accept(this);
 	}
         if (work != null)
-            work.accept(this);
+	    print("work " + work.getName());
         pos -= TAB_SIZE;
         newLine();
         print("}");
@@ -276,8 +276,8 @@ public class SIRToStreamIt
                                     JMethodDeclaration[] methods,
                                     JMethodDeclaration init,
                                     JMethodDeclaration work,
-                                    SIRWorkFunction[] initPhases,
-                                    SIRWorkFunction[] phases,
+                                    JMethodDeclaration[] initPhases,
+                                    JMethodDeclaration[] phases,
                                     CType inputType, CType outputType)
     {
         assert false : "should implement phased filter support";
@@ -374,14 +374,6 @@ public class SIRToStreamIt
         return null;
     }
     
-    /* visit a work function */
-    public Object visitWorkFunction(SIRWorkFunction self,
-                                    JMethodDeclaration work)
-    {
-        print("work " + work.getName());
-        return null;
-    }
-
     /* pre-visit a pipeline */
     public Object visitPipeline(SIRPipeline self,
                                 JFieldDeclaration[] fields,

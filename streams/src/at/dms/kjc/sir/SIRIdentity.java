@@ -47,10 +47,10 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable, Const
     public void setRate(JExpression r) 
     {
 	this.rate = r;
+	setType(this.getInputType());
 	this.setPeek(r);
 	this.setPop(r);
 	this.setPush(r);
-	setType(this.getInputType());
     }
 
     public JExpression getRate() 

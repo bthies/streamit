@@ -31,8 +31,8 @@ public class EmptyAttributeStreamVisitor implements AttributeStreamVisitor {
                                     JMethodDeclaration[] methods,
                                     JMethodDeclaration init,
                                     JMethodDeclaration work,
-                                    SIRWorkFunction[] initPhases,
-                                    SIRWorkFunction[] phases,
+                                    JMethodDeclaration[] initPhases,
+                                    JMethodDeclaration[] phases,
                                     CType inputType, CType outputType)
     {
         return self;
@@ -52,13 +52,6 @@ public class EmptyAttributeStreamVisitor implements AttributeStreamVisitor {
 	return self;
     }
 
-    /* visit a work function */
-    public Object visitWorkFunction(SIRWorkFunction self,
-                                    JMethodDeclaration work)
-    {
-        return self;
-    }
-	
     /* pre-visit a pipeline */
     public Object visitPipeline(SIRPipeline self,
 			 JFieldDeclaration[] fields,

@@ -20,7 +20,7 @@ import at.dms.util.*;
  * of the compiler aware of phases.  In some places this is easier
  * than in others; big changes show up in the backends.
  *
- * @version $Id: SIRTwoStageFilter.java,v 1.10 2004-01-27 23:13:23 dmaze Exp $
+ * @version $Id: SIRTwoStageFilter.java,v 1.11 2005-08-21 07:01:51 thies Exp $
  */
 public class SIRTwoStageFilter extends SIRFilter {
     /* Internal invariant: the init and work phases arrays each have
@@ -35,10 +35,9 @@ public class SIRTwoStageFilter extends SIRFilter {
     public SIRTwoStageFilter(String ident) 
     {
         super(ident);
-        // setPhases(new SIRWorkFunction[1]);
-        // getPhases()[0] = new SIRWorkFunction();
-        setInitPhases(new SIRWorkFunction[1]);
-        getInitPhases()[0] = new SIRWorkFunction();
+        setInitPhases(new JMethodDeclaration[1]);
+	// placeholder for I/O rates
+	getInitPhases()[0] = new JMethodDeclaration();
     }
 
     public SIRTwoStageFilter(SIRContainer parent,
@@ -57,15 +56,18 @@ public class SIRTwoStageFilter extends SIRFilter {
 			     CType outputType) {
         super(parent, ident, fields, methods, peek, pop, push, work,
               inputType, outputType);
-        // super(parent, ident, fields, methods,
-        //       new SIRWorkFunction[1], // initPhases,
-        //       new SIRWorkFunction[1], // phases
-        //       null, inputType, outputType);
         // Create a single phase for each stage.
-        setInitPhases(new SIRWorkFunction[1]);
-        getInitPhases()[0] = new SIRWorkFunction(initPeek, initPop,
-                                                 initPush, initWork);
-        // getPhases()[0] = new SIRWorkFunction(peek, pop, push, work);
+        setInitPhases(new JMethodDeclaration[1]);
+
+	// if initWork function is null, make a dummy one just to hold I/O rates
+	if (initWork == null) {
+	    initWork = new JMethodDeclaration();
+	}
+
+        getInitPhases()[0] = initWork;
+	initWork.setPeek(initPeek);
+	initWork.setPush(initPush);
+	initWork.setPop(initPop);
 	checkRep();
         // Confirm that the initWork function is in the methods array.
         if (initWork != null)
@@ -116,8 +118,7 @@ public class SIRTwoStageFilter extends SIRFilter {
 	    // clobber the "empty" init stage of the two-stage filter.
 	    // So just restore the empty init stage here if we have a
 	    // two-stage filter.
-	    setInitPhases(new SIRWorkFunction[1]);
-	    getInitPhases()[0] = new SIRWorkFunction();
+	    setInitPhases(new JMethodDeclaration[1]);
 	}
     }
 
@@ -125,8 +126,19 @@ public class SIRTwoStageFilter extends SIRFilter {
      * Sets the work function for the initialization stage.
      */
     public void setInitWork (JMethodDeclaration newWork) {
+	// if new work function has no I/O rates and old one does,
+	// then transfer rates to new one.  This is an ugly remnant of
+	// the old mode of operation, where I/O rates were stored
+	// outside the function.
+	if (newWork.getPeek()==null && newWork.getPop()==null && newWork.getPush()==null) {
+	    newWork.setPeek(getInitWork().getPeek());
+	    newWork.setPop(getInitWork().getPop());
+	    newWork.setPush(getInitWork().getPush());
+	}
+
+
 	addReplacementMethod(newWork, getInitWork());
-        getInitPhases()[0].setWork(newWork);
+        getInitPhases()[0] = newWork;
 	checkRep();
     }
 
@@ -155,11 +167,11 @@ public class SIRTwoStageFilter extends SIRFilter {
     }
 
     public JMethodDeclaration getInitWork() {
-        return getInitPhases()[0].getWork();
+        return getInitPhases()[0];
     }
 
     /* Overridden from SIRPhasedFilter: */
-    public void setInitPhases(SIRWorkFunction[] initPhases) 
+    public void setInitPhases(JMethodDeclaration[] initPhases) 
     {
         if (initPhases.length != 1)
             throw new UnsupportedOperationException

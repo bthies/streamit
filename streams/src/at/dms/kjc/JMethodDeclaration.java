@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.25 2005-08-22 02:49:53 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.26 2005-08-22 03:24:18 thies Exp $
  */
 
 package at.dms.kjc;
@@ -45,6 +45,12 @@ public class JMethodDeclaration extends JMemberDeclaration {
     // not be used as a real method decl.
     public JMethodDeclaration() {
 	initIORates();
+	// to prevent null points in cloning visitor
+	this.parameters = JFormalParameter.EMPTY;
+	this.exceptions = CClassType.EMPTY;
+	this.body = new JBlock();
+	this.returnType = CStdType.Void;
+	this.ident = "DUMMY UNINITIALIZED METHOD";
     }
 
   /**

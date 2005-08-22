@@ -1,0 +1,101 @@
+void->void pipeline Test6 {
+    portal<Output> p;
+    add Source;
+    add Counter(p);
+    add Identity<int>;
+    add Output to p;
+}
+
+void->int filter Source {
+    int i=100;
+    work push 1 {
+	push(i);
+	i++;
+    }
+}
+
+int->int filter Counter(portal<Output> p) {
+    int val = 0;
+
+    work push 3 pop 1 {  // could also write pop [1,4]
+	if (pop() % 10 == 0) {
+	    push(101);
+	    p.setVal(++val) [1:1];
+	    push(102);
+	    push(103);
+	} else {
+	    push(1000);
+	    push(2000);
+	    push(3000);
+	}
+    }
+}
+
+int->void filter Output {
+    int val = 0;
+    handler setVal(int v) {
+	val = v;
+    }
+    work pop 1 {
+	print(pop());
+	print(val);
+    }
+}
+
+/* OUTPUT
+cagfarm-44 % strc -library Test6.str | & more
+101
+0
+102
+0
+103
+0
+1000   <-- this represents message bundle
+1
+2000
+1
+3000
+1
+1000
+1
+2000
+1
+3000
+1
+1000
+1
+2000
+1
+3000
+1
+1000
+1
+2000
+1
+3000
+1
+1000
+1
+2000
+1
+3000
+1
+1000
+1
+2000
+1
+3000
+1
+111
+1
+112
+1
+113
+1
+1000    <-- this represents message bundle
+2
+2000
+2
+3000
+2
+*/

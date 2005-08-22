@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.23 2005-08-21 07:00:40 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.24 2005-08-22 02:12:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -180,6 +180,16 @@ public class JMethodDeclaration extends JMemberDeclaration {
 	this.pop = new JIntLiteral(0);
     }
 
+    /**
+     * Returns whether this has a non-zero push, pop, or peek rate.
+     */
+    public boolean doesIO() {
+	boolean noPush = (push instanceof JIntLiteral) && ((JIntLiteral)push).intValue()==0;
+	boolean noPeek = (peek instanceof JIntLiteral) && ((JIntLiteral)peek).intValue()==0;
+	boolean noPop = (pop instanceof JIntLiteral) && ((JIntLiteral)pop).intValue()==0;
+	return !(noPush && noPeek && noPop);		
+    }
+
     public void setPeek(JExpression p)
     {
         this.peek = p;
@@ -237,7 +247,8 @@ public class JMethodDeclaration extends JMemberDeclaration {
       }
 	// need int literal to get number
 	if (!(pop instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for pop value in work function " + getName() + ", but the constant hasn't been resolved yet. " + pop);
+	    return 64;
+	    //Utils.fail("Trying to get integer value for pop value in work function " + getName() + ", but the constant hasn't been resolved yet. " + pop);
 	}
 	return ((JIntLiteral)pop).intValue();
     }
@@ -254,7 +265,8 @@ public class JMethodDeclaration extends JMemberDeclaration {
       }
 	// need int literal to get number
 	if (!(peek instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for peek value in work function " + getName() + ", but the constant hasn't been resolved yet. " + peek);
+	    return 64;
+	    //Utils.fail("Trying to get integer value for peek value in work function " + getName() + ", but the constant hasn't been resolved yet. " + peek);
 	}
 	return ((JIntLiteral)peek).intValue();
     }
@@ -272,7 +284,8 @@ public class JMethodDeclaration extends JMemberDeclaration {
       }
 
 	if (!(push instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for push value in work function " + getName() + ", but the constant hasn't been resolved yet. " + push);
+	    return 64;
+	    //Utils.fail("Trying to get integer value for push value in work function " + getName() + ", but the constant hasn't been resolved yet. " + push);
 	}
 	return ((JIntLiteral)push).intValue();
     }

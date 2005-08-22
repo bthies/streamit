@@ -12,7 +12,7 @@ import java.util.HashMap;
  * (no prework function or phases), and only a single phase in its
  * work stage.
  *
- * @version $Id: SIRFilter.java,v 1.35 2005-08-21 07:01:51 thies Exp $
+ * @version $Id: SIRFilter.java,v 1.36 2005-08-22 02:12:39 thies Exp $
  */
 public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     /* Internal invariant: the init phases array is null or has zero
@@ -198,7 +198,7 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
 	// then transfer rates to new one.  This is an ugly remnant of
 	// the old mode of operation, where I/O rates were stored
 	// outside the function.
-	if (work.getPeek()==null && work.getPop()==null && work.getPush()==null) {
+	if (!work.doesIO()) {
 	    work.setPeek(getWork().getPeek());
 	    work.setPop(getWork().getPop());
 	    work.setPush(getWork().getPush());

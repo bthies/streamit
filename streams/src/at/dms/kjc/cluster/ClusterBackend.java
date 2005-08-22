@@ -265,10 +265,17 @@ public class ClusterBackend implements FlatVisitor {
 	    str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, false).calcPartitions(partitionMap);	
 
 	} else {
-	    // Fix up a bug that might be caused by previous 
-	    // pass of partitioner
-	    str.setParent(null); 
-	    str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, false).calcPartitions(partitionMap);	
+	    // if mapping to 1 machine, then just map everyone to
+	    // partition 0 as an optimization (the partitioner would
+	    // do the same thing, but would take longer)
+	    if (threads==1) {
+		mapToPartitionZero(str, partitionMap);
+	    } else {
+		// Fix up a bug that might be caused by previous 
+		// pass of partitioner
+		str.setParent(null); 
+		str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, false).calcPartitions(partitionMap);	
+	    }
 	}
 	
 	System.err.println("Done Partitioning...");
@@ -391,6 +398,22 @@ public class ClusterBackend implements FlatVisitor {
 
 	System.out.println("Exiting");
 	System.exit(0);
+    }
+
+    private static void mapToPartitionZero(SIRStream str, final HashMap partitionMap) {
+	IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+		public void preVisitStream(SIRStream self,
+					   SIRIterator iter) {
+		    partitionMap.put(self, new Integer(0));
+		    if (self instanceof SIRSplitJoin) {
+			partitionMap.put(((SIRSplitJoin)self).getSplitter(), new Integer(0));
+			partitionMap.put(((SIRSplitJoin)self).getJoiner(), new Integer(0));
+		    } else if (self instanceof SIRFeedbackLoop) {
+			partitionMap.put(((SIRFeedbackLoop)self).getSplitter(), new Integer(0));
+			partitionMap.put(((SIRFeedbackLoop)self).getJoiner(), new Integer(0));
+		    }
+		}
+	    });
     }
 
     /**

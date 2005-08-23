@@ -911,8 +911,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor, 
 
 	}
 
-	print("    }\n");
-	print("    last = msg;\n");
+	print("    } else { last = msg; }\n");
  	print("  } // for \n");
 
 	print("}\n");

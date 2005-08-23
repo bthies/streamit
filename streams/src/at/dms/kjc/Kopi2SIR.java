@@ -2041,14 +2041,26 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             if (parentStream instanceof SIRPhasedFilter)
             {
                 SIRPhasedFilter filter = (SIRPhasedFilter)parentStream;
-		
+
 		// input type
 		if (args[0] instanceof JClassExpression) 
 		    filter.setInputType(((JClassExpression)args[0]).getClassType());
 		else if (args[0] instanceof JStringLiteral)
 		    filter.setInputType(getType(((JStringLiteral)args[0]).stringValue()));
+		else if (args[0] instanceof JMethodCallExpression) {
+		    //defining an array to be passed over the tape...
+		    JMethodCallExpression methCall = (JMethodCallExpression)args[0];
+		    if (methCall.getIdent().equals("getClass")) {
+			//array, record the dimension
+			if (methCall.getPrefix().getType() instanceof CArrayType)
+			    ((CArrayType)methCall.getPrefix().getType()).
+				setDims(((JNewArrayExpression)methCall.getPrefix()).getDims());
+			filter.setInputType(methCall.getPrefix().getType());
+		    }
+		}		
 		else if (args[0] instanceof JFieldAccessExpression && 
 			 (((JFieldAccessExpression)args[0]).prefix instanceof JTypeNameExpression)) {
+		    // void type (no input to filter)...
 		    JTypeNameExpression t = (JTypeNameExpression)((JFieldAccessExpression)args[0]).prefix;
 		    if (t.getType().toString().equals("java.lang.Void")) {
 			filter.setInputType(CStdType.Void);
@@ -2063,9 +2075,21 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 		    filter.setOutputType(((JClassExpression)args[1]).getClassType());
 		else if (args[1] instanceof JStringLiteral)
 		    filter.setOutputType(getType(((JStringLiteral)args[1]).stringValue()));
+		else if (args[1] instanceof JMethodCallExpression) {
+		    //defining an array to be passed over the tape...
+		    JMethodCallExpression methCall = (JMethodCallExpression)args[1];
+		    if (methCall.getIdent().equals("getClass")) {
+			//array, record the dimension
+			if (methCall.getPrefix().getType() instanceof CArrayType)
+			    ((CArrayType)methCall.getPrefix().getType()).
+				setDims(((JNewArrayExpression)methCall.getPrefix()).getDims());
+			filter.setOutputType(methCall.getPrefix().getType());
+		    }
+		}
 		else if (args[1] instanceof JFieldAccessExpression && 
 			 (((JFieldAccessExpression)args[1]).prefix instanceof JTypeNameExpression)) {
 		    JTypeNameExpression t = (JTypeNameExpression)((JFieldAccessExpression)args[1]).prefix;
+		    // void type (no input to filter)...
 		    if (t.getType().toString().equals("java.lang.Void")) {
 			filter.setOutputType(CStdType.Void);
 		    } else {

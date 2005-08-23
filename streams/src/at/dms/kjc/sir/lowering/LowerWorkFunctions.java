@@ -124,9 +124,11 @@ public class LowerWorkFunctions implements StreamVisitor
 	    
 	    if (IO[0]) {
                 addEntryExit(method);
-                removeStructureNew(method);
+		removeStructureNew(method);
 	    }
 	}
+	// also remove structures from init functions
+	removeStructureNew(self.getInit());
     }
     
     /**

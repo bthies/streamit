@@ -754,7 +754,7 @@ class ClusterCodeGenerator {
 	r.add("      "+work_function+"(1);\n");
 	if (oper instanceof SIRFilter) {
 	    if (msg_to.size() > 0 || msg_from.size() > 0) {
-		r.add("      __counter_"+id+"++;"); 
+		r.add("      __counter_"+id+"++;\n"); 
 	    }
 	    if (msg_to.size() > 0) {
 		r.add("      send_credits__"+id+"();\n");

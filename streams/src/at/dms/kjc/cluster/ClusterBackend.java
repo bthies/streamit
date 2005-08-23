@@ -306,8 +306,8 @@ public class ClusterBackend implements FlatVisitor {
 
        	System.out.print("Constrained Scheduler Begin...");
 
-	//topStreamIter = IterFactory.createFactory().createIter(str);
-	topStreamIter = IterFactory.createFineGrainedFactory().createIter(str);
+	topStreamIter = IterFactory.createFactory().createIter(str);
+	//topStreamIter = IterFactory.createFineGrainedFactory().createIter(str);
 	//new streamit.scheduler2.print.PrintGraph().printProgram(topStreamIter);
 	//new streamit.scheduler2.print.PrintProgram().printProgram(topStreamIter);
 

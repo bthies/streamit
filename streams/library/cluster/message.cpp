@@ -2,6 +2,7 @@
 #include <message.h>
 
 #include <stdlib.h>
+#include <assert.h>
 
 message::message(int size, int method_id, int execute_at) {
   this->size = size;
@@ -26,17 +27,22 @@ float message::get_float_param() {
 
 message *message::push_on_stack(message *stack_top) {
   if (stack_top == NULL) {
-    previous = NULL;
+    //previous = NULL;
     next = NULL;
     return this;
   } else {
-    next = stack_top;
-    previous = NULL;
-    return this;
+    message *tmp = stack_top;
+    while (tmp->next != NULL) tmp = tmp->next;
+    tmp->next = this;
+    next = NULL;
+    //previous = tmp;
+    return stack_top;
   }
 }
 
 message *message::remove_from_stack(message *stack_top) {
+  assert(1==0);
+  /*
   if (previous == NULL) {
     next = NULL;
     return next;
@@ -46,4 +52,5 @@ message *message::remove_from_stack(message *stack_top) {
     next = NULL;
     return stack_top;
   }
+  */
 }

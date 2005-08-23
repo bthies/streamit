@@ -2,6 +2,7 @@
 #include "sdep.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
   sdep::sdep(int initSrc, int initDst, int steadySrc, int steadyDst) {
     numInitSrcExec = initSrc;
@@ -35,6 +36,7 @@
   }
 
   int sdep::getDstPhase4SrcPhase(int nSrcPhase) {
+    //printf("nSrcPhase=%d\n", nSrcPhase);
     // first have to figure out if I need to "wrap around"
     int addDstPhase = 0;
     if (nSrcPhase >= numInitSrcExec + numSteadySrcExec + 1)
@@ -44,6 +46,7 @@
 	addDstPhase = fullExecs * numSteadyDstExec;
 	nSrcPhase = nSrcPhase - fullExecs * numSteadySrcExec;
       }
+    //printf("addDstPhase=%d\n", addDstPhase);
     
     int dstPhaseLow = 0,
       dstPhaseHigh = numInitDstExec + numSteadyDstExec;
@@ -66,14 +69,16 @@
     // If there is an entry of nSrcPhase, I want to get the lowest index
     // that contains it. But if such an entry doesn't exist, I want the
     // high-end entry! 
+    //printf("dstPhaseLow=%d\n", dstPhaseLow);
+    //printf("dstPhaseHigh=%d\n", dstPhaseHigh);
     int dstPhase;
-    if (dst2srcDependency[dstPhaseLow] == nSrcPhase)
+    if (dst2srcDependency[dstPhaseHigh] == nSrcPhase)
       {
-	dstPhase = dstPhaseLow;
+	dstPhase = dstPhaseHigh;
       }
     else
       {
-	dstPhase = dstPhaseHigh;
+	dstPhase = dstPhaseLow;
       }
     
     return dstPhase + addDstPhase;

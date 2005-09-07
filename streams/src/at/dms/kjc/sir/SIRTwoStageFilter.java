@@ -20,7 +20,7 @@ import at.dms.util.*;
  * of the compiler aware of phases.  In some places this is easier
  * than in others; big changes show up in the backends.
  *
- * @version $Id: SIRTwoStageFilter.java,v 1.12 2005-08-23 19:39:37 thies Exp $
+ * @version $Id: SIRTwoStageFilter.java,v 1.13 2005-09-07 00:14:21 thies Exp $
  */
 public class SIRTwoStageFilter extends SIRFilter {
     /* Internal invariant: the init and work phases arrays each have
@@ -132,7 +132,7 @@ public class SIRTwoStageFilter extends SIRFilter {
 	// then transfer rates to new one.  This is an ugly remnant of
 	// the old mode of operation, where I/O rates were stored
 	// outside the function.
-	if (newWork.getPeek()==null && newWork.getPop()==null && newWork.getPush()==null) {
+	if (!newWork.doesIO()) {
 	    newWork.setPeek(getInitWork().getPeek());
 	    newWork.setPop(getInitWork().getPop());
 	    newWork.setPush(getInitWork().getPush());

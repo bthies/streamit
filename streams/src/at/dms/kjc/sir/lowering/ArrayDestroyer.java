@@ -152,6 +152,22 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 				declared.put(var,Boolean.TRUE);
 				return self;
 			    }
+			} else if (left instanceof JFieldAccessExpression) {
+			    // assigning one array to another.  We do
+			    // not yet track the flow of values
+			    // through an assignment such as this.
+			    //
+			    // This means that if you pass an array of
+			    // coefficients to a filter and store it
+			    // to a field, the array cannot be
+			    // destroyed.  To support this, would need
+			    // to propagate constants from locals to
+			    // fields, which I don't think FieldProp
+			    // or Propagator currently dues. 
+			    // SEE RT #257.  --BFT
+			    JFieldAccessExpression l = (JFieldAccessExpression)left;
+			    targetsField.remove(l.getIdent());
+			    unsafe.put(l.getIdent(), Boolean.TRUE);
 			}
 			return super.visitAssignmentExpression(self,left,right);
 		    }

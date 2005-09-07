@@ -170,6 +170,19 @@ public class IMEMEstimation implements FlatVisitor
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
 		jProcess.waitFor();
 
+		//dump the output so that the process does not hang on it
+		InputStream output = jProcess.getInputStream();
+		try {
+		    InputStreamReader isr = new InputStreamReader(output);
+		    BufferedReader br = new BufferedReader(isr);
+		    String line = null;
+		    while ((line = br.readLine()) != null) {
+		    }
+		}
+		catch (Exception e) {
+		    e.printStackTrace();
+		}
+
 		//set the return value based on the exit code of the make 
 		assert (jProcess.exitValue() == 0) : 
 		    "Failure to build C file for IMEM estimation";
@@ -187,6 +200,19 @@ public class IMEMEstimation implements FlatVisitor
 		cmdArray[5] = "verify_imem";
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
 		jProcess.waitFor();
+
+		//dump the output so that the process does not hang on it
+		InputStream output = jProcess.getInputStream();
+		try {
+		    InputStreamReader isr = new InputStreamReader(output);
+		    BufferedReader br = new BufferedReader(isr);
+		    String line = null;
+		    while ((line = br.readLine()) != null) {
+		    }
+		}
+		catch (Exception e) {
+		    e.printStackTrace();
+		}
 
 		//set the return value based on the exit code of the make 
 		fits = (jProcess.exitValue() == 0);

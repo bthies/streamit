@@ -2,17 +2,8 @@
 float->float filter FIRSmoothingFilter(int DFTLen) {
 
   int cosWinLength = 15;
-  float[cosWinLength] cosWin;
+  float[cosWinLength] cosWin = {0.1951, 0.3827, 0.5556, 0.7071, 0.8315, 0.9239, 0.9808, 1.0000, 0.9808, 0.9239, 0.8315, 0.7071, 0.5556, 0.3827, 0.1951 };
   int offset = (int)(cosWinLength / 2);
-
-  init { 
-
-    cosWin[0] = 0.1951; cosWin[1] = 0.3827; cosWin[2] = 0.5556;
-    cosWin[3] = 0.7071; cosWin[4] = 0.8315; cosWin[5] = 0.9239;
-    cosWin[6] = 0.9808; cosWin[7] = 1.0000; cosWin[8] = 0.9808;
-    cosWin[9] = 0.9239; cosWin[10] = 0.8315; cosWin[11] = 0.7071;
-    cosWin[12] = 0.5556; cosWin[13] = 0.3827; cosWin[14] = 0.1951; 
-  }
 
   work push DFTLen pop DFTLen peek cosWinLength {
 

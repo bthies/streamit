@@ -40,7 +40,7 @@ public class RawExecutionCode extends at.dms.util.Utils
     public static String exeIndex = "__EXEINDEX__";
     public static String exeIndex1 = "__EXEINDEX__1__";
 
-    public static String ARRAY_INDEX = "__ARRAY_INDEX__";
+    public static String ARRAY_INDEX = "__ARRAY_RECEIVE_INDEX__";
     public static String ARRAY_COPY = "__ARRAY_COPY__";
 
     public static String initSchedFunction = "__RAWINITSCHED__";
@@ -572,22 +572,16 @@ public class RawExecutionCode extends at.dms.util.Utils
 	
 	//print the declarations for the array indices for pushing and popping
 	//if this filter deals with arrays
-	if (filter.getInputType().isArrayType() || 
-	    filter.getOutputType().isArrayType()) {
-	    int inputDim = 0, outputDim = 0, maxDim;
-	    //find which array has the greatest dimensionality	   
-	    if (filter.getInputType().isArrayType())
-		inputDim = 
+	if (filter.getInputType().isArrayType()) {
+	    //the number of vars for receiving is equal to the dimensionality of the
+	    //input array
+	    int inputDim = 
 		    ((CArrayType)filter.getInputType()).getArrayBound();
-	    if (filter.getOutputType().isArrayType()) 
-		outputDim = 
-		    ((CArrayType)filter.getOutputType()).getArrayBound();
-	    maxDim = (inputDim > outputDim) ? inputDim : outputDim;
 	    
-	    localVariables.ARRAY_INDEX = new JVariableDefinition[maxDim];
+	    localVariables.ARRAY_INDEX = new JVariableDefinition[inputDim];
 	    
 	    //create enough index vars as max dim
-	    for (int i = 0; i < maxDim; i++) {
+	    for (int i = 0; i < inputDim; i++) {
 		JVariableDefinition arrayIndexVar = 
 		    new JVariableDefinition(null, 
 					    0, 
@@ -1113,7 +1107,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	JStatement stmt = new JExpressionStatement(null,
 						   methodCall,
 						   null);
-	for (int i = 0; i < dims.length - 1; i++) 
+	for (int i = dims.length - 1; i >= 0; i--) 
 	    stmt = makeForLoop(stmt, localVariables.ARRAY_INDEX[i],
 			       dims[i]);
 	

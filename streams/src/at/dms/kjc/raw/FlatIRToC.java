@@ -929,11 +929,20 @@ public class FlatIRToC extends ToC implements StreamVisitor
     {
 	CType baseType = ((CArrayType)tapeType).getBaseType();
 	String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
-	
+	String ARRAY_INDEX = "ARRAY_PUSH_INDEX";
+
+	print("{\n");
+	print ("  int ");
 	for (int i = 0; i < dims.length; i++) {
-	    print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
-		  RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-		  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
+	    print(ARRAY_INDEX + i);
+	    if (i < dims.length - 1)
+		print(", ");
+	}
+	print(";\n");
+	for (int i = 0; i < dims.length; i++) {
+	    print("  for (" + ARRAY_INDEX + i + " = 0; " +
+		  ARRAY_INDEX + i + " < " + dims[i] + " ; " +
+		  ARRAY_INDEX + i + "++)\n");
 	}
 
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
@@ -941,7 +950,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    print(Util.staticNetworkSendPrefix(Util.getBaseType(tapeType)));
 	    val.accept(this);
 	    for (int i = 0; i < dims.length; i++) {
-		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+		print("[" + ARRAY_INDEX + i + "]");
 	    }
 	    print(Util.staticNetworkSendSuffix());
 	    print(";\n}\n");
@@ -950,10 +959,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    print("static_send((" + baseType + ") ");
 	    val.accept(this);
 	    for (int i = 0; i < dims.length; i++) {
-		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+		print("[" + ARRAY_INDEX + i + "]");
 	    }
 	    print(");\n}\n");
 	}
+	print("}\n");
     }
     
     public void visitPushExpression(SIRPushExpression self,

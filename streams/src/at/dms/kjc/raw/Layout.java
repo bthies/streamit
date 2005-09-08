@@ -74,7 +74,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	// if there is create a new column to place the fileReader/writer
 	// it will become a bc file reading device
 	FileVisitor.init(top);
-	if (FileVisitor.foundReader || FileVisitor.foundWriter){
+	if (FileVisitor.foundReader || FileVisitor.foundWriter) {
 	    columns++;
 	}
 	

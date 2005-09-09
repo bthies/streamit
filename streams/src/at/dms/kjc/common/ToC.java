@@ -741,12 +741,19 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
 				    CType type)
     {
 	print("(");
-        print("(");
-        print(type);
-        print(")");
+	//suppress generation of casts for multidimensional arrays
+	//when generating C code because they are meaningless
+	//and if we try to access a multi-dim array after it has been cast to 
+	//(type **) they dimensions are unknown...
+	if (!(type.isArrayType() && ((CArrayType)type).getElementType().isArrayType())) {
+	    print("(");
+	    print(type);
+	    print(")");
+	}
         print("(");
 	expr.accept(this);
 	print(")");
+	
         print(")");
     }
     

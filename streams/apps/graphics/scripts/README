@@ -1,0 +1,31 @@
+Scripts used for graphics apps.
+
+adjustJava.py
+=============
+Takes a .java file as input.  It expects the .java output of:
+"java streamit.frontend.ToJava --library --output GPUModel.java GPUModel.str"
+The script puts some hacks into it so that you can run it in the library
+and see a reasonable output.
+
+strcm.py
+========
+Takes a filename as an argument.
+The first line of the file is the output filename.
+Followed by a filename on each line.
+The script simply concatenates them together into one big .str file.
+
+xyToPPM.py
+==========
+Usage: xyToPPM.py colorBuffer.xy widthxheight
+Takes an input colorBuffer.xy file and a resolution.
+Outputs a displayable colorBuffer.xy.ppm file.
+
+convert_input_array
+===================
+Technically not a script.  The source .c is in the same directory.
+Usage: convert_input_array input.txt output.bin
+
+Reads input.txt, expecting 1 float (as ASCII) per line.
+Outputs to output.bin in binary, followed by 100 dummy values.
+
+Useful for creating files to be read by InputReaders.

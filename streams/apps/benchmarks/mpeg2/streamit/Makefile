@@ -1,4 +1,3 @@
-STREAMIT_HOME = ~/streams
 PREPROCESS = ${STREAMIT_HOME}/misc/scripts/preprocess.perl
 STREAMITDOC = ${STREAMIT_HOME}/misc/scripts/streamitdoc
 STRC_OPTIONS = -library -nosched
@@ -30,6 +29,9 @@ player:	MPEGplayer.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT}
 mpeg2bmp:	MPEGtoBMP.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT}
 	strc MPEGtoBMP.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
 
+${LIBDCT}:
+	pushd ${DCT_HOME} && make && popd
+
 MPEGdecoder.str: MPEGdecoder.str.pre ${PREPROCESS}
 	${PREPROCESS} MPEGdecoder.str.pre -o MPEGdecoder.str
 
@@ -47,10 +49,3 @@ docs:	${STREAMITDOC}
 	${STREAMITDOC} MPEGdecoder.str.pre -o MPEGdecoder.str.pre.html
 	${STREAMITDOC} MPEGplayer.str -o MPEGplayer.str.html
 	${STREAMITDOC} MPEGtoBMP.str -o MPEGtoBMP.str.html
-
-
-
-
-
-
-

@@ -12,6 +12,7 @@ message::message(int size, int method_id, int execute_at) {
 
 void message::read_params(netsocket *sock) {
   int param_size = size - 12;
+  if (param_size <= 0) return;
   params = (int*)malloc(param_size);
   current = params;
   sock->read_chunk((char*)params, param_size);

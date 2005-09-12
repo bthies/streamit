@@ -30,13 +30,14 @@ public class RemoveDynamicRates extends EmptyStreamVisitor {
 	    methods[i].setPeek((JExpression)methods[i].getPeek().accept(replacer));
 	}
     }
-}
 
-/**
- * Visit SLIR and replace all dynamic rates with the constant 1.
- */
-class SLIRRemoveDynamicRates extends SLIRReplacingVisitor {
-    public Object visitRangeExpression(SIRRangeExpression self) {
-	return new JIntLiteral(1);
+
+    /**
+     * Visit SLIR and replace all dynamic rates with the constant 1.
+     */
+    class SLIRRemoveDynamicRates extends SLIRReplacingVisitor {
+	public Object visitRangeExpression(SIRRangeExpression self) {
+	    return new JIntLiteral(1);
+	}
     }
 }

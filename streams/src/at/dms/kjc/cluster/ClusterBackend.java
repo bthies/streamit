@@ -119,9 +119,15 @@ public class ClusterBackend implements FlatVisitor {
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
 
-	if (Flattener.hasDynamicRates(str)) {
-	    System.err.println("Failure: Dynamic rates are not yet supported in the cluster backend.");
+	if (Flattener.hasDynamicRates(str) && KjcOptions.fusion) {
+	    System.err.println("Failure: Dynamic rates with -fusion is not yet supported.");
 	    System.exit(1);
+	} else {
+	    // for now, cluster backend deals with dynamic rates by
+	    // REPLACING them with a constant rate.  This could cause
+	    // innacurracies for load balancing, etc., but serves to
+	    // push through applications for now
+	    RemoveDynamicRates.doit(str);
 	}
 
 	//SIRPrinter printer1 = new SIRPrinter();

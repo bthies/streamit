@@ -194,6 +194,10 @@ public class TraceIRtoC extends ToC
                                   JStatement incr,
                                   JStatement body) {
         print("for (");
+
+	boolean oldStatementContext = statementContext;
+	statementContext = false; // initially exprs, with ';' forced
+
         if (init != null) {
             init.accept(this);
 	    //the ; will print in a statement visitor
@@ -225,12 +229,14 @@ public class TraceIRtoC extends ToC
 
         print(") ");
 
+	statementContext = true;
         print("{");
         pos += TAB_SIZE;
         body.accept(this);
         pos -= TAB_SIZE;
         newLine();
         print("}");
+	statementContext = oldStatementContext;
     }
 
     protected void stackAllocateArray(String ident){
@@ -425,12 +431,15 @@ public class TraceIRtoC extends ToC
 	//print the correct code for array assignment
 	//this must be run after renaming!!!!!!
 	if (left.getType() == null || right.getType() == null) {
+	    boolean oldStatementContext = statementContext;
 	    lastLeft=left;
-	    print("(");
+	    printLParen();
+	    statementContext = false;
 	    left.accept(this);
 	    print(" = ");
 	    right.accept(this);
-	    print(")");
+	    statementContext = oldStatementContext;
+	    printRParen();
 	    return;
  	}
 
@@ -450,12 +459,15 @@ public class TraceIRtoC extends ToC
 	    String[] dims = ArrayDim.findDim(new TraceIRtoC(), tile.getComputeCode().getFields(), method, ident);
 	    //if we cannot find the dim, just create a pointer copy
 	    if (dims == null) {
+		boolean oldStatementContext = statementContext;
 		lastLeft=left;
-		print("(");
+		printLParen();	// parenthesize if expr, not if stmt
+		statementContext = false;
 		left.accept(this);
 		print(" = ");
 		right.accept(this);
-		print(")");
+		statementContext = oldStatementContext;
+		printRParen();
 		return;
 	    }
 	    print("{\n");
@@ -501,12 +513,15 @@ public class TraceIRtoC extends ToC
            
 
 	
+	boolean oldStatementContext = statementContext;
 	lastLeft=left;
-        print("(");
+	printLParen();	// parenthesize if expr, not if stmt
+	statementContext = false;
         left.accept(this);
         print(" = ");
         right.accept(this);
-        print(")");
+	statementContext = oldStatementContext;
+        printRParen();
     }
 
     
@@ -659,7 +674,7 @@ public class TraceIRtoC extends ToC
 	    }
 	else
 	    {
-		System.out.println("Unprintatble type");
+		System.out.println("Unprintable type");
 		print("print_int(");
 		exp.accept(this);
 		print(");");

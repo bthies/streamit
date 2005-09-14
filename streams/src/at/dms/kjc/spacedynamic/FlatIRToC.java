@@ -388,6 +388,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//be careful, if you return prematurely, decrement me
 	forLoopHeader++;
 
+	boolean oldStatementContext = statementContext;
+	statementContext = false; // starts with expressions
+
         print("for (");
         if (init != null) {
             init.accept(this);
@@ -415,12 +418,14 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	forLoopHeader--;
         print(") ");
 
+	statementContext = true; // statments here
         print("{");
         pos += TAB_SIZE;
         body.accept(this);
         pos -= TAB_SIZE;
         newLine();
         print("}");
+	statementContext = oldStatementContext;
     }
 
    
@@ -646,12 +651,15 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//print the correct code for array assignment
 	//this must be run after renaming!!!!!!
 	if (left.getType() == null || right.getType() == null) {
+	    boolean oldStatementContext = statementContext;
 	    lastLeft = left;
-	    print("(");
+	    printLParen();	// parenthesize if expr not if stmt
+	    statementContext = false;
 	    left.accept(this);
 	    print(" = ");
 	    right.accept(this);
-	    print(")");
+	    statementContext = oldStatementContext;
+	    printRParen();
 	    return;
  	}
 
@@ -671,12 +679,15 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    String[] dims = ArrayDim.findDim(new FlatIRToC(), filter.getFields(), method, ident);
 	    //if we cannot find the dim, just create a pointer copy
 	    if (dims == null) {
+		boolean oldStatementContext = statementContext;
 		lastLeft=left;
-		print("(");
+		printLParen();	// parenthesize if expr not if stmt
+		statementContext = false;
 		left.accept(this);
 		print(" = ");
 		right.accept(this);
-		print(")");
+		statementContext = oldStatementContext;
+		printRParen();
 		return;
 	    }
 	    print("{\n");
@@ -720,13 +731,15 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	}
            
 	
-	
+	boolean oldStatementContext = statementContext;
 	lastLeft = left;
-        print("(");
+	printLParen();	// parenthesize if expr not if stmt
+	statementContext = false;
         left.accept(this);
         print(" = ");
         right.accept(this);
-        print(")");
+	statementContext = oldStatementContext;
+        printRParen();
     }
 
     /**

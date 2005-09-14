@@ -40,7 +40,7 @@ public class SpaceDynamicBackend {
 			   SIRStructure[]
 			   structs) {
 
-	System.out.println("Entry to RAW Backend");
+	System.out.println("Entry to RAW Backend (spacedynamic)");
 	
 	//alt code gen has to be enabled for this pass to work
 	KjcOptions.altcodegen = true;

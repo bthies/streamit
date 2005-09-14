@@ -24,39 +24,15 @@ import at.dms.util.SIRPrinter;
  *
  * @author Michael Gordon
  */
-public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
+public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 {
-    /** tabbing / spacing variables **/
-    protected int TAB_SIZE = 2;
-    /** tabbing / spacing variables **/
-    protected int WIDTH = 80;
-    /** tabbing / spacing variables **/
-    protected int pos;
-    /** Some output classes **/
-    protected TabbedPrintWriter p;
-    protected StringWriter str;
     /** set to true to only print declarations of methods when visiting them **/
     public boolean declOnly = true;
     /** true if we are currently visiting the init function **/
     protected boolean isInit = false;
     /** the current function we are visiting **/
     protected JMethodDeclaration method;
-    /** Needed to pass info from assignment to visitNewArray **/
-    protected JExpression lastLeft;
     
-    public String getString() {
-        if (str != null)
-            return str.toString();
-        else
-            return null;
-    }
-    
-
-    public void setPos(int pos) {
-        this.pos = pos;
-    }
-
-
     /**
      * Prints initialization for an array with static initializer, e.g., "int A[2] = {1,2};"
      *
@@ -156,70 +132,29 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
     // STATEMENT
     // ----------------------------------------------------------------------
     
-    /**
-     * prints a while statement
+    /*
+     * prints a while statement visitWhileStatement in ToCCommon
      */
-    public void visitWhileStatement(JWhileStatement self,
-                                    JExpression cond,
-                                    JStatement body) {
-	newLine();
-        print("while (");
-        cond.accept(this);
-        print(") ");
 
-        body.accept(this);
-    }
-
-    /**
+    /*
      * prints a variable declaration statement
+     * visitVariableDeclarationStatement in ToCCommon
      */
-    public void visitVariableDeclarationStatement(JVariableDeclarationStatement self,
-                                                  JVariableDefinition[] vars) {
-        for (int i = 0; i < vars.length; i++) {
-            vars[i].accept(this);
-        }
-    }
-
    
-    /**
+    /*
      * prints a switch statement
+     * visitSwitchStatement in ToCCommon
      */
-    public void visitSwitchStatement(JSwitchStatement self,
-                                     JExpression expr,
-                                     JSwitchGroup[] body) {
-        print("switch (");
-        expr.accept(this);
-        print(") {");
-        for (int i = 0; i < body.length; i++) {
-            body[i].accept(this);
-        }
-        newLine();
-        print("}");
-    }
-
       
-    /**
+    /*
      * prints a return statement
+     * visitReturnStatement in ToCCommon
      */
-    public void visitReturnStatement(JReturnStatement self,
-                                     JExpression expr) {
-        print("return");
-        if (expr != null) {
-            print(" ");
-            expr.accept(this);
-        }
-        print(";");
-    }
 
-    /**
+    /*
      * prints a labeled statement
+     * visitLabeledStatement  in ToCCommon
      */
-    public void visitLabeledStatement(JLabeledStatement self,
-                                      String label,
-                                      JStatement stmt) {
-        print(label + ":");
-        stmt.accept(this);
-    }
 
     /**
      * prints a if statement
@@ -228,9 +163,13 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
                                  JExpression cond,
                                  JStatement thenClause,
                                  JStatement elseClause) {
+
+	boolean oldStatementContext = statementContext;
         print("if (");
+	statementContext = false;
         cond.accept(this);
         print(") {");
+	statementContext = true;
         pos += thenClause instanceof JBlock ? 0 : TAB_SIZE;
         thenClause.accept(this);
         pos -= thenClause instanceof JBlock ? 0 : TAB_SIZE;
@@ -246,195 +185,57 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
             pos -= elseClause instanceof JBlock || elseClause instanceof JIfStatement ? 0 : TAB_SIZE;
         }
 	print("}");
+	statementContext = oldStatementContext;
     }
-    
 
-
-    /**
-     * prints a compound statement
+    /*
+     * prints a compound statement: 2-argument form
+     * visitCompoundStatement in ToCCommon
      */
-    public void visitCompoundStatement(JCompoundStatement self,
-                                       JStatement[] body) {
-        visitCompoundStatement(body);
-    }
 
-    /**
+    /*
      * prints a compound statement
+     * visitCompoundStatement in ToCCommon
      */
-    public void visitCompoundStatement(JStatement[] body) {
-        for (int i = 0; i < body.length; i++) {
-	    /* if (body[i] instanceof JIfStatement &&
-                i < body.length - 1 &&
-                !(body[i + 1] instanceof JReturnStatement)) {
-                newLine();
-            }
-            if (body[i] instanceof JReturnStatement && i > 0) {
-                newLine();
-		}*/
 
-            if (!(body[i] instanceof JEmptyStatement))
-		newLine();
-            body[i].accept(this);
-	    /*
-	      if (body[i] instanceof JVariableDeclarationStatement &&
-	      i < body.length - 1 &&
-	      !(body[i + 1] instanceof JVariableDeclarationStatement)) {
-	      newLine();
-	      }
-	    */
-        }
-    }
-
-    /**
+    /*
      * prints an expression statement
+     * visitExpressionStatement in ToCCommon
      */
-    public void visitExpressionStatement(JExpressionStatement self,
-                                         JExpression expr) {
-        expr.accept(this);
-	print(";");
-    }
 
-    /**
+    /*
      * prints an expression list statement
+     * visitExpressionListStatement in ToCCommon
      */
-    public void visitExpressionListStatement(JExpressionListStatement self,
-                                             JExpression[] expr) {
-        for (int i = 0; i < expr.length; i++) {
-            if (i != 0) {
-                print(", ");
-            }
-            expr[i].accept(this);
-        }
-	print(";");
-    }
 
-    /**
-     * prints a do statement
+    /*
+     * prints a do statement 
+     * visitDoStatement in ToCCommon
      */
-    public void visitDoStatement(JDoStatement self,
-                                 JExpression cond,
-                                 JStatement body) {
-        newLine();
-        print("do ");
-        body.accept(this);
-        print("");
-        print("while (");
-        cond.accept(this);
-        print(");");
-    }
 
-    /**
+    /*
      * prints a continue statement
+     * visitContinueStatement in ToCCommon
      */
-    public void visitContinueStatement(JContinueStatement self,
-                                       String label) {
-        newLine();
-        print("continue");
-        if (label != null) {
-            print(" " + label);
-        }
-        print(";");
-    }
 
-    /**
+    /*
      * prints a break statement
+     * visitBreakStatement in ToCCommon
      */
-    public void visitBreakStatement(JBreakStatement self,
-                                    String label) {
-        newLine();
-        print("break");
-        if (label != null) {
-            print(" " + label);
-        }
-        print(";");
-    }
 
-    /**
+    /*
      * prints an expression statement
+     * visitBlockStatement  in ToCCommon
      */
-    public void visitBlockStatement(JBlock self,
-                                    JavaStyleComment[] comments) {
-        print("{");
-        pos += TAB_SIZE;
-        visitCompoundStatement(self.getStatementArray());
-        if (comments != null) {
-            visitComments(comments);
-        }
-        pos -= TAB_SIZE;
-        newLine();
-        print("}");
-    }
 
-    /**
+    /*
      * prints a type declaration statement
+     * visitTypeDeclarationStatement  in ToCCommon
      */
-    public void visitTypeDeclarationStatement(JTypeDeclarationStatement self,
-                                              JTypeDeclaration decl) {
-        decl.accept(this);
-    }
 
     // ----------------------------------------------------------------------
     // EXPRESSION
     // ----------------------------------------------------------------------
-
-    /**
-     * prints an unary plus expression
-     */
-    public void visitUnaryPlusExpression(JUnaryExpression self,
-                                         JExpression expr)
-    {
-	print("(");
-        print("+");
-        expr.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints an unary minus expression
-     */
-    public void visitUnaryMinusExpression(JUnaryExpression self,
-                                          JExpression expr)
-    {
-	print("(");
-        print("-");
-        expr.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a bitwise complement expression
-     */
-    public void visitBitwiseComplementExpression(JUnaryExpression self,
-						 JExpression expr)
-    {
-	print("(");
-        print("~");
-        expr.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a logical complement expression
-     */
-    public void visitLogicalComplementExpression(JUnaryExpression self,
-						 JExpression expr)
-    {
-	print("(");
-        print("!");
-        expr.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a type name expression
-     */
-    public void visitTypeNameExpression(JTypeNameExpression self,
-                                        CType type) {
-	print("(");
-        print(type);
-	print(")");
-    }
-
     /**
      * prints a this expression
      */
@@ -450,33 +251,19 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
         Utils.fail("Super Expression Encountered");
     }
 
-    /**
+    /*
      * prints a shift expression
      */
-    public void visitShiftExpression(JShiftExpression self,
-                                     int oper,
-                                     JExpression left,
-                                     JExpression right) {
-	print("(");
-        left.accept(this);
-        if (oper == OPE_SL) {
-            print(" << ");
-        } else if (oper == OPE_SR) {
-            print(" >> ");
-        } else {
-            print(" >>> ");
-        }
-        right.accept(this);
-	print(")");
-    }
 
     /**
-     * prints a shift expressiona
+     * prints a relational expression
      */
     public void visitRelationalExpression(JRelationalExpression self,
                                           int oper,
                                           JExpression left,
                                           JExpression right) {
+	boolean oldStatementContext = statementContext;
+	statementContext = false;
 	print("(");
         left.accept(this);
         switch (oper) {
@@ -493,101 +280,20 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
             print(" >= ");
             break;
         default:
-            Utils.fail("Unknown relational expression");
+            Utils.fail("Unknown relational expression"); // only difference from LIRToC
 	}
         right.accept(this);
 	print(")");
-    }
-
-    /**
-     * prints a prefix expression
-     */
-    public void visitPrefixExpression(JPrefixExpression self,
-                                      int oper,
-                                      JExpression expr) {
-	print("(");
-        if (oper == OPE_PREINC) {
-            print("++");
-        } else {
-            print("--");
-        }
-        expr.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a postfix expression
-     */
-    public void visitPostfixExpression(JPostfixExpression self,
-                                       int oper,
-                                       JExpression expr) {
-	print("(");
-        expr.accept(this);
-        if (oper == OPE_POSTINC) {
-            print("++");
-        } else {
-            print("--");
-        }
-	print(")");
-    }
-
-    /**
-     * prints a parenthesed expression
-     */
-    public void visitParenthesedExpression(JParenthesedExpression self,
-                                           JExpression expr) {
-        print("(");
-        expr.accept(this);
-        print(")");
+	statementContext = oldStatementContext;
     }
 
 
-    /**
+    /*
      * prints an array allocator expression
+     *
+     *  public void visitNewArrayExpression
+     *  see at/dms/kjc/common.ToCCommon
      */
-    public void visitNewArrayExpression(JNewArrayExpression self,
-                                        CType type,
-                                        JExpression[] dims,
-                                        JArrayInitializer init)
-    {
-	//the memory allocator to use
-	String memory_alloc = KjcOptions.malloczeros ? 
-	    "malloc" : "calloc";
-	//malloc takes one arg, calloc two, so use a different sep between
-	//size and elements
-	String mem_alloc_sep = KjcOptions.malloczeros ? 
-	    " * " : ", ";
-
-	print(memory_alloc + "(");
-        dims[0].accept(this);
-        print(mem_alloc_sep + "sizeof(");
-        print(type);
-	if(dims.length>1)
-	    print("*");
-        print("))");
-	if(dims.length>1) {
-	    for(int off=0;off<(dims.length-1);off++) {
-		//Right now only handles JIntLiteral dims
-		//If cast expression then probably a failure to reduce
-		int num=((JIntLiteral)dims[off]).intValue();
-		for(int i=0;i<num;i++) {
-		    print(",\n");
-		    //If lastLeft null then didn't come right after an assignment
-		    lastLeft.accept(this);
-		    print("["+i+"]=" + memory_alloc + "(");
-		    dims[off+1].accept(this);
-		    print(mem_alloc_sep + "sizeof(");
-		    print(type);
-		    if(off<(dims.length-2))
-			print("*");
-		    print("))");
-		}
-	    }
-	}
-        if (init != null) {
-            init.accept(this);
-        }
-    }
 
     
     /**
@@ -598,6 +304,8 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
                                     String ident) {
 	Utils.fail("Name Expression");
 	
+	boolean oldStatementContext = statementContext;
+	statementContext = false;
 	print("(");
         if (prefix != null) {
             prefix.accept(this);
@@ -605,109 +313,28 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
         }
         print(ident);
 	print(")");
+	statementContext = oldStatementContext;
     }
 
     /**
-     * prints an array allocator expression
+     * prints an binary expression
      */
     public void visitBinaryExpression(JBinaryExpression self,
                                       String oper,
                                       JExpression left,
                                       JExpression right) {
-	print("(");
+	printLParen();
+	boolean oldStatementContext = statementContext;
+	statementContext = false;
         left.accept(this);
         print(" ");
         print(oper);
         print(" ");
         right.accept(this);
-	print(")");
+	statementContext = oldStatementContext;
+	printRParen();
     }
 
-    /**
-     * prints a local variable expression
-     */
-    public void visitLocalVariableExpression(JLocalVariableExpression self,
-                                             String ident) {
-        print(ident);
-    }
-
-    /**
-     * prints an equality expression
-     */
-    public void visitEqualityExpression(JEqualityExpression self,
-                                        boolean equal,
-                                        JExpression left,
-                                        JExpression right) {
-	print("(");
-        left.accept(this);
-        print(equal ? " == " : " != ");
-        right.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a conditional expression
-     */
-    public void visitConditionalExpression(JConditionalExpression self,
-                                           JExpression cond,
-                                           JExpression left,
-                                           JExpression right) {
-	print("(");
-        cond.accept(this);
-        print(" ? ");
-        left.accept(this);
-        print(" : ");
-        right.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a compound expression
-     */
-    public void visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
-                                                  int oper,
-                                                  JExpression left,
-                                                  JExpression right) {
-	print("(");
-        left.accept(this);
-        switch (oper) {
-        case OPE_STAR:
-            print(" *= ");
-            break;
-        case OPE_SLASH:
-            print(" /= ");
-            break;
-        case OPE_PERCENT:
-            print(" %= ");
-            break;
-        case OPE_PLUS:
-            print(" += ");
-            break;
-        case OPE_MINUS:
-            print(" -= ");
-            break;
-        case OPE_SL:
-            print(" <<= ");
-            break;
-        case OPE_SR:
-            print(" >>= ");
-            break;
-        case OPE_BSR:
-            print(" >>>= ");
-            break;
-        case OPE_BAND:
-            print(" &= ");
-            break;
-        case OPE_BXOR:
-            print(" ^= ");
-            break;
-        case OPE_BOR:
-            print(" |= ");
-            break;
-        }
-        right.accept(this);
-	print(")");
-    }
 
     /**
      * prints a field expression
@@ -716,8 +343,11 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
                                      JExpression left,
                                      String ident)
     {
+	boolean oldStatementContext = statementContext;
+	statementContext = false;
         if (ident.equals(JAV_OUTER_THIS)) {// don't generate generated fields
             print(left.getType().getCClass().getOwner().getType() + "->this");
+	    statementContext = oldStatementContext;
             return;
         }
         int		index = ident.indexOf("_$");
@@ -731,57 +361,18 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
             print(ident);
 	    print(")");
         }
+	statementContext = oldStatementContext;
     }
 
     /**
-     * prints a cast expression
-     */
-    public void visitCastExpression(JCastExpression self,
-				    JExpression expr,
-				    CType type)
-    {
-	print("(");
-	//suppress generation of casts for multidimensional arrays
-	//when generating C code because they are meaningless
-	//and if we try to access a multi-dim array after it has been cast to 
-	//(type **) they dimensions are unknown...
-	if (!(type.isArrayType() && ((CArrayType)type).getElementType().isArrayType())) {
-	    print("(");
-	    print(type);
-	    print(")");
-	}
-        print("(");
-	expr.accept(this);
-	print(")");
-	
-        print(")");
-    }
-    
-    /**
-     * prints a cast expression
-     */
-    public void visitUnaryPromoteExpression(JUnaryPromote self,
-                                            JExpression expr,
-                                            CType type)
-    {
-	print("(");
-        print("(");
-        print(type);
-        print(")");
-        print("(");
-        expr.accept(this);
-        print(")");
-        print(")");
-    }
-
-    /**
-     * prints a compound assignment expression
+     * prints a bitwise expression
      */
     public void visitBitwiseExpression(JBitwiseExpression self,
                                        int oper,
                                        JExpression left,
                                        JExpression right) {
-        print("(");
+	printLParen();
+	boolean oldStatementContext = statementContext;
         left.accept(this);
         switch (oper) {
         case OPE_BAND:
@@ -794,10 +385,11 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
             print(" ^ ");
             break;
         default:
-	    Utils.fail("Unknown relational expression");
+	    Utils.fail("Unknown relational expression"); // only difference with LIRToC
         }
         right.accept(this);
-        print(")");
+	statementContext = oldStatementContext;
+	printRParen();
     }
 
     /**
@@ -812,17 +404,20 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
     }
 
     /**
-     * prints an array length expression
+     * prints an array access expression
      */
     public void visitArrayAccessExpression(JArrayAccessExpression self,
                                            JExpression prefix,
                                            JExpression accessor) {
-        print("(");
+	printLParen();
+	boolean oldStatementContext = statementContext;
+	statementContext = false;
         prefix.accept(this);
-        print("[(int)");
+        print("[(int)");	// cast to int is only difference with LIRToC
         accessor.accept(this);
         print("]");
-        print(")");
+	statementContext = oldStatementContext;
+	printRParen();
     }
     
     // ----------------------------------------------------------------------
@@ -1101,10 +696,6 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
     // PROTECTED METHODS
     // ----------------------------------------------------------------------
 
-    protected void newLine() {
-        p.println();
-    }
-
     // Special case for CTypes, to map some Java types to C types.
     protected void print(CType s) {
 	if (s instanceof CArrayType){
@@ -1118,31 +709,6 @@ public abstract class ToC extends SLIREmptyVisitor implements CodeGenerator
 	    print("portal");
 	else
             print(s.toString());
-    }
-
-    protected void print(Object s) {
-        print(s.toString());
-    }
-
-    public void print(String s) {
-        p.setPos(pos);
-        p.print(s);
-    }
-
-    protected void print(boolean s) {
-        print("" + s);
-    }
-
-    protected void print(int s) {
-        print("" + s);
-    }
-
-    protected void print(char s) {
-        print("" + s);
-    }
-
-    protected void print(double s) {
-        print("" + s);
     }
 
     /** clear the internal String that represents the code generated so far **/

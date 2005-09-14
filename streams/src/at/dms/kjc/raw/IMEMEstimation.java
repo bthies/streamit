@@ -148,6 +148,7 @@ public class IMEMEstimation implements FlatVisitor
 	    //move the files 
 	    {
 		System.out.println("moving...");
+		System.out.flush();
 		String[] cmdArray = new String[5];
 		cmdArray[0] = "mv";
 		cmdArray[1] = "tile" + tileNumber + ".c";
@@ -156,20 +157,50 @@ public class IMEMEstimation implements FlatVisitor
 		cmdArray[4] = dir;    
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
 		jProcess.waitFor();
+			
+		jProcess.getInputStream().close();
+		jProcess.getOutputStream().close();
+		jProcess.getErrorStream().close();
 	    }
 	    //now see if the compile succeeds
 	    {
 		System.out.println("build...");
-		String[] cmdArray = new String[6];
+		/*
+		String[] cmdArray = new String[8];
 		cmdArray[0] = "make";
 		cmdArray[1] = "-C";
 		cmdArray[2] = dir;
 		cmdArray[3] = "-f";
 		cmdArray[4] = "Makefile.streamit";
 		cmdArray[5] = "tile" + tileNumber + ".s";
-		Process jProcess = Runtime.getRuntime().exec(cmdArray);
-		jProcess.waitFor();
+		cmdArray[6] = "&>";
+		cmdArray[7] = "/dev/null";
+		*/
+		
+		String[] cmdArray = 
+		    {
+			"/bin/bash",
+			"-c",
+			"make -C " + dir + " -f Makefile.streamit tile" + tileNumber + ".s  &> /dev/null"
+		    };
 
+		Process jProcess = Runtime.getRuntime().exec(cmdArray);
+		/*
+		InputStreamReader output = new InputStreamReader(jProcess.getInputStream());
+		BufferedReader br = new BufferedReader(output);
+		try {
+		    String str;
+		    while ((str = br.readLine()) != null) {
+			//System.out.println(str);
+		    }
+		} catch (IOException e) {
+		    System.err.println("Error reading stdout of child process in work estimation...");
+		}
+		*/
+
+		jProcess.waitFor();
+		
+		/*
 		//dump the output so that the process does not hang on it
 		InputStream output = jProcess.getInputStream();
 		try {
@@ -182,25 +213,57 @@ public class IMEMEstimation implements FlatVisitor
 		catch (Exception e) {
 		    e.printStackTrace();
 		}
+		*/
+		
+		//jProcess.waitFor();
 
 		//set the return value based on the exit code of the make 
 		assert (jProcess.exitValue() == 0) : 
 		    "Failure to build C file for IMEM estimation";
+			
+		jProcess.getInputStream().close();
+		jProcess.getOutputStream().close();
+		jProcess.getErrorStream().close();
 	    }
 
 	    //now determine if the filter fit in IMEM
 	    {
 		System.out.println("verify imem...");
-		String[] cmdArray = new String[6];
+		/*
+		String[] cmdArray = new String[8];
 		cmdArray[0] = "make";
 		cmdArray[1] = "-C";
 		cmdArray[2] = dir;
 		cmdArray[3] = "-f";
 		cmdArray[4] = "Makefile.streamit";
 		cmdArray[5] = "verify_imem";
+		cmdArray[6] = "&>";
+		cmdArray[7] = "/dev/null";
+		*/
+		
+		String[] cmdArray = 
+		    {
+			"/bin/bash",
+			"-c",
+			"make -C " + dir + " -f Makefile.streamit verify_imem  &> /dev/null"
+		    };
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
+		/*	
+		InputStreamReader output = new InputStreamReader(jProcess.getInputStream());
+		BufferedReader br = new BufferedReader(output);
+		try {
+		    String str;
+		    while ((str = br.readLine()) != null) {
+			//System.out.println(str);
+		    }
+		} catch (IOException e) {
+		    System.err.println("Error reading stdout of child process in work estimation...");
+		}
+		*/
+		
 		jProcess.waitFor();
-
+		
+		/*
 		//dump the output so that the process does not hang on it
 		InputStream output = jProcess.getInputStream();
 		try {
@@ -213,9 +276,13 @@ public class IMEMEstimation implements FlatVisitor
 		catch (Exception e) {
 		    e.printStackTrace();
 		}
-
+		*/
 		//set the return value based on the exit code of the make 
 		fits = (jProcess.exitValue() == 0);
+			
+		jProcess.getInputStream().close();
+		jProcess.getOutputStream().close();
+		jProcess.getErrorStream().close();
 	    }
 	    //remove the directory
 	    {
@@ -226,6 +293,10 @@ public class IMEMEstimation implements FlatVisitor
  		cmdArray[2] = dir;
  		Process jProcess = Runtime.getRuntime().exec(cmdArray);
  		jProcess.waitFor();
+	
+		jProcess.getInputStream().close();
+		jProcess.getOutputStream().close();
+		jProcess.getErrorStream().close();
 	    }
 	}
 	catch (Exception e) {

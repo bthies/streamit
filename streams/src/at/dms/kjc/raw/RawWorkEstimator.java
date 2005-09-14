@@ -107,6 +107,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	try {
 	    //copy the files 
 	    {
+		System.out.println("Moving files to /tmp...");
 		String[] cmdArray = new String[5];
 		cmdArray[0] = "cp";
 		cmdArray[1] = "tile" + tileNumber + ".c";
@@ -115,21 +116,61 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 		cmdArray[4] = dir;    
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
 		jProcess.waitFor();
+			
+		jProcess.getInputStream().close();
+		jProcess.getOutputStream().close();
+		jProcess.getErrorStream().close();
 	    }
 	    
 	    //run the simulator
 	    {
-		String[] cmdArray = new String[6];
+		System.out.println("Running on the Simulator...");
+		/*
+		  String[] cmdArray = new String[8];
 		cmdArray[0] = "make";
 		cmdArray[1] = "-C";
 		cmdArray[2] = dir;
 		cmdArray[3] = "-f";
 		cmdArray[4] = "Makefile.streamit";
 		cmdArray[5] = "run";
+		cmdArray[6] = "&>";
+		cmdArray[7] = "/dev/null";
+		
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
+		*/
+
+		String[] cmdArray = 
+		    {
+			"/bin/bash",
+			"-c",
+			"make -C " + dir + " -f Makefile.streamit run &> /dev/null"
+		    };
+		
+			
+		Process jProcess = 
+		    Runtime.getRuntime().exec(cmdArray);
+		/*
+		InputStreamReader output = new InputStreamReader(jProcess.getInputStream());
+		BufferedReader br = new BufferedReader(output);
+		try {
+		    String str;
+		    while ((str = br.readLine()) != null) {
+			System.out.println(str);
+		    }
+		} catch (IOException e) {
+		    System.err.println("Error reading stdout of child process in work estimation...");
+		}
+		*/
+		
 		jProcess.waitFor();
+
+		jProcess.getInputStream().close();
+		jProcess.getOutputStream().close();
+		jProcess.getErrorStream().close();
+		
+	
 		//dump the output so that the process does not hang on it
-		InputStream output = jProcess.getInputStream();
+		/*
 		try {
 		    InputStreamReader isr = new InputStreamReader(output);
 		    BufferedReader br = new BufferedReader(isr);
@@ -140,7 +181,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 		catch (Exception e) {
 		    e.printStackTrace();
 		}
-		
+		*/
 	    }
 
 	    
@@ -156,6 +197,10 @@ public class RawWorkEstimator extends EmptyStreamVisitor
  		cmdArray[2] = dir;
  		Process jProcess = Runtime.getRuntime().exec(cmdArray);
  		jProcess.waitFor();
+			
+		jProcess.getInputStream().close();
+		jProcess.getOutputStream().close();
+		jProcess.getErrorStream().close();
  	    }
 	    
 	}

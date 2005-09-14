@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.99 2005-04-10 18:38:42 thies Exp $
+ * $Id: LIRToC.java,v 1.100 2005-09-14 19:10:22 dimock Exp $
  */
 
 package at.dms.kjc.lir;
@@ -13,6 +13,7 @@ import java.util.Map;
 import at.dms.kjc.common.MacroConversion;
 import at.dms.kjc.common.CodeGenerator;
 import at.dms.util.InconsistencyException;
+import at.dms.util.Utils;
 
 import at.dms.kjc.sir.lowering.LoweringConstants;
 import at.dms.kjc.sir.*;
@@ -20,13 +21,11 @@ import at.dms.kjc.*;
 import at.dms.compiler.*;
 
 public class LIRToC
-    extends at.dms.util.Utils
-    implements Constants, CodeGenerator
+    extends at.dms.kjc.common.ToCCommon
+    implements SLIRVisitor,Constants, CodeGenerator
 {
     /** >0 if in for loop header */
     private int forLoopHeader;
-    //Needed to pass info from assignment to visitNewArray
-    JExpression lastLeft;
 
     //Name of the "this" parameter to init and work functions
     public static final String THIS_NAME = LoweringConstants.STATE_PARAM_NAME;
@@ -86,7 +85,7 @@ public class LIRToC
 	    // that 1) the generated C file can move around, wherever
 	    // there's an ATLAS install, and 2) atlas-interface.c is short
 	    try {
-		String filename = (getEnvironmentVariable("STREAMIT_HOME") +
+		String filename = (Utils.getEnvironmentVariable("STREAMIT_HOME") +
 				   File.separator + "include" + 
 				   File.separator + "atlas" + 
 				   File.separator + "atlas-interface.c");
@@ -100,7 +99,7 @@ public class LIRToC
 		System.out.println("\n/* Done with include of " + filename + " ---------- */");
 	    } catch (IOException e) {
 		e.printStackTrace();
-		fail("IOException looking for atlas-interface.c");
+		Utils.fail("IOException looking for atlas-interface.c");
 	    }
 	}
     }
@@ -124,17 +123,6 @@ public class LIRToC
      */
     public void close() {
         p.close();
-    }
-
-    public void setPos(int pos) {
-        this.pos = pos;
-    }
-
-    public String getString() {
-        if (str != null)
-            return str.toString();
-        else
-            return null;
     }
 
     // ----------------------------------------------------------------------
@@ -605,28 +593,15 @@ public class LIRToC
     // STATEMENT
     // ----------------------------------------------------------------------
 
-    /**
-     * prints a while statement
+    /*
+     * prints a while statement visitWhileStatement in ToCCommon
      */
-    public void visitWhileStatement(JWhileStatement self,
-                                    JExpression cond,
-                                    JStatement body) {
-        print("while (");
-        cond.accept(this);
-        print(") ");
 
-        body.accept(this);
-    }
-
-    /**
+    /*
      * prints a variable declaration statement
+     * visitVariableDeclarationStatement in ToCCommon
      */
-    public void visitVariableDeclarationStatement(JVariableDeclarationStatement self,
-                                                  JVariableDefinition[] vars) {
-        for (int i = 0; i < vars.length; i++) {
-            vars[i].accept(this);
-        }
-    }
+
 
     private void printLocalArrayDecl(JNewArrayExpression expr) 
     {
@@ -762,44 +737,21 @@ public class LIRToC
         body.accept(this);
     }
 
-    /**
+    /*
      * prints a switch statement
+     * visitSwitchStatement in ToCCommon
      */
-    public void visitSwitchStatement(JSwitchStatement self,
-                                     JExpression expr,
-                                     JSwitchGroup[] body) {
-        print("switch (");
-        expr.accept(this);
-        print(") {");
-        for (int i = 0; i < body.length; i++) {
-            body[i].accept(this);
-        }
-        newLine();
-        print("}");
-    }
-
-    /**
+      
+    /*
      * prints a return statement
+     * visitReturnStatement in ToCCommon
      */
-    public void visitReturnStatement(JReturnStatement self,
-                                     JExpression expr) {
-        print("return");
-        if (expr != null) {
-            print(" ");
-            expr.accept(this);
-        }
-        print(";");
-    }
 
-    /**
+    /*
      * prints a labeled statement
+     * visitLabeledStatement  in ToCCommon
      */
-    public void visitLabeledStatement(JLabeledStatement self,
-                                      String label,
-                                      JStatement stmt) {
-        print(label + ":");
-        stmt.accept(this);
-    }
+
 
     /**
      * prints a if statement
@@ -808,9 +760,12 @@ public class LIRToC
                                  JExpression cond,
                                  JStatement thenClause,
                                  JStatement elseClause) {
+	boolean oldStatementContext = statementContext;
         print("if (");
+	statementContext = false;
         cond.accept(this);
         print(") ");
+	statementContext = true;
         pos += thenClause instanceof JBlock ? 0 : TAB_SIZE;
         thenClause.accept(this);
         pos -= thenClause instanceof JBlock ? 0 : TAB_SIZE;
@@ -825,6 +780,7 @@ public class LIRToC
             elseClause.accept(this);
             pos -= elseClause instanceof JBlock || elseClause instanceof JIfStatement ? 0 : TAB_SIZE;
         }
+	statementContext = oldStatementContext;
     }
 
     /**
@@ -835,8 +791,10 @@ public class LIRToC
                                   JExpression cond,
                                   JStatement incr,
                                   JStatement body) {
-	  forLoopHeader++;
+	boolean oldStatementContext = statementContext;
+	forLoopHeader++;
         print("for (");
+	statementContext = false;
         //forInit = true;
         if (init != null) {
             init.accept(this);
@@ -863,74 +821,39 @@ public class LIRToC
 		    print(str);
 		}
         }
-	  forLoopHeader--;
+	forLoopHeader--;
         print(") {");
-	  newLine();
-
+	newLine();
+	  
+	statementContext = true;
         pos += TAB_SIZE;
         body.accept(this);
         pos -= TAB_SIZE;
         newLine();
         print("}");
+	statementContext = oldStatementContext;
     }
 
-    /**
-     * prints a compound statement
+    /*
+     * prints a compound statement: 2-argument form
+     * visitCompoundStatement in ToCCommon
      */
-    public void visitCompoundStatement(JCompoundStatement self,
-                                       JStatement[] body) {
-        visitCompoundStatement(body);
-    }
 
-    /**
+
+    /*
      * prints a compound statement
+     * visitCompoundStatement in ToCCommon
      */
-    public void visitCompoundStatement(JStatement[] body) {
-        for (int i = 0; i < body.length; i++) {
-            if (body[i] instanceof JIfStatement &&
-                i < body.length - 1 &&
-                !(body[i + 1] instanceof JReturnStatement)) {
-                newLine();
-            }
-            if (body[i] instanceof JReturnStatement && i > 0) {
-                newLine();
-            }
 
-            newLine();
-            body[i].accept(this);
-
-            if (body[i] instanceof JVariableDeclarationStatement &&
-                i < body.length - 1 &&
-                !(body[i + 1] instanceof JVariableDeclarationStatement)) {
-		    newLine();
-            }
-        }
-    }
-
-    /**
+    /*
      * prints an expression statement
+     * visitExpressionStatement in ToCCommon
      */
-    public void visitExpressionStatement(JExpressionStatement self,
-                                         JExpression expr) {
-        expr.accept(this);
-        //if (!forInit) {
-	  print(";");
-	  //}
-    }
 
-    /**
+    /*
      * prints an expression list statement
+     * visitExpressionListStatement in ToCCommon
      */
-    public void visitExpressionListStatement(JExpressionListStatement self,
-                                             JExpression[] expr) {
-        for (int i = 0; i < expr.length; i++) {
-            if (i != 0) {
-                print(", ");
-            }
-            expr[i].accept(this);
-        }
-	print(";");
-    }
 
     /**
      * prints a empty statement
@@ -944,133 +867,34 @@ public class LIRToC
 	}
     }
 
-    /**
-     * prints a do statement
+    /*
+     * prints a do statement 
+     * visitDoStatement in ToCCommon
      */
-    public void visitDoStatement(JDoStatement self,
-                                 JExpression cond,
-                                 JStatement body) {
-        newLine();
-        print("do ");
-        body.accept(this);
-        print("");
-        print("while (");
-        cond.accept(this);
-        print(");");
-    }
 
-    /**
+    /*
      * prints a continue statement
+     * visitContinueStatement in ToCCommon
      */
-    public void visitContinueStatement(JContinueStatement self,
-                                       String label) {
-        newLine();
-        print("continue");
-        if (label != null) {
-            print(" " + label);
-        }
-        print(";");
-    }
 
-    /**
+    /*
      * prints a break statement
+     * visitBreakStatement in ToCCommon
      */
-    public void visitBreakStatement(JBreakStatement self,
-                                    String label) {
-        newLine();
-        print("break");
-        if (label != null) {
-            print(" " + label);
-        }
-        print(";");
-    }
 
-    /**
+    /*
      * prints an expression statement
+     * visitBlockStatement  in ToCCommon
      */
-    public void visitBlockStatement(JBlock self,
-                                    JavaStyleComment[] comments) {
-        print("{");
-        pos += TAB_SIZE;
-        visitCompoundStatement(self.getStatementArray());
-        if (comments != null) {
-            visitComments(comments);
-        }
-        pos -= TAB_SIZE;
-        newLine();
-        print("}");
-    }
 
-    /**
+    /*
      * prints a type declaration statement
+     * visitTypeDeclarationStatement  in ToCCommon
      */
-    public void visitTypeDeclarationStatement(JTypeDeclarationStatement self,
-                                              JTypeDeclaration decl) {
-        decl.accept(this);
-    }
 
     // ----------------------------------------------------------------------
     // EXPRESSION
     // ----------------------------------------------------------------------
-
-    /**
-     * prints an unary plus expression
-     */
-    public void visitUnaryPlusExpression(JUnaryExpression self,
-                                         JExpression expr)
-    {
-	print("(");
-        print("+");
-        expr.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints an unary minus expression
-     */
-    public void visitUnaryMinusExpression(JUnaryExpression self,
-                                          JExpression expr)
-    {
-	print("(");
-        print("-");
-        expr.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a bitwise complement expression
-     */
-    public void visitBitwiseComplementExpression(JUnaryExpression self,
-						 JExpression expr)
-    {
-	print("(");
-        print("~");
-        expr.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a logical complement expression
-     */
-    public void visitLogicalComplementExpression(JUnaryExpression self,
-						 JExpression expr)
-    {
-	print("(");
-        print("!");
-        expr.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a type name expression
-     */
-    public void visitTypeNameExpression(JTypeNameExpression self,
-                                        CType type) {
-	print("(");
-        print(type);
-	print(")");
-    }
-
     /**
      * prints a this expression
      */
@@ -1092,32 +916,14 @@ public class LIRToC
     }
 
     /**
-     * prints a shift expression
-     */
-    public void visitShiftExpression(JShiftExpression self,
-                                     int oper,
-                                     JExpression left,
-                                     JExpression right) {
-	print("(");
-        left.accept(this);
-        if (oper == OPE_SL) {
-            print(" << ");
-        } else if (oper == OPE_SR) {
-            print(" >> ");
-        } else {
-            print(" >>> ");
-        }
-        right.accept(this);
-	print(")");
-    }
-
-    /**
      * prints a shift expressiona
      */
     public void visitRelationalExpression(JRelationalExpression self,
                                           int oper,
                                           JExpression left,
                                           JExpression right) {
+	boolean oldStatementContext = statementContext;
+	statementContext = false;
 	print("(");
         left.accept(this);
         switch (oper) {
@@ -1134,52 +940,11 @@ public class LIRToC
             print(" >= ");
             break;
         default:
-            throw new InconsistencyException();
+            throw new InconsistencyException(); // only difference from ToC
         }
         right.accept(this);
 	print(")");
-    }
-
-    /**
-     * prints a prefix expression
-     */
-    public void visitPrefixExpression(JPrefixExpression self,
-                                      int oper,
-                                      JExpression expr) {
-	print("(");
-        if (oper == OPE_PREINC) {
-            print("++");
-        } else {
-            print("--");
-        }
-        expr.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a postfix expression
-     */
-    public void visitPostfixExpression(JPostfixExpression self,
-                                       int oper,
-                                       JExpression expr) {
-	print("(");
-        expr.accept(this);
-        if (oper == OPE_POSTINC) {
-            print("++");
-        } else {
-            print("--");
-        }
-	print(")");
-    }
-
-    /**
-     * prints a parenthesed expression
-     */
-    public void visitParenthesedExpression(JParenthesedExpression self,
-                                           JExpression expr) {
-        print("(");
-        expr.accept(this);
-        print(")");
+	statementContext = oldStatementContext;
     }
 
     /**
@@ -1248,44 +1013,12 @@ public class LIRToC
 	*/
     }
 
-    /**
+    /*
      * prints an array allocator expression
+     *
+     *  public void visitNewArrayExpression
+     *  see at/dms/kjc/common.ToCCommon
      */
-    public void visitNewArrayExpression(JNewArrayExpression self,
-                                        CType type,
-                                        JExpression[] dims,
-                                        JArrayInitializer init)
-    {
-        print("calloc(");
-        dims[0].accept(this);
-        print(", sizeof(");
-        print(type);
-	if(dims.length>1)
-	    print("*");
-        print("))");
-	if(dims.length>1) {
-	    for(int off=0;off<(dims.length-1);off++) {
-		//Right now only handles JIntLiteral dims
-		//If cast expression then probably a failure to reduce
-		int num=((JIntLiteral)dims[off]).intValue();
-		for(int i=0;i<num;i++) {
-		    print(",\n");
-		    //If lastLeft null then didn't come right after an assignment
-		    lastLeft.accept(this);
-		    print("["+i+"]=calloc(");
-		    dims[off+1].accept(this);
-		    print(", sizeof(");
-		    print(type);
-		    if(off<(dims.length-2))
-			print("*");
-		    print("))");
-		}
-	    }
-	}
-        if (init != null) {
-            init.accept(this);
-        }
-    }
 
     /**
      * prints a name expression
@@ -1303,19 +1036,22 @@ public class LIRToC
     }
 
     /**
-     * prints an array allocator expression
+     * prints an binary expression
      */
     public void visitBinaryExpression(JBinaryExpression self,
                                       String oper,
                                       JExpression left,
                                       JExpression right) {
-	print("(");
+	printLParen();
+	boolean oldStatementContext = statementContext;
+	statementContext = false;
         left.accept(this);
         print(" ");
         print(oper);
         print(" ");
         right.accept(this);
-	print(")");
+	statementContext = oldStatementContext;
+	printRParen();
     }
 
     /**
@@ -1325,6 +1061,7 @@ public class LIRToC
                                           JExpression prefix,
                                           String ident,
                                           JExpression[] args) {
+
         /*
           if (ident != null && ident.equals(JAV_INIT)) {
           return; // we do not want generated methods in source code
@@ -1345,14 +1082,6 @@ public class LIRToC
     }
 
     /**
-     * prints a local variable expression
-     */
-    public void visitLocalVariableExpression(JLocalVariableExpression self,
-                                             String ident) {
-        print(ident);
-    }
-
-    /**
      * prints an instanceof expression
      */
     public void visitInstanceofExpression(JInstanceofExpression self,
@@ -1363,83 +1092,6 @@ public class LIRToC
         print(dest);
     }
 
-    /**
-     * prints an equality expression
-     */
-    public void visitEqualityExpression(JEqualityExpression self,
-                                        boolean equal,
-                                        JExpression left,
-                                        JExpression right) {
-	print("(");
-        left.accept(this);
-        print(equal ? " == " : " != ");
-        right.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a conditional expression
-     */
-    public void visitConditionalExpression(JConditionalExpression self,
-                                           JExpression cond,
-                                           JExpression left,
-                                           JExpression right) {
-	print("(");
-        cond.accept(this);
-        print(" ? ");
-        left.accept(this);
-        print(" : ");
-        right.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a compound expression
-     */
-    public void visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
-                                                  int oper,
-                                                  JExpression left,
-                                                  JExpression right) {
-	print("(");
-        left.accept(this);
-        switch (oper) {
-        case OPE_STAR:
-            print(" *= ");
-            break;
-        case OPE_SLASH:
-            print(" /= ");
-            break;
-        case OPE_PERCENT:
-            print(" %= ");
-            break;
-        case OPE_PLUS:
-            print(" += ");
-            break;
-        case OPE_MINUS:
-            print(" -= ");
-            break;
-        case OPE_SL:
-            print(" <<= ");
-            break;
-        case OPE_SR:
-            print(" >>= ");
-            break;
-        case OPE_BSR:
-            print(" >>>= ");
-            break;
-        case OPE_BAND:
-            print(" &= ");
-            break;
-        case OPE_BXOR:
-            print(" ^= ");
-            break;
-        case OPE_BOR:
-            print(" |= ");
-            break;
-        }
-        right.accept(this);
-	print(")");
-    }
 
     /**
      * prints a field expression
@@ -1502,45 +1154,14 @@ public class LIRToC
     }
 
     /**
-     * prints a cast expression
-     */
-    public void visitCastExpression(JCastExpression self,
-                                    JExpression expr,
-                                    CType type)
-    {
-	print("(");
-        print("(");
-        print(type);
-        print(")");
-        expr.accept(this);
-	print(")");
-    }
-
-    /**
-     * prints a cast expression
-     */
-    public void visitUnaryPromoteExpression(JUnaryPromote self,
-                                            JExpression expr,
-                                            CType type)
-    {
-	print("(");
-        print("(");
-        print(type);
-        print(")");
-        print("(");
-        expr.accept(this);
-        print(")");
-        print(")");
-    }
-
-    /**
      * prints a compound assignment expression
      */
     public void visitBitwiseExpression(JBitwiseExpression self,
                                        int oper,
                                        JExpression left,
                                        JExpression right) {
-        print("(");
+	printLParen();
+	boolean oldStatementContext = statementContext;
         left.accept(this);
         switch (oper) {
         case OPE_BAND:
@@ -1553,10 +1174,11 @@ public class LIRToC
             print(" ^ ");
             break;
         default:
-            throw new InconsistencyException();
+            throw new InconsistencyException(); // only difference with ToC
         }
         right.accept(this);
-        print(")");
+	statementContext = oldStatementContext;
+	printRParen();
     }
 
     /**
@@ -1565,6 +1187,7 @@ public class LIRToC
     public void visitAssignmentExpression(JAssignmentExpression self,
                                           JExpression left,
                                           JExpression right) {
+
         /*
           if ((left instanceof JFieldAccessExpression) &&
           ((JFieldAccessExpression)left).getField().getIdent().equals(Constants.JAV_OUTER_THIS)) {
@@ -1583,13 +1206,17 @@ public class LIRToC
 	    print(findSize((JArrayInitializer)right) + " * sizeof(");
 	    print(findBaseType((JArrayInitializer)right));
 	    print("))");
+	    if (statementContext) { print(";"); }
 	} else {
+	    boolean oldStatementContext = statementContext;
 	    lastLeft=left;
-	    print("(");
+	    printLParen();
+	    statementContext = false;
 	    left.accept(this);
 	    print(" = ");
 	    right.accept(this);
-	    print(")");
+	    statementContext = oldStatementContext;
+	    printRParen();
 	    lastLeft=null;
 	}
     }
@@ -1604,21 +1231,24 @@ public class LIRToC
     }
 
     /**
-     * prints an array length expression
+     * prints an array access expression
      */
     public void visitArrayAccessExpression(JArrayAccessExpression self,
                                            JExpression prefix,
                                            JExpression accessor) {
-        print("(");
+	printLParen();
+	boolean oldStatementContext = statementContext;
+	statementContext = false;
         prefix.accept(this);
         print("[");
         accessor.accept(this);
         print("]");
-        print(")");
+	statementContext = oldStatementContext;
+	printRParen();
     }
 
     /**
-     * prints an array length expression
+     * prints a comment expression
      */
     public void visitComments(JavaStyleComment[] comments) {
         for (int i = 0; i < comments.length; i++) {
@@ -1629,7 +1259,7 @@ public class LIRToC
     }
 
     /**
-     * prints an array length expression
+     * prints a comment expression
      */
     public void visitComment(JavaStyleComment comment) {
         StringTokenizer	tok = new StringTokenizer(comment.getText(), "\n");
@@ -1672,7 +1302,7 @@ public class LIRToC
     }
 
     /**
-     * prints an array length expression
+     * prints a Javadoc expression
      */
     public void visitJavadoc(JavadocComment comment) {
         StringTokenizer	tok = new StringTokenizer(comment.getText(), "\n");
@@ -1910,6 +1540,8 @@ public class LIRToC
     public void visitPrintStatement(SIRPrintStatement self,
                                     JExpression exp)
     {
+	boolean oldStatementContext = statementContext;
+	statementContext = true;
         CType type = exp.getType();
         
         if (type.equals(CStdType.Boolean))
@@ -1951,6 +1583,8 @@ public class LIRToC
             exp.accept(this);
             print(");");
         }
+	statementContext = oldStatementContext;
+
     }
     
     public void visitPushExpression(SIRPushExpression self,
@@ -2693,10 +2327,6 @@ public class LIRToC
     // PROTECTED METHODS
     // ----------------------------------------------------------------------
 
-    protected void newLine() {
-        p.println();
-    }
-
     // Special case for CTypes, to map some Java types to C types.
     protected void print(CType s) {
         if (s instanceof CArrayType)
@@ -2723,30 +2353,6 @@ public class LIRToC
             print(s.toString());
     }
 
-    protected void print(Object s) {
-        print(s.toString());
-    }
-
-    public void print(String s) {
-        p.setPos(pos);
-        p.print(s);
-    }
-
-    protected void print(boolean s) {
-        print("" + s);
-    }
-
-    protected void print(int s) {
-        print("" + s);
-    }
-
-    protected void print(char s) {
-        print("" + s);
-    }
-
-    protected void print(double s) {
-        print("" + s);
-    }
 
     /**
      * Tries to find the number of dimensions of <self>.
@@ -2929,14 +2535,9 @@ public class LIRToC
     // ----------------------------------------------------------------------
 
     //protected boolean			forInit;	// is on a for init
-    protected int				TAB_SIZE = 2;
-    protected int				WIDTH = 80;
-    protected int				pos;
     protected String                      className;
     protected boolean isStruct;
 
-    protected TabbedPrintWriter		p;
-    protected StringWriter                str;
     protected boolean			nl = true;
     protected boolean                   declOnly = false;
 

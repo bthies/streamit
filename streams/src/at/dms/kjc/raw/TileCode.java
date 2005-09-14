@@ -14,6 +14,10 @@ import java.util.TreeSet;
 import java.util.HashSet;
 import java.io.*;
 
+// debug printing:
+import at.dms.util.SIRPrinter;
+import at.dms.kjc.iterator.IterFactory;
+
 /**
  * This class dumps the tile code for each filter into a file based 
  * on the tile number assigned 
@@ -393,6 +397,14 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    if (!Layout.isAssigned(node))
 		return;
 	    realTiles.add(Layout.getTile(node.contents));
+
+	    /*	    SIRIterator it = IterFactory.createFactory().createIter(node);
+	    SIRPrinter printer0 = new SIRPrinter("SIR_RawBackendGenCode.out");
+	    FlatGraphToSIR fg = new FlatGraphToSIR(node);
+	    SIRPipeline sp = fg.getTopLevelSIR();
+	    sp.accept(printer0);
+	    printer0.close();
+	    */ System.out.println( "node type is " + node.getClass().getName() + "\n");
 	    FlatIRToC.generateCode(node);
 	    //After done with node drops its contents for garbage collection
 	    //Need to keep contents for filter type checking but dropping methods

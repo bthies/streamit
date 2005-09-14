@@ -88,12 +88,15 @@ public class FlatIRToRS extends ToC
 	    return;
 	}
 
+	boolean oldStatementContext = statementContext;
 	lastLeft=left;
-        print("(");
+        printLParen();
+	statementContext = false;
         left.accept(this);
         print(" = ");
         right.accept(this);
-        print(")");
+	statementContext = oldStatementContext;
+        printRParen();
     }
 
     /**
@@ -488,11 +491,13 @@ public class FlatIRToRS extends ToC
     {
 	assert self.countUp() : "Currently we only handle doloops with positive increment";
 
+	boolean oldStatementContext = statementContext;
 	doLoops++;
 	if (self.staticBounds())
 	    staticDoLoops++;
 
 	print("doloop (");
+	statementContext = false; // expressions here
 	print(self.getInduction().getType() + " ");
 	print(self.getInduction().getIdent());
 	print(" = ");
@@ -516,12 +521,13 @@ public class FlatIRToRS extends ToC
 	print(") ");
 
 	
-	
+	statementContext = true; // statement(s) here 
 	newLine();
         pos += TAB_SIZE;
         self.getBody().accept(this);
         pos -= TAB_SIZE;
         newLine();
+	statementContext = oldStatementContext;
     }
     
 
@@ -541,6 +547,9 @@ public class FlatIRToRS extends ToC
 	
 	//be careful, if you return prematurely, decrement me
 	forLoopHeader++;
+
+	boolean oldStatementContext = statementContext;
+	statementContext = false; // initially expressions, then statement
 
 	print("for (");
 	
@@ -571,6 +580,7 @@ public class FlatIRToRS extends ToC
 	forLoopHeader--;
 	print(") ");
 	
+	statementContext = true;
         //print("{");
 	newLine();
         pos += TAB_SIZE;
@@ -578,6 +588,7 @@ public class FlatIRToRS extends ToC
         pos -= TAB_SIZE;
         newLine();
 	//print("}");
+	statementContext = oldStatementContext;
     }
 
 
@@ -887,14 +898,17 @@ public class FlatIRToRS extends ToC
 	}
 	
 	    
-	print("(");
+	printLParen();
+	boolean oldStatementContext = statementContext;
+	statementContext = false;
         print("(");
 	print(type);
         print(")");
         print("(");
 	expr.accept(this);
 	print(")");
-        print(")");
+	statementContext = oldStatementContext;
+        printRParen();
     }
     
 

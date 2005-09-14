@@ -331,10 +331,13 @@ public class FlatIRToC extends ToC implements StreamVisitor
                                   JExpression cond,
                                   JStatement incr,
                                   JStatement body) {
+	
 	//be careful, if you return prematurely, decrement me
 	forLoopHeader++;
 
+	boolean oldStatementContext = statementContext;
         print("for (");
+	statementContext = false;
         if (init != null) {
             init.accept(this);
 	    //the ; will print in a statement visitor
@@ -362,11 +365,13 @@ public class FlatIRToC extends ToC implements StreamVisitor
         print(") ");
 
         print("{");
+	statementContext = true;
         pos += TAB_SIZE;
         body.accept(this);
         pos -= TAB_SIZE;
         newLine();
         print("}");
+	statementContext = oldStatementContext;
     }
 
    
@@ -609,12 +614,15 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//print the correct code for array assignment
 	//this must be run after renaming!!!!!!
 	if (left.getType() == null || right.getType() == null) {
+	    boolean oldStatementContext = statementContext;
 	    lastLeft=left;
-	    print("(");
+	    printLParen();
+	    statementContext = false;
 	    left.accept(this);
 	    print(" = ");
 	    right.accept(this);
-	    print(")");
+	    statementContext = oldStatementContext;
+	    printRParen();
 	    return;
  	}
 
@@ -634,12 +642,15 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    String[] dims = ArrayDim.findDim(new FlatIRToC(), filter.getFields(), method, ident);
 	    //if we cannot find the dim, just create a pointer copy
 	    if (dims == null) {
+		boolean oldStatementContext = statementContext;
 		lastLeft=left;
-		print("(");
+		printLParen();
+		statementContext = false;
 		left.accept(this);
 		print(" = ");
 		right.accept(this);
-		print(")");
+		statementContext = oldStatementContext;
+		printRParen();
 		return;
 	    }
 	    print("{\n");
@@ -683,13 +694,16 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	}
            
 
-	
+	boolean oldStatementContext = statementContext;
 	lastLeft=left;
-        print("(");
+        printLParen();
+	statementContext = false;
         left.accept(this);
         print(" = ");
         right.accept(this);
-        print(")");
+	statementContext = oldStatementContext;
+        printRParen();
+	// would it catch other bugs to put lastLeft=null here?
     }
 
     /**
@@ -699,9 +713,12 @@ public class FlatIRToC extends ToC implements StreamVisitor
                                           JExpression prefix,
                                           String ident,
                                           JExpression[] args) {
+	boolean oldStatementContext = statementContext;
+	statementContext = false;
         /*
           if (ident != null && ident.equals(JAV_INIT)) {
-          return; // we do not want generated methods in source code
+          statementContext = oldStatementContext;
+	  return; // we do not want generated methods in source code
           }
         */
 
@@ -710,6 +727,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//if (ident.equals("memset")) {
 	//    String[] dims = ArrayDim.findDim(filter, ((JLocalVariableExpression)args[0]).getIdent());
 	//    if (dims[0].equals("0"))
+	//      statementContext = oldStatementContext;
 	//	return;
 	//}
 
@@ -720,6 +738,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    visitArgs(args,0);
 	    print(Util.staticNetworkReceiveSuffix
 		  (Util.getBaseType(filter.getInputType())));
+	    statementContext = oldStatementContext;
 	    return;  
 	}
 
@@ -727,12 +746,14 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//we are receiving an array type, call the popArray method
 	if (ident.equals(RawExecutionCode.arrayReceiveMethod)) {
 	    popArray(args[0]);
+	    statementContext = oldStatementContext;
 	    return;
 	}
 	*/
 	/*
 	if (ident.equals(RawExecutionCode.rateMatchSendMethod)) {
 	    rateMatchPush(args);
+	    statementContext = oldStatementContext;
 	    return;
 	}
 	*/
@@ -759,6 +780,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         */
         visitArgs(args, i);
         print(")");
+	statementContext = oldStatementContext;
     }
 
     public void visitDynamicToken(SIRDynamicToken self) {

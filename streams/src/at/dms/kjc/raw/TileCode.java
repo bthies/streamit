@@ -404,7 +404,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    SIRPipeline sp = fg.getTopLevelSIR();
 	    sp.accept(printer0);
 	    printer0.close();
-	    */ System.out.println( "node type is " + node.getClass().getName() + "\n");
+	    */ 
+	    //System.out.println( "node type is " + node.getClass().getName() + "\n");
 	    FlatIRToC.generateCode(node);
 	    //After done with node drops its contents for garbage collection
 	    //Need to keep contents for filter type checking but dropping methods

@@ -13,10 +13,12 @@ class timer {
 
   struct timeval tv1, tv2;
   struct timezone tz;
+  char str[128];
 
  public:
   void start();
   void stop();
+  char *get_str();
   void output(FILE *f);
 };
 

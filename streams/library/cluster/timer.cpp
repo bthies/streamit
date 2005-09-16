@@ -13,9 +13,14 @@ void timer::stop() {
   gettimeofday(&tv2, &tz);
 }
 
-void timer::output(FILE *f) {
+char *timer::get_str() {
   double elapsed = tv2.tv_sec - tv1.tv_sec + (tv2.tv_usec - tv1.tv_usec) / 1000000.0;
-  fprintf(f, "Timer: %g sec\n", elapsed);
+  sprintf(str, "Timer: %g sec", elapsed);
+  return str;
+}
+
+void timer::output(FILE *f) {
+  fprintf(f, "%s\n", get_str());
 }
 
 

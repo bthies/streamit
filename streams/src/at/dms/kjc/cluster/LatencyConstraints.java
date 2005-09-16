@@ -35,6 +35,9 @@ public class LatencyConstraints {
     // consists of SIRFilter(s)
     public static HashSet restrictedExecutionFilters = new HashSet();
 
+    // consists of SIRFilter -> Integer
+    public static HashMap initCredit = new HashMap();
+
     // consists of SIRFilter(s) -> HashSet of LatencyConstraint(s)
     public static HashMap outgoingLatencyConstraints = new HashMap();
 
@@ -43,6 +46,17 @@ public class LatencyConstraints {
 
     public static boolean isRestricted(SIRFilter filter) {
 	return restrictedExecutionFilters.contains(filter);
+    }
+
+    public static int getInitCredit(SIRFilter filter) {
+	return ((Integer)initCredit.get(filter)).intValue();
+    }
+
+    private static void setInitCredit(SIRFilter filter, int val) {
+	Integer now = (Integer)initCredit.get(filter);
+	if (now == null || val < now.intValue()) {
+	    initCredit.put(filter, new Integer(val));
+	}
     }
 
     public static HashSet getOutgoingConstraints(SIRFilter filter) {
@@ -342,8 +356,9 @@ public class LatencyConstraints {
 			// add receiver to set of restricted filters
 			
 			restrictedExecutionFilters.add(receiver);
-			
+
 			init_credit = sdep2.getSrcPhase4DstPhase(1 + min_latency) - 1;
+			setInitCredit((SIRFilter)receiver, init_credit);
 
 			System.out.println("Init credit: "+init_credit);
 

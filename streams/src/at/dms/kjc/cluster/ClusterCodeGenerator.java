@@ -29,6 +29,8 @@ class ClusterCodeGenerator {
     private Vector msg_to;
 
     private boolean restrictedExecution;
+    private int initCredit = 0;
+
     private boolean sendsCredits;
     private HashSet sendsCreditsTo;
 
@@ -100,6 +102,13 @@ class ClusterCodeGenerator {
 	    SIRFilter f = (SIRFilter)oper;
 
 	    restrictedExecution = LatencyConstraints.isRestricted(f); 
+	    
+	    /*
+	    if (restrictedExecution) {
+		initCredit = LatencyConstraints.getInitCredit(f); 
+	    }
+	    */
+
 	    sendsCreditsTo = LatencyConstraints.getOutgoingConstraints(f);
 	    sendsCredits = (sendsCreditsTo.size() > 0);
 
@@ -175,7 +184,7 @@ class ClusterCodeGenerator {
 	r.add("thread_info *__thread_"+id+" = NULL;\n");
 
 	if (restrictedExecution) {
-	    r.add("int __credit_"+id+" = 0;\n");
+	    r.add("int __credit_"+id+" = "+initCredit+";\n");
 	}
 	
 	i = msg_to.iterator();

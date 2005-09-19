@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.12 2005-08-21 07:01:51 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.13 2005-09-19 14:58:47 thies Exp $
  */
 public class SIRToStreamIt
     extends at.dms.util.Utils
@@ -256,13 +256,8 @@ public class SIRToStreamIt
         pos += TAB_SIZE;
         for (int i = 0; i < fields.length; i++)
             fields[i].accept(this);
-        if (init != null)
-            init.accept(this);
-	if (self instanceof SIRTwoStageFilter) {
-	    ((SIRTwoStageFilter)self).getInitWork().accept(this);
-	}
-        if (work != null)
-	    print("work " + work.getName());
+	for (int i=0; i < methods.length; i++)
+	    methods[i].accept(this);
         pos -= TAB_SIZE;
         newLine();
         print("}");
@@ -2532,8 +2527,9 @@ public class SIRToStreamIt
      * prints a double literal
      */
     public void visitDoubleLiteral(double value) {
-        assert false;
-        print("((double)" + value + ")");
+	System.err.println("Warning: converting double to float when printing StreamIt version of IR.\n" +
+			   "         (StreamIt does not yet have syntax for doubles.)");
+        print((float)value);
     }
 
     /**

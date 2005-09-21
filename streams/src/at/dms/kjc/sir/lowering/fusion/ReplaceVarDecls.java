@@ -2,79 +2,112 @@
 package at.dms.kjc.sir.lowering.fusion;
 
 import java.util.*;
+
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 
-/*
+
 public class ReplaceVarDecls extends SLIRReplacingVisitor {
-
-    public static JStatement replaceIntDecls(JStatement body) {
-	ReplaceVarDecls obj = new ReplaceVarDecls();
-	return (JStatement)body.accept(obj);
-    }
-
-    HashMap var_names; // String (Ident) -> Integer
-
-    int int_count;
-
-    ReplaceVarDecls() {
-	int_count = 0;
-	var_names = new HashMap();
-    }
-
     
+    private HashMap var_names; // String (Ident) -> Integer
+    private FindVarDecls find_obj;
+
+    ReplaceVarDecls(HashMap var_names, FindVarDecls find_obj) {
+	this.var_names = var_names;
+	this.find_obj = find_obj;
+    }
+
     public Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
 						    JVariableDefinition[] vars) 
     {
-
+	
 	LinkedList new_vars = new LinkedList();
+	LinkedList new_statements = new LinkedList();
+	
+	for (int i = 0; i < vars.length; i++) {
 
-	int i;
+	    if (!var_names.containsKey(vars[i])) {
+		// the variable has not been eliminated
 
-	for (i = 0; i < vars.length; i++) {
-	    
-	    if (vars[i].getType().getTypeID() == CType.TID_INT) {
+		// if statement declares only one variable return the statement
+		if (vars.length == 1) return self;
 
-		String ident = vars[i].getIdent();
-		assert (!var_names.containsKey(ident));
-		var_names.put(ident, new Integer(int_count++));
-		
+		// otherwise add the variable to the list
+		new_vars.add(vars[i]);
+
 	    } else {
 
-		new_vars.add(vars[i]);
+		// the variable has been eliminated
+		if (vars[i].getType().getTypeID() == CType.TID_INT) {
+		    if (vars[i].getValue() != null) {		    
+			Integer name = 
+                            (Integer)var_names.get(vars[i]);
+			JVariableDefinition var = find_obj.getIntVar(name); 
+			JLocalVariableExpression var_expr = new JLocalVariableExpression(null, var); 
+			JExpression expr = new JAssignmentExpression(null, var_expr, vars[i].getValue());
+			new_statements.addLast(new JExpressionStatement(null, expr, null));
+		    }
+		}
+		
+		
+		if (vars[i].getType().getTypeID() == CType.TID_FLOAT) {
+		    if (vars[i].getValue() != null) {		    
+			Integer name = 
+                            (Integer)var_names.get(vars[i]);
+			JVariableDefinition var = find_obj.getFloatVar(name);
+			JLocalVariableExpression var_expr = new JLocalVariableExpression(null, var); 
+			JExpression expr = new JAssignmentExpression(null, var_expr, vars[i].getValue());
+			new_statements.addLast(new JExpressionStatement(null, expr, null));
+		    }
+		}
 	    }
+	    
 	}
 
-	JVariableDefinition new_array[] = new JVariableDefinition[new_vars.size()];
+	// make sure that all variables are either renamed or none is renamed
+	// this is because Unroller/VarDeclRaiser do not correctly handle
+	// varaible declarations inside of a JCompoundStatement, so
+	// we must return a JVariableDeclarationStatement or a JCompoundStatement
+	// that does not contain declarations.
+	
+	assert (new_vars.size() == 0 || new_statements.size() == 0);
 
-	i = 0;
-	for (ListIterator li = new_vars.listIterator(); li.hasNext(); ) {
-	    new_array[i++] = (JVariableDefinition)li.next();
+	if (new_vars.size() > 0) {
+
+	    JVariableDefinition new_array[] = (JVariableDefinition[])new_vars.toArray(new JVariableDefinition[0]);
+	    self.setVars(new_array);
+	    return self;
+
+	} else {
+
+	    JExpressionStatement new_array[] = (JExpressionStatement[])new_statements.toArray(new JExpressionStatement[0]);
+	    return new JCompoundStatement(null, new_array);
+
 	}
-
-	self.setVars(new_array);
-	return self;
     }
 
     
     public Object visitLocalVariableExpression(JLocalVariableExpression self,
 					       String ident) {
 
-	if (self.getType().getTypeID() == CType.TID_INT) {
+	if (var_names.containsKey(self.getVariable())) {
 
-	    assert (var_names.containsKey(ident));
-	    Integer name = (Integer)var_names.get(ident);
-	    
-	    JVariableDefinition var = new JVariableDefinition(null, 
-		 0, CStdType.Integer, "int_"+name.intValue(), null);
-	    
-	    return new JLocalVariableExpression(null, var);
+	    // variable has been eliminated
+	    if (self.getType().getTypeID() == CType.TID_INT) {
+		Integer name = (Integer)var_names.get(self.getVariable());
+		JVariableDefinition var = find_obj.getIntVar(name);
+		return new JLocalVariableExpression(null, var);
+	    }
+
+	    if (self.getType().getTypeID() == CType.TID_FLOAT) {
+		Integer name = (Integer)var_names.get(self.getVariable());
+		JVariableDefinition var = find_obj.getFloatVar(name);
+		return new JLocalVariableExpression(null, var);
+	    }
 	}
 
+	// variable has not been eliminated
 	return self;
-
     }
 
 }
-
-*/

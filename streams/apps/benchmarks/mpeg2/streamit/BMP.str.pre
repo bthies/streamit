@@ -148,3 +148,88 @@ int->bit filter BMPStreamCreator(int width, int height) {
     }
   }
 }
+
+bit->int pipeline BMPStream_to_rawImageStream(int width, int height) {
+  add BMPStreamParser(width, height);
+  add FlipVertically(width, height);
+}
+
+bit->int filter BMPStreamParser(int width, int height) {
+  boolean ran;
+
+  init {
+    ran = false;
+  }
+
+  work pop 1 push 1 {
+    if (!ran) {
+      print("Reading BMP File...");
+      ran = true;
+
+      int tempval;
+
+      int colordepth = 24;
+
+      pops(16, tempval);
+      if (tempval != 0x424D)
+        print("Error - Expecting File Type 'BM'");
+
+      int filesize;
+      intpops(filesize);
+      
+      pops(32, tempval);
+      if (tempval != 0x0)
+        print("Error - Expecting Reserved 0s");
+
+      intpops(tempval);
+      if (tempval != 54)
+        print("Error - Program Limitation: Expecting File Offset to be 54 bytes");
+
+      intpops(tempval);
+      if (tempval != 40)
+        print("Error - Program Limitation: Expecting Header to be 40 bytes");
+
+      intpops(tempval);
+      if (tempval != width)
+        print("Error - Program Limitation: BMP not the width the BMP Parser was initialized to");
+
+      intpops(tempval);
+      if (tempval != height)
+        print("Error - Program Limitation: BMP not the height the BMP Parser was initialized to");
+
+      shortpops(tempval);
+      if (tempval != 1)
+        print("Error - Program Limitation: Expecting 1 Color Plane");
+
+      shortpops(tempval);
+      if (tempval != 24) 
+        print("Error - Program Limitation: Expecting 24 bits per pixel");
+
+      pops(32, tempval);
+      if (tempval != 0)
+        print("Error - Program Limitation: Expecting Compression Type 0");
+
+      int image_size;
+      intpops(image_size);
+      if (image_size != width*height*3) {
+        print("Error - Image Size is not width*height*3");
+      }
+
+      intpops(tempval);
+      intpops(tempval);
+      pops(32, tempval);
+      pops(32, tempval);
+
+      int val = 1;
+      for (int i = 0; i < width*height*3; i++) {
+        pops(8, val);
+        push(val);
+      }
+      
+      print("Done Reading BMP File...");
+    }
+  }
+}
+
+
+

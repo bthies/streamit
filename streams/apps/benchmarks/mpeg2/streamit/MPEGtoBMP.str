@@ -41,8 +41,8 @@ void->void pipeline MPEGtoBMP() {
 
   add int->void splitjoin {
     split roundrobin(width*height*3);
-    // TODO Hardcoded to only generate 5 frames of output
-    for (int i = 0; i < 5; i++) {
+    // TODO Hardcoded to only generate 3 frames of output
+    for (int i = 0; i < 3; i++) {
       add int->void pipeline {
         add rawImageStream_to_BMPStream(width, height);
         add FileWriter<bit>("./output" + i + ".bmp");
@@ -56,3 +56,5 @@ void->void pipeline MPEGtoBMP() {
   }
 
 }
+
+

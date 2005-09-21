@@ -5,13 +5,14 @@ STRC_OPTIONS = -library -nosched
 DCT_HOME = ${STREAMIT_HOME}/apps/benchmarks/dct_ieee/streamit
 LIBDCT = ${DCT_HOME}/DCTinternal.str ${DCT_HOME}/DCTexternal.str
 
-LIBMPEG2 = MPEGdecoder.str ColorSpace.str Misc.str 
-
+LIBMPEG2 = MPEGdecoder.str MPEGencoder.str MPEGglobal.str ColorSpace.str Misc.str 
 
 default: player
 
 clean:	
 	rm -f MPEGdecoder.str
+	rm -f MPEGencoder.str
+	rm -f MPEGglobal.str
 	rm -f BinaryFile.str
 	rm -f BMP.str
 	rm -f *.java
@@ -19,27 +20,25 @@ clean:
 	rm -f *.dot
 	rm -f *.html
 	rm -f *.bmp
+	rm -f *.m2v
 
 # NOTE: BinaryFile.str is actually only needed for compiling outside the library
 # where one must use the FileReader<int>
 
-player:	MPEGplayer.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT}
-	strc MPEGplayer.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
+player:	MPEGplayer.str BinaryFile.str ${LIBMPEG2} ${LIBDCT}
+	strc MPEGplayer.str BinaryFile.str ${LIBMPEG2} ${LIBDCT} ${STRC_OPTIONS}
 
 mpeg2bmp:	MPEGtoBMP.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT}
 	strc MPEGtoBMP.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
 
+bmp2mpeg: BMPtoMPEG.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT}
+	strc BMPtoMPEG.str BinaryFile.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
+
 ${LIBDCT}:
 	pushd ${DCT_HOME} && make && popd
 
-MPEGdecoder.str: MPEGdecoder.str.pre ${PREPROCESS}
-	${PREPROCESS} MPEGdecoder.str.pre -o MPEGdecoder.str
-
-BinaryFile.str: BinaryFile.str.pre ${PREPROCESS}
-	${PREPROCESS} BinaryFile.str.pre -o BinaryFile.str
-
-BMP.str: BMP.str.pre ${PREPROCESS}
-	${PREPROCESS} BMP.str.pre -o BMP.str
+%.str: %.str.pre ${PREPROCESS}
+	${PREPROCESS} $@.pre -o $@
 
 docs:	${STREAMITDOC}
 	${STREAMITDOC} BinaryFile.str.pre -o BinaryFile.str.pre.html
@@ -49,3 +48,14 @@ docs:	${STREAMITDOC}
 	${STREAMITDOC} MPEGdecoder.str.pre -o MPEGdecoder.str.pre.html
 	${STREAMITDOC} MPEGplayer.str -o MPEGplayer.str.html
 	${STREAMITDOC} MPEGtoBMP.str -o MPEGtoBMP.str.html
+
+
+
+
+
+
+
+
+
+
+

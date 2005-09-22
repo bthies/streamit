@@ -192,8 +192,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	int prePeek = 0;
 	
 	if (filter instanceof SIRTwoStageFilter) {
-	    prePop = ((SIRTwoStageFilter)filter).getInitPop();
-	    prePeek = ((SIRTwoStageFilter)filter).getInitPeek();
+	    prePop = ((SIRTwoStageFilter)filter).getInitPopInt();
+	    prePeek = ((SIRTwoStageFilter)filter).getInitPeekInt();
 	}
 	
 	//the number of times this filter fires in the initialization
@@ -299,7 +299,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	//in the initialItemsTo Receive
 	if (previous != null && previous.contents instanceof SIRTwoStageFilter) {
 	    upStreamItems -= ((SIRTwoStageFilter)previous.contents).getPushInt();
-	    upStreamItems += ((SIRTwoStageFilter)previous.contents).getInitPush();
+	    upStreamItems += ((SIRTwoStageFilter)previous.contents).getInitPushInt();
 	}
 
 	return upStreamItems;
@@ -430,7 +430,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    int prepeek = 0;
 	    int maxpeek = filter.getPeekInt();
 	    if (filter instanceof SIRTwoStageFilter)
-		prepeek = ((SIRTwoStageFilter)filter).getInitPeek();
+		prepeek = ((SIRTwoStageFilter)filter).getInitPeekInt();
 	    //set up the maxpeek
 	    maxpeek = (prepeek > maxpeek) ? prepeek : maxpeek;
 	    
@@ -679,7 +679,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    
 	    if (filter.getPeekInt() == 0 &&
 		(!(filter instanceof SIRTwoStageFilter) ||
-		 (((SIRTwoStageFilter)filter).getInitPeek() == 0)))
+		 (((SIRTwoStageFilter)filter).getInitPeekInt() == 0)))
 		return true;
 	    return false;		
 	}
@@ -729,7 +729,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 		(makeForLoop(receiveCode(filter, filter.getInputType(), 
 					 localVariables),
 			     localVariables.exeIndex,
-			     new JIntLiteral(two.getInitPeek())));
+			     new JIntLiteral(two.getInitPeekInt())));
 	    
 	    //now inline the init work body
 	    statements.addStatement(body);

@@ -89,7 +89,7 @@ public class StatelessDuplicate {
  	// We don't yet support fission of two-stage filters that peek.
 	if (filter instanceof SIRTwoStageFilter) {
 	    SIRTwoStageFilter twoStage = (SIRTwoStageFilter)filter;
-	    if (twoStage.getInitPop()>0) {
+	    if (twoStage.getInitPopInt()>0) {
 		return false;
 	    }
 	}
@@ -267,7 +267,7 @@ public class StatelessDuplicate {
 	// we pop <i> * the original pop amount
 	filter.setInitPop(i*origPop);
 	// we peek the original peek amount (plus the pop)
-	filter.setInitPeek(filter.getInitPop()+filter.getPeekInt()-filter.getPopInt());
+	filter.setInitPeek(filter.getInitPopInt()+filter.getPeekInt()-filter.getPopInt());
     }
 
     /**

@@ -4,7 +4,7 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.flatgraph.GraphFlattener;
-import at.dms.util.IRPrinter;
+//import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
@@ -15,12 +15,14 @@ import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.partition.cache.*;
 import at.dms.kjc.sir.lowering.partition.dynamicprog.*;
 import at.dms.kjc.sir.lowering.fusion.*;
-import at.dms.kjc.sir.lowering.fission.*;
-import at.dms.kjc.lir.*;
+//import at.dms.kjc.sir.lowering.fission.*;
+//import at.dms.kjc.lir.*;
 import at.dms.kjc.raw.*;
 import java.util.*;
-import java.io.*;
-import at.dms.util.Utils;
+//import java.io.*;
+
+//import streamit.scheduler2.print.PrintProgram;
+//import at.dms.util.Utils;
 
 //import streamit.scheduler2.*;
 //import streamit.scheduler2.constrained.*;
@@ -101,7 +103,7 @@ public class ClusterBackend implements FlatVisitor {
 	//    RawBackend.rawColumns = KjcOptions.raw;
 
 	//simulator = new FineGrainSimulator();
-
+	
 	//this must be run now, FlatIRToC relies on it!!!
 	RenameAll.renameAllFilters(str);
 	

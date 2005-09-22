@@ -115,9 +115,9 @@ public class VerticalFission {
 					   new JIntLiteral(vPop+(vStage==vPeek-1 ? 0 : vPush)),  // pop (==peek)
 					   new JIntLiteral(vPush+(vStage==vBlock-1 ? 0 : vPop)), // push
 					   work, 
-					   (vPush+vPop)*(1+(vPeek*vPush/vPop)/vPush), // initPeek
-					   (vPush+vPop)*(1+(vPeek*vPush/vPop)/vPush), // initPop (==initPeek)
-					   vPush-((vPeek*vPush/vPop) % vPush), // initPush
+					   new JIntLiteral((vPush+vPop)*(1+(vPeek*vPush/vPop)/vPush)), // initPeek
+					   new JIntLiteral((vPush+vPop)*(1+(vPeek*vPush/vPop)/vPush)), // initPop (==initPeek)
+					   new JIntLiteral(vPush-((vPeek*vPush/vPop) % vPush)), // initPush
 					   prework, // initWork
 					   baseType, baseType);
 	} else {

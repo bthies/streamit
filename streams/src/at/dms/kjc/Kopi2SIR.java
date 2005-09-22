@@ -12,12 +12,12 @@
 
 package at.dms.kjc;
 
-import java.io.*;
+//import java.io.*;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
 import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
-import at.dms.util.*;
+//import at.dms.util.*;
 import java.util.*;
 
 
@@ -112,7 +112,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     
     //Uncomment the println for debugging
     private void printMe(String str) {
-	// System.out.println(str);
+    //	System.out.println(str);
     }
 
     public Kopi2SIR() {
@@ -925,15 +925,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 		System.err.println("Current Kopi2SIR should not construct plain PhasedFilters.");
 	    }
 	    if (parentStream instanceof SIRFilter)
-		((SIRFilter)parentStream).setWork(new JMethodDeclaration(null,
-									 modifiers,
-									 returnType,
-									 ident,
-									 parameters,
-									 exceptions,
-									 body,
-									 null,
-									 null));
+		((SIRFilter)parentStream).setWork
+		    (new JMethodDeclaration(null,
+					    modifiers,
+					    returnType,
+					    ident,
+					    parameters,
+					    exceptions,
+					    body,
+					    null,
+					    null));
 	    else
 		at.dms.util.Utils.fail(printLine(self) +
 				       "Work Function Declared for Non-Filter");
@@ -942,15 +943,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	// install prework function
 	else if (ident.equals("prework")) {
 	    if (parentStream instanceof SIRTwoStageFilter) {
-		((SIRTwoStageFilter)parentStream).setInitWork(new JMethodDeclaration(null,
-										     modifiers,
-										     returnType,
-										     ident,
-										     parameters,
-										     exceptions,
-										     body,
-										     null,
-										     null));
+		((SIRTwoStageFilter)parentStream).setInitWork
+		    (new JMethodDeclaration(null,
+					    modifiers,
+					    returnType,
+					    ident,
+					    parameters,
+					    exceptions,
+					    body,
+					    null,
+					    null));
 	    }
 	    else
 		at.dms.util.Utils.fail(printLine(self) +
@@ -959,40 +961,44 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	
 	/*Install init function for filter*/
 	else if (ident.equals("init") && (parentStream instanceof SIRStream)) {
-	    ((SIRStream)parentStream).setInit(new JMethodDeclaration(null,
-								     modifiers,
-								     returnType,
-								     ident,
-								     parameters,
-								     exceptions,
-								     body,
-								     null,
-								     null)); 
+	    ((SIRStream)parentStream).setInit
+		(new JMethodDeclaration(null,
+					modifiers,
+					returnType,
+					ident,
+					parameters,
+					exceptions,
+					body,
+					null,
+					null)); 
 	}
 	else if (ident.startsWith("initPath")) {
 	    if (!(parentStream instanceof SIRFeedbackLoop))
 		at.dms.util.Utils.fail(printLine(self) +
 				       "initPath declared for non-Feedbackloop");
-	    ((SIRFeedbackLoop)parentStream).setInitPath(new JMethodDeclaration(null,
-									       modifiers,
-									       returnType,
-									       ident,
-									       parameters,
-									       exceptions,
-									       body,
-									       null,
-									       null)); 
+	    ((SIRFeedbackLoop)parentStream).setInitPath
+		(new JMethodDeclaration(null,
+					modifiers,
+					returnType,
+					ident,
+					parameters,
+					exceptions,
+					body,
+					null,
+					null)); 
 	}            
-	else if (!ignoreMethodDeclaration(ident) && (parentStream instanceof SIRStream))
-	    ((SIRStream)parentStream).addMethod(new JMethodDeclaration(null,
-								       modifiers,
-								       returnType,
-								       ident,
-								       parameters,
-								       exceptions,
-								       body,
-								       null,
-								       null));
+	else if (!ignoreMethodDeclaration(ident) 
+		 && (parentStream instanceof SIRStream))
+	    ((SIRStream)parentStream).addMethod
+		(new JMethodDeclaration(null,
+					modifiers,
+					returnType,
+					ident,
+					parameters,
+					exceptions,
+					body,
+					null,
+					null));
 
 	params=saveParams;
 	paramNames=saveNames;

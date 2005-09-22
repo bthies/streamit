@@ -3,7 +3,7 @@ package at.dms.kjc.sir.linear;
 import java.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.linear.*;
+//import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.iterator.*;
 
 
@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * requirements. Refer to the documentation in LinearRedundancy
  * for more information.<br>
  *
- * $Id: LinearRedundancyReplacer.java,v 1.13 2003-10-24 22:04:00 thies Exp $
+ * $Id: LinearRedundancyReplacer.java,v 1.14 2005-09-22 21:55:27 dimock Exp $
  **/
 public class LinearRedundancyReplacer extends LinearReplacer implements Constants{
     /** The prefix to use to name fields. **/
@@ -135,9 +135,9 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 					  new JIntLiteral(pop),       /* pop */
 					  new JIntLiteral(push),      /* push */
 					  work,                       /* work */
-					  peek,                       /* initPeek */
-					  pop,                        /* initPop */
-					  push,                       /* initPush */
+					  new JIntLiteral(peek),      /* initPeek */
+					  new JIntLiteral(pop),       /* initPop */
+					  new JIntLiteral(push),      /* initPush */
 					  initWork,                   /* initWork */
 					  self.getInputType(),        /* input type */
 					  self.getOutputType());      /* output type */

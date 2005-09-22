@@ -68,8 +68,9 @@ public class StreaMITMain {
 	for (int i = 0; i < app.length; i++) {
 	    //System.err.println("Visiting "+i+" of "+(app.length-1));
 	    SIRStream top = (SIRStream)app[i].accept(k2s);
-	    if (top != null)
-		stream = top;
+	    if (top != null) {
+	    	stream = top;
+	    }
 	}
 
 	System.err.println("Done Kopi2SIR..");

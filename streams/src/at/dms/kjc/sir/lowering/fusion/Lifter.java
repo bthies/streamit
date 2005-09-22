@@ -1,20 +1,20 @@
 package at.dms.kjc.sir.lowering.fusion;
 
-import at.dms.util.IRPrinter;
+//import at.dms.util.IRPrinter;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
+//import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
-import at.dms.kjc.lir.*;
+//import at.dms.kjc.lir.*;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.ListIterator;
+//import java.math.BigInteger;
+//import java.util.Arrays;
+//import java.util.HashMap;
+//import java.util.List;
+//import java.util.LinkedList;
+//import java.util.ListIterator;
 
 public class Lifter implements StreamVisitor {
     /**
@@ -286,8 +286,8 @@ public class Lifter implements StreamVisitor {
 	for (int i=0; i<str.size(); i++) {
 	    if (str.get(i) instanceof SIRTwoStageFilter) {
 		SIRTwoStageFilter twoStage = (SIRTwoStageFilter)str.get(i);
-		if (twoStage.getInitPush()==0 &&
-		    twoStage.getInitPop()==0) {
+		if (twoStage.getInitPushInt()==0 &&
+		    twoStage.getInitPopInt()==0) {
 		    // right now we don't support the case where
 		    // there's a peek expression without pushing or
 		    // popping

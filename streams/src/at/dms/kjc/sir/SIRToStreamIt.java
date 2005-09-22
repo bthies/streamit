@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.13 2005-09-19 14:58:47 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.14 2005-09-22 21:55:27 dimock Exp $
  */
 public class SIRToStreamIt
     extends at.dms.util.Utils
@@ -2095,14 +2095,16 @@ public class SIRToStreamIt
 					  SIRStream receiver, 
 					  JMethodDeclaration[] methods)
     {
-        assert false : "TODO: implement SIR messaging";
+    	print("visitRegReceiverStatement");
+//        assert false : "TODO: implement SIR messaging";
     }
     
     public void visitRegSenderStatement(SIRRegSenderStatement self,
                                         String fn,
                                         SIRLatency latency)
     {
-        assert false : "TODO: implement SIR messaging";
+    	print("visitRegSenderStatement");
+//        assert false : "TODO: implement SIR messaging";
     }
 
 

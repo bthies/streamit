@@ -3,11 +3,11 @@ package at.dms.kjc.sir.lowering;
 import java.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
-import at.dms.util.*;
+//import at.dms.util.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.lir.*;
+//import at.dms.kjc.lir.*;
 
-import java.util.*;
+//import java.util.*;
 /**
  * This class converts all pops in a program into peeks. It does not reinvent
  * the wheel to handle control flow, instead it merely replaces each pop expression
@@ -39,7 +39,7 @@ public class PopToPeek extends EmptyStreamVisitor implements Constants {
 	if (self instanceof SIRTwoStageFilter) {
 	    SIRTwoStageFilter two = (SIRTwoStageFilter)self;
 	    if (two.getInitWork() != null)
-		doIt(self, two.getInitWork().getBody(), two.getInitPop());
+		doIt(self, two.getInitWork().getBody(), two.getInitPopInt());
 	}
     }
 

@@ -359,7 +359,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	if (initSimulation &&
 	    !counters.hasFired(fire) &&
 	    fire.contents instanceof SIRTwoStageFilter) {
-	    return ((SIRTwoStageFilter)fire.contents).getInitPeek();
+	    return ((SIRTwoStageFilter)fire.contents).getInitPeekInt();
 	}
 	else if (!initSimulation && KjcOptions.ratematch && 
 		 fire.contents instanceof SIRFilter) {
@@ -396,7 +396,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	if (initSimulation &&
 	    !counters.hasFired(fire) &&
 	    fire.contents instanceof SIRTwoStageFilter)
-	    return ((SIRTwoStageFilter)fire.contents).getInitPop();
+	    return ((SIRTwoStageFilter)fire.contents).getInitPopInt();
 	else if (!initSimulation && KjcOptions.ratematch &&
 		 fire.contents instanceof SIRFilter) {
 	    //we are ratematching on the filter
@@ -427,7 +427,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    if (initSimulation &&
 		!counters.hasFired(fire) &&
 		fire.contents instanceof SIRTwoStageFilter)
-		ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
+		ret = ((SIRTwoStageFilter)fire.contents).getInitPushInt();
 	    else if (!initSimulation && KjcOptions.ratematch) {
 		//we are ratematching so produce all the data on the one firing.
 		ret *= ((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue();

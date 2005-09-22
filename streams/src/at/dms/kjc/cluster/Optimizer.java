@@ -1,19 +1,19 @@
 
 package at.dms.kjc.cluster;
 
-import at.dms.kjc.common.*;
-import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
+//import at.dms.kjc.common.*;
+//import at.dms.kjc.flatgraph.FlatNode;
+//import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
-import at.dms.util.Utils;
-import at.dms.compiler.*;
+//import at.dms.util.Utils;
+//import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
-import at.dms.util.SIRPrinter;
+//import at.dms.util.SIRPrinter;
 
 import java.util.*;
-import java.io.*;
+//import java.io.*;
 
 class Optimizer implements StreamVisitor {
 

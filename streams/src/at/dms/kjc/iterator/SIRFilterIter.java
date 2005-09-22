@@ -48,7 +48,7 @@ public class SIRFilterIter extends SIRIterator implements FilterIter {
 
     public int getInitPeekStage (int phase) {
 	if (obj instanceof SIRTwoStageFilter) {
-	    return ((SIRTwoStageFilter)obj).getInitPeek();
+	    return ((SIRTwoStageFilter)obj).getInitPeekInt();
 	} else {
 	    return -1;
 	}
@@ -56,7 +56,7 @@ public class SIRFilterIter extends SIRIterator implements FilterIter {
 
     public int getInitPopStage (int phase) {
 	if (obj instanceof SIRTwoStageFilter) {
-	    return ((SIRTwoStageFilter)obj).getInitPop();
+	    return ((SIRTwoStageFilter)obj).getInitPopInt();
 	} else {
 	    return -1;
 	}
@@ -64,7 +64,7 @@ public class SIRFilterIter extends SIRIterator implements FilterIter {
 
     public int getInitPushStage (int phase) {
 	if (obj instanceof SIRTwoStageFilter) {
-	    return ((SIRTwoStageFilter)obj).getInitPush();
+	    return ((SIRTwoStageFilter)obj).getInitPushInt();
 	} else {
 	    return -1;
 	}

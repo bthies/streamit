@@ -3,7 +3,7 @@ package at.dms.kjc.sir.lowering.fusion;
 import at.dms.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.lir.*;
+//import at.dms.kjc.lir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 
@@ -196,7 +196,9 @@ public class FuseSplit {
 					      new JIntLiteral(rate.pop), 
 					      new JIntLiteral(rate.push),
 					      newWork, 
-					      rate.initPeek, rate.initPop, rate.initPush,
+					      new JIntLiteral(rate.initPeek), 
+					      new JIntLiteral(rate.initPop), 
+					      new JIntLiteral(rate.initPush),
 					      newInitWork,
 					      sj.getInputType(), sj.getOutputType());
 	}
@@ -278,7 +280,7 @@ public class FuseSplit {
 	    int peekSize = rep.child[i] * filter.getPopInt() + (filter.getPeekInt() - filter.getPopInt());
 	    // if we have a two-stage filter, need to peek the items it consumes the first time through
 	    if (filter instanceof SIRTwoStageFilter) {
-		peekSize += ((SIRTwoStageFilter)filter).getInitPop();
+		peekSize += ((SIRTwoStageFilter)filter).getInitPopInt();
 	    }
 	    // added buffer, since initPeek has to match a steady execution.  Think about this...
 	    peekSize += rate.initPeek;
@@ -319,7 +321,7 @@ public class FuseSplit {
 	    int pushSize = rep.child[i] * filter.getPushInt();
 	    // if we have a two-stage filter, add its push amount
 	    if (filter instanceof SIRTwoStageFilter) {
-		pushSize += ((SIRTwoStageFilter)filter).getInitPush();
+		pushSize += ((SIRTwoStageFilter)filter).getInitPushInt();
 	    }
 	    // round to next power of 2 for cheaper mod functions
 	    pushSize = Utils.nextPow2(pushSize);
@@ -378,7 +380,7 @@ public class FuseSplit {
 	    SIRFilter filter = (SIRFilter)sj.get(i);
 	    int localPeek = filter.getPeekInt() - filter.getPopInt();
 	    if (filter instanceof SIRTwoStageFilter) {
-		localPeek += ((SIRTwoStageFilter)filter).getInitPop();
+		localPeek += ((SIRTwoStageFilter)filter).getInitPopInt();
 	    }
 	    if (isDup || localPeek==0) {
 		peekIndex[i] = localPeek;

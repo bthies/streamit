@@ -1,14 +1,14 @@
 package at.dms.kjc.sir.lowering.fusion;
 
-import at.dms.util.IRPrinter;
+//import at.dms.util.IRPrinter;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.sir.lowering.partition.*;
-import at.dms.kjc.lir.*;
+//import at.dms.kjc.sir.lowering.partition.*;
+//import at.dms.kjc.lir.*;
 
-import java.math.BigInteger;
+//import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -152,7 +152,7 @@ class ShiftPipelineFusion {
 		if (last.filter instanceof SIRTwoStageFilter &&
 		    last.init.num > 0) {
 		    //System.err.println("last is two-stage.  getInitPush=" + ((SIRTwoStageFilter)last.filter).getInitPush() + " last.init.num=" + last.init.num + " last.filter.getPushInt=" + last.filter.getPushInt() + " getInitPeek=" + ((SIRTwoStageFilter)last.filter).getInitPeek() + " getInitPop=" + ((SIRTwoStageFilter)last.filter).getInitPop());
-		    lastProduce = ((SIRTwoStageFilter)last.filter).getInitPush() + 
+		    lastProduce = ((SIRTwoStageFilter)last.filter).getInitPushInt() + 
 			(last.init.num-1) * last.filter.getPushInt();
 		} else {
 		    lastProduce = last.init.num * last.filter.getPushInt();
@@ -160,7 +160,7 @@ class ShiftPipelineFusion {
 		int myConsume = 0;
 		if (filter instanceof SIRTwoStageFilter &&
 		    num[0] > 0) {
-		    myConsume = ((SIRTwoStageFilter)filter).getInitPop() + 
+		    myConsume = ((SIRTwoStageFilter)filter).getInitPopInt() + 
 			(num[0]-1) * filter.getPopInt();
 		} else {
 		    myConsume = num[0] * filter.getPopInt();
@@ -722,12 +722,12 @@ class ShiftPipelineFusion {
 	    
 	    int initPop = first.init.num * first.filter.getPopInt();
 	    if(first.filter instanceof SIRTwoStageFilter)
-		initPop = ((SIRTwoStageFilter)first.filter).getInitPop()+(first.init.num-1) * first.filter.getPopInt();
+		initPop = ((SIRTwoStageFilter)first.filter).getInitPopInt()+(first.init.num-1) * first.filter.getPopInt();
 	    int initPeek =
 		(first.filter.getPeekInt() - first.filter.getPopInt()) + initPop;
 	    int initPush = last.init.num * last.filter.getPushInt();
 	    if(last.filter instanceof SIRTwoStageFilter)
-		initPush = ((SIRTwoStageFilter)last.filter).getInitPush()+(last.init.num-1) * last.filter.getPushInt();
+		initPush = ((SIRTwoStageFilter)last.filter).getInitPushInt()+(last.init.num-1) * last.filter.getPushInt();
 	    
 	    // make a new filter to represent the fused combo
 	    result = new SIRTwoStageFilter(first.filter.getParent(),
@@ -741,9 +741,9 @@ class ShiftPipelineFusion {
 					   new JIntLiteral(steadyPop),
 					   new JIntLiteral(steadyPush),
 					   steadyWork,
-					   initPeek,
-					   initPop,
-					   initPush,
+					   new JIntLiteral(initPeek),
+					   new JIntLiteral(initPop),
+					   new JIntLiteral(initPush),
 					   initWork,
 					   first.filter.getInputType(),
 					   last.filter.getOutputType());

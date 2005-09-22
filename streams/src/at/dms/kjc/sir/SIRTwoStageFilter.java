@@ -1,8 +1,8 @@
 package at.dms.kjc.sir;
 
-import at.dms.kjc.lir.LIRStreamType;
+//import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.*;
-import at.dms.util.*;
+//import at.dms.util.*;
 
 /**
  * A two-stage filter is a filter that has two work phases.  The first
@@ -20,7 +20,7 @@ import at.dms.util.*;
  * of the compiler aware of phases.  In some places this is easier
  * than in others; big changes show up in the backends.
  *
- * @version $Id: SIRTwoStageFilter.java,v 1.13 2005-09-07 00:14:21 thies Exp $
+ * @version $Id: SIRTwoStageFilter.java,v 1.14 2005-09-22 21:55:27 dimock Exp $
  */
 public class SIRTwoStageFilter extends SIRFilter {
     /* Internal invariant: the init and work phases arrays each have
@@ -48,9 +48,9 @@ public class SIRTwoStageFilter extends SIRFilter {
 			     JExpression pop, 
 			     JExpression push, 
 			     JMethodDeclaration work, 
-			     int initPeek,
-			     int initPop,
-			     int initPush,
+			     JExpression initPeek,
+			     JExpression initPop,
+			     JExpression initPush,
 			     JMethodDeclaration initWork, 
 			     CType inputType, 
 			     CType outputType) {
@@ -68,40 +68,54 @@ public class SIRTwoStageFilter extends SIRFilter {
 	initWork.setPeek(initPeek);
 	initWork.setPush(initPush);
 	initWork.setPop(initPop);
-	checkRep();
+	if ((peek instanceof JIntLiteral) && (pop instanceof JIntLiteral)
+	    && (initPeek instanceof JIntLiteral) 
+	    && (initPop instanceof JIntLiteral)) {
+	    checkRep();
+	}
         // Confirm that the initWork function is in the methods array.
         if (initWork != null)
             addReplacementMethod(initWork, initWork);
 
-	assert ((!(peek instanceof JIntLiteral) ||
-                 ((JIntLiteral)peek).intValue()>0) ||
-                inputType==CStdType.Void) ||
-            ((initPeek >0) || inputType==CStdType.Void):
-            "TwoStageFilter " + this +
-            " declares peek and initPeek rate of 0 but has input type of " +
-            inputType + " which should be Void instead.";
+    	assert (   (!(peek instanceof JIntLiteral) 
+                || ((JIntLiteral)peek).intValue()>0) 
+                || (!(initPeek instanceof JIntLiteral) 
+                || ((JIntLiteral)initPeek).intValue()>0) 
+                || inputType==CStdType.Void):
+                "TwoStageFilter " + this +
+                " declares peek and initPeek rate of 0 but has input type of " +
+                inputType + " which should be Void instead.";
 
-	assert ((!(push instanceof JIntLiteral) ||
-                 ((JIntLiteral)push).intValue()>0) ||
-                outputType==CStdType.Void) ||
-            ((initPush >0) || outputType==CStdType.Void):
-            "TwoStageFilter " + this +
-            " declares push and initPush rate of 0 but has output type of " +
-            outputType + " which should be Void instead.";
+    	assert (   (!(push instanceof JIntLiteral) 
+                || ((JIntLiteral)push).intValue()>0) 
+                || (!(initPush instanceof JIntLiteral) 
+                || ((JIntLiteral)initPush).intValue()>0) 
+                || outputType==CStdType.Void):
+                "TwoStageFilter " + this +
+                " declares push and initPush rate of 0 but has output type of " +
+                outputType + " which should be Void instead.";
     }
 
     /**
      * Checks the representation of this to make sure it's consistent
-     * with our assumptions.
+     * with our assumption that the preWork peek - pop rate is the same
+     * as the work peek - pop rate.
+     *
+     * This will cause an assertion error if
+     * <ol>
+     * <li>dynamic rates are used or
+     * </li><li>checkRep is called before lowering and the static rates
+     * have symbolic rather than an integer representation
+     * </li></ol>
      */
     private void checkRep() {
 	// we think the peek-pop difference should be the same in the
 	// initial and steady states (our simulation routine with the
 	// scheduler makes this assumption).
-	assert getInitPeek()-getInitPop()==getPeekInt()-getPopInt():
+	assert getInitPeekInt()-getInitPopInt()==getPeekInt()-getPopInt():
             "For Two Stage Filters, initPeek-initPop must equal peek-pop" +
-            "\ninitPeek=" + getInitPeek() + 
-            "\ninitPop=" + getInitPop() + 
+            "\ninitPeek=" + getInitPeekInt() + 
+            "\ninitPop=" + getInitPopInt() + 
             "\nPeek=" + getPeekInt() + 
             "\nPop=" + getPopInt();
     }
@@ -144,15 +158,27 @@ public class SIRTwoStageFilter extends SIRFilter {
 	checkRep();
     }
 
-    public int getInitPush() {
+    public JExpression getInitPush() {
+        return getInitPhases()[0].getPush();
+    }
+  
+    public int getInitPushInt() {
         return getInitPhases()[0].getPushInt();
     }
 
-    public int getInitPeek() {
+    public JExpression getInitPeek() {
+        return getInitPhases()[0].getPeek();
+    }
+
+    public int getInitPeekInt() {
         return getInitPhases()[0].getPeekInt();
     }
 
-    public int getInitPop() {
+    public JExpression getInitPop() {
+        return getInitPhases()[0].getPop();
+    }
+
+    public int getInitPopInt() {
         return getInitPhases()[0].getPopInt();
     }
 

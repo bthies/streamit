@@ -1,20 +1,20 @@
 package at.dms.kjc.spacedynamic;
 
 import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
+//import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
+//import at.dms.kjc.sir.lowering.*;
 import at.dms.util.Utils;
 import java.util.HashSet;
-import java.math.BigInteger;
+//import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.Vector;
+//import java.util.Vector;
 import java.util.List;
-import java.util.LinkedList;
+//import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Iterator;
-import at.dms.kjc.sir.lowering.partition.WorkEstimate;
+//import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 
 
 
@@ -188,7 +188,7 @@ public abstract class Simulator {
 	if (initSimulation &&
 	    !counters.hasFired(fire) &&
 	    fire.contents instanceof SIRTwoStageFilter) {
-	    return ((SIRTwoStageFilter)fire.contents).getInitPeek();
+	    return ((SIRTwoStageFilter)fire.contents).getInitPeekInt();
 	}
 	else if (!initSimulation && KjcOptions.ratematch && 
 		 fire.contents instanceof SIRFilter) {
@@ -229,7 +229,7 @@ public abstract class Simulator {
 	if (initSimulation &&
 	    !counters.hasFired(fire) &&
 	    fire.contents instanceof SIRTwoStageFilter)
-	    return ((SIRTwoStageFilter)fire.contents).getInitPop();
+	    return ((SIRTwoStageFilter)fire.contents).getInitPopInt();
 	else if (!initSimulation && KjcOptions.ratematch &&
 		 fire.contents instanceof SIRFilter) {
 	    //we are ratematching on the filter
@@ -261,7 +261,7 @@ public abstract class Simulator {
 	    if (initSimulation &&
 		!counters.hasFired(fire) &&
 		fire.contents instanceof SIRTwoStageFilter)
-		ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
+		ret = ((SIRTwoStageFilter)fire.contents).getInitPushInt();
 	    else if (!initSimulation && KjcOptions.ratematch) {
 		//we are ratematching so produce all the data on the one firing.
 		ret *= ssg.getMult(fire, false);

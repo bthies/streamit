@@ -153,7 +153,7 @@ public class LowerInitFunctions implements StreamVisitor {
 	// Just augment the buffer size by initPush if the previous
 	// filter is an SIRTwoStageFilter
 	if (op1 instanceof SIRTwoStageFilter) {
-	    size += ((SIRTwoStageFilter)op1).getInitPush();
+	    size += ((SIRTwoStageFilter)op1).getInitPushInt();
 	}
 	// C library requires power of 2
 	return Utils.nextPow2(size);

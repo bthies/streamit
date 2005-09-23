@@ -59,8 +59,18 @@ sub rule_markerbit {
     return $_[0];
 }
 
+sub rule_addmarkerbit {
+    $_[0] =~ s/( *)add_marker_bit\(\);/$1\{\n$1  int marker_bit = 1;\n$1  pushs(1, marker_bit);\n$1\}/;
+    return $_[0];
+}
+
 sub rule_vlc {
     $_[0] =~ s/( *)variable_length_code\((\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1\{\n$1  boolean found = false;\n$1  int guesslength = 1;\n$1  int tablepos = 0;\n$1  while (!found) \{\n$1    peeks(guesslength, $2);\n$1    tablepos = 0;\n$1    while (!found && tablepos < $4_len) \{\n$1      if ($2 == $4\[tablepos\].code && guesslength == $4\[tablepos\].len) \{\n$1        found = true;\n$1        pops(guesslength, $2);\n$1      \} else \{\n$1      tablepos++;\n$1    \}\n$1    \}\n$1    guesslength++;\n$1  \}\n$1  $2 = $4\[tablepos\].value;\n$1\}/;
+    return $_[0];
+}
+
+sub rule_vlec {
+    $_[0] =~ s/( *)variable_length_encode\((\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1\{\n$1  boolean found = false;\n$1  int index = -1;\n$1  while (!found) {\n$1    index++;\n$1    if ($4\[index\].value == $2)\n$1      found = true;\n$1  }\n$1  int templen = $4\[index\].len;\n$1  int tempcode = $4\[index\].code;\n$1  pushs(templen, tempcode);\n$1}/;
     return $_[0];
 }
 
@@ -84,8 +94,18 @@ sub rule_shortpushs {
     return $_[0];
 }
 
+sub rule_shortpops {
+    $_[0] =~ s/( *)shortpops\((\w+(\[\w+\])*)\);/$1\{\n$1  int intpops_int;\n$1  pops(16, intpops_int);\n$1  int intpops_b0 = ((intpops_int >> 8) & 0x000000FF);\n$1  int intpops_b1 = (intpops_int & 0x000000FF) << 8;\n$1  $2 = (intpops_b0 | intpops_b1);\n$1\}/;
+    return $_[0];
+}
+
 sub rule_intpushs {
     $_[0] =~ s/( *)intpushs\((\w+(\[\w+\])*)\);/$1\{\n$1  int intpushs_int = $2;\n$1  int intpushs_b0 = ((intpushs_int >> 24) & 0x000000FF);\n$1  int intpushs_b1 = (intpushs_int & 0x00FF0000) >> 8;\n$1  int intpushs_b2 = (intpushs_int & 0x0000FF00) << 8;\n$1  int intpushs_b3 = (intpushs_int & 0x000000FF) << 24;\n$1  intpushs_int = (intpushs_b0 | intpushs_b1 | intpushs_b2 | intpushs_b3);\n$1  pushs(32, intpushs_int);\n$1\}/;
+    return $_[0];
+}
+
+sub rule_intpops {
+    $_[0] =~ s/( *)intpops\((\w+(\[\w+\])*)\);/$1\{\n$1  int intpops_int;\n$1  pops(32, intpops_int);\n$1  int intpops_b0 = ((intpops_int >> 24) & 0x000000FF);\n$1  int intpops_b1 = (intpops_int & 0x00FF0000) >> 8;\n$1  int intpops_b2 = (intpops_int & 0x0000FF00) << 8;\n$1  int intpops_b3 = (intpops_int & 0x000000FF) << 24;\n$1  $2 = (intpops_b0 | intpops_b1 | intpops_b2 | intpops_b3);\n$1\n$1}/;
     return $_[0];
 }
 
@@ -116,16 +136,21 @@ sub main {
     
     @intermediate = process_rule(\&rule_intpushs, @intermediate);
     @intermediate = process_rule(\&rule_shortpushs, @intermediate);
-    @intermediate = process_rule(\&rule_pushs, @intermediate);
+
+    @intermediate = process_rule(\&rule_intpops, @intermediate);
+    @intermediate = process_rule(\&rule_shortpops, @intermediate);
     
     @intermediate = process_rule(\&rule_vlc, @intermediate);
+    @intermediate = process_rule(\&rule_vlec, @intermediate);
     @intermediate = process_rule(\&rule_vlc_dct, @intermediate);
     
     @intermediate = process_rule(\&rule_peeks, @intermediate);
     
+    @intermediate = process_rule(\&rule_addmarkerbit, @intermediate);
     @intermediate = process_rule(\&rule_markerbit, @intermediate);
     @intermediate = process_rule(\&rule_nextstartcode, @intermediate);
     @intermediate = process_rule(\&rule_pops, @intermediate);
+    @intermediate = process_rule(\&rule_pushs, @intermediate);
 
     @intermediate = process_rule(\&rule_include, @intermediate);
     

@@ -41,6 +41,71 @@
 // block of code and aren't sure what it is doing, find the previous citation
 // comment, and refer to the corresponding page in the MPEG 2 spec.
 
+int->bit pipeline rawImageStream_to_MPEGStream(int width, int height) {
+  int actual_intra_dc_precision = 8;  
+  // Default Values for the quantiser_matrices
+  int[64] default_intra_quantiser_matrix = 
+        { 8, 16, 19, 22, 26, 27, 29, 34,
+         16, 16, 22, 24, 27, 29, 34, 37,
+         19, 22, 26, 27, 29, 34, 34, 38,
+         22, 22, 26, 27, 29, 34, 37, 40,
+         22, 26, 27, 29, 32, 35, 40, 48,
+         26, 27, 29, 32, 35, 40, 48, 58,
+         26, 27, 29, 34, 38, 46, 56, 69,
+         27, 29, 35, 38, 46, 56, 69, 83};
+  int[64] default_non_intra_quantiser_matrix =
+        {16, 16, 16, 16, 16, 16, 16, 16,
+         16, 16, 16, 16, 16, 16, 16, 16,
+         16, 16, 16, 16, 16, 16, 16, 16,
+         16, 16, 16, 16, 16, 16, 16, 16,
+         16, 16, 16, 16, 16, 16, 16, 16,
+         16, 16, 16, 16, 16, 16, 16, 16,
+         16, 16, 16, 16, 16, 16, 16, 16,
+         16, 16, 16, 16, 16, 16, 16, 16};
+  int q_scale_type = 0;
+
+  add PicturePreprocessing(width, height);
+  // Eventually Wrap in Programmable Splitjoin for Group of Pictures
+//  add ReorderPictures(2+(width*height*3)/2);
+  // Eventually Wrap in Programmable Splitjoin for Slices - Also need to communicate frame type.
+  int motionvectordatasize = 0;
+/*  add int->int splitjoin {
+    split duplicate; // FEATURETODO eventually replace by programmable splitjoin based on message type.
+    add Identity<int>;
+    for (int i = 0; i < 2; i++) {
+      add Identity<int>; // TODO MotionPrediction
+    }
+    join roundrobin(64*6, 64*6+motionvectordatasize, 64*6+motionvectordatasize); // FEATURETODO eventually replace
+  }*/
+  /*add int->int filter {
+    // TODO Change to DECIDE
+    work pop(64*6*3+2*motionvectordatasize) push (64*6) {
+      for (int i = 0; i < 64*6; i++) {
+        push(pop());
+      }
+      for (int i = 0; i < (64*6)+motionvectordatasize; i++) {
+        pop();
+      }
+      for (int i = 0; i < (64*6)+motionvectordatasize; i++) {
+        pop();
+      }
+    }
+  }*/
+  add int->int splitjoin {
+    split roundrobin(2, (width*height*3)/2);
+    add Identity<int>;
+    add MacroBlockEncode(default_intra_quantiser_matrix, default_non_intra_quantiser_matrix);
+    // TODO ADD dequantize and feedback  
+    join roundrobin(2, (width*height*3)/2);
+  }
+  // add PartialStreamGenerator_Slice;       
+  // add PartialStreamGenerator_PictureLevel;
+  add MPEGStreamGenerator(width, height, default_intra_quantiser_matrix, 
+                          default_non_intra_quantiser_matrix, 
+                          actual_intra_dc_precision-8,
+                          q_scale_type);
+}
+
 int->int splitjoin MacroBlockScrambler(int width) {
   split roundrobin(16);
   for (int i = 0; i < (width/16); i++) {
@@ -116,12 +181,20 @@ int->int pipeline TransformPicture(int width, int height) {
 // It also assumes everything is a single scene, and just uses a static IPB
 // pattern: IBBPBBPBBPBB
 // TODO - For now we actually just send I-Pictures ONLY
+// First Value Pushed: Temporal Reference (Frame Number)
+// Second Value Pushed: See interpretation below
 // Output Interpretation:
 // 1 = I-Picture
 // 2 = P-Picture
 // 3 = B-Picture
 int->int filter AssignPictureType(int width, int height) {
-  work pop (width*height*3) push 1 {
+  int frameno;
+  init {
+    frameno = 0;
+  }
+  work pop (width*height*3) push 2 {
+    push(frameno);
+    frameno++;
     for (int i = 0; i < width*height*3; i++) {
       pop();
     }
@@ -133,7 +206,7 @@ int->int splitjoin PicturePreprocessing(int width, int height) {
   split duplicate;
   add AssignPictureType(width, height);
   add TransformPicture(width, height);
-  join roundrobin(1, (width*height*3)/2); 
+  join roundrobin(2, (width*height*3)/2); 
     // (width*height)*(1+1/4+1/4) with ints
 }
 
@@ -146,69 +219,72 @@ int->int filter ReorderPictures(int picturedatasize) {
   }
 }
 
-int->bit pipeline rawImageStream_to_MPEGStream(int width, int height) {
-  int actual_intra_dc_precision = 8;  
-  // Default Values for the quantiser_matrices
-  int[64] default_intra_quantiser_matrix = 
-        { 8, 16, 19, 22, 26, 27, 29, 34,
-         16, 16, 22, 24, 27, 29, 34, 37,
-         19, 22, 26, 27, 29, 34, 34, 38,
-         22, 22, 26, 27, 29, 34, 37, 40,
-         22, 26, 27, 29, 32, 35, 40, 48,
-         26, 27, 29, 32, 35, 40, 48, 58,
-         26, 27, 29, 34, 38, 46, 56, 69,
-         27, 29, 35, 38, 46, 56, 69, 83};
-  int[64] default_non_intra_quantiser_matrix =
-        {16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16};
-  int q_scale_type = 0;
-
-  add PicturePreprocessing(width, height);
-  // Eventually Wrap in Programmable Splitjoin for Group of Pictures
-    add ReorderPictures(width*height*3);
-    // Eventually Wrap in Programmable Splitjoin for Slices - Also need to communicate frame type.
-      add int->int splitjoin {
-        split duplicate; // FEATURETODO eventually replace by programmable splitjoin based on message type.
-        add Identity<int>;
-        for (int i = 0; i < 2; i++) {
-          add Identity<int>; // TODO MotionPrediction
-        }
-        int motionvectordatasize = 0;
-        join roundrobin(64*6, 64*6+motionvectordatasize, 64*6+motionvectordatasize); // FEATURETODO eventually replace
-      }
-      add int->int filter {
-        // TODO Change to DECIDE
-        work pop(64*6*3) push (64*6) {
-          for (int i = 0; i < 64*6; i++) {
-            push(pop());
-          }
-          for (int i = 0; i < 64*6; i++) {
-            pop();
-          }
-          for (int i = 0; i < 64*6; i++) {
-            pop();
-          }
-        }
-      }
-      add MacroBlockEncode;
-      // TODO ADD dequantize and feedback
-      add PartialStreamGenerator_Slice;       
-    add PartialStreamGenerator_PictureLevel;
-  add MPEGStreamGenerator(width, height, default_intra_quantiser_matrix, 
-                          default_non_intra_quantiser_matrix, 
-                          actual_intra_dc_precision-8,
-                          q_scale_type);
+int->int pipeline MacroBlockEncode(int[64] intra_quantiser_matrix, int[64] non_intra_quantiser_matrix) {
+  add DCT8x8_ieee;
+  add Quantization(intra_quantiser_matrix, non_intra_quantiser_matrix);
+  add int->int splitjoin {
+    split roundrobin(4, 64);
+    add Identity<int>;
+    add ZigZagOrdering;
+    join roundrobin(4, 64);
+  }
 }
 
-int->int filter MacroBlockEncode {
-  work pop 1 push 1 {
-    push(pop());
+int->int filter Quantization(int[64] intra_quantiser_matrix, int[64] non_intra_quantiser_matrix) {
+
+  // FEATURETODO - Move to globals when globals working properly - also out of decoder
+  // (cite 1, P.70 Table 7-6)
+  int[2][32] quantiser_scale =
+    // Note that quantiser_scale[x][0] is a Forbidden Value
+    {{ 0,  2,  4,  6,  8, 10, 12, 14,
+      16, 18, 20, 22, 24, 26, 28, 30,
+      32, 34, 36, 38, 40, 42, 44, 46,
+      48, 50, 52, 54, 56, 58, 60, 62},
+     { 0,  1,  2,  3,  4,  5,  6,  7,
+       8, 10, 12, 14, 16, 18, 20, 22,
+      24, 28, 32, 36, 40, 44, 48, 52, 
+      56, 64, 72, 80, 88, 96, 104, 112}};
+
+  // TODO temp - for now only use intra quantization, and 
+  // no changes in the scaling.
+  work pop 64 push 68 {
+    int macroblock_intra = 1;
+    int quantiser_scale_code = 1;
+    push(quantiser_scale_code);
+    push(0); // TODO temp motion_forward
+    push(0); // TODO temp motion_backward
+    push(macroblock_intra);
+    // See (cite 1, P. 71) for more details.
+    // macroblock is INTRA TODO temp
+    int k = 0;
+    int q_scale_type = 0;
+    for (int block = 0; block < 6; block++) { // TODO move out
+      for (int count = 0; count < 64; count++) {
+        push(16*pop()/(intra_quantiser_matrix[count]*quantiser_scale[q_scale_type][quantiser_scale_code]));
+      } 
+    }
+  }
+}
+
+/**
+ * @internal
+ */
+int->int filter ZigZagOrdering {
+  int[64] Ordering = {00, 01, 08, 16, 09, 02, 03, 10,
+                      17, 24, 32, 25, 18, 11, 04, 05,
+                      12, 19, 26, 33, 40, 48, 41, 34,
+                      27, 20, 13, 06, 07, 14, 21, 28,
+                      35, 42, 49, 56, 57, 50, 43, 36,
+                      29, 22, 15, 23, 30, 37, 44, 51,
+                      58, 59, 52, 45, 38, 31, 39, 46,
+                      53, 60, 61, 54, 47, 55, 62, 63};
+  work pop 64 push 64 {
+    for (int i = 0; i < 64; i++) {
+      push(peek(Ordering[i]));
+    }
+    for (int i = 0; i < 64; i++) {
+      pop();
+    }
   }
 }
 
@@ -224,6 +300,23 @@ int->int filter PartialStreamGenerator_PictureLevel {
   }
 }
 
+/** 
+ * Notes: This is the sequence of Pop Operations
+ * this will perform basically, and expect to
+ * receive data in this fashion:
+ * for each picture
+ *   int temporal_reference = pop()
+ *   int picture_coding_type = pop()
+ *   for each slice
+ *     for each macroblock
+ *       int quantiser_scale_code = pop()
+ *       int macroblock_motion_forward = pop()
+ *       int macroblock_motion_backward = pop()
+ *       int macroblock_intra = pop()    
+ *       for each block (block_count)
+ *         for j from 0 to 63
+ *           QFS[i][j] = pop()
+ */
 int->bit filter MPEGStreamGenerator(int width, int height, 
                                     int[64] intra_quantiser_matrix,
                                     int[64] non_intra_quantiser_matrix,
@@ -428,375 +521,400 @@ int->bit filter MPEGStreamGenerator(int width, int height,
       int broken_link = 0;
       pushs(1, broken_link);
 
-      // TODO Start of picture - this might later be broken up
-      // picture_header() (cite 1, P.30)
-      tempval = 0x00000100;
-      pushs(32, tempval);
+      int num_pictures = 3; // Hardcoded for now TODO
+      for (int pic = 0; pic < num_pictures; pic++) {
+        // TODO Start of picture - this might later be broken up
+        // picture_header() (cite 1, P.30)
+        tempval = 0x00000100;
+        pushs(32, tempval);
 
-      // (cite 1, P.50)
-      // The picture in time order, basically
-      int temporal_reference = pop(); 
-      pushs(10, temporal_reference);
+        // (cite 1, P.50)
+        // The picture in time order, basically
+        int temporal_reference = pop(); 
+        pushs(10, temporal_reference);
 
-      int picture_coding_type = pop();      
-      // picture_coding_type = 1 -> I-picture
-      // picture_coding_type = 2 -> P-picture
-      // picture_coding_type = 3 -> B-picture
-      pushs(3, picture_coding_type);
+        int picture_coding_type = pop();      
+        // picture_coding_type = 1 -> I-picture
+        // picture_coding_type = 2 -> P-picture
+        // picture_coding_type = 3 -> B-picture
+        pushs(3, picture_coding_type);
 
-      // TODO unknown interpretation for vbv_delay, (cite 1, P.50)
-      // I really have no idea what this is for. The value I am going
-      // to assign it is the value that I found for one frame from
-      // one video, and I'm going to hope that, like me, most decoders
-      // don't really care about this value.
-      // If there are weird problems later, especially anything related
-      // to playback timing in something like mplayer, I would assume this
-      // is at fault.
-      int vbv_delay = 61589;
-      pushs(16, vbv_delay);
+        // TODO unknown interpretation for vbv_delay, (cite 1, P.50)
+        // I really have no idea what this is for. The value I am going
+        // to assign it is the value that I found for one frame from
+        // one video, and I'm going to hope that, like me, most decoders
+        // don't really care about this value.
+        // If there are weird problems later, especially anything related
+        // to playback timing in something like mplayer, I would assume this
+        // is at fault.
+        int vbv_delay = 61589;
+        pushs(16, vbv_delay);
 
-      // The following is not used by the MPEG-2 specification (cite 1, P.51)
-      // Supposed to have certain values, but not guaranteed for most files.
-      // (cite 1, P. 51)
-      if (picture_coding_type == 2 || picture_coding_type == 3) {
-        int full_pel_forward_vector = 0;
-        pushs(1, full_pel_forward_vector);
-        int forward_f_code = 7;
-        pushs(3, forward_f_code);
-      } 
-      if (picture_coding_type == 3) {
-        int full_pel_backward_vector = 0;
-        pushs(1, full_pel_backward_vector);
-        int backward_f_code = 7;
-        pushs(3, backward_f_code);
-      }
+        // The following is not used by the MPEG-2 specification (cite 1, P.51)
+        // Supposed to have certain values, but not guaranteed for most files.
+        // (cite 1, P. 51)
+        if (picture_coding_type == 2 || picture_coding_type == 3) {
+          int full_pel_forward_vector = 0;
+          pushs(1, full_pel_forward_vector);
+          int forward_f_code = 7;
+          pushs(3, forward_f_code);
+        } 
+        if (picture_coding_type == 3) {
+          int full_pel_backward_vector = 0;
+          pushs(1, full_pel_backward_vector);
+          int backward_f_code = 7;
+          pushs(3, backward_f_code);
+        }
 
-      // Must be 0 for MPEG-2, 1 for supersets of MPEG-2.
-      tempval = 0;
-      pushs(1, tempval);
-      
-      // picture_coding_extension() (cite 1, P.30)
-      tempval = 0x000001B5;
-      pushs(32, tempval);
-
-      extension_start_code_identifier = 0x8;
-      pushs(4, extension_start_code_identifier);
-            
-      int[2][2] f_code;
-      // TODO - what to do about f_code? Fill in later. CONTINUEpoint
-      // TODO - hardcoded for I-pictures right now 
-      f_code[0][0] = 0xF;
-      f_code[0][1] = 0xF;
-      f_code[1][0] = 0xF;
-      f_code[1][1] = 0xF; 
-      pushs(4, f_code[0][0]);
-      pushs(4, f_code[0][1]);
-      pushs(4, f_code[1][0]);
-      pushs(4, f_code[1][1]);
-      // (cite 1, P.51)
-
-      pushs(2, intra_dc_precision);
-
-      int picture_structure = 3;
-      pushs(2, picture_structure);
-
-      int top_field_first = 0;
-      pushs(1, top_field_first);
-
-      int frame_pred_frame_dct = 1;
-      pushs(1, frame_pred_frame_dct);
-
-      int concealment_motion_vectors = 0;
-      // not using concealment_motion_vectors...it just makes everything that
-      // much more complicated.
-      pushs(1, concealment_motion_vectors);
-
-      pushs(1, q_scale_type);      
-
-      int intra_vlc_format = 0;
-      pushs(1, intra_vlc_format);
-
-      int alternate_scan = 0;
-      pushs(1, alternate_scan);
-
-      int repeat_first_field = 0;
-      pushs(1, repeat_first_field);
-
-      // It should be 1 for 4:2:0 chroma.
-      int chroma_420_type = 1;
-      pushs(1, chroma_420_type);
-      // (cite 1, P.53)
-
-      int progressive_frame = 1;
-      pushs(1, progressive_frame);
-
-      int composite_display_flag = 0;
-      pushs(1, composite_display_flag);
-
-      // picture_data() (cite 1, P.34)
-      
-      // I assume 1 slice per macroblock line, for now
-      // TODO eventually parallelize this slicing as best as possible.
-      for (int slice_vertical_position = 1; slice_vertical_position <= mb_height; slice_vertical_position++) {
-        // slice() (cite 1, P.34)
-        // Reset motion vector predictors, (cite 1, P.77-80)
-
-        tempval = 0x000001;
-        pushs(24, tempval);
-        pushs(8, slice_vertical_position);
-
-        if (vertical_size > 2800)
-          print("Error - Program Limitation: Doesn't handle vertical_slices > 2800");
-        int mb_row, previous_macroblock_address;
-        mb_row = slice_vertical_position - 1;
-        previous_macroblock_address = (mb_row * mb_width) - 1;
-        int quantiser_scale_code = pop();
-        pushs(5, quantiser_scale_code);
-        
+        // Must be 0 for MPEG-2, 1 for supersets of MPEG-2.
         tempval = 0;
         pushs(1, tempval);
-        
-        int[3] dc_dct_pred; // (cite 1, P.64-65)
-                            // I'm not sure about this - see P. 64 and getpic.c Line 1180
-                            // they disagree TODO
-        dc_dct_pred[0] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
-        dc_dct_pred[1] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
-        dc_dct_pred[2] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
-        
-        for (int slice_horizontal_position = 1; slice_horizontal_position <= mb_width; slice_horizontal_position++) {
-          // macroblock() (cite 1, P.35)
-          // Note - temporary TODO - for now we allow NO skipped macroblocks
-          int macroblock_address_increment = 1;
-          variable_length_encode(macroblock_address_increment, const_macroblock_address_inc);
-          int macroblock_address = previous_macroblock_address + macroblock_address_increment;
-          previous_macroblock_address = macroblock_address;
-          int mb_column = macroblock_address % mb_width;
-          
-          int macroblock_quant = pop();
-          int macroblock_motion_forward = pop();
-          int macroblock_motion_backward = pop();
-          int macroblock_pattern = 1; 
-            // For now - we are going to force all blocks to be encoded temporarily TODO
-          int macroblock_intra = pop();
-          int spatial_temporal_weight_code_flag = 0;
+      
+        // picture_coding_extension() (cite 1, P.30)
+        tempval = 0x000001B5;
+        pushs(32, tempval);
 
+        extension_start_code_identifier = 0x8;
+        pushs(4, extension_start_code_identifier);
+            
+        int[2][2] f_code;
+        // TODO - what to do about f_code? Fill in later. CONTINUEpoint
+        // TODO - hardcoded for I-pictures right now 
+        f_code[0][0] = 0xF;
+        f_code[0][1] = 0xF;
+        f_code[1][0] = 0xF;
+        f_code[1][1] = 0xF; 
+        pushs(4, f_code[0][0]);
+        pushs(4, f_code[0][1]);
+        pushs(4, f_code[1][0]);
+        pushs(4, f_code[1][1]);
+        // (cite 1, P.51)
+
+        pushs(2, intra_dc_precision);
+
+        int picture_structure = 3;
+        pushs(2, picture_structure);
+ 
+        int top_field_first = 0;
+        pushs(1, top_field_first);
+
+        int frame_pred_frame_dct = 1;
+        pushs(1, frame_pred_frame_dct);
+
+        int concealment_motion_vectors = 0;
+        // not using concealment_motion_vectors...it just makes everything that
+        // much more complicated.
+        pushs(1, concealment_motion_vectors);
+
+        pushs(1, q_scale_type);      
+
+        int intra_vlc_format = 0;
+        pushs(1, intra_vlc_format);
+
+        int alternate_scan = 0;
+        pushs(1, alternate_scan);
+
+        int repeat_first_field = 0;
+        pushs(1, repeat_first_field);
+
+        // It should be 1 for 4:2:0 chroma.
+        int chroma_420_type = 1;
+        pushs(1, chroma_420_type);
+        // (cite 1, P.53)
+
+        int progressive_frame = 1;
+        pushs(1, progressive_frame);
+
+        int composite_display_flag = 0;
+        pushs(1, composite_display_flag);
+
+        // picture_data() (cite 1, P.34)
+      
+        // I assume 1 slice per macroblock line, for now
+        // TODO eventually parallelize this slicing as best as possible.
+        for (int slice_vertical_position = 1; slice_vertical_position <= mb_height; slice_vertical_position++) {
+          // slice() (cite 1, P.34)
+          // Reset motion vector predictors, (cite 1, P.77-80)
+
+          tempval = 0x000001;
+          pushs(24, tempval);
+          pushs(8, slice_vertical_position);
+
+          if (vertical_size > 2800)
+            print("Error - Program Limitation: Doesn't handle vertical_slices > 2800");
+          int mb_row, previous_macroblock_address;
+          mb_row = slice_vertical_position - 1;
+          previous_macroblock_address = (mb_row * mb_width) - 1;
+          int quantiser_scale_code = pop();
+          pushs(5, quantiser_scale_code);
+        
           tempval = 0;
-          tempval = tempval | macroblock_quant;
-          tempval <<= 1;
-          tempval = tempval | macroblock_motion_forward;
-          tempval <<= 1;
-          tempval = tempval | macroblock_motion_backward;
-          tempval <<= 1;
-          tempval = tempval | macroblock_pattern;
-          tempval <<= 1;
-          tempval = tempval | macroblock_intra;
-          tempval <<= 1;
-          tempval = tempval | spatial_temporal_weight_code_flag;
+          pushs(1, tempval);
+        
+          int[3] dc_dct_pred; // (cite 1, P.64-65)
+                              // I'm not sure about this - see P. 64 and getpic.c Line 1180
+                              // they disagree TODO
+          dc_dct_pred[0] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
+          dc_dct_pred[1] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
+          dc_dct_pred[2] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
+        
+          for (int slice_horizontal_position = 1; slice_horizontal_position <= mb_width; slice_horizontal_position++) {
+            // macroblock() (cite 1, P.35)
+            // Note - temporary TODO - for now we allow NO skipped macroblocks
+            int macroblock_address_increment = 1;
+            variable_length_encode(macroblock_address_increment, const_macroblock_address_inc);
+            int macroblock_address = previous_macroblock_address + macroblock_address_increment;
+            previous_macroblock_address = macroblock_address;
+            int mb_column = macroblock_address % mb_width;
           
-          if (picture_coding_type == 1) { // I-picture
-            variable_length_encode(tempval, const_macroblock_type_Ipictures);
-          } else if (picture_coding_type == 2) { // P-picture
-            variable_length_encode(tempval, const_macroblock_type_Ppictures);
-          } else if (picture_coding_type == 3) { // B-picture
-            variable_length_encode(tempval, const_macroblock_type_Bpictures);
-          }
-
-          // (cite 1, P.60, Table 6-17)
-          int prediction_type = 2; // 0 = reserved, 1 = field-based, 2=frame-based, 3=dual-prime
-          int mv_format = 1; // 0 = field, 1 = frame
-          int motion_vector_count = 1;
-          int dmv = 0;
-
-          if (macroblock_quant == 1) {
-            quantiser_scale_code = pop();
-            pushs(5, quantiser_scale_code);
-          }
-
-          int[2][2][2] motion_code;
-          int[2][2][2] motion_residual;
-          // not sure what we're doing with this
-          for (int i = 0; i < 2; i++)
-            for (int j = 0; j < 2; j++)
-              for (int k = 0; k < 2; k++) {
-                motion_code[i][j][k] = 0;
-                motion_residual[i][j][k] = 0;
+            int macroblock_quant;
+            if (slice_horizontal_position != 1) {
+              tempval = pop();
+              if (quantiser_scale_code == tempval) {
+                macroblock_quant = 0;
+              } else {
+                macroblock_quant = 1;
               }
+              quantiser_scale_code = tempval;
+            } else {
+              // If it's the first block of the slice we already popped it off and included it above
+              // in the slice code section, so there's no reason to do it again.
+              macroblock_quant = 0;
+            }
+            int macroblock_motion_forward = pop();
+            int macroblock_motion_backward = pop();
+            // Must be 0 for intra blocks TODO generalize
+            int macroblock_pattern = 0; 
+              // For now - we are going to force all blocks to be encoded temporarily TODO
+            int macroblock_intra = pop();
+            int spatial_temporal_weight_code_flag = 0;
+
+            print("macroblock_quant: " + macroblock_quant);
+            tempval = 0;
+            tempval = tempval | macroblock_quant;
+            tempval <<= 1;
+            print("macroblock_motion_forward: " + macroblock_motion_forward);
+            tempval = tempval | macroblock_motion_forward;
+            tempval <<= 1;
+            print("macroblock_motion_backward: " + macroblock_motion_backward);
+            tempval = tempval | macroblock_motion_backward;
+            tempval <<= 1;
+            print("macroblock_pattern: " + macroblock_pattern);
+            tempval = tempval | macroblock_pattern;
+            tempval <<= 1;
+            print("macroblock_intra: " + macroblock_intra);
+            tempval = tempval | macroblock_intra;
+            tempval <<= 1;
+            print("spatial_temporal_weight_code_flag: " + spatial_temporal_weight_code_flag);
+            tempval = tempval | spatial_temporal_weight_code_flag;
           
-          // Motion Vector Predictor Reset, (cite 1, P.80)     
-          if ((macroblock_intra == 1) ||
-              (macroblock_intra == 0 && macroblock_motion_forward == 0 && 
-               picture_coding_type == 2)) {          
-            // not clear if we should do anything here TODO
-          }
+            if (picture_coding_type == 1) { // I-picture
+              variable_length_encode(tempval, const_macroblock_type_Ipictures);
+            } else if (picture_coding_type == 2) { // P-picture
+              variable_length_encode(tempval, const_macroblock_type_Ppictures);
+            } else if (picture_coding_type == 3) { // B-picture
+              variable_length_encode(tempval, const_macroblock_type_Bpictures);
+            }
 
-          if (macroblock_motion_forward == 1) {
-            // motion_vectors(0); (cite 1, P.36, 61)
-            // motion_vector(0,0);
-            // (cite 1, P.61)
-            for (int t = 0; t < 2; t++) {
-              variable_length_encode(motion_code[0][0][t], const_motion_code);                            
-              if ((f_code[0][t] != 1) && (motion_code[0][0][t] != 0)) {
-                int r_size = f_code[0][t]-1;
-                pushs(r_size, motion_residual[0][0][t]);
+            // (cite 1, P.60, Table 6-17)
+            int prediction_type = 2; // 0 = reserved, 1 = field-based, 2=frame-based, 3=dual-prime
+            int mv_format = 1; // 0 = field, 1 = frame
+            int motion_vector_count = 1;
+            int dmv = 0;
+
+            if (macroblock_quant == 1) {
+              pushs(5, quantiser_scale_code);
+            }
+
+            int[2][2][2] motion_code;
+            int[2][2][2] motion_residual;
+            // not sure what we're doing with this
+            for (int i = 0; i < 2; i++)
+              for (int j = 0; j < 2; j++)
+                for (int k = 0; k < 2; k++) {
+                  motion_code[i][j][k] = 0;
+                  motion_residual[i][j][k] = 0;
+                }
+          
+            // Motion Vector Predictor Reset, (cite 1, P.80)     
+            if ((macroblock_intra == 1) ||
+                (macroblock_intra == 0 && macroblock_motion_forward == 0 && 
+                 picture_coding_type == 2)) {          
+              // not clear if we should do anything here TODO
+            }
+
+            if (macroblock_motion_forward == 1) {
+              // motion_vectors(0); (cite 1, P.36, 61)
+              // motion_vector(0,0);
+              // (cite 1, P.61)
+              for (int t = 0; t < 2; t++) {
+                variable_length_encode(motion_code[0][0][t], const_motion_code);                            
+                if ((f_code[0][t] != 1) && (motion_code[0][0][t] != 0)) {
+                  int r_size = f_code[0][t]-1;
+                  pushs(r_size, motion_residual[0][0][t]);
+                }
               }
             }
-          }
 
-          if (macroblock_motion_backward == 1) {
-            // motion_vectors(1); (cite 1, P.36, 61)
-            // motion_vector(0,1);
-            // (cite 1, P.61)
-            for (int t = 0; t < 2; t++) {
-              variable_length_encode(motion_code[0][1][t], const_motion_code);
-              if ((f_code[1][t] != 1) && (motion_code[0][1][t] != 0)) {
-                int r_size = f_code[1][t]-1;
-                pushs(r_size, motion_residual[0][1][t]);
+            if (macroblock_motion_backward == 1) {
+              // motion_vectors(1); (cite 1, P.36, 61)
+              // motion_vector(0,1);
+              // (cite 1, P.61)
+              for (int t = 0; t < 2; t++) {
+                variable_length_encode(motion_code[0][1][t], const_motion_code);
+                if ((f_code[1][t] != 1) && (motion_code[0][1][t] != 0)) {
+                  int r_size = f_code[1][t]-1;
+                  pushs(r_size, motion_residual[0][1][t]);
+                }
               }
             }
-          }
 
-          int[12] pattern_code;
-          // TODO - later when skipped blocks allowed, change
-          // The meaning of pattern_code is defined somewhat poorly
-          // on (cite 1, P.62) in the code block
-          for (int i = 0; i < 12; i++) {
-            pattern_code[i] = 1;
-          }
-
-          int[8][8] QFS;
-          for (int i = 0; i < block_count; i++) {
-            int QFS_current;
-            QFS_current = 0;
-            for (int j = 0; j < 64; j++) {
-              QFS[i][j] = pop();
+            int[12] pattern_code;
+            // TODO - later when skipped blocks allowed, change
+            // The meaning of pattern_code is defined somewhat poorly
+            // on (cite 1, P.62) in the code block
+            for (int i = 0; i < 12; i++) {
+              pattern_code[i] = 1;
             }
 
-            // block(i) (cite 1, P.38)
-            // if macroblocks are skipped, predictor is reset
-            if (pattern_code[i] == 1) {
-              if (macroblock_intra == 1) {
-                if (i < 4) {
-                  int dc_dct_luminance = QFS[i][0];
-                  int dct_diff = dc_dct_luminance - dc_dct_pred[0];
-                  int dc_dct_size_luminance;
-                  if (dct_diff == 0) {
+            int[block_count][64] QFS;
+
+            for (int i = 0; i < block_count; i++) {
+              int QFS_current;
+              QFS_current = 0;
+              print("here");
+              for (int j = 0; j < 64; j++) {
+                QFS[i][j] = pop();
+              }
+              print("here2");
+              // block(i) (cite 1, P.38)
+              // if macroblocks are skipped, predictor is reset
+              if (pattern_code[i] == 1) {
+                if (macroblock_intra == 1) {
+                  if (i < 4) {
+                    int dc_dct_luminance = QFS[i][0];
+                    int dct_diff = dc_dct_luminance - dc_dct_pred[0];
+                    int dc_dct_size_luminance;
+                    if (dct_diff == 0) {
                     dc_dct_size_luminance = 0;
-                    variable_length_encode(dc_dct_size_luminance, const_dct_dc_size_luminance);
-                  } else {
-                    int temp = (int) abs(dct_diff);
-                    dc_dct_size_luminance = 0;
-                    while (temp != 0) {
-                      temp /= 2;
-                      dc_dct_size_luminance++;
-                    }
-                    variable_length_code(dc_dct_size_luminance, const_dct_dc_size_luminance);
-                    int half_range = (int) pow(2,dc_dct_size_luminance-1);
-                    int dc_dct_differential_luminance;
-                    if (dct_diff > 0) {
-                      dc_dct_differential_luminance = dct_diff;
+                      variable_length_encode(dc_dct_size_luminance, const_dct_dc_size_luminance);
                     } else {
-                      dc_dct_differential_luminance = (dct_diff + (2*half_range)) - 1;
-                    }
-                    pushs(dc_dct_size_luminance, dc_dct_differential_luminance);
-                    QFS_current++;
-                  }         
-                  dc_dct_pred[0] = dc_dct_luminance;
-                } else {
-                  int dc_dct_chrominance = QFS[i][0];
-                  int dct_diff = dc_dct_chrominance - dc_dct_pred[i-3];
-                  int dc_dct_size_chrominance;
-                  if (dct_diff == 0) {
-                    dc_dct_size_chrominance = 0;
-                    variable_length_encode(dc_dct_size_chrominance, const_dct_dc_size_chrominance);
+                      int temp = (int) abs(dct_diff);
+                      dc_dct_size_luminance = 0;
+                      while (temp != 0) {
+                        temp /= 2;
+                        dc_dct_size_luminance++;
+                      }
+                      variable_length_code(dc_dct_size_luminance, const_dct_dc_size_luminance);
+                      int half_range = (int) pow(2,dc_dct_size_luminance-1);
+                      int dc_dct_differential_luminance;
+                      if (dct_diff > 0) {
+                        dc_dct_differential_luminance = dct_diff;
+                      } else {
+                        dc_dct_differential_luminance = (dct_diff + (2*half_range)) - 1;
+                      }
+                      pushs(dc_dct_size_luminance, dc_dct_differential_luminance);
+                      QFS_current++;
+                    }         
+                    dc_dct_pred[0] = dc_dct_luminance;
                   } else {
-                    int temp = (int) abs(dct_diff);
-                    dc_dct_size_chrominance = 0;
-                    while (temp != 0) {
-                      temp /= 2;
-                      dc_dct_size_chrominance++;
-                    }
-                    variable_length_code(dc_dct_size_chrominance, const_dct_dc_size_chrominance);
-                    int half_range = (int) pow(2, dc_dct_size_chrominance-1);
-                    int dc_dct_differential_chrominance;
-                    if (dct_diff > 0) {
-                      dc_dct_differential_chrominance = dct_diff;
+                    int dc_dct_chrominance = QFS[i][0];
+                    int dct_diff = dc_dct_chrominance - dc_dct_pred[i-3];
+                    int dc_dct_size_chrominance;
+                    if (dct_diff == 0) {
+                      dc_dct_size_chrominance = 0;
+                      variable_length_encode(dc_dct_size_chrominance, const_dct_dc_size_chrominance);
                     } else {
-                      dc_dct_differential_chrominance = (dct_diff + (2*half_range)) - 1;
-                    } 
-                    pushs(dc_dct_size_chrominance, dc_dct_differential_chrominance);
-                    QFS_current++;
+                      int temp = (int) abs(dct_diff);
+                      dc_dct_size_chrominance = 0;
+                      while (temp != 0) {
+                        temp /= 2;
+                        dc_dct_size_chrominance++;
+                      }
+                      variable_length_code(dc_dct_size_chrominance, const_dct_dc_size_chrominance);
+                      int half_range = (int) pow(2, dc_dct_size_chrominance-1);
+                      int dc_dct_differential_chrominance;
+                      if (dct_diff > 0) {
+                        dc_dct_differential_chrominance = dct_diff;
+                      } else {
+                        dc_dct_differential_chrominance = (dct_diff + (2*half_range)) - 1;
+                      } 
+                      pushs(dc_dct_size_chrominance, dc_dct_differential_chrominance);
+                      QFS_current++;
+                    }  
+                    dc_dct_pred[i-3] = dc_dct_chrominance;
                   }
-                  dc_dct_pred[i-3] = dc_dct_chrominance;
+                } else {
+                  dc_dct_pred[0] = 0;
+                  dc_dct_pred[1] = 0;
+                  dc_dct_pred[2] = 0;
+                }
+                print("here3");
+                if (macroblock_intra == 0 && QFS_current == 0) {
+                  // This section here from end of Table B.14 and 7.2.2.2 (cite 1, P.66)
+                  if (QFS[i][0] == 1 || QFS[i][0] == -1) {
+                    if (QFS[i][0] == 1) {
+                      tempval = 2;
+                    } else {
+                      tempval = 3;
+                    }
+                    pushs(2, tempval);
+                    QFS_current++;
+                  }             
+                }
+                int run = 0;
+                while (QFS_current < 64) {
+                  // For an understanding of this section see
+                  // (cite 1, 7.2.2 P.65-66) 
+                  if (QFS[i][QFS_current] == 0) {
+                    run++;
+                  } else {
+                    int level = (int) abs(QFS[i][QFS_current]);
+                    int sign = 0;
+                    if (QFS[i][QFS_current] > 0) {
+                      sign = 0;
+                    } else {
+                      sign = 1;
+                    }
+                    boolean found = false;
+                    for (int c = 0; c < const_dct_coefficients_table_zero_len; c++) {
+                      // Regular run/level encoding 
+                      // We write it specially because not all combinations
+                      // are encoded, there are also the escape coded coefficients.
+                      if (const_dct_coefficients_table_zero[c].run == run &&
+                          const_dct_coefficients_table_zero[c].level == level) {
+                        int len = const_dct_coefficients_table_zero[c].len;
+                        tempval = const_dct_coefficients_table_zero[c].code;
+                        pushs(len, tempval);
+                        pushs(1, sign);
+                        found = true;
+                        c = const_dct_coefficients_table_zero_len;
+                      }
+                    }
+                    if (!found) {
+                      // Escape Coding
+                      tempval = 1;
+                      pushs(6, tempval);
+                      pushs(6, run);
+                      pushs(1, sign);
+                      if (sign == 0) {
+                        level = QFS[i][QFS_current];
+                      } else {
+                        level = QFS[i][QFS_current] - 2048;
+                      }
+                      pushs(11, level);
+                    }
+                    run = 0;
+                  }
+                  QFS_current++;
+                  if (QFS_current == 64 && run > 0) {
+                    tempval = 2;
+                    pushs(2, tempval);
+                  }
                 }
               } else {
-                dc_dct_pred[0] = 0;
-                dc_dct_pred[1] = 0;
-                dc_dct_pred[2] = 0;
+                print("Error - Program Limitation: Does not yet handle skipped blocks");
               }
-              if (macroblock_intra == 0 && QFS_current == 0) {
-                // This section here from end of Table B.14 and 7.2.2.2 (cite 1, P.66)
-                if (QFS[i][0] == 1 || QFS[i][0] == -1) {
-                  if (QFS[i][0] == 1) {
-                    tempval = 2;
-                  } else {
-                    tempval = 3;
-                  }
-                  pushs(2, tempval);
-                  QFS_current++;
-                }             
-              }
-              int run = 0;
-              while (QFS_current < 64) {
-                // For an understanding of this section see
-                // (cite 1, 7.2.2 P.65-66) 
-                if (QFS[i][QFS_current] == 0) {
-                  run++;
-                } else {
-                  int level = (int) abs(QFS[i][QFS_current]);
-                  int sign = 0;
-                  if (QFS[i][QFS_current] > 0) {
-                    sign = 0;
-                  } else {
-                    sign = 1;
-                  }
-                  boolean found = false;
-                  for (int c = 0; c < const_dct_coefficients_table_zero_len; c++) {
-                    // Regular run/level encoding 
-                    // We write it specially because not all combinations
-                    // are encoded, there are also the escape coded coefficients.
-                    if (const_dct_coefficients_table_zero[c].run == run &&
-                        const_dct_coefficients_table_zero[c].level == level) {
-                          int len = const_dct_coefficients_table_zero[c].len;
-                          tempval = const_dct_coefficients_table_zero[c].code;
-                          pushs(len, tempval);
-                          pushs(1, sign);
-                          found = true;
-                          c = const_dct_coefficients_table_zero_len;
-                        }
-                  }
-                  if (!found) {
-                    // Escape Coding
-                    tempval = 1;
-                    pushs(6, tempval);
-                    pushs(6, run);
-                    pushs(1, sign);
-                    if (sign == 0) {
-                      level = QFS[i][QFS_current];
-                    } else {
-                      level = QFS[i][QFS_current] - 2048;
-                    }
-                    pushs(11, level);
-                  }
-                  run = 0;
-                }
-                QFS_current++;
-                if (QFS_current == 64 && run > 0) {
-                  tempval = 2;
-                  pushs(2, tempval);
-                }
-              }
-            } else {
-              print("Error - Program Limitation: Does not yet handle skipped blocks");
             }
           }
         }

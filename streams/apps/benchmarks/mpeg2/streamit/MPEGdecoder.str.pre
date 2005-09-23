@@ -1081,6 +1081,7 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
 
   int count;
 
+  // (cite 1, P.70 Table 7-6)
   int[2][32] quantiser_scale =
     // Note that quantiser_scale[x][0] is a Forbidden Value
     {{ 0,  2,  4,  6,  8, 10, 12, 14,
@@ -1091,7 +1092,6 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
        8, 10, 12, 14, 16, 18, 20, 22,
       24, 28, 32, 36, 40, 44, 48, 52, 
       56, 64, 72, 80, 88, 96, 104, 112}};
-  // (cite 1, P.70 Table 7-6)
 
   init {
     count = 0;

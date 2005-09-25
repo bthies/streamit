@@ -201,7 +201,7 @@ public class StreamGraph
     
     /**
        This method cuts the connects from <upstream> to <downstream> in the flatgraph
-       and in the SIR graph,sets the types of the input of <downstream> and
+       and in the SIR graph, sets the types of the input of <downstream> and
        output of <upstream> to void, and sets the appropriate rates to 0
     **/
     private void cutGraph(FlatNode upstream, FlatNode downstream) 

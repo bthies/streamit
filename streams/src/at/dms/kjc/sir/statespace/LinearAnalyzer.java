@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.15 2004-08-16 02:48:03 sitij Exp $
+ * $Id: LinearAnalyzer.java,v 1.16 2005-09-25 21:27:56 rabbah Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -229,7 +229,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	try {
 
 	    unrolledSelf.getInit().accept(initVisitor);
-            initVisitor.complete();
+	    initVisitor.complete();
 
 	    // copy the last column of A (constants) to the init vector
 

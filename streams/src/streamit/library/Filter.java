@@ -605,7 +605,7 @@ public abstract class Filter extends Stream
     }
 
     public void doWork() {
-        prepareToWork();
+	prepareToWork();
 
 	// call work or prework, etc.
 	PhaseInfo phase = getCurrentPhase();
@@ -617,7 +617,7 @@ public abstract class Filter extends Stream
 	    throw new RuntimeException("Unrecognized phase name: " + phase.name);
 	}
 
-        cleanupWork();
+	cleanupWork();
     }
 
     public void cleanupWork() {

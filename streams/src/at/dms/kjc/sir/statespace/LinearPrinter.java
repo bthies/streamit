@@ -16,19 +16,19 @@ public class LinearPrinter {
     public static void setOutput(boolean outFlag) {
 	outputEnabled = outFlag;
     }
-    /** Prints message to stdout if flag is set to true. **/
+    /** Prints message to stderr if flag is set to true. **/
     public static void println(String message) {
 	if (outputEnabled) {
 	    System.err.println(message);
 	}
     }
-    /** Prints message to stdout if flag is set to true. **/
+    /** Prints message to stderr if flag is set to true. **/
     public static void print(String message) {
 	if (outputEnabled) {
 	    System.err.print(message);
 	}
     }
-    /** Prints message with WARNING: prefix to stdout if flag is set to true. **/
+    /** Prints message with WARNING: prefix to stderr if flag is set to true. **/
     public static void warn(String message) {
 	System.err.println("WARNING: " + message);
     }

@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.34 2003-11-02 13:10:13 jasperln Exp $
+ * $Id: LinearAnalyzer.java,v 1.35 2005-09-25 21:21:39 rabbah Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -404,7 +404,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 
     /**
      * Given kidList, returns a list of the values of kidMap.get(kidList)
-     * in the same ovder as the kidList.
+     * in the same order as the kidList.
      **/
     private static List getLinearRepList(HashMap kidMap, List kidList) {
 	List repList = new LinkedList(); 
@@ -569,7 +569,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    LinearFilterRepresentation currentDecimatorRep;
 	    currentDecimatorRep = makeDecimator(totalSplitWeight, splitterWeights, childPosition);
 
-	    // make a pipelin list (decimator, child) to pass to pipeline transform 
+	    // make a pipeline list (decimator, child) to pass to pipeline transform 
 	    List virtualPipeline = new LinkedList();
 	    virtualPipeline.add(currentDecimatorRep);
 	    virtualPipeline.add(currentChildRep);
@@ -589,7 +589,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    // update child position
 	    childPosition++;
 	    
-	// lather, rise and repeat
+	// lather, rinse and repeat
 	}
 
 	// return the new repList.

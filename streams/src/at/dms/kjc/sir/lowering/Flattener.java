@@ -327,6 +327,7 @@ public class Flattener {
 	    // if we are doing linear partitioning, it will take care
 	    // of linear and frequency replacement automatically
 	    if (KjcOptions.linearpartition) {
+		System.err.println("Running linear partitioner...");
 		str = new LinearPartitioner(str, lfa).toplevel();
 	    } else { 
 		// and finally, if we want to run frequency analysis

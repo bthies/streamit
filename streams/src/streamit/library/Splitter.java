@@ -27,6 +27,7 @@ import streamit.library.iriter.FeedbackLoopIter;
 abstract public class Splitter extends Operator
 {
     public static boolean finegrained = false;
+    public boolean duplicateSplitter = false;
 
     List dest = new ArrayList();
     public Channel input = null;
@@ -63,7 +64,16 @@ abstract public class Splitter extends Operator
 	    // sum output weights to get input weights
 	    int totalData = 0;
 	    for (int i=0; i<throughput.length; i++) {
-		totalData += throughput[i];
+		/* RMR { for duplicate splitters, only take the max output weight
+		 * since the data on the input channel is shared 
+		 */
+		if (duplicateSplitter) {
+		    totalData = MAX(throughput[i], totalData);
+		}
+		else {
+		    totalData += throughput[i];
+		}
+		/* } RMR */
 	    }
 
 	    // ensure data
@@ -169,7 +179,7 @@ abstract public class Splitter extends Operator
 
     public String toString()
     {
-        return "joiner";
+        return "splitter";
     }
 
     Pair splitWorks[];

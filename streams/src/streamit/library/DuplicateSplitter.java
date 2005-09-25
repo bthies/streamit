@@ -18,6 +18,10 @@ package streamit.library;
 
 public class DuplicateSplitter extends Splitter
 {
+    public void init()
+    {
+	  duplicateSplitter = true;
+    }
     
     /* this work function remains here (instead of using work function
        in the parent) because it copies single data to many channels

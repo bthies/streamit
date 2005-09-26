@@ -189,9 +189,9 @@ public class RenameAll extends SLIRReplacingVisitor
 				       (JExpression)two.getPop().accept(this),
 				       (JExpression)two.getPush().accept(this),
 				       newWork,
-				       two.getInitPeek(),
-				       two.getInitPop(),
-				       two.getInitPush(),
+				       (JExpression)two.getInitPeek().accept(this),
+				       (JExpression)two.getInitPop().accept(this),
+				       (JExpression)two.getInitPush().accept(this),
 				       newInitWork,
 				       two.getInputType(),
 				       two.getOutputType());

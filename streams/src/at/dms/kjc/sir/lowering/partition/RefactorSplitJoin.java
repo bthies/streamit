@@ -221,7 +221,6 @@ public class RefactorSplitJoin {
 	// return child of wrapper
 	return wrapper.get(0);
     }
-    static int ij=0;
 
     /**
      * Given that all of the children of <sj> are pipelines and that

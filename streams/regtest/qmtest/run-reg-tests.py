@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.13 2005-02-20 16:02:05 rabbah Exp $
+# $Id: run-reg-tests.py,v 1.14 2005-09-29 21:58:26 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -148,6 +148,8 @@ class RunRegTests:
                          'Building the compiler')
         self.run_and_log('make -C %s/library/c' % self.streamit_home,
                          'makeclog', 'Building the C library')
+        self.run_and_log('make -C %s/library/cluster' % self.streamit_home,
+                         'makeclusterlog', 'Building the cluster library')
         self.run_and_log('make -C %s/misc/raw' % self.streamit_home, 'rawlog',
                          'Building the RAW tree', permissible=1)
         # No error results on this yet.

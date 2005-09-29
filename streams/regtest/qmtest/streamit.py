@@ -1,7 +1,7 @@
 #
 # streamit.py: Python extensions to QMTest for StreamIt
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamit.py,v 1.5 2003-12-23 19:05:28 dmaze Exp $
+# $Id: streamit.py,v 1.6 2005-09-29 21:58:26 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -16,6 +16,8 @@ import qm.test.test
 import signal
 import threading
 import re
+import socket
+import shutil
 
 class TimedExecutable(qm.executable.RedirectedExecutable):
     # TODO: make this configurable.
@@ -54,8 +56,8 @@ class TimedExecutable(qm.executable.RedirectedExecutable):
 class BackendField(EnumerationField):
     """A field containing a StreamIt compiler backend."""
 
-    backend_names = ['Uniprocessor', 'Library', 'RAW 4x4']
-    backend_tags = ['uni', 'library', 'raw4']    
+    backend_names = ['Uniprocessor', 'Library', 'RAW 4x4', 'Cluster 1']
+    backend_tags = ['uni', 'library', 'raw4', 'cluster']    
 
     # TODO: think about some way to present the backend_names
     # to the user, but use the backend_tags internally.
@@ -87,19 +89,19 @@ def InterpretExitCode(result, status, expected, component):
 
     # Figure out what happened; crib from the QMTest ExecTest class.
     # (But don't worry about Win32.)
-    if os.WIFEXITED(status):
+    if os.WIFEXITED(status):            # status && 0xff = 0
         exit_code = os.WEXITSTATUS(status)
         if expected != None and exit_code != expected:
             result[component + '.expected_exit_code'] \
                              = str(expected)
             result[component + '.exit_code'] = str(exit_code)
             result.Fail("Unexpected exit code.")
-    elif os.WIFSIGNALED(status):
-        signum = os.WTERMSIG(status)
+    elif os.WIFSIGNALED(status):        # 0 < status < 258
+        signum = os.WTERMSIG(status)    # status & 0x7f
         result[component + '.signal'] = str(signum)
         result.Fail("Exited with signal.")
-    elif os.WIFSTOPPED(status):
-        signum = os.WSTOPSIG(status)
+    elif os.WIFSTOPPED(status):         # status > 256 && status & 0xff = 127
+        signum = os.WSTOPSIG(status)    # status >> 8 & 0xff
         result[component + '.signal'] = str(signum)
         result.Fail("Stopped with signal.")
     else:
@@ -166,6 +168,8 @@ class RunStrcTest(qm.test.test.Test):
             backend = ['--library']
         elif self.backend == 'raw4':
             backend = ['--raw', '4']
+        elif self.backend == 'cluster':
+            backend = ['-cluster', '1']
         # List of args to the program, starting with the program name,
         # and always including the iteration count:
         arguments = [path] + backend + \
@@ -186,7 +190,39 @@ class RunStrcTest(qm.test.test.Test):
             result['RunStrcTest.stdout'] = e.stdout
 
         InterpretExitCode(result, status, self.exit_code, 'RunStrcTest')
-        
+
+        if (self.backend == 'cluster'
+            and result.GetOutcome() != result.FAIL
+            and result.GetOutcome() != result.ERROR):
+            # cluster requires extra make step
+            e = TimedExecutable()
+            e.Run(['make', '-f', 'Makefile.cluster', 'run_cluster'])
+            result['RunStrcTest.stdout_makefile'] = e.stdout
+            result['RunStrcTest.stderr_makefile'] = e.stderr
+            makestatus = 1
+            if os.access('run_cluster', os.F_OK):
+                 makestatus=0
+
+            InterpretExitCode(result, makestatus, self.exit_code, 'RunStrcTest')
+
+            if (result.GetOutcome() != result.FAIL
+                and result.GetOutcome() != result.ERROR):
+                # first need to replace "machine-1" in cluster-config.txt
+                # with name of the machine that we are running on (uname -n)
+                finame = "cluster-config.txt"
+                ftname = "cluster-config.txt.tmp"
+                hostname = socket.gethostname()
+                fi = open(finame)
+                ft = open(ftname, 'w')
+                for s in fi.readlines():
+                    ft.write(s.replace('machine-1',hostname))
+                    
+                fi.close()
+                ft.close()
+                # Python 2.2.2: no shutil.move yet
+                shutil.copy(ftname,finame)
+	        os.unlink(ftname)        
+            
 class RunProgramTest(qm.test.test.Test):
     """Run a compiled program as a QMTest test.
 
@@ -214,6 +250,8 @@ class RunProgramTest(qm.test.test.Test):
             return self._RunRaw(context, result)
         elif self.backend == 'uni':
             return self._RunUni(context, result)
+	elif self.backend == 'cluster':
+            return self._RunClu(context, result)
         else:
             # Should raise an exception
             pass
@@ -229,9 +267,9 @@ class RunProgramTest(qm.test.test.Test):
 
         InterpretExitCode(result, status, None, 'RunProgramTest')
 
-    def _RunUni(self, context, result):
-        # Unless magic has happened, the binary should be a.out.
-        path = os.path.join('.', 'a.out')
+    def _RunNamedFile(self, context, result, filename):
+        # then run_cluster with path and -i
+        path = os.path.join('.', filename)
         arguments = [path, '-i' + str(self.runopts[1])]
         e = TimedExecutable()
         status = e.Run(arguments, path=path)
@@ -243,6 +281,12 @@ class RunProgramTest(qm.test.test.Test):
 
         # Mostly, note if the program died an unholy death.
         InterpretExitCode(result, status, None, 'RunProgramTest')
+        
+    def _RunClu(self, context, result):
+        self._RunNamedFile(context, result, 'run_cluster')
+
+    def _RunUni(self, context, result):
+        self._RunNamedFile(context, result, 'a.out')
 
 class CompareResultsTest(qm.test.test.Test):
     """Compare the results from a program run to the expected output."""

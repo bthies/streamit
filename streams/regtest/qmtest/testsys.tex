@@ -180,4 +180,131 @@ and \textsf{build-qmtest.py}, along with adding the backend to
 backend flag for validity, and places which dispatch based on the
 backend and assume it is one of the extant backends.
 
+\subsection{Data Files}
+The description of the structure of the .xml files is based on looking
+at build-qmtest.py and determining what tags it uses.  If it does not
+use a tag that is in an example file, then the tag is listed as
+optional and shown in the sequence in which it appears on some
+randomly-chosen example file.
+
+\subsubsection{regtest.xml}
+Format: \verb@regtest (test | option(CDATA))+@
+
+All \verb+<test root="DIRNAME">+ indicate directories that might have 
+benchmarks.xml files in directory subtrees. (build-qmtest.py processes
+this file and does not follow symbolic links in determining the
+directory subtree.)
+
+All \verb+<option target="BACKEND">COMMAND_LINE_OPTIONS</option>+
+indicate back ends that will be used for all tests.
+
+Current legal values for the target attribute are  ``uni'', ``raw4'', or 
+``cluster''.
+
+\subsubsection{benchmark.xml}
+Format:\begin{verbatim}
+benchmark 
+  (name(CDATA)?, desc(CDATA)?, description(CDATA)?, reference(CDATA)?
+   implementations 
+     (impl
+        (desc(CDATA)? | file(CDATA)+ | make(CDATA)?)))
+       \end{verbatim}%
+where {\tt impl} has attributes
+\begin{itemize}
+\item {\tt regtest} optional.  If value is {\tt skip} then skip
+  processing of {\tt file}s in this {\tt impl} 
+\item {\tt dir} optional to indicate that {\tt file}s are in a subdirectory.
+The value is the relative address of the subdirectory from the
+directory containing the benchmark.xml
+\item {\tt id} optional, used for naming test directories, for
+  reporting.  If absent defaults to ``impl'' plus a sequence number.
+\item {\tt lang} Language to use in testing.  build-qmtest.py filters
+  out all {\tt impl}s where {\tt lang} $\neq$ {\tt StreamIT}.
+\end{itemize}
+
+{\tt make} names a make file, which is run before processing {\tt file}s.
+
+{\tt file} has one attribute, {\tt class}.  If the value of {\tt class}
+is "source" or if class is missing then the file name is of a source
+file.  If {\tt class} is "output" then the file name is the is expected
+output.
+
+\subsubsection{classes.qmc}
+Points QM at some overridden or extended classes in streamit.py
+
+\subsection{configuration}
+Used by QM?
+
+\subsubsection{Directories}
+{\tt build-qmtest.py} will create a different subdirectory for each
+combination of {\tt impl} in a benchmark.xml file and {\tt option}s in
+the regtest.xml file.
+
+
+\subsection{Programs and Control Flow}
+
+\subsubsection{streamit.py}
+extends / overrides som QM methods, and contains a few utility routines.
+
+\subsubsection{run-reg-tests.py}
+\begin{itemize}
+\item check out clean directory:
+ Under directory named in global variable {\tt regtest\_root} check
+ out a fresh copy of streams from CVS, build the compiler (src), the C
+ library (library/c) and the raw toolchain (misc/raw),
+\item use streamitqm / run-reg-tests.py to convert from our .xml files to QM
+  files,
+\item run QM,
+\item run examine-results.py to create summary report and mail it to all.
+\item run rt-results.py to build a detailed report
+\item and set the results of this run to be the latest results.
+\end{itemize}
+
+\subsubsection{streamitqm}
+Shell script used to get from run-reg-tests.py to 
+./regtest/qmtest/build-qmtest.py
+plus some file handling.  run-reg-tests.py expects this file to be in 
+\$STREAMIT\_HOME/regtest/qmtest/streamitqm.
+
+\subsubsection{build-qmtest.py}
+Executable, invoked with 1 parameter: the complete path and file name for the 
+regtest.xml file.  streamitqm expects this file to be in '.regtest/qmtest'.
+Creates files {\tt compile.qmt}, {\tt run.qmt}, and {\tt verify.qmt}
+for each combination of backend and options.
+
+\subsubsection{rt-results.py}
+Executable, invoked with 2 parameters: name of results file (defaults
+to results.qmr), and path to place to put reports (defaults to '.').
+Creates files 
+``Summary'' (with bad link to RT::WebPath/StreamIt/listing.html which
+probably doesn't matter since listing.html is difficult to read...).
+``RegtestItem'' which is supposed to be html with embedded Perl, but
+all my browser sees is the Perl.
+``listing.html'' (not very readable as mentioned above).
+
+Presumably, nobody has wanted the results of this for a while...
+
+\section{Running your own regression test}
+
+Slightly modified from Bill Thies' mail message of  Wed, 14 Sep 2005.
+\begin{verbatim}
+1. Edit $STREAMIT_HOME/regtest/qmtest/regtest.xml to test the
+   directory tree ("test root") and options that you want.
+
+   All benchmarks with a benchmark.xml file under the test root
+   specified will be tested.
+
+2. Do the following commands:
+
+   cd $STREAMIT_HOME
+   rm -fr QMTest results.qmr apps.qms
+   ./regtest/qmtest/streamitqm setup
+   setenv QMTEST_CLASS_PATH $STREAMIT_HOME/QMTest
+   qmtest run
+
+This will start a regtest running with your local copy of the source
+tree and outputting the results to the screen.  The applications and
+compile options being tested are stored under $STREAMIT_HOME/apps.qms.
+\end{verbatim}
+
 \end{document}

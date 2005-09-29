@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.6 2005-08-16 19:10:04 thies Exp $
+# $Id: build-qmtest.py,v 1.7 2005-09-29 21:58:26 dimock Exp $
 #
 
 import os
@@ -65,7 +65,10 @@ def BuildQMTestTree(control):
     working directory.
 
     'control' -- Results of parsing the regtest control file, as
-    returned from 'ReadControlFile()'."""
+    returned from 'ReadControlFile()'..  
+    { 'testroots': testroots, 'targets': targets }
+    where testroots is a list of directories to search in BuildQMTestTree
+    targets is provessed by DoQMTestDir"""
 
     def visit(arg, dirname, names):
         if 'benchmark.xml' in names:
@@ -84,7 +87,10 @@ def DoQMTestDir(path, control):
     'path' -- Path to the benchmark in the source tree.
 
     'control' -- Results of parsing the regtest control file, as
-    returned from 'ReadControlFile()'."""
+    returned from 'ReadControlFile()'.  
+    { 'testroots': testroots, 'targets': targets }
+    where testroots is a list of directories to search in BuildQMTestTree
+    targets is list of backend, option pairs for use with StreamIt compiler."""
 
     benchmarkname = os.path.join(path, 'benchmark.xml')
     qmname = '.'.join(SplitAll(path))
@@ -276,8 +282,8 @@ def GetRunDOM(target, fileset, extras):
     'extras' -- Mapping describing additional parameters available.
     'testname' should contain the basename of this set of tests."""
 
-    # Only deal with the uniprocessor and RAW paths.
-    if not (target == 'uni' or target == 'raw4'):
+    # Only deal with the uniprocessor, RAW, and cluster paths.
+    if not (target == 'uni' or target == 'raw4' or target == 'cluster'):
         return None
     impl = xml.dom.minidom.getDOMImplementation()
     doc = impl.createDocument(None, 'extension', None)
@@ -336,7 +342,7 @@ def GetVerifyDOM(target, fileset, extras):
     # What's the actual name of the prereq?  Library doesn't have a
     # "run" stage.
     prereq = extras['testname']
-    if target == 'uni' or target == 'raw4':
+    if target == 'uni' or target == 'raw4' or target == 'cluster':
         prereq = prereq + '.run'
     else:
         prereq = prereq + '.compile'
@@ -410,7 +416,7 @@ def MakeOptionName(target, opts):
     QMTest test name.
 
     'target' -- Name of the compiler backend target, should be one
-    of 'library', 'uni', or 'raw4'.
+    of 'library', 'uni', 'cluster', or 'raw4'.
 
     'opts' -- Additional options to pass to strc."""
 

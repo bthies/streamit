@@ -170,11 +170,13 @@ public class StreaMITMain {
 	} catch (IllegalAccessException e) {
             System.err.println("*** Not allowed to invoke backend " +
                                backendClass);
+            System.exit(1);
         } catch (InvocationTargetException e) {
             // Loses debugging information on the exception, sigh.
             // We can't blindly rethrow the exception because it might
             // not be a RuntimeException.  I hate Java.  Die as best we can.
 	    e.getTargetException().printStackTrace();
+	    System.exit(1);
         }
 
     }

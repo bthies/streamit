@@ -29,10 +29,13 @@ public class TestK2S extends Main
      */
     public static void main(String[] args)
     {
-   	boolean     success = true;
-        
-	success = compile(args);
-        
+   	boolean success = false;
+    try {
+    	success = compile(args);
+    } catch (Throwable e) {
+    	e.printStackTrace();
+    	success = false;
+    }
         System.exit(success ? 0 : 1);
     }
     

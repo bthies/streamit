@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.20 2003-10-02 04:31:31 jasperln Exp $
+ * $Id: Main.java,v 1.21 2005-09-29 21:27:04 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -54,11 +54,16 @@ public class Main extends Compiler {
      * @param	args		the command line arguments
      */
     public static void main(String[] args) {
-	boolean	success;
+    	boolean	success = false;
 
-	success = compile(args);
-
-	System.exit(success ? 0 : 1);
+    	try {
+    		success = compile(args);
+    	} catch (java.lang.Throwable e) {
+    		System.err.println("Compilation produced an uncaught Throwable");
+    		e.printStackTrace();
+    		success = false;
+    	}
+    	System.exit(success ? 0 : 1);
     }
 
     /**

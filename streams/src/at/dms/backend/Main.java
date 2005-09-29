@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: Main.java,v 1.2 2005-09-29 21:27:03 dimock Exp $
  */
 
 package at.dms.backend;
@@ -63,6 +63,9 @@ public class Main {
 	  optimizeClass(infiles[i]);
 	} catch (UnpositionedError e) {
 	  System.err.println("Error: " + e.getMessage());
+	  errorsFound = true;
+	} catch (Throwable e) {
+	  e.printStackTrace();
 	  errorsFound = true;
 	}
       }

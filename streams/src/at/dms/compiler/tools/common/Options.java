@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Options.java,v 1.2 2002-12-11 20:17:41 karczma Exp $
+ * $Id: Options.java,v 1.3 2005-09-29 21:27:04 dimock Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -142,7 +142,7 @@ public abstract class Options {
 	defaultValue;
     } catch (Exception e) {
       System.err.println("malformed option: " + g.getOptarg());
-      System.exit(0);
+      System.exit(1);
       return 1;
     }
   }

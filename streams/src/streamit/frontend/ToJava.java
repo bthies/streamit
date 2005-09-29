@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.68 2005-07-19 18:09:05 madrake Exp $
+ * @version $Id: ToJava.java,v 1.69 2005-09-29 21:27:04 dimock Exp $
  */
 public class ToJava
 {
@@ -328,8 +328,12 @@ public class ToJava
     
     public static void main(String[] args)
     {
-        int result = new ToJava().run(args);
-        System.exit(result);
+    	try {
+    		int result = new ToJava().run(args);
+    		System.exit(result); }
+    	catch (Throwable e) { 
+    		e.printStackTrace();
+    	}
     }
 }
 

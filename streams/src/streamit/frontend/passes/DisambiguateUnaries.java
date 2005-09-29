@@ -27,7 +27,7 @@ import java.util.List;
  * a temporary variable.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DisambiguateUnaries.java,v 1.8 2005-04-09 00:01:09 thies Exp $
+ * @version $Id: DisambiguateUnaries.java,v 1.9 2005-09-29 18:49:21 thies Exp $
  */
 public class DisambiguateUnaries extends SymbolTableVisitor
 {
@@ -69,14 +69,14 @@ public class DisambiguateUnaries extends SymbolTableVisitor
     private boolean calcVisitPopPeek(Statement stmt) {
 	final int[] popCount = { 0 };
 	final int[] peekCount = { 0 };
-	stmt.accept(new FENullVisitor() {
+	stmt.accept(new FEReplacer() {
 		public Object visitExprPop(ExprPop expr) {
 		    popCount[0]++;
-		    return null;
+		    return super.visitExprPop(expr);
 		}
-		public Object visitExprPeek(ExprPop expr) {
+		public Object visitExprPeek(ExprPeek expr) {
 		    peekCount[0]++;
-		    return null;
+		    return super.visitExprPeek(expr);
 		}
 	    });
 	return (// more than one pop, or

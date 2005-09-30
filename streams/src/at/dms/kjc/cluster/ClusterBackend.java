@@ -260,6 +260,7 @@ public class ClusterBackend implements FlatVisitor {
 	    if (str instanceof SIRContainer) {
 		((SIRContainer)str).reclaimChildren();
 	    }
+	    str.setParent(null);
 	    */
 	} 
 

@@ -171,6 +171,8 @@ public class CachePartitioner extends ListPartitioner {
 	if (result instanceof SIRContainer) {
 	    ((SIRContainer)result).reclaimChildren();
 	}
+	// also set parent to null, since this is toplevel stream
+	result.setParent(null);
 
 	// can only print if we didn't transform
 	if (!doTransform) {

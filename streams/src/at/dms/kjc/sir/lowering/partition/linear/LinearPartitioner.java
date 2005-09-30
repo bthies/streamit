@@ -111,6 +111,9 @@ public class LinearPartitioner {
 	if (result instanceof SIRContainer) {
 	    ((SIRContainer)result).reclaimChildren();
 	}
+	// also set toplevel parent to be null, in case it was
+	// shuffled
+	result.setParent(null);
 
 	return result;
     }

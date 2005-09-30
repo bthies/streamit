@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.31 2005-08-09 01:41:27 madrake Exp $
+ * @version $Id: SemanticChecker.java,v 1.32 2005-09-30 21:29:52 rabbah Exp $
  */
 public class SemanticChecker
 {
@@ -254,7 +254,7 @@ public class SemanticChecker
                 {
                     StreamType st = ss.getStreamType();
                     if (ss.getType() != StreamSpec.STREAM_GLOBAL && 
-			st != null && 
+                        st != null && 
                         st.getIn() instanceof TypePrimitive &&
                         st.getOut() instanceof TypePrimitive &&
                         ((TypePrimitive)st.getIn()).getType() ==
@@ -270,7 +270,7 @@ public class SemanticChecker
                         else
                         {
                             report(theTopLevel,
-                                   "first declared top-level stream" +
+                                   "first declared top-level stream " +
                                    theTopLevel.getName());
                             report(ss, "duplicate top-level stream " +
                                    ss.getName());

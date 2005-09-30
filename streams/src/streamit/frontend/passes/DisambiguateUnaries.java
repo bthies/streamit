@@ -27,7 +27,7 @@ import java.util.List;
  * a temporary variable.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DisambiguateUnaries.java,v 1.9 2005-09-29 18:49:21 thies Exp $
+ * @version $Id: DisambiguateUnaries.java,v 1.10 2005-09-30 21:27:08 rabbah Exp $
  */
 public class DisambiguateUnaries extends SymbolTableVisitor
 {
@@ -48,11 +48,24 @@ public class DisambiguateUnaries extends SymbolTableVisitor
     protected void doStatement(Statement stmt)
     {
         successors = new java.util.ArrayList();
-	visitPopPeek = calcVisitPopPeek(stmt);
+        visitPopPeek = calcVisitPopPeek(stmt);
         Statement result = (Statement)stmt.accept(this);
         if (result != null)
             addStatement(result);
         addStatements(successors);
+
+        /* RMR { clear the list of successor statements once they are
+         * added to avoid adding them again in the case of a statement
+         * which triggers recursive processing (namely an <add> of an
+         * anonymous filter); otherwise if the last statement of an
+         * anonymous filter results in a non-null list of successor
+         * statements (e.g, add filter ... { push(i++); or i++; } the
+         * successor statements are added following the <push> as well
+         * as following the <add> in the parent stream's initialization 
+	   * code
+         */
+        successors.clear();
+        /* } RMR */
     }
 
     /**
@@ -87,29 +100,33 @@ public class DisambiguateUnaries extends SymbolTableVisitor
 
     public Object visitExprUnary(ExprUnary expr)
     {
-        // Does this modify its argument?
-        int op = expr.getOp();
-        if (op == ExprUnary.UNOP_PREINC || op == ExprUnary.UNOP_PREDEC ||
-            op == ExprUnary.UNOP_POSTINC || op == ExprUnary.UNOP_POSTDEC)
-        {
-            // Insert a statement: a = a + 1.
-            // Assume that the child expression of expr is a valid
-            // left-hand side; it can usefully be a field, array
-            // reference, or local variable.
-            FEContext ctx = expr.getContext();
-            Expression lhs = expr.getExpr();
-            int bop = ExprBinary.BINOP_ADD;
-            if (op == ExprUnary.UNOP_PREDEC || op == ExprUnary.UNOP_POSTDEC)
-                bop = ExprBinary.BINOP_SUB;
-            Expression rhs =
-                new ExprBinary(ctx, bop, lhs, new ExprConstInt(ctx, 1));
-            Statement assign = new StmtAssign(ctx, lhs, rhs, 0);
-            if (op == ExprUnary.UNOP_PREINC || op == ExprUnary.UNOP_PREDEC)
-                addStatement(assign);
-            else
-                successors.add(assign);
-            return lhs;
-        }
+	  /* RMR { do not transform ++/-- operators to new expressions,
+	   * instead simple return the original expression
+	   */
+//         // Does this modify its argument?
+//         int op = expr.getOp();
+//         if (op == ExprUnary.UNOP_PREINC || op == ExprUnary.UNOP_PREDEC ||
+//             op == ExprUnary.UNOP_POSTINC || op == ExprUnary.UNOP_POSTDEC)
+//         {
+//             // Insert a statement: a = a + 1.
+//             // Assume that the child expression of expr is a valid
+//             // left-hand side; it can usefully be a field, array
+//             // reference, or local variable.
+//             FEContext ctx = expr.getContext();
+//             Expression lhs = expr.getExpr();
+//             int bop = ExprBinary.BINOP_ADD;
+//             if (op == ExprUnary.UNOP_PREDEC || op == ExprUnary.UNOP_POSTDEC)
+//                 bop = ExprBinary.BINOP_SUB;
+//             Expression rhs =
+//                 new ExprBinary(ctx, bop, lhs, new ExprConstInt(ctx, 1));
+//             Statement assign = new StmtAssign(ctx, lhs, rhs, 0);
+//             if (op == ExprUnary.UNOP_PREINC || op == ExprUnary.UNOP_PREDEC)
+//                 addStatement(assign);
+//             else
+//                 successors.add(assign);
+//             return lhs;
+//         }
+        /* } RMR */
         return expr;
     }
 
@@ -120,24 +137,34 @@ public class DisambiguateUnaries extends SymbolTableVisitor
      */
     private Object visitPeekOrPop(Expression expr)
     {
-	// don't change anything if we're not to be visiting pops or
-	// peeks
-	if (!visitPopPeek) {
-	    return expr;
-	}
-
-	// Create a temporary variable...
-	FEContext ctx = expr.getContext();
-	String name = varGen.nextVar();
-	Type type = getType(expr);
-	addStatement(new StmtVarDecl(ctx, type, name, null));
-	// Generate an assignment to that..
-	Expression var = new ExprVar(ctx, name);
-	addStatement(new StmtAssign(ctx, var, expr, 0));
-	// ...and return the variable.
-	return var;
+	  /* RMR { make sure peek arguements get visited
+	   * to handle pre/post decrements/increments 
+	   */
+	  if (expr instanceof ExprPeek) {
+		ExprPeek peekArgument = (ExprPeek) expr;
+		expr = new ExprPeek(expr.getContext(), 
+					  (Expression) peekArgument.getExpr().accept(this));
+	  }
+	  /* } RMR */
+	  
+	  // don't change anything if we're not to be visiting pops or
+	  // peeks
+	  if (!visitPopPeek) {
+		return expr;
+	  }
+	  
+	  // Create a temporary variable...
+	  FEContext ctx = expr.getContext();
+	  String name = varGen.nextVar();
+	  Type type = getType(expr);
+	  addStatement(new StmtVarDecl(ctx, type, name, null));
+	  // Generate an assignment to that..
+	  Expression var = new ExprVar(ctx, name);
+	  addStatement(new StmtAssign(ctx, var, expr, 0));
+	  // ...and return the variable.
+	  return var;
     }
-
+    
     public Object visitExprPeek(ExprPeek expr)
     {
         // Why do we need to visit peek expressions here?  If we have

@@ -38,7 +38,7 @@
   int sdep::getDstPhase4SrcPhase(int nSrcPhase) {
     nSrcPhase++;
 
-    //printf("nSrcPhase=%d\n", nSrcPhase);
+    //fprintf(stderr,"nSrcPhase=%d\n", nSrcPhase);
     // first have to figure out if I need to "wrap around"
     int addDstPhase = 0;
     if (nSrcPhase >= numInitSrcExec + numSteadySrcExec + 1)
@@ -48,7 +48,7 @@
 	addDstPhase = fullExecs * numSteadyDstExec;
 	nSrcPhase = nSrcPhase - fullExecs * numSteadySrcExec;
       }
-    //printf("addDstPhase=%d nSrcPhase=%d\n", addDstPhase, nSrcPhase);
+    //fprintf(stderr,"addDstPhase=%d nSrcPhase=%d\n", addDstPhase, nSrcPhase);
     
     int dstPhaseLow = 0,
       dstPhaseHigh = numInitDstExec + numSteadyDstExec;
@@ -71,8 +71,8 @@
     // If there is an entry of nSrcPhase, I want to get the lowest index
     // that contains it. But if such an entry doesn't exist, I want the
     // high-end entry! 
-    //printf("dstPhaseLow=%d dst2src[]=%d\n", dstPhaseLow, dst2srcDependency[dstPhaseLow]);
-    //printf("dstPhaseHigh=%d dst2src[]=%d\n", dstPhaseHigh, dst2srcDependency[dstPhaseHigh]);
+    //fprintf(stderr,"dstPhaseLow=%d dst2src[]=%d\n", dstPhaseLow, dst2srcDependency[dstPhaseLow]);
+    //fprintf(stderr,"dstPhaseHigh=%d dst2src[]=%d\n", dstPhaseHigh, dst2srcDependency[dstPhaseHigh]);
     int dstPhase;
     if (dst2srcDependency[dstPhaseLow] == nSrcPhase)
       {
@@ -82,7 +82,7 @@
       {
 	dstPhase = dstPhaseHigh;
       }
-    //printf("dstPhase=%d\n", dstPhase);
+    //fprintf(stderr,"dstPhase=%d\n", dstPhase);
     
     return dstPhase + addDstPhase - 1;
   }

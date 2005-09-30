@@ -86,7 +86,7 @@ void init_instance::read_config_file() {
 
   FILE *f = fopen("cluster-config.txt", "r");
 
-  printf("Reading cluster config file...\n");
+  fprintf(stderr,"Reading cluster config file...\n");
 
   for (;;) {
   
@@ -96,11 +96,11 @@ void init_instance::read_config_file() {
 
     string s(name);
     thread_machines[node] = lookup_ip(s.c_str());
-    printf("thread:%d machine:%s\n", node, name);
+    fprintf(stderr,"thread:%d machine:%s\n", node, name);
 
   }
 
-  printf("\n");
+  fprintf(stderr,"\n");
   
   fclose(f);
 }
@@ -174,9 +174,9 @@ void init_instance::initialize_sockets() {
 
   // create local socket pair where applicable
 
-  //printf("Creating kernel level pipes");
-  printf("Creating shared memory sockets...\n");
-  fflush(stdout);
+  //fprintf(stderr,"Creating kernel level pipes");
+  fprintf(stderr,"Creating shared memory sockets...\n");
+  fflush(stderr);
   
   for (vector<sock_dscr>::iterator i = out_connections.begin(); i < out_connections.end(); ++i) {
   
@@ -193,9 +193,9 @@ void init_instance::initialize_sockets() {
 
       // create pipe
 
-      printf("Creataing memory socket %d->%d type:%d\n", sd.from, sd.to, sd.type);
-      //printf(".");
-      fflush(stdout);
+      fprintf(stderr,"Creataing memory socket %d->%d type:%d\n", sd.from, sd.to, sd.type);
+      //fprintf(stderr,".");
+      fflush(stderr);
       
       //int pfd[2];
       //int retval = pipe(pfd);
@@ -231,7 +231,7 @@ void init_instance::initialize_sockets() {
     }
   }
 
-  printf("done\n");
+  fprintf(stderr,"done\n");
 
   for (vector<sock_dscr>::iterator i = in_connections.begin(); i < in_connections.end(); ++i) {
   
@@ -294,34 +294,34 @@ void init_instance::initialize_sockets() {
       sock = open_socket::connect(ip_addr, 22222);
 
       if (sock == NULL) {
-	printf("Trying again ...\n");
+	fprintf(stderr,"Trying again ...\n");
 	sleep(1);     
       }
     }
 
-    //printf("socket connected !!\n");
+    //fprintf(stderr,"socket connected !!\n");
 
     sock->write_chunk((char*)data, 12);
     sock->read_chunk((char*)data, 12);
 
-    //printf("socket done: recieved reply %d %d !!\n", data[0], data[1]);
+    //fprintf(stderr,"socket done: recieved reply %d %d !!\n", data[0], data[1]);
 
     out_sockets[sd] = new netsocket(sock->get_fd());
 
-    //printf("Out Socket Added from:%d to:%d socket:%d\n", pair.from, pair.to, sock->get_fd());
+    //fprintf(stderr,"Out Socket Added from:%d to:%d socket:%d\n", pair.from, pair.to, sock->get_fd());
 
     ++i1;
 
   }
 
-  printf("All outgoing connections created!\n");
+  fprintf(stderr,"All outgoing connections created!\n");
 
   // wait for accept thread to finnish
 
   LOCK(&accept_lock);
   UNLOCK(&accept_lock);
 
-  printf("\n");
+  fprintf(stderr,"\n");
   
 }
 
@@ -414,7 +414,7 @@ int init_instance::listen() {
     return -1;
   }
 
-  printf("Socket bound and listening....done\n");
+  fprintf(stderr,"Socket bound and listening....done\n");
   
   UNLOCK(&bind_lock);
 
@@ -440,24 +440,24 @@ int init_instance::listen() {
       struct sockaddr_in cliaddr;
       unsigned clilen = sizeof(cliaddr);
 
-      //printf("Accepting connection....");
-      fflush(stdout);
+      //fprintf(stderr,"Accepting connection....");
+      //fflush(stderr);
 
       sock = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
 
       unsigned ip = cliaddr.sin_addr.s_addr;
 
-      //printf("Incomming connection from : %d.%d.%d.%d %d ", (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256), cliaddr.sin_port );
+      //fprintf(stderr,"Incomming connection from : %d.%d.%d.%d %d ", (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256), cliaddr.sin_port );
 
       if (sock == -1) {	
 
-	printf("failed to accept socket\n");
+	fprintf(stderr,"failed to accept socket\n");
 
       } else {
 	
 	if ( fcntl(sock, F_SETFL, O_NONBLOCK) != -1 ) {
 
-	  //printf("have connection on socket (%d)\n", sock);
+	  //fprintf(stderr,"have connection on socket (%d)\n", sock);
 	
 	  netsocket socket(sock);
 
@@ -472,23 +472,23 @@ int init_instance::listen() {
 
 	  if (i == in_done.end()) {
 	  
-	    printf("error: socket data is undefined! %d %d %d\n", data[0], data[1], data[2]);
+	    fprintf(stderr,"error: socket data is undefined! %d %d %d\n", data[0], data[1], data[2]);
 	    close(sock);
 	    
 	  } else {
 
 	    if ((*i).second == false) {
 	  
-	      //printf("int pair FOUND!\n");
+	      //fprintf(stderr,"int pair FOUND!\n");
 	      in_done[sd] = true;
 
 	      in_sockets[sd] = new netsocket(sock);
-	      //printf("In Socket Added from:%d to:%d socket:%d\n", pair.from, pair.to, sock);
+	      //fprintf(stderr,"In Socket Added from:%d to:%d socket:%d\n", pair.from, pair.to, sock);
 
 	      socks_accepted++;
 	    } else {
 
-	      printf("Warning! socket data already seen!\n");
+	      fprintf(stderr,"Warning! socket data already seen!\n");
 	      close(sock);
 	      
 	    }
@@ -497,7 +497,7 @@ int init_instance::listen() {
 
 	  if (socks_accepted >= in_connections.size()) { 
 	    
-	    printf("All incoming connections created!\n");
+	    fprintf(stderr,"All incoming connections created!\n");
 
 	    close(listenfd);
 
@@ -513,7 +513,7 @@ void init_instance::close_sockets() {
 
   map<sock_dscr, mysocket*>::iterator i;
 
-  printf("Closing sockets...\n");
+  fprintf(stderr,"Closing sockets...\n");
 
   for (i = in_sockets.begin(); i != in_sockets.end(); ++i) {
     ((*i).second)->close();

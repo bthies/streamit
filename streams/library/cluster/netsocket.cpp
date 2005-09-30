@@ -226,7 +226,7 @@ int netsocket::read_chunk(char *buf, int len) {
     
     if (select_retval > 0) {
       
-      //printf("read_chunk :: select returns true\n");
+      //fprintf(stderr,"read_chunk :: select returns true\n");
 
       retval = read(fd, buf + done, len - done);
 

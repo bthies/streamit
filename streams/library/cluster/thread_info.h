@@ -69,7 +69,7 @@ class thread_info {
 
 inline void exit_thread(thread_info *info) {
 
-  printf("thread %d exited!\n", info->get_thread_id());
+  fprintf(stderr,"thread %d exited!\n", info->get_thread_id());
   pthread_exit(NULL);
 }
 

@@ -76,7 +76,7 @@ int save_state::load_from_file(int thread,
   char fname[256];
   sprintf(fname, "%s%d.%d", PATH, thread, steady_iter);
   
-  printf("thread: %d file: %s\n", thread, fname);
+  fprintf(stderr,"thread: %d file: %s\n", thread, fname);
   
   int fd = open(fname, O_RDONLY);
   
@@ -97,10 +97,10 @@ int save_state::load_from_file(int thread,
 
     count += 4;
 
-    //printf("read data (4 bytes)\n");
+    //fprintf(stderr,"read data (4 bytes)\n");
   }
 
-  printf("thread: %d file: %s size: %d bytes\n", thread, fname, count);
+  fprintf(stderr,"thread: %d file: %s size: %d bytes\n", thread, fname, count);
   close(fd);
   
   buf.set_read_offset(0);
@@ -113,7 +113,7 @@ int save_state::load_from_file(int thread,
 int save_state::load_state(int thread, int *steady, void (*read_object)(object_write_buffer *)) {
   
   unsigned iter = init_instance::get_thread_start_iter(thread);
-  printf("thread: %d iteration: %d\n", thread, iter);
+  fprintf(stderr,"thread: %d iteration: %d\n", thread, iter);
   
   if (iter > 0) {
     *steady = iter;
@@ -238,7 +238,7 @@ void save_state::delete_checkpoints(int max_iter) {
 	sprintf(fname, "%s%s", PATH, name);
 	unlink(fname);
 	
-	//printf("deleted (%s)", fname);
+	//fprintf(stderr,"deleted (%s)", fname);
       }
     }
       

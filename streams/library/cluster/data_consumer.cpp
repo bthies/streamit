@@ -56,8 +56,8 @@ void data_consumer::read_chunk(void *buf, int size, int nitems) {
     retval = sock->read_chunk((char*)buf, size);
 
     if (retval == -1) {
-      printf("data_consumer: could not read data!");
-      fflush(stdout);
+      fprintf(stderr,"data_consumer: could not read data!");
+      fflush(stderr);
       sock->check_thread_status();
       sleep(1);
     }

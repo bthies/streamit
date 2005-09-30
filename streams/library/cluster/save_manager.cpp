@@ -54,8 +54,8 @@ void save_manager::run() {
 
       (*t_info->get_latest_checkpoint()) = info->steady_iter;
 
-      //printf("save(%d.%d)", thread_id, info->steady_iter);
-      //fflush(stdout);
+      //fprintf(stderr,"save(%d.%d)", thread_id, info->steady_iter);
+      //fflush(stderr);
 
       delete info->buf;
       delete info;

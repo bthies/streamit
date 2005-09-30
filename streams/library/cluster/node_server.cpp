@@ -62,7 +62,7 @@ int node_server::read_cluster_config(netsocket *sock) {
 
   /*
   if (tmp != n_threads) {
-    printf("ERROR: reading cluster config (n_threads)!\n");
+    fprintf(stderr,"ERROR: reading cluster config (n_threads)!\n");
     return -1;
   }
   */
@@ -76,13 +76,13 @@ int node_server::read_cluster_config(netsocket *sock) {
     sock->read_chunk((char*)&ip, sizeof(unsigned));
     iter = sock->read_int();
 
-    printf("read: %d %u %d\n", thread, ip, iter);
+    fprintf(stderr,"read: %d %u %d\n", thread, ip, iter);
     
     init_instance::set_thread_ip(thread, ip);
     init_instance::set_thread_start_iter(thread, iter);
   }
 
-  printf("done.\n");
+  fprintf(stderr,"done.\n");
 
   return 0;
 }
@@ -96,7 +96,7 @@ void node_server::run_server(netsocket *sock) {
   for (;;) {
     cmd = sock->read_int();
 
-    printf("received command: %d\n", cmd);
+    fprintf(stderr,"received command: %d\n", cmd);
     
     if (sock->eof()) break;
     
@@ -182,7 +182,7 @@ int node_server::find_latest_checkpoint() {
   
       int latest = *info->get_latest_checkpoint();
 
-      //printf("latest chkpt: (%d->%d)", info->get_thread_id(), latest);
+      //fprintf(stderr,"latest chkpt: (%d->%d)", info->get_thread_id(), latest);
 
       if (latest < resp || !any) resp = latest;
       

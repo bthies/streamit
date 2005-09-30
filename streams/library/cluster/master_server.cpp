@@ -145,24 +145,24 @@ void master_server::process_command(char *cmd) {
 
     if (node == NULL) {
       
-      printf("ERROR: Connection failed.\n");
+      fprintf(stderr,"ERROR: Connection failed.\n");
       
     } else {
       
-      printf("Connected to %s\n", host);
+      fprintf(stderr,"Connected to %s\n", host);
       
       vector<int> threads = list(node);
       
-      printf("  threads found: ");
+      fprintf(stderr,"  threads found: ");
       
       for (vector<int>::iterator i = threads.begin();
 	   i < threads.end();
 	   ++i) {
 	
-	printf("%d ", *i);
+	fprintf(stderr,"%d ", *i);
       }
       
-      printf("\n");      
+      fprintf(stderr,"\n");      
     }
   } 
 
@@ -176,13 +176,13 @@ void master_server::process_command(char *cmd) {
     
     if (node == NULL) {
       
-      printf("ERROR: Thread not found.\n");
+      fprintf(stderr,"ERROR: Thread not found.\n");
       
     } else {
 
       int retval;
       retval = pause_proper(node, id);
-      printf("retval: %d\n", retval);	
+      fprintf(stderr,"retval: %d\n", retval);	
       
     }      
   }
@@ -198,13 +198,13 @@ void master_server::process_command(char *cmd) {
     
     if (node == NULL) {
       
-      printf("ERROR: Thread not found.\n");
+      fprintf(stderr,"ERROR: Thread not found.\n");
       
     } else {
 
       int retval;
       retval = pause_any(node, id);
-      printf("retval: %d\n", retval);	
+      fprintf(stderr,"retval: %d\n", retval);	
       
     }      
   }
@@ -219,13 +219,13 @@ void master_server::process_command(char *cmd) {
     
     if (node == NULL) {
       
-      printf("ERROR: Thread not found.\n");
+      fprintf(stderr,"ERROR: Thread not found.\n");
       
     } else {
       
       int retval;
       retval = resume(node, id);
-      printf("retval: %d\n", retval);	
+      fprintf(stderr,"retval: %d\n", retval);	
       
     }      
   }  
@@ -241,22 +241,22 @@ void master_server::process_command(char *cmd) {
 
     if (node == NULL) {
       
-      printf("ERROR: Thread not found.\n");
+      fprintf(stderr,"ERROR: Thread not found.\n");
       
     } else {
 
       vector<int> threads = indata(node, id);
       
-      printf("  incoming links from: ");
+      fprintf(stderr,"  incoming links from: ");
       
       for (vector<int>::iterator i = threads.begin();
 	   i < threads.end();
 	   ++i) {
 	
-	printf("%d ", *i);
+	fprintf(stderr,"%d ", *i);
       }
       
-      printf("\n");      
+      fprintf(stderr,"\n");      
       
     }
   }
@@ -273,22 +273,22 @@ void master_server::process_command(char *cmd) {
 
     if (node == NULL) {
       
-      printf("ERROR: Thread not found.\n");
+      fprintf(stderr,"ERROR: Thread not found.\n");
       
     } else {
 
       vector<int> threads = outdata(node, id);
       
-      printf("  outbound links to: ");
+      fprintf(stderr,"  outbound links to: ");
       
       for (vector<int>::iterator i = threads.begin();
 	   i < threads.end();
 	   ++i) {
 	
-	printf("%d ", *i);
+	fprintf(stderr,"%d ", *i);
       }
       
-      printf("\n");      
+      fprintf(stderr,"\n");      
       
     }
   }

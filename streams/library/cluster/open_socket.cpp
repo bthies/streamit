@@ -73,7 +73,7 @@ netsocket *open_socket::listen(short port) {
     return NULL;
   }
 
-  //printf("Socket bound and listening....done\n");
+  //fprintf(stderr,"Socket bound and listening....done\n");
   
 
   ///////////////////////////////////////////
@@ -97,14 +97,14 @@ netsocket *open_socket::listen(short port) {
       struct sockaddr_in cliaddr;
       unsigned clilen = sizeof(cliaddr);
 
-      //printf("Accepting connection....");
-      fflush(stdout);
+      //fprintf(stderr,"Accepting connection....");
+      //fflush(stderr);
 
       sock = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
 
       unsigned ip = cliaddr.sin_addr.s_addr;
 
-      //printf("Incomming connection from : %d.%d.%d.%d %d ", 
+      //fprintf(stderr,"Incomming connection from : %d.%d.%d.%d %d ", 
       //     (ip % 256), 
       //     ((ip>>8) % 256), 
       //     ((ip>>16) % 256), 
@@ -116,7 +116,7 @@ netsocket *open_socket::listen(short port) {
 
       if (sock == -1) {	
 
-	printf("failed\n");
+	fprintf(stderr,"failed\n");
 
 	return NULL;
 
@@ -127,7 +127,7 @@ netsocket *open_socket::listen(short port) {
 	  return NULL;
 	}
 
-	//printf("done (%d)\n", sock);
+	//fprintf(stderr,"done (%d)\n", sock);
 
 	return new netsocket(sock);
       }
@@ -167,14 +167,14 @@ netsocket *open_socket::connect(unsigned ipaddr, short port) {
   sa.sin_port = htons(port);
   sa.sin_addr.s_addr = ipaddr;
 
-  //printf("Tyring to connect....");
-  fflush(stdout);
+  //fprintf(stderr,"Tyring to connect....");
+  //fflush(stderr);
 
   if (::connect(sock, (struct sockaddr *)&sa, sizeof(sa))) {
 
-    printf("failed to connect to ");
-    print_ip(stdout, ipaddr);
-    printf("\n");
+    fprintf(stderr,"failed to connect to ");
+    print_ip(stderr, ipaddr);
+    fprintf(stderr,"\n");
     return NULL; // Could not connect to the host
   }
 
@@ -185,7 +185,7 @@ netsocket *open_socket::connect(unsigned ipaddr, short port) {
     return NULL;
   }
 
-  //printf("done\n");
+  //fprintf(stderr,"done\n");
  
   return new netsocket(sock);
 

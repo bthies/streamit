@@ -56,12 +56,12 @@ int ccp::read_config_file(char *file_name) {
     m_id--; // adjust from 1..n to 0..(1-n) 
     
     partition[id] = m_id;
-    printf("thread %d -> %s (%d)\n", id, buf, m_id);
+    fprintf(stderr,"thread %d -> %s (%d)\n", id, buf, m_id);
   }
 
   fclose(f);
 
-  printf("Number of nodes in partition: (%d)\n", max);
+  fprintf(stderr,"Number of nodes in partition: (%d)\n", max);
   machines_in_partition = max;
 
   return 0;
@@ -122,7 +122,7 @@ int ccp::run_ccp() {
     return -1;
   }
 
-  printf("Socket bound and listening....done\n");
+  fprintf(stderr,"Socket bound and listening....done\n");
   
   struct timeval rwait;
 
@@ -162,7 +162,7 @@ int ccp::run_ccp() {
 	  unsigned ip = cliaddr.sin_addr.s_addr;
 	  
 	  /*
-	  printf("Incomming connection from : %d.%d.%d.%d %d \n",
+	  fprintf(stderr,"Incomming connection from : %d.%d.%d.%d %d \n",
 		 (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256),
 		 cliaddr.sin_port );
 	  */
@@ -170,7 +170,7 @@ int ccp::run_ccp() {
 	  if ( fcntl(fd, F_SETFL, O_NONBLOCK) == -1 ) {
 	    
 	    close(fd);
-	    printf("Failed to set non-blocking!\n");	  
+	    fprintf(stderr,"Failed to set non-blocking!\n");	  
 	    
 	  } else {
 	  
@@ -179,7 +179,7 @@ int ccp::run_ccp() {
 	    ccp_session *s = new ccp_session(ip, sock);
 	    sessions.push_back(s);
 	    
-	    printf("new connection from (%d.%d.%d.%d)\n", 
+	    fprintf(stderr,"new connection from (%d.%d.%d.%d)\n", 
 		   (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256));
 
 	    handle_change_in_number_of_nodes();
@@ -197,7 +197,7 @@ int ccp::run_ccp() {
 	  if (res == -1) {
 	    unsigned ip = (*i)->get_ip();
 	    
-	    printf("connection closed by (%d.%d.%d.%d)\n", 
+	    fprintf(stderr,"connection closed by (%d.%d.%d.%d)\n", 
 		   (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256));
 
 	    sessions.erase(i, i+1); // remove session	    
@@ -223,8 +223,8 @@ int ccp::run_ccp() {
 
     if (latest_chkpt > last_latest_chkpt) {
 
-      printf("latest chkpt is: [%d]", latest_chkpt);
-      fflush(stdout);
+      fprintf(stderr,"latest chkpt is: [%d]", latest_chkpt);
+      fflush(stderr);
 
       delete_chkpts::set_max_iter(latest_chkpt);
 
@@ -244,7 +244,7 @@ int ccp::run_ccp() {
 
 	if (!alive) {
 
-	  printf("connection closed from (%d.%d.%d.%d) no longer ALIVE\n", 
+	  fprintf(stderr,"connection closed from (%d.%d.%d.%d) no longer ALIVE\n", 
 		 (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256));
 
 	  sessions.erase(i, i+1); // remove session
@@ -264,22 +264,22 @@ void ccp::handle_change_in_number_of_nodes() {
 
   int count = sessions.size();
   
-  printf("Number of nodes available: %d\n", 
+  fprintf(stderr,"Number of nodes available: %d\n", 
 	 count);
 
   if ( waiting_to_start_execution ) {
 
     if (count == machines_in_partition) {
 
-      printf("Enough nodes to start cluster execution!\n");
+      fprintf(stderr,"Enough nodes to start cluster execution!\n");
       
       assign_nodes_to_partition();
       
-      printf("Assignement of threads to nodes...\n");
+      fprintf(stderr,"Assignement of threads to nodes...\n");
       
       for (int t = 0; t < number_of_threads; t++) {
 	unsigned ip = machines[partition[t]];
-	printf("thread: %d ip: (%d.%d.%d.%d)\n", t, (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
+	fprintf(stderr,"thread: %d ip: (%d.%d.%d.%d)\n", t, (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
       }
       
       send_cluster_config(initial_iteration);
@@ -295,7 +295,7 @@ void ccp::handle_change_in_number_of_nodes() {
     
     if (count == 0) {
     
-      printf("All nodes have disconnected!");
+      fprintf(stderr,"All nodes have disconnected!");
 
     } else {
     
@@ -309,45 +309,45 @@ void ccp::handle_change_in_number_of_nodes() {
 
 	unsigned ip = (*i)->get_ip();
       
-	printf("Node: (%d.%d.%d.%d) ", (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
+	fprintf(stderr,"Node: (%d.%d.%d.%d) ", (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
 	if (ret == 1) {
-	  printf("All threads stoped\n");
+	  fprintf(stderr,"All threads stoped\n");
 	} else {
-	  printf("Unexpected error!\n");
+	  fprintf(stderr,"Unexpected error!\n");
 	}
 
       }
 
-      printf("Sleep 5 seconds...");
+      fprintf(stderr,"Sleep 5 seconds...");
       sleep(5);
-      printf("Done.\n");
+      fprintf(stderr,"Done.\n");
 
       //execute_partitioner(count);
 
       char name[64];
       sprintf(name, "cluster-config.txt.%d", count);
-      printf("Trying to open file [%s] ...", name); 
+      fprintf(stderr,"Trying to open file [%s] ...", name); 
 
       int res = read_config_file(name);
       if (res == -1) {
-	printf("Failed!\n"); 
+	fprintf(stderr,"Failed!\n"); 
 	return;
       } else {
-	printf("Success!\n");
+	fprintf(stderr,"Success!\n");
       }
 
       assign_nodes_to_partition();
       
-      printf("Assignement of threads to nodes...\n");
+      fprintf(stderr,"Assignement of threads to nodes...\n");
       
       for (int t = 0; t < number_of_threads; t++) {
 	unsigned ip = machines[partition[t]];
-	printf("thread: %d ip: (%d.%d.%d.%d)\n", t, (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
+	fprintf(stderr,"thread: %d ip: (%d.%d.%d.%d)\n", t, (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
       }
 
       int iter = save_state::find_max_iter(number_of_threads);
 
-      printf("Latest checkpoint found is: %d\n", iter);
+      fprintf(stderr,"Latest checkpoint found is: %d\n", iter);
 
       send_cluster_config(iter);
 
@@ -362,8 +362,8 @@ void ccp::handle_change_in_number_of_nodes() {
 
 void ccp::send_cluster_config(int iter) {
 
-  printf("Sending cluster configuration to cluster nodes... ");
-  fflush(stdout);
+  fprintf(stderr,"Sending cluster configuration to cluster nodes... ");
+  fflush(stderr);
 
   for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i) {
 
@@ -378,7 +378,7 @@ void ccp::send_cluster_config(int iter) {
       (*i)->get_socket()->write_int(iter);
     }
   }
-  printf("done.\n");
+  fprintf(stderr,"done.\n");
 
   for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i) {
     
@@ -386,7 +386,7 @@ void ccp::send_cluster_config(int iter) {
 
   }
   
-  printf("All nodes have received configuration and have initialized!\n"); 
+  fprintf(stderr,"All nodes have received configuration and have initialized!\n"); 
 
 }
 
@@ -397,14 +397,14 @@ void ccp::execute_partitioner(int number_of_nodes) {
 
   sprintf(cmd, "./do_part %d", number_of_nodes);
 
-  printf("Executing partitioner for %d nodes...\n ", number_of_nodes);
-  printf("=============================================================\n");
+  fprintf(stderr,"Executing partitioner for %d nodes...\n ", number_of_nodes);
+  fprintf(stderr,"=============================================================\n");
 
   FILE *f = popen(cmd, "w");
 
   pclose(f);
 
-  printf("============================================================= done.\n");
+  fprintf(stderr,"============================================================= done.\n");
 }
 
 
@@ -413,13 +413,13 @@ void ccp::assign_nodes_to_partition() {
   int m = 0;
   machines.clear();
 
-  printf("Assigning nodes to partition...\n");
+  fprintf(stderr,"Assigning nodes to partition...\n");
 
   for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i) {
   
     unsigned ip = (*i)->get_ip();
 
-    printf("machine (%d) -> node (%d.%d.%d.%d)\n", 
+    fprintf(stderr,"machine (%d) -> node (%d.%d.%d.%d)\n", 
 	   m, (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256));
 
     // machines is a map (machine id -> ip address)

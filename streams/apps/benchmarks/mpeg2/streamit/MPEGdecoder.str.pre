@@ -69,7 +69,9 @@ bit->int pipeline MPEGStream_to_rawImageStream(int width, int height) {
                        UpdatePortal_macroblock_intra,
                        UpdatePortal_picture_type,
                        UpdatePortal_mvd,
-                       UpdatePortal_picture_type2
+                       UpdatePortal_picture_type2,
+                       width,
+                       height
                       );
 
   add int->int splitjoin {
@@ -109,21 +111,6 @@ bit->int pipeline MPEGStream_to_rawImageStream(int width, int height) {
 
 }
 
-struct vlc_table_entry {
-  int code;
-  int len; // Length of code in bits
-  int value;
-}
-
-struct vlc_dct_table_entry { // See P. 135
-  // We code a special vlc table type for the DCT coefficients because they are
-  // so important.
-  int code;
-  int len; // Length of code in bits
-  int run;
-  int level;
-}
-
 // TODO - note, at the end of the video we need to run through an empty I-frame to clean out
 // accumulated data so that the last frame of the video gets output.
 
@@ -136,7 +123,9 @@ bit->int filter MPEGStreamParser(
                         portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra,
                         portal<MotionPrediction> UpdatePortal_picture_type,
                         portal<MotionVectorDecode> UpdatePortal_mvd,
-                        portal<PictureReorder> UpdatePortal_picture_type2) {
+                        portal<PictureReorder> UpdatePortal_picture_type2,
+                        int width,
+                        int height) {
   // FEATURETODO
   // When phases can take parameters, get rid of this definition and
   // uncomment the definition in the filter work function, and change
@@ -149,13 +138,10 @@ bit->int filter MPEGStreamParser(
   int[2][2][2] motion_code;
   int[2][2][2] motion_residual;
 
-  boolean ran;
+  int ran;
 
   init {
-    ran = false;
-
-    // Initialize Constants
-
+    ran = 0;
   } 
 
   phase PushMacroblock push (6*64+19) {
@@ -180,9 +166,9 @@ bit->int filter MPEGStreamParser(
   }
 
   work pop * push * {  // Actually unknown pop/push rate
-    if (!ran) {
+    if (ran == 0) {
       print("Parsing M2V File...");
-      ran = true;
+      ran = 1;
  
       int tempval;
 
@@ -225,6 +211,7 @@ bit->int filter MPEGStreamParser(
         print("Error - Program Limitation: Don't Know How to Handle Other Frame Rate Codes");
       pops(18,bit_rate_value);
       marker_bit();
+
       pops(10,vbv_buffer_size_value);
       pops(1,constrained_parameters_flag);
       // (cite 1, P. 43)
@@ -344,6 +331,7 @@ bit->int filter MPEGStreamParser(
       } else {
         // low_delay 0 indicates that sequence is allowed to contain B-pictures
       }
+
       pops(2,frame_rate_extension_n);
       pops(5,frame_rate_extension_d);
       // (cite 1, P. P.41)
@@ -420,7 +408,8 @@ bit->int filter MPEGStreamParser(
           }
           UpdatePortal_picture_type.setPictureType(picture_coding_type) [0:0];
           UpdatePortal_picture_type2.setPictureType(picture_coding_type) [0:0];
-          pops(16,vbv_delay);
+ 
+         pops(16,vbv_delay);
           // TODO unknown interpretation for vbv_delay, (cite 1, P.50)
           // The following is not used by the MPEG-2 specification (cite 1, P.51)
           // Supposed to have certain values, but not guaranteed for most files.
@@ -528,6 +517,7 @@ bit->int filter MPEGStreamParser(
               print("Error - Program Limitation: Doesn't handle vertical_sizes > 2800");
             int mb_row, previous_macroblock_address;
             mb_row = slice_vertical_position - 1;
+            print("Row: " + slice_vertical_position);
             previous_macroblock_address = (mb_row * mb_width) - 1;
             int quantiser_scale_code;
             pops(5,quantiser_scale_code);
@@ -754,6 +744,7 @@ bit->int filter MPEGStreamParser(
                 }
               }
               for (int i = 0; i < block_count; i++) {
+                print("Block Count: " + i);
                 int QFS_current;
                 QFS_current = 0;
                 for (int j = 0; j < 64; j++) {
@@ -836,28 +827,35 @@ bit->int filter MPEGStreamParser(
                       int signed_level, run;
                       peeks(6,tempval);
                       if (tempval == 1) { 
+                        print("Escape Coded");
                         // Escape Code
                         pops(6,tempval);
                         int level, sign;
                         pops(6,run);
+                        print("QFS_current: " + QFS_current);
+                        print("Run: " + run);
                         pops(1,sign);
+                        print("Sign: " + sign);
                         pops(11,level);
-
                         if (sign == 0) {
                           signed_level = level;
                         } else {
                           signed_level = level - 2048;
                         }
+                        print("signed_level: " + signed_level);
                       } else {
                         // Regular Code
+                        print("Regular Code");
                         int level, sign;
                         variable_length_code_dct(run,level,const_dct_coefficients_table_zero);
+                        print("Run: " + run);
                         pops(1,sign);
                         if (sign == 0) {
                           signed_level = level;
                         } else {
                           signed_level = -level;
                         }
+                        print("Signed_Level: " + signed_level);
                       }
                       QFS_current += run;
                       if (QFS_current == 63) {
@@ -921,6 +919,36 @@ bit->int filter MPEGStreamParser(
         }
       }
       print("Done Parsing M2V File...");
+    } else if (ran == 1) {
+      print("Generating fake last frame to push out last real frame of video.");
+      ran = 2;
+      UpdatePortal_picture_type.setPictureType(1);
+      UpdatePortal_picture_type2.setPictureType(1);
+      UpdatePortal_macroblock_intra.setMacroblockIntra(1);
+      for (int i = 0; i < 6; i++) {
+        for (int j = 0; j < 64; j++) {
+          QFS[i][j] = 0;
+        }
+      }
+      for (int r = 0; r < 2; r++) 
+        for (int s = 0; s < 2; s++)
+          for (int t = 0; t < 2; t++) {
+              motion_code[r][s][t] = 0;
+          }
+      for (int r = 0; r < 2; r++) 
+        for (int s = 0; s < 2; s++)
+          for (int t = 0; t < 2; t++) {
+              motion_residual[r][s][t] = 0;
+          }
+      push(1);
+      push(0);
+      push(0);
+      for (int i = 0; i < (width/16); i++) {
+        for (int j = 0; j < (height/16); j++) {
+          PushMacroblock();     
+        } 
+      }
+      print("Done generating fake frame");
     } else {
       print("Error - Trying to parse M2V file for a second time...");
     }

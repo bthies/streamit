@@ -1267,8 +1267,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("void sig_recv(int sig_nr) {\n");
 	p.print("  if (master_pid == getpid()) {\n");
-	p.print("    printf(\"\n data sent     : %d\\n\", mysocket::get_total_data_sent());\n");
-        p.print("    printf(\" data received : %d\\n\", mysocket::get_total_data_received());\n");
+	p.print("    fprintf(stderr,\"\n data sent     : %d\\n\", mysocket::get_total_data_sent());\n");
+        p.print("    fprintf(stderr,\" data received : %d\\n\", mysocket::get_total_data_received());\n");
 	p.print("  }\n");
 	p.print("}\n");
 
@@ -1332,7 +1332,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-init\") == 0) {\n"); 
 	p.print("       int tmp;\n");
 	p.print("       sscanf(argv[a + 1], \"%d\", &tmp);\n");
-	p.print("       printf(\"Initial Iteration: %d\\n\", tmp);\n"); 
+	p.print("       fprintf(stderr,\"Initial Iteration: %d\\n\", tmp);\n"); 
 	p.print("       __init_iter = tmp;"); 
 	p.print("       init_instance::set_start_iter(__init_iter);"); 
 	p.print("    }\n");
@@ -1340,17 +1340,17 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-i\") == 0) {\n"); 
 	p.print("       int tmp;\n");
 	p.print("       sscanf(argv[a + 1], \"%d\", &tmp);\n");
-	p.print("       printf(\"Number of Iterations: %d\\n\", tmp);\n"); 
+	p.print("       fprintf(stderr,\"Number of Iterations: %d\\n\", tmp);\n"); 
 	p.print("       __max_iteration = tmp;"); 
 	p.print("    }\n");
 
 	p.print("    if (strcmp(argv[a], \"-t\") == 0) {\n"); 
-	p.print("       printf(\"Timer enabled.\\n\");\n"); 
+	p.print("       fprintf(stderr,\"Timer enabled.\\n\");\n"); 
 	p.print("       __timer_enabled = 1;"); 
 	p.print("    }\n");
 
 	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-ccp\") == 0) {\n");
-	p.print("       printf(\"CCP address: %s\\n\", argv[a + 1]);\n"); 
+	p.print("       fprintf(stderr,\"CCP address: %s\\n\", argv[a + 1]);\n"); 
 	p.print("       __ccp_ip = lookup_ip(argv[a + 1]);\n");
 	p.print("    }\n");
 
@@ -1366,7 +1366,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("      master_server *m = new master_server();\n");
 	p.print("      m->print_commands();\n");
 	p.print("      for (;;) {\n");
-	p.print("        printf(\"master> \");fflush(stdout);\n");
+	p.print("        fprintf(stderr,\"master> \");fflush(stdout);\n");
 	p.print("        line[0] = 0;\n");
 	p.print("        scanf(\"%[^\\n]\", line);scanf(\"%c\", &tmp);\n");
 	p.print("        m->process_command(line);\n");

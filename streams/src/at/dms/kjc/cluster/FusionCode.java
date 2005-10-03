@@ -2,13 +2,13 @@
 package at.dms.kjc.cluster;
 
 import java.io.*;
-import java.lang.*;
+//import java.lang.*;
 import java.util.*;
 import at.dms.compiler.TabbedPrintWriter;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.KjcOptions;
-import at.dms.kjc.sir.lowering.partition.WorkEstimate;
+//import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 
 class FusionCode {
 
@@ -433,12 +433,12 @@ class FusionCode {
 	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-i\") == 0) {\n");
 	p.print("      int tmp;\n");
 	p.print("      sscanf(argv[a + 1], \"%d\", &tmp);\n");
-	p.print("      printf(\"Number of Iterations: %d\\n\", tmp);\n");
+	p.print("      fprintf(stderr,\"Number of Iterations: %d\\n\", tmp);\n");
 	p.print("      __max_iteration = tmp;\n");
 	p.print("    }\n");
 
 	p.print("    if (strcmp(argv[a], \"-t\") == 0) {\n"); 
-	p.print("       printf(\"Timer enabled.\\n\");\n"); 
+	p.print("       fprintf(stderr,\"Timer enabled.\\n\");\n"); 
 	p.print("       __timer_enabled = 1;"); 
 	p.print("    }\n");
 
@@ -446,12 +446,12 @@ class FusionCode {
 
 
 	p.print("  if ("+implicit_mult+" > 1) {\n");
-	p.print("    printf(\"Implicit multiplicity: "+implicit_mult+"\\n\");\n");
+	p.print("    fprintf(stderr,\"Implicit multiplicity: "+implicit_mult+"\\n\");\n");
 	p.print("    int tmp;\n");
 	p.print("    tmp = __max_iteration / "+implicit_mult+";\n");
 	p.print("    if (__max_iteration % "+implicit_mult+" > 0) tmp++;\n");
 	p.print("    __max_iteration = tmp;\n");
-	p.print("    printf(\"Number of Iterations: %d (%d)\\n\", __max_iteration, __max_iteration * "+implicit_mult+");\n");
+	p.print("    fprintf(stderr,\"Number of Iterations: %d (%d)\\n\", __max_iteration, __max_iteration * "+implicit_mult+");\n");
 	p.print("  }\n");
 
 	/*
@@ -614,8 +614,8 @@ class FusionCode {
 			/*
 
 			p.print("    if (HEAD_"+_s+"_"+_d+" - TAIL_"+_s+"_"+_d+" != __PEEK_BUF_SIZE_"+_s+"_"+_d+") {\n");
-			p.print("      printf(\"head: %d\\n\", HEAD_"+_s+"_"+_d+");\n");
-			p.print("      printf(\"tail: %d\\n\", TAIL_"+_s+"_"+_d+");\n");
+			p.print("      fprintf(stderr,\"head: %d\\n\", HEAD_"+_s+"_"+_d+");\n");
+			p.print("      fprintf(stderr,\"tail: %d\\n\", TAIL_"+_s+"_"+_d+");\n");
 			p.print("      assert(1 == 0);\n");
 			p.print("    }\n");
 			*/
@@ -681,8 +681,8 @@ class FusionCode {
 			/*
 
 			p.print("    if (HEAD_"+_s+"_"+_d+" - TAIL_"+_s+"_"+_d+" != __PEEK_BUF_SIZE_"+_s+"_"+_d+") {\n");
-			p.print("      printf(\"head: %d\\n\", HEAD_"+_s+"_"+_d+");\n");
-			p.print("      printf(\"tail: %d\\n\", TAIL_"+_s+"_"+_d+");\n");
+			p.print("      fprintf(stderr,\"head: %d\\n\", HEAD_"+_s+"_"+_d+");\n");
+			p.print("      fprintf(stderr,\"tail: %d\\n\", TAIL_"+_s+"_"+_d+");\n");
 			p.print("      assert(1 == 0);\n");
 			p.print("    }\n");
 			*/

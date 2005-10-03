@@ -3,16 +3,16 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.common.MacroConversion;
 import at.dms.kjc.common.CodeGenerator;
 import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
+//import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
-import java.util.List;
-import java.util.ListIterator;
+//import java.util.List;
+//import java.util.ListIterator;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.HashMap;
+//import java.util.LinkedList;
+//import java.util.HashMap;
 import java.util.HashSet;
 import java.io.*;
 import at.dms.compiler.*;
@@ -396,7 +396,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    print("  while (offs != __head__"+selfID+") {\n");
 	    print("    buf->write(&__pop_buf__"+selfID+"[offs], sizeof("+input_type.toString()+"));\n    offs++;\n    offs&="+(peek_buf_size-1)+";\n    i++;\n");
 	    print("  }\n");
-	    //print("  printf(\"buf size: %d\\n\", i);\n"); 
+	    //print("  fprintf(stderr,\"buf size: %d\\n\", i);\n"); 
 	    print("  assert(i == "+extra+");\n");
 	    print("}\n");
 	    print("\n");
@@ -906,7 +906,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	print("  int size = sock->read_int();\n");
 	
 	if (restrictedExecution) {
-	    print("  if (size == -1) { // a credit message received\n");
+	    print("  i (size == -1) { // a credit message received\n");
 	    print("    __credit_"+selfID+" = sock->read_int();\n");
 	    print("    return;\n");
 	    print("  };\n");
@@ -914,7 +914,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
 	print("  int index = sock->read_int();\n");
 	print("  int iteration = sock->read_int();\n");
-	print("  printf(\"Message receieved! thread: "+selfID+", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
+	print("  fprintf(stderr,\"Message receieved! thread: "+selfID+", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
 
 	print("  if (iteration > 0) {\n");
 	print("    message *msg = new message(size, index, iteration);\n");
@@ -2128,7 +2128,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    }
 	else
 	    {
-		System.out.println("Unprintatble type");
+		System.err.println("Unprintatble type: " + type.toString());
 		print("print_int(");
 		exp.accept(this);
 		print(");");

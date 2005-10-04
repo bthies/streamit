@@ -54,7 +54,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
     private final String INT_HEADER_WORD = "__INT_HEADER_WORD__";
 
 
-    private static int filterID = 0;
+//    private static int filterID = 0;
     
     int PRINT_MSG_PARAM = -1;
 
@@ -580,7 +580,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    FlatNode dst_node = NodeEnumerator.getFlatNode(out.getDest());
 	    FlatNode my_node = NodeEnumerator.getFlatNode(selfID);
 
-	    String push_expr = null;
+//	    String push_expr = null;
 
 	    FlatNode dst_master = ClusterFusion.getLocalMaster(dst_node);
 	    FlatNode my_master = ClusterFusion.getLocalMaster(my_node);
@@ -1240,6 +1240,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	method = null;
     }
 
+/* Doesn't seem to be used
     private void dummyWork(int push) {
 	print("{\n");
 	print("  int i;\n");
@@ -1247,7 +1248,9 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	print("    static_send(i);\n");
 	print("}\n");
     }
-
+*/
+    
+/* Doesn't seem to be used
     private int nextPow2(int i) {
 	String str = Integer.toBinaryString(i);
 	if  (str.indexOf('1') == -1)
@@ -1255,6 +1258,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	int bit = str.length() - str.indexOf('1');
 	return (int)Math.pow(2, bit);
     }
+*/
     
     // ----------------------------------------------------------------------
     // STATEMENT
@@ -1268,23 +1272,25 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
      * prints a variable declaration statement
      */
 
+/* Doesn't seem to be used
     private void printLocalArrayDecl(JNewArrayExpression expr) 
     {
 	JExpression[] dims = expr.getDims();
 	for (int i = 0 ; i < dims.length; i++) {
-	    /*
+*/	    /*
 	     * I don't see why we need a new instance -- A.D.
 	     * why not
 	     *
 	    print("[");
 	    dims[i].accept(this);
 	    print("]");
-	    */
+	    */ /*
 	    FlatIRToCluster toC = new FlatIRToCluster();
 	    dims[i].accept(toC);
 	    print("[" + toC.getString() + "]"); 
 	}
     }
+*/
     
     /**
      * prints a variable declaration statement
@@ -2118,7 +2124,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		exp.accept(this);
 		print(");");
 	    }
-        else if (type.equals(CStdType.Long))
+    else if (type.equals(CStdType.Long))
 	    {
 		print("printf(\"%d\\n\", "); 
 		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
@@ -2126,6 +2132,12 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		exp.accept(this);
 		print(");");
 	    }
+    else if (type.equals(CStdType.String))
+        {
+    	print("printf(\"%s\\n\", ");
+    	exp.accept(this);
+    	print(")");
+        }
 	else
 	    {
 		System.err.println("Unprintatble type: " + type.toString());

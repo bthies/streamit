@@ -24,6 +24,21 @@
  * @version 1.0
  */
 
+struct vlc_table_entry {
+  int code;
+  int len; // Length of code in bits
+  int value;
+}
+
+struct vlc_dct_table_entry { // See P. 135
+  // We code a special vlc table type for the DCT coefficients because they are
+  // so important.
+  int code;
+  int len; // Length of code in bits
+  int run;
+  int level;
+}
+
 global {
   vlc_table_entry[33] const_macroblock_address_inc;  // Table B1
   int const_macroblock_address_inc_len = 33;

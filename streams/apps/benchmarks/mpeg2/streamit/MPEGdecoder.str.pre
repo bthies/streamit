@@ -517,7 +517,6 @@ bit->int filter MPEGStreamParser(
               print("Error - Program Limitation: Doesn't handle vertical_sizes > 2800");
             int mb_row, previous_macroblock_address;
             mb_row = slice_vertical_position - 1;
-            print("Row: " + slice_vertical_position);
             previous_macroblock_address = (mb_row * mb_width) - 1;
             int quantiser_scale_code;
             pops(5,quantiser_scale_code);
@@ -744,7 +743,6 @@ bit->int filter MPEGStreamParser(
                 }
               }
               for (int i = 0; i < block_count; i++) {
-                print("Block Count: " + i);
                 int QFS_current;
                 QFS_current = 0;
                 for (int j = 0; j < 64; j++) {
@@ -827,35 +825,27 @@ bit->int filter MPEGStreamParser(
                       int signed_level, run;
                       peeks(6,tempval);
                       if (tempval == 1) { 
-                        print("Escape Coded");
                         // Escape Code
                         pops(6,tempval);
                         int level, sign;
                         pops(6,run);
-                        print("QFS_current: " + QFS_current);
-                        print("Run: " + run);
                         pops(1,sign);
-                        print("Sign: " + sign);
                         pops(11,level);
                         if (sign == 0) {
                           signed_level = level;
                         } else {
                           signed_level = level - 2048;
                         }
-                        print("signed_level: " + signed_level);
                       } else {
                         // Regular Code
-                        print("Regular Code");
                         int level, sign;
                         variable_length_code_dct(run,level,const_dct_coefficients_table_zero);
-                        print("Run: " + run);
                         pops(1,sign);
                         if (sign == 0) {
                           signed_level = level;
                         } else {
                           signed_level = -level;
                         }
-                        print("Signed_Level: " + signed_level);
                       }
                       QFS_current += run;
                       if (QFS_current == 63) {
@@ -888,14 +878,12 @@ bit->int filter MPEGStreamParser(
             }
  
             next_start_code();
-
             peeks(32,tempval);
             if (tempval > 0x000001AF || tempval < 0x00000101)
               slice_start_code_follows = false;
             else
               slice_start_code_follows = true;
           }
-
           next_start_code();
           peeks(32,tempval);
 
@@ -1107,8 +1095,6 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
   int[64] intra_quantiser_matrix;
   int[64] non_intra_quantiser_matrix;
 
-  int count;
-
   // (cite 1, P.70 Table 7-6)
   int[2][32] quantiser_scale =
     // Note that quantiser_scale[x][0] is a Forbidden Value
@@ -1122,8 +1108,6 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
       56, 64, 72, 80, 88, 96, 104, 112}};
 
   init {
-    count = 0;
-
     quantiser_scale_code = 0; // Guarantees that this throws an error
                               // if it doesn't get a quantiser message
                               // before getting some data.
@@ -1159,9 +1143,6 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
               quantiser_scale[q_scale_type][quantiser_scale_code] / 32;
       push(F);
     }
-    count = count + 1;
-    if (count == 6)
-      count = 0;
   }
 
   handler setQuantiserScaleCode(int new_quantiser_scale_code) {
@@ -1308,7 +1289,7 @@ int->int filter MotionVectorDecode() {
 int->int pipeline LuminanceChannelProcessing(int width, 
                                                 int height,
                                                 portal<MotionPrediction> UpdatePortal_picture_type) {
-  add MacroBlockDescrambler(width);
+  add MacroBlockDescrambler(width, 64+11);
   add DescrambleAndMotionCompensate(width, height, 1, UpdatePortal_picture_type, 1);
 }
 
@@ -1326,12 +1307,12 @@ int->int pipeline ChrominanceChannelProcessing(int width,
 /**
  * @internal
  */
-int->int splitjoin MacroBlockDescrambler(int width) {
-  split roundrobin((64+11)*2);
+int->int splitjoin MacroBlockDescrambler(int width, int block_data_size) {
+  split roundrobin(block_data_size*2);
   for (int i = 0; i < 2; i++) {
     add Identity<int>;
   }
-  join roundrobin((width/8)*(64+11));
+  join roundrobin((width/8)*block_data_size);
 }
 
 /**

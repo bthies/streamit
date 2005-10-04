@@ -161,7 +161,7 @@ bit->int filter BMPStreamParser(int width, int height) {
     ran = false;
   }
 
-  work pop 1 push 1 {
+  work pop * push * {
     if (!ran) {
       print("Reading BMP File...");
       ran = true;
@@ -227,6 +227,8 @@ bit->int filter BMPStreamParser(int width, int height) {
       }
       
       print("Done Reading BMP File...");
+    } else {
+      print("Error - BMP Stream Parser Should Not Run Twice");
     }
   }
 }

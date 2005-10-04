@@ -41,7 +41,8 @@
 // block of code and aren't sure what it is doing, find the previous citation
 // comment, and refer to the corresponding page in the MPEG 2 spec.
 
-int->bit pipeline rawImageStream_to_MPEGStream(int width, int height) {
+int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpictures) {
+  int downsample_data_size = (width*height*3)/2;
   int actual_intra_dc_precision = 8;  
   // Default Values for the quantiser_matrices
   int[64] default_intra_quantiser_matrix = 
@@ -66,41 +67,20 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height) {
 
   add PicturePreprocessing(width, height);
   // Eventually Wrap in Programmable Splitjoin for Group of Pictures
-//  add ReorderPictures(2+(width*height*3)/2);
+  add ReorderPictures(2+downsample_data_size);
   // Eventually Wrap in Programmable Splitjoin for Slices - Also need to communicate frame type.
-  int motionvectordatasize = 0;
-/*  add int->int splitjoin {
-    split duplicate; // FEATURETODO eventually replace by programmable splitjoin based on message type.
-    add Identity<int>;
-    for (int i = 0; i < 2; i++) {
-      add Identity<int>; // TODO MotionPrediction
-    }
-    join roundrobin(64*6, 64*6+motionvectordatasize, 64*6+motionvectordatasize); // FEATURETODO eventually replace
-  }*/
-  /*add int->int filter {
-    // TODO Change to DECIDE
-    work pop(64*6*3+2*motionvectordatasize) push (64*6) {
-      for (int i = 0; i < 64*6; i++) {
-        push(pop());
-      }
-      for (int i = 0; i < (64*6)+motionvectordatasize; i++) {
-        pop();
-      }
-      for (int i = 0; i < (64*6)+motionvectordatasize; i++) {
-        pop();
-      }
-    }
-  }*/
+
   add int->int splitjoin {
-    split roundrobin(2, (width*height*3)/2);
+    split roundrobin(2, downsample_data_size);
     add Identity<int>;
-    add MacroBlockEncode(default_intra_quantiser_matrix, default_non_intra_quantiser_matrix);
+    add MacroBlockEncode(default_intra_quantiser_matrix, default_non_intra_quantiser_matrix,
+                         actual_intra_dc_precision-8, q_scale_type);
     // TODO ADD dequantize and feedback  
-    join roundrobin(2, (width*height*3)/2);
+    join roundrobin(2, downsample_data_size*(64*6+5)/(64*6));
   }
-  // add PartialStreamGenerator_Slice;       
-  // add PartialStreamGenerator_PictureLevel;
-  add MPEGStreamGenerator(width, height, default_intra_quantiser_matrix, 
+
+  add MPEGStreamGenerator(width, height, numpictures,
+                          default_intra_quantiser_matrix, 
                           default_non_intra_quantiser_matrix, 
                           actual_intra_dc_precision-8,
                           q_scale_type);
@@ -116,6 +96,14 @@ int->int splitjoin MacroBlockScrambler(int width) {
       }
       join roundrobin(8*8);
     }
+  }
+  join roundrobin(16*16);
+}
+
+int->int splitjoin MacroBlockOrder(int width) {
+  split roundrobin(16);
+  for (int i = 0; i < (width/16); i++) {
+    add Identity<int>;
   }
   join roundrobin(16*16);
 }
@@ -149,14 +137,8 @@ int->int pipeline ChannelDownsample(int width, int height) {
   add DropSecond;
   add int->int splitjoin {
     split roundrobin(1);
-    for (int i = 0; i < width/2; i++) {
-      add int->int splitjoin {
-        split roundrobin(2);
-        for (int j = 0; j < height/2; j++) {
-          add ChannelDownsample_1D(0.5, 0.5);
-        }
-        join roundrobin(1);
-      }
+    for (int i = 0; i < 8; i++) {
+      add DropSecond; // TODO This is actually WRONG!
     }
     join roundrobin(1);
   }
@@ -169,8 +151,8 @@ int->int pipeline TransformPicture(int width, int height) {
     add MacroBlockScrambler(width);
     for (int i = 0; i < 2; i++) {
       add int->int pipeline {
-        add MacroBlockScrambler(width);
-        add ChannelDownsample(width, height);
+        add MacroBlockOrder(width);
+        add ChannelDownsample(width, height); 
       }
     }
     join roundrobin(64*4, 64, 64);
@@ -204,14 +186,14 @@ int->int filter AssignPictureType(int width, int height) {
 
 int->int splitjoin PicturePreprocessing(int width, int height) {
   split duplicate;
+  int downsample_data_size = (width*height*3)/2;
   add AssignPictureType(width, height);
   add TransformPicture(width, height);
-  join roundrobin(2, (width*height*3)/2); 
-    // (width*height)*(1+1/4+1/4) with ints
+  join roundrobin(2, downsample_data_size);
 }
 
 int->int filter ReorderPictures(int picturedatasize) {
-  work pop * push * {
+  work pop 1 push 1 {
     push(pop());
     // TODO This doesn't actually reorder right now
     // Note - I think you can reorder with relatively small saved state in the function
@@ -219,19 +201,20 @@ int->int filter ReorderPictures(int picturedatasize) {
   }
 }
 
-int->int pipeline MacroBlockEncode(int[64] intra_quantiser_matrix, int[64] non_intra_quantiser_matrix) {
+int->int pipeline MacroBlockEncode(int[64] intra_quantiser_matrix, int[64] non_intra_quantiser_matrix,
+                                   int intra_dc_precision, int q_scale_type) {
   add DCT8x8_ieee;
-  add Quantization(intra_quantiser_matrix, non_intra_quantiser_matrix);
+  add Quantisation(intra_quantiser_matrix, non_intra_quantiser_matrix, intra_dc_precision, q_scale_type);
   add int->int splitjoin {
-    split roundrobin(4, 64);
+    split roundrobin(5, (64*6));
     add Identity<int>;
     add ZigZagOrdering;
-    join roundrobin(4, 64);
+    join roundrobin(5, (64*6));
   }
 }
 
-int->int filter Quantization(int[64] intra_quantiser_matrix, int[64] non_intra_quantiser_matrix) {
-
+int->int filter Quantisation(int[64] intra_quantiser_matrix, int[64] non_intra_quantiser_matrix,
+                             int intra_dc_precision, int q_scale_type) {
   // FEATURETODO - Move to globals when globals working properly - also out of decoder
   // (cite 1, P.70 Table 7-6)
   int[2][32] quantiser_scale =
@@ -244,10 +227,18 @@ int->int filter Quantization(int[64] intra_quantiser_matrix, int[64] non_intra_q
        8, 10, 12, 14, 16, 18, 20, 22,
       24, 28, 32, 36, 40, 44, 48, 52, 
       56, 64, 72, 80, 88, 96, 104, 112}};
+  int[4] intra_dc_mult;
 
+  init {
+    intra_dc_mult[0] = 8;
+    intra_dc_mult[1] = 4;
+    intra_dc_mult[2] = 2;
+    intra_dc_mult[3] = 1;
+  }
   // TODO temp - for now only use intra quantization, and 
   // no changes in the scaling.
-  work pop 64 push 68 {
+  work pop (64*6) push (64*6+5) {
+    push(3278);
     int macroblock_intra = 1;
     int quantiser_scale_code = 1;
     push(quantiser_scale_code);
@@ -257,10 +248,14 @@ int->int filter Quantization(int[64] intra_quantiser_matrix, int[64] non_intra_q
     // See (cite 1, P. 71) for more details.
     // macroblock is INTRA TODO temp
     int k = 0;
-    int q_scale_type = 0;
     for (int block = 0; block < 6; block++) { // TODO move out
       for (int count = 0; count < 64; count++) {
-        push(16*pop()/(intra_quantiser_matrix[count]*quantiser_scale[q_scale_type][quantiser_scale_code]));
+        if (count == 0) {
+          push(pop() / intra_dc_mult[intra_dc_precision]);
+        } else {
+          push(16*pop()/
+               (intra_quantiser_matrix[count]*quantiser_scale[q_scale_type][quantiser_scale_code]));
+        }
       } 
     }
   }
@@ -317,7 +312,7 @@ int->int filter PartialStreamGenerator_PictureLevel {
  *         for j from 0 to 63
  *           QFS[i][j] = pop()
  */
-int->bit filter MPEGStreamGenerator(int width, int height, 
+int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
                                     int[64] intra_quantiser_matrix,
                                     int[64] non_intra_quantiser_matrix,
                                     int intra_dc_precision,
@@ -521,8 +516,9 @@ int->bit filter MPEGStreamGenerator(int width, int height,
       int broken_link = 0;
       pushs(1, broken_link);
 
-      int num_pictures = 3; // Hardcoded for now TODO
-      for (int pic = 0; pic < num_pictures; pic++) {
+      // hardcoded for now TODO maybe
+      for (int pic = 0; pic < numpictures; pic++) {
+        print("Starting picture " + pic);
         // TODO Start of picture - this might later be broken up
         // picture_header() (cite 1, P.30)
         tempval = 0x00000100;
@@ -533,7 +529,7 @@ int->bit filter MPEGStreamGenerator(int width, int height,
         int temporal_reference = pop(); 
         pushs(10, temporal_reference);
 
-        int picture_coding_type = pop();      
+        int picture_coding_type = pop();     
         // picture_coding_type = 1 -> I-picture
         // picture_coding_type = 2 -> P-picture
         // picture_coding_type = 3 -> B-picture
@@ -645,6 +641,13 @@ int->bit filter MPEGStreamGenerator(int width, int height,
           int mb_row, previous_macroblock_address;
           mb_row = slice_vertical_position - 1;
           previous_macroblock_address = (mb_row * mb_width) - 1;
+
+          tempval = pop();
+          if (tempval != 3278)
+            print("Error - Stream Misaligned Somehow - got " + tempval + " expected " + 3278); 
+//          else
+//            print("Reading Macroblock: " + ((slice_vertical_position-1) * mb_width));
+
           int quantiser_scale_code = pop();
           pushs(5, quantiser_scale_code);
         
@@ -668,7 +671,13 @@ int->bit filter MPEGStreamGenerator(int width, int height,
             int mb_column = macroblock_address % mb_width;
           
             int macroblock_quant;
+
             if (slice_horizontal_position != 1) {
+              tempval = pop();
+              if (tempval != 3278)
+                print("Error - Stream Misaligned Somehow got " + tempval + " expected " + 3278);
+//              else           
+//                print("Reading Macroblock: " + ((slice_vertical_position-1)*mb_width + slice_horizontal_position-1));
               tempval = pop();
               if (quantiser_scale_code == tempval) {
                 macroblock_quant = 0;
@@ -681,6 +690,7 @@ int->bit filter MPEGStreamGenerator(int width, int height,
               // in the slice code section, so there's no reason to do it again.
               macroblock_quant = 0;
             }
+
             int macroblock_motion_forward = pop();
             int macroblock_motion_backward = pop();
             // Must be 0 for intra blocks TODO generalize
@@ -689,23 +699,17 @@ int->bit filter MPEGStreamGenerator(int width, int height,
             int macroblock_intra = pop();
             int spatial_temporal_weight_code_flag = 0;
 
-            print("macroblock_quant: " + macroblock_quant);
             tempval = 0;
             tempval = tempval | macroblock_quant;
             tempval <<= 1;
-            print("macroblock_motion_forward: " + macroblock_motion_forward);
             tempval = tempval | macroblock_motion_forward;
             tempval <<= 1;
-            print("macroblock_motion_backward: " + macroblock_motion_backward);
             tempval = tempval | macroblock_motion_backward;
             tempval <<= 1;
-            print("macroblock_pattern: " + macroblock_pattern);
             tempval = tempval | macroblock_pattern;
             tempval <<= 1;
-            print("macroblock_intra: " + macroblock_intra);
             tempval = tempval | macroblock_intra;
             tempval <<= 1;
-            print("spatial_temporal_weight_code_flag: " + spatial_temporal_weight_code_flag);
             tempval = tempval | spatial_temporal_weight_code_flag;
           
             if (picture_coding_type == 1) { // I-picture
@@ -782,11 +786,9 @@ int->bit filter MPEGStreamGenerator(int width, int height,
             for (int i = 0; i < block_count; i++) {
               int QFS_current;
               QFS_current = 0;
-              print("here");
               for (int j = 0; j < 64; j++) {
                 QFS[i][j] = pop();
               }
-              print("here2");
               // block(i) (cite 1, P.38)
               // if macroblocks are skipped, predictor is reset
               if (pattern_code[i] == 1) {
@@ -796,7 +798,7 @@ int->bit filter MPEGStreamGenerator(int width, int height,
                     int dct_diff = dc_dct_luminance - dc_dct_pred[0];
                     int dc_dct_size_luminance;
                     if (dct_diff == 0) {
-                    dc_dct_size_luminance = 0;
+                      dc_dct_size_luminance = 0;
                       variable_length_encode(dc_dct_size_luminance, const_dct_dc_size_luminance);
                     } else {
                       int temp = (int) abs(dct_diff);
@@ -805,7 +807,7 @@ int->bit filter MPEGStreamGenerator(int width, int height,
                         temp /= 2;
                         dc_dct_size_luminance++;
                       }
-                      variable_length_code(dc_dct_size_luminance, const_dct_dc_size_luminance);
+                      variable_length_encode(dc_dct_size_luminance, const_dct_dc_size_luminance);
                       int half_range = (int) pow(2,dc_dct_size_luminance-1);
                       int dc_dct_differential_luminance;
                       if (dct_diff > 0) {
@@ -814,8 +816,8 @@ int->bit filter MPEGStreamGenerator(int width, int height,
                         dc_dct_differential_luminance = (dct_diff + (2*half_range)) - 1;
                       }
                       pushs(dc_dct_size_luminance, dc_dct_differential_luminance);
-                      QFS_current++;
-                    }         
+                    } 
+                    QFS_current++;        
                     dc_dct_pred[0] = dc_dct_luminance;
                   } else {
                     int dc_dct_chrominance = QFS[i][0];
@@ -831,7 +833,7 @@ int->bit filter MPEGStreamGenerator(int width, int height,
                         temp /= 2;
                         dc_dct_size_chrominance++;
                       }
-                      variable_length_code(dc_dct_size_chrominance, const_dct_dc_size_chrominance);
+                      variable_length_encode(dc_dct_size_chrominance, const_dct_dc_size_chrominance);
                       int half_range = (int) pow(2, dc_dct_size_chrominance-1);
                       int dc_dct_differential_chrominance;
                       if (dct_diff > 0) {
@@ -840,8 +842,8 @@ int->bit filter MPEGStreamGenerator(int width, int height,
                         dc_dct_differential_chrominance = (dct_diff + (2*half_range)) - 1;
                       } 
                       pushs(dc_dct_size_chrominance, dc_dct_differential_chrominance);
-                      QFS_current++;
                     }  
+                    QFS_current++;
                     dc_dct_pred[i-3] = dc_dct_chrominance;
                   }
                 } else {
@@ -849,7 +851,6 @@ int->bit filter MPEGStreamGenerator(int width, int height,
                   dc_dct_pred[1] = 0;
                   dc_dct_pred[2] = 0;
                 }
-                print("here3");
                 if (macroblock_intra == 0 && QFS_current == 0) {
                   // This section here from end of Table B.14 and 7.2.2.2 (cite 1, P.66)
                   if (QFS[i][0] == 1 || QFS[i][0] == -1) {
@@ -894,7 +895,7 @@ int->bit filter MPEGStreamGenerator(int width, int height,
                     if (!found) {
                       // Escape Coding
                       tempval = 1;
-                      pushs(6, tempval);
+                      pushs(6, tempval);                     
                       pushs(6, run);
                       pushs(1, sign);
                       if (sign == 0) {
@@ -907,11 +908,9 @@ int->bit filter MPEGStreamGenerator(int width, int height,
                     run = 0;
                   }
                   QFS_current++;
-                  if (QFS_current == 64 && run > 0) {
-                    tempval = 2;
-                    pushs(2, tempval);
-                  }
                 }
+                tempval = 2;
+                pushs(2, tempval);
               } else {
                 print("Error - Program Limitation: Does not yet handle skipped blocks");
               }
@@ -922,9 +921,15 @@ int->bit filter MPEGStreamGenerator(int width, int height,
       // Sequence End Code
       tempval = 0x000001B7;
       pushs(32, tempval);
+      tempval = 0;
+      // To force flush, below:
+      pushs(32, tempval);
+      pushs(32, tempval);
+      pushs(32, tempval);
+      pushs(32, tempval);
       print("Done Writing M2V File...");
     } else {
-      print("Error - Trying to generate M2V file for a second time...");
+//      print("Error - Trying to generate M2V file for a second time...");
     }
   }
 }

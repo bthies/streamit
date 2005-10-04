@@ -31,8 +31,8 @@ player:	MPEGplayer.str MPEGdecoder.str ${LIBMPEG2} ${LIBDCT}
 mpeg2bmp:	MPEGtoBMP.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${LIBDCT}
 	strc MPEGtoBMP.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
 
-bmp2mpeg: BMPtoMPEG.str MPEGencoder.str ${LIBMPEG2} BMP.str ${LIBDCT}
-	strc BMPtoMPEG.str MPEGencoder.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
+bmp2mpeg: BMPtoMPEG.str MPEGencoder.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${LIBDCT}
+	strc BMPtoMPEG.str MPEGencoder.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
 
 ${LIBDCT}:
 	pushd ${DCT_HOME} && make && popd

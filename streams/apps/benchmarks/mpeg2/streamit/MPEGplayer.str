@@ -26,7 +26,7 @@
  */
 
 void->void pipeline MPEGplayer() {
-
+//  add FileReader<bit>("./output.m2v");
   add FileReader<bit>("../input/cact_015.m2v");
   // For compiling outside the library, if support has not yet been added for FileReader<bit>
   // substitute the following, which will cause a slight performance hit.
@@ -35,6 +35,8 @@ void->void pipeline MPEGplayer() {
 
   int width=352;  // Hacked till we have reprogrammable splitjoins FEATURETODO
   int height=240;
+//  int width=32;
+//  int height=32;
   add MPEGStream_to_rawImageStream(width, height);
 
   add ImageDisplay(width, height);

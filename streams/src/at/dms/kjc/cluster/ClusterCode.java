@@ -3,22 +3,22 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
-import at.dms.kjc.cluster.*;
+//import at.dms.kjc.cluster.*;
 import at.dms.kjc.sir.*;
-import at.dms.util.Utils;
+//import at.dms.util.Utils;
 import java.util.Vector;
-import java.util.List;
+//import java.util.List;
 import at.dms.compiler.TabbedPrintWriter;
 import at.dms.kjc.raw.Util;
-import at.dms.kjc.sir.lowering.*;
-import java.util.ListIterator;
-import java.util.Iterator;
-import java.util.LinkedList;
+//import at.dms.kjc.sir.lowering.*;
+//import java.util.ListIterator;
+//import java.util.Iterator;
+//import java.util.LinkedList;
 import java.util.HashMap;
-import java.util.TreeSet;
+//import java.util.TreeSet;
 import java.util.HashSet;
 import java.io.*;
-import java.lang.*;
+//import java.lang.*;
 
 /**
  * This class dumps the tile code for each filter into a file based 
@@ -27,7 +27,7 @@ import java.lang.*;
 public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
     // the max-ahead is the maximum number of lines that this will
     // recognize as a pattern for folding into a loop
-    private static final int MAX_LOOKAHEAD = 20;
+//    private static final int MAX_LOOKAHEAD = 20;
 
     //Hash set of tiles mapped to filters or joiners
     //all other tiles are routing tiles
@@ -38,6 +38,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
     private static HashMap partitionMap;
 
+    /**
+     * Set private variable partitionMap, which is never read.
+     * 
+     * Is this for Debugging or just a code maintenance glitch?
+     * 
+     * @param pmap
+     */ 
     public static void setPartitionMap(HashMap pmap) {
 	partitionMap = pmap;
     }
@@ -1161,14 +1168,15 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 
 	if (global == null) {
-	    str += "void __global__init() { }\n";
+	    str += "void __global__init() { }";
 	} else {
 	    FlatIRToCluster f2c = new FlatIRToCluster();
 	    f2c.setGlobal(true);
 	    global.getInit().accept(f2c);
 	    str += f2c.getString();
 	}
-
+	str += "\n";
+	
 	try {
 	    FileWriter fw = new FileWriter("global.cpp");
 	    fw.write(str.toString());

@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.14 2005-09-29 21:58:26 dimock Exp $
+# $Id: run-reg-tests.py,v 1.15 2005-10-05 23:39:25 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -15,6 +15,7 @@ import os.path
 import popen2
 import smtplib
 import time
+import re
 
 # Some defaults:
 admins = 'streamit-regtest-log@cag.lcs.mit.edu'
@@ -185,12 +186,32 @@ is the QMTest results file.
            self.streamit_home)
         
         last_results = ''
+        cvs_date = ''
         try:
             fn = regtest_root + '/latest/streams/results.qmr'
             os.stat(fn) # throws OSError if fn doesn't exist
             last_results = ' ' + fn
+            last_dirname = os.path.basename(os.path.realpath(regtest_root
+                                                             + '/latest'))
+            re_pattern=re.compile('^(\d\d\d\d)(\d\d)(\d\d)\.(\d\d)(\d\d)')
+            m = re_pattern.match(last_dirname)
+            cvs_date = m.group(1)+':'+m.group(2)+':'+m.group(3)+' '+m.group(4)+':'+m.group(5)
         except:
             pass
+
+        if cvs_date:
+            header = header + "CVS history since " + cvs_date + "\n"
+            cvs_command = 'cvs history -x AMR -a -D "' + cvs_date + '"'
+            self.run_and_log(cvs_command, 'cvshistory', 'Getting CVS history')
+            hf = open(self.working_dir + '/' + cvshistory, 'r')
+            lines = hf.readlines()
+            hf.close()
+            re_pattern = re.compile('^(\S\s+\S+\s+\S+\s+\S+\s+\S+)\s+(\S+)\s+(\S+)\s+(streams/\S*)')
+            for line in lines:
+                m = re_pattern.match(line)
+                if m:
+                    header = header + m.group(1) + ' ' + m.group(2) + ' ' + m.group(4) + '/' + m.group(3) + '\n'
+
         
         pop = popen2.Popen4(self.streamit_home +
                             '/regtest/qmtest/examine-results.py ' +

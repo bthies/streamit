@@ -1,7 +1,7 @@
 #
 # streamit.py: Python extensions to QMTest for StreamIt
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamit.py,v 1.6 2005-09-29 21:58:26 dimock Exp $
+# $Id: streamit.py,v 1.7 2005-10-05 23:39:25 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -192,8 +192,7 @@ class RunStrcTest(qm.test.test.Test):
         InterpretExitCode(result, status, self.exit_code, 'RunStrcTest')
 
         if (self.backend == 'cluster'
-            and result.GetOutcome() != result.FAIL
-            and result.GetOutcome() != result.ERROR):
+            and result.GetOutcome() == result.PASS):
             # cluster requires extra make step
             e = TimedExecutable()
             e.Run(['make', '-f', 'Makefile.cluster', 'run_cluster'])
@@ -205,8 +204,7 @@ class RunStrcTest(qm.test.test.Test):
 
             InterpretExitCode(result, makestatus, self.exit_code, 'RunStrcTest')
 
-            if (result.GetOutcome() != result.FAIL
-                and result.GetOutcome() != result.ERROR):
+            if (result.GetOutcome() == result.PASS):
                 # first need to replace "machine-1" in cluster-config.txt
                 # with name of the machine that we are running on (uname -n)
                 finame = "cluster-config.txt"

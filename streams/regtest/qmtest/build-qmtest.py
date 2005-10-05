@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.7 2005-09-29 21:58:26 dimock Exp $
+# $Id: build-qmtest.py,v 1.8 2005-10-05 23:39:25 dimock Exp $
 #
 
 import os
@@ -14,12 +14,13 @@ from   types import *
 import xml.dom.minidom
 
 # TODO: some option parsing.
-# For now, assume sys.argv[0] has the path to the regtest control file,
+# For now, assume sys.argv[1] has the path to the regtest control file,
 # and that we're in STREAMIT_HOME.
 
 def main():
     # Read the regtest control file.
-    control = ReadControlFile(sys.argv[1])
+    controlfileName = sys.argv[1]
+    control = ReadControlFile(controlfileName)
     BuildQMTestTree(control)
 
 def ReadControlFile(fn):
@@ -35,8 +36,9 @@ def ReadControlFile(fn):
     'fn' -- Name of the regtest control file.
 
     returns -- A dictionary, where the 'testroots' element contains
-    a list of the root strings and the 'targets' element contains
-    a list of pairs of (target, options)."""
+    a list of the root strings, the 'targets' element contains
+    a list of pairs of (target, options), and the 'whichtypes' element
+    contains a list of benchmark 'types' to execute."""
     
     dom = xml.dom.minidom.parse(fn)
     # From this, get the list of test roots:
@@ -55,8 +57,19 @@ def ReadControlFile(fn):
         if onode:
             opts = onode.data
         targets.append((target, opts))
+    # Get classifications of tests: regtest, checkin, ...
+    whichtypes = []
+    testtypes = dom.getElementsByTagName('whichtype')
+    for node in testtypes:
+        tnode = node.firstChild
+        # ASSERT: tnode is a text node
+        if (tnode and tnode.data != ''):
+            whichtypes.append(tnode.data)
+    whichtypes.sort()
     dom.unlink()
-    return { 'testroots': testroots, 'targets': targets }
+    return { 'testroots': testroots,
+             'targets': targets,
+             'whichtypes' : whichtypes }
 
 def BuildQMTestTree(control):
     """Build a QMTest XML tree.
@@ -66,9 +79,12 @@ def BuildQMTestTree(control):
 
     'control' -- Results of parsing the regtest control file, as
     returned from 'ReadControlFile()'..  
-    { 'testroots': testroots, 'targets': targets }
+    { 'testroots': testroots, 'targets': targets, 'whichtypes' : whichtypes }
     where testroots is a list of directories to search in BuildQMTestTree
-    targets is provessed by DoQMTestDir"""
+    targets, whichtypes are processed by DoQMTestDir
+
+    'includes' a list of specific targets to match the 'includedin'
+    attribute of 'impl'"""
 
     def visit(arg, dirname, names):
         if 'benchmark.xml' in names:
@@ -88,9 +104,10 @@ def DoQMTestDir(path, control):
 
     'control' -- Results of parsing the regtest control file, as
     returned from 'ReadControlFile()'.  
-    { 'testroots': testroots, 'targets': targets }
+    { 'testroots': testroots, 'targets': targets, 'whichtypes' : whichtypes }
     where testroots is a list of directories to search in BuildQMTestTree
-    targets is list of backend, option pairs for use with StreamIt compiler."""
+    targets is list of backend, option pairs for use with StreamIt compiler,
+    and whichtypes is a list of benchmark 'types' to execute."""
 
     benchmarkname = os.path.join(path, 'benchmark.xml')
     qmname = '.'.join(SplitAll(path))
@@ -104,10 +121,30 @@ def DoQMTestDir(path, control):
     # Only StreamIt implementations are interesting.
     impls = filter(lambda i: i.getAttribute('lang') == 'StreamIt', impls)
     seq = 0
+    whichtypes = control['whichtypes']
     for impl in impls:
+        
         # If benchmark has regtest="skip" field, skip it
         if (impl.getAttribute('regtest') == 'skip'): continue
         
+        # if regtest is looking for markers for a certain subset of benchmarks
+        # and if this benchmark has 'whichtype' markers, and there is no
+        # intersection between the sought markers and the markers on this
+        # benchmark, then skip this benchmark.
+        if (len(whichtypes) > 0):
+            twhichtypes = []
+            testtypes = impl.getElementsByTagName('whichtype')
+            for node in testtypes:
+                tnode = node.firstChild
+                # ASSERT: tnode is a text node
+                if (tnode and tnode.data != ''):
+                    twhichtypes.append(tnode.data)
+            twhichtypes.sort()
+
+            if (len(twhichtypes > 0)
+                and EmptyIntersectionOfSorted(whichtypes, twhichtypes)):
+                continue
+
         # Where are the source files?  If the implementation has
         # a dir attribute, they're in that subdirectory.
         srcdir = path
@@ -155,6 +192,20 @@ def DoQMTestDir(path, control):
         ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control)
 
     dom.unlink()
+
+def EmptyIntersectionOfSorted(sorted1, sorted2):
+    # return true if sorted lists have empty intersection, false otherwise
+    i1 = 0; i2 = 0
+    n1 = len(sorted1); n2 = len(sorted2)
+    while (i1 < n1 and i2 < n2):
+        c = cmp(sorted1[i1],sorted2[i2])
+        if (c == 0):
+            return false
+        elif (c < 0):
+            i1 = i1 + 1
+        else:
+            i2 = i2 + 1
+    return true
 
 def DirToQMDir(path):
     """Convert a source-tree path to a QMTest path.

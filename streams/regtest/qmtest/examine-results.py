@@ -2,7 +2,7 @@
 #
 # examine-results.py: get interesting results from a QMTest results file
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: examine-results.py,v 1.3 2003-11-24 17:05:27 dmaze Exp $
+# $Id: examine-results.py,v 1.4 2005-10-05 23:39:25 dimock Exp $
 
 import os
 import os.path
@@ -116,7 +116,7 @@ def print_counts(disposition):
     succeeds.insert(0, sum)
 
     print "%4d failures  (%d compile, %d execute, %d verify)" % tuple(fails)
-    print "%4d successes (%d passed, %d not verified)" % tuple(succeeds)
+    print "%4d successes (%d passed, %d not verified -- no output to compare to)" % tuple(succeeds)
 
 def detailed_results(disposition):
     """Print detailed results."""
@@ -128,7 +128,7 @@ def detailed_results(disposition):
          ('verify-failed',
           "For the following benchmarks, VERIFICATION failed:"),
          ('not-verified',
-          "The following benchmarks executed, but were NOT VERIFIED:"),
+          "The following benchmarks executed, but can NOT be VERIFIED because there is no output to compare to:"),
          ('passed', "The following benchmarks PASSED:")]:
         if k in disposition.values():
             print

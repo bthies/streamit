@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.18 2005-10-06 19:25:31 dimock Exp $
+# $Id: run-reg-tests.py,v 1.19 2005-10-06 20:22:03 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -18,14 +18,14 @@ import time
 import re
 
 # Some defaults:
-#admins = 'streamit-regtest-log@cag.lcs.mit.edu'
-admins = 'dimock@csail.mit.edu'
-#users = 'streamit-regtest@cag.lcs.mit.edu'
-users = 'dimock@csail.mit.edu'
+admins = 'streamit-regtest-log@cag.lcs.mit.edu'
+#admins = 'dimock@csail.mit.edu'
+users = 'streamit-regtest@cag.lcs.mit.edu'
+#users = 'dimock@csail.mit.edu'
 cvs_root = '/projects/raw/cvsroot'
 #regtest_root = '/home/bits7/NO_BACKUP/streamit/regtest_working'
-regtest_root = '/home/bits7/NO_BACKUP/ad_tmp/regtest'
-#regtest_root = '/home/bits8/streamit/regtest'
+#regtest_root = '/home/bits7/NO_BACKUP/ad_tmp/regtest'
+regtest_root = '/home/bits8/streamit/regtest'
 smtp_server = 'k2.csail.mit.edu'
 
 # TODO: determine distinctions between "nightly" and "all" regtests.
@@ -161,12 +161,13 @@ class RunRegTests:
         try:
             last_dirname = os.path.basename(os.path.realpath(regtest_root
                                                              + '/latest'))
-            os.stat(last_dirname) # throws OSError if fn doesn't exist
             re_pattern=re.compile('^(\d\d\d\d)(\d\d)(\d\d)\.(\d\d)(\d\d)')
             m = re_pattern.match(last_dirname)
             self.cvs_date = m.group(1)+'-'+m.group(2)+'-'+m.group(3)+' '+m.group(4)+':'+m.group(5)
             cvs_command = 'cvs history -x AMR -a -D "' + self.cvs_date + '"'
+            os.chdir(self.working_dir + '/streams')
             self.run_and_log(cvs_command, 'cvshistory', 'Getting CVS history')
+            os.chdir(self.working_dir)
         except:
             pass
         
@@ -219,7 +220,7 @@ is the QMTest results file.
             pass
 
         if self.cvs_date:
-            header = header + "CVS history since " + cvs_date + "\n"
+            header = header + "CVS history since " + self.cvs_date + "\n"
             hf = open(self.working_dir + '/cvshistory', 'r')
             lines = hf.readlines()
             hf.close()

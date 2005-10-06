@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.15 2005-10-05 23:39:25 dimock Exp $
+# $Id: run-reg-tests.py,v 1.16 2005-10-06 13:03:16 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -195,7 +195,7 @@ is the QMTest results file.
                                                              + '/latest'))
             re_pattern=re.compile('^(\d\d\d\d)(\d\d)(\d\d)\.(\d\d)(\d\d)')
             m = re_pattern.match(last_dirname)
-            cvs_date = m.group(1)+':'+m.group(2)+':'+m.group(3)+' '+m.group(4)+':'+m.group(5)
+            cvs_date = m.group(1)+'-'+m.group(2)+'-'+m.group(3)+' '+m.group(4)+':'+m.group(5)
         except:
             pass
 

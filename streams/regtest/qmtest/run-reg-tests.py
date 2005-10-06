@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.17 2005-10-06 19:18:24 dimock Exp $
+# $Id: run-reg-tests.py,v 1.18 2005-10-06 19:25:31 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -18,13 +18,13 @@ import time
 import re
 
 # Some defaults:
-admins = 'streamit-regtest-log@cag.lcs.mit.edu'
-#admins = 'dimock@csail.mit.edu'
-users = 'streamit-regtest@cag.lcs.mit.edu'
-#users = 'dimock@csail.mit.edu'
+#admins = 'streamit-regtest-log@cag.lcs.mit.edu'
+admins = 'dimock@csail.mit.edu'
+#users = 'streamit-regtest@cag.lcs.mit.edu'
+users = 'dimock@csail.mit.edu'
 cvs_root = '/projects/raw/cvsroot'
-regtest_root = '/home/bits7/NO_BACKUP/streamit/regtest_working'
-#regtest_root = '/home/bits7/NO_BACKUP/ad_tmp/regtest'
+#regtest_root = '/home/bits7/NO_BACKUP/streamit/regtest_working'
+regtest_root = '/home/bits7/NO_BACKUP/ad_tmp/regtest'
 #regtest_root = '/home/bits8/streamit/regtest'
 smtp_server = 'k2.csail.mit.edu'
 

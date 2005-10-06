@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.16 2005-10-06 13:03:16 dimock Exp $
+# $Id: run-reg-tests.py,v 1.17 2005-10-06 19:18:24 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -19,10 +19,13 @@ import re
 
 # Some defaults:
 admins = 'streamit-regtest-log@cag.lcs.mit.edu'
+#admins = 'dimock@csail.mit.edu'
 users = 'streamit-regtest@cag.lcs.mit.edu'
+#users = 'dimock@csail.mit.edu'
 cvs_root = '/projects/raw/cvsroot'
-# regtest_root = '/home/bits7/NO_BACKUP/streamit/regtest_working'
-regtest_root = '/home/bits8/streamit/regtest'
+regtest_root = '/home/bits7/NO_BACKUP/streamit/regtest_working'
+#regtest_root = '/home/bits7/NO_BACKUP/ad_tmp/regtest'
+#regtest_root = '/home/bits8/streamit/regtest'
 smtp_server = 'k2.csail.mit.edu'
 
 # TODO: determine distinctions between "nightly" and "all" regtests.
@@ -145,6 +148,28 @@ class RunRegTests:
 
         self.run_and_log('cvs -d %s co streams' % cvs_root, 'cvslog',
                          'CVS checkout')
+
+        # There may or may not be a 'latest' file.
+        # If there is then it is a link to a directory
+        # The directory name should be the start time of the previous
+        # regression test run.
+        # Get a file of cvs history since the last run.  There is a slight
+        # overlap since we are getting cvs history from the start of the
+        # last run until now, rather than from the start of the cvs checkout
+        # for the last run until the start of the cvs checkout for this run.
+        self.cvs_date = ''
+        try:
+            last_dirname = os.path.basename(os.path.realpath(regtest_root
+                                                             + '/latest'))
+            os.stat(last_dirname) # throws OSError if fn doesn't exist
+            re_pattern=re.compile('^(\d\d\d\d)(\d\d)(\d\d)\.(\d\d)(\d\d)')
+            m = re_pattern.match(last_dirname)
+            self.cvs_date = m.group(1)+'-'+m.group(2)+'-'+m.group(3)+' '+m.group(4)+':'+m.group(5)
+            cvs_command = 'cvs history -x AMR -a -D "' + self.cvs_date + '"'
+            self.run_and_log(cvs_command, 'cvshistory', 'Getting CVS history')
+        except:
+            pass
+        
         self.run_and_log('make -C %s/src' % self.streamit_home, 'makelog',
                          'Building the compiler')
         self.run_and_log('make -C %s/library/c' % self.streamit_home,
@@ -186,24 +211,16 @@ is the QMTest results file.
            self.streamit_home)
         
         last_results = ''
-        cvs_date = ''
         try:
             fn = regtest_root + '/latest/streams/results.qmr'
             os.stat(fn) # throws OSError if fn doesn't exist
             last_results = ' ' + fn
-            last_dirname = os.path.basename(os.path.realpath(regtest_root
-                                                             + '/latest'))
-            re_pattern=re.compile('^(\d\d\d\d)(\d\d)(\d\d)\.(\d\d)(\d\d)')
-            m = re_pattern.match(last_dirname)
-            cvs_date = m.group(1)+'-'+m.group(2)+'-'+m.group(3)+' '+m.group(4)+':'+m.group(5)
         except:
             pass
 
-        if cvs_date:
+        if self.cvs_date:
             header = header + "CVS history since " + cvs_date + "\n"
-            cvs_command = 'cvs history -x AMR -a -D "' + cvs_date + '"'
-            self.run_and_log(cvs_command, 'cvshistory', 'Getting CVS history')
-            hf = open(self.working_dir + '/' + cvshistory, 'r')
+            hf = open(self.working_dir + '/cvshistory', 'r')
             lines = hf.readlines()
             hf.close()
             re_pattern = re.compile('^(\S\s+\S+\s+\S+\s+\S+\s+\S+)\s+(\S+)\s+(\S+)\s+(streams/\S*)')
@@ -212,7 +229,8 @@ is the QMTest results file.
                 if m:
                     header = header + m.group(1) + ' ' + m.group(2) + ' ' + m.group(4) + '/' + m.group(3) + '\n'
 
-        
+            print('\n');
+            
         pop = popen2.Popen4(self.streamit_home +
                             '/regtest/qmtest/examine-results.py ' +
                             self.streamit_home + '/results.qmr' +

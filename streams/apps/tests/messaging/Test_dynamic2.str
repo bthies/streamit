@@ -28,6 +28,7 @@ int->int filter Counter(portal<Output> p) {
     work push * pop 1 {
 	// would use while loop, but it fails in frontend
 	for (int i=0; i<10000; i++) {
+	    pop();
 	    myPhase();
 	    myPhase();
 	    myPhase();

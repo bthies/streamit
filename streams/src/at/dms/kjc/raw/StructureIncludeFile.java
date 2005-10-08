@@ -93,10 +93,12 @@ public class StructureIncludeFile implements FlatVisitor
 		fw.write("inline void " + RawExecutionCode.structReceiveMethodPrefix + 
 			 current.getIdent() + "(" + current.getIdent() + "*);\n\n");
 	    }
-	    // FIXME put in kluge for 'bit'  We do not have bit handling so 
-	    // bit is defined here as 'unsigned char'
-	    fw.write("typedef unsigned char  bit;\n");
 	}
+	/* RMR { moved typedef outside of loop */
+	// FIXME put in kluge for 'bit'  We do not have bit handling so 
+	// bit is defined here as 'unsigned char'
+	fw.write("typedef unsigned char  bit;\n");
+	/* } RMR */
     }
 
     private void createPushPopFunctions(SIRStructure[] structs,

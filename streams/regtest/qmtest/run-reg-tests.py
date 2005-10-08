@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.19 2005-10-06 20:22:03 dimock Exp $
+# $Id: run-reg-tests.py,v 1.20 2005-10-08 23:52:13 rabbah Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -19,12 +19,8 @@ import re
 
 # Some defaults:
 admins = 'streamit-regtest-log@cag.lcs.mit.edu'
-#admins = 'dimock@csail.mit.edu'
 users = 'streamit-regtest@cag.lcs.mit.edu'
-#users = 'dimock@csail.mit.edu'
 cvs_root = '/projects/raw/cvsroot'
-#regtest_root = '/home/bits7/NO_BACKUP/streamit/regtest_working'
-#regtest_root = '/home/bits7/NO_BACKUP/ad_tmp/regtest'
 regtest_root = '/home/bits8/streamit/regtest'
 smtp_server = 'k2.csail.mit.edu'
 
@@ -230,7 +226,7 @@ is the QMTest results file.
                 if m:
                     header = header + m.group(1) + ' ' + m.group(2) + ' ' + m.group(4) + '/' + m.group(3) + '\n'
 
-            print('\n');
+            header = header + '\n';
             
         pop = popen2.Popen4(self.streamit_home +
                             '/regtest/qmtest/examine-results.py ' +

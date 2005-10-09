@@ -59,7 +59,7 @@ complex->complex filter CombineIDFT(int n, int maxN) {
     wn.imag = sin(2 * pi / n);
   }
 
-  work {
+  work push n pop n {
     if (n==maxN) {
       workLast();
     } else {

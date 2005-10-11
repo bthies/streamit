@@ -144,45 +144,41 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         return newNode;
     }
 
-    public SDEPData computeSDEP(
-        LatencyNode upstreamNode,
-        LatencyNode downstreamNode)
-        throws NoPathException
-    {
-        // first find all the edges that need to be traversed when figuring
-        // out the dependencies between nodes
-        OSet edgesToTraverse;
-        {
-            StreamInterface ancestor =
-                findLowestCommonAncestor(upstreamNode, downstreamNode);
+    /**
+     * Returns edges between two nodes, assuming one is upstream and
+     * other is downstream.
+     */
+    private OSet getEdgesBetween(LatencyNode upstreamNode, LatencyNode downstreamNode) {
+	StreamInterface ancestor =
+	    findLowestCommonAncestor(upstreamNode, downstreamNode);
 
-            edgesToTraverse =
-                visitGraph(
-                    upstreamNode,
-                    false,
-                    true,
-                    ancestor,
-                    false,
-                    true);
+	OSet result =
+	    visitGraph(
+		       upstreamNode,
+		       false,
+		       true,
+		       ancestor,
+		       false,
+		       true);
 
-            OSet edgesUpstream =
-                visitGraph(
-                    downstreamNode,
-                    true,
-                    false,
-                    ancestor,
-                    false,
-                    true);
+	OSet edgesUpstream =
+	    visitGraph(
+		       downstreamNode,
+		       true,
+		       false,
+		       ancestor,
+		       false,
+		       true);
 
-            // find an intersection between these two sets:
-            {
-                OSetIterator edgesIter = edgesToTraverse.begin();
-                OSetIterator edgesLastIter = edgesToTraverse.end();
-                OSetIterator upstreamEdgesLastIter = edgesUpstream.end();
+	// find an intersection between these two sets:
+	{
+	    OSetIterator edgesIter = result.begin();
+	    OSetIterator edgesLastIter = result.end();
+	    OSetIterator upstreamEdgesLastIter = edgesUpstream.end();
 
-                DLList uselessEdges = new DLList();
+	    DLList uselessEdges = new DLList();
 
-                for (; !edgesIter.equals(edgesLastIter); edgesIter.next())
+	    for (; !edgesIter.equals(edgesLastIter); edgesIter.next())
                 {
                     // if the edgesUpstream set doesn't have this edge,
                     // store it to be removed from the set
@@ -192,43 +188,69 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                         uselessEdges.pushBack(edgesIter.get());
                 }
 
-                // remove useless edges
-                while (!uselessEdges.empty())
+	    // remove useless edges
+	    while (!uselessEdges.empty())
                 {
-                    edgesToTraverse.erase(uselessEdges.front().get());
+                    result.erase(uselessEdges.front().get());
                     uselessEdges.popFront();
                 }
 
-                // now edgesToTraverse holds all edges that can be traversed
-                // between upstreamNode and downstreamNode
-            }
+	    // now result holds all edges that can be traversed
+	    // between upstreamNode and downstreamNode
+	}
 
-            // remove the backward pointing edges:
-            {
-                OSet backwardPointingEdges =
-                    findBackPointingEdges(upstreamNode, ancestor);
-                OSetIterator backEdgeLastIter = backwardPointingEdges.end();
-                for (OSetIterator backEdgeIter =
-                    backwardPointingEdges.begin();
-                    !backEdgeIter.equals(backEdgeLastIter);
-                    backEdgeIter.next())
+	// remove the backward pointing edges:
+	{
+	    OSet backwardPointingEdges =
+		findBackPointingEdges(upstreamNode, ancestor);
+	    OSetIterator backEdgeLastIter = backwardPointingEdges.end();
+	    for (OSetIterator backEdgeIter =
+		     backwardPointingEdges.begin();
+		 !backEdgeIter.equals(backEdgeLastIter);
+		 backEdgeIter.next())
                 {
-                    edgesToTraverse.erase(backEdgeIter.get());
+                    result.erase(backEdgeIter.get());
                 }
-            }
+	}
 
-            // make sure that there are SOME edges between the two nodes
-            // if this assert fails, then either the srcIsUpstream is reversed
-            // or there is no path between upstreamNode and downstreamNode
-            // within their lowest common ancestor.
-            // if you don't understand this, or think it's wrong, ask karczma 
-            // (03/07/15)
-            //assert !edgesToTraverse.empty();
-            if (edgesToTraverse.empty())
-            {
-                throw new NoPathException();
-            }
-        }
+	return result;
+    }
+
+    /**
+     * Returns true iff there is a downstream path from <node1> to <node2>.
+     */
+    public boolean isDownstreamPath(LatencyNode node1, LatencyNode node2) {
+	OSet edges = getEdgesBetween(node1, node2);
+	return !edges.empty();
+    }
+
+    /**
+     * Returns true iff there is an upstream path from <node1> to <node2>.
+     */
+    public boolean isUpstreamPath(LatencyNode node1, LatencyNode node2) {
+	OSet edges = getEdgesBetween(node2, node1);
+	return !edges.empty();
+    }
+
+    public SDEPData computeSDEP(
+        LatencyNode upstreamNode,
+        LatencyNode downstreamNode)
+        throws NoPathException
+    {
+        // first find all the edges that need to be traversed when figuring
+        // out the dependencies between nodes
+        OSet edgesToTraverse = getEdgesBetween(upstreamNode, downstreamNode);
+
+	// make sure that there are SOME edges between the two nodes
+	// if this assert fails, then either the srcIsUpstream is reversed
+	// or there is no path between upstreamNode and downstreamNode
+	// within their lowest common ancestor.
+	// if you don't understand this, or think it's wrong, ask karczma 
+	// (03/07/15)
+	//assert !edgesToTraverse.empty();
+	if (edgesToTraverse.empty()) {
+	    throw new NoPathException();
+	}
 
         // now go through all the edges and count how many useful edges
         // arrive at each node that will be traversed
@@ -349,7 +371,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                 }
 
                 // find how many more edges need to lead to this node
-                OMapIterator nodeNumEdgesIter =
+                 OMapIterator nodeNumEdgesIter =
                     nodes2numEdges.find(edge.getDst());
                 int nodeNumEdges =
                     ((Integer)nodeNumEdgesIter.getData()).intValue();

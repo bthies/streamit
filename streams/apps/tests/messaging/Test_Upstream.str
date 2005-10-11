@@ -1,0 +1,94 @@
+void->void pipeline Test_Upstream
+{
+    portal<MessageReceiver> prtl;
+    
+    add void->int filter {
+	  int i = 0;
+	  work push 1 {
+		push(i++);
+		if (i == 10) i = 0;
+	  }
+    }
+    
+    add MessageReceiver to prtl;
+    add MessageSender(prtl);
+    
+    add int->void filter {
+	  work pop 1 {
+		print(pop());
+	  }
+    }
+}
+
+int->int filter MessageReceiver {
+    int s = 1;
+    
+    work pop 1 push 1 {
+	  push(s + pop());
+	  s++;
+    }
+    
+    handler reset_state(int i) {
+	  s = i & 0x1;
+    }
+}
+
+int->int filter MessageSender(portal<MessageReceiver> prtl) 
+{
+    int i = 1;
+    int k = 0;
+    work pop 1 push 1 {
+	  if ((i++ % 10) == 0) {
+		prtl.reset_state(k++) [1:1];
+	  }
+	  push(pop());
+    }
+}
+
+/* OUTPUT
+cagfarm-44 % strc -library Test_Upstream -i20
+1
+3
+5
+7
+9
+11
+13
+15
+17
+19
+Delivering message (reset s to alternating 0 or 1)
+0
+2
+4
+6
+8
+10
+12
+14
+16
+18
+Delivering message (reset s to alternating 0 or 1)
+1
+3
+5
+7
+9
+11
+13
+15
+17
+19
+Delivering message (reset s to alternating 0 or 1)
+0
+2
+4
+6
+8
+10
+12
+14
+16
+18
+...
+*/

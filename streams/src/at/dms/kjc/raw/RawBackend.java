@@ -48,10 +48,6 @@ public class RawBackend {
 
 	System.out.println("Entry to RAW Backend");
 
-	SIRPrinter printer0 = new SIRPrinter("SIR_EnteringRawBackend.out");
-	IterFactory.createFactory().createIter(str).accept(printer0);
-	printer0.close();
-
 	structures = structs;
 
 	if (KjcOptions.standalone)

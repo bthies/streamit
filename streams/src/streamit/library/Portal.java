@@ -17,6 +17,7 @@
 package streamit.library;
 
 import streamit.scheduler2.SDEPData;
+import streamit.scheduler2.constrained.NoPathException;
 import streamit.library.iriter.Iterator;
 
 import java.util.ArrayList;
@@ -30,15 +31,15 @@ import java.util.HashMap;
  * defined; that class is the portal object.  Receiver objects should
  * also implement the interface.
  *
- * @version $Id: Portal.java,v 1.7 2005-07-19 22:25:22 thies Exp $
+ * @version $Id: Portal.java,v 1.8 2005-10-11 22:14:12 thies Exp $
  */
 public abstract class Portal
 {
     protected ArrayList receivers; //List of Filters
     private int minLat,maxLat;
     /**
-     * Stream -> SDEPData[].  Maps a given sender to the SDEP data
-     * for each receiver in <receivers>.
+     * Stream -> SDEPInfo.  Maps a given sender to the SDEP data for
+     * each receiver in <receivers>.
      */
     private HashMap SDEPCache;
     /**
@@ -95,13 +96,22 @@ public abstract class Portal
 	    this.scheduler = streamit.scheduler2.constrained.Scheduler.createForSDEP(new Iterator(Stream.toplevel));
 	}
 	// get SDEP to receivers
-	SDEPData[] sdep = getSDEP(sender);
+	SDEPInfo sdep = getSDEP(sender);
 	// for each receiver...
 	for (int i=0; i<receivers.size(); i++) {
 	    Stream receiver = (Stream)receivers.get(i);
-	    // make message
-	    Message m = new Message(sdep[i].getDstPhase4SrcPhase(sender.getNumExecutions()+minLat+1),
-				    handlerName, args);
+	    // make message -- for now just send with maximum latency
+	    // to make it easiest to schedule
+	    Message m;
+	    if (sdep.isDownstream[i]) {
+		// schedule downstream messages using DstPhase4Src
+		m = new Message(sdep.data[i].getDstPhase4SrcPhase(sender.getNumExecutions()+maxLat+1),
+				handlerName, args);
+	    } else {
+		// schedule upstream messages messages using SrcPhase4Dst
+		m = new Message(sdep.data[i].getSrcPhase4DstPhase(sender.getNumExecutions()+maxLat+1),
+				handlerName, args);
+	    }
 	    //System.err.println("Enqueuing message <" + handlerName + "> for deliver at time " + m.getDeliveryTime() + " in " + receiver);
 	    // enqueue message
 	    receiver.enqueueMessage(m);
@@ -111,21 +121,43 @@ public abstract class Portal
     /**
      * Returns SDEP data from sender to each receiver.
      */
-    private SDEPData[] getSDEP(Stream sender) {
+    private SDEPInfo getSDEP(Stream sender) {
 	if (SDEPCache.containsKey(sender)) {
-	    return (SDEPData[])SDEPCache.get(sender);
+	    return (SDEPInfo)SDEPCache.get(sender);
 	} else {
-	    SDEPData[] result = new SDEPData[receivers.size()];
+	    // make placeholders for data and direction info
+	    SDEPData[] data = new SDEPData[receivers.size()];
+	    boolean[] isDownstream = new boolean[receivers.size()];
+	    // for each receiver...
 	    for (int i=0; i<receivers.size(); i++) {
 		Stream receiver = (Stream)receivers.get(i);
-		try {
-		    result[i] = scheduler.computeSDEP(new Iterator(sender),
-						      new Iterator(receiver));
-		} catch (streamit.scheduler2.constrained.NoPathException e) {
-		    System.err.println("No path between message sender and receiver in stream graph.");
-		    e.printStackTrace();
+		if (scheduler.isDownstreamPath(new Iterator(sender), new Iterator(receiver))) {
+		    // if downstream path, compute dependences downstream
+		    try {
+			data[i] = scheduler.computeSDEP(new Iterator(sender),
+							new Iterator(receiver));
+		    } catch (NoPathException e) {
+			// should not happen because we checked that there is downstream path
+			e.printStackTrace();
+		    }
+		    isDownstream[i] = true;
+		} else if (scheduler.isUpstreamPath(new Iterator(sender), new Iterator(receiver))) {
+		    // if upstream path, compute dependences upstream
+		    try {
+			data[i] = scheduler.computeSDEP(new Iterator(receiver),
+							new Iterator(sender));
+		    } catch (NoPathException e) {
+			// should not happen because we checked that there is downstream path
+			e.printStackTrace();
+		    }
+		    isDownstream[i] = false;
+		} else {
+		    // otherwise, fail -- no path between sender and receiver
+		    new RuntimeException("No path between message sender and receiver in stream graph.")
+			.printStackTrace();
 		}
 	    }
+	    SDEPInfo result = new SDEPInfo(data, isDownstream);
 	    SDEPCache.put(sender, result);
 	    return result;
 	}
@@ -162,5 +194,22 @@ public abstract class Portal
     public Short wrapInObject(short s) {
 	return new Short(s);
     }
+
+    /**
+     * Just a bundle of the SDEP data and whether or not a given
+     * message travels upstream or downstream.
+     */
+    class SDEPInfo {
+	// table of dependence info
+	public SDEPData[] data;
+	// true iff the receiver is downstream of the sender
+	public boolean[] isDownstream;
+	
+	public SDEPInfo(SDEPData[] data, boolean[] isDownstream) {
+	    this.data = data;
+	    this.isDownstream = isDownstream;
+	}
+    }
     
 }
+

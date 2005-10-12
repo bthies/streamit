@@ -9,7 +9,8 @@
   <reference>http://linux.wku.edu/~lamonml/algor/sort/merge.html</reference>
   <implementations>  
     <impl lang="StreamIt">
-      <file>MergeSort.str</file>
+      <file class="source">MergeSort.str</file>
+      <file class="output">MergeSort.out</file>
     </impl>   
   </implementations>
 </benchmark>

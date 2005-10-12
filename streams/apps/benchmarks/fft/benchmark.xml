@@ -52,10 +52,14 @@
       <file class="output">FFT5.out</file>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="fft6">
+      <desc>.out file just generted by strc -library -i100, not checked for correctness</desc>
       <file class="source">FFT6.str</file>
+      <file class="output">FFT6.out</file>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="fft7">
+      <desc>.out file just generted by strc -library -i100, not checked for correctness</desc>
       <file class="source">FFT7.str</file>
+      <file class="output">FFT7.out</file>
     </impl>
   </implementations>
 </benchmark>

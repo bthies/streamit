@@ -12,7 +12,8 @@ result matrix.
       <file>matrix.c</file>
     </impl>
     <impl lang="StreamIt">
-      <file>MatrixMult.str</file>
+      <file class="source">MatrixMult.str</file>
+      <file class="output">MatrixMult.out</file>
     </impl>
   </implementations>
 </benchmark>

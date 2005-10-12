@@ -7,35 +7,43 @@ These are the examples in the StreamIt Cookbook.
   <implementations>
     <impl lang="StreamIt" id="minimal">
       <desc>Minimal program, section 2.1</desc>
-      <file>Minimal.str</file>
+      <file class="source">Minimal.str</file>
+      <file class="output">Minimal.out</file>
     </impl>
     <impl lang="StreamIt" id="movingaverage">
       <desc>Moving average filter, section 2.2</desc>
-      <file>MovingAverage.str</file>
+      <file class="source">MovingAverage.str</file>
+      <file class="output">MovingAverage.out</file>
     </impl>
     <impl lang="StreamIt" id="lpf">
       <desc>Low-pass filter, section 2.3</desc>
-      <file>LPFProgram.str</file>
+      <file class="source">LPFProgram.str</file>
+      <file class="output">LPFProgram.out</file>
     </impl>
     <impl lang="StreamIt" id="bpf">
       <desc>Band-pass filter, section 2.4</desc>
-      <file>BPFProgram.str</file>
+      <file class="source">BPFProgram.str</file>
+      <file class="output">BPFProgram.out</file>
     </impl>
     <impl lang="StreamIt" id="equalizer">
       <desc>Equalizer, section 2.5</desc>
-      <file>EqualizerProgram.str</file>
+      <file class="source">EqualizerProgram.str</file>
+      <file class="output">EqualizerProgram.out</file>
     </impl>
     <impl lang="StreamIt" id="echo">
       <desc>Echo effect, section 2.6</desc>
-      <file>EchoProgram.str</file>
+      <file class="source">EchoProgram.str</file>
+      <file class="output">EchoProgram.out</file>
     </impl>
     <impl lang="StreamIt" id="fib">
       <desc>Fibonacci number generator, section 2.7</desc>
-      <file>FibProgram.str</file>
+      <file class="source">FibProgram.str</file>
+      <file class="output">FibProgram.out</file>
     </impl>
     <impl lang="StreamIt" id="fmradio">
       <desc>FMRadio with equalizer, section 3</desc>
-      <file>FMRadio.str</file>
+      <file class="source">FMRadio.str</file>
+      <file class="output">FMRadio.out</file>
     </impl>
   </implementations>
 </benchmark>

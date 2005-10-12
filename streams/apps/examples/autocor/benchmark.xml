@@ -9,7 +9,8 @@ autocorrelation series for a specified number of lags.
   </description>
   <implementations>
     <impl lang="StreamIt">
-      <file>AutoCor.str</file>
+      <file class="source">AutoCor.str</file>
+      <file class="output">AutoCor.out</file>
     </impl>
   </implementations>
 </benchmark>

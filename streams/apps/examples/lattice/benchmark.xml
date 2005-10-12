@@ -10,7 +10,8 @@ by one element.
   </description>
   <implementations>
     <impl lang="StreamIt">
-      <file>Lattice.str</file>
+      <file class="source">Lattice.str</file>
+      <file class="output">Lattice.out</file>
     </impl>
   </implementations>
 </benchmark>

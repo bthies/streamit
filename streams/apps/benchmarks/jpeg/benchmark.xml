@@ -5,11 +5,18 @@
 The JPEG Transcoder takes as input a JPEG image and then decodes it,
 specifies a much higher level of JPEG compression, and then re-encodes
 it as a JPEG.
+
+Other files: JPEGtoBMP.str produces output.bmp.int,
+JPEG.str does not compile   strc -library JPEG.str
+Transcoder_Raw.str  ??
   </description>
   <implementations>
-    <impl lang="StreamIt" dir="streamit">
+    <impl lang="StreamIt" dir="streamit" regtest="skip">
+      <desc>StreamIt version of JPEG decoder/encoder.
+            strc -library Transcode.str -i1  does not seem to terminate.
+            presumably testing would want to look at output.jpg.int</desc>
+      <make>Makefile output.jpg input.jpg.int</make>
       <file>Transcoder.str</file>
-      <desc>StreamIt version of JPEG decoder/encoder.</desc>
     </impl>
   </implementations>
 </benchmark>

@@ -8,16 +8,19 @@ calculated.
   </description>
   <implementations>
     <impl lang="StreamIt">
-      <desc>Basic implementation</desc>
+      <desc class="source">Basic implementation</desc>
       <file>Fib.str</file>
+      <file class="output">Fib.out</file>
     </impl>
     <impl lang="StreamIt">
       <desc>As before, but with a top-level feedback loop</desc>
       <file>FibFeed.str</file>
+      <file class="output">Fib.out</file>
     </impl>
     <impl lang="StreamIt">
       <desc>With a round-robin splitter and no peeking</desc>
       <file>Fib2.str</file>
+      <file class="output">Fib.out</file>
     </impl>
   </implementations>
 </benchmark>

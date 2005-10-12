@@ -1,0 +1,51 @@
+<benchmark>
+  <name>messaging</name>
+  <desc>Tests of dynamic messaging</desc>
+  <description>
+Tests of dynamic messaging.
+Someone want to write a detailed description?
+  </description>
+  <implementations>
+    <impl lang="StreamIt" id="test1">
+      <desc>Someone want to write a description of this test?</desc>
+      <file class="source">Test1.str</file>
+      <file class="output">Test1.out</file>
+    </impl>
+    <impl lang="StreamIt" id="test2">
+      <desc>Someone want to write a description of this test?</desc>
+      <file class="source">Test2.str</file>
+      <file class="output">Test2.out</file>
+    </impl>
+    <impl lang="StreamIt" id="test3">
+      <desc>Someone want to write a description of this test?</desc>
+      <file class="source">Test3.str</file>
+      <file class="output">Test3.out</file>
+    </impl>
+    <impl lang="StreamIt" id="test4">
+      <desc>Someone want to write a description of this test?</desc>
+      <file class="source">Test4.str</file>
+      <file class="output">Test4.out</file>
+    </impl>
+    <impl lang="StreamIt" id="test5">
+      <desc>Someone want to write a description of this test?</desc>
+      <file class="source">Test5.str</file>
+      <file class="output">Test5.out</file>
+    </impl>
+    <impl lang="StreamIt" id="test_upstream">
+      <desc>Someone want to write a description of this test?</desc>
+      <file class="source">Test_Upstream.str</file>
+      <file class="output">Test_Upstream.out</file>
+    </impl>
+    <impl lang="StreamIt" id="test_dynamic">
+      <desc>Someone want to write a description of this test? 
+            No output: -library does not seem to terminate</desc>
+      <file class="source">Test_dynamic.str</file>
+    </impl>
+    <impl lang="StreamIt" id="test_dynamic2">
+      <desc>Someone want to write a description of this test? 
+            No output: -library -nosched does not seem to terminate
+                       -library without -nosched crashes</desc>
+      <file class="source">Test_dynamic2.str</file>
+    </impl>
+  </implementations>
+</benchmark>

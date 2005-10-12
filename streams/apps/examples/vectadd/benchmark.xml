@@ -11,7 +11,8 @@ doing an elementwise add on the output.
   <implementations>
     <impl lang="StreamIt">
       <desc>Generate two input vectors and add them</desc>
-      <file>VectAdd.str</file>
+      <file class="source">VectAdd.str</file>
+      <file class="output">VectAdd.out</file>
     </impl>
   </implementations>
 </benchmark>

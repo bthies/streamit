@@ -9,6 +9,7 @@ used in both the MPEG and JPEG standards. A definition of what makes a
 DCT or inverse DCT implementation conform to the IEEE specification
 can be found in Appendix A of the MPEG-2 specification (ISO/IEC
 13818-2) on P. 125.
+
   </description>
   <implementations>
     <impl lang="StreamIt" dir="streamit" regtest="skip">

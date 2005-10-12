@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.20 2005-10-08 23:52:13 rabbah Exp $
+# $Id: run-reg-tests.py,v 1.21 2005-10-12 22:01:33 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -221,10 +221,13 @@ is the QMTest results file.
             lines = hf.readlines()
             hf.close()
             re_pattern = re.compile('^(\S\s+\S+\s+\S+\s+\S+\s+\S+)\s+(\S+)\s+(\S+)\s+(streams/\S*)')
+            re_docs_pattern = re.compile('^(\S\s+\S+\s+\S+\s+\S+\s+\S+)\s+(\S+)\s+(\S+)\s+(streams/docs/\S*)')
             for line in lines:
                 m = re_pattern.match(line)
                 if m:
-                    header = header + m.group(1) + ' ' + m.group(2) + ' ' + m.group(4) + '/' + m.group(3) + '\n'
+                    n = re_docs_pattern.match(line)
+                    if not n:
+                        header = header + m.group(1) + ' ' + m.group(2) + ' ' + m.group(4) + '/' + m.group(3) + '\n'
 
             header = header + '\n';
             

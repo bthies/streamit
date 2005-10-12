@@ -347,10 +347,41 @@ bit->int filter MPEGStreamParser(
           pops(32,tempval);
           if (tempval == 0x000001B5) {
           // extension_data(0) (cite 1, P.27)
-            print("Error - Program Limitation: Not Yet Support for Extension_Data(0)");
-          } else {      
-          // user_data() TODO (cite 1, P.27)
-            print("Error - Program Limitation: Not Yet Support for User_Data()");
+            peeks(4, tempval); 
+            if (tempval == 2) { // extension_start_code_identifier
+              pops(4, tempval); 
+              int video_format;
+              pops(3, video_format);
+              int color_description;
+              pops(1, color_description);
+              if (color_description == 1) {
+                int color_primaries, transfer_characteristics, matrix_coefficients;
+                pops(8, color_primaries);
+                pops(8, transfer_characteristics);
+                pops(8, matrix_coefficients);
+              }
+              int display_horizontal_size;
+              pops(14, display_horizontal_size);
+              marker_bit();
+              int display_vertical_size;
+              pops(14, display_vertical_size);
+              // TODO - we don't do anything with this extra data we get out. Eventually we should.
+              next_start_code();
+            } else {
+              print("Error - Program Limitation: Not Yet Support for Sequence Scalable Extension()");
+            }
+          } else { // user_data() (cite 1, P.27)      
+            if (tempval != 0x000001B2) {
+              print("Error - Program Limitation: Not Yet Support for User_Data()");
+            } 
+            peeks(24, tempval);
+            while (tempval != 0x000001) {
+              int user_data;
+              pops(8, user_data);
+              // TODO we should probably do something with this data
+              peeks(24, tempval);
+            }
+            next_start_code();
           }
           peeks(32,tempval);
         }

@@ -264,7 +264,31 @@ the regtest.xml file.
 \subsection{Programs and Control Flow}
 
 \subsubsection{streamit.py}
-extends / overrides some QM methods, and contains a few utility routines.
+Extends / overrides some QM methods, and contains a few utility routines.
+
+The current version includes its own version of ``TimedExecutable''
+since that was not supplied in QMTest 2.0 (It appears in later
+versions).  This version of TimedExecutable does not work with
+``process targets'':
+\begin{verbatim}
+qmtest create-target -a processes=4 p4 process_target.ProcessTarget
+qmtest run
+\end{verbatim}
+will occasionally come up withe an EACCESS error (Error 13) when the
+provess target performs some exec functions before TimedExecutable can
+perform a setpgid.
+
+The three Run methods: RunStrcTest, which compiles; RunProgramTest,
+which executes; and CompareResultsTest, which verifies output
+all currently require that a chdir is made to the proper test
+directory.
+This makes it impossible to use a thread target
+\begin{verbatim}
+qmtest run -j4
+\end{verbatim}
+since threads and chdir do not interact well.
+A common symptom of attempting this is verification errors trying to
+verify one test's output against another test's expected output file.
 
 \subsubsection{run-reg-tests.py}
 \begin{itemize}
@@ -303,13 +327,12 @@ the latest QMTeat resultle file.
 Executable, invoked with 2 parameters: name of results file (defaults
 to results.qmr), and path to place to put reports (defaults to '.').
 Creates files 
-``Summary'' (with bad link to RT::WebPath/StreamIt/listing.html which
-probably doesn't matter since listing.html is difficult to read...).
-``RegtestItem'' which is supposed to be html with embedded Perl, but
-all my browser sees is the Perl.
-``listing.html'' (not very readable as mentioned above).
+{\tt Summary}, 
+{\tt RegtestItem}, and 
+{\tt listing.html}.
+Presumably these files are used to show the latest QMtest results on the 
+RT ticket tracking system.  The files are not very readable on their own.
 
-Presumably, nobody has wanted the results of this for a while...
 
 \section{Running your own regression test}
 

@@ -1,7 +1,7 @@
 #
 # streamit.py: Python extensions to QMTest for StreamIt
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamit.py,v 1.7 2005-10-05 23:39:25 dimock Exp $
+# $Id: streamit.py,v 1.8 2005-10-12 14:17:44 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -36,6 +36,9 @@ class TimedExecutable(qm.executable.RedirectedExecutable):
         self.pid = qm.executable.RedirectedExecutable.Spawn \
                    (self, arguments, environment, dir, path,
                     exception_pipe)
+        # using a "process target", the following line occasionally
+        # throws an Error 13, which I think is EACCESS: the child process
+        # has already performed an exec function.
         os.setpgid(self.pid, 0)
         self.timer = threading.Timer(self.timeout, self._OnTimeout)
         self.timer.start()
@@ -53,6 +56,48 @@ class TimedExecutable(qm.executable.RedirectedExecutable):
         os.kill(-self.pid, signal.SIGTERM)
         self.timer = None
 
+
+def xlate(path_to_dbs,dotted_test_name):
+    """Translate path to QMTest ExtensionDatabase and test name to a os.path.
+
+    'path_to_dbs' is path to the ExtensionDatabase.
+
+    'dotted_test_name' is the test name in the database."""
+    
+    extn = '.qms' #qm.test.file_database.ExtensionDatabase.GetSuiteExtension(?)
+    # split, remove test name from directory path
+    test_split = dotted_test_name.split('.')[:-1]
+    parts = map(lambda p: p + extn, test_split)
+    path = os.path.join(path_to_dbs, *parts)
+    return path
+
+def maybe_xlate_context(context):
+    """Given a QMTest 2.3 context, return a path to the current test directory.
+
+    returns None if can not determine path from context (as in QMTest 2.0)."""
+
+    dbpath = context.get('qmtest.dbpath')
+    testid = context.get('qmtest.id')
+    if testid:
+        return xlate(dbpath, testid)
+
+    return None
+
+def ch_to_test_dir(context):
+    """Make sure have chdir's to directory with test.
+
+    returns previous directory to return to, or None if no need to return
+
+    Note: chdir wreaks havoc with threads"""
+
+    olddir = None
+    working_dir = maybe_xlate_context(context)
+    if working_dir:
+        olddir = os.getcwd()
+        os.chdir(working_dir)
+
+    return olddir
+
 class BackendField(EnumerationField):
     """A field containing a StreamIt compiler backend."""
 
@@ -66,9 +111,10 @@ class BackendField(EnumerationField):
                                   self.backend_tags, **properties)
 
 class RunOptionsField(TupleField):
-    """A field containins options to run a StreamIt program."""
+    """A field containing options to run a StreamIt program."""
 
     def __init__(self, name, **properties):
+
         fields = [qm.fields.TextField(name="output",
                                       default_value="output"),
                   qm.fields.IntegerField(name="iters",
@@ -159,7 +205,20 @@ class RunStrcTest(qm.test.test.Test):
         ]
 
     def Run(self, context, result):
-        """Actually run the StreamIt compiler."""
+      """Actually run the StreamIt compiler."""
+
+      olddir = ch_to_test_dir(context)
+
+#      print "In directory ", os.getcwd(), "\n"
+#      print "RunStrTest.Run ", os.getcwd(), "\n"
+#      print "runopts[0]: ", str(self.runopts[0]), "\n"
+#      print "runopts[1]: ", str(self.runopts[1]), "\n"
+#      print "options: ", str(self.options), "\n"
+#      print "filenames: ", str(self.filenames), "\n"
+#      print "context keys: ", str(context.keys()), "\n"
+#      print "context values: ", str(context.values()), "\n"
+
+      try:
         path = os.path.join(os.environ['STREAMIT_HOME'], 'strc')
         # Figure out what flags to use for the backend
         if self.backend == 'uni':
@@ -220,7 +279,11 @@ class RunStrcTest(qm.test.test.Test):
                 # Python 2.2.2: no shutil.move yet
                 shutil.copy(ftname,finame)
 	        os.unlink(ftname)        
-            
+
+      finally:
+          if olddir:
+              os.chdir(olddir)
+              
 class RunProgramTest(qm.test.test.Test):
     """Run a compiled program as a QMTest test.
 
@@ -243,7 +306,10 @@ class RunProgramTest(qm.test.test.Test):
         ]
 
     def Run(self, context, result):
-        """Actually run the target program."""
+      """Actually run the target program."""
+        
+      olddir = ch_to_test_dir(context)
+      try:
         if self.backend == 'raw4':
             return self._RunRaw(context, result)
         elif self.backend == 'uni':
@@ -253,6 +319,10 @@ class RunProgramTest(qm.test.test.Test):
         else:
             # Should raise an exception
             pass
+
+      finally:
+          if olddir:
+              os.chdir(olddir)
 
     def _RunRaw(self, context, result):
         e = TimedExecutable()
@@ -316,7 +386,9 @@ class CompareResultsTest(qm.test.test.Test):
     zero = 1e-6
 
     def Run(self, context, result):
-        """Actually do the comparison."""
+      """Actually do the comparison."""
+      olddir = ch_to_test_dir(context)
+      try:
 
         failed = 0
         
@@ -363,3 +435,7 @@ class CompareResultsTest(qm.test.test.Test):
         # All done.
         if failed:
             result.Fail('Output mismatch.')
+
+      finally:
+          if olddir:
+              os.chdir(olddir)

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.61 2005-08-20 00:53:51 thies Exp $
+# $Id: strc,v 1.62 2005-10-18 20:28:34 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -22,6 +22,13 @@
 use strict;
 use vars qw(%opts $java $javac $cc $have_fftw);
 use POSIX qw(:sys_wait_h);
+
+# QMTest 2.3 running in some way different from QMTest 2.0.3
+#foreach (sort keys(%ENV)) {
+#    print "$_ = $ENV{$_}\n";
+#}
+use Cwd;
+print STDERR getcwd(), "\n";
 
 # AUTOCONFISCATE $var = "@VAR@";
 $java = "java";
@@ -92,7 +99,7 @@ if ($opts{streamit}) {
 }
 exit(1) if !$fns;
 if ($opts{'library'}) {
-    run_in_library($fns);
+    exit(1) if ! defined run_in_library($fns);
     exit(0);
 }
 $fns = old_to_c($fns) unless $opts{tokopi};
@@ -458,16 +465,19 @@ sub new_to_c
     my $xmx = "-Xmx" . $opts{memory};
     my $server = $opts{server} ? "-server" : "";
     my $sfiles = join(' ', @$fns);
+    my $result;
     if (!$opts{raw} && !$opts{cluster})
       {
 	my $target = change_extension($fns->[0], "str", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
-	call("$java $xmx $server streamit.frontend.ToKopi $kjcopts $sfiles > $target");
+	$result = call("$java $xmx $server streamit.frontend.ToKopi $kjcopts $sfiles > $target");
+	return undef if $result != 0;
 	return [$target];
       }
     else
       {
-	call("$java $xmx $server at.dms.kjc.Main --streamit $kjcopts $sfiles");
+	$result = call("$java $xmx $server at.dms.kjc.Main --streamit $kjcopts $sfiles");
+	return undef if $result != 0;
 	return [];
       }
   }
@@ -479,12 +489,16 @@ sub run_in_library
     my @out = ();
     my $xmx = "-Xmx" . $opts{memory};
     my $server = $opts{server} ? "-server" : "";
+    my $result;
     foreach my $jfile (@$fns)
       {
 	  my $class = remove_extension($jfile, "java");
-	  call("$javac $jfile");
-	  call("$java $xmx $server $class " . get_lib_opts());
+	  $result = call("$javac $jfile");
+	  return undef if $result != 0;
+	  $result = call("$java $xmx $server $class " . get_lib_opts());
+	  return undef if $result != 0;
       }
+    return [];
   }
 
 sub c_to_out

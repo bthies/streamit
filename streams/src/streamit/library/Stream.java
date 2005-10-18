@@ -667,6 +667,7 @@ public abstract class Stream extends Operator
 	// we're running this as the toplevel stream
 	toplevel = this;
 
+	try {
         // read the args:
         if (args != null)
         {
@@ -884,6 +885,13 @@ public abstract class Stream extends Operator
                 drainChannels();
             }
         }
+	} catch (Throwable e) {
+	    /* Any unhandled error or exception in running the program
+	     * results in "exit 1" so that automated testing is informed of 
+	     * the error in running the program. */
+		e.printStackTrace();
+	    System.exit(1);
+	}
     }
 
     /*************************************************************/

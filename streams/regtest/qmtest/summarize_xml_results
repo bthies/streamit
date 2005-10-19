@@ -1,0 +1,408 @@
+#!/usr/uns/bin/perl
+
+###############################################################################
+# Takes either 1 file from a QM regression test -- referred to results.xml
+# or result.xml files from a recent QM regression test and an older test.
+#
+# It produces a "summary" report categorizing all tests into several kinds
+# of successes and failures.
+#
+# If two files are given, it printes the Deltas between the tests:
+# newly added tests, newly removed tests, tests that worsened, tests that
+# improved. 
+#
+# Right now, the SAX parsing is a time bottleneck.
+# (Furthermore, we got a SAX parsing package from CPAN, which is quite
+# likely to not be in your PERL5LIB path so you may not be able to run this
+# program without tweaking your path).
+##############################################################################
+
+use strict;
+use warnings;
+use XML::SAX::ParserFactory;
+#use Data::Dumper;
+
+###############################################################################
+# Constants, 
+###############################################################################
+
+# results => strings to print in status comparison
+my %summary_status = ('compile-failed' => 'compile-failed',
+		   'run-failed' => 'run-failed',
+		   'compile' => 'un-verified',
+		   'run' => 'un-verified',
+		   'verify-failed' => 'verify-failed',
+		   'verify' => 'passed');
+
+
+# order in which results are printed.
+# also used to sort for improvment / worsening between runs.
+my %summary_order = ('compile-failed' => 0,
+		  'run-failed' => 1,
+		  'verify-failed' => 2,
+		  'compile' => 3, # for compile & go such as 'strc -library'
+		  'run' => 3, # 3 considered a pass: no verification requested
+		  'verify' => 4);
+
+my @summary_range = (0..4);
+
+# breakup of buckets for success / failure line
+my @failure_indices = (0,1,2);
+my @success_indices = (4,3);
+
+# strings for success / failure line
+my @succeed_fail_strings = (' compile, ',
+			   ' execute, ',
+			   ' verify',
+			   ' not verified -- no output to compare to',
+			   ' passed, ');
+
+# headers for printing lists of tests
+my @summary_headers = ('For the following benchmarks, COMPILATION failed:',
+		       'For the following benchmarks, EXECUTION failed:',
+		       'For the following benchmarks, VERIFICATION failed:',
+		       'The following benchmarks executed, but can NOT be '
+		       . 'VERIFIED because there is no output to compare to:',
+		       'The following benchmarks PASSED:');
+
+###############################################################################
+#  Globals to communicate between SAX parser events and main program
+###############################################################################
+
+# references to data for input file being processed:
+# hashes resulting from parsing results.xml
+# (benchmark header info not currently used, but could eventually be used
+#  to create some of the header information that is currently prepended
+#  to this report by run-reg-tests.py)
+
+my ($benchheaders, $benchstatus);
+
+
+###############################################################################
+# Main program
+###############################################################################
+
+MAIN: {
+    # one or two input files.
+    my ($f1, $f2) = @ARGV;
+
+    # results from SAX parser on $f1 and $f2
+    # become global hash references $benchheaders, $benchstatus
+    my (%benchheaders1, %benchstatus1);
+    my (%benchheaders2, %benchstatus2);
+
+
+    # create a SAX parser using the event handlers needed for our processing
+    my $handler = MySAXHandler->new();
+    my $p = XML::SAX::ParserFactory->parser(Handler => $handler);
+
+    # process input file 1 to %benchheaders1, %benchstatus1
+    $benchheaders = \%benchheaders1; 
+    $benchstatus  = \%benchstatus1;
+    $p->parse_uri($f1);
+    undef($p);
+
+    my @comparison_outputs = ();
+
+    # process input file 2 to %benchheaders2, %benchstatus2 if it exists.
+    if ($f2) {
+	$benchheaders = \%benchheaders2; 
+	$benchstatus  = \%benchstatus2;
+	$p = XML::SAX::ParserFactory->parser(Handler => $handler);
+	$p->parse_uri($f2);
+	undef($p);
+
+	@comparison_outputs = &comparison(\%benchstatus1, \%benchstatus2);
+    }
+
+    
+    &print_status(\%benchstatus1, \@comparison_outputs);
+
+    exit;
+}
+
+#############################################################################
+#
+# status of a test run
+#
+#############################################################################
+
+#############################################################################
+#
+# Print status of a test run
+#
+#############################################################################
+
+sub print_status {
+    my ($stat, $comparison_outputs) = @_; 
+
+    #
+    # sort keys into buckets by status, 
+    # keys should be in lexicographical order within a bukcket
+    #
+    my @stat_keys = sort keys %$stat;
+    my @summary_buckets = ([], [], [], [], []);
+
+    foreach (@stat_keys) {
+	my $stat_num = $summary_order{$stat->{$_}};
+	push @{$summary_buckets[$stat_num]}, $_;
+    }
+
+
+    #
+    # Summary: total nombers of successes and failures
+    #
+    my $num_failures = 0;
+    my $num_successes = 0;
+    foreach (@failure_indices) {
+	$num_failures += $#{$summary_buckets[$_]};
+    }
+    foreach (@success_indices) {
+	$num_successes += $#{$summary_buckets[$_]};
+    }
+    printf "%4d failures  (", $num_failures;
+    foreach (@failure_indices) {
+	print $#{$summary_buckets[$_]}, $succeed_fail_strings[$_];
+    }
+    print ")\n";
+    printf "%4d successes (", $num_successes;
+    foreach (@success_indices) {
+	print $#{$summary_buckets[$_]}, $succeed_fail_strings[$_];
+    }
+    print ")\n";
+
+    #
+    # Any information output by the comparison (if any comparison)
+    # goes between the summary lines and the printout of the buckets
+    #
+    foreach (@{$comparison_outputs}) {
+	print $_;
+    }
+
+    #
+    # Print bucket header and tests in bucket
+    #
+    foreach (@summary_range) {
+	print "\n$summary_headers[$_]\n";
+	my $bucket = $summary_buckets[$_];
+	foreach (@{$bucket}) {
+	    print "$_\n";
+	}
+    }
+}
+    
+#############################################################################
+#
+# comparison between two test runs:
+#
+# first parameter is hash ref for current run.
+# second parameter is hash ref for previous run.
+#
+# returns an array of strings to be output
+#############################################################################
+
+sub comparison {
+    my ($stat1, $stat2) = @_;
+    my @outputs = ();
+
+    #
+    # Partition stat1, stat2 keys
+    #
+    # all of @in_1_only, @stat1_keys, @in_2_only, @stat2_keys, @in_both
+    # are in lexicographical order, and the union of @stat1_keys, @stat2_keys
+    # equals the union of the disjoint sets @in_1_only, @in_2_only, @in_both
+
+    my @stat1_keys = sort keys %$stat1;
+    my @stat2_keys = sort keys %$stat2;
+    my @in_1_only = ();
+    my @in_2_only = ();
+    my @in_both = ();
+
+    my $i1 = 0;
+    my $i2 = 0;
+    my $c;
+
+    while ($i1 < @stat1_keys && $i2 < @stat2_keys) {
+	$c = $stat1_keys[$i1] cmp $stat2_keys[$i2];
+	if ($c < 0) {
+	    push @in_1_only, $stat1_keys[$i1++];
+	} elsif ($c == 0) {
+	    push @in_both, $stat1_keys[$i1++];
+	    $i2++;
+	} else {
+	    push @in_2_only, $stat2_keys[$i2++];
+	} 
+    }
+    while ($i1 < @stat1_keys) { push @in_1_only, $stat1_keys[$i1++]; }
+    while ($i2 < @stat2_keys) { push @in_2_only, $stat2_keys[$i2++]; }
+
+    #
+    # output added and removed test names
+    #
+
+    if (@in_1_only) {
+	push @outputs, "\nNEW tests since last run:\n";
+	foreach (@in_1_only) {
+	    push @outputs, "  $_\n";
+	}
+    }
+
+    if (@in_2_only) {
+	push @outputs, "\nTests NOT RUN in this run, but in last run:\n";
+	foreach (@in_2_only) {
+	    push @outputs, "  $_\n";
+	}
+    }
+
+    #
+    # select tests that changed status between the runs and 
+    # output tests thath have improves and tests that have worsened.
+    #
+
+    my @worsened;
+    my @improved;
+    foreach (@in_both) {
+	$c = $summary_order{$stat1->{$_}} <=> $summary_order{$stat2->{$_}};
+	if ($c < 0) {
+	    push @worsened, $_;
+	} elsif ($c > 0) {
+	    push @improved, $_;
+	}
+    }
+
+    if (@improved) {
+	push @outputs, "\nTests IMPROVED in this run over last run:\n";
+	foreach (@improved) {
+	    my $s1 = $summary_status{$stat2->{$_}};
+	    my $s2 = $summary_status{$stat1->{$_}};
+	    push @outputs, "  $_ ($s1 -> $s2)\n";
+	}
+    }
+
+    if (@worsened) {
+	push @outputs, "\nTests WORSENED in this run over last run:\n";
+	foreach (@worsened) {
+	    my $s1 = $summary_status{$stat2->{$_}};
+	    my $s2 = $summary_status{$stat1->{$_}};
+	    push @outputs, "  $_ ($s1 -> $s2)\n";
+	}
+    }
+    return @outputs;
+}
+
+#############################################################################
+# The following package contains handlers for SAX parsing of the output of
+# qmtest report  -o xmlfile.xml  path/results.qmr  
+#
+# It uses hash reference $benchheaders to store
+# key='...' => text          of <report><results><attribute>
+#
+# It uses hash reference $bencfhstatus to store
+# id='...' => outcome='...'  of <report><results><result>
+#############################################################################
+
+package MySAXHandler;
+use base qw(XML::SAX::Base);
+  
+my $in_results;
+my $seen_result;
+my $chars;
+
+my $current_element;
+my $current_key;
+
+sub new {
+    my $type = shift;
+    return bless {}, $type;
+}
+
+sub start_document {
+    my ($self, $doc) = @_;
+    $in_results = undef;
+    $seen_result = undef;
+}
+  
+sub start_element {
+    my ($self, $el) = @_;
+    # process element start event
+    my $n = $el->{Name};
+    $in_results = 1 if $n eq 'results';
+
+    if ($in_results && $n eq 'result') {
+	$seen_result = 1;
+	my %a = %{$el->{Attributes}};
+
+	# A bunch of code so that $benchstatus maps a test name without 
+	# the "compile", "run", or "verify" suffix to the status of the
+	# last portion of testing that completed.
+	# expect "compile-failed", "run", "run-failed", "verify" or "verify-failed".
+	#
+	# should be rewritten to drive off some tables rather than exposing
+	# all the decision tree in the code
+	#
+
+	my $testString = $a{'{}id'}{'Value'};
+	my $outcomeString = $a{'{}outcome'}{'Value'};
+	if ($outcomeString ne 'UNTESTED') {
+	    my ($rootStr, $phaseStr) = ($testString =~ /^(.*)\.([^\.]*)$/);
+	    if (exists($benchstatus->{$rootStr})) {
+		my $storedOutcome = $benchstatus->{$rootStr};
+		if ($outcomeString ne 'PASS') {
+		    if ($phaseStr eq 'compile') {
+			$benchstatus->{$rootStr} = 'compile-failed';
+		    } elsif ($phaseStr eq 'run' && $storedOutcome eq 'compile') {
+			$benchstatus->{$rootStr} = 'run-failed';
+		    } elsif ($phaseStr eq 'verify'
+			     && ($storedOutcome eq 'compile' || $storedOutcome eq 'run')) {
+			$benchstatus->{$rootStr} = 'verify-failed';
+		    } else {
+			print STDERR "Confused: trying to replace $storedOutcome with " +
+			    "$phaseStr-failed\n";
+		    }
+		} else {	# ($outcomeString eq 'PASS')
+		    if ($storedOutcome eq 'compile'
+			|| ($storedOutcome eq 'run' && $phaseStr eq 'verify')) {
+			$benchstatus->{$rootStr} = $phaseStr;
+		    } else {
+			print STDERR "Confused: trying to replace $storedOutcome with " +
+			    "$phaseStr\n"
+		    }
+		}
+	    } else {
+		# if passes, put in phase string to post-process.
+		# otherwise put in failure string
+		if ($outcomeString eq 'PASS') {
+		    $benchstatus->{$rootStr} = $phaseStr;
+		} else { 
+                    # ($outcomeString eq 'FAIL' || $outcomeString eq 'ERROR')
+		    $benchstatus->{$rootStr} = $phaseStr . '-failed';
+		}
+	    }
+	}
+    } elsif (!$seen_result && $n eq 'annotation') {
+	$current_key = $el->{Attributes}{'{}key'}{'Value'};
+    }
+}
+
+sub end_element {
+    my ($self, $el) = @_;
+    my $n = $el->{Name};
+    $in_results = undef if $n eq 'results';
+    if ($in_results && !$seen_result && $n eq 'annotation') {
+	$chars =~ s/\n//g;
+	$chars =~ s/^\s+//;
+	$chars =~ s/\s+$//;
+	$benchheaders->{$current_key} = $chars;
+	$chars = undef;
+	$current_key = undef;
+    }
+}
+
+sub characters {
+    my ($self, $characters) = @_;
+    if ($current_key) {
+	$chars .= $characters->{Data};
+    }
+}
+
+1;

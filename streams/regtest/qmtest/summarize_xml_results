@@ -356,16 +356,16 @@ sub start_element {
 			     && ($storedOutcome eq 'compile' || $storedOutcome eq 'run')) {
 			$benchstatus->{$rootStr} = 'verify-failed';
 		    } else {
-			print STDERR "Confused: trying to replace $storedOutcome with " +
-			    "$phaseStr-failed\n";
+			print STDERR "Confused: trying to replace "
+			    . "$storedOutcome with $phaseStr-failed\n";
 		    }
 		} else {	# ($outcomeString eq 'PASS')
 		    if ($storedOutcome eq 'compile'
 			|| ($storedOutcome eq 'run' && $phaseStr eq 'verify')) {
 			$benchstatus->{$rootStr} = $phaseStr;
 		    } else {
-			print STDERR "Confused: trying to replace $storedOutcome with " +
-			    "$phaseStr\n"
+			print STDERR "Confused: trying to replace "
+			    . "$storedOutcome with $phaseStr\n"
 		    }
 		}
 	    } else {

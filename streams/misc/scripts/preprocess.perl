@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/uns/bin/perl -w
 
 $numArgs = $#ARGV + 1;
 if ($numArgs == 1) {

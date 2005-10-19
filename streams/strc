@@ -1,8 +1,8 @@
-#!/usr/bin/perl -w
+#!/usr/uns/bin/perl
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.62 2005-10-18 20:28:34 dimock Exp $
+# $Id: strc,v 1.63 2005-10-19 16:11:37 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -20,15 +20,15 @@
 #
 
 use strict;
+use warnings;
 use vars qw(%opts $java $javac $cc $have_fftw);
 use POSIX qw(:sys_wait_h);
 
 # QMTest 2.3 running in some way different from QMTest 2.0.3
-#foreach (sort keys(%ENV)) {
-#    print "$_ = $ENV{$_}\n";
-#}
+#foreach (sort keys(%ENV)) { print "$_ = $ENV{$_}\n"; }
+#print STDERR getcwd(), "\n";
+
 use Cwd;
-print STDERR getcwd(), "\n";
 
 # AUTOCONFISCATE $var = "@VAR@";
 $java = "java";

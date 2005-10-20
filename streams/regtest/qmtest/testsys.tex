@@ -70,9 +70,9 @@ The script searches for files named \textsf{benchmark.xml} and reads
 those.  In particular, the relevant XML file must have one or more
 \verb|<impl>|s for the ``StreamIt'' language; all files listed there
 are copied into all of the child directories of the matching QMTest
-directory.  Implementations are named by the ``name'' attribute of the
-corresponding XML tag.
-%, or as ``impl1'', ``impl2'', and so on.
+directory.  Implementations are named by the ``id'' attribute of the
+corresponding XML tag, or as ``impl1'', ``impl2'', and so on if there is 
+no ``id'' attribute.
 
 The QMTest name for a particular test then consists of the path to the
 XML file, the implementation name, the backend/optimization name, and
@@ -256,7 +256,7 @@ will be run.
 Points QM at some overridden or extended classes in {\tt streamit.py}.
 
 \subsubsection{configuration}
-Tells QM what sort of ``database'' of tests we are using:  We are curently
+Tells QM what sort of ``database'' of tests we are using:  We are currently
 using a directory-structured database where the leaves contain {\tt  xml} 
 files giving instructions to QM as well as containing the tests themselves.
 
@@ -298,18 +298,18 @@ The new subdirectories are ``QMTest'' and ``apps.qms''.
 
 The ``streams/QMtest'' subdirectory contains the files needed to
 tailor QM to our needs:  ``configuration'', ``classes.qmc'', and the
-source and compiled version of ``streamit.py'' which contains extesion
+source and compiled version of ``streamit.py'' which contains extension
 classes adapting the QM test framework to out needs.
 
 The ``streams/apps.qms'' subdirectory is the root of the test
-database.  Conditer a path under ``apps.qms'' to be similar to the
+database.  Consider a path under ``apps.qms'' to be similar to the
 path under ``streams/apps'' to a benchmark, except that ``.qms'' is
 added to the name of each subdirectory.  There is a formatting
 difference: QM requires that all letters are lowercase and that
 hyphens and other odd characters in directory and file names be
 removed.
 
-At the leaf of a  ``streams/apps.qms'' directtory, find: 
+At the leaf of a  ``streams/apps.qms'' directory, find: 
 \begin{itemize}
 \item a {\tt .str} file to test
 \item optionally, an output file to verify the results of running the 
@@ -321,7 +321,7 @@ name, any arguments needed to run the test, and any prerequisites
 needed to order tests correctly.
 \end{itemize}
 {\tt build-qmtest.py} creates the ``apps.qms'' directory structure and
-the {\tt .qmt} files based on {\tt impl} fielde in a {\tt benchmark.xml}
+the {\tt .qmt} files based on {\tt impl} fields in a {\tt benchmark.xml}
 file and {\tt option}s in the {\tt regtest.xml} file.
 
 \subsection{Programs and Control Flow}
@@ -338,7 +338,7 @@ qmtest create-target -a processes=4 p4 process_target.ProcessTarget
 qmtest run
 \end{verbatim}
 will occasionally come up withe an EACCESS error (Error 13) when the
-provess target performs some exec functions before TimedExecutable can
+process target performs some exec functions before TimedExecutable can
 perform a setpgid.
 
 The three Run methods: RunStrcTest, which compiles; RunProgramTest,
@@ -385,7 +385,7 @@ Executable, invoked from run-reg-tests.py to produce a brief report based on
 the current QMTest results.xml file, and differences from the ``latest''
 QMTest results.xml file if one exists. The first parameter is the path to
 the current QMTest results.xml file, the second parameter is the path to
-the latest QMTeat results.xml file.
+the latest QMtest results.xml file.
 
 \subsubsection{rt-results}
 Executable, invoked with 2 parameters: path to the results.xml file (defaults

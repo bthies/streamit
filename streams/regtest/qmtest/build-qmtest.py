@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.8 2005-10-05 23:39:25 dimock Exp $
+# $Id: build-qmtest.py,v 1.9 2005-10-20 20:46:49 dimock Exp $
 #
 
 import os
@@ -110,7 +110,7 @@ def DoQMTestDir(path, control):
     and whichtypes is a list of benchmark 'types' to execute."""
 
     benchmarkname = os.path.join(path, 'benchmark.xml')
-    qmname = '.'.join(SplitAll(path))
+    qmname = '.'.join(map(lambda p: QMSanitize(p), SplitAll(path)))
     qmdir = DirToQMDir(path)
     dom = xml.dom.minidom.parse(benchmarkname)
     # We basically want to ignore the entire benchmark.xml file, except
@@ -162,9 +162,11 @@ def DoQMTestDir(path, control):
             seq = seq + 1
             id = impl.getAttribute('id')
             if not id: id = "impl%d" % seq
+            id = QMSanitize(id)
             benchname = qmname + "." + id
             benchdir = os.path.join(qmdir, id + ".qms")
 
+        
         # Create the benchmark directory.
         if not os.path.exists(benchdir):
             os.makedirs(benchdir)

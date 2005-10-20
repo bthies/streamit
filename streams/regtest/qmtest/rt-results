@@ -1,0 +1,411 @@
+#!/usr/uns/bin/perl
+
+
+###############################################################################
+# Takes a file from a QM regression test -- referred to results.xml
+# and an existing directory in which to place its output.
+#
+# Produces, in the output directory files:
+# Summary,  RegtestItem, listing.html,
+# and, for each tested file, filename.html
+#
+# Don't be fooled by the .html extensions:  these files are to be read by RT
+# and contain RT-specific annotations as well as html: your browser will gag
+# on them!
+#
+# Right now, the SAX parsing is a time bottleneck.
+# (Furthermore, we got a SAX parsing package from CPAN, which is quite
+# likely to not be in your PERL5LIB path so you may not be able to run this
+# program without tweaking your path).
+##############################################################################
+
+use strict;
+use warnings;
+use XML::SAX::ParserFactory;
+use File::Spec;
+#use Data::Dumper;
+
+###############################################################################
+#  Constants
+###############################################################################
+
+# used during SAX parsing
+my %segment_title = (compile => 'Compilation',
+		     run => 'Execution',
+		     verify => 'Verification');
+
+# used in post-processing:
+
+# order in which results are printed.
+my %summary_order = ('compile-failed' => 0,
+		  'run-failed' => 1,
+		  'verify-failed' => 2,
+		  'compile' => 3, # for compile & go such as 'strc -library'
+		  'run' => 3, # 3 considered a pass: no verification requested
+		  'verify' => 4);
+
+my @summary_range = (0..4);
+
+my @succeed_fail_strings = ('Compile failed',
+			    'Execution failed',
+			    'Verification failed',
+			    'Not verified',
+			    'Passed');
+
+# in order in which we are combining phases in filename.html
+my @file_extensions = ('.compile', '.run', '.verify'); 
+
+
+###############################################################################
+#  Globals to communicate between SAX parser events and main program
+###############################################################################
+
+my $benchstatus;
+my $rt_root;
+
+# subroutines used both in main module, and in SAX events package:
+
+#
+# alternately return 'oddline' and 'evenline' after seeding.
+#
+{
+    my $alt_line;
+    sub alt_line_seed {
+	$alt_line = 'evenline';
+    }
+    sub alt_line {
+	if ($alt_line eq 'evenline') {
+	    $alt_line = 'oddline';
+	} elsif ($alt_line eq 'oddline') {
+	    $alt_line = 'evenline';
+	} else {
+	    error('invalid seed for alt_line');
+	}
+	return $alt_line;
+    }
+}
+
+###############################################################################
+# Main program
+###############################################################################
+
+MAIN: {
+
+    (my $input_file, $rt_root) = @ARGV;
+    $input_file = 'results.xml' unless $input_file;
+    $rt_root = '.' unless $rt_root;
+
+    my %benchstatus;
+    $benchstatus = \%benchstatus; # use ref only to make stealing code from
+                                  # summarize_xml_results easier!
+    
+    # create a SAX parser using the event handlers needed for our processing
+    my $handler = MySAXHandler->new();
+    my $p = XML::SAX::ParserFactory->parser(Handler => $handler);
+
+    $p->parse_uri($input_file);
+
+    undef($p);
+
+    printSummary(\%benchstatus, File::Spec->catfile($rt_root, 'Summary'));
+    printRegtestItem(File::Spec->catfile($rt_root, 'RegtestItem'));
+    printListing(\%benchstatus, File::Spec->catfile($rt_root, 'listing.html'));
+    combinePassFiles(\%benchstatus,$rt_root);
+
+    exit;
+}
+
+
+#############################################################################
+#
+# Files are written out by the SAX event handlersfor each phase of testing on
+# each file.
+#
+# This function combines the files for each phase into a singl RT/html file
+# and deletes the original 1..3 files.
+#
+#############################################################################
+
+sub combinePassFiles {
+    (my $stat, my $root) = @_;
+
+    my @SAVED_ARGV = @ARGV;	# use ARGV's special feature in file copying
+
+    foreach my $fbase (keys %$stat) {
+	my @fns = ();
+	foreach (@file_extensions) {
+	    my $f = File::Spec->catfile($root, $fbase . $_);
+	    push @fns, $f if -e $f; 
+	}
+	warn "can't find any phase files for $fbase"  unless @fns;
+	my $outfile = File::Spec->catfile($root, $fbase . '.html');
+	my $tag = "StreamIt Regtest: $fbase";
+	open(F, "> $outfile");
+	print F "<& /Elements/Header, Title => loc(\"$tag\") &>\n";
+	print F "<& /Elements/Tabs, Title => loc(\"$tag\") &>\n";
+	@ARGV = @fns;
+	print F <>;
+	print F "<& /Elements/Footer &>\n";
+	close (F);
+
+	foreach my $f (@fns) {
+	    unlink $f;
+	}
+    }
+
+    @ARGV = @SAVED_ARGV;	# restore ARGV (hygiene, not needed)
+}
+
+#############################################################################
+#
+# Print a listing of the files with status into a file
+#
+#############################################################################
+
+sub printListing {
+    (my $stat, my $f) = @_;
+
+    open(F, "> $f");
+
+    print F  <<'__END_OF_DOCUMENT__';
+<& /Elements/Header, Title => loc("StreamIt Regtest") &>
+<& /Elements/Tabs, Title => loc("StreamIt Regtest") &>
+<table border=0 width="100%">
+<tr align=top><td>
+<& /Elements/TitleBoxStart, title => "Tests by name" &>
+__END_OF_DOCUMENT__
+
+    alt_line_seed();
+    foreach (sort keys %$stat) {
+	printf F '<& RegtestItem, Class => "%s", Test => "%s",' . "\n"
+                 . 'Status => "%s", TestTickets => $TestTickets &>' . "\n",
+  	       alt_line(), $_, $stat->{$_};
+    }
+
+    print F  <<'__END_OF_DOCUMENT__';
+<& /Elements/TitleBoxEnd &>
+</td></tr></table>
+<& /Elements/Footer &>
+<%INIT>
+my $TestTickets = {};
+my $Tickets = RT::Tickets->new($session{"CurrentUser"});
+$Tickets->ClearRestrictions;
+$Tickets->LimitStatus(VALUE => "new");
+$Tickets->LimitStatus(VALUE => "open");
+$Tickets->LimitQueue(VALUE => "StreamIt Bugs", OPERATOR => "=");
+while (my $t = $Tickets->Next) {
+  my $Values = $t->CustomFieldValues("Regtest");
+  while (my $v = $Values->Next) {
+    my $Content = $v->Content;
+    $Content =~ s/[\r\n]//g;
+    push @{$TestTickets->{$Content}}, $t;
+  }
+}
+</%INIT>
+__END_OF_DOCUMENT__
+
+    close(F);
+
+}
+
+#############################################################################
+#
+# Print some fixed data and Perl code into a file.
+#
+#############################################################################
+
+sub printRegtestItem {
+    my $f = shift @_;
+
+    open(F, "> $f");
+
+    print F  <<'__END_OF_DOCUMENT__';
+<tr class=<%$Class%>>
+<td><b><a href="<%"$Test.html"%>"><%$Test%></a></b></td>
+<td><%$Status%></td><td>
+% foreach my $t (@{$TestTickets->{$Test}}) {
+<a href="<%$RT::WebPath%>/Ticket/Display.html?id=<%$t->Id%>"><%$t->id%>
+(<%$t->OwnerObj->Name%>) <%$t->Subject%></a><br>
+% }
+</td></tr>
+<%INIT>
+my $Tickets = RT::Tickets->new($session{"CurrentUser"});
+</%INIT>
+<%ARGS>
+$Class => "oddline"
+$Test => undef
+$Status => undef
+$TestTickets => undef
+</%ARGS>
+__END_OF_DOCUMENT__
+
+    close(F); 
+}
+
+#############################################################################
+#
+# Print status of a test run into a file
+#
+#############################################################################
+
+sub printSummary {
+    (my $stat, my $f) = @_; 
+
+    # array of counts of disposiitons
+    my @summary_counts = ();
+    foreach (@summary_range) { push @summary_counts, 0; }
+
+    foreach (keys %$stat) {
+	my $stat_num = $summary_order{$stat->{$_}};
+	$summary_counts[$stat_num] ++;
+    }
+
+    open(F, "> $f");
+
+    print F  <<'__END_OF_DOCUMENT__';
+<table border=0 cellspacing=0 cellpadding=1 width=100%
+<tr><th align=left>
+<a href="<% $RT::WebPath %>/StreamIt/listing.html">Regtest</a>
+</th><th>&nbsp;</th></tr>
+__END_OF_DOCUMENT__
+
+    alt_line_seed();
+
+    foreach (@summary_range) {
+	printf F '<tr class=%s><td>%s</td><td>%d</td></tr>',
+  	       alt_line(), $succeed_fail_strings[$_], $summary_counts[$_];
+    }
+    print F "</table>\n";
+    close(F);
+}
+
+#############################################################################
+# The following package contains handlers for SAX parsing of the output of
+# qmtest report  -o xmlfile.xml  path/results.qmr  
+#
+# It uses hash reference $benchheaders to store
+# key='...' => text          of <report><results><attribute>
+#
+# It uses hash reference $bencfhstatus to store
+# id='...' => outcome='...'  of <report><results><result>
+#############################################################################
+
+package MySAXHandler;
+use base qw(XML::SAX::Base);
+  
+my $in_results;			# inside <results> ... </results>
+my $FH;				# file handle ref for printing current test
+                                # inside <result> ... </result>
+my $current_key;		# 'key' attribute of 'annotation' element
+my $chars;			# character data  <annotation>...</annotation>
+
+
+sub new {
+    my $type = shift;
+    return bless {}, $type;
+}
+
+sub start_document {
+    my ($self, $doc) = @_;
+    $in_results = undef;
+}
+  
+sub start_element {
+    my ($self, $el) = @_;
+    # process element start event
+    my $n = $el->{Name};
+    $in_results = 1 if $n eq 'results';
+
+    if ($in_results && $n eq 'result') {
+	my %a = %{$el->{Attributes}};
+
+	# A bunch of code so that $benchstatus maps a test name without 
+	# the "compile", "run", or "verify" suffix to the status of the
+	# last portion of testing that completed.
+	# expect "compile-failed", "run", "run-failed", "verify" or "verify-failed".
+	#
+	# should be rewritten to drive off some tables rather than exposing
+	# all the decision tree in the code
+	#
+
+	my $testString = $a{'{}id'}{'Value'};
+	my $outcomeString = $a{'{}outcome'}{'Value'};
+	if ($outcomeString ne 'UNTESTED') {
+	    # Open file for test and phase, and write some header info.
+	    my $test_phase_file = File::Spec->catfile($rt_root,$testString);
+#	    print STDERR "> $test_phase_file\n";
+	    open(FH, "> $test_phase_file");
+	    $FH = \*FH;
+	    my ($rootStr, $phaseStr) = ($testString =~ /^(.*)\.([^\.]*)$/);
+	    print $FH '<& /Elements/TitleBoxStart, title => "',
+		      $segment_title{$phaseStr}, '" &>', "\n";
+	    ::alt_line_seed();
+	    
+	    # update mapping from test to status
+	    if (exists($benchstatus->{$rootStr})) {
+		my $storedOutcome = $benchstatus->{$rootStr};
+		if ($outcomeString ne 'PASS') {
+		    if ($phaseStr eq 'compile') {
+			$benchstatus->{$rootStr} = 'compile-failed';
+		    } elsif ($phaseStr eq 'run' && $storedOutcome eq 'compile') {
+			$benchstatus->{$rootStr} = 'run-failed';
+		    } elsif ($phaseStr eq 'verify'
+			     && ($storedOutcome eq 'compile' || $storedOutcome eq 'run')) {
+			$benchstatus->{$rootStr} = 'verify-failed';
+		    } else {
+			warn "Trying to replace "
+			    . "$storedOutcome with $phaseStr-failed\n";
+		    }
+		} else {	# ($outcomeString eq 'PASS')
+		    if ($storedOutcome eq 'compile'
+			|| ($storedOutcome eq 'run' && $phaseStr eq 'verify')) {
+			$benchstatus->{$rootStr} = $phaseStr;
+		    } else {
+			warn "Trying to replace "
+			    . "$storedOutcome with $phaseStr\n"
+		    }
+		}
+	    } else {
+		# if passes, put in phase string to post-process.
+		# otherwise put in failure string
+		if ($outcomeString eq 'PASS') {
+		    $benchstatus->{$rootStr} = $phaseStr;
+		} else { 
+                    # ($outcomeString eq 'FAIL' || $outcomeString eq 'ERROR')
+		    $benchstatus->{$rootStr} = $phaseStr . '-failed';
+		}
+	    }
+	}
+    } elsif ($FH && $n eq 'annotation') {
+	$current_key = $el->{Attributes}{'{}name'}{'Value'};
+	print $FH '<tr class="', ::alt_line(), '"><td colspan=2><b>', 
+                   $current_key, "</b>\n<p>";
+    }
+}
+
+sub end_element {
+    my ($self, $el) = @_;
+    my $n = $el->{Name};
+
+    if ($n eq 'annotation' && $FH) {
+	$chars =~ s{\s*\n}{<br/>\n}g;
+	print $FH $chars, "</p></td></tr>\n";
+	$chars = undef;
+	$current_key = undef;
+    } elsif ($in_results && $n eq 'result' && $FH) {
+	print $FH "<& /Elements/TitleBoxEnd &>\n";
+	close($FH);
+	undef($FH);
+    } elsif ($n eq 'results') {
+	$in_results = undef;
+    }
+}
+
+sub characters {
+    my ($self, $characters) = @_;
+    if ($current_key) {
+	$chars .= $characters->{Data};
+    }
+}
+
+1;

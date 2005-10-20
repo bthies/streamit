@@ -167,7 +167,7 @@ sub print_status {
     print ")\n";
     printf "%4d successes (", $num_successes;
     foreach (@success_indices) {
-	print $#{$summary_buckets[$_]}, $succeed_fail_strings[$_];
+	print $#{$summary_buckets[$_]}+1, $succeed_fail_strings[$_];
     }
     print ")\n";
 
@@ -356,7 +356,7 @@ sub start_element {
 			     && ($storedOutcome eq 'compile' || $storedOutcome eq 'run')) {
 			$benchstatus->{$rootStr} = 'verify-failed';
 		    } else {
-			print STDERR "Confused: trying to replace "
+			warn "Trying to replace "
 			    . "$storedOutcome with $phaseStr-failed\n";
 		    }
 		} else {	# ($outcomeString eq 'PASS')
@@ -364,7 +364,7 @@ sub start_element {
 			|| ($storedOutcome eq 'run' && $phaseStr eq 'verify')) {
 			$benchstatus->{$rootStr} = $phaseStr;
 		    } else {
-			print STDERR "Confused: trying to replace "
+			warn "Trying to replace "
 			    . "$storedOutcome with $phaseStr\n"
 		    }
 		}

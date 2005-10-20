@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.21 2005-10-12 22:01:33 dimock Exp $
+# $Id: run-reg-tests.py,v 1.22 2005-10-20 19:41:58 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -20,6 +20,8 @@ import re
 # Some defaults:
 admins = 'streamit-regtest-log@cag.lcs.mit.edu'
 users = 'streamit-regtest@cag.lcs.mit.edu'
+#admins = 'dimock@csail.mit.edu'
+#users = 'dimock@csail.mit.edu'
 cvs_root = '/projects/raw/cvsroot'
 regtest_root = '/home/bits8/streamit/regtest'
 smtp_server = 'k2.csail.mit.edu'
@@ -45,6 +47,7 @@ class RunRegTests:
         try:
             self.prep()
             self.run_tests()
+            self.pre_report() 
             self.report()
             self.rt_report()
             self.set_latest()
@@ -187,6 +190,12 @@ class RunRegTests:
 			 permissible=1)
         self.endtime = time.localtime()
 
+    def pre_report(self):
+        self.run_and_log('qmtest report -o ' +
+                         self.streamit_home + '/results.xml' + ' ' +
+                         self.streamit_home + '/results.qmr',
+                         'qmprereportlog', 'Generating xml report')
+
     def report(self):
         header = """StreamIt Regression Test Summary
 --------------------------------
@@ -209,7 +218,7 @@ is the QMTest results file.
         
         last_results = ''
         try:
-            fn = regtest_root + '/latest/streams/results.qmr'
+            fn = regtest_root + '/latest/streams/results.xml'
             os.stat(fn) # throws OSError if fn doesn't exist
             last_results = ' ' + fn
         except:
@@ -232,8 +241,8 @@ is the QMTest results file.
             header = header + '\n';
             
         pop = popen2.Popen4(self.streamit_home +
-                            '/regtest/qmtest/examine-results.py ' +
-                            self.streamit_home + '/results.qmr' +
+                            '/regtest/qmtest/summarize_xml_results ' +
+                            self.streamit_home + '/results.xml' +
                             last_results)
         summary = ''
         while 1:
@@ -249,10 +258,9 @@ is the QMTest results file.
         os.mkdir(rt_root)
         # Ignore errors (but hope it works).
         os.spawnl(os.P_WAIT,
-                  os.path.join(self.streamit_home,
-                               'regtest/qmtest/rt-results.py'),
-                  'rt-results.py',
-                  os.path.join(self.streamit_home, 'results.qmr'),
+                  os.path.join(self.streamit_home,'regtest/qmtest/rt-results'),
+                  'rt-results',
+                  os.path.join(self.streamit_home, 'results.xml'),
                   rt_root)
         
 

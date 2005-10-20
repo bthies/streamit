@@ -71,7 +71,8 @@ those.  In particular, the relevant XML file must have one or more
 \verb|<impl>|s for the ``StreamIt'' language; all files listed there
 are copied into all of the child directories of the matching QMTest
 directory.  Implementations are named by the ``name'' attribute of the
-corresponding XML tag, or as ``impl1'', ``impl2'', and so on.
+corresponding XML tag.
+%, or as ``impl1'', ``impl2'', and so on.
 
 The QMTest name for a particular test then consists of the path to the
 XML file, the implementation name, the backend/optimization name, and
@@ -110,7 +111,7 @@ and creating XML test files.  The Python XML DOM infrastructure is
 used to create the various files, which get written out.
 
 These reference QMTest Test classes, which are by and large defined in
-\textsf{qmtest.py}.  There are three classes here, which describe the
+\textsf{streamit.py}.  There are three classes here, which describe the
 three stages of the StreamIt tests.  Of particular note, the
 ``verify'' stage is implemented within a single Python function, where
 before it was a set of three separate Perl scripts.  Each class
@@ -234,6 +235,8 @@ directory containing the benchmark.xml
 \end{itemize}
 
 {\tt make} names a make file, which is run before processing {\tt file}s.
+Since the text is just processed by ``make -f ...'', you can put targets, 
+switches, ... on this line as well.
 
 {\tt file} has one attribute, {\tt class}.  If the value of {\tt class}
 is "source" or if class is missing then the file name is of a source
@@ -250,16 +253,76 @@ or the {\tt impl} does not specify any {\tt whichtype}s then the test
 will be run.
 
 \subsubsection{classes.qmc}
-Points QM at some overridden or extended classes in streamit.py
+Points QM at some overridden or extended classes in {\tt streamit.py}.
 
-\subsection{configuration}
-Used by QM?
+\subsubsection{configuration}
+Tells QM what sort of ``database'' of tests we are using:  We are curently
+using a directory-structured database where the leaves contain {\tt  xml} 
+files giving instructions to QM as well as containing the tests themselves.
+
+\subsubsection{results.qmr}
+QM results file in undocumented internal format (where both the
+format, and the internal routines to access the elements of the file
+may change between versions of QM).  This is the file produced by
+``qmtest run''.
+
+\subsubsection{results.xml}
+This is a version of the QM results file as processed by ``qmtest report''.
+the programs {\tt summarize_xml_results} and {\tt rt-results} run off
+the contents of this file.
+Unfortunately, there is no DTD for this file, and as of QM 2.3, there
+was no guarantee from CodeSourcery that the file format would not
+change.
+However, we expect that the data that we process from the {\tt results.xml}
+file will not change format.
 
 \subsubsection{Directories}
-{\tt build-qmtest.py} will create a different subdirectory for each
-combination of {\tt impl} in a benchmark.xml file and {\tt option}s in
-the regtest.xml file.
+{\tt run-reg-tests.py} builds the following directory structure:
+A root directory with a name derived from the date and time that the
+regression test was started.
+This directory contains log files from pre- and post-processing
+phases, and two subdirectories.
 
+The ``rt'' subdirectory is where the files that describe the
+regression test to the RT ticket-management system will reside after
+testing. (There is an extension to RT to allow browsing these files.)
+
+The ``streams'' subdirectory is a fresh {\tt cvs} checkout of the
+entire StreamIt source tree.  This checkout includes some of the
+programs used in regression testing.
+
+In the ``streams'' subdirectory, regression testing builds two new
+subdirectories and two files:  The files ``results.qmr'' and
+``results.xml'' are described above.
+The new subdirectories are ``QMTest'' and ``apps.qms''.
+
+The ``streams/QMtest'' subdirectory contains the files needed to
+tailor QM to our needs:  ``configuration'', ``classes.qmc'', and the
+source and compiled version of ``streamit.py'' which contains extesion
+classes adapting the QM test framework to out needs.
+
+The ``streams/apps.qms'' subdirectory is the root of the test
+database.  Conditer a path under ``apps.qms'' to be similar to the
+path under ``streams/apps'' to a benchmark, except that ``.qms'' is
+added to the name of each subdirectory.  There is a formatting
+difference: QM requires that all letters are lowercase and that
+hyphens and other odd characters in directory and file names be
+removed.
+
+At the leaf of a  ``streams/apps.qms'' directtory, find: 
+\begin{itemize}
+\item a {\tt .str} file to test
+\item optionally, an output file to verify the results of running the 
+compiled program,
+\item {\tt compile.qmt}, {\tt run.qmt}, and {\tt verify.qmt}
+containing instructions to QM in {\tt xml} format.
+This includes the name of the class that performs the test, the test
+name, any arguments needed to run the test, and any prerequisites
+needed to order tests correctly.
+\end{itemize}
+{\tt build-qmtest.py} creates the ``apps.qms'' directory structure and
+the {\tt .qmt} files based on {\tt impl} fielde in a {\tt benchmark.xml}
+file and {\tt option}s in the {\tt regtest.xml} file.
 
 \subsection{Programs and Control Flow}
 
@@ -298,10 +361,11 @@ verify one test's output against another test's expected output file.
  library (library/c) and the raw toolchain (misc/raw),
 \item use streamitqm / run-reg-tests.py to convert from our .xml files to QM
   files,
-\item run QM,
-\item run examine-results.py to create summary report and mail it to all.
-\item run rt-results.py to build a detailed report
-\item and set the results of this run to be the latest results.
+\item run QM,  ({\tt qmtest run} followed by  {\tt qmtest report})
+\item run summarize_xml_results to create summary report and mail it to all.
+\item run rt-results to build files usable by RT for detailed
+  reporting of the results,
+\item and set the directory built by this run to be the ``latest'' results.
 \end{itemize}
 
 \subsubsection{streamitqm}
@@ -312,31 +376,35 @@ plus some file handling.  run-reg-tests.py expects this file to be in
 
 \subsubsection{build-qmtest.py}
 Executable, invoked with 1 parameter: the complete path and file name for the 
-regtest.xml file.  streamitqm expects this file to be in '.regtest/qmtest'.
+regtest.xml file.  streamitqm expects this file to be in './regtest/qmtest'.
 Creates files {\tt compile.qmt}, {\tt run.qmt}, and {\tt verify.qmt}
 for each combination of backend and options.
 
-\subsubsection{examine-results.py}
+\subsubsection{summarize_xml_results}
 Executable, invoked from run-reg-tests.py to produce a brief report based on
-the current QMTest results file, and differences from the ``latest''
-QMTest results file if one exists. The first parameter is the path to
-the current QMTest results file, the second parameter is the path to
-the latest QMTeat resultle file.
+the current QMTest results.xml file, and differences from the ``latest''
+QMTest results.xml file if one exists. The first parameter is the path to
+the current QMTest results.xml file, the second parameter is the path to
+the latest QMTeat results.xml file.
 
-\subsubsection{rt-results.py}
-Executable, invoked with 2 parameters: name of results file (defaults
-to results.qmr), and path to place to put reports (defaults to '.').
+\subsubsection{rt-results}
+Executable, invoked with 2 parameters: path to the results.xml file (defaults
+to results.xml if not given), 
+and path to place to put reports (defaults to '.' if not given).
 Creates files 
 {\tt Summary}, 
-{\tt RegtestItem}, and 
-{\tt listing.html}.
-Presumably these files are used to show the latest QMtest results on the 
-RT ticket tracking system.  The files are not very readable on their own.
+{\tt RegtestItem}, 
+{\tt listing.html},
+and a {\tt .html} file per test.
+
+These files are used to show the latest QMtest results on the 
+RT ticket tracking system. 
+ The files are not very readable on their own.
 
 
 \section{Running your own regression test}
 
-Slightly modified from Bill Thies' mail message of  Wed, 14 Sep 2005.
+Modified from Bill Thies' mail message of  Wed, 14 Sep 2005.
 \begin{verbatim}
 1. Edit $STREAMIT_HOME/regtest/qmtest/regtest.xml to test the
    directory tree ("test root") and options that you want.
@@ -357,9 +425,11 @@ tree and outputting the results to the screen.  The applications and
 compile options being tested are stored under $STREAMIT_HOME/apps.qms.
 
 When done, you can see a summary report similar to that from the
-nightly regression test using the command:
-
-   ./regtest/qmtest/examine-results.py
+nightly regression test using the commands:
+   qmtest -o ./results.xml ./results.qmr 
+   ./regtest/qmtest/summarize_xml_results ./results.xml
+however, for a substantial test, you will have to wait for a rather
+slow XML parser to do its work.  It may be easier to just capture the
+results of "qmtest run" to a file.
 \end{verbatim}
-
 \end{document}

@@ -1,8 +1,13 @@
+# OBSOLETE: used internal represntation of QM 2.0.3 results file.
+# Neither the internal representation, nor the internal interface to the
+#  representation remained stable between versions.
+# replaced by sequence of 'qmtest report' and 'rt-results'
+#
 #!/usr/uns/bin/python
 #
 # rt-results.py: present QMTest results in CAG RT
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: rt-results.py,v 1.4 2003-12-17 20:48:05 dmaze Exp $
+# $Id: rt-results.py,v 1.5 2005-10-20 19:41:58 dimock Exp $
 
 import os
 import os.path

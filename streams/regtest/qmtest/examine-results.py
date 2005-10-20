@@ -1,24 +1,63 @@
+# OBSOLETE: used internal represntation of QM 2.0.3 results file.
+# Neither the internal representation, nor the internal interface to the
+#  representation remained stable between versions.
+# replaced by sequence of 'qmtest report' and 'summarize_xml_results'
+#
 #!/usr/uns/bin/python
 #
 # examine-results.py: get interesting results from a QMTest results file
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: examine-results.py,v 1.4 2005-10-05 23:39:25 dimock Exp $
+# $Id: examine-results.py,v 1.5 2005-10-20 19:41:58 dimock Exp $
 
 import os
 import os.path
+import sys
 
-# First thing we need to do is set up some magic to find the QMTest
-# classes.  Erk.
-qm_home = '/usr/uns'
+#
+# Finding qm modules for recent versions of QM:
+# (luckily for latest version, was also put in
+# /usr/uns/lib/python2.2/site-packages which is on the usual python path)
+# 
+
+# #(childin, childout) = os.popen2('which qmtest')
+# #qmtest_fullpath = childout.read().replace('\n','')
+# #childin.close(); childout.close()     # leaves [which <defunct>] until we exit
+# #qmtest_fullpath = os.path.realpath(qmtest_fullpath)
+# #  os.environ['QM_PATH'] = qmtest_fullpath
+# #qm_home = qmtest_fullpath.replace('/bin/qmtest','')
+# #  os.environ['QM_HOME'] = qm_home
+# #  os.environ['QM_BUILD'] = '0'
+# #  py_ver_2 = sys.version_info[0:2]
+# #  python_subdir = 'python' + str(py_ver_2[0]) + '.' + str(py_ver_2[1])
+# #  qm_path = os.path.join(qm_home, 'lib', python_subdir, 'site-packages', 'qm')
+# #  sys.path.insert(0, qm_path)
+# import qm
+# qm.prefix = '/home/linux/encap/qm-2.3'
+
+#
+# Finding qm modules for early versions of QM (through 2.1? 2.0?)
+#
+qm_home = '/usr/uns/encap/qm-2.0.3'
 os.environ['QM_HOME'] = qm_home
 os.environ['QM_PATH'] = '%s/bin/qmtest' % qm_home
 os.environ['QM_BUILD'] = '0'
 execfile(os.path.join(qm_home, 'lib/qm/qm', 'setup_path.py'))
 
 # Now, be a normal script from here on in.
+
 import qm.test.base
 from   qm.test.result import Result
 
+# expects to be given one or two results files as command line arguments.
+# if one results file: this is the current results
+# if two results files: the second is from the previous regression test, used
+#  to produce deltas.
+# if no command line arguments, expects processes file ./results.qmr
+#
+# With more recent versions of QM, needs to pass a test database to the
+# qm routines.  The test database is assumed to be the directory
+# containing the results file.
+#
 def main():
     result_file = 'results.qmr'
     if len(sys.argv) > 1: result_file = sys.argv[1]
@@ -42,8 +81,16 @@ def get_classified_results(filename):
     returned by 'classify_results()'."""
 
     f = open(filename, 'r')
+#   QM 2.0 version
     results = qm.test.base.load_results(f)
+#   QM 2.3 version
+#    db = os.path.split(os.path.realpath(filename))[0]
+#    qm.common.RcConfiguration.Load(qm.common.RcConfiguration(), None)
+#    sys.stderr.write("qm.common.RcConfiguration.Load done\n")
+#    results = qm.test.base.load_results(f,qm.test.database.load_database(db))
+#    sys.stderr.write("qm.test.base.load_results done\n")
     f.close()
+    
     return classify_results(results)
 
 def classify_results(results):
@@ -72,6 +119,15 @@ def classify_results(results):
     #
     # Start by breaking up the list of results by test name.
     resname = {}
+#    sys.stderr.write("about to look at results:\n")
+#    sys.stderr.write("results:\n")
+#    sys.stderr.write(str(results))
+#    sys.stderr.write("\n")
+#
+# Under QM 2.3 crashes here: Segmentation fault
+#
+#    sys.stderr.write(str(results.GetResult()))
+#    sys.stderr.write("\n")
     for r in results:
         label = r.GetId()
         parts = label.split('.')
@@ -95,7 +151,6 @@ def classify_results(results):
         else:
             thedisp = 'passed'
         disposition[k] = thedisp
-
     return disposition
 
 def print_counts(disposition):

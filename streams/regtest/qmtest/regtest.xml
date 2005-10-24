@@ -8,4 +8,5 @@
   <option target="raw4">-O1</option>
   <option target="raw4">-O2</option>
   <option target="raw4">-O2 --altcodegen</option>
+  <option target="cluster"></option>
 </regtest>

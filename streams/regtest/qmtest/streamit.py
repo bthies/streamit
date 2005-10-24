@@ -1,7 +1,7 @@
 #
 # streamit.py: Python extensions to QMTest for StreamIt
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamit.py,v 1.8 2005-10-12 14:17:44 dimock Exp $
+# $Id: streamit.py,v 1.9 2005-10-24 19:40:40 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -19,45 +19,9 @@ import re
 import socket
 import shutil
 
-class TimedExecutable(qm.executable.RedirectedExecutable):
-    # TODO: make this configurable.
-    timeout = 20 * 60
+TIMEOUT = 20 * 60
 
-    # Limitations here: we can't set a signal handler, because
-    # this sometimes gets run in a thread.  We want to kill all
-    # of our children (recursively).  texec doesn't seem to be
-    # reliable.
-    #
-    # New thought: when we spawn a child, make the child a process
-    # group.  Then set a thread-based timeout.  When the timeout
-    # trips, kill the child process group.
-    def Spawn(self, arguments=[], environment=None, dir=None,
-              path=None, exception_pipe=None):
-        self.pid = qm.executable.RedirectedExecutable.Spawn \
-                   (self, arguments, environment, dir, path,
-                    exception_pipe)
-        # using a "process target", the following line occasionally
-        # throws an Error 13, which I think is EACCESS: the child process
-        # has already performed an exec function.
-        os.setpgid(self.pid, 0)
-        self.timer = threading.Timer(self.timeout, self._OnTimeout)
-        self.timer.start()
-        return self.pid
-
-    def Run(self, arguments=[], environment=None, dir=None, path=None):
-        status = qm.executable.RedirectedExecutable.Run \
-                 (self, arguments, environment, dir, path)
-        if self.timer:
-            self.timer.cancel()
-            self.timer = None
-        return status
-
-    def _OnTimeout(self):
-        os.kill(-self.pid, signal.SIGTERM)
-        self.timer = None
-
-
-def xlate(path_to_dbs,dotted_test_name):
+def dbs_test_to_dir(path_to_dbs,dotted_test_name):
     """Translate path to QMTest ExtensionDatabase and test name to a os.path.
 
     'path_to_dbs' is path to the ExtensionDatabase.
@@ -71,7 +35,7 @@ def xlate(path_to_dbs,dotted_test_name):
     path = os.path.join(path_to_dbs, *parts)
     return path
 
-def maybe_xlate_context(context):
+def context_to_dir(context):
     """Given a QMTest 2.3 context, return a path to the current test directory.
 
     returns None if can not determine path from context (as in QMTest 2.0)."""
@@ -79,24 +43,9 @@ def maybe_xlate_context(context):
     dbpath = context.get('qmtest.dbpath')
     testid = context.get('qmtest.id')
     if testid:
-        return xlate(dbpath, testid)
+        return dbs_test_to_dir(dbpath, testid)
 
     return None
-
-def ch_to_test_dir(context):
-    """Make sure have chdir's to directory with test.
-
-    returns previous directory to return to, or None if no need to return
-
-    Note: chdir wreaks havoc with threads"""
-
-    olddir = None
-    working_dir = maybe_xlate_context(context)
-    if working_dir:
-        olddir = os.getcwd()
-        os.chdir(working_dir)
-
-    return olddir
 
 class BackendField(EnumerationField):
     """A field containing a StreamIt compiler backend."""
@@ -201,13 +150,19 @@ class RunStrcTest(qm.test.test.Test):
         'strc', but only affects actual compilation for the RAW
         backend.  For the library backend, 'strc' also runs the
         program, so the iteration count and output file here
-        affect the program execution.""")
+        affect the program execution."""),
+
+        IntegerField(name='timeout', title='Timeout', default_value=TIMEOUT,
+                     description="""Timeout in seconds.
+
+        Specifies the number of seconds that program can run before
+        being killed.  If not specified, defaults to constant TIMEOUT""")
         ]
 
     def Run(self, context, result):
       """Actually run the StreamIt compiler."""
 
-      olddir = ch_to_test_dir(context)
+      test_home_dir = context_to_dir(context)
 
 #      print "In directory ", os.getcwd(), "\n"
 #      print "RunStrTest.Run ", os.getcwd(), "\n"
@@ -218,71 +173,70 @@ class RunStrcTest(qm.test.test.Test):
 #      print "context keys: ", str(context.keys()), "\n"
 #      print "context values: ", str(context.values()), "\n"
 
-      try:
-        path = os.path.join(os.environ['STREAMIT_HOME'], 'strc')
-        # Figure out what flags to use for the backend
-        if self.backend == 'uni':
-            backend = []
-        elif self.backend == 'library':
-            backend = ['--library']
-        elif self.backend == 'raw4':
-            backend = ['--raw', '4']
-        elif self.backend == 'cluster':
-            backend = ['-cluster', '1']
-        # List of args to the program, starting with the program name,
-        # and always including the iteration count:
-        arguments = [path] + backend + \
-                    ["--iterations", str(self.runopts[1])] + \
-                    self.options + self.filenames
-        e = TimedExecutable()
-        status = e.Run(arguments, path=path)
+      path = os.path.join(os.environ['STREAMIT_HOME'], 'strc')
+      # Figure out what flags to use for the backend
+      if self.backend == 'uni':
+          backend = []
+      elif self.backend == 'library':
+          backend = ['--library']
+      elif self.backend == 'raw4':
+          backend = ['--raw', '4']
+      elif self.backend == 'cluster':
+          backend = ['-cluster', '1']
+      # List of args to the program, starting with the program name,
+      # and always including the iteration count:
+      arguments = [path] + backend + \
+                  ["--iterations", str(self.runopts[1])] + \
+                  self.options + self.filenames
+      #e = TimedExecutable()
+      e = qm.executable.RedirectedExecutable(self.timeout)
+      status = e.Run(arguments, dir=test_home_dir, path=path)
 
-        # In all cases, save stderr.
-        result['RunStrcTest.stderr'] = e.stderr
-        # For the library backend, write stdout to a file;
-        # for other backends, save it.
-        if self.backend == 'library':
-            f = open(self.runopts[0], 'w')
-            f.write(e.stdout)
-            f.close()
-        else:
-            result['RunStrcTest.stdout'] = e.stdout
+      # In all cases, save stderr.
+      result['RunStrcTest.stderr'] = e.stderr
+      # For the library backend, write stdout to a file;
+      # for other backends, save it.
+      if self.backend == 'library':
+          f = open(os.path.join(test_home_dir,self.runopts[0]), 'w')
+          f.write(e.stdout)
+          f.close()
+      else:
+          result['RunStrcTest.stdout'] = e.stdout
 
-        InterpretExitCode(result, status, self.exit_code, 'RunStrcTest')
+      InterpretExitCode(result, status, self.exit_code, 'RunStrcTest')
 
-        if (self.backend == 'cluster'
-            and result.GetOutcome() == result.PASS):
-            # cluster requires extra make step
-            e = TimedExecutable()
-            e.Run(['make', '-f', 'Makefile.cluster', 'run_cluster'])
-            result['RunStrcTest.stdout_makefile'] = e.stdout
-            result['RunStrcTest.stderr_makefile'] = e.stderr
-            makestatus = 1
-            if os.access('run_cluster', os.F_OK):
-                 makestatus=0
+      if (self.backend == 'cluster'
+          and result.GetOutcome() == result.PASS):
+          # cluster requires extra make step
+          #e = TimedExecutable()
+          e = qm.executable.RedirectedExecutable(self.timeout)
+          e.Run(['make', '-f', 'Makefile.cluster', 'run_cluster'])
+          result['RunStrcTest.stdout_makefile'] = e.stdout
+          result['RunStrcTest.stderr_makefile'] = e.stderr
+          makestatus = 1
+          if os.access('run_cluster', os.F_OK):
+              makestatus=0
 
-            InterpretExitCode(result, makestatus, self.exit_code, 'RunStrcTest')
+          InterpretExitCode(result, makestatus, self.exit_code, 'RunStrcTest')
 
-            if (result.GetOutcome() == result.PASS):
-                # first need to replace "machine-1" in cluster-config.txt
-                # with name of the machine that we are running on (uname -n)
-                finame = "cluster-config.txt"
-                ftname = "cluster-config.txt.tmp"
-                hostname = socket.gethostname()
-                fi = open(finame)
-                ft = open(ftname, 'w')
-                for s in fi.readlines():
-                    ft.write(s.replace('machine-1',hostname))
-                    
-                fi.close()
-                ft.close()
-                # Python 2.2.2: no shutil.move yet
-                shutil.copy(ftname,finame)
-	        os.unlink(ftname)        
+          if (result.GetOutcome() == result.PASS):
+              # first need to replace "machine-1" in cluster-config.txt
+              # with name of the machine that we are running on (uname -n)
+              finame = "cluster-config.txt"
+              ftname = "cluster-config.txt.tmp"
+              # need socket to get host name??!
+              hostname = socket.gethostname()
+              fi = open(finame)
+              ft = open(ftname, 'w')
+              for s in fi.readlines():
+                  ft.write(s.replace('machine-1',hostname))
+                  
+              fi.close()
+              ft.close()
+              # Python 2.2.2: no shutil.move yet
+              shutil.copy(ftname,finame)
+              os.unlink(ftname)        
 
-      finally:
-          if olddir:
-              os.chdir(olddir)
               
 class RunProgramTest(qm.test.test.Test):
     """Run a compiled program as a QMTest test.
@@ -302,34 +256,37 @@ class RunProgramTest(qm.test.test.Test):
         the backend.  In both cases, the output is written to
         the specified output file.  The iteration count is used
         for the uniprocessor backend; for the RAW backend, the
-        iteration count used at compile time is used instead.""")
+        iteration count used at compile time is used instead."""),
+
+        IntegerField(name='timeout', title='Timeout', default_value=TIMEOUT,
+                     description="""Timeout in seconds.
+
+        Specifies the number of seconds that program can run before
+        being killed.  If not specified, defaults to constant TIMEOUT""")
         ]
 
     def Run(self, context, result):
       """Actually run the target program."""
         
-      olddir = ch_to_test_dir(context)
-      try:
-        if self.backend == 'raw4':
-            return self._RunRaw(context, result)
-        elif self.backend == 'uni':
-            return self._RunUni(context, result)
-	elif self.backend == 'cluster':
-            return self._RunClu(context, result)
-        else:
-            # Should raise an exception
-            pass
-
-      finally:
-          if olddir:
-              os.chdir(olddir)
+      if self.backend == 'raw4':
+          return self._RunRaw(context, result)
+      elif self.backend == 'uni':
+          return self._RunUni(context, result)
+      elif self.backend == 'cluster':
+          return self._RunClu(context, result)
+      else:
+          # Should raise an exception
+          pass
 
     def _RunRaw(self, context, result):
-        e = TimedExecutable()
+        test_home_dir = context_to_dir(context)
+
+        #e = TimedExecutable()
+        e = qm.executable.RedirectedExecutable(self.timeout)
         status = e.Run(['make', '-f', 'Makefile.streamit', 'run'])
 
         # TODO: see what processing happens on this output, if any.
-        f = open(self.runopts[0], 'w')
+        f = open(os.path.join(test_home_dir,self.runopts[0]), 'w')
         f.write(e.stdout)
         f.close()
 
@@ -337,13 +294,16 @@ class RunProgramTest(qm.test.test.Test):
 
     def _RunNamedFile(self, context, result, filename):
         # then run_cluster with path and -i
+        test_home_dir = context_to_dir(context)
+
         path = os.path.join('.', filename)
         arguments = [path, '-i' + str(self.runopts[1])]
-        e = TimedExecutable()
-        status = e.Run(arguments, path=path)
+        #e = TimedExecutable()
+        e = qm.executable.RedirectedExecutable(self.timeout)
+        status = e.Run(arguments, dir=test_home_dir, path=path)
 
         # Dump stdout to the file; ignore stderr.
-        f = open(self.runopts[0], 'w')
+        f = open(os.path.join(test_home_dir,self.runopts[0]), 'w')
         f.write(e.stdout)
         f.close()
 
@@ -387,18 +347,23 @@ class CompareResultsTest(qm.test.test.Test):
 
     def Run(self, context, result):
       """Actually do the comparison."""
-      olddir = ch_to_test_dir(context)
+
+      test_home_dir = context_to_dir(context)
+
       try:
 
         failed = 0
         
+        #print "self.expected: ", str(self.expected), "\n"
+        #print "self.output:   ", str(self.output), "\n"
+
         # First off, read the expected results file:
-        f = open(self.expected, 'r')
+        f = open(os.path.join(test_home_dir,self.expected), 'r')
         expected = f.readlines()
         f.close()
 
         # Next, read the actual results file:
-        f = open(self.output, 'r')
+        f = open(os.path.join(test_home_dir,self.output), 'r')
         actual = f.readlines()
         f.close()
 
@@ -437,5 +402,5 @@ class CompareResultsTest(qm.test.test.Test):
             result.Fail('Output mismatch.')
 
       finally:
-          if olddir:
-              os.chdir(olddir)
+          pass
+      

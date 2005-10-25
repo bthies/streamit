@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.24 2005-10-25 16:52:00 dimock Exp $
+# $Id: run-reg-tests.py,v 1.25 2005-10-25 17:16:33 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -201,7 +201,7 @@ class RunRegTests:
             pass
         run_command = 'qmtest run'
         if cpu_count:
-            run_command = run_command + ' j' + str(cpu_count)
+            run_command = run_command + ' -j' + str(cpu_count)
         # ok, now run with thread count as set above
         os.chdir(self.streamit_home)
         self.starttime = time.localtime()

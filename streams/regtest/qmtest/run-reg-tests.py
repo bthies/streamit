@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.23 2005-10-24 19:40:40 dimock Exp $
+# $Id: run-reg-tests.py,v 1.24 2005-10-25 16:52:00 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -189,6 +189,7 @@ class RunRegTests:
         cpu_count = 0
         re_pattern=re.compile('^processor\s+:')
         try:
+            f = open('/proc/cpuinfo', 'r')
             while 1:
                 line = f.readline()
                 if (not line):

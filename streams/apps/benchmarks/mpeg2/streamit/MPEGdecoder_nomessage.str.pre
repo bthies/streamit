@@ -56,9 +56,16 @@
  */
 
 void->void pipeline MPEGdecoder_nomessage() {
-  // 1 = Perform only the variable length decoding and put data in temporary file. (dynamic)
-  // 2 = Read data from temporary file and perform the rest of the decoding process, sending integer output to file. (static)
+  // 1 = Perform only the variable length decoding and put data in temporary file.
+  // 2 = Read data from temporary file and perform the rest of the decoding process, sending integer output to file.
   // 3 = Full MPEG pipeline
+  // 4 = Read data from temporary file and perform block decoding.
+  // 5 = Read data from temporary file and generate a temporary file right before color channel procesing
+  // 6 = Read data from color channel temporary file and perform luminance channel processing.
+  // Dynamic Rate Graphs: 1, 3
+  // Static Rate Graphs: 2, 4, 5, 6 
+  // 2, 4, and 5 each require that you already ran 1 to generate the variable length decoding output file
+  // 6 requires that you run 5 to generate the color channel input files
   int parse_or_process = 1;
 
   int width=352;
@@ -74,12 +81,46 @@ void->void pipeline MPEGdecoder_nomessage() {
     add FileReader<bit>("../input/nomessage.m2v"); // Use this one for the nomessage decoder
     add MPEGStreamParser(width, height, the_chroma_format);
     add FileWriter<int>("../input/nomessage.int");
-  } else {
+  } else if (parse_or_process == 2) {
     add FileReader<int>("../input/nomessage.int");
     add MPEGStream_to_rawImageStream(width, height, the_chroma_format);
     add FileWriter<int>("./nomessage_output.int");
-  }
+  } else if (parse_or_process == 4) {
+    add FileReader<int>("../input/nomessage.int");
+    add int->int filter {
+      work pop 64*6+19 push 64*6 {
+        int a = 64*6;
+        pushpop(a);
+        deadpop(16);
+        deadpop(3);
+      }
+    }
+    add BlockDecode();
+    add FileWriter<int>("./nomessage_blockdecode_output.int");
+  } else if (parse_or_process == 5) {
+    add FileReader<int>("../input/nomessage.int");
+    add int->int splitjoin {
+      split roundrobin(64*blocks_per_macroblock[the_chroma_format], 16, 3);
+      add BlockDecode();
+      add int->int pipeline {
+        add MotionVectorDecode();
+        add Repeat(8, blocks_per_macroblock[the_chroma_format]);
+      }
+      add Repeat(3, blocks_per_macroblock[the_chroma_format]); // macroblock_intra
+      join roundrobin(64, 8, 3);
+    }
 
+    add int->int splitjoin {
+      split roundrobin(4*75, 2*75);
+      add FileWriter<int>("./nomessage_lum_channel_input.int");
+      add FileWriter<int>("./nomessage_cb_channel_input.int");
+      join roundrobin(0, 0);
+    }
+  } else if (parse_or_process == 6) {
+    add FileReader<int>("./nomessage_lum_channel_input.int");
+    add LuminanceChannelProcessing(width, height, the_chroma_format);
+    add FileWriter<int>("./nomessage_lum_channel_output.int");
+  }
 }
 
 int->int pipeline MPEGStream_to_rawImageStream(int width, int height,

@@ -1,7 +1,7 @@
 #
 # streamit.py: Python extensions to QMTest for StreamIt
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamit.py,v 1.9 2005-10-24 19:40:40 dimock Exp $
+# $Id: streamit.py,v 1.10 2005-10-26 22:44:53 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -167,7 +167,8 @@ class RunStrcTest(qm.test.test.Test):
 #      print "In directory ", os.getcwd(), "\n"
 #      print "RunStrTest.Run ", os.getcwd(), "\n"
 #      print "runopts[0]: ", str(self.runopts[0]), "\n"
-#      print "runopts[1]: ", str(self.runopts[1]), "\n"
+      print "runopts[1]: ", str(self.runopts[1]), "\n"
+      print "timeout: ", str(self.timeout), "\n"
 #      print "options: ", str(self.options), "\n"
 #      print "filenames: ", str(self.filenames), "\n"
 #      print "context keys: ", str(context.keys()), "\n"
@@ -210,7 +211,7 @@ class RunStrcTest(qm.test.test.Test):
           # cluster requires extra make step
           #e = TimedExecutable()
           e = qm.executable.RedirectedExecutable(self.timeout)
-          e.Run(['make', '-f', 'Makefile.cluster', 'run_cluster'])
+          e.Run(['make', '-f', 'Makefile.cluster', 'run_cluster'], dir=test_home_dir)
           result['RunStrcTest.stdout_makefile'] = e.stdout
           result['RunStrcTest.stderr_makefile'] = e.stderr
           makestatus = 1
@@ -222,8 +223,8 @@ class RunStrcTest(qm.test.test.Test):
           if (result.GetOutcome() == result.PASS):
               # first need to replace "machine-1" in cluster-config.txt
               # with name of the machine that we are running on (uname -n)
-              finame = "cluster-config.txt"
-              ftname = "cluster-config.txt.tmp"
+              finame = os.path.join(test_home_dir, "cluster-config.txt")
+              ftname = os.path.join(test_home_dir, "cluster-config.txt.tmp")
               # need socket to get host name??!
               hostname = socket.gethostname()
               fi = open(finame)
@@ -268,6 +269,8 @@ class RunProgramTest(qm.test.test.Test):
     def Run(self, context, result):
       """Actually run the target program."""
         
+      print "Run: runopts[1]: ", str(self.runopts[1]), "\n"
+      print "timeout: ", str(self.timeout), "\n"
       if self.backend == 'raw4':
           return self._RunRaw(context, result)
       elif self.backend == 'uni':

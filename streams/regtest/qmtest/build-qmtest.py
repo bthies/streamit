@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.9 2005-10-20 20:46:49 dimock Exp $
+# $Id: build-qmtest.py,v 1.10 2005-10-26 22:44:53 dimock Exp $
 #
 
 import os
@@ -126,6 +126,11 @@ def DoQMTestDir(path, control):
         
         # If benchmark has regtest="skip" field, skip it
         if (impl.getAttribute('regtest') == 'skip'): continue
+
+        # get compiletime and runtime if present
+        compile_time = impl.getAttribute('compile_time')
+        run_time = impl.getAttribute('run_time')
+        iters = impl.getAttribute('iterations')
         
         # if regtest is looking for markers for a certain subset of benchmarks
         # and if this benchmark has 'whichtype' markers, and there is no
@@ -172,6 +177,9 @@ def DoQMTestDir(path, control):
             os.makedirs(benchdir)
 
         # Run appropriate Makefile if any
+        # BUG? this make not run under qmtest so any errors not reported.
+        # on other hand some makefiles may use relative directories so
+        # not possible to run except in srcdir.
         makes=impl.getElementsByTagName('make')
         for make in makes:
             mnode=make.firstChild
@@ -191,7 +199,7 @@ def DoQMTestDir(path, control):
             if cls not in fileset: fileset[cls] = []
             fileset[cls].append(fn)
 
-        ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control)
+        ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control, compile_time, run_time, iters)
 
     dom.unlink()
 
@@ -242,7 +250,7 @@ def SplitAll(path):
         path = head
     return parts
 
-def ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control):
+def ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control, compile_time, run_time, iters):
     """Actually construct the QMTest XML test files in a directory.
 
     'srcdir' -- Directory containing the original benchmark.
@@ -254,7 +262,13 @@ def ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control):
 
     'benchname' -- QMTest base name for this set of tests.
 
-    'control' -- Regtest control structure."""
+    'control' -- Regtest control structure.
+
+    'compile_time' -- override of default compile time or None
+
+    'run_time' -- override of default run time or None
+
+    'iters' -- override of iteration count or None"""
 
     for (target, opts) in control['targets']:
         testname = MakeOptionName(target, opts)
@@ -269,7 +283,10 @@ def ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control):
                 shutil.copyfile(src, dst)
         # Three stages, write out the files.
         extras = { 'opts': opts,
-                   'testname': benchname + '.' + testname }
+                   'testname': benchname + '.' + testname,
+                   'compile_time': compile_time,
+                   'run_time': run_time,
+                   'iters': iters}
         for (GetDOM, fn) in [(GetCompileDOM, 'compile.qmt'),
                              (GetRunDOM, 'run.qmt'),
                              (GetVerifyDOM, 'verify.qmt')]:
@@ -291,6 +308,7 @@ def GetCompileDOM(target, fileset, extras):
     'extras' -- Mapping describing additional parameters available.
     'opts' should map to a string or list containing extra parameters
     to the StreamIt compiler, 'strc'."""
+    
 
     impl = xml.dom.minidom.getDOMImplementation()
     doc = impl.createDocument(None, 'extension', None)
@@ -319,8 +337,18 @@ def GetCompileDOM(target, fileset, extras):
     for fn in fileset['source']:
         CreateTextElement(doc, set, 'text', fn)
 
-    # (Does benchmark.xml give us a way to specify number of iterations?)
-    CreateRunOpts(doc, extension, iters=100, output='output')
+    if extras['compile_time']:
+        argument = doc.createElement('argument')
+        extension.appendChild(argument)
+        argument.setAttribute('name', 'timeout')
+        CreateTextElement(doc, argument, 'integer',str(extras['compile_time']))
+
+    iters = str(100)
+    if extras['iters']:
+        iters = extras['iters']
+
+    # fall back to old form: iters = runopts[1]
+    CreateRunOpts(doc, extension, iters=iters, output='output')
     
     return doc
 
@@ -333,7 +361,7 @@ def GetRunDOM(target, fileset, extras):
     of filenames.
 
     'extras' -- Mapping describing additional parameters available.
-    'testname' should contain the basename of this set of tests."""
+    'testname' should contain the basename of this set of tests"""
 
     # Only deal with the uniprocessor, RAW, and cluster paths.
     if not (target == 'uni' or target == 'raw4' or target == 'cluster'):
@@ -359,8 +387,18 @@ def GetRunDOM(target, fileset, extras):
     argument.setAttribute('name', 'backend')
     CreateTextElement(doc, argument, 'enumeral', target)
 
-    # (Does benchmark.xml give us a way to specify number of iterations?)
-    CreateRunOpts(doc, extension, iters=100, output='output')
+    if extras['run_time']:
+        argument = doc.createElement('argument')
+        extension.appendChild(argument)
+        argument.setAttribute('name', 'timeout')
+        CreateTextElement(doc, argument, 'integer',str(extras['run_time']))
+
+    iters = str(100)
+    if extras['iters']:
+        iters = extras['iters']
+
+    # fall back to old form: iters = runopts[1]
+    CreateRunOpts(doc, extension, iters=iters, output='output')
     
     return doc
 
@@ -373,7 +411,9 @@ def GetVerifyDOM(target, fileset, extras):
     of filenames.
 
     'extras' -- Mapping describing additional parameters available.
-    'testname' should contain the basename of this set of tests."""
+    'testname' should contain the basename of this set of tests.
+
+    'timeout -- ignored for now"""
 
     # Punt now if there's no output file.
     if 'output' not in fileset:
@@ -416,7 +456,7 @@ def GetVerifyDOM(target, fileset, extras):
     extension.appendChild(argument)
     argument.setAttribute('name', 'expected')
     CreateTextElement(doc, argument, 'text', fileset['output'][0])
-
+    
     return doc
 
 def CreateRunOpts(doc, parent, iters=100, output='output'):

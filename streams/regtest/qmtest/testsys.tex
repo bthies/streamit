@@ -232,6 +232,10 @@ directory containing the benchmark.xml
   reporting.  If absent defaults to ``impl'' plus a sequence number.
 \item {\tt lang} Language to use in testing.  build-qmtest.py filters
   out all {\tt impl}s where {\tt lang} $\neq$ {\tt StreamIT}.
+\item {\tt iters} Overrides default of running test for 100 iterations of steady state.
+\item {\tt compile\_time} Time in seconds to override default compile time of 20 minutes.
+\item {\tt run\_time} Time in seconds to override default run time of 20 minutes.
+In case of compile-and-go situation like library compiler, use {\tt compile\_time}, not {\tt run\_time}.
 \end{itemize}
 
 {\tt make} names a make file, which is run before processing {\tt file}s.

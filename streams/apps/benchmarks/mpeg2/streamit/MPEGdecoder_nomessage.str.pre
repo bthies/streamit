@@ -54,35 +54,39 @@
  *         equalling the width * height of the video. Frames are output in time order,
  *         top to bottom, left to right, and RGB color order.
  */
+
+void->void pipeline MPEGdecoder_nomessage() {
+  int width=352;
+  int height=240;
+
+  // Uncomment the next four lines to generate a temporary output file
+  add FileReader<bit>("../input/nomessage.m2v"); // Use this one for the nomessage decoder
+  int the_chroma_format = 1;
+  add MPEGStream_to_rawImageStream(width, height, the_chroma_format);
+  add FileWriter<int>("../input/nomessage.int");
+
+  // Uncomment the next two lines to use that temporary output file.
+  // to process all the MPEG data. The rest of the MPEG pipeline in this
+  // file has been modified to use NO messaging.
+//  add FileReader<int>("../input/nomessage.int");
+//  add ImageDisplay(width, height); // Could change this to file output if
+                                     // you want for verification purposes.
+}
+
 bit->int pipeline MPEGStream_to_rawImageStream(int width, int height,
                                                int the_chroma_format) {
   // width, height, chroma: Hacked till we have reprogrammable splitjoins FEATURETODO
 
-  portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac;
-  portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra;
-  portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc;
-  portal<MotionPrediction> UpdatePortal_picture_type;
-  portal<MotionVectorDecode> UpdatePortal_mvd;
-  portal<PictureReorder> UpdatePortal_picture_type2;
- 
-  add MPEGStreamParser(UpdatePortal_quantiser_data_ac,
-                       UpdatePortal_quantiser_data_dc,
-                       UpdatePortal_macroblock_intra,
-                       UpdatePortal_picture_type,
-                       UpdatePortal_mvd,
-                       UpdatePortal_picture_type2,
-                       width,
+  add MPEGStreamParser(width,
                        height,
                        the_chroma_format
                       );
 
   add int->int splitjoin {
     split roundrobin(64*blocks_per_macroblock[the_chroma_format], 16, 3);
-    add BlockDecode(UpdatePortal_quantiser_data_ac, 
-                    UpdatePortal_macroblock_intra, 
-                    UpdatePortal_quantiser_data_dc);
+    add BlockDecode();
     add int->int pipeline {
-      add MotionVectorDecode() to UpdatePortal_mvd;
+      add MotionVectorDecode();
       add Repeat(8, blocks_per_macroblock[the_chroma_format]);
     }
     add Repeat(3, blocks_per_macroblock[the_chroma_format]); // macroblock_intra
@@ -96,11 +100,11 @@ bit->int pipeline MPEGStream_to_rawImageStream(int width, int height,
     } else {
       split roundrobin(4*75, 4*75);
     }
-    add LuminanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+    add LuminanceChannelProcessing(width, height, the_chroma_format);
     add int->int splitjoin {
       split roundrobin(75);
-      add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);  
-      add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);  
+      add ChrominanceChannelProcessing(width, height, the_chroma_format);  
+      add ChrominanceChannelProcessing(width, height, the_chroma_format);  
       join roundrobin(1, 1);
     }
     join roundrobin(1, 2);
@@ -108,7 +112,7 @@ bit->int pipeline MPEGStream_to_rawImageStream(int width, int height,
  
   // FEATURETODO This next component should also use the UpdatePortal_picture_type
   // but it doesn't because of messaging limitations.
-  add PictureReorder(width, height) to UpdatePortal_picture_type2;
+  add PictureReorder(width, height);
 
   // This function assumes that no sequence display extension was ever
   // encountered in the data stream, and the default colorspace transformations 
@@ -135,12 +139,6 @@ int->int splitjoin ReorderCrCbBlocks(int blocks_per_macroblock) {
  * @internal
  */
 bit->int filter MPEGStreamParser(
-                        portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac,
-                        portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc,
-                        portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra,
-                        portal<MotionPrediction> UpdatePortal_picture_type,
-                        portal<MotionVectorDecode> UpdatePortal_mvd,
-                        portal<PictureReorder> UpdatePortal_picture_type2,
                         int width,
                         int height,
                         int the_chroma_format) {
@@ -294,8 +292,6 @@ bit->int filter MPEGStreamParser(
         // print("  Using Default Non Intra Quantiser Matrix");
         // Default Values Previously Loaded
       }
-      UpdatePortal_quantiser_data_ac.setQuantiserMatrices(intra_quantiser_matrix,
-                                                          non_intra_quantiser_matrix) [0:0]; 
       next_start_code();
 
       // sequence_extension() (cite 1, P. 28)
@@ -449,8 +445,6 @@ bit->int filter MPEGStreamParser(
           } else {
             print("  Error: Forbidden picture_coding_type " + picture_coding_type);
           }
-          UpdatePortal_picture_type.setPictureType(picture_coding_type) [0:0];
-          UpdatePortal_picture_type2.setPictureType(picture_coding_type) [0:0];
  
          pops(16,vbv_delay);
           // TODO unknown interpretation for vbv_delay, (cite 1, P.50)
@@ -481,7 +475,6 @@ bit->int filter MPEGStreamParser(
           pops(4,f_code[0][1]);
           pops(4,f_code[1][0]);
           pops(4,f_code[1][1]);
-          UpdatePortal_mvd.setFCode(f_code) [0:0];
           // (cite 1, P.51)
           for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) {
@@ -497,7 +490,6 @@ bit->int filter MPEGStreamParser(
               concealment_motion_vectors, q_scale_type, intra_vlc_format, alternate_scan, 
               repeat_first_field, chroma_420_type, progressive_frame, composite_display_flag;
           pops(2,intra_dc_precision);
-          UpdatePortal_quantiser_data_dc.setIntraDCPrecision(intra_dc_precision);
           int actual_intra_dc_precision = intra_dc_precision + 8;
           pops(2,picture_structure);
           if (picture_structure != 3)
@@ -508,7 +500,6 @@ bit->int filter MPEGStreamParser(
             print("Error - Program Limitation or Bad Syntax: frame_pred_frame_dct must be 1");
           pops(1,concealment_motion_vectors);
           pops(1,q_scale_type);
-          UpdatePortal_quantiser_data_ac.setQScaleType(q_scale_type) [0:0];
           pops(1,intra_vlc_format);
           pops(1,alternate_scan);
           if (alternate_scan == 1)
@@ -548,7 +539,6 @@ bit->int filter MPEGStreamParser(
           while (slice_start_code_follows) {
             // slice() (cite 1, P.34)
             // Reset motion vector predictors, (cite 1, P.77-80)
-            UpdatePortal_mvd.resetPredictors() [0:0];
             pops(24,tempval);
             if (tempval != 0x000001) 
               print("Error - Expecting slice_start_code " + tempval);
@@ -563,7 +553,6 @@ bit->int filter MPEGStreamParser(
             previous_macroblock_address = (mb_row * mb_width) - 1;
             int quantiser_scale_code;
             pops(5,quantiser_scale_code);
-            UpdatePortal_quantiser_data_ac.setQuantiserScaleCode(quantiser_scale_code) [0:0];
             peeks(1,tempval);
             if (tempval == 1)
               print("Error - Program Limitation: Doesn't handle intra_slice_flag");
@@ -612,7 +601,6 @@ bit->int filter MPEGStreamParser(
               spatial_temporal_weight_code_flag = tempval & 0x01;
               tempval >>= 1;
               macroblock_intra = tempval & 0x01;
-              UpdatePortal_macroblock_intra.setMacroblockIntra(macroblock_intra) [0:0];
               tempval >>= 1;
               macroblock_pattern = tempval & 0x01;
               tempval >>= 1;
@@ -685,7 +673,6 @@ bit->int filter MPEGStreamParser(
 
               if (macroblock_quant == 1) {
                 pops(5,quantiser_scale_code);
-                UpdatePortal_quantiser_data_ac.setQuantiserScaleCode(quantiser_scale_code) [0:0];
               }
 
 /*            int[2][2][2] motion_code;
@@ -701,7 +688,6 @@ bit->int filter MPEGStreamParser(
               if ((macroblock_intra == 1 && concealment_motion_vectors == 0) ||
                   (macroblock_intra == 0 && macroblock_motion_forward == 0 && 
                    picture_coding_type == 2)) {
-                UpdatePortal_mvd.resetPredictors() [0:0];  
               }
 
               if (macroblock_motion_forward == 1 || 
@@ -961,9 +947,6 @@ bit->int filter MPEGStreamParser(
     } else if (ran == 1) {
       print("Generating fake last frame to push out last real frame of video.");
       ran = 2;
-      UpdatePortal_picture_type.setPictureType(1);
-      UpdatePortal_picture_type2.setPictureType(1);
-      UpdatePortal_macroblock_intra.setMacroblockIntra(1);
       for (int i = 0; i < blocks_per_macroblock[the_chroma_format]; i++) {
         for (int j = 0; j < 64; j++) {
           QFS[i][j] = 0;
@@ -997,16 +980,12 @@ bit->int filter MPEGStreamParser(
 /**
  * @internal
  */
-int->int pipeline BlockDecode(portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac,
-                              portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra,
-                              portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc
+int->int pipeline BlockDecode(
                              ) {
   add ZigZagUnordering;
     // Assumes no alternate_scan TODO
     // Output of this corresponds to QF[v][u], (cite 1, P. 67)
-  add InverseQuantization(UpdatePortal_quantiser_data_ac,
-                          UpdatePortal_quantiser_data_dc,
-                          UpdatePortal_macroblock_intra);
+  add InverseQuantization();
   add Saturation(-2048, 2047);
   add MismatchControl();
   add iDCT8x8_ieee;
@@ -1039,9 +1018,7 @@ int->int filter ZigZagUnordering {
  * @internal
  */
 int->int pipeline InverseQuantization(  
-         portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac,
-         portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc,
-         portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra) {
+) {
 
   // The handling of the intra DC coefficient is described on (cite 1, P.69)
   add int->int splitjoin {
@@ -1049,19 +1026,19 @@ int->int pipeline InverseQuantization(
     // Intra Coded Macroblocks
     add int->int splitjoin {
       split roundrobin(1, 63); 
-      add InverseQuantization_DC_Intra_Coeff to UpdatePortal_quantiser_data_dc; // (cite 1, P.69)
-      add InverseQuantization_AC_Coeff(1) to UpdatePortal_quantiser_data_ac;
+      add InverseQuantization_DC_Intra_Coeff; // (cite 1, P.69)
+      add InverseQuantization_AC_Coeff(1);
       join roundrobin(1, 63); 
     }
     // Non Intra Coded Macroblocks
-    add InverseQuantization_AC_Coeff(0) to UpdatePortal_quantiser_data_ac;
+    add InverseQuantization_AC_Coeff(0);
     join roundrobin(64, 64);  
   }
   
   // Selects which stream - FEATURETODO eventually programmable splitjoin and only one of the two
   // above branches gets taken instead of both.
  
-  add InverseQuantizationJoinerSubstitute() to UpdatePortal_macroblock_intra;
+  add InverseQuantizationJoinerSubstitute();
 }
 
 /**
@@ -1071,13 +1048,9 @@ int->int filter InverseQuantizationJoinerSubstitute {
   int macroblock_intra;
  
   init {
-    macroblock_intra = -1;
+    macroblock_intra = 1;
   }
-  
-  handler setMacroblockIntra(int new_macroblock_intra) {
-    macroblock_intra = new_macroblock_intra;
-  }
-  
+   
   work pop (128) push 64 {
     if (macroblock_intra == -1) {
       print("  Error: macroblock_intra should not be -1, should have recieved update message");
@@ -1117,16 +1090,13 @@ int->int filter InverseQuantization_DC_Intra_Coeff() {
     intra_dc_mult[1] = 4;
     intra_dc_mult[2] = 2;
     intra_dc_mult[3] = 1;
-    intra_dc_precision = -1; // In case no message is received, error
+    intra_dc_precision = 0; 
   }
 
   work pop 1 push 1 {
     push(intra_dc_mult[intra_dc_precision] * pop());
   }
 
-  handler setIntraDCPrecision(int new_intra_dc_precision) {
-    intra_dc_precision = new_intra_dc_precision;
-  }
 }
 
 /**
@@ -1142,8 +1112,22 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
   // call to work()
   int quantiser_scale_code;
   int q_scale_type;
-  int[64] intra_quantiser_matrix;
-  int[64] non_intra_quantiser_matrix;
+  int[64] intra_quantiser_matrix = { 8, 16, 19, 22, 26, 27, 29, 34,
+                                    16, 16, 22, 24, 27, 29, 34, 37,
+                                    19, 22, 26, 27, 29, 34, 34, 38,
+                                    22, 22, 26, 27, 29, 34, 37, 40,
+                                    22, 26, 27, 29, 32, 35, 40, 48,
+                                    26, 27, 29, 32, 35, 40, 48, 58,
+                                    26, 27, 29, 34, 38, 46, 56, 69,
+                                    27, 29, 35, 38, 46, 56, 69, 83};
+  int[64] non_intra_quantiser_matrix = {16, 16, 16, 16, 16, 16, 16, 16,
+                                        16, 16, 16, 16, 16, 16, 16, 16,
+                                        16, 16, 16, 16, 16, 16, 16, 16,
+                                        16, 16, 16, 16, 16, 16, 16, 16,
+                                        16, 16, 16, 16, 16, 16, 16, 16,
+                                        16, 16, 16, 16, 16, 16, 16, 16,
+                                        16, 16, 16, 16, 16, 16, 16, 16,
+                                        16, 16, 16, 16, 16, 16, 16, 16};
 
   // (cite 1, P.70 Table 7-6)
   int[2][32] quantiser_scale =
@@ -1158,10 +1142,10 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
       56, 64, 72, 80, 88, 96, 104, 112}};
 
   init {
-    quantiser_scale_code = 0; // Guarantees that this throws an error
+    quantiser_scale_code = 1; // Guarantees that this throws an error
                               // if it doesn't get a quantiser message
                               // before getting some data.
-    q_scale_type = -1; // Another nice error if no message received in time.
+    q_scale_type = 0; // Another nice error if no message received in time.
   }
 
   work pop (64-macroblock_intra) push (64-macroblock_intra) {
@@ -1195,21 +1179,6 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
     }
   }
 
-  handler setQuantiserScaleCode(int new_quantiser_scale_code) {
-    quantiser_scale_code = new_quantiser_scale_code;
-  }
-
-  handler setQuantiserMatrices(int[64] new_intra_quantiser_matrix, 
-                               int[64] new_non_intra_quantiser_matrix) {
-    for (int i = 0; i < 64; i++) {
-      intra_quantiser_matrix[i] = new_intra_quantiser_matrix[i];
-      non_intra_quantiser_matrix[i] = new_non_intra_quantiser_matrix[i];
-    }
-  }
-
-  handler setQScaleType(int new_q_scale_type) {
-    q_scale_type = new_q_scale_type;
-  }
 } 
 
 /**
@@ -1243,7 +1212,7 @@ int->int filter MismatchControl() {
  * @internal
  */
 int->int filter MotionVectorDecode() {
-  // Note - at first glance, this filter looks like it OUGHT to handle only a single motion vector instead
+  // Note - at first glance, this filter looks like it OUGHT to handle. only a single motion vector instead
   // of all 8, and then it would be wrapped inside an 8 way splitjoin. This is only because of currently
   // existing limitations in this code, however. More general MPEG-2 bitstreams allow for concealment
   // motion vectors (to help in the case of errors introduced during transmission of the bitstream), and
@@ -1253,7 +1222,6 @@ int->int filter MotionVectorDecode() {
 
   // Section 7.6.3.1 covers this. (cite 1, P.77)
   int[2][2][2] PMV;
-  int[2][2] f_code;
 
   int mv_format; // HACKED TODO - MESSAGING
   int picture_structure; // HACKED TODO - MESSAGING
@@ -1281,7 +1249,7 @@ int->int filter MotionVectorDecode() {
     // NOTE TODO - Hacked right now, don't know when we need the second motion vector.
       for (int s = 0; s < 2; s++) {
         for (int t = 0; t < 2; t++) {
-          int r_size = f_code[s][t]-1;
+          int r_size = 14;
           int f = 1 << r_size;
           int high = (16*f)-1;
           int low = ((-16)*f);
@@ -1319,20 +1287,6 @@ int->int filter MotionVectorDecode() {
         }
   }
   
-  handler resetPredictors() {
-    for (int i = 0; i < 2; i++)
-      for (int j = 0; j < 2; j++)
-        for (int k = 0; k < 2; k++) {
-          PMV[i][j][k] = 0;
-        }
-  }
- 
-  handler setFCode(int[2][2] new_f_code) {
-    for (int s = 0; s < 2; s++) 
-      for (int t = 0; t < 2; t++) 
-        f_code[s][t] = new_f_code[s][t];
-  }
-
 }
 
 /**
@@ -1340,10 +1294,10 @@ int->int filter MotionVectorDecode() {
  */
 int->int pipeline LuminanceChannelProcessing(int width, 
                                                 int height,
-                                                portal<MotionPrediction> UpdatePortal_picture_type,
+                                                
                                                 int the_chroma_format) {
   add MacroBlockDescrambler(width, 64+11, 2);
-  add DescrambleAndMotionCompensate(width, height, 1, 1, UpdatePortal_picture_type, 1, the_chroma_format);
+  add DescrambleAndMotionCompensate(width, height, 1, 1, 1, the_chroma_format);
 }
 
 /**
@@ -1351,7 +1305,7 @@ int->int pipeline LuminanceChannelProcessing(int width,
  */
 int->int pipeline ChrominanceChannelProcessing(int width, 
                                                int height,
-                                               portal<MotionPrediction> UpdatePortal_picture_type,
+                                               
                                                int the_chroma_format) {
   // Assumes 4:2:0 to 4:4:4 or 4:2:2 to 4:4:4
   // Adding 4:4:4 support requires some additional block reordering.
@@ -1364,7 +1318,7 @@ int->int pipeline ChrominanceChannelProcessing(int width,
   } else {
     vertical_upsample_factor = 1;
   }
-  add DescrambleAndMotionCompensate(width, height, vertical_upsample_factor, 2, UpdatePortal_picture_type, 0, the_chroma_format);
+  add DescrambleAndMotionCompensate(width, height, vertical_upsample_factor, 2, 0, the_chroma_format);
   if (the_chroma_format == 1) {
     add ChannelUpsample_Vert_and_Horz(width/2, height/2);
   } else {
@@ -1390,7 +1344,7 @@ int->int pipeline DescrambleAndMotionCompensate(int width,
                                                   int height, 
                                                   int vertical_upsample_factor,
                                                   int horizontal_upsample_factor,
-                                                  portal<MotionPrediction> UpdatePortal_picture_type,
+                                                  
                                                   int temp,
                                                   int the_chroma_format) {
   int datasize = (width/horizontal_upsample_factor)*(height/vertical_upsample_factor);
@@ -1410,22 +1364,7 @@ int->int pipeline DescrambleAndMotionCompensate(int width,
 //    join roundrobin(datasize, (datasize/64)*8, datasize/64, datasize/64, datasize/64); 
     join roundrobin(64, 8, 1, 1, 1);
   }  
-  add MotionPrediction(width/horizontal_upsample_factor, height/vertical_upsample_factor) 
-      to UpdatePortal_picture_type;
-}
-
-int->int filter SendBackReferenceFrame(int width, int height,
-                                       portal<MotionPrediction> UpdatePortal_reference_frame) {
-  work pop (width*height) push (width*height) {
-    int[width][height] picture;
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        push(peek(0));
-        picture[x][y] = pop();
-      }
-    }
-    UpdatePortal_reference_frame.referenceFrame(picture) [1:1];    
-  }
+  add MotionPrediction(width/horizontal_upsample_factor, height/vertical_upsample_factor);
 }
 
 /**
@@ -1456,7 +1395,7 @@ int->int filter MotionPrediction(int width, int height) {
   int next_picture_type;
 
   init {
-    next_picture_type = -1;
+    next_picture_type = 1;
     count = 0;
   }
 
@@ -1608,20 +1547,6 @@ int->int filter MotionPrediction(int width, int height) {
     }
   }
 
-  handler setPictureType(int picture_coding_type) {
-    next_picture_type = picture_coding_type;
-  }
-
-  handler referenceFrame(int[width][height] picture) {
-    if (lastSeenFrame == 1 || lastSeenFrame == 2) {
-      for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-          next_picture[x][y] = picture[x][y];
-        }
-      }
-    }
-  }
-
   int predictPixelHorizHalfPelVertHalfPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
     int sample_data;
     sample_data = (predict_pic[(horiz_vector-1)/2][(vert_vector-1)/2] +
@@ -1762,7 +1687,7 @@ int->int filter ChannelUpsample_1D(int sourcelen, float weight1, float weight2) 
 int->int filter PictureReorder(int width, int height) {
   int datarate = (width*height*3);
   int[(width*height*3)] databuffer;
-  int next_picture_type;
+  int next_picture_type = 1;
 
   prework pop datarate {
     for (int i = 0; i < datarate; i++) {
@@ -1783,9 +1708,6 @@ int->int filter PictureReorder(int width, int height) {
     }     
   }
 
-  handler setPictureType(int picture_coding_type) {
-    next_picture_type = picture_coding_type;
-  }
 }
 
 

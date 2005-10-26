@@ -28,6 +28,9 @@ clean:
 player:	MPEGplayer.str MPEGdecoder.str ${LIBMPEG2} ${LIBDCT}
 	strc MPEGplayer.str MPEGdecoder.str ${LIBMPEG2} ${LIBDCT} ${STRC_OPTIONS}
 
+nomessage: MPEGdecoder_nomessage.str $(LIBMPEG2) $(LIBDCT)
+	strc MPEGdecoder_nomessage.str $(LIBMPEG2) $(LIBDCT) $(STRC_OPTIONS)
+
 mpeg2bmp:	MPEGtoBMP.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${LIBDCT}
 	strc MPEGtoBMP.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
 

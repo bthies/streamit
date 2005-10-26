@@ -32,7 +32,8 @@ void->void pipeline MPEGplayer() {
   // add IntStream2BitStream();
 
 //  add FileReader<bit>("./output.m2v"); // Output of the in-progress MPEG-encoder
-  add FileReader<bit>("../input/cact_015.m2v");
+  add FileReader<bit>("../input/nomessage.m2v"); // Use this one for the nomessage decoder
+//  add FileReader<bit>("../input/cact_015.m2v"); // A normal MPEG-2 video for the decoder
 //  add FileReader<bit>("../input/test.m2v"); // A 4:2:2 chroma format video
   int width=352;  // Hacked till we have reprogrammable splitjoins FEATURETODO
   int height=240;

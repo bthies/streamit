@@ -476,7 +476,7 @@ global {
   const_macroblock_type_Ipictures[1].value = 34;
   
   const_macroblock_type_Ppictures[0].code = 1;
-  const_macroblock_type_Ppictures[0].len = 1;
+  const_macroblock_type_Ppictures[0].len =   1;
   const_macroblock_type_Ppictures[0].value = 20;
   const_macroblock_type_Ppictures[1].code = 1;
   const_macroblock_type_Ppictures[1].len = 2;

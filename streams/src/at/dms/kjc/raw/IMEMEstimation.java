@@ -30,7 +30,7 @@ public class IMEMEstimation implements FlatVisitor
 
     static 
     {
-	rand = new Random(17);
+	rand = new Random();
 	user = getUser();
     }
 

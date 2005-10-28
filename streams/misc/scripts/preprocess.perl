@@ -1,33 +1,68 @@
-#!/usr/uns/bin/perl -w
+#!/usr/local/bin/perl -w
+###############################################################################
+# Preprocess a .str.pre file.
+#
+# usage:
+# preprocess.perl input_file_name                       outputs to stdout
+# preprocess.perl input_file_name -o output_file_name
+#
+# does the following:
+# convert 0b binary format to decimal
+# process #include to read a file inline
+# special macros: 
+#                 pops              -- pop and shift repeatedly
+#                 peeks             -- peek and shift repeatedly
+#                 pushs    (and int and short variants 
+#                 next_start_code
+#                 marker_bit
+#                 add_marker_bit
+#                 variable_length_code
+#                 variable_length_encode
+#                 variable_length_code_dct
+#
+###############################################################################
+use strict;
 
-$numArgs = $#ARGV + 1;
+my $numArgs = $#ARGV + 1;
 if ($numArgs == 1) {
-    $precompile_file = $ARGV[0];
-    open(PRECOMPILE, $precompile_file) || die("Could not open $precompile_file for input!");
-    open(POSTCOMPILE, ">&STDOUT") || die("Could not output to STDOUT for output!");;
+    my $precompile_file = $ARGV[0];
+    open(PRECOMPILE, $precompile_file) 
+	|| die("Could not open $precompile_file for input!");
+    open(POSTCOMPILE, ">&STDOUT") 
+	|| die("Could not output to STDOUT for output!");;
     main();
+    exit(0);
 } elsif ($numArgs == 3 && ($ARGV[1] eq "-o")) {
-    $precompile_file = $ARGV[0];
-    $postcompile_file = $ARGV[2];
-    open(PRECOMPILE, $precompile_file) || die("Could not open $precompile_file for input!");
-    open(POSTCOMPILE, ">$postcompile_file") || die("Could not open $postcompile_file for output!");    
+    my $precompile_file = $ARGV[0];
+    my $postcompile_file = $ARGV[2];
+    open(PRECOMPILE, $precompile_file) 
+	|| die("Could not open $precompile_file for input!");
+    open(POSTCOMPILE, ">$postcompile_file") 
+	|| die("Could not open $postcompile_file for output!");    
     main();
+    exit(0);
 } else {
     help();
     exit(-1);
 }
 
+##
+# first parameter: rule (code reference)
+# rest of parameters: lines
+# repeatedly apply the rule to each line until the line ceases to change
+#
 sub process_rule {
     my $rule = shift; 
-    my @$file_contents = shift;
+    my @file_contents = @_;
     my @output = ();
 
-    foreach $line (@file_contents) {
-        $newline = "";
+    foreach my $line (@file_contents) {
+        my $newline = "";
         while ($newline ne $line) {
-            $newline = $rule->($line);
+            $newline = $rule->($line); # apply rule repeatedly until no change
+	    $line = $newline;
         }
-        push(@output, $newline); 
+        push(@output, $newline);
     }
 
     return @output; 
@@ -37,8 +72,13 @@ sub bin2dec {
     return unpack("N", pack("B32", substr("0" x 32 . shift, -32)));
 }
 
+##
+# convert 0b binary format to decimal
+# This is first rule applied and chomps the lines so later rules don't have
+# to deal with nuisance of line terminators.
+#
 sub rule_convertbinary {
-    $line = $_[0];
+    my $line = $_[0];
     chomp($line);
     while ($line =~ /0b/) {
         my($before, $matching, $after) = $line =~ /(.*)(0b[0|1]*)(.*)/;
@@ -117,20 +157,22 @@ sub rule_pushs {
 sub rule_include {
     if ($_[0] =~ m/\#include \"(\w+).str\"/) {
         open(ADDLIBRARY, "./$1.str") || die("Could not open ./$1.str for input!");
-        @library_contents = <ADDLIBRARY>;
+        my @library_contents = <ADDLIBRARY>;
         $_[0] = "";
-        foreach $line (@library_contents) {
+        foreach my $line (@library_contents) {
             $_[0] .= $line;
         }
     }
     return $_[0];
 }
 
+##
+# Process input applying each rule in order.
+# include comes last: so included files must already be preprocessed.
+#
 sub main {
 
-    @file_contents = <PRECOMPILE>;
-
-    @intermediate = ();
+    my @intermediate = <PRECOMPILE>;
     
     @intermediate = process_rule(\&rule_convertbinary, @intermediate);
     
@@ -154,11 +196,10 @@ sub main {
 
     @intermediate = process_rule(\&rule_include, @intermediate);
     
-    foreach $line (@intermediate) {
+    foreach my $line (@intermediate) {
         print POSTCOMPILE "$line\n";
     }
     close(POSTCOMPILE);
-
 }
 
 sub help {

@@ -1,7 +1,7 @@
 #
 # streamit.py: Python extensions to QMTest for StreamIt
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamit.py,v 1.10 2005-10-26 22:44:53 dimock Exp $
+# $Id: streamit.py,v 1.11 2005-10-28 16:26:29 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -167,8 +167,8 @@ class RunStrcTest(qm.test.test.Test):
 #      print "In directory ", os.getcwd(), "\n"
 #      print "RunStrTest.Run ", os.getcwd(), "\n"
 #      print "runopts[0]: ", str(self.runopts[0]), "\n"
-      print "runopts[1]: ", str(self.runopts[1]), "\n"
-      print "timeout: ", str(self.timeout), "\n"
+#      print "runopts[1]: ", str(self.runopts[1]), "\n"
+#      print "timeout: ", str(self.timeout), "\n"
 #      print "options: ", str(self.options), "\n"
 #      print "filenames: ", str(self.filenames), "\n"
 #      print "context keys: ", str(context.keys()), "\n"
@@ -215,30 +215,34 @@ class RunStrcTest(qm.test.test.Test):
           result['RunStrcTest.stdout_makefile'] = e.stdout
           result['RunStrcTest.stderr_makefile'] = e.stderr
           makestatus = 1
-          if os.access('run_cluster', os.F_OK):
+          if os.access(os.path.join(test_home_dir,'run_cluster'), os.F_OK):
               makestatus=0
 
-          InterpretExitCode(result, makestatus, self.exit_code, 'RunStrcTest')
+          InterpretExitCode(result, makestatus, self.exit_code, 'RunStrcTest_makefile')
 
           if (result.GetOutcome() == result.PASS):
-              # first need to replace "machine-1" in cluster-config.txt
-              # with name of the machine that we are running on (uname -n)
-              finame = os.path.join(test_home_dir, "cluster-config.txt")
-              ftname = os.path.join(test_home_dir, "cluster-config.txt.tmp")
-              # need socket to get host name??!
-              hostname = socket.gethostname()
-              fi = open(finame)
-              ft = open(ftname, 'w')
-              for s in fi.readlines():
-                  ft.write(s.replace('machine-1',hostname))
+              try:
+                  # first need to replace "machine-1" in cluster-config.txt
+                  # with name of the machine that we are running on (uname -n)
+                  finame = os.path.join(test_home_dir, "cluster-config.txt")
+                  ftname = os.path.join(test_home_dir, "cluster-config.txt.tmp")
+                  # need socket to get host name??!
+                  hostname = socket.gethostname()
+                  fi = open(finame)
+                  ft = open(ftname, 'w')
+                  for s in fi.readlines():
+                      ft.write(s.replace('machine-1',hostname))
+                      
+                  fi.close()
+                  ft.close()
+                  # Python 2.2.2: no shutil.move yet
+                  shutil.copy(ftname,finame)
+                  os.unlink(ftname)        
+              except:
+                  errmes = sys.exc_info()[0]
+                  result['RunStrcTest.cluster-config'] =  'Error: %s' % errmes
+                  result.Fail("Error in editing cluster-config")
                   
-              fi.close()
-              ft.close()
-              # Python 2.2.2: no shutil.move yet
-              shutil.copy(ftname,finame)
-              os.unlink(ftname)        
-
-              
 class RunProgramTest(qm.test.test.Test):
     """Run a compiled program as a QMTest test.
 
@@ -269,8 +273,8 @@ class RunProgramTest(qm.test.test.Test):
     def Run(self, context, result):
       """Actually run the target program."""
         
-      print "Run: runopts[1]: ", str(self.runopts[1]), "\n"
-      print "timeout: ", str(self.timeout), "\n"
+#      print "Run: runopts[1]: ", str(self.runopts[1]), "\n"
+#      print "timeout: ", str(self.timeout), "\n"
       if self.backend == 'raw4':
           return self._RunRaw(context, result)
       elif self.backend == 'uni':

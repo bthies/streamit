@@ -75,7 +75,7 @@ public class SwitchCode extends at.dms.util.Utils {
                 Repetition[] big3work = null;
 
                 int codeSize = getCodeLength(steadyCode + initCode);
-                if (true) {//(codeSize > 5000) {
+                if (codeSize > 5000) {
                     System.out.println("Compression needed.  Code size = "
                             + codeSize);
                     compression = true;

@@ -104,6 +104,16 @@ sub rule_addmarkerbit {
     return $_[0];
 }
 
+sub rule_pushpop {
+    $_[0] =~ s/( *)pushpop\((\w+(\[\w+\])*)\);/$1\{\n$1  for (int pushpop_count = 0; pushpop_count < $2; pushpop_count++) \{\n$1    push(pop());\n$1  \}\n$1\}/;
+    return $_[0];
+}
+
+sub rule_deadpop {
+    $_[0] =~ s/( *)deadpop\((\w+(\[\w+\])*)\);/$1\{\n$1  for (int pushpop_count = 0; pushpop_count < $2; pushpop_count++) \{\n$1    pop();\n$1  \}\n$1\}/;
+    return $_[0];
+}
+
 sub rule_vlc {
     $_[0] =~ s/( *)variable_length_code\((\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1\{\n$1  boolean found = false;\n$1  int guesslength = 1;\n$1  int tablepos = 0;\n$1  while (!found) \{\n$1    peeks(guesslength, $2);\n$1    tablepos = 0;\n$1    while (!found && tablepos < $4_len) \{\n$1      if ($2 == $4\[tablepos\].code && guesslength == $4\[tablepos\].len) \{\n$1        found = true;\n$1        pops(guesslength, $2);\n$1      \} else \{\n$1      tablepos++;\n$1    \}\n$1    \}\n$1    guesslength++;\n$1  \}\n$1  $2 = $4\[tablepos\].value;\n$1\}/;
     return $_[0];
@@ -195,6 +205,10 @@ sub main {
     @intermediate = process_rule(\&rule_pushs, @intermediate);
 
     @intermediate = process_rule(\&rule_include, @intermediate);
+
+    @intermediate = process_rule(\&rule_pushpop, @intermediate);
+
+    @intermediate = process_rule(\&rule_deadpop, @intermediate);
     
     foreach my $line (@intermediate) {
         print POSTCOMPILE "$line\n";
@@ -209,9 +223,3 @@ sub help {
     print("  -o [OUTPUTFILE]     Redirect output to a file\n");
     print("\nReport bugs to Matthew Drake <madrake\@gmail.com>\n");
 }
-
-
-
-
-
-

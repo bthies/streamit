@@ -66,6 +66,29 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
          16, 16, 16, 16, 16, 16, 16, 16};
   int q_scale_type = 0;
 
+  // This Addition for getting output for Rodric's MPEG Encoding example
+/*
+    add ColorSpaceConversion_RGBtoYCbCr;
+    add int->int filter {
+      int a = width*height;
+      work pop (a*3) push (a) {
+        print("firing");
+        pushpop(a);
+        deadpop(a);
+        deadpop(a);
+      }
+    }
+    add int->int splitjoin {
+      split roundrobin(16);
+      for (int i = 0; i < (width/16); i++) {
+        add Identity<int>;
+      }
+      join roundrobin(16*16);
+    }
+  add FileWriter<int>("./lum_channel_macroblock_ordered.int");
+*/
+  // Done with Addition
+
   add PicturePreprocessing(width, height);
   // Eventually Wrap in Programmable Splitjoin for Group of Pictures
   add ReorderPictures(2+downsample_data_size);
@@ -90,6 +113,16 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
   add MotionPredictionDecision(mp_data_size, mpd_data_size);
 
   int macroblock_output_data_size = downsample_data_size*(64*6+5+8+1)/(64*6);
+/*
+  add int->int filter {
+    int a = 2 + mpd_data_size;
+    work pop a push a {
+      if (peek(1) < 1 || peek(1) > 3) {
+        print("WTF MATE!!! " + peek(1));
+      }
+      pushpop(a);
+    }
+  } */
 
   add int->int splitjoin {
     split roundrobin(2, mpd_data_size);
@@ -97,12 +130,53 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
     add splitjoin {
       split roundrobin(64*6, 4, 1);
       add MacroBlockEncode(default_intra_quantiser_matrix, default_non_intra_quantiser_matrix,
-                           actual_intra_dc_precision-8, q_scale_type);
-      add MotionVectorEncode();
+                           actual_intra_dc_precision-8, q_scale_type);       
+      add MotionVectorEncode(width/16);
       add Identity<int>;
       join roundrobin(64*6+5, 8, 1);
     }
     join roundrobin(2, macroblock_output_data_size);
+  }
+
+  // FEATURETODO - Some kind of message should ignore the right branch if its a B frame
+
+  add int->int splitjoin {
+    split duplicate;
+    add Identity<int>;
+    add int->int pipeline {
+      add int->int splitjoin { 
+        split roundrobin(2, macroblock_output_data_size);
+        // CONTINUE HERE - see previous, 8, 1
+        add Identity<int>;
+        add pipeline {
+          add int->int splitjoin {
+            split roundrobin(5, (64*6));
+            add Identity<int>;
+            add ZigZagUnordering;
+            join roundrobin(5, (64*6));
+          }     
+          add undoQuantisation(default_intra_quantiser_matrix, default_non_intra_quantiser_matrix,
+                               actual_intra_dc_precision-8, q_scale_type);
+          add iDCT8x8_ieee;
+        }
+        join roundrobin(2, mpd_data_size);
+      }
+      add int->int filter {
+        work pop 2+mpd_data_size push 1 {
+          deadpop(2);
+          deadpop(mpd_data_size);
+          push(1);
+        }
+      }
+    }
+    join roundrobin(2+macroblock_output_data_size, 1);
+  }
+  add int->int filter {
+    int a = 2+macroblock_output_data_size;
+    work pop a+1 push a {
+      pushpop(a);
+      deadpop(1);
+    }
   }
 
   add MPEGStreamGenerator(width, height, numpictures,
@@ -112,25 +186,31 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
                           q_scale_type);
 }
 
-int->int splitjoin MotionVectorEncode {
+int->int splitjoin MotionVectorEncode(int macroblock_width) {
   split roundrobin(1);
   for (int i = 0; i < 4; i++) {
-    add IndividualMotionVectorEncode();
+    add IndividualMotionVectorEncode(macroblock_width);
   }
   join roundrobin(2);
 }
 
-int->int filter IndividualMotionVectorEncode() {
+int->int filter IndividualMotionVectorEncode(int macro_width) {
   // TODO This function hasn't been thoroughly checked for correctness yet.  
   int PMV;
   int f_code;
 
   init {
-    PMV = 0;
     f_code = 9; // TODO temp
   }
 
-  work pop 1 push 2 {
+  work pop macro_width push 2*macro_width {
+    PMV = 0;
+    for (int i = 0; i < macro_width; i++) {
+      oneBlock();
+    }
+  }
+
+  phase oneBlock pop 1 push 2 {
     int r_size = f_code-1;
     int f = 1 << r_size;
     int high = (16*f)-1;
@@ -459,6 +539,56 @@ int->int pipeline MacroBlockEncode(int[64] intra_quantiser_matrix, int[64] non_i
   }
 }
 
+int->int filter undoQuantisation(int[64] intra_quantiser_matrix, int[64] non_intra_quantiser_matrix,
+                                 int intra_dc_precision, int q_scale_type) {
+  // FEATURETODO - Move to globals when globals working properly - also out of decoder
+  // (cite 1, P. 70 Table 7-6)
+  int[2][32] quantiser_scale =
+    // Note that quantiser_scale[x][0] is a Forbidden Value
+    {{ 0,  2,  4,  6,  8, 10, 12, 14,
+      16, 18, 20, 22, 24, 26, 28, 30,
+      32, 34, 36, 38, 40, 42, 44, 46,
+      48, 50, 52, 54, 56, 58, 60, 62},
+     { 0,  1,  2,  3,  4,  5,  6,  7,
+       8, 10, 12, 14, 16, 18, 20, 22,
+      24, 28, 32, 36, 40, 44, 48, 52, 
+      56, 64, 72, 80, 88, 96, 104, 112}};
+  int[4] intra_dc_mult;
+
+  init {
+    intra_dc_mult[0] = 8;
+    intra_dc_mult[1] = 4;
+    intra_dc_mult[2] = 2;
+    intra_dc_mult[3] = 1;
+  }
+  // TODO temp - for now only use intra quantization, and 
+  // no changes in the scaling.
+  // TODO - just thought of this, this comment goes elsewhere - make sure to eventually
+  // unfix the fcode from having a constant value.
+  work pop (64*6+5) push (64*6) {
+    int a = pop();
+    if (a != 3278) {
+      print("Error - Bitstream must be missaligned" + a);
+    }
+    int quantiser_scale_code = pop();
+    int motion_forward = pop();
+    int motion_backward = pop();
+    int macroblock_intra = pop();
+    // See (cite 1, P. 71) for more details.
+    // macroblock is INTRA TODO temp
+    int k = 0;
+    for (int block = 0; block < 6; block++) { // TODO move out - also fixed for chroma
+      for (int count = 0; count < 64; count++) {
+        if (count == 0) {
+          push(pop() * intra_dc_mult[intra_dc_precision]);
+        } else {
+          push(pop()*intra_quantiser_matrix[count]*quantiser_scale[q_scale_type][quantiser_scale_code]/16);
+        }
+      }
+    }
+  }
+}
+
 int->int filter Quantisation(int[64] intra_quantiser_matrix, int[64] non_intra_quantiser_matrix,
                              int intra_dc_precision, int q_scale_type) {
   // FEATURETODO - Move to globals when globals working properly - also out of decoder
@@ -776,6 +906,9 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
         pushs(10, temporal_reference);
 
         int picture_coding_type = pop();     
+        if (picture_coding_type < 1 || picture_coding_type > 3) {
+          print("   Error: Forbidden picture_coding_type " + picture_coding_type);
+        }
         // picture_coding_type = 1 -> I-picture
         // picture_coding_type = 2 -> P-picture
         // picture_coding_type = 3 -> B-picture

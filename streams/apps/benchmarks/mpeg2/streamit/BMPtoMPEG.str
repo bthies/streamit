@@ -38,3 +38,4 @@ void->void pipeline BMPtoMPEG() {
   add rawImageStream_to_MPEGStream(width, height, numpictures);
   add FileWriter<bit>("./output.m2v");
 }
+

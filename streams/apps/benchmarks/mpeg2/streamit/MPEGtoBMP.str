@@ -37,7 +37,7 @@ void->void pipeline MPEGtoBMP() {
 
   int width=352; // Hacked till we have reprogrammable splitjoins FEATURETODO
   int height=240;
-  add MPEGStream_to_rawImageStream(width, height);
+  add MPEGStream_to_rawImageStream(width, height, 1);
 
   add int->void splitjoin {
     split roundrobin(width*height*3);

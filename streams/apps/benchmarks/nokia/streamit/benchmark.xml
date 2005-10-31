@@ -6,7 +6,8 @@
   </description>
   <reference>(none)</reference>
   <implementations>
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" run_time="2400">
+      <desc>Extra time needed to run on cluster</desc>
       <file class="source">dcalc.str</file>
       <file class="output">Linkeddcalc.out</file>
     </impl>

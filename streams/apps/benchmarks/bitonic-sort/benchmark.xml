@@ -11,7 +11,8 @@
     <impl lang="C" dir="c">
       <file>bitonic.c</file>
     </impl>
-    <impl lang="StreamIt" dir="streamit" id="bitonic">
+    <impl lang="StreamIt" dir="streamit" id="bitonic" compile_time="2400">
+      <desc>Extra compile time for gcc'ing threads on cluster</desc>
       <file class="source">BitonicSort.str</file>
       <file class="output">BitonicSort.out</file>
       <desc>Original implementation</desc>

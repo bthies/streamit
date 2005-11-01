@@ -11,13 +11,15 @@
     <impl lang="C" dir="c">
       <file>bitonic.c</file>
     </impl>
-    <impl lang="StreamIt" dir="streamit" id="bitonic" compile_time="2400">
-      <desc>Extra compile time for gcc'ing threads on cluster</desc>
+    <impl lang="StreamIt" dir="streamit" id="bitonic" compile_time="2400" run_time="2400">
+      <desc>Extra compile time for gcc'ing threads on cluster
+            Extra run time on cluster</desc>
       <file class="source">BitonicSort.str</file>
       <file class="output">BitonicSort.out</file>
       <desc>Original implementation</desc>
     </impl>
-    <impl lang="StreamIt" dir="streamit" id="recursive">
+    <impl lang="StreamIt" dir="streamit" id="recursive" run_time="2400">
+      <desc>Extra run time on cluster</desc>
       <file class="source">BitonicSortRecursive.str</file>
       <file class="output">BitonicSort.out</file>
       <desc>Recursive implementation</desc>

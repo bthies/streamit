@@ -7,19 +7,21 @@ work by pushing previous values around a feedback loop, so they can be
 calculated.
   </description>
   <implementations>
-    <impl lang="StreamIt">
-      <desc class="source">Basic implementation</desc>
-      <file>Fib.str</file>
+    <impl lang="StreamIt" id="fib" run_time="2400">
+      <desc>Basic implementation
+            Extra run time on cluster</desc>
+      <file class="source">Fib.str</file>
       <file class="output">Fib.out</file>
     </impl>
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" id="fibfeed">
       <desc>As before, but with a top-level feedback loop</desc>
-      <file>FibFeed.str</file>
+      <file class="source">FibFeed.str</file>
       <file class="output">Fib.out</file>
     </impl>
-    <impl lang="StreamIt">
-      <desc>With a round-robin splitter and no peeking</desc>
-      <file>Fib2.str</file>
+    <impl lang="StreamIt" id="fib2" run_time="2400">
+      <desc>With a round-robin splitter and no peeking
+            Extra run time on cluster</desc>
+      <file class="source">Fib2.str</file>
       <file class="output">Fib.out</file>
     </impl>
   </implementations>

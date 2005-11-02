@@ -175,6 +175,7 @@ public class SwitchCode extends at.dms.util.Utils {
             // no compression --- just dump the routes with nops as the
             // instructions
             while (t.hasMoreTokens()) {
+		instrDumped++;
                 fw.write("\tnop\t" + t.nextToken() + "\n");
             }
         } else {
@@ -229,7 +230,8 @@ public class SwitchCode extends at.dms.util.Utils {
                 }
             }
         }
-	assert instrCount == instrDumped : "Error in Switch Compression!";
+	assert instrCount == instrDumped : "Error in Switch Compression! (" + instrCount + " != " + 
+	    instrDumped + ")";
     }
 
     private static int getCodeLength(String str) {

@@ -94,6 +94,15 @@ public class DirectCommunication extends at.dms.util.Utils
 				   filter.getInit().getName(),
 				   paramArray),
 				  null));
+
+	//add call to raw_init2
+	statements.addStatement(new JExpressionStatement(null,
+							 new JMethodCallExpression
+							 (null, 
+							  new JThisExpression(null),
+							  SwitchCode.SW_SS_TRIPS,
+							  new JExpression[0]),
+							 null));
 	
 	//inline the work function in a while loop
 	JBlock workBlock = 

@@ -103,20 +103,21 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		fw.write("int " + Util.CSTOINTVAR + ";\n");
 		fw.write("int " + Util.CSTIINTVAR + ";\n");
 	    }
-	    
-	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)
-		fw.write(createInitPath(joiner) + "\n");	    
-	    fw.write(createJoinerWork(joiner));
+
 	    //write the extern for the function to init the 
 	    //switch, but there is no switch for the magic network
 	    if (!KjcOptions.magic_net && !KjcOptions.decoupled) {
 		fw.write("void raw_init();\n\n");
-		fw.write("void raw_init2();\n\n");
+		fw.write("void " + SwitchCode.SW_SS_TRIPS + "();\n\n");
 	    }
+	    
+	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)
+		fw.write(createInitPath(joiner) + "\n");	    
+	    fw.write(createJoinerWork(joiner));
+
 	    fw.write("void begin(void) {\n");
 	    if (!KjcOptions.magic_net) {
 		fw.write("  raw_init();\n");
-		fw.write("  raw_init2();\n");
 	    }
 	    else
 		fw.write("  __asm__ volatile (\"magc $0, $0, 1\");\n");
@@ -210,6 +211,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 
 	printSchedule(joiner, (JoinerScheduleNode)RawBackend.simulator.initJoinerCode.get(joiner), ret);
+	ret.append(SwitchCode.SW_SS_TRIPS + "();\n");
 	ret.append("while(1) {\n");
 	printSchedule(joiner, (JoinerScheduleNode)RawBackend.simulator.steadyJoinerCode.get(joiner), ret);
 	ret.append("}}\n");
@@ -353,10 +355,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    //write the extern for the function to init the 
 	    //switch
 	    fw.write("void raw_init();\n\n");
-            fw.write("void raw_init2();\n\n");
+            fw.write("void " + SwitchCode.SW_SS_TRIPS + "();\n\n");
 	    fw.write("void begin(void) {\n");
 	    fw.write("  raw_init();\n");
-            fw.write("  raw_init2();\n");
+            fw.write("  " + SwitchCode.SW_SS_TRIPS + "();\n");
 	    fw.write("  while (1) {}\n");
 	    fw.write("}\n");
 	    fw.close();

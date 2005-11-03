@@ -18,7 +18,7 @@ import java.io.*;
 
 public class SwitchCode extends at.dms.util.Utils {
     //use heavy-weight compression algorithm
-    private static final boolean USE_BETTER_COMP = false;
+    private static final boolean USE_BETTER_COMP = true;
     // the max-ahead is the maximum number of lines that this will
     // recognize as a pattern for folding into a loop
     private static final int MAX_LOOKAHEAD = 100;
@@ -26,6 +26,9 @@ public class SwitchCode extends at.dms.util.Utils {
     // the maximum number of repetitions allowed for a switch sequence
     // this is 2^16 because that is the largest immediate allowed
     private static final int MAX_REP = 65535;
+    //the name of the function that sends the loop trip counts to the 
+    //switch for switch code compression in the steady state
+    public static final String  SW_SS_TRIPS = "raw_init2";
 
     public static void generate(FlatNode top) {
         // Use the simulator to create the switch schedules
@@ -394,7 +397,7 @@ public class SwitchCode extends at.dms.util.Utils {
         buf.append(".swtext\n");
         buf.append(".global sw_begin\n");
         buf.append(".global raw_init\n");
-        buf.append(".global raw_init2\n\n");
+        buf.append(".global " + SW_SS_TRIPS + "\n\n");
         buf.append("sw_begin:\n");
 
         return buf.toString();
@@ -427,7 +430,7 @@ public class SwitchCode extends at.dms.util.Utils {
         }
         buf.append("\tjr $31\n");
 
-        buf.append("raw_init2:\n");
+        buf.append(SW_SS_TRIPS + ":\n");
         if (compressWork != null) {
             for (int i = 0; i < compressWork.length; i++) {
 

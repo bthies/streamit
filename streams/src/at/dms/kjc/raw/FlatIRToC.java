@@ -204,7 +204,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//a uniprocessor
 	if (!KjcOptions.standalone) {
 	    print("void raw_init();\n");
-	    print("void raw_init2();\n");
+	    print("void " + SwitchCode.SW_SS_TRIPS + "();\n");
 	}
 
 
@@ -273,7 +273,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	if (!(KjcOptions.standalone || KjcOptions.magic_net || KjcOptions.decoupled ||
 	      IMEMEstimation.TESTING_IMEM)) {
 	    print("  raw_init();\n");
-	    print("  raw_init2();\n");
+	    //the call to raw_init2 is now within __RAW_MAIN__()
 	}
 	//execute the raw main function
 	print(RawExecutionCode.rawMain + "();\n");

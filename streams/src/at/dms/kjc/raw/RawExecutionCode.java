@@ -755,6 +755,15 @@ public class RawExecutionCode extends at.dms.util.Utils
 			     new JIntLiteral(remaining))); 
 	}
 
+	//add a call to raw_init2
+	statements.addStatement(new JExpressionStatement(null,
+							 new JMethodCallExpression
+							 (null, 
+							  new JThisExpression(null),
+							  SwitchCode.SW_SS_TRIPS,
+							  new JExpression[0]),
+							 null));
+
 	if (RawBackend.FILTER_DEBUG_MODE) {
 	    statements.addStatement
 		(new SIRPrintStatement(null,

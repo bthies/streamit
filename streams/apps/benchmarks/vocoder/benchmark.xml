@@ -10,7 +10,7 @@
   </description>
   <reference>(none)</reference>
   <implementations>
-    <impl lang="StreamIt" dir="streamit" run_time="2400">
+    <impl lang="StreamIt" dir="streamit" run_time="3600">
       <desc>Extra run time on cluster</desc>
       <file class="source">VocoderTopLevel.str</file>
       <file class="output">LinkedVocoderToplevel.out</file>

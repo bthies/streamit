@@ -7,7 +7,7 @@
   element.
   </description>
   <implementations>  
-    <impl lang="StreamIt" run_time="2400">
+    <impl lang="StreamIt" run_time="3600">
       <desc>Extra run time on cluster</desc>
       <file class="source">ComparisonCounting.str</file>
       <file class="output">ComparisonCounting.out</file>

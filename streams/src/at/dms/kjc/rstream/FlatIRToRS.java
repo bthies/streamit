@@ -702,62 +702,7 @@ public class FlatIRToRS extends ToC
 	assert false : "RStream code generation should not see a pop statement";
     }
     
-    public void visitPrintStatement(SIRPrintStatement self,
-                                    JExpression exp)
-    {
-	CType type = null;
-
-	
-	try {
-	    type = exp.getType();
-	}
-	catch (Exception e) {
-	    System.err.println("Cannot get type for print statement");
-	    type = CStdType.Integer;
-	}
-	
-	if (type.equals(CStdType.Boolean))
-	    {
-		Utils.fail("Cannot print a boolean");
-	    }
-	else if (type.equals(CStdType.Byte) ||
-		 type.equals(CStdType.Integer) ||
-		 type.equals(CStdType.Short))
-	    {
-		print("printf(\"%d\\n\", "); 
-		exp.accept(this);
-		print(");");
-	    }
-	else if (type.equals(CStdType.Char))
-	    {
-		print("printf(\"%d\\n\", "); 
-		exp.accept(this);
-		print(");");
-	    }
-	else if (type.equals(CStdType.Float))
-	    {
-		print("printf(\"%f\\n\", ");
-		exp.accept(this);
-		print(");");
-	    }
-        else if (type.equals(CStdType.Long))
-	    {
-		print("printf(\"%d\\n\", "); 
-		exp.accept(this);
-		print(");");
-	    }
-	else if (type.equals(CStdType.String)) 
-	    {
-		print("printf(\"%s\\n\", "); 
-		exp.accept(this);
-		print(");");
-	    }
-	else
-	    {
-		assert false : "Unprintable type";
-	    }
-    }
-
+    // visitPrintStatement innerited from ToCCommon
     
     public void visitPushExpression(SIRPushExpression self,
                                     CType tapeType,

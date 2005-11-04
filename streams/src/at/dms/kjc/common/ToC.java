@@ -1,7 +1,7 @@
 package at.dms.kjc.common;
 
 //import at.dms.kjc.flatgraph.FlatNode;
-//import at.dms.kjc.flatgraph.FlatVisitor;
+
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 //import at.dms.kjc.iterator.*;
@@ -32,6 +32,10 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
     protected boolean isInit = false;
     /** the current function we are visiting **/
     protected JMethodDeclaration method;
+
+    public ToC() { super(); }
+
+    public ToC(TabbedPrintWriter p) { super(p); }
     
     /**
      * Prints initialization for an array with static initializer, e.g., "int A[2] = {1,2};"

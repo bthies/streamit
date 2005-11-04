@@ -23,39 +23,47 @@ import at.dms.compiler.JavaStyleComment;
 
 public abstract class ToCCommon extends SLIREmptyVisitor {
 	
-	/**
-	 *  Controls visitPrintStatement. Can override for a backend by writing
-	 *  to this variable. initialized by a static block.  Can be
-	 *  overridden in a static block in a subclass by 
-	 *  printPrefixMap.clear();
-	 *  printPrefixMap.put...
-	 *  
-	 *  If there is more than one printer inheriting from ToCCommon and 
-	 *  your inheritance structure is not linear then you may have
-	 *  to write to printPrefixMap from a constructor rather than from
-	 *  a static block. 
-	 *
-	 *  If your backend does more on prints than the common
-	 *  backend, you will probably want to override printExp.
-	 */
+    /**
+     *  Controls visitPrintStatement. Can override for a backend by writing
+     *  to this variable. initialized by a static block.  Can be
+     *  overridden in a static block in a subclass by 
+     *  printPrefixMap.clear();
+     *  printPrefixMap.put...
+     *  
+     *  If there is more than one printer inheriting from ToCCommon and 
+     *  your inheritance structure is not linear then you may have
+     *  to write to printPrefixMap from a constructor rather than from
+     *  a static block. 
+     *
+     *  If your backend does more on prints than the common
+     *  backend, you will probably want to override printExp.
+     */
 
-	static protected Map/*<String><String>*/ printPrefixMap;
+    static protected Map/*<String><String>*/ printPrefixMap;
+    
+    /**
+     * Print postfixes: defaults to ");" useful for printing boolean.
+     */
+    static protected Map/*<String><String>*/ printPostfixMap;
 
     static {
     	printPrefixMap = new java.util.HashMap();
+    	printPostfixMap = new java.util.HashMap();
     	// Set up standard prefixes for visitPrintStatement.
 	// a subclass may override by:
 	// printPrefixMap.clear(); printPrefixMap.put...
-		printPrefixMap.put("byte", "printf( \"%d\", ");
-    	printPrefixMap.put("char", "printf( \"%d\", ");
+	printPrefixMap.put("boolean", "printf( \"%s\", ");
+	printPostfixMap.put("boolean", " ? \"true\" : \"false\");");
+	printPrefixMap.put("byte", "printf( \"%d\", ");
+    	printPrefixMap.put("char", "printf( \"%c\", ");
     	printPrefixMap.put("double", "printf( \"%f\", ");
     	printPrefixMap.put("float", "printf( \"%f\", ");
     	printPrefixMap.put("int", "printf( \"%d\", ");
     	printPrefixMap.put("long", "printf( \"%d\", ");
     	printPrefixMap.put("short", "printf( \"%d\", ");
     	printPrefixMap.put("java.lang.String", "printf( \"%s\", ");
-    	// we don't currently print: boolean, bit, or any CCLassType 
-    	//except String	
+    	// we don't currently print:  bit, or any CCLassType other
+    	// than String
 
     }
     
@@ -79,6 +87,26 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      * are rewritten to multple statements.
      */
     protected boolean statementContext = true;
+
+    /**
+     * With no parameters: create a new TabbedPrintWriter for output
+     */
+    protected ToCCommon() {
+	this.str = new StringWriter();
+        this.p = new TabbedPrintWriter(str);
+    }
+
+    /**
+     * With a TabbedPrintWriter: use the given TabbedPrintWriter for output
+     * and start off with no indentation yet.
+     */
+    protected ToCCommon(TabbedPrintWriter p) {
+	this.str = null;
+        this.p = p;
+	this.pos = 0;
+    }
+
+
 
     // ----------------------------------------------------------------------
     // METHODS for TabbedPrintWriter p
@@ -779,6 +807,9 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     }
 
     protected boolean printExp(JExpression expr) {
+	boolean oldStatementContext = statementContext;
+	statementContext = true;
+
     	List exps = splitForPrint(expr);
     	boolean printedOK = true;
     	for (Iterator i = exps.iterator(); i.hasNext();) {
@@ -799,10 +830,16 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     		} else {
     			print(printPrefix);
     			exp.accept(this);
-    			print(");");
+			String printPostfix = 
+			    (String)(printPostfixMap.get(typeString));
+			if (printPostfix == null) {
+			    printPostfix = ");";
+			}
+    			print(printPostfix);
     		}
     	}
-		return printedOK;
+	statementContext = oldStatementContext;
+	return printedOK;
     }
     
     /**

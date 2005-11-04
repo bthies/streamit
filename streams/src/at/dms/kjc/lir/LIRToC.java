@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.100 2005-09-14 19:10:22 dimock Exp $
+ * $Id: LIRToC.java,v 1.101 2005-11-04 16:25:17 dimock Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1537,55 +1537,7 @@ public class LIRToC
         print(portalNames.get(self));
     }
 
-    public void visitPrintStatement(SIRPrintStatement self,
-                                    JExpression exp)
-    {
-	boolean oldStatementContext = statementContext;
-	statementContext = true;
-        CType type = exp.getType();
-        
-        if (type.equals(CStdType.Boolean))
-        {
-            print("printf(\"%s\\n\", ");
-            exp.accept(this);
-            print(" ? \"true\" : \"false\");");
-        }
-        else if (type.equals(CStdType.Byte) ||
-                 type.equals(CStdType.Integer) ||
-                 type.equals(CStdType.Short))
-        {
-            print("printf(\"%d\\n\", ");
-            exp.accept(this);
-            print(");");
-        }
-        else if (type.equals(CStdType.Char))
-        {
-            print("printf(\"%c\\n\", ");
-            exp.accept(this);
-            print(");");
-        }
-        else if (type.equals(CStdType.Float) ||
-                 type.equals(CStdType.Double))
-        {
-            print("printf(\"%f\\n\", ");
-            exp.accept(this);
-            print(");");
-        }
-        else if (type.equals(CStdType.Long))
-        {
-            print("printf(\"%ld\\n\", ");
-            exp.accept(this);
-            print(");");
-        }
-        else
-        {
-            print("printf(\"(unprintable type: " + type + ")\\n\", ");
-            exp.accept(this);
-            print(");");
-        }
-	statementContext = oldStatementContext;
-
-    }
+    // visitPrintStatement inherited from ToCCommon.
     
     public void visitPushExpression(SIRPushExpression self,
                                     CType tapeType,

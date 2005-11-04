@@ -111,49 +111,24 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
     
-    // WARNING:
-    // This is currently setting static variables.  It is assumed that the 
-    // printing options will not be be changed at any future time in this
-    // compilation!
-    private void fixPrintingForOptions() {
-	// if not overriding print statments for number gathering
-	// and not creating a standalone program
-	if (KjcOptions.numbers <= 0 && !KjcOptions.standalone) {
-	    // all prints just end with a ');'
-	    printPostfixMap = new java.util.HashMap();
-	    // special print statements: 
-	    printPrefixMap = new java.util.HashMap();
-	    printPrefixMap.put("byte", "print_int(");
-	    printPrefixMap.put("int", "print_int(");
-	    printPrefixMap.put("short", "print_int(");
-	    printPrefixMap.put("long", "print_int(");
-	    // char prints as int.
-	    printPrefixMap.put("char", "print_int(");
-	    printPrefixMap.put("double", "print_float(");
-	    printPrefixMap.put("float", "print_float(");
-	    printPrefixMap.put("java.lang.String", "print_string(");
-	    // Do not handle boolean, bit, or any CCLassType other
-	    // than String
-	}
-    }
-
     public FlatIRToC() 
     {
-	super();
-	fixPrintingForOptions();
+	this.str = new StringWriter();
+        this.p = new TabbedPrintWriter(str);
     }
     
 
     public FlatIRToC(TabbedPrintWriter p) {
-	super(p);
-	fixPrintingForOptions();
+        this.p = p;
+        this.str = null;
+        this.pos = 0;
     }
     
     public FlatIRToC(SIRFilter f) {
-	super();
 	this.filter = f;
 	//	circular = false;
-	fixPrintingForOptions();
+	this.str = new StringWriter();
+        this.p = new TabbedPrintWriter(str);
     }
     
     
@@ -832,20 +807,21 @@ public class FlatIRToC extends ToC implements StreamVisitor
     public void visitPrintStatement(SIRPrintStatement self,
                                     JExpression exp)
     {
+	CType type = null;
+
+	
+	try {
+	    type = exp.getType();
+	}
+	catch (Exception e) {
+	    System.err.println("Cannot get type for print statement");
+	    type = CStdType.Integer;
+	}
+	
 	//if we have the number gathering stuff on, convert each print 
 	//to a magic instruction, there are only print statements in the sink
 	//all other prints have been removed...
 	if (KjcOptions.numbers > 0) {
-	    
-	    CType type = null;
-	    try {
-		type = exp.getType();
-	    }
-	    catch (Exception e) {
-		System.err.println("Cannot get type for print statement");
-		type = CStdType.Integer;
-	    }
-	
 	    //assign the expression to a dummy var do it does not get
 	    //optimized out...
 	    print("dummy");
@@ -859,7 +835,85 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    print("__asm__ volatile (\"magc $0, $0, 2\");\n");
 	    return;
 	}
-	super.visitPrintStatement(self, exp);
+
+	    
+	if (type.equals(CStdType.Boolean))
+	    {
+		Utils.fail("Cannot print a boolean");
+	    }
+	else if (type.equals(CStdType.Byte) ||
+		 type.equals(CStdType.Integer) ||
+		 type.equals(CStdType.Short))
+	    {
+		if (!KjcOptions.standalone) {
+		    //print("raw_test_pass_reg(");
+		    print("print_int(");
+		}
+		else
+		    print("printf(\"%d\\n\", "); 
+		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
+		//print("gdn_send(");
+		exp.accept(this);
+		print(");");
+	    }
+	else if (type.equals(CStdType.Char))
+	    {
+		if (!KjcOptions.standalone) {
+		    //print("raw_test_pass_reg(");
+		    print("print_int(");
+		}
+		else
+		    print("printf(\"%d\\n\", "); 
+		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
+		//print("gdn_send(");
+		exp.accept(this);
+		print(");");
+	    }
+	else if (type.equals(CStdType.Float))
+	    {
+		if (!KjcOptions.standalone) {
+		    //print("raw_test_pass_reg(");
+		    print("print_float(");
+		}
+		else 
+		    print("printf(\"%f\\n\", "); 
+		//print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
+		//print("gdn_send(");
+		exp.accept(this);
+		print(");");
+	    }
+        else if (type.equals(CStdType.Long))
+	    {
+		if (!KjcOptions.standalone) {
+		    //print("raw_test_pass_reg(");
+		    print("print_int(");
+		}
+		else
+		    print("printf(\"%d\\n\", "); 
+		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
+		//print("gdn_send(");
+		exp.accept(this);
+		print(");");
+	    }
+	else if (type.equals(CStdType.String)) 
+	    {
+		if (!KjcOptions.standalone)
+		    print("print_string(");
+		else
+		    print("printf(\"%s\\n\", "); 
+		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
+		//print("gdn_send(");
+		exp.accept(this);
+		print(");");
+	    }
+	else
+	    {
+		System.out.println("Unprintatble type");
+		print("print_int(");
+		exp.accept(this);
+		print(");");
+		//Utils.fail("Unprintable Type");
+	    }
     }
     
     private void pushScalar(SIRPushExpression self,
@@ -876,6 +930,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    print("(" + tapeType + ")");
 	val.accept(this);
 	print(Util.staticNetworkSendSuffix());
+	//useful if debugging...!
+	/*print(";\n");
+	print("raw_test_pass_reg(");
+	val.accept(this);
+	print(")");*/
     }
 
     

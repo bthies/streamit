@@ -1,6 +1,6 @@
 /*
  * HelloWorld6.str: a serial integer printer
- * $Id: HelloWorld6.str,v 1.5 2002-06-12 20:31:04 dmaze Exp $
+ * $Id: HelloWorld6.str,v 1.6 2005-11-04 01:06:17 dimock Exp $
  */
 
 void->int filter IntSource {
@@ -15,7 +15,7 @@ void->int filter IntSource {
 
 int->void filter IntPrinter {
     work pop 1 {
-        print(pop());
+        println(pop());
     }
 }
 

@@ -36,7 +36,7 @@ int->int filter IntAdder() {
 int->void filter IntPrinter {
     int base;
     work pop 1 {
-        print(pop()+base);
+        println(pop()+base);
     }
     handler addBase(int b) {
         base += b;

@@ -88,6 +88,6 @@ int->int pipeline Sorter (int N) {
  **/
 int->void filter IntPrinter() {
   work pop 1 {
-    print(pop());
+    println(pop());
   }
 }

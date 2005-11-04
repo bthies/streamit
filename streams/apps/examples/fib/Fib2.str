@@ -2,7 +2,7 @@
  * Since y[n]=y[n-1]+y[n-2], push the two values that get added around
  * the loop.  The body filter inputs the two values, and outputs the
  * next result and the next two values to be added.
- * $Id: Fib2.str,v 1.1 2003-10-10 19:04:52 dmaze Exp $ */
+ * $Id: Fib2.str,v 1.2 2005-11-04 01:06:17 dimock Exp $ */
 void->void pipeline Fib2 {
   add void->int feedbackloop {
     join roundrobin(0, 1);
@@ -21,5 +21,5 @@ void->void pipeline Fib2 {
     enqueue(0);
     enqueue(1);
   };
-  add int->void filter { work pop 1 { print(pop()); } };
+  add int->void filter { work pop 1 { println(pop()); } };
 }

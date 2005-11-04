@@ -66,7 +66,7 @@ float->float filter FloatNAdder(int count) {
 float->float filter FloatDiff() {
 
   work push 1 pop 2 {
-      //print(peek(0) - peek(1));
+      //println(peek(0) - peek(1));
     push(peek(0) - peek(1));
     pop();
     pop();
@@ -79,7 +79,7 @@ float->float filter FloatDup() {
   work push 2 pop 1 {
 
     float val = pop();
-    //print(val);
+    //println(val);
     push(val);
     push(val);
   }
@@ -198,7 +198,7 @@ float->float filter FMDemodulator(float sampRate, float max, float bandwidth) {
     temp = (float)(mGain * atan(temp));
 
     pop(); 
-	//print(temp);
+	//println(temp);
     push(temp);
   }
 }

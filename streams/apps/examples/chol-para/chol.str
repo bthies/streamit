@@ -134,11 +134,11 @@ float->void filter sink (int N) {
 	for (int i=0;i<N;i++)
 	    for (int j=i;j<N;j++)
 		{
-		    //		    print("col: ");
-//		    print(i);
-		    //		    print("  row: ");
-//		    print(j);
-		    //		    print(" = ");
+		    //		    println("col: ");
+//		    println(i);
+		    //		    println("  row: ");
+//		    println(j);
+		    //		    println(" = ");
 		    println(pop());
 		}
     }

@@ -114,10 +114,10 @@ float->float filter VertexShader
 /*
 	void printv4( Vector4f v )
 	{
-		print( v.x );
-		print( v.y );
-		print( v.z );
-		print( v.w );
+		println( v.x );
+		println( v.y );
+		println( v.z );
+		println( v.w );
 	}
 */
 
@@ -307,17 +307,17 @@ float->void filter FragmentShader( int number, int left, int bottom, int tileWid
 /*
 	void printv3( Vector3f v )
 	{
-		print( v.x );
-		print( v.y );
-		print( v.z );
+		println( v.x );
+		println( v.y );
+		println( v.z );
 	}
 
 	void printv4( Vector4f v )
 	{
-		print( v.x );
-		print( v.y );
-		print( v.z );
-		print( v.w );
+		println( v.x );
+		println( v.y );
+		println( v.z );
+		println( v.w );
 	}
 */
 
@@ -354,14 +354,14 @@ float->void filter FragmentShader( int number, int left, int bottom, int tileWid
 		ndcSpace[2] = normalizeW( clipSpace[2] );
 
 /*
-		print( "clipspace" );
+		println( "clipspace" );
 		printv4( clipSpace[0] );
 		printv4( clipSpace[1] );
 		printv4( clipSpace[2] );
 */
 
 /*
-		print( "ndcspace" );
+		println( "ndcspace" );
 		printv4( ndcSpace[0] );
 		printv4( ndcSpace[1] );
 		printv4( ndcSpace[2] );
@@ -372,7 +372,7 @@ float->void filter FragmentShader( int number, int left, int bottom, int tileWid
 		screenSpace[2] = viewport( ndcSpace[2] );
 
 /*
-		print( "viewport" );
+		println( "viewport" );
 		printv3( screenSpace[0] );
 		printv3( screenSpace[1] );
 		printv3( screenSpace[2] );
@@ -457,8 +457,8 @@ float->void filter FragmentShader( int number, int left, int bottom, int tileWid
 					screen[ ( y - bottom ) * tileWidth + ( x - left ) ] = 1;
 
 
-					// print( "x = " + x );
-					// print( "y = " + y );
+					// println( "x = " + x );
+					// println( "y = " + y );
 
 
 /*
@@ -486,7 +486,7 @@ float->void filter FragmentShader( int number, int left, int bottom, int tileWid
 			}
 		}
 
-		print( number );
+		println( number );
 	}
 }
 
@@ -496,7 +496,7 @@ float->void filter ProgressPrinter
 	{
 		for( int i = 0; i < 12; ++i )
 		{
-			print( pop() );
+			println( pop() );
 		}
 	}
 }

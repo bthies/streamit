@@ -57,6 +57,6 @@ int->int filter incr {
 
 int->void filter printer {
     work pop 1 {
-	print(pop());
+	println(pop());
     }
 }

@@ -96,10 +96,10 @@ float->float filter RealFIRFilter(int sampleFreq, int dec, float c, int t, float
 			  (0.54-0.46*cos(2.0*pi*((float)index)/M)));
 	    }
 
-//print(arg*(index-(M/2.0)));
-//print(sin(arg*(index-(M/2.0))));
-//print(index);
-//print(taps[index]);
+//println(arg*(index-(M/2.0)));
+//println(sin(arg*(index-(M/2.0))));
+//println(index);
+//println(taps[index]);
 
 	}
 	if ((((int)M)/2)*2 == (int)M ){ 
@@ -169,7 +169,7 @@ void->float filter TestSource {
 float->void filter NullSink {
 
   work push 0 pop 1 {
-    print(pop());
+    println(pop());
   }
 }
 
@@ -208,7 +208,7 @@ float->float filter print_pop() {
   work push 1 pop 1 {
 
     float x = pop();
-    print(x);
+    println(x);
     push(x);
   }
 }

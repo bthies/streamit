@@ -1388,7 +1388,7 @@ void->void pipeline MP3() {
 int->void filter output_int {
 
   work push 0 pop 1 peek 1 {
-    print(pop());
+    println(pop());
   }
 }
 

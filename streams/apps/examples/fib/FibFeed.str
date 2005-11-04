@@ -15,7 +15,7 @@ int->int filter PeekAdd {
 
 int->int filter IntPrinter {
   work pop 1 push 1 {
-    print(peek((0)));
+    println(peek((0)));
     push(pop());
   }
 }

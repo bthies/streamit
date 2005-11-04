@@ -1,6 +1,7 @@
 PREPROCESS = ${STREAMIT_HOME}/misc/scripts/preprocess.perl
 STREAMITDOC = ${STREAMIT_HOME}/misc/scripts/streamitdoc
 STRC_OPTIONS = -library -nosched
+#STRC_OPTIONS = -cluster 1
 
 DCT_HOME = ${STREAMIT_HOME}/apps/benchmarks/dct_ieee/streamit
 LIBDCT = ${DCT_HOME}/DCTinternal.str ${DCT_HOME}/DCTexternal.str
@@ -10,7 +11,9 @@ LIBDCT = ${DCT_HOME}/DCTinternal.str ${DCT_HOME}/DCTexternal.str
 
 LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str
 
-default: player
+default: foo
+
+#default: player
 
 clean:	
 	rm -f MPEGdecoder.str
@@ -24,6 +27,9 @@ clean:
 	rm -f *.html
 	rm -f *.bmp
 	rm -f *.m2v
+
+foo:	foo.str 
+	strc foo.str $(STRC_OPTIONS)
 
 player:	MPEGplayer.str MPEGdecoder.str ${LIBMPEG2} ${LIBDCT}
 	strc MPEGplayer.str MPEGdecoder.str ${LIBMPEG2} ${LIBDCT} ${STRC_OPTIONS}

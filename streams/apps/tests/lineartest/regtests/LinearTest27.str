@@ -1,5 +1,5 @@
 /** 
- * Really simple fir program for testing that filters that print are
+ * Really simple fir program for testing that filters that println are
  * not marked as linear.
  **/
 void->void pipeline LinearTest27 {

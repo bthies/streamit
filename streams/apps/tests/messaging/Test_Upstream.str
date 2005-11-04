@@ -15,7 +15,7 @@ void->void pipeline Test_Upstream
     
     add int->void filter {
 	  work pop 1 {
-		print(pop());
+		println(pop());
 	  }
     }
 }

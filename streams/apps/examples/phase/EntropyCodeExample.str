@@ -25,7 +25,7 @@ void->void pipeline EntropyCodeExample {
 
   add int->void filter {
     work pop 1 {
-      print(pop());
+      println(pop());
     }
   }
 }

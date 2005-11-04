@@ -33,6 +33,6 @@ int->int filter TimesTwo() {
 
 int->void filter Printer() {
     work pop 1 {
-	print(pop());
+	println(pop());
     }
 }

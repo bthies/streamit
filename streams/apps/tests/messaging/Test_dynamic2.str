@@ -48,8 +48,8 @@ int->void filter Output {
 	val = v;
     }
     work pop 1 {
-	print(pop());
-	print(val);
+	println(pop());
+	println(val);
     }
 }
 

@@ -216,7 +216,7 @@ void->float filter InputGenerate (int myChannel, int numberOfSamples, int tarBea
 }
 
 float->void filter FloatPrinter {
-    work pop 1 { print ( pop() ); }
+    work pop 1 { println ( pop() ); }
 }
 
 float->float filter BeamFirFilter (int numTaps, int inputLength, int decimationRatio) {

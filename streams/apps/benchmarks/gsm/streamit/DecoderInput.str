@@ -33,12 +33,12 @@ int getParameters(int[260] input)
 			num_bits = 3;		
 		}
 	
-		//print("pre index is " + input_index);
-		//print("numbits is " + num_bits);
+		//println("pre index is " + input_index);
+		//println("numbits is " + num_bits);
 	    mLarParameters[i] = 0;
 	    for (j = 0; j < num_bits; j++)
 		{
-		    //print("gets here at iteration " + j + " with input index " + input_index);
+		    //println("gets here at iteration " + j + " with input index " + input_index);
 		    mLarParameters[i] = mLarParameters[i] | input[input_index] * gsm_exp(2, (num_bits - 1 - i));
 		    input_index = input_index + 1;
 		}
@@ -48,8 +48,8 @@ int getParameters(int[260] input)
     //Sub-frames 1 through 4!
     for (k = 0; k < 4; k++)
 	{
-	    //print("k is " + k);
-	    //print("input index is " + input_index);
+	    //println("k is " + k);
+	    //println("input index is " + input_index);
 	    mLtpOffset[k] = 0;
 	    for (l = 0; l < 7; l++)
 		{

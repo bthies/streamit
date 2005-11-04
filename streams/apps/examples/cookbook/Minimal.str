@@ -8,5 +8,5 @@ void->int filter IntSource {
   work push 1 { push(x++); }
 }
 int->void filter IntPrinter {
-  work pop 1 { print(pop()); }
+  work pop 1 { println(pop()); }
 }

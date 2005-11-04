@@ -73,7 +73,7 @@ float->complex filter combine_floats() {
 float->void filter output_f {
 
   work push 0 pop 1 peek 1 {
-    print(pop());
+    println(pop());
   }
 }
 
@@ -84,7 +84,7 @@ complex->void filter output_c {
 
   work push 0 pop 1 peek 1 {
    c = pop();
-   print(c.real); print(c.imag);
+   println(c.real); println(c.imag);
   }
 }
 

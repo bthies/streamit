@@ -64,7 +64,7 @@ void->int splitjoin TwoVectSource(int N) {
  */
 int->void filter VectPrinter {
     work pop 1 {
-	print(pop());
+	println(pop());
     }
 } 
 

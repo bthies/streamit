@@ -72,7 +72,7 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
     add int->int filter {
       int a = width*height;
       work pop (a*3) push (a) {
-        print("firing");
+        println("firing");
         pushpop(a);
         deadpop(a);
         deadpop(a);
@@ -118,7 +118,7 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
     int a = 2 + mpd_data_size;
     work pop a push a {
       if (peek(1) < 1 || peek(1) > 3) {
-        print("WTF MATE!!! " + peek(1));
+        println("WTF MATE!!! " + peek(1));
       }
       pushpop(a);
     }
@@ -463,7 +463,7 @@ int->int filter AssignPictureType(int width, int height) {
       // TODO hacked for now for no backward motion compensation till we get forward working
       pushval = 2;
     }
-    print("frame " + frameno + " gets type " + pushval);
+    println("frame " + frameno + " gets type " + pushval);
     push(pushval);      
     frameno++;
   }
@@ -568,7 +568,7 @@ int->int filter undoQuantisation(int[64] intra_quantiser_matrix, int[64] non_int
   work pop (64*6+5) push (64*6) {
     int a = pop();
     if (a != 3278) {
-      print("Error - Bitstream must be missaligned" + a);
+      println("Error - Bitstream must be missaligned" + a);
     }
     int quantiser_scale_code = pop();
     int motion_forward = pop();
@@ -702,7 +702,7 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
   // TODO - might be able to put bounds on this.
   work pop * push * {
     if (!ran) {
-      print("Writing M2V File...");
+      println("Writing M2V File...");
       ran = true;
       int tempval;
 
@@ -894,7 +894,7 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
 
       // hardcoded for now TODO maybe
       for (int pic = 0; pic < numpictures; pic++) {
-        print("Starting picture " + pic);
+        println("Starting picture " + pic);
         // TODO Start of picture - this might later be broken up
         // picture_header() (cite 1, P.30)
         tempval = 0x00000100;
@@ -907,7 +907,7 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
 
         int picture_coding_type = pop();     
         if (picture_coding_type < 1 || picture_coding_type > 3) {
-          print("   Error: Forbidden picture_coding_type " + picture_coding_type);
+          println("   Error: Forbidden picture_coding_type " + picture_coding_type);
         }
         // picture_coding_type = 1 -> I-picture
         // picture_coding_type = 2 -> P-picture
@@ -1026,16 +1026,16 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
           pushs(8, slice_vertical_position);
 
           if (vertical_size > 2800)
-            print("Error - Program Limitation: Doesn't handle vertical_slices > 2800");
+            println("Error - Program Limitation: Doesn't handle vertical_slices > 2800");
           int mb_row, previous_macroblock_address;
           mb_row = slice_vertical_position - 1;
           previous_macroblock_address = (mb_row * mb_width) - 1;
 
           tempval = pop();
           if (tempval != 3278)
-            print("Error - Stream Misaligned Somehow - got " + tempval + " expected " + 3278); 
+            println("Error - Stream Misaligned Somehow - got " + tempval + " expected " + 3278); 
 //          else
-//            print("Reading Macroblock: " + ((slice_vertical_position-1) * mb_width));
+//            println("Reading Macroblock: " + ((slice_vertical_position-1) * mb_width));
 
           int quantiser_scale_code = pop();
           pushs(5, quantiser_scale_code);
@@ -1064,9 +1064,9 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
             if (slice_horizontal_position != 1) {
               tempval = pop();
               if (tempval != 3278)
-                print("Error - Stream Misaligned Somehow got " + tempval + " expected " + 3278);
+                println("Error - Stream Misaligned Somehow got " + tempval + " expected " + 3278);
 //              else           
-//                print("Reading Macroblock: " + ((slice_vertical_position-1)*mb_width + slice_horizontal_position-1));
+//                println("Reading Macroblock: " + ((slice_vertical_position-1)*mb_width + slice_horizontal_position-1));
               tempval = pop();
               if (quantiser_scale_code == tempval) {
                 macroblock_quant = 0;
@@ -1344,9 +1344,9 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
       pushs(32, tempval);
       pushs(32, tempval);
       pushs(32, tempval);
-      print("Done Writing M2V File...");
+      println("Done Writing M2V File...");
     } else {
-//      print("Error - Trying to generate M2V file for a second time...");
+//      println("Error - Trying to generate M2V file for a second time...");
     }
   }
 }

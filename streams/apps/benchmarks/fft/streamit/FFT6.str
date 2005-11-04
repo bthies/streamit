@@ -208,8 +208,8 @@ complex->void filter CPrinter()
     
       complex c = pop();
 
-      print(c.real);
-      print(c.imag);
+      println(c.real);
+      println(c.imag);
     }
 }
 
@@ -219,8 +219,8 @@ complex->complex filter PassThroughPrinter()
     
       complex c = pop();
 
-      print(c.real);
-      print(c.imag);
+      println(c.real);
+      println(c.imag);
  
       push (c);
     }

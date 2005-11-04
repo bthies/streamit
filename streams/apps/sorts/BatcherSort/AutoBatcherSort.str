@@ -110,13 +110,13 @@ void->int filter IntSource(int SIZE) {
 int->int filter IntIdentityPrinter() {
   work push 1 pop 1 {
     int i = pop();
-    print(i);
+    println(i);
     push(i);
   }
 }
 
 int->void filter IntPrinter() {
   work pop 1 {
-    print(pop());
+    println(pop());
   }
 }

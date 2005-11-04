@@ -11,7 +11,7 @@ float->Vertex filter Input( int vertexDataSize )
 	    v.position.z = pop();
 	    v.position.w = 1.0;
 
-	    print( "i = " + i );
+	    println( "i = " + i );
 	    
 	    v.normal.x = v.position.x;
 	    v.normal.y = v.position.y;

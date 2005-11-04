@@ -179,8 +179,8 @@ void->void pipeline Raytracer()
 
     int P = 1; //how many parallel pipelines
 
-    print(W);
-    print(H);
+    println(W);
+    println(H);
     add genEyeRays();
 
     add splitjoin {

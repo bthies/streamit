@@ -10,7 +10,7 @@ void->int feedbackloop Fib {
 }
 
 int->void filter IntPrinter {
-    work pop 1 { print(pop()); }
+    work pop 1 { println(pop()); }
 }
 
 void->void pipeline FibProgram {

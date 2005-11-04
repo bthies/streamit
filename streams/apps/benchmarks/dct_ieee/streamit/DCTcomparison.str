@@ -58,11 +58,11 @@ int->int pipeline iDCT8x8_ieee {
       int fastVal = pop();
       int refVal = pop();
       if (fastVal != refVal) {
-        print("Error - Discrepancy between reference iDCT and fast iDCT");
-        print("        Reference iDCT gives " + refVal + " and Fast iDCT gives " + fastVal);
+        println("Error - Discrepancy between reference iDCT and fast iDCT");
+        println("        Reference iDCT gives " + refVal + " and Fast iDCT gives " + fastVal);
         errors += 1.0;
         float errorRate = errors/count;
-        print("        Error Rate is " + errorRate);
+        println("        Error Rate is " + errorRate);
       }
       push(refVal);
     }
@@ -98,11 +98,11 @@ int->int pipeline DCT8x8_ieee {
       int fastVal = pop();
       int refVal = pop();
       if (fastVal != refVal) {
-        print("Error - Discrepancy between reference DCT and fast DCT");
-        print("        Reference DCT gives " + refVal + " and Fast DCT gives " + fastVal);
+        println("Error - Discrepancy between reference DCT and fast DCT");
+        println("        Reference DCT gives " + refVal + " and Fast DCT gives " + fastVal);
         errors += 1.0;
         float errorRate = errors/count;
-        print("        Error Rate is " + errorRate);
+        println("        Error Rate is " + errorRate);
       }
       push(refVal);
     }

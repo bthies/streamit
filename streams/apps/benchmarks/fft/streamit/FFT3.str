@@ -205,8 +205,8 @@ float->void filter FloatPrinter {
  
     work pop 2 
     {
-	print(pop()); 
-	print(pop()); 
+	println(pop()); 
+	println(pop()); 
     }
 }
 

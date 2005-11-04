@@ -72,7 +72,7 @@ float->float filter Subtract {
 
 float->void filter FloatPrinter {
     work pop 1 {
-	print(pop());
+	println(pop());
     }
 }
 

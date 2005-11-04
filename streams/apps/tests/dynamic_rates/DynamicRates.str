@@ -36,7 +36,7 @@ int->void filter Filter3()
 {
     work pop 1 
 	{
-	    print(pop());
+	    println(pop());
 	}
 }
 

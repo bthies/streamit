@@ -79,7 +79,7 @@ float->float filter FIR(int N) {
 
 float->void filter Printer() {
     work pop 2 {
-	print(pop());
-	print(pop());
+	println(pop());
+	println(pop());
     }
 }

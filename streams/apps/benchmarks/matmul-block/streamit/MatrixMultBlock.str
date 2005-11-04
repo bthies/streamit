@@ -1,7 +1,7 @@
 /*
  * MatrixMultBlock.str: block matrix multiply
  * Translated from Jasper's old-syntax code
- * $Id: MatrixMultBlock.str,v 1.6 2004-05-04 01:02:58 thies Exp $
+ * $Id: MatrixMultBlock.str,v 1.7 2005-11-04 01:06:14 dimock Exp $
  */
 
 void->void pipeline MatrixMultBlock
@@ -14,7 +14,7 @@ void->void pipeline MatrixMultBlock
     
     add BlockFloatSource(500);
     add MatrixBlockMultiply(x0, y0, x1, y1, blockDiv);
-    add float->void filter { work pop 1 { print(pop()); } };
+    add float->void filter { work pop 1 { println(pop()); } };
 }
 
 float->float pipeline MatrixBlockMultiply(int x0, int y0, int x1, int y1,

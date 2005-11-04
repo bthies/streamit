@@ -83,13 +83,13 @@ int->void pipeline checkDCT_IDCT {
       if (a != b) {
         errors += 1.0;
         if ((a-b) > 1 || (a-b) < -1) {
-          print("Serious Error  - fast iDCT output off by more than 1 from fast DCT input.");
+          println("Serious Error  - fast iDCT output off by more than 1 from fast DCT input.");
         } else {
-          print("Possible Error - fast iDCT output off by 1 from fast DCT input.");
+          println("Possible Error - fast iDCT output off by 1 from fast DCT input.");
         }
-        print("                 input: " + b + ", output: " + a);
+        println("                 input: " + b + ", output: " + a);
         float errorRate = errors/count;
-        print("                 Error Rate: " + errorRate);
+        println("                 Error Rate: " + errorRate);
       }
     }
   }   
@@ -120,13 +120,13 @@ int->void pipeline checkrefDCT_IDCT {
       if (a != b) {
         errors += 1.0;
         if ((a-b) > 1 || (a-b) < -1) {
-          print("Serious Error  - ref iDCT output off by more than 1 from ref DCT input.");
+          println("Serious Error  - ref iDCT output off by more than 1 from ref DCT input.");
         } else {
-          print("Possible Error - ref iDCT output off by 1 from ref DCT input.");
+          println("Possible Error - ref iDCT output off by 1 from ref DCT input.");
         }
-        print("                 input: " + b + ", output: " + a);
+        println("                 input: " + b + ", output: " + a);
         float errorRate = errors/count;
-        print("                 Error Rate: " + errorRate);
+        println("                 Error Rate: " + errorRate);
       }
     }
   }   

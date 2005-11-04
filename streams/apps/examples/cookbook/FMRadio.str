@@ -115,7 +115,7 @@ void->float filter FloatOneSource {
 
 float->void filter FloatPrinter {
   work push 0 pop 1 {
-    print(pop());
+    println(pop());
   }
 }
 

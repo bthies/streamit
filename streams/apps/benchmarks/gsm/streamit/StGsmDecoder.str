@@ -52,7 +52,7 @@ int -> int filter RPEDecodeFilter {
 		exp = gsm_sub(intify(xmaxc / 8), 1);
 	    }
 	mant = gsm_sub(xmaxc, intify(exp * 8));
-	////print("Mantissa is " + mant);
+	////println("Mantissa is " + mant);
 	//normalize mantissa 0 <= mant <= 7;
 	
 	if (mant == 0)
@@ -69,7 +69,7 @@ int -> int filter RPEDecodeFilter {
 		    }
 		mant = gsm_sub(mant, 8);
 	    }
-	////print("Normalized mantissa is " + mant);
+	////println("Normalized mantissa is " + mant);
 
 	/* 
 	 *  This part is for decoding the RPE sequence of coded Xmc[0..12]
@@ -80,15 +80,15 @@ int -> int filter RPEDecodeFilter {
 	//System.err.//println("Size of FAC is " + FAC.length);
 	//System.err.//println("Gets called at mant = " + mant);
 	temp1 = FAC[mant];
-	//print("temp1 is " + temp1 + " with exp " + exp);
+	//println("temp1 is " + temp1 + " with exp " + exp);
 	temp2 = gsm_sub(6, exp);
-	//print("temp2 is " + temp2);
+	//println("temp2 is " + temp2);
 
 	int blahblah = gsm_sub(temp2, 1);
-	//print("blahblah is " + blahblah);
+	//println("blahblah is " + blahblah);
 
 	temp3 = intify(1 * gsm_exp(2, gsm_sub(temp2, 1)));
-	//print("temp3 is " + temp3);
+	//println("temp3 is " + temp3);
 	for (i = 0; i < 13; i++)
 	    {
 		temp = gsm_sub(intify(mXmc[i] * 2), 7);    //3 bit unsigned
@@ -96,7 +96,7 @@ int -> int filter RPEDecodeFilter {
 		temp = gsm_mult_r(temp1, temp);
 		temp = gsm_add(temp, temp3);
 		xmp[i] = intify(temp / gsm_exp(2, temp2));
-		////print("xmp[i] is " + xmp[i]);
+		////println("xmp[i] is " + xmp[i]);
 	    }
 
 	/**
@@ -712,7 +712,7 @@ int->int filter IdentityPrint(int rate) {
 	for (int i = 0; i < ratea; i++)
 	    {
 		int a = pop();
-		////print(a);
+		////println(a);
 		push(a);
 	    }			
     }
@@ -726,6 +726,6 @@ int->void filter IntegerPrint {
 
     work push 0 pop 1 {
 	int a = pop();
-	print(a);
+	println(a);
 }
 }

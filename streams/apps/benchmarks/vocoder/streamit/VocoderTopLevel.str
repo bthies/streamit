@@ -187,7 +187,7 @@ float->float filter DFTChannel(int DFTLen, float range) {
 
     push(prevR);
     push(prevI);
-    //print("range: " + range + " real: " + prevR + " imag: " + prevI);
+    //println("range: " + range + " real: " + prevR + " imag: " + prevI);
   }
 }
 
@@ -622,7 +622,7 @@ int->int filter ShortPrinter() {
     work push 1 pop 1 {
 
 	int i = pop();
-	print(i);
+	println(i);
 	push(i);
     }
 }
@@ -769,7 +769,7 @@ float->float filter print_pop() {
   work push 1 pop 1 {
 
     float x = pop(); 
-    print(x);
+    println(x);
     push(x);
   }
 }
@@ -781,7 +781,7 @@ int->int filter print_pop_int() {
 
     int y = pop();
 print(111);
-    print(y);
+    println(y);
     push(y);
   }
 }

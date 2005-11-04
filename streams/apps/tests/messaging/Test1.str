@@ -34,7 +34,7 @@ int->int filter Counter {
 
 int->void filter Output {
   work pop 1 {
-    print(pop());
+    println(pop());
   }
 }
 

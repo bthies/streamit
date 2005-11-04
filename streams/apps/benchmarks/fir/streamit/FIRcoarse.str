@@ -15,7 +15,7 @@ void->float filter FloatSource (float maxNum) {
 }
 
 float->void filter FloatPrinter (int x) {
-    work pop 1 { print(pop()); }
+    work pop 1 { println(pop()); }
 }
 
 float->float filter FIR(int N) {

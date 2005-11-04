@@ -23,7 +23,7 @@ void->int filter IntSource(portal<IntPrinter> pp) {
 int->void filter IntPrinter {
     int base;
     work pop 1 {
-        print(pop()+base);
+        println(pop()+base);
     }
     handler setBase(int b) {
         base = b;

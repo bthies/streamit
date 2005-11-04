@@ -506,7 +506,7 @@ int->int filter BMPByteStream_Creator {
         push(pop());
       }
 
-      print("Done writing image"); 
+      println("Done writing image"); 
 
     }
   }
@@ -544,7 +544,7 @@ int->int filter JPEGByteStream_Creator {
         // See the Parser for reasons for pop/push rates
 	work pop [192, 230400,*] push [48,100000,*] {
 		if (!ran) {
-			print("Reencoding JPEG...");
+			println("Reencoding JPEG...");
 			ran = true;
 			// First comes the SOI Marker and the JFIF Header
 			for (int i = 0; i < 20; i++) {
@@ -555,7 +555,7 @@ int->int filter JPEGByteStream_Creator {
 			for (int i = 0; i < 2; i++)
 				push(CommentHeader[i]);
 
-			print("Writing Comment: Encoded with StreamIt");				
+			println("Writing Comment: Encoded with StreamIt");				
 			/* Comment = "Encoded with StreamIt" */
 			int[21] comment_body = 
 				{69, 110, 99, 111, 100, 101, 100, 32, 119, 105, 116,
@@ -973,7 +973,7 @@ int->int filter JPEGByteStream_Creator {
 			for (int i = 0; i < 2; i++)
 				push(EOIHeader[i]);
 				
-			print("Done encoding image");
+			println("Done encoding image");
 
 		}
 	}
@@ -1013,23 +1013,23 @@ int->int filter JPEGByteStream_Parser {
     // Average push rate is also pretty arbitrary - I assume the average JPEG is 320x240x3 = 
     work pop [48,100000,*] push [192,230400,*] {
     	if (!ran) {
-    	    print("Processing JPEG...");
+    	    println("Processing JPEG...");
     	    ran = true;
 	    // First comes the SOI Marker and the JFIF Header
 	   
             for (int i = 0; i < 20; i++) {
                 int popval = pop();
                 if (popval != FileHeader[i]) {
-		    print("Error - Unrecognized File Header at byte " + i);
-		    print("Encountered: " + popval);
-		    print("Expecting: " + FileHeader[i]);
+		    println("Error - Unrecognized File Header at byte " + i);
+		    println("Encountered: " + popval);
+		    println("Expecting: " + FileHeader[i]);
 		}
 	    }
 			
 	    // Then comes the comment
 	    for (int i = 0; i < 2; i++) {
 		if (pop() != CommentHeader[i]) {
-		    print("Error - Unrecognized Comment Header");
+		    println("Error - Unrecognized Comment Header");
                 }
             }
 		
@@ -1037,7 +1037,7 @@ int->int filter JPEGByteStream_Parser {
 	    int comment_length = pop() * 256;
 	    comment_length += pop();
 	    comment_length -= 2;
-	    print("Comment Encountered of Length: " + comment_length);
+	    println("Comment Encountered of Length: " + comment_length);
 			
 	    // Then comes the body of the comment
 	    int[1000] comment_body; // TODO HACK for dynamic allocation
@@ -1050,7 +1050,7 @@ int->int filter JPEGByteStream_Parser {
 	    // Then comes the DQT Header
 	    for (int i = 0; i < 2; i++) {
 		if (pop() != DQTHeader[i]) {
-		     print("Error - Unrecognized DQT Header");
+		     println("Error - Unrecognized DQT Header");
                 }
             }
 					
@@ -1059,9 +1059,9 @@ int->int filter JPEGByteStream_Parser {
 	    int dqt_table_length = pop() * 256;
 	    dqt_table_length += pop();
             dqt_table_length -= 2;
-            print("DQT Table Size: " + dqt_table_length);
+            println("DQT Table Size: " + dqt_table_length);
             int dqt_num_tables = dqt_table_length / 65; 
-            print("Number of DQT Tables: " + dqt_num_tables);
+            println("Number of DQT Tables: " + dqt_num_tables);
 			
  	    // Then comes the actual tables
 	    int[2][64] dqt_tables; // TODO HACK for dynamic allocation
@@ -1071,7 +1071,7 @@ int->int filter JPEGByteStream_Parser {
 	    // but not neccesarily true.			
 	    for (int i = 0; i < dqt_num_tables; i++) {
 	        if (pop() != i) {
-		    print("Error - Unexpected DQT Table Number");
+		    println("Error - Unexpected DQT Table Number");
                 }
 		for (int j = 0; j < 64; j++) {
 		    dqt_tables[i][j] = pop();	
@@ -1081,7 +1081,7 @@ int->int filter JPEGByteStream_Parser {
 	    // Then comes the Start of Frame Header
 	    for (int i = 0; i < 4; i++)
 		if (pop() != SOFHeader[i])
-		    print("Error - Unrecognized Start of Frame Header");
+		    println("Error - Unrecognized Start of Frame Header");
 			
 	    // The next byte is the precision of the JPEG
             int jpeg_precision = pop();
@@ -1089,19 +1089,19 @@ int->int filter JPEGByteStream_Parser {
             // The next two bytes are the image's height
             int image_height = pop() * 256;
 	    image_height += pop();
-	    print("Image Height: " + image_height);
+	    println("Image Height: " + image_height);
 			
 	    // The next two bytes are the image's width
 	    int image_width = pop() * 256;
 	    image_width += pop();
-	    print("Image Width: " + image_width);
+	    println("Image Width: " + image_width);
 			
 	    // The next byte represents the number of components in an image.
 	    int num_components = pop();
 			
 	    // TODO We make the assumption that all images have three components.
 	    if (num_components != 3)
-	    print("Error - Expected 3 Components, Found " + num_components);
+	    println("Error - Expected 3 Components, Found " + num_components);
 
 	    // Next come some information about each component.
 	    // TODO HACK I assume there are always three components, for dynamic
@@ -1117,7 +1117,7 @@ int->int filter JPEGByteStream_Parser {
 		// TODO The components don't actually have to be in order
 		// but this makes my life easier.
 		if (component_ID[i] != i + 1)
-		    print("Components Not In Order");
+		    println("Components Not In Order");
 		int tempval = pop();
 		horizontal_sampling_factor[i] = tempval >> 4;
 		vertical_sampling_factor[i] = tempval & 15;
@@ -1127,7 +1127,7 @@ int->int filter JPEGByteStream_Parser {
 	    // Then comes the DHT Header
 		for (int i = 0; i < 2; i++)
 		    if (pop() != DHTHeader[i])
-			print("Error - Unrecognized DHT Header");
+			println("Error - Unrecognized DHT Header");
 					
 	    int huffman_table_length = pop() * 256;
 	    huffman_table_length += pop();
@@ -1207,12 +1207,12 @@ int->int filter JPEGByteStream_Parser {
    	    // Then comes the Start of Scan Header
 	    for (int i = 0; i < 4; i++)
 	        if (pop() != SoSHeader[i])
-		    print("Error - Unrecognized Start of Scan Header");
+		    println("Error - Unrecognized Start of Scan Header");
 				
 	    // TODO I assume that the Scan Header and the Frame Header have the
 	    // same number of components - but is this actually a requirement?
 	    if (pop() != num_components)
-	        print("Error - Different Number of Components");
+	        println("Error - Different Number of Components");
 				
 	    // TODO HACK for dynamic memory allocation - assumes there are 3
 	    // components.
@@ -1224,13 +1224,13 @@ int->int filter JPEGByteStream_Parser {
 	        // TODO The components don't actually have to be in order
 	        // but this makes my life easier.
 	        if (pop() != i + 1)
-		    print("Components Not In Order");
+		    println("Components Not In Order");
 	        int tempval = pop();
 	        dc_table_number[i] = tempval >> 4;
 	        ac_table_number[i] = tempval & 15;
-	        print("Component ID: " + component_ID[i]);
-	        print("DC Table Number: " + dc_table_number[i]);
-	        print("AC Table Number: " + ac_table_number[i]);
+	        println("Component ID: " + component_ID[i]);
+	        println("DC Table Number: " + dc_table_number[i]);
+	        println("AC Table Number: " + ac_table_number[i]);
 	    }
 			
 	    int[3] weirdbytes; // I don't know what these bytes do but I think
@@ -1273,8 +1273,8 @@ int->int filter JPEGByteStream_Parser {
 			if (readbit_int == 255) {
 			    int temppop = pop();
 			    if (temppop != 0) {
-				print("Error - Don't know how to handle markers");	
-				print("Marker Symbol Detected: " + temppop);
+				println("Error - Don't know how to handle markers");	
+				println("Marker Symbol Detected: " + temppop);
 			    }	
 			}
 			readbit_position = 1;							
@@ -1328,8 +1328,8 @@ int->int filter JPEGByteStream_Parser {
 				         if (readbit_int == 255) {
 				             int temppop = pop();
 				             if (temppop != 0) {
-					         print("Error - Don't know how to handle markers");	
-					         print("Marker Symbol Detected: " + temppop);
+					         println("Error - Don't know how to handle markers");	
+					         println("Marker Symbol Detected: " + temppop);
 				             }	
 				         }
 				         readbit_position = 1;							
@@ -1361,7 +1361,7 @@ int->int filter JPEGByteStream_Parser {
 	            }
 	        }
 	        if (innernotfound == true)
-	            print("Error - Incorrectly Formed Huffman Tables or Data Stream");
+	            println("Error - Incorrectly Formed Huffman Tables or Data Stream");
 				
 	        num_found++;
 
@@ -1378,9 +1378,9 @@ int->int filter JPEGByteStream_Parser {
 									
             for (int i = 0; i < 2; i++)
 	        if (pop() != EOIHeader[i])
-	            print("Error - Unrecognized EOI Header");
+	            println("Error - Unrecognized EOI Header");
 					
-            print("Done processing image");
+            println("Done processing image");
 			
    	}	
     }    

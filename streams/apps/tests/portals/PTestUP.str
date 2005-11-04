@@ -42,7 +42,7 @@ int->void filter IntPrinter(portal<IntSource> pp) {
 	c = c + 1;
 	int x = pop();
 	if (c == 1) pp.addBase(1000) [1:2];
-        print(x);
+        println(x);
     }
 }
 

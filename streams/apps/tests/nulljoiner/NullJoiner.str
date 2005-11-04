@@ -32,7 +32,7 @@ int->void splitjoin Test {
 
 int->void filter Sink {
     work pop 1 {
-	print(pop());
+	println(pop());
     }
 }
 

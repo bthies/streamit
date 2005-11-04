@@ -30,5 +30,5 @@ complex->float filter ComplexToRect {
 }
 
 float->void filter FloatPrinter {
-  work pop 1 { print(pop()); }
+  work pop 1 { println(pop()); }
 }

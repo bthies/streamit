@@ -1,7 +1,7 @@
 /*
  * UpDown.str: demo app demonstrating StreamIt messaging
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: UpDown.str,v 1.1 2003-07-03 18:38:16 dmaze Exp $
+ * $Id: UpDown.str,v 1.2 2005-11-04 01:06:18 dimock Exp $
  */
 
 void->int filter Counter
@@ -48,7 +48,7 @@ int->int filter Detector(portal<Counter> p)
 
 int->void filter IntSink
 {
-  work pop 1 { print(pop()); }
+  work pop 1 { println(pop()); }
 }
 
 void->void pipeline UpDown

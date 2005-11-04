@@ -164,7 +164,7 @@ Color->void filter WritePPM(int nx, int ny) {
     Color c;
 
     c = pop();
-    print(c.r);
+    println(c.r);
   }
 }
 

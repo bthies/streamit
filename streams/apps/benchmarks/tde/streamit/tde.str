@@ -3317,7 +3317,7 @@ float->void filter sink (int m) {
             correct = 0;
       }
     }
-    print(correct);
+    println(correct);
   }
 }
 

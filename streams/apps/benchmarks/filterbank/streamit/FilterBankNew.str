@@ -48,7 +48,7 @@ void->float filter source() {
 }
 
 float->void filter sink(int N) {
-  work pop 1 { print(pop()); }
+  work pop 1 { println(pop()); }
 }
 
 float->float pipeline FilterBank(int N_samp, int N_ch, int N_col,

@@ -63,7 +63,7 @@ complex->complex pipeline freq_conv(int x, int y) {
   float log2_total = log(total)/log(2);
   int log2_total_ceil = (int)(log2_total+0.999);
   int fft_len = (int)(exp(log(2)*log2_total_ceil)+0.5);
-//print(fft_len);
+//println(fft_len);
 
   add splitjoin {
     split roundrobin(x,y);

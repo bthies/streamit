@@ -1729,7 +1729,7 @@ void->complex filter gen_ints(int start, int end) {
 }
 
 
-// print len values and push them along - useful for debugging
+// println len values and push them along - useful for debugging
 
 // input: len complex
 // output: len complex
@@ -1740,19 +1740,19 @@ complex->complex filter print_and_push(int len) {
 
     complex temp;
 
-    print(11111);
+    println(11111);
     for(int i=0; i<len; i++) {
       temp = pop();
-      print(temp.real);
-      print(temp.imag);
+      println(temp.real);
+      println(temp.imag);
       push(temp);
     }
-    print(99999);
+    println(99999);
   }
 }
 
 
-// print len values and push them along - useful for debugging
+// println len values and push them along - useful for debugging
 
 // input: len float
 // output: len float
@@ -1763,13 +1763,13 @@ float->float filter print_and_push_f(int len) {
 
     float temp;
 
-    print(11111);
+    println(11111);
     for(int i=0; i<len; i++) {
       temp = pop();
-      print(temp);
+      println(temp);
       push(temp);
     }
-    print(99999);
+    println(99999);
   }
 }
 

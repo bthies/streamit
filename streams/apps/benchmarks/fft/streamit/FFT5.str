@@ -40,7 +40,7 @@ complex->complex pipeline bitreverse(int N) {
 
 float->void filter sink {
   work pop 1 {
-    print(pop());
+    println(pop());
   }
 }
 

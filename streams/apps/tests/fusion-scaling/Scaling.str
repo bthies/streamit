@@ -24,6 +24,6 @@ int->void filter Sink(int o, int e) {
 	for (int i=0; i<o; i++) {
 	    pop();
 	}
-	print(result);
+	println(result);
     }
 }

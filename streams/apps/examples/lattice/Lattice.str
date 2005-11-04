@@ -51,7 +51,7 @@ float->float pipeline CompStage(float k_par) {
 // this class is the last stage of a lattice filter
 float->void filter LastStage {
     work pop 2 {
-	print(pop());
+	println(pop());
 	pop();
     }
 }

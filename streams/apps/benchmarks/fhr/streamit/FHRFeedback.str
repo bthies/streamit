@@ -152,7 +152,7 @@ float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
     }
 
     handler set_frequency(float _freq) {
-	  print(iter);
+	  println(iter);
 	  count  = 0;
 	  size   = (int) ((_start_freq / _freq) * N);
 	  for (int i = 0; i < size; i++) {
@@ -256,7 +256,7 @@ float->float splitjoin Check_Freq_Hop(int N, int channels, float start_freq, flo
 float->void filter __Output_Filter__
 {
     work peek 1 pop 1 push 0 {
-	  print(peek(0));
+	  println(peek(0));
 	  pop();
     }
 }
@@ -301,12 +301,12 @@ void->void pipeline FHRFeedback
 float->float filter Print(int N)
 {
     work peek N pop N push N {
-	  print("---------------------------");
+	  println("---------------------------");
 	  for (int i = 0; i < N; i++) {
-		print(peek(0));
+		println(peek(0));
 		push(pop());
 	  }
-	  print("---------------------------");
+	  println("---------------------------");
     }
 }
 

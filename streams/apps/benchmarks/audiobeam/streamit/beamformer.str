@@ -21,7 +21,7 @@ void->void pipeline beamformer
   //  add FileReader<float>("/home/streamit/compiler-static/audiobeam/data/near-field/data2");
   add FileReader<float>("../data/data2.binary");
 
-  //  add float->float filter { work pop 1 push 1 { float val = pop(); print(val); push(val); } } 
+  //  add float->float filter { work pop 1 push 1 { float val = pop(); println(val); push(val); } } 
 
   add calculate_single_position(num_mics, hamming, sound_speed, sampling_rate, 
 					  mic_locations, source_location);    
@@ -109,8 +109,8 @@ float->void pipeline calculate_single_position(int num_mics, boolean hamming,
     }
 	  
     work pop 1 {
-	print(time_index);
-	print(pop());
+	println(time_index);
+	println(pop());
 	time_index += time_index_increment;
     }
   }

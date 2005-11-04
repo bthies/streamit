@@ -203,8 +203,8 @@ complex->void filter CPrinter()
     
       complex c = pop();
 
-      print(c.real);
-      print(c.imag);
+      println(c.real);
+      println(c.imag);
     }
 }
 

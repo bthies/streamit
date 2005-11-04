@@ -49,7 +49,7 @@ void->float filter source(int N, float[N] r) {
 
 float->void filter sink(int N, portal<source> port) {
   work pop 1 { 
-      print(pop()); 
+      println(pop()); 
       if (false) {
 	  port.handleMessage() [1:1];
       }

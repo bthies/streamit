@@ -86,7 +86,7 @@ void->float filter SortInput(int N) {
  */
 float->void filter FloatPrinter {
     work pop 1 {
-	print(pop());
+	println(pop());
     }
 }
 

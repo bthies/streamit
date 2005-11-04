@@ -76,6 +76,6 @@ int->int filter JumpSort(int SIZE, int START) {
 
 int->void filter IntPrinter() {
   work pop 1 {
-    print(pop());
+    println(pop());
   }
 }

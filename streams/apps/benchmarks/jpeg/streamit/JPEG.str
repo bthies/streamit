@@ -476,9 +476,9 @@ int->void filter Display8BitIntBlock {
     x[5] = pop();
     x[6] = pop();
     x[7] = pop();
-    print("NEWLINE");
+    println("NEWLINE");
     for (int i = 0; i < 8; i++) {
-      print(x[i]);
+      println(x[i]);
     }
   }
 }
@@ -494,12 +494,12 @@ float->void filter Display8BitFloatBlock {
     x[5] = pop();
     x[6] = pop();
     x[7] = pop();
-    print("NEWLINE");
+    println("NEWLINE");
     for (int i = 0; i < 8; i++) {
       if (x[i] < 0.0001 && x[i] > -0.0001)
-        print("0");
+        println("0");
       else
-        print(x[i]);
+        println(x[i]);
     }
   }
 }
@@ -508,9 +508,9 @@ float->void filter OutputFloat {
   work pop 1 {
     float x = pop();
     if (x < 0.0001 && x > -0.0001)
-      print("0");
+      println("0");
     else
-      print(x);
+      println(x);
   }
 }
 

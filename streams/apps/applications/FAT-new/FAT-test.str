@@ -105,12 +105,12 @@ float[N_cnb][N_rg][N_dop]-> void filter Print3d(int N_cnb, int N_rg, int N_dop){
 	    for (int j=0; j < N_rg; j++)
 		for (int k=0; k < N_dop; k++)
 		    {
-			print(i);
-			// print(":");
-			print(j);
-			// print(":");
-			print(k);
-			// print("=");
+			println(i);
+			// println(":");
+			println(j);
+			// println(":");
+			println(k);
+			// println("=");
 			println(InArr[i][j][k]);
 		    }
     }

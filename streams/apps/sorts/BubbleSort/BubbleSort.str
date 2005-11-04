@@ -62,6 +62,6 @@ int->int filter Bubble(int SIZE) {
 
 int->void filter IntPrinter() {
   work pop 1 {
-    print(pop());
+    println(pop());
   }
 }

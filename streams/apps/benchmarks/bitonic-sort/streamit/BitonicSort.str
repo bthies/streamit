@@ -237,9 +237,9 @@ int->void filter KeyPrinter(int N)
                 // ASSERT(peek(0) <= peek(1));
                 /* verifies if it is DOWN sorted */  
                 // ASSERT(peek(0) >= peek(1));
-                print(pop());
+                println(pop());
             } 
-            print(pop());
+            println(pop());
   }                          
 }
  

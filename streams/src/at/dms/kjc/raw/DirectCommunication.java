@@ -25,6 +25,10 @@ import java.math.BigInteger;
 public class DirectCommunication extends at.dms.util.Utils 
     implements Constants 
 {
+
+    //the multiplicity of the filter in the init stage
+    private static int initMult = 0;
+    
     public static boolean doit(SIRFilter filter) 
     {
 	//runs some tests to see if we can 
@@ -62,6 +66,14 @@ public class DirectCommunication extends at.dms.util.Utils
     private static void rawMainFunction(SIRFilter filter) 
     {
 	JBlock statements = new JBlock();
+	
+	//index variable for loop of work function in init stage
+	JVariableDefinition exeIndex1Var = 
+	    new JVariableDefinition(null, 
+				    0, 
+				    CStdType.Integer,
+				    RawExecutionCode.exeIndex1,
+				    null);
 
 	//create the params list, for some reason 
 	//calling toArray() on the list breaks a later pass
@@ -72,6 +84,33 @@ public class DirectCommunication extends at.dms.util.Utils
 	else
 	    paramArray = (JExpression[])paramList.toArray(new JExpression[0]);
 	
+	// initExec counts might be null if we're calling for work
+	// estimation before exec counts have been determined.
+	if (RawBackend.initExecutionCounts!=null) {
+	    Integer init = (Integer)RawBackend.initExecutionCounts.
+		get(Layout.getNode(Layout.getTile(filter)));
+	
+	    if (init != null) 
+		initMult = init.intValue();
+	} else {
+	    // otherwise, we should be doing this only for work
+	    // estimation--check that the filter is the only thing in the graph
+	    assert filter.getParent()==null ||
+                filter.getParent().size()==1 &&
+                filter.getParent().getParent()==null:
+                "Found null pointer where unexpected.";
+	}
+
+	//if we execute in the init stage, then create the local to index the for loop
+	if (initMult > 0) {
+	    statements.addStatement
+		(new JVariableDeclarationStatement(null,
+						   exeIndex1Var,
+						   null));	
+	}
+	
+
+
 	//if standalone, add a field for the iteration counter...
 	JFieldDeclaration iterationCounter = null;
 	if (KjcOptions.standalone) {
@@ -94,6 +133,22 @@ public class DirectCommunication extends at.dms.util.Utils
 				   filter.getInit().getName(),
 				   paramArray),
 				  null));
+
+	//if we execute in the init stage, then create the loop'ed work function
+	if (initMult > 0) {
+	    //inline the work function in a while loop
+	    JBlock workInitBlock = 
+		(JBlock)ObjectDeepCloner.
+		deepCopy(filter.getWork().getBody());
+	    
+	    //call work function for init stage????
+	    statements.addStatement
+		(RawExecutionCode.makeForLoop(workInitBlock, 
+					      exeIndex1Var,
+					      new JIntLiteral(initMult)));
+	}
+	
+
 
 	//add call to raw_init2
 	statements.addStatement(new JExpressionStatement(null,

@@ -1168,7 +1168,7 @@ public class RawExecutionCode extends at.dms.util.Utils
      * <count> times with the body of the loop being <body>.  If count
      * is non-positive, just returns empty (!not legal in the general case)
      */
-    private static JStatement makeForLoop(JStatement body,
+    public static JStatement makeForLoop(JStatement body,
 					  JLocalVariable var,
 					  JExpression count) {
 	if (body == null)

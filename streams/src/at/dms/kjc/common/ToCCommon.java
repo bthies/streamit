@@ -24,14 +24,19 @@ import at.dms.compiler.JavaStyleComment;
 public abstract class ToCCommon extends SLIREmptyVisitor {
 	
 	/**
-	 *  Controls visitPrintStatement. Can override for a backend by writing to this variable. 
-	 *  initialized by a static block.  Can be overridden in a static block in a subclass by
+	 *  Controls visitPrintStatement. Can override for a backend by writing
+	 *  to this variable. initialized by a static block.  Can be
+	 *  overridden in a static block in a subclass by 
 	 *  printPrefixMap.clear();
 	 *  printPrefixMap.put...
 	 *  
-	 *  If there is more than one printer inheriting from ToCCommon and your inheritance
-	 *  structure is not linear then you may have to override printPrefixMap in a constructor 
-	 *  rather than in a static block.
+	 *  If there is more than one printer inheriting from ToCCommon and 
+	 *  your inheritance structure is not linear then you may have
+	 *  to write to printPrefixMap from a constructor rather than from
+	 *  a static block. 
+	 *
+	 *  If your backend does more on prints than the common
+	 *  backend, you will probably want to override printExp.
 	 */
 
 	static protected Map/*<String><String>*/ printPrefixMap;
@@ -39,11 +44,12 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     static {
     	printPrefixMap = new java.util.HashMap();
     	// Set up standard prefixes for visitPrintStatement.
-		// a subclass may override by printPrefixMap.clear(); printPrefixMap.put...
+	// a subclass may override by:
+	// printPrefixMap.clear(); printPrefixMap.put...
 		printPrefixMap.put("byte", "printf( \"%d\", ");
     	printPrefixMap.put("char", "printf( \"%d\", ");
-    	printPrefixMap.put("double", "printf( \"%d\", ");
-    	printPrefixMap.put("float", "printf( \"%d\", ");
+    	printPrefixMap.put("double", "printf( \"%f\", ");
+    	printPrefixMap.put("float", "printf( \"%f\", ");
     	printPrefixMap.put("int", "printf( \"%d\", ");
     	printPrefixMap.put("long", "printf( \"%d\", ");
     	printPrefixMap.put("short", "printf( \"%d\", ");

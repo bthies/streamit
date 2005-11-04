@@ -642,8 +642,11 @@ public class FEIRToSIR implements FEVisitor, Constants {
     for (i = 0; i < params.size(); i++) {
       args[i] = (JExpression) ((Expression) params.get(i)).accept(this);
     }
-    if (exp.getName().equals("print") || exp.getName().equals("println")) {
-      return new SIRPrintStatement(null, args[0], null);
+    if (exp.getName().equals("print")) {
+        return new SIRPrintStatement(null, args[0], false, null);
+    }
+    if (exp.getName().equals("println")) {
+        return new SIRPrintStatement(null, args[0], true, null);
     }
     return new JMethodCallExpression(null, exp.getName(), args);
   }

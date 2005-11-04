@@ -21,6 +21,7 @@ import java.util.*;
 
 import at.dms.kjc.raw.*;
 
+
 /**
  * This class dumps the tile code for each filter into a file based 
  * on the tile number assigned 
@@ -1224,6 +1225,23 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	
 	method = self;
 
+	//for testing: print out comments.
+	{
+	    print("/* Method declaration comments:\n");
+	    JavaStyleComment[]comments;
+	    comments=body.getComments();
+	    if(comments!=null){
+		for (int i = 0; i < comments.length; i++){
+		    JavaStyleComment c = comments[i];
+		    print(c.getText());
+		    if(c.isLineComment() || c.hadSpaceAfter()){
+			print("\n");
+		    }
+		}
+	    }
+	    print(" */\n");
+	}
+
 	//set is init for dynamically allocating arrays...
 	if (filter != null &&
 	    self.getName().startsWith("init"))
@@ -2026,12 +2044,23 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		if (params != null) {
 		    for (int t = 0; t < method_params.length; t++) {
 
-			if (method_params[t].toString().equals("int")) {
-			    print("__msg_sock_"+selfID+"_"+dst+"out->write_int(");
-			}
-			if (method_params[t].toString().equals("float")) {
-			    print("__msg_sock_"+selfID+"_"+dst+"out->write_float(");
-			}
+			String method_params_string=method_params[t]
+			    .toString();
+			print("__msg_sock_" + selfID + "_" + dst
+			      + "out->write_");
+			if(method_params_string == "int"
+			   || method_params_string == "float"){
+			    print (method_params_string + "(");
+			}else{
+			    print ("unsupported/* " + method_params_string
+				   + " */ (");
+}
+// 			if (method_params[t].toString().equals("int")) {
+// 			    print("__msg_sock_"+selfID+"_"+dst+"out->write_int(");
+// 			}
+// 			if (method_params[t].toString().equals("float")) {
+// 			    print("__msg_sock_"+selfID+"_"+dst+"out->write_float(");
+// 			}
 
 			// print out the parameter!
 			PRINT_MSG_PARAM = t;
@@ -2080,74 +2109,8 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	//Utils.fail("FlatIRToCluster should see no pop expressions");
     }
     
-    public void visitPrintStatement(SIRPrintStatement self,
-                                    JExpression exp)
-    {
-	CType type = null;
-	
-	try {
-	    type = exp.getType();
-	}
-	catch (Exception e) {
-	    System.err.println("Cannot get type for print statement");
-	    type = CStdType.Integer;
-	}
-	    
-	if (type.equals(CStdType.Boolean))
-	    {
-		Utils.fail("Cannot print a boolean");
-	    }
-	else if (type.equals(CStdType.Byte) ||
-		 type.equals(CStdType.Integer) ||
-		 type.equals(CStdType.Short))
-	    {
-
-		print("printf(\"%d\\n\", "); 
-		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
-		//print("gdn_send(");
-		exp.accept(this);
-		print(");");
-	    }
-	else if (type.equals(CStdType.Char))
-	    {
-		print("printf(\"%d\\n\", "); 
-		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
-		//print("gdn_send(");
-		exp.accept(this);
-		print(");");
-	    }
-	else if (type.equals(CStdType.Float))
-	    {
-		print("printf(\"%f\\n\", "); 
-		//print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
-		//print("gdn_send(");
-		exp.accept(this);
-		print(");");
-	    }
-    else if (type.equals(CStdType.Long))
-	    {
-		print("printf(\"%d\\n\", "); 
-		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
-		//print("gdn_send(");
-		exp.accept(this);
-		print(");");
-	    }
-    else if (type.equals(CStdType.String))
-        {
-    	print("printf(\"%s\\n\", ");
-    	exp.accept(this);
-    	print(")");
-        }
-	else
-	    {
-		System.err.println("Unprintatble type: " + type.toString());
-		print("print_int(");
-		exp.accept(this);
-		print(");");
-		//Utils.fail("Unprintable Type");
-	    }
-    }
-    
+//    public void visitPrintStatement: in superclass ToCCommon
+   
     private void pushScalar(SIRPushExpression self,
 			    CType tapeType,
 			    JExpression val) 
@@ -2305,7 +2268,12 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
     protected void printLocalType(CType s) 
     {
 	if (s instanceof CArrayType){
-	    print(((CArrayType)s).getElementType()+"*");
+	    //	    print(((CArrayType)s).getElementType()+"*");
+	    print(((CArrayType)s).getElementType());
+	    for(int i = 0, b = ((CArrayType)s).getArrayBound();
+		i < b; i++){
+		print("*");
+	    }
 	}
         else if (s.getTypeID() == TID_BOOLEAN)
             print("int");

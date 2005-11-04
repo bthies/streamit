@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: SIRPrintStatement.java,v 1.10 2003-11-13 10:46:15 thies Exp $
+ * $Id: SIRPrintStatement.java,v 1.11 2005-11-04 00:25:22 dimock Exp $
  */
 
 package at.dms.kjc.sir;
@@ -34,9 +34,14 @@ import at.dms.util.InconsistencyException;
 public class SIRPrintStatement extends JStatement {
 
     /**
-     * The argument to the print statement.
+     * The argument to the print statement: expression to be printed.
      */
     protected JExpression arg;
+
+    /**
+     * Whether the print ends with a newline. (print vs println)
+     */
+    protected boolean newline = true;
 
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
@@ -46,14 +51,21 @@ public class SIRPrintStatement extends JStatement {
      * Construct a node in the parsing tree
      * @param where the line of this node in the source code
      */
-    public SIRPrintStatement(TokenReference where, JExpression arg, JavaStyleComment[] comments) {
-	super(where, comments);
-	this.arg = arg;
+    public SIRPrintStatement(TokenReference where, JExpression arg,
+			     boolean newline, JavaStyleComment[] comments) {
+    	super(where, comments);
+    	this.arg = arg;
+		this.newline = newline;
+    }
+	
+
+    public SIRPrintStatement(TokenReference where, JExpression arg, 
+			     JavaStyleComment[] comments) {
+	this(where,arg,true,comments);
     }
 
     public SIRPrintStatement() {
-	super(null, null);
-	this.arg =null;
+	this(null,null,true,null);
     }
 
 
@@ -63,6 +75,14 @@ public class SIRPrintStatement extends JStatement {
 
     public void setArg(JExpression a) {
 	this.arg = a;
+    }
+
+    public boolean getNewline() {
+	return newline;
+    }
+
+    public void setNewline(boolean val) {
+	newline = val;
     }
 
     // ----------------------------------------------------------------------

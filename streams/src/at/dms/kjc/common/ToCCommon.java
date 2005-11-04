@@ -3,6 +3,10 @@ package at.dms.kjc.common;
 import java.io.StringWriter;
 import java.util.Vector;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.LoweringConstants;
@@ -18,7 +22,37 @@ import at.dms.compiler.JavaStyleComment;
  */
 
 public abstract class ToCCommon extends SLIREmptyVisitor {
+	
+	/**
+	 *  Controls visitPrintStatement. Can override for a backend by writing to this variable. 
+	 *  initialized by a static block.  Can be overridden in a static block in a subclass by
+	 *  printPrefixMap.clear();
+	 *  printPrefixMap.put...
+	 *  
+	 *  If there is more than one printer inheriting from ToCCommon and your inheritance
+	 *  structure is not linear then you may have to override printPrefixMap in a constructor 
+	 *  rather than in a static block.
+	 */
 
+	static protected Map/*<String><String>*/ printPrefixMap;
+
+    static {
+    	printPrefixMap = new java.util.HashMap();
+    	// Set up standard prefixes for visitPrintStatement.
+		// a subclass may override by printPrefixMap.clear(); printPrefixMap.put...
+		printPrefixMap.put("byte", "printf( \"%d\", ");
+    	printPrefixMap.put("char", "printf( \"%d\", ");
+    	printPrefixMap.put("double", "printf( \"%d\", ");
+    	printPrefixMap.put("float", "printf( \"%d\", ");
+    	printPrefixMap.put("int", "printf( \"%d\", ");
+    	printPrefixMap.put("long", "printf( \"%d\", ");
+    	printPrefixMap.put("short", "printf( \"%d\", ");
+    	printPrefixMap.put("java.lang.String", "printf( \"%s\", ");
+    	// we don't currently print: boolean, bit, or any CCLassType 
+    	//except String	
+
+    }
+    
     /** Needed to pass info from assignment to visitNewArray **/
     protected JExpression lastLeft;  // LITtoC gave package visibility
     /** tabbing / spacing variables **/
@@ -688,5 +722,95 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
         printRParen();
     }
 
+    /**
+     * Split expression into list of expressions for print.
+     * 
+     * The C backends are not set up to perform Java-like string 
+     * concatenation, and the C++ backends often can not perform
+     * string concatenation because of semantic diffrences between
+     * the C++ + operator and the Java + operator.
+     * 
+     * We solve this by looking for all string contatenations reachable 
+     * from the root of the expression without going through any operator
+     * other than string concatenation and return a List of expressions
+     * -- in left-to-right order -- that were connected by string 
+     * concatenation in the original expression.
+     * 
+     * I am following the belief that there are some expressions for which
+     * no type can be found.  As per previous implementations, such expressions
+     * do not cause an uncaught exception, but they may generate bad code...
+     * 
+     * @param exp
+     * @return
+     */
+    protected List /*<JExpression>*/ splitForPrint(JExpression exp) {
+    	List exprs = new ArrayList(1);
+    	if (exp instanceof JAddExpression) {
+    		JExpression l, r;
+    		CType lt = null; 
+    		CType rt = null;
+    		
+    		l = ((JAddExpression)exp).getLeft();
+    		r = ((JAddExpression)exp).getRight();
+    		try {
+    			lt = l.getType();
+    		} catch (Exception e) { /* leave Null if type not recorded */ }
+    		try {
+    			rt = r.getType();
+    		} catch (Exception e) { /* leave Null if type not recorded */ }
 
+    		if ((lt != null && lt.equals(CStdType.String))
+    			 || (rt != null && rt.equals(CStdType.String) )) {
+    			exprs.addAll(splitForPrint(l));
+    			exprs.addAll(splitForPrint(r));
+    		} else {
+    			exprs.add(exp);
+    		}
+    	} else {
+    		exprs.add(exp);
+    	}
+    	return exprs;
+    }
+
+    protected boolean printExp(JExpression expr) {
+    	List exps = splitForPrint(expr);
+    	boolean printedOK = true;
+    	for (Iterator i = exps.iterator(); i.hasNext();) {
+    		JExpression exp = ((JExpression)i.next());
+    		CType t = null;
+    		try {
+    			t = exp.getType();
+    		} catch (Exception e) {
+    			System.err.println("Cannot get type for print statement");
+    			printedOK = false;
+    		}
+    		String typeString = t.toString();
+    		String printPrefix = (String)(printPrefixMap.get(typeString));
+    		if (printPrefix == null) {
+    			System.err.println("Print statement does not support type "
+    					+ t);
+    			printedOK = false;
+    		} else {
+    			print(printPrefix);
+    			exp.accept(this);
+    			print(");");
+    		}
+    	}
+		return printedOK;
+    }
+    
+    /**
+     * Process a Print statment, table driven to allow several backends
+     * Deals with the problem of string concatenation in Java not translating
+     * to our output languages C or C++
+     */
+    
+   public void visitPrintStatement(SIRPrintStatement self,
+            JExpression exp) {
+    	printExp(exp);
+    	if (self.getNewline()) {
+    		print("printf(\"\\n\");\n");
+    	}
+    }
+    
 }

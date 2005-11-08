@@ -22,7 +22,7 @@ public class SIRUtils {
 	 *
 	 */
 	
-	static boolean isSpecialFilter (SIRFilter f) {
+	static public boolean isSpecialFilter (SIRFilter f) {
 		return (f instanceof SIRFileReader
 				|| f instanceof SIRFileReader
 				|| f instanceof SIRIdentity);

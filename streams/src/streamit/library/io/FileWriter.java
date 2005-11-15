@@ -27,7 +27,6 @@ public class FileWriter extends Filter
     File outputFile;
     java.io.FileOutputStream fileOutputStream;
     DataOutputStream outputStream;
-    boolean closed = true;
 
     public FileWriter (String fileName, Class type, boolean TREAT_AS_BITS)
     {
@@ -42,7 +41,6 @@ public class FileWriter extends Filter
             outputFile = new File(fileName);
             fileOutputStream = new java.io.FileOutputStream (outputFile);
             outputStream = new DataOutputStream (fileOutputStream);
-	    closed = false;
         }
         catch(Throwable e)
         {
@@ -58,13 +56,11 @@ public class FileWriter extends Filter
     public void init ()
     {
         // This is part of the hack to make FileReader/Writer<bit> work
-        if (fileType == null) {
+        if (fileType == null)
             input = new Channel (Integer.TYPE, 1);
-	    bits_to_go = 8;
-	    the_bits = 0;
-	} else {
+        else
             input = new Channel (fileType, 1);
-        }
+        
     }
 
     int endianFlip (int x)
@@ -87,81 +83,57 @@ public class FileWriter extends Filter
         return (short)(x0 | (x1 << 8));
     }
 
-
-    // for writing bits one at a time.
-    private int bits_to_go = 8;
-    private byte the_bits = 0;
-
     public void work ()
     {
-		try {
-			// This is part of the hack to make FileReader/Writer<bit> work
-			if (fileType == null) {
-				the_bits = (byte) ((the_bits << 1) | (input.popInt() & 1));
-				bits_to_go--;
-				if (bits_to_go == 0) {
-					outputStream.writeByte(the_bits);
-					the_bits = 0;
-					bits_to_go = 8;
-				}
-			} else if (fileType == Integer.TYPE) {
-				outputStream.writeInt(endianFlip(input.popInt()));
-			} else if (fileType == Short.TYPE) {
-				outputStream.writeShort(endianFlip(input.popShort()));
-			} else if (fileType == Character.TYPE) {
-				outputStream.writeChar(input.popChar());
-			} else if (fileType == Float.TYPE) {
-				outputStream.writeInt(endianFlip(Float.floatToIntBits(input
-						.popFloat())));
-			} else {
-				ERROR("You must define a writer for your type here.\n" +
-						"Object writing isn't supported right now " +
-						"(for compatibility with the\n" +
-						"C library).");
-			}
-		} catch (Throwable e) {
-			ERROR(e);
-		}
-	}
+        try
+        {
+            // This is part of the hack to make FileReader/Writer<bit> work
+            if (fileType == null) {
+                int temp = 0;
+                for (int i = 0; i < 8; i++) {
+                    temp = (temp << 1) | input.popInt();
+                }
+                outputStream.writeByte(temp);
+                
+            } else
+            if (fileType == Integer.TYPE)
+            {
+                outputStream.writeInt (endianFlip (input.popInt ()));
+            } else
+            if (fileType == Short.TYPE)
+            {
+                outputStream.writeShort (endianFlip (input.popShort ()));
+            } else
+            if (fileType == Character.TYPE)
+            {
+                outputStream.writeChar (input.popChar ());
+            } else
+            if (fileType == Float.TYPE)
+            {
+                outputStream.writeInt (endianFlip (Float.floatToIntBits (input.popFloat ())));
+            } else
+            {
+                ERROR ("You must define a writer for your type here.\nObject writing isn't supported right now (for compatibility with the\nC library).");
+            }
+        }
+        catch (Throwable e)
+        {
+            ERROR (e);
+        }
+    }
 
     /**
-	 * Closing is necessary to get last bits out for <bit>
-	 */
-    public void close() 
+     * Destructor closes the file written.
+     */
+    public void DELETE ()
     {
-		if (!closed) {
-			closed = true;
-			try {
-				if (fileType == null && bits_to_go != 8) {
-					the_bits = (byte) (the_bits << bits_to_go);
-					outputStream.writeByte(the_bits);
-					bits_to_go = 8;
-				}
-				outputStream.close();
-			} catch (Throwable e) {
-				ERROR(e);
-			}
-		}
-	}
-
-    /**
-	 * Destructor should write anything left and close the file.
-	 * 
-	 * Should happen on finalize: inherits from DestroyedClass which calls
-	 * DELETE on finalization. But doesn't work. Presumably
-	 * DestroyedClass.finalize() is called too early while there are still
-	 * references to the FileWriter.
-	 * 
-	 * Using System.runFinalization(); System.gc(); as last thing in main will
-	 * work sometimes, but is not consistent. Using
-	 * System.runFinalizersOnExit(true); will run a finalizer but will close the
-	 * file first, causing an exception when close is called!
-	 * 
-	 */
-
-    public void DELETE() // on finalize: inherits from DestroyedClass
-	{
-		close();
-	}
+        try
+        {
+            outputStream.close ();
+        }
+        catch (Throwable e)
+        {
+            ERROR (e);
+        }
+    }
 }
- 

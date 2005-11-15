@@ -19,6 +19,8 @@ package streamit.frontend.tojava;
 import streamit.frontend.nodes.*;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Traverse a front-end tree and produce Java code.  This uses {@link
@@ -27,7 +29,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.106 2005-08-09 01:41:36 madrake Exp $
+ * @version $Id: NodesToJava.java,v 1.107 2005-11-15 01:19:08 dimock Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -37,6 +39,7 @@ public class NodesToJava implements FEVisitor
     private boolean libraryFormat;
     private TempVarGen varGen;
     private boolean global;
+    private Map/*<String,String>*/ fileWriterNames = new HashMap();
     
     public NodesToJava(boolean libraryFormat, TempVarGen varGen)
     {
@@ -44,7 +47,7 @@ public class NodesToJava implements FEVisitor
         this.indent = "";
         this.libraryFormat = libraryFormat;
         this.varGen = varGen;
-	this.global = false;
+	    this.global = false;
     }
 
     // Add two spaces to the indent.
@@ -841,6 +844,7 @@ public class NodesToJava implements FEVisitor
                 creator.getName().equals("FileWriter") ||
                 creator.getName().equals("ImageDisplay")) {
                 result = "new " + creator.getName() + "(";
+                
             }
             else
                 result = creator.getName() + ".__construct(";
@@ -903,8 +907,26 @@ public class NodesToJava implements FEVisitor
         // If the stream creator involves registering with a portal,
         // we need a temporary variable.
         List portals = sc.getPortals();
-        if (portals.isEmpty())
-            return how + "(" + (String)sc.accept(this) + ")";
+        if (portals.isEmpty()) {
+        	if (! (sc instanceof SCSimple && 
+        		  ((SCSimple)sc).getName().equals("FileWriter") &&
+        		  libraryFormat)) {
+        		// basic behavior: put expression in-line.
+        		//System.err.println("basic \"" + ((SCSimple)sc).getName() + "\"");
+        		return how + "(" + (String)sc.accept(this) + ")";
+        	} else {
+        		// FileWriter:
+        		// create variable, remember variable so that main can be
+        		// made to close the file.
+        		String varName = ((SCSimple)sc).getName() + varGen.nextVar();
+        		fileWriterNames.put(varName,
+        				"static FileWriter " + varName + " = " + (String)sc.accept(this) + ";\n"
+        					);
+//        		System.err.println("FileWriter " + varName + " " + fileWriterNames.size());
+        		return (how + "(this." + varName + ")");
+        	}
+        }
+        // has portals:
         String tempVar = varGen.nextVar();
         // Need run-time type of the creator.  Assert that only
         // named streams can be added to portals.
@@ -1372,7 +1394,7 @@ public class NodesToJava implements FEVisitor
             // meaning it has type void->void.
             StreamType st = spec.getStreamType();
             if (spec.getType() != StreamSpec.STREAM_GLOBAL &&
-		st != null &&
+   		        st != null &&
                 st.getIn() instanceof TypePrimitive &&
                 ((TypePrimitive)st.getIn()).getType() ==
                 TypePrimitive.TYPE_VOID &&
@@ -1385,13 +1407,6 @@ public class NodesToJava implements FEVisitor
                     " // " + spec.getContext() + "\n";
                 result += indent + "{\n";
                 addIndent();
-                result += indent + "public static void main(String[] args) {\n";
-                addIndent();
-                result += indent + spec.getName() + " program = new " +
-                    spec.getName() + "();\n";
-                result += indent + "program.run(args);\n";
-                unIndent();
-                result += indent + "}\n";
             }
             else
             {
@@ -1464,6 +1479,52 @@ public class NodesToJava implements FEVisitor
             result += (String)(((Function)iter.next()).accept(this));
 
         ss = oldSS;
+
+	// Top-level stream: do any post-processing and emit "main"
+            // This is only public if it's the top-level stream,
+            // meaning it has type void->void.
+            StreamType st = spec.getStreamType();
+            if (spec.getType() != StreamSpec.STREAM_GLOBAL &&
+   		        st != null &&
+                st.getIn() instanceof TypePrimitive &&
+                ((TypePrimitive)st.getIn()).getType() ==
+                TypePrimitive.TYPE_VOID &&
+                st.getOut() instanceof TypePrimitive &&
+                ((TypePrimitive)st.getOut()).getType() ==
+                TypePrimitive.TYPE_VOID)
+            {
+                if (libraryFormat) {
+                	
+                	Iterator i = fileWriterNames.values().iterator();
+//                	System.err.println("File writer initialization "
+//                				+ fileWriterNames.size());
+                	while (i.hasNext()) {
+                		String fwDefn = (String)(i.next());
+                		System.err.println(fwDefn);
+                		result += indent + fwDefn;
+                	}
+                }
+
+
+
+                result += indent + "public static void main(String[] args) {\n";
+                addIndent();
+                result += indent + spec.getName() + " program = new " +
+                    spec.getName() + "();\n";
+                result += indent + "program.run(args);\n";
+                if (libraryFormat) {
+                	Iterator i = fileWriterNames.keySet().iterator();
+//                	System.err.println("File writer closing "
+//            				+ fileWriterNames.size());
+                	while (i.hasNext()) {
+                		String fwName = (String)(i.next());
+                		result += indent + fwName + ".close();\n";
+                	}
+                }
+                unIndent();
+                result += indent + "}\n";
+            }
+
         unIndent();
         result += "}\n";
 	global = false; // unset global bit

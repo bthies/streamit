@@ -18,6 +18,15 @@
  * DestroyedClass.java
  *
  * Created on May 31, 2001, 4:50 PM
+ * Classes that inherit from this class are supposed to have finalizers
+ * called on their instances (in reverse order of descent).
+ * 
+ * Unfortunately: (1) finalization is not reliable.
+ * (2) The only time to finalize to close FileWriters (which is one of the
+ * few real uses of this class) is at the end of the program, but
+ * System.runFinalizersAtExit(true) will cause the finalizes to be run
+ * after some JVMs have already closed the files -- causing FileWriters to
+ * throw exceptions.  Any other time is likely not to close a FileWriter.
  */
 
 package streamit.misc;

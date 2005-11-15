@@ -11,14 +11,17 @@ src/streamit/library/io: DataPrinter, ImageDisplay.
     <impl lang="StreamIt" id="fileintcopy">
       <desc>Copy int.in to int.out</desc>
       <file class="source">FileIntcopy.str</file>
+      <file class="data">int.in</file>
     </impl>
     <impl lang="StreamIt" id="filefloatcopy">
       <desc>Copy float.in to float.out</desc>
       <file class="source">FileFloatcopy.str</file>
+      <file class="data">float.in</file>
     </impl>
     <impl lang="StreamIt" id="filebitcopy">
       <desc>Copy bit.in to bit.out</desc>
       <file class="source">FileBitcopy.str</file>
+      <file class="data">bit.in</file>
     </impl>
   </implementations>
 </benchmark>

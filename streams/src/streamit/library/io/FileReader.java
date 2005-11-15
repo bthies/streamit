@@ -69,10 +69,12 @@ public class FileReader extends Filter
     public void init ()
     {
         // Hacked to make FileReader/Writer<bit> work
-        if (fileType == null)
+        if (fileType == null) {
             output = new Channel (Integer.TYPE, 1);
-        else 
+	    bits_to_go = 0;
+	} else {
             output = new Channel (fileType, 1);
+	}
     }
 
     int endianFlip (int x)
@@ -95,6 +97,10 @@ public class FileReader extends Filter
         return (short)(x0 | (x1 << 8));
     }
 
+    // for reading bits one at a time.
+    private int bits_to_go = 0;
+    private byte the_bits = 0;
+
     public void work ()
     {
         boolean done = false;
@@ -102,12 +108,14 @@ public class FileReader extends Filter
             try {
                 // Hacked to make FileReader/Writer<bit> work
                 if (fileType == null) { // fileType is a bit
-                    int temp = inputStream.readUnsignedByte();
-                    for (int i = 0; i < 8; i++) {
-                        output.pushInt((temp >> 7) & 1);
-                        temp <<= 1;
-                    }
-                } else if (fileType == Integer.TYPE) {
+		    if (bits_to_go == 0) {
+			the_bits = (byte)(inputStream.readUnsignedByte());
+			bits_to_go = 8;
+		    }
+		    output.pushInt((the_bits >> 7) & 1);
+		    the_bits <<= 1;
+		    bits_to_go--;
+		} else if (fileType == Integer.TYPE) {
                     output.pushInt (endianFlip (inputStream.readInt ()));
                 } else if (fileType == Short.TYPE) {
                     output.pushShort (endianFlip (inputStream.readShort ()));

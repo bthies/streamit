@@ -19,6 +19,11 @@ package streamit.frontend.tojava;
 import streamit.frontend.nodes.*;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Traverse a front-end tree and produce Java code.  This uses {@link
@@ -27,17 +32,39 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.108 2005-11-15 16:01:25 dimock Exp $
+ * @version $Id: NodesToJava.java,v 1.109 2005-11-15 22:39:15 dimock Exp $
  */
 public class NodesToJava implements FEVisitor
 {
+    // Set inside visitStreamSpec
     private StreamSpec ss;
+
     // A string consisting of an even number of spaces.
     private String indent;
+
+    // Allow tweaks when compiling for --library (from constructor)
     private boolean libraryFormat;
+
+    // a generator for unique strings (from constructor)
     private TempVarGen varGen;
+
+    // set inside visitStreamSpec if this class generated using static 
+    //(a.k.a. global) keyword.
     private boolean global;
-    
+
+    // fileWriterNames collects file writer names and code strings to close
+    // the file writers.  Created once per class.  A class that creates a file
+    // writer will be given a __close method:  This is done only for library
+    // since the compilers each have their own handling of file writers already
+    // built in.  This map is reinitialized once per class.
+
+    private Map/*<String,String>*/ fileWriterNames = null;
+    // classesToClose collects names of classes for which close methods
+    // have been creted.  For library, these classes will have their close
+    // methods called before exit.
+    private Set/*String*/ classesToClose = new HashSet();
+
+
     public NodesToJava(boolean libraryFormat, TempVarGen varGen)
     {
         this.ss = null;
@@ -57,6 +84,21 @@ public class NodesToJava implements FEVisitor
     private void unIndent()
     {
         indent = indent.substring(2);
+    }
+
+    // Determine if this is that top level of th program
+    // There is no built-in marker for the top-level stream, but
+    // we can recognize it as the only void -> void stream spec other than
+    // a static (global).
+    private boolean isTopLevelSpec(StreamSpec spec) {
+	StreamType st = spec.getStreamType();
+        return
+	    spec.getType() != StreamSpec.STREAM_GLOBAL &&
+	    st != null &&
+	    st.getIn() instanceof TypePrimitive &&
+	    ((TypePrimitive)st.getIn()).getType() == TypePrimitive.TYPE_VOID &&
+	    st.getOut() instanceof TypePrimitive &&
+	    ((TypePrimitive)st.getOut()).getType() == TypePrimitive.TYPE_VOID;
     }
 
     // Convert a Type to a String.  If visitors weren't so generally
@@ -459,7 +501,7 @@ public class NodesToJava implements FEVisitor
 	// look for print and println statements; assume everything
 	// else is a math function
         else if (name.equals("print")) {
-            result = "System.out.println(";
+            result = "System.out.print(";
         } else if (name.equals("println")) {
             result = "System.out.println(";
         } else if (name.equals("super")) {
@@ -713,118 +755,129 @@ public class NodesToJava implements FEVisitor
         return visitFunction(func);
     }
 
-    public Object visitProgram(Program prog)
-    {
-        // Nothing special here either.  Just accumulate all of the
-        // structures and streams.
-        String result = "";
+    public Object visitProgram(Program prog) {
+		// Nothing special here either. Just accumulate all of the
+		// structures and streams.
+		String result = "";
 
-        for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
-	    {
-		TypeStruct struct = (TypeStruct)iter.next();
+		for (Iterator iter = prog.getStructs().iterator(); iter.hasNext();) {
+			TypeStruct struct = (TypeStruct) iter.next();
 
-		if (struct.getName().equals("String")) continue;
-		if (libraryFormat && struct.getName().equals("float2")) continue;
-		if (libraryFormat && struct.getName().equals("float3")) continue;
-		if (libraryFormat && struct.getName().equals("float4")) continue;
+			if (struct.getName().equals("String"))
+				continue;
+			if (libraryFormat && struct.getName().equals("float2"))
+				continue;
+			if (libraryFormat && struct.getName().equals("float3"))
+				continue;
+			if (libraryFormat && struct.getName().equals("float4"))
+				continue;
 
-		result += indent + "class " + struct.getName() +
-		    " extends Structure implements Serializable {\n";
-		addIndent();
-		for (int i = 0; i < struct.getNumFields(); i++)
-		    {
-			String name = struct.getField(i);
-			Type type = struct.getType(name);
-			result += indent + convertType(type) + " " + name + ";\n";
-		    }
-		unIndent();
-		result += indent + "}\n";
-	    }
+			result += indent + "class " + struct.getName()
+					+ " extends Structure implements Serializable {\n";
+			addIndent();
+			for (int i = 0; i < struct.getNumFields(); i++) {
+				String name = struct.getField(i);
+				Type type = struct.getType(name);
+				result += indent + convertType(type) + " " + name + ";\n";
+			}
+			unIndent();
+			result += indent + "}\n";
+		}
 
-        for (Iterator iter = prog.getHelpers().iterator(); iter.hasNext(); )
-	    {
-		TypeHelper th = (TypeHelper)iter.next();
-		result += visitTypeHelper(th);
-	    }
+		for (Iterator iter = prog.getHelpers().iterator(); iter.hasNext();) {
+			TypeHelper th = (TypeHelper) iter.next();
+			result += visitTypeHelper(th);
+		}
 
-	if (!libraryFormat) {
+		if (!libraryFormat) {
+			result += indent + "class StreamItVectorLib {\n";
+			addIndent();
+			result += indent + "public static native float2 add2(float2 a, float2 b);\n";
+			result += indent + "public static native float3 add3(float3 a, float3 b);\n";
+			result += indent + "public static native float4 add4(float4 a, float4 b);\n";
 
-	    result += indent + "class StreamItVectorLib {\n";
-	    addIndent();
-	    result += indent+"public static native float2 add2(float2 a, float2 b);\n";
-	    result += indent+"public static native float3 add3(float3 a, float3 b);\n";
-	    result += indent+"public static native float4 add4(float4 a, float4 b);\n";
-	    
-	    result += indent+"public static native float2 sub2(float2 a, float2 b);\n";
-	    result += indent+"public static native float3 sub3(float3 a, float3 b);\n";
-	    result += indent+"public static native float4 sub4(float4 a, float4 b);\n";
-	    
-	    result += indent+"public static native float2 mul2(float2 a, float2 b);\n";
-	    result += indent+"public static native float3 mul3(float3 a, float3 b);\n";
-	    result += indent+"public static native float4 mul4(float4 a, float4 b);\n";
-	    
-	    result += indent+"public static native float2 div2(float2 a, float2 b);\n";
-	    result += indent+"public static native float3 div3(float3 a, float3 b);\n";
-	    result += indent+"public static native float4 div4(float4 a, float4 b);\n";
-	    
-	    result += indent+"public static native float2 addScalar2(float2 a, float b);\n";
-	    result += indent+"public static native float3 addScalar3(float3 a, float b);\n";
-	    result += indent+"public static native float4 addScalar4(float4 a, float b);\n";
-	    
-	    result += indent+"public static native float2 subScalar2(float2 a, float b);\n";
-	    result += indent+"public static native float3 subScalar3(float3 a, float b);\n";
-	    result += indent+"public static native float4 subScalar4(float4 a, float b);\n";
-	    
-	    result += indent+"public static native float2 scale2(float2 a, float b);\n";
-	    result += indent+"public static native float3 scale3(float3 a, float b);\n";
-	    result += indent+"public static native float4 scale4(float4 a, float b);\n";
-	    
-	    result += indent+"public static native float2 scaleInv2(float2 a, float b);\n";
-	    result += indent+"public static native float3 scaleInv3(float3 a, float b);\n";
-	    result += indent+"public static native float4 scaleInv4(float4 a, float b);\n";
-	    
-	    result += indent+"public static native float sqrtDist2(float2 a, float2 b);\n";
-	    result += indent+"public static native float sqrtDist3(float3 a, float3 b);\n";
-	    result += indent+"public static native float sqrtDist4(float4 a, float4 b);\n";
-	    
-	    result += indent+"public static native float dot3(float3 a, float3 b);\n";
-	    result += indent+"public static native float3 cross3(float3 a, float3 b);\n";
-	    
-	    result += indent+"public static native float2 max2(float2 a, float2 b);\n";
-	    result += indent+"public static native float3 max3(float3 a, float3 b);\n";
-	    
-	    result += indent+"public static native float2 min2(float2 a, float2 b);\n";
-	    result += indent+"public static native float3 min3(float3 a, float3 b);\n";
-	    
-	    result += indent+"public static native float2 neg2(float2 a);\n";
-	    result += indent+"public static native float3 neg3(float3 a);\n";
-	    result += indent+"public static native float4 neg4(float4 a);\n";
-	    
-	    result += indent+"public static native float2 floor2(float2 a);\n";
-	    result += indent+"public static native float3 floor3(float3 a);\n";
-	    result += indent+"public static native float4 floor4(float4 a);\n";
-	    
-	    result += indent+"public static native float2 normalize2(float2 a);\n";
-	    result += indent+"public static native float3 normalize3(float3 a);\n";
-	    result += indent+"public static native float4 normalize4(float4 a);\n";
-	    
-	    result += indent+"public static native boolean greaterThan3(float3 a, float3 b);\n";
-	    result += indent+"public static native boolean lessThan3(float3 a, float3 b);\n";
-	    result += indent+"public static native boolean equals3(float3 a, float3 b);\n";
-	    
-	    unIndent();
-	    result += indent + "}\n";
+			result += indent + "public static native float2 sub2(float2 a, float2 b);\n";
+			result += indent + "public static native float3 sub3(float3 a, float3 b);\n";
+			result += indent + "public static native float4 sub4(float4 a, float4 b);\n";
+
+			result += indent + "public static native float2 mul2(float2 a, float2 b);\n";
+			result += indent + "public static native float3 mul3(float3 a, float3 b);\n";
+			result += indent + "public static native float4 mul4(float4 a, float4 b);\n";
+
+			result += indent + "public static native float2 div2(float2 a, float2 b);\n";
+			result += indent + "public static native float3 div3(float3 a, float3 b);\n";
+			result += indent + "public static native float4 div4(float4 a, float4 b);\n";
+
+			result += indent + "public static native float2 addScalar2(float2 a, float b);\n";
+			result += indent + "public static native float3 addScalar3(float3 a, float b);\n";
+			result += indent + "public static native float4 addScalar4(float4 a, float b);\n";
+
+			result += indent + "public static native float2 subScalar2(float2 a, float b);\n";
+			result += indent + "public static native float3 subScalar3(float3 a, float b);\n";
+			result += indent + "public static native float4 subScalar4(float4 a, float b);\n";
+
+			result += indent + "public static native float2 scale2(float2 a, float b);\n";
+			result += indent + "public static native float3 scale3(float3 a, float b);\n";
+			result += indent + "public static native float4 scale4(float4 a, float b);\n";
+
+			result += indent + "public static native float2 scaleInv2(float2 a, float b);\n";
+			result += indent + "public static native float3 scaleInv3(float3 a, float b);\n";
+			result += indent + "public static native float4 scaleInv4(float4 a, float b);\n";
+
+			result += indent + "public static native float sqrtDist2(float2 a, float2 b);\n";
+			result += indent + "public static native float sqrtDist3(float3 a, float3 b);\n";
+			result += indent + "public static native float sqrtDist4(float4 a, float4 b);\n";
+
+			result += indent + "public static native float dot3(float3 a, float3 b);\n";
+			result += indent + "public static native float3 cross3(float3 a, float3 b);\n";
+
+			result += indent + "public static native float2 max2(float2 a, float2 b);\n";
+			result += indent + "public static native float3 max3(float3 a, float3 b);\n";
+
+			result += indent + "public static native float2 min2(float2 a, float2 b);\n";
+			result += indent + "public static native float3 min3(float3 a, float3 b);\n";
+
+			result += indent + "public static native float2 neg2(float2 a);\n";
+			result += indent + "public static native float3 neg3(float3 a);\n";
+			result += indent + "public static native float4 neg4(float4 a);\n";
+
+			result += indent + "public static native float2 floor2(float2 a);\n";
+			result += indent + "public static native float3 floor3(float3 a);\n";
+			result += indent + "public static native float4 floor4(float4 a);\n";
+
+			result += indent + "public static native float2 normalize2(float2 a);\n";
+			result += indent + "public static native float3 normalize3(float3 a);\n";
+			result += indent + "public static native float4 normalize4(float4 a);\n";
+
+			result += indent + "public static native boolean greaterThan3(float3 a, float3 b);\n";
+			result += indent + "public static native boolean lessThan3(float3 a, float3 b);\n";
+			result += indent + "public static native boolean equals3(float3 a, float3 b);\n";
+
+			unIndent();
+			result += indent + "}\n";
+		}
+
+		StreamSpec main = null;
+		for (Iterator iter = prog.getStreams().iterator(); iter.hasNext();) {
+			StreamSpec spec = ((StreamSpec) iter.next());
+
+			if (isTopLevelSpec(spec)) {
+				assert main == null : "Found more than one top-level stream";
+				main = spec;
+				iter.remove();
+			} else {
+				result += spec.accept(this);
+			}
+		}
+		assert main != null : "Did not find any top-level stream";
+		result += main.accept(this);
+		return result;
 	}
 
-        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
-            result += (String)((StreamSpec)iter.next()).accept(this);
-        return result;
-    }
-
-    public Object visitSCAnon(SCAnon creator)
-    {
-        return creator.getSpec().accept(this);
-    }
+    public Object visitSCAnon(SCAnon creator) {
+		assert false : "NodesToJava run before NameAnonymousStreams";
+		return creator.getSpec().accept(this);
+	}
     
     public Object visitSCSimple(SCSimple creator)
     {
@@ -841,6 +894,7 @@ public class NodesToJava implements FEVisitor
                 creator.getName().equals("FileWriter") ||
                 creator.getName().equals("ImageDisplay")) {
                 result = "new " + creator.getName() + "(";
+                
             }
             else
                 result = creator.getName() + ".__construct(";
@@ -898,13 +952,31 @@ public class NodesToJava implements FEVisitor
         return result;
     }
 
-    public Object doStreamCreator(String how, StreamCreator sc)
+    private Object doStreamCreator(String how, StreamCreator sc)
     {
         // If the stream creator involves registering with a portal,
         // we need a temporary variable.
         List portals = sc.getPortals();
-        if (portals.isEmpty())
-            return how + "(" + (String)sc.accept(this) + ")";
+        if (portals.isEmpty()) {
+        	if (! (sc instanceof SCSimple && 
+        		  ((SCSimple)sc).getName().equals("FileWriter") &&
+        		  libraryFormat)) {
+        		// basic behavior: put expression in-line.
+        		//System.err.println("basic \"" + ((SCSimple)sc).getName() + "\"");
+        		return how + "(" + (String)sc.accept(this) + ")";
+        	} else {
+        		// FileWriter:
+        		// create variable, remember variable so that main can be
+        		// made to close the file.
+        		String varName = ((SCSimple)sc).getName() + varGen.nextVar();
+        		fileWriterNames.put(varName,
+        				"private static FileWriter " + varName + " = " + (String)sc.accept(this) + ";\n"
+        					);
+//        		System.err.println("FileWriter " + varName + " " + fileWriterNames.size());
+        		return (how + "(this." + varName + ")");
+        	}
+        }
+        // has portals:
         String tempVar = varGen.nextVar();
         // Need run-time type of the creator.  Assert that only
         // named streams can be added to portals.
@@ -1351,11 +1423,16 @@ public class NodesToJava implements FEVisitor
     public Object visitStreamSpec(StreamSpec spec)
     {
         String result = "";
-	if (spec.getType() == StreamSpec.STREAM_GLOBAL) global = true; // set global bit
+        fileWriterNames = new HashMap();
+        if (spec.getType() == StreamSpec.STREAM_GLOBAL) global = true; // set global bit
 
-	// Anonymous classes look different from non-anonymous ones.
+        // Anonymous classes look different from non-anonymous ones.
         // This appears in two places: (a) as a top-level (named)
         // stream; (b) in an anonymous stream creator (SCAnon).
+        //
+        // However... 
+        // Any code here for anonymous streams should be obsolete since 
+        // NameAnonymousStreams should have been run before NodesToJava.
         if (spec.getName() != null)
         {
             // Non-anonymous stream.  Maybe it has interfaces.
@@ -1370,83 +1447,58 @@ public class NodesToJava implements FEVisitor
             result += indent;
             // This is only public if it's the top-level stream,
             // meaning it has type void->void.
-            StreamType st = spec.getStreamType();
-            if (spec.getType() != StreamSpec.STREAM_GLOBAL &&
-		st != null &&
-                st.getIn() instanceof TypePrimitive &&
-                ((TypePrimitive)st.getIn()).getType() ==
-                TypePrimitive.TYPE_VOID &&
-                st.getOut() instanceof TypePrimitive &&
-                ((TypePrimitive)st.getOut()).getType() ==
-                TypePrimitive.TYPE_VOID)
-            {
-                result += "public class " + spec.getName() +
-                    " extends StreamIt" + spec.getTypeString() + ifaces +
-                    " // " + spec.getContext() + "\n";
-                result += indent + "{\n";
-                addIndent();
-                result += indent + "public static void main(String[] args) {\n";
-                addIndent();
-                result += indent + spec.getName() + " program = new " +
-                    spec.getName() + "();\n";
-                result += indent + "program.run(args);\n";
-                unIndent();
-                result += indent + "}\n";
-            }
-            else
-            {
-                result += "class " + spec.getName() + " extends ";
-                if (spec.getType() == StreamSpec.STREAM_FILTER)
-                {
-                    // Need to notice now if this is a phased filter.
-                    if (spec.getPhasedFuncs().size() > 0)
-                        result += "PhasedFilter";
-                    else
-                        result += "Filter";
-                }
-                else
-                    switch (spec.getType())
-                    {
-                    case StreamSpec.STREAM_PIPELINE:
-                        result += "Pipeline";
-                        break;
-                    case StreamSpec.STREAM_SPLITJOIN:
-                        result += "SplitJoin";
-                        break;
-                    case StreamSpec.STREAM_FEEDBACKLOOP:
-                        result += "FeedbackLoop";
-                        break;
-                    case StreamSpec.STREAM_GLOBAL:
-                        result += "Global";
-                        break;
-                    }
-                result += ifaces + " // " + spec.getContext() + "\n" +
-                    indent + "{\n";
-                addIndent();
-                // If we're in the library backend, we need a construct()
-                // method too; in the compiler backend, a constructor.
-                result += maybeGenerateConstruct(spec);
-            }
-        }
-        else
-        {
-            // Anonymous stream:
-            result += "new ";
-            switch (spec.getType())
-            {
-            case StreamSpec.STREAM_FILTER: result += "Filter";
-                break;
-            case StreamSpec.STREAM_PIPELINE: result += "Pipeline";
-                break;
-            case StreamSpec.STREAM_SPLITJOIN: result += "SplitJoin";
-                break;
-            case StreamSpec.STREAM_FEEDBACKLOOP: result += "FeedbackLoop";
-                break;
-            }
-            result += "() {\n" + indent;
-            addIndent();
-        }
-        
+            if (isTopLevelSpec(spec)) {
+				result += "public class " + spec.getName()
+						+ " extends StreamIt" + spec.getTypeString() + ifaces
+						+ " // " + spec.getContext() + "\n";
+				result += indent + "{\n";
+				addIndent();
+			} else {
+				result += "class " + spec.getName() + " extends ";
+				if (spec.getType() == StreamSpec.STREAM_FILTER) {
+					// Need to notice now if this is a phased filter.
+					if (spec.getPhasedFuncs().size() > 0)
+						result += "PhasedFilter";
+					else
+						result += "Filter";
+				} else
+					switch (spec.getType()) {
+					case StreamSpec.STREAM_PIPELINE:
+						result += "Pipeline";
+						break;
+					case StreamSpec.STREAM_SPLITJOIN:
+						result += "SplitJoin";
+						break;
+					case StreamSpec.STREAM_FEEDBACKLOOP:
+						result += "FeedbackLoop";
+						break;
+					case StreamSpec.STREAM_GLOBAL:
+						result += "Global";
+						break;
+					}
+				result += ifaces + " // " + spec.getContext() + "\n" + indent
+						+ "{\n";
+				addIndent();
+				// If we're in the library backend, we need a construct()
+				// method too; in the compiler backend, a constructor.
+				result += maybeGenerateConstruct(spec);
+			}
+		} else {
+			assert false : "NodesToJava run before NameAnonymousStreams";
+/*
+ 			// Anonymous stream: 
+ 			result += "new "; 
+ 			switch (spec.getType()) { 
+ 			case StreamSpec.STREAM_FILTER: result += "Filter"; break; 
+ 			case StreamSpec.STREAM_PIPELINE: result += "Pipeline"; break; 
+ 			case StreamSpec.STREAM_SPLITJOIN: result += "SplitJoin"; break; 
+ 			case StreamSpec.STREAM_FEEDBACKLOOP: result += "FeedbackLoop"; 
+ 				 break;
+		    }
+		    result += "() {\n" + indent;
+		    addIndent();
+   */
+		}
         // At this point we get to ignore wholesale the stream type, except
         // that we want to save it.
         StreamSpec oldSS = ss;
@@ -1464,10 +1516,55 @@ public class NodesToJava implements FEVisitor
             result += (String)(((Function)iter.next()).accept(this));
 
         ss = oldSS;
-        unIndent();
-        result += "}\n";
-	global = false; // unset global bit
-        return result;
+
+		if (fileWriterNames.size() != 0) {
+			classesToClose.add(spec.getName());
+			if (libraryFormat) {
+				// now that we have walked all methods create fields
+				// for file writers.
+				Iterator i = fileWriterNames.values().iterator();
+				while (i.hasNext()) {
+					String fwDefn = (String) (i.next());
+					result += indent + fwDefn;
+				}
+				// create a method to close all file writers
+				result += "\n";
+				result += indent + "public static void __close() {\n";
+				addIndent();
+				Iterator j = fileWriterNames.keySet().iterator();
+				while (j.hasNext()) {
+					String fwName = (String) (j.next());
+					result += indent + fwName + ".close();\n";
+				}
+				unIndent();
+				result += indent + "}\n";
+				result += indent + "\n";
+			}
+		}
+
+		// Top-level stream: do any post-processing and emit "main"
+		// This is only public if it's the top-level stream,
+		// meaning it has type void->void.
+		if (isTopLevelSpec(spec)) {
+			result += indent + "public static void main(String[] args) {\n";
+			addIndent();
+			result += indent + spec.getName() + " program = new "
+					+ spec.getName() + "();\n";
+			result += indent + "program.run(args);\n";
+			if (libraryFormat) {
+				Iterator i = classesToClose.iterator();
+				while (i.hasNext()) {
+					result += indent + ((String)(i.next())) + ".__close();\n";
+				}
+			}
+			unIndent();
+			result += indent + "}\n";
+		}
+
+		unIndent();
+		result += "}\n";
+		global = false; // unset global bit
+		return result;
     }
 
     public Object visitTypeHelper(TypeHelper th) {

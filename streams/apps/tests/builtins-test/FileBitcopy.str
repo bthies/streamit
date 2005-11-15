@@ -1,0 +1,19 @@
+//===========================================================================
+//
+//   FILE: FileBitcopyTest.str:
+//   
+//   Author: Allyn Dimock
+//
+//   Function:  Simple i/o test
+//
+//===========================================================================
+
+void->void pipeline FileBitcopy {
+    add FileReader<bit>("bit.in");
+    add bit->bit filter {
+	work pop 1 push 1 {
+	    push(pop());
+	}
+    }	
+    add FileWriter<bit>("bit.out");
+}

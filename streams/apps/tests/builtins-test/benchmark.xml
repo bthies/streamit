@@ -1,0 +1,24 @@
+<benchmark>
+  <name>builtinstest</name>
+  <desc>Tests of built-in filters</desc>
+  <description>
+This set of tests exercises the built-in filters: FileReader, FileWriter so far
+Remaining to test are subclasses of src/at/dms/kjc/sir/SIRPredefinedFilter: 
+DummySource, DummySink, and Identity.  The library also implements in
+src/streamit/library/io: DataPrinter, ImageDisplay.
+  </description>
+  <implementations>
+    <impl lang="StreamIt" id="fileintcopy">
+      <desc>Copy int.in to int.out</desc>
+      <file class="source">FileIntcopy.str</file>
+    </impl>
+    <impl lang="StreamIt" id="filefloatcopy">
+      <desc>Copy float.in to float.out</desc>
+      <file class="source">FileFloatcopy.str</file>
+    </impl>
+    <impl lang="StreamIt" id="filebitcopy">
+      <desc>Copy bit.in to bit.out</desc>
+      <file class="source">FileBitcopy.str</file>
+    </impl>
+  </implementations>
+</benchmark>

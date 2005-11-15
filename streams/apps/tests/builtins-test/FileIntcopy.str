@@ -1,0 +1,14 @@
+//===========================================================================
+//
+//   FILE: FileIntcopyTest.str:
+//   
+//   Author: Allyn Dimock
+//
+//   Function:  Simple i/o test
+//
+//===========================================================================
+
+void->void pipeline FileIntcopy {
+    add FileReader<int>("int.in");
+    add FileWriter<int>("int.out");
+}

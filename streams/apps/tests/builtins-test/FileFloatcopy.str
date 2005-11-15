@@ -1,0 +1,14 @@
+//===========================================================================
+//
+//   FILE: FileFloatcopyTest.str:
+//   
+//   Author: Allyn Dimock
+//
+//   Function:  Simple i/o test
+//
+//===========================================================================
+
+void->void pipeline FileFloatcopy {
+    add FileReader<float>("float.in");
+    add FileWriter<float>("float.out");
+}

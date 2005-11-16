@@ -149,15 +149,17 @@ public class DirectCommunication extends at.dms.util.Utils
 	}
 	
 
-
-	//add call to raw_init2
-	statements.addStatement(new JExpressionStatement(null,
-							 new JMethodCallExpression
-							 (null, 
-							  new JThisExpression(null),
-							  SwitchCode.SW_SS_TRIPS,
-							  new JExpression[0]),
-							 null));
+	if (!IMEMEstimation.TESTING_IMEM) {
+	    //add call to raw_init2, only if not testing imem
+	    statements.addStatement(new JExpressionStatement(null,
+							     new JMethodCallExpression
+							     (null, 
+							      new JThisExpression(null),
+							      SwitchCode.SW_SS_TRIPS,
+							      new JExpression[0]),
+							     null));
+	}
+	
 	
 	//inline the work function in a while loop
 	JBlock workBlock = 

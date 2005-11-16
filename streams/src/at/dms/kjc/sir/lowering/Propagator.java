@@ -704,25 +704,30 @@ public class Propagator extends SLIRReplacingVisitor {
 						    int oper,
 						    JExpression left,
 						    JExpression right) {
+	// need to clone <left> when converting a compound assignment
+	// into an assignment, as otherwise this object appears on
+	// both the LHS and RHS and can be accidentally visited twice
+	// by standard visitors
+	JExpression leftCopy = (JExpression)ObjectDeepCloner.deepCopy(left);
 	switch(oper) {
 	case OPE_SR:
 	case OPE_SL:
 	case OPE_BSR:
-	    return new JAssignmentExpression(null,left,new JShiftExpression(null,oper,left,right)).accept(this);
+	    return new JAssignmentExpression(null,left,new JShiftExpression(null,oper,leftCopy,right)).accept(this);
 	case OPE_BAND:
 	case OPE_BXOR:
 	case OPE_BOR:
-	    return new JAssignmentExpression(null,left,new JBitwiseExpression(null,oper,left,right)).accept(this);
+	    return new JAssignmentExpression(null,left,new JBitwiseExpression(null,oper,leftCopy,right)).accept(this);
 	case OPE_PLUS:
-	    return new JAssignmentExpression(null,left,new JAddExpression(null,left,right)).accept(this);
+	    return new JAssignmentExpression(null,left,new JAddExpression(null,leftCopy,right)).accept(this);
 	case OPE_MINUS:
-	    return new JAssignmentExpression(null,left,new JMinusExpression(null,left,right)).accept(this);
+	    return new JAssignmentExpression(null,left,new JMinusExpression(null,leftCopy,right)).accept(this);
 	case OPE_STAR:
-	    return new JAssignmentExpression(null,left,new JMultExpression(null,left,right)).accept(this);
+	    return new JAssignmentExpression(null,left,new JMultExpression(null,leftCopy,right)).accept(this);
 	case OPE_SLASH:
-	    return new JAssignmentExpression(null,left,new JDivideExpression(null,left,right)).accept(this);
+	    return new JAssignmentExpression(null,left,new JDivideExpression(null,leftCopy,right)).accept(this);
 	case OPE_PERCENT:
-	    return new JAssignmentExpression(null,left,new JModuloExpression(null,left,right)).accept(this);
+	    return new JAssignmentExpression(null,left,new JModuloExpression(null,leftCopy,right)).accept(this);
 	default:
 	    throw new InconsistencyException("unexpected operator " + oper);
 	}

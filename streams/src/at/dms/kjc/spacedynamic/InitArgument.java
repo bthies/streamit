@@ -36,7 +36,7 @@ public class InitArgument {
 	    }
 	    FlatIRToC ftoc = new FlatIRToC();
 	    ((JExpression)params.get(i)).accept(ftoc);
-	    buf.append(ftoc.getString() + ",");
+	    buf.append(ftoc.getPrinter().getString() + ",");
 	}
 	if (buf.length() > 0) {
 	    buf.setCharAt(buf.length() - 1, ' ');

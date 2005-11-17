@@ -38,7 +38,7 @@ public class ArrayDim extends SLIREmptyVisitor implements StreamVisitor{
 	for (int i = 0; i < ad.dims.length; i++) {
 	    FlatIRToCluster ftoc = new FlatIRToCluster();
 	    ad.dims[i].accept(ftoc);
-	    ret[i] = ftoc.getString();
+	    ret[i] = ftoc.getPrinter().getString();
 	}
 	
 	return ret;

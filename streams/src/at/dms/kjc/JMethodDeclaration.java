@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.26 2005-08-22 03:24:18 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.27 2005-11-17 22:49:08 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -53,7 +53,33 @@ public class JMethodDeclaration extends JMemberDeclaration {
 	this.ident = "DUMMY UNINITIALIZED METHOD";
     }
 
-  /**
+    /**
+     * Dummy JMethodDeclarations should now include comment...
+     * (mostly Debugging aide)
+     *
+     * Replaces new JMethodDeclaration() in code since
+     * the constructor with 0 parameters is reserved for the cloner.
+     * Sets all io rates to 0, parameters to EMPTY, exceptions to EMPTY
+     * body to the passed comment as a block, returnType to Void.
+     *
+     * @param  comment: for use in debugging Since this comment
+     *         is often lost in making copies, it is included
+     *         in C / C++ comment form in the ident.
+     */
+
+    public JMethodDeclaration (String comment) {
+        initIORates();
+        this.returnType = CStdType.Void;
+        this.parameters = JFormalParameter.EMPTY;
+        this.exceptions = CClassType.EMPTY;
+        JavaStyleComment[] comments = new JavaStyleComment[1];
+        comments[0]= new JavaStyleComment(comment,false,false,false);
+        this.body = new JBlock(/*where*/null, new LinkedList(), comments);
+        this.ident = "/* '" + comment + "' */ DUMMY UNINITIALIZED METHOD";
+}
+
+    
+    /**
    * Constructs a method declaration node in the syntax tree.
    *
    * @param	where		the line of this node in the source code
@@ -672,7 +698,7 @@ public class JMethodDeclaration extends JMemberDeclaration {
 
 /** Returns a deep clone of this object. */
 public Object deepClone() {
-  at.dms.kjc.JMethodDeclaration other = new at.dms.kjc.JMethodDeclaration();
+  at.dms.kjc.JMethodDeclaration other = new at.dms.kjc.JMethodDeclaration("Cloner "+ this.ident);
   at.dms.kjc.AutoCloner.register(this, other);
   deepCloneInto(other);
   return other;

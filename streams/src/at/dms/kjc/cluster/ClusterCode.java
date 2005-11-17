@@ -8,7 +8,7 @@ import at.dms.kjc.sir.*;
 //import at.dms.util.Utils;
 import java.util.Vector;
 //import java.util.List;
-import at.dms.compiler.TabbedPrintWriter;
+import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.raw.Util;
 //import at.dms.kjc.sir.lowering.*;
 //import java.util.ListIterator;
@@ -115,16 +115,12 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	NetStream in = (NetStream)in_v.elementAt(0);
 	Vector out = (Vector)RegisterStreams.getNodeOutStreams(node.contents);
 	
-	TabbedPrintWriter p;
-	StringWriter str; 
-	
-	str = new StringWriter();
-        p = new TabbedPrintWriter(str);
-		
+	CodegenPrintWriter p = new CodegenPrintWriter();
+
 	ClusterCodeGenerator gen = new ClusterCodeGenerator(splitter, new JFieldDeclaration[0]);
 
-	p.print("// init counts: "+init_counts+" steady counts: "+steady_counts+"\n"); 
-	p.print("\n");
+	p.println("// init counts: "+init_counts+" steady counts: "+steady_counts); 
+	p.newLine();
 
 	//  +=============================+
 	//  | Preamble                    |
@@ -136,9 +132,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print(pre.elementAt(i).toString());
 	}
 
-	p.print("void save_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}\n");
-	p.print("void load_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}\n");
-	p.print("\n");
+	p.println("void save_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}");
+	p.println("void load_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}");
+	p.newLine();
 
 	//  +=============================+
 	//  | Splitter Push               |
@@ -148,7 +144,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print(baseType.toString()+" "+in.push_buffer()+"["+sum_of_weights+"];\n");
 	p.print("int "+in.push_index()+" = 0;\n");
-	p.print("\n");
+	p.newLine();
 
 	p.print("void "+in.push_name()+"("+baseType.toString()+" data) {\n");
 
@@ -187,7 +183,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("  }\n");
 	}
 	p.print("}\n");
-	p.print("\n");
+	p.newLine();
 
 	//  +=============================+
 	//  | Splitter Pop                |
@@ -200,7 +196,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    p.print(baseType.toString()+" "+_out.pop_buffer()+"["+weight+"];\n");
 	    p.print("int "+_out.pop_index()+" = "+weight+";\n");
-	    p.print("\n");
+	    p.newLine();
 
 	    p.print(baseType.toString()+" "+_out.pop_name()+"() {\n");
 
@@ -241,7 +237,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    }
 
 	    p.print("}\n");
-	    p.print("\n");
+	    p.newLine();
 	}
 	
 
@@ -267,7 +263,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("#endif\n");
 	}
 
-	p.print("\n");
+	p.newLine();
 
 	p.print("void __splitter_"+thread_id+"_work(int ____n) {\n");
 	p.print("  for (;____n > 0; ____n--) {\n");
@@ -281,7 +277,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    _s = in.getSource();
 	    _d = in.getDest();	    
 
-	    p.print("\n");
+	    p.newLine();
 
 	    p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
 	    p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
@@ -299,7 +295,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    p.print("  #endif\n");
 
-	    p.print("\n");
+	    p.newLine();
 
 	    for (int i = 0; i < out.size(); i++) {
 		NetStream s = (NetStream)out.elementAt(i);		
@@ -537,7 +533,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    int offs = 0;
 		
 	    p.print("  "+baseType.toString()+" tmp["+sum+"];\n");
-	    p.print("\n");
+	    p.newLine();
 
 	    _s = in.getSource();
 	    _d = in.getDest();
@@ -565,7 +561,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    }
 
 	    p.print("  #endif\n");
-	    p.print("\n");
+	    p.newLine();
 	    
 	    for (int i = 0; i < out.size(); i++) {
 		int num = splitter.getWeight(i);
@@ -600,7 +596,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("  }\n");
 	p.print("}\n");
-	p.print("\n");
+	p.newLine();
 
 
 	//  +=============================+
@@ -657,7 +653,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	
 	try {
 	    FileWriter fw = new FileWriter("thread"+thread_id+".cpp");
-	    fw.write(str.toString());
+	    fw.write(p.getString());
 	    fw.close();
 	}
 	catch (Exception e) {
@@ -697,16 +693,12 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	Vector out_v = (Vector)RegisterStreams.getNodeOutStreams(node.contents);
 	NetStream out = (NetStream)out_v.elementAt(0);
 
-	TabbedPrintWriter p;
-	StringWriter str; 
-	
-	str = new StringWriter();
-        p = new TabbedPrintWriter(str);
+	CodegenPrintWriter p = new CodegenPrintWriter();
 		
 	ClusterCodeGenerator gen = new ClusterCodeGenerator(joiner, new JFieldDeclaration[0]);
 
 	p.print("// init counts: "+init_counts+" steady counts: "+steady_counts+"\n"); 
-	p.print("\n");
+	p.newLine();
 
 	//  +=============================+
 	//  | Preamble                    |
@@ -721,7 +713,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("void save_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}\n");
 	p.print("void load_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}\n");
-	p.print("\n");
+	p.newLine();
 
 	//  +=============================+
 	//  | Joiner Pop                  |
@@ -732,7 +724,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print(baseType.toString()+" "+out.pop_buffer()+"["+sum_of_weights+"];\n");
 	p.print("int "+out.pop_index()+" = "+sum_of_weights+";\n");
-	p.print("\n");
+	p.newLine();
 
 	p.print(baseType.toString()+" "+out.pop_name()+"() {\n");
 
@@ -758,7 +750,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	
 	p.print("  return "+out.pop_buffer()+"["+out.pop_index()+"++];\n");
 	p.print("}\n");
-	p.print("\n");
+	p.newLine();
 
 	//  +=============================+
 	//  | Init Path                   |
@@ -768,22 +760,22 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	if (joiner.getParent() instanceof SIRFeedbackLoop) {
 	    
 	    p.print("int __init_counter_"+thread_id+" = 0;\n"); // INVALID
-	    p.print("\n");
+	    p.newLine();
 
 	    SIRFeedbackLoop floop = (SIRFeedbackLoop)joiner.getParent();
 
 	    p.print("//delay = "+((JIntLiteral)floop.getDelay()).intValue());
-	    p.print("\n");
+	    p.newLine();
 
 	    JMethodDeclaration ipath = floop.getInitPath();
 
 	    ipath.setName("__Init_Path_"+thread_id);
 	    FlatIRToCluster fir = new FlatIRToCluster();
 	    ipath.accept(fir);
-	    p.print(fir.getString());
+	    p.print(fir.getPrinter().getString());
 
-	    p.print("\n");
-	    p.print("\n");
+	    p.newLine();
+	    p.newLine();
 
 	}
 
@@ -809,7 +801,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("#endif\n");
 	}
 
-	p.print("\n");
+	p.newLine();
 
 	p.print("void __joiner_"+thread_id+"_work(int ____n) {\n");
 	p.print("  for (;____n > 0; ____n--) {\n");
@@ -939,7 +931,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		int offs = 0;
 		
 		p.print("  "+baseType.toString()+" tmp["+sum+"];\n");
-		p.print("\n");
+		p.newLine();
 
 		for (int i = 0; i < in.size(); i++) {
 
@@ -970,7 +962,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    
 		}
 
-		p.print("\n");
+		p.newLine();
 
 		_s = out.getSource();
 		_d = out.getDest();
@@ -1000,7 +992,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  }\n");
 	p.print("}\n");
 
-	p.print("\n");
+	p.newLine();
 
 	//  +=============================+
 	//  | Joiner Main                 |
@@ -1045,7 +1037,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	try {
 	    FileWriter fw = new FileWriter("thread"+thread_id+".cpp");
-	    fw.write(str.toString());
+	    fw.write(p.getString());
 	    fw.close();
 	}
 	catch (Exception e) {
@@ -1089,7 +1081,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		f2c.helper_package = helpers[i].getIdent();
 		f2c.declOnly = true;
 		m[j].accept(f2c);
-		str += "extern "+f2c.getString()+"\n";
+		str += "extern "+f2c.getPrinter().getString()+"\n";
 	    }
 	}
 
@@ -1162,7 +1154,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    f2c.helper_package = helpers[i].getIdent();
 		    f2c.declOnly = false;
 		    m[j].accept(f2c);
-		    str += f2c.getString()+"\n";
+		    str += f2c.getPrinter().getString()+"\n";
 		}
 	    }
 	}
@@ -1173,7 +1165,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    FlatIRToCluster f2c = new FlatIRToCluster();
 	    f2c.setGlobal(true);
 	    global.getInit().accept(f2c);
-	    str += f2c.getString();
+	    str += f2c.getPrinter().getString();
 	}
 	str += "\n";
 	
@@ -1192,11 +1184,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	int threadNumber = NodeEnumerator.getNumberOfNodes();
 
-	TabbedPrintWriter p;
-	StringWriter str; 
-	
-	str = new StringWriter();
-        p = new TabbedPrintWriter(str);
+        CodegenPrintWriter p = new CodegenPrintWriter();
 	
 	p.print("#include <pthread.h>\n");
 	p.print("#include <unistd.h>\n");
@@ -1204,7 +1192,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <string.h>\n");
 	p.print("#include <stdlib.h>\n");
 	p.print("#include <stdio.h>\n");
-	p.println();
+	p.newLine();
 	p.print("#include <netsocket.h>\n");
 	p.print("#include <node_server.h>\n");
 	p.print("#include <init_instance.h>\n");
@@ -1216,7 +1204,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <read_setup.h>\n");
 	p.print("#include <ccp.h>\n");
 	p.print("#include \"global.h\"\n");
-	p.println();
+	p.newLine();
 
 	p.print("int __max_iteration;\n");
 	p.print("int __timer_enabled = 0;\n");
@@ -1227,10 +1215,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("netsocket *server = NULL;\n");
 	p.print("unsigned __ccp_ip = 0;\n");
 	p.print("int __init_iter = 0;\n");
-	p.println();
+	p.newLine();
 
 	p.print("unsigned myip;\n");
-	p.println();
+	p.newLine();
 
 	for (int i = 0; i < threadNumber; i++) {
 
@@ -1247,7 +1235,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	}
 
-	p.println();
+	p.newLine();
 
 	p.print("static void *run_join(void *param) {\n");
 
@@ -1265,11 +1253,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("}\n");
 
-	p.println();
+	p.newLine();
 
 	p.print("int master_pid;\n");
 
-	p.println();
+	p.newLine();
 
 	/*
 
@@ -1280,7 +1268,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  }\n");
 	p.print("}\n");
 
-	p.println();
+	p.newLine();
 
 	*/
 
@@ -1322,7 +1310,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("}\n");
 
-	p.println();
+	p.newLine();
 
 	p.print("int main(int argc, char **argv) {\n");
 
@@ -1383,10 +1371,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("  }\n");
 
-	p.print("\n");
+	p.newLine();
 
 	p.print("  __global__init();\n");
-	p.print("\n");
+	p.newLine();
 
 	p.print("  thread_info *t_info;\n");
 
@@ -1401,7 +1389,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  (new save_manager())->start();\n");
 	p.print("  node_server *node = new node_server(thread_list, init);\n");
 
-	p.print("\n");
+	p.newLine();
 
 	//p.print("  signal(3, sig_recv);\n\n");
 	p.print("  node->run(__ccp_ip);\n");
@@ -1414,7 +1402,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	try {
 	    FileWriter fw = new FileWriter("master.cpp");
-	    fw.write(str.toString());
+	    fw.write(p.getString());
 	    fw.close();
 	}
 	catch (Exception e) {
@@ -1427,22 +1415,18 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
     public static void generateClusterHeader() {
 
-	TabbedPrintWriter p;
-	StringWriter str; 
-	
-	str = new StringWriter();
-        p = new TabbedPrintWriter(str);
+        CodegenPrintWriter p = new CodegenPrintWriter();
 
-	p.println();
-	p.println();
+	p.newLine();
+	p.newLine();
 
 	p.print("//#define __CHECKPOINT_FREQ 10000");
-	p.println();
-	p.println();
+	p.newLine();
+	p.newLine();
 
 	try {
 	    FileWriter fw = new FileWriter("cluster.h");
-	    fw.write(str.toString());
+	    fw.write(p.getString());
 	    fw.close();
 	}
 	catch (Exception e) {
@@ -1454,46 +1438,42 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	int threadNumber = NodeEnumerator.getNumberOfNodes();
 
-	TabbedPrintWriter p;
-	StringWriter str; 
+        CodegenPrintWriter p = new CodegenPrintWriter();
 	
-	str = new StringWriter();
-        p = new TabbedPrintWriter(str);
-	
-	p.println();
+	p.newLine();
 	p.print("LIB_CLUSTER = $(STREAMIT_HOME)/library/cluster\n");
 
-	p.println();	
+	p.newLine();	
 	p.print("CC = gcc34 #gcc34\n"); // gcc34
 	p.print("CC_IA64 = ecc\n");
 	p.print("CC_ARM = /u/janiss/bin/arm343 #arm-linux-gcc\n");
 
-	p.println();
+	p.newLine();
 	p.print("CCFLAGS = -O3 #-O3\n");
 	p.print("CCFLAGS_IA64 = -O3\n");
 	p.print("CCFLAGS_ARM = -O3\n");
 
-	p.println();
+	p.newLine();
 	p.print("NAMES = ");
 	
 	{
 	    int i;
 	    for (i = 0; i < threadNumber - 1; i++) {
 		p.print("\tthread"+i+" \\");
-		p.println();
+		p.newLine();
 	    }
 	    p.print("\tthread"+i);
-	    p.println();
+	    p.newLine();
 	}
 
-	p.println();
+	p.newLine();
 
 	p.print("SOURCES = \t$(NAMES:%=%.cpp)\n");
 	p.print("OBJS = \t$(NAMES:%=%.o)\n");
 	p.print("OBJS_IA64 = \t$(NAMES:%=%_ia64.o)\n");
 	p.print("OBJS_ARM = \t$(NAMES:%=%_arm.o)\n");
 
-	p.println();
+	p.newLine();
 
 	if (KjcOptions.standalone) {
 	    p.print("all: fusion\n");
@@ -1501,7 +1481,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("all: run_cluster\n");
 	}
 
-	p.println();
+	p.newLine();
 
 	if (KjcOptions.standalone) {
 	    p.print("ia64: fusion_ia64\n");
@@ -1509,17 +1489,17 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("ia64: run_cluster_ia64\n");
 	}
 
-	p.println();
+	p.newLine();
 	
 	p.print("arm: fusion_arm\n");
          
-	p.println();
+	p.newLine();
 
 	p.print("clean:\n");
 	p.print("\trm -f run_cluster fusion master*.o fusion*.o thread*.o\n");
-	p.println();
+	p.newLine();
 
-	p.println();
+	p.newLine();
 
 	// =============== run_cluster
 
@@ -1531,7 +1511,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 	p.print("$(OBJS)\n");
 	p.print("\t$(CC) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++\n");
-	p.println();
+	p.newLine();
 
 	// =============== fusion
 
@@ -1539,34 +1519,34 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("\tar r objects.a $^\n");
 	p.print("\tranlib objects.a\n");
 	p.print("\t$(CC) $(CCFLAGS) -o $@ objects.a -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++\n");
-	p.println();
+	p.newLine();
 	
 	// =============== %.o : %.cpp
 	
 	p.print("%.o: %.cpp fusion.h cluster.h global.h\n");
 	p.print("\t$(CC) $(CCFLAGS) -I$(LIB_CLUSTER) -c -o $@ $<\n");
-	p.println();
+	p.newLine();
 
-	p.println();
+	p.newLine();
 
 	// =============== run_cluster_ia64
 
 	p.print("run_cluster_ia64: master_ia64.o $(OBJS_IA64)\n");
 	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster_ia64\n");
-	p.println();
+	p.newLine();
 
 	// =============== fusion_ia64
 
 	p.print("fusion_ia64: fusion_ia64.o $(OBJS_IA64)\n");
 	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster_ia64\n");
 
-	p.println();
+	p.newLine();
 
 	// =============== %_ia64.o : %.cpp
 
 	p.print("%_ia64.o: %.cpp fusion.h cluster.h\n");
 	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -I$(LIB_CLUSTER) -c -o $@ $<\n");
-	p.println();
+	p.newLine();
 
 
 
@@ -1578,19 +1558,19 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("\tranlib objects_arm.a\n");
 	p.print("\t$(CC_ARM) $(CCFLAGS_ARM) -o $@ objects_arm.a -L$(LIB_CLUSTER) -lstdc++ -lm -lcluster_arm #-lpthread\n");
 
-	p.println();
+	p.newLine();
 
 	// =============== %_arm.o : %.cpp
 
 	p.print("%_arm.o: %.cpp fusion.h cluster.h\n");
 	p.print("\t$(CC_ARM) $(CCFLAGS_ARM) -I$(LIB_CLUSTER) -c -o $@ $<\n");
-	p.println();
+	p.newLine();
 
 
 
 	try {
 	    FileWriter fw = new FileWriter("Makefile.cluster");
-	    fw.write(str.toString());
+	    fw.write(p.getString());
 	    fw.close();
 	}
 	catch (Exception e) {
@@ -1606,11 +1586,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	int threadNumber = NodeEnumerator.getNumberOfNodes();
 
-	TabbedPrintWriter p;
-	StringWriter str; 
-	
-	str = new StringWriter();
-        p = new TabbedPrintWriter(str);
+        CodegenPrintWriter p = new CodegenPrintWriter();
 
 	/*
 	  String me = new String();
@@ -1640,7 +1616,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	try {
 	    FileWriter fw = new FileWriter("cluster-config.txt");
-	    fw.write(str.toString());
+	    fw.write(p.getString());
 	    fw.close();
 	}
 	catch (Exception e) {
@@ -1651,11 +1627,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
     public static void generateSetupFile() {
 
-	TabbedPrintWriter p;
-	StringWriter str; 
-	
-	str = new StringWriter();
-        p = new TabbedPrintWriter(str);
+        CodegenPrintWriter p = new CodegenPrintWriter();
+
 
 	p.print("frequency_of_checkpoints 0    // Must be a multiple of 1000 or 0 for disabled.\n");
 	p.print("outbound_data_buffer 1000     // Number of bytes to buffer before writing to socket. Must be <= 1400 or 0 for disabled\n");
@@ -1663,7 +1636,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	try {
 	    FileWriter fw = new FileWriter("cluster-setup.txt");
-	    fw.write(str.toString());
+	    fw.write(p.getString());
 	    fw.close();
 	}
 	catch (Exception e) {

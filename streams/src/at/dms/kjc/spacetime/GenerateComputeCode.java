@@ -17,7 +17,7 @@ public class GenerateComputeCode {
 						       ".c");
 			TraceIRtoC ttoc  = new TraceIRtoC(tile);
 			ttoc.createCCode();    
-			fw.write(ttoc.getString());
+			fw.write(ttoc.getPrinter().getString());
 			fw.close();
 		    }
 		}

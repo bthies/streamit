@@ -166,7 +166,7 @@ public class Util extends at.dms.util.Utils {
 	for (int i = 0; i < dims.length; i++) {
 	    FlatIRToC ftoc = new FlatIRToC();
 	    dims[i].accept(ftoc);
-	    ret[i] = ftoc.getString();
+	    ret[i] = ftoc.getPrinter().getString();
 	}
 	return ret;
     }

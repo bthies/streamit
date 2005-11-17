@@ -6,5 +6,11 @@ package at.dms.kjc.common;
  * uniprocessor and Raw-type backends.)
  */
 public interface CodeGenerator extends at.dms.kjc.SLIRVisitor {
-    void print(String s);    
+    /** 
+     * 
+     * @return a printer for interleaving code created inside code generators
+     *         with code created outside of descendents of classes implementing
+     *         CodeGenerator.
+     */
+	public CodegenPrintWriter getPrinter();
 }

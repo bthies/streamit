@@ -45,7 +45,7 @@ public class ArrayDim extends SLIREmptyVisitor {
 
 	for (int i = 0; i < ad.dims.length; i++) {
 	    ad.dims[i].accept(toC);
-	    ret[i] = toC.getString();
+	    ret[i] = toC.p.getString();
 	    toC.clear();
 	}
 	

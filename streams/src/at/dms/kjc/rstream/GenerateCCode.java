@@ -369,7 +369,7 @@ public class GenerateCCode
 	//main method body
 	mainMethod.accept(toRS);
 	//append the string for the c code
-	str.append(toRS.getString());
+	str.append(toRS.getPrinter().getString());
 	
 	System.out.println("Static doloops/doloop: " + toRS.staticDoLoops + " / " +
 			   toRS.doLoops);

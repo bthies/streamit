@@ -162,7 +162,9 @@ public class RenameAll extends SLIRReplacingVisitor
 	    oldInitWork = ((SIRTwoStageFilter)str).getInitWork();
 	}
 
-        JMethodDeclaration newInit = null, newWork = null, newInitWork = null;
+        JMethodDeclaration newInit = new JMethodDeclaration("RenameAll newInit"),
+        	newWork = new JMethodDeclaration("RenameAll newWork"), 
+        	newInitWork = new JMethodDeclaration("RenameAll newInitWork");
         JMethodDeclaration[] newMethods =
             new JMethodDeclaration[str.getMethods().length];
         for (int i = 0; i < str.getMethods().length; i++)

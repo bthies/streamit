@@ -18,7 +18,7 @@ import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import java.util.*;
-
+import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.raw.*;
 
 
@@ -72,9 +72,17 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
     public static void generateCode(FlatNode node) 
     {
-	FlatIRToCluster toC = new FlatIRToCluster((SIRFilter)node.contents);
-	//FieldInitMover.moveStreamInitialAssignments((SIRFilter)node.contents);
-	//FieldProp.doPropagate((SIRFilter)node.contents);
+    SIRFilter contentsAsFilter = (SIRFilter)node.contents;
+	FlatIRToCluster toC = new FlatIRToCluster(contentsAsFilter);
+	// the code below only deals with user-defined filters.
+	// on a PredefinedFilter we need to go generate special code.
+	if (node.contents instanceof SIRPredefinedFilter) { 
+		IterFactory.createFactory().createIter(contentsAsFilter).accept(toC);
+    	return;
+    }
+
+	//FieldInitMover.moveStreamInitialAssignments(contentsAsFilter;
+	//FieldProp.doPropagate(contentsAsFilter);
 
 	//Optimizations
 	if(!KjcOptions.nofieldprop)
@@ -86,12 +94,12 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	Set destroyed_vars = new HashSet();
 
 	//ArrayDestroyer arrayDest=new ArrayDestroyer();
-	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
+	for (int i = 0; i < contentsAsFilter.getMethods().length; i++) {
 
 	    // do not optimize init work function
 	    if (node.contents instanceof SIRTwoStageFilter) {
 	    	JMethodDeclaration init_work = ((SIRTwoStageFilter)node.contents).getInitWork();
-	    	if (((SIRFilter)node.contents).getMethods()[i].equals(init_work)) {
+	    	if (contentsAsFilter.getMethods()[i].equals(init_work)) {
 	    	    continue;
 	    	}
 	    }
@@ -103,64 +111,60 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		    do {
 			//System.out.println("Unrolling..");
 			unroller = new Unroller(new Hashtable());
-			((SIRFilter)node.contents).getMethods()[i].accept(unroller);
+			(contentsAsFilter).getMethods()[i].accept(unroller);
 		    } while(unroller.hasUnrolled());
 		    //System.out.println("Constant Propagating..");
-		    ((SIRFilter)node.contents).getMethods()[i].accept(new Propagator(new Hashtable()));
+		    (contentsAsFilter).getMethods()[i].accept(new Propagator(new Hashtable()));
 		    //System.out.println("Unrolling..");
 		    unroller = new Unroller(new Hashtable());
-		    ((SIRFilter)node.contents).getMethods()[i].accept(unroller);
+		    (contentsAsFilter).getMethods()[i].accept(unroller);
 		} while(unroller.hasUnrolled());
 		//System.out.println("Flattening..");
-		((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());
+		(contentsAsFilter).getMethods()[i].accept(new BlockFlattener());
 		//System.out.println("Analyzing Branches..");
-		//((SIRFilter)node.contents).getMethods()[i].accept(new BranchAnalyzer());
+		//(contentsAsFilter).getMethods()[i].accept(new BranchAnalyzer());
 		//System.out.println("Constant Propagating..");
-		((SIRFilter)node.contents).getMethods()[i].accept(new Propagator(new Hashtable()));
+		(contentsAsFilter).getMethods()[i].accept(new Propagator(new Hashtable()));
 	    } else
-		((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());
+		(contentsAsFilter).getMethods()[i].accept(new BlockFlattener());
 
 	    if (KjcOptions.destroyfieldarray) {
 		ArrayDestroyer arrayDest = new ArrayDestroyer();
-		((SIRFilter)node.contents).getMethods()[i].accept(arrayDest);
+		(contentsAsFilter).getMethods()[i].accept(arrayDest);
 		arrayDest.addDestroyedLocals(destroyed_vars);
 	    }
 
-	    ((SIRFilter)node.contents).getMethods()[i].accept(new VarDeclRaiser());
+	    (contentsAsFilter).getMethods()[i].accept(new VarDeclRaiser());
 	}
 
 	//if(KjcOptions.destroyfieldarray) {
-	//   arrayDest.destroyFieldArrays((SIRFilter)node.contents);
+	//   arrayDest.destroyFieldArrays(contentsAsFilter);
 	//}
 
-	DeadCodeElimination.doit((SIRFilter)node.contents);
+	DeadCodeElimination.doit(contentsAsFilter);
 
 	if (KjcOptions.rename2 && KjcOptions.destroyfieldarray) {
-	    RenameDestroyedVars.renameDestroyedVars((SIRFilter)node.contents, destroyed_vars);
-	    DeadCodeElimination.doit((SIRFilter)node.contents);
+	    RenameDestroyedVars.renameDestroyedVars(contentsAsFilter, destroyed_vars);
+	    DeadCodeElimination.doit(contentsAsFilter);
 	}
 
-        IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
+        IterFactory.createFactory().createIter(contentsAsFilter).accept(toC);
     }
     
     public FlatIRToCluster() 
     {
-	this.str = new StringWriter();
-        this.p = new TabbedPrintWriter(str);
+    	super();
     }
     
 
-    public FlatIRToCluster(TabbedPrintWriter p) {
-        this.p = p;
-        this.str = null;
-        this.pos = 0;
+    public FlatIRToCluster(CodegenPrintWriter p) {
+    	super(p);
     }
     
     public FlatIRToCluster(SIRFilter f) {
-	this.filter = f;
+    	super();
+    	this.filter = f;
 	//	circular = false;
-	this.str = new StringWriter();
-        this.p = new TabbedPrintWriter(str);
     }
 
      
@@ -177,17 +181,30 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
                                SIRStream parent,
                                JFieldDeclaration[] fields)
     {
-        print("struct " + self.getIdent() + " {\n");
+        p.print("struct " + self.getIdent() + " {\n");
         for (int i = 0; i < fields.length; i++)
             fields[i].accept(this);
-        print("};\n");
+        p.print("};\n");
     }
     */
 
     private int selfID = -1;
     
+    private void specialsToC(SIRPredefinedFilter f) {
+    	System.err.println("specialsToC: " + f.toString());
+    	p.print("// specialsToC: "+ f.toString());
+    	return;
+    }
+    
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
+
+    	// the code below only deals with user-defined filters.
+    	// on a PredefinedFilter we need to go generate special code.
+    	if (self instanceof SIRPredefinedFilter) { 
+        	specialsToC((SIRPredefinedFilter)self); 
+//        	return;
+        }
 
 	filter = self;
 	selfID = NodeEnumerator.getSIROperatorId(self); // needed by the class
@@ -244,9 +261,9 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	peek_n = self.getPeekInt();
 	push_n = self.getPushInt();
 
-	print("// peek: "+peek_n+" pop: "+pop_n+" push "+push_n+"\n"); 
-	print("// init counts: "+init_counts+" steady counts: "+steady_counts+"\n"); 
-	print("\n");
+	p.print("// peek: "+peek_n+" pop: "+pop_n+" push "+push_n+"\n"); 
+	p.print("// init counts: "+init_counts+" steady counts: "+steady_counts+"\n"); 
+	p.newLine();
 
 	int data = DataEstimate.filterGlobalsSize(self);
 
@@ -264,7 +281,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	Vector pre = gen.generatePreamble();
 
 	for (int i = 0; i < pre.size(); i++) {
-	    print(pre.elementAt(i).toString());
+	    p.print(pre.elementAt(i).toString());
 	}
 
 
@@ -281,13 +298,13 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    if (!methods[i].equals(work)) methods[i].accept(this);
 	}
 
-	print("\n");
-	print("inline void check_status__"+selfID+"();\n");
-	print("void check_messages__"+selfID+"();\n");
-	print("void handle_message__"+selfID+"(netsocket *sock);\n");
-	print("void send_credits__"+selfID+"();\n");
+	p.newLine();
+	p.print("inline void check_status__"+selfID+"();\n");
+	p.print("void check_messages__"+selfID+"();\n");
+	p.print("void handle_message__"+selfID+"(netsocket *sock);\n");
+	p.print("void send_credits__"+selfID+"();\n");
 
-	print("\n");
+	p.newLine();
 
 	//  +=============================+
 	//  | Push / Pop                  |
@@ -305,13 +322,13 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	if (push_n != 0) out_pop_num_iters = out_pop_buffer_size / push_n;
 
 	if (out != null) {
-	    //print(output_type.toString()+" "+out.pop_buffer()+"["+push_n+"];\n");
-	    //print("int "+out.pop_index()+" = "+push_n+";\n");
+	    //p.print(output_type.toString()+" "+out.pop_buffer()+"["+push_n+"];\n");
+	    //p.print("int "+out.pop_index()+" = "+push_n+";\n");
 
-	    print(output_type.toString()+" "+out.pop_buffer()+"["+out_pop_buffer_size+"];\n");
-	    print("int "+out.pop_index()+" = "+(out_pop_num_iters*push_n)+";\n");
+	    p.print(output_type.toString()+" "+out.pop_buffer()+"["+out_pop_buffer_size+"];\n");
+	    p.print("int "+out.pop_index()+" = "+(out_pop_num_iters*push_n)+";\n");
 	    
-	    print("\n");
+	    p.newLine();
 	}
 
 	if (in != null) {
@@ -336,31 +353,31 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		peek_buf_size *= 2;
 	    }
 
-	    print(input_type.toString()+" __pop_buf__"+selfID+"["+peek_buf_size+"];\n");
-	    print("int __head__"+selfID+";\n");
-	    print("int __tail__"+selfID+";\n");
-	    print("\n");
+	    p.print(input_type.toString()+" __pop_buf__"+selfID+"["+peek_buf_size+"];\n");
+	    p.print("int __head__"+selfID+";\n");
+	    p.print("int __tail__"+selfID+";\n");
+	    p.newLine();
 
 	    int extra = peek_n - pop_n;
 	    
 	    //assert (extra >= 0);
 	    if (extra < 0) extra = 0;
 
-	    print("inline void __init_pop_buf__"+selfID+"() {\n");
+	    p.print("inline void __init_pop_buf__"+selfID+"() {\n");
 			
 	    for (int i = 0; i < extra; i++) {	
 		
-		print("  __pop_buf__"+selfID+"["+i+"]=");
+		p.print("  __pop_buf__"+selfID+"["+i+"]=");
 		
 		if (source_fused) { 
-		    print(in.pop_name()+"();\n");
+		    p.print(in.pop_name()+"();\n");
 		} else {
-		    print(in.consumer_name()+".pop();\n");
+		    p.print(in.consumer_name()+".pop();\n");
 		}
 	    }
 
-	    print("  __tail__"+selfID+"=0;\n");
-	    print("  __head__"+selfID+"="+extra+";\n");
+	    p.print("  __tail__"+selfID+"=0;\n");
+	    p.print("  __head__"+selfID+"="+extra+";\n");
 		
 
 		/*
@@ -370,67 +387,67 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		    for (int y = 0; y < extra; y++) {
 			int index = y + pop_n;
 			
-			print("  __pop_buf__"+selfID+"["+index+"] = "+in.pop_name()+"();\n");
+			p.print("  __pop_buf__"+selfID+"["+index+"] = "+in.pop_name()+"();\n");
 		    }
 		} else {
 
 		    if (pop_n < 8) {
 			
 			for (int i = 0; i < extra; i++) {			
-			    print("  __pop_buf__"+selfID+"["+(pop_n+i)+"] = "+in.consumer_name()+".pop();\n");
+			    p.print("  __pop_buf__"+selfID+"["+(pop_n+i)+"] = "+in.consumer_name()+".pop();\n");
 			}
 			
 		    } else {
 
 			
-			print("  "+in.consumer_name()+".pop_items(&__pop_buf__"+selfID+"["+pop_n+"], "+extra+");\n");
+			p.print("  "+in.consumer_name()+".pop_items(&__pop_buf__"+selfID+"["+pop_n+"], "+extra+");\n");
 		    }
 
 		}
 		*/
 	    
-	    print("}\n");
-	    print("\n");
+	    p.print("}\n");
+	    p.newLine();
 
-	    print("void save_peek_buffer__"+selfID+"(object_write_buffer *buf) {\n");
-	    print("  int i = 0, offs = __tail__"+selfID+";\n");
-	    print("  while (offs != __head__"+selfID+") {\n");
-	    print("    buf->write(&__pop_buf__"+selfID+"[offs], sizeof("+input_type.toString()+"));\n    offs++;\n    offs&="+(peek_buf_size-1)+";\n    i++;\n");
-	    print("  }\n");
-	    //print("  fprintf(stderr,\"buf size: %d\\n\", i);\n"); 
-	    print("  assert(i == "+extra+");\n");
-	    print("}\n");
-	    print("\n");
+	    p.print("void save_peek_buffer__"+selfID+"(object_write_buffer *buf) {\n");
+	    p.print("  int i = 0, offs = __tail__"+selfID+";\n");
+	    p.print("  while (offs != __head__"+selfID+") {\n");
+	    p.print("    buf->write(&__pop_buf__"+selfID+"[offs], sizeof("+input_type.toString()+"));\n    offs++;\n    offs&="+(peek_buf_size-1)+";\n    i++;\n");
+	    p.print("  }\n");
+	    //p.print("  fprintf(stderr,\"buf size: %d\\n\", i);\n"); 
+	    p.print("  assert(i == "+extra+");\n");
+	    p.print("}\n");
+	    p.newLine();
 
-	    print("void load_peek_buffer__"+selfID+"(object_write_buffer *buf) {\n");
-	    print("  for (int i = 0; i < "+extra+"; i++) {\n");
-	    print("     buf->read(&__pop_buf__"+selfID+"[i] , sizeof("+input_type.toString()+"));\n");
-	    print("  }\n");
-	    print("  __tail__"+selfID+"=0;\n");
-	    print("  __head__"+selfID+"="+extra+";\n");
-	    print("}\n");
-	    print("\n");
+	    p.print("void load_peek_buffer__"+selfID+"(object_write_buffer *buf) {\n");
+	    p.print("  for (int i = 0; i < "+extra+"; i++) {\n");
+	    p.print("     buf->read(&__pop_buf__"+selfID+"[i] , sizeof("+input_type.toString()+"));\n");
+	    p.print("  }\n");
+	    p.print("  __tail__"+selfID+"=0;\n");
+	    p.print("  __head__"+selfID+"="+extra+";\n");
+	    p.print("}\n");
+	    p.newLine();
 
 
-	    print("inline void __update_pop_buf__"+selfID+"() {\n");
+	    p.print("inline void __update_pop_buf__"+selfID+"() {\n");
 	    
 	    if (peek_n <= pop_n) {
 
 		// no peek beyond pop
 
 		for (int i = 0; i < pop_n; i++) {
-		    print("  __pop_buf__"+selfID+"["+i+"]=");
+		    p.print("  __pop_buf__"+selfID+"["+i+"]=");
 		    
 		    if (source_fused) { 
-			print(in.pop_name()+"();");
+			p.print(in.pop_name()+"();");
 		    } else {
-			print(in.consumer_name()+".pop();");
+			p.print(in.consumer_name()+".pop();");
 		    }
-		    print("\n");
+		    p.newLine();
 		}
 
-		print("  __tail__"+selfID+" = 0;\n");
-		print("  __head__"+selfID+" = "+pop_n+";\n");
+		p.print("  __tail__"+selfID+" = 0;\n");
+		p.print("  __head__"+selfID+" = "+pop_n+";\n");
 
 	    } else {
 
@@ -438,142 +455,142 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
 		for (int i = 0; i < pop_n; i++) {
 		    
-		    print("  __pop_buf__"+selfID+"[__head__"+selfID+"]=");
+		    p.print("  __pop_buf__"+selfID+"[__head__"+selfID+"]=");
 		    
 		    if (source_fused) { 
-			print(in.pop_name()+"();");
+			p.print(in.pop_name()+"();");
 		    } else {
-			print(in.consumer_name()+".pop();");
+			p.print(in.consumer_name()+".pop();");
 		    }
 		    
-		    print("__head__"+selfID+"++;");
-		    print("__head__"+selfID+"&="+(peek_buf_size-1)+";\n");
+		    p.print("__head__"+selfID+"++;");
+		    p.print("__head__"+selfID+"&="+(peek_buf_size-1)+";\n");
 		}
 	    }
 
 	    /*
-	    print("  __pop_index__"+selfID+" = 0;\n");
+	    p.print("  __pop_index__"+selfID+" = 0;\n");
 
 	    int extra = peek_n - pop_n;
 	    for (int y = 0; y < extra; y++) {
 		int index = y + pop_n;
-		print("  __pop_buf__"+selfID+"["+y+"] = __pop_buf__"+selfID+"["+index+"];\n");
+		p.print("  __pop_buf__"+selfID+"["+y+"] = __pop_buf__"+selfID+"["+index+"];\n");
 	    }
 
 	    if (source_fused) {
 	    
 		for (int y = 0; y < pop_n; y++) {
 		    int index = y + extra;
-		    print("  __pop_buf__"+selfID+"["+index+"] = "+in.pop_name()+"();\n");
+		    p.print("  __pop_buf__"+selfID+"["+index+"] = "+in.pop_name()+"();\n");
 		}
 	    } else {
 
 		if (pop_n < 8) {
 		    
 		    for (int i = 0; i < pop_n; i++) {			
-			print("  __pop_buf__"+selfID+"["+(extra+i)+"] = "+in.consumer_name()+".pop();\n");
+			p.print("  __pop_buf__"+selfID+"["+(extra+i)+"] = "+in.consumer_name()+".pop();\n");
 		    }
 
 		} else {
 		    
-		    print("  "+in.consumer_name()+".pop_items(&__pop_buf__"+selfID+"["+extra+"], "+pop_n+");\n");
+		    p.print("  "+in.consumer_name()+".pop_items(&__pop_buf__"+selfID+"["+extra+"], "+pop_n+");\n");
 		}
 
 	    }
 	    */
 	    
-	    print("}\n");
-	    print("\n");
+	    p.print("}\n");
+	    p.newLine();
 
 	    int s = in.getSource();
 	    int d = in.getDest();
 
-	    print("#ifdef __FUSED_"+s+"_"+d+"\n");
+	    p.print("#ifdef __FUSED_"+s+"_"+d+"\n");
 	    
 	    // the filter is fused with its source 
 
-	    print("\n");
+	    p.newLine();
 
-	    print("  extern "+input_type.toString()+" BUFFER_"+s+"_"+d+"[];\n");
+	    p.print("  extern "+input_type.toString()+" BUFFER_"+s+"_"+d+"[];\n");
 
-	    print("  extern volatile int HEAD_"+s+"_"+d+";\n");
-	    print("  extern volatile int TAIL_"+s+"_"+d+";\n");
+	    p.print("  extern volatile int HEAD_"+s+"_"+d+";\n");
+	    p.print("  extern volatile int TAIL_"+s+"_"+d+";\n");
 
-	    //print("  extern int HEAD_"+s+"_"+d+";\n");
-	    //print("  extern int TAIL_"+s+"_"+d+";\n");
+	    //p.print("  extern int HEAD_"+s+"_"+d+";\n");
+	    //p.print("  extern int TAIL_"+s+"_"+d+";\n");
 
-	    print("\n");
+	    p.newLine();
 
 	    // pop from fusion buffer
 
-	    print("  inline "+input_type.toString()+" __pop__"+selfID+"() {\n");
+	    p.print("  inline "+input_type.toString()+" __pop__"+selfID+"() {\n");
 
-	    print("    "+input_type.toString()+" res=BUFFER_"+s+"_"+d+"[TAIL_"+s+"_"+d+"];\n");
-	    print("    TAIL_"+s+"_"+d+"++;\n");
-	    print("    #ifndef __NOMOD_"+s+"_"+d+"\n");
-	    print("    TAIL_"+s+"_"+d+"&=__BUF_SIZE_MASK_"+s+"_"+d+";\n");
-	    print("    #endif\n");
-	    print("    return res;\n");
+	    p.print("    "+input_type.toString()+" res=BUFFER_"+s+"_"+d+"[TAIL_"+s+"_"+d+"];\n");
+	    p.print("    TAIL_"+s+"_"+d+"++;\n");
+	    p.print("    #ifndef __NOMOD_"+s+"_"+d+"\n");
+	    p.print("    TAIL_"+s+"_"+d+"&=__BUF_SIZE_MASK_"+s+"_"+d+";\n");
+	    p.print("    #endif\n");
+	    p.print("    return res;\n");
 
-	    print("  }\n");
-	    print("\n");
+	    p.print("  }\n");
+	    p.newLine();
 
 	    // peek from fusion buffer
 
-	    print("  inline "+input_type.toString()+" __peek__"+selfID+"(int offs) {\n");
-	    print("    #ifdef __NOMOD_"+s+"_"+d+"\n");
-	    print("    return BUFFER_"+s+"_"+d+"[TAIL_"+s+"_"+d+"+offs];\n");
-	    print("    #else\n");
-	    print("    return BUFFER_"+s+"_"+d+"[(TAIL_"+s+"_"+d+"+offs)&__BUF_SIZE_MASK_"+s+"_"+d+"];\n");
-	    print("    #endif\n");
+	    p.print("  inline "+input_type.toString()+" __peek__"+selfID+"(int offs) {\n");
+	    p.print("    #ifdef __NOMOD_"+s+"_"+d+"\n");
+	    p.print("    return BUFFER_"+s+"_"+d+"[TAIL_"+s+"_"+d+"+offs];\n");
+	    p.print("    #else\n");
+	    p.print("    return BUFFER_"+s+"_"+d+"[(TAIL_"+s+"_"+d+"+offs)&__BUF_SIZE_MASK_"+s+"_"+d+"];\n");
+	    p.print("    #endif\n");
 
-	    print("  }\n");
-	    print("\n");
+	    p.print("  }\n");
+	    p.newLine();
 
 	    // the source is not fused
 
-	    print("#else //!__FUSED_"+s+"_"+d+"\n");
-	    print("\n");
+	    p.print("#else //!__FUSED_"+s+"_"+d+"\n");
+	    p.newLine();
 
-	    print("  inline "+input_type.toString()+" __pop__"+selfID+"() {\n");
-
-	    if (peek_n <= pop_n) {
-		print("    return __pop_buf__"+selfID+"[__tail__"+selfID+"++];\n");
-	    } else {
-		print("    "+input_type.toString()+" res=__pop_buf__"+selfID+"[__tail__"+selfID+"];");
-		print("__tail__"+selfID+"++;");
-		print("__tail__"+selfID+"&="+(peek_buf_size-1)+";\n");
-		print("    return res;\n");
-	    }
-
-	    //print("  return __pop_buf__"+selfID+"[__pop_index__"+selfID+"++];\n");
-	    print("  }\n");
-	    print("\n");
-
-	    print("  inline "+input_type.toString()+" __peek__"+selfID+"(int offs) {\n");
+	    p.print("  inline "+input_type.toString()+" __pop__"+selfID+"() {\n");
 
 	    if (peek_n <= pop_n) {
-		print("    return __pop_buf__"+selfID+"[(__tail__"+selfID+"+offs)];\n");
+		p.print("    return __pop_buf__"+selfID+"[__tail__"+selfID+"++];\n");
 	    } else {
-		print("    return __pop_buf__"+selfID+"[(__tail__"+selfID+"+offs)&"+(peek_buf_size-1)+"];\n");
+		p.print("    "+input_type.toString()+" res=__pop_buf__"+selfID+"[__tail__"+selfID+"];");
+		p.print("__tail__"+selfID+"++;");
+		p.print("__tail__"+selfID+"&="+(peek_buf_size-1)+";\n");
+		p.print("    return res;\n");
 	    }
 
-	    //print("  return __pop_buf__"+selfID+"[__pop_index__"+selfID+" + offs];\n");
- 	    print("  }\n");
-	    print("\n");
+	    //p.print("  return __pop_buf__"+selfID+"[__pop_index__"+selfID+"++];\n");
+	    p.print("  }\n");
+	    p.newLine();
 
- 	    print("#endif\n");
-	    print("\n");
+	    p.print("  inline "+input_type.toString()+" __peek__"+selfID+"(int offs) {\n");
+
+	    if (peek_n <= pop_n) {
+		p.print("    return __pop_buf__"+selfID+"[(__tail__"+selfID+"+offs)];\n");
+	    } else {
+		p.print("    return __pop_buf__"+selfID+"[(__tail__"+selfID+"+offs)&"+(peek_buf_size-1)+"];\n");
+	    }
+
+	    //p.print("  return __pop_buf__"+selfID+"[__pop_index__"+selfID+" + offs];\n");
+ 	    p.print("  }\n");
+	    p.newLine();
+
+ 	    p.print("#endif\n");
+	    p.newLine();
 
 	} else {
        
-	    print("inline "+input_type.toString()+" __init_pop_buf__"+selfID+"() {}\n");
-	    print("inline "+input_type.toString()+" __update_pop_buf__"+selfID+"() {}\n");
+	    p.print("inline "+input_type.toString()+" __init_pop_buf__"+selfID+"() {}\n");
+	    p.print("inline "+input_type.toString()+" __update_pop_buf__"+selfID+"() {}\n");
 
-	    print("void save_peek_buffer__"+selfID+"(object_write_buffer *buf) {}\n");
-	    print("void load_peek_buffer__"+selfID+"(object_write_buffer *buf) {}\n");
+	    p.print("void save_peek_buffer__"+selfID+"(object_write_buffer *buf) {}\n");
+	    p.print("void load_peek_buffer__"+selfID+"(object_write_buffer *buf) {}\n");
 
-	    print("\n");
+	    p.newLine();
 	}
 
 	if (out != null) {
@@ -591,102 +608,102 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    
 	    // check if the destination node is fused
 	    
-	    print("#ifdef __FUSED_"+s+"_"+d+"\n");
+	    p.print("#ifdef __FUSED_"+s+"_"+d+"\n");
 
-	    print("\n");
-	    print("  extern "+output_type.toString()+" BUFFER_"+s+"_"+d+"[];\n");
-	    print("  extern int HEAD_"+s+"_"+d+";\n");
-	    print("  extern int TAIL_"+s+"_"+d+";\n");
-	    print("\n");
+	    p.newLine();
+	    p.print("  extern "+output_type.toString()+" BUFFER_"+s+"_"+d+"[];\n");
+	    p.print("  extern int HEAD_"+s+"_"+d+";\n");
+	    p.print("  extern int TAIL_"+s+"_"+d+";\n");
+	    p.newLine();
 
-	    print("  inline void __push__"+selfID+"("+output_type.toString()+" data) {\n");
+	    p.print("  inline void __push__"+selfID+"("+output_type.toString()+" data) {\n");
 
-	    print("    BUFFER_"+s+"_"+d+"[HEAD_"+s+"_"+d+"]=data;\n");
-	    print("    HEAD_"+s+"_"+d+"++;\n");
-	    print("    #ifndef __NOMOD_"+s+"_"+d+"\n");
-	    print("    HEAD_"+s+"_"+d+"&=__BUF_SIZE_MASK_"+s+"_"+d+";\n");
-	    print("    #endif\n");
+	    p.print("    BUFFER_"+s+"_"+d+"[HEAD_"+s+"_"+d+"]=data;\n");
+	    p.print("    HEAD_"+s+"_"+d+"++;\n");
+	    p.print("    #ifndef __NOMOD_"+s+"_"+d+"\n");
+	    p.print("    HEAD_"+s+"_"+d+"&=__BUF_SIZE_MASK_"+s+"_"+d+";\n");
+	    p.print("    #endif\n");
 
-	    print("  }\n");
-	    print("\n");
+	    p.print("  }\n");
+	    p.newLine();
 
 	    // if not fused use the producer's push function
 
-	    print("#else //!__FUSED_"+s+"_"+d+"\n");
-	    print("\n");
+	    p.print("#else //!__FUSED_"+s+"_"+d+"\n");
+	    p.newLine();
 
-	    print("  inline void __push__"+selfID+"("+output_type.toString()+" data) {\n");
+	    p.print("  inline void __push__"+selfID+"("+output_type.toString()+" data) {\n");
 
 	    if (dst_master != null && dst_master.equals(my_node)) {
-       		print("  "+out.push_name()+"(data);\n");		    
+       		p.print("  "+out.push_name()+"(data);\n");		    
 	    } else if (my_master != null && my_master.equals(dst_node)) {
-		print("  "+out.pop_buffer()+"["+out.pop_index()+"++] = data;\n");
+		p.print("  "+out.pop_buffer()+"["+out.pop_index()+"++] = data;\n");
 	    } else {
-		print("  "+out.producer_name()+".push(data);\n");
+		p.print("  "+out.producer_name()+".push(data);\n");
 	    }
 	    
-	    print("  }\n");
+	    p.print("  }\n");
 
-	    print("\n");
-	    print("#endif");
-	    print("\n");
+	    p.newLine();
+	    p.print("#endif");
+	    p.newLine();
 
 	}
 
 	if (in != null) {
-	    print("void "+in.push_name()+"("+input_type.toString()+" data) {}\n");
-	    print("\n");
+	    p.print("void "+in.push_name()+"("+input_type.toString()+" data) {}\n");
+	    p.newLine();
 	}
 
-	print("\n");
+	p.newLine();
 
 	if (out != null) {
 	    
-	    //print("void "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
-	    print("void "+self.getWork().getName()+"__"+selfID+"(int);\n\n");
+	    //p.print("void "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
+	    p.print("void "+getWorkName(self,selfID)+"(int);\n\n");
 
-	    print(output_type.toString()+" "+out.pop_name()+"() {\n");
-	    print("  int _tmp;\n");
+	    p.print(output_type.toString()+" "+out.pop_name()+"() {\n");
+	    p.print("  int _tmp;\n");
 	    
 	    /*
-	    print("  if ("+out.pop_index()+" == "+push_n+") {\n");
-	    print("    int tmp = __number_of_iterations_"+selfID+";\n");
-	    print("    __number_of_iterations_"+selfID+" = 1;\n");
-	    print("    "+out.pop_index()+" = 0;\n");
-            print("    "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
-	    print("    __number_of_iterations_"+selfID+" = tmp - 1;\n");
-	    print("    "+out.pop_index()+" = 0;\n");
+	    p.print("  if ("+out.pop_index()+" == "+push_n+") {\n");
+	    p.print("    int tmp = __number_of_iterations_"+selfID+";\n");
+	    p.print("    __number_of_iterations_"+selfID+" = 1;\n");
+	    p.print("    "+out.pop_index()+" = 0;\n");
+            p.print("    "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
+	    p.print("    __number_of_iterations_"+selfID+" = tmp - 1;\n");
+	    p.print("    "+out.pop_index()+" = 0;\n");
 	    */
-	    print("  if ("+out.pop_index()+" == "+(out_pop_num_iters*push_n)+") {\n");
+	    p.print("  if ("+out.pop_index()+" == "+(out_pop_num_iters*push_n)+") {\n");
 
-	    print("    "+out.pop_index()+" = 0;\n");
+	    p.print("    "+out.pop_index()+" = 0;\n");
 
-	    print("    for (_tmp = 0; _tmp < "+out_pop_num_iters+"; _tmp++) {\n");
-	    print("      //check_status__"+selfID+"();\n");
-	    print("      check_messages__"+selfID+"();\n");
-	    print("      __update_pop_buf__"+selfID+"();\n");
-	    print("      "+self.getWork().getName()+"__"+selfID+"(1);\n");
-	    print("      //send_credits__"+selfID+"();\n");
-	    print("    }\n");
+	    p.print("    for (_tmp = 0; _tmp < "+out_pop_num_iters+"; _tmp++) {\n");
+	    p.print("      //check_status__"+selfID+"();\n");
+	    p.print("      check_messages__"+selfID+"();\n");
+	    p.print("      __update_pop_buf__"+selfID+"();\n");
+	    p.print("      "+getWorkName(self,selfID)+"(1);\n");
+	    p.print("      //send_credits__"+selfID+"();\n");
+	    p.print("    }\n");
 
-	    print("    "+out.pop_index()+" = 0;\n");
+	    p.print("    "+out.pop_index()+" = 0;\n");
 
 
 	    /*
-	    print("    int tmp = __number_of_iterations_"+selfID+";\n");
-	    print("    __number_of_iterations_"+selfID+" = "+out_pop_num_iters+";\n");
-	    print("    "+out.pop_index()+" = 0;\n");
-            print("    "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
-	    print("    __number_of_iterations_"+selfID+" = tmp - "+out_pop_num_iters+";\n");
-	    print("    "+out.pop_index()+" = 0;\n");
+	    p.print("    int tmp = __number_of_iterations_"+selfID+";\n");
+	    p.print("    __number_of_iterations_"+selfID+" = "+out_pop_num_iters+";\n");
+	    p.print("    "+out.pop_index()+" = 0;\n");
+            p.print("    "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
+	    p.print("    __number_of_iterations_"+selfID+" = tmp - "+out_pop_num_iters+";\n");
+	    p.print("    "+out.pop_index()+" = 0;\n");
 	    */
 
-	    print("  }\n");
+	    p.print("  }\n");
 
-	    print("  return "+out.pop_buffer()+"["+out.pop_index()+"++];\n");
+	    p.print("  return "+out.pop_buffer()+"["+out.pop_index()+"++];\n");
 	    
-	    print("}\n");
-	    print("\n");
+	    p.print("}\n");
+	    p.newLine();
 	}
 
 	//  +=============================+
@@ -704,8 +721,6 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	//  +=============================+
 	//  | Work Function (int ____n)   |
 	//  +=============================+
-
-	
 
        	JBlock block = new JBlock(null, new JStatement[0], null);
 
@@ -757,6 +772,20 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 				      new JLocalVariableExpression(null,counter));
 
 
+	if (self instanceof SIRPredefinedFilter) {
+	    // body is run in loop for number of iterations scheduled.
+	    // call "predefinedFilterWork" with filter, names of
+	    // peek, push, pop routines/macros for use by filter,
+	    p.print("void "+ getWorkName(self,selfID)+"(int ____n) {");
+	    p.indent();
+	    p.newLine();
+	    predefinedFilterWork((SIRPredefinedFilter)self,"__peek__"+selfID,
+				 "__push__"+selfID, "__pop__"+selfID, selfID);
+	    p.outdent();
+	    p.print("}"); p.newLine(); p.newLine();
+	} else {
+
+
 	block.addStatement(new JForStatement(null, init, cond, decr, work.getBody(),
 					     null));
 
@@ -783,50 +812,49 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	JFormalParameter param = new JFormalParameter(null, 0, CStdType.Integer, "____n", true);
 	JFormalParameter params[] = new JFormalParameter[1];
 	params[0] = param;
+		JMethodDeclaration work_n = 
+			new JMethodDeclaration(null, 
+					at.dms.kjc.Constants.ACC_PUBLIC,
+					CStdType.Void,
+					work.getName(),
+					params,
+					CClassType.EMPTY,
+					block,
+					null,
+					null);
 
-	JMethodDeclaration work_n = 
-	    new JMethodDeclaration(null, 
-				   at.dms.kjc.Constants.ACC_PUBLIC,
-				   CStdType.Void,
-				   work.getName(),
-				   params,
-				   CClassType.EMPTY,
-				   block,
-				   null,
-				   null);
-
-	work_n.accept(this);
-
+		work_n.accept(this);
+	}
 	
 
 	//  +=============================+
 	//  | Check Messages              |
 	//  +=============================+
 
-	print("\nvoid check_messages__"+selfID+"() {\n");
+	p.print("\nvoid check_messages__"+selfID+"() {\n");
 
-	print("  message *msg, *last = NULL;\n");
+	p.print("  message *msg, *last = NULL;\n");
 
 
 	if (restrictedExecution) {
-	    print("  while (__credit_"+selfID+" <= __counter_"+selfID+") {\n");
+	    p.print("  while (__credit_"+selfID+" <= __counter_"+selfID+") {\n");
 	}
 	
 	{
 	    Iterator i = receives_from.iterator();
 	    while (i.hasNext()) {
 		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("  if (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n    handle_message__"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n  } // if\n");
+		p.print("  if (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n    handle_message__"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n  } // if\n");
 	    }
 	}
 
 	if (restrictedExecution) {
-	    print("  } // while \n");
+	    p.print("  } // while \n");
 	}
 
 
-	print("  for (msg = __msg_stack_"+selfID+"; msg != NULL; msg = msg->next) {\n");
-	print("    if (msg->execute_at <= __counter_"+selfID+") {\n");
+	p.print("  for (msg = __msg_stack_"+selfID+"; msg != NULL; msg = msg->next) {\n");
+	p.print("    if (msg->execute_at <= __counter_"+selfID+") {\n");
 
 
 	SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
@@ -851,7 +879,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		if (!method_name.startsWith("<") && 
 		    !method_name.endsWith(">")) {
 
-		    print("      if (msg->method_id == "+i+") {\n");
+		    p.print("      if (msg->method_id == "+i+") {\n");
 
 		    for (int t = 0; t < methods.length; t++) {
 		    
@@ -865,64 +893,64 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
 			    for (int a = 0; a < param_count; a++) {
 				if (portal_method_params[a].toString().equals("int")) {
-				    print("        int p"+a+" = msg->get_int_param();\n");
+				    p.print("        int p"+a+" = msg->get_int_param();\n");
 				}
 				if (portal_method_params[a].toString().equals("float")) {
-				    print("        float p"+a+" = msg->get_float_param();\n");
+				    p.print("        float p"+a+" = msg->get_float_param();\n");
 				}
 			    }
 
-			    print("        "+thread_method_name+"__"+selfID+"(");
+			    p.print("        "+thread_method_name+"__"+selfID+"(");
 			    for (int a = 0; a < param_count; a++) {
-				if (a > 0) print(", ");
-				print("p"+a);
+				if (a > 0) p.print(", ");
+				p.print("p"+a);
 			    }
-			    print(");\n");
+			    p.print(");\n");
 			}
 		    }
-		    print("      }\n");
+		    p.print("      }\n");
 		}
 	    }
 	    
-	    print("      if (last != NULL) { \n");
-	    print("        last->next = msg->next;\n");
-	    print("      } else {\n");
-	    print("        __msg_stack_"+selfID+" = msg->next;\n");
-	    print("      }\n");
-	    print("      delete msg;\n");
+	    p.print("      if (last != NULL) { \n");
+	    p.print("        last->next = msg->next;\n");
+	    p.print("      } else {\n");
+	    p.print("        __msg_stack_"+selfID+" = msg->next;\n");
+	    p.print("      }\n");
+	    p.print("      delete msg;\n");
 
 	}
 
-	print("    } else { last = msg; }\n");
- 	print("  } // for \n");
+	p.print("    } else { last = msg; }\n");
+ 	p.print("  } // for \n");
 
-	print("}\n");
+	p.print("}\n");
 	
 	//  +=============================+
 	//  | Handle Message              |
 	//  +=============================+
 
 	
-	print("\nvoid handle_message__"+selfID+"(netsocket *sock) {\n");
-	print("  int size = sock->read_int();\n");
+	p.print("\nvoid handle_message__"+selfID+"(netsocket *sock) {\n");
+	p.print("  int size = sock->read_int();\n");
 	
 	if (restrictedExecution) {
-	    print("  i (size == -1) { // a credit message received\n");
-	    print("    __credit_"+selfID+" = sock->read_int();\n");
-	    print("    return;\n");
-	    print("  };\n");
+	    p.print("  i (size == -1) { // a credit message received\n");
+	    p.print("    __credit_"+selfID+" = sock->read_int();\n");
+	    p.print("    return;\n");
+	    p.print("  };\n");
 	}
 
-	print("  int index = sock->read_int();\n");
-	print("  int iteration = sock->read_int();\n");
-	print("  fprintf(stderr,\"Message receieved! thread: "+selfID+", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
+	p.print("  int index = sock->read_int();\n");
+	p.print("  int iteration = sock->read_int();\n");
+	p.print("  fprintf(stderr,\"Message receieved! thread: "+selfID+", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
 
-	print("  if (iteration > 0) {\n");
-	print("    message *msg = new message(size, index, iteration);\n");
-	print("    msg->read_params(sock);\n");
-	print("    __msg_stack_"+selfID+" = msg->push_on_stack(__msg_stack_"+selfID+");\n");
-	print("    return;\n");
-	print("  }\n");
+	p.print("  if (iteration > 0) {\n");
+	p.print("    message *msg = new message(size, index, iteration);\n");
+	p.print("    msg->read_params(sock);\n");
+	p.print("    __msg_stack_"+selfID+" = msg->push_on_stack(__msg_stack_"+selfID+");\n");
+	p.print("    return;\n");
+	p.print("  }\n");
 
 	//SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
 
@@ -946,7 +974,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		if (!method_name.startsWith("<") && 
 		    !method_name.endsWith(">")) {
 
-		    print("  if (index == "+i+") {\n");
+		    p.print("  if (index == "+i+") {\n");
 
 		    for (int t = 0; t < methods.length; t++) {
 		    
@@ -960,27 +988,27 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
 			    for (int a = 0; a < param_count; a++) {
 				if (portal_method_params[a].toString().equals("int")) {
-				    print("    int p"+a+" = sock->read_int();\n");
+				    p.print("    int p"+a+" = sock->read_int();\n");
 				}
 				if (portal_method_params[a].toString().equals("float")) {
-				    print("    float p"+a+" = sock->read_float();\n");
+				    p.print("    float p"+a+" = sock->read_float();\n");
 				}
 			    }
 
-			    print("    "+thread_method_name+"__"+selfID+"(");
+			    p.print("    "+thread_method_name+"__"+selfID+"(");
 			    for (int a = 0; a < param_count; a++) {
-				if (a > 0) print(", ");
-				print("p"+a);
+				if (a > 0) p.print(", ");
+				p.print("p"+a);
 			    }
-			    print(");\n");
+			    p.print(");\n");
 			}
 		    }
-		    print("  }\n");
+		    p.print("  }\n");
 		}
 	    }
 	}
 
-	print("}\n");
+	p.print("}\n");
 
 	
 	//  +=============================+
@@ -996,29 +1024,29 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
 	    int sourcePhase = constraint.getSourceSteadyExec();
 
-	    print("int __init_"+selfID+"_"+receiver+" = "+constraint.getSourceInit()+";\n");
-	    print("int __source_phase_"+selfID+"_"+receiver+" = "+sourcePhase+";\n");
-	    print("int __dest_phase_"+selfID+"_"+receiver+" = "+constraint.getDestSteadyExec()+";\n");
-	    print("int __current_"+selfID+"_"+receiver+" = 0;\n");
-	    print("int __dest_offset_"+selfID+"_"+receiver+" = 0;\n");
+	    p.print("int __init_"+selfID+"_"+receiver+" = "+constraint.getSourceInit()+";\n");
+	    p.print("int __source_phase_"+selfID+"_"+receiver+" = "+sourcePhase+";\n");
+	    p.print("int __dest_phase_"+selfID+"_"+receiver+" = "+constraint.getDestSteadyExec()+";\n");
+	    p.print("int __current_"+selfID+"_"+receiver+" = 0;\n");
+	    p.print("int __dest_offset_"+selfID+"_"+receiver+" = 0;\n");
 
 
-	    print("int __dependency_"+selfID+"_"+receiver+"[] = {");
+	    p.print("int __dependency_"+selfID+"_"+receiver+"[] = {");
 
 	    int y;
 	    
 	    for (y = 0; y < sourcePhase - 1; y++) {
-		print(constraint.getDependencyData(y)+",");
+		p.print(constraint.getDependencyData(y)+",");
 	    }
 
-	    print(constraint.getDependencyData(y)+"};\n");
+	    p.print(constraint.getDependencyData(y)+"};\n");
 
-	    print("\n");
+	    p.newLine();
 	}
 	
-	print("\ninline void send_credits__"+selfID+"() {\n");
+	p.print("\ninline void send_credits__"+selfID+"() {\n");
 
-	print("  int tmp;\n");
+	p.print("  int tmp;\n");
 
 	    
 
@@ -1036,49 +1064,64 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
 		// message and credit is sent downstream
 
-		print("  if (__counter_"+selfID+" > __init_"+selfID+"_"+receiver+") {\n");
-		print("    tmp = __dependency_"+selfID+"_"+receiver+"[__current_"+selfID+"_"+receiver+"];\n");
-		print("    if (tmp > 0) {\n");
-		print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(-1);\n");
-		print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(tmp + __dest_offset_"+selfID+"_"+receiver+");\n");
-		print("    }\n");
-		print("    __current_"+selfID+"_"+receiver+" = (__current_"+selfID+"_"+receiver+" + 1) % __source_phase_"+selfID+"_"+receiver+";\n");
-		print("    if (__current_"+selfID+"_"+receiver+" == 0) __dest_offset_"+selfID+"_"+receiver+" += __dest_phase_"+selfID+"_"+receiver+";\n");
-		print("  }\n");   
+		p.print("  if (__counter_"+selfID+" > __init_"+selfID+"_"+receiver+") {\n");
+		p.print("    tmp = __dependency_"+selfID+"_"+receiver+"[__current_"+selfID+"_"+receiver+"];\n");
+		p.print("    if (tmp > 0) {\n");
+		p.print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(-1);\n");
+		p.print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(tmp + __dest_offset_"+selfID+"_"+receiver+");\n");
+		p.print("    }\n");
+		p.print("    __current_"+selfID+"_"+receiver+" = (__current_"+selfID+"_"+receiver+" + 1) % __source_phase_"+selfID+"_"+receiver+";\n");
+		p.print("    if (__current_"+selfID+"_"+receiver+" == 0) __dest_offset_"+selfID+"_"+receiver+" += __dest_phase_"+selfID+"_"+receiver+";\n");
+		p.print("  }\n");   
 	    } else {
 
 		// message and credit is sent upstream
 	    
-		print("  if (__counter_"+selfID+" == 0) {\n");
-		print("    __msg_sock_"+selfID+"_"+receiver+"out->write_int(-1);\n");
-		print("    __msg_sock_"+selfID+"_"+receiver+"out->write_int(__init_"+selfID+"_"+receiver+");\n");
-		print("  } else {\n");   
-		print("    tmp = __dependency_"+selfID+"_"+receiver+"[__current_"+selfID+"_"+receiver+"];\n");
-		print("    if (tmp > 0) {\n");
-		print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(-1);\n");
-		print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(tmp + __dest_offset_"+selfID+"_"+receiver+");\n");
-		print("    }\n");   
-		print("    __current_"+selfID+"_"+receiver+" = (__current_"+selfID+"_"+receiver+" + 1) % __source_phase_"+selfID+"_"+receiver+";\n");
-		print("    if (__current_"+selfID+"_"+receiver+" == 0) __dest_offset_"+selfID+"_"+receiver+" += __dest_phase_"+selfID+"_"+receiver+";\n");
-		print("  }\n");   
+		p.print("  if (__counter_"+selfID+" == 0) {\n");
+		p.print("    __msg_sock_"+selfID+"_"+receiver+"out->write_int(-1);\n");
+		p.print("    __msg_sock_"+selfID+"_"+receiver+"out->write_int(__init_"+selfID+"_"+receiver+");\n");
+		p.print("  } else {\n");   
+		p.print("    tmp = __dependency_"+selfID+"_"+receiver+"[__current_"+selfID+"_"+receiver+"];\n");
+		p.print("    if (tmp > 0) {\n");
+		p.print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(-1);\n");
+		p.print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(tmp + __dest_offset_"+selfID+"_"+receiver+");\n");
+		p.print("    }\n");   
+		p.print("    __current_"+selfID+"_"+receiver+" = (__current_"+selfID+"_"+receiver+" + 1) % __source_phase_"+selfID+"_"+receiver+";\n");
+		p.print("    if (__current_"+selfID+"_"+receiver+" == 0) __dest_offset_"+selfID+"_"+receiver+" += __dest_phase_"+selfID+"_"+receiver+";\n");
+		p.print("  }\n");   
 	    
 	    }
 	}
 
 
-	print("}\n");
+	p.print("}\n");
 
 	//  +=============================+
 	//  | Cluster Main                |
 	//  +=============================+
 
-	Vector run = gen.generateRunFunction(filter.getInit().getName()+"__"+selfID, filter.getWork().getName()+"__"+selfID);
+	Vector run = gen.generateRunFunction(filter.getInit().getName()+"__"+selfID,
+					     getWorkName(filter,selfID));
 
 	for (int i = 0; i < run.size(); i++) {
-	    print(run.elementAt(i).toString());
+	    p.print(run.elementAt(i).toString());
 	}
        
 	createFile(selfID);
+    }
+
+    // work function name  should change to include them)
+    // If not a predefined filter then the work method should have a useful
+    // unique name.  If a predefined filter, the work method may be called
+    // "UNINITIALIZED DUMMY METHOD" (A Kopi2Sir bug?) so give it a reasonable name.
+    private static String getWorkName(SIRFilter f, int id) {
+	if (f instanceof SIRPredefinedFilter) {
+		//System.err.println("FlatIRToCluster Predef work name = "+f.getName()+"__work__"+id);		
+	    return f.getName()+"__work__"+id;
+	} else {
+		//System.err.println("FlatIRToCluster Filter work name = "+f.getWork().getName()+"__"+id);
+	    return f.getWork().getName()+"__"+id;
+	}
     }
 
     public void visitPhasedFilter(SIRPhasedFilter self,
@@ -1094,7 +1137,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 			   ".cpp");
 	try {
 	    FileWriter fw = new FileWriter("thread" + thread_id + ".cpp");
-	    fw.write(str.toString());
+	    fw.write(p.getString());
 	    fw.close();
 	}
 	catch (Exception e) {
@@ -1120,19 +1163,19 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
 	if (type.toString().endsWith("Portal")) return;
 
-        newLine();
-        // print(CModifier.toString(modifiers));
+        p.newLine();
+        // p.print(CModifier.toString(modifiers));
 
 	//only stack allocate singe dimension arrays
 	if (expr instanceof JNewArrayExpression) {
 	    //print the basetype
-	    print(((CArrayType)type).getBaseType());
-	    print(" ");
+	    typePrint(((CArrayType)type).getBaseType());
+	    p.print(" ");
 	    //print the field identifier
-	    print(ident);
+	    p.print(ident);
 	    //print the dims
 	    stackAllocateArray(ident);
-	    print(";");
+	    p.print(";");
 	    return;
 	} else if (expr instanceof JArrayInitializer) {
 	    declareInitializedArray(type, ident, expr);
@@ -1140,25 +1183,25 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	}
 
 	if (type.toString().compareTo("boolean") == 0) {
-	    print("bool");
+	    p.print("bool");
 	} else {
-	    print(type);
+	    typePrint(type);
 	}
 
-        print(" ");
-        print(ident);
-	print("__"+selfID);
+        p.print(" ");
+        p.print(ident);
+	p.print("__"+selfID);
 
         if (expr != null) {
-            print("\t= ");
+            p.print("\t= ");
 	    expr.accept(this);
         }   //initialize all fields to 0
 	else if (type.isOrdinal())
-	    print (" = 0");
+	    p.print (" = 0");
 	else if (type.isFloatingPoint())
-	    print(" = 0.0f");
+	    p.print(" = 0.0f");
 
-        print(";/* "+type+" size: "+byteSize(type)+" */\n");
+        p.print(";/* "+type+" size: "+byteSize(type)+" */\n");
     }
 
     /**
@@ -1171,6 +1214,14 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
                                        JFormalParameter[] parameters,
                                        CClassType[] exceptions,
                                        JBlock body) {
+        if (filter != null && filter instanceof SIRPredefinedFilter &&
+	    self.getName().startsWith("init") && !declOnly) {
+        	predefinedFilterInit(self, returnType, ident+"__"+selfID,
+				     selfID);
+        	return;
+        }
+
+        p.print(" ");
 	//System.out.println(ident);
 	
 	//in the raw path we do not want to print the 
@@ -1192,34 +1243,34 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    return;
 	}
 
-        if (helper_package == null) newLine();
+        if (helper_package == null) p.newLine();
 
-	// print(CModifier.toString(modifiers));
-	print(returnType);
-	print(" ");
-	if (global) print("__global__");
-	if (helper_package != null) print(helper_package+"_");
-	print(ident);
+	// p.print(CModifier.toString(modifiers));
+	typePrint(returnType);
+	p.print(" ");
+	if (global) p.print("__global__");
+	if (helper_package != null) p.print(helper_package+"_");
+	p.print(ident);
 	// this breaks initpath
 	if (helper_package == null && !global && 
 	    !ident.startsWith("__Init_Path_")) {
-	    print("__"+selfID);
+	    p.print("__"+selfID);
 	}
-	print("(");
+	p.print("(");
 	int count = 0;
 	
 	for (int i = 0; i < parameters.length; i++) {
 	    if (count != 0) {
-		print(", ");
+		p.print(", ");
 	    }
 	    parameters[i].accept(this);
 	    count++;
 	}
-	print(")");
+	p.print(")");
 	
 	//print the declaration then return
 	if (declOnly) {
-	    print(";");
+	    p.print(";");
 	    return;
 	}
 	
@@ -1227,44 +1278,43 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
 	//for testing: print out comments.
 	{
-	    print("/* Method declaration comments:\n");
+	    p.print("/* Method declaration comments:\n");
 	    JavaStyleComment[]comments;
 	    comments=body.getComments();
 	    if(comments!=null){
 		for (int i = 0; i < comments.length; i++){
 		    JavaStyleComment c = comments[i];
-		    print(c.getText());
+		    p.print(c.getText());
 		    if(c.isLineComment() || c.hadSpaceAfter()){
-			print("\n");
+			p.newLine();
 		    }
 		}
 	    }
-	    print(" */\n");
+	    p.print(" */\n");
 	}
 
 	//set is init for dynamically allocating arrays...
 	if (filter != null &&
-	    self.getName().startsWith("init"))
+	    self.getName().startsWith("init")) {
 	    isInit = true;
-
-        print(" ");
-        if (body != null) 
-	    body.accept(this);
-        else 
-            print(";");
-
-        newLine();
+	}
+    if (body != null) { 
+      	body.accept(this);
+    } else { 
+        p.print(";");
+    }
+    p.newLine();
 	isInit = false;
 	method = null;
     }
 
 /* Doesn't seem to be used
     private void dummyWork(int push) {
-	print("{\n");
-	print("  int i;\n");
-	print("  for(i = 0; i < " + push + "; i++)\n");
-	print("    static_send(i);\n");
-	print("}\n");
+	p.print("{\n");
+	p.print("  int i;\n");
+	p.print("  for(i = 0; i < " + push + "; i++)\n");
+	p.print("    static_send(i);\n");
+	p.print("}\n");
     }
 */
     
@@ -1299,13 +1349,13 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	     * I don't see why we need a new instance -- A.D.
 	     * why not
 	     *
-	    print("[");
+	    p.print("[");
 	    dims[i].accept(this);
-	    print("]");
+	    p.print("]");
 	    */ /*
 	    FlatIRToCluster toC = new FlatIRToCluster();
 	    dims[i].accept(toC);
-	    print("[" + toC.getString() + "]"); 
+	    p.print("[" + toC.getString() + "]"); 
 	}
     }
 */
@@ -1319,7 +1369,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
                                         String ident,
                                         JExpression expr) {
 
-        // print(CModifier.toString(modifiers));
+        // p.print(CModifier.toString(modifiers));
 	//	System.out.println(ident);
 	//System.out.println(expr);
 
@@ -1333,13 +1383,13 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    //new expression, otherwise don't print anything.
 	    if (expr instanceof JNewArrayExpression) {
 		//print the type
-		print(((CArrayType)type).getBaseType());
-		print(" ");
+		typePrint(((CArrayType)type).getBaseType());
+		p.print(" ");
 		//print the field identifier
-		print(ident);
+		p.print(ident);
 		//print the dims
 		stackAllocateArray(ident);
-		print(";");
+		p.print(";");
 		return;
 	    }
 	    else if (dims != null)
@@ -1351,23 +1401,23 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	}
 	
 	if (expr!=null) {
-	    printLocalType(type);
+	    typePrint(type);
 	} else {
-	    print(type);
+	    p.print("null");
 	}	    
-        print(" ");
-	print(ident);
+        p.print(" ");
+	p.print(ident);
         if (expr != null) {
-	    print(" = ");
+	    p.print(" = ");
 	    expr.accept(this);
 	}
 	else if (type.isOrdinal())
-	    print (" = 0");
+	    p.print (" = 0");
 	else if (type.isFloatingPoint())
-	    print(" = 0.0f");
+	    p.print(" = 0.0f");
 
-        print(";/* "+type+" */");
-        //print(";\n");
+        p.print(";/* "+type+" */");
+        //p.print(";\n");
 
     }
 
@@ -1406,42 +1456,42 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	forLoopHeader++;
 
 	boolean oldStatementContext = statementContext;
-        print("for (");
+        p.print("for (");
 	statementContext = false; // expreeions here separated by ';'
         if (init != null) {
             init.accept(this);
 	    //the ; will print in a statement visitor
 	}
 
-        print(" ");
+        p.print(" ");
         if (cond != null) {
             cond.accept(this);
 	}
 	//cond is an expression so print the ;
-        print("; ");
+        p.print("; ");
 	if (incr != null) {
 	    FlatIRToCluster l2c = new FlatIRToCluster(filter);
             incr.accept(l2c);
 	    // get String
-	    String str = l2c.getString();
+	    String str = l2c.p.getString();
 	    // leave off the trailing semicolon if there is one
 	    if (str.endsWith(";")) {
-		print(str.substring(0, str.length()-1));
+		p.print(str.substring(0, str.length()-1));
 	    } else { 
-		print(str);
+		p.print(str);
 	    }
         }
 
 	forLoopHeader--;
-        print(") ");
+        p.print(") ");
 
-        print("{");
+        p.print("{");
 	statementContext = true;
-        pos += TAB_SIZE;
+        p.indent();
         body.accept(this);
-        pos -= TAB_SIZE;
-        newLine();
-        print("}");
+        p.outdent();
+        p.newLine();
+        p.print("}");
 	statementContext = oldStatementContext;
     }
 
@@ -1459,19 +1509,19 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
             if (body[i] instanceof JIfStatement &&
                 i < body.length - 1 &&
                 !(body[i + 1] instanceof JReturnStatement)) {
-                newLine();
+                p.newLine();
             }
             if (body[i] instanceof JReturnStatement && i > 0) {
-                newLine();
+                p.newLine();
             }
 
-            newLine();
+            p.newLine();
             body[i].accept(this);
 
             if (body[i] instanceof JVariableDeclarationStatement &&
                 i < body.length - 1 &&
                 !(body[i + 1] instanceof JVariableDeclarationStatement)) {
-                newLine();
+                p.newLine();
             }
         }
 	statementContext = oldStatementContext;
@@ -1492,8 +1542,8 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	//if we are inside a for loop header, we need to print 
 	//the ; of an empty statement
 	if (forLoopHeader > 0) {
-	    newLine();
-	    print(";");
+	    p.newLine();
+	    p.print(";");
 	}
     }
 
@@ -1596,13 +1646,13 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
                                     String ident) {
 	Utils.fail("Name Expression");
 	
-	print("(");
+	p.print("(");
         if (prefix != null) {
             prefix.accept(this);
-            print("->");
+            p.print("->");
         }
-        print(ident);
-	print(")");
+        p.print(ident);
+	p.print(")");
     }
 
     /**
@@ -1635,9 +1685,9 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    //Do not generate this!
 	    
 	    /*
-	    print(Util.staticNetworkReceivePrefix());
+	    p.print(Util.staticNetworkReceivePrefix());
 	    visitArgs(args,0);
-	    print(Util.staticNetworkReceiveSuffix(args[0].getType()));
+	    p.print(Util.staticNetworkReceiveSuffix(args[0].getType()));
 	    */
 
 
@@ -1647,25 +1697,25 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	if (prefix instanceof JTypeNameExpression) {
 	    JTypeNameExpression nexp = (JTypeNameExpression)prefix;
 	    String name = nexp.getType().toString();
-	    if (!name.equals("java.lang.Math")) print(name+"_");
+	    if (!name.equals("java.lang.Math")) p.print(name+"_");
 	}
 
-        print(ident);
+        p.print(ident);
 	
 	if (!Utils.isMathMethod(prefix, ident) && 
 	    ident.indexOf("::")==-1) {
 	    // don't rename the built-in math functions
 	    // don't rename calls to static functions
 
-	    if (method_names.contains(ident)) print("__"+selfID);
+	    if (method_names.contains(ident)) p.print("__"+selfID);
 	}
-        print("(");
+        p.print("(");
 	
 	//if this method we are calling is the call to a structure 
 	//receive method that takes a pointer, we have to add the 
 	//address of operator
 	if (ident.startsWith(RawExecutionCode.structReceiveMethodPrefix))
-	    print("&");
+	    p.print("&");
 
         int i = 0;
         /* Ignore prefix, since it's just going to be a Java class name.
@@ -1675,7 +1725,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
         }
         */
         visitArgs(args, i);
-        print(")");
+        p.print(")");
     }
 
     /**
@@ -1702,36 +1752,36 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
                                      String ident)
     {
         if (ident.equals(JAV_OUTER_THIS)) {// don't generate generated fields
-            print(left.getType().getCClass().getOwner().getType() + "->this");
+            p.print(left.getType().getCClass().getOwner().getType() + "->this");
             return;
         }
         int		index = ident.indexOf("_$");
         if (index != -1) {
-            print(ident.substring(0, index));      // local var
+            p.print(ident.substring(0, index));      // local var
         } else {
-	    print("(");
+	    p.print("(");
 
 	    if (global) {
 		if (left instanceof JThisExpression) {
-		    print("__global__"+ident);
+		    p.print("__global__"+ident);
 		} else {
 		    left.accept(this);
-		    print(".");
-		    print(ident);
+		    p.print(".");
+		    p.print(ident);
 		}
 	    } else if (left instanceof JThisExpression) {
-		print(ident+"__"+selfID);
+		p.print(ident+"__"+selfID);
 	    } else if (left instanceof JTypeNameExpression &&
 		  ((JTypeNameExpression)left).getType().toString().equals("TheGlobal")) {
-		print("__global__");
-		print(ident);
+		p.print("__global__");
+		p.print(ident);
 	    } else {
 		left.accept(this);
-		print(".");
-		print(ident);
+		p.print(".");
+		p.print(ident);
 	    }
 
-	    print(")");
+	    p.print(")");
         }
     }
 
@@ -1751,7 +1801,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
                                           JExpression right) {
 
 	if (left.getType() != null && left.getType().toString().endsWith("Portal")) {
-	    print("/* void */");
+	    p.print("/* void */");
 	    return;
 	}
 
@@ -1763,7 +1813,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    printLParen();
 	    statementContext = false;
 	    left.accept(this);
-	    print(" = ");
+	    p.print(" = ");
 	    right.accept(this);
 	    statementContext = oldStatementContext;
 	    printRParen();
@@ -1791,31 +1841,31 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		printLParen();
 		statementContext = false;
 		left.accept(this);
-		print(" = ");
+		p.print(" = ");
 		right.accept(this);
 		statementContext = oldStatementContext;
 		printRParen();
 		return;
 	    }
-	    print("{\n");
-	    print("int ");
+	    p.print("{\n");
+	    p.print("int ");
 	    //print the index var decls
 	    for (int i = 0; i < dims.length -1; i++)
-		print(RawExecutionCode.ARRAY_COPY + i + ", ");
-	    print(RawExecutionCode.ARRAY_COPY + (dims.length - 1));
-	    print(";\n");
+		p.print(RawExecutionCode.ARRAY_COPY + i + ", ");
+	    p.print(RawExecutionCode.ARRAY_COPY + (dims.length - 1));
+	    p.print(";\n");
 	    for (int i = 0; i < dims.length; i++) {
-		print("for (" + RawExecutionCode.ARRAY_COPY + i + " = 0; " + RawExecutionCode.ARRAY_COPY + i +  
+		p.print("for (" + RawExecutionCode.ARRAY_COPY + i + " = 0; " + RawExecutionCode.ARRAY_COPY + i +  
 		      " < " + dims[i] + "; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
 	    }
 	    left.accept(this);
 	    for (int i = 0; i < dims.length; i++)
-		print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
-	    print(" = ");
+		p.print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
+	    p.print(" = ");
 	    right.accept(this);
 	    for (int i = 0; i < dims.length; i++)
-		print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
-	    print(";\n}\n");
+		p.print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
+	    p.print(";\n}\n");
 	    return;
 	}
 
@@ -1827,8 +1877,8 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
 	    //get the basetype and print it 
 	    CType baseType = ((CArrayType)((JNewArrayExpression)right).getType()).getBaseType();
-	    print(baseType);
-	    print(" ");
+	    typePrint(baseType);
+	    p.print(" ");
 	    //print the identifier
 	    
 	    //Before the ISCA hack this was how we printed the var ident
@@ -1843,14 +1893,14 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		
 		//HACK FOR THE ICSA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		//turn all array access into access of a pointer pointing to the array
-		print(ident + "_Alloc");
+		p.print(ident + "_Alloc");
 		
 		//print the dims of the array
 		stackAllocateArray(ident);
 
 		//print the pointer def and the assignment to the array
-		print(";\n");
-		print(baseType + " *" + ident + " = " + ident + "_Alloc");
+		p.print(";\n");
+		p.print(baseType + " *" + ident + " = " + ident + "_Alloc");
 	    }
 	    else {
 		//the way it used to be before the hack
@@ -1872,12 +1922,12 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
         printLParen();
 	statementContext = false;
         left.accept(this);
-        print(" = ");
+        p.print(" = ");
         right.accept(this);
 	statementContext = oldStatementContext;
         printRParen();
 
-	print("/*"+left.getType()+"*/");
+	p.print("/*"+left.getType()+"*/");
     }
 
     //stack allocate the array
@@ -1887,7 +1937,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    ArrayDim.findDim(filter, ident);
 	
 	for (int i = 0; i < dims.length; i++)
-	    print("[" + dims[i] + "]");
+	    p.print("[" + dims[i] + "]");
 	return;
     }
     
@@ -1918,18 +1968,18 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
                                       SIRLatency latency)
     {
 	/*
-	print("//send_" + iname + "_" + ident + "(");
+	p.print("//send_" + iname + "_" + ident + "(");
         portal.accept(this);
-        print(", ");
+        p.print(", ");
         latency.accept(this);
         if (params != null)
             for (int i = 0; i < params.length; i++)
                 if (params[i] != null)
                 {
-                    print(", ");
+                    p.print(", ");
                     params[i].accept(this);
                 }
-        print(");");
+        p.print(");");
 	*/
 
 	String ident;
@@ -1946,7 +1996,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
 		ident = ((JStringLiteral)params[1]).stringValue();
 
-		print("/*");
+		p.print("/*");
 
 		for (int y = 0;; y++) {
 		    // this causes only msg param to be output
@@ -1954,19 +2004,19 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		    params[2].accept(this);
 		    if (PRINT_MSG_PARAM == -1) break; // no more params!
 		    num_params++;
-		    print(",");
+		    p.print(",");
 		}
 
-		print(" num_params: "+num_params+"*/\n");
+		p.print(" num_params: "+num_params+"*/\n");
 
 		/*
 		try {
 
-		    print(((JStringLiteral)params[1]).stringValue());
+		    p.print(((JStringLiteral)params[1]).stringValue());
 
 		    // params[1].accept(this); // name of the portal method! 
 		    
-		    print("\n");
+		    p.newLine();
 
 		    for (int y = 0;; y++) {
 
@@ -2012,33 +2062,33 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		}
 		*/
 
-		print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+size+");\n");
+		p.print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+size+");\n");
 
-		print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+index+");\n");
+		p.print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+index+");\n");
 
 		if (latency instanceof SIRLatencyMax) {
 
 		    int max = ((SIRLatencyMax)latency).getMax();
 
-		    //print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+max+");");
+		    //p.print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+max+");");
 
 		    SIRFilter sender = (SIRFilter)NodeEnumerator.getOperator(selfID);
 		    SIRFilter receiver = (SIRFilter)NodeEnumerator.getOperator(dst);
 
 		    if (LatencyConstraints.isMessageDirectionDownstream(sender, receiver)) {
 			
-			print("__msg_sock_"+selfID+"_"+dst+"out->write_int(sdep_"+selfID+"_"+dst+"->getDstPhase4SrcPhase(__counter_"+selfID+"+"+max+"));\n");
+			p.print("__msg_sock_"+selfID+"_"+dst+"out->write_int(sdep_"+selfID+"_"+dst+"->getDstPhase4SrcPhase(__counter_"+selfID+"+"+max+"));\n");
 
 		    } else {
 		    
 					    
-			print("__msg_sock_"+selfID+"_"+dst+"out->write_int(sdep_"+selfID+"_"+dst+"->getSrcPhase4DstPhase(__counter_"+selfID+"+"+max+"));\n");
+			p.print("__msg_sock_"+selfID+"_"+dst+"out->write_int(sdep_"+selfID+"_"+dst+"->getSrcPhase4DstPhase(__counter_"+selfID+"+"+max+"));\n");
 		    
 		    }
 
 		} else {
 
-		    print("__msg_sock_"+selfID+"_"+dst+"out->write_int(-1);\n");
+		    p.print("__msg_sock_"+selfID+"_"+dst+"out->write_int(-1);\n");
 		}
 		
 		if (params != null) {
@@ -2046,20 +2096,20 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
 			String method_params_string=method_params[t]
 			    .toString();
-			print("__msg_sock_" + selfID + "_" + dst
+			p.print("__msg_sock_" + selfID + "_" + dst
 			      + "out->write_");
 			if(method_params_string == "int"
 			   || method_params_string == "float"){
-			    print (method_params_string + "(");
+			    p.print (method_params_string + "(");
 			}else{
-			    print ("unsupported/* " + method_params_string
+			    p.print ("unsupported/* " + method_params_string
 				   + " */ (");
 }
 // 			if (method_params[t].toString().equals("int")) {
-// 			    print("__msg_sock_"+selfID+"_"+dst+"out->write_int(");
+// 			    p.print("__msg_sock_"+selfID+"_"+dst+"out->write_int(");
 // 			}
 // 			if (method_params[t].toString().equals("float")) {
-// 			    print("__msg_sock_"+selfID+"_"+dst+"out->write_float(");
+// 			    p.print("__msg_sock_"+selfID+"_"+dst+"out->write_float(");
 // 			}
 
 			// print out the parameter!
@@ -2067,7 +2117,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 			params[2].accept(this);
 			PRINT_MSG_PARAM = -1;
 
-			print(");\n");
+			p.print(");\n");
 		    }
 		}
 		
@@ -2091,9 +2141,9 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 
 	NetStream in = RegisterStreams.getFilterInStream(filter);
 	//print(in.consumer_name()+".peek(");
-	print("__peek__"+selfID+"(");
+	p.print("__peek__"+selfID+"(");
 	num.accept(this);
-	print(")");
+	p.print(")");
 
 	//Utils.fail("FlatIRToCluster should see no peek expressions");
     }
@@ -2103,8 +2153,8 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
     {
 
 	NetStream in = RegisterStreams.getFilterInStream(filter);
-	//print(in.consumer_name()+".pop()");
-	print("__pop__"+selfID+"()");
+	//p.print(in.consumer_name()+".pop()");
+	p.print("__pop__"+selfID+"()");
 
 	//Utils.fail("FlatIRToCluster should see no pop expressions");
     }
@@ -2116,15 +2166,15 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 			    JExpression val) 
     {
 	
-	print("__push__"+selfID+"(");
+	p.print("__push__"+selfID+"(");
 	val.accept(this);
-	print(")");
+	p.print(")");
 
 	//NetStream out = RegisterStreams.getFilterOutStream(filter);
-	//print(out.producer_name()+".push(");
+	//p.print(out.producer_name()+".push(");
 
-	//print(Util.staticNetworkSendPrefix(tapeType));
-	//print(Util.staticNetworkSendSuffix());
+	//p.print(Util.staticNetworkSendPrefix(tapeType));
+	//p.print(Util.staticNetworkSendSuffix());
 
     }
 
@@ -2134,16 +2184,16 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 			  JExpression val) 
     {
 
-	print("__push__"+selfID+"(");
+	p.print("__push__"+selfID+"(");
 	val.accept(this);
-	print(")");
+	p.print(")");
 
 
 	//turn the push statement into a call of
 	//the structure's push method
-	//print("push" + tapeType + "(&");
+	//p.print("push" + tapeType + "(&");
 	//val.accept(this);
-	//print(")");
+	//p.print(")");
     }
     
 
@@ -2155,27 +2205,27 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
 	
 	for (int i = 0; i < dims.length; i++) {
-	    print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
+	    p.print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
 		  RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
 		  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
 	}
 
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-	    print("{\n");
-	    //	    print(Util.CSTOVAR + " = ");
+	    p.print("{\n");
+	    //	    p.print(Util.CSTOVAR + " = ");
 	    val.accept(this);
 	    for (int i = 0; i < dims.length; i++) {
-		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+		p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
 	    }
-	    print(";\n}\n");
+	    p.print(";\n}\n");
 	} else {
-	    print("{");
-	    print("static_send((" + baseType + ") ");
+	    p.print("{");
+	    p.print("static_send((" + baseType + ") ");
 	    val.accept(this);
 	    for (int i = 0; i < dims.length; i++) {
-		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+		p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
 	    }
-	    print(");\n}\n");
+	    p.print(");\n}\n");
 	}
     }
     
@@ -2196,11 +2246,11 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 					  SIRStream receiver, 
 					  JMethodDeclaration[] methods)
     {
-        print("register_receiver(");
+        p.print("register_receiver(");
         portal.accept(this);
-        print(", data->context, ");
-        print(self.getItable().getVarDecl().getIdent());
-        print(", LATENCY_BEST_EFFORT);");
+        p.print(", data->context, ");
+        p.print(self.getItable().getVarDecl().getIdent());
+        p.print(", LATENCY_BEST_EFFORT);");
         // (But shouldn't there be a latency field in here?)
     }
     
@@ -2208,11 +2258,11 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
                                         String fn,
                                         SIRLatency latency)
     {
-        print("register_sender(this->context, ");
-        print(fn);
-        print(", ");
+        p.print("register_sender(this->context, ");
+        p.print(fn);
+        p.print(", ");
         latency.accept(this);
-        print(");");
+        p.print(");");
     }
 
 
@@ -2230,12 +2280,12 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
                                       String ident) {
         String type_string = type.toString();
 	if (type_string.equals("java.lang.String")) 
-	    print("char*");
+	    p.print("char*");
 	else 
-	    print(type);
+	    typePrint(type);
         if (ident.indexOf("$") == -1) {
-            print(" ");
-            print(ident);
+            p.print(" ");
+            p.print(ident);
         }
     }
 
@@ -2264,27 +2314,131 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
     // PROTECTED METHODS
     // ----------------------------------------------------------------------
 
-
-    protected void printLocalType(CType s) 
-    {
-	if (s instanceof CArrayType){
-	    //	    print(((CArrayType)s).getElementType()+"*");
-	    print(((CArrayType)s).getElementType());
-	    for(int i = 0, b = ((CArrayType)s).getArrayBound();
-		i < b; i++){
-		print("*");
-	    }
+    private void predefinedFilterWork(SIRPredefinedFilter self,
+				      String peekname, String pushname,
+				      String popname, int selfID) {
+	// Caller has printed function name and an iteration parameter ____n
+	// Generate loop to execute body of this function ____n times, 
+	// In loop generate specialized code for function.
+	p.indent();
+	p.print ("// predefinedFilterWork " + self.getIdent()); p.newLine();
+	p.print ("for (; 0 < ____n; ____n--) {");
+	p.outdent(); p.newLine();
+	if (filter instanceof SIRFileReader) {
+	    String theType = ""+filter.getOutputType();
+	    // pop into a location.
+	    // Is the cast sufficisnt for the bit type?
+	    p.print(theType + " v;"); p.newLine();
+	    p.print("fwrite(" +
+		  "&v, " +
+		  "sizeof(v), " +
+		  "1, " +
+		  fpName(filter) +
+		  ");"); p.newLine();
+		p.print(pushname + "(v);"); p.newLine();
+	} else if (filter instanceof SIRFileWriter) {
+	    String theType = ""+filter.getInputType();
+	    // pop into a location.
+	    // Is the cast sufficisnt for the bit type?
+	    p.print(theType + " v = (" + theType +")(" + popname + "());"); p.newLine();
+	    p.print("fwrite(" +
+		  "&v, " +
+		  "sizeof(v), " +
+		  "1, " +
+		  fpName(filter) +
+		  ");"); p.newLine();
+	} else if (filter instanceof SIRIdentity) {
+	    throw new Error("Unsupported predefined filter " 
+				+filter.getIdent());
+	} else if (filter instanceof SIRDummySink) {
+	    // TODO:  get right exception for unimplemented.
+	    throw new Error("Unsupported predefined filter " 
+				+filter.getIdent());
+	} else if (filter instanceof SIRDummySource) {
+	    throw new Error("Unsupported predefined filter " 
+				+filter.getIdent());
+	} else {
+	    // TODO:  get right unchecked exception for unextended code...
+	    throw new Error("Unknown predefined filter " 
+				+filter.getIdent());
 	}
-        else if (s.getTypeID() == TID_BOOLEAN)
-            print("int");
-        else if (s.toString().endsWith("Portal"))
-	    // ignore the specific type of portal in the C library
-	    print("portal");
-	else
-            print(s.toString());
+        p.print ("}");		// end of for loop.
+	p.indent();
+	p.newLine();
+	p.outdent();		// end of function body
+    }
+    
+    private void startParameterlessFunction(String return_type, 
+					    String function_name) {
+	p.print(return_type);
+	p.print(" " + function_name + "() {"); p.newLine();
+	p.indent();
     }
 
+    private void endFunction() {
+	p.outdent();
+	p.print ("}"); p.newLine(); p.newLine();
+    }
 
+    private static String fpName(SIRFilter f) {
+	// assuming that a filter manages at most one C- stype file
+	// pointer, what is that file pointer named?
+	return f.getIdent()+"__fp";
+    }
+
+    private void predefinedFilterInit(JMethodDeclaration self, 
+				      CType return_type,
+				      String function_name,
+				      int selfID) {
+	// No wrapper code around init since may need to create defns at file 
+	// level.  We assume that the code generator will continue to
+	// generate code for init before code for work, so scope of
+	// any file-level code will include the work function.
+	//
+	// should replace this if sequence...
+
+    	p.print ("// predefinedFilterInit " + filter.getIdent()); p.newLine();
+	if (filter instanceof SIRFileReader) {
+	    SIRFileReader filter = (SIRFileReader)this.filter;
+	    p.print ("FILE* "+fpName(filter)+";"); p.newLine(); p.newLine();
+	    startParameterlessFunction(""+return_type, function_name);
+	    p.print (fpName(filter) + " = fopen(\"" + filter.getFileName() +
+		   "\", \"r\");"); p.newLine();
+	    p.print ("assert (" + fpName(filter) + ");"); p.newLine();
+	    endFunction();
+	    
+	    startParameterlessFunction("void", getWorkName(filter,selfID)+"__close");
+	    p.print ("fclose("+fpName(filter)+");"); p.newLine();
+	    endFunction();
+	} else if (filter instanceof SIRFileWriter) {
+	    SIRFileWriter filter = (SIRFileWriter)this.filter;
+	    p.print ("FILE* "+fpName(filter)+";"); p.newLine(); p.newLine();
+	    startParameterlessFunction(""+return_type, function_name);
+	    p.print (fpName(filter) + " = fopen(\"" + filter.getFileName() +
+		   "\", \"w\");"); p.newLine();
+	    p.print ("assert (" + fpName(filter) + ");"); p.newLine();
+	    endFunction();
+
+	    startParameterlessFunction("void", getWorkName(filter,selfID)+"__close");
+	    p.print ("fclose("+fpName(filter)+");"); p.newLine();
+	    endFunction();
+	} else if (filter instanceof SIRIdentity) {
+	    throw new Error("Unsupported predefined filter " 
+				+filter.getIdent());
+	} else if (filter instanceof SIRDummySink) {
+	    // TODO:  get right exception for unimplemented.
+	    throw new Error("Unsupported predefined filter " 
+				+filter.getIdent());
+	} else if (filter instanceof SIRDummySource) {
+	    throw new Error("Unsupported predefined filter " 
+				+filter.getIdent());
+	} else {
+	    // TODO:  get right unchecked exception for unextended code...
+	    throw new Error("Unknown predefined filter " 
+				+filter.getIdent());
+	}
+
+    }
     // ----------------------------------------------------------------------
     // UNUSED STREAM VISITORS
     // ----------------------------------------------------------------------

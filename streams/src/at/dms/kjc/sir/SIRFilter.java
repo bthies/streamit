@@ -12,7 +12,7 @@ import java.util.HashMap;
  * (no prework function or phases), and only a single phase in its
  * work stage.
  *
- * @version $Id: SIRFilter.java,v 1.36 2005-08-22 02:12:39 thies Exp $
+ * @version $Id: SIRFilter.java,v 1.37 2005-11-17 22:49:09 dimock Exp $
  */
 public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     /* Internal invariant: the init phases array is null or has zero
@@ -28,7 +28,7 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
         super(ident);
         setPhases(new JMethodDeclaration[1]);
 	// placeholder for I/O rates
-        getPhases()[0] = new JMethodDeclaration();
+        getPhases()[0] = new JMethodDeclaration("SIRFilter placeholder");
     }
     
     public SIRFilter(SIRContainer parent,

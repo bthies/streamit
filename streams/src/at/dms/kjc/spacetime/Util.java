@@ -100,7 +100,7 @@ public class Util {
 	for (int i = 0; i < dims.length; i++) {
 	    TraceIRtoC ttoc = new TraceIRtoC();
 	    dims[i].accept(ttoc);
-	    ret[i] = ttoc.getString();
+	    ret[i] = ttoc.getPrinter().getString();
 	}
 	return ret;
     }

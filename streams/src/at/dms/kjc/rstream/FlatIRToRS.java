@@ -46,19 +46,17 @@ public class FlatIRToRS extends ToC
     
     public FlatIRToRS() 
     {
-	this.str = new StringWriter();
-        this.p = new TabbedPrintWriter(str);
-	doloops = new HashMap();
-	this.newArrayExprs = null;
+    	super();
+    	doloops = new HashMap();
+    	this.newArrayExprs = null;
     }
     
     
     public FlatIRToRS(NewArrayExprs newArrayExprs)
     {
-	this.str = new StringWriter();
-        this.p = new TabbedPrintWriter(str);
-	doloops = new HashMap();
-	this.newArrayExprs = newArrayExprs;
+    	super();
+    	doloops = new HashMap();
+    	this.newArrayExprs = newArrayExprs;
     }
     
     
@@ -93,7 +91,7 @@ public class FlatIRToRS extends ToC
         printLParen();
 	statementContext = false;
         left.accept(this);
-        print(" = ");
+        p.print(" = ");
         right.accept(this);
 	statementContext = oldStatementContext;
         printRParen();
@@ -107,7 +105,7 @@ public class FlatIRToRS extends ToC
                                       CType type,
                                       String ident,
                                       JExpression expr) {
-	newLine();
+	p.newLine();
 	assert !(expr instanceof JNewArrayExpression) :
 	    "New Array expression in field declaration";
 
@@ -139,27 +137,27 @@ public class FlatIRToRS extends ToC
 	    
 	    //print the = for the absarray(); not used anymore
 	    //if (KjcOptions.absarray)
-	    //print(" = ");
+	    //p.print(" = ");
 	    
 	    //visit the new array expression
 	    expr.accept(this);
 	}
 	else {
-	    print(type);
-	    print(" ");
-	    print(ident);
+	    typePrint(type);
+	    p.print(" ");
+	    p.print(ident);
 	    
 	    if (expr != null) {
-		print("\t= ");
+		p.print("\t= ");
 		expr.accept(this);
 	    }   //initialize all fields to 0
 	    else if (type.isOrdinal())
-		print (" = 0");
+		p.print (" = 0");
 	    else if (type.isFloatingPoint())
-		print(" = 0.0f");
+		p.print(" = 0.0f");
 	    
 	}
-	print(";");
+	p.print(";");
     }
 
 
@@ -204,11 +202,11 @@ public class FlatIRToRS extends ToC
 	    brackets = brackets + "[]";
 	
 	//current type should now be the base type
-	print(currentType);
-	print(" ");
-	print(ident);
+	typePrint(currentType);
+	p.print(" ");
+	p.print(ident);
 	//if (KjcOptions.absarray)  old absarray stuff
-	//    print(brackets);
+	//    p.print(brackets);
 	return dim;
     }
     
@@ -234,9 +232,9 @@ public class FlatIRToRS extends ToC
 	    brackets = brackets + "*";
 	
 	//current type should now be the base type
-	print(currentType);
-	print(" ");
-	print(brackets);
+	typePrint(currentType);
+	p.print(" ");
+	p.print(brackets);
     }
     
 
@@ -298,7 +296,7 @@ public class FlatIRToRS extends ToC
 	    
 	    
 	    //if (KjcOptions.absarray) { old abs array() stuff
-	    //print(" = ");
+	    //p.print(" = ");
 	    //}
 	    
 	    if (expr != null)
@@ -306,22 +304,22 @@ public class FlatIRToRS extends ToC
 
 	}
 	else {
-	    print(type);
+	    typePrint(type);
 	    
-	    print(" ");
-	    print(ident);
+	    p.print(" ");
+	    p.print(ident);
 	    if (expr != null) {
-		print(" = ");
+		p.print(" = ");
 		expr.accept(this);
 	    } else {
 		if (type.isOrdinal())
-		    print (" = 0");
+		    p.print (" = 0");
 		else if (type.isFloatingPoint())
-		    print(" = 0.0f");
+		    p.print(" = 0.0f");
 	    }
 	    
 	}
-	print(";");
+	p.print(";");
     }
 
     /**
@@ -340,33 +338,33 @@ public class FlatIRToRS extends ToC
 	    //we are generating abstract arrays
 	    //print the absarray call with the dimensions...
 	    /*old absarray stuff 
-	      print(" absarray" + dims.length + "(");
+	      p.print(" absarray" + dims.length + "(");
 	    dims[0].accept(this);
 	    for (int i = 1; i < dims.length; i++) {
-		print(",");
+		p.print(",");
 		dims[i].accept(this);
 	    }
-	    print(")");
+	    p.print(")");
 	    */
 	    //new abs array declaration
 	    assert dims.length > 0;	    
-	    print("[[");
+	    p.print("[[");
 	    dims[0].accept(this);
 	    for (int i = 1; i < dims.length; i++) {
 		  // RMR { syntax change in rstream 2.1: multidimmensional arrays do not use commas
-		  // print(", ");
-		  print("]][[");
+		  // p.print(", ");
+		  p.print("]][[");
 	        // } RMR
 		dims[i].accept(this);
 	    }
-	    print("]]");
+	    p.print("]]");
 	}
 	else {
 	    //normal c arrays
 	    for (int i = 0; i < dims.length; i++) {
-		print("[");
+		p.print("[");
 		dims[i].accept(this);
-		print("]");
+		p.print("]");
 	    }
 	}
     }
@@ -390,22 +388,22 @@ public class FlatIRToRS extends ToC
 	if (self instanceof Jrstream_pr)
 	    // RMR { did the rstream C language extensions change?
 	    // replace rstream_pr with a pragma so that rstream 2.1 doesn't barf
-	    //print("rstream_pr ");
+	    //p.print("rstream_pr ");
 	    {
-		  print("#pragma res parallel");
-		  newLine();
+		  p.print("#pragma res parallel");
+		  p.newLine();
 	    }
 	    // } RMR
 
-        print("{");
-        pos += TAB_SIZE;
+        p.print("{");
+        p.indent();
         visitCompoundStatement(self.getStatementArray());
         if (comments != null) {
             visitComments(comments);
         }
-        pos -= TAB_SIZE;
-        newLine();
-        print("}");
+        p.outdent();
+        p.newLine();
+        p.print("}");
     }
 
 
@@ -426,19 +424,19 @@ public class FlatIRToRS extends ToC
 	    return;
 	}
 
-        newLine();
+        p.newLine();
 	// print(CModifier.toString(modifiers));
-	print(returnType);
-	print(" ");
+	typePrint(returnType);
+	p.print(" ");
 	
 	//just print initPath() instead of initPath<Type>
 	//if (ident.startsWith("initPath"))
-	//    print("initPath"); 
+	//    p.print("initPath"); 
 	//else
 	
-	print(ident);
+	p.print(ident);
 	
-	print("(");
+	p.print("(");
 	int count = 0;
 	
 	// RMR { for the main function, do not use abstract array syntax
@@ -451,32 +449,32 @@ public class FlatIRToRS extends ToC
 
 	for (int i = 0; i < parameters.length; i++) {
 	    if (count != 0) {
-		print(", ");
+		p.print(", ");
 	    }
 	    parameters[i].accept(this);
 	    count++;
 	}
-	print(")");
+	p.print(")");
 
 	// RMR { restore saved KjcOption for abstract arrays
 	KjcOptions.absarray = savedKjcOption_absarray;
 	// } RMR
 	//print the declaration then return
 	if (declOnly) {
-	    print(";");
+	    p.print(";");
 	    return;
 	}
 
 	//set the current method we are visiting
 	method = self;
 	
-	print(" ");
+	p.print(" ");
         if (body != null) 
 	    body.accept(this);
         else 
-            print(";");
+            p.print(";");
 
-        newLine();
+        p.newLine();
 	method = null;
     }
     
@@ -496,37 +494,37 @@ public class FlatIRToRS extends ToC
 	if (self.staticBounds())
 	    staticDoLoops++;
 
-	print("doloop (");
+	p.print("doloop (");
 	statementContext = false; // expressions here
-	print(self.getInduction().getType() + " ");
-	print(self.getInduction().getIdent());
-	print(" = ");
+	p.print(self.getInduction().getType() + " ");
+	p.print(self.getInduction().getIdent());
+	p.print(" = ");
 	self.getInitValue().accept(this);
-	print("; ");
+	p.print("; ");
 	// RMR { did the rstream C language extensions change?
 	// the following were added so that rstream 2.1 doesn't barf
 	// the output will now more closely resemble a for loop
-	print(self.getInduction().getIdent());
+	p.print(self.getInduction().getIdent());
 	// note assumption: always less than
-	print(" < ");
+	p.print(" < ");
 	// } RMR
 	self.getCondValue().accept(this);
-	print("; ");
+	p.print("; ");
 	// RMR { added so that rstream 2.1 doesn't barf; see note above
-	print(self.getInduction().getIdent());
+	p.print(self.getInduction().getIdent());
 	// note assumption: always increment
-	print(" += ");
+	p.print(" += ");
 	// } RMR
 	self.getIncrValue().accept(this);
-	print(") ");
+	p.print(") ");
 
 	
 	statementContext = true; // statement(s) here 
-	newLine();
-        pos += TAB_SIZE;
+	p.newLine();
+        p.indent();
         self.getBody().accept(this);
-        pos -= TAB_SIZE;
-        newLine();
+        p.outdent();
+        p.newLine();
 	statementContext = oldStatementContext;
     }
     
@@ -551,43 +549,43 @@ public class FlatIRToRS extends ToC
 	boolean oldStatementContext = statementContext;
 	statementContext = false; // initially expressions, then statement
 
-	print("for (");
+	p.print("for (");
 	
 	if (init != null) {
 	    init.accept(this);
 	    //the ; will print in a statement visitor
 	}
 	
-	print(" ");
+	p.print(" ");
 	if (cond != null) {
 	    cond.accept(this);
 	}
 	//cond is an expression so print the ;
-	print("; ");
+	p.print("; ");
 	if (incr != null) {
 	    FlatIRToRS l2c = new FlatIRToRS(newArrayExprs);
 	    l2c.doloops = this.doloops;
 	    incr.accept(l2c);
 	    // get String
-	    String str = l2c.getString();
+	    String str = l2c.getPrinter().getString();
 	    // leave off the trailing semicolon if there is one
 	    if (str.endsWith(";")) {
-		print(str.substring(0, str.length()-1));
+		p.print(str.substring(0, str.length()-1));
 	    } else { 
-		print(str);
+		p.print(str);
 	    }
 	}
 	forLoopHeader--;
-	print(") ");
+	p.print(") ");
 	
 	statementContext = true;
-        //print("{");
-	newLine();
-        pos += TAB_SIZE;
+        //p.print("{");
+	p.newLine();
+        p.indent();
         body.accept(this);
-        pos -= TAB_SIZE;
-        newLine();
-	//print("}");
+        p.outdent();
+        p.newLine();
+	//p.print("}");
 	statementContext = oldStatementContext;
     }
 
@@ -612,15 +610,15 @@ public class FlatIRToRS extends ToC
 		
 		// RMR { syntax change in rstream 2.1: multidimmensional arrays do not use commas
 		// access = access + toRS.getString() + ", ";
-		access = access + toRS.getString() + "]][[";
+		access = access + toRS.getPrinter().getString() + "]][[";
 		// } RMR
 		exp = arr.getPrefix();
 	    }
 	    //visit the var access
 	    exp.accept(this);
-	    print(access);
+	    p.print(access);
 	    accessor.accept(this);
-	    print("]]");
+	    p.print("]]");
 	}
 	
 	else {
@@ -632,14 +630,14 @@ public class FlatIRToRS extends ToC
 		FlatIRToRS toRS = new FlatIRToRS(newArrayExprs);
 		arr.getAccessor().accept(toRS);
 		
-		access = access + "[" + toRS.getString() + "]";
+		access = access + "[" + toRS.getPrinter().getString() + "]";
 		exp = arr.getPrefix();
 	    }
 	    exp.accept(this);
-	    print(access);
-	    print("[");
+	    p.print(access);
+	    p.print("[");
 	    accessor.accept(this);
-	    print("]");
+	    p.print("]");
 	}
     }
     
@@ -655,17 +653,17 @@ public class FlatIRToRS extends ToC
 	assert (!ident.equals(Names.receiveMethod)) :
 	    "Error: RStream code generation should not see network receive method";
 	
-        print(ident);
+        p.print(ident);
 	
 	//we want single precision versions of the math functions
 	if (Utils.isMathMethod(prefix, ident)) 
-	    print("f");
+	    p.print("f");
 	    
-	print("(");
+	p.print("(");
 	if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 if (i != 0) {
-                    print(", ");
+                    p.print(", ");
                 }
 		/* this is a hack but there is no other way to do it,
 		   if we are currently visiting fscanf and we are at the 3rd
@@ -673,11 +671,11 @@ public class FlatIRToRS extends ToC
 		   to the fscanf
 		*/
 		if (ident.equals(Names.fscanf) && i == 2)
-		    print("&");
+		    p.print("&");
                 args[i].accept(this);
             }
         }
-        print(")");
+        p.print(")");
     }
 
     public JExpression passParentheses(JExpression exp) 
@@ -721,12 +719,12 @@ public class FlatIRToRS extends ToC
 	    //assert false : "Should not be printing an array type";
         }
         else if (s.getTypeID() == TID_BOOLEAN)
-            print("int");
+            p.print("int");
         else if (s.toString().endsWith("Portal"))
 	    // ignore the specific type of portal in the C library
-	    print("portal");
+	    p.print("portal");
 	else
-            print(s.toString());
+            p.print(s.toString());
     }
     
 
@@ -776,25 +774,25 @@ public class FlatIRToRS extends ToC
 	assert bound > 0;
 
 	//print out a loop that will perform the element-wise copy
-	print("{\n");
-	print("int ");
+	p.print("{\n");
+	p.print("int ");
 	//print the index var decls
 	for (int i = 0; i < bound -1; i++)
-	    print(FlatIRToRS.ARRAY_COPY + i + ", ");
-	print(FlatIRToRS.ARRAY_COPY + (bound - 1));
-	print(";\n");
+	    p.print(FlatIRToRS.ARRAY_COPY + i + ", ");
+	p.print(FlatIRToRS.ARRAY_COPY + (bound - 1));
+	p.print(";\n");
 	for (int i = 0; i < bound; i++) {
-	    print("for (" + FlatIRToRS.ARRAY_COPY + i + " = 0; " + FlatIRToRS.ARRAY_COPY + i +  
+	    p.print("for (" + FlatIRToRS.ARRAY_COPY + i + " = 0; " + FlatIRToRS.ARRAY_COPY + i +  
 		  " < " + dims[i + diff] + "; " + FlatIRToRS.ARRAY_COPY + i + "++)\n");
 	}
 	left.accept(this);
 	for (int i = 0; i < bound; i++)
-	    print("[" + FlatIRToRS.ARRAY_COPY + i + "]");
-	print(" = ");
+	    p.print("[" + FlatIRToRS.ARRAY_COPY + i + "]");
+	p.print(" = ");
 	right.accept(this);
 	for (int i = 0; i < bound; i++)
-	    print("[" + FlatIRToRS.ARRAY_COPY + i + "]");
-	print(";\n}\n");
+	    p.print("[" + FlatIRToRS.ARRAY_COPY + i + "]");
+	p.print(";\n}\n");
 	return;
     }
     
@@ -824,7 +822,7 @@ public class FlatIRToRS extends ToC
 	if (comment.hadSpaceAfter())
 	    str = str + " ";
 	
-	print(str);
+	p.print(str);
     }
     
 
@@ -846,12 +844,12 @@ public class FlatIRToRS extends ToC
 	printLParen();
 	boolean oldStatementContext = statementContext;
 	statementContext = false;
-        print("(");
-	print(type);
-        print(")");
-        print("(");
+        p.print("(");
+	typePrint(type);
+        p.print(")");
+        p.print("(");
 	expr.accept(this);
-	print(")");
+	p.print(")");
 	statementContext = oldStatementContext;
         printRParen();
     }
@@ -921,8 +919,8 @@ public class FlatIRToRS extends ToC
 	//if we are inside a for loop header, we need to print 
 	//the ; of an empty statement
 	if (forLoopHeader > 0) {
-	    newLine();
-	    print(";");
+	    p.newLine();
+	    p.print(";");
 	}
     }
 
@@ -942,13 +940,13 @@ public class FlatIRToRS extends ToC
 	
 // 	//Entry point of the visitor
 
-// 	//print("#include <stdlib.h>\n");
-// 	//print("#include <math.h>\n\n");
+// 	//p.print("#include <stdlib.h>\n");
+// 	//p.print("#include <math.h>\n\n");
 
 // 	//if there are structures in the code, include
 // 	//the structure definition header files
 // 	if (StrToRStream.structures.length > 0) 
-// 	    print("#include \"structs.h\"\n");
+// 	    p.print("#include \"structs.h\"\n");
 	
 // 	printExterns();
 // 	//Visit fields declared in the filter class
@@ -968,17 +966,17 @@ public class FlatIRToRS extends ToC
 // 	    methods[i].accept(this);	
 // 	}
 	
-// 	print("int main() {\n");
+// 	p.print("int main() {\n");
 // 	//generate array initializer blocks for fields...
-// 	printFieldArrayInits();
+// 	p.printFieldArrayInits();
 	
 // 	//execute the main function
-// 	print(Names.main + "();\n");
+// 	p.print(Names.main + "();\n");
 	
 // 	//return 0 even though this should never return!
-// 	print("  return 0;\n");
+// 	p.print("  return 0;\n");
 // 	//closes main()
-// 	print("}\n");
+// 	p.print("}\n");
        
 // 	createFile();
 //     }
@@ -1072,33 +1070,33 @@ public class FlatIRToRS extends ToC
 //     //external functions
 //     protected void printExterns() 
 //     {
-// 	print("#define EXTERNC \n\n");
-// 	print("extern EXTERNC int printf(char[], ...);\n");
-// 	print("extern EXTERNC int fprintf(int, char[], ...);\n");
-// 	print("extern EXTERNC int fopen(char[], char[]);\n");
-// 	print("extern EXTERNC int fscanf(int, char[], ...);\n");
-// 	print("extern EXTERNC float acosf(float);\n"); 
-// 	print("extern EXTERNC float asinf(float);\n"); 
-// 	print("extern EXTERNC float atanf(float);\n"); 
-// 	print("extern EXTERNC float atan2f(float, float);\n"); 
-// 	print("extern EXTERNC float ceilf(float);\n"); 
-// 	print("extern EXTERNC float cosf(float);\n"); 
-// 	print("extern EXTERNC float sinf(float);\n"); 
-// 	print("extern EXTERNC float coshf(float);\n"); 
-// 	print("extern EXTERNC float sinhf(float);\n"); 
-// 	print("extern EXTERNC float expf(float);\n"); 
-// 	print("extern EXTERNC float fabsf(float);\n"); 
-// 	print("extern EXTERNC float modff(float, float *);\n"); 
-// 	print("extern EXTERNC float fmodf(float, float);\n"); 
-// 	print("extern EXTERNC float frexpf(float, int *);\n"); 
-// 	print("extern EXTERNC float floorf(float);\n"); 	     
-// 	print("extern EXTERNC float logf(float);\n"); 
-// 	print("extern EXTERNC float log10f(float, int);\n"); 
-// 	print("extern EXTERNC float powf(float, float);\n"); 
-// 	print("extern EXTERNC float rintf(float);\n"); 
-// 	print("extern EXTERNC float sqrtf(float);\n"); 
-// 	print("extern EXTERNC float tanhf(float);\n"); 
-// 	print("extern EXTERNC float tanf(float);\n");
+// 	p.print("#define EXTERNC \n\n");
+// 	p.print("extern EXTERNC int printf(char[], ...);\n");
+// 	p.print("extern EXTERNC int fprintf(int, char[], ...);\n");
+// 	p.print("extern EXTERNC int fopen(char[], char[]);\n");
+// 	p.print("extern EXTERNC int fscanf(int, char[], ...);\n");
+// 	p.print("extern EXTERNC float acosf(float);\n"); 
+// 	p.print("extern EXTERNC float asinf(float);\n"); 
+// 	p.print("extern EXTERNC float atanf(float);\n"); 
+// 	p.print("extern EXTERNC float atan2f(float, float);\n"); 
+// 	p.print("extern EXTERNC float ceilf(float);\n"); 
+// 	p.print("extern EXTERNC float cosf(float);\n"); 
+// 	p.print("extern EXTERNC float sinf(float);\n"); 
+// 	p.print("extern EXTERNC float coshf(float);\n"); 
+// 	p.print("extern EXTERNC float sinhf(float);\n"); 
+// 	p.print("extern EXTERNC float expf(float);\n"); 
+// 	p.print("extern EXTERNC float fabsf(float);\n"); 
+// 	p.print("extern EXTERNC float modff(float, float *);\n"); 
+// 	p.print("extern EXTERNC float fmodf(float, float);\n"); 
+// 	p.print("extern EXTERNC float frexpf(float, int *);\n"); 
+// 	p.print("extern EXTERNC float floorf(float);\n"); 	     
+// 	p.print("extern EXTERNC float logf(float);\n"); 
+// 	p.print("extern EXTERNC float log10f(float, int);\n"); 
+// 	p.print("extern EXTERNC float powf(float, float);\n"); 
+// 	p.print("extern EXTERNC float rintf(float);\n"); 
+// 	p.print("extern EXTERNC float sqrtf(float);\n"); 
+// 	p.print("extern EXTERNC float tanhf(float);\n"); 
+// 	p.print("extern EXTERNC float tanf(float);\n");
 	     
 //     }
 

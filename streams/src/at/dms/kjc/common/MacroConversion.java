@@ -88,7 +88,8 @@ public class MacroConversion {
      * will be used to generate code for macro expression.
      */
     public static void doConvert(JMethodDeclaration decl, boolean declOnly, CodeGenerator toC) {
-	// replace actual method with nothing
+    	CodegenPrintWriter p = toC.getPrinter();
+    // replace actual method with nothing
 	if (!declOnly) { return; }
 
 	// print status
@@ -108,21 +109,21 @@ public class MacroConversion {
 	    });
 	
 	// "#define foo"
-	toC.print("\n#define ");
-	toC.print(decl.getName());
+	p.print("\n#define ");
+	p.print(decl.getName());
 
 	// param names (without types!)
-	toC.print("(");
+	p.print("(");
 	JFormalParameter[] params = decl.getParameters();
 	for (int i = 0; i < params.length; i++) {
-	    if (i!=0) { toC.print(", "); }
-	    toC.print(params[i].getIdent());
+	    if (i!=0) { p.print(", "); }
+	    p.print(params[i].getIdent());
 	}
-	toC.print(") ");
+	p.print(") ");
 	
 	// body
 	expr.accept(toC);
-	toC.print("\n");
+	p.print("\n");
     }
 
     /**

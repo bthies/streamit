@@ -65,7 +65,11 @@ class ClusterCodeGenerator {
 	steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
 
 	if (oper instanceof SIRFilter) {
+	    if (oper instanceof SIRPredefinedFilter) {
+		work_function = ((SIRFilter)oper).getName()+"__work__"+id;
+	    } else {
 	    work_function = ((SIRFilter)oper).getWork().getName()+"__"+id;
+	    }
 	} 
 
 	if (oper instanceof SIRSplitter) {

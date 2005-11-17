@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClassNameType.java,v 1.6 2003-11-13 10:46:10 thies Exp $
+ * $Id: CClassNameType.java,v 1.7 2005-11-17 22:49:08 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -54,11 +54,21 @@ public class CClassNameType extends CClassType {
 
   /**
    * Transforms this type to a string
+   * 
+   * For any class type except string, get back the java class type.
+   * For string, get back "char*"
    */
   public String toString() {
-    return qualifiedName != null ?
-      qualifiedName.replace('/', '.') :
-      super.toString();
+	  if (qualifiedName == null) {
+		  return super.toString();
+	  } else {
+		  String fullName = qualifiedName.replace('/', '.');
+		  if (fullName.equals("java.lang.String")) {
+			  return "char*";
+		  } else {
+			  return fullName;
+		  }
+	  }
   }
 
   /**

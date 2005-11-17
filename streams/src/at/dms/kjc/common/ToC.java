@@ -11,8 +11,8 @@ import at.dms.util.Utils;
 //import java.util.Iterator;
 //import java.util.LinkedList;
 //import java.util.HashMap;
-import java.io.*;
-import at.dms.compiler.*;
+//import java.io.*;
+//import at.dms.compiler.*;
 //import at.dms.kjc.sir.lowering.*;
 //import java.util.Hashtable;
 //import at.dms.util.SIRPrinter;
@@ -35,7 +35,7 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 
     public ToC() { super(); }
 
-    public ToC(TabbedPrintWriter p) { super(p); }
+    public ToC(CodegenPrintWriter p) { super(p); }
     
     /**
      * Prints initialization for an array with static initializer, e.g., "int A[2] = {1,2};"
@@ -45,13 +45,13 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
      */
     protected void declareInitializedArray(CType type, String ident, JExpression expr) {
 	// note this calls print(CType), not print(String)
-	print(((CArrayType)type).getBaseType()); 
+	typePrint(((CArrayType)type).getBaseType());  
 	
-	print(" " + ident);
+	p.print(" " + ident);
 	JArrayInitializer init = (JArrayInitializer)expr;
 	while (true) {
 	    int length = init.getElems().length;
-	    print("[" + length + "]");
+	    p.print("[" + length + "]");
 	    if (length==0) { 
 		// hope that we have a 1-dimensional array in
 		// this case.  Otherwise we won't currently
@@ -67,9 +67,9 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 		break;
 	    }
 	}
-	print(" = ");
+	p.print(" = ");
 	expr.accept(this);
-	print(";");
+	p.print(";");
 	return;
     }
 
@@ -90,43 +90,43 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
           }
         */
 
-        newLine();
-        // print(CModifier.toString(modifiers));
+        p.newLine();
+        // p.print(CModifier.toString(modifiers));
 
 	//only stack allocate singe dimension arrays
 	if (expr instanceof JNewArrayExpression) {
 	    //print the basetype
-	    print(((CArrayType)type).getBaseType());
-	    print(" ");
+	    typePrint(((CArrayType)type).getBaseType());
+	    p.print(" ");
 	    //print the field identifier
-	    print(ident);
+	    p.print(ident);
 	    //print the dims
 	    stackAllocateArray(ident);
-	    print(";");
+	    p.print(";");
 	    return;
 	} else if (expr instanceof JArrayInitializer) {
 	    declareInitializedArray(type, ident, expr);
 	    return;
 	}
 
-        print(type);
-        print(" ");
-        print(ident);
+        typePrint(type);
+        p.print(" ");
+        p.print(ident);
 
         if (expr != null) {
-            print("\t= ");
+            p.print("\t= ");
 	    expr.accept(this);
         }   //initialize all fields to 0
 	else if (type.isOrdinal())
-	    print (" = 0");
+	    p.print (" = 0");
 	else if (type.isFloatingPoint())
-	    print(" = 0.0f");
+	    p.print(" = 0.0f");
 	else if (type.isArrayType()) {
-	    print(" = 0");
+	    p.print(" = 0");
 	}
 	
 
-        print(";");
+        p.print(";");
     }
 
 
@@ -169,26 +169,28 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                  JStatement elseClause) {
 
 	boolean oldStatementContext = statementContext;
-        print("if (");
+        p.print("if (");
 	statementContext = false;
         cond.accept(this);
-        print(") {");
+        p.print(") {");
 	statementContext = true;
-        pos += thenClause instanceof JBlock ? 0 : TAB_SIZE;
+    if (!(thenClause instanceof JBlock)) {p.indent(); }
         thenClause.accept(this);
-        pos -= thenClause instanceof JBlock ? 0 : TAB_SIZE;
+        if (!(thenClause instanceof JBlock)) {p.outdent(); }
         if (elseClause != null) {
             if ((elseClause instanceof JBlock) || (elseClause instanceof JIfStatement)) {
-                print(" ");
+                p.print(" ");
             } else {
-                newLine();
+                p.newLine();
             }
-            print("} else {");
-            pos += elseClause instanceof JBlock || elseClause instanceof JIfStatement ? 0 : TAB_SIZE;
+            p.print("} else {");
+            if (!(elseClause instanceof JBlock 
+            	|| elseClause instanceof JIfStatement)) { p.indent(); }
             elseClause.accept(this);
-            pos -= elseClause instanceof JBlock || elseClause instanceof JIfStatement ? 0 : TAB_SIZE;
+            if (!(elseClause instanceof JBlock 
+                || elseClause instanceof JIfStatement)) { p.outdent(); }
         }
-	print("}");
+	p.print("}");
 	statementContext = oldStatementContext;
     }
 
@@ -268,26 +270,26 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                           JExpression right) {
 	boolean oldStatementContext = statementContext;
 	statementContext = false;
-	print("(");
+	p.print("(");
         left.accept(this);
         switch (oper) {
         case OPE_LT:
-            print(" < ");
+            p.print(" < ");
             break;
         case OPE_LE:
-            print(" <= ");
+            p.print(" <= ");
             break;
         case OPE_GT:
-            print(" > ");
+            p.print(" > ");
             break;
         case OPE_GE:
-            print(" >= ");
+            p.print(" >= ");
             break;
         default:
             Utils.fail("Unknown relational expression"); // only difference from LIRToC
 	}
         right.accept(this);
-	print(")");
+	p.print(")");
 	statementContext = oldStatementContext;
     }
 
@@ -310,13 +312,13 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 	
 	boolean oldStatementContext = statementContext;
 	statementContext = false;
-	print("(");
+	p.print("(");
         if (prefix != null) {
             prefix.accept(this);
-            print("->");
+            p.print("->");
         }
-        print(ident);
-	print(")");
+        p.print(ident);
+	p.print(")");
 	statementContext = oldStatementContext;
     }
 
@@ -331,9 +333,9 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 	boolean oldStatementContext = statementContext;
 	statementContext = false;
         left.accept(this);
-        print(" ");
-        print(oper);
-        print(" ");
+        p.print(" ");
+        p.print(oper);
+        p.print(" ");
         right.accept(this);
 	statementContext = oldStatementContext;
 	printRParen();
@@ -350,20 +352,20 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 	boolean oldStatementContext = statementContext;
 	statementContext = false;
         if (ident.equals(JAV_OUTER_THIS)) {// don't generate generated fields
-            print(left.getType().getCClass().getOwner().getType() + "->this");
+            p.print(left.getType().getCClass().getOwner().getType() + "->this");
 	    statementContext = oldStatementContext;
             return;
         }
         int		index = ident.indexOf("_$");
         if (index != -1) {
-            print(ident.substring(0, index));      // local var
+            p.print(ident.substring(0, index));      // local var
         } else {
-	    print("(");
+	    p.print("(");
             left.accept(this);
 	    if (!(left instanceof JThisExpression))
-		print(".");
-            print(ident);
-	    print(")");
+		p.print(".");
+            p.print(ident);
+	    p.print(")");
         }
 	statementContext = oldStatementContext;
     }
@@ -380,13 +382,13 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
         left.accept(this);
         switch (oper) {
         case OPE_BAND:
-            print(" & ");
+            p.print(" & ");
             break;
         case OPE_BOR:
-            print(" | ");
+            p.print(" | ");
             break;
         case OPE_BXOR:
-            print(" ^ ");
+            p.print(" ^ ");
             break;
         default:
 	    Utils.fail("Unknown relational expression"); // only difference with LIRToC
@@ -404,7 +406,7 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 	Utils.fail("Array length expression not supported in streamit");
 	
         prefix.accept(this);
-        print(".length");
+        p.print(".length");
     }
 
     /**
@@ -417,9 +419,9 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 	boolean oldStatementContext = statementContext;
 	statementContext = false;
         prefix.accept(this);
-        print("[(int)");	// cast to int is only difference with LIRToC
+        p.print("[(int)");	// cast to int is only difference with LIRToC
         accessor.accept(this);
-        print("]");
+        p.print("]");
 	statementContext = oldStatementContext;
 	printRParen();
     }
@@ -429,13 +431,13 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
     // ----------------------------------------------------------------------
 
     public void visitCreatePortalExpression(SIRCreatePortal self) {
-        print("create_portal()");
+        p.print("create_portal()");
     }
 
     public void visitInitStatement(SIRInitStatement self,
                                    SIRStream stream)
     {
-        print("/* InitStatement */");
+        p.print("/* InitStatement */");
     }
 
     public void visitInterfaceTable(SIRInterfaceTable self)
@@ -444,34 +446,34 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
         JMethodDeclaration[] methods = self.getMethods();
         boolean first = true;
         
-        print("{ ");
+        p.print("{ ");
         for (int i = 0; i < methods.length; i++)
 	    {
-		if (!first) print(", ");
+		if (!first) p.print(", ");
 		first = false;
-		print(iname + "_" + methods[i].getName());
+		p.print(iname + "_" + methods[i].getName());
 	    }
-        print("}");
+        p.print("}");
     }
     
     public void visitLatency(SIRLatency self)
     {
-        print("LATENCY_BEST_EFFORT");
+        p.print("LATENCY_BEST_EFFORT");
     }
     
     public void visitLatencyMax(SIRLatencyMax self)
     {
-        print("LATENCY_BEST_EFFORT");
+        p.print("LATENCY_BEST_EFFORT");
     }
     
     public void visitLatencyRange(SIRLatencyRange self)
     {
-        print("LATENCY_BEST_EFFORT");
+        p.print("LATENCY_BEST_EFFORT");
     }
     
     public void visitLatencySet(SIRLatencySet self)
     {
-        print("LATENCY_BEST_EFFORT");
+        p.print("LATENCY_BEST_EFFORT");
     }
 
     public void visitMessageStatement(SIRMessageStatement self,
@@ -481,18 +483,18 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                       JExpression[] params,
                                       SIRLatency latency)
     {
-	print("send_" + iname + "_" + ident + "(");
+	p.print("send_" + iname + "_" + ident + "(");
         portal.accept(this);
-        print(", ");
+        p.print(", ");
         latency.accept(this);
         if (params != null)
             for (int i = 0; i < params.length; i++)
                 if (params[i] != null)
 		    {
-			print(", ");
+			p.print(", ");
 			params[i].accept(this);
 		    }
-        print(");");
+        p.print(");");
     }
     
     public JExpression passParentheses(JExpression exp) 
@@ -509,13 +511,13 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
      */
     public void visitSwitchLabel(JSwitchLabel self,
                                  JExpression expr) {
-        newLine();
+        p.newLine();
         if (expr != null) {
-            print("case ");
+            p.print("case ");
             expr.accept(this);
-            print(": ");
+            p.print(": ");
         } else {
-            print("default: ");
+            p.print("default: ");
         }
     }
 
@@ -528,12 +530,12 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
         for (int i = 0; i < labels.length; i++) {
             labels[i].accept(this);
         }
-        pos += TAB_SIZE;
+        p.indent();
         for (int i = 0; i < stmts.length; i++) {
-            newLine();
+            p.newLine();
             stmts[i].accept(this);
         }
-        pos -= TAB_SIZE;
+        p.outdent();
     }
 
     /**
@@ -541,16 +543,16 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
      */
     public void visitBooleanLiteral(boolean value) {
         if (value)
-            print(1);
+            p.print(1);
         else
-            print(0);
+            p.print(0);
     }
 
     /**
      * prints a byte literal
      */
     public void visitByteLiteral(byte value) {
-        print("((byte)" + value + ")");
+        p.print("((byte)" + value + ")");
     }
 
     /**
@@ -559,31 +561,31 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
     public void visitCharLiteral(char value) {
         switch (value) {
         case '\b':
-            print("'\\b'");
+            p.print("'\\b'");
             break;
         case '\r':
-            print("'\\r'");
+            p.print("'\\r'");
             break;
         case '\t':
-            print("'\\t'");
+            p.print("'\\t'");
             break;
         case '\n':
-            print("'\\n'");
+            p.print("'\\n'");
             break;
         case '\f':
-            print("'\\f'");
+            p.print("'\\f'");
             break;
         case '\\':
-            print("'\\\\'");
+            p.print("'\\\\'");
             break;
         case '\'':
-            print("'\\''");
+            p.print("'\\''");
             break;
         case '\"':
-            print("'\\\"'");
+            p.print("'\\\"'");
             break;
         default:
-            print("'" + value + "'");
+            p.print("'" + value + "'");
         }
     }
 
@@ -591,49 +593,49 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
      * prints a double literal
      */
     public void visitDoubleLiteral(double value) {
-        print("((float)" + value + ")");
+        p.print("((float)" + value + ")");
     }
 
     /**
      * prints a float literal
      */
     public void visitFloatLiteral(float value) {
-        print("((float)" + value + ")");
+        p.print("((float)" + value + ")");
     }
 
     /**
      * prints a int literal
      */
     public void visitIntLiteral(int value) {
-        print(value);
+        p.print(value);
     }
 
     /**
      * prints a long literal
      */
     public void visitLongLiteral(long value) {
-        print("(" + value + "L)");
+        p.print("(" + value + "L)");
     }
 
     /**
      * prints a short literal
      */
     public void visitShortLiteral(short value) {
-        print("((short)" + value + ")");
+        p.print("((short)" + value + ")");
     }
 
     /**
      * prints a string literal
      */
     public void visitStringLiteral(String value) {
-        print('"' + value + '"');
+        p.print('"' + value + '"');
     }
 
     /**
      * prints a null literal
      */
     public void visitNullLiteral() {
-        print("null");
+        p.print("null");
     }
 
     /**
@@ -643,10 +645,10 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                       boolean isFinal,
                                       CType type,
                                       String ident) {
-        print(type);
+        typePrint(type);
         if (ident.indexOf("$") == -1) {
-            print(" ");
-            print(ident);
+            p.print(" ");
+            p.print(ident);
         }
     }
 
@@ -657,7 +659,7 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 if (i + base != 0) {
-                    print(", ");
+                    p.print(", ");
                 }
                 args[i].accept(this);
             }
@@ -671,11 +673,11 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                      boolean functorIsThis,
                                      JExpression[] params)
     {
-        newLine();
-        print(functorIsThis ? "this" : "super");
-        print("(");
+        p.newLine();
+        p.print(functorIsThis ? "this" : "super");
+        p.print("(");
         visitArgs(params, 0);
-        print(");");
+        p.print(");");
     }
 
     /**
@@ -684,15 +686,15 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
     public void visitArrayInitializer(JArrayInitializer self,
                                       JExpression[] elems)
     {
-        newLine();
-        print("{");
+        p.newLine();
+        p.print("{");
         for (int i = 0; i < elems.length; i++) {
             if (i != 0) {
-                print(", ");
+                p.print(", ");
             }
             elems[i].accept(this);
         }
-        print("}");
+        p.print("}");
     }
 
     
@@ -700,26 +702,11 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
     // PROTECTED METHODS
     // ----------------------------------------------------------------------
 
-    // Special case for CTypes, to map some Java types to C types.
-    protected void print(CType s) {
-	if (s instanceof CArrayType){
-            print(((CArrayType)s).getElementType());
-            print("*");
-        }
-        else if (s.getTypeID() == TID_BOOLEAN)
-            print("int");
-        else if (s.toString().endsWith("Portal"))
-	    // ignore the specific type of portal in the C library
-	    print("portal");
-	else
-            print(s.toString());
-    }
 
     /** clear the internal String that represents the code generated so far **/
     public void clear() 
     {
-	this.str = new StringWriter();
-        this.p = new TabbedPrintWriter(str);
+        this.p = new CodegenPrintWriter();
     }
     
 }

@@ -154,7 +154,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	
 	JMethodDeclaration initPath = ((SIRFeedbackLoop)joiner.contents.getParent()).getInitPath();
 	initPath.accept(toC);
-	return toC.getString();
+	return toC.getPrinter().getString();
     }
 
     private static String createJoinerWork(FlatNode joiner) 

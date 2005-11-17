@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.101 2005-11-04 16:25:17 dimock Exp $
+ * $Id: LIRToC.java,v 1.102 2005-11-17 22:49:08 dimock Exp $
  */
 
 package at.dms.kjc.lir;
@@ -13,6 +13,7 @@ import java.util.Map;
 import at.dms.kjc.common.MacroConversion;
 import at.dms.kjc.common.CodeGenerator;
 import at.dms.util.InconsistencyException;
+import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.util.Utils;
 
 import at.dms.kjc.sir.lowering.LoweringConstants;
@@ -43,79 +44,76 @@ public class LIRToC
      * set of array initializers defined.
      */
     private LIRToC(java.util.HashMap arrayInitializers) {
-        this.str = new StringWriter();
-        this.p = new TabbedPrintWriter(str);
-	this.arrayInitializers = arrayInitializers;
+        super();
+        this.arrayInitializers = arrayInitializers;
     }
     private LIRToC() {
-	this(null);
+        this(null);
     }
 
     /**
      * Generates code for <flatClass> and sends to System.out.
      */
     public static void generateCode(JClassDeclaration flat) {
-	System.out.println("*/");	
-	System.out.println("#include \"streamit.h\"");
-	System.out.println("#include <stdio.h>");
-	System.out.println("#include <stdlib.h>");
-	System.out.println("#include <math.h>");
-	printAtlasInterface();
-	LIRToC l2c = new LIRToC(null, new TabbedPrintWriter(new PrintWriter(System.out)));
+        System.out.println("*/");       
+        System.out.println("#include \"streamit.h\"");
+        System.out.println("#include <stdio.h>");
+        System.out.println("#include <stdlib.h>");
+        System.out.println("#include <math.h>");
+        printAtlasInterface();
+        LIRToC l2c = new LIRToC(null, new CodegenPrintWriter(new PrintWriter(System.out)));
 
         // Print all of the portals.
         for (int i = 0; i < SIRPortal.getPortals().length; i++) {
-            l2c.print("portal ");
+            l2c.getPrinter().print("portal ");
             SIRPortal.getPortals()[i].accept(l2c);
-            l2c.print(";");
-            l2c.newLine();
+            l2c.getPrinter().print(";");
+            l2c.getPrinter().newLine();
         }
 
-	// Print the static array initializers
-	l2c.gatherArrayInitializers(flat);
+        // Print the static array initializers
+        l2c.gatherArrayInitializers(flat);
 
-	flat.accept(l2c);
-	l2c.close();
+        flat.accept(l2c);
+        l2c.close();
     }
 
     // include literal ATLAS interface if appropriate
     private static void printAtlasInterface() {
-	if (KjcOptions.atlas) {
-	    // copy this over instead of doing an include reference so
-	    // that 1) the generated C file can move around, wherever
-	    // there's an ATLAS install, and 2) atlas-interface.c is short
-	    try {
-		String filename = (Utils.getEnvironmentVariable("STREAMIT_HOME") +
-				   File.separator + "include" + 
-				   File.separator + "atlas" + 
-				   File.separator + "atlas-interface.c");
-		System.out.println("\n/* Starting include of file " + filename + " ---------- */\n");
-		BufferedReader br = new BufferedReader(new FileReader(filename));
-		String line;
-		while ((line = br.readLine()) != null) {
-		    System.out.println(line);
-		}
-		br.close();
-		System.out.println("\n/* Done with include of " + filename + " ---------- */");
-	    } catch (IOException e) {
-		e.printStackTrace();
-		Utils.fail("IOException looking for atlas-interface.c");
-	    }
-	}
+        if (KjcOptions.atlas) {
+            // copy this over instead of doing an include reference so
+            // that 1) the generated C file can move around, wherever
+            // there's an ATLAS install, and 2) atlas-interface.c is short
+            try {
+                String filename = (Utils.getEnvironmentVariable("STREAMIT_HOME") +
+                                   File.separator + "include" + 
+                                   File.separator + "atlas" + 
+                                   File.separator + "atlas-interface.c");
+                System.out.println("\n/* Starting include of file " + filename + " ---------- */\n");
+                BufferedReader br = new BufferedReader(new FileReader(filename));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    System.out.println(line);
+                }
+                br.close();
+                System.out.println("\n/* Done with include of " + filename + " ---------- */");
+            } catch (IOException e) {
+                e.printStackTrace();
+                Utils.fail("IOException looking for atlas-interface.c");
+            }
+        }
     }
 
     /**
      * construct a pretty printer object for java code
      * @param   arrayInitializers       set of array initializers detected in code
-     * @param	fileName		the file into the code is generated
+     * @param   fileName                the file into the code is generated
      */
-    private LIRToC(java.util.HashMap arrayInitializers, TabbedPrintWriter p) {
-        this.p = p;
-        this.str = null;
-        this.pos = 0;
+    private LIRToC(java.util.HashMap arrayInitializers, CodegenPrintWriter p) {
+        super();
         this.portalCount = 0;
         this.portalNames = new java.util.HashMap();
-	this.arrayInitializers = arrayInitializers;
+        this.arrayInitializers = arrayInitializers;
     }
 
     /**
@@ -140,26 +138,26 @@ public class LIRToC
         if (packageName.getName().length() > 0) {
             packageName.accept(this);
             if (importedPackages.length + importedClasses.length > 0) {
-                newLine();
+                p.newLine();
             }
         }
 
         for (int i = 0; i < importedPackages.length ; i++) {
             if (!importedPackages[i].getName().equals("java/lang")) {
                 importedPackages[i].accept(this);
-                newLine();
+                p.newLine();
             }
         }
 
         for (int i = 0; i < importedClasses.length ; i++) {
             importedClasses[i].accept(this);
-            newLine();
+            p.newLine();
         }
 
         for (int i = 0; i < typeDeclarations.length ; i++) {
-            newLine();
+            p.newLine();
             typeDeclarations[i].accept(this);
-            newLine();
+            p.newLine();
         }
     }
 
@@ -212,9 +210,9 @@ public class LIRToC
             }
         }
 
-        newLine();
-        print("typedef struct " + className + " {");
-        pos += TAB_SIZE;
+        p.newLine();
+        p.print("typedef struct " + className + " {");
+        p.indent();
         if (body != null) {
             for (int i = 0; i < body.length ; i++) {
                 if (body[i] instanceof JFieldDeclaration &&
@@ -228,12 +226,12 @@ public class LIRToC
                 fields[i].accept(this);
         }    
 
-        pos -= TAB_SIZE;
-        newLine();
+        p.outdent();
+        p.newLine();
         if (isStruct)
-            print("} " + className + ";");
+            p.print("} " + className + ";");
         else
-            print("} _" + className + ", *" + className + ";");
+            p.print("} _" + className + ", *" + className + ";");
 
         // Print function prototypes for each of the methods.
         declOnly = true;
@@ -291,37 +289,37 @@ public class LIRToC
         JMethodDeclaration[] methods = self.getMethods();
         for (int i = 0; i < methods.length; i++)
         {
-            newLine();
-            print("void " + iname + "_" + methods[i].getName() +
+            p.newLine();
+            p.print("void " + iname + "_" + methods[i].getName() +
                   "(void *" + THIS_NAME + ", void *params)");
-            newLine();
-            print("{");
-            pos += TAB_SIZE;
-            newLine();
+            p.newLine();
+            p.print("{");
+            p.indent();
+            p.newLine();
             // The method matches the corresponding method in the
             // interface.
             CMethod im = imethods[i];
             String imName = iname + "_" + im.getIdent();
             // Cast the parameters struct...
-            print(imName + "_params q = params;");
+            p.print(imName + "_params q = params;");
             // Call the actual function.
-            newLine();
-            print(methods[i].getName() + "(" + THIS_NAME);
+            p.newLine();
+            p.print(methods[i].getName() + "(" + THIS_NAME);
             for (int j = 0; j < im.getParameters().length; j++)
-                print(", q->p" + j);
-            print(");");
-            pos -= TAB_SIZE;
-            newLine();
-            print("}");
+                p.print(", q->p" + j);
+            p.print(");");
+            p.outdent();
+            p.newLine();
+            p.print("}");
         }
         // Print the actual variable definition, too.  We can
         // just print the left-hand side explicitly and let the
         // visitor deal with the right.  Using the visitor for
         // the whole thing gets the wrong type (void).
-        newLine();
-        print("message_fn " + vardef.getIdent() + "[] = ");
+        p.newLine();
+        p.print("message_fn " + vardef.getIdent() + "[] = ");
         self.accept(this);
-        print(";");
+        p.print(";");
         // While we're at it, save the variable definition in the
         // interface table structure.
         self.setVarDecl(vardef);
@@ -339,8 +337,8 @@ public class LIRToC
                                            JPhylum[] body,
                                            JFieldDeclaration[] fields,
                                            JMethodDeclaration[] methods) {
-        print(" {");
-        pos += TAB_SIZE;
+        p.print(" {");
+        p.indent();
         for (int i = 0; i < decls.length ; i++) {
             decls[i].accept(this);
         }
@@ -353,9 +351,9 @@ public class LIRToC
         for (int i = 0; i < body.length ; i++) {
             body[i].accept(this);
         }
-        pos -= TAB_SIZE;
-        newLine();
-        print("}");
+        p.outdent();
+        p.newLine();
+        p.print("}");
     }
 
     /**
@@ -379,39 +377,39 @@ public class LIRToC
             String pname = name + "_params";
 
             // Print the parameter structure.
-            newLine();
-            print("typedef struct " + pname + " {");
-            pos += TAB_SIZE;
+            p.newLine();
+            p.print("typedef struct " + pname + " {");
+            p.indent();
             for (int j = 0; j < params.length; j++) {
-                newLine();
-                print(params[j]);
-                print(" p" + j + ";");
+                p.newLine();
+                typePrint(params[j]);
+                p.print(" p" + j + ";");
             }
-            pos -= TAB_SIZE;
-            newLine();
-            print("} _" + pname + ", *" + pname + ";");
+            p.outdent();
+            p.newLine();
+            p.print("} _" + pname + ", *" + pname + ";");
 
             // And now print a wrapper for send_message().
-            newLine();
-            print("void send_" + name + "(portal p, latency l");
+            p.newLine();
+            p.print("void send_" + name + "(portal p, latency l");
             for (int j = 0; j < params.length; j++) {
-                print(", ");
-                print(params[j]);
-                print(" p" + j);
+                p.print(", ");
+                typePrint(params[j]);
+                p.print(" p" + j);
             }
-            print(") {");
-            pos += TAB_SIZE;
-            newLine();
-            print(pname + " q = malloc(sizeof(_" + pname + "));");
+            p.print(") {");
+            p.indent();
+            p.newLine();
+            p.print(pname + " q = malloc(sizeof(_" + pname + "));");
             for (int j = 0; j < params.length; j++) {
-                newLine();
-                print("q->p" + j + " = p" + j + ";");
+                p.newLine();
+                p.print("q->p" + j + " = p" + j + ";");
             }
-            newLine();
-            print("send_message(p, " + i + ", l, q);");
-            pos -= TAB_SIZE;
-            newLine();
-            print("}");
+            p.newLine();
+            p.print("send_message(p, " + i + ", l, q);");
+            p.outdent();
+            p.newLine();
+            p.print("}");
         }        
     }
 
@@ -433,58 +431,58 @@ public class LIRToC
           }
         */
 
-	// if it is a final field (eg constant)
-	// leave it out of the structure because constant propagation
-	// will have removed all references to it.
-	/*
-	if ((expr == null ||
-	     !(expr instanceof JNewArrayExpression)) &&
-	    CModifier.contains(self.getVariable().getModifiers(),
-			       CModifier.ACC_FINAL)) {
-	    return;
-	}
-	*/
+        // if it is a final field (eg constant)
+        // leave it out of the structure because constant propagation
+        // will have removed all references to it.
+        /*
+        if ((expr == null ||
+             !(expr instanceof JNewArrayExpression)) &&
+            CModifier.contains(self.getVariable().getModifiers(),
+                               CModifier.ACC_FINAL)) {
+            return;
+        }
+        */
 
 
-	
-        newLine();
-	if (expr instanceof JArrayInitializer) {
-	    // just declare the beginning of array here; initializer copied over later
-	    declareInitializedArray(findBaseType((JArrayInitializer)expr),
-				    ident,
-				    expr,
-				    this,
-				    false);
-	} else {
-	    // if printing a field decl and it's array and it's
-	    // initialized, I want to use a special printer that
-	    // will just declare an array, instead of a pointer
-	    if (expr == null || !(expr instanceof JNewArrayExpression)) {
-		// nope - not an array, or not initialized.
-		// just print it normally - if an array, it'll become  a
-		// pointer and the init function better allocate it	    
-		
-		print (type);
-		print (" ");
-		print (ident);
-		
-		// initializing vars is legal in C as well as java.
-		if (expr != null) {
-		    print ("\t= ");
-		    expr.accept (this);
-		}
-		print(";");
-	    } else {
-		// yep.  use the local printing functions to print
-		// the correct type and array size
-		printLocalType (type);
-		print (" ");
-		print (ident);
-		print(" ");
-		printLocalArrayDecl((JNewArrayExpression)expr);
-		print(";");
-	    }
-	}
+        
+        p.newLine();
+        if (expr instanceof JArrayInitializer) {
+            // just declare the beginning of array here; initializer copied over later
+            declareInitializedArray(findBaseType((JArrayInitializer)expr),
+                                    ident,
+                                    expr,
+                                    this,
+                                    false);
+        } else {
+            // if printing a field decl and it's array and it's
+            // initialized, I want to use a special printer that
+            // will just declare an array, instead of a pointer
+            if (expr == null || !(expr instanceof JNewArrayExpression)) {
+                // nope - not an array, or not initialized.
+                // just print it normally - if an array, it'll become  a
+                // pointer and the init function better allocate it         
+                
+                typePrint (type);
+                p.print (" ");
+                p.print (ident);
+                
+                // initializing vars is legal in C as well as java.
+                if (expr != null) {
+                    p.print ("\t= ");
+                    expr.accept (this);
+                }
+                p.print(";");
+            } else {
+                // yep.  use the local printing functions to print
+                // the correct type and array size
+                printLocalType (type);
+                p.print (" ");
+                p.print (ident);
+                p.print(" ");
+                printLocalArrayDecl((JNewArrayExpression)expr);
+                p.print(";");
+            }
+        }
     }
 
     /**
@@ -498,30 +496,30 @@ public class LIRToC
                                        CClassType[] exceptions,
                                        JBlock body) {
 
-	// try converting to macro
-	if (MacroConversion.shouldConvert(self)) {
-	    MacroConversion.doConvert(self, declOnly, this);
-	    return;
-	}
+        // try converting to macro
+        if (MacroConversion.shouldConvert(self)) {
+            MacroConversion.doConvert(self, declOnly, this);
+            return;
+        }
 
-        newLine();
+        p.newLine();
         // Treat main() specially.
         if (ident.equals("main"))
         {
-            print("int main(int argc, char **argv)");
+            p.print("int main(int argc, char **argv)");
         }
         else
         {
-            // print(CModifier.toString(modifiers));
-            print(returnType);
-            print(" ");
-            print(ident);
-            print("(");
+            // p.print(CModifier.toString(modifiers));
+            typePrint(returnType);
+            p.print(" ");
+            p.print(ident);
+            p.print("(");
             int count = 0;
             
             for (int i = 0; i < parameters.length; i++) {
                 if (count != 0) {
-                    print(", ");
+                    p.print(", ");
                 }
                 
                 // if (!parameters[i].isGenerated()) {
@@ -529,22 +527,22 @@ public class LIRToC
                 count++;
                 // }
             }
-            print(")");
+            p.print(")");
         }
         
         if (declOnly)
         {
-            print(";");
+            p.print(";");
             return;
         }
 
-        print(" ");
+        p.print(" ");
         if (body != null) {
             body.accept(this);
         } else {
-            print(";");
+            p.print(";");
         }
-        newLine();
+        p.newLine();
     }
 
     /**
@@ -557,36 +555,36 @@ public class LIRToC
                                             CClassType[] exceptions,
                                             JConstructorBlock body)
     {
-        newLine();
-        print(CModifier.toString(modifiers));
-        print(ident);
-        print("_");
-        print(ident);
-        print("(");
+        p.newLine();
+        p.print(CModifier.toString(modifiers));
+        p.print(ident);
+        p.print("_");
+        p.print(ident);
+        p.print("(");
         int count = 0;
         for (int i = 0; i < parameters.length; i++) {
             if (count != 0) {
-                print(", ");
+                p.print(", ");
             }
             if (!parameters[i].isGenerated()) {
                 parameters[i].accept(this);
                 count++;
             }
         }
-        print(")");
+        p.print(")");
         /*
           for (int i = 0; i < exceptions.length; i++) {
           if (i != 0) {
-          print(", ");
+          p.print(", ");
           } else {
-          print(" throws ");
+          p.print(" throws ");
           }
-          print(exceptions[i].toString());
+          p.print(exceptions[i].toString());
           }
         */
-        print(" ");
+        p.print(" ");
         body.accept(this);
-        newLine();
+        p.newLine();
     }
 
     // ----------------------------------------------------------------------
@@ -605,28 +603,28 @@ public class LIRToC
 
     private void printLocalArrayDecl(JNewArrayExpression expr) 
     {
-	JExpression[] dims = expr.getDims();
-	for (int i = 0 ; i < dims.length; i++) {
-	    print("[");
-	    LIRToC toC = new LIRToC(arrayInitializers, this.p);
-	    dims[i].accept(toC);
-	    print("]");
-	}
+        JExpression[] dims = expr.getDims();
+        for (int i = 0 ; i < dims.length; i++) {
+            p.print("[");
+            LIRToC toC = new LIRToC(arrayInitializers, this.p);
+            dims[i].accept(toC);
+            p.print("]");
+        }
     }
     
 
     protected void printLocalType(CType s) 
     {
-	if (s instanceof CArrayType){
-	    print(((CArrayType)s).getBaseType());
-	}
+        if (s instanceof CArrayType){
+            typePrint(((CArrayType)s).getBaseType());
+        }
         else if (s.getTypeID() == TID_BOOLEAN)
-            print("int");
+            p.print("int");
         else if (s.toString().endsWith("Portal"))
-	    // ignore the specific type of portal in the C library
-	    print("portal");
-	else
-            print(s.toString());
+            // ignore the specific type of portal in the C library
+            p.print("portal");
+        else
+            p.print(s.toString());
     }
 
     /**
@@ -637,55 +635,55 @@ public class LIRToC
                                         CType type,
                                         String ident,
                                         JExpression expr) {
-	if (type.isArrayType() && expr instanceof JArrayInitializer) {
-	    print(((CArrayType)type).getBaseType() + " " + ident);
-	    JArrayInitializer init = (JArrayInitializer)expr;
-	    while (true) {
-		int length = init.getElems().length;
-		print("[" + length + "]");
-		if (length==0) { 
-		    // hope that we have a 1-dimensional array in
-		    // this case.  Otherwise we won't currently
-		    // get the type declarations right for the
-		    // lower pieces.
-		    break;
-		}
-		// assume rectangular arrays
-		JExpression next = (JExpression)init.getElems()[0];
-		if (next instanceof JArrayInitializer) {
-		    init = (JArrayInitializer)next;
-		} else {
-		    break;
-		}
-	    }
-	    print(" = ");
-	    expr.accept(this);
-	    print(";");
-	    return;
-	}
+        if (type.isArrayType() && expr instanceof JArrayInitializer) {
+            p.print(((CArrayType)type).getBaseType() + " " + ident);
+            JArrayInitializer init = (JArrayInitializer)expr;
+            while (true) {
+                int length = init.getElems().length;
+                p.print("[" + length + "]");
+                if (length==0) { 
+                    // hope that we have a 1-dimensional array in
+                    // this case.  Otherwise we won't currently
+                    // get the type declarations right for the
+                    // lower pieces.
+                    break;
+                }
+                // assume rectangular arrays
+                JExpression next = (JExpression)init.getElems()[0];
+                if (next instanceof JArrayInitializer) {
+                    init = (JArrayInitializer)next;
+                } else {
+                    break;
+                }
+            }
+            p.print(" = ");
+            expr.accept(this);
+            p.print(";");
+            return;
+        }
 
-	if (type.isArrayType()) {
-	    
-	}
+        if (type.isArrayType()) {
+            
+        }
 
-        // print(CModifier.toString(modifiers));
-	if (expr!=null) {
-	    printLocalType(type);
-	} else {
-	    print(type);
-	}	    
-        print(" ");
-        print(ident);
-	if (expr instanceof JNewArrayExpression) {
-	    print (" ");
-	    printLocalArrayDecl((JNewArrayExpression)expr);
-	} else {
-	    if (expr != null) {
-		print(" = ");
-		expr.accept(this);
-	    }
-	}
-        print(";");
+        // p.print(CModifier.toString(modifiers));
+        if (expr!=null) {
+            printLocalType(type);
+        } else {
+            typePrint(type);
+        }           
+        p.print(" ");
+        p.print(ident);
+        if (expr instanceof JNewArrayExpression) {
+            p.print(" ");
+            printLocalArrayDecl((JNewArrayExpression)expr);
+        } else {
+            if (expr != null) {
+                p.print(" = ");
+                expr.accept(this);
+            }
+        }
+        p.print(";");
     }
 
     /**
@@ -694,7 +692,7 @@ public class LIRToC
     public void visitTryCatchStatement(JTryCatchStatement self,
                                        JBlock tryClause,
                                        JCatchClause[] catchClauses) {
-        print("try ");
+        p.print("try ");
         tryClause.accept(this);
         for (int i = 0; i < catchClauses.length; i++) {
             catchClauses[i].accept(this);
@@ -707,10 +705,10 @@ public class LIRToC
     public void visitTryFinallyStatement(JTryFinallyStatement self,
                                          JBlock tryClause,
                                          JBlock finallyClause) {
-        print("try ");
+        p.print("try ");
         tryClause.accept(this);
         if (finallyClause != null) {
-            print(" finally ");
+            p.print(" finally ");
             finallyClause.accept(this);
         }
     }
@@ -720,9 +718,9 @@ public class LIRToC
      */
     public void visitThrowStatement(JThrowStatement self,
                                     JExpression expr) {
-        print("throw ");
+        p.print("throw ");
         expr.accept(this);
-        print(";");
+        p.print(";");
     }
 
     /**
@@ -731,9 +729,9 @@ public class LIRToC
     public void visitSynchronizedStatement(JSynchronizedStatement self,
                                            JExpression cond,
                                            JStatement body) {
-        print("synchronized (");
+        p.print("synchronized (");
         cond.accept(this);
-        print(") ");
+        p.print(") ");
         body.accept(this);
     }
 
@@ -760,27 +758,29 @@ public class LIRToC
                                  JExpression cond,
                                  JStatement thenClause,
                                  JStatement elseClause) {
-	boolean oldStatementContext = statementContext;
-        print("if (");
-	statementContext = false;
+        boolean oldStatementContext = statementContext;
+        p.print("if (");
+        statementContext = false;
         cond.accept(this);
-        print(") ");
-	statementContext = true;
-        pos += thenClause instanceof JBlock ? 0 : TAB_SIZE;
+        p.print(") ");
+        statementContext = true;
+        if (!(thenClause instanceof JBlock)) p.indent();
         thenClause.accept(this);
-        pos -= thenClause instanceof JBlock ? 0 : TAB_SIZE;
+        if (!(thenClause instanceof JBlock)) p.outdent();
         if (elseClause != null) {
             if ((elseClause instanceof JBlock) || (elseClause instanceof JIfStatement)) {
-                print(" ");
+                p.print(" ");
             } else {
-                newLine();
+                p.newLine();
             }
-            print("else ");
-            pos += elseClause instanceof JBlock || elseClause instanceof JIfStatement ? 0 : TAB_SIZE;
+            p.print("else ");
+            if (!(elseClause instanceof JBlock 
+            	|| elseClause instanceof JIfStatement)) p.indent();
             elseClause.accept(this);
-            pos -= elseClause instanceof JBlock || elseClause instanceof JIfStatement ? 0 : TAB_SIZE;
-        }
-	statementContext = oldStatementContext;
+            if (!(elseClause instanceof JBlock 
+                	|| elseClause instanceof JIfStatement)) p.outdent();
+         }
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -791,47 +791,47 @@ public class LIRToC
                                   JExpression cond,
                                   JStatement incr,
                                   JStatement body) {
-	boolean oldStatementContext = statementContext;
-	forLoopHeader++;
-        print("for (");
-	statementContext = false;
+        boolean oldStatementContext = statementContext;
+        forLoopHeader++;
+        p.print("for (");
+        statementContext = false;
         //forInit = true;
         if (init != null) {
             init.accept(this);
-	  } else {
-		print(";");
-	  }
-	  //forInit = false;
+          } else {
+                p.print(";");
+          }
+          //forInit = false;
 
-        print(" ");
+        p.print(" ");
         if (cond != null) {
             cond.accept(this);
         }
-        print("; ");
+        p.print("; ");
 
         if (incr != null) {
-		LIRToC l2c = new LIRToC(arrayInitializers);
+                LIRToC l2c = new LIRToC(arrayInitializers);
             incr.accept(l2c);
-		// get String
-		String str = l2c.getString();
-		// leave off the trailing semicolon if there is one
-		if (str.endsWith(";")) {
-		    print(str.substring(0, str.length()-1));
-		} else { 
-		    print(str);
-		}
+                // get String
+                String str = l2c.getPrinter().getString();
+                // leave off the trailing semicolon if there is one
+                if (str.endsWith(";")) {
+                    p.print(str.substring(0, str.length()-1));
+                } else { 
+                    p.print(str);
+                }
         }
-	forLoopHeader--;
-        print(") {");
-	newLine();
-	  
-	statementContext = true;
-        pos += TAB_SIZE;
+        forLoopHeader--;
+        p.print(") {");
+        p.newLine();
+          
+        statementContext = true;
+        p.indent();
         body.accept(this);
-        pos -= TAB_SIZE;
-        newLine();
-        print("}");
-	statementContext = oldStatementContext;
+        p.outdent();
+        p.newLine();
+        p.print("}");
+        statementContext = oldStatementContext;
     }
 
     /*
@@ -859,12 +859,12 @@ public class LIRToC
      * prints a empty statement
      */
     public void visitEmptyStatement(JEmptyStatement self) {
-	//if we are inside a for loop header, we need to print 
-	//the ; of an empty statement
-	if (forLoopHeader > 0) {
-	    // RMR (don't offset the ; by a new line) // newLine();
-	    print(";");
-	}
+        //if we are inside a for loop header, we need to print 
+        //the ; of an empty statement
+        if (forLoopHeader > 0) {
+            // RMR (don't offset the ; by a new line) // p.newLine();
+            p.print(";");
+        }
     }
 
     /*
@@ -902,9 +902,9 @@ public class LIRToC
                                     JExpression prefix) {
         if (prefix != null) {
             prefix.accept(this);
-            print("." + THIS_NAME);
+            p.print("." + THIS_NAME);
         } else {
-            print(THIS_NAME);
+            p.print(THIS_NAME);
         }
     }
 
@@ -912,7 +912,7 @@ public class LIRToC
      * prints a super expression
      */
     public void visitSuperExpression(JSuperExpression self) {
-        print("super");
+        p.print("super");
     }
 
     /**
@@ -922,29 +922,29 @@ public class LIRToC
                                           int oper,
                                           JExpression left,
                                           JExpression right) {
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
-	print("(");
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
+        p.print("(");
         left.accept(this);
         switch (oper) {
         case OPE_LT:
-            print(" < ");
+            p.print(" < ");
             break;
         case OPE_LE:
-            print(" <= ");
+            p.print(" <= ");
             break;
         case OPE_GT:
-            print(" > ");
+            p.print(" > ");
             break;
         case OPE_GE:
-            print(" >= ");
+            p.print(" >= ");
             break;
         default:
             throw new InconsistencyException(); // only difference from ToC
         }
         right.accept(this);
-	print(")");
-	statementContext = oldStatementContext;
+        p.print(")");
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -957,9 +957,9 @@ public class LIRToC
                                                 JClassDeclaration decl)
     {
         prefix.accept(this);
-        print(".new " + ident + "(");
+        p.print(".new " + ident + "(");
         visitArgs(params, 0);
-        print(")");
+        p.print(")");
         // decl.genInnerJavaCode(this);
     }
 
@@ -972,9 +972,9 @@ public class LIRToC
                                                JExpression[] params)
     {
         prefix.accept(this);
-        print(".new " + ident + "(");
+        p.print(".new " + ident + "(");
         visitArgs(params, 0);
-        print(")");
+        p.print(")");
     }
 
     /**
@@ -985,14 +985,14 @@ public class LIRToC
                                                   JExpression[] params,
                                                   JClassDeclaration decl)
     {
-	/* It appears this only occurs in dead cody ("new Complex()",
-	 * FFT6) and it doesn't make sense in C, so just removing
-	 * this.
+        /* It appears this only occurs in dead cody ("new Complex()",
+         * FFT6) and it doesn't make sense in C, so just removing
+         * this.
 
-        print("new " + type + "(");
+        p.print("new " + type + "(");
         visitArgs(params, 0);
-        print(")");
-	*/
+        p.print(")");
+        */
         // decl.genInnerJavaCode(this);
     }
 
@@ -1003,14 +1003,14 @@ public class LIRToC
                                                  CClassType type,
                                                  JExpression[] params)
     {
-	/* It appears this only occurs in dead cody ("new Complex()",
-	 * FFT6) and it doesn't make sense in C, so just removing
-	 * this.
+        /* It appears this only occurs in dead cody ("new Complex()",
+         * FFT6) and it doesn't make sense in C, so just removing
+         * this.
 
-        print("new " + type + "(");
+        p.print("new " + type + "(");
         visitArgs(params, 0);
-        print(")");
-	*/
+        p.print(")");
+        */
     }
 
     /*
@@ -1026,13 +1026,13 @@ public class LIRToC
     public void visitNameExpression(JNameExpression self,
                                     JExpression prefix,
                                     String ident) {
-	print("(");
+        p.print("(");
         if (prefix != null) {
             prefix.accept(this);
-            print("->");
+            p.print("->");
         }
-        print(ident);
-	print(")");
+        p.print(ident);
+        p.print(")");
     }
 
     /**
@@ -1042,16 +1042,16 @@ public class LIRToC
                                       String oper,
                                       JExpression left,
                                       JExpression right) {
-	printLParen();
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
+        printLParen();
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
         left.accept(this);
-        print(" ");
-        print(oper);
-        print(" ");
+        p.print(" ");
+        p.print(oper);
+        p.print(" ");
         right.accept(this);
-	statementContext = oldStatementContext;
-	printRParen();
+        statementContext = oldStatementContext;
+        printRParen();
     }
 
     /**
@@ -1068,8 +1068,8 @@ public class LIRToC
           }
         */
 
-        print(ident);
-        print("(");
+        p.print(ident);
+        p.print("(");
         int i = 0;
         /* Ignore prefix, since it's just going to be a Java class name.
         if (prefix != null) {
@@ -1078,7 +1078,7 @@ public class LIRToC
         }
         */
         visitArgs(args, i);
-        print(")");
+        p.print(")");
     }
 
     /**
@@ -1088,8 +1088,8 @@ public class LIRToC
                                           JExpression expr,
                                           CType dest) {
         expr.accept(this);
-        print(" instanceof ");
-        print(dest);
+        p.print(" instanceof ");
+        typePrint(dest);
     }
 
 
@@ -1100,25 +1100,25 @@ public class LIRToC
                                      JExpression left,
                                      String ident)
     {
-	/*
-	System.err.println("!!! self=" + self);
-	System.err.println(" left=" + left);
-	System.err.println(" ident=" + ident);
-	System.err.println(" left.getType()==" + left.getType());
-	System.err.println(" getCClass()=" +left.getType().getCClass());
-	*/
+        /*
+        System.err.println("!!! self=" + self);
+        System.err.println(" left=" + left);
+        System.err.println(" ident=" + ident);
+        System.err.println(" left.getType()==" + left.getType());
+        System.err.println(" getCClass()=" +left.getType().getCClass());
+        */
         if (ident.equals(JAV_OUTER_THIS)) {
             // This identifier is used for the enclosing instance of
             // inner classes; see JLS 8.1.2.
-            print("((" + left.getType().getCClass().getOwner().getType() +
+            p.print("((" + left.getType().getCClass().getOwner().getType() +
                   ")(" + THIS_CONTEXT_NAME + "->parent->stream_data))");
             return;
         }
-        int		index = ident.indexOf("_$");
+        int             index = ident.indexOf("_$");
         if (index != -1) {
-            print(ident.substring(0, index));      // local var
+            p.print(ident.substring(0, index));      // local var
         } else {
-	    print("(");
+            p.print("(");
             left.accept(this);
             // I hate Kopi.  getType() doesn't necessarily work, since some
             // things (e.g. JFieldAccessExpressions) determine their CType
@@ -1127,8 +1127,8 @@ public class LIRToC
             boolean isStructField = false;
             try
             {
-		CType ctype = left.getType();
-		// only class types have a proper cclass; the other's assert
+                CType ctype = left.getType();
+                // only class types have a proper cclass; the other's assert
                 if (ctype instanceof CClassType && ctype.getCClass().getSuperClass().getIdent().equals("Structure"))
                     isStructField = true;
             }
@@ -1137,11 +1137,11 @@ public class LIRToC
                 // do nothing
             }
             if (isStructField)
-                print(".");
+                p.print(".");
             else
-                print("->");
-            print(ident);
-	    print(")");
+                p.print("->");
+            p.print(ident);
+            p.print(")");
         }
     }
 
@@ -1149,8 +1149,8 @@ public class LIRToC
      * prints a class expression
      */
     public void visitClassExpression(JClassExpression self, CType type) {
-        print(type);
-        print(".class");
+        typePrint(type);
+        p.print(".class");
     }
 
     /**
@@ -1160,25 +1160,25 @@ public class LIRToC
                                        int oper,
                                        JExpression left,
                                        JExpression right) {
-	printLParen();
-	boolean oldStatementContext = statementContext;
+        printLParen();
+        boolean oldStatementContext = statementContext;
         left.accept(this);
         switch (oper) {
         case OPE_BAND:
-            print(" & ");
+            p.print(" & ");
             break;
         case OPE_BOR:
-            print(" | ");
+            p.print(" | ");
             break;
         case OPE_BXOR:
-            print(" ^ ");
+            p.print(" ^ ");
             break;
         default:
             throw new InconsistencyException(); // only difference with ToC
         }
         right.accept(this);
-	statementContext = oldStatementContext;
-	printRParen();
+        statementContext = oldStatementContext;
+        printRParen();
     }
 
     /**
@@ -1194,31 +1194,31 @@ public class LIRToC
           return;
           }
         */
-	if (right instanceof JArrayInitializer &&
-	    arrayInitializers.containsKey(right)) {
-	    // memcpy for arrays
-	    print("memcpy(");
-	    left.accept(this);
-	    print(",");
-	    String name = (String)arrayInitializers.get(right);
-	    print(name);
-	    print(",");
-	    print(findSize((JArrayInitializer)right) + " * sizeof(");
-	    print(findBaseType((JArrayInitializer)right));
-	    print("))");
-	    if (statementContext) { print(";"); }
-	} else {
-	    boolean oldStatementContext = statementContext;
-	    lastLeft=left;
-	    printLParen();
-	    statementContext = false;
-	    left.accept(this);
-	    print(" = ");
-	    right.accept(this);
-	    statementContext = oldStatementContext;
-	    printRParen();
-	    lastLeft=null;
-	}
+        if (right instanceof JArrayInitializer &&
+            arrayInitializers.containsKey(right)) {
+            // memcpy for arrays
+            p.print("memcpy(");
+            left.accept(this);
+            p.print(",");
+            String name = (String)arrayInitializers.get(right);
+            p.print(name);
+            p.print(",");
+            p.print(findSize((JArrayInitializer)right) + " * sizeof(");
+            typePrint(findBaseType((JArrayInitializer)right));
+            p.print("))");
+            if (statementContext) { p.print(";"); }
+        } else {
+            boolean oldStatementContext = statementContext;
+            lastLeft=left;
+            printLParen();
+            statementContext = false;
+            left.accept(this);
+            p.print(" = ");
+            right.accept(this);
+            statementContext = oldStatementContext;
+            printRParen();
+            lastLeft=null;
+        }
     }
 
     /**
@@ -1227,7 +1227,7 @@ public class LIRToC
     public void visitArrayLengthExpression(JArrayLengthExpression self,
                                            JExpression prefix) {
         prefix.accept(this);
-        print(".length");
+        p.print(".length");
     }
 
     /**
@@ -1236,15 +1236,15 @@ public class LIRToC
     public void visitArrayAccessExpression(JArrayAccessExpression self,
                                            JExpression prefix,
                                            JExpression accessor) {
-	printLParen();
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
+        printLParen();
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
         prefix.accept(this);
-        print("[");
+        p.print("[");
         accessor.accept(this);
-        print("]");
-	statementContext = oldStatementContext;
-	printRParen();
+        p.print("]");
+        statementContext = oldStatementContext;
+        printRParen();
     }
 
     /**
@@ -1262,42 +1262,42 @@ public class LIRToC
      * prints a comment expression
      */
     public void visitComment(JavaStyleComment comment) {
-        StringTokenizer	tok = new StringTokenizer(comment.getText(), "\n");
+        StringTokenizer tok = new StringTokenizer(comment.getText(), "\n");
 
         if (comment.hadSpaceBefore()) {
-            newLine();
+            p.newLine();
         }
 
         if (comment.isLineComment()) {
-            print("//");
-	    if (tok.hasMoreTokens())
-	      print(tok.nextToken().trim());
-            p.println();
+            p.print("//");
+            if (tok.hasMoreTokens())
+              p.print(tok.nextToken().trim());
+            p.newLine();
         } else {
             if (p.getLine() > 0) {
                 if (!nl) {
-                    newLine();
+                    p.newLine();
                 }
-                newLine();
+                p.newLine();
             }
-            print("/*");
+            p.print("/*");
             while (tok.hasMoreTokens()){
                 String comm = tok.nextToken().trim();
                 if (comm.startsWith("*")) {
                     comm = comm.substring(1).trim();
                 }
                 if (tok.hasMoreTokens() || comm.length() > 0) {
-                    newLine();
-                    print(" * " + comm);
+                    p.newLine();
+                    p.print(" * " + comm);
                 }
             }
-            newLine();
-            print(" */");
-            newLine();
+            p.newLine();
+            p.print(" */");
+            p.newLine();
         }
 
         if (comment.hadSpaceAfter()) {
-            newLine();
+            p.newLine();
         }
     }
 
@@ -1305,19 +1305,19 @@ public class LIRToC
      * prints a Javadoc expression
      */
     public void visitJavadoc(JavadocComment comment) {
-        StringTokenizer	tok = new StringTokenizer(comment.getText(), "\n");
-        boolean		isFirst = true;
+        StringTokenizer tok = new StringTokenizer(comment.getText(), "\n");
+        boolean         isFirst = true;
 
         if (!nl) {
-            newLine();
+            p.newLine();
         }
-        newLine();
-        print("/**");
+        p.newLine();
+        p.print("/**");
         while (tok.hasMoreTokens()) {
-            String	text = tok.nextToken().trim();
-            String	type = null;
-            boolean	param = false;
-            int	idx = text.indexOf("@param");
+            String      text = tok.nextToken().trim();
+            String      type = null;
+            boolean     param = false;
+            int idx = text.indexOf("@param");
             if (idx >= 0) {
                 type = "@param";
                 param = true;
@@ -1367,7 +1367,7 @@ public class LIRToC
                 }
             }
             if (idx >= 0) {
-                newLine();
+                p.newLine();
                 isFirst = false;
                 if (param) {
                     text = text.substring(idx + type.length()).trim();
@@ -1376,34 +1376,34 @@ public class LIRToC
                     if (idx == Integer.MAX_VALUE) {
                         idx = 0;
                     }
-                    String	before = text.substring(0, idx);
-                    print(" * " + type);
-                    pos += 12;
-                    print(before);
-                    pos += 20;
-                    print(text.substring(idx).trim());
-                    pos -= 20;
-                    pos -= 12;
+                    String      before = text.substring(0, idx);
+                    p.print(" * " + type);
+                    p.setIndentation(p.getIndentation() + 12);
+                    p.print(before);
+                    p.setIndentation(p.getIndentation() + 20);
+                    p.print(text.substring(idx).trim());
+                    p.setIndentation(p.getIndentation() - 20);
+                    p.setIndentation(p.getIndentation() - 12);
                 } else {
                     text = text.substring(idx + type.length()).trim();
-                    print(" * " + type);
-                    pos += 12;
-                    print(text);
-                    pos -= 12;
+                    p.print(" * " + type);
+                    p.setIndentation(p.getIndentation() + 12);
+                    p.print(text);
+                    p.setIndentation(p.getIndentation() - 12);
                 }
             } else {
                 text = text.substring(text.indexOf("*") + 1);
                 if (tok.hasMoreTokens() || text.length() > 0) {
-                    newLine();
-                    print(" * ");
-                    pos += isFirst ? 0 : 32;
-                    print(text.trim());
-                    pos -= isFirst ? 0 : 32;
+                    p.newLine();
+                    p.print(" * ");
+                    p.setIndentation(p.getIndentation() + (isFirst ? 0 : 32));
+                    p.print(text.trim());
+                    p.setIndentation(p.getIndentation() - (isFirst ? 0 : 32));
                 }
             }
         }
-        newLine();
-        print(" */");
+        p.newLine();
+        p.print(" */");
     }
 
     // ----------------------------------------------------------------------
@@ -1411,13 +1411,13 @@ public class LIRToC
     // ----------------------------------------------------------------------
 
     public void visitCreatePortalExpression(SIRCreatePortal self) {
-        print("create_portal()");
+        p.print("create_portal()");
     }
 
     public void visitInitStatement(SIRInitStatement self,
                                    SIRStream stream)
     {
-        print("/* InitStatement */");
+        p.print("/* InitStatement */");
     }
 
     public void visitInterfaceTable(SIRInterfaceTable self)
@@ -1426,34 +1426,34 @@ public class LIRToC
         JMethodDeclaration[] methods = self.getMethods();
         boolean first = true;
         
-        print("{ ");
+        p.print("{ ");
         for (int i = 0; i < methods.length; i++)
         {
-            if (!first) print(", ");
+            if (!first) p.print(", ");
             first = false;
-            print(iname + "_" + methods[i].getName());
+            p.print(iname + "_" + methods[i].getName());
         }
-        print("}");
+        p.print("}");
     }
     
     public void visitLatency(SIRLatency self)
     {
-        print("LATENCY_BEST_EFFORT");
+        p.print("LATENCY_BEST_EFFORT");
     }
     
     public void visitLatencyMax(SIRLatencyMax self)
     {
-        print("LATENCY_BEST_EFFORT");
+        p.print("LATENCY_BEST_EFFORT");
     }
     
     public void visitLatencyRange(SIRLatencyRange self)
     {
-        print("LATENCY_BEST_EFFORT");
+        p.print("LATENCY_BEST_EFFORT");
     }
     
     public void visitLatencySet(SIRLatencySet self)
     {
-        print("LATENCY_BEST_EFFORT");
+        p.print("LATENCY_BEST_EFFORT");
     }
 
     public void visitMessageStatement(SIRMessageStatement self,
@@ -1463,66 +1463,66 @@ public class LIRToC
                                       JExpression[] params,
                                       SIRLatency latency)
     {
-	print("send_" + iname + "_" + ident + "(");
+        p.print("send_" + iname + "_" + ident + "(");
         portal.accept(this);
-        print(", ");
+        p.print(", ");
         latency.accept(this);
         if (params != null)
             for (int i = 0; i < params.length; i++)
                 if (params[i] != null)
                 {
-                    print(", ");
+                    p.print(", ");
                     params[i].accept(this);
                 }
-        print(");");
+        p.print(");");
     }
 
     public void visitRangeExpression(SIRRangeExpression self) {
-	assert false : "Do not yet support dynamic rates in uniprocessor backend.";
+        assert false : "Do not yet support dynamic rates in uniprocessor backend.";
     }
 
     public void visitDynamicToken(SIRDynamicToken self) {
-	assert false : "Do not yet support dynamic rates in uniprocessor backend.";
+        assert false : "Do not yet support dynamic rates in uniprocessor backend.";
     }
 
     public void visitPeekExpression(SIRPeekExpression self,
                                     CType tapeType,
                                     JExpression num)
     {
-        print("(PEEK_DEFAULTB(");
+        p.print("(PEEK_DEFAULTB(");
         if (tapeType != null)
-            print(tapeType);
+            typePrint(tapeType);
         else
-            print("/* null tapeType! */ int");
-        print(", ");
+            p.print("/* null tapeType! */ int");
+        p.print(", ");
         num.accept(this);
-        print("))");
+        p.print("))");
     }
     
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-	if (self.getNumPop()>1) {
-	    print("(POP_DEFAULTB_N( ");
-	    if (tapeType != null)
-		if(tapeType instanceof CArrayType)
-		    print(tapeType.toString());
-		else
-		    print(tapeType);
-	    else
-		print("/* null tapeType! */ int");
-	    print(", " + self.getNumPop() + " ))");
-	} else {
-	    print("(POP_DEFAULTB( ");
-	    if (tapeType != null)
-		if(tapeType instanceof CArrayType)
-		    print(tapeType.toString());
-		else
-		    print(tapeType);
-	    else
-		print("/* null tapeType! */ int");
-	    print("))");
-	}
+        if (self.getNumPop()>1) {
+            p.print("(POP_DEFAULTB_N( ");
+            if (tapeType != null)
+                if(tapeType instanceof CArrayType)
+                    p.print(tapeType.toString());
+                else
+                    typePrint(tapeType);
+            else
+                p.print("/* null tapeType! */ int");
+            p.print(", " + self.getNumPop() + " ))");
+        } else {
+            p.print("(POP_DEFAULTB( ");
+            if (tapeType != null)
+                if(tapeType instanceof CArrayType)
+                    p.print(tapeType.toString());
+                else
+                    typePrint(tapeType);
+            else
+                p.print("/* null tapeType! */ int");
+            p.print("))");
+        }
     }
     
     public void visitPortal(SIRPortal self)
@@ -1534,7 +1534,7 @@ public class LIRToC
             String theName = "__portal_" + portalCount;
             portalNames.put(self, theName);
         }
-        print(portalNames.get(self));
+        p.print((String)portalNames.get(self));
     }
 
     // visitPrintStatement inherited from ToCCommon.
@@ -1543,17 +1543,17 @@ public class LIRToC
                                     CType tapeType,
                                     JExpression val)
     {
-        print("(PUSH_DEFAULTB(");
+        p.print("(PUSH_DEFAULTB(");
         if (tapeType != null) {
-	    if(tapeType instanceof CArrayType)
-		print(tapeType.toString());
-	    else
-		print(tapeType);
+            if(tapeType instanceof CArrayType)
+                p.print(tapeType.toString());
+            else
+                typePrint(tapeType);
         } else
-            print("/* null tapeType! */ int");
-        print(", ");
+            p.print("/* null tapeType! */ int");
+        p.print(", ");
         val.accept(this);
-        print("))");
+        p.print("))");
     }
     
     public void visitPhaseInvocation(SIRPhaseInvocation self,
@@ -1562,21 +1562,21 @@ public class LIRToC
                                      JExpression pop,
                                      JExpression push)
     {
-        print("/* phase invocation: ");
+        p.print("/* phase invocation: ");
         call.accept(this);
-        print("; */");
+        p.print("; */");
     }
 
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,
                                           JExpression portal,
-					  SIRStream receiver, 
-					  JMethodDeclaration[] methods)
+                                          SIRStream receiver, 
+                                          JMethodDeclaration[] methods)
     {
-        print("register_receiver(");
+        p.print("register_receiver(");
         portal.accept(this);
-        print(", " + THIS_CONTEXT_NAME + ", ");
-        print(self.getItable().getVarDecl().getIdent());
-        print(", LATENCY_BEST_EFFORT);");
+        p.print(", " + THIS_CONTEXT_NAME + ", ");
+        p.print(self.getItable().getVarDecl().getIdent());
+        p.print(", LATENCY_BEST_EFFORT);");
         // (But shouldn't there be a latency field in here?)
     }
     
@@ -1584,11 +1584,11 @@ public class LIRToC
                                         String fn,
                                         SIRLatency latency)
     {
-        print("register_sender(this->context, ");
-        print(fn);
-        print(", ");
+        p.print("register_sender(this->context, ");
+        p.print(fn);
+        p.print(", ");
         latency.accept(this);
-        print(");");
+        p.print(");");
     }
 
 
@@ -1597,15 +1597,15 @@ public class LIRToC
      */
     public void visitFileReader(LIRFileReader self) {
         String childName = THIS_NAME + "->" + self.getChildName();
-        print(childName + " = malloc(sizeof(_ContextContainer));");
-        newLine();
-        print(childName + "->" + CONTEXT_NAME +
+        p.print(childName + " = malloc(sizeof(_ContextContainer));");
+        p.newLine();
+        p.print(childName + "->" + CONTEXT_NAME +
               " = streamit_filereader_create(\"" +
               self.getFileName() + "\");");
-        newLine();
-        print("register_child(");
+        p.newLine();
+        p.print("register_child(");
         self.getStreamContext().accept(this);
-        print(", " + childName + "->" + CONTEXT_NAME + ");");
+        p.print(", " + childName + "->" + CONTEXT_NAME + ");");
     }
 
     /**
@@ -1613,15 +1613,15 @@ public class LIRToC
      */
     public void visitFileWriter(LIRFileWriter self) {
         String childName = THIS_NAME + "->" + self.getChildName();
-        print(childName + " = malloc(sizeof(_ContextContainer));");
-        newLine();
-        print(childName + "->" + CONTEXT_NAME +
+        p.print(childName + " = malloc(sizeof(_ContextContainer));");
+        p.newLine();
+        p.print(childName + "->" + CONTEXT_NAME +
               " = streamit_filewriter_create(\"" +
               self.getFileName() + "\");");
-        newLine();
-        print("register_child(");
+        p.newLine();
+        p.print("register_child(");
         self.getStreamContext().accept(this);
-        print(", " + childName + "->" + CONTEXT_NAME + ");");
+        p.print(", " + childName + "->" + CONTEXT_NAME + ");");
     }
 
     /**
@@ -1630,14 +1630,14 @@ public class LIRToC
     public void visitIdentity(LIRIdentity self) 
     {
         String childName = THIS_NAME + "->" + self.getChildName();
-        print(childName + " = malloc(sizeof(_ContextContainer));");
-        newLine();
-        print(childName + "->" + CONTEXT_NAME +
+        p.print(childName + " = malloc(sizeof(_ContextContainer));");
+        p.newLine();
+        p.print(childName + "->" + CONTEXT_NAME +
               " = streamit_identity_create();");
-        newLine();
-        print("register_child(");
+        p.newLine();
+        p.print("register_child(");
         self.getStreamContext().accept(this);
-        print(", " + childName + "->" + CONTEXT_NAME + ");");
+        p.print(", " + childName + "->" + CONTEXT_NAME + ");");
     }
 
     public void visitSetChild(LIRSetChild self,
@@ -1646,15 +1646,15 @@ public class LIRToC
                               String childName)
     {
         // Pay attention, three statements!
-        print(THIS_NAME + "->" + childName +
+        p.print(THIS_NAME + "->" + childName +
               " = malloc(sizeof(_" + childType + "));");
-        newLine();
-        print(THIS_NAME + "->" + childName + "->" + CONTEXT_NAME + " = " +
+        p.newLine();
+        p.print(THIS_NAME + "->" + childName + "->" + CONTEXT_NAME + " = " +
               "create_context(" + THIS_NAME + "->" + childName + ");");
-        newLine();
-        print("register_child(");
+        p.newLine();
+        p.print("register_child(");
         streamContext.accept(this);
-        print(", " + THIS_NAME + "->" + childName + "->" + CONTEXT_NAME +
+        p.print(", " + THIS_NAME + "->" + childName + "->" + CONTEXT_NAME +
               ");");
     }
     
@@ -1665,13 +1665,13 @@ public class LIRToC
                              CType type,
                              int size)
     {
-        print("create_tape(");
+        p.print("create_tape(");
         srcStruct.accept(this);
-        print("->" + CONTEXT_NAME + ", ");
+        p.print("->" + CONTEXT_NAME + ", ");
         dstStruct.accept(this);
-        print("->" + CONTEXT_NAME + ", sizeof(");
-        print(type);
-        print("), " + size + ");");
+        p.print("->" + CONTEXT_NAME + ", sizeof(");
+        typePrint(type);
+        p.print("), " + size + ");");
     }
     
     /**
@@ -1681,7 +1681,7 @@ public class LIRToC
                                      String name)
     {
         // This is an expression.
-        print(name);
+        p.print(name);
     }
     
     /**
@@ -1690,7 +1690,7 @@ public class LIRToC
     public void visitNode(LIRNode self)
     {
         // This should never be called directly.
-        print("/* Unexpected visitNode */");
+        p.print("/* Unexpected visitNode */");
     }
 
     /**
@@ -1702,12 +1702,12 @@ public class LIRToC
                                       String childName,
                                       SIRInterfaceTable itable)
     {
-        print("register_receiver(");
+        p.print("register_receiver(");
         portal.accept(this);
-        print(", ");
-        print(THIS_NAME + "->" + childName + "->" + CONTEXT_NAME + ", ");
-        print(itable.getVarDecl().getIdent());
-        print(", LATENCY_BEST_EFFORT);");
+        p.print(", ");
+        p.print(THIS_NAME + "->" + childName + "->" + CONTEXT_NAME + ", ");
+        p.print(itable.getVarDecl().getIdent());
+        p.print(", LATENCY_BEST_EFFORT);");
         // (But shouldn't there be a latency field in here?)
     }
 
@@ -1719,12 +1719,12 @@ public class LIRToC
                               JExpression childContext)
     {
         // This is a statement.
-        newLine();
-        print("register_child(");
+        p.newLine();
+        p.print("register_child(");
         streamContext.accept(this);
-        print(", ");
+        p.print(", ");
         childContext.accept(this);
-        print(");");
+        p.print(");");
     }
     
     /**
@@ -1734,11 +1734,11 @@ public class LIRToC
                                JExpression streamContext,
                                LIRFunctionPointer fp)
     {
-        print("set_decode(");
+        p.print("set_decode(");
         streamContext.accept(this);
-        print(", ");
+        p.print(", ");
         fp.accept(this);
-        print(");");
+        p.print(");");
     }
 
     /**
@@ -1752,15 +1752,15 @@ public class LIRToC
                               LIRFunctionPointer fp)
     {
         /* This doesn't work quite right yet, but it's closer. */
-        print("FEEDBACK_DELAY(");
+        p.print("FEEDBACK_DELAY(");
         data.accept(this);
-        print(", ");
+        p.print(", ");
         streamContext.accept(this);
-        print(", " + delay + ", ");
-        print(type);
-        print(", ");
+        p.print(", " + delay + ", ");
+        typePrint(type);
+        p.print(", ");
         fp.accept(this);
-        print(");");
+        p.print(");");
     }
     
     /**
@@ -1770,11 +1770,11 @@ public class LIRToC
                         JExpression streamContext,
                         LIRFunctionPointer fp)
     {
-        print("set_encode(");
+        p.print("set_encode(");
         streamContext.accept(this);
-        print(", ");
+        p.print(", ");
         fp.accept(this);
-        print(");");
+        p.print(");");
     }
     
     /**
@@ -1786,17 +1786,17 @@ public class LIRToC
                                int ways,
                                int[] weights)
     {
-        print("set_joiner(");
+        p.print("set_joiner(");
         streamContext.accept(this);
-        print(", ");
-        print(type);
-        print(", " + String.valueOf(ways));
+        p.print(", ");
+        p.print(type.toString());
+        p.print(", " + String.valueOf(ways));
         if (weights != null)
         {
             for (int i = 0; i < weights.length; i++)
-                print(", " + String.valueOf(weights[i]));
+                p.print(", " + String.valueOf(weights[i]));
         }
-        print(");");
+        p.print(");");
     }
 
     /**
@@ -1806,9 +1806,9 @@ public class LIRToC
                       JExpression streamContext,
                       int peek)
     {
-        print("set_peek(");
+        p.print("set_peek(");
         streamContext.accept(this);
-        print(", " + peek + ");");
+        p.print(", " + peek + ");");
     }
     
     /**
@@ -1818,9 +1818,9 @@ public class LIRToC
                      JExpression streamContext,
                      int pop)
     {
-        print("set_pop(");
+        p.print("set_pop(");
         streamContext.accept(this);
-        print(", " + pop + ");");
+        p.print(", " + pop + ");");
     }
     
     /**
@@ -1830,9 +1830,9 @@ public class LIRToC
                       JExpression streamContext,
                       int push)
     {
-        print("set_push(");
+        p.print("set_push(");
         streamContext.accept(this);
-        print(", " + push + ");");
+        p.print(", " + push + ");");
     }
 
     /**
@@ -1844,15 +1844,15 @@ public class LIRToC
                                  int ways,
                                  int[] weights)
     {
-        print("set_splitter(");
+        p.print("set_splitter(");
         streamContext.accept(this);
-        print(", " + type + ", " + String.valueOf(ways));
+        p.print(", " + type + ", " + String.valueOf(ways));
         if (weights != null)
         {
             for (int i = 0; i < weights.length; i++)
-                print(", " + String.valueOf(weights[i]));
+                p.print(", " + String.valueOf(weights[i]));
         }
-        print(");");
+        p.print(");");
     }
 
     /**
@@ -1862,9 +1862,9 @@ public class LIRToC
                             JExpression streamContext,
                             LIRStreamType streamType)
     {
-        print("set_stream_type(");
+        p.print("set_stream_type(");
         streamContext.accept(this);
-        print(", " + streamType + ");");
+        p.print(", " + streamType + ");");
     }
     
     /**
@@ -1874,47 +1874,47 @@ public class LIRToC
                       JExpression streamContext,
                       LIRFunctionPointer fn)
     {
-        print("set_work(");
+        p.print("set_work(");
         streamContext.accept(this);
-        print(", (work_fn)");
+        p.print(", (work_fn)");
         fn.accept(this);
-        print(");");
+        p.print(");");
     }
 
     public void visitMainFunction(LIRMainFunction self,
                                   String typeName,
                                   LIRFunctionPointer init,
-				  List initStatements)
+                                  List initStatements)
     {
-        print(typeName + " " + THIS_NAME +
+        p.print(typeName + " " + THIS_NAME +
               " = malloc(sizeof(_" + typeName + "));");
-        newLine();
-        print(THIS_CONTEXT_NAME + " = create_context(" + THIS_NAME + ");");
-        newLine();
+        p.newLine();
+        p.print(THIS_CONTEXT_NAME + " = create_context(" + THIS_NAME + ");");
+        p.newLine();
         init.accept(this);
-        print("(" + THIS_NAME + ");");
-        newLine();
-        print("connect_tapes(" + THIS_CONTEXT_NAME + ");");
-        newLine();
+        p.print("(" + THIS_NAME + ");");
+        p.newLine();
+        p.print("connect_tapes(" + THIS_CONTEXT_NAME + ");");
+        p.newLine();
         Iterator iter = initStatements.iterator();
         while (iter.hasNext())
             ((JStatement)(iter.next())).accept(this);
-        newLine();
-        print("streamit_run(" + THIS_CONTEXT_NAME + ", argc, argv);");
-        newLine();
-        print("return 0;");
+        p.newLine();
+        p.print("streamit_run(" + THIS_CONTEXT_NAME + ", argc, argv);");
+        p.newLine();
+        p.print("return 0;");
     }
 
     /**
      * Visits a set body of feedback loop.
      */
     public void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
-				       JExpression streamContext,
+                                       JExpression streamContext,
                                        JExpression childContext,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
+                                       CType inputType,
+                                       CType outputType,
+                                       int inputSize,
+                                       int outputSize) {
         /* Three things need to happen for feedback loop children:
          * they need to be registered, their input tapes need
          * to be created, and the output tapes need to be created.
@@ -1922,87 +1922,87 @@ public class LIRToC
          * to take care of the tapes.  For a feedback loop body,
          * we're looking at the output of the joiner and the
          * input of the splitter. */
-        print("create_splitjoin_tape(");
+        p.print("create_splitjoin_tape(");
         streamContext.accept(this);
-        print(", JOINER, OUTPUT, 0, ");
+        p.print(", JOINER, OUTPUT, 0, ");
         childContext.accept(this);
-        print(", sizeof(");
-        print(inputType);
-        print("), " + inputSize + ");");
-        newLine();
-        print("create_splitjoin_tape(");
+        p.print(", sizeof(");
+        typePrint(inputType);
+        p.print("), " + inputSize + ");");
+        p.newLine();
+        p.print("create_splitjoin_tape(");
         streamContext.accept(this);
-        print(", SPLITTER, INPUT, 0, ");
+        p.print(", SPLITTER, INPUT, 0, ");
         childContext.accept(this);
-        print(", sizeof(");
-        print(outputType);
-        print("), " + outputSize + ");");
+        p.print(", sizeof(");
+        typePrint(outputType);
+        p.print("), " + outputSize + ");");
     }
 
     /**
      * Visits a set loop of feedback loop.
      */
     public void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
-				       JExpression streamContext,
+                                       JExpression streamContext,
                                        JExpression childContext,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
+                                       CType inputType,
+                                       CType outputType,
+                                       int inputSize,
+                                       int outputSize) {
         /* The loop's output goes to input 1 of the joiner, and its
          * input comes from output 1 of the splitter.  (input/output
          * 0 are connected to the outside of the block.) */
-        print("create_splitjoin_tape(");
+        p.print("create_splitjoin_tape(");
         streamContext.accept(this);
-        print(", SPLITTER, OUTPUT, 1, ");
+        p.print(", SPLITTER, OUTPUT, 1, ");
         childContext.accept(this);
-        print(", sizeof(");
-        print(inputType);
-        print("), " + inputSize + ");");
-        newLine();
-        print("create_splitjoin_tape(");
+        p.print(", sizeof(");
+        typePrint(inputType);
+        p.print("), " + inputSize + ");");
+        p.newLine();
+        p.print("create_splitjoin_tape(");
         streamContext.accept(this);
-        print(", JOINER, INPUT, 1, ");
+        p.print(", JOINER, INPUT, 1, ");
         childContext.accept(this);
-        print(", sizeof(");
-        print(outputType);
-        print("), " + outputSize + ");");
+        p.print(", sizeof(");
+        typePrint(outputType);
+        p.print("), " + outputSize + ");");
     }
 
     /**
      * Visits a set a parallel stream.
      */
     public void visitSetParallelStream(LIRSetParallelStream self,
-				       JExpression streamContext,
+                                       JExpression streamContext,
                                        JExpression childContext,
-				       int position,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
+                                       int position,
+                                       CType inputType,
+                                       CType outputType,
+                                       int inputSize,
+                                       int outputSize) {
         /* For  split/joins now.  Again, assume registration has
          * already happened; we just need to connect tapes.
          * Use the position'th slot on the splitter output and
          * joiner input. */
-	if (inputSize!=0) {
-	    print("create_splitjoin_tape(");
-	    streamContext.accept(this);
-	    print(", SPLITTER, OUTPUT, " + position + ", ");
-	    childContext.accept(this);
-	    print(", sizeof(");
-            print(inputType);
-            print("), " + inputSize + ");");
-	    newLine();
-	}
-	if (outputSize!=0) {
-	    print("create_splitjoin_tape(");
-	    streamContext.accept(this);
-	    print(", JOINER, INPUT, " + position + ", ");
-	    childContext.accept(this);
-	    print(", sizeof(");
-            print(outputType);
-            print("), " + outputSize + ");");
-	}
+        if (inputSize!=0) {
+            p.print("create_splitjoin_tape(");
+            streamContext.accept(this);
+            p.print(", SPLITTER, OUTPUT, " + position + ", ");
+            childContext.accept(this);
+            p.print(", sizeof(");
+            typePrint(inputType);
+            p.print("), " + inputSize + ");");
+            p.newLine();
+        }
+        if (outputSize!=0) {
+            p.print("create_splitjoin_tape(");
+            streamContext.accept(this);
+            p.print(", JOINER, INPUT, " + position + ", ");
+            childContext.accept(this);
+            p.print(", sizeof(");
+            typePrint(outputType);
+            p.print("), " + outputSize + ");");
+        }
     }
 
     /**
@@ -2010,11 +2010,11 @@ public class LIRToC
      */
     public void visitWorkEntry(LIRWorkEntry self)
     {
-        print("VARS_DEFAULTB();");
-	  newLine();
-        print("LOCALIZE_DEFAULTB(");
+        p.print("VARS_DEFAULTB();");
+          p.newLine();
+        p.print("LOCALIZE_DEFAULTB(");
         self.getStreamContext().accept(this);
-        print(");");
+        p.print(");");
     }
 
     /**
@@ -2022,9 +2022,9 @@ public class LIRToC
      */
     public void visitWorkExit(LIRWorkExit self)
     {
-        print("UNLOCALIZE_DEFAULTB(");
+        p.print("UNLOCALIZE_DEFAULTB(");
         self.getStreamContext().accept(this);
-        print(");");
+        p.print(");");
     }
 
 
@@ -2037,13 +2037,13 @@ public class LIRToC
      */
     public void visitSwitchLabel(JSwitchLabel self,
                                  JExpression expr) {
-        newLine();
+        p.newLine();
         if (expr != null) {
-            print("case ");
+            p.print("case ");
             expr.accept(this);
-            print(": ");
+            p.print(": ");
         } else {
-            print("default: ");
+            p.print("default: ");
         }
     }
 
@@ -2056,12 +2056,12 @@ public class LIRToC
         for (int i = 0; i < labels.length; i++) {
             labels[i].accept(this);
         }
-        pos += TAB_SIZE;
+        p.indent();
         for (int i = 0; i < stmts.length; i++) {
-            newLine();
+            p.newLine();
             stmts[i].accept(this);
         }
-        pos -= TAB_SIZE;
+        p.outdent();
     }
 
     /**
@@ -2070,9 +2070,9 @@ public class LIRToC
     public void visitCatchClause(JCatchClause self,
                                  JFormalParameter exception,
                                  JBlock body) {
-        print(" catch (");
+        p.print(" catch (");
         exception.accept(this);
-        print(") ");
+        p.print(") ");
         body.accept(this);
     }
 
@@ -2081,16 +2081,16 @@ public class LIRToC
      */
     public void visitBooleanLiteral(boolean value) {
         if (value)
-            print(1);
+            p.print(1);
         else
-            print(0);
+            p.print(0);
     }
 
     /**
      * prints a byte literal
      */
     public void visitByteLiteral(byte value) {
-        print("((byte)" + value + ")");
+        p.print("((byte)" + value + ")");
     }
 
     /**
@@ -2099,31 +2099,31 @@ public class LIRToC
     public void visitCharLiteral(char value) {
         switch (value) {
         case '\b':
-            print("'\\b'");
+            p.print("'\\b'");
             break;
         case '\r':
-            print("'\\r'");
+            p.print("'\\r'");
             break;
         case '\t':
-            print("'\\t'");
+            p.print("'\\t'");
             break;
         case '\n':
-            print("'\\n'");
+            p.print("'\\n'");
             break;
         case '\f':
-            print("'\\f'");
+            p.print("'\\f'");
             break;
         case '\\':
-            print("'\\\\'");
+            p.print("'\\\\'");
             break;
         case '\'':
-            print("'\\''");
+            p.print("'\\''");
             break;
         case '\"':
-            print("'\\\"'");
+            p.print("'\\\"'");
             break;
         default:
-            print("'" + value + "'");
+            p.print("'" + value + "'");
         }
     }
 
@@ -2131,71 +2131,71 @@ public class LIRToC
      * prints a double literal
      */
     public void visitDoubleLiteral(double value) {
-        print("((double)" + value + ")");
+        p.print("((double)" + value + ")");
     }
 
     /**
      * prints a float literal
      */
     public void visitFloatLiteral(float value) {
-        print("((float)" + value + ")");
+        p.print("((float)" + value + ")");
     }
 
     /**
      * prints a int literal
      */
     public void visitIntLiteral(int value) {
-        print(value);
+        p.print(value);
     }
 
     /**
      * prints a long literal
      */
     public void visitLongLiteral(long value) {
-        print("(" + value + "L)");
+        p.print("(" + value + "L)");
     }
 
     /**
      * prints a short literal
      */
     public void visitShortLiteral(short value) {
-        print("((short)" + value + ")");
+        p.print("((short)" + value + ")");
     }
 
     /**
      * prints a string literal
      */
     public void visitStringLiteral(String value) {
-        print('"' + value + '"');
+        p.print('"' + value + '"');
     }
 
     /**
      * prints a null literal
      */
     public void visitNullLiteral() {
-        print("null");
+        p.print("null");
     }
 
     /**
      * prints an array length expression
      */
     public void visitPackageName(String name) {
-        // print("package " + name + ";");
-        // newLine();
+        // p.print("package " + name + ";");
+        // p.newLine();
     }
 
     /**
      * prints an array length expression
      */
     public void visitPackageImport(String name) {
-        // print("import " + name.replace('/', '.') + ".*;");
+        // p.print("import " + name.replace('/', '.') + ".*;");
     }
 
     /**
      * prints an array length expression
      */
     public void visitClassImport(String name) {
-        // print("import " + name.replace('/', '.') + ";");
+        // p.print("import " + name.replace('/', '.') + ";");
     }
 
     /**
@@ -2205,10 +2205,10 @@ public class LIRToC
                                       boolean isFinal,
                                       CType type,
                                       String ident) {
-        print(type);
+        typePrint(type);
         if (ident.indexOf("$") == -1) {
-            print(" ");
-            print(ident);
+            p.print(" ");
+            p.print(ident);
         }
     }
 
@@ -2219,7 +2219,7 @@ public class LIRToC
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 if (i + base != 0) {
-                    print(", ");
+                    p.print(", ");
                 }
                 args[i].accept(this);
             }
@@ -2233,11 +2233,11 @@ public class LIRToC
                                      boolean functorIsThis,
                                      JExpression[] params)
     {
-        newLine();
-        print(functorIsThis ? "this" : "super");
-        print("(");
+        p.newLine();
+        p.print(functorIsThis ? "this" : "super");
+        p.print("(");
         visitArgs(params, 0);
-        print(");");
+        p.print(");");
     }
 
     /**
@@ -2246,32 +2246,32 @@ public class LIRToC
     public void visitArrayInitializer(JArrayInitializer self,
                                       JExpression[] elems)
     {
-	/*
-	// refer to previously declared static initializers
-	if (arrayInitializers.containsKey(self)) {
-	    // cast to pointer type
-	    print("(");
-	    print(findBaseType(self));
-	    int dims = findNumDims(self);
-	    for (int i=0; i<dims; i++) {
-		print("*");
-	    }
-	    print(")");
-	    // print name of array
-	    String name = (String)arrayInitializers.get(self);
-	    print(name);
-	} else {
-	*/
-	newLine();
-	print("{");
-	for (int i = 0; i < elems.length; i++) {
-	    if (i != 0) {
-		print(", ");
-	    }
-	    elems[i].accept(this);
-	}
-	print("}");
-	//}
+        /*
+        // refer to previously declared static initializers
+        if (arrayInitializers.containsKey(self)) {
+            // cast to pointer type
+            p.print("(");
+            p.print(findBaseType(self));
+            int dims = findNumDims(self);
+            for (int i=0; i<dims; i++) {
+                p.print("*");
+            }
+            p.print(")");
+            // print name of array
+            String name = (String)arrayInitializers.get(self);
+            p.print(name);
+        } else {
+        */
+        p.newLine();
+        p.print("{");
+        for (int i = 0; i < elems.length; i++) {
+            if (i != 0) {
+                p.print(", ");
+            }
+            elems[i].accept(this);
+        }
+        p.print("}");
+        //}
     }
 
     
@@ -2280,29 +2280,29 @@ public class LIRToC
     // ----------------------------------------------------------------------
 
     // Special case for CTypes, to map some Java types to C types.
-    protected void print(CType s) {
+    protected void typePrint(CType s) {
         if (s instanceof CArrayType)
         {
-            print(((CArrayType)s).getBaseType());
+            typePrint(((CArrayType)s).getBaseType());
             JExpression[] dims = ((CArrayType)s).getDims();
-	    if (dims != null)
-		for (int i = 0; i < dims.length; i++)
-		    {
-			print("[");
-			dims[i].accept(this);
-			print("]");
-		    }
-	    else
-		for (int i = 0; i < ((CArrayType)s).getArrayBound(); i++)
-		    print("*");
+            if (dims != null)
+                for (int i = 0; i < dims.length; i++)
+                    {
+                        p.print("[");
+                        dims[i].accept(this);
+                        p.print("]");
+                    }
+            else
+                for (int i = 0; i < ((CArrayType)s).getArrayBound(); i++)
+                    p.print("*");
         }
         else if (s.getTypeID() == TID_BOOLEAN)
-            print("int");
+            p.print("int");
         else if (s.toString().endsWith("Portal"))
-	    // ignore the specific type of portal in the C library
-	    print("portal");
-	else
-            print(s.toString());
+            // ignore the specific type of portal in the C library
+            p.print("portal");
+        else
+            p.print(s.toString());
     }
 
 
@@ -2310,17 +2310,17 @@ public class LIRToC
      * Tries to find the number of dimensions of <self>.
      */
     protected int findNumDims(JArrayInitializer self) {
-	int dims = 0;
-	JExpression expr = self;
-	while(true) {
-	    if (expr instanceof JArrayInitializer) {
-		dims++;
-		expr = ((JArrayInitializer)expr).getElems()[0];
-	    } else {
-		break;
-	    }
-	}
-	return dims;
+        int dims = 0;
+        JExpression expr = self;
+        while(true) {
+            if (expr instanceof JArrayInitializer) {
+                dims++;
+                expr = ((JArrayInitializer)expr).getElems()[0];
+            } else {
+                break;
+            }
+        }
+        return dims;
     }
 
     /**
@@ -2328,46 +2328,46 @@ public class LIRToC
      * array.  For example, "A[2][2]" has 4 elements.
      */
     protected int findSize(JArrayInitializer self) {
-	int count = 1;
-	JExpression expr = self;
-	while(true) {
-	    if (expr instanceof JArrayInitializer) {
-		count *= ((JArrayInitializer)expr).getElems().length;
-		expr = ((JArrayInitializer)expr).getElems()[0];
-	    } else {
-		break;
-	    }
-	}
-	return count;
+        int count = 1;
+        JExpression expr = self;
+        while(true) {
+            if (expr instanceof JArrayInitializer) {
+                count *= ((JArrayInitializer)expr).getElems().length;
+                expr = ((JArrayInitializer)expr).getElems()[0];
+            } else {
+                break;
+            }
+        }
+        return count;
     }
 
     /**
      * Tries to find base type of <self> (sometimes getType() returns null)
      */
     protected CType findBaseType(JArrayInitializer self) {
-	JExpression expr = self;
-	while (true) {
-	    if (expr.getType()!=null && 
-		expr.getType() instanceof CArrayType &&
-		((CArrayType)expr.getType()).getBaseType()!=null) {
-		return ((CArrayType)expr.getType()).getBaseType();
-	    }
-	    if (expr.getType()!=null && 
-		!(expr.getType() instanceof CArrayType)) {
-		return expr.getType();
-	    }
-	    if (expr.getType()==null &&
-		expr instanceof JArrayInitializer) {
-		JExpression[] myElems = ((JArrayInitializer)expr).getElems();
-		if (myElems.length==0) {
-		    at.dms.util.Utils.fail("Can't find type of array " + self);
-		} else {
-		    expr = myElems[0];
-		}
-	    } else {
-		at.dms.util.Utils.fail("Can't find type of array " + self);
-	    }
-	}
+        JExpression expr = self;
+        while (true) {
+            if (expr.getType()!=null && 
+                expr.getType() instanceof CArrayType &&
+                ((CArrayType)expr.getType()).getBaseType()!=null) {
+                return ((CArrayType)expr.getType()).getBaseType();
+            }
+            if (expr.getType()!=null && 
+                !(expr.getType() instanceof CArrayType)) {
+                return expr.getType();
+            }
+            if (expr.getType()==null &&
+                expr instanceof JArrayInitializer) {
+                JExpression[] myElems = ((JArrayInitializer)expr).getElems();
+                if (myElems.length==0) {
+                    at.dms.util.Utils.fail("Can't find type of array " + self);
+                } else {
+                    expr = myElems[0];
+                }
+            } else {
+                at.dms.util.Utils.fail("Can't find type of array " + self);
+            }
+        }
     }
 
     /**
@@ -2375,33 +2375,33 @@ public class LIRToC
      * otherwise just the declaration is printed.
      */
     protected void declareInitializedArray(CType baseType, String ident, JExpression expr, KjcVisitor visitor, boolean printInit) {
-	print(baseType); // note this calls print(CType), not print(String)
-	print(" " + ident);
-	JArrayInitializer init = (JArrayInitializer)expr;
-	while (true) {
-	    int length = init.getElems().length;
-	    print("[" + length + "]");
-	    if (length==0) { 
-		// hope that we have a 1-dimensional array in
-		// this case.  Otherwise we won't currently
-		// get the type declarations right for the
-		// lower pieces.
-		break;
-	    }
-	    // assume rectangular arrays
-	    JExpression next = (JExpression)init.getElems()[0];
-	    if (next instanceof JArrayInitializer) {
-		init = (JArrayInitializer)next;
-	    } else {
-		break;
-	    }
-	}
-	if (printInit) {
-	    print(" = ");
-	    expr.accept(visitor);
-	}
-	print(";");
-	newLine();
+        typePrint(baseType); // note this calls print(CType), not print(String)
+        p.print(" " + ident);
+        JArrayInitializer init = (JArrayInitializer)expr;
+        while (true) {
+            int length = init.getElems().length;
+            p.print("[" + length + "]");
+            if (length==0) { 
+                // hope that we have a 1-dimensional array in
+                // this case.  Otherwise we won't currently
+                // get the type declarations right for the
+                // lower pieces.
+                break;
+            }
+            // assume rectangular arrays
+            JExpression next = (JExpression)init.getElems()[0];
+            if (next instanceof JArrayInitializer) {
+                init = (JArrayInitializer)next;
+            } else {
+                break;
+            }
+        }
+        if (printInit) {
+            p.print(" = ");
+            expr.accept(visitor);
+        }
+        p.print(";");
+        p.newLine();
     }
 
     /**
@@ -2429,68 +2429,68 @@ public class LIRToC
      */
     protected java.util.HashMap arrayInitializers; // JArrayInitializer -> String
     public void gatherArrayInitializers(JClassDeclaration flat) {
-	arrayInitializers = new java.util.HashMap();
-	flat.accept(new GatherArrayInitializers(this));
+        arrayInitializers = new java.util.HashMap();
+        flat.accept(new GatherArrayInitializers(this));
     }
     class GatherArrayInitializers extends SLIREmptyVisitor {
-	/**
-	 * Name for init fields generated.
-	 */
-	private static final String INITIALIZER_NAME = "__array_initializer_";
-	/**
-	 * Counter for init fields generated.
-	 */
-	private int INITIALIZER_COUNT = 0;
-	/**
-	 * The visitor doing the actual printing of stuff.
-	 */
-	private KjcVisitor printer;
-	
-	public GatherArrayInitializers(KjcVisitor printer) {
-	    this.printer = printer;
-	}
-	
-	/**
-	 * Don't visit variable defs, because these declare local
-	 * arrays.  They are stack allocated automatically.
-	 */
-	public void visitVariableDefinition(JVariableDefinition self,
-					    int modifiers,
-					    CType type,
-					    String ident,
-					    JExpression expr) {
-	    return;
-	}
+        /**
+         * Name for init fields generated.
+         */
+        private static final String INITIALIZER_NAME = "__array_initializer_";
+        /**
+         * Counter for init fields generated.
+         */
+        private int INITIALIZER_COUNT = 0;
+        /**
+         * The visitor doing the actual printing of stuff.
+         */
+        private KjcVisitor printer;
+        
+        public GatherArrayInitializers(KjcVisitor printer) {
+            this.printer = printer;
+        }
+        
+        /**
+         * Don't visit variable defs, because these declare local
+         * arrays.  They are stack allocated automatically.
+         */
+        public void visitVariableDefinition(JVariableDefinition self,
+                                            int modifiers,
+                                            CType type,
+                                            String ident,
+                                            JExpression expr) {
+            return;
+        }
 
-	public void visitAssignmentExpression(JAssignmentExpression self,
-					      JExpression left,
-					      JExpression right) {
-	    if (right instanceof JArrayInitializer) {
-		JArrayInitializer init = (JArrayInitializer)right;
-		// make new name for this reference
-		String name = INITIALIZER_NAME + (INITIALIZER_COUNT++);
-		CType baseType = findBaseType(init);
-		int numDims = findNumDims(init);
-		assert baseType!=null:"Can't find type of array " + init;
-		
-		declareInitializedArray(baseType, name, init, printer, true);
-		// important to register the name after declaring the
-		// array, so that the above statement prints the array
-		// itself rather than a reference to the name
-		arrayInitializers.put(init, name);	    
-	    }
-	}
+        public void visitAssignmentExpression(JAssignmentExpression self,
+                                              JExpression left,
+                                              JExpression right) {
+            if (right instanceof JArrayInitializer) {
+                JArrayInitializer init = (JArrayInitializer)right;
+                // make new name for this reference
+                String name = INITIALIZER_NAME + (INITIALIZER_COUNT++);
+                CType baseType = findBaseType(init);
+                int numDims = findNumDims(init);
+                assert baseType!=null:"Can't find type of array " + init;
+                
+                declareInitializedArray(baseType, name, init, printer, true);
+                // important to register the name after declaring the
+                // array, so that the above statement prints the array
+                // itself rather than a reference to the name
+                arrayInitializers.put(init, name);          
+            }
+        }
     }
 
     // ----------------------------------------------------------------------
     // DATA MEMBERS
     // ----------------------------------------------------------------------
 
-    //protected boolean			forInit;	// is on a for init
+    //protected boolean                 forInit;        // is on a for init
     protected String                      className;
     protected boolean isStruct;
 
-    protected boolean			nl = true;
+    protected boolean                   nl = true;
     protected boolean                   declOnly = false;
 
     protected int                       portalCount;

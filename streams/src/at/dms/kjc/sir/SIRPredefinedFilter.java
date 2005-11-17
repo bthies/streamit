@@ -28,7 +28,7 @@ public class SIRPredefinedFilter extends SIRFilter implements Cloneable {
 	      fields,
 	      methods,
 	      peek, pop, push,
-	      /* work */ null,
+	      /* work */ new JMethodDeclaration("SIRPredefinedFilter " + ident),
 	      /* input type */ inputType,
 	      /* output type */ outputType);
     }

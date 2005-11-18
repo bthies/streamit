@@ -13,7 +13,7 @@ void->void pipeline tde {
     int M = 15;   // number of pri's
     int N = 36; // number of input samples
     int B = 64; // largest power of 2 above (N+K)
-    int PAR = 15;
+    int PAR = 12;
 
     add start (PAR); 
     
@@ -26,8 +26,6 @@ void->void pipeline tde {
 	  }
 	  join roundrobin(0);
     }
-
-//    add finish(PAR);
 }
 
 void->int filter start (int p) {
@@ -9956,8 +9954,6 @@ float[128] coeff= {
   int N = 64, Nstage = 3;
   int idx = 0;
   float[128] xd, yd;
-//  float[90*36*2] Raw, outdata;
-//  float[90*36*2] outdata;
   int DS, x, y, offset, current;
   int correct;
   float diff;
@@ -9973,8 +9969,8 @@ float[128] coeff= {
     x = current%15;
     y = current/15;
 
-    // input data
 /*
+    // synthetic input data
     for (int i=0; i<6; i++) {
       for (int k=0; k<15; k++) {
         for (int j=0; j<36; j++) {
@@ -10115,151 +10111,153 @@ float[128] coeff= {
         yd[(bk * 4 + 3) * 2 + 1] = gi + fi;
       }
 
+      // multiplication
+      for (int j = 0; j < 64; j++) {
+        xd[j*2]   = coeff[j*2] * yd[j*2] - coeff[j*2+1] * yd[j*2+1];
+        xd[j*2+1] = coeff[j*2] * yd[j*2+1] + coeff[j*2+1] * yd[j*2];
+      }
+
+/*
       // bit reverse
       for(i=0; i<N; i++) {
         xd[(bitr[i]) * 2    ] = yd[i * 2    ];
         xd[(bitr[i]) * 2 + 1] = yd[i * 2 + 1];
       }
-
+*/
+/*
       // multiplication
       for (int j = 0; j < 64; j++) {
         yd[j*2]   = coeff[j*2] * xd[j*2] - coeff[j*2+1] * xd[j*2+1];
         yd[j*2+1] = coeff[j*2] * xd[j*2+1] + coeff[j*2+1] * xd[j*2];
       }
+*/
 
-// IFFT
-      // conjugate
-      for (int j = 0; j < 64; j++) {
-        xd[j*2]   = yd[j*2];
-        xd[j*2+1] = yd[j*2+1] * -1;
-      }
+// IFFT directly not using fft code
 
-      q1 = N/4;
-      q2 = N/2;
-      q3 = N*3/4;
-      q4 = N;
-
-      for(bf=0; bf < q1; bf++) {
-
-        er = xd[(     bf) * 2    ] + xd[(q2 + bf) * 2    ]; 
-        ei = xd[(     bf) * 2    ] - xd[(q2 + bf) * 2    ]; 
-        fr = xd[(q1 + bf) * 2    ] + xd[(q3 + bf) * 2    ]; 
-        fi = xd[(q1 + bf) * 2    ] - xd[(q3 + bf) * 2    ]; 
-        gr = xd[(     bf) * 2 + 1] + xd[(q2 + bf) * 2 + 1]; 
-        gi = xd[(     bf) * 2 + 1] - xd[(q2 + bf) * 2 + 1]; 
-        hr = xd[(q1 + bf) * 2 + 1] + xd[(q3 + bf) * 2 + 1]; 
-        hi = xd[(q1 + bf) * 2 + 1] - xd[(q3 + bf) * 2 + 1]; 
-
-        yd[(     bf) * 2    ] = er + fr;
-        yd[(     bf) * 2 + 1] = gr + hr;
-        yd[(q1 + bf) * 2    ] = ei + hi;
-        yd[(q1 + bf) * 2 + 1] = gi - fi;
-        yd[(q2 + bf) * 2    ] = er - fr;
-        yd[(q2 + bf) * 2 + 1] = gr - hr;
-        yd[(q3 + bf) * 2    ] = ei - hi;
-        yd[(q3 + bf) * 2 + 1] = gi + fi;
-
-        xd[(bf) * 2    ] = yd[(bf) * 2    ];
-        xd[(bf) * 2 + 1] = yd[(bf) * 2 + 1];
-
-        xd[(q1 + bf) * 2    ] = yd[(q1 + bf) * 2] * wfft[(bf) * 2] - yd[(q1 + bf) * 2 + 1] * wfft[(bf) * 2 + 1];
-        xd[(q1 + bf) * 2 + 1] = yd[(q1 + bf) * 2] * wfft[(bf) * 2 + 1] + yd[(q1 + bf) * 2 + 1] * wfft[(bf) * 2];
-        xd[(q2 + bf) * 2    ] = yd[(q2 + bf) * 2] * wfft[(2 * bf) * 2] - yd[(q2 + bf) * 2 + 1] * wfft[(2 * bf) * 2 + 1];
-        xd[(q2 + bf) * 2 + 1] = yd[(q2 + bf) * 2] * wfft[(2 * bf) * 2 + 1] + yd[(q2 + bf) * 2 + 1] * wfft[(2 * bf) * 2];
-        xd[(q3 + bf) * 2    ] = yd[(q3 + bf) * 2] * wfft[(3 * bf) * 2] - yd[(q3 + bf) * 2 + 1] * wfft[(3 * bf) * 2 + 1];
-        xd[(q3 + bf) * 2 + 1] = yd[(q3 + bf) * 2] * wfft[(3 * bf) * 2 + 1] + yd[(q3 + bf) * 2 + 1] * wfft[(3 * bf) * 2];
-      }
-
-      nbk = 4;
-      q1 = 4;
-      q2 = 8;
-      q3 = 12;
-      q4 = 16;
-
-      for(bk=0; bk < nbk; bk++) {
-        for(bf=0; bf < q1; bf++) {
-
-          er = xd[(bk * q4 +      bf) * 2    ] + xd[(bk * q4 + q2 + bf) * 2    ]; 
-          ei = xd[(bk * q4 +      bf) * 2    ] - xd[(bk * q4 + q2 + bf) * 2    ]; 
-          fr = xd[(bk * q4 + q1 + bf) * 2    ] + xd[(bk * q4 + q3 + bf) * 2    ]; 
-          fi = xd[(bk * q4 + q1 + bf) * 2    ] - xd[(bk * q4 + q3 + bf) * 2    ]; 
-          gr = xd[(bk * q4 +      bf) * 2 + 1] + xd[(bk * q4 + q2 + bf) * 2 + 1]; 
-          gi = xd[(bk * q4 +      bf) * 2 + 1] - xd[(bk * q4 + q2 + bf) * 2 + 1]; 
-          hr = xd[(bk * q4 + q1 + bf) * 2 + 1] + xd[(bk * q4 + q3 + bf) * 2 + 1]; 
-          hi = xd[(bk * q4 + q1 + bf) * 2 + 1] - xd[(bk * q4 + q3 + bf) * 2 + 1]; 
-
-          yd[(bk * q4 +      bf) * 2    ] = er + fr;
-          yd[(bk * q4 +      bf) * 2 + 1] = gr + hr;
-          yd[(bk * q4 + q1 + bf) * 2    ] = ei + hi;
-          yd[(bk * q4 + q1 + bf) * 2 + 1] = gi - fi;
-          yd[(bk * q4 + q2 + bf) * 2    ] = er - fr;
-          yd[(bk * q4 + q2 + bf) * 2 + 1] = gr - hr;
-          yd[(bk * q4 + q3 + bf) * 2    ] = ei - hi;
-          yd[(bk * q4 + q3 + bf) * 2 + 1] = gi + fi;
-
-          xd[(bk * q4 + bf) * 2    ] = yd[(bk * q4 + bf) * 2    ];
-          xd[(bk * q4 + bf) * 2 + 1] = yd[(bk * q4 + bf) * 2 + 1];
-
-          xd[(bk * q4 + q1 + bf) * 2    ] = yd[(bk * q4 + q1 + bf) * 2] * wfft[(bf * nbk) * 2]
-                                      - yd[(bk * q4 + q1 + bf) * 2 + 1] * wfft[(bf * nbk) * 2 + 1];
-          xd[(bk * q4 + q1 + bf) * 2 + 1] = yd[(bk * q4 + q1 + bf) * 2] * wfft[(bf * nbk) * 2 + 1]
-                                       + yd[(bk * q4 + q1 + bf) * 2 + 1] * wfft[(bf * nbk) * 2];
-          xd[(bk * q4 + q2 + bf) * 2    ] = yd[(bk * q4 + q2 + bf) * 2] * wfft[(2 * bf * nbk) * 2]
-                                      - yd[(bk * q4 + q2 + bf) * 2 + 1] * wfft[(2 * bf * nbk) * 2 + 1];
-          xd[(bk * q4 + q2 + bf) * 2 + 1] = yd[(bk * q4 + q2 + bf) * 2] * wfft[(2 * bf * nbk) * 2 + 1]
-                                      + yd[(bk * q4 + q2 + bf) * 2 + 1] * wfft[(2 * bf * nbk) * 2];
-          xd[(bk * q4 + q3 + bf) * 2    ] =   yd[(bk * q4 + q3 + bf) * 2] * wfft[(3 * bf * nbk) * 2]
-                                      - yd[(bk * q4 + q3 + bf) * 2 + 1] * wfft[(3 * bf * nbk) * 2 + 1];
-          xd[(bk * q4 + q3 + bf) * 2 + 1] = yd[(bk * q4 + q3 + bf) * 2] * wfft[(3 * bf * nbk) * 2 + 1]
-                                       + yd[(bk * q4 + q3 + bf) * 2 + 1] * wfft[(3 * bf * nbk) * 2];
-        }
-      }
-
-      nbk = 16;
       q1 = 1;
       q2 = 2;
       q3 = 3;
       q4 = 4;
 
-      // butterfly in the last stage
-      for(bk=0; bk < nbk; bk++) {
-        er = xd[(bk * 4    ) * 2    ] + xd[(bk * 4 + 2) * 2];
-        ei = xd[(bk * 4    ) * 2    ] - xd[(bk * 4 + 2) * 2];
-        fr = xd[(bk * 4 + 1) * 2    ] + xd[(bk * 4 + 3) * 2];
-        fi = xd[(bk * 4 + 1) * 2    ] - xd[(bk * 4 + 3) * 2];
-        gr = xd[(bk * 4    ) * 2 + 1] + xd[(bk * 4 + 2) * 2 + 1];
-        gi = xd[(bk * 4    ) * 2 + 1] - xd[(bk * 4 + 2) * 2 + 1];
-        hr = xd[(bk * 4 + 1) * 2 + 1] + xd[(bk * 4 + 3) * 2 + 1];
-        hi = xd[(bk * 4 + 1) * 2 + 1] - xd[(bk * 4 + 3) * 2 + 1];
+//HH
+      for(int bf=0; bf < 16; bf++) {
 
-        yd[(bk * 4    ) * 2    ] = (er + fr)*0.015625;
-        yd[(bk * 4    ) * 2 + 1] = (gr + hr)*0.015625;
-        yd[(bk * 4 + 1) * 2    ] = (ei + hi)*0.015625;
-        yd[(bk * 4 + 1) * 2 + 1] = (gi - fi)*0.015625;
-        yd[(bk * 4 + 2) * 2    ] = (er - fr)*0.015625;
-        yd[(bk * 4 + 2) * 2 + 1] = (gr - hr)*0.015625;
-        yd[(bk * 4 + 3) * 2    ] = (ei - hi)*0.015625;
-        yd[(bk * 4 + 3) * 2 + 1] = (gi + fi)*0.015625;
+        er = xd[(     bf * 4) * 2    ] + xd[(q2 + bf * 4) * 2    ];
+        fr = xd[(q1 + bf * 4) * 2    ] + xd[(q3 + bf * 4) * 2    ];
+        gr = xd[(     bf * 4) * 2 + 1] + xd[(q2 + bf * 4) * 2 + 1];
+        hr = xd[(q1 + bf * 4) * 2 + 1] + xd[(q3 + bf * 4) * 2 + 1];
+
+        gi = xd[(     bf * 4) * 2 + 1] - xd[(q2 + bf * 4) * 2 + 1];
+        ei = xd[(     bf * 4) * 2    ] - xd[(q2 + bf * 4) * 2    ];
+        fi = xd[(q1 + bf * 4) * 2    ] - xd[(q3 + bf * 4) * 2    ];
+        hi = xd[(q1 + bf * 4) * 2 + 1] - xd[(q3 + bf * 4) * 2 + 1];
+
+        yd[(     bf * 4) * 2    ] = er + fr;
+        yd[(     bf * 4) * 2 + 1] = gr + hr;
+        yd[(q2 + bf * 4) * 2    ] = er - fr;
+        yd[(q2 + bf * 4) * 2 + 1] = gr - hr;
+        yd[(q1 + bf * 4) * 2    ] = ei - hi;
+        yd[(q1 + bf * 4) * 2 + 1] = gi + fi;
+        yd[(q3 + bf * 4) * 2    ] = ei + hi;
+        yd[(q3 + bf * 4) * 2 + 1] = gi - fi;
+
+        xd[(bf * 4) * 2    ] = yd[(bf * 4) * 2    ];
+        xd[(bf * 4) * 2 + 1] = yd[(bf * 4) * 2 + 1];
+
+//br, bi
+        xd[(q1 + bf * 4) * 2    ] =   yd[(q1 + bf * 4) * 2]     * wfft[    (bitr[bf * 4]) * 2    ]
+                                    + yd[(q1 + bf * 4) * 2 + 1] * wfft[    (bitr[bf * 4]) * 2 + 1];
+        xd[(q1 + bf * 4) * 2 + 1] = - yd[(q1 + bf * 4) * 2]     * wfft[    (bitr[bf * 4]) * 2 + 1]
+                                    + yd[(q1 + bf * 4) * 2 + 1] * wfft[    (bitr[bf * 4]) * 2    ];
+        xd[(q2 + bf * 4) * 2    ] =   yd[(q2 + bf * 4) * 2]     * wfft[2 * (bitr[bf * 4]) * 2    ]
+                                    + yd[(q2 + bf * 4) * 2 + 1] * wfft[2 * (bitr[bf * 4]) * 2 + 1];
+        xd[(q2 + bf * 4) * 2 + 1] = - yd[(q2 + bf * 4) * 2]     * wfft[2 * (bitr[bf * 4]) * 2 + 1]
+                                    + yd[(q2 + bf * 4) * 2 + 1] * wfft[2 * (bitr[bf * 4]) * 2    ];
+        xd[(q3 + bf * 4) * 2    ] =   yd[(q3 + bf * 4) * 2]     * wfft[3 * (bitr[bf * 4]) * 2    ]
+                                    + yd[(q3 + bf * 4) * 2 + 1] * wfft[3 * (bitr[bf * 4]) * 2 + 1];
+        xd[(q3 + bf * 4) * 2 + 1] = - yd[(q3 + bf * 4) * 2]     * wfft[3 * (bitr[bf * 4]) * 2 + 1]
+                                    + yd[(q3 + bf * 4) * 2 + 1] * wfft[3 * (bitr[bf * 4]) * 2    ];
       }
 
-      // bit reverse
-      for(i=0; i<N; i++) {
-        xd[(bitr[i]) * 2    ] = yd[i * 2    ];
-        xd[(bitr[i]) * 2 + 1] = yd[i * 2 + 1];
-      }
+    q1 = 4;
+    q2 = 8;
+    q3 = 12;
+    q4 = 16;
 
-      // conjugate
-      for (int j = 0; j < 64; j++) {
-        xd[j*2+1] *= -1;
-      }
+    for(int bk=0; bk < 4; bk++) {
+      for(int bf=0; bf < 4; bf++) {
 
+        er = xd[(     bk * 16 + bf) * 2    ] + xd[(q2 + bk * 16 + bf) * 2    ];
+        fr = xd[(q1 + bk * 16 + bf) * 2    ] + xd[(q3 + bk * 16 + bf) * 2    ];
+        gr = xd[(     bk * 16 + bf) * 2 + 1] + xd[(q2 + bk * 16 + bf) * 2 + 1];
+        hr = xd[(q1 + bk * 16 + bf) * 2 + 1] + xd[(q3 + bk * 16 + bf) * 2 + 1];
+
+        gi = xd[(     bk * 16 + bf) * 2 + 1] - xd[(q2 + bk * 16 + bf) * 2 + 1];
+        ei = xd[(     bk * 16 + bf) * 2    ] - xd[(q2 + bk * 16 + bf) * 2    ];
+        fi = xd[(q1 + bk * 16 + bf) * 2    ] - xd[(q3 + bk * 16 + bf) * 2    ];
+        hi = xd[(q1 + bk * 16 + bf) * 2 + 1] - xd[(q3 + bk * 16 + bf) * 2 + 1];
+
+        yd[(     bk * 16 + bf) * 2    ] = er + fr;
+        yd[(     bk * 16 + bf) * 2 + 1] = gr + hr;
+        yd[(q2 + bk * 16 + bf) * 2    ] = er - fr;
+        yd[(q2 + bk * 16 + bf) * 2 + 1] = gr - hr;
+        yd[(q1 + bk * 16 + bf) * 2    ] = ei - hi;
+        yd[(q1 + bk * 16 + bf) * 2 + 1] = gi + fi;
+        yd[(q3 + bk * 16 + bf) * 2    ] = ei + hi;
+        yd[(q3 + bk * 16 + bf) * 2 + 1] = gi - fi;
+
+        xd[(bk * 16 + bf) * 2    ] = yd[(bk * 16 + bf) * 2    ];
+        xd[(bk * 16 + bf) * 2 + 1] = yd[(bk * 16 + bf) * 2 + 1];
+
+//br, bi
+        xd[(q1 + bk * 16 + bf) * 2    ] =   yd[(q1 + bk * 16 + bf) * 2]     * wfft[    (bitr[bk * 16] * 4) * 2    ]
+                                          + yd[(q1 + bk * 16 + bf) * 2 + 1] * wfft[    (bitr[bk * 16] * 4) * 2 + 1];
+        xd[(q1 + bk * 16 + bf) * 2 + 1] = - yd[(q1 + bk * 16 + bf) * 2]     * wfft[    (bitr[bk * 16] * 4) * 2 + 1]
+                                          + yd[(q1 + bk * 16 + bf) * 2 + 1] * wfft[    (bitr[bk * 16] * 4) * 2    ];
+        xd[(q2 + bk * 16 + bf) * 2    ] =   yd[(q2 + bk * 16 + bf) * 2]     * wfft[2 * (bitr[bk * 16] * 4) * 2    ]
+                                          + yd[(q2 + bk * 16 + bf) * 2 + 1] * wfft[2 * (bitr[bk * 16] * 4) * 2 + 1];
+        xd[(q2 + bk * 16 + bf) * 2 + 1] = - yd[(q2 + bk * 16 + bf) * 2]     * wfft[2 * (bitr[bk * 16] * 4) * 2 + 1]
+                                          + yd[(q2 + bk * 16 + bf) * 2 + 1] * wfft[2 * (bitr[bk * 16] * 4) * 2    ];
+        xd[(q3 + bk * 16 + bf) * 2    ] =   yd[(q3 + bk * 16 + bf) * 2]     * wfft[3 * (bitr[bk * 16] * 4) * 2    ]
+                                          + yd[(q3 + bk * 16 + bf) * 2 + 1] * wfft[3 * (bitr[bk * 16] * 4) * 2 + 1];
+        xd[(q3 + bk * 16 + bf) * 2 + 1] = - yd[(q3 + bk * 16 + bf) * 2]     * wfft[3 * (bitr[bk * 16] * 4) * 2 + 1]
+                                          + yd[(q3 + bk * 16 + bf) * 2 + 1] * wfft[3 * (bitr[bk * 16] * 4) * 2    ];
+      }
+    }
+
+    q1 = 16;
+    q2 = 32;
+    q3 = 48;
+    q4 = 64;
+
+    for(int bk=0; bk < 16; bk++) {
+        er = xd[(bk     ) * 2    ] + xd[(bk + 32) * 2    ];
+        ei = xd[(bk     ) * 2    ] - xd[(bk + 32) * 2    ];
+        fr = xd[(bk + 16) * 2    ] + xd[(bk + 48) * 2    ];
+        fi = xd[(bk + 16) * 2    ] - xd[(bk + 48) * 2    ];
+        gr = xd[(bk     ) * 2 + 1] + xd[(bk + 32) * 2 + 1];
+        gi = xd[(bk     ) * 2 + 1] - xd[(bk + 32) * 2 + 1];
+        hr = xd[(bk + 16) * 2 + 1] + xd[(bk + 48) * 2 + 1];
+        hi = xd[(bk + 16) * 2 + 1] - xd[(bk + 48) * 2 + 1];
+        yd[(bk     ) * 2    ] = (er + fr) * 0.015625;
+        yd[(bk     ) * 2 + 1] = (gr + hr) * 0.015625;
+        yd[(bk + 16) * 2    ] = (ei - hi) * 0.015625;
+        yd[(bk + 16) * 2 + 1] = (gi + fi) * 0.015625;
+        yd[(bk + 32) * 2    ] = (er - fr) * 0.015625;
+        yd[(bk + 32) * 2 + 1] = (gr - hr) * 0.015625;
+        yd[(bk + 48) * 2    ] = (ei + hi) * 0.015625;
+        yd[(bk + 48) * 2 + 1] = (gi - fi) * 0.015625;
+    }
+
+// move data to outdata
       for (int i = 0; i<36; i++) {
-        outdata[(offset+i*15)*2] = xd[i*2];
-        outdata[(offset+i*15)*2+1] = xd[i*2+1];
+        outdata[(offset+i*15)*2] = yd[i*2];
+        outdata[(offset+i*15)*2+1] = yd[i*2+1];
       }
     }
     correct = 1;
-/*
+
+/* -- when synthetic data is used
     for (int ds=0; ds<DS; ds++) {
       for (int j=0; j<36; j++) {
           diff = (outdata[(offset+j*15)*2] - j);
@@ -10275,7 +10273,10 @@ float[128] coeff= {
             correct = 0;
       }
     }
-*/
+
+*/    println(7);
+
+// -- when raw data is used
     for (int ds=0; ds<DS; ds++) {
       for (int j=0; j<36; j++) {
           diff = outdata[(offset+j*15)*2] - refeq[(offset+j*15)*2];
@@ -10291,6 +10292,7 @@ float[128] coeff= {
             correct = 0;
       }
     }
+
 
     println(correct);
   }

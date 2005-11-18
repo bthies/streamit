@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.102 2005-11-17 22:49:08 dimock Exp $
+ * $Id: LIRToC.java,v 1.103 2005-11-18 19:58:48 dimock Exp $
  */
 
 package at.dms.kjc.lir;
@@ -49,6 +49,18 @@ public class LIRToC
     }
     private LIRToC() {
         this(null);
+    }
+
+    /**
+     * construct a pretty printer object for java code
+     * @param   arrayInitializers       set of array initializers detected in code
+     * @param   fileName                the file into the code is generated
+     */
+    private LIRToC(java.util.HashMap arrayInitializers, CodegenPrintWriter p) {
+        super(p);
+        this.portalCount = 0;
+        this.portalNames = new java.util.HashMap();
+        this.arrayInitializers = arrayInitializers;
     }
 
     /**
@@ -102,18 +114,6 @@ public class LIRToC
                 Utils.fail("IOException looking for atlas-interface.c");
             }
         }
-    }
-
-    /**
-     * construct a pretty printer object for java code
-     * @param   arrayInitializers       set of array initializers detected in code
-     * @param   fileName                the file into the code is generated
-     */
-    private LIRToC(java.util.HashMap arrayInitializers, CodegenPrintWriter p) {
-        super();
-        this.portalCount = 0;
-        this.portalNames = new java.util.HashMap();
-        this.arrayInitializers = arrayInitializers;
     }
 
     /**
@@ -177,7 +177,7 @@ public class LIRToC
                                       JFieldDeclaration[] fields,
                                       JMethodDeclaration[] methods,
                                       JTypeDeclaration[] decls) {
-        LIRToC that = new LIRToC(arrayInitializers, this.p);
+    	LIRToC that = new LIRToC(arrayInitializers, this.p);
         that.className = ident;
         that.isStruct = ((modifiers & ACC_STATIC) == ACC_STATIC);
         that.visitClassBody(decls, fields, methods, body);
@@ -810,17 +810,17 @@ public class LIRToC
         p.print("; ");
 
         if (incr != null) {
-                LIRToC l2c = new LIRToC(arrayInitializers);
-            incr.accept(l2c);
-                // get String
-                String str = l2c.getPrinter().getString();
-                // leave off the trailing semicolon if there is one
-                if (str.endsWith(";")) {
-                    p.print(str.substring(0, str.length()-1));
-                } else { 
-                    p.print(str);
-                }
-        }
+			LIRToC l2c = new LIRToC(arrayInitializers);
+			incr.accept(l2c);
+			// get String
+			String str = l2c.getPrinter().getString();
+			// leave off the trailing semicolon if there is one
+			if (str.endsWith(";")) {
+				p.print(str.substring(0, str.length() - 1));
+			} else {
+				p.print(str);
+			}
+		}
         forLoopHeader--;
         p.print(") {");
         p.newLine();
@@ -1396,9 +1396,9 @@ public class LIRToC
                 if (tok.hasMoreTokens() || text.length() > 0) {
                     p.newLine();
                     p.print(" * ");
-                    p.setIndentation(p.getIndentation() + (isFirst ? 0 : 32));
+                    if (isFirst) p.setIndentation(p.getIndentation() + 32);
                     p.print(text.trim());
-                    p.setIndentation(p.getIndentation() - (isFirst ? 0 : 32));
+                    if (isFirst) p.setIndentation(p.getIndentation() - 32);
                 }
             }
         }

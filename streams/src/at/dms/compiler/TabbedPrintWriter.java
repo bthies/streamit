@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TabbedPrintWriter.java,v 1.6 2003-11-13 10:46:06 thies Exp $
+ * $Id: TabbedPrintWriter.java,v 1.7 2005-11-18 19:58:48 dimock Exp $
  */
 
 package at.dms.compiler;
@@ -85,7 +85,7 @@ public class TabbedPrintWriter implements at.dms.kjc.DeepCloneable {
    * Decrement tab
    */
   public void sub(int pos) {
-    this.pos += pos;
+    this.pos -= pos;
   }
 
   /**

@@ -12,6 +12,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.LoweringConstants;
 //import at.dms.compiler.TabbedPrintWriter;
 import at.dms.compiler.JavaStyleComment;
+import at.dms.kjc.common.CommonUtils;
 /**
  * Somewhat artificial class to provide common code for 
  * at.dms.kjc.common.ToC and at.dms.kjc.lir.LIRToC
@@ -69,14 +70,17 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     
     /** Needed to pass info from assignment to visitNewArray * */
     protected JExpression lastLeft;  // LITtoC gave package visibility
+
     /** Object with useful print routines **/
     protected CodegenPrintWriter p;
+
     /** Make sure anyone can get the printer to insert code generated 
      * outside of a descendant of this class.
      */
     public CodegenPrintWriter getPrinter() { return p; }
+
     /**
-     * set statmentContext to true in statements, false in expressions.
+     * Set statmentContext to true in statements, false in expressions.
      * 
      * Used to control parentheses:  Specifically, an assignment
      * expression used in a statment context should not be wrapped
@@ -85,6 +89,12 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     protected boolean statementContext = true;
 
+    /**
+     * For C code generation, the Java type 'boolean' will be printed as 'int'
+     * For C++ code generation, set hasBoolType = true; to print the Java
+     * type 'boolean' as 'bool'
+     */
+    protected boolean hasBoolType = false; 
     /**
      * With no parameters: create a new string TabbedPrintWriter for output
      */
@@ -797,18 +807,15 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     	}
     }
  
-   // Special case for CTypes, to map some Java types to C types.
-   protected void typePrint(CType s) {
-	if (s instanceof CArrayType){
-		typePrint(((CArrayType)s).getElementType());
-           p.print("*");
-       }
-       else if (s.getTypeID() == TID_BOOLEAN)
-           p.print("int");
-       else if (s.toString().endsWith("Portal"))
-	    // ignore the specific type of portal in the C library
-	    p.print("portal");
-	else
-           p.print(s.toString());
-   }   
+
+    /**
+     * Print a CType.
+     *
+     * @param s    a CType to be printed.
+     *
+     * {@link at.dms.kjc.common.CommonUtils#printCTypeString}.
+     */
+    protected void typePrint(CType s) {
+    	p.print(CommonUtils.CTypeToString(s, hasBoolType));
+    }
 }

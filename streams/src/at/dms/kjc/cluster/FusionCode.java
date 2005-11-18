@@ -7,6 +7,7 @@ import at.dms.compiler.TabbedPrintWriter;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.KjcOptions;
+import at.dms.kjc.cluster.ClusterUtils;
 //import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 
 class FusionCode {
@@ -381,7 +382,7 @@ class FusionCode {
 		NetStream stream = (NetStream)out.elementAt(s);
 		int src = stream.getSource();
 		int dst = stream.getDest();
-		String type = stream.getTypeToC();
+		String type = ClusterUtils.CTypeToString(stream.getType());
 
 		p.print(type+" BUFFER_"+src+"_"+dst+"[__BUF_SIZE_MASK_"+src+"_"+dst+" + 1];\n");
 		//p.print(type+" PEEK_BUFFER_"+src+"_"+dst+"[__PEEK_BUF_SIZE_"+src+"_"+dst+"];\n");
@@ -402,8 +403,7 @@ class FusionCode {
 	    if (node.contents instanceof SIRFilter) {
 		//p.print("extern void __init_pop_buf__"+i+"();\n");
 		//p.print("extern void __update_pop_buf__"+i+"();\n");
-	    	// Init function name should be OK even for SIRPredefinedFilter
-	    	p.print("extern void "+getWorkName((SIRFilter)node.contents,id)+"();\n");
+		p.print("extern void "+((SIRFilter)node.contents).getInit().getName()+"__"+id+"();\n");
 	    }
 
 	    if (node.contents instanceof SIRTwoStageFilter) {
@@ -518,7 +518,7 @@ class FusionCode {
 			    
 			    //if (ph > 0) p.print("  __init_pop_buf__"+id+"(); "); else p.print("  ");
 			    p.print("  ");
-			    p.print(getWorkName((SIRFilter)oper,id) +"(); ");
+			    p.print(((SIRFilter)oper).getInit().getName()+"__"+id+"(); ");
 			    
 			} else {
 			    p.print("  ");
@@ -751,7 +751,7 @@ class FusionCode {
 	int id = NodeEnumerator.getSIROperatorId(oper);	
 
 	if (oper instanceof SIRFilter) {
-	    return getWorkName((SIRFilter)oper,id);
+	    return ClusterUtils.getWorkName((SIRFilter)oper,id);
 	}
 		    
 	if (oper instanceof SIRSplitter) {
@@ -780,19 +780,6 @@ class FusionCode {
 	return null;
     }
 
-    // work function name  should change to include them)
-    // If not a predefined filter then the work method should have a useful
-    // unique name.  If a predefined filter, the work method may be called
-    // "UNINITIALIZED DUMMY METHOD" (A Kopi2Sir bug?) so give it a reasonable name.
-    private static String getWorkName(SIRFilter f, int id) {
-	if (f instanceof SIRPredefinedFilter) {
-		//System.err.println("FlatIRToCluster Predef work name = "+f.getName()+"__work__"+id);		
-	    return f.getName()+"__work__"+id;
-	} else {
-		//System.err.println("FlatIRToCluster Filter work name = "+f.getWork().getName()+"__"+id);
-	    return f.getWork().getName()+"__"+id;
-	}
-    }
 
 
 }

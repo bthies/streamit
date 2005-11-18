@@ -8,13 +8,14 @@ import java.io.StringWriter;
  *
  * Delegates to at.dms.compiler.TabbedPrintWriter, which in turn delegates to
  * java.io.PrintWriter.
- *
+ * <br/>
  * Includes print and println at the base types commonly found in the compiler
- * and for String.  Printing of Object (as its toString()) is deliberately missing
- * from this implementation since it was causing bugs in the printing of CType's
- * To print a CType see {@see at.dms.kjc.common.ToCCommon#typePrint}.
- * 
- *
+ * and for String.  Printing of Object (as its toString()) is deliberately 
+ * missing from this implementation since it was causing bugs in the printing 
+ * of CType's.
+ * To print a CType see {@see at.dms.kjc.common.ToCCommon#typePrint} or
+ * {@see at.dms.kjc.common.CommonUtils#printCTypeString}
+ * <br/>
  * Includes an optional debugging feature to dump the caller's line number and 
  * test to be printed on a print, println, or printnl.
  *
@@ -35,7 +36,7 @@ public final class CodegenPrintWriter {
 	 * Static field to set to get debug dumps from all
 	 * instantiations.
 	 */
-	public static boolean defaultDebug = false;
+	public static boolean defaultDebug = true;
 
 	/**
 	 * How many stack frames to go up to print caller information.

@@ -28,6 +28,9 @@ import at.dms.kjc.raw.*;
  */
 public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisitor, CodeGenerator
 {
+    protected boolean hasBoolType = true; // override ToC with info that we generate
+                                  // 'bool' for 'boolean', not 'int'
+
     private boolean DEBUG = false;
 
     protected String               className;
@@ -660,7 +663,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	if (out != null) {
 	    
 	    //p.print("void "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
-	    p.print("void "+getWorkName(self,selfID)+"(int);\n\n");
+	    p.print("void "+ClusterUtils.getWorkName(self,selfID)+"(int);\n\n");
 
 	    p.print(output_type.toString()+" "+out.pop_name()+"() {\n");
 	    p.print("  int _tmp;\n");
@@ -682,7 +685,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    p.print("      //check_status__"+selfID+"();\n");
 	    p.print("      check_messages__"+selfID+"();\n");
 	    p.print("      __update_pop_buf__"+selfID+"();\n");
-	    p.print("      "+getWorkName(self,selfID)+"(1);\n");
+	    p.print("      "+ClusterUtils.getWorkName(self,selfID)+"(1);\n");
 	    p.print("      //send_credits__"+selfID+"();\n");
 	    p.print("    }\n");
 
@@ -776,7 +779,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    // body is run in loop for number of iterations scheduled.
 	    // call "predefinedFilterWork" with filter, names of
 	    // peek, push, pop routines/macros for use by filter,
-	    p.print("void "+ getWorkName(self,selfID)+"(int ____n) {");
+	    p.print("void "+ ClusterUtils.getWorkName(self,selfID)+"(int ____n) {");
 	    p.indent();
 	    p.newLine();
 	    predefinedFilterWork((SIRPredefinedFilter)self,"__peek__"+selfID,
@@ -1101,7 +1104,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	//  +=============================+
 
 	Vector run = gen.generateRunFunction(filter.getInit().getName()+"__"+selfID,
-					     getWorkName(filter,selfID));
+					     ClusterUtils.getWorkName(filter,selfID));
 
 	for (int i = 0; i < run.size(); i++) {
 	    p.print(run.elementAt(i).toString());
@@ -1110,19 +1113,6 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	createFile(selfID);
     }
 
-    // work function name  should change to include them)
-    // If not a predefined filter then the work method should have a useful
-    // unique name.  If a predefined filter, the work method may be called
-    // "UNINITIALIZED DUMMY METHOD" (A Kopi2Sir bug?) so give it a reasonable name.
-    private static String getWorkName(SIRFilter f, int id) {
-	if (f instanceof SIRPredefinedFilter) {
-		//System.err.println("FlatIRToCluster Predef work name = "+f.getName()+"__work__"+id);		
-	    return f.getName()+"__work__"+id;
-	} else {
-		//System.err.println("FlatIRToCluster Filter work name = "+f.getWork().getName()+"__"+id);
-	    return f.getWork().getName()+"__"+id;
-	}
-    }
 
     public void visitPhasedFilter(SIRPhasedFilter self,
                                   SIRPhasedFilterIter iter) {
@@ -2407,7 +2397,9 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    p.print ("assert (" + fpName(filter) + ");"); p.newLine();
 	    endFunction();
 	    
-	    startParameterlessFunction("void", getWorkName(filter,selfID)+"__close");
+	    startParameterlessFunction("void", 
+				       ClusterUtils.getWorkName(filter,selfID)
+				       +"__close");
 	    p.print ("fclose("+fpName(filter)+");"); p.newLine();
 	    endFunction();
 	} else if (filter instanceof SIRFileWriter) {
@@ -2419,7 +2411,9 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    p.print ("assert (" + fpName(filter) + ");"); p.newLine();
 	    endFunction();
 
-	    startParameterlessFunction("void", getWorkName(filter,selfID)+"__close");
+	    startParameterlessFunction("void", 
+				       ClusterUtils.getWorkName(filter,selfID)
+				       +"__close");
 	    p.print ("fclose("+fpName(filter)+");"); p.newLine();
 	    endFunction();
 	} else if (filter instanceof SIRIdentity) {

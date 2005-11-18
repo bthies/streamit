@@ -1,19 +1,18 @@
 
 package at.dms.kjc.cluster;
 
-import java.io.*;
-import java.lang.*;
+//import java.io.*; 
+//import java.lang.*;
 import java.util.*;
 import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
+//import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
-import at.dms.kjc.cluster.*;
-import at.dms.kjc.raw.Util;
+//import at.dms.kjc.cluster.*;
+//import at.dms.kjc.raw.Util;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
-import at.dms.util.Utils;
-import at.dms.compiler.TabbedPrintWriter;
+//import at.dms.kjc.sir.lowering.*;
+//import at.dms.util.Utils;
 
 class ClusterCodeGenerator {
 
@@ -42,13 +41,6 @@ class ClusterCodeGenerator {
     private int steady_counts;
     private String work_function;
 
-    public static String TypeToC(CType t) {
-	if (t.toString().compareTo("boolean") == 0) return "bool";
-	//if (t.toString().compareTo("int") == 0) return "int";
-	//if (t.toString().compareTo("float") == 0) return "float";
-	return t.toString();
-    } 
-    
     public ClusterCodeGenerator(SIROperator oper, 
 				   JFieldDeclaration fields[]) {
 	
@@ -65,11 +57,7 @@ class ClusterCodeGenerator {
 	steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
 
 	if (oper instanceof SIRFilter) {
-	    if (oper instanceof SIRPredefinedFilter) {
-		work_function = ((SIRFilter)oper).getName()+"__work__"+id;
-	    } else {
-	    work_function = ((SIRFilter)oper).getWork().getName()+"__"+id;
-	    }
+	    work_function = ClusterUtils.getWorkName(((SIRFilter)oper), id);
 	} 
 
 	if (oper instanceof SIRSplitter) {
@@ -206,8 +194,8 @@ class ClusterCodeGenerator {
 	i = data_in.iterator();
 	while (i.hasNext()) {
 	    NetStream in = (NetStream)i.next();
-	    r.add("consumer2<"+TypeToC(in.getType())+"> "+in.consumer_name()+";\n");
-	    r.add("extern "+TypeToC(in.getType())+" "+in.pop_name()+"();\n");
+	    r.add("consumer2<"+ClusterUtils.CTypeToString(in.getType())+"> "+in.consumer_name()+";\n");
+	    r.add("extern "+ClusterUtils.CTypeToString(in.getType())+" "+in.pop_name()+"();\n");
 
 	    /*
 	    if (oper instanceof SIRFilter) {
@@ -220,8 +208,8 @@ class ClusterCodeGenerator {
 	i = data_out.iterator();
 	while (i.hasNext()) {
 	    NetStream out = (NetStream)i.next();
-	    r.add("producer2<"+TypeToC(out.getType())+"> "+out.producer_name()+";\n");
-	    r.add("extern void "+out.push_name()+"("+TypeToC(out.getType())+" data);\n");
+	    r.add("producer2<"+ClusterUtils.CTypeToString(out.getType())+"> "+out.producer_name()+";\n");
+	    r.add("extern void "+out.push_name()+"("+ClusterUtils.CTypeToString(out.getType())+" data);\n");
 	    r.add("    // this-part:"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(id))+" dst-part:"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(out.getDest()))+"\n");
 	}
 	
@@ -251,7 +239,7 @@ class ClusterCodeGenerator {
 	    JExpression init_val = fields[f].getVariable().getValue();
 	    String ident = fields[f].getVariable().getIdent();
 
-	    r.add(TypeToC(type)+" "+ident+"__"+id);
+	    r.add(ClusterUtils.CTypeToString(type)+" "+ident+"__"+id);
 
 	    if (init_val == null) {
 		if (type.isOrdinal()) r.add(" = 0");
@@ -313,9 +301,9 @@ class ClusterCodeGenerator {
 		} catch (NumberFormatException ex) {
 		    System.out.println("Warning! Could not estimate size of an array: "+ident);
 		}
-		r.add("  buf->write("+ident+"__"+id+", "+size+" * sizeof("+TypeToC(base)+"));\n");
+		r.add("  buf->write("+ident+"__"+id+", "+size+" * sizeof("+ClusterUtils.CTypeToString(base)+"));\n");
 	    } else {
-		r.add("  buf->write(&"+ident+"__"+id+", sizeof("+TypeToC(type)+"));\n");
+		r.add("  buf->write(&"+ident+"__"+id+", sizeof("+ClusterUtils.CTypeToString(type)+"));\n");
 	    }
 	}
 
@@ -361,9 +349,9 @@ class ClusterCodeGenerator {
 		} catch (NumberFormatException ex) {
 		    System.out.println("Warning! Could not estimate size of an array: "+ident);
 		}
-		r.add("  buf->read("+ident+"__"+id+", "+size+" *  sizeof("+TypeToC(base)+"));\n");
+		r.add("  buf->read("+ident+"__"+id+", "+size+" *  sizeof("+ClusterUtils.CTypeToString(base)+"));\n");
 	    } else {
-		r.add("  buf->read(&"+ident+"__"+id+", sizeof("+TypeToC(type)+"));\n");
+		r.add("  buf->read(&"+ident+"__"+id+", sizeof("+ClusterUtils.CTypeToString(type)+"));\n");
 	    }
 	}
 

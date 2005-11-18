@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.io.*;
 //import java.lang.*;
+import at.dms.kjc.cluster.ClusterUtils;
 
 /**
  * This class dumps the tile code for each filter into a file based 
@@ -1094,7 +1095,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    if (type.toString().endsWith("Portal")) continue;
 
 	    String ident = fields[f].getVariable().getIdent();
-	    str += "extern " + ClusterCodeGenerator.TypeToC(type) +
+	    str += "extern " + ClusterUtils.CTypeToString(type) +
 		" __global__" + ident + ";\n";
 	}
 
@@ -1128,7 +1129,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    JExpression init_val = fields[f].getVariable().getValue();
 	    String ident = fields[f].getVariable().getIdent();
 
-	    str += (ClusterCodeGenerator.TypeToC(type)+" __global__"+ident);
+	    str += (ClusterUtils.CTypeToString(type)+" __global__"+ident);
 
 	    if (init_val == null) {
 		if (type.isOrdinal()) str += (" = 0");

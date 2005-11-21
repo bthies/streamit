@@ -36,7 +36,7 @@ public final class CodegenPrintWriter {
 	 * Static field to set to get debug dumps from all
 	 * instantiations.
 	 */
-	public static boolean defaultDebug = true;
+	public static boolean defaultDebug = false;
 
 	/**
 	 * How many stack frames to go up to print caller information.

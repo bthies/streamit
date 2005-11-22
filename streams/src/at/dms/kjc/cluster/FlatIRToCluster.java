@@ -1390,11 +1390,8 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    }
 	}
 	
-	if (expr!=null) {
-	    typePrint(type);
-	} else {
-	    p.print("null");
-	}	    
+	typePrint(type);
+
         p.print(" ");
 	p.print(ident);
         if (expr != null) {
@@ -2313,7 +2310,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	p.indent();
 	p.print ("// predefinedFilterWork " + self.getIdent()); p.newLine();
 	p.print ("for (; 0 < ____n; ____n--) {");
-	p.outdent(); p.newLine();
+	p.indent(); p.newLine();
 	if (filter instanceof SIRFileReader) {
 	    String theType = ""+filter.getOutputType();
 	    // pop into a location.
@@ -2338,8 +2335,8 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 		  fpName(filter) +
 		  ");"); p.newLine();
 	} else if (filter instanceof SIRIdentity) {
-	    throw new Error("Unsupported predefined filter " 
-				+filter.getIdent());
+		p.print("  //SIRIdentity work"); p.newline();
+	    p.print("  return " + pushname + "(" + popname + "());"); p.newline();
 	} else if (filter instanceof SIRDummySink) {
 	    // TODO:  get right exception for unimplemented.
 	    throw new Error("Unsupported predefined filter " 
@@ -2352,8 +2349,8 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    throw new Error("Unknown predefined filter " 
 				+filter.getIdent());
 	}
-        p.print ("}");		// end of for loop.
-	p.indent();
+    p.print ("}");		// end of for loop.
+	p.outdent();
 	p.newLine();
 	p.outdent();		// end of function body
     }
@@ -2391,7 +2388,8 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	if (filter instanceof SIRFileReader) {
 	    SIRFileReader filter = (SIRFileReader)this.filter;
 	    p.print ("FILE* "+fpName(filter)+";"); p.newLine(); p.newLine();
-	    startParameterlessFunction(""+return_type, function_name);
+	    startParameterlessFunction(ClusterUtils.CTypeToString(return_type),
+	    						   function_name);
 	    p.print (fpName(filter) + " = fopen(\"" + filter.getFileName() +
 		   "\", \"r\");"); p.newLine();
 	    p.print ("assert (" + fpName(filter) + ");"); p.newLine();
@@ -2405,7 +2403,8 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	} else if (filter instanceof SIRFileWriter) {
 	    SIRFileWriter filter = (SIRFileWriter)this.filter;
 	    p.print ("FILE* "+fpName(filter)+";"); p.newLine(); p.newLine();
-	    startParameterlessFunction(""+return_type, function_name);
+	    startParameterlessFunction(ClusterUtils.CTypeToString(return_type),
+	    		                   function_name);
 	    p.print (fpName(filter) + " = fopen(\"" + filter.getFileName() +
 		   "\", \"w\");"); p.newLine();
 	    p.print ("assert (" + fpName(filter) + ");"); p.newLine();
@@ -2417,8 +2416,10 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements StreamVisi
 	    p.print ("fclose("+fpName(filter)+");"); p.newLine();
 	    endFunction();
 	} else if (filter instanceof SIRIdentity) {
-	    throw new Error("Unsupported predefined filter " 
-				+filter.getIdent());
+	   p.print("//SIRIdentity init"); p.newline();
+	   startParameterlessFunction(ClusterUtils.CTypeToString(return_type),
+			                     function_name);
+	   endFunction();
 	} else if (filter instanceof SIRDummySink) {
 	    // TODO:  get right exception for unimplemented.
 	    throw new Error("Unsupported predefined filter " 

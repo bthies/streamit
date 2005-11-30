@@ -193,13 +193,11 @@ class BuiltinsCodeGen {
             p.newline();
             startParameterlessFunction(ClusterUtils.CTypeToString(return_type),
                     function_name, p);
-            p.print(ClusterUtils.popName(selfID) + "("
-                    + ClusterUtils.peekName(selfID) + ")");
             endFunction(p);
         } else if (filter instanceof SIRDummySink) {
             // TODO:  get right exception for unimplemented.
             throw new Error("Unsupported predefined filter "
-                    + filter.getIdent());
+                    + filter.getIdent()); 
         } else if (filter instanceof SIRDummySource) {
             throw new Error("Unsupported predefined filter "
                     + filter.getIdent());

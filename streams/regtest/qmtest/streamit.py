@@ -1,7 +1,7 @@
 #
 # streamit.py: Python extensions to QMTest for StreamIt
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamit.py,v 1.11 2005-10-28 16:26:29 dimock Exp $
+# $Id: streamit.py,v 1.12 2005-11-30 00:16:21 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -304,7 +304,7 @@ class RunProgramTest(qm.test.test.Test):
         test_home_dir = context_to_dir(context)
 
         path = os.path.join('.', filename)
-        arguments = [path, '-i' + str(self.runopts[1])]
+        arguments = [path, '-i ' + str(self.runopts[1])]
         #e = TimedExecutable()
         e = qm.executable.RedirectedExecutable(self.timeout)
         status = e.Run(arguments, dir=test_home_dir, path=path)

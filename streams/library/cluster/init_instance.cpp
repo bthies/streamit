@@ -1,4 +1,5 @@
 
+#include <netinet/tcp.h>
 #include <init_instance.h>
 #include <open_socket.h>
 #include <netsocket.h>
@@ -206,7 +207,19 @@ void init_instance::initialize_sockets() {
       //out_sockets[sd] = pfd[0];
       //in_sockets[sd] = pfd[1];
 
-      /*
+
+#ifdef CONSUMER_BUFFER_SIZE 
+ 
+      memsocket *ms = new memsocket();
+
+      out_sockets[sd] = ms;
+      in_sockets[sd] = ms;
+      
+      out_done[sd] = true;
+      in_done[sd] = true;
+
+#else
+
       int sockets[2];
       if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0) {
         perror("opening stream socket pair");
@@ -218,16 +231,9 @@ void init_instance::initialize_sockets() {
       
       out_done[sd] = true;
       in_done[sd] = true;
-      */
-      
-      memsocket *ms = new memsocket();
 
-      out_sockets[sd] = ms;
-      in_sockets[sd] = ms;
-      
-      out_done[sd] = true;
-      in_done[sd] = true;
-      
+#endif
+ 
     }
   }
 
@@ -456,6 +462,15 @@ int init_instance::listen() {
       } else {
 	
 	if ( fcntl(sock, F_SETFL, O_NONBLOCK) != -1 ) {
+
+	  flag = 1;
+	  retval = setsockopt(sock,            
+			      IPPROTO_TCP,     
+			      TCP_NODELAY,     
+			      &flag,  
+			      sizeof(int));    
+	  
+	  if (retval == -1) { assert(false); }
 
 	  //fprintf(stderr,"have connection on socket (%d)\n", sock);
 	

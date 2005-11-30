@@ -21,7 +21,8 @@ public:
   
   message(int size, int method_id, int execute_at);
 
-  void read_params(netsocket *sock);
+  void read_params(netsocket *sock) { read_params(sock, 12); }
+  void read_params(netsocket *sock, int head_size);
 
   int get_int_param(); // advances current
   float get_float_param(); // advances current

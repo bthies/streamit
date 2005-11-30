@@ -1,27 +1,49 @@
-#ifndef __PRODUCER2_H
-#define __PRODUCER2_H
+#ifndef __PRODUCER3_H
+#define __PRODUCER3_H
 
-#include <init_instance.h>
 #include <socket_holder.h>
 #include <serializable.h>
 #include <netsocket.h>
 #include <memsocket.h>
 
+#define PRODUCER_BUFFER_SIZE 10000
+
 template <class T>
-class producer2 : public socket_holder, public serializable {
+class producer3 : public socket_holder, public serializable {
 
   T *buf;
   int offs;
   int item_size;
   int item_count;
 
+  int frame_id;
+
  public:
 
-  producer2() {
+  producer3() {
     buf = NULL;
     offs = 0;
+    frame_id = 0;
     item_size = sizeof(T);
     item_count = 0;
+  }
+
+
+  void inc_frame() { frame_id++; }
+  void dec_frame() { frame_id--; }
+
+  int get_frame() { return frame_id; }
+  inline int get_size() { return offs; }
+
+
+
+  int rollback(int size) {
+    if (offs >= size) {
+      offs -= size;
+      return 0;
+    }
+    printf("producer3: invalid rollback!\n");
+    assert(1 == 0);
   }
 
 
@@ -36,6 +58,8 @@ class producer2 : public socket_holder, public serializable {
     } else {
       
       buf = (T*)malloc(PRODUCER_BUFFER_SIZE*sizeof(T));
+      offs = 0;
+
       
     }
 #endif //ARM
@@ -56,8 +80,12 @@ class producer2 : public socket_holder, public serializable {
       
     } else {
       
+      //printf("producer3 ===== id %d offs %d\n", frame_id, offs); 
+
+      ((netsocket*)sock)->write_int(frame_id);
+      ((netsocket*)sock)->write_int(offs);
       ((netsocket*)sock)->write_chunk((char*)buf, 
-				      PRODUCER_BUFFER_SIZE*sizeof(T));
+				      offs*sizeof(T));
       offs = 0;
       
     }
@@ -68,56 +96,26 @@ class producer2 : public socket_holder, public serializable {
   virtual void write_object(object_write_buffer *) {}
   virtual void read_object(object_write_buffer *) {}
 
+
   inline void push_items(T *data, int num) {
-
-#ifndef PRODUCER_BUFFER_SIZE
-
-    //((netsocket*)sock)->write_chunk((char*)data, sizeof(T)*num);
-
-#else
-
-  __start: 
-    
-    if (num < PRODUCER_BUFFER_SIZE - offs) {
-      int _offs = offs;
-      for (int i = 0; i < num; i++, _offs++) buf[_offs] = data[i];
-      offs = _offs;
-      return;
-    }
-
-    int avail = PRODUCER_BUFFER_SIZE - offs;
-    int _offs = offs;
-    for (int i = 0; i < avail; i++, _offs++) buf[_offs] = data[i];
-
-    send_buffer();
-
-    num -= avail;
-    data += avail;
-
-    goto __start;
-
-#endif
-  }
+    for (int i = 0; i < num; i++, offs++) buf[offs] = data[i];
+  }    
 
   inline void push(T data) {
-
-#ifndef PRODUCER_BUFFER_SIZE
-
-    ((netsocket*)sock)->write_chunk((char*)&data, sizeof(T));    
-
-#else
-
-    buf[offs++] = data;
-    //item_count++;
-    
-    if (offs == PRODUCER_BUFFER_SIZE) send_buffer();
-
-#endif
+    buf[offs++] = data;    
   }
 
   inline void flush() {
-    
+    //printf("producer3-flush frame: %d size: %d\n", frame_id, offs);     
     if (offs > 0) send_buffer();
+  }
+
+  inline void flush_pseudo() {
+    //printf("producer3-flush frame: %d size: %d\n", frame_id, offs);     
+    int id = frame_id;
+    frame_id = -1;
+    if (offs > 0) send_buffer();
+    frame_id = id;
   }
 
 };

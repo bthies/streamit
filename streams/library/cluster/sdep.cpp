@@ -18,6 +18,7 @@
 
 
   int sdep::getSrcPhase4DstPhase(int nDstPhase) {
+
     if (nDstPhase < numInitDstExec + 1)
       {
 	return dst2srcDependency[nDstPhase];
@@ -36,7 +37,11 @@
   }
 
   int sdep::getDstPhase4SrcPhase(int nSrcPhase) {
-    nSrcPhase++;
+
+    if (nSrcPhase <= 0) {
+      printf("WARNING: negative downstream message sent too early!\n");
+      return 1;
+    }
 
     //fprintf(stderr,"nSrcPhase=%d\n", nSrcPhase);
     // first have to figure out if I need to "wrap around"
@@ -84,7 +89,7 @@
       }
     //fprintf(stderr,"dstPhase=%d\n", dstPhase);
     
-    return dstPhase + addDstPhase - 1;
+    return dstPhase + addDstPhase;
   }
 
  

@@ -1,12 +1,11 @@
 #ifndef __CONSUMER2_H
 #define __CONSUMER2_H
 
+#include <init_instance.h>
 #include <socket_holder.h>
 #include <serializable.h>
 #include <netsocket.h>
 #include <memsocket.h>
-
-#define CONSUMER_BUFFER_SIZE 10000
 
 template <class T>
 class consumer2 : public socket_holder, public serializable {
@@ -20,7 +19,13 @@ class consumer2 : public socket_holder, public serializable {
 
   consumer2() {
     buf = NULL;
+
+#ifdef CONSUMER_BUFFER_SIZE
     offs = CONSUMER_BUFFER_SIZE;
+#else
+    offs = 0;
+#endif
+
     item_size = sizeof(T);
     item_count = 0;
   }
@@ -70,7 +75,12 @@ class consumer2 : public socket_holder, public serializable {
 
   inline void pop_items(T *data, int num) {
 
-    //((netsocket*)sock)->read_chunk((char*)data, sizeof(T)*num);
+
+#ifndef CONSUMER_BUFFER_SIZE
+
+    ((netsocket*)sock)->read_chunk((char*)data, sizeof(T)*num);
+
+#else
 
   __start:
     
@@ -91,13 +101,20 @@ class consumer2 : public socket_holder, public serializable {
     data += avail;
     
     goto __start;
+
+#endif
+
   }
   
   inline T pop() {
 
-    //T tmp;
-    //((netsocket*)sock)->read_chunk((char*)&tmp, sizeof(T));
-    //return tmp;
+#ifndef CONSUMER_BUFFER_SIZE
+
+    T tmp;
+    ((netsocket*)sock)->read_chunk((char*)&tmp, sizeof(T));
+    return tmp;
+
+#else
 
     //item_count++;
 
@@ -106,13 +123,17 @@ class consumer2 : public socket_holder, public serializable {
     }
     
     return buf[offs++];
+
+#endif
   }
 
   inline void peek(int index) {
     
+#ifdef CONSUMER_BUFFER_SIZE
     if (offs == CONSUMER_BUFFER_SIZE) {
       recv_buffer();
     }
+#endif
     
     return;
   }

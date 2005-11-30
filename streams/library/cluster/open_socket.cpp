@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <ctype.h>
@@ -181,7 +182,17 @@ netsocket *open_socket::connect(unsigned ipaddr, short port) {
   retval = fcntl(sock, F_SETFL, O_NONBLOCK);
 
   if (retval == -1) {
+    return NULL;
+  }
 
+  int flag = 1;
+  retval = setsockopt(sock,            
+			  IPPROTO_TCP,     
+			  TCP_NODELAY,     
+			  &flag,  
+			  sizeof(int));    
+
+  if (retval == -1) {
     return NULL;
   }
 

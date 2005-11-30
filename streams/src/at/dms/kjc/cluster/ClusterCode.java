@@ -37,7 +37,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
     public static final String ARRAY_INDEX = "__ARRAY_INDEX__";
 
-    private static HashMap partitionMap;
+    //private static HashMap partitionMap;
 
     /**
      * Set private variable partitionMap, which is never read.
@@ -47,7 +47,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
      * @param pmap
      */ 
     public static void setPartitionMap(HashMap pmap) {
-	partitionMap = pmap;
+	//partitionMap = pmap;
     }
 
     public static void generateCode(FlatNode topLevel) 
@@ -642,7 +642,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	//  | Run Function                |
 	//  +=============================+
 
-	Vector run = gen.generateRunFunction(null, "__splitter_"+thread_id+"_main");
+	Vector run = gen.generateRunFunction(null, "__splitter_"+thread_id+"_main", new Vector());
 
 	for (int i = 0; i < run.size(); i++) {
 	    p.print(run.elementAt(i).toString());
@@ -1026,7 +1026,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	//  | Run Function                |
 	//  +=============================+
 
-	Vector run = gen.generateRunFunction(null, "__joiner_"+thread_id+"_main");
+	Vector run = gen.generateRunFunction(null, "__joiner_"+thread_id+"_main", new Vector());
 
 	for (int i = 0; i < run.size(); i++) {
 	    p.print(run.elementAt(i).toString());

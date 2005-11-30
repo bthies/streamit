@@ -40,5 +40,45 @@ class ClusterUtils {
     public static String CTypeToString(CType s) {
     	return CommonUtils.CTypeToString(s, true);
     }
-    
+ 
+
+    /**
+     * Use this to get name of peek function
+     *
+     * push, peek, and pop functions are used in several different classes
+     * when generating code.  Centralize the naming of these functions here.
+     *
+     * @param selfID   a unique identifier
+     * @return         name for push function based on the passed identifier.
+     */
+    public static String peekName(int selfID) {
+    	return "__peek__"+selfID;
+    }
+
+ 
+    /**
+     * Use this to get name of push function
+     *
+     * push, peek, and pop functions are used in several different classes
+     * when generating code.  Centralize the naming of these functions here.
+     *
+     * @param selfID   a unique identifier
+     * @return         name for pop function based on the passed identifier.
+     */
+    public static String pushName(int selfID) {
+    	return "__push__"+selfID;
+    }
+
+    /**
+     * Use this to get name of pop function
+     *
+     * push and pop functions are used in several different classes
+     * when generating code.  Centralize the naming of these functions here.
+     *
+     * @param selfID   a unique identifier
+     * @return         name for pop function based on the passed identifier.
+     */
+    public static String popName(int selfID) {
+    	return "__pop__"+selfID;
+    }
 }

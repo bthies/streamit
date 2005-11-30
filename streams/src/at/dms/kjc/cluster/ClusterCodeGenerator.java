@@ -642,10 +642,10 @@ class ClusterCodeGenerator {
     }
 
 
-    public Vector generateRunFunction(String init_f, String main_f) {
+    public Vector generateRunFunction(String init_f, String main_f,
+                                      List/*String*/ cleanupCode) {
     
 	Vector r = new Vector();
-	Iterator i;
 
 	r.add("\n");
 
@@ -783,8 +783,7 @@ class ClusterCodeGenerator {
 
 	r.add("  __init_sockets_"+id+"(check_status_during_io__"+id+");\n");
 
-	i = msg_to.iterator();
-	while (i.hasNext()) {
+	for (Iterator i = msg_to.iterator(); i.hasNext(); ) {
 	
 	    SIRFilter sender = (SIRFilter)oper;
 	    SIRFilter receiver = (SIRFilter)i.next();
@@ -869,6 +868,10 @@ class ClusterCodeGenerator {
 	}
 
 	r.add("\n");
+    
+    for (Iterator cleanIt = cleanupCode.iterator(); cleanIt.hasNext();) {
+        r.add(cleanIt.next().toString());
+    }
 
 	r.add("  __flush_sockets_"+id+"();\n");
 

@@ -8,6 +8,7 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.cluster.ClusterUtils;
+import at.dms.kjc.common.CodegenPrintWriter;
 //import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 
 class FusionCode {
@@ -96,19 +97,17 @@ class FusionCode {
 
 	int threadCount = NodeEnumerator.getNumberOfNodes();
 	
-	TabbedPrintWriter p;
-	StringWriter str; 
+	CodegenPrintWriter p;
 	
-	str = new StringWriter();
-        p = new TabbedPrintWriter(str);
+	p = new CodegenPrintWriter();
 
 	p.print("#ifndef __FUSION_H\n");
 	p.print("#define __FUSION_H\n");
-	p.println();
+	p.newline();
 
 	p.print("#define max(A,B) (((A)>(B))?(A):(B))\n");
 	p.print("#define pow2ceil(A) ((A<=256)?(256):(((A<=1024)?(1024):(((A<=4096)?(4096):(((A<=16384)?(16384):(((A<=65536)?(65536):(((A<=131072)?(131072):(((A<=262144)?(262144):(524288))))))))))))))\n");
-	p.println();
+	p.newLine();
 
 	//p.print("#define __ITERS 10000\n");
 
@@ -118,7 +117,7 @@ class FusionCode {
 	if (KjcOptions.nomult) mult = 1;
 
 	p.print("#define __MULT "+mult+"\n");
-	p.println();
+	p.newLine();
 
 	if (!KjcOptions.standalone) {
 
@@ -323,7 +322,7 @@ class FusionCode {
 
 	try {
 	    FileWriter fw = new FileWriter("fusion.h");
-	    fw.write(str.toString());
+	    fw.write(p.getString());
 	    fw.close();
 	}
 	catch (Exception e) {
@@ -338,11 +337,7 @@ class FusionCode {
 	
 	int threadNumber = NodeEnumerator.getNumberOfNodes();
 	
-	TabbedPrintWriter p;
-	StringWriter str; 
-	
-	str = new StringWriter();
-        p = new TabbedPrintWriter(str);
+    CodegenPrintWriter p = new CodegenPrintWriter();
 	
 	p.print("#include <pthread.h>\n");
 	p.print("#include <unistd.h>\n");
@@ -350,7 +345,7 @@ class FusionCode {
 	p.print("#include <string.h>\n");
 	p.print("#include <stdlib.h>\n");
 	p.print("#include <stdio.h>\n");
-	p.println();
+	p.newLine();
 	p.print("#include <netsocket.h>\n");
 	p.print("#include <node_server.h>\n");
 	p.print("#include <init_instance.h>\n");
@@ -364,14 +359,14 @@ class FusionCode {
 	p.print("#include <read_setup.h>\n");
 	p.print("#include <timer.h>\n");
 	p.print("#include \"fusion.h\"\n");
-	p.println();
+	p.newLine();
 	
 	p.print("int __max_iteration;\n");
 	p.print("int __timer_enabled = 0;\n");
 	p.print("int __frequency_of_chkpts;\n");
 	p.print("volatile int __vol;\n");
 	p.print("proc_timer tt;\n");
-	p.println();
+	p.newLine();
 
 	for (int i = 0; i < threadNumber; i++) {
 	    FlatNode node = NodeEnumerator.getFlatNode(i);
@@ -391,7 +386,7 @@ class FusionCode {
 	    }
 	}
 	
-	p.println();
+	p.newLine();
 
 	for (int i = 0; i < threadNumber; i++) {
 	    FlatNode node = NodeEnumerator.getFlatNode(i);
@@ -421,7 +416,7 @@ class FusionCode {
 	    */
 	}
 
-	p.println();
+	p.newLine();
 
 	p.print("int main(int argc, char **argv) {\n");
 	p.print("  ");
@@ -485,10 +480,10 @@ class FusionCode {
 
 	p.print("// number of phases: "+n_phases+"\n");
 
-	p.println();
-	p.println();
+	p.newLine();
+	p.newLine();
 	p.print("  // ============= Initialization =============\n");
-	p.println();
+	p.newLine();
 
 	for (int ph = 0; ph < n_phases; ph++) {
 	
@@ -540,7 +535,7 @@ class FusionCode {
 			}
 
 			//p.print(get_loop(init_int, get_work_function(oper)+"();"));
-			p.println();
+			p.newLine();
 			
 		    } else {
 			
@@ -549,7 +544,7 @@ class FusionCode {
 			    //if (ph > 0) p.print("  __init_pop_buf__"+id+"(); ");
 			    p.print("  ");
 			    p.print(((SIRFilter)oper).getInit().getName()+"__"+id+"();");
-			    p.println();
+			    p.newLine();
 			}
 		    }
 		}
@@ -558,9 +553,9 @@ class FusionCode {
 	    //p.println();
 	}
 
-	p.println();
+	p.newLine();
 	p.print("  // ============= Steady State =============\n");
-	p.println();
+	p.newLine();
 	p.print("  tt.start();\n");
 
 	p.print("  for (int n = 0; n < (__max_iteration / __MULT); n++) {\n");
@@ -624,7 +619,7 @@ class FusionCode {
 		    p.print("    "+get_work_function(oper)+"("+steady_int+"*__MULT);");
 		}
 
-		p.println();
+		p.newLine();
 	    }
 	}
 	
@@ -712,7 +707,7 @@ class FusionCode {
 		}
 		*/
 
-		p.println();
+		p.newLine();
 	    }
 	}
 	
@@ -723,11 +718,11 @@ class FusionCode {
 
 	p.print("  return 0;\n");
 	p.print("}");
-	p.println();
+	p.newLine();
 
 	try {
 	    FileWriter fw = new FileWriter("fusion.cpp");
-	    fw.write(str.toString());
+	    fw.write(p.getString());
 	    fw.close();
 	}
 	catch (Exception e) {
@@ -736,48 +731,49 @@ class FusionCode {
     }
 
 
-    private static String get_loop(int times, String code) {    
-	String res = "";
-	if (times <= 4) {
-	    for (int i = 0; i < times; i++) res += code;
-	    return res;
-	} else {
-	    return "for (int i=0; i<"+times+"; i++) { "+code+" }"; 
-	}
+    private static String get_loop(int times, String code) {
+        String res = "";
+        if (times <= 4) {
+            for (int i = 0; i < times; i++)
+                res += code;
+            return res;
+        } else {
+            return "for (int i=0; i<" + times + "; i++) { " + code + " }";
+        }
     }
 
     private static String get_work_function(SIROperator oper) {
 
-	int id = NodeEnumerator.getSIROperatorId(oper);	
+        int id = NodeEnumerator.getSIROperatorId(oper);
 
-	if (oper instanceof SIRFilter) {
-	    return ClusterUtils.getWorkName((SIRFilter)oper,id);
-	}
-		    
-	if (oper instanceof SIRSplitter) {
-	    return "__splitter_"+id+"_work";
-	}
-	
-	if (oper instanceof SIRJoiner) {
-	    return "__joiner_"+id+"_work";
-	}
+        if (oper instanceof SIRFilter) {
+            return ClusterUtils.getWorkName((SIRFilter) oper, id);
+        }
 
-	assert (1 == 0);
-	return null;
+        if (oper instanceof SIRSplitter) {
+            return "__splitter_" + id + "_work";
+        }
+
+        if (oper instanceof SIRJoiner) {
+            return "__joiner_" + id + "_work";
+        }
+
+        assert (false);
+        return null;
     }
 
 
     private static String get_work_n_function(SIROperator oper) {
 
-	int id = NodeEnumerator.getSIROperatorId(oper);	
+        int id = NodeEnumerator.getSIROperatorId(oper);	
 
 	/*
-	if (oper instanceof SIRFilter) {   
-	   return ((SIRFilter)oper).getWork().getName()+"__n__"+id;
-	}
+	    if (oper instanceof SIRFilter) {   
+	         return ((SIRFilter)oper).getWork().getName()+"__n__"+id;
+	    }
 	*/
 
-	return null;
+        return null;
     }
 
 

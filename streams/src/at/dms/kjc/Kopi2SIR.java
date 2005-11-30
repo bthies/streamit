@@ -381,11 +381,17 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
      **/
     private boolean isSIRExp(JMethodCallExpression exp)  
     {
-
+    // TODO:  this seems like an undocumented language feature:
+    // rather than 'startsWith("push")' we should have 
+    // equals 'push' followed by a type, etc.  Otherwise
+    // we need documentation for helper functions that 
+    // any identifier starting with push, peek, pop, (initPath)
+    // is reserved.
 	if (exp.getIdent().startsWith("push") ||
 	    exp.getIdent().startsWith("pop")  ||
-	    exp.getIdent().startsWith("peek") ||
-	    exp.getIdent().startsWith("println") )
+        exp.getIdent().startsWith("peek") ||
+        exp.getIdent().equals("print") ||
+	    exp.getIdent().equals("println") )
 	    return true;
 	
 	return false;
@@ -422,9 +428,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    newExp = new SIRPeekExpression(args[0]);
 	    ((SIRPeekExpression)newExp).setTapeType(parentStream.getInputType()); 
 	}
-	if (exp.getIdent().startsWith("println")) {
-	    newExp = new SIRPrintStatement(null, args[0], true, null);
-	}
+	if (exp.getIdent().equals("print")) {
+            if (exp.getIdent().equals("println")) {
+                newExp = new SIRPrintStatement(null, args[0], true, null);
+            } else {
+                newExp = new SIRPrintStatement(null, args[0], false, null);
+            }
+        }
 	
 	return newExp;
     }

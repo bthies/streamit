@@ -212,6 +212,7 @@ public final class CodegenPrintWriter {
 
 	/**
 	 * Print something in the current line.
+     * 
 	 * @param s String to print.
 	 * 
 	 * Also overloaded for base types boolean, int, char, float, double. 
@@ -265,9 +266,11 @@ public final class CodegenPrintWriter {
 
 	/**
 	 * Print something in the current line and terminate the line.
+	 *
 	 * @param s String to print.
 	 * 
 	 * Also overloaded at base types boolean, int, char, float, double. 
+	 * println() acts identically to {@see #newLine()}.
 	 */
 	// println duplicates print functionality so that it doesn't have to
 	// manipulate debugDepth, which is presumably infrequently used.
@@ -279,6 +282,8 @@ public final class CodegenPrintWriter {
 		p.println();
 	}
 
+    public void println() { newLine(); }
+    
 	public void println(boolean b) {
 		String s = "" + b;
 		if (debug) {

@@ -2039,6 +2039,28 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
                     }
                 }
 
+	    /*
+		SIRStream dest_arr[] = ((SIRPortal)portal).getReceivers();
+
+		System.out.println("Handler name is: "+ident); 
+
+		String ident2 = ident+"__";
+
+		for (int t = 0; t < dest_arr.length; t++) {
+		    JMethodDeclaration m[] = dest_arr[t].getMethods();
+		    for (int z = 0; z < m.length; z++) {
+			String name = m[z].getName();
+			boolean guess = name.startsWith(ident2);
+			System.out.println("== "+name+" == "+(guess?"***":""));
+			if (guess) {
+			    System.out.println("ModState: "+ModState.methodModsState(m[z]));
+			}
+		    }
+		}
+
+		int index = -1;
+	    */
+
                 CType method_params[] = methods[index].getParameters();
 
                 /*
@@ -2071,19 +2093,18 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
                         p.print("__msg_sock_" + selfID + "_" + dst
                                 + "out->write_int(sdep_" + selfID + "_" + dst
                                 + "->getDstPhase4SrcPhase(__counter_" + selfID
-                                + "+" + max + "));\n");
+                                + "+" + max + "+1)-1);\n");
 
                     } else {
 
                         p.print("__msg_sock_" + selfID + "_" + dst
                                 + "out->write_int(sdep_" + selfID + "_" + dst
                                 + "->getSrcPhase4DstPhase(__counter_" + selfID
-                                + "+" + max + "));\n");
+                                + "+" + max + "+1)-1);\n");
 
                     }
 
                 } else {
-
                     p.print("__msg_sock_" + selfID + "_" + dst
                             + "out->write_int(-1);\n");
                 }

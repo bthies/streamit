@@ -107,7 +107,7 @@ public class LatencyConstraints {
 
 	Boolean b = (Boolean)messageDirectionDownstream.get(v);
 	
-	System.out.println("sender: "+sender+" receiver: "+receiver);
+	//System.out.println("sender: "+sender+" receiver: "+receiver);
 
         assert b != null:
             "Information about message direction from " + sender + " to " +
@@ -216,6 +216,11 @@ public class LatencyConstraints {
 		    SIRFilter f1 = (SIRFilter)sender;
 		    SIRFilter f2 = (SIRFilter)receiver;
 
+		    int n1 = NodeEnumerator.getSIROperatorId(f1);
+		    int n2 = NodeEnumerator.getSIROperatorId(f2);
+
+		    FindPath.find(n1,n2);
+
 		    streamit.scheduler2.constrained.Scheduler cscheduler2 =
 			streamit.scheduler2.constrained.Scheduler.create(topStreamIter);
 
@@ -293,19 +298,18 @@ public class LatencyConstraints {
 			
 			restrictedExecutionFilters.add(receiver);
 			
-			for (iter = 0;; iter++) {
+			for (iter = 1;; iter++) {
 			    last_dep = sdep2.getDstPhase4SrcPhase(iter);
-			    
-			    if (last_dep > 1) {
-				
-				break;
-			    }
+
+			    if (last_dep > 1) break;
 			}
 
-			//System.out.println("iter: "+iter+" last_dep: "+last_dep);
+			System.out.println("iter: "+iter+" last_dep: "+last_dep);
 			
+			int init = (iter-1)-min_latency-1;
+
 			LatencyConstraint constraint = 
-			    new LatencyConstraint(iter-min_latency-1,
+			    new LatencyConstraint(init,
 						  upstreamSteady,
 						  downstreamSteady,
 						  (SIRFilter)receiver);
@@ -316,21 +320,21 @@ public class LatencyConstraints {
 			
 			constraints.add(constraint);
 			
-			last_dep = 1;
+			last_dep = 0;
 			
 			for (int inc = 0; inc < upstreamSteady; inc++) {
-			    int current = sdep2.getDstPhase4SrcPhase(iter + inc);
+			    int current = sdep2.getDstPhase4SrcPhase(iter+inc)-1;
 			    if (current > last_dep) {
 				
-				System.out.println("Can exec "+last_dep+"-"+(current-1)+" at source iteration nr. "+(iter + inc + (-min_latency))+" array:"+(current-1));
+				System.out.println("Can exec "+current+" at source iteration nr. "+(init+inc)+" array:"+current);
 				
 				constraint.setDependencyData(inc, 
-							     current-1); 
+							     current); 
 				
 				last_dep = current;
 			    } else {
 				
-				System.out.println("Can not advance dest. at source iteration nr. "+(iter + inc + (-min_latency))+" array:-1");
+				System.out.println("Can not advance dest. at source iteration nr. "+(init+inc)+" array:0");
 				
 				constraint.setDependencyData(inc, 
 							     0); 
@@ -358,12 +362,14 @@ public class LatencyConstraints {
 			restrictedExecutionFilters.add(receiver);
 
 			init_credit = sdep2.getSrcPhase4DstPhase(1 + min_latency) - 1;
+
 			setInitCredit((SIRFilter)receiver, init_credit);
 
 			System.out.println("Init credit: "+init_credit);
 
 			if (init_credit < sdep2.getSrcPhase4DstPhase(iter)) {
 			    // a deadlock
+			    System.out.println("WARNING === possible deadlock ===");
 
 			}
 
@@ -375,7 +381,7 @@ public class LatencyConstraints {
 
 			constraints.add(constraint);
 
-			int credit_sent = 0;
+			int credit_sent = init_credit;
 
 			for (int offset = 0; offset < downstreamSteady; offset++) {
 			    

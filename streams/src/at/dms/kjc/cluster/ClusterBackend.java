@@ -350,9 +350,12 @@ public class ClusterBackend implements FlatVisitor {
 	graphFlattener.top.accept(d_sched, new HashSet(), true);
 	d_sched.findPhases();
 
+	/*
+	// Remove globals pass is broken in cluster !!!
 	if (KjcOptions.removeglobals) {
 	    RemoveGlobals.doit(graphFlattener.top);
 	}
+	*/
 
 	StructureIncludeFile.doit(structures, graphFlattener.top);
 
@@ -405,6 +408,20 @@ public class ClusterBackend implements FlatVisitor {
 	MakefileGenerator.createMakefile();
 	*/
 
+	/*
+	// attempt to find constrained schedule!
+	Greedy g = new Greedy(d_sched);
+
+	for (int w = 0; w < 20; w++) {
+	    int res = g.nextPhase(); // find a constrained phase
+	    if (res > 0) break;
+	}
+
+	for (int w = 0; w < 20; w++) { 
+	    g.combineInit();
+	}
+	*/
+	
 	System.out.println("Exiting");
 	System.exit(0);
     }

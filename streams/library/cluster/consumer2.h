@@ -35,6 +35,8 @@ class consumer2 : public socket_holder, public serializable {
 #ifndef ARM
 
     buf = NULL;
+
+#ifdef CONSUMER_BUFFER_SIZE
     if (is_mem_socket) {
       
       ((memsocket*)sock)->set_buffer_size(CONSUMER_BUFFER_SIZE * sizeof(T));
@@ -44,11 +46,14 @@ class consumer2 : public socket_holder, public serializable {
       buf =  (T*)malloc(CONSUMER_BUFFER_SIZE * sizeof(T));
       
     }
+#endif
+
 #endif //ARM
   }
 
   void recv_buffer() {
 #ifndef ARM
+#ifdef CONSUMER_BUFFER_SIZE
    
     if (is_mem_socket) {
 
@@ -67,6 +72,7 @@ class consumer2 : public socket_holder, public serializable {
 				     CONSUMER_BUFFER_SIZE * sizeof(T));
       offs = 0;
     }
+#endif
 #endif //ARM
   }
 

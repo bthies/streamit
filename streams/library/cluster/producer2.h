@@ -27,6 +27,7 @@ class producer2 : public socket_holder, public serializable {
 
   void init() {
 #ifndef ARM
+#ifdef PRODUCER_BUFFER_SIZE
     
     if (is_mem_socket) {
 
@@ -38,12 +39,14 @@ class producer2 : public socket_holder, public serializable {
       buf = (T*)malloc(PRODUCER_BUFFER_SIZE*sizeof(T));
       
     }
+#endif
 #endif //ARM
   }
 
 
   void send_buffer() {
 #ifndef ARM
+#ifdef PRODUCER_BUFFER_SIZE
     if (is_mem_socket) {
       
       //while (((memsocket*)sock)->queue_full()) {
@@ -61,6 +64,7 @@ class producer2 : public socket_holder, public serializable {
       offs = 0;
       
     }
+#endif
 #endif //ARM
   }
 

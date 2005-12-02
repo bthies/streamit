@@ -762,10 +762,14 @@ class stream_node {
 	int id = *i;
 	int _pop = pop_rates[id];
 	consumer3<IN> *c = consumer_array[id];
-	if (c->get_size() < _pop) {
+
+	int size = c->get_size();
+	while (size < _pop) {
 	  c->read_frame();
+	  size = c->get_size();
 	}
-	int nn = cons->get_size() / _pop;
+
+	int nn = size / _pop;
 	if (nn < n1) n1 = nn;
       }
 

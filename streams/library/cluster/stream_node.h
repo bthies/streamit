@@ -741,7 +741,7 @@ class stream_node {
 
   void run_simple(int num) {
     timer t;
-    int n, n1, n2;
+    int n;
 
     init_sockets();
     init_filter();
@@ -752,8 +752,7 @@ class stream_node {
 
     while (iteration < num) {
 
-      n1 = 100000;
-      n2 = 100000;
+      n = 100000;
 
       // BEGIN: modify for joiner !!
 
@@ -770,32 +769,23 @@ class stream_node {
 	}
 
 	int nn = size / _pop;
-	if (nn < n1) n1 = nn;
+	if (nn < n) n = nn;
       }
-
-	/*
-      if (cons != NULL) {
-	if (cons->get_size() < pop_rate) {
-	  cons->read_frame();
-	}
-	n1 = cons->get_size() / pop_rate;
-      }
-	*/
 
       // END: modify for joiner !!
 
-      if (prod != NULL) {
-	n2 = (PRODUCER_BUFFER_SIZE - prod->get_size()) / push_rate;      
+      for (i = outputs.begin(); i != outputs.end(); ++i) {
+	int id = *i;
+	int nn = (PRODUCER_BUFFER_SIZE - producer_array[id]->get_size()) / push_rates[id];
+	if (nn < n) n = nn;
       }
-
-      if (n1 < n2) n = n1; else n = n2;
 
       //update_pop_buf_simple(n1);
 
       if (iteration == 0) t.start();      
       if (iteration + n > num) n = num - iteration;
 
-      //printf("Thread [%d] n=%d\n", node_id, n);
+      printf("Thread [%d] n=%d\n", node_id, n);
 
       //work_n(n);
       //iteration+=n;
@@ -804,15 +794,16 @@ class stream_node {
 	work();
 	iteration++;
       }
-      
-      if (prod != NULL &&
-	  prod->get_size() + push_rate > PRODUCER_BUFFER_SIZE) {
 
-	//printf("simple-prod-flush [iter:%d size:%d]\n", iteration, prod->get_size());
-
-	prod->flush();
-	prod->inc_frame();
+      for (i = outputs.begin(); i != outputs.end(); ++i) {
+	int id = *i;
+	if (producer_array[id]->get_size() + push_rates[id]  
+	    >= PRODUCER_BUFFER_SIZE) {
+	  producer_array[id]->flush();
+	  producer_array[id]->inc_frame();
+	}
       }
+
     }
     
     t.stop();

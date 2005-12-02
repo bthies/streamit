@@ -129,7 +129,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	for (int i = 0; i < out.size(); i++) {
 	    NetStream s = (NetStream)out.elementAt(i);		
-	    int num = splitter.getWeight(i);	
+	    int num;
+	    if (splitter.getType().equals(SIRSplitType.DUPLICATE))
+		num = sum_of_weights;
+	    else 
+		num = splitter.getWeight(i);	
 	    p.println("    add_output_rate("+s.getDest()+","+num+");");
 	}
 	
@@ -152,9 +156,16 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	int offs = 0;
 	for (int i = 0; i < out.size(); i++) {
 	    NetStream s = (NetStream)out.elementAt(i);		
-	    int num = splitter.getWeight(i);	
+	    
+	    int num;
+	    if (splitter.getType().equals(SIRSplitType.DUPLICATE))
+		num = sum_of_weights;
+	    else
+		num = splitter.getWeight(i);	
+	    
 	    p.println("    producer_array["+s.getDest()+"]->push_items(buf+"+offs+", "+num+");");
-	    offs += num;
+
+	    if (!splitter.getType().equals(SIRSplitType.DUPLICATE)) offs += num;
 	}
 	p.println("  }");
 	p.newLine();
@@ -165,9 +176,16 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	offs = 0;
 	for (int i = 0; i < out.size(); i++) {
 	    NetStream s = (NetStream)out.elementAt(i);		
-	    int num = splitter.getWeight(i);	
+
+	    int num;
+	    if (splitter.getType().equals(SIRSplitType.DUPLICATE))
+		num = sum_of_weights;
+	    else
+		num = splitter.getWeight(i);	
+
 	    p.println("      producer_array["+s.getDest()+"]->push_items(buf+"+offs+", "+num+");");
-	    offs += num;
+
+	    if (!splitter.getType().equals(SIRSplitType.DUPLICATE)) offs += num;
 	}
 	p.println("    }");
 	p.println("  }");

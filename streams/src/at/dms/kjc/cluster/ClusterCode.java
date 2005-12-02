@@ -70,6 +70,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    DetectConst.detect(node);
 	    FlatIRToCluster.generateCode(node);
+	    FlatIRToCluster2.generateCode(node); // new codegen
 
 	    //((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());
 
@@ -78,15 +79,241 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	if (node.contents instanceof SIRSplitter) {
 
 	    generateSplitter(node);
+	    generateSplitter2(node); // new codegen
 
 	}
 
 	if (node.contents instanceof SIRJoiner) {
 
 	    generateJoiner(node);
+	    generateJoiner2(node); // new codegen
 
 	}
     }
+
+
+    public static void generateSplitter2(FlatNode node) {
+    	
+	SIRSplitter splitter = (SIRSplitter)node.contents;
+
+	// The splitter is not doing any work
+	if (splitter.getSumOfWeights() == 0) return; 
+
+	int init_counts, steady_counts;
+
+	Integer init_int = (Integer)ClusterBackend.initExecutionCounts.get(node);
+	if (init_int==null) {
+	    init_counts = 0;
+	} else {
+	    init_counts = init_int.intValue();
+	}
+
+	steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
+
+	CType baseType = Util.getBaseType(Util.getOutputType(node));
+	int id = NodeEnumerator.getSIROperatorId(node.contents);
+
+	Vector in_v = (Vector)RegisterStreams.getNodeInStreams(node.contents);
+	NetStream in = (NetStream)in_v.elementAt(0);
+	Vector out = (Vector)RegisterStreams.getNodeOutStreams(node.contents);
+
+	int sum_of_weights = splitter.getSumOfWeights();
+	
+	CodegenPrintWriter p = new CodegenPrintWriter();
+
+	p.println("#include <stream_node.h>\n");
+	p.println("class thread"+id+" : public stream_node<"+baseType+","+baseType+"> {");
+	p.println("public:");
+	p.println("  thread"+id+"() : stream_node<"+baseType+","+baseType+">("+id+","+NodeEnumerator.getNumberOfNodes()+","+sum_of_weights+","+sum_of_weights+","+sum_of_weights+") {");
+	p.println("    add_input("+in.getSource()+");");
+
+	for (int i = 0; i < out.size(); i++) {
+	    NetStream s = (NetStream)out.elementAt(i);		
+	    int num = splitter.getWeight(i);	
+	    p.println("    add_output_rate("+s.getDest()+","+num+");");
+	}
+	
+	p.println("  }");
+	p.newLine();
+
+	p.println("  "+baseType+" buf["+sum_of_weights+"];");
+	p.newLine();
+
+	p.println("  int state_size() { return 0; }");
+	p.println("  void save_state(object_write_buffer *buf) {}");
+	p.println("  void load_state(object_write_buffer *buf) {}");
+	p.println("  void init_state() {}");
+	p.println("  void send_credits() {}");
+	p.println("  void exec_message(message *msg) {}");
+	p.newLine();
+	
+	p.println("  void work() {");
+	p.println("    consumer_array["+in.getSource()+"]->pop_items(buf, "+sum_of_weights+");");
+	int offs = 0;
+	for (int i = 0; i < out.size(); i++) {
+	    NetStream s = (NetStream)out.elementAt(i);		
+	    int num = splitter.getWeight(i);	
+	    p.println("    producer_array["+s.getDest()+"]->push_items(buf+"+offs+", "+num+");");
+	    offs += num;
+	}
+	p.println("  }");
+	p.newLine();
+
+	p.println("  void work_n(int __n) {");
+	p.println("    for (int y = 0; y < __n; y++) {");
+	p.println("      consumer_array["+in.getSource()+"]->pop_items(buf, "+sum_of_weights+");");
+	offs = 0;
+	for (int i = 0; i < out.size(); i++) {
+	    NetStream s = (NetStream)out.elementAt(i);		
+	    int num = splitter.getWeight(i);	
+	    p.println("      producer_array["+s.getDest()+"]->push_items(buf+"+offs+", "+num+");");
+	    offs += num;
+	}
+	p.println("    }");
+	p.println("  }");
+	p.newLine();
+
+	p.println("};");
+	p.newLine();
+
+	p.println("thread"+id+" *instance_"+id+" = NULL;");
+	p.println("thread"+id+" *get_instance_"+id+"() {");
+	p.println("  if (instance_"+id+" == NULL) { instance_"+id+" = new thread"+id+"();");
+	p.println("    instance_"+id+"->init_stream(); }");
+	p.println("  return instance_"+id+";");
+	p.println("}");
+	p.println("void __get_thread_info_"+id+"() { get_instance_"+id+"()->get_thread_info(); }");
+	p.println("void __declare_sockets_"+id+"() { get_instance_"+id+"()->declare_sockets(); }");
+	p.println("extern int __max_iteration;");
+	p.println("void run_"+id+"() { get_instance_"+id+"()->run_simple("+init_counts+"+("+steady_counts+"*__max_iteration)); }");
+
+	try {
+	    FileWriter fw = new FileWriter("thread_"+id+".cpp");
+	    fw.write(p.getString());
+	    fw.close();
+	}
+	catch (Exception e) {
+	    System.err.println("Unable to write code to file thread_"+id+".cpp");
+	}
+	
+	System.out.println("Code for " + node.contents.getName() +
+			   " written to thread_"+id+".cpp");
+
+    }
+
+
+
+
+    public static void generateJoiner2(FlatNode node) {
+    	
+	SIRJoiner joiner = (SIRJoiner)node.contents;
+
+	// The joiner is not doing any work
+	if (joiner.getSumOfWeights() == 0) return; 
+
+	int init_counts, steady_counts;
+
+	Integer init_int = (Integer)ClusterBackend.initExecutionCounts.get(node);
+	if (init_int==null) {
+	    init_counts = 0;
+	} else {
+	    init_counts = init_int.intValue();
+	}
+
+	steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
+
+	CType baseType = Util.getBaseType(Util.getJoinerType(node));
+	int id = NodeEnumerator.getSIROperatorId(node.contents);
+
+	Vector in = (Vector)RegisterStreams.getNodeInStreams(node.contents);
+	Vector out_v = (Vector)RegisterStreams.getNodeOutStreams(node.contents);
+	NetStream out = (NetStream)out_v.elementAt(0);
+
+	int sum_of_weights = joiner.getSumOfWeights();
+	
+	CodegenPrintWriter p = new CodegenPrintWriter();
+
+	p.println("#include <stream_node.h>\n");
+	p.println("class thread"+id+" : public stream_node<"+baseType+","+baseType+"> {");
+	p.println("public:");
+	p.println("  thread"+id+"() : stream_node<"+baseType+","+baseType+">("+id+","+NodeEnumerator.getNumberOfNodes()+","+sum_of_weights+","+sum_of_weights+","+sum_of_weights+") {");
+
+	for (int i = 0; i < in.size(); i++) {
+	    NetStream s = (NetStream)in.elementAt(i);		
+	    int num = joiner.getWeight(i);	
+	    p.println("    add_input_rate("+s.getSource()+","+num+");");
+	}
+
+	p.println("    add_output("+out.getDest()+");");
+	
+	p.println("  }");
+	p.newLine();
+
+	p.println("  "+baseType+" buf["+sum_of_weights+"];");
+	p.newLine();
+
+	p.println("  int state_size() { return 0; }");
+	p.println("  void save_state(object_write_buffer *buf) {}");
+	p.println("  void load_state(object_write_buffer *buf) {}");
+	p.println("  void init_state() {}");
+	p.println("  void send_credits() {}");
+	p.println("  void exec_message(message *msg) {}");
+	p.newLine();
+	
+	p.println("  void work() {");
+	int offs = 0;
+	for (int i = 0; i < in.size(); i++) {
+	    NetStream s = (NetStream)in.elementAt(i);		
+	    int num = joiner.getWeight(i);	
+	    p.println("    consumer_array["+s.getSource()+"]->pop_items(buf+"+offs+", "+num+");");
+	    offs += num;
+	}
+	p.println("    producer_array["+out.getDest()+"]->push_items(buf, "+sum_of_weights+");");
+	p.println("  }");
+	p.newLine();
+
+	p.println("  void work_n(int __n) {");
+	p.println("    for (int y = 0; y < __n; y++) {");
+	offs = 0;
+	for (int i = 0; i < in.size(); i++) {
+	    NetStream s = (NetStream)in.elementAt(i);		
+	    int num = joiner.getWeight(i);	
+	    p.println("      consumer_array["+s.getSource()+"]->pop_items(buf+"+offs+", "+num+");");
+	    offs += num;
+	}
+	p.println("      producer_array["+out.getDest()+"]->push_items(buf, "+sum_of_weights+");");
+	p.println("    }");
+	p.println("  }");
+	p.newLine();
+
+	p.println("};");
+	p.newLine();
+
+	p.println("thread"+id+" *instance_"+id+" = NULL;");
+	p.println("thread"+id+" *get_instance_"+id+"() {");
+	p.println("  if (instance_"+id+" == NULL) { instance_"+id+" = new thread"+id+"();");
+	p.println("    instance_"+id+"->init_stream(); }");
+	p.println("  return instance_"+id+";");
+	p.println("}");
+	p.println("void __get_thread_info_"+id+"() { get_instance_"+id+"()->get_thread_info(); }");
+	p.println("void __declare_sockets_"+id+"() { get_instance_"+id+"()->declare_sockets(); }");
+	p.println("extern int __max_iteration;");
+	p.println("void run_"+id+"() { get_instance_"+id+"()->run_simple("+init_counts+"+("+steady_counts+"*__max_iteration)); }");
+
+	try {
+	    FileWriter fw = new FileWriter("thread_"+id+".cpp");
+	    fw.write(p.getString());
+	    fw.close();
+	}
+	catch (Exception e) {
+	    System.err.println("Unable to write code to file thread_"+id+".cpp");
+	}
+	
+	System.out.println("Code for " + node.contents.getName() +
+			   " written to thread_"+id+".cpp");
+
+    }
+
 
     public static void generateSplitter(FlatNode node) {
     	

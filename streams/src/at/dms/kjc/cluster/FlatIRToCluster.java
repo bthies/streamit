@@ -378,7 +378,23 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
 
             p.print("inline void __init_pop_buf__" + selfID + "() {\n");
 
-            for (int i = 0; i < extra; i++) {
+	    int init_pop_count = extra;
+
+	    if (self instanceof SIRTwoStageFilter) {
+
+		SIRTwoStageFilter ff = (SIRTwoStageFilter)self;
+
+		int init_peek = ff.getInitPeekInt();
+		int init_pop = ff.getInitPopInt();
+		if (init_pop > init_peek) init_peek = init_pop;
+
+		init_pop_count = init_peek;
+
+		if (extra > (init_peek - init_pop))
+		    init_pop_count += extra - (init_peek - init_pop);
+	    }
+
+            for (int i = 0; i < init_pop_count; i++) {
 
                 p.print("  __pop_buf__" + selfID + "[" + i + "]=");
 
@@ -390,7 +406,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
             }
 
             p.print("  __tail__" + selfID + "=0;\n");
-            p.print("  __head__" + selfID + "=" + extra + ";\n");
+            p.print("  __head__" + selfID + "=" + init_pop_count + ";\n");
 
             /*
              * 

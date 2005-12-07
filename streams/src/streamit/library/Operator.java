@@ -1010,12 +1010,20 @@ public class Operator extends DestroyedClass
             sink = (Operator) iter.next ();
             assert sink != null;
 
-            // do bunch of work
-            int i;
-            for (i = 0; i < 10; i++)
-            {
-                sink.doWork();
-            }
+            /* RMR { rather than running the sink for 10 counts (old code)
+		 * run the work function once instead
+		 * 
+		 * begin old code
+		 // do bunch of work
+		 int i;
+		 for (i = 0; i < 10; i++)
+		 {
+		     sink.doWork();
+		 }
+		 * end old code
+		 */
+		sink.doWork();
+		/* } RMR */
         }
     }
 

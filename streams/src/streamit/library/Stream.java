@@ -879,11 +879,19 @@ public abstract class Stream extends Operator
             if (!doRun)
                 System.exit(0);
 
-            while (true)
+		/* RMR { in no sched case, nIters counts the executions of the sink
+		 * NOTE: need to clarify what happens in the case of multiple sinks
+		 */
+		while (nIters != 0)
             {
                 runSinks();
                 drainChannels();
+		    /* RMR { decrement iteration count so driver knows when to stop */
+                if (nIters > 0)
+                    nIters--;
+		    /* } RMR */
             }
+		/* } RMR */
         }
 	} catch (Throwable e) {
 	    /* Any unhandled error or exception in running the program

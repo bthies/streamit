@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.16 2005-02-17 00:08:28 thies Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.17 2005-12-07 01:18:51 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -15,7 +15,7 @@ import at.dms.kjc.sir.*;
  * This visitor is for visiting statement-level constructs in the
  * streamit IR.  It visits both high-level constructs like
  * SIRInitStatement that never appear in the LIR, as well as low-level
- * constructs like LIRSetPeek that never appear in the low IR.
+ * constructs like LIRSetPeek that never appear in the high IR.
  */
 public class SLIREmptyVisitor extends KjcEmptyVisitor 
     implements Constants, SLIRVisitor

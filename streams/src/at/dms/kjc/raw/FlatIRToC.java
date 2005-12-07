@@ -220,12 +220,12 @@ public class FlatIRToC extends ToC implements StreamVisitor
             addIterCountFunction();
 
         //visit methods of filter, print the declaration first
-        declOnly = true;
+        setDeclOnly(true);
         JMethodDeclaration[] methods = self.getMethods();
         for (int i =0; i < methods.length; i++)
             methods[i].accept(this);
         //now print the functions with body
-        declOnly = false;
+        setDeclOnly(false);
         for (int i =0; i < methods.length; i++) {
             methods[i].accept(this);    
         }
@@ -405,7 +405,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
         // try converting to macro
         if (MacroConversion.shouldConvert(self)) {
-            MacroConversion.doConvert(self, declOnly, this);
+            MacroConversion.doConvert(self, isDeclOnly(), this);
             return;
         }
 
@@ -431,7 +431,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         p.print(")");
         
         //print the declaration then return
-        if (declOnly) {
+        if (isDeclOnly()) {
             p.print(";");
             return;
         }

@@ -1325,7 +1325,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    for (int j = 0; j < m.length; j++) {
 		FlatIRToCluster f2c = new FlatIRToCluster();
 		f2c.helper_package = helpers[i].getIdent();
-		f2c.declOnly = true;
+		f2c.setDeclOnly(true);
 		m[j].accept(f2c);
 		str += "extern "+f2c.getPrinter().getString()+"\n";
 	    }
@@ -1398,7 +1398,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		for (int j = 0; j < m.length; j++) {
 		    FlatIRToCluster f2c = new FlatIRToCluster();
 		    f2c.helper_package = helpers[i].getIdent();
-		    f2c.declOnly = false;
+		    f2c.setDeclOnly(false);
 		    m[j].accept(f2c);
 		    str += f2c.getPrinter().getString()+"\n";
 		}
@@ -1410,6 +1410,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	} else {
 	    FlatIRToCluster f2c = new FlatIRToCluster();
 	    f2c.setGlobal(true);
+        f2c.setDeclOnly(false);
 	    global.getInit().accept(f2c);
 	    str += f2c.getPrinter().getString();
 	}

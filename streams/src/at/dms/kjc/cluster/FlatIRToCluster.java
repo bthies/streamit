@@ -297,7 +297,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
         JMethodDeclaration work = self.getWork();
 
         // visit methods of filter, print the declaration first
-        declOnly = true;
+        setDeclOnly(true);
         JMethodDeclaration[] methods = self.getMethods();
         for (int i = 0; i < methods.length; i++) {
             if (!methods[i].equals(work))
@@ -464,6 +464,20 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
             if (peek_n <= pop_n) {
 
                 // no peek beyond pop
+                
+                p.println("for (int i = 0; i < " + pop_n + "; i++) {");
+                p.indent();
+                p.print("  __pop_buf__" + selfID + "[i]="); 
+                if (source_fused) {
+                    p.println(in.pop_name() + "();"); 
+                } else {
+                    p.println(in.consumer_name() + ".pop();");
+                }
+                p.outdent();
+                p.println("}");
+                
+                /* The following compile-time unrolling caused gcc to thrash
+                 * on very large buffer sizes.  replaced with run-time loop.
 
                 for (int i = 0; i < pop_n; i++) {
                     p.print("  __pop_buf__" + selfID + "[" + i + "]=");
@@ -475,7 +489,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
                     }
                     p.newLine();
                 }
-
+                */
                 p.print("  __tail__" + selfID + " = 0;\n");
                 p.print("  __head__" + selfID + " = " + pop_n + ";\n");
 
@@ -483,7 +497,25 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
 
                 // peek beyond pop => circular buffer
 
-                for (int i = 0; i < pop_n; i++) {
+                
+                p.println("for (int i = 0; i < " + pop_n + "; i++) {");
+                p.indent();
+                p.print("  __pop_buf__" + selfID + "[__head__" + selfID + "]="); 
+                if (source_fused) {
+                    p.println(in.pop_name() + "();"); 
+                } else {
+                    p.println(in.consumer_name() + ".pop();");
+                }
+                p.print("__head__" + selfID + "++;");
+                p.print("__head__" + selfID + "&=" + (peek_buf_size - 1)
+                        + ";\n");
+                p.outdent();
+                p.println("}");
+                
+                /* The following compile-time unrolling caused gcc to thrash
+                 * on very large buffer sizes.  replaced with run-time loop.
+
+               for (int i = 0; i < pop_n; i++) {
 
                     p.print("  __pop_buf__" + selfID + "[__head__" + selfID
                             + "]=");
@@ -498,6 +530,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
                     p.print("__head__" + selfID + "&=" + (peek_buf_size - 1)
                             + ";\n");
                 }
+                */
             }
 
             /*
@@ -774,7 +807,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
         // | Method Bodies |
         // +=============================+
 
-        declOnly = false;
+        setDeclOnly(false);
         for (int i = 0; i < methods.length; i++) {
             if (!methods[i].equals(work))
                 methods[i].accept(this);
@@ -1255,7 +1288,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
             CType returnType, String ident, JFormalParameter[] parameters,
             CClassType[] exceptions, JBlock body) {
         if (filter != null && filter instanceof SIRPredefinedFilter
-                && self.getName().startsWith("init") && !declOnly) {
+                && self.getName().startsWith("init") && !isDeclOnly()) {
             BuiltinsCodeGen.predefinedFilterInit((SIRPredefinedFilter) filter,
                     returnType, ident + "__" + selfID, selfID, cleanupCode, p);
             return;
@@ -1276,7 +1309,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
 
         // try converting to macro
         if (MacroConversion.shouldConvert(self)) {
-            MacroConversion.doConvert(self, declOnly, this);
+            MacroConversion.doConvert(self, isDeclOnly(), this);
             return;
         }
 
@@ -1309,7 +1342,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
         p.print(")");
 
         // print the declaration then return
-        if (declOnly) {
+        if (isDeclOnly()) {
             p.print(";");
             return;
         }

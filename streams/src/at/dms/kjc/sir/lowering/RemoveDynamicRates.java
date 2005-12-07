@@ -37,7 +37,8 @@ public class RemoveDynamicRates extends EmptyStreamVisitor {
      */
     class SLIRRemoveDynamicRates extends SLIRReplacingVisitor {
 	public Object visitRangeExpression(SIRRangeExpression self) {
-	    return new JIntLiteral(1);
+//TODO: eventually change to self.max or 1000 if max dynamic 
+        return new JIntLiteral(625032);
 	}
     }
 }

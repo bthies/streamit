@@ -97,7 +97,10 @@ public class StructureIncludeFile implements FlatVisitor
 	/* RMR { moved typedef outside of loop */
 	// FIXME put in kluge for 'bit'  We do not have bit handling so 
 	// bit is defined here as 'unsigned char'
-	fw.write("typedef unsigned char  bit;\n");
+    // Further kluge: until can figure out how to get cluster to expand
+    // from unsigned byte to integer we just use integer!
+//    fw.write("typedef unsigned char bit;\n");
+    fw.write("typedef int bit;\n");
 	/* } RMR */
     }
 

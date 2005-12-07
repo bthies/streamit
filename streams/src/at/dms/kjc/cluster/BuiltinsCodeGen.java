@@ -125,10 +125,10 @@ class BuiltinsCodeGen {
         // generate code for init before code for work, so scope of
         // any file-level code will include the work function.
 
-        p.print("// predefinedFilterInit " + filter.getIdent()
-		+ " " + filter.getInputType().toString() + " -> " 
-		+ filter.getOutputType().toString());
-        p.newLine();
+//        p.println("// predefinedFilterInit " + filter.getIdent()
+//		+ " " + filter.getInputType().toString() + " -> " 
+//		+ filter.getOutputType().toString());
+
         if (filter instanceof SIRFileReader) {
             genFileReaderInit((SIRFileReader)filter, return_type, 
                     function_name, selfID, cleanupCode, p);

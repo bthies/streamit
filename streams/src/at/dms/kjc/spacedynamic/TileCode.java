@@ -173,7 +173,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    return "";
 	
 	FlatIRToC toC = new FlatIRToC();
-	toC.declOnly = false;
+	toC.setDeclOnly(false);
 	
 	JMethodDeclaration initPath = ((SIRFeedbackLoop)joiner.contents.getParent()).getInitPath();
 	initPath.accept(toC);

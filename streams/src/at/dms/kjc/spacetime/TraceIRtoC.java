@@ -60,12 +60,12 @@ public class TraceIRtoC extends ToC
             p.print(CommunicateAddrs.getFields(tile));
 
         //visit methods of tile, print the declaration first
-        declOnly = true;
+        setDeclOnly(true);
         for (int i = 0; i < tile.getComputeCode().getMethods().length; i++)
             tile.getComputeCode().getMethods()[i].accept(this);
 
         //generate the methods
-        declOnly = false;
+        setDeclOnly(false);
         JMethodDeclaration mainMethod=tile.getComputeCode().getMainFunction();
         for (int i = 0; i < tile.getComputeCode().getMethods().length; i++) {
             JMethodDeclaration method=tile.getComputeCode().getMethods()[i];
@@ -318,7 +318,7 @@ public class TraceIRtoC extends ToC
 
         // try converting to macro
         if (MacroConversion.shouldConvert(self)) {
-            MacroConversion.doConvert(self, declOnly, this);
+            MacroConversion.doConvert(self, isDeclOnly(), this);
             return;
         }
            
@@ -344,7 +344,7 @@ public class TraceIRtoC extends ToC
         p.print(")");
         
         //print the declaration then return
-        if (declOnly) {
+        if (isDeclOnly()) {
             p.print(";");
             return;
         }

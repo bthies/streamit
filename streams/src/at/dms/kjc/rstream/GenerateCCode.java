@@ -355,14 +355,14 @@ public class GenerateCCode
 	//    ((JFieldDeclaration)fields.get(i)).accept(toRS);
 
 	//initially just print the function decls
-	toRS.declOnly = true;
+	toRS.setDeclOnly(true);
 	for (int i = 0; i < functions.size(); i++) 
 	    ((JMethodDeclaration)functions.get(i)).accept(toRS);
 	//print the main method decl
 	mainMethod.accept(toRS);
 
 	//now print the method bodies...
-	toRS.declOnly = false;
+	toRS.setDeclOnly(false);
 	for (int i = 0; i < functions.size(); i++) 
 	    ((JMethodDeclaration)functions.get(i)).accept(toRS);
 

@@ -420,7 +420,7 @@ public class FlatIRToRS extends ToC
                                        JBlock body) {
 	// try converting to macro
 	if (MacroConversion.shouldConvert(self)) {
-	    MacroConversion.doConvert(self, declOnly, this);
+	    MacroConversion.doConvert(self, isDeclOnly(), this);
 	    return;
 	}
 
@@ -460,7 +460,7 @@ public class FlatIRToRS extends ToC
 	KjcOptions.absarray = savedKjcOption_absarray;
 	// } RMR
 	//print the declaration then return
-	if (declOnly) {
+	if (isDeclOnly()) {
 	    p.print(";");
 	    return;
 	}

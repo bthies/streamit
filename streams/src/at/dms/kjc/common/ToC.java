@@ -26,8 +26,8 @@ import at.dms.util.Utils;
  */
 public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 {
-    /** set to true to only print declarations of methods when visiting them **/
-    public boolean declOnly = true;
+    /** true to only print declarations of methods when visiting them **/
+    private boolean declOnly = true;
     /** true if we are currently visiting the init function **/
     protected boolean isInit = false;
     /** the current function we are visiting **/
@@ -699,7 +699,7 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 
     
     // ----------------------------------------------------------------------
-    // PROTECTED METHODS
+    // Misc methods for manipulating fields
     // ----------------------------------------------------------------------
 
 
@@ -707,6 +707,20 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
     public void clear() 
     {
         this.p = new CodegenPrintWriter();
+    }
+
+    /**
+     * @param declOnly The declOnly to set.
+     */
+    public void setDeclOnly(boolean declOnly) {
+        this.declOnly = declOnly;
+    }
+
+    /**
+     * @return Returns the declOnly.
+     */
+    public boolean isDeclOnly() {
+        return declOnly;
     }
     
 }

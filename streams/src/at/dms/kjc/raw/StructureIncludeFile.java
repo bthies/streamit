@@ -102,6 +102,7 @@ public class StructureIncludeFile implements FlatVisitor
 //    fw.write("typedef unsigned char bit;\n");
     fw.write("typedef int bit;\n");
 	/* } RMR */
+    fw.write("#ifndef round\n#define round(x) (floor((x)+0.5))\n#endif\n");
     }
 
     private void createPushPopFunctions(SIRStructure[] structs,

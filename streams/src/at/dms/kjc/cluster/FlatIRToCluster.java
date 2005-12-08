@@ -284,11 +284,8 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
         ClusterCodeGenerator gen = new ClusterCodeGenerator(self, self
                 .getFields());
 
-        Vector pre = gen.generatePreamble();
-
-        for (int i = 0; i < pre.size(); i++) {
-            p.print(pre.elementAt(i).toString());
-        }
+        // A lot of stuff including printing field initializers.
+        gen.generatePreamble(this, p); 
 
         // +=============================+
         // | Method Declarations |
@@ -1227,59 +1224,63 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
         }
     }
 
-    /**
+    /*//*
      * prints a field declaration
      */
-    public void visitFieldDeclaration(JFieldDeclaration self, int modifiers,
-            CType type, String ident, JExpression expr) {
-        /*
-         * if (ident.indexOf("$") != -1) { return; // dont print generated
-         * elements }
-         */
-
-        if (type.toString().endsWith("Portal"))
-            return;
-
-        p.newLine();
-        // p.print(CModifier.toString(modifiers));
-
-        // only stack allocate singe dimension arrays
-        if (expr instanceof JNewArrayExpression) {
-            // print the basetype
-            typePrint(((CArrayType) type).getBaseType());
-            p.print(" ");
-            // print the field identifier
-            p.print(ident);
-            // print the dims
-            stackAllocateArray(ident);
-            p.print(";");
-            return;
-        } else if (expr instanceof JArrayInitializer) {
-            declareInitializedArray(type, ident, expr);
-            return;
-        }
-
-        if (type.toString().compareTo("boolean") == 0) {
-            p.print("bool");
-        } else {
-            typePrint(type);
-        }
-
-        p.print(" ");
-        p.print(ident);
-        p.print("__" + selfID);
-
-        if (expr != null) {
-            p.print("\t= ");
-            expr.accept(this);
-        } // initialize all fields to 0
-        else if (type.isOrdinal())
-            p.print(" = 0");
-        else if (type.isFloatingPoint())
-            p.print(" = 0.0f");
-
-        p.print(";/* " + type + " size: " + byteSize(type) + " */\n");
-    }
+/* Never called:  Some weird and incomplete handling of fields in 
+ * CodeGenerator.java.  Pull that out and use standard field initialization
+ * from ToC.java
+ */ 
+//    public void visitFieldDeclaration(JFieldDeclaration self, int modifiers,
+//            CType type, String ident, JExpression expr) {
+//        System.err.println("Eclipse was wrong, we really visited fielf decl!");
+//        //
+//        // if (ident.indexOf("$") != -1) { return; // dont print generated
+//        // elements }
+//        //
+//
+//        if (type.toString().endsWith("Portal"))
+//            return;
+//
+//        p.newLine();
+//        // p.print(CModifier.toString(modifiers));
+//
+//        // only stack allocate singe dimension arrays
+//        if (expr instanceof JNewArrayExpression) {
+//            // print the basetype
+//            typePrint(((CArrayType) type).getBaseType());
+//            p.print(" ");
+//            // print the field identifier
+//            p.print(ident);
+//            // print the dims
+//            stackAllocateArray(ident);
+//            p.print(";");
+//            return;
+//        } else if (expr instanceof JArrayInitializer) {
+//            declareInitializedArray(type, ident, expr);
+//            return;
+//        }
+//
+//        if (type.toString().compareTo("boolean") == 0) {
+//            p.print("bool");
+//        } else {
+//            typePrint(type);
+//        }
+//
+//        p.print(" ");
+//        p.print(ident);
+//        p.print("__" + selfID);
+//
+//        if (expr != null) {
+//            p.print("\t= ");
+//            expr.accept(this);
+//        } // initialize all fields to 0
+//        else if (type.isOrdinal())
+//            p.print(" = 0");
+//        else if (type.isFloatingPoint())
+//            p.print(" = 0.0f");
+//        p.print(";/* " + type + " size: " + byteSize(type) + " */\n");
+//    }
 
     /**
      * prints a method declaration

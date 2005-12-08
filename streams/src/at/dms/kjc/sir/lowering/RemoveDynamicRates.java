@@ -18,7 +18,7 @@ public class RemoveDynamicRates extends EmptyStreamVisitor {
     public static void doit(SIRStream str) {
 	IterFactory.createFactory().createIter(str).accept(new RemoveDynamicRates());
     }
-    
+     
     public void preVisitStream(SIRStream self, SIRIterator iter) {
 	SLIRRemoveDynamicRates replacer = new SLIRRemoveDynamicRates();
 	JMethodDeclaration[] methods = self.getMethods();
@@ -37,8 +37,11 @@ public class RemoveDynamicRates extends EmptyStreamVisitor {
      */
     class SLIRRemoveDynamicRates extends SLIRReplacingVisitor {
 	public Object visitRangeExpression(SIRRangeExpression self) {
-//TODO: eventually change to self.max or 1000 if max dynamic 
-        return new JIntLiteral(625032);
+        //TODO: eventually change to self.max or 1000 if max dynamic 
+        // for now: to push MPEG through cluster need size 
+        // of apps/benchmarks/mpeg2/input/momessage.m2v in bits rounded up
+        // to a multiple of 32.
+        return new JIntLiteral(/*625032*/1000000);
 	}
     }
 }

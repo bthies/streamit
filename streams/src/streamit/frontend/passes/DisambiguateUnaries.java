@@ -27,7 +27,7 @@ import java.util.List;
  * a temporary variable.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DisambiguateUnaries.java,v 1.10 2005-09-30 21:27:08 rabbah Exp $
+ * @version $Id: DisambiguateUnaries.java,v 1.11 2005-12-08 00:13:37 rabbah Exp $
  */
 public class DisambiguateUnaries extends SymbolTableVisitor
 {
@@ -62,7 +62,7 @@ public class DisambiguateUnaries extends SymbolTableVisitor
          * statements (e.g, add filter ... { push(i++); or i++; } the
          * successor statements are added following the <push> as well
          * as following the <add> in the parent stream's initialization 
-	   * code
+         * code
          */
         successors.clear();
         /* } RMR */
@@ -101,7 +101,7 @@ public class DisambiguateUnaries extends SymbolTableVisitor
     public Object visitExprUnary(ExprUnary expr)
     {
 	  /* RMR { do not transform ++/-- operators to new expressions,
-	   * instead simple return the original expression
+	   * instead simply return the original expression
 	   */
 //         // Does this modify its argument?
 //         int op = expr.getOp();

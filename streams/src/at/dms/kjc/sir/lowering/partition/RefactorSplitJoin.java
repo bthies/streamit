@@ -210,7 +210,7 @@ public class RefactorSplitJoin {
 		    super.postVisitSplitJoin(self, iter);
 		    // don't need to do anything if only one level in <self>
 		    if (self.getRectangularHeight()>1) {
-			// make partitiongroup, putting each child in its own group
+			// make partition group, putting each child in its own group
 			SIRPipeline synced = addSyncPoints(self, PartitionGroup.createUniformPartition(self.getRectangularHeight()));
 			self.getParent().replace(self, synced);
 			Lifter.eliminatePipe(synced);

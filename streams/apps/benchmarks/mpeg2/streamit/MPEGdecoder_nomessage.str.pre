@@ -76,7 +76,7 @@ void->void pipeline MPEGdecoder_nomessage() {
     add FileReader<bit>("../input/nomessage.m2v"); // Use this one for the nomessage decoder
     add MPEGStreamParser(width, height, the_chroma_format);
     add MPEGStream_to_rawImageStream(width, height, the_chroma_format);
-    add FileWriter<int>("./nomessage_output.int");
+    add FileWriter<int>("../input/nomessage_output.int");
   } else if (parse_or_process == 1) {
     add FileReader<bit>("../input/nomessage.m2v"); // Use this one for the nomessage decoder
     add MPEGStreamParser(width, height, the_chroma_format);
@@ -96,7 +96,7 @@ void->void pipeline MPEGdecoder_nomessage() {
       }
     }
     add BlockDecode();
-    add FileWriter<int>("./nomessage_blockdecode_output.int");
+    add FileWriter<int>("../input/nomessage_blockdecode_output.int");
   } else if (parse_or_process == 5) {
     add FileReader<int>("../input/nomessage.int");
     add int->int splitjoin {
@@ -112,14 +112,14 @@ void->void pipeline MPEGdecoder_nomessage() {
 
     add int->int splitjoin {
       split roundrobin(4*75, 2*75);
-      add FileWriter<int>("./nomessage_lum_channel_input.int");
-      add FileWriter<int>("./nomessage_cb_channel_input.int");
+      add FileWriter<int>("../input/nomessage_lum_channel_input.int");
+      add FileWriter<int>("../input/nomessage_cb_channel_input.int");
       join roundrobin(0, 0);
     }
   } else if (parse_or_process == 6) {
-    add FileReader<int>("./nomessage_lum_channel_input.int");
+    add FileReader<int>("../input/nomessage_lum_channel_input.int");
     add LuminanceChannelProcessing(width, height, the_chroma_format);
-    add FileWriter<int>("./nomessage_lum_channel_output.int");
+    add FileWriter<int>("../input/nomessage_lum_channel_output.int");
   }
 }
 

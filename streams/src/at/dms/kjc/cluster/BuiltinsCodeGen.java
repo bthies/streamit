@@ -165,13 +165,16 @@ class BuiltinsCodeGen {
      * 
      * The File* is declared outside any function / method.
      * 
+     * This code follows the model in the library of stalling (not pushing)
+     * at end of file (detected by fread returning 0).
+     * 
      * There is special case code for FileReader<bit> since individual
      * bits can not be read in by any system routine that I know.
      * 
-     * With most bit streams that I (AD) have seen, the order is
+     * With most bit streams that I (A.D.) have seen, the order is
      * little-endian in words, low-to-high bit in bytes.
      * This code -- matching Matt's implementation for the library
-     * is a bit odd: endian-ness depends on what fwrite -- my
+     * is a bit odd: endian-ness depends on fread / fwrite -- my
      * laziness, should always be little-endian -- but bits are read
      * and written from high to low.  So byte 0b10011111
      * is read as 1, 0, 0, 1, 1, 1, 1, 1 and is written back as
@@ -203,23 +206,40 @@ class BuiltinsCodeGen {
             p.newline();
             p.println("if (" + bits_to_go + " == 0) {");
             p.indent();
-            p.println("fread(" + "&"+ the_bits + ", " 
+            p.println("if (fread(" + "&"+ the_bits + ", " 
                         + "sizeof(" + the_bits + "),"
                         + " " + "1, " 
-                        + fpName(filter) + ");");
+                        + fpName(filter) + ")) {");
+            p.indent();
             p.println(bits_to_go + " = 8 * sizeof("+ the_bits + ");");
-            p.outdent();
-            p.println("}");
+// identical to code fragment below ///////////////////////
             p.println(ClusterUtils.pushName(selfID) 
-                      + "((" + the_bits +" & (1 << (sizeof(" + the_bits + ") * 8 - 1))) ? 1 : 0);");
+                    + "((" + the_bits +" & (1 << (sizeof(" + the_bits + ") * 8 - 1))) ? 1 : 0);");
             p.println(the_bits + " <<= 1;");
             p.println(bits_to_go + "--;");
-        } else {
+// end identical to code fragment below ////////////////////
+            p.outdent();
+            p.println("}");
+            p.outdent();
+            p.println("} else {");
+            p.indent();
+// identical to code fragment above /////////////////////////
+            p.println(ClusterUtils.pushName(selfID) 
+                    + "((" + the_bits +" & (1 << (sizeof(" + the_bits + ") * 8 - 1))) ? 1 : 0);");
+            p.println(the_bits + " <<= 1;");
+            p.println(bits_to_go + "--;");
+// end identical to code fragment above /////////////////////
+            p.outdent();
+            p.println("}");
+       } else {
             // push into a location.
             p.println(theType + " v;");
-            p.println("fread(" + "&v, " + "sizeof(v), " + "1, " 
-                    + fpName(filter) + ");");
+            p.println("if (fread(" + "&v, " + "sizeof(v), " + "1, " 
+                    + fpName(filter) + ")) {");
+            p.indent();
             p.println(ClusterUtils.pushName(selfID) + "(v);");
+            p.outdent();
+            p.println("}");
         }
     }
     

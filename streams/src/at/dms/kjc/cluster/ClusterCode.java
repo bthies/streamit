@@ -1303,6 +1303,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	// Writing global.h
 	// ================================
 
+	str += "#include <math.h>\n";
 	str += "#include \"structs.h\"\n";
 	str += "#include <StreamItVectorLib.h>\n";
 	str += "\n";

@@ -5,6 +5,10 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
 
 /**
+ * NOTE: This class is deprecated in favor of SIRDynamicRateManager.
+ * (However, this class still might be useful if we want to replace
+ * all dynamic rates with something in the IR.)
+ *
  * This class performs an UNSAFE TRANSFORMATION in which all dynamic
  * rates are replaced with the constant 1.  This is an easy way to
  * push dynamic rates through backends such as the cluster backend,

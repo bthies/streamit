@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.27 2005-11-17 22:49:08 dimock Exp $
+ * $Id: JMethodDeclaration.java,v 1.28 2005-12-12 20:41:30 thies Exp $
  */
 
 package at.dms.kjc;
@@ -27,6 +27,7 @@ import at.dms.compiler.JavadocComment;
 import at.dms.compiler.TokenReference;
 import at.dms.compiler.UnpositionedError;
 import at.dms.util.InconsistencyException;
+import at.dms.kjc.sir.SIRDynamicRateManager;
 
 import java.util.ListIterator;
 import java.util.LinkedList;
@@ -216,9 +217,14 @@ public class JMethodDeclaration extends JMemberDeclaration {
      * Returns whether this has a non-zero push, pop, or peek rate.
      */
     public boolean doesIO() {
-	boolean noPush = (push instanceof JIntLiteral) && ((JIntLiteral)push).intValue()==0;
-	boolean noPeek = (peek instanceof JIntLiteral) && ((JIntLiteral)peek).intValue()==0;
-	boolean noPop = (pop instanceof JIntLiteral) && ((JIntLiteral)pop).intValue()==0;
+	// always access via accessors
+	JExpression myPush = getPush();
+	JExpression myPeek = getPeek();
+	JExpression myPop = getPop();
+	// compute IO
+	boolean noPush = (myPush instanceof JIntLiteral) && ((JIntLiteral)myPush).intValue()==0;
+	boolean noPeek = (myPeek instanceof JIntLiteral) && ((JIntLiteral)myPeek).intValue()==0;
+	boolean noPop = (myPop instanceof JIntLiteral) && ((JIntLiteral)myPop).intValue()==0;
 	return !(noPush && noPeek && noPop);		
     }
 
@@ -254,17 +260,17 @@ public class JMethodDeclaration extends JMemberDeclaration {
     
     public JExpression getPeek()
     {
-        return this.peek;
+        return SIRDynamicRateManager.interpretRate(this.peek);
     }
     
     public JExpression getPop()
     {
-        return this.pop;
+        return SIRDynamicRateManager.interpretRate(this.pop);
     }
     
     public JExpression getPush()
     {
-        return this.push;
+        return SIRDynamicRateManager.interpretRate(this.push);
     }
 
     /**
@@ -274,14 +280,16 @@ public class JMethodDeclaration extends JMemberDeclaration {
      * getPop.
      */
     public int getPopInt() {
-      if (pop instanceof JFloatLiteral) { //clleger
-	pop = new JIntLiteral(null, (int) ((JFloatLiteral)pop).floatValue());
-      }
-	// need int literal to get number
-	if (!(pop instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for pop value in work function " + getName() + ", but the constant hasn't been resolved yet. " + pop);
+	// always access pop through getPop()
+	JExpression myPop = getPop();
+	if (pop instanceof JFloatLiteral) { //clleger
+	    myPop = new JIntLiteral(null, (int) ((JFloatLiteral)myPop).floatValue());
 	}
-	return ((JIntLiteral)pop).intValue();
+	// need int literal to get number
+	if (!(myPop instanceof JIntLiteral)) {
+	    Utils.fail("Trying to get integer value for myPop value in work function " + getName() + ", but the constant hasn't been resolved yet. " + myPop);
+	}
+	return ((JIntLiteral)myPop).intValue();
     }
 
     /**
@@ -291,14 +299,16 @@ public class JMethodDeclaration extends JMemberDeclaration {
      * getPeek.
      */
     public int getPeekInt() {
-      if (peek instanceof JFloatLiteral) { //clleger
-	peek = new JIntLiteral(null, (int) ((JFloatLiteral)peek).floatValue());
-      }
-	// need int literal to get number
-	if (!(peek instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for peek value in work function " + getName() + ", but the constant hasn't been resolved yet. " + peek);
+	// always access peek through getPeek()
+	JExpression myPeek = getPeek();
+	if (myPeek instanceof JFloatLiteral) { //clleger
+	    myPeek = new JIntLiteral(null, (int) ((JFloatLiteral)myPeek).floatValue());
 	}
-	return ((JIntLiteral)peek).intValue();
+	// need int literal to get number
+	if (!(myPeek instanceof JIntLiteral)) {
+	    Utils.fail("Trying to get integer value for myPeek value in work function " + getName() + ", but the constant hasn't been resolved yet. " + myPeek);
+	}
+	return ((JIntLiteral)myPeek).intValue();
     }
 
     /**
@@ -308,15 +318,17 @@ public class JMethodDeclaration extends JMemberDeclaration {
      * getPush.
      */
     public int getPushInt() {
+	// always access push through getPush()
+	JExpression myPush = getPush();
 	// need int literal to get number
-      if (push instanceof JFloatLiteral) { //clleger
-	push = new JIntLiteral(null, (int) ((JFloatLiteral)push).floatValue());
+      if (myPush instanceof JFloatLiteral) { //clleger
+	myPush = new JIntLiteral(null, (int) ((JFloatLiteral)myPush).floatValue());
       }
 
-	if (!(push instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for push value in work function " + getName() + ", but the constant hasn't been resolved yet. " + push);
+	if (!(myPush instanceof JIntLiteral)) {
+	    Utils.fail("Trying to get integer value for myPush value in work function " + getName() + ", but the constant hasn't been resolved yet. " + myPush);
 	}
-	return ((JIntLiteral)push).intValue();
+	return ((JIntLiteral)myPush).intValue();
     }
 
     /**
@@ -324,10 +336,11 @@ public class JMethodDeclaration extends JMemberDeclaration {
      * range, like [1,2,3]).
      */
     public String getPopString() {
-	if (pop instanceof JLiteral) {
+	JExpression myPop = getPop();
+	if (myPop instanceof JLiteral) {
 	    return ""+getPopInt();
 	} else {
-	    return pop.toString();
+	    return myPop.toString();
 	}
     }
 
@@ -336,10 +349,11 @@ public class JMethodDeclaration extends JMemberDeclaration {
      * range, like [1,2,3]).
      */
     public String getPeekString() {
-	if (peek instanceof JLiteral) {
+	JExpression myPeek = getPeek();
+	if (myPeek instanceof JLiteral) {
 	    return ""+getPeekInt();
 	} else {
-	    return peek.toString();
+	    return myPeek.toString();
 	}
     }
 
@@ -348,10 +362,11 @@ public class JMethodDeclaration extends JMemberDeclaration {
      * range, like [1,2,3]).
      */
     public String getPushString() {
-	if (push instanceof JLiteral) {
+	JExpression myPush = getPush();
+	if (myPush instanceof JLiteral) {
 	    return ""+getPushInt();
 	} else {
-	    return push.toString();
+	    return myPush.toString();
 	}
     }
 

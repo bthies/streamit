@@ -6,6 +6,7 @@ import at.dms.kjc.raw.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.compiler.*;
+import at.dms.kjc.sir.lowering.fusion.FusePipe;
 import java.util.*;
 
 import at.dms.kjc.cluster.CodeEstimate;
@@ -244,7 +245,24 @@ static class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
 	    //System.err.println("this filter has null work function: " + filter);
 	    return 0;
 	} else {
-	    return getWork(filter, filter.getWork());
+	    // for this test, be sure to interpret dynamic rates as
+	    // real dynamic rates
+	    SIRDynamicRateManager.pushIdentityPolicy();
+	    boolean isFusable = FusePipe.isFusable(filter);
+	    SIRDynamicRateManager.popPolicy();
+
+	    if (!isFusable) {
+		// if not fusable, return infinite work for now.  While
+		// this might throw off some passes of the compiler, it
+		// causes the partitioning passes to attempt fusion of
+		// dynamic-rate filters LAST.
+		
+		// return a smaller infinity in case the partitioners
+		// decide to add two of these together (avoid overflow)
+		return Integer.MAX_VALUE / 2 - 1;
+	    } else {
+		return getWork(filter, filter.getWork());
+	    }
 	}
     }
 

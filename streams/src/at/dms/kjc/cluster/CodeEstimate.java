@@ -134,9 +134,15 @@ public class CodeEstimate extends SLIREmptyVisitor {
 	    }
 	}
 
-	code_size += ARRAY_ACCESS * 2 * (filter.getPeekInt() - 
-					 filter.getPopInt());
+	// for this operation, currently ignore dynamic rates
+	// (consider peek-pop == 0).
+	SIRDynamicRateManager.pushConstantPolicy(0);
+	// get peek-pop
+	int peekMinusPop = filter.getPeekInt() - filter.getPopInt();
+	// restore old policy
+	SIRDynamicRateManager.popPolicy();
 
+	code_size += ARRAY_ACCESS * 2 * peekMinusPop;
     }
 
 

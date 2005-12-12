@@ -121,19 +121,6 @@ public class ClusterBackend implements FlatVisitor {
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
 
-	if (Flattener.hasDynamicRates(str)) {
-        if (KjcOptions.fusion) {
-            System.err
-                    .println("Failure: Dynamic rates with -fusion is not yet supported.");
-            System.exit(1);
-        }
-        // for now, cluster backend deals with dynamic rates by
-        // REPLACING them with a constant rate. This could cause
-        // innacurracies for load balancing, etc., but serves to
-        // push through applications for now
-        RemoveDynamicRates.doit(str);
-    }  
-
 	//SIRPrinter printer1 = new SIRPrinter();
 	//str.accept(printer1);
 	//printer1.close();
@@ -171,6 +158,15 @@ public class ClusterBackend implements FlatVisitor {
 	str = Flattener.doLinearAnalysis(str);
 	str = Flattener.doStateSpaceAnalysis(str);
 
+	// for scheduler, interpret dynamic rates as a constant.
+	// TODO:
+        // eventually make a policy that changes dynamic rates <r> to
+        // to <r.max> or 1000 if <r.max> is dynamic.
+	// for now: 
+	// to push MPEG through cluster need size of
+        // apps/benchmarks/mpeg2/input/momessage.m2v in bits rounded
+        // up to a multiple of 32.
+	SIRDynamicRateManager.pushConstantPolicy(1000000);
 
 	// Calculate SIRSchedule before increasing multiplicity
 	StreamItDot.printGraph(str, "before-peekmult.dot");
@@ -185,6 +181,7 @@ public class ClusterBackend implements FlatVisitor {
 	if (!(KjcOptions.peekratio >= 256)) {
 	    IncreaseFilterMult.inc(str, 1, code_cache);
 	}
+
 	    //}
 
 	/* for cluster backend, fusion means to fuse segments on same cluster
@@ -244,7 +241,6 @@ public class ClusterBackend implements FlatVisitor {
 	System.err.println("Running Partitioning... target number of threads: "+threads);
 
 	StreamItDot.printGraph(str, "before-partition.dot");
-
 
 	// actually fuse components if fusion flag is enabled
 	if (KjcOptions.fusion) {

@@ -277,24 +277,26 @@ public class FusePipe {
 
     /**
      * Returns whether or note <str> is a candidate component for
-     * fusion.  For now, <str> must be a filter with a work function
-     * in order for us to fuse it.
+     * fusion.
      */
-    private static boolean isFusable(SIRStream str) {
-	// don't allow two-stage filters that peek
-	/*if (str instanceof SIRTwoStageFilter) {
-	// can fuse in this specific case
-	if ((str.getParent().indexOf(str)==0) && (((SIRTwoStageFilter)str).getInitPush()==0)) {
-	return true;
-	}
-	return false;
-	}*/
-	if ((str instanceof SIRFilter) && ((SIRFilter)str).getWork()!=null) {
-	    return true;
-	} else {
-	    //System.err.println("Couldn't fuse " + str + " because it isn't filter or doesn't need work");
+    public static boolean isFusable(SIRStream str) {
+	// must be a filter to fuse
+	if (!(str instanceof SIRFilter)) {
 	    return false;
 	}
+	SIRFilter filter = (SIRFilter)str;
+	// must have a work function
+	if (filter.getWork()==null) {
+	    return false;
+	}
+	// must have static rates
+	if (filter.getPeek().isDynamic() ||
+	    filter.getPop().isDynamic() ||
+	    filter.getPush().isDynamic()) {
+	    return false;
+	}
+	// otherwise fusable
+	return true;
     }
 
     /**

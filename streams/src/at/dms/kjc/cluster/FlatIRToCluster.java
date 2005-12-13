@@ -990,10 +990,10 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
         p.print("  int size = sock->read_int();\n");
 
         if (restrictedExecution) {
-            p.print("  i (size == -1) { // a credit message received\n");
+            p.print("  if (size == -1) { // a credit message received\n");
             p.print("    __credit_" + selfID + " = sock->read_int();\n");
             p.print("    return;\n");
-            p.print("  };\n");
+            p.print("  }\n");
         }
 
         p.print("  int index = sock->read_int();\n");

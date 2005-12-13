@@ -947,7 +947,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	//  +=============================+     
 
 	FlatIRToCluster f2c = new FlatIRToCluster(p);
-    gen.generatePreamble(f2c,p);
+        gen.generatePreamble(f2c,p);
 
 	p.print("void save_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}\n");
 	p.print("void load_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}\n");
@@ -1009,6 +1009,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    ipath.setName("__Init_Path_"+thread_id);
 	    FlatIRToCluster fir = new FlatIRToCluster();
+	    fir.setDeclOnly(false);
 	    ipath.accept(fir);
 	    p.print(fir.getPrinter().getString());
 
@@ -1403,7 +1404,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	} else {
 	    FlatIRToCluster f2c = new FlatIRToCluster();
 	    f2c.setGlobal(true);
-        f2c.setDeclOnly(false);
+            f2c.setDeclOnly(false);
 	    global.getInit().accept(f2c);
 	    str += f2c.getPrinter().getString();
 	}

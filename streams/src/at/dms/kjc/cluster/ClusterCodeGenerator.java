@@ -795,7 +795,13 @@ class ClusterCodeGenerator {
 	    r.add("  "+sdepname+" = new sdep("+
 		  srcInit+","+dstInit+","+
 		  srcSteady+","+dstSteady+");\n");
-		
+
+
+	    // TODO:  this loop can get too large to unroll at compile time:
+	    // one example of size 1x10^6 cause gcc to crash.
+	    // If > threshold size then find contiguous sections with
+	    // the same sdep.getSrcPhase4DstPhase(y) and generate loops
+	    // rather than unrolling
 	    for (int y = 0; y < dstInit + dstSteady + 1; y++) {
 		r.add("  "+sdepname+"->setDst2SrcDependency("+y+","+sdep.getSrcPhase4DstPhase(y)+");\n");
 	    }

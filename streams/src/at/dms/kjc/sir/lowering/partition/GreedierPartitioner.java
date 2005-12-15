@@ -97,6 +97,10 @@ public class GreedierPartitioner {
     
     //Creates Nodes and populates pairs,nodes
     private void buildNodesList() {
+	// make sure that dynamic rates interpreted correctly for
+	// isFusable test
+	SIRDynamicRateManager.pushIdentityPolicy();
+
 	SIRIterator it = IterFactory.createFactory().createIter(str);
 	it.accept(new EmptyStreamVisitor() {
 		Node prevNode;
@@ -104,23 +108,28 @@ public class GreedierPartitioner {
 		
 		public void visitFilter(SIRFilter self,
 					SIRFilterIter iter) {
-		    Node node=new Node(self,work.getWork(self));
-		    nodes.put(node,null);
-		    if(StatelessDuplicate.isFissable(self))
-			node.fissable=true;
-		    SIRContainer parent=self.getParent();
-		    if(prevNode!=null) {
-			prevNode.next=node;
-			node.prev=prevNode;
-			if(parent.equals(prevParent)) {
-			    Pair pair=new Pair(prevNode,node);
-			    pairs.put(pair,null);
+		    if (FusePipe.isFusable(self)) {
+			Node node=new Node(self,work.getWork(self));
+			nodes.put(node,null);
+			if(StatelessDuplicate.isFissable(self))
+			    node.fissable=true;
+			SIRContainer parent=self.getParent();
+			if(prevNode!=null) {
+			    prevNode.next=node;
+			    node.prev=prevNode;
+			    if(parent.equals(prevParent)) {
+				Pair pair=new Pair(prevNode,node);
+				pairs.put(pair,null);
 			}
+			}
+			prevNode=node;
+			prevParent=parent;
 		    }
-		    prevNode=node;
-		    prevParent=parent;
 		}
 	    });
+
+	// restore dynamic rate policy
+	SIRDynamicRateManager.popPolicy();
     }
 
     /**
@@ -156,6 +165,11 @@ public class GreedierPartitioner {
     }
 
     private Pair findSmallest() {
+	// if there is only one key left, return it
+	if (pairs.size()==1) {
+	    return (Pair)pairs.firstKey();
+	}
+
 	Pair smallest=(Pair)pairs.firstKey();
 	int work=smallest.work;
 	ArrayList temp=new ArrayList();
@@ -315,6 +329,10 @@ public class GreedierPartitioner {
 	    this.filter=filter;
 	    this.work=work;
 	}
+
+	public String toString() {
+	    return filter.getName();
+	}
     }
 
     class Pair {
@@ -331,6 +349,10 @@ public class GreedierPartitioner {
 
 	public void work(Node n1,Node n2) {
 	    work=n1.work+n2.work;
+	}
+
+	public String toString() {
+	    return "Pair(" + n1 + ", " + n2  + ")";
 	}
     }
 }

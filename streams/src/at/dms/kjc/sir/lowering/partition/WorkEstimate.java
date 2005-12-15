@@ -239,30 +239,14 @@ static class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
      * Returns estimate of work function in <filter>
      */
     public static int getWork(SIRFilter filter) {
+	// if no work function (e.g., identity filters?) return 0
         if (!filter.needsWork ()) {
 	    return 0;
 	} else if (filter.getWork()==null) {
 	    //System.err.println("this filter has null work function: " + filter);
 	    return 0;
 	} else {
-	    // for this test, be sure to interpret dynamic rates as
-	    // real dynamic rates
-	    SIRDynamicRateManager.pushIdentityPolicy();
-	    boolean isFusable = FusePipe.isFusable(filter);
-	    SIRDynamicRateManager.popPolicy();
-
-	    if (!isFusable) {
-		// if not fusable, return infinite work for now.  While
-		// this might throw off some passes of the compiler, it
-		// causes the partitioning passes to attempt fusion of
-		// dynamic-rate filters LAST.
-		
-		// return a smaller infinity in case the partitioners
-		// decide to add two of these together (avoid overflow)
-		return Integer.MAX_VALUE / 2 - 1;
-	    } else {
-		return getWork(filter, filter.getWork());
-	    }
+	    return getWork(filter, filter.getWork());
 	}
     }
 

@@ -285,16 +285,36 @@ public class FusePipe {
 	    return false;
 	}
 	SIRFilter filter = (SIRFilter)str;
+
+	// special case: identity filters are fusable (even though
+	// they fail some of the later tests, like having a work function)
+	if (filter instanceof SIRIdentity) {
+	    return true;
+	}
+
 	// must have a work function
 	if (filter.getWork()==null) {
 	    return false;
 	}
+
 	// must have static rates
 	if (filter.getPeek().isDynamic() ||
 	    filter.getPop().isDynamic() ||
 	    filter.getPush().isDynamic()) {
 	    return false;
 	}
+
+	// don't fuse message receivers because they have a lot of communication overhead
+	SIRPortal[] portal = SIRPortal.getPortalsWithReceiver(filter);
+	if (portal.length>=1) {
+	    return false;
+	}
+
+	// don't fuse file readers or file writers
+	if (filter instanceof SIRFileReader || filter instanceof SIRFileWriter) {
+	    return false;
+	}
+
 	// otherwise fusable
 	return true;
     }

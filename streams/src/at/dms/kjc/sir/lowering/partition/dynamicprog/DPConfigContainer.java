@@ -619,16 +619,7 @@ abstract class DPConfigContainer extends DPConfig {
      * Returns whether or not it is okay to fuse <filter> with others.
      */
     private boolean isFusable(SIRFilter filter) {
-	// don't fuse message receivers because they have a lot of communication overhead
-	SIRPortal[] portal = SIRPortal.getPortalsWithReceiver(filter);
-	if (portal.length>=1) {
-	    return false;
-	}
-	// don't fuse file readers or file writers
-	if (filter instanceof SIRFileReader || filter instanceof SIRFileWriter) {
-	    return false;
-	}
-	return true;
+	return FusePipe.isFusable(filter);
     }
 
     /**

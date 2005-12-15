@@ -307,6 +307,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
             
             if (downstream != null) {
                 int size = Util.getTypeSize(ssg.getOutputType(flatNode));
+		assert size < 31 : "Type size too large to fit in single dynamic network packet";
                 /*System.out.println(flatNode + " " + layout.getTile(flatNode) + 
                                    " dynamically sends to + " + downstream + " " + 
                                    layout.getTile(downstream) + ", size = " + size);
@@ -348,7 +349,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
         if (KjcOptions.standalone) 
             p.print("  return 0;\n");
         p.print("}\n");
-       
         createFile();
     }
 
@@ -998,34 +998,48 @@ public class FlatIRToC extends ToC implements StreamVisitor
                            CType tapeType,
                            JExpression val) 
     {
-        assert !dynamicOutput : "pushing of non-scalars at SSG boundary not supported yet";
-        CType baseType = ((CArrayType)tapeType).getBaseType();
-        String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
-        
-        for (int i = 0; i < dims.length; i++) {
-            p.print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
-                  RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-                  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
-        }
+	assert !dynamicOutput : "pushing of non-scalars at SSG boundary not supported yet";
+	CType baseType = ((CArrayType)tapeType).getBaseType();
+	String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
+	String ARRAY_INDEX = "ARRAY_PUSH_INDEX";
 
-        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-            p.print("{\n");
-            p.print(Util.networkSendPrefix(dynamicOutput, Util.getBaseType(tapeType)));
-            val.accept(this);
-            for (int i = 0; i < dims.length; i++) {
-                p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
-            }
-            p.print(Util.networkSendSuffix(dynamicOutput));
-            p.print(";\n}\n");
-        } else {
-            p.print("{");
-            p.print("static_send((" + baseType + ") ");
-            val.accept(this);
-            for (int i = 0; i < dims.length; i++) {
-                p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
-            }
-            p.print(");\n}\n");
-        }
+	//start a new block
+	p.print("{\n");
+	//print the decls of the loop indices
+	p.print ("  int ");
+	for (int i = 0; i < dims.length; i++) {
+	    p.print(ARRAY_INDEX + i);
+	    if (i < dims.length - 1)
+		p.print(", ");
+	}
+	p.print(";\n");
+
+	//print the for loops
+	for (int i = 0; i < dims.length; i++) {
+	    p.print("for (" + ARRAY_INDEX + i + " = 0; " +
+		  ARRAY_INDEX + i + " < " + dims[i] + " ; " +
+		  ARRAY_INDEX + i + "++)\n");
+	}
+
+	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
+	    p.print("{\n");
+	    p.print(Util.networkSendPrefix(dynamicOutput, Util.getBaseType(tapeType)));
+	    val.accept(this);
+	    for (int i = 0; i < dims.length; i++) {
+		p.print("[" + ARRAY_INDEX + i + "]");
+	    }
+	    p.print(Util.networkSendSuffix(dynamicOutput));
+	    p.print(";\n}\n");
+	} else {
+	    p.print("{");
+	    p.print("static_send((" + baseType + ") ");
+	    val.accept(this);
+	    for (int i = 0; i < dims.length; i++) {
+		p.print("[" + ARRAY_INDEX + i + "]");
+	    }
+	    p.print(");\n}\n");
+	}
+	p.print("}\n");
     }
     
     public void visitPushExpression(SIRPushExpression self,

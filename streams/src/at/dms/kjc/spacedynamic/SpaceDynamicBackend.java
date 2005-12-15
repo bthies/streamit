@@ -72,6 +72,10 @@ public class SpaceDynamicBackend {
 	ConstantProp.propagateAndUnroll(str);
 	System.out.println("Done Constant Prop and Unroll...");
 
+	SIRPrinter printer1 = new SIRPrinter("sir_AFTER_CONSTPROP_.out");
+	IterFactory.createFactory().createIter(str).accept(printer1);
+	printer1.close();
+	
         // add initPath functions
         EnqueueToInitPath.doInitPath(str);
 
@@ -79,11 +83,6 @@ public class SpaceDynamicBackend {
 	ConstructSIRTree.doit(str);
 
 	FieldProp.doPropagate(str);
-
-	SIRPrinter printer1 = new SIRPrinter("sir_AFTER_FIELD_PROP_.out");
-	IterFactory.createFactory().createIter(str).accept(printer1);
-	printer1.close();
-
 
 	// expand array initializers loaded from a file
 	ArrayInitExpander.doit(str);

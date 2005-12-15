@@ -74,6 +74,7 @@ global {
 
   vlc_dct_table_entry[114] const_dct_coefficients_table_zero; // Table B14, assuming 
   int const_dct_coefficients_table_zero_len = 111; // intra_vlc_format == 1, macroblock_intra == 0  
+  int const_dct_coefficients_table_zero_max_symbol_len = 16;
 
   const_coded_block_patterns[0].code = 0b111;
   const_coded_block_patterns[0].len = 3;

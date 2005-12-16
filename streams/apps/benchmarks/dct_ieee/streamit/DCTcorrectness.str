@@ -135,7 +135,7 @@ int->void pipeline checkrefDCT_IDCT {
 void->int filter RandomDataSource {
   work push 64 {
     for (int i = 0; i < 64; i++) {
-      push((int) (pow(3, i) % 75));
+      push(((int)(pow(3, i))) % 75));
     }
   }
 }

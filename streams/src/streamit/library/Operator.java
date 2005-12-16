@@ -104,6 +104,12 @@ public class Operator extends DestroyedClass
      * on the operator.
      */
     public void cleanupWork() {
+	// if we have not pushed or popped anything, throw exception.
+	// Do not count this as an execution.
+	if (currentPopped==0 && currentPushed==0) {
+	    throw new NoPushPopException();
+	}
+
         numExecutions++;
     }
     /**
@@ -975,11 +981,13 @@ public class Operator extends DestroyedClass
     
     // allSinks is used for scheduling the streaming graph
     public static LinkedList allSinks;
+    public static LinkedList allSources;
     public static LinkedList allFilters;
     public static HashSet fullChannels;
     
     static {
         allSinks = new LinkedList ();
+        allSources = new LinkedList ();
         allFilters = new LinkedList ();
         fullChannels = new HashSet ();
     }
@@ -987,6 +995,11 @@ public class Operator extends DestroyedClass
     void addSink ()
     {
         allSinks.add (this);
+    }
+    
+    void addSource ()
+    {
+        allSources.add (this);
     }
     
     void addFilter ()
@@ -1002,29 +1015,54 @@ public class Operator extends DestroyedClass
             iter = allSinks.listIterator ();
         else
             iter = allFilters.listIterator ();
-        
+
         // go over all the sinks
+	int executions = 0;
         while (iter.hasNext ())
         {
             Operator sink;
             sink = (Operator) iter.next ();
             assert sink != null;
 
-            /* RMR { rather than running the sink for 10 counts (old code)
-		 * run the work function once instead
-		 * 
-		 * begin old code
-		 // do bunch of work
-		 int i;
-		 for (i = 0; i < 10; i++)
-		 {
-		     sink.doWork();
-		 }
-		 * end old code
-		 */
-		sink.doWork();
-		/* } RMR */
+	    // get a snapshot of how much the sources have executed.
+	    // We will execute a sink until some source executes at
+	    // least once.  This is an effort to drain intermediate
+	    // buffers between sink executions -- otherwise it is not
+	    // clear in -nosched mode how often to execute sinks with
+	    // mismatching steady-state multiplicities.
+	    int beforeSink = getSourceExecs();
+	    int afterSink;
+	    do {
+		try {
+		    sink.doWork();
+		    executions++;
+		} catch (NoPushPopException e) {
+		    // this indicates that an upstream filter has no
+		    // more output to offer to the given sink, so we
+		    // should switch to a different sink.
+		    break;
+		}
+		afterSink = getSourceExecs();
+	    } while (afterSink == beforeSink);
         }
+
+	// make sure that at least someone successfully executed;
+	// otherwise the stream is fully drained
+	if (executions==0) {
+	    System.exit(0);
+	}
+    }
+
+    /**
+     * Returns the total number of times that the sources have
+     * executed.
+     */
+    int getSourceExecs() {
+	int sourceExecs = 0;
+	for (Iterator i = allSources.listIterator(); i.hasNext(); ) {
+	    sourceExecs += ((Operator)i.next()).numExecutions;
+	}
+	return sourceExecs;
     }
 
     void drainChannels ()

@@ -776,7 +776,9 @@ public abstract class Filter extends Stream
         if (myInput != null)
         {
             myInput.setSink(this);
-        }
+        } else {
+	    addSource();
+	}
 
         addFilter();
         initCount();

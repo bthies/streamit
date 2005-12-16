@@ -45,8 +45,9 @@ public class Names
     public static String main = "__MAIN__";
 
     public static String fscanf = "fscanf";
-    // RMR { add fread, sizeof, and address-of operator
-    public static String fread = "fread";
+    // RMR { add fread, frwrite, sizeof, and address-of operator
+    public static String fread  = "fread";
+    public static String fwrite = "fwrite";
     public static String sizeof = "sizeof";
     public static String addressof = "&";
     // } RMR

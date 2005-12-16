@@ -11,9 +11,7 @@ LIBDCT = ${DCT_HOME}/DCTinternal.str ${DCT_HOME}/DCTexternal.str
 
 LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str
 
-default: foo
-
-#default: player
+default: player
 
 clean:	
 	rm -f MPEGdecoder.str
@@ -27,9 +25,6 @@ clean:
 	rm -f *.html
 	rm -f *.bmp
 	rm -f *.m2v
-
-foo:	foo.str 
-	strc foo.str $(STRC_OPTIONS)
 
 player:	MPEGplayer.str MPEGdecoder.str ${LIBMPEG2} ${LIBDCT}
 	strc MPEGplayer.str MPEGdecoder.str ${LIBMPEG2} ${LIBDCT} ${STRC_OPTIONS}

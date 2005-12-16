@@ -177,7 +177,7 @@ int->int pipeline iDCT_2D_int(int size) {
       push((float) pop());
     }
   }
-  add iDCT_2D(8);
+  add iDCT_2D(size);
   add float->int filter {
     work pop 1 push 1 {
       push((int) round(pop()));
@@ -201,7 +201,7 @@ int->int pipeline DCT_2D_int(int size) {
       push((float) pop());
     }
   }
-  add DCT_2D(8);
+  add DCT_2D(size);
   add float->int filter {
     work pop 1 push 1 {
       push((int) round(pop()));
@@ -254,7 +254,7 @@ float->float pipeline iDCT_1D_compute_value(int x, int size) {
     }
     join roundrobin(1);
   }
-  add Add_float(8);
+  add Add_float(size);
 }
 
 /**
@@ -306,7 +306,7 @@ float->float pipeline DCT_1D_compute_value(int u, int size) {
     }
     join roundrobin(1);
   }
-  add Add_float(8);
+  add Add_float(size);
 }
 
 /** 

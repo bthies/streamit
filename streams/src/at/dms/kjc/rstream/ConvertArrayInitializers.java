@@ -220,7 +220,7 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
 									 (JExpression)indices.get(j));
 		   }
 		
-		 * the  follow code  will produce  the dimmensions  in the
+		 * the following code will produce the dimmensions  in the
 		 * proper order:  the prefix is the  variable name, append
 		 * to that the  first dimmension and then in  the loop add
 		 * every  other  dimmension but  the  last; following  the
@@ -228,18 +228,23 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
 		 */
 
 		//build the final array access expression, top down
-		JArrayAccessExpression access = 
-		    new JArrayAccessExpression(null, 
-							 prefix,
-							 (JExpression)indices.get(0));
-		
-		for (int j = 1; j <= indices.size() - 1; j++) {
+		JArrayAccessExpression access = new JArrayAccessExpression(null, 
+											     prefix,
+											     new JIntLiteral(i));
+
+		if (indices.size() > 0) {
 		    access = new JArrayAccessExpression(null, 
-								    access,
-								    (JExpression)indices.get(j));
+								    prefix,
+								    (JExpression)indices.get(0));
+		    
+		    for (int j = 1; j <= indices.size() - 1; j++) {
+			  access = new JArrayAccessExpression(null, 
+									  access,
+									  (JExpression)indices.get(j));
+		    }
+		    
+		    access = new JArrayAccessExpression(null, access, new JIntLiteral(i));
 		}
-		
-		access = new JArrayAccessExpression(null, access, new JIntLiteral(i));
 		// } RMR
 		
 		//only handle constant initializers for now

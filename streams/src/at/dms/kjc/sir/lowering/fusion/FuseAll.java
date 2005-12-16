@@ -89,10 +89,11 @@ public class FuseAll implements StreamVisitor {
     public void postVisitPipeline(SIRPipeline self,
 				  SIRPipelineIter iter) {
 	int elim = FusePipe.fuse(self);
-	assert elim>0:
-            "Tried to fuse " + self + " that has " + self.size() +
-            " components, but didn't eliminate anything.";
-	throw new SuccessfulFuseException();
+	// now fusion fuses as much as possible, but might leave a
+	// few filters (e.g., filereaders and filewriters) 
+	if (elim > 0) {
+	    throw new SuccessfulFuseException();
+	}
     }
 
     /* post-visit a splitjoin */

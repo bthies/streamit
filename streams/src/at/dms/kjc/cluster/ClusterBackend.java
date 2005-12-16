@@ -244,14 +244,18 @@ public class ClusterBackend implements FlatVisitor {
 		str = CachePartitioner.doit(str, code_cache, data_cache);
 	    } else {		
 		str = Partitioner.doit(str, 0, threads, false, false);
+		// from now on, target however many threads were
+		// produced by the partitioner
+		KjcOptions.cluster = Partitioner.countFilters(str);
 	    }
+
 	    /*
 	    if (str instanceof SIRContainer) {
 		((SIRContainer)str).reclaimChildren();
 	    }
 	    str.setParent(null);
 	    */
-	} 
+	}
 
 	//HashMap partitionMap = new HashMap();
 	partitionMap.clear();

@@ -46,55 +46,70 @@ public class Partitioner {
 	// the pipe
 	Lifter.lift(str);
 
-	// make work estimate
-	WorkEstimate work = WorkEstimate.getWorkEstimate(str);
-	work.printGraph(str, "work-before-partition.dot");
-	work.getSortedFilterWork().writeToFile("work-before-partition.txt");
+	// use identity policy for assessing fusability
+	SIRDynamicRateManager.pushIdentityPolicy();
 
-	System.err.println("  Found "+curCount+" tiles.");
+	// optimization for fusing a lot: if the number of tiles
+	// requested is only one more than the number of non-fusable
+	// filters, then just run fuse-all
+	int numUnfusable = countUnfusableFilters(str);
+	if (targetCount == numUnfusable + 1) {
+	    System.out.println("  Detected target is max fusion, running fuseall...");
+	    str = FuseAll.fuse(str);
+	} else {
+	    // make work estimate
+	    WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+	    work.printGraph(str, "work-before-partition.dot");
+	    work.getSortedFilterWork().writeToFile("work-before-partition.txt");
+	    
+	    System.err.println("  Found "+curCount+" tiles.");
 
-	// for statistics gathering
-	if (KjcOptions.dpscaling) {
-	    DynamicProgPartitioner.saveScalingStatistics(str, work, 256);
-	}
-
-	// do the partitioning
-	if (KjcOptions.partition_dp) {
-	    /* // uncomment these lines if you want a partitions.dot
-	       // file of the partitions chosen by the DP partitioner.
-	       // Unfortunately we have to run partitioning twice to
-	       // get this.
-	       
-	       SIRStream str2 = (SIRStream)ObjectDeepCloner.deepCopy(str);
-	       new DynamicProgPartitioner(str2, WorkEstimate.getWorkEstimate(str2), targetCount).calcPartitions();
-	    */
-	    str = new DynamicProgPartitioner(str, work, targetCount, joinersNeedTiles, limitICode, noHorizFuse).toplevel();
-	} else if(KjcOptions.partition_greedier) {
-	    str=new GreedierPartitioner(str,work,targetCount,joinersNeedTiles).toplevel();
-	} else if (KjcOptions.partition_greedy) {
-	    if (curCount < targetCount) {
-		// need fission
-		new GreedyPartitioner(str, work, targetCount, joinersNeedTiles).toplevelFission(curCount);
-	    } else {
-		// need fusion
-		new GreedyPartitioner(str, work, targetCount, joinersNeedTiles).toplevelFusion();
+	    // for statistics gathering
+	    if (KjcOptions.dpscaling) {
+		DynamicProgPartitioner.saveScalingStatistics(str, work, 256);
 	    }
+	    
+	    // do the partitioning
+	    if (KjcOptions.partition_dp) {
+		/* // uncomment these lines if you want a partitions.dot
+		// file of the partitions chosen by the DP partitioner.
+		// Unfortunately we have to run partitioning twice to
+		// get this.
 		
-	} else if (KjcOptions.partition_ilp) {
-	    Utils.fail("ILP Partitioner no longer supported.");
-	    // don't reference the ILPPartitioner because it won't
-	    // build without CPLEX, which is problematic for release
-	    // new ILPPartitioner(str, work, targetCount).toplevelFusion();
+		SIRStream str2 = (SIRStream)ObjectDeepCloner.deepCopy(str);
+		new DynamicProgPartitioner(str2, WorkEstimate.getWorkEstimate(str2), targetCount).calcPartitions();
+		*/
+		str = new DynamicProgPartitioner(str, work, targetCount, joinersNeedTiles, limitICode, noHorizFuse).toplevel();
+	    } else if(KjcOptions.partition_greedier) {
+		str=new GreedierPartitioner(str,work,targetCount,joinersNeedTiles).toplevel();
+	    } else if (KjcOptions.partition_greedy) {
+		if (curCount < targetCount) {
+		    // need fission
+		    new GreedyPartitioner(str, work, targetCount, joinersNeedTiles).toplevelFission(curCount);
+		} else {
+		    // need fusion
+		    new GreedyPartitioner(str, work, targetCount, joinersNeedTiles).toplevelFusion();
+		}
+		
+	    } else if (KjcOptions.partition_ilp) {
+		Utils.fail("ILP Partitioner no longer supported.");
+		// don't reference the ILPPartitioner because it won't
+		// build without CPLEX, which is problematic for release
+		// new ILPPartitioner(str, work, targetCount).toplevelFusion();
+	    }
+	    
+	    // lift the result
+	    Lifter.lift(str);
+	    
+	    // get the final work estimate
+	    work = WorkEstimate.getWorkEstimate(str);
+	    work.printGraph(str, "work-after-partition.dot");
+	    work.getSortedFilterWork().writeToFile("work-after-partition.txt");
+	    work.printWork();
 	}
-
-	// lift the result
-	Lifter.lift(str);
-
-	// get the final work estimate
-	work = WorkEstimate.getWorkEstimate(str);
-	work.printGraph(str, "work-after-partition.dot");
-	work.getSortedFilterWork().writeToFile("work-after-partition.txt");
-	work.printWork();
+	
+	// restore dynamic rate policy
+	SIRDynamicRateManager.popPolicy();
 
 	return str;
     }
@@ -124,6 +139,24 @@ public class Partitioner {
 	    // otherwise count number of filters
 	    return countFilters(str);
 	}
+    }
+
+    /**
+     * Returns how many unfusable filters are in <str>.
+     */
+    static int countUnfusableFilters(SIRStream str) {
+	// Should this count identity filters or not?  Unclear,
+	// depending on backend, so for now be conservative and count
+	// them.
+	final int[] count = { 0 };
+	IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+		public void visitFilter(SIRFilter self,
+					SIRFilterIter iter) {
+		    if (!FusePipe.isFusable(self)) {
+			count[0]++;
+		    }
+		}});
+	return count[0];
     }
 
     /**

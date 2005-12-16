@@ -53,7 +53,7 @@ public class Partitioner {
 	// requested is only one more than the number of non-fusable
 	// filters, then just run fuse-all
 	int numUnfusable = countUnfusableFilters(str);
-	if (targetCount == numUnfusable + 1) {
+	if (targetCount <= numUnfusable + 1) {
 	    System.out.println("  Detected target is max fusion, running fuseall...");
 	    str = FuseAll.fuse(str);
 	} else {
@@ -162,7 +162,7 @@ public class Partitioner {
     /**
      * Returns the number of filters in the graph.
      */
-    private static int countFilters(SIRStream str) {
+    public static int countFilters(SIRStream str) {
 	// Should this count identity filters or not?  Unclear,
 	// depending on backend, so for now be conservative and count
 	// them.

@@ -94,8 +94,18 @@ sub rule_nextstartcode {
     return $_[0];
 }
 
+sub rule_bufferednextstartcode {
+    $_[0] =~ s/( *)buffered_next_start_code\(\);/$1\{\n$1  int nsc_tempval;\n$1  bufferedpeeks(24, nsc_tempval);\n$1  while (nsc_tempval != 1) \{\n$1    bufferedpops(1, nsc_tempval);\n$1    \/\/ print(\"....looking for next_start_code....\");\n$1    bufferedpeeks(24, nsc_tempval);\n$1  \}\n$1\}/;
+    return $_[0];
+}
+
 sub rule_markerbit {
     $_[0] =~ s/( *)marker_bit\(\);/$1\{\n$1  int marker_bit;\n$1  pops(1, marker_bit);\n$1  if (marker_bit != 1)\n$1  print(\"Error - Expected Marker Bit To Be Set\");\n$1\}/;
+    return $_[0];
+}
+
+sub rule_bufferedmarkerbit {
+    $_[0] =~ s/( *)buffered_marker_bit\(\);/$1\{\n$1  int marker_bit;\n$1  bufferedpops(1, marker_bit);\n$1  if (marker_bit != 1)\n$1  print(\"Error - Expected Marker Bit To Be Set\");\n$1\}/;
     return $_[0];
 }
 
@@ -119,13 +129,28 @@ sub rule_vlc {
     return $_[0];
 }
 
+sub rule_bufferedvlc {
+    $_[0] =~ s/( *)buffered_variable_length_code\((\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1\{\n$1  boolean found = false;\n$1  int guesslength = 1;\n$1  int tablepos = 0;\n$1  while (!found) \{\n$1    bufferedpeeks(guesslength, $2);\n$1    tablepos = 0;\n$1    while (!found && tablepos < $4_len) \{\n$1      if ($2 == $4\[tablepos\].code && guesslength == $4\[tablepos\].len) \{\n$1        found = true;\n$1        bufferedpops(guesslength, $2);\n$1      \} else \{\n$1      tablepos++;\n$1    \}\n$1    \}\n$1    guesslength++;\n$1  \}\n$1  $2 = $4\[tablepos\].value;\n$1\}/;
+    return $_[0];
+}
+
 sub rule_vlec {
     $_[0] =~ s/( *)variable_length_encode\((\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1\{\n$1  boolean found = false;\n$1  int index = -1;\n$1  while (!found) {\n$1    index++;\n$1    if ($4\[index\].value == $2)\n$1      found = true;\n$1  }\n$1  int templen = $4\[index\].len;\n$1  int tempcode = $4\[index\].code;\n$1  pushs(templen, tempcode);\n$1}/;
     return $_[0];
 }
 
+sub rule_debug_vlc_dct {
+    $_[0] =~ s/( *)debug_variable_length_code_dct\((\w+(\[\w+\])*), *(\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1\{\n$1  boolean found = false;\n$1  int guesslength = 1;\n$1  int tablepos = 0;\n$1  while (!found) \{\n$1    if (guesslength > $6_max_symbol_len) {\n$1    peeks($6_max_symbol_len, $2);\n$1    print("Error - No Matching Symbol Found: " + $2);\n$1    }\n$1    peeks(guesslength, $2);\n$1    tablepos = 0;\n$1    while (!found && tablepos < $6_len) \{\n$1      if ($2 == $6\[tablepos\].code && guesslength == $6\[tablepos\].len) \{\n$1        found = true;\n$1        debugpops(guesslength, $2);\n$1      \} else \{\n$1        tablepos++;\n$1      \}\n$1    \}\n$1    guesslength++;\n$1  \}\n$1  $2 = $6\[tablepos\].run;\n$1  $4 = $6\[tablepos\].level;\n$1\}/;
+    return $_[0];
+}
+
 sub rule_vlc_dct {
-    $_[0] =~ s/( *)variable_length_code_dct\((\w+(\[\w+\])*), *(\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1\{\n$1  boolean found = false;\n$1  int guesslength = 1;\n$1  int tablepos = 0;\n$1  while (!found) \{\n$1    peeks(guesslength, $2);\n$1    tablepos = 0;\n$1    while (!found && tablepos < $6_len) \{\n$1      if ($2 == $6\[tablepos\].code && guesslength == $6\[tablepos\].len) \{\n$1        found = true;\n$1        pops(guesslength, $2);\n$1      \} else \{\n$1        tablepos++;\n$1      \}\n$1    \}\n$1    guesslength++;\n$1  \}\n$1  $2 = $6\[tablepos\].run;\n$1  $4 = $6\[tablepos\].level;\n$1\}/;
+    $_[0] =~ s/( *)variable_length_code_dct\((\w+(\[\w+\])*), *(\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1\{\n$1  boolean found = false;\n$1  int guesslength = 1;\n$1  int tablepos = 0;\n$1  while (!found) \{\n$1    if (guesslength > $6_max_symbol_len) {\n$1    peeks($6_max_symbol_len, $2);\n$1    print("Error - No Matching Symbol Found: " + $2);\n$1    }\n$1    peeks(guesslength, $2);\n$1    tablepos = 0;\n$1    while (!found && tablepos < $6_len) \{\n$1      if ($2 == $6\[tablepos\].code && guesslength == $6\[tablepos\].len) \{\n$1        found = true;\n$1        pops(guesslength, $2);\n$1      \} else \{\n$1        tablepos++;\n$1      \}\n$1    \}\n$1    guesslength++;\n$1  \}\n$1  $2 = $6\[tablepos\].run;\n$1  $4 = $6\[tablepos\].level;\n$1\}/;
+    return $_[0];
+}
+
+sub rule_bufferedvlc_dct {
+    $_[0] =~ s/( *)buffered_variable_length_code_dct\((\w+(\[\w+\])*), *(\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1\{\n$1  boolean found = false;\n$1  int guesslength = 1;\n$1  int tablepos = 0;\n$1  while (!found) \{\n$1    if (guesslength > $6_max_symbol_len) {\n$1    bufferedpeeks($6_max_symbol_len, $2);\n$1    print("Error - No Matching Symbol Found: " + $2);\n$1    }\n$1    bufferedpeeks(guesslength, $2);\n$1    tablepos = 0;\n$1    while (!found && tablepos < $6_len) \{\n$1      if ($2 == $6\[tablepos\].code && guesslength == $6\[tablepos\].len) \{\n$1        found = true;\n$1        bufferedpops(guesslength, $2);\n$1      \} else \{\n$1        tablepos++;\n$1      \}\n$1    \}\n$1    guesslength++;\n$1  \}\n$1  $2 = $6\[tablepos\].run;\n$1  $4 = $6\[tablepos\].level;\n$1\}/;
     return $_[0];
 }
 
@@ -134,8 +159,28 @@ sub rule_pops {
     return $_[0];
 }
 
+sub rule_setupbuffer {
+    $_[0] =~ s/( *)SetupPeekBuffer\(\);/$1int peek_buffer_size = 100;\n$1int[peek_buffer_size] peek_buffer;\n$1int peek_buffer_head = 0;\n$1int peek_buffer_tail = 0;/;
+    return $_[0];
+}
+
+sub rule_bufferedpops {
+  $_[0] =~ s/( *)bufferedpops\((\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1$4 = 0;\n$1for (int pops_i = 0; pops_i < ($2); pops_i++) \{\n$1  $4 <<= 1;\n$1  if (peek_buffer_tail != peek_buffer_head) {\n$1    $4 += peek_buffer[peek_buffer_tail];\n$1    peek_buffer_tail = (peek_buffer_tail+1) % peek_buffer_size;\n$1  } else {\n$1    $4 += pop();\n$1  }\n$1\}\n/;
+  return $_[0];
+}
+
+sub rule_debug_pops {
+    $_[0] =~ s/( *)debugpops\((\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1$4 = 0;\n$1for (int pops_i = 0; pops_i < ($2-1); pops_i++) \{\n$1  print("debug: " + peek(0));\n$1  $4 += pop();\n$1  $4 <<= 1;\n$1\}\n$1print("debug: " + peek(0));\n$1$4 += pop();/;
+    return $_[0];
+}
+
 sub rule_peeks {
     $_[0] =~ s/( *)peeks\((\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1$4 = 0;\n$1for (int peeks_i = 0; peeks_i < ($2-1); peeks_i++) \{\n$1  $4 += peek(peeks_i);\n$1  $4 <<= 1;\n$1\}\n$1$4 += peek($2-1);/;
+    return $_[0];
+}
+
+sub rule_bufferedpeeks {
+    $_[0] =~ s/( *)bufferedpeeks\((\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1\{\n$1  int bufsize = peek_buffer_head - peek_buffer_tail;\n$1  if (bufsize < 0)\n$1    bufsize += peek_buffer_size;\n$1  int numbufpeeks = $2;\n$1  if (numbufpeeks > bufsize)\n$1    numbufpeeks = bufsize;\n$1  $4 = 0;\n$1  for (int peeks_i = 0; peeks_i < numbufpeeks; peeks_i++) \{\n$1    $4 <<= 1;\n$1    $4 += peek_buffer[(peek_buffer_tail + peeks_i) % peek_buffer_size];\n$1  \}\n$1  for (int peeks_i = 0; peeks_i < ($2 - numbufpeeks); peeks_i++) \{\n$1    $4 <<= 1;\n$1    if (((peek_buffer_head + 1) % peek_buffer_size) == peek_buffer_tail)\n$1      print("Error - Buffer is Full!");\n$1    peek_buffer[peek_buffer_head] = pop();\n$1    $4 += peek_buffer[peek_buffer_head];\n$1    peek_buffer_head = (peek_buffer_head + 1) % 100;\n$1  \}\n$1\}\n/;
     return $_[0];
 }
                                         
@@ -161,6 +206,11 @@ sub rule_intpops {
 
 sub rule_pushs {
     $_[0] =~ s/( *)pushs\((\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1\{\n$1  int pushs_int = $4 << (32-$2);\n$1  for (int pushs_i = 0; pushs_i < $2; pushs_i++) \{\n$1    if (pushs_int >= 0) \{\n$1      push(0);\n$1    \} else \{\n$1      push(1);\n$1    \}\n$1    pushs_int <<= 1;\n$1  \}\n$1\}/;
+    return $_[0];
+}
+
+sub rule_debug_pushs {
+    $_[0] =~ s/( *)debugpushs\((\w+(\[\w+\])*), *(\w+(\[\w+\])*)\);/$1\{\n$1  int pushs_int = $4 << (32-$2);\n$1  for (int pushs_i = 0; pushs_i < $2; pushs_i++) \{\n$1    if (pushs_int >= 0) \{\n$1      print("debug: 0");\n$1      push(0);\n$1    \} else \{\n$1      print("debug: 1");\n$1      push(1);\n$1    \}\n$1    pushs_int <<= 1;\n$1  \}\n$1\}/;
     return $_[0];
 }
 
@@ -192,15 +242,25 @@ sub main {
     @intermediate = process_rule(\&rule_intpops, @intermediate);
     @intermediate = process_rule(\&rule_shortpops, @intermediate);
     
+    @intermediate = process_rule(\&rule_bufferedvlc, @intermediate);
     @intermediate = process_rule(\&rule_vlc, @intermediate);
     @intermediate = process_rule(\&rule_vlec, @intermediate);
+    @intermediate = process_rule(\&rule_debug_vlc_dct, @intermediate);
+    @intermediate = process_rule(\&rule_bufferedvlc_dct, @intermediate);
     @intermediate = process_rule(\&rule_vlc_dct, @intermediate);
-    
-    @intermediate = process_rule(\&rule_peeks, @intermediate);
-    
+       
     @intermediate = process_rule(\&rule_addmarkerbit, @intermediate);
+    @intermediate = process_rule(\&rule_bufferedmarkerbit, @intermediate);
     @intermediate = process_rule(\&rule_markerbit, @intermediate);
+    @intermediate = process_rule(\&rule_bufferednextstartcode, @intermediate);
     @intermediate = process_rule(\&rule_nextstartcode, @intermediate);
+    @intermediate = process_rule(\&rule_bufferedpeeks, @intermediate);
+    @intermediate = process_rule(\&rule_bufferedpeeks, @intermediate);
+    @intermediate = process_rule(\&rule_peeks, @intermediate);
+    @intermediate = process_rule(\&rule_peeks, @intermediate); # Not sure why we need to run it twice now.
+    @intermediate = process_rule(\&rule_debug_pops, @intermediate);
+    @intermediate = process_rule(\&rule_debug_pushs, @intermediate);
+    @intermediate = process_rule(\&rule_bufferedpops, @intermediate);
     @intermediate = process_rule(\&rule_pops, @intermediate);
     @intermediate = process_rule(\&rule_pushs, @intermediate);
 
@@ -209,6 +269,8 @@ sub main {
     @intermediate = process_rule(\&rule_pushpop, @intermediate);
 
     @intermediate = process_rule(\&rule_deadpop, @intermediate);
+
+    @intermediate = process_rule(\&rule_setupbuffer, @intermediate);
     
     foreach my $line (@intermediate) {
         print POSTCOMPILE "$line\n";
@@ -223,3 +285,4 @@ sub help {
     print("  -o [OUTPUTFILE]     Redirect output to a file\n");
     print("\nReport bugs to Matthew Drake <madrake\@gmail.com>\n");
 }
+

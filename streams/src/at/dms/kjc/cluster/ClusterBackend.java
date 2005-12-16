@@ -182,16 +182,7 @@ public class ClusterBackend implements FlatVisitor {
 	    IncreaseFilterMult.inc(str, 1, code_cache);
 	}
 
-	    //}
-
-	/* for cluster backend, fusion means to fuse segments on same cluster
-	if (KjcOptions.fusion) {
-	    System.out.println("Running FuseAll...");
-	    str = FuseAll.fuse(str);
-	    Lifter.lift(str);
-	    System.out.println("Done FuseAll...");
-	}
-	*/
+	//}
 
 	Optimizer.optimize(str);
 	Estimator.estimate(str);

@@ -84,7 +84,7 @@ public class FuseAll implements StreamVisitor {
     /**
      * POST-VISITS 
      */
-	    
+
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
 				  SIRPipelineIter iter) {
@@ -99,9 +99,11 @@ public class FuseAll implements StreamVisitor {
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
 				   SIRSplitJoinIter iter) {
-	SIRStream result = FuseSplit.fuse(self);
-	// should always be successful
-	throw new SuccessfulFuseException();
+	if (FuseSplit.isFusable(self)) {
+	    SIRStream result = FuseSplit.fuse(self);
+	    // should always be successful, given that it's fusable
+	    throw new SuccessfulFuseException();
+	}
     }
 
     /* post-visit a feedbackloop */

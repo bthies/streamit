@@ -431,7 +431,7 @@ public class FuseSplit {
     /**
      * Returns whether or not <sj> is fusable.
      */
-    private static boolean isFusable(SIRSplitJoin sj) {
+    public static boolean isFusable(SIRSplitJoin sj) {
         // Check the ratios.
         Iterator childIter = sj.getParallelStreams().iterator();
         while (childIter.hasNext()) {

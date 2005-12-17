@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.64 2005-12-17 02:21:40 rabbah Exp $
+# $Id: strc,v 1.65 2005-12-17 02:25:18 rabbah Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -512,8 +512,8 @@ sub c_to_out
 
     $gcc = "$cc";
     my $ccflags  = "-O2";
-    my $incflags;
-    my $libflags;
+    my $incflags = "";
+    my $libflags = "";
 
     if ($opts{rstream}) 
     {

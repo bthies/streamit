@@ -582,7 +582,9 @@ public class GenerateCCode
 	arrayInits.convertFilter(filter);
 
 	//find all do loops, 
-	if (StrToRStream.CONVERT_FOR_TO_DO_LOOPS)
+	/* RMR { replaced the following by compiler command line switch } */
+	// if (StrToRStream.CONVERT_FOR_TO_DO_LOOPS) 
+	if (KjcOptions.doloops)
 	    IDDoLoops.doit(filter);
 	//remove unnecessary do loops
 	//RemoveDeadDoLoops.doit(node, toC.doloops);

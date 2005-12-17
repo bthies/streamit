@@ -64,7 +64,9 @@ public class RemoveDeadDoLoops extends SLIRReplacingVisitor implements FlatVisit
 				    JStatement body) {
 	System.out.println("For Loop");
 	
-	if (StrToRStream.CONVERT_FOR_TO_DO_LOOPS && doloops.containsKey(self)) {
+	/* RMR { replaced the following by compiler command line switch } */
+	// if (StrToRStream.CONVERT_FOR_TO_DO_LOOPS && doloops.containsKey(self)) {
+	if (KjcOptions.doloops && doloops.containsKey(self)) {
 	    DoLoopInformation doInfo = (DoLoopInformation)doloops.get(self);
 	    
 	    //find out if we should generate the do loop or not, 

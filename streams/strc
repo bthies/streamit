@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.63 2005-10-19 16:11:37 dimock Exp $
+# $Id: strc,v 1.64 2005-12-17 02:21:40 rabbah Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -107,7 +107,7 @@ exit(1) if !$fns;
 $fns = new_to_c($fns) if $opts{tokopi};
 exit(1) if !$fns;
 $fns = c_to_out($fns, $opts{output}) unless 
-    ($opts{raw} || $opts{cluster} || $opts{rstream});
+    ($opts{raw} || $opts{cluster} || $opts{absarray} || $opts{doloops});
 exit(1) if !$fns;
 exit(0);
 
@@ -509,22 +509,36 @@ sub c_to_out
     $target = $target ? "-o$target" : ""; # but never undef
     my $sh = $opts{home};
     my ($gcc, $libs);
-    if ($opts{profile})
-      {
-	$gcc = "$cc -pg -a";
-	$libs = "-nodefaultlibs -lstreamit_p ";
-	$libs .= "-lsrfftw -lssftw " if $have_fftw;
-	$libs .= "-lm_p -lc_p -lgcc";
-      }
-    else
-      {
-	$gcc = "$cc";
-	$libs = "-lstreamit ";
-	$libs .= "-lsrfftw -lsfftw " if $have_fftw;
-	$libs .= "-lm";
-      }
-    my $result = call("$gcc -g -O2 $target -I$sh/library/c " .
-		      join(' ', @$fns) . " -L$sh/library/c $libs");
+
+    $gcc = "$cc";
+    my $ccflags  = "-O2";
+    my $incflags;
+    my $libflags;
+
+    if ($opts{rstream}) 
+    {
+	  $libs .= " -lm";
+    }
+    else 
+    {
+	  $incflags = "-L$sh/library/c";
+	  $libflags = "-I$sh/library/c";
+
+	  if ($opts{profile}) 
+	  {
+		$gcc  .= " -pg -a";
+		$libs .= " -nodefaultlibs -lstreamit_p";
+		$libs .= " -lsrfftw -lssftw" if $have_fftw;
+		$libs .= " -lm_p -lc_p -lgcc";
+	  }
+	  else {
+		$libs .= " -lstreamit";
+		$libs .= " -lsrfftw -lsfftw" if $have_fftw;
+		$libs .= " -lm";
+	  }
+    }
+
+    my $result = call("$gcc $ccflags $target " . join(' ', @$fns) . " $incflags $libflags $libs");
     return undef if $result != 0;
     return [$tfn];
   }

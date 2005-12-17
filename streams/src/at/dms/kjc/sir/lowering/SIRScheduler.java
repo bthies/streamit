@@ -98,9 +98,8 @@ public class SIRScheduler implements Constants {
 	// fill in the steady-state schedule
 	fillExecutionCounts(scheduler.getOptimizedSteadySchedule(), result[1], 1);
 
-	checkSchedule(str, scheduler, result);
-
 	// debug
+	//checkSchedule(str, scheduler, result);
 	//printSchedules(schedule);
 	//printSchedulesViaLibrary(schedule);
 	//printExecutionCounts(result);

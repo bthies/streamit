@@ -605,6 +605,8 @@ static class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
         else if (ident.equals("sqrt")) work += 297;
         else if (ident.equals("tan")) work += 224;
         else if (ident.equals("tanh")) work += 288;
+	// not from profiling: round(x) is currently macro for floor((x)+0.5)
+	else if (ident.equals("round")) work += (58 + FLOAT_ARITH_OP);
         else
         {
             JMethodDeclaration target = findMethod(ident);

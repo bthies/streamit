@@ -110,6 +110,9 @@ public class ClusterBackend implements FlatVisitor {
 	// propagate constants and unroll loop
 	System.out.print("Running Constant Prop and Unroll...");
 
+	// Constant propagate and unroll.
+	// Set unrolling factor to <= 4 for loops that don't involve
+	//  any tape operations.
 	Unroller.setLimitNoTapeLoops(true, 4);
 	ConstantProp.propagateAndUnroll(str);
 

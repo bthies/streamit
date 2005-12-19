@@ -1,0 +1,82 @@
+/* from_file_dyn_raw
+ *
+ * streams values to a static network port from a file.
+ * makes use of the data_transmitter generic device.
+ *
+ * Michael Gordon
+ */
+
+if (FindFunctionInSymbolHash(gSymbolTable, "dev_data_transmitter_init",3) == NULL)
+  include("<dev/data_transmitter.bc>");
+
+fn dev_from_file_dyn_raw(filename, ourY, ourX, destY, destX, port) 
+{
+  local send_device_descriptor = hms_new();
+
+  //open the file
+  send_device_descriptor.fileName = filename;
+  send_device_descriptor.theFile = fopen(send_device_descriptor.fileName,
+					 "r");
+  send_device_descriptor.ioPort = port;
+
+  verify(send_device_descriptor.theFile != NULL,
+         "### Failed from open output file\n");
+
+  send_device_descriptor.calc = 
+    & fn(this) 
+  {
+    local theFile = this.theFile;
+    local ioPort = this.ioPort;
+    local fileName = this.fileName;
+    local value, i;
+    
+    local PKT_SIZE = 31;
+    local pkt_remaining = 0;
+    while (1) {
+      //compose new pkt header if we cannot send anymore data in this 
+      //pkt
+      if (pkt_remaining == 0) {
+	local packet_size, header, savepos, end, file_remaining;
+	
+	//save the current file pos
+	savepos = ftell(theFile);
+	//move to the end of the file
+	fseek(theFile, 0, 2);
+	//get the bytes from the beginning for the end
+	end = ftell(theFile);
+	//find the difference int bytes and convert to words
+	file_remaining = (end - savepos) / 4;
+	//restore the file pointer to the previous position
+	fseek(theFile, savepos, 0);
+        //choose either pkt_size or the number of works remaining
+	packet_size = choose(file_remaining > PKT_SIZE, PKT_SIZE, file_remaining);
+	//reset pkt_remaining!
+	pkt_remaining = packet_size;
+        //construct and send the header
+	header = ConstructDynHdr(0, packet_size, 0, ourY, ourX, 
+				   destY, destX);
+	this.send(header);
+      }
+      if (fread(&value, 4, 1, theFile) != 0) {
+	this.send(value);
+	pkt_remaining -= 1;
+      }
+      else {
+	//we have reached the end of the input
+	break;
+      }
+    }
+
+    printf("** Input exhausted from %s (port %d)\n", fileName, ioPort);
+    while (1) {
+      //we are done, do nothing
+      yield;
+    }
+  };
+
+  return dev_data_transmitter_init("from_file_dyn_raw",
+				   port,
+				   1, //wait for trigger
+				   send_device_descriptor,
+				   2);  //use the general dynamic network
+}

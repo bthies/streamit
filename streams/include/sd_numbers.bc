@@ -2,7 +2,7 @@
 global gGenerate_BloodGraph = 1;
 
 //how often (in cycles) would we like to update the bloodgraph
-global bg_update_cycles = 1;
+global bg_update_cycles = 10;
 
 //Number gathering bc code
 //the blood graph variables

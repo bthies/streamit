@@ -55,6 +55,6 @@ fn dev_from_file(filename, port, type)
 
   return dev_data_transmitter_init("from_file",
 				   port,
-				   1, // wait for trigger
+				   0, // don't wait for trigger
 				   send_device_descriptor);
 }

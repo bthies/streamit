@@ -33,6 +33,10 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
     /** true if this filter is the source of a static stream graph * */
     private boolean dynamicInput;
 
+    //the multiplicity of the filter in the init stage
+    private static int initMult = 0;
+    
+
     /**
      * See if we can generate input communication channel code without using a
      * buffer.  If true, then we can, and we have already generated the code. This 
@@ -100,8 +104,17 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         return true;
     }
 
-    private static void rawMainFunction(SIRFilter filter) {
+    private void rawMainFunction(SIRFilter filter) {
         JBlock statements = new JBlock();
+
+	//index variable for loop of work function in init stage
+	JVariableDefinition exeIndex1Var = 
+	    new JVariableDefinition(null, 
+				    0, 
+				    CStdType.Integer,
+				    RawExecutionCode.exeIndex1,
+				    null);
+
 
         // create the params list, for some reason
         // calling toArray() on the list breaks a later pass
@@ -113,10 +126,59 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         else
             paramArray = (JExpression[]) paramList.toArray(new JExpression[0]);
 
+	//get the init multiplicty
+	initMult = ssg.getMult(node, true);
+
+	//if we execute in the init stage, then create the local to index the for loop
+	if (initMult > 0) {
+	    statements.addStatement
+		(new JVariableDeclarationStatement(null,
+						   exeIndex1Var,
+						   null));	
+	}
+	
+	//if standalone, add a field for the iteration counter...
+	JFieldDeclaration iterationCounter = null;
+	if (KjcOptions.standalone) {
+	    iterationCounter = 
+		new JFieldDeclaration(new JVariableDefinition(0,
+							      CStdType.Integer, 
+							      FlatIRToC.MAINMETHOD_COUNTER,
+							      new JIntLiteral(-1)));
+	    filter.addField(iterationCounter);
+	}
+	
+
         // add the call to the init function
         statements.addStatement(new JExpressionStatement(null,
                 new JMethodCallExpression(null, new JThisExpression(null),
                         filter.getInit().getName(), paramArray), null));
+	
+	//if we execute in the init stage, then create the loop'ed work function
+	if (initMult > 0) {
+	    //inline the work function in a while loop
+	    JBlock workInitBlock = 
+		(JBlock)ObjectDeepCloner.
+		deepCopy(filter.getWork().getBody());
+	    
+	    //call work function for init stage????
+	    statements.addStatement
+		(RawExecutionCode.makeForLoop(workInitBlock, 
+					      exeIndex1Var,
+					      new JIntLiteral(initMult)));
+	}
+	
+
+	if (!IMEMEstimation.TESTING_IMEM) {
+	    //add call to raw_init2, only if not testing imem
+	    statements.addStatement(new JExpressionStatement(null,
+							     new JMethodCallExpression
+							     (null, 
+							      new JThisExpression(null),
+							      SwitchCode.SW_SS_TRIPS,
+							      new JExpression[0]),
+							     null));
+	}
 
         // inline the work function in a while loop
         JBlock workBlock = (JBlock) ObjectDeepCloner.deepCopy(filter.getWork()
@@ -138,8 +200,17 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
                     null, new JIntLiteral(1), null));
             statements.addStatement(workBlock);
         } else {
-            statements.addStatement(new JWhileStatement(null,
-                    new JBooleanLiteral(null, true), workBlock, null));
+	      statements.addStatement
+		(new JWhileStatement
+		 (null, 
+		  KjcOptions.standalone ?  
+		 (JExpression) new JPostfixExpression(null, 
+					 Constants.OPE_POSTDEC, 
+					 new JFieldAccessExpression(new JThisExpression(null), 
+								    FlatIRToC.MAINMETHOD_COUNTER)) :
+		  (JExpression)new JBooleanLiteral(null, true),
+		  workBlock, 
+		  null));
         }
 
         JMethodDeclaration rawMainFunct = new JMethodDeclaration(null,

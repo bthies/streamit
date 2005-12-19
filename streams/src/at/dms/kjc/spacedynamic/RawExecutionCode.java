@@ -73,6 +73,15 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
     public static String structReceivePrefixDynamic = structReceivePrefix
             + "Dynamic";
 
+    /** the name of the pop mehtod for each filter when the filter has
+     * dynamic input and we are not inlining 
+     */
+    public static String popDynamic = "__pop_dynamic__";
+    /** the name of the peek method for each filter when the filter has
+     * dynamic input and we are not inlining the method 
+     * */
+    public static String peekDynamic = "__peek_dynamic__";
+    
     public static String arrayReceiveMethod = "__array_receive__";
 
     public static String rawMain = "__RAWMAIN__";
@@ -99,6 +108,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
 
     public RawExecutionCode(StaticStreamGraph ssg) {
         this.ssg = ssg;
+        this.layout = ssg.getStreamGraph().getLayout();
     }
 
     public static void doit(StreamGraph streamGraph) {
@@ -118,34 +128,31 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
 
     public void visitNode(FlatNode node) {
         if (node.isFilter()) {
-            // dynamic input
-            if (ssg.isInput(node)) {
+            SIRFilter filter = (SIRFilter) node.contents;
+            
+            if (!Layout.assignToATile(node))
+                return;
+            //calculate various stats of the filter            
+            calculateItems(filter);
+
+            System.out.print("Generating Raw Code: "
+                    + node.contents.getName() + " ");
+
+//          attempt to generate direct communication code
+            // (no buffer), if this returns true it was sucessful
+            // and the code was produced
+            if (bottomPeek == 0 && remaining == 0
+                    && DirectCommunication.doit(ssg, node)) {
+                System.out.println("(Direct Communication)");
+
+                return;
+            }
+
+            //if we get here, then we need a buffer!
+            if (ssg.isInput(node)) {             // dynamic input
                 // create dynamic network code and a circular buffer
                 (new BufferedDynamicCommunication(ssg, node)).doit();
             } else {
-                //we have static communication, see if we need a buffer or not
-                
-                SIRFilter filter = (SIRFilter) node.contents;
-                // Skip Identities now
-                if (!Layout.assignToATile(node))
-                    return;
-                if (!KjcOptions.decoupled)
-                    calculateItems(filter);
-                System.out.print("Generating Raw Code: "
-                        + node.contents.getName() + " ");
-
-                // attempt to generate direct communication code
-                // (no buffer), if this returns true it was sucessful
-                // and the code was produced
-                if (bottomPeek == 0 && remaining == 0
-                        && DirectCommunication.doit(ssg, node)) {
-                    System.out.println("(Direct Communication)");
-
-                    return;
-                }
-
-                //if we get here, then we have to use a buffer for input 
-                
                 // create static network code and a buffer (maybe circular or
                 // linear)
                 (new BufferedStaticCommunication(ssg, node, bottomPeek,
@@ -176,8 +183,8 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
         // initExec counts might be null if we're calling for work
         // estimation before exec counts have been determined.
         if (ssg.getExecutionCounts(true) != null) {
-            initFire = ssg
-                    .getMult(layout.getNode(layout.getTile(filter)), true);
+            //whatSystem.out.println(layout.getTile(filter));
+            initFire = ssg.getMult(layout.getNode(layout.getTile(filter)), true);
         } else {
             // otherwise, we should be doing this only for work
             // estimation--check that the filter is the only thing in the graph
@@ -325,4 +332,41 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
         // (some may be roundrobin so we must use the weight multiplier.
         return (int) (currentUpStreamItems * roundRobinMult);
     }
+
+
+
+    /**
+     * Returns a for loop that uses field <var> to count <count> times with the
+     * body of the loop being <body>. If count is non-positive, just returns
+     * empty (!not legal in the general case)
+     */
+    public static JStatement makeForLoop(JStatement body, JLocalVariable var,
+            JExpression count) {
+        if (body == null)
+            return new JEmptyStatement(null, null);
+
+        // make init statement - assign zero to <var>. We need to use
+        // an expression list statement to follow the convention of
+        // other for loops and to get the codegen right.
+        JExpression initExpr[] = { new JAssignmentExpression(null,
+                new JLocalVariableExpression(null, var), new JIntLiteral(0)) };
+        JStatement init = new JExpressionListStatement(null, initExpr, null);
+        // if count==0, just return init statement
+        if (count instanceof JIntLiteral) {
+            int intCount = ((JIntLiteral) count).intValue();
+            if (intCount <= 0) {
+                // return assignment statement
+                return new JEmptyStatement(null, null);
+            }
+        }
+        // make conditional - test if <var> less than <count>
+        JExpression cond = new JRelationalExpression(null, Constants.OPE_LT,
+                new JLocalVariableExpression(null, var), count);
+        JExpression incrExpr = new JPostfixExpression(null,
+                Constants.OPE_POSTINC, new JLocalVariableExpression(null, var));
+        JStatement incr = new JExpressionStatement(null, incrExpr, null);
+
+        return new JForStatement(null, init, cond, incr, body, null);
+    }
+
 }

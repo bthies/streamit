@@ -68,6 +68,8 @@ public class JoinerScheduleNode
 		    arrayAccess.append("[" + TileCode.ARRAY_INDEX + i + "]");
 		}
 	    }
+	    //now set the type of the element be the base type of the array
+	    ctype = ((CArrayType)ctype).getBaseType(); 
 	}
 
    	if (type == DUPLICATE) {

@@ -15,6 +15,7 @@ import at.dms.kjc.Constants;
 import at.dms.kjc.JAddExpression;
 import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JAssignmentExpression;
+import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JBitwiseExpression;
 import at.dms.kjc.JBlock;
 import at.dms.kjc.JBooleanLiteral;
@@ -24,6 +25,7 @@ import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionListStatement;
 import at.dms.kjc.JExpressionStatement;
 import at.dms.kjc.JForStatement;
+import at.dms.kjc.JFieldDeclaration;
 import at.dms.kjc.JFormalParameter;
 import at.dms.kjc.JIfStatement;
 import at.dms.kjc.JIntLiteral;
@@ -349,6 +351,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // print the declarations for the array indices for pushing and popping
         // if this filter deals with arrays
         if (filter.getInputType().isArrayType()) {
+
             int inputDim = ((CArrayType) filter.getInputType()).getArrayBound();
 
             localVariables.ARRAY_INDEX = new JVariableDefinition[inputDim];
@@ -433,6 +436,15 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         else
             paramArray = (JExpression[]) paramList.toArray(new JExpression[0]);
 
+	// if standalone, add a field for the iteration counter...
+        JFieldDeclaration iterationCounter = null;
+        if (KjcOptions.standalone) {
+            iterationCounter = new JFieldDeclaration(new JVariableDefinition(0,
+                    CStdType.Integer, FlatIRToC.MAINMETHOD_COUNTER,
+                    new JIntLiteral(-1)));
+            filter.addField(iterationCounter);
+        }
+
         // add the call to the init function
         statements.addStatement(new JExpressionStatement(null,
                 new JMethodCallExpression(null, new JThisExpression(null),
@@ -445,7 +457,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
                     .getBody());
 
             // add the code to receive the items into the buffer
-            statements.addStatement(makeForLoop(receiveCode(filter, filter
+            statements.addStatement(RawExecutionCode.makeForLoop(receiveCode(filter, filter
                     .getInputType(), localVariables), localVariables.exeIndex,
                     new JIntLiteral(two.getInitPeekInt())));
 
@@ -466,7 +478,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
             // work function for the first time
 
             if (bottomPeek > 0) {
-                statements.addStatement(makeForLoop(receiveCode(filter, filter
+                statements.addStatement(RawExecutionCode.makeForLoop(receiveCode(filter, filter
                         .getInputType(), localVariables),
                         localVariables.exeIndex, new JIntLiteral(bottomPeek)));
             }
@@ -479,9 +491,16 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // add the code to collect all data produced by the upstream filter
         // but not consumed by this filter in the initialization stage
         if (remaining > 0) {
-            statements.addStatement(makeForLoop(receiveCode(filter, filter
+            statements.addStatement(RawExecutionCode.makeForLoop(receiveCode(filter, filter
                     .getInputType(), localVariables), localVariables.exeIndex,
                     new JIntLiteral(remaining)));
+        }
+
+	if (!IMEMEstimation.TESTING_IMEM) {
+            // add a call to raw_init2 only if not testing imem
+            statements.addStatement(new JExpressionStatement(null,
+                    new JMethodCallExpression(null, new JThisExpression(null),
+                            SwitchCode.SW_SS_TRIPS, new JExpression[0]), null));
         }
 
         if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
@@ -500,7 +519,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
     // initialization schedule
     JStatement generateInitWorkLoop(SIRFilter filter,
             LocalVariables localVariables) {
-        JStatement innerReceiveLoop = makeForLoop(receiveCode(filter, filter
+        JStatement innerReceiveLoop = RawExecutionCode.makeForLoop(receiveCode(filter, filter
                 .getInputType(), localVariables), localVariables.exeIndex,
                 new JIntLiteral(filter.getPopInt()));
 
@@ -538,7 +557,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
         // return the for loop that executes the block init - 1
         // times
-        return makeForLoop(block, localVariables.exeIndex1, new JIntLiteral(
+        return RawExecutionCode.makeForLoop(block, localVariables.exeIndex1, new JIntLiteral(
                 initFire - 1));
     }
 
@@ -572,7 +591,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // should be at least peek - pop items in the buffer, so
         // just receive pop * steady in the buffer and we can
         // run for an entire steady state
-        block.addStatement(makeForLoop(receiveCode(filter, filter
+        block.addStatement(RawExecutionCode.makeForLoop(receiveCode(filter, filter
                 .getInputType(), localVariables), localVariables.exeIndex,
                 new JIntLiteral(filter.getPopInt() * steady)));
         if (filter.getPushInt() > 0) {
@@ -600,7 +619,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         }
 
         // add the cloned work function to the block
-        block.addStatement(makeForLoop(workBlock, localVariables.exeIndex,
+        block.addStatement(RawExecutionCode.makeForLoop(workBlock, localVariables.exeIndex,
                 new JIntLiteral(steady)));
 
         // now add the code to push the output buffer onto the static network
@@ -622,7 +641,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
             JExpressionStatement send = new JExpressionStatement(null, pushExp,
                     null);
 
-            block.addStatement(makeForLoop(send, localVariables.exeIndex,
+            block.addStatement(RawExecutionCode.makeForLoop(send, localVariables.exeIndex,
                     new JIntLiteral(steady * filter.getPushInt()
                             * Util.getTypeSize(filter.getOutputType()))));
 
@@ -665,7 +684,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         }
 
         // add the statements to receive pop items into the buffer
-        block.addStatement(makeForLoop(receiveCode(filter, filter
+        block.addStatement(RawExecutionCode.makeForLoop(receiveCode(filter, filter
                 .getInputType(), localVariables), localVariables.exeIndex,
                 new JIntLiteral(filter.getPopInt())));
 
@@ -695,9 +714,13 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
             return block;
         }
 
-        // return the infinite loop
-        return new JWhileStatement(null, new JBooleanLiteral(null, true),
-                block, null);
+	return new JWhileStatement(null,
+				   KjcOptions.standalone ? (JExpression) new JPostfixExpression(
+                        null, Constants.OPE_POSTDEC,
+                        new JFieldAccessExpression(new JThisExpression(null),
+                                FlatIRToC.MAINMETHOD_COUNTER))
+                        : (JExpression) new JBooleanLiteral(null, true), block,
+                null);
     }
 
     JStatement receiveCode(SIRFilter filter, CType type,
@@ -772,7 +795,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         JExpression[] dims = type.getDims();
         JStatement stmt = new JExpressionStatement(null, methodCall, null);
         for (int i = dims.length - 1; i >= 0; i--)
-            stmt = makeForLoop(stmt, localVariables.ARRAY_INDEX[i], dims[i]);
+            stmt = RawExecutionCode.makeForLoop(stmt, localVariables.ARRAY_INDEX[i], dims[i]);
 
         return stmt;
     }
@@ -801,40 +824,6 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
             return indexAnd;
         }
-    }
-
-    /**
-     * Returns a for loop that uses field <var> to count <count> times with the
-     * body of the loop being <body>. If count is non-positive, just returns
-     * empty (!not legal in the general case)
-     */
-    private static JStatement makeForLoop(JStatement body, JLocalVariable var,
-            JExpression count) {
-        if (body == null)
-            return new JEmptyStatement(null, null);
-
-        // make init statement - assign zero to <var>. We need to use
-        // an expression list statement to follow the convention of
-        // other for loops and to get the codegen right.
-        JExpression initExpr[] = { new JAssignmentExpression(null,
-                new JLocalVariableExpression(null, var), new JIntLiteral(0)) };
-        JStatement init = new JExpressionListStatement(null, initExpr, null);
-        // if count==0, just return init statement
-        if (count instanceof JIntLiteral) {
-            int intCount = ((JIntLiteral) count).intValue();
-            if (intCount <= 0) {
-                // return assignment statement
-                return new JEmptyStatement(null, null);
-            }
-        }
-        // make conditional - test if <var> less than <count>
-        JExpression cond = new JRelationalExpression(null, Constants.OPE_LT,
-                new JLocalVariableExpression(null, var), count);
-        JExpression incrExpr = new JPostfixExpression(null,
-                Constants.OPE_POSTINC, new JLocalVariableExpression(null, var));
-        JStatement incr = new JExpressionStatement(null, incrExpr, null);
-
-        return new JForStatement(null, init, cond, incr, body, null);
     }
 
     class ConvertCommunicationSimple extends SLIRReplacingVisitor {

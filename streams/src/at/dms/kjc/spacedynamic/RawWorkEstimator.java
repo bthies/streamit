@@ -80,6 +80,8 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	// layout the components (assign filters to tiles)	
 	streamGraph.getLayout().singleFilterAssignment();
 
+	String tileNumber = streamGraph.getLayout().getTileNumber(ssg.getTopLevel()) + "";
+
 	//remove print statements in the original app
 	//if we are running with decoupled
 	RemovePrintStatements.doIt(ssg.getTopLevel());
@@ -103,30 +105,71 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 
 	try {
 	    //copy the files 
-	    System.out.println("Copy the files ...");
 	    {
+		System.out.println("Moving files to /tmp...");
 		String[] cmdArray = new String[5];
 		cmdArray[0] = "cp";
-		cmdArray[1] = "tile0.c";
+		cmdArray[1] = "tile" + tileNumber + ".c";
 		cmdArray[2] = "Makefile.streamit";
 		cmdArray[3] = "fileio.bc";
 		cmdArray[4] = dir;    
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
 		jProcess.waitFor();
+			
+		jProcess.getInputStream().close();
+		jProcess.getOutputStream().close();
+		jProcess.getErrorStream().close();
 	    }
-	    System.out.println("Run the simulator ...");
+	    
 	    //run the simulator
 	    {
-		String[] cmdArray = new String[6];
+		System.out.println("Running on the Simulator...");
+		/*
+		  String[] cmdArray = new String[8];
 		cmdArray[0] = "make";
 		cmdArray[1] = "-C";
 		cmdArray[2] = dir;
 		cmdArray[3] = "-f";
 		cmdArray[4] = "Makefile.streamit";
 		cmdArray[5] = "run";
+		cmdArray[6] = "&>";
+		cmdArray[7] = "/dev/null";
+		
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
+		*/
+
+		String[] cmdArray = 
+		    {
+			"/bin/bash",
+			"-c",
+			"make -C " + dir + " -f Makefile.streamit run &> /dev/null"
+		    };
+		
+			
+		Process jProcess = 
+		    Runtime.getRuntime().exec(cmdArray);
+		/*
+		InputStreamReader output = new InputStreamReader(jProcess.getInputStream());
+		BufferedReader br = new BufferedReader(output);
+		try {
+		    String str;
+		    while ((str = br.readLine()) != null) {
+			System.out.println(str);
+		    }
+		} catch (IOException e) {
+		    System.err.println("Error reading stdout of child process in work estimation...");
+		}
+		*/
+		
+		jProcess.waitFor();
+
+		jProcess.getInputStream().close();
+		jProcess.getOutputStream().close();
+		jProcess.getErrorStream().close();
+		
+	
 		//dump the output so that the process does not hang on it
-		InputStream output = jProcess.getInputStream();
+		/*
 		try {
 		    InputStreamReader isr = new InputStreamReader(output);
 		    BufferedReader br = new BufferedReader(isr);
@@ -137,12 +180,14 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 		catch (Exception e) {
 		    e.printStackTrace();
 		}
-		jProcess.waitFor();
+		*/
 	    }
-	    System.out.println("Read the work_est.out ...");
+
+	    
+	    
 	    //open the results file and return the stats
 	    work = readCycleCount(dir);
-	    System.out.println("Remove the tmp dir ...");
+	    
 	    //remove the directory
  	    {
  		String[] cmdArray = new String[3];
@@ -151,8 +196,12 @@ public class RawWorkEstimator extends EmptyStreamVisitor
  		cmdArray[2] = dir;
  		Process jProcess = Runtime.getRuntime().exec(cmdArray);
  		jProcess.waitFor();
+			
+		jProcess.getInputStream().close();
+		jProcess.getOutputStream().close();
+		jProcess.getErrorStream().close();
  	    }
-	    System.out.println("Done (work = " + work + ").");
+	    
 	}
 	catch (Exception e) {
 	    e.printStackTrace();

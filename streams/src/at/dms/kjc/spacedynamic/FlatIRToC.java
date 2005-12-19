@@ -40,6 +40,12 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
     private static int filterID = 0;
     
+    //variable names for iteration counter for --standalone option...
+    public static String MAINMETHOD_ARGC    = "argc";
+    public static String MAINMETHOD_ARGV    = "argv";
+    public static String MAINMETHOD_COUNTER = "__iterationCounter";
+    public static String ARGHELPER_COUNTER  = "__setIterationCounter";
+
     //the flat node for the filter we are visiting
     private FlatNode flatNode;
     
@@ -249,19 +255,19 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //a uniprocessor
         if (!KjcOptions.standalone) {
             p.print("void raw_init();\n");
-            p.print("void raw_init2();\n");
+	    p.print("void " + SwitchCode.SW_SS_TRIPS + "();\n");
         }
 
-
                 
-        //not used any more
-        //print("unsigned int " + FLOAT_HEADER_WORD + ";\n");
-        //print("unsigned int " + INT_HEADER_WORD + ";\n");
-       
         //Visit fields declared in the filter class
         JFieldDeclaration[] fields = self.getFields();
         for (int i = 0; i < fields.length; i++)
            fields[i].accept(this);
+
+	//add function for --standalone that will get the iteration
+        //count from the command-line
+        if (KjcOptions.standalone) 
+            addIterCountFunction();
         
         //visit methods of filter, print the declaration first
         setDeclOnly(true);
@@ -280,10 +286,15 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print("void begin(void) {\n");
         }
         else {
-            //otherwise print a normal main()
-            p.print("int main() {\n");
+	    //otherwise print a normal main()
+            p.print("int main(int argc, char** argv) {\n");
         }
         
+	if (KjcOptions.standalone) {
+            p.print("  " + ARGHELPER_COUNTER + "(argc, argv);\n");
+        }
+        
+
         //for the first filter/tile we encounter we are going to 
         //create a magic instruction that tells the number-gathering
         //stuff that everything is done snake booting, so if this is true
@@ -291,13 +302,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
             gen_magc_done_boot = true;
             p.print("  __asm__ volatile (\"magc $0, $0, 5\");\n");
         }
-        
-
-        //not used at this time
-        //print(FLOAT_HEADER_WORD + 
-        //" = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
-        //print(INT_HEADER_WORD + 
-        //" = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
+	
         
         //if we are using the dynamic network create the dynamic network
         //header to be used for all outgoing messages
@@ -307,17 +312,27 @@ public class FlatIRToC extends ToC implements StreamVisitor
             
             if (downstream != null) {
                 int size = Util.getTypeSize(ssg.getOutputType(flatNode));
-		assert size < 31 : "Type size too large to fit in single dynamic network packet";
+                assert size < 31 : "Type size too large to fit in single dynamic network packet";
                 /*System.out.println(flatNode + " " + layout.getTile(flatNode) + 
                                    " dynamically sends to + " + downstream + " " + 
                                    layout.getTile(downstream) + ", size = " + size);
                 */
-                p.print(" " + DYNMSGHEADER + " = construct_dyn_hdr(0, " +
-                      size + ", 0, " +
-                      (layout.getTile(self)).getY() + ", " +
-                      (layout.getTile(self)).getX() + ", " + 
-                      (layout.getTile(downstream)).getY() + "," +
-                      (layout.getTile(downstream)).getX() + ");\n");
+                    //if the downstream filter is assigned to a tile then use the    
+                //following raw helper function to construct the header for the push dynamic
+                if (layout.isAssigned(downstream)) {          
+                    p.print(" " + DYNMSGHEADER + " = construct_dyn_hdr(0, " +
+                            size + ", 0, " +
+                            (layout.getTile(self)).getY() + ", " +
+                            (layout.getTile(self)).getX() + ", " + 
+                            (layout.getTile(downstream)).getY() + "," +
+                            (layout.getTile(downstream)).getX() + ");\n");
+                }
+                else {
+                    //otherwise we are dealing with a file writer that is off chip
+                    //so use another thing to construct the header for the dynamic message!
+                    //p.print();
+		    assert false : "dynamic file writers not supported yet";
+                }
             }
         }
         
@@ -341,7 +356,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         if (!(KjcOptions.standalone || KjcOptions.magic_net || KjcOptions.decoupled ||
               IMEMEstimation.TESTING_IMEM)) {
             p.print("  raw_init();\n");
-            p.print("  raw_init2();\n");
+	    //the call to raw_init2 is now within __RAW_MAIN__()
         }
         //execute the raw main function
         p.print(RawExecutionCode.rawMain + "();\n");
@@ -352,10 +367,25 @@ public class FlatIRToC extends ToC implements StreamVisitor
         createFile();
     }
 
+     //generate a function that will get the iteration count from the 
+    //command-line, only generation this if --standalone is enabled...
+    private void addIterCountFunction() 
+    {
+        p.print("\n/* helper routines to parse command line arguments */\n");
+        p.print("#include <unistd.h>\n\n");
+
+        p.print("/* retrieve iteration count for top level driver */\n");
+        p.print("static void " + ARGHELPER_COUNTER + "(int argc, char** argv) {\n");
+        p.print("    int flag;\n");
+        p.print("    while ((flag = getopt(argc, argv, \"i:\")) != -1)\n");
+        p.print("       if (flag == \'i\') { " + MAINMETHOD_COUNTER + " =  atoi(optarg); return;}\n");
+        p.print("    " + MAINMETHOD_COUNTER + " = -1; /* default iteration count (run indefinitely) */\n");
+        p.print("}\n\n\n");
+    }
+
     public void visitPhasedFilter(SIRPhasedFilter self,
                                   SIRPhasedFilterIter iter) {
-        // This is a stub; it'll get filled in once we figure out how phased
-        // filters should actually work.
+	assert false;
     }
 
     private void createFile() {
@@ -923,9 +953,14 @@ public class FlatIRToC extends ToC implements StreamVisitor
                     p.print("printf(\"%s\\n\", "); 
                 else if (KjcOptions.decoupled)
                     p.print("print_string(");
-                else
-                    assert false : "Can't print strings in the raw simulator without using printf";
+                else {
+                        //assert false : "Can't print strings in the raw simulator without using printf";
                 //              p.print("gdn_send(" + INT_HEADER_WORD + ");\n");
+                    //for now just print -1 as the string and warn the user!
+                    //we don't have to evaluate a string!
+                    p.print("raw_test_pass_reg(-1);");    
+                    return;
+                }
                 //print("gdn_send(");
                 exp.accept(this);
                 p.print(");");
@@ -971,6 +1006,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print("(" + tapeType + ")");
         val.accept(this);
         p.print(Util.networkSendSuffix(dynamicOutput));
+	//useful if debugging...!
+        /*print(";\n");
+        p.print("raw_test_pass_reg(");
+        val.accept(this);
+        p.print(")");*/
     }
 
     

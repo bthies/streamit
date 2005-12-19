@@ -440,6 +440,16 @@ public class RemoveGlobals extends at.dms.util.Utils
 	private static SIRFilter filter;
 	private static HashSet localVariables;
 
+	/** the fields that cannot be localized for one reason or another (Strings) **/
+	private static HashSet doNotLocalize;
+
+	//build the list of variables not to localize..
+	static 
+	{
+	    doNotLocalize = new HashSet();
+	    doNotLocalize.add(new String(FlatIRToC.MAINMETHOD_COUNTER));
+	}
+
 	public static void doit(SIRFilter f) 
 	{
 	    filter = f;
@@ -450,6 +460,10 @@ public class RemoveGlobals extends at.dms.util.Utils
 	    
 	    HashSet arrays = new HashSet();
 
+	    //fields that should not be localized and need to be added back
+	    //to the fields arrays
+	    HashSet fieldsToKeep = new HashSet();
+
 	    //move all globals var defs into the raw main function
 	    for (int i = 0; i < fields.length; i++) {
 		JVariableDefinition def = fields[i].getVariable();
@@ -458,8 +472,12 @@ public class RemoveGlobals extends at.dms.util.Utils
 		//zero them later
 		if (def.getType().isArrayType())
 		    arrays.add(def);
+		
+		if (!doNotLocalize.contains(def.getIdent()))
+		    localVariables.add(def);
+		else
+		    fieldsToKeep.add(fields[i]);
 
-		localVariables.add(def);
 		
 		rawMainBlock.addStatementFirst
 		    (new JVariableDeclarationStatement
@@ -509,6 +527,13 @@ public class RemoveGlobals extends at.dms.util.Utils
 
 	    //remove the field defs from the filter
 	    filter.setFields(new JFieldDeclaration[0]);
+
+	    //add back the fields that should not be removed..
+	    Iterator ftk = fieldsToKeep.iterator();
+	    while (ftk.hasNext()) {
+		filter.addField((JFieldDeclaration)ftk.next());
+	    }
+	    
 
 	    //convert all access of globals into locals
 	    RemoveGlobals.getRawMain(filter).accept(new ConvertGlobalsToLocals());
@@ -562,7 +587,7 @@ public class RemoveGlobals extends at.dms.util.Utils
 	    //to a local variable access
 	    //otherwise it is accessing a field of a variable, so just
 	    //keep the name, it does not matter what it is...
-	    if (left instanceof JThisExpression) {
+	    if (left instanceof JThisExpression && !doNotLocalize.contains(ident)) {
 		return new JLocalVariableExpression(null, getVarDef(ident));
 	    }
 	    else {

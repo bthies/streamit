@@ -15,9 +15,7 @@ import at.dms.kjc.flatgraph.*;
 public class FileReaderDevice extends IODevice {
     private SIRFileReader fileReader;
     private FlatNode node;
-   /** true if this file reader should use the gdn */
-    private boolean isDynamic;         
-    /** if dynamic the downstream node of this file reader, note we only support reader that 
+     /** if dynamic the downstream node of this file reader, note we only support reader that 
      connect to filter (not splitters!) when dynamic */ 
     private FlatNode dest = null;
 
@@ -38,9 +36,6 @@ public class FileReaderDevice extends IODevice {
         isDynamic = true;
     }
     
-    public boolean isDynamic() {
-        return isDynamic;
-    }
     
     public FlatNode getDest() {
         assert isDynamic;

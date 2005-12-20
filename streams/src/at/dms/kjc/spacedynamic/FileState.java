@@ -24,13 +24,13 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
     // true if the graph contains a fileReader
     public boolean foundReader;
 
-    // a hashmap SIRFileReader -> FileReaderDevice
+    // a hashmap FlatNode -> FileReaderDevice
     private HashMap fileReaders;
 
     // true if the graph contains a fileWriter
     public boolean foundWriter;
 
-    // a hashmap SIRFileWriter -> FileWriterDevice
+    // a hashmap FlatNode -> FileWriterDevice
     private HashMap fileWriters;
 
     // a hashset containing the flatnodes of all the file manipulators
@@ -44,6 +44,8 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
     // the buffered reader from where we get the assignment
     private BufferedReader inputBuffer;
 
+   
+    
     public void visitStaticStreamGraph(StaticStreamGraph ssg) {
         ssg.getTopLevel().accept(this, new HashSet(), false);
     }
@@ -87,7 +89,10 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
         SpaceDynamicBackend.addAll(fileNodes, fileWriters.keySet());
     }
 
+    /** If we have a file reader or writer, create the device and connect
+	it to the raw chip **/
     public void visitNode(FlatNode node) {
+	//lots of duplication here, but oh well
         if (node.contents instanceof SIRFileReader) {
             FileReaderDevice dev = new FileReaderDevice(streamGraph, node);
             StaticStreamGraph parent = streamGraph.getParentSSG(node);
@@ -103,7 +108,15 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
             fileReaders.put(node, dev);
             foundReader = true;
         } else if (node.contents instanceof SIRFileWriter) {
-            FileWriterDevice dev = new FileWriterDevice(node);
+            FileWriterDevice dev = new FileWriterDevice(streamGraph, node);
+	    StaticStreamGraph parent = streamGraph.getParentSSG(node);
+            
+            if (parent.getIOFilters().contains(node.contents)) {
+                //we have a dynamic file reader
+                dev.setDynamic();
+            }
+
+
             IOPort port = getPortFromUser(dev);
             rawChip.connectDevice(dev, port);
 
@@ -146,6 +159,16 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
         return rawChip.getIOPort(num);
     }
 
+    /** get the FileWriterDevice that implements this SIRFileWriter. 
+     * 
+     * @param fw
+     * @return The FileWriterDevice
+     */
+    public FileWriterDevice getFileWriterDevice(FlatNode fw) {
+        assert fileWriters.containsKey(fw);
+        return (FileWriterDevice)fileWriters.get(fw);
+    }
+    
     public Collection getFileWriterDevs() {
         return fileWriters.values();
     }

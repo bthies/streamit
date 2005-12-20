@@ -328,10 +328,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
                             (layout.getTile(downstream)).getX() + ");\n");
                 }
                 else {
-                    //otherwise we are dealing with a file writer that is off chip
-                    //so use another thing to construct the header for the dynamic message!
-                    //p.print();
-		    assert false : "dynamic file writers not supported yet";
+                    //this filters outputs to a filewriter over the dynamic net 
+                    //generate the header with the correct dir bit
+                    genHeaderForDynFileWriter(downstream, size);
                 }
             }
         }
@@ -366,9 +365,44 @@ public class FlatIRToC extends ToC implements StreamVisitor
         p.print("}\n");
         createFile();
     }
-
-     //generate a function that will get the iteration count from the 
-    //command-line, only generation this if --standalone is enabled...
+    
+    
+    /**
+     * Generate the dynamic network (GDN) network header for this filter; it 
+     * outputs to a file writer over the dynamic network.  We have to set the 
+     * final route field to route the words off the chip to the device.
+     * 
+     * @param self the flat node we are generating code for.
+     * @param size The type size in words.
+     * @param downstream The downstream file writer.
+     */
+    private void genHeaderForDynFileWriter(FlatNode downstream, int size) {
+        assert downstream.contents instanceof SIRFileWriter : 
+            "Didn't see an SIRFileWriter where one was expected, instead: " + downstream.contents; 
+    
+        FileWriterDevice fwd = ssg.getStreamGraph().getFileState().getFileWriterDevice(downstream);
+        //get the neighboring tile
+        RawTile neighboringTile = fwd.getPort().getNeighboringTile();
+        //now calculated the final route, once the packet gets to the destination (neighboring) tile
+        //it will be routed off the chip by 
+        // 2 = west, 3 = south, 4 = east, 5 = north
+        int finalRoute = fwd.getPort().getDirectionFromTile();
+                
+        p.print(" " + DYNMSGHEADER + " = construct_dyn_hdr(" +
+                finalRoute + ", " +
+                size + ", " + 
+		"0, " + //user
+                (layout.getTile(flatNode)).getY() + ", " +
+                (layout.getTile(flatNode)).getX() + ", " + 
+                neighboringTile.getY() + "," +
+                neighboringTile.getX() + ");\n");
+        
+    }   
+        
+    /** 
+     * generate a function that will get the iteration count from the 
+     * command-line, only generation this if --standalone is enabled...
+     **/
     private void addIterCountFunction() 
     {
         p.print("\n/* helper routines to parse command line arguments */\n");

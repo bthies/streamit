@@ -1,6 +1,6 @@
 PREPROCESS = ${STREAMIT_HOME}/misc/scripts/preprocess.perl
 STREAMITDOC = ${STREAMIT_HOME}/misc/scripts/streamitdoc
-STRC_OPTIONS = -library -nosched
+STRC_OPTIONS = -library #-nosched
 #STRC_OPTIONS = -cluster 1
 
 DCT_HOME = ${STREAMIT_HOME}/apps/benchmarks/dct_ieee/streamit
@@ -18,6 +18,7 @@ clean:
 	rm -f MPEGencoder.str
 	rm -f MPEGglobal.str
 	rm -f BinaryFile.str
+	rm -f MPEGdecoder_nomessage.str
 	rm -f BMP.str
 	rm -f *.java
 	rm -f *.class
@@ -25,6 +26,7 @@ clean:
 	rm -f *.html
 	rm -f *.bmp
 	rm -f *.m2v
+	rm -f *.int
 
 player:	MPEGplayer.str MPEGdecoder.str ${LIBMPEG2} ${LIBDCT}
 	strc MPEGplayer.str MPEGdecoder.str ${LIBMPEG2} ${LIBDCT} ${STRC_OPTIONS}

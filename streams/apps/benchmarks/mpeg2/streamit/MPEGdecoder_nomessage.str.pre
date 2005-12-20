@@ -73,7 +73,7 @@ void->void pipeline MPEGdecoder_nomessage() {
   // All of these test cases can be run independently of each other.
   // For each output file, there is an associated output file without the "unver" extension
   // and an md5sum which can be compared against the actual output to make sure it's correct.
-  int parse_or_process = 6;
+  int parse_or_process = 3;
 
   int width=352;
   int height=240;
@@ -198,10 +198,9 @@ int->int splitjoin ReorderCrCbBlocks(int blocks_per_macroblock) {
 /**
  * @internal
  */
-bit->int filter MPEGStreamParser(
-                        int width,
-                        int height,
-                        int the_chroma_format) {
+bit->int filter MPEGStreamParser(int width,
+                                 int height,
+                                 int the_chroma_format) {
   // FEATURETODO
   // When phases can take parameters, get rid of this definition and
   // uncomment the definition in the filter work function, and change
@@ -221,29 +220,10 @@ bit->int filter MPEGStreamParser(
     ran = 0;
   } 
 
-  phase PushMacroblock push (b_per_m*64+19) {
-    for (int i = 0; i < blocks_per_macroblock[the_chroma_format]; i++) {
-      for (int j = 0; j < 64; j++) {
-        push(QFS[i][j]);
-      }
-    }
-    for (int r = 0; r < 2; r++) 
-      for (int s = 0; s < 2; s++)
-        for (int t = 0; t < 2; t++) {
-            push(motion_code[r][s][t]);
-        }
-    for (int r = 0; r < 2; r++) 
-      for (int s = 0; s < 2; s++)
-        for (int t = 0; t < 2; t++) {
-            push(motion_residual[r][s][t]);
-        }
-    push(macroblock_intra);
-    push(macroblock_motion_forward);
-    push(macroblock_motion_backward);
-  }
-
-  work pop * push * {  // Actually unknown pop/push rate
-    if (ran == 0) {
+  work pop 624909 push (1320*(b_per_m*64+19)) {
+    
+    while (ran < 2) {
+    
       SetupPeekBuffer();    // for the buffered peeks/pops
  
       println("Parsing M2V File...");
@@ -975,7 +955,24 @@ bit->int filter MPEGStreamParser(
                   }
                 }
               }
-              PushMacroblock();
+              for (int ppi = 0; ppi < blocks_per_macroblock[the_chroma_format]; ppi++) {
+                for (int pj = 0; pj < 64; pj++) {
+                  push(QFS[ppi][pj]);
+                }
+              }
+              for (int pr = 0; pr < 2; pr++) 
+                for (int ps = 0; ps < 2; ps++)
+                   for (int pt = 0; pt < 2; pt++) {
+                      push(motion_code[pr][ps][pt]);
+                   }
+              for (int pr = 0; pr < 2; pr++) 
+                for (int ps = 0; ps < 2; ps++)
+                  for (int pt = 0; pt < 2; pt++) {
+                     push(motion_residual[pr][ps][pt]);
+                  }
+              push(macroblock_intra);
+              push(macroblock_motion_forward);
+              push(macroblock_motion_backward);
               bufferedpeeks(23,tempval);
               if (tempval == 0) {
                 macroblock_next = false;
@@ -1014,7 +1011,6 @@ bit->int filter MPEGStreamParser(
         }
       }
       println("Done Parsing M2V File...");
-    } else if (ran == 1) {
       println("Generating fake last frame to push out last real frame of video.");
       ran = 2;
       for (int i = 0; i < blocks_per_macroblock[the_chroma_format]; i++) {
@@ -1032,17 +1028,32 @@ bit->int filter MPEGStreamParser(
           for (int t = 0; t < 2; t++) {
               motion_residual[r][s][t] = 0;
           }
-      push(1);
-      push(0);
-      push(0);
+      macroblock_intra = 1;
+      macroblock_motion_forward = 0;
+      macroblock_motion_backward = 0;
       for (int i = 0; i < (width/16); i++) {
         for (int j = 0; j < (height/16); j++) {
-          PushMacroblock();     
+            for (int ppi = 0; ppi < blocks_per_macroblock[the_chroma_format]; ppi++) {
+                for (int pj = 0; pj < 64; pj++) {
+                    push(QFS[ppi][pj]);
+                }
+            }
+            for (int pr = 0; pr < 2; pr++) 
+                for (int ps = 0; ps < 2; ps++)
+                    for (int pt = 0; pt < 2; pt++) {
+                        push(motion_code[pr][ps][pt]);
+                    }
+            for (int pr = 0; pr < 2; pr++) 
+                for (int ps = 0; ps < 2; ps++)
+                    for (int pt = 0; pt < 2; pt++) {
+                        push(motion_residual[pr][ps][pt]);
+                    }
+            push(macroblock_intra);
+            push(macroblock_motion_forward);
+            push(macroblock_motion_backward);
         } 
       }
       println("Done generating fake frame");
-    } else {
-//      println("Error - Trying to parse M2V file for a second time...");
     }
   }
 }

@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.69 2005-09-29 21:27:04 dimock Exp $
+ * @version $Id: ToJava.java,v 1.70 2005-12-20 23:07:27 dimock Exp $
  */
 public class ToJava
 {
@@ -333,6 +333,7 @@ public class ToJava
     		System.exit(result); }
     	catch (Throwable e) { 
     		e.printStackTrace();
+		System.exit(1);
     	}
     }
 }

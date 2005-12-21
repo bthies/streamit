@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CArrayType.java,v 1.9 2004-01-28 16:55:35 dmaze Exp $
+ * $Id: CArrayType.java,v 1.10 2005-12-21 20:02:34 thies Exp $
  */
 
 package at.dms.kjc;
@@ -40,7 +40,17 @@ public class CArrayType extends CClassType {
    * @param	baseType	the base type of the array type
    * @param	arrayBound	the dimension of the array type
    */
-  public CArrayType(CType baseType, int arrayBound) {
+    public CArrayType(CType baseType, int arrayBound) {
+	this(baseType, arrayBound, null);
+    }
+
+  /**
+   * Constructs an array type
+   * @param	baseType	the base type of the array type
+   * @param	arrayBound	the dimension of the array type
+   * @param	dims	        expressions for array bounds in each dimension
+   */
+  public CArrayType(CType baseType, int arrayBound, JExpression[] dims) {
     super();
 
     type = TID_ARRAY;
@@ -54,6 +64,8 @@ public class CArrayType extends CClassType {
       this.arrayBound = arrayBound;
       this.baseType = baseType;
     }
+
+    this.dims = dims;
   }
 
   // ----------------------------------------------------------------------
@@ -129,7 +141,12 @@ public class CArrayType extends CClassType {
     if (arrayBound == 1) {
       return baseType;
     } else {
-      return new CArrayType(baseType, arrayBound - 1);
+	// copy over dims 1 ... n-1
+	JExpression[] newDims = new JExpression[dims.length-1];
+	for (int i=0; i<newDims.length; i++) {
+	    newDims[i] = dims[i+1];
+	}
+      return new CArrayType(baseType, arrayBound - 1, newDims);
     }
   }
 

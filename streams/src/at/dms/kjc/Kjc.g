@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Kjc.g,v 1.5 2005-04-06 12:01:52 thies Exp $
+ * $Id: Kjc.g,v 1.6 2005-12-21 20:02:34 thies Exp $
  */
 
 /*
@@ -33,6 +33,7 @@
 header { package at.dms.kjc; }
 {
   import java.util.Vector;
+  import java.util.ArrayList;
 
   import at.dms.compiler.CWarning;
   import at.dms.compiler.Compiler;
@@ -242,15 +243,17 @@ jClassTypeSpec []
 {
   String		name = null;
   int			bounds = 0;
+  JExpression expr;
+  ArrayList dims = new ArrayList();
 }
 :
   self = jTypeName[]
   (
-    LBRACK RBRACK { bounds += 1; }
+    LBRACK (expr = jExpression[]) RBRACK { dims.add(expr); bounds += 1; }
   )*
     {
       if (bounds > 0) {
-	self = new CArrayType(self, bounds);
+	self = new CArrayType(self, bounds, (JExpression[])dims.toArray(new JExpression[0]));
       }
     }
 ;
@@ -261,15 +264,17 @@ jBuiltInTypeSpec []
   returns [CType self = null]
 {
   int			bounds = 0;
+  JExpression expr;
+  ArrayList dims = new ArrayList();
 }
 :
   self = jBuiltInType[]
   (
-    LBRACK RBRACK { bounds += 1; }
+    LBRACK (expr = jExpression[]) RBRACK { dims.add(expr); bounds += 1; }
   )*
     {
       if (bounds > 0) {
-	self = new CArrayType(self, bounds);
+	self = new CArrayType(self, bounds, (JExpression[])dims.toArray(new JExpression[0]));
       }
     }
 ;
@@ -592,15 +597,17 @@ jMethodDefinition [int modifiers, CType type]
   TokenReference	sourceRef = buildTokenReference();
   JavadocComment	javadoc = getJavadocComment();
   JavaStyleComment[]	comments = getStatementComment();
+  JExpression expr;
+  ArrayList dims = new ArrayList();
 }
 :
   name : IDENT
   LPAREN parameters = jParameterDeclarationList[JLocalVariable.DES_PARAMETER] RPAREN
-  ( LBRACK RBRACK { bounds += 1; } )*
+  ( LBRACK (expr = jExpression[]) RBRACK { dims.add(expr); bounds += 1; } )*
     {
       if (bounds > 0) {
 	reportTrouble(new CWarning(sourceRef, KjcMessages.OLD_STYLE_ARRAY_BOUNDS, null));
-	type = new CArrayType(type, bounds);
+	type = new CArrayType(type, bounds, (JExpression[])dims.toArray(new JExpression[0]));
       }
     }
   (throwsList = jThrowsClause[])?
@@ -645,15 +652,17 @@ jVariableDeclarator [int modifiers, CType type]
   int			bounds = 0;
   JExpression		expr = null;
   TokenReference	sourceRef = buildTokenReference();
+  JExpression dimExpr;
+  ArrayList dims = new ArrayList();
 }
 :
   ident : IDENT
-  ( LBRACK RBRACK { bounds += 1; } )*
+  ( LBRACK (dimExpr = jExpression[]) RBRACK { dims.add(expr); bounds += 1; } )*
   ( ASSIGN expr = jVariableInitializer[] )?
     {
       if (bounds > 0) {
 	reportTrouble(new CWarning(sourceRef, KjcMessages.OLD_STYLE_ARRAY_BOUNDS, null));
-	type = new CArrayType(type, bounds);
+	type = new CArrayType(type, bounds, (JExpression[])dims.toArray(new JExpression[0]));
       }
       self = new JVariableDefinition(sourceRef, modifiers, type, ident.getText(), expr);
     }
@@ -737,16 +746,18 @@ jParameterDeclaration [int desc]
   int		bounds = 0;
   CType		type;
   TokenReference	sourceRef = buildTokenReference();
+  JExpression expr;
+  ArrayList dims = new ArrayList();
 }
 :
   ( "final" { isFinal = true; } )?
   type = jTypeSpec[]
   ident:IDENT
-  ( LBRACK RBRACK { bounds += 1; } )*
+  ( LBRACK (expr = jExpression[]) RBRACK { dims.add(expr); bounds += 1; } )*
     {
       if (bounds > 0) {
 	reportTrouble(new CWarning(sourceRef, KjcMessages.OLD_STYLE_ARRAY_BOUNDS, null));
-	type = new CArrayType(type, bounds);
+	type = new CArrayType(type, bounds, (JExpression[])dims.toArray(new JExpression[0]));
       }
       self = new JFormalParameter(sourceRef, desc, type, ident.getText(), isFinal);
     }

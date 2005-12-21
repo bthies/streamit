@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.15 2005-11-16 20:46:25 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.16 2005-12-21 20:02:58 thies Exp $
  */
 public class SIRToStreamIt
     extends at.dms.util.Utils
@@ -54,7 +54,7 @@ public class SIRToStreamIt
                            SIRStructure[] structs) {
         System.out.println("*/");
 	
-	SIRToStreamIt s2s = new SIRToStreamIt(new TabbedPrintWriter(new PrintWriter(System.out)));
+	SIRToStreamIt s2s = new SIRToStreamIt(new TabbedPrintWriter(new PrintWriter(System.err)));
 
         for (int i = 0; i < structs.length; i++)
         {
@@ -2684,16 +2684,6 @@ public class SIRToStreamIt
                     dims[i].accept(this);
                     print("]");
                 }
-	    else
-            {
-                print("[");
-                // I suspect this isn't entirely what we want.
-                // In fact, it looks like it prints the number
-                // of array bounds, which is frequently "1".
-                // Eit.
-                print(((CArrayType)s).getArrayBound());
-                print("]");
-            }
         }
         else if (s.toString().equals("Complex"))
             print("complex"); // revert to primitive type

@@ -204,8 +204,7 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
 		else 
 		    prefix = new JLocalVariableExpression(null,
 							  (JLocalVariable)varAccess);
-		// RMR {
-		/* the  code   below  will   reverse  the  order   of  the
+		/* RMR { the old code below will reverse the order of the
 		 * dimmensions in an array expression; this is a bug!
 		 *
 		   //build the final array access expression
@@ -220,7 +219,7 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
 									 (JExpression)indices.get(j));
 		   }
 		
-		 * the following code will produce the dimmensions  in the
+		 * the following new code will produce the dimmensions in the
 		 * proper order:  the prefix is the  variable name, append
 		 * to that the  first dimmension and then in  the loop add
 		 * every  other  dimmension but  the  last; following  the
@@ -245,7 +244,7 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
 		    
 		    access = new JArrayAccessExpression(null, access, new JIntLiteral(i));
 		}
-		// } RMR
+		/* } RMR */
 		
 		//only handle constant initializers for now
 		assert (Utils.passThruParens(init.getElems()[i]) instanceof JLiteral) : 

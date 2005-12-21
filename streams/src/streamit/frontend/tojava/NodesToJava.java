@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.109 2005-11-15 22:39:15 dimock Exp $
+ * @version $Id: NodesToJava.java,v 1.110 2005-12-21 20:03:33 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -103,14 +103,19 @@ public class NodesToJava implements FEVisitor
 
     // Convert a Type to a String.  If visitors weren't so generally
     // useless for other operations involving Types, we'd use one here.
-    public static String convertType(Type type)
+    public String convertType(Type type)
     {
         // This is So Wrong in the greater scheme of things.
         if (type instanceof TypeArray)
 	    {
+		// following change declares arrays like int[10][10] foo;
+		return convertTypeFull(type);
+		// uncomment following to declare arrays like int[][] foo;
+		/*
 		TypeArray array = (TypeArray)type;
 		String base = convertType(array.getBase());
 		return base + "[]";
+		*/
 	    }
         else if (type instanceof TypeStruct)
 	    {
@@ -226,22 +231,22 @@ public class NodesToJava implements FEVisitor
     }
 
     // Helpers to get function names for stream types.
-    public static String pushFunction(StreamType st)
+    public String pushFunction(StreamType st)
     {
         return annotatedFunction("output.push", st.getOut());
     }
     
-    public static String popFunction(StreamType st)
+    public String popFunction(StreamType st)
     {
         return annotatedFunction("input.pop", st.getIn());
     }
     
-    public static String peekFunction(StreamType st)
+    public String peekFunction(StreamType st)
     {
         return annotatedFunction("input.peek", st.getIn());
     }
     
-    private static String annotatedFunction(String name, Type type)
+    private String annotatedFunction(String name, Type type)
     {
         String prefix = "", suffix = "";
         // Check for known suffixes:
@@ -1545,7 +1550,7 @@ public class NodesToJava implements FEVisitor
 		// Top-level stream: do any post-processing and emit "main"
 		// This is only public if it's the top-level stream,
 		// meaning it has type void->void.
-		if (isTopLevelSpec(spec)) {
+		if (isTopLevelSpec(spec) && libraryFormat) {
 			result += indent + "public static void main(String[] args) {\n";
 			addIndent();
 			result += indent + spec.getName() + " program = new "

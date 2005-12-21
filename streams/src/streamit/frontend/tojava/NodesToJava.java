@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.110 2005-12-21 20:03:33 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.111 2005-12-21 20:04:46 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -108,14 +108,15 @@ public class NodesToJava implements FEVisitor
         // This is So Wrong in the greater scheme of things.
         if (type instanceof TypeArray)
 	    {
-		// following change declares arrays like int[10][10] foo;
-		return convertTypeFull(type);
-		// uncomment following to declare arrays like int[][] foo;
-		/*
-		TypeArray array = (TypeArray)type;
-		String base = convertType(array.getBase());
-		return base + "[]";
-		*/
+		if (libraryFormat) {
+		    // declare arrays like int[][] foo;
+		    TypeArray array = (TypeArray)type;
+		    String base = convertType(array.getBase());
+		    return base + "[]";
+		} else {
+		    // declare arrays like int[10][10] foo;
+		    return convertTypeFull(type);
+		}
 	    }
         else if (type instanceof TypeStruct)
 	    {
@@ -761,128 +762,128 @@ public class NodesToJava implements FEVisitor
     }
 
     public Object visitProgram(Program prog) {
-		// Nothing special here either. Just accumulate all of the
-		// structures and streams.
-		String result = "";
+	// Nothing special here either. Just accumulate all of the
+	// structures and streams.
+	String result = "";
 
-		for (Iterator iter = prog.getStructs().iterator(); iter.hasNext();) {
-			TypeStruct struct = (TypeStruct) iter.next();
+	for (Iterator iter = prog.getStructs().iterator(); iter.hasNext();) {
+	    TypeStruct struct = (TypeStruct) iter.next();
 
-			if (struct.getName().equals("String"))
-				continue;
-			if (libraryFormat && struct.getName().equals("float2"))
-				continue;
-			if (libraryFormat && struct.getName().equals("float3"))
-				continue;
-			if (libraryFormat && struct.getName().equals("float4"))
-				continue;
+	    if (struct.getName().equals("String"))
+		continue;
+	    if (libraryFormat && struct.getName().equals("float2"))
+		continue;
+	    if (libraryFormat && struct.getName().equals("float3"))
+		continue;
+	    if (libraryFormat && struct.getName().equals("float4"))
+		continue;
 
-			result += indent + "class " + struct.getName()
-					+ " extends Structure implements Serializable {\n";
-			addIndent();
-			for (int i = 0; i < struct.getNumFields(); i++) {
-				String name = struct.getField(i);
-				Type type = struct.getType(name);
-				result += indent + convertType(type) + " " + name + ";\n";
-			}
-			unIndent();
-			result += indent + "}\n";
-		}
-
-		for (Iterator iter = prog.getHelpers().iterator(); iter.hasNext();) {
-			TypeHelper th = (TypeHelper) iter.next();
-			result += visitTypeHelper(th);
-		}
-
-		if (!libraryFormat) {
-			result += indent + "class StreamItVectorLib {\n";
-			addIndent();
-			result += indent + "public static native float2 add2(float2 a, float2 b);\n";
-			result += indent + "public static native float3 add3(float3 a, float3 b);\n";
-			result += indent + "public static native float4 add4(float4 a, float4 b);\n";
-
-			result += indent + "public static native float2 sub2(float2 a, float2 b);\n";
-			result += indent + "public static native float3 sub3(float3 a, float3 b);\n";
-			result += indent + "public static native float4 sub4(float4 a, float4 b);\n";
-
-			result += indent + "public static native float2 mul2(float2 a, float2 b);\n";
-			result += indent + "public static native float3 mul3(float3 a, float3 b);\n";
-			result += indent + "public static native float4 mul4(float4 a, float4 b);\n";
-
-			result += indent + "public static native float2 div2(float2 a, float2 b);\n";
-			result += indent + "public static native float3 div3(float3 a, float3 b);\n";
-			result += indent + "public static native float4 div4(float4 a, float4 b);\n";
-
-			result += indent + "public static native float2 addScalar2(float2 a, float b);\n";
-			result += indent + "public static native float3 addScalar3(float3 a, float b);\n";
-			result += indent + "public static native float4 addScalar4(float4 a, float b);\n";
-
-			result += indent + "public static native float2 subScalar2(float2 a, float b);\n";
-			result += indent + "public static native float3 subScalar3(float3 a, float b);\n";
-			result += indent + "public static native float4 subScalar4(float4 a, float b);\n";
-
-			result += indent + "public static native float2 scale2(float2 a, float b);\n";
-			result += indent + "public static native float3 scale3(float3 a, float b);\n";
-			result += indent + "public static native float4 scale4(float4 a, float b);\n";
-
-			result += indent + "public static native float2 scaleInv2(float2 a, float b);\n";
-			result += indent + "public static native float3 scaleInv3(float3 a, float b);\n";
-			result += indent + "public static native float4 scaleInv4(float4 a, float b);\n";
-
-			result += indent + "public static native float sqrtDist2(float2 a, float2 b);\n";
-			result += indent + "public static native float sqrtDist3(float3 a, float3 b);\n";
-			result += indent + "public static native float sqrtDist4(float4 a, float4 b);\n";
-
-			result += indent + "public static native float dot3(float3 a, float3 b);\n";
-			result += indent + "public static native float3 cross3(float3 a, float3 b);\n";
-
-			result += indent + "public static native float2 max2(float2 a, float2 b);\n";
-			result += indent + "public static native float3 max3(float3 a, float3 b);\n";
-
-			result += indent + "public static native float2 min2(float2 a, float2 b);\n";
-			result += indent + "public static native float3 min3(float3 a, float3 b);\n";
-
-			result += indent + "public static native float2 neg2(float2 a);\n";
-			result += indent + "public static native float3 neg3(float3 a);\n";
-			result += indent + "public static native float4 neg4(float4 a);\n";
-
-			result += indent + "public static native float2 floor2(float2 a);\n";
-			result += indent + "public static native float3 floor3(float3 a);\n";
-			result += indent + "public static native float4 floor4(float4 a);\n";
-
-			result += indent + "public static native float2 normalize2(float2 a);\n";
-			result += indent + "public static native float3 normalize3(float3 a);\n";
-			result += indent + "public static native float4 normalize4(float4 a);\n";
-
-			result += indent + "public static native boolean greaterThan3(float3 a, float3 b);\n";
-			result += indent + "public static native boolean lessThan3(float3 a, float3 b);\n";
-			result += indent + "public static native boolean equals3(float3 a, float3 b);\n";
-
-			unIndent();
-			result += indent + "}\n";
-		}
-
-		StreamSpec main = null;
-		for (Iterator iter = prog.getStreams().iterator(); iter.hasNext();) {
-			StreamSpec spec = ((StreamSpec) iter.next());
-
-			if (isTopLevelSpec(spec)) {
-				assert main == null : "Found more than one top-level stream";
-				main = spec;
-				iter.remove();
-			} else {
-				result += spec.accept(this);
-			}
-		}
-		assert main != null : "Did not find any top-level stream";
-		result += main.accept(this);
-		return result;
+	    result += indent + "class " + struct.getName()
+		+ " extends Structure implements Serializable {\n";
+	    addIndent();
+	    for (int i = 0; i < struct.getNumFields(); i++) {
+		String name = struct.getField(i);
+		Type type = struct.getType(name);
+		result += indent + convertType(type) + " " + name + ";\n";
+	    }
+	    unIndent();
+	    result += indent + "}\n";
 	}
+
+	for (Iterator iter = prog.getHelpers().iterator(); iter.hasNext();) {
+	    TypeHelper th = (TypeHelper) iter.next();
+	    result += visitTypeHelper(th);
+	}
+
+	if (!libraryFormat) {
+	    result += indent + "class StreamItVectorLib {\n";
+	    addIndent();
+	    result += indent + "public static native float2 add2(float2 a, float2 b);\n";
+	    result += indent + "public static native float3 add3(float3 a, float3 b);\n";
+	    result += indent + "public static native float4 add4(float4 a, float4 b);\n";
+
+	    result += indent + "public static native float2 sub2(float2 a, float2 b);\n";
+	    result += indent + "public static native float3 sub3(float3 a, float3 b);\n";
+	    result += indent + "public static native float4 sub4(float4 a, float4 b);\n";
+
+	    result += indent + "public static native float2 mul2(float2 a, float2 b);\n";
+	    result += indent + "public static native float3 mul3(float3 a, float3 b);\n";
+	    result += indent + "public static native float4 mul4(float4 a, float4 b);\n";
+
+	    result += indent + "public static native float2 div2(float2 a, float2 b);\n";
+	    result += indent + "public static native float3 div3(float3 a, float3 b);\n";
+	    result += indent + "public static native float4 div4(float4 a, float4 b);\n";
+
+	    result += indent + "public static native float2 addScalar2(float2 a, float b);\n";
+	    result += indent + "public static native float3 addScalar3(float3 a, float b);\n";
+	    result += indent + "public static native float4 addScalar4(float4 a, float b);\n";
+
+	    result += indent + "public static native float2 subScalar2(float2 a, float b);\n";
+	    result += indent + "public static native float3 subScalar3(float3 a, float b);\n";
+	    result += indent + "public static native float4 subScalar4(float4 a, float b);\n";
+
+	    result += indent + "public static native float2 scale2(float2 a, float b);\n";
+	    result += indent + "public static native float3 scale3(float3 a, float b);\n";
+	    result += indent + "public static native float4 scale4(float4 a, float b);\n";
+
+	    result += indent + "public static native float2 scaleInv2(float2 a, float b);\n";
+	    result += indent + "public static native float3 scaleInv3(float3 a, float b);\n";
+	    result += indent + "public static native float4 scaleInv4(float4 a, float b);\n";
+
+	    result += indent + "public static native float sqrtDist2(float2 a, float2 b);\n";
+	    result += indent + "public static native float sqrtDist3(float3 a, float3 b);\n";
+	    result += indent + "public static native float sqrtDist4(float4 a, float4 b);\n";
+
+	    result += indent + "public static native float dot3(float3 a, float3 b);\n";
+	    result += indent + "public static native float3 cross3(float3 a, float3 b);\n";
+
+	    result += indent + "public static native float2 max2(float2 a, float2 b);\n";
+	    result += indent + "public static native float3 max3(float3 a, float3 b);\n";
+
+	    result += indent + "public static native float2 min2(float2 a, float2 b);\n";
+	    result += indent + "public static native float3 min3(float3 a, float3 b);\n";
+
+	    result += indent + "public static native float2 neg2(float2 a);\n";
+	    result += indent + "public static native float3 neg3(float3 a);\n";
+	    result += indent + "public static native float4 neg4(float4 a);\n";
+
+	    result += indent + "public static native float2 floor2(float2 a);\n";
+	    result += indent + "public static native float3 floor3(float3 a);\n";
+	    result += indent + "public static native float4 floor4(float4 a);\n";
+
+	    result += indent + "public static native float2 normalize2(float2 a);\n";
+	    result += indent + "public static native float3 normalize3(float3 a);\n";
+	    result += indent + "public static native float4 normalize4(float4 a);\n";
+
+	    result += indent + "public static native boolean greaterThan3(float3 a, float3 b);\n";
+	    result += indent + "public static native boolean lessThan3(float3 a, float3 b);\n";
+	    result += indent + "public static native boolean equals3(float3 a, float3 b);\n";
+
+	    unIndent();
+	    result += indent + "}\n";
+	}
+
+	StreamSpec main = null;
+	for (Iterator iter = prog.getStreams().iterator(); iter.hasNext();) {
+	    StreamSpec spec = ((StreamSpec) iter.next());
+
+	    if (isTopLevelSpec(spec)) {
+		assert main == null : "Found more than one top-level stream";
+		main = spec;
+		iter.remove();
+	    } else {
+		result += spec.accept(this);
+	    }
+	}
+	assert main != null : "Did not find any top-level stream";
+	result += main.accept(this);
+	return result;
+    }
 
     public Object visitSCAnon(SCAnon creator) {
-		assert false : "NodesToJava run before NameAnonymousStreams";
-		return creator.getSpec().accept(this);
-	}
+	assert false : "NodesToJava run before NameAnonymousStreams";
+	return creator.getSpec().accept(this);
+    }
     
     public Object visitSCSimple(SCSimple creator)
     {
@@ -892,17 +893,17 @@ public class NodesToJava implements FEVisitor
         
         String result;
         if (libraryFormat)
-        {
-            // Magic for builtins.
-            if (creator.getName().equals("Identity") ||
-                creator.getName().equals("FileReader") ||
-                creator.getName().equals("FileWriter") ||
-                creator.getName().equals("ImageDisplay")) {
-                result = "new " + creator.getName() + "(";
+	    {
+		// Magic for builtins.
+		if (creator.getName().equals("Identity") ||
+		    creator.getName().equals("FileReader") ||
+		    creator.getName().equals("FileWriter") ||
+		    creator.getName().equals("ImageDisplay")) {
+		    result = "new " + creator.getName() + "(";
                 
-            }
-            else
-                result = creator.getName() + ".__construct(";
+		}
+		else
+		    result = creator.getName() + ".__construct(";
         }
         else
             result = "new " + creator.getName() + "(";

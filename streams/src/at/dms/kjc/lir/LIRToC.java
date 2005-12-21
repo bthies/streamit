@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.103 2005-11-18 19:58:48 dimock Exp $
+ * $Id: LIRToC.java,v 1.104 2005-12-21 20:02:47 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -2284,17 +2284,8 @@ public class LIRToC
         if (s instanceof CArrayType)
         {
             typePrint(((CArrayType)s).getBaseType());
-            JExpression[] dims = ((CArrayType)s).getDims();
-            if (dims != null)
-                for (int i = 0; i < dims.length; i++)
-                    {
-                        p.print("[");
-                        dims[i].accept(this);
-                        p.print("]");
-                    }
-            else
-                for (int i = 0; i < ((CArrayType)s).getArrayBound(); i++)
-                    p.print("*");
+	    for (int i = 0; i < ((CArrayType)s).getArrayBound(); i++)
+		p.print("*");
         }
         else if (s.getTypeID() == TID_BOOLEAN)
             p.print("int");

@@ -225,7 +225,10 @@ public class SIRSplitter extends SIROperator {
             "it hasn't been run yet) or orig program";
 	return ((JIntLiteral)weights[i]).intValue();
     }
-
+ 
+    public JExpression getWeightNoChecking(int i) {
+        return weights[i];
+    }
 /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
 /** Returns a deep clone of this object. */

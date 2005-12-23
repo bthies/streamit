@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.18 2005-12-23 17:29:46 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.19 2005-12-23 17:51:25 dimock Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -363,15 +363,21 @@ public class SIRToStreamIt
 
             // Check (the hard way) for a uniform round-robin.
             boolean uniform = false;
-            if (weights.length > 0)
-            {
+            if (weights.length > 0) {
                 uniform = true;
-                int w = self.getWeight(0);
-                for (int i = 1; i < weights.length; i++)
-                    if (self.getWeight(i) != w)
-                        uniform = false;
+                JExpression e = self.getWeightNoChecking(0);
+                if (e instanceof JIntLiteral) {
+                    int w = self.getWeight(0);
+                    for (int i = 1; i < weights.length; i++) {
+                        e = self.getWeightNoChecking(i);
+                        if (e instanceof JIntLiteral) {
+                            if (self.getWeight(i) != w) {
+                                uniform = false;
+                            }
+                        } else {uniform = false;}
+                    }
+                } else {uniform = false;}
             }
-
             if (uniform)
                 p.print(self.getWeight(0));
             else
@@ -406,16 +412,27 @@ public class SIRToStreamIt
             p.print("join roundrobin(");
 
             // Check (the hard way) for a uniform round-robin.
-            boolean uniform = false;
-            if (weights.length > 0)
-            {
-                uniform = true;
-                int w = self.getWeight(0);
-                for (int i = 1; i < weights.length; i++)
-                    if (self.getWeight(i) != w)
-                        uniform = false;
-            }
+            boolean uniform = false;            
 
+            if (weights.length > 0) {
+                uniform = true;
+                JExpression e = self.getWeightNoChecking(0);
+                if (e instanceof JIntLiteral) {
+                    int w = self.getWeight(0);
+                    for (int i = 1; i < weights.length; i++) {
+                        e = self.getWeightNoChecking(i);
+                        if (e instanceof JIntLiteral) {
+                            if (self.getWeight(i) != w) {
+                                uniform = false;
+                            }
+                        } else {
+                            uniform = false;
+                        }
+                    }
+                } else {
+                    uniform = false;
+                }
+            }
             if (uniform)
                 p.print(self.getWeight(0));
             else

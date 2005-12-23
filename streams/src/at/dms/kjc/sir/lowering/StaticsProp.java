@@ -230,19 +230,18 @@ public class StaticsProp {
      */
     private void findStaticsForStr(SIRStream str) {
 
-        // Specialize stream walker to maintain this.currentStreamIdent
-        // so that the FindStaticsInStr visitor can record stream names
-        class MyIter extends IterOverAllFieldsAndMethods {
-            protected boolean preVisit(SIRStream str) {
-                currentStreamIdent = str.getIdent();
-                return true;
-            }
-        };
-        
         MyIter myIter = new MyIter();
         myIter.iterOverAllFieldsAndMethods (str, true, true, 
                 new FindStaticsInStr());
     }
+    // Specialize stream walker to maintain this.currentStreamIdent
+    // so that the FindStaticsInStr visitor can record stream names
+    class MyIter extends IterOverAllFieldsAndMethods {
+	protected boolean preVisit(SIRStream str) {
+	    currentStreamIdent = str.getIdent();
+	    return true;
+	}
+    };
     
     /*
      * Given a Kjc / SLIR expression, find all static fields referenced

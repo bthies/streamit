@@ -62,8 +62,12 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     }
 
     /**
-     * Adds <f> to the fields of this.  Does not check
+     * Adds <f> to the fields of this. 
+     * 
+     *  Does not check
      * for duplicates.
+     * 
+     * Adds to end of fields.
      */
     public void addFields (JFieldDeclaration[] f) {
 	JFieldDeclaration[] newFields = 
@@ -77,6 +81,43 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
 	this.fields = newFields;
     }
 
+    /**
+     * Add fields <f> before a particular offset. 
+     * 
+     * Does not check for duplicates.
+     * 
+     * @param offset    offset to add before
+     * @param f         fields to add
+     */
+    public void addFields (int offset, JFieldDeclaration[] f) {
+        LinkedList additions = new LinkedList();
+        LinkedList oldfields = new LinkedList();
+        
+        for (int i = 0; i < f.length; i++) {
+            additions.addLast(f[i]);
+        }
+        
+        for (int i = 0; i < fields.length; i++) {
+            oldfields.addLast(fields[i]);
+        }
+        
+        oldfields.addAll(offset, additions);
+        this.fields = (JFieldDeclaration[])oldfields.toArray(fields);
+    }
+    
+    /**
+     * Add a field <f> before a particular offset.
+     * 
+     *  Does not check for duplicates.
+     *  
+     * @param offset     offset to add before
+     * @param f          field to add
+     */
+    public void addField (int offset, JFieldDeclaration f) {
+        JFieldDeclaration[] fArr = {f};
+        addFields(offset, fArr);
+    }
+    
     /**
      * Adds <m> to the methods of this.  Does not check for
      * duplicates. 

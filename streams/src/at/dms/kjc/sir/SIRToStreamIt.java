@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.17 2005-12-23 15:15:11 dimock Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.18 2005-12-23 17:29:46 thies Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -445,6 +445,13 @@ public class SIRToStreamIt
                                 JMethodDeclaration init)
     {
         printHeader(self, "pipeline");
+        p.newLine();
+
+        for (int i = 0; i < fields.length; i++)
+            fields[i].accept(this);
+        p.newLine();
+
+        p.indent();
         toplevel = true;
         init.getBody().accept(this);
         p.newLine();
@@ -460,6 +467,13 @@ public class SIRToStreamIt
                                  SIRJoiner joiner)
     {
         printHeader(self, "splitjoin");
+        p.newLine();
+
+        for (int i = 0; i < fields.length; i++)
+            fields[i].accept(this);
+        p.newLine();
+
+        p.indent();
         toplevel = true;
         init.getBody().accept(this);
         p.newLine();
@@ -474,6 +488,12 @@ public class SIRToStreamIt
                                     JMethodDeclaration initPath)
     {
         printHeader(self, "feedbackloop");
+        p.newLine();
+
+        for (int i = 0; i < fields.length; i++)
+            fields[i].accept(this);
+        p.newLine();
+
         toplevel = true;
         init.getBody().accept(this);
         p.newLine();

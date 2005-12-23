@@ -2,32 +2,39 @@ package at.dms.kjc.sir.lowering;
 
 import java.util.*;
 import at.dms.kjc.*;
-import at.dms.util.*;
+//import at.dms.util.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.raw.ArrayCopy;
-import at.dms.kjc.lir.*;
-import at.dms.compiler.JavaStyleComment;
-import at.dms.compiler.JavadocComment;
-
+//import at.dms.kjc.lir.*;
+//import at.dms.compiler.JavaStyleComment;
 /**
  * This class propagates constants and unrolls loops.  Currently only
  * works for init functions.
+ * 
+ * (Bill Thies & Allyn Dimock: 2005-12-22  now works for all SIRStreams.)
  */
 public class ConstantProp {
 
-    private ConstantProp() {
+    private ConstantProp(boolean removeDeadFields) {
+        this.removeDeadFields = removeDeadFields;
     }
 
+    private boolean removeDeadFields;
+    
     /**
      * Propagates constants as far as possible in <str> and also
      * unrolls loops.
      */
     public static void propagateAndUnroll(SIRStream str) {
 	// start at the outermost loop with an empty set of constants
-	new ConstantProp().propagateAndUnroll(str, new Hashtable());
+	new ConstantProp(false).propagateAndUnroll(str, new Hashtable());
     }
 
-    /**
+    public static void propagateAndUnroll(SIRStream str, boolean removeDeadFields) {
+        // start at the outermost loop with an empty set of constants
+        new ConstantProp(removeDeadFields).propagateAndUnroll(str, new Hashtable());
+        }
+   /**
      * Does the work on <str>, given that <constants> maps from
      * a JLocalVariable to a JLiteral for all constants that are known.
      */
@@ -41,6 +48,7 @@ public class ConstantProp {
 		    methods[i].accept(dest);
 		dest.addFields(str);
 	    }
+        FieldProp.doPropagateNotRecursive(str, false, removeDeadFields);
 	    // make a propagator
 	    Propagator propagator = new Propagator(constants);
 	    // propagate constants within init function of <str>
@@ -61,7 +69,8 @@ public class ConstantProp {
 	    unroller = new Unroller(constants);
 	    // only unroll maximally for containers
 	    boolean oldInit=unroller.getContainerInit();
-	    unroller.setContainerInit(str instanceof SIRContainer);
+	    unroller.setContainerInit(str instanceof SIRContainer
+				      || str instanceof SIRGlobal);
 	    str.getInit().accept(unroller);
 	    unroller.setContainerInit(oldInit);
 	    // patch list of children for splitjoins and pipelines

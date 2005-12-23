@@ -8,12 +8,28 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.26 2005-08-21 07:02:35 thies Exp $
+ * $Id: FieldProp.java,v 1.27 2005-12-23 15:26:13 dimock Exp $
  */
 public class FieldProp implements Constants
 {
+    static boolean debugPrint = false;
+    
     /** Maps field names to CTypes. */
     private HashMap types;
+    
+    /*
+     * a field, if noticed, will either have a JExpression in
+     * 'fields' if it may possibly be propagated, or will have
+     * its name in the set 'nofields' if it may not be propagated.
+     * 
+     * a field which is an array will further have information
+     * about its slots: 'arrays' maps array names to arrays of 
+     * expressions, 'noarrays' maps an array name to an array of
+     * booleans, where a boolean is 'true' if the slot can not
+     * be propagated.
+     * 
+     */
+    
     /** Maps field names to JExpression values. */
     private HashMap fields;
     /** List of field names that can't be propagated. */
@@ -41,16 +57,24 @@ public class FieldProp implements Constants
      * calls propagate() on any SIRSplitJoins as a post-pass.
      */
     public static SIRStream doPropagate(SIRStream str) {
-	return doPropagate(str, false);
+	return doPropagate(str, false, false);
     }
-    public static SIRStream doPropagate(SIRStream str, boolean unrollOuterLoops)
+    public static SIRStream doPropagate(SIRStream str, boolean unrollOuterLoops) {
+        return doPropagate(str, unrollOuterLoops, false);
+    }
+    
+    // the way the code was written, unrollOuterLoops applied only to the 
+    // root of the stream graph.  Is this correct?  Presumably if run after
+    // constant prop, loops will already be unrolled...
+    public static SIRStream doPropagate(SIRStream str, boolean unrollOuterLoops,
+            boolean removeDeadFields)
     {
         // First, visit children (if any).
         if (str instanceof SIRFeedbackLoop)
         {
             SIRFeedbackLoop fl = (SIRFeedbackLoop)str;
-            doPropagate(fl.getBody());
-            doPropagate(fl.getLoop());
+            doPropagate(fl.getBody(),false,removeDeadFields);
+            doPropagate(fl.getLoop(),false,removeDeadFields);
         }
         if (str instanceof SIRPipeline)
         {
@@ -59,7 +83,7 @@ public class FieldProp implements Constants
             while (iter.hasNext())
             {
                 SIRStream child = (SIRStream)iter.next();
-                doPropagate(child);
+                doPropagate(child,false,removeDeadFields);
             }
         }
         if (str instanceof SIRSplitJoin)
@@ -69,14 +93,26 @@ public class FieldProp implements Constants
             while (iter.hasNext())
             {
                 SIRStream child = (SIRStream)iter.next();
-                doPropagate(child);
+                doPropagate(child,false,removeDeadFields);
             }
         }
         
-	FieldProp lastProp=new FieldProp();
+        return doPropagateNotRecursive(str, unrollOuterLoops, removeDeadFields); 
+    }
+    
+    /**
+     * Perform field propagation on a given stream, without recursing into its child streams.
+     */
+    public static SIRStream doPropagateNotRecursive(SIRStream str) {
+        return doPropagateNotRecursive(str, false, false);
+    }
+
+    public static SIRStream doPropagateNotRecursive(SIRStream str,
+            boolean unrollOuterLoops, boolean removeDeadFields) {
+        FieldProp lastProp = new FieldProp();
 
         // Having recursed, do the flattening, if it's appropriate.
-        if (str instanceof SIRFilter || str instanceof SIRPhasedFilter)
+        // if (str instanceof SIRFilter || str instanceof SIRPhasedFilter)
         {
             // Run propagate twice, just to be sure.
             new FieldProp().propagate(str);
@@ -84,60 +120,141 @@ public class FieldProp implements Constants
             // Run the unroller...
             Unroller unroller;
             for (int i = 0; i < str.getMethods().length; i++) {
-		do {
-		    unroller = new Unroller(new Hashtable(), unrollOuterLoops);
-		    str.getMethods()[i].accept(unroller);
-		} while(unroller.hasUnrolled());
-	    }
+                do {
+                    unroller = new Unroller(new Hashtable(), unrollOuterLoops);
+                    str.getMethods()[i].accept(unroller);
+                } while (unroller.hasUnrolled());
+            }
             // Then try to propagatate again.
             lastProp.propagate(str);
         }
 
-	//Remove uninvalidated fields
-	/*LinkedList okayFields=new LinkedList();
-	  JFieldDeclaration[] fields=str.getFields();
-	  for(int i=0;i<fields.length;i++) {
-	  JFieldDeclaration thisField=fields[i];
-	  if(lastProp.isFieldInvalidated(thisField.getVariable().getIdent()))
-	  okayFields.add(thisField);
-	  else
-	  System.out.println("Removing:"+thisField);		
-	  }
-	  str.setFields((JFieldDeclaration[])okayFields.toArray(new JFieldDeclaration[0]));*/
         
+        // Remove uninvalidated fields
+        if (removeDeadFields) {
+            LinkedList okayFields = new LinkedList();
+            Set removedFields = new HashSet();
+            JFieldDeclaration[] fields = str.getFields();
+            for (int i = 0; i < fields.length; i++) {
+                JFieldDeclaration thisField = fields[i];
+                if (lastProp.isFieldInvalidated(thisField.getVariable()
+                        .getIdent()))
+                    okayFields.add(thisField);
+                else {
+                    if (debugPrint) {
+                        System.out.println("Removing:"
+                                + thisField.getVariable().getIdent());
+                    }
+                    removedFields.add(thisField.getVariable().getIdent());
+                }
+            }
+            str.setFields((JFieldDeclaration[]) okayFields
+                    .toArray(new JFieldDeclaration[0]));
+            removeAssignmentsToFields(str, removedFields);
+            if (debugPrint) {
+                System.err
+                        .println("FieldProp: Stream after doPropagateNonRecursive with dead field removal");
+                SIRToStreamIt.runNonRecursive(str);
+            }
+        }
         // All done, return the object.
         return str;
     }
     
+    private static void removeAssignmentsToFields(SIRStream str, 
+               final Set/*<String>*/ fields) {
+
+        final boolean[] makeEmpty = {false};
+        JMethodDeclaration[] methods = str.getMethods();
+        for (int i = 0; i < methods.length; i++) {
+            methods[i].accept(new SLIRReplacingVisitor() {
+                // If an expression statement is an assignment to a removed field
+                // then makeEmpty[0] will be set to true, in which case return 
+                // an empty statement.  Otherwise return this statement.
+                public Object visitExpressionStatement(JExpressionStatement self,
+                        JExpression expr) {
+                    makeEmpty[0] = false;
+                    super.visitExpressionStatement(self,expr);
+                    if (makeEmpty[0]) {
+                        return new JEmptyStatement();
+                    }
+                    return self;
+                }
+                
+                // only need to look at direct JAssignmentExpression since
+                // that is all that propagation looks at.
+                
+                public Object visitAssignmentExpression(JAssignmentExpression self,
+                        JExpression left, JExpression right) {
+                    JExpression field = lhsBaseExpr(left);
+                    if (field instanceof JFieldAccessExpression) {
+                        String ident = ((JFieldAccessExpression)field).getIdent();
+                        makeEmpty[0] = fields.contains(ident);
+                    }
+                    return self;
+                }
+            });
+            
+        }
+        
+    }
+    
+    // this method cloned from StaticsProp for now. (move to a Utils later)
+    private static JExpression lhsBaseExpr (JExpression expr) {
+        if (expr instanceof JArrayAccessExpression) {
+            return lhsBaseExpr(((JArrayAccessExpression)expr).getPrefix());
+        } 
+        if (expr instanceof JFieldAccessExpression) {
+            JFieldAccessExpression fexpr = (JFieldAccessExpression)expr;
+            if (fexpr.getPrefix() instanceof JThisExpression
+                || fexpr.getPrefix() instanceof JClassExpression) {
+                // field of named class or of 'this' class: is as
+                // far as we can go.
+                return (JExpression)fexpr;
+            } else {
+                return lhsBaseExpr(fexpr.getPrefix());
+            }
+        } 
+        if (expr instanceof JLocalVariableExpression) {
+            return expr;
+        }
+        assert false:expr;
+        return expr;      // for idiotic Java typechecker
+    }
+
     /**
      * Does the actual work on <filter>.
      */
-    private void propagate(SIRStream filter)
-    {
+    private void propagate(SIRStream filter) {
         findCandidates(filter);
 
-	//	System.out.println("--------------------");
-	//System.out.println("Candidates Fields : ");
-	Iterator keyIter = this.types.keySet().iterator();
-	while(keyIter.hasNext()) {
-	  Object f = keyIter.next();
-	  /*	  System.out.println("Field: " + f +
-			     "  " + this.types.get(f) +
-			     " --> " + this.fields.get(f));
-	  */
-	  
-	}
+        // System.out.println("--------------------");
+        // System.out.println("Candidates Fields : ");
+        // Iterator keyIter = this.types.keySet().iterator();
+        // while (keyIter.hasNext()) {
+        //    Object f = */ keyIter.next();
+        //    System.out.println("Field: " + f + " " + this.types.get(f)
+        //      + " --> " + this.fields.get(f));
+        // }
 
-	doPropagation(filter);
+        doPropagation(filter);
     }
     
-    /** Helper function to determine if a field has been invalidated. */
+    /** Helper function to determine if a field has been invalidated. 
+     * 
+     * a field name is invalidated if it is contained in 'nofields'
+     */
     private boolean isFieldInvalidated(String name)
     {
         return nofields.contains(name);
     }
 
-    /** Helper function to determine if an array slot has been invalidated. */
+    /** Helper function to determine if an array slot has been invalidated. 
+     * 
+     * an array slot is invalidated if the array field is invalidated or
+     * if a boolean array exists in 'noarrays' for the array name and
+     * the slot is invalidated (true)  in the boolean array.
+     */
     private boolean isArrayInvalidated(String name, int slot)
     {
         if (isFieldInvalidated(name)) return true;
@@ -147,7 +264,10 @@ public class FieldProp implements Constants
         return bary[slot];
     }
 
-    /** Helper function to invalidate a particular field. */
+    /** Helper function to invalidate a particular field. 
+     *
+     * (move its name from 'fields' to 'noields')
+     */
     private void invalidateField(String name)
     {
 	//      System.out.println("Invalidating field: " + name);
@@ -174,9 +294,18 @@ public class FieldProp implements Constants
 	    exprs[slot] = null;
     }
 
-    /** Helper function to invalidate whatever a particular expression
-        points to.  No effect if the expression isn't a field-access
-        or array-access expression. */
+    /** 
+     * Helper function to invalidate whatever a particular expression
+     * points to.  
+     *  
+     *   No effect if the expression isn't a field-access
+     *   or array-access expression.
+     *   
+     *   WTF: only invalidates JFieldAccessExpression,
+     *   not JArrayAccessExpression (which is not sub-class)
+     *   so appears to not be doing it's documented job on
+     *   arrays.
+     */
     private void invalidateExpression(JExpression expr)
     {
         if (expr instanceof JFieldAccessExpression)
@@ -190,7 +319,11 @@ public class FieldProp implements Constants
         }
     }
 
-    /** Helper function to determine if a field can be propagated. */
+    /** Helper function to determine if a field can be propagated. 
+     * 
+     * a field can propagate if it has already been added to 'fields'
+     * but has not been subsequently invalidated (moved to 'nofields') 
+     */
     private boolean canFieldPropagate(String name)
     {
         if (isFieldInvalidated(name)) return false;
@@ -198,7 +331,12 @@ public class FieldProp implements Constants
         return true;
     }
 
-    /** Helper function to determine if an array slot can be propagated. */
+    /** Helper function to determine if an array slot can be propagated. 
+     * 
+     * An array slot can be propagated if neither the array as a whole
+     * nor the slot has been invalidated and if the slot contains an
+     * (non-null) JExpression.
+     */
     private boolean canArrayPropagate(String name, int slot)
     {
         if (isFieldInvalidated(name)) return false;
@@ -222,7 +360,10 @@ public class FieldProp implements Constants
         return exprs[slot];
     }
 
-    /** Force a literal JExpression type to a particular other type. */
+    /** Force a literal JExpression type to a particular other type. 
+     * 
+     * looks like forces double literals to be float literals, else no-op
+     */
     private JExpression forceLiteralType(JExpression expr, CType type)
     {
         switch(type.getTypeID())
@@ -236,7 +377,13 @@ public class FieldProp implements Constants
         return expr;
     }
 
-    /** Notice that a field variable has a constant assignment. */
+    /** Notice that a field variable has a constant assignment. 
+     * 
+     * in fact, does not live up to the coment above:
+     * if field already has been noticed to have an assignment
+     * then it is invalidated.  So we are tracking single assignment
+     * to a field, not all assignments to field being the same value.
+     */
     private void noticeFieldAssignment(String name, JExpression value)
     {
         // If the field has already been invalidated, stop now.
@@ -268,11 +415,17 @@ public class FieldProp implements Constants
         CType atype = (CType)types.get(name);
         value = forceLiteralType(value, ((CArrayType)atype).getBaseType());
         JExpression[] exprs = (JExpression[])arrays.get(name);
-	if(exprs!=null)
-	    exprs[slot] = value;
+        if(exprs!=null) exprs[slot] = value;
     }
 
-    /** Notice that an array exists with a fixed size. */
+    /** Notice that an array exists with a fixed size. 
+     * 
+     *  updates: arrays
+     *  
+     *  If the name is not invalidated and 'arrays' does not already
+     *  contain the name, then create a new array of (null) expressions
+     *  in 'arrays'
+     */
     private void noticeArrayCreation(String name, int size)
     {
         // Punt if the field has been invalidated, or if the array
@@ -283,12 +436,30 @@ public class FieldProp implements Constants
         arrays.put(name, exprs);
     }
 
-    /** Look for candidate fields in a filter. */
+    /** Look for candidate fields in a filter. 
+     * 
+     * First sets up 'types' for all declared fields.
+     * Then puts fields and 1-d array slots assigned a 
+     * single constant into 'fields' and 'arrays'
+     * possibly invalidating them as it goes...
+     * 
+     * Then looks at assignment statements to fields in 'this' 
+     * and "notices" all fields that are assigned a scalar value.
+     * Also "notices" assignments of literals to constant offsets
+     * of 1-d arrays that are fields. 
+     * 
+     * Compound assignments, prefix and postfix result in
+     * the fields being immediately invalidated.
+     *
+     */
     private void findCandidates(SIRStream filter)
     {
         JFieldDeclaration[] fields = filter.getFields();
         for (int i = 0; i < fields.length; i++)
         {
+            // WTF: the visitor should only be necessary if 
+            // field declarations can be nested.  Else simple
+            // loop should do.
             fields[i].accept(new SLIREmptyVisitor() {
                     public void visitFieldDeclaration(JFieldDeclaration self,
                                                       int modifiers,
@@ -296,8 +467,8 @@ public class FieldProp implements Constants
                                                       String ident,
                                                       JExpression expr)
                     {
-		      // add entry to name->type mapping
-		      types.put(ident, type);
+                        // add entry to name->type mapping
+                        types.put(ident, type);
                     }
                 });
         }
@@ -407,122 +578,134 @@ public class FieldProp implements Constants
         }
     }
 
-    /** Replace previously-notice candidate fields. */
-    private void doPropagation(SIRStream filter)
-    {
+    /** Replace previously-notice candidate fields. 
+     * 
+     * Visitor propagates into  rhs of assignments,
+     * field expressions, array access expressions.
+     * 
+     * Visitor is applied in method bodies, field initializers,
+     * and push / pop / peek expressions of a (phased)filter.
+     * 
+     * After visiting a method, calls Propagate with all the 
+     * local (scalar) variables of the method that have a single
+     * constant assignment.  A Propagator is also run over the
+     * push / peek / pop expressions and the field initializers.
+     */
+    private void doPropagation(SIRStream filter) {
         JMethodDeclaration[] meths = filter.getMethods();
         SLIRReplacingVisitor theVisitor = new SLIRReplacingVisitor() {
-                    public Object visitAssignmentExpression
-                        (JAssignmentExpression self,
-                         JExpression left,
-                         JExpression right)
-                    {
-                        // Don't visit the left-hand side of the
-                        // expression.
-			// Visit if Array Expression --jasperln
-			if(left instanceof JArrayAccessExpression)
-			    ((JArrayAccessExpression)left).setAccessor((JExpression)((JArrayAccessExpression)left).getAccessor().accept(this));
-                        return new JAssignmentExpression
-                            (self.getTokenReference(),
-                             left,
-                             (JExpression)right.accept(this));
-                    }
-                    
-                    public Object visitFieldExpression
-                        (JFieldAccessExpression self,
-                         JExpression left,
-                         String ident)
-                    {
-                        Object orig =
-                            super.visitFieldExpression(self, left, ident);
-                        if (canFieldPropagate(ident))
-                            return propagatedField(ident);
-                        else
-                            return orig;
-                    }
+            public Object visitAssignmentExpression(JAssignmentExpression self,
+                    JExpression left, JExpression right) {
+                // Don't visit the left-hand side of the
+                // expression unless it is an array access,
+                // in which case visit it to propagate constants
+                // in the subscripts.
+                if (left instanceof JArrayAccessExpression)
+                    ((JArrayAccessExpression) left)
+                            .setAccessor((JExpression) ((JArrayAccessExpression) left)
+                                    .getAccessor().accept(this));
+                return new JAssignmentExpression(self.getTokenReference(),
+                        left, (JExpression) right.accept(this));
+            }
 
-                    public Object visitArrayAccessExpression
-                        (JArrayAccessExpression self,
-                         JExpression pfx,
-                         JExpression acc)
-                    {
-                        // Recurse so we have something to return.
-                        Object orig =
-                            super.visitArrayAccessExpression(self, pfx, acc);
-                        // Take a harder look at what we have...
-                        if (!(pfx instanceof JFieldAccessExpression))
-                            return orig;
-                        JFieldAccessExpression fae =
-                            (JFieldAccessExpression)pfx;
-                        if (!(fae.getPrefix() instanceof JThisExpression))
-                            return orig;
-                        // Okay, the base is a FAE with this.  Yay.
-                        // Save its name.
-                        String name = fae.getIdent();
-                        // Now, is the offset an integer literal?
-                        if (!(acc instanceof JIntLiteral))
-                            return orig;
-                        // Yay, we win (hopefully).
-                        int slot = ((JIntLiteral)acc).intValue();
-                        if (canArrayPropagate(name, slot))
-                            return propagatedArray(name, slot);
-                        else
-                            return orig;
-                    }
-            };
-        for (int i = 0; i < meths.length; i++)
-        {
+            public Object visitFieldExpression(JFieldAccessExpression self,
+                    JExpression left, String ident) {
+                Object orig = super.visitFieldExpression(self, left, ident);
+                if (canFieldPropagate(ident))
+                    return propagatedField(ident);
+                else
+                    return orig;
+            }
+
+            public Object visitArrayAccessExpression(
+                    JArrayAccessExpression self, JExpression pfx,
+                    JExpression acc) {
+                // Recurse so we have something to return.
+                Object orig = super.visitArrayAccessExpression(self, pfx, acc);
+                // Take a harder look at what we have...
+                if (!(pfx instanceof JFieldAccessExpression))
+                    return orig;
+                JFieldAccessExpression fae = (JFieldAccessExpression) pfx;
+                if (!(fae.getPrefix() instanceof JThisExpression))
+                    return orig;
+                // Okay, the base is a FAE with this. Yay.
+                // Save its name.
+                String name = fae.getIdent();
+                // Now, is the offset an integer literal?
+                if (!(acc instanceof JIntLiteral))
+                    return orig;
+                // Yay, we win (hopefully).
+                int slot = ((JIntLiteral) acc).intValue();
+                if (canArrayPropagate(name, slot))
+                    return propagatedArray(name, slot);
+                else
+                    return orig;
+            }
+        };
+        for (int i = 0; i < meths.length; i++) {
             meths[i].accept(theVisitor);
             // Also run some simple algebraic simplification now.
             meths[i].accept(new Propagator(findLocals(meths[i])));
-	    // Raise Variable Declarations to beginning of block
-	    //meths[i].accept(new VarDeclRaiser());
+            // Raise Variable Declarations to beginning of block
+            // meths[i].accept(new VarDeclRaiser());
         }
-        // If this is a filter, also run on I/O rates and other field initializers
-        if (filter instanceof SIRPhasedFilter)
-        {
-            SIRPhasedFilter filt = (SIRPhasedFilter)filter;
+        // If this is a filter, also run on I/O rates and other field
+        // initializers
+        if (filter instanceof SIRPhasedFilter) {
+            SIRPhasedFilter filt = (SIRPhasedFilter) filter;
             Propagator prop = new Propagator(new Hashtable());
 
-	    for (int j=0; j<filter.getMethods().length; j++) {
-		JMethodDeclaration method = filter.getMethods()[j];
+            for (int j = 0; j < filter.getMethods().length; j++) {
+                JMethodDeclaration method = filter.getMethods()[j];
 
-		// pop
-		JExpression newPop = (JExpression)method.getPop().accept(theVisitor);
-		newPop = (JExpression)newPop.accept(prop);
-		if (newPop!=null && newPop!=method.getPop()) {
-		    method.setPop(newPop);
-		}
-		// peek
-		JExpression newPeek = (JExpression)method.getPeek().accept(theVisitor);
-		newPeek = (JExpression)newPeek.accept(prop);
-		if (newPeek!=null && newPeek!=method.getPeek()) {
-		    method.setPeek(newPeek);
-		}
-		// push
-		JExpression newPush = (JExpression)method.getPush().accept(theVisitor);
-		newPush = (JExpression)newPush.accept(prop);
-		if (newPush!=null && newPush!=method.getPush()) {
-		    method.setPush(newPush);
-		}
-		
-		// field initializers
-		JFieldDeclaration[] fields = filter.getFields();
-		for (int i=0; i<fields.length; i++) {
-		    JVariableDefinition var = fields[i].getVariable();
-		    if (var.hasInitializer()) {
-			JExpression origInit = var.getValue();
-			JExpression newInit = (JExpression)origInit.accept(theVisitor);
-			newInit = (JExpression)newInit.accept(prop);
-			if (newInit!=origInit) {
-			    var.setValue(newInit);
-			}
-		    }
-		}
-	    }
+                // pop
+                JExpression newPop = (JExpression) method.getPop().accept(
+                        theVisitor);
+                newPop = (JExpression) newPop.accept(prop);
+                if (newPop != null && newPop != method.getPop()) {
+                    method.setPop(newPop);
+                }
+                // peek
+                JExpression newPeek = (JExpression) method.getPeek().accept(
+                        theVisitor);
+                newPeek = (JExpression) newPeek.accept(prop);
+                if (newPeek != null && newPeek != method.getPeek()) {
+                    method.setPeek(newPeek);
+                }
+                // push
+                JExpression newPush = (JExpression) method.getPush().accept(
+                        theVisitor);
+                newPush = (JExpression) newPush.accept(prop);
+                if (newPush != null && newPush != method.getPush()) {
+                    method.setPush(newPush);
+                }
+
+                // field initializers
+                JFieldDeclaration[] fields = filter.getFields();
+                for (int i = 0; i < fields.length; i++) {
+                    JVariableDefinition var = fields[i].getVariable();
+                    if (var.hasInitializer()) {
+                        JExpression origInit = var.getValue();
+                        JExpression newInit = (JExpression) origInit
+                                .accept(theVisitor);
+                        newInit = (JExpression) newInit.accept(prop);
+                        if (newInit != origInit) {
+                            var.setValue(newInit);
+                        }
+                    }
+                }
+            }
         }
     }
 
+    
+    /**
+     * Find local scalar variables of method with a single literal
+     * assignment.  (Fed into Propagate in doPropagation above.)
+     * 
+     * @param meth
+     * @return
+     */
     private Hashtable findLocals(JMethodDeclaration meth)
     {
         final Hashtable yes = new Hashtable();
@@ -606,13 +789,5 @@ public class FieldProp implements Constants
             });
         return yes;
     }
-
-
-
-
-
-
-
-
 
 }

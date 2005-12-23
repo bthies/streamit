@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/uns/bin/perl -w
 ###############################################################################
 # Preprocess a .str.pre file.
 #

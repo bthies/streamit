@@ -37,6 +37,7 @@ public class ClusterBackend implements FlatVisitor {
     //public static Simulator simulator;
     // get the execution counts from the scheduler
 
+    static boolean debugPrint = false;
 
     //given a flatnode map to the execution count
     public static HashMap initExecutionCounts;
@@ -57,7 +58,7 @@ public class ClusterBackend implements FlatVisitor {
     
     public void visitNode(FlatNode node) 
     {
-	filter2Node.put(node.contents, node);
+        filter2Node.put(node.contents, node);
     }
 
 
@@ -93,6 +94,16 @@ public class ClusterBackend implements FlatVisitor {
 	System.out.println("  rename1 is: "+KjcOptions.rename1);
 	System.out.println("  rename2 is: "+KjcOptions.rename2);
 
+	if (debugPrint) {
+        SIRGlobal[] globals;
+        if (global != null) {
+            globals = new SIRGlobal[1];
+            globals[0] = global;
+        } else globals = new SIRGlobal[0];
+        System.out.println("// str on entry to Cluster backend");
+        SIRToStreamIt.run(str,interfaces,interfaceTables,structs,globals);
+        System.out.println("// END str on entry to Cluster backend");
+   }
 	structures = structs;
 	
 	// set number of columns/rows
@@ -106,7 +117,27 @@ public class ClusterBackend implements FlatVisitor {
 	
 	//this must be run now, FlatIRToC relies on it!!!
 	RenameAll.renameAllFilters(str);
-	
+
+    // Perform propagation on fields from 'static' sections.
+    Set statics = new HashSet();
+    if (global != null)
+        statics.add(global);
+    Map associatedGlobals = StaticsProp.propagate(str, statics);
+
+    if (debugPrint) {
+            System.err.println("// str after RenameAll and StaticsProp");
+            SIRGlobal[] globals;
+            if (global != null) {
+                globals = new SIRGlobal[1];
+                globals[0] = global;
+            } else {
+                globals = new SIRGlobal[0];
+            }
+            SIRToStreamIt.run(str, interfaces, interfaceTables, structs,
+                    globals);
+            System.err.println("// END str after RenameAll and StaticsProp");
+        }
+
 	// propagate constants and unroll loop
 	System.out.print("Running Constant Prop and Unroll...");
 
@@ -114,12 +145,16 @@ public class ClusterBackend implements FlatVisitor {
 	// Set unrolling factor to <= 4 for loops that don't involve
 	//  any tape operations.
 	Unroller.setLimitNoTapeLoops(true, 4);
-	ConstantProp.propagateAndUnroll(str);
+    
+    ConstantProp.propagateAndUnroll(str);
 
-	System.out.println(" done.");
+    // do constant propagation on fields
+    System.out.print("Running Constant Field Propagation...");
+    ConstantProp.propagateAndUnroll(str, true);
+    if (debugPrint) {SIRToStreamIt.run(str,interfaces,interfaceTables,structs);}
 
-        // add initPath functions
-        EnqueueToInitPath.doInitPath(str);
+    // add initPath functions
+    EnqueueToInitPath.doInitPath(str);
 
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
@@ -131,13 +166,10 @@ public class ClusterBackend implements FlatVisitor {
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
 
-        // do constant propagation on fields
-	System.out.print("Running Constant Field Propagation...");
-	FieldProp.doPropagate(str);
-	System.out.println(" done.");
 
 	// expand array initializers loaded from a file
 	ArrayInitExpander.doit(str);
+    System.out.println(" done.");
 
 	//System.out.println("Analyzing Branches..");
 	//new BlockFlattener().flattenBlocks(str);

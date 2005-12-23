@@ -438,7 +438,7 @@ results of "qmtest run" to a file.
 
 If you run a complete test and want to compare it to a standard
 regression test for some date, try:
-   qmtest -o ./results.xml ./results.qmr 
+   qmtest report -o ./results.xml ./results.qmr 
    ./regtest/qmtest/summarize_xml_results ./results.xml \
  /home/bits8/streamit/regtest/latest/streams/results.xml
 to compare with most recent regtest, or replace 'latest' with a

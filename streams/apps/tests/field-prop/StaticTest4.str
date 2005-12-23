@@ -1,0 +1,66 @@
+void->void pipeline StaticTest4 {
+    add source;
+    add doit(m,n);
+    add sink;
+}
+
+void->int filter source {
+    int i = 0;
+    work push 1 {
+	push(i++);
+    }
+}
+
+int->int filter doit (int pushrate, int poprate) {
+    int i;
+    work push pushrate pop poprate {
+	i = 0;
+	int j;
+	for (j = 0; j < poprate; j++) {
+	    i += pop() + blocks_per_macroblock[pushrate];
+	}
+	int k;
+	for (k = 0; k < pushrate; k++) {
+	    push(i);
+	}
+    }
+}
+
+int->void filter sink{
+    work pop 1 {
+	println (pop());
+    }
+}
+
+struct vlc_table_entry {
+  int code;
+  int len; // Length of code in bits
+  int value;
+}
+
+static {
+  int[4] blocks_per_macroblock; // Index is the chroma format
+  int[4] bpmb2 = {0, 6, 8, 12};
+  vlc_table_entry[3] const_macroblock_address_inc;  // Table B1
+  int const_macroblock_address_inc_len = 3;
+
+    int n = 3;
+    int m;
+    init {
+	m = 2;
+
+  blocks_per_macroblock[0] = 0; // ERROR - you must have set it incorrectly
+  blocks_per_macroblock[1] = 6;
+  blocks_per_macroblock[2] = 8;
+  blocks_per_macroblock[3] = 12; 
+  const_macroblock_address_inc[0].code = 1;
+  const_macroblock_address_inc[0].len = 1;
+  const_macroblock_address_inc[0].value = 1;
+  const_macroblock_address_inc[1].code = 3;
+  const_macroblock_address_inc[1].len = 3;
+  const_macroblock_address_inc[1].value = 2;
+  const_macroblock_address_inc[2].code = 2;
+  const_macroblock_address_inc[2].len = 3;
+  const_macroblock_address_inc[2].value = 3;
+    }
+}

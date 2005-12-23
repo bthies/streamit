@@ -19,13 +19,15 @@ package streamit.frontend.nodes;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-
+import streamit.frontend.tojava.*;
 import java.util.ArrayList;
 
 /**
- * Replaces nodes in a front-end tree.  This is a skeleton for writing
+ * Replaces nodes in a front-end tree.  
+ * 
+ * This is a skeleton for writing
  * replacing passes, which implements <code>FEVisitor</code>.  On its
- * own it does nothing, but it is a convenice class for deriving your
+ * own it does nothing, but it is a convenience class for deriving your
  * own replacers from.  All of the member functions of
  * <code>FEReplacer</code> return objects of appropriate types
  * (<code>Expression</code> subclasses return
@@ -52,7 +54,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.37 2005-07-18 22:09:15 janiss Exp $
+ * @version $Id: FEReplacer.java,v 1.38 2005-12-23 15:08:42 dimock Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -548,6 +550,9 @@ public class FEReplacer implements FEVisitor
         return new StmtPhase(stmt.getContext(), (ExprFunCall)newFc);
     }
 
+//    public Object visitStmtAddPhase(StmtAddPhase stmt) {
+//        Expression peek = 
+//    }
     public Object visitStmtPush(StmtPush stmt)
     {
         Expression newValue = doExpression(stmt.getValue());
@@ -667,5 +672,70 @@ public class FEReplacer implements FEVisitor
     }
     
     public Object visitStreamType(StreamType type) { return type; }
-    public Object visitOther(FENode node) { return node; }
+    public Object visitOther(FENode node) { 
+        // streamit.frontend.tojava.StmtSetTypes: has only types
+        // not processed.
+        if (node instanceof StmtSetTypes) return node;
+	// streamit.frontend.tojava.ExprJavaConstructor: has only types
+        if (node instanceof ExprJavaConstructor) return node;
+	
+        
+        // streamit.frontend.tojava.StmtIODecl: has rate declaration 
+        // expressions getRate1(), getRate2()
+        if (node instanceof StmtIODecl) {
+            boolean changed = false;
+            Expression oldRate1 = ((StmtIODecl)node).getRate1();
+            Expression newRate1 = null;
+            if (oldRate1 != null) {
+                newRate1 = (Expression)oldRate1.accept(this);
+                if (oldRate1 != newRate1) { changed = true; }
+            }
+            Expression oldRate2 = ((StmtIODecl)node).getRate2();
+            Expression newRate2 = null;
+            if (oldRate2 != null) {
+                newRate2 = (Expression)oldRate2.accept(this);
+                if (oldRate2 != newRate2) { changed = true; }
+            }
+            if (! changed) return node;
+            return new StmtIODecl(node.getContext(),
+                    ((StmtIODecl)node).getName(),
+                    ((StmtIODecl)node).getType(),
+                    newRate1, newRate2);
+        }
+        // streamit.frontend.tojava.StmtAddPhase:
+        // need to visit expressions getPeek(), getPop(), getPush()
+        if (node instanceof StmtAddPhase) {
+            boolean changed = false;
+            Expression oldPeek = ((StmtAddPhase)node).getPeek();
+            Expression newPeek = null;
+            if (oldPeek != null) {
+                newPeek = (Expression)oldPeek.accept(this);
+                if (oldPeek != newPeek) { changed = true; }
+            }
+            Expression oldPop = ((StmtAddPhase)node).getPop();
+            Expression newPop = null;
+            if (oldPop != null) {
+                newPop = (Expression)oldPop.accept(this);
+                if (oldPop != newPop) { changed = true; }
+            }
+            Expression oldPush = ((StmtAddPhase)node).getPush();
+            Expression newPush = null;
+            if (oldPush != null) {
+                newPush = (Expression)oldPush.accept(this);
+                if (oldPush != newPush) { changed = true; }
+            }
+            if (! changed) return node;
+            return new StmtAddPhase(node.getContext(),
+                    ((StmtAddPhase)node).isInit(),
+                    newPeek, newPop, newPush, 
+                    ((StmtAddPhase)node).getName());
+        }
+        // Some other case of visitOther that we have not seen yet
+        
+        System.err.println(this.getClass().getName() 
+                + " visitOther for "
+                + node.getClass().getName()
+                + " may require support in code");
+                return node; 
+    }
 }

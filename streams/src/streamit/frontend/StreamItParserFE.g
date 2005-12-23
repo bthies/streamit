@@ -11,12 +11,12 @@
  * software without specific, written prior permission.
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is"
- * without express or implied warranty.
+ * without express or implied warranty. 
  */
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.60 2005-07-18 20:31:39 janiss Exp $
+ * $Id: StreamItParserFE.g,v 1.61 2005-12-23 15:08:42 dimock Exp $
  */
 
 header {
@@ -98,55 +98,68 @@ stream_decl returns [StreamSpec ss] { ss = null; StreamType st; }
 		(ss=filter_decl[st] | ss=struct_stream_decl[st])
 	;
 
-global_decl returns [StreamSpec ss] { ss = null; FEContext context = null; StreamSpec body; }
-	:	tg:TK_global
+global_decl returns [StreamSpec ss] 
+{ ss = null; FEContext context = null; StreamSpec body; }
+	:	tg:TK_static
 		{ context = getContext(tg); }
 		body=global_body[context]
 		{ ss = body; }
 	;
 
-global_body[FEContext context] returns [StreamSpec ss] { ss = null; List init = new ArrayList(); 
-	List vars = new ArrayList(); Statement s = null; FieldDecl decl; }
-	:	t:LCURLY
-		( (global_statement) => s=global_statement { if (s != null) init.add(s); } 
-		| decl=field_decl SEMI { 
+global_body[FEContext context] returns [StreamSpec ss] 
+{ ss = null; List vars = new ArrayList(); List funcs = new ArrayList();
+	Function fn; FieldDecl decl; }
+	:	LCURLY
+        ( decl=field_decl SEMI { vars.add(decl); })* 
+        ( fn=init_decl { funcs.add(fn); } )?
+        RCURLY
+        { StreamType st = new StreamType(context, 
+ 		                           new TypePrimitive(TypePrimitive.TYPE_VOID),
+		                           new TypePrimitive(TypePrimitive.TYPE_VOID));
+          ss = new StreamSpec(context, StreamSpec.STREAM_GLOBAL, st,
+                              "TheGlobal", Collections.EMPTY_LIST,
+                              vars, funcs); }
+        ; 
 
-			// need to separate initializers from field
-			// declarations to ensure that initializations
-			// are performed in the correct order!
+// 		( (global_statement) => s=global_statement { if (s != null) init.add(s); } 
+// 		| decl=field_decl SEMI { 
 
-			FEContext ctx = decl.getContext();
-			int num = decl.getNumFields();
+// 			// need to separate initializers from field
+// 			// declarations to ensure that initializations
+// 			// are performed in the correct order!
 
-			List names = decl.getNames();
-			List types = decl.getTypes();
-			List inits = decl.getInits();
-			List new_inits = new ArrayList(num);
+// 			FEContext ctx = decl.getContext();
+// 			int num = decl.getNumFields();
 
-			for (int i = 0; i < num; i++) {
-				Expression iexpr = (Expression)inits.get(i);
-				if (iexpr != null) {
-					init.add(new StmtAssign(ctx, 
-						new ExprVar(ctx, (String)names.get(i)),
-						iexpr));
-				}
-				new_inits.add(null);
-			}
+// 			List names = decl.getNames();
+// 			List types = decl.getTypes();
+// 			List inits = decl.getInits();
+// 			List new_inits = new ArrayList(num);
 
-			vars.add(new FieldDecl(ctx, types, names, new_inits)); 
+// 			for (int i = 0; i < num; i++) {
+// 				Expression iexpr = (Expression)inits.get(i);
+// 				if (iexpr != null) {
+// 					init.add(new StmtAssign(ctx, 
+// 						new ExprVar(ctx, (String)names.get(i)),
+// 						iexpr));
+// 				}
+// 				new_inits.add(null);
+// 			}
 
-		}
-		)* 
-		RCURLY
-		{ 
-	StreamType st = new StreamType(context, 
-		new TypePrimitive(TypePrimitive.TYPE_VOID),
-		new TypePrimitive(TypePrimitive.TYPE_VOID));	
-	ss = new StreamSpec(context, StreamSpec.STREAM_GLOBAL,
-				st, "TheGlobal", Collections.EMPTY_LIST, vars,
-				Collections.singletonList(Function.newInit(context, new StmtBlock(getContext(t), init))));
-		}
-	;
+// 			vars.add(new FieldDecl(ctx, types, names, new_inits)); 
+
+// 		}
+// 		)* 
+// 		RCURLY
+// 		{ 
+// 	StreamType st = new StreamType(context, 
+// 		new TypePrimitive(TypePrimitive.TYPE_VOID),
+// 		new TypePrimitive(TypePrimitive.TYPE_VOID));	
+// 	ss = new StreamSpec(context, StreamSpec.STREAM_GLOBAL,
+// 				st, "TheGlobal", Collections.EMPTY_LIST, vars,
+// 				Collections.singletonList(Function.newInit(context, new StmtBlock(getContext(t), init))));
+// 		}
+// 	;
 
 global_statement returns [Statement s] { s = null; }
 	:	(expr_statement) => s=expr_statement SEMI! 
@@ -816,4 +829,4 @@ helper_decl returns [TypeHelper th]
 		RCURLY
 		{ th = new TypeHelper(getContext(t), id.getText(), funcs); }
 	;
-
+        

@@ -22,18 +22,20 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Front-end visitor pass that maintains a symbol table.  Other
- * passes that need symbol table information can extend this.
+ * Front-end visitor pass that maintains a symbol table. 
+ * 
+ * Other passes that need symbol table information can extend this.
  * The protected <code>symtab</code> member has the prevailing
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.17 2005-07-13 22:19:15 janiss Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.18 2005-12-23 15:08:42 dimock Exp $
  */
+
 public class SymbolTableVisitor extends FEReplacer
 {
 
-    protected StreamSpec global;
+    //protected StreamSpec global;
 
     /**
      * The current symbol table.  Functions in this class keep the
@@ -182,36 +184,38 @@ public class SymbolTableVisitor extends FEReplacer
         return result;
     }
 
-    public Object visitProgram(Program prog)
-    {
+ /**
+  * Top level visitor, sets up some useful info.
+  * 
+  * structsByName will map struct names to TypeStruct's
+  * helpersByName will map helper function names to TypeHelper's
+  * symtab will be initialized for all fields for static's
+  */
+    public Object visitProgram(Program prog) {
         // Examine and register structure members, then recurse normally.
-        for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
-        {
-            TypeStruct struct = (TypeStruct)iter.next();
+        for (Iterator iter = prog.getStructs().iterator(); iter.hasNext();) {
+            TypeStruct struct = (TypeStruct) iter.next();
             structsByName.put(struct.getName(), struct);
         }
-	for (Iterator iter = prog.getHelpers().iterator(); iter.hasNext(); )
-	{
-	    TypeHelper helper = (TypeHelper)iter.next();
-	    helpersByName.put(helper.getName(), helper);
-	}
+        for (Iterator iter = prog.getHelpers().iterator(); iter.hasNext();) {
+            TypeHelper helper = (TypeHelper) iter.next();
+            helpersByName.put(helper.getName(), helper);
+        }
         symtab = new SymbolTable(symtab); // table for globals
-        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
-	{
-	    StreamSpec spec = (StreamSpec)iter.next();
-	    if (spec.getType() == StreamSpec.STREAM_GLOBAL) {
-		for (Iterator _iter = spec.getVars().iterator(); _iter.hasNext(); ) {
-		    FieldDecl var = (FieldDecl)_iter.next();
-		    int num = var.getNumFields();
-		    for (int y = 0; y < num; y++) {
-			symtab.registerVar(var.getName(y),
-					   actualType(var.getType(y)),
-					   var,
-					   SymbolTable.KIND_GLOBAL);
-		    }
-		}
-	    }
-	}
+        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext();) {
+            StreamSpec spec = (StreamSpec) iter.next();
+            if (spec.getType() == StreamSpec.STREAM_GLOBAL) {
+                for (Iterator _iter = spec.getVars().iterator(); _iter
+                        .hasNext();) {
+                    FieldDecl var = (FieldDecl) _iter.next();
+                    int num = var.getNumFields();
+                    for (int y = 0; y < num; y++) {
+                        symtab.registerVar(var.getName(y), actualType(var
+                                .getType(y)), var, SymbolTable.KIND_GLOBAL);
+                    }
+                }
+            }
+        }
         return super.visitProgram(prog);
     }
     

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldDeclaration.java,v 1.11 2005-01-23 00:33:01 thies Exp $
+ * $Id: JFieldDeclaration.java,v 1.12 2005-12-23 15:12:52 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -91,6 +91,16 @@ public class JFieldDeclaration extends JMemberDeclaration {
     return variable;
   }
 
+  /**
+   * Allow setting a new variable name.
+   * 
+   * For performing variable renaming in situ.
+   * 
+   * @param _variable   The new variable definition
+   */
+  public void setVariable(JVariableDefinition _variable) {
+      variable = _variable;
+  }
   // ----------------------------------------------------------------------
   // INTERFACE CHECKING
   // ----------------------------------------------------------------------

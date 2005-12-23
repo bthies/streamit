@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldAccessExpression.java,v 1.13 2005-01-23 00:33:01 thies Exp $
+ * $Id: JFieldAccessExpression.java,v 1.14 2005-12-23 15:12:52 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -97,6 +97,15 @@ public class JFieldAccessExpression extends JExpression {
      */
     public String getIdent() {
 	return ident;
+    }
+
+    /**
+     * Allows setting of Ident to rename a field in place.
+     * Please use cautiously.
+     */
+
+    public void setIdent(String _ident) {
+	ident = _ident;
     }
 
     /**

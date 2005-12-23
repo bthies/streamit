@@ -7,26 +7,56 @@ import at.dms.kjc.*;
 import at.dms.kjc.lir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.compiler.*;
+import at.dms.kjc.common.CodegenPrintWriter;
+import at.dms.kjc.common.CodeGenerator;
 
 /**
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.16 2005-12-21 20:02:58 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.17 2005-12-23 15:15:11 dimock Exp $
  */
 public class SIRToStreamIt
-    extends at.dms.util.Utils
-    implements Constants, SLIRVisitor, AttributeStreamVisitor
+    implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
 {
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    //protected boolean			forInit;	// is on a for init
+    protected String  className;
+    protected boolean isStruct;
+    protected boolean toplevel;
+
+    private CodegenPrintWriter p;
+    protected boolean nl = true;
+    protected boolean declOnly = false;
+
+    protected int portalCount;
+    protected Map portalNames;
+    protected SIROperator theStream;
     /**
      * >0 when in a for loop header.
      */
     private int forLoopHeader;
-    /*
-     * Test code: top-level entry point if you are processing SIR that
-     * has not been compiled at all -- i.e., the stream graph has not
+
+    // ------------------------------------------------------------------------
+    // METHODS
+    // -----------------------------------------------------------------------
+
+    public CodegenPrintWriter getPrinter() { return p; }
+    
+    /**
+     * Top-level entry point if you are processing SIR that
+     * has not been compiled at all.
+     *
+     * -- i.e., the stream graph has not
      * been unrolled.  This includes the stream graph unrolling as
      * part of its processing.
+     * 
+     * If you are using 'static' sections and have not yet run StaticProp
+     * you mat get error messages about non-constant parameters etc.
      */
     public static void runBeforeCompiler(SIRStream str,
                            JInterfaceDeclaration[] interfaces,
@@ -44,8 +74,10 @@ public class SIRToStreamIt
 	run(str, interfaces, interfaceTables, structs);
     }
 	
-    /*
-     * Test code: top-level entry point.  For use on stream graphs
+    /**
+     * Top-level entry point.  
+     *
+     * For use on stream graphs
      * that have already been expanded in the compiler.
      */
     public static void run(SIRStream str,
@@ -54,7 +86,7 @@ public class SIRToStreamIt
                            SIRStructure[] structs) {
         System.out.println("*/");
 	
-	SIRToStreamIt s2s = new SIRToStreamIt(new TabbedPrintWriter(new PrintWriter(System.err)));
+	SIRToStreamIt s2s = new SIRToStreamIt();
 
         for (int i = 0; i < structs.length; i++)
         {
@@ -65,9 +97,36 @@ public class SIRToStreamIt
         for (int i = 0; i < interfaces.length; i++)
             interfaces[i].accept(s2s);
         s2s.visitAnyStream(str);
+        System.err.println(s2s.getPrinter().getString());
         s2s.close();
     }
 
+    // Version using globals
+    public static void run(SIRStream str,
+        JInterfaceDeclaration[] interfaces,
+        SIRInterfaceTable[] interfaceTables,
+        SIRStructure[] structs,
+        SIRGlobal[] globals) {
+
+        run(str, interfaces, interfaceTables, structs);
+        for (int i = 0; i < globals.length; i++) {
+            runOnGlobal(globals[i]);
+        }
+    }
+    
+    public static void runOnGlobal(SIRGlobal global) {
+        SIRToStreamIt s2s = new SIRToStreamIt();
+        s2s.processGlobal(global);
+        System.err.println(s2s.getPrinter().getString());
+        s2s.close();
+    }
+    
+    public static void runNonRecursive(SIRStream str) {
+        SIRToStreamIt s2s = new SIRToStreamIt();
+        str.accept(s2s);
+        System.err.println(s2s.getPrinter().getString());
+        s2s.close();
+    }
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
     // ----------------------------------------------------------------------
@@ -77,24 +136,23 @@ public class SIRToStreamIt
      */
     private SIRToStreamIt() {
         this(null);
-        this.str = new StringWriter();
-        this.p = new TabbedPrintWriter(str);
+        this.p = new CodegenPrintWriter();
     }
 
     /**
-     * Generates code for <flatClass> and sends to System.out.
+     * Generates code for <flatClass> and sends to System.err.
      */
     public static void generateCode(JClassDeclaration flat) {
 	System.out.println("*/");	
-        SIRToStreamIt s2s = new SIRToStreamIt(new TabbedPrintWriter(new PrintWriter(System.out)));
+        SIRToStreamIt s2s = new SIRToStreamIt(new CodegenPrintWriter(new PrintWriter(System.out)));
 
         // Print all of the portals.
         for (int i = 0; i < SIRPortal.getPortals().length; i++) {
 
-            s2s.print("portal ");
+            s2s.getPrinter().print("portal ");
             SIRPortal.getPortals()[i].accept(s2s);
-            s2s.print(";");
-            s2s.newLine();
+            s2s.getPrinter().print(";");
+            s2s.getPrinter().newLine();
         }
 
 	flat.accept(s2s);
@@ -105,11 +163,9 @@ public class SIRToStreamIt
      * construct a pretty printer object for java code
      * @param	fileName		the file into the code is generated
      */
-    private SIRToStreamIt(TabbedPrintWriter p) {
+    private SIRToStreamIt(CodegenPrintWriter p) {
         this.p = p;
         this.toplevel = false;
-        this.str = null;
-        this.pos = 0;
         this.portalCount = 0;
         this.portalNames = new java.util.HashMap();
         this.seenStreams = new java.util.HashSet();
@@ -123,15 +179,8 @@ public class SIRToStreamIt
         p.close();
     }
 
-    public void setPos(int pos) {
-        this.pos = pos;
-    }
-
     public String getString() {
-        if (str != null)
-            return str.toString();
-        else
-            return null;
+	return p.getString();
     }
 
     // ----------------------------------------------------------------------
@@ -157,7 +206,7 @@ public class SIRToStreamIt
                 {
                     theStream = o;
                     o.accept(this);
-                    newLine();
+                    p.newLine();
                 }
             }
         }
@@ -186,12 +235,12 @@ public class SIRToStreamIt
         }
         if (inType != null && outType != null)
         {
-            print(inType);
-            print("->");
-            print(outType);
-            print(" ");
+            typePrint(inType);
+            p.print("->");
+            typePrint(outType);
+            p.print(" ");
         }
-        print(type);
+        p.print(type);
         if (self.getIdent() != null)
         {
             // if the parent is null, this is the top-level stream;
@@ -199,9 +248,9 @@ public class SIRToStreamIt
             // ident rather than its [unique] name so the class name
             // matches the filename
             if (self.getParent() == null)
-                print(" " + self.getIdent());
+                p.print(" " + self.getIdent());
             else
-                print(" " + self.getName());
+                p.print(" " + self.getName());
         }
 
         // In SIR, streams don't have parameter lists, but their
@@ -210,38 +259,58 @@ public class SIRToStreamIt
         JFormalParameter[] parameters = init.getParameters();
         if (parameters.length > 0)
         {
-            print("(");
+            p.print("(");
             boolean first = true;
             
             for (int i = 0; i < parameters.length; i++) {
                 if (!first)
-                    print(", ");
+                    p.print(", ");
                 first = false;
                 parameters[i].accept(this);
             }
-            print(")");
+            p.print(")");
         }
         
-        newLine();
+        p.newLine();
     }
 
     public Object visitStructure(SIRStructure self,
                                  JFieldDeclaration[] fields)
     {
-        print("struct " + self.getIdent());
-        newLine();
-        print("{");
-        pos += TAB_SIZE;
+        p.print("struct " + self.getIdent());
+        p.newLine();
+        p.print("{");
+        p.indent();
         for (int i = 0; i < fields.length; i++)
             fields[i].accept(this);
-        pos -= TAB_SIZE;
-        newLine();
-        print("}");
-        newLine();
-        newLine();
+        p.outdent();
+        p.newLine();
+        p.print("}");
+        p.newLine();
+        p.newLine();
         return null;
     }
 
+    // Global sections are not part of the stream graph and
+    // thus can not be visited from the root of the stream graph.
+  
+    public void processGlobal(SIRGlobal self) {
+        JFieldDeclaration[] fields = self.getFields();
+        JMethodDeclaration[] methods = self.getMethods();
+
+        p.print("static /*" + self.getIdent() + "*/ {");
+        p.newLine();
+        p.indent();
+        for (int i = 0; i < fields.length; i++)
+            fields[i].accept(this);
+        for (int i = 0; i < methods.length; i++)
+            methods[i].accept(this);
+        p.outdent();
+        p.newLine();
+        p.print("}");
+        p.newLine();
+    }
+    
     /* visit a filter */
     public Object visitFilter(SIRFilter self,
                               JFieldDeclaration[] fields,
@@ -251,17 +320,17 @@ public class SIRToStreamIt
                               CType inputType, CType outputType)
     {
         printHeader(self, "filter");
-        print("{");
-        newLine();
-        pos += TAB_SIZE;
+        p.print("{");
+        p.newLine();
+        p.indent();
         for (int i = 0; i < fields.length; i++)
             fields[i].accept(this);
 	for (int i=0; i < methods.length; i++)
 	    methods[i].accept(this);
-        pos -= TAB_SIZE;
-        newLine();
-        print("}");
-        newLine();
+        p.outdent();
+        p.newLine();
+        p.print("}");
+        p.newLine();
         return null;
     }
   
@@ -285,12 +354,12 @@ public class SIRToStreamIt
                                 JExpression[] weights)
     {
         if (type.isDuplicate())
-            print("split duplicate;");
+            p.print("split duplicate;");
         else if (type.isNull())
-            print("split roundrobin(0);");
+            p.print("split roundrobin(0);");
         else if (type.isRoundRobin())
         {
-            print("split roundrobin(");
+            p.print("split roundrobin(");
 
             // Check (the hard way) for a uniform round-robin.
             boolean uniform = false;
@@ -304,7 +373,7 @@ public class SIRToStreamIt
             }
 
             if (uniform)
-                print(self.getWeight(0));
+                p.print(self.getWeight(0));
             else
             {
                 boolean first = true;
@@ -312,13 +381,13 @@ public class SIRToStreamIt
                 {
                     assert weights[i] != null;
                     if (!first)
-                        print(", ");
+                        p.print(", ");
                     first = false;
                     weights[i].accept(this);
                 }
             }
             
-            print(");");
+            p.print(");");
         }
         else
             assert false : self;
@@ -331,10 +400,10 @@ public class SIRToStreamIt
                               JExpression[] weights)
     {
         if (type.isNull())
-            print("join roundrobin(0);");
+            p.print("join roundrobin(0);");
         else if (type.isRoundRobin())
         {
-            print("join roundrobin(");
+            p.print("join roundrobin(");
 
             // Check (the hard way) for a uniform round-robin.
             boolean uniform = false;
@@ -348,7 +417,7 @@ public class SIRToStreamIt
             }
 
             if (uniform)
-                print(self.getWeight(0));
+                p.print(self.getWeight(0));
             else
             {
                 boolean first = true;
@@ -356,13 +425,13 @@ public class SIRToStreamIt
                 {
                     assert weights[i] != null;
                     if (!first)
-                        print(", ");
+                        p.print(", ");
                     first = false;
                     weights[i].accept(this);
                 }
             }
             
-            print(");");
+            p.print(");");
         }
         else
             assert false : self;
@@ -378,7 +447,7 @@ public class SIRToStreamIt
         printHeader(self, "pipeline");
         toplevel = true;
         init.getBody().accept(this);
-        newLine();
+        p.newLine();
         return null;
     }
 
@@ -393,7 +462,7 @@ public class SIRToStreamIt
         printHeader(self, "splitjoin");
         toplevel = true;
         init.getBody().accept(this);
-        newLine();
+        p.newLine();
         return null;
     }
 
@@ -407,7 +476,7 @@ public class SIRToStreamIt
         printHeader(self, "feedbackloop");
         toplevel = true;
         init.getBody().accept(this);
-        newLine();
+        p.newLine();
         return null;
     }
 
@@ -426,26 +495,26 @@ public class SIRToStreamIt
         if (packageName.getName().length() > 0) {
             packageName.accept(this);
             if (importedPackages.length + importedClasses.length > 0) {
-                newLine();
+                p.newLine();
             }
         }
 
         for (int i = 0; i < importedPackages.length ; i++) {
             if (!importedPackages[i].getName().equals("java/lang")) {
                 importedPackages[i].accept(this);
-                newLine();
+                p.newLine();
             }
         }
 
         for (int i = 0; i < importedClasses.length ; i++) {
             importedClasses[i].accept(this);
-            newLine();
+            p.newLine();
         }
 
         for (int i = 0; i < typeDeclarations.length ; i++) {
-            newLine();
+            p.newLine();
             typeDeclarations[i].accept(this);
-            newLine();
+            p.newLine();
         }
     }
 
@@ -497,9 +566,9 @@ public class SIRToStreamIt
             }
         }
 
-        newLine();
-        print("typedef struct " + className + " {");
-        pos += TAB_SIZE;
+        p.newLine();
+        p.print("typedef struct " + className + " {");
+        p.indent();
         if (body != null) {
             for (int i = 0; i < body.length ; i++) {
                 if (body[i] instanceof JFieldDeclaration)
@@ -510,12 +579,12 @@ public class SIRToStreamIt
             fields[i].accept(this);
         }    
 
-        pos -= TAB_SIZE;
-        newLine();
+        p.outdent();
+        p.newLine();
         if (isStruct)
-            print("} " + className + ";");
+            p.print("} " + className + ";");
         else
-            print("} _" + className + ", *" + className + ";");
+            p.print("} _" + className + ", *" + className + ";");
 
         // Print function prototypes for each of the methods.
         declOnly = true;
@@ -541,8 +610,8 @@ public class SIRToStreamIt
                                            JPhylum[] body,
                                            JFieldDeclaration[] fields,
                                            JMethodDeclaration[] methods) {
-        print(" {");
-        pos += TAB_SIZE;
+        p.print(" {");
+        p.indent();
         for (int i = 0; i < decls.length ; i++) {
             decls[i].accept(this);
         }
@@ -555,9 +624,9 @@ public class SIRToStreamIt
         for (int i = 0; i < body.length ; i++) {
             body[i].accept(this);
         }
-        pos -= TAB_SIZE;
-        newLine();
-        print("}");
+        p.outdent();
+        p.newLine();
+        p.print("}");
     }
 
     /**
@@ -581,39 +650,39 @@ public class SIRToStreamIt
             String pname = name + "_params";
 
             // Print the parameter structure.
-            newLine();
-            print("typedef struct " + pname + " {");
-            pos += TAB_SIZE;
+            p.newLine();
+            p.print("typedef struct " + pname + " {");
+            p.indent();
             for (int j = 0; j < params.length; j++) {
-                newLine();
-                print(params[j]);
-                print(" p" + j + ";");
+                p.newLine();
+                typePrint(params[j]);
+                p.print(" p" + j + ";");
             }
-            pos -= TAB_SIZE;
-            newLine();
-            print("} _" + pname + ", *" + pname + ";");
+            p.outdent();
+            p.newLine();
+            p.print("} _" + pname + ", *" + pname + ";");
 
             // And now print a wrapper for send_message().
-            newLine();
-            print("void send_" + name + "(portal p, latency l");
+            p.newLine();
+            p.print("void send_" + name + "(portal p, latency l");
             for (int j = 0; j < params.length; j++) {
-                print(", ");
-                print(params[j]);
-                print(" p" + j);
+                p.print(", ");
+                typePrint(params[j]);
+                p.print(" p" + j);
             }
-            print(") {");
-            pos += TAB_SIZE;
-            newLine();
-            print(pname + " q = malloc(sizeof(_" + pname + "));");
+            p.print(") {");
+            p.indent();
+            p.newLine();
+            p.print(pname + " q = malloc(sizeof(_" + pname + "));");
             for (int j = 0; j < params.length; j++) {
-                newLine();
-                print("q->p" + j + " = p" + j + ";");
+                p.newLine();
+                p.print("q->p" + j + " = p" + j + ";");
             }
-            newLine();
-            print("send_message(p, " + i + ", l, q);");
-            pos -= TAB_SIZE;
-            newLine();
-            print("}");
+            p.newLine();
+            p.print("send_message(p, " + i + ", l, q);");
+            p.outdent();
+            p.newLine();
+            p.print("}");
         }        
     }
 
@@ -629,15 +698,15 @@ public class SIRToStreamIt
                                       CType type,
                                       String ident,
                                       JExpression expr) {
-        newLine();
-        print (type);
-        print (" ");
-        print (ident);
+        p.newLine();
+        typePrint(type);
+        p.print(" ");
+        p.print(ident);
         if (expr != null) {
-            print (" = ");
+            p.print(" = ");
             expr.accept (this);
         }
-        print(";");
+        p.print(";");
     }
 
     /**
@@ -650,32 +719,32 @@ public class SIRToStreamIt
                                        JFormalParameter[] parameters,
                                        CClassType[] exceptions,
                                        JBlock body) {
-        newLine();
+        p.newLine();
         // TODO: figure out what kind of function this is
         // (phase, handler, helper are special).
 
         // Treat init and work functions specially.
         if (ident.equals("init") || ident.equals("work"))
         {
-            print(ident);
+            p.print(ident);
         }
 	else if (ident.equals("initWork")) 
 	{
 	    // initWork is the compiler's name for "prework"
-	    print("prework");
+	    p.print("prework");
 	}
         else
         {
-            // print(CModifier.toString(modifiers));
-            print(returnType);
-            print(" ");
-            print(ident);
-            print("(");
+            // p.print(CModifier.toString(modifiers));
+            typePrint(returnType);
+            p.print(" ");
+            p.print(ident);
+            p.print("(");
             int count = 0;
             
             for (int i = 0; i < parameters.length; i++) {
                 if (count != 0) {
-                    print(", ");
+                    p.print(", ");
                 }
                 
                 // if (!parameters[i].isGenerated()) {
@@ -683,16 +752,16 @@ public class SIRToStreamIt
                 count++;
                 // }
             }
-            print(")");
+            p.print(")");
         }
 
         // Print I/O rates for initWork function, if they're available.
         if (ident.equals("initWork")) // or a phase function?
         {
             SIRTwoStageFilter filter = (SIRTwoStageFilter)theStream;
-	    print(" pop " + filter.getInitPop());
-	    print(" peek " + filter.getInitPeek());
-	    print(" push " + filter.getInitPush());
+	    p.print(" pop " + filter.getInitPop());
+	    p.print(" peek " + filter.getInitPeek());
+	    p.print(" push " + filter.getInitPush());
         }
 
         // Print I/O rates for work function, if they're available.
@@ -701,34 +770,34 @@ public class SIRToStreamIt
             SIRFilter filter = (SIRFilter)theStream;
             if (filter.getPop() != null)
             {
-                print(" pop ");
+                p.print(" pop ");
                 filter.getPop().accept(this);
             }
             if (filter.getPeek() != null)
             {
-                print(" peek ");
+                p.print(" peek ");
                 filter.getPeek().accept(this);
             }
             if (filter.getPush() != null)
             {
-                print(" push ");
+                p.print(" push ");
                 filter.getPush().accept(this);
             }
         }
         
         if (declOnly)
         {
-            print(";");
+            p.print(";");
             return;
         }
 
-        newLine();
+        p.newLine();
         if (body != null) {
             body.accept(this);
         } else {
-            print(";");
+            p.print(";");
         }
-        newLine();
+        p.newLine();
     }
 
     /**
@@ -741,36 +810,36 @@ public class SIRToStreamIt
                                             CClassType[] exceptions,
                                             JConstructorBlock body)
     {
-        newLine();
-        print(CModifier.toString(modifiers));
-        print(ident);
-        print("_");
-        print(ident);
-        print("(");
+        p.newLine();
+        p.print(CModifier.toString(modifiers));
+        p.print(ident);
+        p.print("_");
+        p.print(ident);
+        p.print("(");
         int count = 0;
         for (int i = 0; i < parameters.length; i++) {
             if (count != 0) {
-                print(", ");
+                p.print(", ");
             }
             if (!parameters[i].isGenerated()) {
                 parameters[i].accept(this);
                 count++;
             }
         }
-        print(")");
+        p.print(")");
         /*
           for (int i = 0; i < exceptions.length; i++) {
           if (i != 0) {
-          print(", ");
+          p.print(", ");
           } else {
-          print(" throws ");
+          p.print(" throws ");
           }
-          print(exceptions[i].toString());
+          p.print(exceptions[i].toString());
           }
         */
-        print(" ");
+        p.print(" ");
         body.accept(this);
-        newLine();
+        p.newLine();
     }
 
     // ----------------------------------------------------------------------
@@ -783,9 +852,9 @@ public class SIRToStreamIt
     public void visitWhileStatement(JWhileStatement self,
                                     JExpression cond,
                                     JStatement body) {
-        print("while (");
+        p.print("while (");
         cond.accept(this);
-        print(") ");
+        p.print(") ");
 
         body.accept(this);
     }
@@ -804,10 +873,10 @@ public class SIRToStreamIt
     {
 	JExpression[] dims = expr.getDims();
 	for (int i = 0 ; i < dims.length; i++) {
-	    print("[");
+	    p.print("[");
 	    SIRToStreamIt toC = new SIRToStreamIt(this.p);
 	    dims[i].accept(toC);
-	    print("]");
+	    p.print("]");
 	}
     }
 
@@ -819,25 +888,25 @@ public class SIRToStreamIt
                                         CType type,
                                         String ident,
                                         JExpression expr) {
-        // print(CModifier.toString(modifiers));
+        // p.print(CModifier.toString(modifiers));
         // Uh, hmm, maybe we should do this conversion globally in
         // SIR.  But in this case we know the type a little better
         // than we do just from Java.
         if (expr != null && expr instanceof JNewArrayExpression)
         {
             assert type instanceof CArrayType;
-            print(((CArrayType)type).getElementType());
+            typePrint(((CArrayType)type).getElementType());
             printLocalArrayDecl((JNewArrayExpression)expr);
         }
         else
-            print(type);
-        print(" ");
-        print(ident);
+            typePrint(type);
+        p.print(" ");
+        p.print(ident);
         if (expr != null && !(expr instanceof JNewArrayExpression)) {
-            print(" = ");
+            p.print(" = ");
             expr.accept(this);
 	}
-        print(";");
+        p.print(";");
     }
 
     /**
@@ -848,7 +917,7 @@ public class SIRToStreamIt
                                        JCatchClause[] catchClauses) {
         // Not legit StreamIt code!
         assert false;
-        print("try ");
+        p.print("try ");
         tryClause.accept(this);
         for (int i = 0; i < catchClauses.length; i++) {
             catchClauses[i].accept(this);
@@ -863,10 +932,10 @@ public class SIRToStreamIt
                                          JBlock finallyClause) {
         // Not legit StreamIt code!
         assert false;
-        print("try ");
+        p.print("try ");
         tryClause.accept(this);
         if (finallyClause != null) {
-            print(" finally ");
+            p.print(" finally ");
             finallyClause.accept(this);
         }
     }
@@ -878,9 +947,9 @@ public class SIRToStreamIt
                                     JExpression expr) {
         // Not legit StreamIt code!
         assert false;
-        print("throw ");
+        p.print("throw ");
         expr.accept(this);
-        print(";");
+        p.print(";");
     }
 
     /**
@@ -891,9 +960,9 @@ public class SIRToStreamIt
                                            JStatement body) {
         // Not legit StreamIt code!
         assert false;
-        print("synchronized (");
+        p.print("synchronized (");
         cond.accept(this);
-        print(") ");
+        p.print(") ");
         body.accept(this);
     }
 
@@ -903,14 +972,14 @@ public class SIRToStreamIt
     public void visitSwitchStatement(JSwitchStatement self,
                                      JExpression expr,
                                      JSwitchGroup[] body) {
-        print("switch (");
+        p.print("switch (");
         expr.accept(this);
-        print(") {");
+        p.print(") {");
         for (int i = 0; i < body.length; i++) {
             body[i].accept(this);
         }
-        newLine();
-        print("}");
+        p.newLine();
+        p.print("}");
     }
 
     /**
@@ -918,12 +987,12 @@ public class SIRToStreamIt
      */
     public void visitReturnStatement(JReturnStatement self,
                                      JExpression expr) {
-        print("return");
+        p.print("return");
         if (expr != null) {
-            print(" ");
+            p.print(" ");
             expr.accept(this);
         }
-        print(";");
+        p.print(";");
     }
 
     /**
@@ -932,7 +1001,7 @@ public class SIRToStreamIt
     public void visitLabeledStatement(JLabeledStatement self,
                                       String label,
                                       JStatement stmt) {
-        print(label + ":");
+        p.print(label + ":");
         stmt.accept(this);
     }
 
@@ -943,22 +1012,24 @@ public class SIRToStreamIt
                                  JExpression cond,
                                  JStatement thenClause,
                                  JStatement elseClause) {
-        print("if (");
+        p.print("if (");
         cond.accept(this);
-        print(") ");
-        pos += thenClause instanceof JBlock ? 0 : TAB_SIZE;
+        p.print(") ");
+        if (!(thenClause instanceof JBlock)) p.indent();
         thenClause.accept(this);
-        pos -= thenClause instanceof JBlock ? 0 : TAB_SIZE;
+        if (!(thenClause instanceof JBlock)) p.outdent();
         if (elseClause != null) {
             if ((elseClause instanceof JBlock) || (elseClause instanceof JIfStatement)) {
-                print(" ");
+                p.print(" ");
             } else {
-                newLine();
+                p.newLine();
             }
-            print("else ");
-            pos += elseClause instanceof JBlock || elseClause instanceof JIfStatement ? 0 : TAB_SIZE;
+            p.print("else ");
+            if (!(elseClause instanceof JBlock 
+                  || elseClause instanceof JIfStatement)) p.indent();
             elseClause.accept(this);
-            pos -= elseClause instanceof JBlock || elseClause instanceof JIfStatement ? 0 : TAB_SIZE;
+            if (!(elseClause instanceof JBlock 
+                || elseClause instanceof JIfStatement)) p.outdent();
         }
     }
 
@@ -971,20 +1042,20 @@ public class SIRToStreamIt
                                   JStatement incr,
                                   JStatement body) {
 	forLoopHeader++;
-        print("for (");
+        p.print("for (");
         //forInit = true;
         if (init != null) {
             init.accept(this);
 	} else {
-	    print(";");
+	    p.print(";");
 	}
 	//forInit = false;
 
-        print(" ");
+        p.print(" ");
         if (cond != null) {
             cond.accept(this);
         }
-        print("; ");
+        p.print("; ");
 
         if (incr != null) {
 	    SIRToStreamIt l2c = new SIRToStreamIt();
@@ -993,17 +1064,17 @@ public class SIRToStreamIt
 	    String str = l2c.getString();
 	    // leave off the trailing semicolon if there is one
 	    if (str.endsWith(";")) {
-		print(str.substring(0, str.length()-1));
+		p.print(str.substring(0, str.length()-1));
 	    } else { 
-		print(str);
+		p.print(str);
 	    }
         }
 	forLoopHeader--;
-        print(")");
-        newLine();
-        pos += TAB_SIZE;
+        p.print(")");
+        p.newLine();
+        p.indent();
         body.accept(this);
-        pos -= TAB_SIZE;
+        p.outdent();
     }
 
     /**
@@ -1022,19 +1093,19 @@ public class SIRToStreamIt
             if (body[i] instanceof JIfStatement &&
                 i < body.length - 1 &&
                 !(body[i + 1] instanceof JReturnStatement)) {
-                newLine();
+                p.newLine();
             }
             if (body[i] instanceof JReturnStatement && i > 0) {
-                newLine();
+                p.newLine();
             }
 
-            newLine();
+            p.newLine();
             body[i].accept(this);
 
             if (body[i] instanceof JVariableDeclarationStatement &&
                 i < body.length - 1 &&
                 !(body[i + 1] instanceof JVariableDeclarationStatement)) {
-                newLine();
+                p.newLine();
             }
         }
     }
@@ -1069,7 +1140,7 @@ public class SIRToStreamIt
         
         expr.accept(this);
         //if (!forInit) {
-            print(";");
+            p.print(";");
 	    //}
     }
 
@@ -1080,11 +1151,11 @@ public class SIRToStreamIt
                                              JExpression[] expr) {
         for (int i = 0; i < expr.length; i++) {
             if (i != 0) {
-                print(", ");
+                p.print(", ");
             }
             expr[i].accept(this);
         }
-	print(";");
+	p.print(";");
     }
 
     /**
@@ -1094,8 +1165,8 @@ public class SIRToStreamIt
 	//if we are inside a for loop header, we need to print 
 	//the ; of an empty statement
 	if (forLoopHeader > 0) {
-	    newLine();
-	    print(";");
+	    p.newLine();
+	    p.print(";");
 	}
 
     }
@@ -1106,13 +1177,13 @@ public class SIRToStreamIt
     public void visitDoStatement(JDoStatement self,
                                  JExpression cond,
                                  JStatement body) {
-        newLine();
-        print("do ");
+        p.newLine();
+        p.print("do ");
         body.accept(this);
-        print("");
-        print("while (");
+        p.print("");
+        p.print("while (");
         cond.accept(this);
-        print(");");
+        p.print(");");
     }
 
     /**
@@ -1120,12 +1191,12 @@ public class SIRToStreamIt
      */
     public void visitContinueStatement(JContinueStatement self,
                                        String label) {
-        newLine();
-        print("continue");
+        p.newLine();
+        p.print("continue");
         if (label != null) {
-            print(" " + label);
+            p.print(" " + label);
         }
-        print(";");
+        p.print(";");
     }
 
     /**
@@ -1133,12 +1204,12 @@ public class SIRToStreamIt
      */
     public void visitBreakStatement(JBreakStatement self,
                                     String label) {
-        newLine();
-        print("break");
+        p.newLine();
+        p.print("break");
         if (label != null) {
-            print(" " + label);
+            p.print(" " + label);
         }
-        print(";");
+        p.print(";");
     }
 
     /**
@@ -1149,8 +1220,8 @@ public class SIRToStreamIt
         boolean wasToplevel = toplevel;
         toplevel = false;
         
-        print("{");
-        pos += TAB_SIZE;
+        p.print("{");
+        p.indent();
         visitCompoundStatement(self.getStatementArray());
         if (comments != null) {
             visitComments(comments);
@@ -1165,17 +1236,17 @@ public class SIRToStreamIt
             if (theStream instanceof SIRSplitJoin)
             {
                 SIRSplitJoin sj = (SIRSplitJoin)theStream;
-                newLine();
+                p.newLine();
                 sj.getSplitter().accept(this);
-                newLine();
+                p.newLine();
                 sj.getJoiner().accept(this);
             }
             if (theStream instanceof SIRFeedbackLoop)
             {
                 SIRFeedbackLoop fl = (SIRFeedbackLoop)theStream;
-                newLine();
+                p.newLine();
                 fl.getJoiner().accept(this);
-                newLine();
+                p.newLine();
                 fl.getSplitter().accept(this);
             }
             if (theStream instanceof SIRContainer)
@@ -1188,14 +1259,14 @@ public class SIRToStreamIt
                     // synthesize an SIRInitStatement, then visit
                     // it to print an add/body/loop statement and
                     // enqueue the stream's code to be printed.
-                    newLine();
+                    p.newLine();
                     new SIRInitStatement(params, child).accept(this);
                 }
             }
         }
-        pos -= TAB_SIZE;
-        newLine();
-        print("}");
+        p.outdent();
+        p.newLine();
+        p.print("}");
     }
 
     /**
@@ -1216,10 +1287,10 @@ public class SIRToStreamIt
     public void visitUnaryPlusExpression(JUnaryExpression self,
                                          JExpression expr)
     {
-	print("(");
-        print("+");
+	p.print("(");
+        p.print("+");
         expr.accept(this);
-	print(")");
+	p.print(")");
     }
 
     /**
@@ -1228,10 +1299,10 @@ public class SIRToStreamIt
     public void visitUnaryMinusExpression(JUnaryExpression self,
                                           JExpression expr)
     {
-	print("(");
-        print("-");
+	p.print("(");
+        p.print("-");
         expr.accept(this);
-	print(")");
+	p.print(")");
     }
 
     /**
@@ -1240,10 +1311,10 @@ public class SIRToStreamIt
     public void visitBitwiseComplementExpression(JUnaryExpression self,
 						 JExpression expr)
     {
-	print("(");
-        print("~");
+	p.print("(");
+        p.print("~");
         expr.accept(this);
-	print(")");
+	p.print(")");
     }
 
     /**
@@ -1252,10 +1323,10 @@ public class SIRToStreamIt
     public void visitLogicalComplementExpression(JUnaryExpression self,
 						 JExpression expr)
     {
-	print("(");
-        print("!");
+	p.print("(");
+        p.print("!");
         expr.accept(this);
-	print(")");
+	p.print(")");
     }
 
     /**
@@ -1263,9 +1334,9 @@ public class SIRToStreamIt
      */
     public void visitTypeNameExpression(JTypeNameExpression self,
                                         CType type) {
-	print("(");
-        print(type);
-	print(")");
+	p.print("(");
+    typePrint(type);
+	p.print(")");
     }
 
     /**
@@ -1281,7 +1352,7 @@ public class SIRToStreamIt
      * prints a super expression
      */
     public void visitSuperExpression(JSuperExpression self) {
-        print("super");
+        p.print("super");
     }
 
     /**
@@ -1291,17 +1362,17 @@ public class SIRToStreamIt
                                      int oper,
                                      JExpression left,
                                      JExpression right) {
-	print("(");
+	p.print("(");
         left.accept(this);
         if (oper == OPE_SL) {
-            print(" << ");
+            p.print(" << ");
         } else if (oper == OPE_SR) {
-            print(" >> ");
+            p.print(" >> ");
         } else {
-            print(" >>> ");
+            p.print(" >>> ");
         }
         right.accept(this);
-	print(")");
+	p.print(")");
     }
 
     /**
@@ -1311,26 +1382,26 @@ public class SIRToStreamIt
                                           int oper,
                                           JExpression left,
                                           JExpression right) {
-	print("(");
+	p.print("(");
         left.accept(this);
         switch (oper) {
         case OPE_LT:
-            print(" < ");
+            p.print(" < ");
             break;
         case OPE_LE:
-            print(" <= ");
+            p.print(" <= ");
             break;
         case OPE_GT:
-            print(" > ");
+            p.print(" > ");
             break;
         case OPE_GE:
-            print(" >= ");
+            p.print(" >= ");
             break;
         default:
             assert false : self;
         }
         right.accept(this);
-	print(")");
+	p.print(")");
     }
 
     /**
@@ -1342,9 +1413,9 @@ public class SIRToStreamIt
         // Maybe should be parenthesized, but exists in very
         // limited contexts.
         if (oper == OPE_PREINC) {
-            print("++");
+            p.print("++");
         } else {
-            print("--");
+            p.print("--");
         }
         expr.accept(this);
     }
@@ -1357,9 +1428,9 @@ public class SIRToStreamIt
                                        JExpression expr) {
         expr.accept(this);
         if (oper == OPE_POSTINC) {
-            print("++");
+            p.print("++");
         } else {
-            print("--");
+            p.print("--");
         }
     }
 
@@ -1368,9 +1439,9 @@ public class SIRToStreamIt
      */
     public void visitParenthesedExpression(JParenthesedExpression self,
                                            JExpression expr) {
-        print("(");
+        p.print("(");
         expr.accept(this);
-        print(")");
+        p.print(")");
     }
 
     /**
@@ -1383,9 +1454,9 @@ public class SIRToStreamIt
                                                 JClassDeclaration decl)
     {
         prefix.accept(this);
-        print(".new " + ident + "(");
+        p.print(".new " + ident + "(");
         visitArgs(params, 0);
-        print(")");
+        p.print(")");
         // decl.genInnerJavaCode(this);
     }
 
@@ -1402,9 +1473,9 @@ public class SIRToStreamIt
 	 * this.
 
         prefix.accept(this);
-        print(".new " + ident + "(");
+        p.print(".new " + ident + "(");
         visitArgs(params, 0);
-        print(")");
+        p.print(")");
 	*/
     }
 
@@ -1420,9 +1491,9 @@ public class SIRToStreamIt
 	 * FFT6) and it doesn't make sense in C, so just removing
 	 * this.
 
-        print("new " + type + "(");
+        p.print("new " + type + "(");
         visitArgs(params, 0);
-        print(")");
+        p.print(")");
         // decl.genInnerJavaCode(this);
 	*/
     }
@@ -1434,9 +1505,9 @@ public class SIRToStreamIt
                                                  CClassType type,
                                                  JExpression[] params)
     {
-        print("new " + type + "(");
+        p.print("new " + type + "(");
         visitArgs(params, 0);
-        print(")");
+        p.print(")");
     }
 
     /**
@@ -1464,9 +1535,9 @@ public class SIRToStreamIt
         // Meaningful?
         if (prefix != null) {
             prefix.accept(this);
-            print(".");
+            p.print(".");
         }
-        print(ident);
+        p.print(ident);
     }
 
     /**
@@ -1476,13 +1547,13 @@ public class SIRToStreamIt
                                       String oper,
                                       JExpression left,
                                       JExpression right) {
-	print("(");
+	p.print("(");
         left.accept(this);
-        print(" ");
-        print(oper);
-        print(" ");
+        p.print(" ");
+        p.print(oper);
+        p.print(" ");
         right.accept(this);
-	print(")");
+	p.print(")");
     }
 
     /**
@@ -1501,11 +1572,11 @@ public class SIRToStreamIt
         // rename enqueue functions
         if (ident.startsWith("enqueue"))
             ident = "enqueue";
-        print(ident);
-        print("(");
+        p.print(ident);
+        p.print("(");
         int i = 0;
         visitArgs(args, i);
-        print(")");
+        p.print(")");
     }
 
     /**
@@ -1513,7 +1584,7 @@ public class SIRToStreamIt
      */
     public void visitLocalVariableExpression(JLocalVariableExpression self,
                                              String ident) {
-        print(ident);
+        p.print(ident);
     }
 
     /**
@@ -1523,8 +1594,8 @@ public class SIRToStreamIt
                                           JExpression expr,
                                           CType dest) {
         expr.accept(this);
-        print(" instanceof ");
-        print(dest);
+        p.print(" instanceof ");
+        typePrint(dest);
     }
 
     /**
@@ -1534,11 +1605,11 @@ public class SIRToStreamIt
                                         boolean equal,
                                         JExpression left,
                                         JExpression right) {
-	print("(");
+	p.print("(");
         left.accept(this);
-        print(equal ? " == " : " != ");
+        p.print(equal ? " == " : " != ");
         right.accept(this);
-	print(")");
+	p.print(")");
     }
 
     /**
@@ -1548,13 +1619,13 @@ public class SIRToStreamIt
                                            JExpression cond,
                                            JExpression left,
                                            JExpression right) {
-	print("(");
+	p.print("(");
         cond.accept(this);
-        print(" ? ");
+        p.print(" ? ");
         left.accept(this);
-        print(" : ");
+        p.print(" : ");
         right.accept(this);
-	print(")");
+	p.print(")");
     }
 
     /**
@@ -1568,37 +1639,37 @@ public class SIRToStreamIt
         left.accept(this);
         switch (oper) {
         case OPE_STAR:
-            print(" *= ");
+            p.print(" *= ");
             break;
         case OPE_SLASH:
-            print(" /= ");
+            p.print(" /= ");
             break;
         case OPE_PERCENT:
-            print(" %= ");
+            p.print(" %= ");
             break;
         case OPE_PLUS:
-            print(" += ");
+            p.print(" += ");
             break;
         case OPE_MINUS:
-            print(" -= ");
+            p.print(" -= ");
             break;
         case OPE_SL:
-            print(" <<= ");
+            p.print(" <<= ");
             break;
         case OPE_SR:
-            print(" >>= ");
+            p.print(" >>= ");
             break;
         case OPE_BSR:
-            print(" >>>= ");
+            p.print(" >>>= ");
             break;
         case OPE_BAND:
-            print(" &= ");
+            p.print(" &= ");
             break;
         case OPE_BXOR:
-            print(" ^= ");
+            p.print(" ^= ");
             break;
         case OPE_BOR:
-            print(" |= ");
+            p.print(" |= ");
             break;
         }
         right.accept(this);
@@ -1629,14 +1700,14 @@ public class SIRToStreamIt
         }
         int		index = ident.indexOf("_$");
         if (index != -1) {
-            print(ident.substring(0, index));      // local var
+            p.print(ident.substring(0, index));      // local var
         } else {
             if (!(left instanceof JThisExpression))
             {
                 left.accept(this);
-                print(".");
+                p.print(".");
             }
-            print(ident);
+            p.print(ident);
         }
     }
 
@@ -1644,8 +1715,8 @@ public class SIRToStreamIt
      * prints a class expression
      */
     public void visitClassExpression(JClassExpression self, CType type) {
-        print(type);
-        print(".class");
+        typePrint(type);
+        p.print(".class");
     }
 
     /**
@@ -1655,12 +1726,12 @@ public class SIRToStreamIt
                                     JExpression expr,
                                     CType type)
     {
-	print("(");
-        print("(");
-        print(type);
-        print(")");
+	p.print("(");
+        p.print("(");
+        typePrint(type);
+        p.print(")");
         expr.accept(this);
-	print(")");
+	p.print(")");
     }
 
     /**
@@ -1670,14 +1741,14 @@ public class SIRToStreamIt
                                             JExpression expr,
                                             CType type)
     {
-	print("(");
-        print("(");
-        print(type);
-        print(")");
-        print("(");
+	p.print("(");
+        p.print("(");
+        typePrint(type);
+        p.print(")");
+        p.print("(");
         expr.accept(this);
-        print(")");
-        print(")");
+        p.print(")");
+        p.print(")");
     }
 
     /**
@@ -1687,23 +1758,23 @@ public class SIRToStreamIt
                                        int oper,
                                        JExpression left,
                                        JExpression right) {
-        print("(");
+        p.print("(");
         left.accept(this);
         switch (oper) {
         case OPE_BAND:
-            print(" & ");
+            p.print(" & ");
             break;
         case OPE_BOR:
-            print(" | ");
+            p.print(" | ");
             break;
         case OPE_BXOR:
-            print(" ^ ");
+            p.print(" ^ ");
             break;
         default:
             assert false : self;
         }
         right.accept(this);
-        print(")");
+        p.print(")");
     }
 
     /**
@@ -1717,7 +1788,7 @@ public class SIRToStreamIt
         // which doesn't allow arbitrary assignments as expressions,
         // we can ignore this.
         left.accept(this);
-        print(" = ");
+        p.print(" = ");
         right.accept(this);
     }
 
@@ -1728,7 +1799,7 @@ public class SIRToStreamIt
                                            JExpression prefix) {
         assert false : "StreamIt doesn't support Java array.length";
         prefix.accept(this);
-        print(".length");
+        p.print(".length");
     }
 
     /**
@@ -1738,9 +1809,9 @@ public class SIRToStreamIt
                                            JExpression prefix,
                                            JExpression accessor) {
         prefix.accept(this);
-        print("[");
+        p.print("[");
         accessor.accept(this);
-        print("]");
+        p.print("]");
     }
 
     /**
@@ -1763,39 +1834,39 @@ public class SIRToStreamIt
         StringTokenizer	tok = new StringTokenizer(comment.getText(), "\n");
 
         if (comment.hadSpaceBefore()) {
-            newLine();
+            p.newLine();
         }
 
         if (comment.isLineComment()) {
-            print("//");
+            p.print("//");
 	    if (tok.hasMoreTokens())
-	      print(tok.nextToken().trim());
+	      p.print(tok.nextToken().trim());
             p.println();
         } else {
             if (p.getLine() > 0) {
                 if (!nl) {
-                    newLine();
+                    p.newLine();
                 }
-                newLine();
+                p.newLine();
             }
-            print("/*");
+            p.print("/*");
             while (tok.hasMoreTokens()){
                 String comm = tok.nextToken().trim();
                 if (comm.startsWith("*")) {
                     comm = comm.substring(1).trim();
                 }
                 if (tok.hasMoreTokens() || comm.length() > 0) {
-                    newLine();
-                    print(" * " + comm);
+                    p.newLine();
+                    p.print(" * " + comm);
                 }
             }
-            newLine();
-            print(" * /");
-            newLine();
+            p.newLine();
+            p.print(" * /");
+            p.newLine();
         }
 
         if (comment.hadSpaceAfter()) {
-            newLine();
+            p.newLine();
         }
        */
     }
@@ -1808,10 +1879,10 @@ public class SIRToStreamIt
         boolean		isFirst = true;
 
         if (!nl) {
-            newLine();
+            p.newLine();
         }
-        newLine();
-        print("/**");
+        p.newLine();
+        p.print("/**");
         while (tok.hasMoreTokens()) {
             String	text = tok.nextToken().trim();
             String	type = null;
@@ -1866,7 +1937,7 @@ public class SIRToStreamIt
                 }
             }
             if (idx >= 0) {
-                newLine();
+                p.newLine();
                 isFirst = false;
                 if (param) {
                     text = text.substring(idx + type.length()).trim();
@@ -1876,33 +1947,33 @@ public class SIRToStreamIt
                         idx = 0;
                     }
                     String	before = text.substring(0, idx);
-                    print(" * " + type);
-                    pos += 12;
-                    print(before);
-                    pos += 20;
-                    print(text.substring(idx).trim());
-                    pos -= 20;
-                    pos -= 12;
+                    p.print(" * " + type);
+                    p.setIndentation(p.getIndentation() + 12);
+                    p.print(before);
+                    p.setIndentation(p.getIndentation() + 20);
+                    p.print(text.substring(idx).trim());
+                    p.setIndentation(p.getIndentation() - 20);
+                    p.setIndentation(p.getIndentation() - 12);
                 } else {
                     text = text.substring(idx + type.length()).trim();
-                    print(" * " + type);
-                    pos += 12;
-                    print(text);
-                    pos -= 12;
+                    p.print(" * " + type);
+                    p.setIndentation(p.getIndentation() + 12);
+                    p.print(text);
+                    p.setIndentation(p.getIndentation() - 12);
                 }
             } else {
                 text = text.substring(text.indexOf("*") + 1);
                 if (tok.hasMoreTokens() || text.length() > 0) {
-                    newLine();
-                    print(" * ");
-                    pos += isFirst ? 0 : 32;
-                    print(text.trim());
-                    pos -= isFirst ? 0 : 32;
+                    p.newLine();
+                    p.print(" * ");
+                    if (!isFirst) p.setIndentation(p.getIndentation() + 32);
+                    p.print(text.trim());
+                    if (!isFirst) p.setIndentation(p.getIndentation() - 32);
                 }
             }
         }
-        newLine();
-        print(" */");
+        p.newLine();
+        p.print(" */");
     }
 
     // ----------------------------------------------------------------------
@@ -1910,7 +1981,7 @@ public class SIRToStreamIt
     // ----------------------------------------------------------------------
 
     public void visitCreatePortalExpression(SIRCreatePortal self) {
-        print("create_portal()");
+        p.print("create_portal()");
     }
 
     public void visitInitStatement(SIRInitStatement self,
@@ -1922,17 +1993,17 @@ public class SIRToStreamIt
         {
             SIRFeedbackLoop fl = (SIRFeedbackLoop)theStream;
             if (stream == fl.getBody())
-                print("body ");
+                p.print("body ");
             else if (stream == fl.getLoop())
-                print("loop ");
+                p.print("loop ");
             else
             {
                 assert false : stream;
-                print("add ");
+                p.print("add ");
             }
         }
         else
-            print("add ");
+            p.print("add ");
 
         // Is stream anonymous?
         if (stream.getName() == null)
@@ -1941,20 +2012,20 @@ public class SIRToStreamIt
         {
             // Certain types of builtins have types and fixed names:
             if (stream instanceof SIRIdentity)
-                print("Identity<" + stream.getInputType() + ">");
+                p.print("Identity<" + stream.getInputType() + ">");
             else
-                print(stream.getName());
+                p.print(stream.getName());
             // Dump the parameter list, if any.
             List params = self.getArgs();
             if (!(params.isEmpty()))
             {
-                print("(");
+                p.print("(");
                 JExpression[] args =
                     (JExpression[])params.toArray(new JExpression[0]);
                 visitArgs(args, 0);
-                print(")");
+                p.print(")");
             }
-            print(";");
+            p.print(";");
             streamQueue.add(stream);
         }
     }
@@ -1965,34 +2036,34 @@ public class SIRToStreamIt
         JMethodDeclaration[] methods = self.getMethods();
         boolean first = true;
         
-        print("{ ");
+        p.print("{ ");
         for (int i = 0; i < methods.length; i++)
         {
-            if (!first) print(", ");
+            if (!first) p.print(", ");
             first = false;
-            print(iname + "_" + methods[i].getName());
+            p.print(iname + "_" + methods[i].getName());
         }
-        print("}");
+        p.print("}");
     }
     
     public void visitLatency(SIRLatency self)
     {
-        print("LATENCY_BEST_EFFORT");
+        p.print("LATENCY_BEST_EFFORT");
     }
     
     public void visitLatencyMax(SIRLatencyMax self)
     {
-        print("LATENCY_BEST_EFFORT");
+        p.print("LATENCY_BEST_EFFORT");
     }
     
     public void visitLatencyRange(SIRLatencyRange self)
     {
-        print("LATENCY_BEST_EFFORT");
+        p.print("LATENCY_BEST_EFFORT");
     }
     
     public void visitLatencySet(SIRLatencySet self)
     {
-        print("LATENCY_BEST_EFFORT");
+        p.print("LATENCY_BEST_EFFORT");
     }
 
     public void visitMessageStatement(SIRMessageStatement self,
@@ -2002,41 +2073,41 @@ public class SIRToStreamIt
                                       JExpression[] params,
                                       SIRLatency latency)
     {
-	print("send_" + iname + "_" + ident + "(");
+	p.print("send_" + iname + "_" + ident + "(");
         portal.accept(this);
-        print(", ");
+        p.print(", ");
         latency.accept(this);
         if (params != null)
             for (int i = 0; i < params.length; i++)
                 if (params[i] != null)
                 {
-                    print(", ");
+                    p.print(", ");
                     params[i].accept(this);
                 }
-        print(");");
+        p.print(");");
     }
 
     public void visitRangeExpression(SIRRangeExpression self) {
-	print("[");
+	p.print("[");
 	self.getMin().accept(this);
-	print(",");
+	p.print(",");
 	self.getAve().accept(this);
-	print(",");
+	p.print(",");
 	self.getMax().accept(this);
-	print("]");
+	p.print("]");
     }
 
     public void visitDynamicToken(SIRDynamicToken self) {
-	print("*");
+	p.print("*");
     }
 
     public void visitPeekExpression(SIRPeekExpression self,
                                     CType tapeType,
                                     JExpression num)
     {
-        print("peek(");
+        p.print("peek(");
         num.accept(this);
-        print(")");
+        p.print(")");
     }
     
     public void visitPopExpression(SIRPopExpression self,
@@ -2047,7 +2118,7 @@ public class SIRToStreamIt
         //   ...
         // }
         // Maybe we should care.
-        print("pop()");
+        p.print("pop()");
     }
     
     public void visitPortal(SIRPortal self)
@@ -2059,24 +2130,24 @@ public class SIRToStreamIt
             String theName = "__portal_" + portalCount;
             portalNames.put(self, theName);
         }
-        print(portalNames.get(self));
+        p.print(portalNames.get(self).toString());
     }
 
     public void visitPrintStatement(SIRPrintStatement self,
                                     JExpression exp)
     {
-        print("println(");
+        p.print("println(");
         exp.accept(this);
-        print(");");
+        p.print(");");
     }
     
     public void visitPushExpression(SIRPushExpression self,
                                     CType tapeType,
                                     JExpression val)
     {
-        print("push(");
+        p.print("push(");
         val.accept(this);
-        print(")");
+        p.print(")");
     }
     
     public void visitPhaseInvocation(SIRPhaseInvocation self,
@@ -2085,9 +2156,9 @@ public class SIRToStreamIt
                                      JExpression pop,
                                      JExpression push)
     {
-        print("/* phase invocation: ");
+        p.print("/* phase invocation: ");
         call.accept(this);
-        print("; */");
+        p.print("; */");
     }
 
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,
@@ -2095,7 +2166,7 @@ public class SIRToStreamIt
 					  SIRStream receiver, 
 					  JMethodDeclaration[] methods)
     {
-    	print("visitRegReceiverStatement");
+    	p.print("visitRegReceiverStatement");
 //        assert false : "TODO: implement SIR messaging";
     }
     
@@ -2103,7 +2174,7 @@ public class SIRToStreamIt
                                         String fn,
                                         SIRLatency latency)
     {
-    	print("visitRegSenderStatement");
+    	p.print("visitRegSenderStatement");
 //        assert false : "TODO: implement SIR messaging";
     }
 
@@ -2210,15 +2281,15 @@ public class SIRToStreamIt
                               LIRFunctionPointer fp)
     {
         /* This doesn't work quite right yet, but it's closer. */
-        print("FEEDBACK_DELAY(");
+        p.print("FEEDBACK_DELAY(");
         data.accept(this);
-        print(", ");
+        p.print(", ");
         streamContext.accept(this);
-        print(", " + delay + ", ");
-        print(type);
-        print(", ");
+        p.print(", " + delay + ", ");
+        typePrint(type);
+        p.print(", ");
         fp.accept(this);
-        print(");");
+        p.print(");");
     }
     
     /**
@@ -2228,11 +2299,11 @@ public class SIRToStreamIt
                         JExpression streamContext,
                         LIRFunctionPointer fp)
     {
-        print("set_encode(");
+        p.print("set_encode(");
         streamContext.accept(this);
-        print(", ");
+        p.print(", ");
         fp.accept(this);
-        print(");");
+        p.print(");");
     }
     
     /**
@@ -2244,17 +2315,17 @@ public class SIRToStreamIt
                                int ways,
                                int[] weights)
     {
-        print("set_joiner(");
+        p.print("set_joiner(");
         streamContext.accept(this);
-        print(", ");
-        print(type);
-        print(", " + String.valueOf(ways));
+        p.print(", ");
+        p.print(type.toString());
+        p.print(", " + String.valueOf(ways));
         if (weights != null)
         {
             for (int i = 0; i < weights.length; i++)
-                print(", " + String.valueOf(weights[i]));
+                p.print(", " + String.valueOf(weights[i]));
         }
-        print(");");
+        p.print(");");
     }
 
     /**
@@ -2264,9 +2335,9 @@ public class SIRToStreamIt
                       JExpression streamContext,
                       int peek)
     {
-        print("set_peek(");
+        p.print("set_peek(");
         streamContext.accept(this);
-        print(", " + peek + ");");
+        p.print(", " + peek + ");");
     }
     
     /**
@@ -2276,9 +2347,9 @@ public class SIRToStreamIt
                      JExpression streamContext,
                      int pop)
     {
-        print("set_pop(");
+        p.print("set_pop(");
         streamContext.accept(this);
-        print(", " + pop + ");");
+        p.print(", " + pop + ");");
     }
     
     /**
@@ -2288,9 +2359,9 @@ public class SIRToStreamIt
                       JExpression streamContext,
                       int push)
     {
-        print("set_push(");
+        p.print("set_push(");
         streamContext.accept(this);
-        print(", " + push + ");");
+        p.print(", " + push + ");");
     }
 
     /**
@@ -2302,15 +2373,15 @@ public class SIRToStreamIt
                                  int ways,
                                  int[] weights)
     {
-        print("set_splitter(");
+        p.print("set_splitter(");
         streamContext.accept(this);
-        print(", " + type + ", " + String.valueOf(ways));
+        p.print(", " + type + ", " + String.valueOf(ways));
         if (weights != null)
         {
             for (int i = 0; i < weights.length; i++)
-                print(", " + String.valueOf(weights[i]));
+                p.print(", " + String.valueOf(weights[i]));
         }
-        print(");");
+        p.print(");");
     }
 
     /**
@@ -2320,9 +2391,9 @@ public class SIRToStreamIt
                             JExpression streamContext,
                             LIRStreamType streamType)
     {
-        print("set_stream_type(");
+        p.print("set_stream_type(");
         streamContext.accept(this);
-        print(", " + streamType + ");");
+        p.print(", " + streamType + ");");
     }
     
     /**
@@ -2385,23 +2456,23 @@ public class SIRToStreamIt
          * Use the position'th slot on the splitter output and
          * joiner input. */
 	if (inputSize!=0) {
-	    print("create_splitjoin_tape(");
+	    p.print("create_splitjoin_tape(");
 	    streamContext.accept(this);
-	    print(", SPLITTER, OUTPUT, " + position + ", ");
+	    p.print(", SPLITTER, OUTPUT, " + position + ", ");
 	    childContext.accept(this);
-	    print(", sizeof(");
-            print(inputType);
-            print("), " + inputSize + ");");
-	    newLine();
+	    p.print(", sizeof(");
+            typePrint(inputType);
+            p.print("), " + inputSize + ");");
+	    p.newLine();
 	}
 	if (outputSize!=0) {
-	    print("create_splitjoin_tape(");
+	    p.print("create_splitjoin_tape(");
 	    streamContext.accept(this);
-	    print(", JOINER, INPUT, " + position + ", ");
+	    p.print(", JOINER, INPUT, " + position + ", ");
 	    childContext.accept(this);
-	    print(", sizeof(");
-            print(outputType);
-            print("), " + outputSize + ");");
+	    p.print(", sizeof(");
+            typePrint(outputType);
+            p.print("), " + outputSize + ");");
 	}
     }
 
@@ -2435,13 +2506,13 @@ public class SIRToStreamIt
      */
     public void visitSwitchLabel(JSwitchLabel self,
                                  JExpression expr) {
-        newLine();
+        p.newLine();
         if (expr != null) {
-            print("case ");
+            p.print("case ");
             expr.accept(this);
-            print(": ");
+            p.print(": ");
         } else {
-            print("default: ");
+            p.print("default: ");
         }
     }
 
@@ -2454,12 +2525,12 @@ public class SIRToStreamIt
         for (int i = 0; i < labels.length; i++) {
             labels[i].accept(this);
         }
-        pos += TAB_SIZE;
+        p.indent();
         for (int i = 0; i < stmts.length; i++) {
-            newLine();
+            p.newLine();
             stmts[i].accept(this);
         }
-        pos -= TAB_SIZE;
+        p.outdent();
     }
 
     /**
@@ -2468,9 +2539,9 @@ public class SIRToStreamIt
     public void visitCatchClause(JCatchClause self,
                                  JFormalParameter exception,
                                  JBlock body) {
-        print(" catch (");
+        p.print(" catch (");
         exception.accept(this);
-        print(") ");
+        p.print(") ");
         body.accept(this);
     }
 
@@ -2479,16 +2550,16 @@ public class SIRToStreamIt
      */
     public void visitBooleanLiteral(boolean value) {
         if (value)
-            print("true");
+            p.print("true");
         else
-            print("false");
+            p.print("false");
     }
 
     /**
      * prints a byte literal
      */
     public void visitByteLiteral(byte value) {
-        print("((byte)" + value + ")");
+        p.print("((byte)" + value + ")");
     }
 
     /**
@@ -2497,31 +2568,31 @@ public class SIRToStreamIt
     public void visitCharLiteral(char value) {
         switch (value) {
         case '\b':
-            print("'\\b'");
+            p.print("'\\b'");
             break;
         case '\r':
-            print("'\\r'");
+            p.print("'\\r'");
             break;
         case '\t':
-            print("'\\t'");
+            p.print("'\\t'");
             break;
         case '\n':
-            print("'\\n'");
+            p.print("'\\n'");
             break;
         case '\f':
-            print("'\\f'");
+            p.print("'\\f'");
             break;
         case '\\':
-            print("'\\\\'");
+            p.print("'\\\\'");
             break;
         case '\'':
-            print("'\\''");
+            p.print("'\\''");
             break;
         case '\"':
-            print("'\\\"'");
+            p.print("'\\\"'");
             break;
         default:
-            print("'" + value + "'");
+            p.print("'" + value + "'");
         }
     }
 
@@ -2531,42 +2602,42 @@ public class SIRToStreamIt
     public void visitDoubleLiteral(double value) {
 	System.err.println("Warning: converting double to float when printing StreamIt version of IR.\n" +
 			   "         (StreamIt does not yet have syntax for doubles.)");
-        print((float)value);
+        p.print((float)value);
     }
 
     /**
      * prints a float literal
      */
     public void visitFloatLiteral(float value) {
-        print(value);
+        p.print(value);
     }
 
     /**
      * prints a int literal
      */
     public void visitIntLiteral(int value) {
-        print(value);
+        p.print(value);
     }
 
     /**
      * prints a long literal
      */
     public void visitLongLiteral(long value) {
-        print("(" + value + "L)");
+        p.print("(" + value + "L)");
     }
 
     /**
      * prints a short literal
      */
     public void visitShortLiteral(short value) {
-        print("((short)" + value + ")");
+        p.print("((short)" + value + ")");
     }
 
     /**
      * prints a string literal
      */
     public void visitStringLiteral(String value) {
-        print('"' + value + '"');
+        p.print('"' + value + '"');
     }
 
     /**
@@ -2574,7 +2645,7 @@ public class SIRToStreamIt
      */
     public void visitNullLiteral() {
         assert false;
-        print("null");
+        p.print("null");
     }
 
     /**
@@ -2582,8 +2653,8 @@ public class SIRToStreamIt
      */
     public void visitPackageName(String name) {
         assert false;
-        // print("package " + name + ";");
-        // newLine();
+        // p.print("package " + name + ";");
+        // p.newLine();
     }
 
     /**
@@ -2591,7 +2662,7 @@ public class SIRToStreamIt
      */
     public void visitPackageImport(String name) {
         assert false;
-        // print("import " + name.replace('/', '.') + ".*;");
+        // p.print("import " + name.replace('/', '.') + ".*;");
     }
 
     /**
@@ -2599,7 +2670,7 @@ public class SIRToStreamIt
      */
     public void visitClassImport(String name) {
         assert false;
-        // print("import " + name.replace('/', '.') + ";");
+        // p.print("import " + name.replace('/', '.') + ";");
     }
 
     /**
@@ -2609,10 +2680,10 @@ public class SIRToStreamIt
                                       boolean isFinal,
                                       CType type,
                                       String ident) {
-        print(type);
+        typePrint(type);
         if (ident.indexOf("$") == -1) {
-            print(" ");
-            print(ident);
+            p.print(" ");
+            p.print(ident);
         }
     }
 
@@ -2623,7 +2694,7 @@ public class SIRToStreamIt
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 if (i + base != 0) {
-                    print(", ");
+                    p.print(", ");
                 }
                 args[i].accept(this);
             }
@@ -2637,11 +2708,11 @@ public class SIRToStreamIt
                                      boolean functorIsThis,
                                      JExpression[] params)
     {
-        newLine();
-        print(functorIsThis ? "this" : "super");
-        print("(");
+        p.newLine();
+        p.print(functorIsThis ? "this" : "super");
+        p.print("(");
         visitArgs(params, 0);
-        print(");");
+        p.print(");");
     }
 
     /**
@@ -2650,15 +2721,15 @@ public class SIRToStreamIt
     public void visitArrayInitializer(JArrayInitializer self,
                                       JExpression[] elems)
     {
-        newLine();
-        print("{");
+        p.newLine();
+        p.print("{");
         for (int i = 0; i < elems.length; i++) {
             if (i != 0) {
-                print(", ");
+                p.print(", ");
             }
             elems[i].accept(this);
         }
-        print("}");
+        p.print("}");
     }
 
     
@@ -2666,80 +2737,42 @@ public class SIRToStreamIt
     // PROTECTED METHODS
     // ----------------------------------------------------------------------
 
-    protected void newLine() {
-        p.println();
-    }
-
     // Special case for CTypes, to map some Java types to C types.
-    protected void print(CType s)
+    protected void typePrint(CType s)
     {
         if (s instanceof CArrayType)
         {
-            print(((CArrayType)s).getElementType());
+            typePrint(((CArrayType)s).getElementType());
             JExpression[] dims = ((CArrayType)s).getDims();
 	    if (dims != null)
 		for (int i = 0; i < dims.length; i++)
                 {
-                    print("[");
+                    p.print("[");
                     dims[i].accept(this);
-                    print("]");
+                    p.print("]");
                 }
+/*	    else
+            {
+                p.print("[");
+                // I suspect this isn't entirely what we want.
+                // In fact, it looks like it prints the number
+                // of array bounds, which is frequently "1".
+                // Eit.
+                p.print(((CArrayType)s).getArrayBound());
+                p.print("]");
+            }
+*/
         }
         else if (s.toString().equals("Complex"))
-            print("complex"); // revert to primitive type
+            p.print("complex"); // revert to primitive type
         else if (s.toString().endsWith("Portal"))
         {
             // Rewrite this to be a Portal<foo> type.
             String name = s.toString();
-            print("Portal<" + name.substring(0, name.length() - 6) + ">");
+            p.print("Portal<" + name.substring(0, name.length() - 6) + ">");
         }
 	else
-            print(s.toString());
+            p.print(s.toString());
     }
 
-    protected void print(Object s) {
-        print(s.toString());
-    }
-
-    protected void print(String s) {
-        p.setPos(pos);
-        p.print(s);
-    }
-
-    protected void print(boolean s) {
-        print("" + s);
-    }
-
-    protected void print(int s) {
-        print("" + s);
-    }
-
-    protected void print(char s) {
-        print("" + s);
-    }
-
-    protected void print(double s) {
-        print("" + s);
-    }
-
-    // ----------------------------------------------------------------------
-    // DATA MEMBERS
-    // ----------------------------------------------------------------------
-
-    //protected boolean			forInit;	// is on a for init
-    protected int				TAB_SIZE = 2;
-    protected int				WIDTH = 80;
-    protected int				pos;
-    protected String                      className;
-    protected boolean isStruct;
-    protected boolean                   toplevel;
-
-    protected TabbedPrintWriter		p;
-    protected StringWriter                str;
-    protected boolean			nl = true;
-    protected boolean                   declOnly = false;
-
-    protected int                       portalCount;
-    protected Map                       portalNames;
-    protected SIROperator               theStream;
 }

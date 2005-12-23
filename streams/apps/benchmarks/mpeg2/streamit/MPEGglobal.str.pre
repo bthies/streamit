@@ -39,14 +39,10 @@ struct vlc_dct_table_entry { // See P. 135
   int level;
 }
 
-global {
+static {
   int[4] blocks_per_macroblock; // Index is the chroma format
                                 // as defined in the MPEG-2 bitstream
                                 // 1 = 4:2:0, 2 = 4:2:2, 3 = 4:4:4
-  blocks_per_macroblock[0] = 0; // ERROR - you must have set it incorrectly
-  blocks_per_macroblock[1] = 6;
-  blocks_per_macroblock[2] = 8;
-  blocks_per_macroblock[3] = 12; 
 
   vlc_table_entry[33] const_macroblock_address_inc;  // Table B1
   int const_macroblock_address_inc_len = 33;
@@ -73,8 +69,14 @@ global {
   int const_dct_dc_size_chrominance_len = 12;
 
   vlc_dct_table_entry[114] const_dct_coefficients_table_zero; // Table B14, assuming 
-  int const_dct_coefficients_table_zero_len = 111; // intra_vlc_format == 1, macroblock_intra == 0  
+  int const_dct_coefficients_table_zero_len = 111; // intra_vlc_format == 1, macroblock_intra == 0
   int const_dct_coefficients_table_zero_max_symbol_len = 16;
+
+init {
+  blocks_per_macroblock[0] = 0; // ERROR - you must have set it incorrectly
+  blocks_per_macroblock[1] = 6;
+  blocks_per_macroblock[2] = 8;
+  blocks_per_macroblock[3] = 12; 
 
   const_coded_block_patterns[0].code = 0b111;
   const_coded_block_patterns[0].len = 3;
@@ -1052,5 +1054,5 @@ global {
   const_dct_coefficients_table_zero[110].len = 16;
   const_dct_coefficients_table_zero[110].run = 31;
   const_dct_coefficients_table_zero[110].level = 1;
-
+}
 }

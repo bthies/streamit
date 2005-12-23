@@ -26,9 +26,9 @@ import streamit.frontend.nodes.*;
  * a Java 'new' expression for some single type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ExprJavaConstructor.java,v 1.2 2003-10-09 19:51:02 dmaze Exp $
+ * @version $Id: ExprJavaConstructor.java,v 1.3 2005-12-23 15:01:05 dimock Exp $
  */
-class ExprJavaConstructor extends Expression
+public class ExprJavaConstructor extends Expression
 {
     private Type type;
     

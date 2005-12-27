@@ -4,6 +4,13 @@ import at.dms.kjc.sir.*;
 import at.dms.util.*;
 import streamit.scheduler2.iriter.*;
 
+
+/**
+ * IterFactory uses this for SIRSplitJoin.
+ *
+ * Includes extra methods as appropriate.
+ */
+
 public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
 
     /**

@@ -3,6 +3,12 @@ package at.dms.kjc.iterator;
 import at.dms.kjc.sir.*;
 import streamit.scheduler2.iriter.*;
 
+/**
+ * IterFactory uses this for SIRPipeline.
+ *
+ * Includes extra methods as appropriate.
+ */
+
 public class SIRPipelineIter extends SIRIterator implements PipelineIter {
 
     /**

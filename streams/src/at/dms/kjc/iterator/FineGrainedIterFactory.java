@@ -1,14 +1,16 @@
 package at.dms.kjc.iterator;
 
-/**
- * This class is a fine-grained iterator factory.  The difference
- * between it and IterFactory is that it provides a separate phase for
- * each item that is passed through a roundrobin splitter or joiner.
- */
-
 import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.sir.*;
+
+/**
+ * This class is a fine-grained iterator factory.  
+ * 
+ * The difference 
+ * between it and IterFactory is that it provides a separate phase for
+ * each item that is passed through a roundrobin splitter or joiner.
+ */
 
 public class FineGrainedIterFactory extends IterFactory {
 

@@ -4,6 +4,13 @@ import at.dms.kjc.sir.*;
 import at.dms.util.*;
 import streamit.scheduler2.iriter.*;
 
+
+/**
+ * FineGrainedIterFactory uses this for SIRFeedbackLoop
+ *
+ * Includes extra methods as appropriate.
+ */
+
 public class SIRFineGrainedFeedbackLoopIter extends SIRFeedbackLoopIter {
 
     /**

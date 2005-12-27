@@ -4,6 +4,12 @@ import at.dms.kjc.sir.*;
 import at.dms.util.*;
 import streamit.scheduler2.iriter.*;
 
+/**
+ * FineGrainedIterFactory uses this for SIRSplitJoiner
+ *
+ * Includes extra methods as appropriate.
+ */
+
 public class SIRFineGrainedSplitJoinIter extends SIRSplitJoinIter {
 
     /**

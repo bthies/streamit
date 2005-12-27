@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<!DOCTYPE html
+   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" >
+
+<!-- 
+  Package documentation.
+  Format from http://java.sun.com/j2se/javadoc/writingdoccomments/index.html
+  Updated template for xhtml1-transitional. Validated http://validator.w3.org/
+-->
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>JavaDoc package documentation for at.dms.kjc.iterator</title>
+  <style type="text/css">
+    body {
+        background-color: white;
+       }
+    </style>
+</head>
+
+<body>
+
+<h2>Package Specification.</h2>
+<p>
+This package provides a facility for iterating over the SIR structures
+that make up a StreamIt program after <code>at.dms.kjc.Kopi2SIR</code>
+has been run. 
+<br/>
+The package creates iterators that take <code>StreamVisitor</code>
+iterators and use them
+</p>
+<p>
+The package should support all <code>SIRStream</code> constructs in
+the program.
+Support is included for <code>SIRFilter</code>,
+<code>SIRPhasedFilter</code>,  <code>SIRPipeline</code>, 
+<code>SIRSplitJoin</code>, <code>SIRFeedbackLoop</code>, and
+<code>SIRRecursiveStub</code>.
+The package currently does not iterate over <code>SIRClobal</code>s
+since that are not reachable from the root of the program.
+</p>
+<p>
+The basis for using the iterator package <code>IterFactory</code> is
+something like:
+</p>
+<pre>
+SIRStream sir = ...;
+StreamVisitor lowLevelVisitor = new EmptyStreamVisitor();
+IterFactory.createFactory().createIter(str).accept(lowLevelVisitor);
+</pre>
+<p>
+The iterators created by <code>IterFactory</code> have certain useful
+methods: finding the <code>SIRStream</code> object currently being
+iterated over, finding its parent, determining its type, finding some
+parameters of the object, etc.
+<code>StreamVisitor</code> (and its subclasses) pass the iterator to the
+visiting methods, and 
+</p>
+<p>
+The class <code>at.dms.kjc.iterator.Memoizer</code> has been almost
+completely removed from use and should be considered <em>deprecated</em>.
+</p>
+<p>
+One common debugging idiom for dumping program contents is:
+</p>
+<pre>
+SIRPrinter printer1 = new SIRPrinter("after munging:");
+IterFactory.createFactory().createIter(str).accept(printer1);
+printer1.close();
+</pre>
+<p>
+(Another debugging idiom is to use <code>SIRToStreamIt</code>.)
+</p>
+
+<h2>Related Documentation.</h2>
+<p>None</p>
+
+<!-- Put @see and @since tags down here. -->
+@see        at.dms.kjc.iterator.IterFactory 
+@see        at.dms.util.SIRPrinter
+
+</body>
+</html>

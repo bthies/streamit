@@ -4,6 +4,12 @@ import at.dms.kjc.sir.*;
 import at.dms.util.*;
 import streamit.scheduler2.iriter.*;
 
+/**
+ * IterFactory uses this for SIRFeedbackLoop.
+ *
+ * Includes extra methods as appropriate.
+ */
+
 public class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter {
 
     /**

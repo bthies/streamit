@@ -1,12 +1,13 @@
 package at.dms.kjc.iterator;
 
-/**
- * This class is the outside interface for managing iterators.
- */
-
 import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.sir.*;
+
+
+/**
+ * This class is the outside interface for managing iterators.
+ */
 
 public class IterFactory {
     /**

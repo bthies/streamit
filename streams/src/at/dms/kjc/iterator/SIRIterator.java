@@ -4,6 +4,10 @@ import java.util.LinkedList;
 import at.dms.kjc.sir.*;
 import streamit.scheduler2.iriter.*;
 
+/**
+ * Abstract class from which 'Iter's inherit.
+ */
+
 public abstract class SIRIterator implements Iterator {
     /**
      * The root of this iterator.

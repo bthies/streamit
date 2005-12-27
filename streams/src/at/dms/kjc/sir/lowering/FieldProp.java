@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.27 2005-12-23 15:26:13 dimock Exp $
+ * $Id: FieldProp.java,v 1.28 2005-12-27 23:03:07 dimock Exp $
  */
 public class FieldProp implements Constants
 {
@@ -55,10 +55,20 @@ public class FieldProp implements Constants
     /**
      * Performs a depth-first traversal of an SIRStream tree, and
      * calls propagate() on any SIRSplitJoins as a post-pass.
+     * 
+     * @param a SIRStream
      */
     public static SIRStream doPropagate(SIRStream str) {
 	return doPropagate(str, false, false);
     }
+
+    /**
+     * Performs a depth-first traversal of an SIRStream tree, and
+     * calls propagate() on any SIRSplitJoins as a post-pass.
+     * 
+     * @param a SIRStream
+     * @param whether to unroll outer (for) loops.
+     */
     public static SIRStream doPropagate(SIRStream str, boolean unrollOuterLoops) {
         return doPropagate(str, unrollOuterLoops, false);
     }
@@ -66,7 +76,16 @@ public class FieldProp implements Constants
     // the way the code was written, unrollOuterLoops applied only to the 
     // root of the stream graph.  Is this correct?  Presumably if run after
     // constant prop, loops will already be unrolled...
-    public static SIRStream doPropagate(SIRStream str, boolean unrollOuterLoops,
+ 
+    /**
+     * Performs a depth-first traversal of an SIRStream tree, and
+     * calls propagate() on any SIRSplitJoins as a post-pass.
+     * 
+     * @param a SIRStream
+     * @param whether to unroll outer (for) loops.
+     * @param whether to remove fully-propagated fields.
+     */
+     public static SIRStream doPropagate(SIRStream str, boolean unrollOuterLoops,
             boolean removeDeadFields)
     {
         // First, visit children (if any).
@@ -132,23 +151,23 @@ public class FieldProp implements Constants
         
         // Remove uninvalidated fields
         if (removeDeadFields) {
-            LinkedList okayFields = new LinkedList();
+            LinkedList keepFields = new LinkedList();
             Set removedFields = new HashSet();
             JFieldDeclaration[] fields = str.getFields();
             for (int i = 0; i < fields.length; i++) {
                 JFieldDeclaration thisField = fields[i];
-                if (lastProp.isFieldInvalidated(thisField.getVariable()
-                        .getIdent()))
-                    okayFields.add(thisField);
-                else {
+                String thisFieldIdent = thisField.getVariable().getIdent();
+                if (! lastProp.isFieldInvalidated(thisFieldIdent)
+                    && allUsesAreFullyQualified(str,thisField)) {
                     if (debugPrint) {
-                        System.out.println("Removing:"
-                                + thisField.getVariable().getIdent());
+                        System.out.println("Removing:" + thisFieldIdent);
                     }
-                    removedFields.add(thisField.getVariable().getIdent());
+                    removedFields.add(thisFieldIdent);
+                } else {
+                    keepFields.add(thisField);
                 }
             }
-            str.setFields((JFieldDeclaration[]) okayFields
+            str.setFields((JFieldDeclaration[]) keepFields
                     .toArray(new JFieldDeclaration[0]));
             removeAssignmentsToFields(str, removedFields);
             if (debugPrint) {
@@ -159,6 +178,44 @@ public class FieldProp implements Constants
         }
         // All done, return the object.
         return str;
+    }
+    
+    /**
+     * It is not safe to remove a propagated field unless all references
+     * to the field are fully qualified.
+     * 
+     * A reference is fully qualified if it follows the structure of the
+     * field to a leaf.
+     * 
+     * For instance: if the declaration is
+     * my_struct[20] my_field;
+     * where my_struct does not have any further array or structure components
+     * then
+     * 
+     * if all uses are of the form
+     * my_field[n].my_struct_component
+     * then the declaration of my_struct is removable.
+     * however, if any references are of the form
+     * my_field[n]
+     * or of the form
+     * my_field
+     * then the declaration of my_struct is not removable.
+     * 
+     * @param str     SIRStream element in which field occurrs
+     * @param field   Field declaration
+     * @return        Whether safe to remove assignments to field
+     * 
+     */
+    private static boolean allUsesAreFullyQualified(SIRStream str, 
+            final JFieldDeclaration field) {
+        if (field.getType().isPrimitive()) {
+            return true;
+        }
+        // Look at all assignments and determine if they are
+        // assigning to a primitive type.  If any one is not, then
+        // return false.  TODO: implement.
+        String thisFieldIdent = field.getVariable().getIdent();
+        return false;
     }
     
     private static void removeAssignmentsToFields(SIRStream str, 

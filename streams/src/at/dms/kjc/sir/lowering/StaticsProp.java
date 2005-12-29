@@ -10,7 +10,7 @@ import at.dms.kjc.sir.*;
 //import at.dms.kjc.iterator.SIRFilterIter;
 import at.dms.kjc.sir.SIRToStreamIt;
 import at.dms.kjc.sir.lowering.ConstantProp;
-import at.dms.kjc.sir.lowering.FieldProp;
+//import at.dms.kjc.sir.lowering.FieldProp;
 import at.dms.kjc.iterator.*;
 
 /**
@@ -94,6 +94,10 @@ public class StaticsProp {
     // map from each propagated field name to a set
     // of synonyms (including the name itself)
     private Map/*<String,Set<String>>*/ nameToName = new HashMap();
+
+    
+    // for conversion to local variables, there must be a single definition of the variable.
+    private final Map/*<String,JVariavleDefinition>*/ identToVarDefn = new HashMap();
 
     /*
      * I thought to eventually support multiple static sections:
@@ -268,7 +272,7 @@ public class StaticsProp {
     // code out of the static section to (1) put into field definitions,
     // and (2) code to put into init functions.
     //
-    // This phase is currently written under the simplfying assumption that
+    // This phase is written under the simplfying assumption that
     // every static section has had its code unwound to be constants so that
     // no field depends on the value of any other field.  If this assumption
     // does not hold, then we need to create a joint back-slice of the static
@@ -364,7 +368,7 @@ public class StaticsProp {
      *  renamed field name to the set of all renamings of the field.
      *
      *  Fields and code are inserted at the front of the SIRStram element and 
-     *  the front of its init function respectively.  changes for multiple
+     *  the front of its init function respectively.  Changes for multiple
      *  fields will end up in arbitrary order with respect to each other.
      */
     private void propagateIntoStreams(SIRStream str) {
@@ -400,9 +404,17 @@ public class StaticsProp {
                                 }
                                 // (2) rename in the copy
                                 mungFieldName(sf, newFieldName,newDecl,newAssignments);
+ 
                                 // (3) propagate field decl
-                                propagateFieldDecl(self,newDecl);
                                 // (4) propagate code.
+                                
+                                // For a filter, which can have multiple functions,
+                                // propgate as a field.
+                                // For a container, which has only an init function,
+                                // propagate as local variables in the init function.
+                                // (If propagated as field, would not be correctly
+                                // propagated through parameters by other propagation phases
+                                propagateFieldDecl(self,newDecl);
                                 propagateCode(self,newAssignments);
                             }
                             // (5) update all references in stream to the old names
@@ -456,19 +468,22 @@ public class StaticsProp {
     /*
      * mung names.  Works in place!  pass it clones of theDecl, theCode.
      */
-    private static void mungFieldName(StaticAndField sf, final String newFieldName,
+    private void mungFieldName(StaticAndField sf, final String newFieldName,
             JFieldDeclaration theDecl, List/*<JStatement>*/ theCode) {
-//        final String theStatic = sf.getTheStatic();
+        final String staticClassName = sf.getTheStatic();
         final String oldFieldName = sf.getTheField();
         
+
         for (Iterator it = theCode.iterator(); it.hasNext();) {
             ((JStatement)it.next()).accept(new KjcEmptyVisitor() {
                 public void visitFieldExpression(JFieldAccessExpression self,
                         JExpression left, String ident) {
                     super.visitFieldExpression(self,left,ident);
+                    JExpression newLeft = new JTypeNameExpression(left.getTokenReference(), staticClassName);
                     if (ident.equals(oldFieldName)) {
-                        self.setIdent(newFieldName);
-                        if (debugPrint) {System.err.println("Munged to " + newFieldName + " in " + self);}
+//                        self.setIdent(newFieldName);
+//                        if (debugPrint) {System.err.println("Munged to " + newFieldName + " in " + self);}
+                        self.setPrefix(newLeft);     //set prefix as would appear in client code
                     }
                     else if (debugPrint) {
                         System.err.println("Leaving untouched: "+ self);
@@ -476,7 +491,7 @@ public class StaticsProp {
                 }
             });
         }
-
+        
         theDecl.accept(new KjcEmptyVisitor() {
             public void visitFieldDeclaration(JFieldDeclaration self, 
                     int modifiers, CType type, String ident, JExpression expr) {
@@ -487,6 +502,7 @@ public class StaticsProp {
                             oldVar.getType(), newFieldName, oldVar.getValue());
                           
                         self.setVariable(newVar);
+                        identToVarDefn.put(newFieldName,newVar);
                     }
             }
         });
@@ -494,41 +510,89 @@ public class StaticsProp {
     
     /*
      * Put a field declaration into a SIRStream
+     * either as a field (for fliters)
+     * or in the beginning of an init as a local declaration (for containers)
+     * If a local definition, save the mapping from name to JVariableDefinition
+     * so that a unique copy of the definition will be used when replacing
+     * fields.
      */
     private static void propagateFieldDecl(SIRStream self, JFieldDeclaration theDecl) {
-        self.addField(0,theDecl);
+        if (self instanceof SIRPhasedFilter) {
+            self.addField(0,theDecl);
+        } else {
+            JVariableDefinition defn = theDecl.getVariable();
+            self.getInit().getBody().addStatementFirst(
+                    new JVariableDeclarationStatement(defn));
+        }
     }
     
     /*
-     * Put a list of statements into a SIRStream
+     * Put a list of statements into a SIRStream after any JVariableDeclarationStatement's
      */
-    private static void propagateCode(SIRStream self, List/*<JStatement>*/ theCode) {
-        self.getInit().addAllStatements(0, theCode);
+    private static void propagateCode(SIRStream str, List/*<JStatement>*/ theCode) {
+        // Add declaration or local and assignments in body of init.
+        JMethodDeclaration init = str.getInit();
+        JBlock body = init.getBody();
+        ListIterator stmtIter = body.getStatementIterator();
+        while (stmtIter.hasNext() && stmtIter.next() instanceof JVariableDeclarationStatement){}
+        body.addAllStatements(stmtIter.previousIndex(), theCode);
     }
 
     /*
      * Update all field references of the form "StaticClass.oldName" to "this.newName"
      */
-    private static void updateReferences(SIRStream self, final Map/*<StaticAndField,String>*/namesInStream) {
-                
-        final KjcVisitor visitor =  new SLIREmptyVisitor() {
-            public void visitFieldExpression(JFieldAccessExpression self,
+    private void updateReferences(final SIRStream str,
+            final Map/* <StaticAndField,String> */namesInStream) {
+        ReplacingVisitor visitor = new SLIRReplacingVisitor() {
+            // need to change JFieldAccessExpression
+            public Object visitFieldExpression(JFieldAccessExpression self,
                     JExpression left, String ident) {
-                super.visitFieldExpression(self,left,ident);
                 if (left instanceof JTypeNameExpression) {
-                    String className = ((JTypeNameExpression)left).getClassType().getIdent();
-                    String newFieldName = (String)namesInStream.get(
-                        new StaticAndField(className, ident));
+                    String className = ((JTypeNameExpression) left).getClassType().getIdent();
+                    String newFieldName = (String) namesInStream.get(new StaticAndField(className, ident));
                     if (newFieldName != null) {
-                        self.setIdent(newFieldName);
-                        self.setPrefix(new JThisExpression(left.getTokenReference()));
+                        if (str instanceof SIRPhasedFilter) {
+                            // In a filter, update to new FieldAccessExpression
+                            // this.newName  there is a redundant name in
+                            // self.getField, but this is unused and not updated.
+                            return new JFieldAccessExpression(self
+                                    .getTokenReference(), new JThisExpression(
+                                    left.getTokenReference()), newFieldName,
+                                    self.getField());
+                        } else {
+                            // In a container, update to a JLocalVariableExpression
+                            // only messy part is that declaration and all references
+                            // must use a single JVariableDefinition object.  So keep
+                            // track of in identToVarDefn.
+                            return new JLocalVariableExpression(self
+                                    .getTokenReference(),
+                                    (JVariableDefinition) identToVarDefn
+                                            .get(newFieldName));
+                        }
+                    } else {
+                        if (debugPrint) {
+                            System.err
+                                    .println("Do not replace class and field "
+                                            + className + "." + ident);
+                        }
+                        return super.visitFieldExpression(self, left, ident);
                     }
-                    else if (debugPrint) {System.err.println("Do not replace class and field " + className + "." + ident);}
+                } else {
+                    if (debugPrint) {
+                        System.err.println("Non-class-name " + left + " ."
+                                + ident);
+                    }
+                    return super.visitFieldExpression(self, left, ident);
                 }
-                else if (debugPrint) {System.err.println("Non-class-name " + left + " ." + ident);}
             }
         };
-        IterOverAllFieldsAndMethods.iterOverFieldsAndMethods(self, false, true, visitor);
+        JMethodDeclaration[] methods = str.getMethods();
+        for (int i = 0; i < methods.length; i++) {
+            methods[i].setBody((JBlock) methods[i].getBody().accept(visitor));
+        }
+
+        // IterOverAllFieldsAndMethods.iterOverFieldsAndMethods(self, false,
+        // true, visitor);
     }
     
     // -------------------------------------------------------------------

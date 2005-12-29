@@ -1732,7 +1732,7 @@ public class Operator extends DestroyedClass
     }
 
 
-    float[][] copyFloatArray2D(float[][] input) {
+    static float[][] copyFloatArray2D(float[][] input) {
 	// according to streamit semantics, assume arrays are rectangular
 	float[][] result = new float[input.length][input[0].length];
 	for (int i=0; i<input.length; i++) {
@@ -1743,7 +1743,18 @@ public class Operator extends DestroyedClass
 	return result;
     }
 
-    float[] copyFloatArray1D(float[] input) {
+    static int[][] copyIntArray2D(int[][] input) {
+	// according to streamit semantics, assume arrays are rectangular
+	int[][] result = new int[input.length][input[0].length];
+	for (int i=0; i<input.length; i++) {
+	    for (int j=0; j<input[0].length; j++) {
+		result[i][j] = input[i][j];
+	    }
+	}
+	return result;
+    }
+
+    static float[] copyFloatArray1D(float[] input) {
 	// according to streamit semantics, assume arrays are rectangular
 	float[] result = new float[input.length];
 	for (int i=0; i<input.length; i++) {
@@ -1752,7 +1763,7 @@ public class Operator extends DestroyedClass
 	return result;
     }
 
-    int[] copyIntArray1D(int[] input) {
+    static int[] copyIntArray1D(int[] input) {
 	// according to streamit semantics, assume arrays are rectangular
 	int[] result = new int[input.length];
 	for (int i=0; i<input.length; i++) {

@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.28 2005-12-27 23:03:07 dimock Exp $
+ * $Id: FieldProp.java,v 1.29 2005-12-30 19:50:09 dimock Exp $
  */
 public class FieldProp implements Constants
 {
@@ -650,35 +650,43 @@ public class FieldProp implements Constants
      */
     private void doPropagation(SIRStream filter) {
         JMethodDeclaration[] meths = filter.getMethods();
+        // Do not propagate fields on lhs of assignment
+        // unless involved in array offest calculation
+        final boolean[] inLeftHandSide = {false};
+        final boolean[] inArrayOffest = {false};
         SLIRReplacingVisitor theVisitor = new SLIRReplacingVisitor() {
             public Object visitAssignmentExpression(JAssignmentExpression self,
                     JExpression left, JExpression right) {
-                // Don't visit the left-hand side of the
-                // expression unless it is an array access,
-                // in which case visit it to propagate constants
-                // in the subscripts.
-                if (left instanceof JArrayAccessExpression)
-                    ((JArrayAccessExpression) left)
-                            .setAccessor((JExpression) ((JArrayAccessExpression) left)
-                                    .getAccessor().accept(this));
+
+                inLeftHandSide[0] = true;
+                JExpression newLeft = (JExpression)left.accept(this);
+                inLeftHandSide[0] = false;
+                JExpression newRight = (JExpression)right.accept(this);
                 return new JAssignmentExpression(self.getTokenReference(),
-                        left, (JExpression) right.accept(this));
+                        newLeft, newRight);
             }
 
             public Object visitFieldExpression(JFieldAccessExpression self,
                     JExpression left, String ident) {
                 Object orig = super.visitFieldExpression(self, left, ident);
-                if (canFieldPropagate(ident))
+                if (canFieldPropagate(ident)
+                    && (inArrayOffest[0]
+                        || !inLeftHandSide[0])) {
                     return propagatedField(ident);
-                else
+                }
+                else {
                     return orig;
+                }
             }
 
             public Object visitArrayAccessExpression(
                     JArrayAccessExpression self, JExpression pfx,
                     JExpression acc) {
+                boolean oldInArrayOffset = inArrayOffest[0];
+                inArrayOffest[0] = true;
                 // Recurse so we have something to return.
                 Object orig = super.visitArrayAccessExpression(self, pfx, acc);
+                inArrayOffest[0] = oldInArrayOffset;
                 // Take a harder look at what we have...
                 if (!(pfx instanceof JFieldAccessExpression))
                     return orig;

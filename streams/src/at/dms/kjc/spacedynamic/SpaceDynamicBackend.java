@@ -33,12 +33,11 @@ public class SpaceDynamicBackend {
     public static boolean FILTER_DEBUG_MODE = false;
 
     public static void run(SIRStream str,
-			   JInterfaceDeclaration[] 
-			   interfaces,
-			   SIRInterfaceTable[]
-			   interfaceTables,
-			   SIRStructure[]
-			   structs) {
+			   JInterfaceDeclaration[] interfaces,
+			   SIRInterfaceTable[] interfaceTables,
+			   SIRStructure[] structs,
+			   SIRHelper[] helpers,
+			   SIRGlobal global) {
 
 	System.out.println("Entry to RAW Backend (spacedynamic)");
 	
@@ -69,7 +68,10 @@ public class SpaceDynamicBackend {
 		
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
-	ConstantProp.propagateAndUnroll(str);
+	Set theStatics = new HashSet();
+	theStatics.add(global);
+	Map associatedGlobals = StaticsProp.propagate(str,theStatics);
+	ConstantProp.propagateAndUnroll(str,true);
 	System.out.println("Done Constant Prop and Unroll...");
 
 	SIRPrinter printer1 = new SIRPrinter("sir_AFTER_CONSTPROP_.out");

@@ -31,12 +31,11 @@ public class SpaceTimeBackend
     
     
     public static void run(SIRStream str,
-			   JInterfaceDeclaration[] 
-			   interfaces,
-			   SIRInterfaceTable[]
-			   interfaceTables,
-			   SIRStructure[]
-			   structs) {
+			   JInterfaceDeclaration[] interfaces,
+			   SIRInterfaceTable[] interfaceTables,
+			   SIRStructure[]structs,
+			   SIRHelper[] helpers,
+			   SIRGlobal global) {
 	structures = structs;
 	
 	//first of all enable altcodegen by default
@@ -57,7 +56,10 @@ public class SpaceTimeBackend
 
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
-	ConstantProp.propagateAndUnroll(str);
+	Set theStatics = new HashSet();
+	theStatics.add(global);
+	Map associatedGlobals = StaticsProp.propagate(str,theStatics);	
+	ConstantProp.propagateAndUnroll(str, true);
 	System.out.println("Done Constant Prop and Unroll...");
 
 	// add initPath functions

@@ -32,7 +32,7 @@ import at.dms.util.*;
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;,
  *          David Ziegler &lt;dziegler@cag.lcs.mit.edu&gt;
- * @version $Id: ToKopi.java,v 1.8 2005-07-19 18:09:05 madrake Exp $
+ * @version $Id: ToKopi.java,v 1.9 2006-01-03 21:13:01 dimock Exp $
  */
 public class ToKopi
 {
@@ -101,43 +101,43 @@ public class ToKopi
         return prog;
     }
 
-    public void run(String[] args)
-    {
-        doOptions(args);
-        if (printHelp)
-        {
-            printUsage();
-            return;
-        }
-        
-        Program prog = null;
-        Writer outWriter;
-
-        try
-        {
-            prog = ToJava.parseFiles(inputFiles);
-        }
-        catch (java.io.IOException e) {e.printStackTrace(System.err);}
-        catch (antlr.RecognitionException e) {e.printStackTrace(System.err);}
-        catch (antlr.TokenStreamException e) {e.printStackTrace(System.err);}
-
-        if (prog == null)
-        {
-            System.err.println("Compilation didn't generate a parse tree.");
-            return;
-        }
-
-        prog = lowerIRToJava(prog);
-
-        System.out.println("/*");
-        SIRStream s = (SIRStream) prog.accept(new FEIRToSIR());
-        Flattener.flatten(s, new JInterfaceDeclaration[0],
-                          new SIRInterfaceTable[0], new SIRStructure[0]);
-    }
+//    public void run(String[] args)
+//   {
+//        doOptions(args);
+//        if (printHelp)
+//        {
+//            printUsage();
+//            return;
+//        }
+//        
+//        Program prog = null;
+////        Writer outWriter;
+//
+//        try
+//        {
+//            prog = ToJava.parseFiles(inputFiles);
+//        }
+//        catch (java.io.IOException e) {e.printStackTrace(System.err);}
+//        catch (antlr.RecognitionException e) {e.printStackTrace(System.err);}
+//        catch (antlr.TokenStreamException e) {e.printStackTrace(System.err);}
+//
+//        if (prog == null)
+//        {
+//            System.err.println("Compilation didn't generate a parse tree.");
+//            return;
+//        }
+//
+//        prog = lowerIRToJava(prog);
+//
+//        System.out.println("/*");
+//        SIRStream s = (SIRStream) prog.accept(new FEIRToSIR());
+//        Flattener.flatten(s, new JInterfaceDeclaration[0],
+//                          new SIRInterfaceTable[0], new SIRStructure[0], null);
+//    }
     
-    public static void main(String[] args)
-    {
-        new ToKopi().run(args);
-    }
+//    public static void main(String[] args)
+//    {
+//        new ToKopi().run(args);
+//    }
 
 }

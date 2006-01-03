@@ -35,24 +35,27 @@ public class Flattener {
      * <interfaceTables> represents the mapping from interfaces to methods
      * that implement a given interface in a given class.
      */
-    public static void flatten(SIRStream str,
-			       JInterfaceDeclaration[] 
-			       interfaces,
-			       SIRInterfaceTable[]
-			       interfaceTables,
-			       SIRStructure[] structs) {
+    public static void run(SIRStream str,
+			       JInterfaceDeclaration[] interfaces,
+			       SIRInterfaceTable[] interfaceTables,
+			       SIRStructure[] structs,
+                   SIRHelper[] helpers,
+			       SIRGlobal global) {
 
 	// move field initializations into init function
 	FieldInitMover.moveStreamInitialAssignments(str, 
 		       FieldInitMover.COPY_ARRAY_INITIALIZERS);
 
-	// propagate constants and unroll loops
+    // propagate constants and unroll loops
 	System.err.print("Running Constant Prop and Unroll... ");
-	ConstantProp.propagateAndUnroll(str);
+    Set theStatics = new HashSet();
+    theStatics.add(global);
+    Map associatedGlobals = StaticsProp.propagate(str,theStatics);
+	ConstantProp.propagateAndUnroll(str,true);
 	System.err.println("done.");
 
-        // Add initPath functions
-        EnqueueToInitPath.doInitPath(str);
+    // Add initPath functions 
+	EnqueueToInitPath.doInitPath(str);
 
 	// Convert Peeks to Pops
 	if (KjcOptions.poptopeek) {
@@ -73,8 +76,9 @@ public class Flattener {
 	INIT_STATEMENTS_RESOLVED = true;
 
 	if (hasDynamicRates(str)) {
-	    System.err.println("Failure: Dynamic rates are not yet supported in the uniprocessor backend.");
-	    System.exit(1);
+	    SIRDynamicRateManager.pushConstantPolicy(1000000);
+//      System.err.println("Failure: Dynamic rates are not yet supported in the uniprocessor backend.");
+//	    System.exit(1);
 	}
 
 	lowerFilterContents(str, true);

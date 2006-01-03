@@ -102,7 +102,7 @@ public class StreaMITMain {
             backendClass = "at.dms.kjc.cluster.ClusterBackend";
         } else {
             backendClass = "at.dms.kjc.sir.lowering.Flattener";
-            backendMethod = "flatten";
+//            backendMethod = "flatten";
         }
         
         // To find a method, we need its name and signature.  To
@@ -118,44 +118,44 @@ public class StreaMITMain {
 	Method theMethod = null;
 	Class theBackend = null;
 	
-        try {
-            paramTypes[0] = Class.forName("at.dms.kjc.sir.SIRStream");
-	    paramTypes[5] = Class.forName("at.dms.kjc.sir.SIRGlobal");
-            for (int i = 1; i < 5; i++)
-                paramTypes[i] = params[i].getClass();
+    try {
+        paramTypes[0] = Class.forName("at.dms.kjc.sir.SIRStream");
+        paramTypes[5] = Class.forName("at.dms.kjc.sir.SIRGlobal");
+        for (int i = 1; i < 5; i++) {
+            paramTypes[i] = params[i].getClass(); }
 	} catch (ClassNotFoundException e) {
-            System.err.println("*** The class " + e.getMessage() +
-                               " does not exist.");
+        System.err.println("*** The class " + e.getMessage() +
+                           " does not exist.");
 	    return;
-        }
+    }
 
 	try {
             theBackend = Class.forName(backendClass);
-        } catch (ClassNotFoundException e) {
+    } catch (ClassNotFoundException e) {
             System.err.println("*** The class " + e.getMessage() +
                                " does not exist.");
-	    return;
-        }	    
+            return;
+    }	    
 	    
 	try {
             theMethod = theBackend.getMethod(backendMethod, paramTypes);
-        } catch (NoSuchMethodException e) {
+    } catch (NoSuchMethodException e) {
 
 	    //try the old calling convention
 
 	    Object old_params[] = new Object[4];
 	    Class old_paramTypes[] = new Class[4];
 	    for (int i = 0; i < 4; i++) {
-		old_params[i] = params[i];
-		old_paramTypes[i] = paramTypes[i];
+	        old_params[i] = params[i];
+	        old_paramTypes[i] = paramTypes[i];
 	    }
 	    params = old_params;
 	    paramTypes = old_paramTypes;
 
 	    try {
-		theMethod = theBackend.getMethod(backendMethod, paramTypes);
+	        theMethod = theBackend.getMethod(backendMethod, paramTypes);
 	    } catch (NoSuchMethodException e2) {
-		System.err.println("*** The backend method " +
+	        System.err.println("*** The backend method " +
 				   backendClass + "." + backendMethod + "()" +
 				   " does not exist.");
 	    }

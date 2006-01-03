@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.21 2005-09-29 21:27:04 dimock Exp $
+ * $Id: Main.java,v 1.22 2006-01-03 21:25:36 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -106,15 +106,15 @@ public class Main extends Compiler {
 	    return false;
 	}
 
-	options.destination = checkDestination(options.destination);
+	KjcOptions.destination = checkDestination(KjcOptions.destination);
 
 	JCompilationUnit[]	tree = new JCompilationUnit[infiles.size()];
 
-	if (options.proc > tree.length) {
-	    options.proc = tree.length;
+	if (KjcOptions.proc > tree.length) {
+	    KjcOptions.proc = tree.length;
 	}
 
-	if (options.multi) {
+	if (KjcOptions.multi) {
 	    parseMultiProc(tree);
 	} else {
 	    for (int count = 0; count < tree.length; count++) {
@@ -128,7 +128,7 @@ public class Main extends Compiler {
 	    return false;
 	}
 
-	if (!options.beautify) {
+	if (!KjcOptions.beautify) {
 	    long	lastTime = System.currentTimeMillis();
 	    for (int count = 0; count < tree.length; count++) {
 		checkInterface(tree[count]);
@@ -149,12 +149,12 @@ public class Main extends Compiler {
 		return false;
 	    }
 
-	    if (options.multi) {
+	    if (KjcOptions.multi) {
 		checkBodyMultiProc(tree);
 	    } else {
 		for (int count = 0; count < tree.length; count++) {
 		    checkBody(tree[count]);
-		    if (!options.java && !options.beautify && !options.streamit) {
+		    if (!KjcOptions.java && !KjcOptions.beautify && !KjcOptions.streamit) {
 			tree[count] = null;
 		    }
 		}
@@ -166,17 +166,17 @@ public class Main extends Compiler {
 	}
 
 	// do streamit pass 
-	if (options.streamit) {
+	if (KjcOptions.streamit) {
 	    StreaMITMain.compile(tree);
 	}
 
-	if (!options.nowrite && !options.streamit) {
-	    if (options.java || options.beautify) {
-		if (options.multi) {
+	if (!KjcOptions.nowrite && !KjcOptions.streamit) {
+	    if (KjcOptions.java || KjcOptions.beautify) {
+		if (KjcOptions.multi) {
 		    acceptMultiProc(tree);
 		} else {
 		    for (int count = 0; count < tree.length; count++) {
-			tree[count].accept(this, options.destination);
+			tree[count].accept(this, KjcOptions.destination);
 			tree[count] = null;
 		    }
 		}
@@ -218,18 +218,18 @@ public class Main extends Compiler {
      */
     public void genCode() {
 	CSourceClass[]	classes = getClasses();
-	BytecodeOptimizer	optimizer = new BytecodeOptimizer(0);//options.optimize);
+	BytecodeOptimizer	optimizer = new BytecodeOptimizer(0);//KjcOptions.optimize);
 
 	this.classes.setSize(0);
 
 	try {
-	    if (options.multi) {
-		genCodeMultiProc(classes, optimizer, options.destination);
+	    if (KjcOptions.multi) {
+		genCodeMultiProc(classes, optimizer, KjcOptions.destination);
 	    } else {
 		for (int count = 0; count < classes.length; count++) {
 		    long		lastTime = System.currentTimeMillis();
 
-		    classes[count].genCode(optimizer, options.destination);
+		    classes[count].genCode(optimizer, KjcOptions.destination);
 		    if (verboseMode() && !classes[count].isNested()) {
 			inform(CompilerMessages.CLASSFILE_GENERATED,
 			       classes[count].getQualifiedName().replace('/', '.'),
@@ -252,7 +252,7 @@ public class Main extends Compiler {
      * Initialize the compiler (read classpath, check classes.zip)
      */
     protected void initialize() {
-	ClassPath.init(options.classpath);
+	ClassPath.init(KjcOptions.classpath);
 	CTopLevel.initSession(this);
 	CStdType.init(this);
     }
@@ -261,7 +261,7 @@ public class Main extends Compiler {
      * returns true iff compilation in verbose mode is requested.
      */
     public boolean verboseMode() {
-	return options.verbose;
+	return KjcOptions.verbose;
     }
 
     /**
@@ -285,10 +285,10 @@ public class Main extends Compiler {
 	InputBuffer		buffer;
 
 	try {
-	    buffer = new InputBuffer(file, options.encoding);
+	    buffer = new InputBuffer(file, KjcOptions.encoding);
 	} catch (UnsupportedEncodingException e) {
 	    reportTrouble(new UnpositionedError(CompilerMessages.UNSUPPORTED_ENCODING,
-						options.encoding));
+						KjcOptions.encoding));
 	    return null;
 	} catch (IOException e) {
 	    reportTrouble(new UnpositionedError(CompilerMessages.IO_EXCEPTION,
@@ -382,7 +382,7 @@ public class Main extends Compiler {
     protected void generateJavaCode(JCompilationUnit cunit) {
 	long	lastTime = System.currentTimeMillis();
 
-	cunit.accept(this, options.destination);
+	cunit.accept(this, KjcOptions.destination);
 	if (verboseMode()) {
 	    inform(CompilerMessages.JAVA_CODE_GENERATED, cunit.getFileName(), new Long(System.currentTimeMillis() - lastTime));
 	}
@@ -393,15 +393,15 @@ public class Main extends Compiler {
      */
     protected void parseMultiProc(final JCompilationUnit[] tree) {
 	try {
-	    Thread[]		parsers = new Thread[options.proc];
-	    int		length = tree.length / options.proc;
+	    Thread[]		parsers = new Thread[KjcOptions.proc];
+	    int		length = tree.length / KjcOptions.proc;
 
-	    for (int i = 0; i < options.proc; i++) {
-		parsers[i] = new ThreadedParser(this, infiles, tree, i * length, i == options.proc - 1 ? tree.length : (i + 1) * length);
+	    for (int i = 0; i < KjcOptions.proc; i++) {
+		parsers[i] = new ThreadedParser(this, infiles, tree, i * length, i == KjcOptions.proc - 1 ? tree.length : (i + 1) * length);
 		parsers[i].start();
 	    }
 
-	    for (int i = 0; i < options.proc; i++) {
+	    for (int i = 0; i < KjcOptions.proc; i++) {
 		parsers[i].join();
 	    }
 	} catch (InterruptedException ie) {
@@ -415,14 +415,14 @@ public class Main extends Compiler {
     protected void checkBodyMultiProc(final JCompilationUnit[] tree) {
 	try {
 	    Thread[]		checkers = new Thread[tree.length];
-	    int		length = tree.length / options.proc;
+	    int		length = tree.length / KjcOptions.proc;
 
-	    for (int i = 0; i < options.proc; i++) {
-		checkers[i] = new ThreadedChecker(this, tree, i * length, i == options.proc - 1 ? tree.length : (i + 1) * length);
+	    for (int i = 0; i < KjcOptions.proc; i++) {
+		checkers[i] = new ThreadedChecker(this, tree, i * length, i == KjcOptions.proc - 1 ? tree.length : (i + 1) * length);
 		checkers[i].start();
 	    }
 
-	    for (int i = 0; i < options.proc; i++) {
+	    for (int i = 0; i < KjcOptions.proc; i++) {
 		checkers[i].join();
 	    }
 	} catch (InterruptedException ie) {
@@ -436,14 +436,14 @@ public class Main extends Compiler {
     protected void acceptMultiProc(final JCompilationUnit[] tree) {
 	try {
 	    Thread[]		writers = new Thread[tree.length];
-	    int		length = tree.length / options.proc;
+	    int		length = tree.length / KjcOptions.proc;
 
-	    for (int i = 0; i < options.proc; i++) {
-		writers[i] = new ThreadedVisitor(options.destination, tree, i * length, i == options.proc - 1 ? tree.length : (i + 1) * length, this);
+	    for (int i = 0; i < KjcOptions.proc; i++) {
+		writers[i] = new ThreadedVisitor(KjcOptions.destination, tree, i * length, i == KjcOptions.proc - 1 ? tree.length : (i + 1) * length, this);
 		writers[i].start();
 	    }
 
-	    for (int i = 0; i < options.proc; i++) {
+	    for (int i = 0; i < KjcOptions.proc; i++) {
 		writers[i].join();
 	    }
 	} catch (InterruptedException ie) {
@@ -460,18 +460,18 @@ public class Main extends Compiler {
     {
 	try {
 	    Thread[]		writers = new Thread[tree.length];
-	    int		length = tree.length / options.proc;
+	    int		length = tree.length / KjcOptions.proc;
 
-	    for (int i = 0; i < options.proc; i++) {
+	    for (int i = 0; i < KjcOptions.proc; i++) {
 		writers[i] = new ThreadedGenerator(tree,
 						   optimizer,
 						   destination,
 						   i * length,
-						   i == options.proc - 1 ? tree.length : (i + 1) * length);
+						   i == KjcOptions.proc - 1 ? tree.length : (i + 1) * length);
 		writers[i].start();
 	    }
 
-	    for (int i = 0; i < options.proc; i++) {
+	    for (int i = 0; i < KjcOptions.proc; i++) {
 		writers[i].join();
 	    }
 	} catch (InterruptedException ie) {
@@ -490,7 +490,7 @@ public class Main extends Compiler {
      */
     public void reportTrouble(PositionedError trouble) {
 	if (trouble instanceof CWarning) {
-	    if (options.warning != 0 && filterWarning((CWarning)trouble)) {
+	    if (KjcOptions.warning != 0 && filterWarning((CWarning)trouble)) {
 		inform(trouble);
 	    }
 	} else {
@@ -521,7 +521,7 @@ public class Main extends Compiler {
 	case WarningFilter.FLT_FORCE:
 	    return true;
 	case WarningFilter.FLT_ACCEPT:
-	    return warning.getSeverityLevel() <= options.warning;
+	    return warning.getSeverityLevel() <= KjcOptions.warning;
 	default:
 	    throw new InconsistencyException();
 	}
@@ -529,11 +529,11 @@ public class Main extends Compiler {
 
     protected WarningFilter getFilter() {
 	if (filter == null) {
-	    if (options.filter != null) {
+	    if (KjcOptions.filter != null) {
 		try {
-		    filter = (WarningFilter)Class.forName(options.filter).newInstance();
+		    filter = (WarningFilter)Class.forName(KjcOptions.filter).newInstance();
 		} catch (Exception e) {
-		    inform(KjcMessages.FILTER_NOT_FOUND, options.filter);
+		    inform(KjcMessages.FILTER_NOT_FOUND, KjcOptions.filter);
 		}
 	    }
 	    if (filter == null) {
@@ -548,7 +548,7 @@ public class Main extends Compiler {
      * Returns true iff comments should be parsed (false if to be skipped)
      */
     public boolean parseComments() {
-	return options.deprecation || (options.beautify && !options.nowrite);
+	return KjcOptions.deprecation || (KjcOptions.beautify && !KjcOptions.nowrite);
     }
 
     /**
@@ -565,6 +565,7 @@ public class Main extends Compiler {
     protected Vector		infiles = new Vector();
     protected boolean		errorFound;
 
+    // refer to 'options' for non-static, 'KjcOptions' for static
     protected KjcOptions		options;
 
     private WarningFilter		filter = new DefaultFilter();

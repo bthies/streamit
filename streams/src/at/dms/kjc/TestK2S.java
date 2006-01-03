@@ -14,7 +14,7 @@ package at.dms.kjc;
 
 import java.io.File;
 import at.dms.compiler.CompilerMessages;
-import at.dms.util.MessageDescription;
+//import at.dms.util.MessageDescription;
 import at.dms.compiler.UnpositionedError;
 import at.dms.util.*;
 import at.dms.kjc.sir.*;
@@ -82,14 +82,14 @@ public class TestK2S extends Main
 		return false;
 	    }
    
-        options.destination = checkDestination(options.destination);
+        KjcOptions.destination = checkDestination(KjcOptions.destination);
         
         JCompilationUnit[]  tree = new JCompilationUnit[infiles.size()];
 
-        if (options.proc > tree.length)
-            options.proc = tree.length;
+        if (KjcOptions.proc > tree.length)
+            KjcOptions.proc = tree.length;
 
-        if (options.multi) {
+        if (KjcOptions.multi) {
             parseMultiProc(tree);
 	}
         else {

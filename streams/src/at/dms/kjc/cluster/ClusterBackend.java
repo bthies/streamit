@@ -151,7 +151,11 @@ public class ClusterBackend implements FlatVisitor {
     // do constant propagation on fields
     System.out.print("Running Constant Field Propagation...");
     ConstantProp.propagateAndUnroll(str, true);
-    if (debugPrint) {SIRToStreamIt.run(str,interfaces,interfaceTables,structs);}
+    if (debugPrint) {
+        System.err.println("// str after ConstantProp");
+        SIRToStreamIt.run(str,interfaces,interfaceTables,structs);
+        System.err.println("// END str after ConstantProp");
+    }
 
     // add initPath functions
     EnqueueToInitPath.doInitPath(str);

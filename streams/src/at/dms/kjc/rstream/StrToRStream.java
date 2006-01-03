@@ -94,7 +94,7 @@ public class StrToRStream {
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
 	Set theStatics = new HashSet();
-	theStatics.add(global);
+	if (global != null) theStatics.add(global);
 	Map associatedGlobals = StaticsProp.propagate(str,theStatics);
 	ConstantProp.propagateAndUnroll(str,true);
 	System.out.println("Done Constant Prop and Unroll.");

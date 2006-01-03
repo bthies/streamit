@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.29 2005-12-30 19:50:09 dimock Exp $
+ * $Id: FieldProp.java,v 1.30 2006-01-03 16:23:57 dimock Exp $
  */
 public class FieldProp implements Constants
 {
@@ -680,31 +680,44 @@ public class FieldProp implements Constants
             }
 
             public Object visitArrayAccessExpression(
-                    JArrayAccessExpression self, JExpression pfx,
-                    JExpression acc) {
+                    JArrayAccessExpression self, JExpression prefix,
+                    JExpression accessor) {
+                JExpression newPfx = (JExpression)prefix.accept(this);
+                if (newPfx != null && newPfx != prefix) {
+                    self.setPrefix(newPfx);
+                }
                 boolean oldInArrayOffset = inArrayOffest[0];
                 inArrayOffest[0] = true;
                 // Recurse so we have something to return.
-                Object orig = super.visitArrayAccessExpression(self, pfx, acc);
+  
+//                Object orig = super.visitArrayAccessExpression(self,prefix, acc);
+                JExpression newAcc = (JExpression)accessor.accept(this);
+                if (newAcc != null && newAcc != accessor) {
+                    self.setAccessor(newAcc);
+                }
+
                 inArrayOffest[0] = oldInArrayOffset;
                 // Take a harder look at what we have...
-                if (!(pfx instanceof JFieldAccessExpression))
-                    return orig;
-                JFieldAccessExpression fae = (JFieldAccessExpression) pfx;
+                if (!(prefix instanceof JFieldAccessExpression))
+                    return self;
+                JFieldAccessExpression fae = (JFieldAccessExpression) prefix;
                 if (!(fae.getPrefix() instanceof JThisExpression))
-                    return orig;
+                    return self;
                 // Okay, the base is a FAE with this. Yay.
                 // Save its name.
                 String name = fae.getIdent();
                 // Now, is the offset an integer literal?
-                if (!(acc instanceof JIntLiteral))
-                    return orig;
+                if (!(newAcc instanceof JIntLiteral))
+                    return self;
                 // Yay, we win (hopefully).
-                int slot = ((JIntLiteral) acc).intValue();
-                if (canArrayPropagate(name, slot))
+                int slot = ((JIntLiteral) newAcc).intValue();
+                if (canArrayPropagate(name, slot)
+                    && (inArrayOffest[0]
+                        || !inLeftHandSide[0])) {
                     return propagatedArray(name, slot);
-                else
-                    return orig;
+                } else {
+                    return self;
+                }
             }
         };
         for (int i = 0; i < meths.length; i++) {

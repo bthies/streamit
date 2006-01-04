@@ -18,8 +18,8 @@ void->void pipeline BMPtoMPEG() {
 
     //int width=352; // Hacked for now TODO
     //int height=240;
-  int width=16*4;
-  int height=16*3;
+  int width=352;
+  int height=240;
   int numpictures = 3;
 
   add void->int splitjoin {

@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.19 2005-12-23 17:51:25 dimock Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.20 2006-01-04 19:11:58 dimock Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -56,7 +56,7 @@ public class SIRToStreamIt
      * part of its processing.
      * 
      * If you are using 'static' sections and have not yet run StaticProp
-     * you mat get error messages about non-constant parameters etc.
+     * you may get error messages about non-constant parameters etc.
      */
     public static void runBeforeCompiler(SIRStream str,
                            JInterfaceDeclaration[] interfaces,
@@ -471,6 +471,7 @@ public class SIRToStreamIt
         p.indent();
         toplevel = true;
         init.getBody().accept(this);
+        p.outdent();
         p.newLine();
         return null;
     }
@@ -493,6 +494,7 @@ public class SIRToStreamIt
         p.indent();
         toplevel = true;
         init.getBody().accept(this);
+        p.outdent();
         p.newLine();
         return null;
     }

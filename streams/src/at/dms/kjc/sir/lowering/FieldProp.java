@@ -2,13 +2,13 @@ package at.dms.kjc.sir.lowering;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-
+import at.dms.kjc.common.CommonUtils;
 import java.util.*;
 
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.30 2006-01-03 16:23:57 dimock Exp $
+ * $Id: FieldProp.java,v 1.31 2006-01-04 19:13:36 dimock Exp $
  */
 public class FieldProp implements Constants
 {
@@ -243,7 +243,7 @@ public class FieldProp implements Constants
                 
                 public Object visitAssignmentExpression(JAssignmentExpression self,
                         JExpression left, JExpression right) {
-                    JExpression field = lhsBaseExpr(left);
+                    JExpression field = CommonUtils.lhsBaseExpr(left);
                     if (field instanceof JFieldAccessExpression) {
                         String ident = ((JFieldAccessExpression)field).getIdent();
                         makeEmpty[0] = fields.contains(ident);
@@ -254,29 +254,6 @@ public class FieldProp implements Constants
             
         }
         
-    }
-    
-    // this method cloned from StaticsProp for now. (move to a Utils later)
-    private static JExpression lhsBaseExpr (JExpression expr) {
-        if (expr instanceof JArrayAccessExpression) {
-            return lhsBaseExpr(((JArrayAccessExpression)expr).getPrefix());
-        } 
-        if (expr instanceof JFieldAccessExpression) {
-            JFieldAccessExpression fexpr = (JFieldAccessExpression)expr;
-            if (fexpr.getPrefix() instanceof JThisExpression
-                || fexpr.getPrefix() instanceof JClassExpression) {
-                // field of named class or of 'this' class: is as
-                // far as we can go.
-                return (JExpression)fexpr;
-            } else {
-                return lhsBaseExpr(fexpr.getPrefix());
-            }
-        } 
-        if (expr instanceof JLocalVariableExpression) {
-            return expr;
-        }
-        assert false:expr;
-        return expr;      // for idiotic Java typechecker
     }
 
     /**

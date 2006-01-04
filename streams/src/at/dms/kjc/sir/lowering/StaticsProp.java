@@ -6,6 +6,7 @@ package at.dms.kjc.sir.lowering;
 import java.util.*;
 import java.lang.IllegalArgumentException;
 import at.dms.kjc.*;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 //import at.dms.kjc.iterator.SIRFilterIter;
 import at.dms.kjc.sir.SIRToStreamIt;
@@ -336,7 +337,7 @@ public class StaticsProp {
             public void visitAssignmentExpression(JAssignmentExpression self,
                     JExpression left, JExpression right) {
                 super.visitAssignmentExpression(self, left, right);
-                JExpression field = lhsBaseExpr(left);
+                JExpression field = CommonUtils.lhsBaseExpr(left);
                 if (field instanceof JFieldAccessExpression) {
                     JFieldAccessExpression fexpr = (JFieldAccessExpression) field;
                     // lhsBaseExpr should either have found an access to a field
@@ -599,42 +600,7 @@ public class StaticsProp {
     // Utility routines that could well go elsewhere
     // -------------------------------------------------------------------
 
-    /**
-     *  Take an expression that could occur on the lhs of an assignment
-     * and drill down to find the name of the field or local involved.
-     * 
-     * These expressions have the form
-     * (Local | (This|ClassName).field) ([Expression] | .StructureField)*
-     * 
-     * 
-     * @param expr   An expression that could occur on the left-hand side
-     *               of an assignment
-     *               
-     * @return       The root field (including this or classname) or 
-     *               local expression
-     */
-    private static JExpression lhsBaseExpr (JExpression expr) {
-        if (expr instanceof JArrayAccessExpression) {
-            return lhsBaseExpr(((JArrayAccessExpression)expr).getPrefix());
-        } 
-        if (expr instanceof JFieldAccessExpression) {
-            JFieldAccessExpression fexpr = (JFieldAccessExpression)expr;
-            if (fexpr.getPrefix() instanceof JThisExpression
-                || fexpr.getPrefix() instanceof JClassExpression) {
-                // field of named class or of 'this' class: is as
-                // far as we can go.
-                return (JExpression)fexpr;
-            } else {
-                return lhsBaseExpr(fexpr.getPrefix());
-            }
-        } 
-        if (expr instanceof JLocalVariableExpression) {
-            return expr;
-        }
-        assert false:expr;
-        return expr;      // for idiotic Java typechecker
-    }
-    
+     
 private static class IterOverAllFieldsAndMethods {
     /**
      * Operation to perform before visiting a SIRstream.

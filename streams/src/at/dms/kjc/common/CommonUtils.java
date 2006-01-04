@@ -2,6 +2,12 @@ package at.dms.kjc.common;
  
 import at.dms.kjc.CType;
 import at.dms.kjc.CArrayType;
+import at.dms.kjc.JArrayAccessExpression;
+import at.dms.kjc.JClassExpression;
+import at.dms.kjc.JExpression;
+import at.dms.kjc.JFieldAccessExpression;
+import at.dms.kjc.JLocalVariableExpression;
+import at.dms.kjc.JThisExpression;
 import at.dms.kjc.common.CodegenPrintWriter;
 /**
  * Some public static utility functions pulled out of other routines.
@@ -40,6 +46,49 @@ public class CommonUtils {
     public static void printCTypeString(CType s, CodegenPrintWriter cpw,
 				   boolean hasBoolType) {
 	cpw.print(CTypeToString(s, hasBoolType));
+    }
+    
+    
+    /**
+     *  Take an expression that could occur on the lhs of an assignment
+     * and drill down to find the name of the field or local involved.
+     * 
+     * These expressions have the form
+     * (Local | (This|ClassName).field | ...) ([Expression] | .StructureField)*
+     * 
+     * 
+     * @param expr   An expression that could occur on the left-hand side
+     *               of an assignment
+     *               
+     * @return       The root field (including this or classname) or 
+     *               local expression, or whatever else was found after
+     *               peeling off all structure field modifiers and array 
+     *               offset modifiers.  (There are assignments of the form
+     *               SIRPortal = SIRPortalCreation and such like, so this
+     *               is not guaranteed to return a field or local.)
+     */
+
+    public static JExpression lhsBaseExpr (JExpression expr) {
+        if (expr instanceof JArrayAccessExpression) {
+            return lhsBaseExpr(((JArrayAccessExpression)expr).getPrefix());
+        } 
+        if (expr instanceof JFieldAccessExpression) {
+            JFieldAccessExpression fexpr = (JFieldAccessExpression)expr;
+            if (fexpr.getPrefix() instanceof JThisExpression
+                || fexpr.getPrefix() instanceof JClassExpression) {
+                // field of named class or of 'this' class: is as
+                // far as we can go.
+                return (JExpression)fexpr;
+            } else {
+                return lhsBaseExpr(fexpr.getPrefix());
+            }
+        } 
+        if (expr instanceof JLocalVariableExpression) {
+            return expr;
+        }
+        // There are some other odd left-hand sides such as 
+        // SIRPortal = SIRCreatePortal
+        return expr;
     }
 
 }

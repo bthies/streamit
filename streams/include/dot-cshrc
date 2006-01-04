@@ -35,6 +35,13 @@ else
   setenv PATH ${STREAMIT_HOME}
 endif
 
+# Perl on RHEL-3
+if ($?PERL5LIB) then
+  setenv PERL5LIB /usr/uns/encap/perl-5.8.0/lib/5.8.0/:${PERL5LIB}
+else
+  setenv PERL5LIB /usr/uns/encap/perl-5.8.0/lib/5.8.0/
+endif
+
 # include extra LaTeX packages
 # (Note that this *always* DTRT: the TeX path-searching stuff interprets
 # a blank entry as "the default path".)

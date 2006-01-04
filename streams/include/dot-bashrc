@@ -41,6 +41,10 @@ else
   PATH=${PATH}:${STREAMIT_HOME}
 fi
 
+# Perl on RHEL-3
+PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:${PERL5LIB}
+export PERL5LIB
+
 # include extra LaTeX packages
 # (Note that this *always* DTRT: the TeX path-searching stuff interprets
 # a blank entry as "the default path".)

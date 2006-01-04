@@ -421,6 +421,7 @@ public class Propagator extends SLIRReplacingVisitor {
 		    self.setThenClause(thenClause);
 		    self.setElseClause(elseClause);
 		    newExp=new JLogicalComplementExpression(cond.getTokenReference(),newExp);
+		    self.setCondition(newExp);
 		    if((elseClause instanceof JBlock)&&(((JBlock)elseClause).size()==0))
 			self.setElseClause(null);
 		}

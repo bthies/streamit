@@ -314,7 +314,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
 			    "Please check that the round-robin weights match the I/O rates of the\n" +
 			    "child streams.\n";
 			// anonymous names aren't too helpful
-			if (name.startsWith("Anon")) {
+			if (name.startsWith("Anon") /* for library */ || name.startsWith("name=Anon") /* for compiler */ ) {
 			    msg += "\n" + 
 				"Note:  the name \"" + name + "\" indicates that this splitjoin is an\n" +
 				"anonymous wrapper in your program.  You can identify this wrapper by\n" +

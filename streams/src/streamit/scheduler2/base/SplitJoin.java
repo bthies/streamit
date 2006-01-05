@@ -19,6 +19,8 @@ package streamit.scheduler2.base;
 import streamit.scheduler2.iriter./*persistent.*/
 SplitJoinIter;
 import java.math.BigInteger;
+
+import at.dms.kjc.sir.SIRStream;
 import streamit.misc.Fraction;
 
 /**
@@ -47,6 +49,20 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
         {
             nChildren = splitjoin.getNumChildren();
 
+            // Debugging:
+            if (debugrates) {
+                if (librarydebug) {
+                    System.err.print("SPLITJOIN "+ splitjoin.getObject().getClass()
+                            .getName());
+                } else {
+                    System.err.print("SPLITJOIN "+ ((SIRStream)splitjoin.getObject())
+                             .getIdent());
+                }
+                System.err.println("[" + nChildren + "]");
+            }
+            // End Debugging
+
+
             // a pipeline must have some children
             assert nChildren > 0;
 
@@ -55,10 +71,44 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             int nChild;
             for (nChild = 0; nChild < splitjoin.getNumChildren(); nChild++)
             {
+                // Debugging:
+                if (debugrates) {
+                    if (librarydebug) {
+                        System.err.println(splitjoin.getObject().getClass()
+                                .getName() + "[" + nChild + "] begin: "
+                                + ((at.dms.kjc.iterator.SIRIterator)splitjoin
+                                        .getChild(nChild)).getObject()
+                                        .getClass().getName());
+                    } else {
+                        System.err.println(((SIRStream) splitjoin.getObject())
+                                 .getIdent() + "[" + nChild + "] begin: "
+                                 + ((SIRStream) ((at.dms.kjc.iterator.SIRIterator)splitjoin
+                                        .getChild(nChild)).getObject()).getIdent());
+                    }
+                }
+                // End Debugging
+
                 // create a new object for the child
                 children[nChild] =
                     factory.newFrom(splitjoin.getChild(nChild), splitjoin.getUnspecializedIter());
-            }
+
+                // Debugging:
+                if (debugrates) {
+                    if (librarydebug) {
+                        System.err.println(splitjoin.getObject().getClass()
+                                .getName() + "[" + nChild + "] end: "
+                                + ((at.dms.kjc.iterator.SIRIterator)splitjoin
+                                        .getChild(nChild)).getObject()
+                                        .getClass().getName());
+                    } else {
+                        System.err.println(((SIRStream)splitjoin.getObject())
+                                .getIdent() + "[" + nChild + "] end: "
+                                + ((SIRStream) ((at.dms.kjc.iterator.SIRIterator)splitjoin
+                                        .getChild(nChild)).getObject()).getIdent());
+                    }
+                }
+                // End Debugging
+             }
 
             // compute my steady schedule
             // my children already have computed their steady schedules,
@@ -168,9 +218,9 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
     {
         // amount of data distributed to and collected by the split
         // and join
-        int splitPushWeights[];
-        int joinPopWeights[];
-        int splitPopWeight, joinPushWeight;
+//        int splitPushWeights[];
+//        int joinPopWeights[];
+//        int splitPopWeight, joinPushWeight;
 
         Fraction childrenRates[] = new Fraction[nChildren];
         Fraction splitRate = null;
@@ -235,6 +285,18 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                 }
 
                 childrenRates[nChild] = childRate;
+
+                // Debugging:
+                if (debugsplitjoin) {
+                    if (librarydebug) {
+                        System.err.print(splitjoin.getObject().getClass().getName());
+                    } else {
+                        System.err.print(((SIRStream)splitjoin.getObject()).getIdent());
+                    }
+                    System.err.println("[" + nChild + "].splitRate = " + childRate);
+                }
+                // End Debugging
+
             }
         }
 
@@ -299,6 +361,17 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
 
                     // set the rate
                     childrenRates[nChild] = newChildRate;
+
+                    // Debugging:
+                    if (debugsplitjoin) {
+                        if (librarydebug) {
+                            System.err.print(splitjoin.getObject().getClass().getName());
+                        } else {
+                            System.err.print(((SIRStream)splitjoin.getObject()).getIdent());
+                        }
+                        System.err.println("[" + nChild + "].joinRate = " + childRate);
+                    }
+                    // End Debugging
                 }
 
                 // okay, if I have both rates, make sure that they agree!
@@ -401,6 +474,17 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                         childrenNumExecs[nChild] =
                             newChildRate.getNumerator();
 
+                        // Debugging:
+                        if (debugsplitjoin) {
+                            if (librarydebug) {
+                                System.err.print(splitjoin.getObject().getClass().getName());
+                            } else {
+                                System.err.print(((SIRStream)splitjoin.getObject()).getIdent());
+                            }
+                            System.err.println("[" + nChild + "] executions = " + childrenNumExecs[nChild]);
+                        }
+                        // End Debugging
+
                         // make sure that the child executes a positive
                         // number of times!
                         assert childrenNumExecs[nChild].signum() == 1;
@@ -421,6 +505,19 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             setSteadyPeek(pop);
             setSteadyPop(pop);
             setSteadyPush(push);
+
+            // Debugging:
+            if (debugrates) {
+                if (librarydebug) {
+                    System.err.print(splitjoin.getObject().
+                            getClass().getName());
+                } else {
+                    System.err.print(((SIRStream)splitjoin.getObject())
+                            .getIdent()); 
+                }
+                System.err.println(" steady state: push " + push + " pop " + pop);
+            }                       
+            // End Debugging
         }
     }
     

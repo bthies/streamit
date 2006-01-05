@@ -16,8 +16,8 @@
 
 package streamit.scheduler2.base;
 
-import streamit.scheduler2.iriter./*persistent.*/
-FilterIter;
+import streamit.scheduler2.iriter.FilterIter;
+import at.dms.kjc.sir.*;
 
 /**
  * Computes some basic data for Filters.
@@ -36,6 +36,18 @@ abstract public class Filter extends Stream
         
         assert _filterIter != null;
         filterIter = _filterIter;
+
+        // Debugging:
+        if (debugrates) {
+            if (librarydebug) {
+                System.err.println("FILTER "+ filterIter.getObject().getClass()
+                        .getName());
+            } else {
+                System.err.println("FILTER "+ ((SIRStream) filterIter.getObject())
+                        .getIdent());
+            }
+        }
+        // End Debugging
 
         computeSteadyState();
     }
@@ -65,6 +77,19 @@ abstract public class Filter extends Stream
         setSteadyPeek(maxPeek);
         setSteadyPop(pop);
         setSteadyPush(push);
+
+        // Debugging:
+        if (debugrates) {
+            if (librarydebug) {
+                System.err.print(filterIter.getObject().
+                getClass().getName());
+            } else {
+                System.err.print(((SIRStream)filterIter.getObject())
+                        .getIdent()); 
+            }   
+            System.err.println(" steady state: push " + push + " pop " + pop + " maxPeek " + maxPeek);
+        }            
+        // End Debugging
     }
     
     public int getNumNodes () { return 1; }

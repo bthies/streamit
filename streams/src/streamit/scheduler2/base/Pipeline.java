@@ -18,6 +18,7 @@ package streamit.scheduler2.base;
 
 import streamit.scheduler2.iriter./*persistent.*/PipelineIter;
 import java.math.BigInteger;
+import at.dms.kjc.sir.*;
 
 /**
  * Computes some basic data for Pipelines.  
@@ -45,7 +46,20 @@ abstract public class Pipeline extends Stream
         {
             nChildren = pipeline.getNumChildren();
 
-            // a pipeline must have some children
+            // Debugging:
+            if (debugrates) {
+                if (librarydebug) {
+                    System.err.print("PIPELINE "+ pipeline.getObject().getClass()
+                            .getName());
+                } else {
+                    System.err.print("PIPELINE "+ ((SIRStream)pipeline.getObject())
+                             .getIdent());
+                }
+                System.err.println("[" + nChildren + "]");
+            }
+            // End Debugging
+
+           // a pipeline must have some children
             assert nChildren > 0;
 
             children = new StreamInterface[nChildren];
@@ -53,9 +67,44 @@ abstract public class Pipeline extends Stream
             int nChild;
             for (nChild = 0; nChild < pipeline.getNumChildren(); nChild++)
             {
+                // Debugging:
+                if (debugrates) {
+                    if (librarydebug) {
+                        System.err.println(pipeline.getObject().getClass()
+                                .getName() + "[" + nChild + "] begin: "
+                                + ((at.dms.kjc.iterator.SIRIterator) pipeline
+                                        .getChild(nChild)).getObject()
+                                        .getClass().getName());
+                    } else {
+                        System.err.println(((SIRStream)pipeline.getObject())
+                                 .getIdent() + "[" + nChild + "] begin: "
+                                 + ((SIRStream) ((at.dms.kjc.iterator.SIRIterator)pipeline
+                                        .getChild(nChild)).getObject()).getIdent());
+                    }
+                }
+                // End Debugging
+            
                 // create a new child object
                 children[nChild] =
                     factory.newFrom(pipeline.getChild(nChild), pipeline.getUnspecializedIter());
+
+                
+                // Debugging:
+                if (debugrates) {
+                    if (librarydebug) {
+                        System.err.println(pipeline.getObject().getClass()
+                                .getName() + "[" + nChild + "] end: "
+                                + ((at.dms.kjc.iterator.SIRIterator) pipeline
+                                        .getChild(nChild)).getObject()
+                                        .getClass().getName());
+                    } else {
+                        System.err.println(((SIRStream) pipeline.getObject())
+                                .getIdent() + "[" + nChild + "] end: "
+                                + ((SIRStream) ((at.dms.kjc.iterator.SIRIterator) pipeline
+                                        .getChild(nChild)).getObject()).getIdent());
+                    }
+                }
+                // End Debugging
             }
             
             // compute my steady schedule
@@ -165,6 +214,21 @@ abstract public class Pipeline extends Stream
             for (nChild = 0; nChild < nChildren; nChild++)
             {
                 gcd = gcd.gcd(childrenNumExecs[nChild]);
+
+                // Debugging:
+                if (debugrates) {
+                    if (librarydebug) {
+                        System.err.println(pipeline.getObject().
+                                getClass().getName() + "[" + nChild 
+                                + "] executions before gcd = " 
+                                + childrenNumExecs[nChild]);
+                    } else {
+                        System.err.println(((SIRStream) pipeline.getObject())
+                                .getIdent() + "[" + nChild + "] executions before gcd = " 
+                                + childrenNumExecs[nChild]);
+                    }
+                }                       
+                // End Debugging
             }
         }
 
@@ -181,9 +245,27 @@ abstract public class Pipeline extends Stream
                 childrenNumExecs[nChild] =
                     childrenNumExecs[nChild].divide(gcd);
 
+                // Debugging:
+                if (debugrates) {
+                    if (librarydebug) {
+                        System.err.println(pipeline.getObject().
+                                getClass().getName() + "[" + nChild 
+                                + "] executions = " 
+                                + childrenNumExecs[nChild]);
+                    } else {
+                        System.err.println(((SIRStream) pipeline.getObject())
+                                .getIdent() + "[" + nChild + "] executions = " 
+                                + childrenNumExecs[nChild]);
+                    }
+                }                       
+                // End Debugging
+
                 // make sure that the child executes a positive
                 // number of times!
-                assert childrenNumExecs[nChild].signum() == 1;
+                assert childrenNumExecs[nChild].signum() == 1 :"" 
+                  + childrenNumExecs[nChild].signum() + " == 1  " 
+                  + pipeline.getObject().getClass().getName() 
+                  + "[" + nChild + "]";
             }
         }
 
@@ -202,6 +284,19 @@ abstract public class Pipeline extends Stream
             setSteadyPeek(pop + peekExtra);
             setSteadyPop(pop);
             setSteadyPush(push);
+            
+            // Debugging:
+            if (debugrates) {
+                if (librarydebug) {
+                    System.err.print(pipeline.getObject().
+                            getClass().getName());
+                } else {
+                    System.err.print(((SIRStream)pipeline.getObject())
+                            .getIdent()); 
+                }
+                System.err.println(" steady state: push " + push + " pop " + pop + " peekExtra " + peekExtra);
+            }                       
+            // End Debugging
         }
     }
 

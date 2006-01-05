@@ -30,6 +30,17 @@ import streamit.scheduler2.iriter.Iterator;
 
 abstract class Stream extends DestroyedClass implements StreamInterface
 {
+    // turn on debugrates for printing out rates
+    protected static boolean debugrates = false;
+    // turn on debugsplitjoin for printing out splitjoin proportions 
+    protected static boolean debugsplitjoin = false;
+    // turn on librarydebug as well for debugging in library
+    // (library and compiler backends use different data
+    //  so having librarydebug set wrong will produce 
+    //  ClassCastException).
+    protected static boolean librarydebug = false;
+
+    
     final private Iterator streamIter;
     
     protected Stream (Iterator _streamIter)

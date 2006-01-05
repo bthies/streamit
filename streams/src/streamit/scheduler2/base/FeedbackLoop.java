@@ -16,10 +16,10 @@
 
 package streamit.scheduler2.base;
 
-import streamit.scheduler2.iriter./*persistent.*/
-FeedbackLoopIter;
+import streamit.scheduler2.iriter.FeedbackLoopIter;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
+import at.dms.kjc.sir.*;
 
 /**
  * Computes some basic steady state data for FeedbackLoops.
@@ -43,8 +43,45 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
         assert _feedbackLoop != null;
         feedbackLoop = _feedbackLoop;
 
+        // Debugging:
+        if (debugrates) {
+            if (librarydebug) {
+                System.err.print("FEEDBACKLOOP "+ feedbackLoop.getObject().getClass()
+                        .getName());
+                System.err.println(feedbackLoop.getObject().getClass().getName() 
+                        + "[body] = " 
+                        + feedbackLoop.getBodyChild().getObject().getClass().getName());
+            } else {
+                System.err.println("FEEDBACKLOOP "+ ((SIRStream)feedbackLoop.getObject())
+                         .getIdent());
+                System.err.println(((SIRStream)feedbackLoop.getObject())
+                        .getIdent()
+                        + "[body] = " 
+                        + ((SIRStream)(feedbackLoop.getBodyChild().getObject())).getIdent());
+            }
+        }
+        // End Debugging
+
         // create new objects for the body and the loop
+
+
         body = factory.newFrom(feedbackLoop.getBodyChild(), feedbackLoop.getUnspecializedIter());
+
+        // Debugging:
+        if (debugrates) {
+            if (librarydebug) {
+                System.err.println(feedbackLoop.getObject().getClass().getName() 
+                        + "[loop] = " 
+                        + feedbackLoop.getLoopChild().getObject().getClass().getName());
+            } else {
+                System.err.println(((SIRStream)feedbackLoop.getObject())
+                        .getIdent()
+                        + "[loop] = " 
+                        + ((SIRStream)(feedbackLoop.getLoopChild().getObject())).getIdent());
+            }
+        }
+        // End Debugging
+
         loop = factory.newFrom(feedbackLoop.getLoopChild(), feedbackLoop.getUnspecializedIter());
 
         // compute my steady schedule
@@ -137,9 +174,9 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
     {
         // amount of data distributed to and collected by the split
         // and join
-        int splitPushWeights[];
-        int joinPopWeights[];
-        int splitPopWeight, joinPushWeight;
+//        int splitPushWeights[];
+//        int joinPopWeights[];
+//        int splitPopWeight, joinPushWeight;
 
         // now, assuming the body executes once, compute fractions
         // of how many times everything else executes
@@ -236,6 +273,19 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
             setSteadyPeek(pop);
             setSteadyPop(pop);
             setSteadyPush(push);
+
+            // Debugging:
+            if (debugrates) {
+                if (librarydebug) {
+                    System.err.print(feedbackLoop.getObject().
+                            getClass().getName());
+                } else {
+                    System.err.print(((SIRStream)feedbackLoop.getObject())
+                            .getIdent()); 
+                }
+                System.err.println(" steady state: push " + push + " pop " + pop);
+            }                       
+            // End Debugging
         }
     }
     

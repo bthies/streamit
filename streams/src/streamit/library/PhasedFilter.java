@@ -37,20 +37,21 @@ public abstract class PhasedFilter extends Filter implements Runnable
 
     public void doWork() {
         prepareToWork();
-        if (firstWork) {
-            firstWork = false;
-            Thread t = new Thread(this);
-            t.start();
-        } else {
-            synchronized (this) {
-                try {
-                    notify();
-                    wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+	synchronized (this) {
+	    try {
+		if (firstWork) {
+		    firstWork = false;
+		    Thread t = new Thread(this);
+		    t.start();
+		    wait();
+		} else {
+		    notify();
+		    wait();
+		}
+	    } catch (InterruptedException e) {
+		e.printStackTrace();
+	    }
+	}
     }
 
     public void run() {

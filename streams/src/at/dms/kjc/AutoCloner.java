@@ -141,7 +141,10 @@ public class AutoCloner {
 	// immutable types -- don't clone them, either because we
 	// don't have to or because they might rely on reference
 	// equality
-	else if (typeName.startsWith("at.dms.kjc.C") ||
+	else if ((typeName.startsWith("at.dms.kjc.C") &&
+		  // need to clone CArrayTypes because the static
+		  // array dimensions could be different for each instance
+		  !(o instanceof CArrayType)) ||
 		 o instanceof JLiteral ||
 		 o instanceof JavaStyleComment ||
 		 o instanceof TokenReference ||

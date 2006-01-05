@@ -1,5 +1,4 @@
 package at.dms.kjc.common;
-
 //import java.io.StringWriter;
 import java.util.Vector;
 import java.util.Iterator;
@@ -141,85 +140,86 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      * The RAW backend has problems with non-zeroed arrays so don't
      *  set KjcOptions.malloczeros to false!
      */
-    public void visitNewArrayExpression(JNewArrayExpression self,
-                                        CType type,
-                                        JExpression[] dims,
-                                        JArrayInitializer init
-					)
-    {
-	p.print(" /* ToCCommon visitNewArrayExpression "
-      	      + this.getClass().getName() + "*/ ");
-	//the memory allocator to use: 
-	String memory_alloc = KjcOptions.malloczeros ? 
-	    "malloc" : "calloc";
-	//malloc takes one arg, calloc two, so use a different sep between
-	//size and elements
-	String mem_alloc_sep = KjcOptions.malloczeros ? 
-	    " * " : ", ";
+    //     public void visitNewArrayExpression(JNewArrayExpression self,
+    //                                         CType type,
+    //                                         JExpression[] dims,
+    //                                         JArrayInitializer init
+    //					 ) {
+    //     }
+//     {
+// 	p.print(" /* ToCCommon visitNewArrayExpression "
+//       	      + this.getClass().getName() + "*/ ");
+// 	//the memory allocator to use: 
+// 	String memory_alloc = KjcOptions.malloczeros ? 
+// 	    "malloc" : "calloc";
+// 	//malloc takes one arg, calloc two, so use a different sep between
+// 	//size and elements
+// 	String mem_alloc_sep = KjcOptions.malloczeros ? 
+// 	    " * " : ", ";
 
 
-	int derefs = dims.length; // number of *'s after element type
-	Vector suffixes = new Vector();
-	for (int dim = 0; dim < dims.length; dim++) {
-	    p.print("(");		// cast return type of allocator
-	    typePrint(type);
-	    for (int i = 0; i < derefs; i++) { p.print("*"); }
-	    p.print(")");
-	    p.print(memory_alloc + "("); // allocation
-	    dims[dim].accept(this);
-	    p.print(mem_alloc_sep + "sizeof(");
-	    typePrint(type);
-	    for (int i = 0; i < derefs - 1; i++) { p.print("*"); }
-	    p.print("));");
-	    p.newLine();
-	    // now either allocate subarrays if not last dimension
-	    // or optionally initialize if last dimension;
-	    if (dim == dims.length - 1) {
-		// gotten to data in array: 
-		// code creating initialization code not yet written
-		if (init != null) {
-		    p.print("/* initialize with "); 
-		    init.accept(this);
-		    p.print("*/");
-		    p.print(" no initialization code! ");
-		    p.newLine();
-		}
-		break;
-            }
-	    // initialize sub-arrays in for loop so that large arrays
-	    // don't result in large amounts of C code
-	    String indx = LoweringConstants.getUniqueVarName();
-	    p.print("{");
-	    p.newLine();
-	    p.indent();
-	    p.print("int " + indx + ";");
-	    p.newLine();
-	    p.print("for (" + indx + "= 0; " 
-		  + indx + " < ");
-	    derefs--;		// drop a level of indirection each time
-            dims[dim].accept(this);
-            p.print("; " 
-		  + indx + "++) {");
-	    p.newLine();
-	    p.indent();
-	    suffixes.add("[" + indx + "]");
-	    lastLeft.accept(this);
-	    for (int i = 0; i < suffixes.size(); i++) {
-		p.print((String)(suffixes.get(i)));
-	    }
-            p.print(" = ");
-	}
+// 	int derefs = dims.length; // number of *'s after element type
+// 	Vector suffixes = new Vector();
+// 	for (int dim = 0; dim < dims.length; dim++) {
+// 	    p.print("(");		// cast return type of allocator
+// 	    printType(type);
+// 	    for (int i = 0; i < derefs; i++) { p.print("*"); }
+// 	    p.print(")");
+// 	    p.print(memory_alloc + "("); // allocation
+// 	    dims[dim].accept(this);
+// 	    p.print(mem_alloc_sep + "sizeof(");
+// 	    printType(type);
+// 	    for (int i = 0; i < derefs - 1; i++) { p.print("*"); }
+// 	    p.print("));");
+// 	    p.newLine();
+// 	    // now either allocate subarrays if not last dimension
+// 	    // or optionally initialize if last dimension;
+// 	    if (dim == dims.length - 1) {
+// 		// gotten to data in array: 
+// 		// code creating initialization code not yet written
+// 		if (init != null) {
+// 		    p.print("/* initialize with "); 
+// 		    init.accept(this);
+// 		    p.print("*/");
+// 		    p.print(" no initialization code! ");
+// 		    p.newLine();
+// 		}
+// 		break;
+//             }
+// 	    // initialize sub-arrays in for loop so that large arrays
+// 	    // don't result in large amounts of C code
+// 	    String indx = LoweringConstants.getUniqueVarName();
+// 	    p.print("{");
+// 	    p.newLine();
+// 	    p.indent();
+// 	    p.print("int " + indx + ";");
+// 	    p.newLine();
+// 	    p.print("for (" + indx + "= 0; " 
+// 		  + indx + " < ");
+// 	    derefs--;		// drop a level of indirection each time
+//             dims[dim].accept(this);
+//             p.print("; " 
+// 		  + indx + "++) {");
+// 	    p.newLine();
+// 	    p.indent();
+// 	    suffixes.add("[" + indx + "]");
+// 	    lastLeft.accept(this);
+// 	    for (int i = 0; i < suffixes.size(); i++) {
+// 		p.print((String)(suffixes.get(i)));
+// 	    }
+//             p.print(" = ");
+// 	}
 	    
-	// close off any for loops created.
-	for (int dim = 0; dim < dims.length-1; dim++) {
-	    p.outdent();	// end of emitted for loop
-	    p.print("}");
-	    p.newLine();
-	    p.outdent();	// end of emitted block declaring loop variable
-	    p.print("}");
-	    p.newLine();
-	}
-    }
+// 	// close off any for loops created.
+// 	for (int dim = 0; dim < dims.length-1; dim++) {
+// 	    p.outdent();	// end of emitted for loop
+// 	    p.print("}");
+// 	    p.newLine();
+// 	    p.outdent();	// end of emitted block declaring loop variable
+// 	    p.print("}");
+// 	    p.newLine();
+// 	}
+//     }
 
 // ----------------------------------------------------------------------------
 // Statements common to ToC, LIRToC up to white space
@@ -489,7 +489,7 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public void visitTypeNameExpression(JTypeNameExpression self,
                                         CType type) {
 	p.print("(");
-    typePrint(type);
+    printType(type);
 	p.print(")");
     }
 
@@ -677,7 +677,7 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
 	if (!(type.isArrayType() 
 	      && ((CArrayType)type).getElementType().isArrayType())) {
 	    p.print("(");
-	    typePrint(type);
+	    printType(type);
 	    p.print(")");
 	}
         p.print("(");
@@ -698,7 +698,7 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
         printLParen();
 	statementContext = false;
         p.print("(");
-        typePrint(type);
+        printType(type);
         p.print(")");
         p.print("(");
         expr.accept(this);
@@ -806,16 +806,25 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     		p.print("printf(\"\\n\");\n");
     	}
     }
- 
+
+    /**
+     * Prints a declaration for the given type with the given
+     * identifier.  Prints int x[10][10] for arrays.
+     * 
+     * @param s      the type to declare
+     * @param ident  the identifier to declare
+     */
+    protected void printDecl(CType s, String ident) {
+	p.print(CommonUtils.declToString(s, ident, hasBoolType));
+    }
 
     /**
      * Print a CType.
      *
      * @param s    a CType to be printed.
      *
-     * {@link at.dms.kjc.common.CommonUtils#printCTypeString}.
      */
-    protected void typePrint(CType s) {
+    protected void printType(CType s) {
     	p.print(CommonUtils.CTypeToString(s, hasBoolType));
     }
 }

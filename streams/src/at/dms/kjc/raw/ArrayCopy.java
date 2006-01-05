@@ -22,16 +22,6 @@ public class ArrayCopy {
 	    }
 	    if(dims.size()>0) {
 		dumpAssign(val,body,new JLocalVariableExpression(null,params[i]));
-		body.addStatementFirst
-		    (new JExpressionStatement
-		     (null,
-		      new JAssignmentExpression(null,
-						new JLocalVariableExpression
-						(null,
-						 params[i]),
-						new JNewArrayExpression(null,
-									params[i].getType(),
-									(JExpression[])dims.toArray(new JExpression[0]),null)),null));
 	    }
 	}
     }

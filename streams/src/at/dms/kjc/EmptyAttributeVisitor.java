@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: EmptyAttributeVisitor.java,v 1.8 2002-02-18 14:54:07 jasperln Exp $
+ * $Id: EmptyAttributeVisitor.java,v 1.9 2006-01-05 22:26:28 thies Exp $
  */
 
 package at.dms.kjc;
@@ -175,6 +175,13 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
 	if (expr != null) {
 	    expr.accept(this);
 	}
+	// visit static array dimensions
+	if (type.isArrayType()) {
+	    JExpression[] dims = ((CArrayType)type).getDims();
+	    for (int i=0; i<dims.length; i++) {
+		dims[i].accept(this);
+	    }
+	}
 	return self;
     }
 
@@ -254,6 +261,13 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
 					  JExpression expr) {
 	if (expr != null) {
 	    expr.accept(this);
+	}
+	// visit static array dimensions
+	if (type.isArrayType()) {
+	    JExpression[] dims = ((CArrayType)type).getDims();
+	    for (int i=0; i<dims.length; i++) {
+		dims[i].accept(this);
+	    }
 	}
 	return self;
     }
@@ -1012,6 +1026,15 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
 					boolean isFinal,
 					CType type,
 					String ident) {
+
+	// visit static array dimensions
+	if (type.isArrayType()) {
+	    JExpression[] dims = ((CArrayType)type).getDims();
+	    for (int i=0; i<dims.length; i++) {
+		dims[i].accept(this);
+	    }
+	}
+
 	return self;
     }
 

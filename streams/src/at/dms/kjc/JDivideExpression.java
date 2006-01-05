@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDivideExpression.java,v 1.4 2003-05-28 05:58:43 thies Exp $
+ * $Id: JDivideExpression.java,v 1.5 2006-01-05 22:26:28 thies Exp $
  */
 
 package at.dms.kjc;
@@ -95,6 +95,24 @@ public class JDivideExpression extends JBinaryArithmeticExpression {
       return CNumericType.binaryPromote(leftType, rightType);
     }
     throw new UnpositionedError(KjcMessages.DIVIDE_BADTYPE, leftType, rightType);
+  }
+
+  // ----------------------------------------------------------------------
+  // ACCESSORS 
+  // ----------------------------------------------------------------------
+
+  /**
+   * Returns a string representation of this object.
+   */
+  public String toString() {
+    StringBuffer	buffer = new StringBuffer();
+
+    buffer.append("JDivideExpression[");
+    buffer.append(left.toString());
+    buffer.append(", ");
+    buffer.append(right.toString());
+    buffer.append("]");
+    return buffer.toString();
   }
 
   // ----------------------------------------------------------------------

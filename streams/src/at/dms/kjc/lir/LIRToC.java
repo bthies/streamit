@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.104 2005-12-21 20:02:47 thies Exp $
+ * $Id: LIRToC.java,v 1.105 2006-01-05 22:27:25 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.List;
 import java.util.Map;
+import at.dms.kjc.raw.RawExecutionCode;
 import at.dms.kjc.common.MacroConversion;
 import at.dms.kjc.common.CodeGenerator;
 import at.dms.util.InconsistencyException;
@@ -382,8 +383,8 @@ public class LIRToC
             p.indent();
             for (int j = 0; j < params.length; j++) {
                 p.newLine();
-                typePrint(params[j]);
-                p.print(" p" + j + ";");
+                printDecl(params[j], "p" + j);
+                p.print(";");
             }
             p.outdent();
             p.newLine();
@@ -394,8 +395,7 @@ public class LIRToC
             p.print("void send_" + name + "(portal p, latency l");
             for (int j = 0; j < params.length; j++) {
                 p.print(", ");
-                typePrint(params[j]);
-                p.print(" p" + j);
+                printDecl(params[j], "p" + j);
             }
             p.print(") {");
             p.indent();
@@ -454,34 +454,13 @@ public class LIRToC
                                     this,
                                     false);
         } else {
-            // if printing a field decl and it's array and it's
-            // initialized, I want to use a special printer that
-            // will just declare an array, instead of a pointer
-            if (expr == null || !(expr instanceof JNewArrayExpression)) {
-                // nope - not an array, or not initialized.
-                // just print it normally - if an array, it'll become  a
-                // pointer and the init function better allocate it         
-                
-                typePrint (type);
-                p.print (" ");
-                p.print (ident);
-                
-                // initializing vars is legal in C as well as java.
-                if (expr != null) {
-                    p.print ("\t= ");
-                    expr.accept (this);
-                }
-                p.print(";");
-            } else {
-                // yep.  use the local printing functions to print
-                // the correct type and array size
-                printLocalType (type);
-                p.print (" ");
-                p.print (ident);
-                p.print(" ");
-                printLocalArrayDecl((JNewArrayExpression)expr);
-                p.print(";");
-            }
+	    printDecl (type, ident);
+	    
+            if (expr != null && !(expr instanceof JNewArrayExpression)) {
+		p.print ("\t= ");
+		expr.accept (this);
+	    } 
+	    p.print(";");
         }
     }
 
@@ -511,7 +490,7 @@ public class LIRToC
         else
         {
             // p.print(CModifier.toString(modifiers));
-            typePrint(returnType);
+            printType(returnType);
             p.print(" ");
             p.print(ident);
             p.print("(");
@@ -591,42 +570,6 @@ public class LIRToC
     // STATEMENT
     // ----------------------------------------------------------------------
 
-    /*
-     * prints a while statement visitWhileStatement in ToCCommon
-     */
-
-    /*
-     * prints a variable declaration statement
-     * visitVariableDeclarationStatement in ToCCommon
-     */
-
-
-    private void printLocalArrayDecl(JNewArrayExpression expr) 
-    {
-        JExpression[] dims = expr.getDims();
-        for (int i = 0 ; i < dims.length; i++) {
-            p.print("[");
-            LIRToC toC = new LIRToC(arrayInitializers, this.p);
-            dims[i].accept(toC);
-            p.print("]");
-        }
-    }
-    
-
-    protected void printLocalType(CType s) 
-    {
-        if (s instanceof CArrayType){
-            typePrint(((CArrayType)s).getBaseType());
-        }
-        else if (s.getTypeID() == TID_BOOLEAN)
-            p.print("int");
-        else if (s.toString().endsWith("Portal"))
-            // ignore the specific type of portal in the C library
-            p.print("portal");
-        else
-            p.print(s.toString());
-    }
-
     /**
      * prints a variable declaration statement
      */
@@ -635,55 +578,22 @@ public class LIRToC
                                         CType type,
                                         String ident,
                                         JExpression expr) {
-        if (type.isArrayType() && expr instanceof JArrayInitializer) {
-            p.print(((CArrayType)type).getBaseType() + " " + ident);
-            JArrayInitializer init = (JArrayInitializer)expr;
-            while (true) {
-                int length = init.getElems().length;
-                p.print("[" + length + "]");
-                if (length==0) { 
-                    // hope that we have a 1-dimensional array in
-                    // this case.  Otherwise we won't currently
-                    // get the type declarations right for the
-                    // lower pieces.
-                    break;
-                }
-                // assume rectangular arrays
-                JExpression next = (JExpression)init.getElems()[0];
-                if (next instanceof JArrayInitializer) {
-                    init = (JArrayInitializer)next;
-                } else {
-                    break;
-                }
-            }
-            p.print(" = ");
-            expr.accept(this);
-            p.print(";");
-            return;
-        }
-
-        if (type.isArrayType()) {
-            
-        }
-
-        // p.print(CModifier.toString(modifiers));
-        if (expr!=null) {
-            printLocalType(type);
+        if (expr instanceof JArrayInitializer) {
+	    declareInitializedArray(findBaseType((JArrayInitializer)expr),
+				    ident,
+				    expr,
+				    this,
+				    true);
         } else {
-            typePrint(type);
-        }           
-        p.print(" ");
-        p.print(ident);
-        if (expr instanceof JNewArrayExpression) {
-            p.print(" ");
-            printLocalArrayDecl((JNewArrayExpression)expr);
-        } else {
-            if (expr != null) {
-                p.print(" = ");
-                expr.accept(this);
-            }
-        }
-        p.print(";");
+
+	    printDecl (type, ident);
+	    
+            if (expr != null && !(expr instanceof JNewArrayExpression)) {
+		p.print ("\t= ");
+		expr.accept (this);
+	    } 
+	    p.print(";");
+	}
     }
 
     /**
@@ -1082,18 +992,6 @@ public class LIRToC
     }
 
     /**
-     * prints an instanceof expression
-     */
-    public void visitInstanceofExpression(JInstanceofExpression self,
-                                          JExpression expr,
-                                          CType dest) {
-        expr.accept(this);
-        p.print(" instanceof ");
-        typePrint(dest);
-    }
-
-
-    /**
      * prints a field expression
      */
     public void visitFieldExpression(JFieldAccessExpression self,
@@ -1143,14 +1041,6 @@ public class LIRToC
             p.print(ident);
             p.print(")");
         }
-    }
-
-    /**
-     * prints a class expression
-     */
-    public void visitClassExpression(JClassExpression self, CType type) {
-        typePrint(type);
-        p.print(".class");
     }
 
     /**
@@ -1204,21 +1094,57 @@ public class LIRToC
             p.print(name);
             p.print(",");
             p.print(findSize((JArrayInitializer)right) + " * sizeof(");
-            typePrint(findBaseType((JArrayInitializer)right));
+            printType(findBaseType((JArrayInitializer)right));
             p.print("))");
             if (statementContext) { p.print(";"); }
-        } else {
-            boolean oldStatementContext = statementContext;
-            lastLeft=left;
-            printLParen();
-            statementContext = false;
+	    return;
+        } 
+
+	// copy arrays element-wise
+        if ((left.getType()!=null && left.getType().isArrayType()) &&
+	    (((right.getType()!=null && right.getType().isArrayType())
+	      || right instanceof SIRPopExpression) 
+	     && !(right instanceof JNewArrayExpression))) {
+
+            CArrayType type = (CArrayType)right.getType();
+	    JExpression[] dims = type.getDims();
+
+            p.print("{\n");
+            p.print("int ");
+            // print the index var decls
+            for (int i = 0; i < dims.length - 1; i++)
+                p.print(RawExecutionCode.ARRAY_COPY + i + ", ");
+            p.print(RawExecutionCode.ARRAY_COPY + (dims.length - 1));
+            p.print(";\n");
+            for (int i = 0; i < dims.length; i++) {
+                p.print("for (" + RawExecutionCode.ARRAY_COPY + i + " = 0; "
+                        + RawExecutionCode.ARRAY_COPY + i + " < ");
+		dims[i].accept(this);
+                p.print("; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
+            }
             left.accept(this);
+            for (int i = 0; i < dims.length; i++)
+                p.print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
             p.print(" = ");
             right.accept(this);
-            statementContext = oldStatementContext;
-            printRParen();
-            lastLeft=null;
-        }
+            for (int i = 0; i < dims.length; i++)
+                p.print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
+            p.print(";\n}\n");
+
+            return;
+
+	}
+
+	boolean oldStatementContext = statementContext;
+	lastLeft=left;
+	printLParen();
+	statementContext = false;
+	left.accept(this);
+	p.print(" = ");
+	right.accept(this);
+	statementContext = oldStatementContext;
+	printRParen();
+	lastLeft=null;
     }
 
     /**
@@ -1491,7 +1417,7 @@ public class LIRToC
     {
         p.print("(PEEK_DEFAULTB(");
         if (tapeType != null)
-            typePrint(tapeType);
+            printType(tapeType);
         else
             p.print("/* null tapeType! */ int");
         p.print(", ");
@@ -1508,7 +1434,7 @@ public class LIRToC
                 if(tapeType instanceof CArrayType)
                     p.print(tapeType.toString());
                 else
-                    typePrint(tapeType);
+                    printType(tapeType);
             else
                 p.print("/* null tapeType! */ int");
             p.print(", " + self.getNumPop() + " ))");
@@ -1518,7 +1444,7 @@ public class LIRToC
                 if(tapeType instanceof CArrayType)
                     p.print(tapeType.toString());
                 else
-                    typePrint(tapeType);
+                    printType(tapeType);
             else
                 p.print("/* null tapeType! */ int");
             p.print("))");
@@ -1548,7 +1474,7 @@ public class LIRToC
             if(tapeType instanceof CArrayType)
                 p.print(tapeType.toString());
             else
-                typePrint(tapeType);
+                printType(tapeType);
         } else
             p.print("/* null tapeType! */ int");
         p.print(", ");
@@ -1670,7 +1596,7 @@ public class LIRToC
         p.print("->" + CONTEXT_NAME + ", ");
         dstStruct.accept(this);
         p.print("->" + CONTEXT_NAME + ", sizeof(");
-        typePrint(type);
+        printType(type);
         p.print("), " + size + ");");
     }
     
@@ -1757,7 +1683,7 @@ public class LIRToC
         p.print(", ");
         streamContext.accept(this);
         p.print(", " + delay + ", ");
-        typePrint(type);
+        printType(type);
         p.print(", ");
         fp.accept(this);
         p.print(");");
@@ -1927,7 +1853,7 @@ public class LIRToC
         p.print(", JOINER, OUTPUT, 0, ");
         childContext.accept(this);
         p.print(", sizeof(");
-        typePrint(inputType);
+        printType(inputType);
         p.print("), " + inputSize + ");");
         p.newLine();
         p.print("create_splitjoin_tape(");
@@ -1935,7 +1861,7 @@ public class LIRToC
         p.print(", SPLITTER, INPUT, 0, ");
         childContext.accept(this);
         p.print(", sizeof(");
-        typePrint(outputType);
+        printType(outputType);
         p.print("), " + outputSize + ");");
     }
 
@@ -1957,7 +1883,7 @@ public class LIRToC
         p.print(", SPLITTER, OUTPUT, 1, ");
         childContext.accept(this);
         p.print(", sizeof(");
-        typePrint(inputType);
+        printType(inputType);
         p.print("), " + inputSize + ");");
         p.newLine();
         p.print("create_splitjoin_tape(");
@@ -1965,7 +1891,7 @@ public class LIRToC
         p.print(", JOINER, INPUT, 1, ");
         childContext.accept(this);
         p.print(", sizeof(");
-        typePrint(outputType);
+        printType(outputType);
         p.print("), " + outputSize + ");");
     }
 
@@ -1990,7 +1916,7 @@ public class LIRToC
             p.print(", SPLITTER, OUTPUT, " + position + ", ");
             childContext.accept(this);
             p.print(", sizeof(");
-            typePrint(inputType);
+            printType(inputType);
             p.print("), " + inputSize + ");");
             p.newLine();
         }
@@ -2000,7 +1926,7 @@ public class LIRToC
             p.print(", JOINER, INPUT, " + position + ", ");
             childContext.accept(this);
             p.print(", sizeof(");
-            typePrint(outputType);
+            printType(outputType);
             p.print("), " + outputSize + ");");
         }
     }
@@ -2205,10 +2131,13 @@ public class LIRToC
                                       boolean isFinal,
                                       CType type,
                                       String ident) {
-        typePrint(type);
         if (ident.indexOf("$") == -1) {
-            p.print(" ");
-            p.print(ident);
+	    printDecl(type, ident);
+	} else {
+	    // does this case actually happen?  just preseving
+	    // semantics of previous version, but this doesn't make
+	    // sense to me.  --bft
+	    printType(type);
         }
     }
 
@@ -2279,24 +2208,6 @@ public class LIRToC
     // PROTECTED METHODS
     // ----------------------------------------------------------------------
 
-    // Special case for CTypes, to map some Java types to C types.
-    protected void typePrint(CType s) {
-        if (s instanceof CArrayType)
-        {
-            typePrint(((CArrayType)s).getBaseType());
-	    for (int i = 0; i < ((CArrayType)s).getArrayBound(); i++)
-		p.print("*");
-        }
-        else if (s.getTypeID() == TID_BOOLEAN)
-            p.print("int");
-        else if (s.toString().endsWith("Portal"))
-            // ignore the specific type of portal in the C library
-            p.print("portal");
-        else
-            p.print(s.toString());
-    }
-
-
     /**
      * Tries to find the number of dimensions of <self>.
      */
@@ -2366,7 +2277,7 @@ public class LIRToC
      * otherwise just the declaration is printed.
      */
     protected void declareInitializedArray(CType baseType, String ident, JExpression expr, KjcVisitor visitor, boolean printInit) {
-        typePrint(baseType); // note this calls print(CType), not print(String)
+        printType(baseType); // note this calls print(CType), not print(String)
         p.print(" " + ident);
         JArrayInitializer init = (JArrayInitializer)expr;
         while (true) {

@@ -329,10 +329,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	return (int)(currentUpStreamItems * roundRobinMult);
     }
     
-    //returns the expression that will create the buffer array.  A JNewArrayExpression
-    //with the proper type, dimensions, and size...
-    private JExpression bufferInitExp(SIRFilter filter, CType inputType,
-				      int buffersize) 
+    //returns the dimensions for the buffer array.
+    private JExpression[] bufferDims(SIRFilter filter, CType inputType, int buffersize) 
     {
 	//this is an array type
 	if (inputType.isArrayType()) {
@@ -346,15 +344,12 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    //copy the dims for the basetype
 	    for (int i = 0; i < baseTypeDims.length; i++)
 		dims[i+1] = baseTypeDims[i];
-	    
-	    return new JNewArrayExpression(null, baseType, dims, null);
+
+	    return dims;
+	} else {
+	    JExpression dims[] = {new JIntLiteral(buffersize)};
+	    return dims;
 	}
-
-	
-
-	JExpression dims[] = {new JIntLiteral(buffersize)};
-	return new JNewArrayExpression(null, inputType, dims, null);
-	
     }
     
 
@@ -461,11 +456,10 @@ public class RawExecutionCode extends at.dms.util.Utils
 		new JVariableDefinition(null, 
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
 					new CArrayType(filter.getInputType(), 
-						       dim /* dimension */ ),
+						       dim /* dimension */ ,
+						       bufferDims(filter, filter.getInputType(), buffersize)),
 					recvBuffer,
-					bufferInitExp
-					(filter, filter.getInputType(), 
-					 buffersize));
+					null);
 	    
 	    
 	    //the size of the buffer 
@@ -557,11 +551,11 @@ public class RawExecutionCode extends at.dms.util.Utils
 		new JVariableDefinition(null, 
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
 					new CArrayType(filter.getOutputType(), 
-						       1 /* dimension */ ),
+						       1 /* dimension */ ,
+						       dims),
 					sendBuffer,
-					new JNewArrayExpression(null,
-								Util.getBaseType(filter.getOutputType()),
-								dims, null));
+					null);
+
 	    localVariables.sendBuffer = sendBufVar;
 	    block.addStatement
 		(new JVariableDeclarationStatement(null,

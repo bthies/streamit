@@ -110,13 +110,10 @@ public class FFSPeekBuffer extends FilterFusionState
 						at.dms.kjc.Constants.ACC_FINAL,
 						new CArrayType(Utils.voidToInt(filter.
 									       getInputType()), 
-							       1 /* dimension */ ),
+							       1 /* dimension */,
+							       dims),
 						PEEKBUFFERNAME + myUniqueID,
-						new JNewArrayExpression(null,
-									Utils.voidToInt(filter.
-											getInputType()),
-									dims,
-									null));
+						null);
     }
     
     public int getBufferSize(FlatNode prev, boolean init)

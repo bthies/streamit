@@ -185,6 +185,16 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
 	    
 	    expr.accept(this);
 	}
+	// visit static array dimensions
+	if (type.isArrayType()) {
+	    JExpression[] dims = ((CArrayType)type).getDims();
+	    for (int i=0; i<dims.length; i++) {
+		JExpression newExp = (JExpression)dims[i].accept(this);
+		if (newExp !=null && newExp!=dims[i]) {
+		    dims[i] = newExp;
+		}
+	    }
+	}
 	return self;
     }
 
@@ -236,6 +246,16 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
 		self.setValue(newExp);
 	    }
 	    
+	}
+	// visit static array dimensions
+	if (type.isArrayType()) {
+	    JExpression[] dims = ((CArrayType)type).getDims();
+	    for (int i=0; i<dims.length; i++) {
+		JExpression newExp = (JExpression)dims[i].accept(this);
+		if (newExp !=null && newExp!=dims[i]) {
+		    dims[i] = newExp;
+		}
+	    }
 	}
 	return self;
     }
@@ -436,12 +456,13 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
      */
     public Object visitParenthesedExpression(JParenthesedExpression self,
 					     JExpression expr) {
-	JExpression newExp = (JExpression)expr.accept(this);
-	if (newExp!=null && newExp!=expr) {
-	    self.setExpression(newExp);
+	// parenthesized expressions are evil, they tend to cause
+	// problems for passes looking for literals in specific
+	// locations.  So remove them whenever we can.
+	while (self.getExpr() instanceof JParenthesedExpression) {
+	    self = (JParenthesedExpression)self.getExpr();
 	}
-
-	return self;
+	return (JExpression)expr.accept(this);
     }
 
     /**
@@ -477,6 +498,28 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
 	}
 
 	visitArgs(params);
+	return self;
+    }
+
+    /**
+     * prints an array length expression
+     */
+    public Object visitFormalParameters(JFormalParameter self,
+					boolean isFinal,
+					CType type,
+					String ident) {
+
+	// visit static array dimensions
+	if (type.isArrayType()) {
+	    JExpression[] dims = ((CArrayType)type).getDims();
+	    for (int i=0; i<dims.length; i++) {
+		JExpression newExp = (JExpression)dims[i].accept(this);
+		if (newExp !=null && newExp!=dims[i]) {
+		    dims[i] = newExp;
+		}
+	    }
+	}
+
 	return self;
     }
 

@@ -110,11 +110,6 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
 		arrayInitBlock(self, (JArrayInitializer)expr, 
 			       currentBlock,
 			       new Vector());
-		
-		//something about method should go here...
-
-		self.setValue(handleArrayInitializer(ident, 
-						     (JArrayInitializer)expr, getBaseType(type)));
 	    } else {
 		JExpression newExp = (JExpression)expr.accept(this);
 		if (newExp!=null && newExp!=expr) {
@@ -143,9 +138,6 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
 			       new Vector());
 		//remember the block
 		fields.add(initBlock);
-		//set the initialization expression to a new array expression
-		self.setValue(handleArrayInitializer(ident, 
-						     (JArrayInitializer)expr, getBaseType(type)));
 	    }
 	    else {
 		JExpression newExp = (JExpression)expr.accept(this);
@@ -159,23 +151,6 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
 	return self;
     }
     
-    
-    /**
-     * generate a new array expressin based on the array initializer
-     **/
-    private JNewArrayExpression handleArrayInitializer(String ident,
-						       JArrayInitializer expr,
-						       CType baseType) 
-    {
-	Vector dims = new Vector();
-	//get the number of dims and the bound for each dim by looking 
-	//at the jarrayinitializer expressions
-	getDims(expr, dims);
-	return new JNewArrayExpression(null, baseType, 
-				       (JExpression[])dims.toArray(new JExpression[0]),
-				       null);
-    }
-
     /**
      * Convert the array initializer into a sequence of assignment statements in a block
      **/

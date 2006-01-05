@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CType.java,v 1.4 2003-05-28 05:58:42 thies Exp $
+ * $Id: CType.java,v 1.5 2006-01-05 22:26:28 thies Exp $
  */
 
 package at.dms.kjc;
@@ -208,7 +208,7 @@ public abstract class CType extends at.dms.util.Utils implements Constants {
    * @return the object class of this type
    */
   public CClass getCClass() {
-    throw new InconsistencyException();
+    throw new InconsistencyException("Current class is " + this.getClass() + " which should not have getCClass called on it.");
   }
 
   // ----------------------------------------------------------------------

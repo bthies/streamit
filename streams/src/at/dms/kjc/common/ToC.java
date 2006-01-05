@@ -24,7 +24,7 @@ import at.dms.util.Utils;
  *
  * @author Michael Gordon
  */
-public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
+public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 {
     /** true to only print declarations of methods when visiting them **/
     private boolean declOnly = true;
@@ -45,7 +45,7 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
      */
     protected void declareInitializedArray(CType type, String ident, JExpression expr) {
 	// note this calls print(CType), not print(String)
-	typePrint(((CArrayType)type).getBaseType());  
+	printType(((CArrayType)type).getBaseType());  
 	
 	p.print(" " + ident);
 	JArrayInitializer init = (JArrayInitializer)expr;
@@ -73,9 +73,6 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 	return;
     }
 
-    protected abstract void stackAllocateArray(String ident);
-   
-    			
     /**
      * prints a field declaration
      */
@@ -95,8 +92,11 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 
 	//only stack allocate singe dimension arrays
 	if (expr instanceof JNewArrayExpression) {
+	    /* Do not expect to have any JNewArrayExpressions any more */
+	    Utils.fail("Unexpected new array expression in codegen, for field: " + self);
+	    /*
 	    //print the basetype
-	    typePrint(((CArrayType)type).getBaseType());
+	    printType(((CArrayType)type).getBaseType());
 	    p.print(" ");
 	    //print the field identifier
 	    p.print(ident);
@@ -104,14 +104,13 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 	    stackAllocateArray(ident);
 	    p.print(";");
 	    return;
+	    */
 	} else if (expr instanceof JArrayInitializer) {
 	    declareInitializedArray(type, ident, expr);
 	    return;
 	}
 
-        typePrint(type);
-        p.print(" ");
-        p.print(ident);
+	printDecl (type, ident);
 
         if (expr != null) {
             p.print("\t= ");
@@ -122,7 +121,7 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
 	else if (type.isFloatingPoint())
 	    p.print(" = 0.0f");
 	else if (type.isArrayType()) {
-	    p.print(" = 0");
+	    p.print(" = {0}");
 	}
 	
 
@@ -308,7 +307,7 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
     public void visitNameExpression(JNameExpression self,
                                     JExpression prefix,
                                     String ident) {
-	Utils.fail("Name Expression");
+	Utils.fail("Name Expression:" + self);
 	
 	boolean oldStatementContext = statementContext;
 	statementContext = false;
@@ -645,10 +644,13 @@ public abstract class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                       boolean isFinal,
                                       CType type,
                                       String ident) {
-        typePrint(type);
         if (ident.indexOf("$") == -1) {
-            p.print(" ");
-            p.print(ident);
+	    printDecl(type, ident);
+	} else {
+	    // does this case actually happen?  just preseving
+	    // semantics of previous version, but this doesn't make
+	    // sense to me.  --bft
+	    printType(type);
         }
     }
 

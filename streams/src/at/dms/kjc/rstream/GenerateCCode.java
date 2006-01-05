@@ -56,8 +56,6 @@ public class GenerateCCode
     private static String FNAME = "str.c";
     /** array initalizers, we must convert array inits to assignment statements**/
     private ConvertArrayInitializers arrayInits;
-    /** remember the new array expressions for array decls **/
-    private NewArrayExprs newArrayExprs;
     
     /**
      * The entry point of the code generation pass.  This will
@@ -329,11 +327,7 @@ public class GenerateCCode
     {
 	StringBuffer str = new StringBuffer();
 
-
-	//remember all new array expressions for use in FlatIRToRS
-	newArrayExprs = NewArrayExprs.doit(functions, mainMethod);
-	
-	toRS = new FlatIRToRS(newArrayExprs);
+	toRS = new FlatIRToRS();
 
 	/* RMR { add helper C routine to parse arguments passed to top level driver */
 	str.append("\n/* helper routines to parse command line arguments */\n");

@@ -33,8 +33,6 @@ public class FlatIRToRS extends ToC
     private HashMap doloops;
     /** the current filter we are visiting **/
     private SIRFilter filter;
-    /** comment me **/
-    private NewArrayExprs newArrayExprs;
     /** > 0 if in a for loop header during visit **/
     private int forLoopHeader = 0;
 
@@ -48,19 +46,8 @@ public class FlatIRToRS extends ToC
     {
     	super();
     	doloops = new HashMap();
-    	this.newArrayExprs = null;
     }
     
-    
-    public FlatIRToRS(NewArrayExprs newArrayExprs)
-    {
-    	super();
-    	doloops = new HashMap();
-    	this.newArrayExprs = newArrayExprs;
-    }
-    
-    
-   
     /**
      * prints an assignment expression
      */
@@ -118,149 +105,56 @@ public class FlatIRToRS extends ToC
 	
 	//we have an array declaration
 	if (type.isArrayType()) {
-	    //print the declaration and get the number of dimensions
-	    int dim = handleArrayDecl(ident, type);   
-	    //now, get the new array expression
-	    if (expr == null) { //if their isn't a new array expression in the declaration
-		expr = getNewArrayExpr(ident);
-	    }
-	    //make sure we found a new array expression
-	    if (expr instanceof JNewArrayExpression) {
-		//make sure the new array expression has the correct number of dims
-		assert dim == ((JNewArrayExpression)expr).getDims().length :
-		    "Array " + ident + " has underspecified NewArrayExpression";
-	    }
-	    else {
-		assert false : 
-		    "Trying to initialize array with something other than NewArrayExpression";
-	    }
-	    
-	    //print the = for the absarray(); not used anymore
-	    //if (KjcOptions.absarray)
-	    //p.print(" = ");
-	    
-	    //visit the new array expression
-	    expr.accept(this);
+	    handleArrayDecl(ident, (CArrayType)type);   
 	}
 	else {
-	    typePrint(type);
+	    printType(type);
 	    p.print(" ");
 	    p.print(ident);
 	    
 	    if (expr != null) {
 		p.print("\t= ");
 		expr.accept(this);
-	    }   //initialize all fields to 0
-	    else if (type.isOrdinal())
-		p.print (" = 0");
-	    else if (type.isFloatingPoint())
-		p.print(" = 0.0f");
+	    } else { //initialize all fields to 0
+		if (type.isOrdinal())
+		    p.print (" = 0");
+		else if (type.isFloatingPoint())
+		    p.print(" = 0.0f");
+		else if (type.isArrayType())
+		    p.print(" = {0}");
+	    }
 	    
 	}
 	p.print(";");
     }
 
-
-    /** return the dimensionality of this type **/
-    private int getDim(CType type) 
-    {
-	int dim = 1;
-	CType currentType = ((CArrayType)type).getElementType();
-	
-	while (currentType.isArrayType()) {
-	    dim++;
-	    currentType = ((CArrayType)currentType).getElementType();
-	}    
-	
-	return dim;
-    }
-    
-
     /**
      * print an abstract array declaration and return the number of dimensions
      **/
-    private int handleArrayDecl(String ident, CType type)
+    private void handleArrayDecl(String ident, CArrayType type)
     {
-	String brackets = KjcOptions.absarray ? "[[" : "";
-	int dim = 1;
-
-	CType currentType = ((CArrayType)type).getElementType();
-	//keep stripping off array types until we get a base type
-	while (currentType.isArrayType()) {
-	    dim++;
-	    brackets = brackets + 
-		  // RMR { syntax change in rstream 2.1: multidimmensional arrays do not use commas
-		  // (KjcOptions.absarray ? "," : "*");
-		  (KjcOptions.absarray ? "]][[" : "[]");
-	        // } RMR
-	    currentType = ((CArrayType)currentType).getElementType();
-	}
-	
-	if (KjcOptions.absarray)
-	    brackets = brackets + "]]";
-	else
-	    brackets = brackets + "[]";
-	
-	//current type should now be the base type
-	typePrint(currentType);
+	printType(type.getBaseType());
 	p.print(" ");
 	p.print(ident);
-	//if (KjcOptions.absarray)  old absarray stuff
-	//    p.print(brackets);
-	return dim;
+
+	// print brackets
+	for (int i=0; i<type.getDims().length; i++) {
+	    p.print("[[]]");
+	}
     }
     
     
     private void printArrayType(CArrayType type) 
     {
-	String brackets = KjcOptions.absarray ? "[[" : "";
-	
-	CType currentType = ((CArrayType)type).getElementType();
-	//keep stripping off array types until we get a base type
-	while (currentType.isArrayType()) {
-	    brackets = brackets + 
-		  // RMR { syntax change in rstream 2.1: multidimmensional arrays do not use commas
-		  // (KjcOptions.absarray ? "," : "*");
-		  (KjcOptions.absarray ? "]][[" : "*");
-	        // } RMR
-	    currentType = ((CArrayType)currentType).getElementType();
-	}
-	
-	if (KjcOptions.absarray)
-	    brackets = brackets + "]]";
-	else 
-	    brackets = brackets + "*";
-	
-	//current type should now be the base type
-	typePrint(currentType);
+	printType(type.getBaseType());
 	p.print(" ");
-	p.print(brackets);
-    }
-    
 
-    /** 
-     * given a string (for field) or a JVariableDefinition (for locals)
-     * find the corresponding JNewArrayExpression, return null if none was found
-    **/
-    private JNewArrayExpression getNewArrayExpr(Object var) 
-    {
-	JNewArrayExpression expr = null; 
-
-	if (newArrayExprs.getNewArr(var) != null) 
-	    expr = newArrayExprs.getNewArr(var);
-	else {  //otherwise, this array was assinged another array,
-	    Object current = var; //so look for that array's new array expression
-	    while (expr == null) {  //keep going until we find the new array expression
-		if (newArrayExprs.getNewArr(newArrayExprs.getArrAss(current)) != null)
-		    expr = newArrayExprs.getNewArr(newArrayExprs.getArrAss(current));
-		else 
-		    current = newArrayExprs.getArrAss(current);
-	    }
+	// print brackets
+	for (int i=0; i<type.getDims().length; i++) {
+	    p.print("[[]]");
 	}
-	return expr;
     }
     
-
     /**
      * prints a variable declaration statement
      */
@@ -277,34 +171,14 @@ public class FlatIRToRS extends ToC
 	
 	//we have an array declaration
 	if (type.isArrayType()) {
-	    //print the declaration and get the number of dimensions
-	    int dim = handleArrayDecl(ident, type); 
-	    //now, get the new array expression
-	    if (expr == null) {//if there isn't a new array expression in the declaration
-		expr = getNewArrayExpr(self);
+	    if (KjcOptions.absarray) {
+		handleArrayDecl(ident, (CArrayType)type); 
+	    } else {
+		printDecl(type, ident);
 	    }
-	    //make sure we found a new array expression
-	    if (expr instanceof JNewArrayExpression) {
-		//make sure the new array expression has the correct number of dims
-		assert dim == ((JNewArrayExpression)expr).getDims().length :
-		    "Array " + ident + " has underspecified NewArrayExpression";
-	    }
-	    else {
-		assert false : 
-		    "Trying to initialize array with something other than a new array expression";
-	    }
-	    
-	    
-	    //if (KjcOptions.absarray) { old abs array() stuff
-	    //p.print(" = ");
-	    //}
-	    
-	    if (expr != null)
-		expr.accept(this);
-
 	}
 	else {
-	    typePrint(type);
+	    printType(type);
 	    
 	    p.print(" ");
 	    p.print(ident);
@@ -316,66 +190,68 @@ public class FlatIRToRS extends ToC
 		    p.print (" = 0");
 		else if (type.isFloatingPoint())
 		    p.print(" = 0.0f");
+		else if (type.isArrayType())
+		    p.print(" = {0}");
 	    }
 	    
 	}
 	p.print(";");
     }
 
-    /**
-     * prints an array allocator expression
-     */
-    public void visitNewArrayExpression(JNewArrayExpression self,
-                                        CType type,
-                                        JExpression[] dims,
-                                        JArrayInitializer init)
-    {
-	//we should see no zero dimension arrays
-	assert dims.length > 0 : "Zero Dimension array" ;
-	//and no initializer
-	assert init == null : "Initializers of Abstract Arrays not supported in RStream yet";
-	if (KjcOptions.absarray) {
-	    //we are generating abstract arrays
-	    //print the absarray call with the dimensions...
-	    /*old absarray stuff 
-	      p.print(" absarray" + dims.length + "(");
-	    dims[0].accept(this);
-	    for (int i = 1; i < dims.length; i++) {
-		p.print(",");
-		dims[i].accept(this);
-	    }
-	    p.print(")");
-	    */
-	    //new abs array declaration
-	    assert dims.length > 0;	    
-	    p.print("[[");
-	    dims[0].accept(this);
-	    for (int i = 1; i < dims.length; i++) {
-		  // RMR { syntax change in rstream 2.1: multidimmensional arrays do not use commas
-		  // p.print(", ");
-		  p.print("]][[");
-	        // } RMR
-		dims[i].accept(this);
-	    }
-	    p.print("]]");
-	}
-	else {
-	    //normal c arrays
-	    for (int i = 0; i < dims.length; i++) {
-		p.print("[");
-		dims[i].accept(this);
-		p.print("]");
-	    }
-	}
-    }
+//     /**
+//      * prints an array allocator expression
+//      */
+//     public void visitNewArrayExpression(JNewArrayExpression self,
+//                                         CType type,
+//                                         JExpression[] dims,
+//                                         JArrayInitializer init)
+//     {
+// 	//we should see no zero dimension arrays
+// 	assert dims.length > 0 : "Zero Dimension array" ;
+// 	//and no initializer
+// 	assert init == null : "Initializers of Abstract Arrays not supported in RStream yet";
+// 	if (KjcOptions.absarray) {
+// 	    //we are generating abstract arrays
+// 	    //print the absarray call with the dimensions...
+// 	    /*old absarray stuff 
+// 	      p.print(" absarray" + dims.length + "(");
+// 	    dims[0].accept(this);
+// 	    for (int i = 1; i < dims.length; i++) {
+// 		p.print(",");
+// 		dims[i].accept(this);
+// 	    }
+// 	    p.print(")");
+// 	    */
+// 	    //new abs array declaration
+// 	    assert dims.length > 0;	    
+// 	    p.print("[[");
+// 	    dims[0].accept(this);
+// 	    for (int i = 1; i < dims.length; i++) {
+// 		  // RMR { syntax change in rstream 2.1: multidimmensional arrays do not use commas
+// 		  // p.print(", ");
+// 		  p.print("]][[");
+// 	        // } RMR
+// 		dims[i].accept(this);
+// 	    }
+// 	    p.print("]]");
+// 	}
+// 	else {
+// 	    //normal c arrays
+// 	    for (int i = 0; i < dims.length; i++) {
+// 		p.print("[");
+// 		dims[i].accept(this);
+// 		p.print("]");
+// 	    }
+// 	}
+//     }
     
-    private int[] getDims(JNewArrayExpression newArray) 
+    private int[] getDims(CArrayType type) 
     {
-	int dims[] = new int[newArray.getDims().length];
+	int dims[] = new int[type.getDims().length];
 	
 	for (int i = 0; i < dims.length; i++) {
-	    assert newArray.getDims()[i] instanceof JIntLiteral;
-	    dims[i] = ((JIntLiteral)newArray.getDims()[i]).intValue();
+	    assert type.getDims()[i] instanceof JIntLiteral;
+	    dims[i] = ((JIntLiteral)type.getDims()[i]).intValue();
 	}
 	return dims;
     }
@@ -426,7 +302,7 @@ public class FlatIRToRS extends ToC
 
         p.newLine();
 	// print(CModifier.toString(modifiers));
-	typePrint(returnType);
+	printType(returnType);
 	p.print(" ");
 	
 	//just print initPath() instead of initPath<Type>
@@ -563,7 +439,7 @@ public class FlatIRToRS extends ToC
 	//cond is an expression so print the ;
 	p.print("; ");
 	if (incr != null) {
-	    FlatIRToRS l2c = new FlatIRToRS(newArrayExprs);
+	    FlatIRToRS l2c = new FlatIRToRS();
 	    l2c.doloops = this.doloops;
 	    incr.accept(l2c);
 	    // get String
@@ -605,7 +481,7 @@ public class FlatIRToRS extends ToC
 	    //comma'ed form
 	    while (exp instanceof JArrayAccessExpression) {
 		JArrayAccessExpression arr = (JArrayAccessExpression)exp;
-		FlatIRToRS toRS = new FlatIRToRS(newArrayExprs);
+		FlatIRToRS toRS = new FlatIRToRS();
 		arr.getAccessor().accept(toRS);
 		
 		// RMR { syntax change in rstream 2.1: multidimmensional arrays do not use commas
@@ -627,7 +503,7 @@ public class FlatIRToRS extends ToC
 	    JExpression exp = prefix;
 	    while (exp instanceof JArrayAccessExpression) {
 		JArrayAccessExpression arr = (JArrayAccessExpression)exp;
-		FlatIRToRS toRS = new FlatIRToRS(newArrayExprs);
+		FlatIRToRS toRS = new FlatIRToRS();
 		arr.getAccessor().accept(toRS);
 		
 		access = access + "[" + toRS.getPrinter().getString() + "]";
@@ -762,9 +638,9 @@ public class FlatIRToRS extends ToC
 	//    "Array dimensions of variables of array assignment do not match";
 	
 	//find the number of dimensions
-	int bound = getDim(right.getType());
+	int bound = ((CArrayType)right.getType()).getArrayBound();
 	//find the extent of each dimension
-	int[] dims = getDims(getNewArrayExpr(varDef));
+	int[] dims = getDims((CArrayType)var.getType());
 	//if we are assigning elements from a lower dimension array to a higher
 	//dim array, remember the difference
 	int diff = dims.length - bound;
@@ -845,7 +721,7 @@ public class FlatIRToRS extends ToC
 	boolean oldStatementContext = statementContext;
 	statementContext = false;
         p.print("(");
-	typePrint(type);
+	printType(type);
         p.print(")");
         p.print("(");
 	expr.accept(this);

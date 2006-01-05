@@ -15,12 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CArrayType.java,v 1.10 2005-12-21 20:02:34 thies Exp $
+ * $Id: CArrayType.java,v 1.11 2006-01-05 22:26:28 thies Exp $
  */
 
 package at.dms.kjc;
 
 import at.dms.compiler.UnpositionedError;
+import at.dms.compiler.PositionedError;
 import at.dms.util.SimpleStringBuffer;
 import at.dms.util.Utils;
 
@@ -63,6 +64,12 @@ public class CArrayType extends CClassType {
     } else {
       this.arrayBound = arrayBound;
       this.baseType = baseType;
+    }
+
+    // only need this for raw backend until it supports static array
+    // dimensions
+    if (dims==null) {
+	dims = new JExpression[0];
     }
 
     this.dims = dims;
@@ -187,10 +194,30 @@ public class CArrayType extends CClassType {
    * @exception UnpositionedError	this error will be positioned soon
    */
   public void checkType(CContext context) throws UnpositionedError {
-    if (!isChecked()) {
-      setClass(CStdType.Object.getCClass());
-      baseType.checkType(context);
-    }
+      if (!isChecked()) {
+	  setClass(CStdType.Object.getCClass());
+	  baseType.checkType(context);
+      }
+      // also resolve dims.  In all cases this is needed
+      // (JFormalParameter and JVariableDefinition), <context> should
+      // be a CBodyContext
+      if (context instanceof CBodyContext) {
+	  for (int i = 0; i < dims.length; i++) {
+	      try {
+		  dims[i] = dims[i].analyse(new CExpressionContext((CBodyContext)context));
+		  if (!dims[i].getType().isAssignableTo(CStdType.Integer)) {
+		      // do our best at a quick error check for non-integer array bounds
+		      System.err.println(KjcMessages.ARRAY_BADTYPE);
+		      System.err.println("Offending array bound expression: " + dims[i]);
+		      System.err.println("Offending type (should be int): "+ dims[i].getType());
+		      System.exit(1);
+		  }
+	      } catch (PositionedError e) {
+		  System.err.println("Warning: positioned error in resolving array bounds.");
+		  e.printStackTrace();
+	      }
+	  }
+      }
   }
 
   // ----------------------------------------------------------------------

@@ -873,6 +873,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 										  ident,
 										  expr),
 						    null, null));
+
+	// visit dimensions inside array fields
+	if (type.isArrayType()) {
+	    JExpression[] dims = ((CArrayType)type).getDims();
+	    for (int i=0; i<dims.length; i++) {
+		dims[i] = (JExpression)dims[i].accept(this);
+	    }
+	}
+
 	return self;
     }
 
@@ -1099,6 +1108,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	printMe(type.toString());
 	if(self.isFinal())
 	    ((List)finalVars.getLast()).add(self);
+
 	//The attribute returned from visiting the expression of the variable def
 	Object retObj = null;
 	//visit the expression
@@ -1153,6 +1163,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	}
 
 	self.setExpression((JExpression)retObj);
+
+	// visit dimensions inside array fields
+	if (type.isArrayType()) {
+	    JExpression[] dims = ((CArrayType)type).getDims();
+	    for (int i=0; i<dims.length; i++) {
+		dims[i] = (JExpression)dims[i].accept(this);
+	    }
+	}
+
 	return self;
 	//return new JVariableDefinition(null, modifiers, type, ident, (JExpression)retObj);
     }
@@ -1668,7 +1687,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     }
 
     /**
-     * visits an array allocator expression
+     * visits an array allocator expression.
      */
     public Object visitNewArrayExpression(JNewArrayExpression self,
 					  CType type,
@@ -2595,6 +2614,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
                                       String ident) 
     {
         blockStart("FormalParameter", self);
+
+	// visit dimensions inside array fields
+	if (type.isArrayType()) {
+	    JExpression[] dims = ((CArrayType)type).getDims();
+	    for (int i=0; i<dims.length; i++) {
+		dims[i] = (JExpression)dims[i].accept(this);
+	    }
+	}
+
 	return self;
     }
 

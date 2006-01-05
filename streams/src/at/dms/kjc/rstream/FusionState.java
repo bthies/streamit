@@ -217,20 +217,15 @@ public abstract class FusionState
 	    dims[i] = elementDims[i-1];
 
 	CArrayType bufferType = new CArrayType(elementType, 
-					       1);
+					       1,
+					       dims);
 	
-	//create a new array expression to initialize the buffer,
-	JExpression initializer = 
-	    new JNewArrayExpression(null,
-				    bufferType,
-				    dims,
-				    null);
 	//return the var def..
 	return new JVariableDefinition(null,
 				       at.dms.kjc.Constants.ACC_FINAL,
 				       bufferType,
 				       bufferName,
-				       initializer);
+				       null);
     }
     
 

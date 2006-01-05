@@ -13,8 +13,7 @@ import java.io.StringWriter;
  * and for String.  Printing of Object (as its toString()) is deliberately 
  * missing from this implementation since it was causing bugs in the printing 
  * of CType's.
- * To print a CType see {@see at.dms.kjc.common.ToCCommon#typePrint} or
- * {@see at.dms.kjc.common.CommonUtils#printCTypeString}
+ * To print a CType see {@see at.dms.kjc.common.ToCCommon#printType}.
  * <br/>
  * Includes an optional debugging feature to dump the caller's line number and 
  * test to be printed on a print, println, or printnl.

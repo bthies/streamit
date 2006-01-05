@@ -1,5 +1,7 @@
 package at.dms.kjc.common;
  
+import at.dms.kjc.JIntLiteral;
+import at.dms.kjc.JExpression;
 import at.dms.kjc.CType;
 import at.dms.kjc.CArrayType;
 import at.dms.kjc.JArrayAccessExpression;
@@ -36,16 +38,57 @@ public class CommonUtils {
     } 
 
     /**
-     * Print a CType to a specified CodegenPrintWriter
-     *
-     * @param s            a CType to be printed.
-     * @param cpw          a CodePrintWriter to print the type
+     * Returns a declaration for the given type with the given
+     * identifier.  Returns int x[10][10] for arrays.
+     * 
+     * @param s      the type to declare
+     * @param ident  the identifier to declare
      * @param hasBoolType  if true then Java 'boolean' becomse 'bool' for C++
      *                     if false then Java 'boolean' becomse 'int' for C
      */
-    public static void printCTypeString(CType s, CodegenPrintWriter cpw,
-				   boolean hasBoolType) {
-	cpw.print(CTypeToString(s, hasBoolType));
+    public static String declToString(CType s, String ident, boolean hasBoolType) {
+	StringBuffer result = new StringBuffer();
+	if (s instanceof CArrayType) {
+	    // special case: "int main(char** argv)" does not have
+	    // static bounds in array
+	    if (ident.equals("argv")) {
+		// first print type
+		result.append(CTypeToString(((CArrayType)s).getBaseType(), hasBoolType));
+		// then *
+		for (int i = 0; i < ((CArrayType)s).getArrayBound(); i++) {
+		    result.append("*");
+		}
+		// then identifier
+		result.append(" ");
+		result.append(ident);
+	    } else {
+		// first print type
+		result.append(CTypeToString(((CArrayType)s).getBaseType(), hasBoolType));
+		// the identifier
+		result.append(" ");
+		result.append(ident);
+		// then dims
+		JExpression[] dims = ((CArrayType)s).getDims();
+		for (int i = 0; i < dims.length; i++) {
+		    result.append("[");
+		    // require that dimensions are resolved to int
+		    // literals.  It might be more general to send a
+		    // visitor through, but some of the cluster code
+		    // generators do not have visitors handy (e.g.,
+		    // ClusterCode.java)
+		    assert dims[i] instanceof JIntLiteral : "Array dimension is not int literal during codegen, instead is: " + dims[i];
+		    result.append(((JIntLiteral)dims[i]).intValue());
+		    result.append("]");
+		}
+	    }
+	} else {
+	    // print type
+	    result.append(CTypeToString(s, hasBoolType));
+	    // then identifier
+	    result.append(" ");
+	    result.append(ident);
+	}
+	return result.toString();
     }
     
     

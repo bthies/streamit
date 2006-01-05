@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNewArrayExpression.java,v 1.11 2005-01-23 00:33:01 thies Exp $
+ * $Id: JNewArrayExpression.java,v 1.12 2006-01-05 22:26:28 thies Exp $
  */
 
 package at.dms.kjc;
@@ -64,7 +64,7 @@ public class JNewArrayExpression extends JExpression {
   {
     super(where);
 
-    this.type = new CArrayType(type, dims.length);
+    this.type = new CArrayType(type, dims.length, dims);
     this.dims = dims;
     this.init = init;
   }

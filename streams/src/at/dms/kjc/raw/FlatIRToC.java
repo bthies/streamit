@@ -411,7 +411,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
         p.newLine();
         // p.print(CModifier.toString(modifiers));
-        typePrint(returnType);
+        printType(returnType);
         p.print(" ");
         //just print initPath() instead of initPath<Type>
         if (ident.startsWith("initPath"))
@@ -494,63 +494,34 @@ public class FlatIRToC extends ToC implements StreamVisitor
                                         String ident,
                                         JExpression expr) {
 
-        // p.print(CModifier.toString(modifiers));
-        //      System.out.println(ident);
-        //System.out.println(expr);
+        if (expr instanceof JArrayInitializer) {
+	    declareInitializedArray(type, ident, expr);
+        } else {
 
-        //we convert an assignment statement into the stack allocation statement'
-        //so, just remove the var definition, if the new array expression
-        //is not included in this definition, just remove the definition,
-        //when we visit the new array expression we will print the definition...
-        if (type.isArrayType() && !isInit) {
-            String[] dims = ArrayDim.findDim(new FlatIRToC(), filter.getFields(), method, ident);
-            //but only do this if the array has corresponding 
-            //new expression, otherwise don't print anything.
-            if (expr instanceof JNewArrayExpression) {
-                //print the type -- note that this prints a type, not a string
-                typePrint(((CArrayType)type).getBaseType());
-                //print the field identifier
-                p.print(" " + ident);
-                //print the dims
-                stackAllocateArray(ident);
-                p.print(";");
-                return;
-            }
-            else if (dims != null)
-                return;
-            else if (expr instanceof JArrayInitializer) {
-                declareInitializedArray(type, ident, expr);
-                return;
-            }
-        }
-        
+	    printDecl (type, ident);
+	    
+            if (expr != null && !(expr instanceof JNewArrayExpression)) {
+		p.print ("\t= ");
+		expr.accept (this);
+	    } else if (RawWorkEstimator.SIMULATING_WORK && ident.indexOf(RawExecutionCode.recvBuffer)!=-1) {
+		// this is to prevent partial evaluation of inputs to
+		// filter by C compiler if we are trying to simulate work
+		// in a node
+		if (type.isOrdinal())
+		    p.print(" = " + ((int)Math.random()));
+		else if (type.isFloatingPoint()) {
+		    p.print(" = " + ((float)Math.random()) + "f");
+		}
+	    } 
+	    else if (type.isOrdinal())
+		p.print(" = 0");
+	    else if (type.isFloatingPoint())
+		p.print(" = 0.0f");
+	    else if (type.isArrayType()) 
+		p.print(" = {0}");
 
-        typePrint(type);
-
-        p.print(" ");
-        p.print(ident);
-        if (expr != null) {
-            p.print(" = ");
-            expr.accept(this);
-        } else if (RawWorkEstimator.SIMULATING_WORK && ident.indexOf(RawExecutionCode.recvBuffer)!=-1) {
-            // this is to prevent partial evaluation of inputs to
-            // filter by C compiler if we are trying to simulate work
-            // in a node
-            if (type.isOrdinal())
-                p.print(" = " + ((int)Math.random()));
-            else if (type.isFloatingPoint()) {
-                p.print(" = " + ((float)Math.random()) + "f");
-            }
-        } else if (type.isOrdinal())
-            p.print(" = 0");
-        else if (type.isFloatingPoint())
-            p.print(" = 0.0f");
-        else if (type.isArrayType()) 
-            p.print(" = 0");
-            
-
-        p.print(";\n");
-
+	    p.print(";/* " + type + " */");
+	}
     }
 
     /**
@@ -583,17 +554,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
         p.print("}");
     }
     */
-    
-    //stack allocate the array
-    protected void stackAllocateArray(String ident) {
-        //find the dimensions of the array!!
-        String dims[] = 
-            ArrayDim.findDim(new FlatIRToC(), filter.getFields(), method, ident);
-        
-        for (int i = 0; i < dims.length; i++)
-            p.print("[" + dims[i] + "]");
-        return;
-    }
     
  /**
      * prints an assignment expression
@@ -628,16 +588,13 @@ public class FlatIRToC extends ToC implements StreamVisitor
              ((right.getType().isArrayType() || right instanceof SIRPopExpression) &&
               !(right instanceof JNewArrayExpression))) {
                     
-            String ident = "";
-                    
-            if (left instanceof JFieldAccessExpression) 
-                ident = ((JFieldAccessExpression)left).getIdent();
-            else if (left instanceof JLocalVariableExpression) 
-                ident = ((JLocalVariableExpression)left).getVariable().getIdent();
-            else 
-                Utils.fail("Assigning an array to an unsupported expression of type " + left.getClass() + ": " + left);
-            
-            String[] dims = ArrayDim.findDim(new FlatIRToC(), filter.getFields(), method, ident);
+            CArrayType type = (CArrayType)right.getType();
+	    String dims[] = Util.makeString(type.getDims());
+
+	    // dims should never be null now that we have static array
+	    // bounds
+	    assert dims != null;
+	    /*
             //if we cannot find the dim, just create a pointer copy
             if (dims == null) {
                 boolean oldStatementContext = statementContext;
@@ -651,6 +608,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
                 printRParen();
                 return;
             }
+	    */
+
+
             p.print("{\n");
             p.print("int ");
             //print the index var decls
@@ -672,25 +632,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print(";\n}\n");
             return;
         }
-
-        //stack allocate all arrays when not in init function
-        //done at the variable definition
-        if (right instanceof JNewArrayExpression &&
-            (left instanceof JLocalVariableExpression) && !isInit) {
-            //      (((CArrayType)((JNewArrayExpression)right).getType()).getArrayBound() < 2)) {
-
-            //get the basetype and print it 
-            CType baseType = ((CArrayType)((JNewArrayExpression)right).getType()).getBaseType();
-            p.print(baseType + " ");
-            //print the identifier
-            left.accept(this);
-            //print the dims of the array
-            String ident;
-            ident = ((JLocalVariableExpression)left).getVariable().getIdent();
-            stackAllocateArray(ident);
-            return;
-        }
-           
 
         boolean oldStatementContext = statementContext;
         lastLeft=left;
@@ -719,15 +660,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
           return; // we do not want generated methods in source code
           }
         */
-
-
-        //supress the call to memset if the array is of size 0
-        //if (ident.equals("memset")) {
-        //    String[] dims = ArrayDim.findDim(filter, ((JLocalVariableExpression)args[0]).getIdent());
-        //    if (dims[0].equals("0"))
-        //      statementContext = oldStatementContext;
-        //      return;
-        //}
 
         //generate the inline asm instruction to execute the 
         //receive if this is a receive instruction

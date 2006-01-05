@@ -8,13 +8,10 @@ then
 fi
 
 # take care of classpath
-if [ -z "$JAVA_HOME" ]
-then
- export JAVA_HOME=/usr/uns
-fi
+export JAVA_HOME=/usr/uns/jdk1.5.0_01
 
 # java classes
-CLASSPATH=${CLASSPATH}:${JAVA_HOME}/jre/lib/rt.jar
+xoCLASSPATH=${CLASSPATH}:${JAVA_HOME}/jre/lib/rt.jar
 ## antlr classes
 CLASSPATH=${CLASSPATH}:/usr/uns/java/antlr.jar
 # streamit classes
@@ -36,9 +33,9 @@ export LEFTYPATH=/home/bits7/NO_BACKUP/streamit/dotty
 # add STREAMIT_HOME to the path in order to find "knit"
 if [ -z "$PATH" ]
 then
-  export PATH=${STREAMIT_HOME}
+  export PATH=${JAVA_HOME}/bin:${STREAMIT_HOME}
 else
-  PATH=${PATH}:${STREAMIT_HOME}
+  PATH=${JAVA_HOME}/bin:${PATH}:${STREAMIT_HOME}
 fi
 
 # Perl on RHEL-3

@@ -4,10 +4,7 @@ else
 endif
 
 # this is a temporary default value
-if ($?JAVA_HOME) then
-else
-  setenv JAVA_HOME /usr/uns
-endif
+setenv JAVA_HOME /usr/uns/jdk1.5.0_01
 
 # java classes
 setenv CLASSPATH ${CLASSPATH}:${JAVA_HOME}/jre/lib/rt.jar
@@ -30,9 +27,9 @@ setenv ATLAS_HOME /home/bits7/NO_BACKUP/streamit/ATLAS
 
 # add STREAMIT_HOME to the path in order to find "knit"
 if ($?PATH) then
-  setenv PATH ${PATH}:${STREAMIT_HOME}
+  setenv PATH ${JAVA_HOME}/bin:${PATH}:${STREAMIT_HOME}
 else
-  setenv PATH ${STREAMIT_HOME}
+  setenv PATH ${JAVA_HOME}/bin:${STREAMIT_HOME}
 endif
 
 # Perl on RHEL-3

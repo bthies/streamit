@@ -121,7 +121,7 @@ public class ArrayInitExpander {
 	    }
 	    // make result
 	    JArrayInitializer result = new JArrayInitializer(expArray);
-	    result.setType(new CArrayType(CStdType.Integer, 1));
+	    result.setType(new CArrayType(CStdType.Integer, 1, new JExpression[] { new JIntLiteral(array.length) } ));
 	    return result;
 	}
 
@@ -135,7 +135,7 @@ public class ArrayInitExpander {
 	    }
 	    // make result
 	    JArrayInitializer result = new JArrayInitializer(expArray);
-	    result.setType(new CArrayType(CStdType.Float, 1));
+	    result.setType(new CArrayType(CStdType.Float, 1, new JExpression[] { new JIntLiteral(array.length) } ));
 	    return result;
 	}
 

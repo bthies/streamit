@@ -110,20 +110,6 @@ class ShiftPipelineFusion {
 	    // the filter
 	    SIRFilter filter = (SIRFilter)pipe.get(i);
 
-	    // the peek buffer
-	    JVariableDefinition peekBufferVar = 
-		new JVariableDefinition(null,
-					at.dms.kjc.Constants.ACC_FINAL,
-					new CArrayType(Utils.voidToInt(filter.
-								       getInputType()), 
-						       1 /* dimension */ ),
-					PEEK_BUFFER_NAME + "_" + i,
-					null);
-	    JFieldDeclaration peekBuffer = new JFieldDeclaration(null,
-								 peekBufferVar,
-								 null,
-								 null);
-	    
 	    // number of executions (num[0] is init, num[1] is steady)
 	    int[] num = new int[2];
 	    for (int j=0; j<2; j++) {
@@ -177,6 +163,21 @@ class ShiftPipelineFusion {
                     lastProduce + " - " + myConsume;
 	    }
 
+	    // the peek buffer
+	    JVariableDefinition peekBufferVar = 
+		new JVariableDefinition(null,
+					at.dms.kjc.Constants.ACC_FINAL,
+					new CArrayType(Utils.voidToInt(filter.
+								       getInputType()), 
+						       1 /* dimension */, 
+						       new JExpression[] { new JIntLiteral(peekBufferSize) }),
+					PEEK_BUFFER_NAME + "_" + i,
+					null);
+	    JFieldDeclaration peekBuffer = new JFieldDeclaration(null,
+								 peekBufferVar,
+								 null,
+								 null);
+	    
 	    // get ready to make rest of phase-specific info
 	    JVariableDefinition popBuffer[] = new JVariableDefinition[2];
 	    JVariableDefinition popCounter[] = new JVariableDefinition[2];
@@ -267,19 +268,15 @@ class ShiftPipelineFusion {
 	int lookedAt = num * filter.getPopInt() + peekBufferSize;
 	// make an initializer to make a buffer of extent <lookedAt>
 	JExpression[] dims = { new JIntLiteral(null, lookedAt) };
-	JExpression initializer = 
-	    new JNewArrayExpression(null,
-				    Utils.voidToInt(filter.getInputType()),
-				    dims,
-				    null);
 	// make a buffer for all the items looked at in a round
 	return new JVariableDefinition(null,
 				       at.dms.kjc.Constants.ACC_FINAL,
 				       new CArrayType(Utils.voidToInt(filter.
 								      getInputType()), 
-						      1 /* dimension */ ),
+						      1 /* dimension */,
+						      new JExpression[] { new JIntLiteral(lookedAt) } ),
 				       POP_BUFFER_NAME + "_" + pos + "_" + stage,
-				       initializer);
+				       null);
     }
 
     /**
@@ -1088,28 +1085,6 @@ class ShiftPipelineFusion {
 	 * traversal of the parent's init function is complete.
 	 */
 	private void makeInitFunction() {
-	    // add allocations for peek buffers
-	    int i=0;
-	    for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
-		// get the next info
-		FilterInfo info = (FilterInfo)it.next();
-		// calculate dimensions of the buffer
-		JExpression[] dims = { new JIntLiteral(null, 
-						       info.peekBufferSize) };
-		// add a statement initializeing the peek buffer
-		fusedBlock.addStatementFirst(new JExpressionStatement(null,
-								      new JAssignmentExpression(
-												null,
-												new JFieldAccessExpression(null,
-															   new JThisExpression(null),
-															   info.peekBuffer.
-															   getVariable().getIdent()),
-												new JNewArrayExpression(null,
-															Utils.voidToInt(info.filter.
-																	getInputType()),
-															dims,
-															null)), null));
-	    }
 	    // now we can make the init function
 	    this.initFunction = new JMethodDeclaration(null,
 						       at.dms.kjc.Constants.ACC_PUBLIC,

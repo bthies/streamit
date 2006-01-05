@@ -288,11 +288,19 @@ public class FuseSimpleSplit {
 	    // here is a version optimized for code size...
 	    // _weights[N] = { , , }
 	    JArrayInitializer _weightsInit = new JArrayInitializer(null, weightsExpression);
-	    JVariableDefinition _weights = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_weights", _weightsInit);
+	    JVariableDefinition _weights = new JVariableDefinition(null, 
+								   0, 
+								   new CArrayType(CStdType.Integer, 1,  new JExpression[] { new JIntLiteral(weights.length) } ), 
+								   "_weights", 
+								   _weightsInit);
 	    list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_weights}, null));
 	    // _partialSum[N] = { , , }
 	    JArrayInitializer _partialSumInit = new JArrayInitializer(null, partialSumExpression);
-	    JVariableDefinition _partialSum = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_partialSum", _partialSumInit);
+	    JVariableDefinition _partialSum = new JVariableDefinition(null, 
+								      0, 
+								      new CArrayType(CStdType.Integer, 1, new JExpression[] { new JIntLiteral(weights.length) } ),
+								      "_partialSum", 
+								      _partialSumInit);
 	    list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_partialSum}, null));
 	    // make loop variables
 	    JVariableDefinition _i = new JVariableDefinition(null, 0, CStdType.Integer, "_i", new JIntLiteral(0));
@@ -381,11 +389,19 @@ public class FuseSimpleSplit {
 	    // here is a version optimized for code size...
 	    // _weights[N] = { , , }
 	    JArrayInitializer _weightsInit = new JArrayInitializer(null, weightsExpression);
-	    JVariableDefinition _weights = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_weights", _weightsInit);
+	    JVariableDefinition _weights = new JVariableDefinition(null, 
+								   0, 
+								   new CArrayType(CStdType.Integer, 1,  new JExpression[] { new JIntLiteral(weights.length) } ), 
+								   "_weights", 
+								   _weightsInit);
 	    list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_weights}, null));
 	    // _partialSum[N] = { , , }
 	    JArrayInitializer _partialSumInit = new JArrayInitializer(null, partialSumExpression);
-	    JVariableDefinition _partialSum = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_partialSum", _partialSumInit);
+	    JVariableDefinition _partialSum = new JVariableDefinition(null, 
+								      0, 
+								      new CArrayType(CStdType.Integer, 1, new JExpression[] { new JIntLiteral(weights.length) } ),
+								      "_partialSum", 
+								      _partialSumInit);
 	    list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_partialSum}, null));
 	    // make loop variables
 	    JVariableDefinition _i = new JVariableDefinition(null, 0, CStdType.Integer, "_i", new JIntLiteral(0));

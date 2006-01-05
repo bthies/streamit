@@ -34,7 +34,7 @@ import java.util.Set;
  * stream.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NameAnonymousStreams.java,v 1.5 2005-06-27 21:08:56 janiss Exp $
+ * @version $Id: NameAnonymousStreams.java,v 1.6 2006-01-05 22:28:33 thies Exp $
  */
 public class NameAnonymousStreams extends SymbolTableVisitor
 {
@@ -101,15 +101,24 @@ public class NameAnonymousStreams extends SymbolTableVisitor
             // Arrays are special: we need an extra parameter for
             // their length.
             Type type = getType(var);
+	    Type formalType;
             if (type instanceof TypeArray)
             {
+		String lengthName = "_len_" + name;
                 params.add(((TypeArray)type).getLength());
                 formals.add(new Parameter
                             (new TypePrimitive(TypePrimitive.TYPE_INT),
-                             "_len_" + name));
-            }
-            params.add(var);
-            formals.add(new Parameter(getType(var), name));
+                             lengthName));
+		// reset length of the array to reference the
+		// parameter passed in, rather than the old length
+		formalType = new TypeArray(((TypeArray)type).getBase(),
+					   new ExprVar(newSpec.getContext(), 
+						       lengthName));
+            } else {
+		formalType = getType(var);
+	    }
+	    params.add(var);
+	    formals.add(new Parameter(formalType, name));
         }
         StreamSpec namedSpec = new StreamSpec(newSpec.getContext(),
                                               newSpec.getType(),

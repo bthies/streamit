@@ -27,20 +27,23 @@ import java.util.ArrayList;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.19 2005-06-20 22:41:03 janiss Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.20 2006-01-05 22:28:39 thies Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
     private TempVarGen varGen;
+    private boolean libraryFormat;
     
     /**
      * Create a new pass to insert constructors.
      *
-     * @param varGen  global object to generate variable names
+     * @param varGen         global object to generate variable names
+     * @param libraryFormat  whether or not we are generating code for Java library
      */
-    public InsertInitConstructors(TempVarGen varGen)
+    public InsertInitConstructors(TempVarGen varGen, boolean libraryFormat)
     {
         this.varGen = varGen;
+        this.libraryFormat = libraryFormat;
     }
     
     /**
@@ -52,16 +55,21 @@ public class InsertInitConstructors extends InitMunger
      * Call the version with the initializer when possible; if no
      * initializer available, will assume to be null.
      */
-    private static boolean needsConstructor(Type type)
+    private boolean needsConstructor(Type type)
     {
 	return needsConstructor(type, null);
     }
-    private static boolean needsConstructor(Type type, Expression initializer) {
+    private boolean needsConstructor(Type type, Expression initializer) {
 	return (type.isComplex() || 
 		type.isComposite() || 
 		(!(type instanceof TypePrimitive) && 
-		 // don't need constructors for arrays with initializers
-		 !(type instanceof TypeArray && initializer!=null)));
+		 // compiler doesn't need constructors for any arrays,
+		 // because we now declare them with static bounds
+		 // (e.g., int x[10][10]).
+		 ((!libraryFormat && !(type instanceof TypeArray)) ||
+		  // library still needs constructors for all arrays
+		  // except for those that have initializers
+		  (libraryFormat && !(type instanceof TypeArray && initializer!=null)))));
     }
 
     /**
@@ -87,7 +95,7 @@ public class InsertInitConstructors extends InitMunger
             return result;
 
         // No; generate the constructor.
-        if (arrayConstructor || !(type instanceof TypeArray))
+        if (!libraryFormat || (arrayConstructor || !(type instanceof TypeArray)))
             result.add(new StmtAssign(ctx, name,
                                       new ExprJavaConstructor(ctx, type)));
 
@@ -112,7 +120,7 @@ public class InsertInitConstructors extends InitMunger
         }
         // Or, if this is an array of structures, we might need to
         // recursively generate constructors.
-        if (type instanceof TypeArray)
+        if (libraryFormat && (type instanceof TypeArray))
         {
             TypeArray ta = (TypeArray)type;
             Type base = ta.getBase();

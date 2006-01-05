@@ -32,7 +32,7 @@ import at.dms.util.*;
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;,
  *          David Ziegler &lt;dziegler@cag.lcs.mit.edu&gt;
- * @version $Id: ToKopi.java,v 1.9 2006-01-03 21:13:01 dimock Exp $
+ * @version $Id: ToKopi.java,v 1.10 2006-01-05 22:28:31 thies Exp $
  */
 public class ToKopi
 {
@@ -94,7 +94,7 @@ public class ToKopi
         prog = (Program)prog.accept(new ComplexToStruct());
         prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new TranslateEnqueue());
-        prog = (Program)prog.accept(new InsertInitConstructors(varGen));
+        prog = (Program)prog.accept(new InsertInitConstructors(varGen, false));
         prog = (Program)prog.accept(new MoveStreamParameters());
         prog = (Program)prog.accept(new NameAnonymousFunctions());
         prog = (Program)prog.accept(new TrimDumbDeadCode());

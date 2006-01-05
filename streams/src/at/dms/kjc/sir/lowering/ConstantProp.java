@@ -60,20 +60,14 @@ public class ConstantProp {
         FieldProp.doPropagateNotRecursive(str, false, removeDeadFields);
 	    // make a propagator
 	    Propagator propagator = new Propagator(constants);
-	    // propagate constants within init function of <str>
-	    str.getInit().accept(propagator);
+	    // propagate constants within methods of <str>
+	    JMethodDeclaration[] methods=str.getMethods();
+	    for(int i=0; i<methods.length; i++) {
+		methods[i].accept(propagator);
+		methods[i].accept(new VarDeclRaiser());
+	    }
 	    // propagate into fields of <str>
 	    propagateFields(propagator, str);
-	    // Copy Arrays
-	    //ArrayCopy.acceptInit(str.getInit(),constants);
-	    // Raise Vars
-	    str.getInit().accept(new VarDeclRaiser());	
-	    // propagate constants within work function of <str>
-	    JMethodDeclaration work= str.getWork();
-	    if(work!=null) {
-		work.accept(propagator);
-		work.accept(new VarDeclRaiser());
-	    }
 	    // unroll loops within init function of <str>
 	    unroller = new Unroller(constants);
 	    // only unroll maximally for containers
@@ -105,6 +99,13 @@ public class ConstantProp {
      * through the fields of <str>.
      */
     private void propagateFields(Propagator propagator, SIRStream str) {
+	// in actual field declarations, look for array dimensions
+	// that refer to fields
+	JFieldDeclaration[] fields = str.getFields();
+	for (int i=0; i<fields.length; i++) {
+	    fields[i].accept(propagator);
+	}
+
 	if (str instanceof SIRPhasedFilter) {
 	    propagateFilterFields(propagator, (SIRPhasedFilter)str);
 	} else if (str instanceof SIRSplitJoin) {
@@ -260,7 +261,8 @@ public class ConstantProp {
 		constants.put(parameters[i], (JLiteral)args.get(i));
             } else if (args.get(i) instanceof SIRPortal ||
                        (args.get(i) instanceof JLocalVariableExpression &&
-                       ((JLocalVariableExpression)args.get(i)).getType().getCClass().getIdent().endsWith("Portal"))) {
+			((JLocalVariableExpression)args.get(i)).getType() instanceof CClassType &&
+			((JLocalVariableExpression)args.get(i)).getType().getCClass().getIdent().endsWith("Portal"))) {
                 // similarly.
                 constants.put(parameters[i], args.get(i));
 	    } else if ((args.get(i) instanceof JLocalVariableExpression)&&constants.get(((JLocalVariableExpression)args.get(i)).getVariable())!=null) {
@@ -276,7 +278,7 @@ public class ConstantProp {
 		//size--;
 	    }
 	}
-	ArrayCopy.acceptInit(str.getInit(),constants);	
+	ArrayCopy.acceptInit(str.getInit(),constants); 
 	// recurse into sub-stream
 	propagateAndUnroll(str, constants);
     }

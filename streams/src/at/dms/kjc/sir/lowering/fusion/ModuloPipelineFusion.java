@@ -140,15 +140,6 @@ class ModuloPipelineFusion {
 	    // the filter
 	    SIRFilter filter = (SIRFilter)pipe.get(i);
 
-	    // the buffer
-	    JVariableDefinition bufferVar = 
-		new JVariableDefinition(at.dms.kjc.Constants.ACC_FINAL,
-					new CArrayType(Utils.voidToInt(filter.
-								       getInputType()), 
-						       1 /* dimension */ ),
-					BUFFER_NAME + "_" + i);
-	    JFieldDeclaration buffer = new JFieldDeclaration(bufferVar);
-
 	    // push index
 	    JVariableDefinition pushVar = new JVariableDefinition(CStdType.Integer,
 								  PUSH_INDEX_NAME + "_" + i);
@@ -206,6 +197,16 @@ class ModuloPipelineFusion {
 		    new JVariableDefinition(CStdType.Integer,
 					    COUNTER_NAME_WORK + "_" + j + "_" +i);
 	    }
+
+	    // the buffer
+	    JVariableDefinition bufferVar = 
+		new JVariableDefinition(at.dms.kjc.Constants.ACC_FINAL,
+					new CArrayType(Utils.voidToInt(filter.
+								       getInputType()), 
+						       1 /* dimension */,
+						       new JExpression[] { new JIntLiteral(bufferSize) } ),
+					BUFFER_NAME + "_" + i);
+	    JFieldDeclaration buffer = new JFieldDeclaration(bufferVar);
 
 	    // add a filter info to <result>
 	    result.add(new FilterInfo(filter, buffer, pushIndex, popIndex, bufferSize, 
@@ -879,12 +880,7 @@ class ModuloPipelineFusion {
 		if (i!=0) {
 		    // calculate dimensions of the buffer
 		    JExpression[] dims = { new JIntLiteral(info.bufferSize) };
-		    // add a statement initializeing the buffer
-		    fusedBlock.addStatementFirst(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(info.buffer.
-															       getVariable().getIdent()),
-												    new JNewArrayExpression(Utils.voidToInt(info.filter.
-																	    getInputType()),
-															    dims))));
+
 		    // initialize pop index to 0
 		    fusedBlock.addStatementFirst(new JExpressionStatement(new JAssignmentExpression(new JFieldAccessExpression(info.popIndex.
 															       getVariable().getIdent()),

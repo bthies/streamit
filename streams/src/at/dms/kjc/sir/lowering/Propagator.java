@@ -168,7 +168,39 @@ public class Propagator extends SLIRReplacingVisitor {
 					  CType type,
 					  String ident,
 					  JExpression expr) {
-	if (expr != null) {
+	// visit static array dimensions
+	if (type.isArrayType()) {
+	    JExpression[] dims = ((CArrayType)type).getDims();
+	    for (int i=0; i<dims.length; i++) {
+		JExpression newExp = (JExpression)dims[i].accept(this);
+		if (newExp !=null && newExp!=dims[i]) {
+		    dims[i] = newExp;
+		}
+	    }
+
+	    // ripped out of original propagator, looks like it's
+	    // initializing array entries to zero
+	    changed.put(self,Boolean.TRUE);
+	    if(dims.length==1) {
+		if(dims[0] instanceof JIntLiteral) {
+		    Object[] array=new Object[((JIntLiteral)dims[0]).intValue()];
+		    constants.put(self,array);
+		    added=true;
+		} else
+		    constants.remove(self);
+	    } else if(dims.length==2) {
+		if((dims[0] instanceof JIntLiteral)&&(dims[1] instanceof JIntLiteral)) {
+		    Object[][] array=new Object[((JIntLiteral)dims[0]).intValue()][((JIntLiteral)dims[1]).intValue()];
+		    constants.put(self,array);
+		    added=true;
+		} else
+		    constants.remove(self);
+	    } else
+		constants.remove(self);
+	} 
+
+	// inspect initializer
+	else if (expr != null) {
 	    JExpression newExp = (JExpression)expr.accept(this);
 	    // if we have a constant AND it's a final variable...
 	    if(newExp.isConstant()) {
@@ -186,25 +218,6 @@ public class Propagator extends SLIRReplacingVisitor {
 		constants.put(self, newExp);
 		added=true;
 		changed.put(self,Boolean.TRUE);
-	    } else if(newExp instanceof JNewArrayExpression) {
-		JExpression[] dims=((JNewArrayExpression)newExp).getDims();
-		changed.put(self,Boolean.TRUE);
-		if(dims.length==1) {
-		    if(dims[0] instanceof JIntLiteral) {
-			Object[] array=new Object[((JIntLiteral)dims[0]).intValue()];
-			constants.put(self,array);
-			added=true;
-		    } else
-			constants.remove(self);
-		} else if(dims.length==2) {
-		    if((dims[0] instanceof JIntLiteral)&&(dims[1] instanceof JIntLiteral)) {
-			Object[][] array=new Object[((JIntLiteral)dims[0]).intValue()][((JIntLiteral)dims[1]).intValue()];
-			constants.put(self,array);
-			added=true;
-		    } else
-			constants.remove(self);
-		} else
-		    constants.remove(self);
 	    } else if(newExp instanceof JLocalVariableExpression) {
 		if(write)
 		    self.setExpression(newExp);
@@ -846,24 +859,6 @@ public class Propagator extends SLIRReplacingVisitor {
 		//constants.put(var,right);
 		//} else
 		//constants.remove(var);
-	    } else if(newRight instanceof JNewArrayExpression) {
-		JExpression[] dims=((JNewArrayExpression)newRight).getDims();
-		if(dims.length==1) {
-		    if(dims[0] instanceof JIntLiteral) {
-			Object[] array=new Object[((JIntLiteral)dims[0]).intValue()];
-			constants.put(var,array);
-			added=true;
-		    } else
-			constants.remove(var);
-		} else if(dims.length==2) {
-		    if((dims[0] instanceof JIntLiteral)&&(dims[1] instanceof JIntLiteral)) {
-			Object[][] array=new Object[((JIntLiteral)dims[0]).intValue()][((JIntLiteral)dims[1]).intValue()];
-			constants.put(var,array);
-			added=true;
-		    } else
-			constants.remove(var);
-		} else
-		    constants.remove(var);
 	    } else if(self.getCopyVar()!=null) {
 		constants.put(var,self.getCopyVar());
 		added=true;
@@ -1058,18 +1053,6 @@ public class Propagator extends SLIRReplacingVisitor {
 	    }
 	    return self;
 	}
-    }
-
-    /**
-     * Visits a parenthesed expression
-     */
-    public Object visitParenthesedExpression(JParenthesedExpression self,
-					     JExpression expr) {
-	JExpression newExp = (JExpression)expr.accept(this);
-	if (write&&(newExp!=expr)) {
-	    self.setExpression(newExp);
-	}
-	return self;
     }
 
     /**

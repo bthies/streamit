@@ -261,21 +261,6 @@ public class FuseSplit {
 	for (int i=0; it.hasNext(); i++) {
 	    SIRFilter filter = (SIRFilter)it.next();
 
-	    // the peek buffer
-	    JVariableDefinition peekBufferVar = 
-		new JVariableDefinition(null,
-					at.dms.kjc.Constants.ACC_FINAL,
-					new CArrayType(Utils.voidToInt(filter.
-								       getInputType()), 
-						       1 /* dimension */ ),
-					PEEK_BUFFER_NAME + "_" + i,
-					null);
-
-	    JFieldDeclaration peekBuffer = new JFieldDeclaration(null,
-								 peekBufferVar,
-								 null,
-								 null);
-	    
 	    // the peek buffer size
 	    int peekSize = rep.child[i] * filter.getPopInt() + (filter.getPeekInt() - filter.getPopInt());
 	    // if we have a two-stage filter, need to peek the items it consumes the first time through
@@ -302,21 +287,6 @@ public class FuseSplit {
 											new JIntLiteral(-1)),
 								null, null);
 	    
-	    // push buffer
-	    JVariableDefinition pushBufferVar = 
-		new JVariableDefinition(null,
-					at.dms.kjc.Constants.ACC_FINAL,
-					new CArrayType(Utils.voidToInt(filter.
-								       getOutputType()), 
-						       1 /* dimension */ ),
-					PUSH_BUFFER_NAME + "_" + i,
-					null);
-
-	    JFieldDeclaration pushBuffer = new JFieldDeclaration(null,
-								 pushBufferVar,
-								 null,
-								 null);
-	    
 	    // the push buffer size
 	    int pushSize = rep.child[i] * filter.getPushInt();
 	    // if we have a two-stage filter, add its push amount
@@ -326,6 +296,37 @@ public class FuseSplit {
 	    // round to next power of 2 for cheaper mod functions
 	    pushSize = Utils.nextPow2(pushSize);
 
+	    // the peek buffer
+	    JVariableDefinition peekBufferVar = 
+		new JVariableDefinition(null,
+					at.dms.kjc.Constants.ACC_FINAL,
+					new CArrayType(Utils.voidToInt(filter.
+								       getInputType()), 
+						       1 /* dimension */,
+						       new JExpression[] { new JIntLiteral(peekSize) } ),
+					PEEK_BUFFER_NAME + "_" + i,
+					null);
+
+	    JFieldDeclaration peekBuffer = new JFieldDeclaration(null,
+								 peekBufferVar,
+								 null,
+								 null);
+	    
+	    // push buffer
+	    JVariableDefinition pushBufferVar = 
+		new JVariableDefinition(null,
+					at.dms.kjc.Constants.ACC_FINAL,
+					new CArrayType(Utils.voidToInt(filter.
+								       getOutputType()), 
+						       1 /* dimension */ ,
+						       new JExpression[] { new JIntLiteral(pushSize) } ),
+					PUSH_BUFFER_NAME + "_" + i,
+					null);
+
+	    JFieldDeclaration pushBuffer = new JFieldDeclaration(null,
+								 pushBufferVar,
+								 null,
+								 null);
 	    // the push read counter
 	    JFieldDeclaration pushRead = new JFieldDeclaration(null,
 							       new JVariableDefinition(null, 0, CStdType.Integer,
@@ -547,11 +548,19 @@ public class FuseSplit {
 		// otherwise, optimize for imem...
 		// _weights[N] = { , , }
 		JArrayInitializer _weightsInit = new JArrayInitializer(null, weightsExpression);
-		JVariableDefinition _weights = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_weights", _weightsInit);
+		JVariableDefinition _weights = new JVariableDefinition(null, 
+								       0, 
+								       new CArrayType(CStdType.Integer, 1, new JExpression[] { new JIntLiteral(weights.length) } ),
+								       "_weights", 
+								       _weightsInit);
 		list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_weights}, null));
 		// _partialSum[N] = { , , }
 		JArrayInitializer _partialSumInit = new JArrayInitializer(null, partialSumExpression);
-		JVariableDefinition _partialSum = new JVariableDefinition(null, 0, new CArrayType(CStdType.Integer, 1), "_partialSum", _partialSumInit);
+		JVariableDefinition _partialSum = new JVariableDefinition(null, 
+									  0, 
+									  new CArrayType(CStdType.Integer, 1, new JExpression[] { new JIntLiteral(weights.length) } ),
+									  "_partialSum", 
+									  _partialSumInit);
 		list.add(new JVariableDeclarationStatement(null, new JVariableDefinition[] {_partialSum}, null));
 		// it's non-trivial to move the k loop into dynamically-generated code because we reference childInfo[k]
 		for (int k=0; k<weights.length; k++) {
@@ -756,31 +765,7 @@ public class FuseSplit {
 	JMethodDeclaration init = sj.getInit();
 	if(init==null)
 	    init=SIRStream.makeEmptyInit();
-	// add allocations of peek and push buffers
-	for (int i=0; i<childInfo.length; i++) {
-	    for (int j=0; j<2; j++) {
-		BufferInfo buffer = (j==0 ? childInfo[i].peekBuffer : childInfo[i].pushBuffer);
-		// calculate dimensions of the buffer
-		JExpression[] dims = { new JIntLiteral(null, buffer.size) };
-		//get the type for the buffer, it will be the output type for the
-		//push buffer, and the input type for peek buffer
-		CType type = (j==0 ? Utils.voidToInt(childInfo[i].filter.getInputType()) :
-			      Utils.voidToInt(childInfo[i].filter.getOutputType()));
-		// add a statement initializing the buffer
 
-		init.addStatementFirst
-		    (new JExpressionStatement(null,
-					      new JAssignmentExpression
-					      (null,
-					       new JFieldAccessExpression(null,
-									  new JThisExpression(null),
-									  buffer.target.getVariable().getIdent()),
-					       new JNewArrayExpression(null,
-								       type,
-								       dims,
-								       null)), null));
-	    }
-	}
 	// add calls to init functions
 	for (int i=0; i<sj.size(); i++) {
 	    SIRStream child = sj.get(i);

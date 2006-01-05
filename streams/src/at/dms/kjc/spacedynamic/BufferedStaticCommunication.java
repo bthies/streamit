@@ -160,11 +160,8 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         filter.addMethod(rawMainFunct);
     }
 
-    // returns the expression that will create the buffer array. A
-    // JNewArrayExpression
-    // with the proper type, dimensions, and size...
-    private JExpression bufferInitExp(SIRFilter filter, CType inputType,
-            int buffersize) {
+    // returns the dims for the buffer array. 
+    private JExpression[] bufferDims(SIRFilter filter, CType inputType, int buffersize) {
         // this is an array type
         if (inputType.isArrayType()) {
             CType baseType = ((CArrayType) inputType).getBaseType();
@@ -178,13 +175,11 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
             // copy the dims for the basetype
             for (int i = 0; i < baseTypeDims.length; i++)
                 dims[i + 1] = baseTypeDims[i];
-
-            return new JNewArrayExpression(null, baseType, dims, null);
-        }
-
-        JExpression dims[] = { new JIntLiteral(buffersize) };
-        return new JNewArrayExpression(null, inputType, dims, null);
-
+	    return dims;
+        } else {
+	    JExpression dims[] = { new JIntLiteral(buffersize) };
+	    return dims;
+	}
     }
 
     private void createLocalVariables(FlatNode node, JBlock block,
@@ -273,9 +268,8 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
             JVariableDefinition recvBufVar = new JVariableDefinition(
                     null,
                     at.dms.kjc.Constants.ACC_FINAL, // ?????????
-                    new CArrayType(filter.getInputType(), dim /* dimension */),
-                    RawExecutionCode.recvBuffer, bufferInitExp(filter, filter
-                            .getInputType(), buffersize));
+                    new CArrayType(filter.getInputType(), dim /* dimension */, bufferDims(filter, filter.getInputType(), buffersize)),
+                    RawExecutionCode.recvBuffer, null);
 
             // the size of the buffer
             JVariableDefinition recvBufferSizeVar = new JVariableDefinition(
@@ -340,9 +334,8 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
             JVariableDefinition sendBufVar = new JVariableDefinition(null,
                     at.dms.kjc.Constants.ACC_FINAL, // ?????????
-                    new CArrayType(filter.getOutputType(), 1 /* dimension */),
-                    RawExecutionCode.sendBuffer, new JNewArrayExpression(null, Util
-                            .getBaseType(filter.getOutputType()), dims, null));
+                    new CArrayType(filter.getOutputType(), 1 /* dimension */, dims),
+                    RawExecutionCode.sendBuffer, null);
             localVariables.sendBuffer = sendBufVar;
             block.addStatement(new JVariableDeclarationStatement(null,
                     sendBufVar, null));

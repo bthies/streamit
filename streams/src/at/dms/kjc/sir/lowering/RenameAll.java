@@ -285,6 +285,15 @@ public class RenameAll extends SLIRReplacingVisitor
 	// have to mutate this instead of replacing it, since some
 	// local vars refer to the object.
 	self.setIdent(symtab.nameFor(ident));
+
+	// visit dimensions inside array fields
+	if (type.isArrayType()) {
+	    JExpression[] dims = ((CArrayType)type).getDims();
+	    for (int i=0; i<dims.length; i++) {
+		dims[i] = (JExpression)dims[i].accept(this);
+	    }
+	}
+
 	return self;
     }
 
@@ -309,6 +318,16 @@ public class RenameAll extends SLIRReplacingVisitor
 	self.setIdent(symtab.nameFor(ident));
 	if (expr!=null) {
 	    self.setExpression((JExpression)expr.accept(this));
+	}
+	// visit static array dimensions
+	if (type.isArrayType()) {
+	    JExpression[] dims = ((CArrayType)type).getDims();
+	    for (int i=0; i<dims.length; i++) {
+		JExpression newExp = (JExpression)dims[i].accept(this);
+		if (newExp !=null && newExp!=dims[i]) {
+		    dims[i] = newExp;
+		}
+	    }
 	}
 	return self;
     }

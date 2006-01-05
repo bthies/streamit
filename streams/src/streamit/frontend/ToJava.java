@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.70 2005-12-20 23:07:27 dimock Exp $
+ * @version $Id: ToJava.java,v 1.71 2006-01-05 22:28:31 thies Exp $
  */
 public class ToJava
 {
@@ -245,7 +245,7 @@ public class ToJava
 
 	// janiss: moved GenerateCopies and InsInitConstructors down
         prog = (Program)prog.accept(new GenerateCopies(varGen)); 
-        prog = (Program)prog.accept(new InsertInitConstructors(varGen));
+        prog = (Program)prog.accept(new InsertInitConstructors(varGen, libraryFormat));
 
         prog = (Program)prog.accept(new MoveStreamParameters());
         prog = (Program)prog.accept(new NameAnonymousFunctions());

@@ -180,11 +180,10 @@ public class BufferedCommunication extends RawExecutionCode
 		new JVariableDefinition(null, 
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
 					new CArrayType(filter.getInputType(), 
-						       1 /* dimension */ ),
+						       1 /* dimension */ ,
+						       bufferDims(filter, filter.getInputType(), buffersize)),
 					recvBuffer + filterInfo.filter.getName(),
-					bufferInitExp
-					(filter, filter.getInputType(), 
-					 buffersize));
+					null);
 	    
 	    
 	    //the size of the buffer 
@@ -258,11 +257,11 @@ public class BufferedCommunication extends RawExecutionCode
 		new JVariableDefinition(null, 
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
 					new CArrayType(filter.getOutputType(), 
-						       1 /* dimension */ ),
+						       1 /* dimension */ ,
+						       dims),
 					sendBuffer + uniqueID, 
-					new JNewArrayExpression(null,
-								Util.getBaseType(filter.getOutputType()),
-								dims, null));
+					null);
+
 	    generatedVariables.sendBuffer = sendBufVar;
 	    decls.add(new JFieldDeclaration(null, sendBufVar, null, null));
 	}
@@ -730,10 +729,8 @@ public class BufferedCommunication extends RawExecutionCode
 	
     }
 
-    //returns the expression that will create the buffer array.  A JNewArrayExpression
-    //with the proper type, dimensions, and size...
-    private JExpression bufferInitExp(FilterContent filter, CType inputType,
-				      int buffersize) 
+    //returns the dims for the buffer array.
+    private JExpression[] bufferDims(FilterContent filter, CType inputType, int buffersize) 
     {
 	//this is an array type
 	if (inputType.isArrayType()) {
@@ -747,15 +744,11 @@ public class BufferedCommunication extends RawExecutionCode
 	    //copy the dims for the basetype
 	    for (int i = 0; i < baseTypeDims.length; i++)
 		dims[i+1] = baseTypeDims[i];
-	    
-	    return new JNewArrayExpression(null, baseType, dims, null);
+	    return dims;
+	} else {
+	    JExpression dims[] = {new JIntLiteral(buffersize)};
+	    return dims;
 	}
-
-	
-
-	JExpression dims[] = {new JIntLiteral(buffersize)};
-	return new JNewArrayExpression(null, inputType, dims, null);
-	
     }
 
     private JStatement receiveCode(FilterContent filter, CType type, GeneratedVariables generatedVariables) {

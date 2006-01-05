@@ -91,12 +91,13 @@ public class VerticalFission {
 	
 	// make field for <last> variable
 	CType baseType = filter.getInputType();
+	JExpression[] dims = { new JIntLiteral(vBlock) };
 	JFieldDeclaration vLastDecl = new JFieldDeclaration(null,
-							    new JVariableDefinition(null, 0, new CArrayType(baseType, 1), NAME_VAR_LAST,  null),
+							    new JVariableDefinition(null, 0, new CArrayType(baseType, 1, dims), NAME_VAR_LAST, null),
 							    null, null);
 
 	// make init function
-	JMethodDeclaration init = makeInit(baseType, vBlock);
+	JMethodDeclaration init = SIRStream.makeEmptyInit();
 	// make prework function, if applicable
 	boolean twoStage = vStage==vBlock-1;
 	JMethodDeclaration prework = twoStage ? makePrework(baseType, A, vPeek, vPop, vPush, vBlock, vStage) : null;
@@ -134,20 +135,6 @@ public class VerticalFission {
 	return result;
     }
 
-    /**
-     * Makes init function for fiss component, given <type> is I/O type of filter.
-     */
-    private static JMethodDeclaration makeInit(CType type, int vBlock) {
-	// allocate vLast[vBlock]
-	JExpression[] dims = { new JIntLiteral(vBlock) };
-	JStatement alloc = LinearReplacer.makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_VAR_LAST),
-								  new JNewArrayExpression(null, type, dims, null));
-
-	JMethodDeclaration result = SIRStream.makeEmptyInit();
-	result.getBody().addStatement(alloc);
-	return result;
-    }
-    
     /**
      * Makes prework function for fiss component:
      *

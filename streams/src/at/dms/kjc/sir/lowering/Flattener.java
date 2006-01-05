@@ -191,6 +191,7 @@ public class Flattener {
 	printer.close();
 	*/
 
+
 	System.err.println("Generating code...");
 	LIRToC.generateCode(flatClass);
 	//System.err.println("done.");

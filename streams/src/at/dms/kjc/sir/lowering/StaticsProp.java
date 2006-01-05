@@ -393,14 +393,14 @@ public class StaticsProp {
                                 // to propagate into the stream "self".
                                 // (1) make a copy of the field decl and code
                                 JFieldDeclaration newDecl = 
-                                        (JFieldDeclaration)AutoCloner.deepCopy(
+                                        (JFieldDeclaration)ObjectDeepCloner.deepCopy(
                                         (JFieldDeclaration)staticNameToFields.get(sf));
                                 LinkedList/*<JStatement>*/ newAssignments = new LinkedList();
                                 List/*<JStatement>*/ oldAssignments = 
                                     (List)staticNameToAssignments.get(sf);
                                 for(Iterator i = oldAssignments.iterator(); i.hasNext();) {
                                     newAssignments.addLast(
-                                            (JStatement)AutoCloner.deepCopy(
+                                            (JStatement)ObjectDeepCloner.deepCopy(
                                                     (JStatement)i.next()));
                                 }
                                 // (2) rename in the copy
@@ -587,13 +587,17 @@ public class StaticsProp {
                 }
             }
         };
+	// send through methods
         JMethodDeclaration[] methods = str.getMethods();
         for (int i = 0; i < methods.length; i++) {
-            methods[i].setBody((JBlock) methods[i].getBody().accept(visitor));
+            methods[i].accept(visitor);
         }
-
-        // IterOverAllFieldsAndMethods.iterOverFieldsAndMethods(self, false,
-        // true, visitor);
+	// send through fields, so that it hits the static array
+	// dimensions as part of field declarations
+        JFieldDeclaration[] fields = str.getFields();
+        for (int i = 0; i < fields.length; i++) {
+            fields[i].accept(visitor);
+        }
     }
     
     // -------------------------------------------------------------------

@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.31 2006-01-04 19:13:36 dimock Exp $
+ * $Id: FieldProp.java,v 1.32 2006-01-05 22:28:14 thies Exp $
  */
 public class FieldProp implements Constants
 {
@@ -704,11 +704,35 @@ public class FieldProp implements Constants
             // Raise Variable Declarations to beginning of block
             // meths[i].accept(new VarDeclRaiser());
         }
+	// propagate into initializers and types of field declarations
+	JFieldDeclaration[] fields = filter.getFields();
+	Propagator prop = new Propagator(new Hashtable());
+	for (int i = 0; i < fields.length; i++) {
+	    // the field type (propagate into static array bounds)
+	    CType type = fields[i].getType();
+	    if (type.isArrayType()) {
+		JExpression[] dims = ((CArrayType)type).getDims();
+		for (int j=0; j<dims.length; j++) {
+		    dims[j] = (JExpression)dims[j].accept(theVisitor);
+		    dims[j] = (JExpression)dims[j].accept(prop);
+		}
+	    }
+	    // initializer
+	    JVariableDefinition var = fields[i].getVariable();
+	    if (var.hasInitializer()) {
+		JExpression origInit = var.getValue();
+		JExpression newInit = (JExpression) origInit
+		    .accept(theVisitor);
+		newInit = (JExpression) newInit.accept(prop);
+		if (newInit != origInit) {
+		    var.setValue(newInit);
+		}
+	    }
+	}
         // If this is a filter, also run on I/O rates and other field
         // initializers
         if (filter instanceof SIRPhasedFilter) {
             SIRPhasedFilter filt = (SIRPhasedFilter) filter;
-            Propagator prop = new Propagator(new Hashtable());
 
             for (int j = 0; j < filter.getMethods().length; j++) {
                 JMethodDeclaration method = filter.getMethods()[j];
@@ -733,21 +757,6 @@ public class FieldProp implements Constants
                 newPush = (JExpression) newPush.accept(prop);
                 if (newPush != null && newPush != method.getPush()) {
                     method.setPush(newPush);
-                }
-
-                // field initializers
-                JFieldDeclaration[] fields = filter.getFields();
-                for (int i = 0; i < fields.length; i++) {
-                    JVariableDefinition var = fields[i].getVariable();
-                    if (var.hasInitializer()) {
-                        JExpression origInit = var.getValue();
-                        JExpression newInit = (JExpression) origInit
-                                .accept(theVisitor);
-                        newInit = (JExpression) newInit.accept(prop);
-                        if (newInit != origInit) {
-                            var.setValue(newInit);
-                        }
-                    }
                 }
             }
         }

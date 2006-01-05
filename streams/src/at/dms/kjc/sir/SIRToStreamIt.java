@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.20 2006-01-04 19:11:58 dimock Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.21 2006-01-05 22:27:48 thies Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -235,9 +235,9 @@ public class SIRToStreamIt
         }
         if (inType != null && outType != null)
         {
-            typePrint(inType);
+            printType(inType);
             p.print("->");
-            typePrint(outType);
+            printType(outType);
             p.print(" ");
         }
         p.print(type);
@@ -694,7 +694,7 @@ public class SIRToStreamIt
             p.indent();
             for (int j = 0; j < params.length; j++) {
                 p.newLine();
-                typePrint(params[j]);
+                printType(params[j]);
                 p.print(" p" + j + ";");
             }
             p.outdent();
@@ -706,7 +706,7 @@ public class SIRToStreamIt
             p.print("void send_" + name + "(portal p, latency l");
             for (int j = 0; j < params.length; j++) {
                 p.print(", ");
-                typePrint(params[j]);
+                printType(params[j]);
                 p.print(" p" + j);
             }
             p.print(") {");
@@ -738,7 +738,7 @@ public class SIRToStreamIt
                                       String ident,
                                       JExpression expr) {
         p.newLine();
-        typePrint(type);
+        printType(type);
         p.print(" ");
         p.print(ident);
         if (expr != null) {
@@ -775,7 +775,7 @@ public class SIRToStreamIt
         else
         {
             // p.print(CModifier.toString(modifiers));
-            typePrint(returnType);
+            printType(returnType);
             p.print(" ");
             p.print(ident);
             p.print("(");
@@ -934,11 +934,11 @@ public class SIRToStreamIt
         if (expr != null && expr instanceof JNewArrayExpression)
         {
             assert type instanceof CArrayType;
-            typePrint(((CArrayType)type).getElementType());
+            printType(((CArrayType)type).getElementType());
             printLocalArrayDecl((JNewArrayExpression)expr);
         }
         else
-            typePrint(type);
+            printType(type);
         p.print(" ");
         p.print(ident);
         if (expr != null && !(expr instanceof JNewArrayExpression)) {
@@ -1374,7 +1374,7 @@ public class SIRToStreamIt
     public void visitTypeNameExpression(JTypeNameExpression self,
                                         CType type) {
 	p.print("(");
-    typePrint(type);
+    printType(type);
 	p.print(")");
     }
 
@@ -1634,7 +1634,7 @@ public class SIRToStreamIt
                                           CType dest) {
         expr.accept(this);
         p.print(" instanceof ");
-        typePrint(dest);
+        printType(dest);
     }
 
     /**
@@ -1754,7 +1754,7 @@ public class SIRToStreamIt
      * prints a class expression
      */
     public void visitClassExpression(JClassExpression self, CType type) {
-        typePrint(type);
+        printType(type);
         p.print(".class");
     }
 
@@ -1767,7 +1767,7 @@ public class SIRToStreamIt
     {
 	p.print("(");
         p.print("(");
-        typePrint(type);
+        printType(type);
         p.print(")");
         expr.accept(this);
 	p.print(")");
@@ -1782,7 +1782,7 @@ public class SIRToStreamIt
     {
 	p.print("(");
         p.print("(");
-        typePrint(type);
+        printType(type);
         p.print(")");
         p.print("(");
         expr.accept(this);
@@ -2325,7 +2325,7 @@ public class SIRToStreamIt
         p.print(", ");
         streamContext.accept(this);
         p.print(", " + delay + ", ");
-        typePrint(type);
+        printType(type);
         p.print(", ");
         fp.accept(this);
         p.print(");");
@@ -2500,7 +2500,7 @@ public class SIRToStreamIt
 	    p.print(", SPLITTER, OUTPUT, " + position + ", ");
 	    childContext.accept(this);
 	    p.print(", sizeof(");
-            typePrint(inputType);
+            printType(inputType);
             p.print("), " + inputSize + ");");
 	    p.newLine();
 	}
@@ -2510,7 +2510,7 @@ public class SIRToStreamIt
 	    p.print(", JOINER, INPUT, " + position + ", ");
 	    childContext.accept(this);
 	    p.print(", sizeof(");
-            typePrint(outputType);
+            printType(outputType);
             p.print("), " + outputSize + ");");
 	}
     }
@@ -2719,7 +2719,7 @@ public class SIRToStreamIt
                                       boolean isFinal,
                                       CType type,
                                       String ident) {
-        typePrint(type);
+        printType(type);
         if (ident.indexOf("$") == -1) {
             p.print(" ");
             p.print(ident);
@@ -2777,11 +2777,11 @@ public class SIRToStreamIt
     // ----------------------------------------------------------------------
 
     // Special case for CTypes, to map some Java types to C types.
-    protected void typePrint(CType s)
+    protected void printType(CType s)
     {
         if (s instanceof CArrayType)
         {
-            typePrint(((CArrayType)s).getElementType());
+            printType(((CArrayType)s).getBaseType());
             JExpression[] dims = ((CArrayType)s).getDims();
 	    if (dims != null)
 		for (int i = 0; i < dims.length; i++)

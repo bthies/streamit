@@ -272,11 +272,10 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 		new JVariableDefinition(null, 
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
 					new CArrayType(filter.getInputType(), 
-						       1  ),
+						       1,
+						       new JExpression[] { new JIntLiteral(buffersize) } ),
 					recvBuffer,
-					bufferInitExp
-					(filter, filter.getInputType(), 
-					 buffersize));
+					null);
 	    
 	    
 	    //the size of the buffer 
@@ -368,11 +367,11 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 		new JVariableDefinition(null, 
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
 					new CArrayType(filter.getOutputType(), 
-						          1),
+						          1,
+						          dims),
 					sendBuffer,
-					new JNewArrayExpression(null,
-								Util.getBaseType(filter.getOutputType()),
-								dims, null));
+					null);
+
 	    localVariables.sendBuffer = sendBufVar;
 	    block.addStatement
 		(new JVariableDeclarationStatement(null,
@@ -415,38 +414,6 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	    }
 	}
     }
-
-
-
-    
-    //returns the expression that will create the buffer array.  A JNewArrayExpression
-    //with the proper type, dimensions, and size...
-    private JExpression bufferInitExp(SIRFilter filter, CType inputType,
-				      int buffersize) 
-    {
-	//this is an array type
-	if (inputType.isArrayType()) {
-	    CType baseType = ((CArrayType)inputType).getBaseType();
-	    //create the array to hold the dims of the buffer
-	    JExpression baseTypeDims[] = ((CArrayType)inputType).getDims();
-	    //the buffer is an array itself, so add one to the size of the input type
-	    JExpression[] dims =  new JExpression[baseTypeDims.length + 1];
-	    //the first dim is the buffersize
-	    dims[0] = new JIntLiteral(buffersize);
-	    //copy the dims for the basetype
-	    for (int i = 0; i < baseTypeDims.length; i++)
-		dims[i+1] = baseTypeDims[i];
-	    
-	    return new JNewArrayExpression(null, baseType, dims, null);
-	}
-
-	
-
-	JExpression dims[] = {new JIntLiteral(buffersize)};
-	return new JNewArrayExpression(null, inputType, dims, null);
-	
-    }
-
 
     private void clusterMainFunction(FlatNode node, JBlock statements,
 				 LocalVariables localVariables) 

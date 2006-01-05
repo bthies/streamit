@@ -297,8 +297,9 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
         setDeclOnly(true);
         JMethodDeclaration[] methods = self.getMethods();
         for (int i = 0; i < methods.length; i++) {
-            if (!methods[i].equals(work))
+            if (!methods[i].equals(work)) {
                 methods[i].accept(this);
+	    }
         }
 
         p.newLine();
@@ -1224,64 +1225,6 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
         }
     }
 
-    /*//*
-     * prints a field declaration
-     */
-/* Never called:  Some weird and incomplete handling of fields in 
- * CodeGenerator.java.  Pull that out and use standard field initialization
- * from ToC.java
- */ 
-//    public void visitFieldDeclaration(JFieldDeclaration self, int modifiers,
-//            CType type, String ident, JExpression expr) {
-//        System.err.println("Eclipse was wrong, we really visited fielf decl!");
-//        //
-//        // if (ident.indexOf("$") != -1) { return; // dont print generated
-//        // elements }
-//        //
-//
-//        if (type.toString().endsWith("Portal"))
-//            return;
-//
-//        p.newLine();
-//        // p.print(CModifier.toString(modifiers));
-//
-//        // only stack allocate singe dimension arrays
-//        if (expr instanceof JNewArrayExpression) {
-//            // print the basetype
-//            typePrint(((CArrayType) type).getBaseType());
-//            p.print(" ");
-//            // print the field identifier
-//            p.print(ident);
-//            // print the dims
-//            stackAllocateArray(ident);
-//            p.print(";");
-//            return;
-//        } else if (expr instanceof JArrayInitializer) {
-//            declareInitializedArray(type, ident, expr);
-//            return;
-//        }
-//
-//        if (type.toString().compareTo("boolean") == 0) {
-//            p.print("bool");
-//        } else {
-//            typePrint(type);
-//        }
-//
-//        p.print(" ");
-//        p.print(ident);
-//        p.print("__" + selfID);
-//
-//        if (expr != null) {
-//            p.print("\t= ");
-//            expr.accept(this);
-//        } // initialize all fields to 0
-//        else if (type.isOrdinal())
-//            p.print(" = 0");
-//        else if (type.isFloatingPoint())
-//            p.print(" = 0.0f");
-//        p.print(";/* " + type + " size: " + byteSize(type) + " */\n");
-//    }
-
     /**
      * prints a method declaration
      */
@@ -1318,7 +1261,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
             p.newLine();
 
         // p.print(CModifier.toString(modifiers));
-        typePrint(returnType);
+        printType(returnType);
         p.print(" ");
         if (global)
             p.print("__global__");
@@ -1405,12 +1348,6 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
      */
 
     /*
-     * Doesn't seem to be used private void
-     * printLocalArrayDecl(JNewArrayExpression expr) { JExpression[] dims =
-     * expr.getDims(); for (int i = 0 ; i < dims.length; i++) {
-     */
-
-    /*
      * I don't see why we need a new instance -- A.D. why not
      * p.print("["); dims[i].accept(this); p.print("]");
      */
@@ -1426,52 +1363,24 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
     public void visitVariableDefinition(JVariableDefinition self,
             int modifiers, CType type, String ident, JExpression expr) {
 
-        // p.print(CModifier.toString(modifiers));
-        // System.out.println(ident);
-        // System.out.println(expr);
+        if (expr instanceof JArrayInitializer) {
+	    declareInitializedArray(type, ident, expr);
+        } else {
 
-        // if we are in a work function, we want to stack allocate all arrays
-        // right now array var definition is separate from allocation
-        // we convert an assignment statement into the stack allocation
-        // statement'
-        // so, just remove the var definition
-        if (type.isArrayType() && !isInit) {
-            String[] dims = ArrayDim.findDim(filter, ident);
-            // but only do this if the array has corresponding
-            // new expression, otherwise don't print anything.
-            if (expr instanceof JNewArrayExpression) {
-                // print the type
-                typePrint(((CArrayType) type).getBaseType());
-                p.print(" ");
-                // print the field identifier
-                p.print(ident);
-                // print the dims
-                stackAllocateArray(ident);
-                p.print(";");
-                return;
-            } else if (dims != null)
-                return;
-            else if (expr instanceof JArrayInitializer) {
-                declareInitializedArray(type, ident, expr);
-                return;
-            }
-        }
+	    printDecl (type, ident);
+	    
+            if (expr != null) {
+		p.print ("\t= ");
+		expr.accept (this);
+	    } else if (type.isOrdinal())
+		p.print(" = 0");
+	    else if (type.isFloatingPoint())
+		p.print(" = 0.0f");
+	    else if (type.isArrayType())
+		p.print(" = {0}");
 
-        typePrint(type);
-
-        p.print(" ");
-        p.print(ident);
-        if (expr != null) {
-            p.print(" = ");
-            expr.accept(this);
-        } else if (type.isOrdinal())
-            p.print(" = 0");
-        else if (type.isFloatingPoint())
-            p.print(" = 0.0f");
-
-        p.print(";/* " + type + " */");
-        // p.print(";\n");
-
+	    p.print(";/* " + type + " */");
+	}
     }
 
     /*
@@ -1665,26 +1574,11 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
      */
 
     /**
-     * prints an array allocator expression
-     */
-    public void visitNewArrayExpression(JNewArrayExpression self, CType type,
-            JExpression[] dims, JArrayInitializer init) {
-        // only print message parameter
-        if (PRINT_MSG_PARAM > -1) {
-            if (init != null) {
-                init.accept(this);
-            }
-            return;
-        }
-        super.visitNewArrayExpression(self, type, dims, init);
-    }
-
-    /**
      * prints a name expression
      */
     public void visitNameExpression(JNameExpression self, JExpression prefix,
             String ident) {
-        Utils.fail("Name Expression");
+        Utils.fail("Name Expression " + self);
 
         p.print("(");
         if (prefix != null) {
@@ -1858,19 +1752,13 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
                         || right instanceof SIRPopExpression) 
                         && !(right instanceof JNewArrayExpression))) {
 
-            String ident = "";
+            CArrayType type = (CArrayType)right.getType();
+	    String dims[] = Util.makeString(type.getDims());
 
-            if (left instanceof JFieldAccessExpression)
-                ident = ((JFieldAccessExpression) left).getIdent();
-            else if (left instanceof JLocalVariableExpression)
-                ident = ((JLocalVariableExpression) left).getVariable()
-                        .getIdent();
-            else
-                Utils
-                        .fail("Assigning an array to an unsupported expression of type "
-                                + left.getClass() + ": " + left);
-
-            String[] dims = ArrayDim.findDim(filter, ident);
+	    // dims should never be null now that we have static array
+	    // bounds
+	    assert dims != null;
+	    /*
             // if we cannot find the dim, just create a pointer copy
             if (dims == null) {
                 boolean oldStatementContext = statementContext;
@@ -1884,6 +1772,9 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
                 printRParen();
                 return;
             }
+	    */
+
+
             p.print("{\n");
             p.print("int ");
             // print the index var decls
@@ -1904,6 +1795,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
             for (int i = 0; i < dims.length; i++)
                 p.print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
             p.print(";\n}\n");
+
             return;
         }
 
@@ -1917,7 +1809,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
             // get the basetype and print it
             CType baseType = ((CArrayType) ((JNewArrayExpression) right)
                     .getType()).getBaseType();
-            typePrint(baseType);
+            printType(baseType);
             p.print(" ");
             // print the identifier
 
@@ -1935,7 +1827,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
                 p.print(ident + "_Alloc");
 
                 // print the dims of the array
-                stackAllocateArray(ident);
+                printDecl(left.getType(), ident);
 
                 // print the pointer def and the assignment to the array
                 p.print(";\n");
@@ -1944,7 +1836,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
                 // the way it used to be before the hack
                 left.accept(this);
                 // print the dims of the array
-                stackAllocateArray(ident);
+                printDecl(left.getType(), ident);
             }
             return;
         }
@@ -1965,16 +1857,6 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
         printRParen();
 
         p.print("/*" + left.getType() + "*/");
-    }
-
-    // stack allocate the array
-    protected void stackAllocateArray(String ident) {
-        //find the dimensions of the array!!
-        String dims[] = ArrayDim.findDim(filter, ident);
-
-        for (int i = 0; i < dims.length; i++)
-            p.print("[" + dims[i] + "]");
-        return;
     }
 
     /*
@@ -2324,12 +2206,14 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
         String type_string = type.toString();
         if (type_string.equals("java.lang.String"))
             p.print("char*");
-        else
-            typePrint(type);
-        if (ident.indexOf("$") == -1) {
-            p.print(" ");
-            p.print(ident);
-        }
+        else if (ident.indexOf("$") == -1) {
+	    printDecl(type, ident);
+	} else {
+	    // does this case actually happen?  just preseving
+	    // semantics of previous version, but this doesn't make
+	    // sense to me.  --bft
+            printType(type);
+	}
     }
 
     /**

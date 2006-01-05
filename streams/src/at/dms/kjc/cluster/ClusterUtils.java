@@ -41,6 +41,23 @@ class ClusterUtils {
     	return CommonUtils.CTypeToString(s, true);
     }
  
+    /**
+     * Print a declaration for the given type with the given
+     * identifier.  Prints int x[10][10] for arrays.
+     *
+     * Use method from CommonUtils to perform conversion.
+     * This layer just tells the method in CommonUtils to
+     * use 'bool' rather than 'int' for translation of Java 'boolean'
+     * 
+     * {@use at.dms.kjc.common.CommonUtils#declToString}
+     *
+     * @param s      a CType
+     * @param ident  identifier for declaration
+     * @return       String translation of declaration
+     */
+    public static String declToString(CType s, String ident) {
+    	return CommonUtils.declToString(s, ident, true);
+    }
 
     /**
      * Use this to get name of peek function

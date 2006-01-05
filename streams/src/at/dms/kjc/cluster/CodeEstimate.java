@@ -2,6 +2,7 @@
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.*;
+import at.dms.kjc.raw.Util;
 import at.dms.kjc.sir.*;
 import java.lang.*;
 import java.util.HashMap;
@@ -163,7 +164,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
 	
 	if (type.isArrayType()) {
 	    
-	    String dims[] = ArrayDim.findDim((SIRFilter)filter, ident);
+	    String dims[] = Util.makeString(((CArrayType)self.getType()).getDims());
 	    CType base = ((CArrayType)type).getBaseType();
 	    
 	    if (dims != null && dims[0] != null) {

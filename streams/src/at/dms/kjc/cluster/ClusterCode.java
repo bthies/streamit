@@ -70,7 +70,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    DetectConst.detect(node);
 	    FlatIRToCluster.generateCode(node);
-	    FlatIRToCluster2.generateCode(node); // new codegen
+	    FlatIRToCluster2.generateCode(node);
 
 	    //((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());
 
@@ -1334,8 +1334,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    if (type.toString().endsWith("Portal")) continue;
 
 	    String ident = fields[f].getVariable().getIdent();
-	    str += "extern " + ClusterUtils.CTypeToString(type) +
-		" __global__" + ident + ";\n";
+	    str += "extern " + ClusterUtils.declToString(type, "__global__" + ident) + ";\n";
 	}
 
 	try {
@@ -1368,7 +1367,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    JExpression init_val = fields[f].getVariable().getValue();
 	    String ident = fields[f].getVariable().getIdent();
 
-	    str += (ClusterUtils.CTypeToString(type)+" __global__"+ident);
+	    str += ClusterUtils.declToString(type, " __global__"+ident);
 
 	    if (init_val == null) {
 		if (type.isOrdinal()) str += (" = 0");
@@ -1829,6 +1828,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
         CodegenPrintWriter p = new CodegenPrintWriter();
 
+	String currentHostName = getCurrentHostName();
+
 	/*
 	  String me = new String();
 
@@ -1852,7 +1853,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	*/
 
 	for (int i = 0; i < threadNumber; i++) {
-	    p.print(i+" "+"machine-"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(i))+"\n");
+	    p.print(i+" "+currentHostName+"\n");
 	}
 
 	try {
@@ -1865,6 +1866,23 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}	
     }
 
+    /**
+     * Returns the name of the machine this is currently running on.
+     */
+    private static String getCurrentHostName() {
+	String result = "unknown";
+	try {
+	    Process proc = Runtime.getRuntime().exec("hostname");
+	    proc.waitFor();
+	    BufferedReader output = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+	    result = output.readLine();
+	} catch (IOException e) {
+	    System.err.println("Warning: could not determine current host name for cluster-config file (IOException).");
+	} catch (InterruptedException e) {
+	    System.err.println("Warning: could not determine current host name for cluster-config file (InterruptedException).");
+	}
+	return result;
+    }
 
     public static void generateSetupFile() {
 

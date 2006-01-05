@@ -2,6 +2,7 @@
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.*;
+import at.dms.kjc.raw.Util;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.raw.Util;
@@ -148,7 +149,7 @@ public class DataEstimate {
 
 	    if (type.isArrayType()) {
 
-		String dims[] = ArrayDim.findDim((SIRFilter)filter, ident);
+		String dims[] = Util.makeString(((CArrayType)type).getDims());
 		CType base = ((CArrayType)type).getBaseType();
 		
 		if (dims != null) {

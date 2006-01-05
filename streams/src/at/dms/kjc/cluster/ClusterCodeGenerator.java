@@ -7,6 +7,7 @@ import java.util.*;
 import at.dms.kjc.flatgraph.FlatNode;
 //import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
+import at.dms.kjc.raw.Util;
 //import at.dms.kjc.cluster.*;
 //import at.dms.kjc.raw.Util;
 import at.dms.kjc.iterator.*;
@@ -275,7 +276,7 @@ class ClusterCodeGenerator {
 
 	    if (type.isArrayType()) {
 		int size = 0;
-		String dims[] = ArrayDim.findDim((SIRFilter)oper, ident);
+		String dims[] = Util.makeString(((CArrayType)type).getDims());
 		CType base = ((CArrayType)type).getBaseType();
 		try {
 		    size = Integer.valueOf(dims[0]).intValue();
@@ -322,7 +323,7 @@ class ClusterCodeGenerator {
 
 	    if (type.isArrayType()) {
 		int size = 0;
-		String dims[] = ArrayDim.findDim((SIRFilter)oper, ident);
+		String dims[] = Util.makeString(((CArrayType)type).getDims());
 		CType base = ((CArrayType)type).getBaseType();
 		try {
 		    size = Integer.valueOf(dims[0]).intValue();

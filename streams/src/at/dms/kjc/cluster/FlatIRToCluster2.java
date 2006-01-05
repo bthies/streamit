@@ -24,7 +24,7 @@ import at.dms.kjc.raw.*;
  * This class dumps the tile code for each filter into a file based 
  * on the tile number assigned 
  */
-public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor, CodeGenerator
+public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements StreamVisitor, CodeGenerator
 {
     private boolean DEBUG = false;
 
@@ -423,7 +423,7 @@ public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor,
 
 	    if (type.isArrayType()) {
 		int size = 0;
-		String dims[] = ArrayDim.findDim((SIRFilter)self, ident);
+		String dims[] = Util.makeString(((CArrayType)type).getDims());
 		CType base = ((CArrayType)type).getBaseType();
 		try {
 		    size = Integer.valueOf(dims[0]).intValue();
@@ -469,7 +469,7 @@ public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor,
 
 	    if (type.isArrayType()) {
 		int size = 0;
-		String dims[] = ArrayDim.findDim((SIRFilter)self, ident);
+		String dims[] = Util.makeString(((CArrayType)type).getDims());
 		CType base = ((CArrayType)type).getBaseType();
 		try {
 		    size = Integer.valueOf(dims[0]).intValue();
@@ -532,7 +532,7 @@ public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor,
 
 	    if (type.isArrayType()) {
 		int size = 0;
-		String dims[] = ArrayDim.findDim((SIRFilter)self, ident);
+		String dims[] = Util.makeString(((CArrayType)type).getDims());
 		CType base = ((CArrayType)type).getBaseType();
 		try {
 		    size = Integer.valueOf(dims[0]).intValue();
@@ -591,7 +591,7 @@ public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor,
 
 	    if (type.isArrayType()) {
 		int size = 0;
-		String dims[] = ArrayDim.findDim((SIRFilter)self, ident);
+		String dims[] = Util.makeString(((CArrayType)type).getDims());
 		CType base = ((CArrayType)type).getBaseType();
 		try {
 		    size = Integer.valueOf(dims[0]).intValue();
@@ -1391,62 +1391,62 @@ public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor,
 
     }
        			
-    /**
-     * prints a field declaration
-     */
-    public void visitFieldDeclaration(JFieldDeclaration self,
-                                      int modifiers,
-                                      CType type,
-                                      String ident,
-                                      JExpression expr) {
-        /*
-          if (ident.indexOf("$") != -1) {
-          return; // dont print generated elements
-          }
-        */
+//     /**
+//      * prints a field declaration
+//      */
+//     public void visitFieldDeclaration(JFieldDeclaration self,
+//                                       int modifiers,
+//                                       CType type,
+//                                       String ident,
+//                                       JExpression expr) {
+//         /*
+//           if (ident.indexOf("$") != -1) {
+//           return; // dont print generated elements
+//           }
+//         */
 
-	if (type.toString().endsWith("Portal")) return;
+// 	if (type.toString().endsWith("Portal")) return;
 
-        newLine();
-        // print(CModifier.toString(modifiers));
+//         newLine();
+//         // print(CModifier.toString(modifiers));
 
-	//only stack allocate singe dimension arrays
-	if (expr instanceof JNewArrayExpression) {
-	    //print the basetype
-	    print(((CArrayType)type).getBaseType());
-	    print(" ");
-	    //print the field identifier
-	    print(ident);
-	    //print the dims
-	    stackAllocateArray(ident);
-	    print(";");
-	    return;
-	} else if (expr instanceof JArrayInitializer) {
-	    declareInitializedArray(type, ident, expr);
-	    return;
-	}
+// 	//only stack allocate singe dimension arrays
+// 	if (expr instanceof JNewArrayExpression) {
+// 	    //print the basetype
+// 	    print(((CArrayType)type).getBaseType());
+// 	    print(" ");
+// 	    //print the field identifier
+// 	    print(ident);
+// 	    //print the dims
+// 	    stackAllocateArray(ident);
+// 	    print(";");
+// 	    return;
+// 	} else if (expr instanceof JArrayInitializer) {
+// 	    declareInitializedArray(type, ident, expr);
+// 	    return;
+// 	}
 
-	if (type.toString().compareTo("boolean") == 0) {
-	    print("bool");
-	} else {
-	    print(type);
-	}
+// 	if (type.toString().compareTo("boolean") == 0) {
+// 	    print("bool");
+// 	} else {
+// 	    print(type);
+// 	}
 
-        print(" ");
-        print(ident);
-	print("__"+selfID);
+//         print(" ");
+//         print(ident);
+// 	print("__"+selfID);
 
-        if (expr != null) {
-            print("\t= ");
-	    expr.accept(this);
-        }   //initialize all fields to 0
-	else if (type.isOrdinal())
-	    print (" = 0");
-	else if (type.isFloatingPoint())
-	    print(" = 0.0f");
+//         if (expr != null) {
+//             print("\t= ");
+// 	    expr.accept(this);
+//         }   //initialize all fields to 0
+// 	else if (type.isOrdinal())
+// 	    print (" = 0");
+// 	else if (type.isFloatingPoint())
+// 	    print(" = 0.0f");
 
-        print(";/* "+type+" size: "+byteSize(type)+" */\n");
-    }
+//         print(";/* "+type+" size: "+byteSize(type)+" */\n");
+//     }
 
     /**
      * prints a method declaration
@@ -1575,16 +1575,6 @@ public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor,
         }
     }
 
-    private void printLocalArrayDecl(JNewArrayExpression expr) 
-    {
-	JExpression[] dims = expr.getDims();
-	for (int i = 0 ; i < dims.length; i++) {
-	    FlatIRToCluster2 toC = new FlatIRToCluster2();
-	    dims[i].accept(toC);
-	    print("[" + toC.getString() + "]");
-	}
-    }
-    
     /**
      * prints a variable declaration statement
      */
@@ -1594,56 +1584,23 @@ public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor,
                                         String ident,
                                         JExpression expr) {
 
-        // print(CModifier.toString(modifiers));
-	//	System.out.println(ident);
-	//System.out.println(expr);
 
-	//if we are in a work function, we want to stack allocate all arrays
-	//right now array var definition is separate from allocation
-	//we convert an assignment statement into the stack allocation statement'
-	//so, just remove the var definition
-	if (type.isArrayType() && !isInit) {
-	    String[] dims = ArrayDim.findDim(filter, ident);
-	    //but only do this if the array has corresponding 
-	    //new expression, otherwise don't print anything.
-	    if (expr instanceof JNewArrayExpression) {
-		//print the type
-		print(((CArrayType)type).getBaseType());
-		print(" ");
-		//print the field identifier
-		print(ident);
-		//print the dims
-		stackAllocateArray(ident);
-		print(";");
-		return;
-	    }
-	    else if (dims != null)
-		return;
-	    else if (expr instanceof JArrayInitializer) {
-		declareInitializedArray(type, ident, expr);
-		return;
-	    }
+        if (expr instanceof JArrayInitializer) {
+	    declareInitializedArray(type, ident, expr);
+        } else {
+
+	    printDecl (type, ident);
+	    
+            if (expr != null && !(expr instanceof JNewArrayExpression)) {
+		p.print ("\t= ");
+		expr.accept (this);
+	    } else if (type.isOrdinal())
+		p.print(" = 0");
+	    else if (type.isFloatingPoint())
+		p.print(" = 0.0f");
+
+	    p.print(";/* " + type + " */");
 	}
-	
-	if (expr!=null) {
-	    printLocalType(type);
-	} else {
-	    print(type);
-	}	    
-        print(" ");
-	print(ident);
-        if (expr != null) {
-	    print(" = ");
-	    expr.accept(this);
-	}
-	else if (type.isOrdinal())
-	    print (" = 0");
-	else if (type.isFloatingPoint())
-	    print(" = 0.0f");
-
-        print(";/* "+type+" */");
-        //print(";\n");
-
     }
 
 
@@ -2461,26 +2418,28 @@ public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor,
 	     ((right.getType().isArrayType() || right instanceof SIRPopExpression) &&
 	      !(right instanceof JNewArrayExpression))) {
 	    
-	    String ident = "";
-	    	    
-	    if (left instanceof JFieldAccessExpression) 
-		ident = ((JFieldAccessExpression)left).getIdent();
-	    else if (left instanceof JLocalVariableExpression) 
-		ident = ((JLocalVariableExpression)left).getVariable().getIdent();
-	    else 
-		Utils.fail("Assigning an array to an unsupported expression of type " + left.getClass() + ": " + left);
-	    
-	    String[] dims = ArrayDim.findDim(filter, ident);
-	    //if we cannot find the dim, just create a pointer copy
-	    if (dims == null) {
-		lastLeft=left;
-		print("(");
-		left.accept(this);
-		print(" = ");
-		right.accept(this);
-		print(")");
-		return;
-	    }
+            CArrayType type = (CArrayType)right.getType();
+	    String dims[] = Util.makeString(type.getDims());
+
+	    // dims should never be null now that we have static array
+	    // bounds
+	    assert dims != null;
+	    /*
+            // if we cannot find the dim, just create a pointer copy
+            if (dims == null) {
+                boolean oldStatementContext = statementContext;
+                lastLeft = left;
+                printLParen();
+                statementContext = false;
+                left.accept(this);
+                p.print(" = ");
+                right.accept(this);
+                statementContext = oldStatementContext;
+                printRParen();
+                return;
+            }
+	    */
+
 	    print("{\n");
 	    print("int ");
 	    //print the index var decls
@@ -2530,7 +2489,7 @@ public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor,
 		print(ident + "_Alloc");
 		
 		//print the dims of the array
-		stackAllocateArray(ident);
+                printDecl(left.getType(), ident);
 
 		//print the pointer def and the assignment to the array
 		print(";\n");
@@ -2540,7 +2499,7 @@ public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor,
 		//the way it used to be before the hack
 		 left.accept(this);
 		 //print the dims of the array
-		 stackAllocateArray(ident);
+		 printDecl(left.getType(), ident);
 	    }
 	    return;
 	}
@@ -2563,17 +2522,6 @@ public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor,
 	print("/*"+left.getType()+"*/");
     }
 
-    //stack allocate the array
-    private void stackAllocateArray(String ident) {
-	//find the dimensions of the array!!
-	String dims[] = 
-	    ArrayDim.findDim(filter, ident);
-	
-	for (int i = 0; i < dims.length; i++)
-	    print("[" + dims[i] + "]");
-	return;
-    }
-    
     /**
      * prints an array length expression
      */
@@ -3151,14 +3099,16 @@ public class FlatIRToCluster2 extends SLIREmptyVisitor implements StreamVisitor,
                                       CType type,
                                       String ident) {
         String type_string = type.toString();
-	if (type_string.equals("java.lang.String")) 
-	    print("char*");
-	else 
-	    print(type);
-        if (ident.indexOf("$") == -1) {
-            print(" ");
-            print(ident);
-        }
+        if (type_string.equals("java.lang.String"))
+            p.print("char*");
+        else if (ident.indexOf("$") == -1) {
+	    printDecl(type, ident);
+	} else {
+	    // does this case actually happen?  just preseving
+	    // semantics of previous version, but this doesn't make
+	    // sense to me.  --bft
+            printType(type);
+	}
     }
 
     /**

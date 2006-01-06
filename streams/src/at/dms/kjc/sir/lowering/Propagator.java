@@ -136,7 +136,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	    cond.accept(this);
 	    body.accept(this);
 	} else {
-	    Propagator newProp=construct(cloneTable(constants),false);
+	    Propagator newProp=construct(cloneTable(constants, getFreeVars(self)),false);
 	   
 	    cond.accept(newProp);
 	    body.accept(newProp);
@@ -147,7 +147,8 @@ public class Propagator extends SLIRReplacingVisitor {
 		constants.remove(var);
 		changed.put(var,Boolean.TRUE);
 	    }
-	    Hashtable saveConstants=cloneTable(constants);
+	    Hashtable saveConstants=constants;
+	    constants=cloneTable(constants, getFreeVars(cond));
 	    JExpression newExp = (JExpression)cond.accept(this);
 	    // reset if we found a constant
 	    if (newExp!=cond) {
@@ -158,6 +159,67 @@ public class Propagator extends SLIRReplacingVisitor {
 	}
 	loopDepth--;
 	return self;
+    }
+
+    /**
+     * Returns a list of local variables that were used within
+     * <phylum> without being defined in <phylum>.
+     */
+    private Set getFreeVars(JPhylum phylum) {
+	if (phylum == null) {
+	    return new TreeSet();
+	}
+
+	// we want to use a treeset just for efficiency, but that
+	// requires a comparator, so just compare based on hashcodes.
+	Comparator hashCodeComparator = new Comparator() {
+		public int compare(Object o1, Object o2) { 
+		    int h1 = o1.hashCode();
+		    int h2 = o2.hashCode();
+		    if (h1 < h2) {
+			return -1;
+		    } else if (h1 > h2) {
+			return 1;
+		    } else {
+			return 0;
+		    }
+		}
+		public boolean equals(Object o1, Object o2) { 
+		    return o1.hashCode()==o2.hashCode(); 
+		}
+	    };
+
+	// collect used and defined lists
+	final TreeSet defined = new TreeSet(hashCodeComparator);
+	final TreeSet used = new TreeSet(hashCodeComparator);
+	phylum.accept(new SLIREmptyVisitor() {
+		public void visitFormalParameters(JFormalParameter self,
+						  boolean isFinal,
+						  CType type,
+						  String ident) {
+		    super.visitFormalParameters(self, isFinal, type, ident);
+		    defined.add(self);
+		}
+
+		public void visitVariableDefinition(JVariableDefinition self,
+						    int modifiers,
+						    CType type,
+						    String ident,
+						    JExpression expr) {
+		    super.visitVariableDefinition(self, modifiers, type, ident, expr);
+		    defined.add(self);
+		}
+
+		public void visitLocalVariableExpression(JLocalVariableExpression self,
+							 String ident) {
+		    super.visitLocalVariableExpression(self, ident);
+		    used.add(self.getVariable());
+		}
+	    });
+
+	// subtract defined from used to get free vars
+	used.removeAll(defined);
+	return used;
     }
     
     /**
@@ -320,24 +382,27 @@ public class Propagator extends SLIRReplacingVisitor {
 	    }
 	    Propagator[] propagators=new Propagator[body.length];
 	    for (int i = 0; i < body.length; i++) {
-		Propagator prop=construct(cloneTable(constants),true);
+		Set varsToClone = getFreeVars(body[i]);
+		// include free var from <expr> for proper comparison with <origConstants> below
+		varsToClone.addAll(getFreeVars(expr));
+		Propagator prop=construct(cloneTable(constants, varsToClone),true);
 		propagators[i]=prop;
 		body[i].accept(prop);
 	    }
 	    if(body.length>0) {
-		Hashtable constants=propagators[0].constants; //Shadow the main constants
+		Hashtable newConstants=propagators[0].constants; //Shadow the main constants
 		//Remove if value is not same in all switch bodies
 		for(int i=1;i<propagators.length;i++) {
 		    Propagator prop=propagators[i];
 		    LinkedList remove=new LinkedList();
-		    Enumeration enum=constants.keys();
+		    Enumeration enum=newConstants.keys();
 		    while(enum.hasMoreElements()) {
 			Object key=enum.nextElement();
-			if(!(prop.constants.get(key).equals(constants.get(key))))
+			if(!(prop.constants.get(key).equals(newConstants.get(key))))
 			    remove.add(key);
-			if((prop.constants.get(key) instanceof Object[])&&(constants.get(key) instanceof Object[])) {
+			if((prop.constants.get(key) instanceof Object[])&&(newConstants.get(key) instanceof Object[])) {
 			    Object[] array1=(Object[])prop.constants.get(key);
-			    Object[] array2=(Object[])constants.get(key);
+			    Object[] array2=(Object[])newConstants.get(key);
 			    if(array1.length!=array2.length)
 				remove.add(key);
 			    else
@@ -347,16 +412,19 @@ public class Propagator extends SLIRReplacingVisitor {
 			}
 		    }
 		    for(int j=0;j<remove.size();j++) {
-			constants.remove(remove.get(j));
-			//changed.put(remove.get(j),Boolean.TRUE);
+			newConstants.remove(remove.get(j));
 		    }
 		}
 		// mark anything that's in <newConstants> but not in
 		// <constants> as <changed>
-		for (Enumeration e=this.constants.keys(); e.hasMoreElements(); ) {
+		Hashtable origConstants = cloneTable(constants, getFreeVars(self));
+		for (Enumeration e=origConstants.keys(); e.hasMoreElements(); ) {
 		    Object key=e.nextElement();
-		    if (!constants.containsKey(key)) {
+		    if (!newConstants.containsKey(key)) {
 			changed.put(key, Boolean.TRUE);
+			constants.remove(key);
+		    } else {
+			constants.put(key, newConstants.get(key));
 		    }
 		}
 		this.constants=constants;
@@ -417,8 +485,8 @@ public class Propagator extends SLIRReplacingVisitor {
 			return new JEmptyStatement(self.getTokenReference(), null);
 		}
 	    // propagate through then and else
-	    Propagator thenProp=construct(cloneTable(constants),true);
-	    Propagator elseProp=construct(cloneTable(constants),true);
+	    Propagator thenProp=construct(cloneTable(constants, getFreeVars(thenClause)),true);
+	    Propagator elseProp=construct(cloneTable(constants, getFreeVars(elseClause)),true);
 	    thenClause.accept(thenProp);
 	    if (elseClause != null) {
 		elseClause.accept(elseProp);
@@ -434,7 +502,6 @@ public class Propagator extends SLIRReplacingVisitor {
 		    self.setThenClause(thenClause);
 		    self.setElseClause(elseClause);
 		    newExp=new JLogicalComplementExpression(cond.getTokenReference(),newExp);
-		    self.setCondition(newExp);
 		    if((elseClause instanceof JBlock)&&(((JBlock)elseClause).size()==0))
 			self.setElseClause(null);
 		}
@@ -464,21 +531,45 @@ public class Propagator extends SLIRReplacingVisitor {
 		    newConstants.put(thenKey, thenVal);
 		}
 	    }
-	    // mark anything that's in <newConstants> but not in
-	    // <constants> as <changed>
-	    for (Enumeration e = constants.keys(); e.hasMoreElements(); ) {
+	    // integrate the update to overall <constants>
+	    Hashtable origConstants = cloneTable(constants, getFreeVars(self));
+	    for (Enumeration e = origConstants.keys(); e.hasMoreElements(); ) {
 		Object key = e.nextElement();
-		if (!newConstants.containsKey(key)) {
+		if (newConstants.containsKey(key)) {
 		    changed.put(key, Boolean.TRUE);
+		    constants.put(key, newConstants.get(key));
+		} else {
+		    constants.remove(key);
 		}
 	    }
-	    // set <constants> to <newConstants>
-	    constants = newConstants;
 	}
 	return self;
     }
 
-    //Handles the deep clonning of arrays correctly
+    // returns a clone of <table> that contains only the keys in
+    //<varsToClone>.  Handles deep-cloning of arrays correctly.
+    private Hashtable cloneTable(Hashtable table, Set varsToClone) {
+	Hashtable out=new Hashtable();
+	Iterator keys=varsToClone.iterator();
+	while(keys.hasNext()) {
+	    Object key=keys.next();
+	    if (table.containsKey(key)) {
+		Object val=table.get(key);
+		if(val instanceof Object[]) {
+		    Object[] array=(Object[])val;
+		    Object[] newArray=new Object[array.length];
+		    System.arraycopy(array,0,newArray,0,array.length);
+		    out.put(key,newArray);
+		} else {
+		    out.put(key, val);
+		}
+	    }
+	}
+	return out;
+    }
+
+    // returns a clone of <table>.  Handles deep-cloning of arrays
+    // correctly.    
     private Hashtable cloneTable(Hashtable table) {
 	Hashtable out=new Hashtable(table);
 	Enumeration keys=table.keys();
@@ -517,7 +608,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	    if (newInit!=null && newInit!=init) {
 		self.setInit(newInit);
 	    }
-	    Propagator newProp=construct(cloneTable(constants),false);
+	    Propagator newProp=construct(cloneTable(constants, getFreeVars(self)),false);
 	    //init.accept(newProp);
 	    incr.accept(newProp);
 	    cond.accept(newProp);
@@ -528,11 +619,10 @@ public class Propagator extends SLIRReplacingVisitor {
 		constants.remove(var);
 		changed.put(var,Boolean.TRUE);
 	    }
-	    Hashtable saveConstants=cloneTable(constants);
-	    // cond should never be a constant, or else we have an
-	    // infinite or empty loop.  Thus I won't check for it... 
-	    // recurse into init
+	    Hashtable saveConstants=constants;
+	    constants=cloneTable(constants, getFreeVars(self));
 
+	    // recurse into cond
 	    JExpression newExp = (JExpression)cond.accept(this);
 	    if (newExp!=null && newExp!=cond) {
 		self.setCond(newExp);

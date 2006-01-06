@@ -73,7 +73,7 @@ void->void pipeline MPEGdecoder_nomessage() {
   // All of these test cases can be run independently of each other.
   // For each output file, there is an associated output file without the "unver" extension
   // and an md5sum which can be compared against the actual output to make sure it's correct.
-  int parse_or_process = 3;
+  int parse_or_process = 2;
 
   int width=352;
   int height=240;
@@ -155,11 +155,11 @@ int->int pipeline MPEGStream_to_rawImageStream(int width, int height,
 
   // Each output channel is ordered left to right, top to bottom
   add int->int splitjoin {
-    if (the_chroma_format == 1) {
+//    if (the_chroma_format == 1) {
       split roundrobin(4*75, 2*75);
-    } else {
-      split roundrobin(4*75, 4*75);
-    }
+//    } else {
+//      split roundrobin(4*75, 4*75);
+//    }
     add LuminanceChannelProcessing(width, height, the_chroma_format);
     add int->int splitjoin {
       split roundrobin(75);

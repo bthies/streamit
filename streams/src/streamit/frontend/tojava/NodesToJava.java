@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.111 2005-12-21 20:04:46 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.112 2006-01-06 23:46:16 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -51,19 +51,6 @@ public class NodesToJava implements FEVisitor
     // set inside visitStreamSpec if this class generated using static 
     //(a.k.a. global) keyword.
     private boolean global;
-
-    // fileWriterNames collects file writer names and code strings to close
-    // the file writers.  Created once per class.  A class that creates a file
-    // writer will be given a __close method:  This is done only for library
-    // since the compilers each have their own handling of file writers already
-    // built in.  This map is reinitialized once per class.
-
-    private Map/*<String,String>*/ fileWriterNames = null;
-    // classesToClose collects names of classes for which close methods
-    // have been creted.  For library, these classes will have their close
-    // methods called before exit.
-    private Set/*String*/ classesToClose = new HashSet();
-
 
     public NodesToJava(boolean libraryFormat, TempVarGen varGen)
     {
@@ -964,23 +951,9 @@ public class NodesToJava implements FEVisitor
         // we need a temporary variable.
         List portals = sc.getPortals();
         if (portals.isEmpty()) {
-        	if (! (sc instanceof SCSimple && 
-        		  ((SCSimple)sc).getName().equals("FileWriter") &&
-        		  libraryFormat)) {
-        		// basic behavior: put expression in-line.
-        		//System.err.println("basic \"" + ((SCSimple)sc).getName() + "\"");
-        		return how + "(" + (String)sc.accept(this) + ")";
-        	} else {
-        		// FileWriter:
-        		// create variable, remember variable so that main can be
-        		// made to close the file.
-        		String varName = ((SCSimple)sc).getName() + varGen.nextVar();
-        		fileWriterNames.put(varName,
-        				"private static FileWriter " + varName + " = " + (String)sc.accept(this) + ";\n"
-        					);
-//        		System.err.println("FileWriter " + varName + " " + fileWriterNames.size());
-        		return (how + "(this." + varName + ")");
-        	}
+	    // basic behavior: put expression in-line.
+	    //System.err.println("basic \"" + ((SCSimple)sc).getName() + "\"");
+	    return how + "(" + (String)sc.accept(this) + ")";
         }
         // has portals:
         String tempVar = varGen.nextVar();
@@ -1429,7 +1402,6 @@ public class NodesToJava implements FEVisitor
     public Object visitStreamSpec(StreamSpec spec)
     {
         String result = "";
-        fileWriterNames = new HashMap();
         if (spec.getType() == StreamSpec.STREAM_GLOBAL) global = true; // set global bit
 
         // Anonymous classes look different from non-anonymous ones.
@@ -1523,31 +1495,6 @@ public class NodesToJava implements FEVisitor
 
         ss = oldSS;
 
-		if (fileWriterNames.size() != 0) {
-			classesToClose.add(spec.getName());
-			if (libraryFormat) {
-				// now that we have walked all methods create fields
-				// for file writers.
-				Iterator i = fileWriterNames.values().iterator();
-				while (i.hasNext()) {
-					String fwDefn = (String) (i.next());
-					result += indent + fwDefn;
-				}
-				// create a method to close all file writers
-				result += "\n";
-				result += indent + "public static void __close() {\n";
-				addIndent();
-				Iterator j = fileWriterNames.keySet().iterator();
-				while (j.hasNext()) {
-					String fwName = (String) (j.next());
-					result += indent + fwName + ".close();\n";
-				}
-				unIndent();
-				result += indent + "}\n";
-				result += indent + "\n";
-			}
-		}
-
 		// Top-level stream: do any post-processing and emit "main"
 		// This is only public if it's the top-level stream,
 		// meaning it has type void->void.
@@ -1558,10 +1505,7 @@ public class NodesToJava implements FEVisitor
 					+ spec.getName() + "();\n";
 			result += indent + "program.run(args);\n";
 			if (libraryFormat) {
-				Iterator i = classesToClose.iterator();
-				while (i.hasNext()) {
-					result += indent + ((String)(i.next())) + ".__close();\n";
-				}
+			    result += indent + "FileWriter.closeAll();\n";
 			}
 			unIndent();
 			result += indent + "}\n";

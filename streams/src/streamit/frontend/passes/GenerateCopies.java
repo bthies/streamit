@@ -28,7 +28,7 @@ import java.util.*;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.13 2005-07-13 22:19:14 janiss Exp $
+ * @version $Id: GenerateCopies.java,v 1.14 2006-01-06 18:35:27 thies Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -230,6 +230,25 @@ public class GenerateCopies extends SymbolTableVisitor
 				((ExprComposite)from).getW() : new ExprField(from.getContext(), from, "w")));
     }
 
+    /**
+     * Returns whether or not <exp> contains a function call.
+     */
+    private boolean containsFunCall(Expression expr) {
+	final boolean[] result = { false };
+
+        expr.accept(new FEReplacer() {
+                public Object visitExprFunCall(ExprFunCall expr)
+                {
+		    result[0] = true;
+		    // don't need to visit any further; we found what
+		    // we were looking for
+		    return expr;
+		}
+	    });
+	
+	return result[0];
+    }
+
     public Object visitExprPeek(ExprPeek expr)
     {
         Expression result = (Expression)super.visitExprPeek(expr);
@@ -304,19 +323,20 @@ public class GenerateCopies extends SymbolTableVisitor
 
 		} else {
 
-		    // make a copy of the RHS in the event that it is a
-		    // function call.  We don't want to call the function
-		    // multiple times for each element.
-		    
-		    Expression copy = assignToTemp(stmt.getRHS(), 
-						   // "true" as deep
-						   // argument will cause
-						   // bugs; need more
-						   // sophisticated
-						   // framework to do
-						   // nested structures
-						   // correctly
-						   false);
+		    // if RHS is a function call, make a copy of it.
+		    // We don't want to call the function multiple
+		    // times for each element.
+		    if (containsFunCall(rhs)) {
+			rhs = assignToTemp(stmt.getRHS(), 
+					   // "true" as deep
+					   // argument will cause
+					   // bugs; need more
+					   // sophisticated
+					   // framework to do
+					   // nested structures
+					   // correctly
+					   false);
+		    }
 		    
 		    // drops op!  If there are compound assignments
 		    // like "a += b" here, we lose.  There shouldn't be,
@@ -324,7 +344,7 @@ public class GenerateCopies extends SymbolTableVisitor
 		    // for structures and arrays and this should be run
 		    // after complex prop.
 		    
-		    makeCopy(copy, stmt.getLHS());                
+		    makeCopy(rhs, stmt.getLHS());                
 		
 		}
 

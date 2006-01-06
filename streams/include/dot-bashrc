@@ -7,8 +7,9 @@ then
  export CLASSPATH=.
 fi
 
-# take care of classpath
+# location of java and jikes
 export JAVA_HOME=/usr/uns/jdk1.5.0_01
+export JIKES_HOME=/home/bits8/streamit/jikes-1.22-customized
 
 # java classes
 xoCLASSPATH=${CLASSPATH}:${JAVA_HOME}/jre/lib/rt.jar
@@ -33,10 +34,13 @@ export LEFTYPATH=/home/bits7/NO_BACKUP/streamit/dotty
 # add STREAMIT_HOME to the path in order to find "knit"
 if [ -z "$PATH" ]
 then
-  export PATH=${JAVA_HOME}/bin:${STREAMIT_HOME}
+  export PATH=${STREAMIT_HOME}
 else
-  PATH=${JAVA_HOME}/bin:${PATH}:${STREAMIT_HOME}
+  PATH=${PATH}:${STREAMIT_HOME}
 fi
+
+# add java and jikes to path
+export PATH=${JAVA_HOME}/bin:${JIKES_HOME}/bin:${PATH}
 
 # Perl on RHEL-3
 PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:${PERL5LIB}

@@ -3,8 +3,9 @@ else
   setenv CLASSPATH .
 endif
 
-# this is a temporary default value
+# location of java and jikes
 setenv JAVA_HOME /usr/uns/jdk1.5.0_01
+setenv JIKES_HOME /home/bits8/streamit/jikes-1.22-customized
 
 # java classes
 setenv CLASSPATH ${CLASSPATH}:${JAVA_HOME}/jre/lib/rt.jar
@@ -27,10 +28,13 @@ setenv ATLAS_HOME /home/bits7/NO_BACKUP/streamit/ATLAS
 
 # add STREAMIT_HOME to the path in order to find "knit"
 if ($?PATH) then
-  setenv PATH ${JAVA_HOME}/bin:${PATH}:${STREAMIT_HOME}
+  setenv PATH ${PATH}:${STREAMIT_HOME}
 else
-  setenv PATH ${JAVA_HOME}/bin:${STREAMIT_HOME}
+  setenv PATH ${STREAMIT_HOME}
 endif
+
+# add java and jikes to path
+setenv PATH ${JAVA_HOME}/bin:${JIKES_HOME}/bin:${PATH}
 
 # Perl on RHEL-3
 if ($?PERL5LIB) then

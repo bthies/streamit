@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldDeclaration.java,v 1.12 2005-12-23 15:12:52 dimock Exp $
+ * $Id: JFieldDeclaration.java,v 1.13 2006-01-06 18:35:15 thies Exp $
  */
 
 package at.dms.kjc;
@@ -150,8 +150,7 @@ public class JFieldDeclaration extends JMemberDeclaration {
     variable.checkInterface(context);
     setInterface(new CSourceField(context.getCClass(),
 				  modifiers,
-				  variable.getIdent(),
-				  variable.getType(),
+				  variable,
 				  isDeprecated()));
 
     return (CSourceField)getField();

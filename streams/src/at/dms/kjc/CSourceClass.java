@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSourceClass.java,v 1.9 2003-11-13 10:46:10 thies Exp $
+ * $Id: CSourceClass.java,v 1.10 2006-01-06 18:35:15 thies Exp $
  */
 
 package at.dms.kjc;
@@ -144,6 +144,16 @@ public class CSourceClass extends CClass {
   public JExpression getOuterLocalAccess(TokenReference ref, 
                                          JLocalVariable var, 
                                          final CMethod constructor) {
+
+    // NOTE - major modification to work with StreamIt.  This could
+    // break Kopi as a Java compiler.  Here we register references to
+    // enclosing final locals even if there is not a constructor, so
+    // that you might not know the data layout.  Commented out version
+    // (original) appears below.
+
+    return new JCheckedExpression(ref, new JLocalVariableExpression(ref, var));
+
+      /*
     String		name;
     CSourceField	field;
 
@@ -158,17 +168,8 @@ public class CSourceClass extends CClass {
       countSyntheticsFields++;
     } else {
       field = (CSourceField)getField(name);
-    }
+      } 
 
-    // NOTE - major modification to work with StreamIt.  This could
-    // break Kopi as a Java compiler.  Here we register references to
-    // enclosing final locals even if there is not a constructor, so
-    // that you might not know the data layout.  Commented out version
-    // (original) appears below.
-
-    return new JCheckedExpression(ref, new JLocalVariableExpression(ref, var));
-
-    /*
       if (constructor != null) {
       final	CSourceField	ffield = field;
       JGeneratedLocalVariable local = new JGeneratedLocalVariable(null, 0, var.getType(), var.getIdent(), null) {

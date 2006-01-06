@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSourceField.java,v 1.3 2003-05-28 05:58:42 thies Exp $
+ * $Id: CSourceField.java,v 1.4 2006-01-06 18:35:15 thies Exp $
  */
 
 package at.dms.kjc;
@@ -35,9 +35,24 @@ public class CSourceField extends CField {
    * Constructs a field export
    * @param	owner		the owner of this field
    * @param	modifiers	the modifiers on this field
-   * @param	ident		the name of this field
-   * @param	type		the type of this field
+   * @param	variable	variable for this field
    * @param	deprecated	is this field deprecated
+   */
+  public CSourceField(CClass owner,
+		      int modifiers,
+		      JVariableDefinition variable,
+		      boolean deprecated)
+  {
+    super(owner, modifiers, variable, deprecated);
+  }
+
+  /**
+   * Constructs a field export
+   * @param	owner		the owner of this field
+   * @param	modifiers	the modifiers on this field
+   * @param     ident           the name of this field
+   * @param     type            the type of this field
+   * @param	deprecated	is this field deprecated ?
    */
   public CSourceField(CClass owner,
 		      int modifiers,

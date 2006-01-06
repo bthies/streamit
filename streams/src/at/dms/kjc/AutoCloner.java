@@ -143,8 +143,13 @@ public class AutoCloner {
 	// equality
 	else if ((typeName.startsWith("at.dms.kjc.C") &&
 		  // need to clone CArrayTypes because the static
-		  // array dimensions could be different for each instance
-		  !(o instanceof CArrayType)) ||
+		  // array dimensions could be different for each instance.
+		  !(o instanceof CArrayType) &&
+		  // also need to clone CFields because they are the
+		  // needed for a JFieldAccessExpression to see the
+		  // corresponding JVariableDefinition for static
+		  // array bounds
+		  !(o instanceof CField)) ||
 		 o instanceof JLiteral ||
 		 o instanceof JavaStyleComment ||
 		 o instanceof TokenReference ||

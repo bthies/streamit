@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CField.java,v 1.6 2003-11-13 10:46:10 thies Exp $
+ * $Id: CField.java,v 1.7 2006-01-06 18:35:15 thies Exp $
  */
 
 package at.dms.kjc;
@@ -37,8 +37,24 @@ public abstract class CField extends CMember {
    * Constructs a field export
    * @param	owner		the owner of this field
    * @param	modifiers	the modifiers on this field
-   * @param	ident		the name of this field
-   * @param	type		the type of this field
+   * @param	variable	the variable of this field
+   * @param	deprecated	is this field deprecated ?
+   */
+  public CField(CClass owner,
+		int modifiers,
+		JVariableDefinition variable,
+		boolean deprecated)
+  {
+    super(owner, modifiers, variable.getIdent(), deprecated);
+    this.variable = variable;
+  }
+
+  /**
+   * Constructs a field export
+   * @param	owner		the owner of this field
+   * @param	modifiers	the modifiers on this field
+   * @param     ident           the name of this field
+   * @param     type            the type of this field
    * @param	deprecated	is this field deprecated ?
    */
   public CField(CClass owner,
@@ -49,6 +65,7 @@ public abstract class CField extends CMember {
   {
     super(owner, modifiers, ident, deprecated);
     this.type = type;
+    this.variable = null;
   }
 
   // ----------------------------------------------------------------------
@@ -66,7 +83,11 @@ public abstract class CField extends CMember {
    * @return the type of this field
    */
   public CType getType() {
-    return type;
+      if (variable!=null) {
+	  return variable.getType();
+      } else {
+	  return type;
+      }
   }
 
   /**
@@ -179,7 +200,13 @@ public abstract class CField extends CMember {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-  private CType			type;
+    // one of these two will be null.  For source fields, StreamIt
+    // wants to see the actual variable corresponding to the field
+    // declaration so that there can be a reference shared between
+    // definition and use.
+  private JVariableDefinition variable;
+  private CType type;
+
   private JExpression		value;
 
 /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

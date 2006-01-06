@@ -29,8 +29,8 @@
 
 void->void pipeline MPEGtoBMP() {
 
-    add FileReader<bit>("../input/nomessage.m2v"); // Use this one for the nomessage decoder
-    //  add FileReader<bit>("../input/cact_015.m2v");
+    //    add FileReader<bit>("../input/nomessage.m2v"); // Use this one for the nomessage decoder
+  add FileReader<bit>("../input/cact_015.m2v");
   // For compiling outside the library, if support has not yet been added for FileReader<bit>
   // substitute the following, which will cause a slight performance hit.
   // add FileReader<int>("../input/cact_015.m2v");

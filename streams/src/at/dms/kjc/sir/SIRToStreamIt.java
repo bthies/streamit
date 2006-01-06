@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.21 2006-01-05 22:27:48 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.22 2006-01-06 20:18:20 thies Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -97,6 +97,16 @@ public class SIRToStreamIt
         for (int i = 0; i < interfaces.length; i++)
             interfaces[i].accept(s2s);
         s2s.visitAnyStream(str);
+        System.err.println(s2s.getPrinter().getString());
+        s2s.close();
+    }
+
+    /**
+     * Top-level entry point for running on a kopi phylum.
+     */
+    public static void run(JPhylum phylum) {
+        SIRToStreamIt s2s = new SIRToStreamIt();
+        phylum.accept(s2s);
         System.err.println(s2s.getPrinter().getString());
         s2s.close();
     }

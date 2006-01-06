@@ -90,22 +90,32 @@ bit->int pipeline MPEGStream_to_rawImageStream(int width, int height,
   }
 
   // Each output channel is ordered left to right, top to bottom
-  add int->int splitjoin {
-    if (the_chroma_format == 1) {
-      split roundrobin(4*75, 2*75);
-    } else {
-      split roundrobin(4*75, 4*75);
-    }
-    add LuminanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
-    add int->int splitjoin {
-      split roundrobin(75);
-      add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);  
-      add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);  
-      join roundrobin(1, 1);
-    }
-    join roundrobin(1, 2);
+
+  // the following split within if drives a bug in Kopi2SIR
+  //add int->int splitjoin {
+  //  if (the_chroma_format == 1) {
+  //    split roundrobin(4*75, 2*75);
+  //  } else {
+  //    split roundrobin(4*75, 4*75);
+  //  }
+  //  add LuminanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+  //  add int->int splitjoin {
+  //    split roundrobin(75);
+  //    add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);  
+  //    add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);  
+  //    join roundrobin(1, 1);
+  //  }
+  //  join roundrobin(1, 2);
+  //}
+
+  // replacement code: wrap if around adds of separately-defined splitjoin's
+  if (the_chroma_format == 1) {
+      add LumChromFormatOne(width,height,UpdatePortal_picture_type,the_chroma_format);
+  } else {
+      add LumChromFormatOther(width,height,UpdatePortal_picture_type,the_chroma_format);
   }
  
+
   // FEATURETODO This next component should also use the UpdatePortal_picture_type
   // but it doesn't because of messaging limitations.
   add PictureReorder(width, height) to UpdatePortal_picture_type2;
@@ -117,6 +127,36 @@ bit->int pipeline MPEGStream_to_rawImageStream(int width, int height,
   // Recommendation ITU-R BT.709 for transformations.
   add ColorSpaceConversion_YCbCrtoRGB;
 
+}
+
+// splitjoin pulled out above
+int->int splitjoin LumChromFormatOne(int width, int height, 
+				     portal<MotionPrediction> UpdatePortal_picture_type,
+				     int the_chroma_format) {
+    split roundrobin(4*75, 2*75);
+    add LuminanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+    add int->int splitjoin {
+      split roundrobin(75);
+      add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+      add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+      join roundrobin(1, 1);
+    }
+    join roundrobin(1, 2);
+}
+
+// splitjoin pulled out above
+int->int splitjoin LumChromFormatOther(int width, int height, 
+                                       portal<MotionPrediction> UpdatePortal_picture_type,
+				       int the_chroma_format) {
+    split roundrobin(4*75, 4*75);
+    add LuminanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+    add int->int splitjoin {
+      split roundrobin(75);
+      add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+      add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+      join roundrobin(1, 1);
+    }
+    join roundrobin(1, 2);
 }
 
 int->int splitjoin ReorderCrCbBlocks(int blocks_per_macroblock) {
@@ -183,6 +223,10 @@ bit->int filter MPEGStreamParser(
     push(macroblock_motion_forward);
     push(macroblock_motion_backward);
   }
+
+
+//  Static work rate if using "../input/nomessage.m2v" as input -- maybe
+//  work pop  624909 push (1320*(b_per_m*64+19)) 
 
   work pop * push * {  // Actually unknown pop/push rate
     if (ran == 0) {

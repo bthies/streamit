@@ -43,46 +43,16 @@ void->void pipeline MPEGtoBMP() {
   add int->void splitjoin {
     split roundrobin(width*height*3);
     // TODO Hardcoded to only generate 3 frames of output
-    //    for (int i = 0; i < 3; i++) {
-    //      add int->void pipeline {
-    //      add rawImageStream_to_BMPStream(width, height);
-    //      add FileWriter<bit>("./output" + i + ".bmp");
-    //     }
-    //
-    // AD: had to unroll 'for' loop: might work in library but nowhere else
-    //     (and actually doesn't work in library as or 1/4/06). 
-    // (1) StreamIt only allows string concatenation in print statments
-    // (2) StreamIt does not have strings as parameters so FileReader and FileWriter
-    //     are not actually parameterized, but rather are created with a single
-    //     fixed file name.
-      add int->void pipeline {
-        add rawImageStream_to_BMPStream(width, height);
-        add FileWriter<bit>("./output0.bmp");
-        // For compiling outside the library, if support has not yet been added for FileReader<bit>
-        // substitute the following, which will cause a slight performance hit.
-        // add BitStream2IntStream();
-        // add FileWriter<int>("./output" + i + ".bmp");
-      }
-      add int->void pipeline {
-        add rawImageStream_to_BMPStream(width, height);
-        add FileWriter<bit>("./output1.bmp");
-        // For compiling outside the library, if support has not yet been added for FileReader<bit>
-        // substitute the following, which will cause a slight performance hit.
-        // add BitStream2IntStream();
-        // add FileWriter<int>("./output" + i + ".bmp");
-      }
-      add int->void pipeline {
-        add rawImageStream_to_BMPStream(width, height);
-        add FileWriter<bit>("./output2.bmp");
-        // For compiling outside the library, if support has not yet been added for FileReader<bit>
-        // substitute the following, which will cause a slight performance hit.
-        // add BitStream2IntStream();
-        // add FileWriter<int>("./output" + i + ".bmp");
-      }
-      //}
+    for (int i = 0; i < 3; i++) {
+        add int->void pipeline {
+            add rawImageStream_to_BMPStream(width, height);
+            add FileWriter<bit>("./output" + i + ".bmp");
+            // For compiling outside the library, if support has not yet been added for FileReader<bit>
+            // substitute the following, which will cause a slight performance hit.
+            // add BitStream2IntStream();
+            // add FileWriter<int>("./output" + i + ".bmp");
+        }
+    }
     join roundrobin(0);
   }
-
 }
-
-

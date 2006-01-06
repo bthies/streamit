@@ -18,6 +18,9 @@ package streamit.library.io;
 
 import streamit.library.Filter;
 import streamit.library.Channel;
+import java.util.Iterator;
+import java.util.List;
+import java.util.LinkedList;
 
 import java.io.*;
 
@@ -28,9 +31,14 @@ public class FileWriter extends Filter
     java.io.FileOutputStream fileOutputStream;
     DataOutputStream outputStream;
     boolean closed = true;
+    /**
+     * List of all FileWriters that have ever been created.
+     */
+    private static List allFileWriters = new LinkedList();
 
     public FileWriter (String fileName, Class type, boolean TREAT_AS_BITS)
     {
+	allFileWriters.add(this);
         // This is part of the hack to make FileReader/Writer<bit> work
         if (TREAT_AS_BITS)
             fileType = null;
@@ -123,6 +131,15 @@ public class FileWriter extends Filter
 			ERROR(e);
 		}
 	}
+
+    /**
+     * Closes all FileWriters that have ever been instantiated.
+     */
+    public static void closeAll() {
+	for (Iterator i = allFileWriters.iterator(); i.hasNext(); ) {
+	    ((FileWriter)i.next()).close();
+	}
+    }
 
     /**
 	 * Closing is necessary to get last bits out for <bit>

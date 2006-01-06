@@ -1747,10 +1747,10 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
             return;
         }
 
-        if ((left.getType().isArrayType())
-                && ((right.getType().isArrayType() 
-                        || right instanceof SIRPopExpression) 
-                        && !(right instanceof JNewArrayExpression))) {
+	// copy arrays element-wise
+	boolean arrayType = ((left.getType()!=null && left.getType().isArrayType()) ||
+			     (right.getType()!=null && right.getType().isArrayType()));
+	if (arrayType && !(right instanceof JNewArrayExpression)) {
 
             CArrayType type = (CArrayType)right.getType();
 	    String dims[] = Util.makeString(type.getDims());

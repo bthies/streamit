@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.105 2006-01-05 22:27:25 thies Exp $
+ * $Id: LIRToC.java,v 1.106 2006-01-06 21:09:00 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1101,10 +1101,9 @@ public class LIRToC
         } 
 
 	// copy arrays element-wise
-        if ((left.getType()!=null && left.getType().isArrayType()) &&
-	    (((right.getType()!=null && right.getType().isArrayType())
-	      || right instanceof SIRPopExpression) 
-	     && !(right instanceof JNewArrayExpression))) {
+	boolean arrayType = ((left.getType()!=null && left.getType().isArrayType()) ||
+			     (right.getType()!=null && right.getType().isArrayType()));
+	if (arrayType && !(right instanceof JNewArrayExpression)) {
 
             CArrayType type = (CArrayType)right.getType();
 	    JExpression[] dims = type.getDims();

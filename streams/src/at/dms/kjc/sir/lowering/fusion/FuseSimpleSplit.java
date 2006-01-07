@@ -173,15 +173,14 @@ public class FuseSimpleSplit {
         // Check the ratios.
         Iterator childIter = sj.getParallelStreams().iterator();
         while (childIter.hasNext()) {
-            SIRStream str = (SIRStream)childIter.next();
-            if (!(str instanceof SIRFilter))
-                return false;
-            SIRFilter filter = (SIRFilter)str;
+	    SIRStream str = (SIRStream)childIter.next();
 	    // don't allow two-stage filters, since we aren't dealing
 	    // with how to fuse their initWork functions.
-            if (filter instanceof SIRTwoStageFilter) {
-		//System.err.println("Didn't fuse SJ because this child is a 2-stage filter: " + filter);
+            if (str instanceof SIRTwoStageFilter) {
                 return false;
+	    } else {
+		// otherwise dispatch to standard fusable test
+		return FusePipe.isFusable(str);
 	    }
         }
 	return true;

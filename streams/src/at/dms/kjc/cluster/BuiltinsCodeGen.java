@@ -25,7 +25,7 @@ class BuiltinsCodeGen {
         p.indent();
         p.newLine();
         p.indent();
-//        p.println("// predefinedFilterWork " + filter.getIdent());
+//        p.println("// predefinedFilterWork " + filter.getName());
         p.println("for (; 0 < ____n; ____n--) {");
         p.indent();
 
@@ -46,10 +46,10 @@ class BuiltinsCodeGen {
             // application code.  Are they part of the language?
             // TODO: get right exception for unimplemented.
             throw new Error("Unsupported predefined filter "
-                    + filter.getIdent());
+                    + filter.getName());
         } else {
             // TODO: get right unchecked exception for unextended code...
-            throw new Error("Unknown predefined filter " + filter.getIdent());
+            throw new Error("Unknown predefined filter " + filter.getName());
         }
         p.outdent();
         p.print("}"); // end of for loop.
@@ -83,19 +83,19 @@ class BuiltinsCodeGen {
     private static String fpName(SIRFilter f) {
         // assuming that a filter manages at most one C- stype file
         // pointer, what is that file pointer named?
-        return f.getIdent() + "__fp";
+        return f.getName() + "__fp";
     }
 
     private static String bitsToGoName(SIRFilter f) {
         // assuming that a filter manages at most one C- stype file
         // pointer, what is that file pointer named?
-        return f.getIdent() + "__bits_to_go";
+        return f.getName() + "__bits_to_go";
     }
 
     private static String theBitsName(SIRFilter f) {
         // assuming that a filter manages at most one C- stype file
         // pointer, what is that file pointer named?
-        return f.getIdent() + "__the_bits";
+        return f.getName() + "__the_bits";
     }
 
     /**
@@ -125,7 +125,7 @@ class BuiltinsCodeGen {
         // generate code for init before code for work, so scope of
         // any file-level code will include the work function.
 
-//        p.println("// predefinedFilterInit " + filter.getIdent()
+//        p.println("// predefinedFilterInit " + filter.getName()
 //		+ " " + filter.getInputType().toString() + " -> " 
 //		+ filter.getOutputType().toString());
 
@@ -145,13 +145,13 @@ class BuiltinsCodeGen {
         } else if (filter instanceof SIRDummySink) {
             // TODO:  get right exception for unimplemented.
             throw new Error("Unsupported predefined filter "
-                    + filter.getIdent()); 
+                    + filter.getName()); 
         } else if (filter instanceof SIRDummySource) {
             throw new Error("Unsupported predefined filter "
-                    + filter.getIdent());
+                    + filter.getName());
         } else {
             // TODO:  get right unchecked exception for unextended code...
-            throw new Error("Unknown predefined filter " + filter.getIdent());
+            throw new Error("Unknown predefined filter " + filter.getName());
         }
     }
    

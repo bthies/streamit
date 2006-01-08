@@ -5,7 +5,11 @@ void->void pipeline FFT7() {
 
   add FFTTestSource(N);
   add FFTKernel2(N);
-  add IFFTKernel2(N);
+
+  // the IFFT also works, but for regtest purposes, only perform an
+  // FFT (otherwise output is all zero)
+  // add IFFTKernel2(N);
+
   add CPrinter();
 }
 
@@ -25,16 +29,16 @@ complex->complex filter CombineDFT(int n) {
         complex w, y0, y1, y1w, w_next;
         w.real = 1.0;
         w.imag = 0.0;
-	complex[n] results;
+        complex[n] results;
 
         for (i = 0; i < n/2; i++)
         {
-	    y0 = peek(i);
+            y0 = peek(i);
             y1 = peek(n/2 + i);
             y1w = y1 * w;
 
             results[i] = y0 + y1w;
-	    results[n/2 + i] = y0 - y1w;
+            results[n/2 + i] = y0 - y1w;
 
             w_next = w * wn;
             w = w_next;
@@ -126,17 +130,17 @@ complex->complex filter FFTReorderSimple(int n) {
 
   work push n pop n {
         int i;
-        
+
         for (i = 0; i < n; i+=2)
         {
             push(peek(i));
         }
-        
+
         for (i = 1; i < n; i+=2)
         {
             push(peek(i));
         }
-        
+
         for (i=0;i<n;i++)
         {
             pop();
@@ -171,7 +175,7 @@ complex->complex pipeline FFTKernel2(int n) {
 
   add FFTReorder(n);
   for(int j=2; j<=n; j*=2)
-    add CombineDFT(j);   
+    add CombineDFT(j);
 
 }
 
@@ -187,7 +191,7 @@ void->complex filter FFTTestSource(int N) {
     int i; complex c1, zero;
     c1 = 1.0 + 0.0i;
     zero = 0.0;
- 
+
     push(zero);
     push(c1);
 
@@ -200,7 +204,7 @@ void->complex filter FFTTestSource(int N) {
 complex->void filter CPrinter()
 {
     work push 0 pop 1 {
-    
+
       complex c = pop();
 
       println(c.real);

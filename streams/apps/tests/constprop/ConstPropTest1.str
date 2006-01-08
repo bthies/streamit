@@ -1,3 +1,7 @@
+/**
+* Tests simple propagation of a constant from one filter to another.
+*/
+
 void->void pipeline ConstPropTest1 {
     add Source();
     add TestP(10);

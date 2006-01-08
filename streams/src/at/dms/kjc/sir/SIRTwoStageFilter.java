@@ -20,7 +20,7 @@ import at.dms.kjc.*;
  * of the compiler aware of phases.  In some places this is easier
  * than in others; big changes show up in the backends.
  *
- * @version $Id: SIRTwoStageFilter.java,v 1.15 2005-11-17 22:49:09 dimock Exp $
+ * @version $Id: SIRTwoStageFilter.java,v 1.16 2006-01-08 21:16:23 thies Exp $
  */
 public class SIRTwoStageFilter extends SIRFilter {
     /* Internal invariant: the init and work phases arrays each have
@@ -134,7 +134,7 @@ public class SIRTwoStageFilter extends SIRFilter {
 	    // two-stage filter.
 	    setInitPhases(new JMethodDeclaration[1]);
 	    // placeholder for holding I/O rates
-	    getInitPhases()[0] = new JMethodDeclaration();
+	    getInitPhases()[0] = new JMethodDeclaration("Placeholder method for SIRTwoStageFilter");
 	}
     }
 

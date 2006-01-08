@@ -136,7 +136,8 @@ public class Propagator extends SLIRReplacingVisitor {
 	    cond.accept(this);
 	    body.accept(this);
 	} else {
-	    Propagator newProp=construct(cloneTable(constants, getFreeVars(self)),false);
+	    Set freeVars = getFreeVars(self);
+	    Propagator newProp=construct(cloneTable(constants, freeVars),false);
 	   
 	    cond.accept(newProp);
 	    body.accept(newProp);
@@ -148,7 +149,7 @@ public class Propagator extends SLIRReplacingVisitor {
 		changed.put(var,Boolean.TRUE);
 	    }
 	    Hashtable saveConstants=constants;
-	    constants=cloneTable(constants, getFreeVars(cond));
+	    constants=cloneTable(constants, freeVars);
 	    JExpression newExp = (JExpression)cond.accept(this);
 	    // reset if we found a constant
 	    if (newExp!=cond) {

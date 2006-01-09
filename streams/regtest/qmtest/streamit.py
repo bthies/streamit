@@ -1,7 +1,8 @@
 #
 # streamit.py: Python extensions to QMTest for StreamIt
-# David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamit.py,v 1.12 2005-11-30 00:16:21 dimock Exp $
+# original author    David Maze <dmaze@cag.lcs.mit.edu>
+# maintained by      Allyn Dimock <dimock@csail.mit.edu>
+# $Id: streamit.py,v 1.13 2006-01-09 15:00:54 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -13,8 +14,8 @@ import os.path
 import qm.executable
 from   qm.fields import *
 import qm.test.test
-import signal
-import threading
+# not used that I can see.  import signal
+# not used that I can see.  import threading
 import re
 import socket
 import shutil
@@ -163,16 +164,6 @@ class RunStrcTest(qm.test.test.Test):
       """Actually run the StreamIt compiler."""
 
       test_home_dir = context_to_dir(context)
-
-#      print "In directory ", os.getcwd(), "\n"
-#      print "RunStrTest.Run ", os.getcwd(), "\n"
-#      print "runopts[0]: ", str(self.runopts[0]), "\n"
-#      print "runopts[1]: ", str(self.runopts[1]), "\n"
-#      print "timeout: ", str(self.timeout), "\n"
-#      print "options: ", str(self.options), "\n"
-#      print "filenames: ", str(self.filenames), "\n"
-#      print "context keys: ", str(context.keys()), "\n"
-#      print "context values: ", str(context.values()), "\n"
 
       path = os.path.join(os.environ['STREAMIT_HOME'], 'strc')
       # Figure out what flags to use for the backend

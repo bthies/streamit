@@ -34,6 +34,13 @@ else
   setenv PATH ${STREAMIT_HOME}
 endif
 
+# some libraries needed for jikes-1.22
+if ($?LD_LIBRARY_PATH) then
+  setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/home/streamit/lib
+else
+  setenv LD_LIBRARY_PATH /home/streamit/lib
+endif
+
 # add java and jikes to path
 setenv PATH ${JAVA_HOME}/bin:${JIKES_HOME}/bin:${PATH}
 

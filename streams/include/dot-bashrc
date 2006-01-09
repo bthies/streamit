@@ -40,6 +40,14 @@ else
   PATH=${PATH}:${STREAMIT_HOME}
 fi
 
+# some libraries needed for jikes-1.22
+if [ -z "$LD_LIBRARY_PATH" ]
+then
+  export LD_LIBRARY_PATH=/home/streamit/lib
+else
+  LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/streamit/lib
+fi
+
 # add java and jikes to path
 export PATH=${JAVA_HOME}/bin:${JIKES_HOME}/bin:${PATH}
 

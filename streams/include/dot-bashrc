@@ -20,7 +20,7 @@ CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/src
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/cplex/cplex.jar
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jgraph/jgraph.jar
-CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jflex/jflex.jar
+CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/JFlex/jflex.jar
 
 # the current version of starsearch we're using
 #export TOPDIR=${STREAMIT_HOME}/misc/raw

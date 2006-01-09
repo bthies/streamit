@@ -31,7 +31,7 @@ import java.util.HashMap;
  * defined; that class is the portal object.  Receiver objects should
  * also implement the interface.
  *
- * @version $Id: Portal.java,v 1.10 2006-01-09 23:15:26 madrake Exp $
+ * @version $Id: Portal.java,v 1.11 2006-01-09 23:22:44 thies Exp $
  */
 public abstract class Portal
 {
@@ -189,24 +189,8 @@ public abstract class Portal
 	return new Long(l);
     }
     public Object wrapInObject(Object o) {
-	// make copy of arrays so that it mimicks pass-by-value.  We
-	// should support more types (this is all that is needed so
-	// far.)  We could also use serialization and unserialization
-	// to be more general (e.g., for arrays of user-defined struct
-	// types).
-	if (o instanceof int[]) {
-	    return Operator.copyIntArray1D((int[])o);
-	} else if (o instanceof float[]) {
-	    return Operator.copyFloatArray1D((float[])o);
-	} else if (o instanceof int[][]) {
-	    return Operator.copyIntArray2D((int[][])o);
-	} else if (o instanceof float[][]) {
-	    return Operator.copyFloatArray2D((float[][])o);
-  } else if (o instanceof int[][][]) {
-	    return Operator.copyIntArray3D((int[][][])o);
-	} else {
-	    return o;
-	}
+	// make a copy to mimick pass-by-value
+	return Cloner.doCopy(o);
     }
     public Short wrapInObject(short s) {
 	return new Short(s);

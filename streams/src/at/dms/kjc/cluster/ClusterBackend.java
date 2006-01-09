@@ -184,6 +184,11 @@ public class ClusterBackend implements FlatVisitor {
 	// optimize so that IncreaseFilterMult has accurate estimates
 	// of code size
 	Optimizer.optimize(str); 
+    if (debugPrint) {
+        System.err.println("// str after Optimizer");
+        SIRToStreamIt.run(str,interfaces,interfaceTables,structs);
+        System.err.println("// END str after Optimizer");
+    }
 	Estimator.estimate(str);
 
 	Lifter.liftAggressiveSync(str);

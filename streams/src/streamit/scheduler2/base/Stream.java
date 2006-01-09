@@ -30,6 +30,10 @@ import streamit.scheduler2.iriter.Iterator;
 
 abstract class Stream extends DestroyedClass implements StreamInterface
 {
+    // counter to assign each stream a consistent identifier
+    private static int MAX_ID = 0;
+    // identifier of this stream (used for hashcode)
+    private int id;
     // turn on debugrates for printing out rates
     protected static boolean debugrates = false;
     // turn on debugsplitjoin for printing out splitjoin proportions 
@@ -47,6 +51,16 @@ abstract class Stream extends DestroyedClass implements StreamInterface
     {
         assert _streamIter != null;
         streamIter = _streamIter;
+	this.id = MAX_ID++;
+    }
+
+    /**
+     * Use the identifier of this stream as the hashcode, to ensure
+     * deterministic behavior in sets and containers (was causing
+     * unpredictable exceptions).
+     */
+    public int hashCode() {
+	return id;
     }
     
     public Iterator getStreamIter () { return streamIter; }
@@ -79,5 +93,9 @@ abstract class Stream extends DestroyedClass implements StreamInterface
     void setSteadyPush (int _steadyPush)
     {
         steadyPush = _steadyPush;
+    }
+
+    public String toString() {
+	return ""+streamIter.getObject();
     }
 }

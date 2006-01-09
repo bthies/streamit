@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.22 2006-01-06 20:18:20 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.23 2006-01-09 20:20:34 dimock Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -1394,7 +1394,9 @@ public class SIRToStreamIt
     public void visitThisExpression(JThisExpression self,
                                     JExpression prefix) {
         // Not a concept we have in StreamIt code.
-        assert false;
+        // but if dumping sufficiently early after Kopi2SIR
+        // you wil encounter it...
+        p.print("this");
     }
 
     /**
@@ -1567,11 +1569,18 @@ public class SIRToStreamIt
                                         JExpression[] dims,
                                         JArrayInitializer init)
     {
-        assert false : "should be handled in variable declaration";
-        // We should never actually see one of these, and if we do,
-        // the place where the expression appears either isn't convertible
-        // to StreamIt or should deal with putting the dimension on the
-        // left-hand side.  Can't handle initializers either.
+        printType(type);
+        for (int i = 0; i < dims.length; i++) {
+            p.print("[");
+            if (dims[i] == null) {
+                p.print("/*NO_DIMENSION*/");
+            } else 
+                dims[i].accept(this);
+        }
+        p.print("]");
+        if (init != null) {
+            init.accept(this);
+        }
     }
 
     /**

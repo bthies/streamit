@@ -31,7 +31,7 @@ import java.util.HashMap;
  * defined; that class is the portal object.  Receiver objects should
  * also implement the interface.
  *
- * @version $Id: Portal.java,v 1.9 2005-12-29 22:49:41 thies Exp $
+ * @version $Id: Portal.java,v 1.10 2006-01-09 23:15:26 madrake Exp $
  */
 public abstract class Portal
 {
@@ -202,6 +202,8 @@ public abstract class Portal
 	    return Operator.copyIntArray2D((int[][])o);
 	} else if (o instanceof float[][]) {
 	    return Operator.copyFloatArray2D((float[][])o);
+  } else if (o instanceof int[][][]) {
+	    return Operator.copyIntArray3D((int[][][])o);
 	} else {
 	    return o;
 	}

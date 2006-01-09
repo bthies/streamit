@@ -1732,6 +1732,19 @@ public class Operator extends DestroyedClass
     }
 
 
+    static int[][][] copyIntArray3D(int[][][] input) {
+        // according to streamit semantics, assume arrays are rectangular
+        int[][][] result = new int[input.length][input[0].length][input[0][0].length];
+        for (int i=0; i<input.length; i++) {
+            for (int j=0; j<input[0].length; j++) {
+                for (int k = 0; k<input[0][0].length; k++) {
+                    result[i][j][k] = input[i][j][k];
+                }
+            }
+        }
+        return result;
+    }        
+
     static float[][] copyFloatArray2D(float[][] input) {
 	// according to streamit semantics, assume arrays are rectangular
 	float[][] result = new float[input.length][input[0].length];

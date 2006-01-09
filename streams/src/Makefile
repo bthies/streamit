@@ -14,9 +14,6 @@ KOPI_GENERATED = \
   at/dms/kjc/KjcScanner.java \
   at/dms/kjc/KjcParser.java
 
-KOPI_JFLEX_TARGET = \
-  ../3rdparty/JFlex/Main.class
-
 KOPI_ANTLR_TARGET = \
   at/dms/compiler/tools/antlr/compiler/Main.class
 
@@ -29,13 +26,9 @@ KOPI_LEXGEN_TARGET = \
   at/dms/compiler/tools/antlr/runtime/CommonToken.class
 
 KOPI_TOOL_TARGET = \
-  $(KOPI_JFLEX_TARGET) \
   $(KOPI_ANTLR_TARGET) \
   $(KOPI_OPTGEN_TARGET) \
   $(KOPI_LEXGEN_TARGET)
-
-KOPI_JFLEX_SRCS = \
-  ../3rdparty/JFlex/Main.java
 
 KOPI_ANTLR_SRCS = \
   at/dms/compiler/tools/antlr/compiler/Main.java
@@ -49,7 +42,6 @@ KOPI_LEXGEN_SRCS = \
   at/dms/compiler/tools/antlr/runtime/CommonToken.java
 
 KOPI_TOOL_SRCS = \
-  $(KOPI_JFLEX_SRCS) \
   $(KOPI_ANTLR_SRCS) \
   $(KOPI_OPTGEN_SRCS) \
   $(KOPI_LEXGEN_SRCS)
@@ -97,7 +89,6 @@ JAVA_TARGET = \
   streamit/library/StreamItPhasedFilter.class \
   streamit/library/StreamItPipeline.class \
   streamit/library/StreamItSplitJoin.class \
-  streamit/frontend/tojava/InsertInitConstructors.class \
   streamit/frontend/ToJava.class \
   streamit/frontend/ToKopi.class
 
@@ -158,7 +149,7 @@ streamit-lib.jar: $(JAVA_TARGET)
 	jar cf $@ -C classes .
 	rm -rf classes
 
-at/dms/kjc/KjcScanner.java : at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex $(KOPI_JFLEX_TARGET)
+at/dms/kjc/KjcScanner.java : at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex
 	@rm -f at/dms/kjc/KjcScanner.java
 	java JFlex.Main -d at/dms/kjc/ -skel at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex
 

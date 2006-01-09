@@ -38,6 +38,11 @@ public abstract class Stream extends Operator
 
     LinkedList streamElements = new LinkedList();
 
+    // counter to assign each stream a consistent identifier
+    private static int MAX_ID = 0;
+    // identifier of this stream (used for hashcode)
+    private int id = MAX_ID++;
+
     // CONSTRUCTORS --------------------------------------------------------------------
     public Stream(float a, float b, int c)
     {
@@ -443,6 +448,19 @@ public abstract class Stream extends Operator
     public MessageStub reset(String str)
     {
         throw new UnsupportedOperationException();
+    }
+
+    // ------------------------------------------------------------------
+    // Misc functions
+    // ------------------------------------------------------------------
+
+    /**
+     * Use the identifier of this stream as the hashcode, to ensure
+     * deterministic behavior in sets and containers (was causing
+     * unpredictable exceptions).
+     */
+    public int hashCode() {
+	return id;
     }
 
     // ------------------------------------------------------------------

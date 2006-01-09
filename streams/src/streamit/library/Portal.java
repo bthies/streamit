@@ -31,10 +31,15 @@ import java.util.HashMap;
  * defined; that class is the portal object.  Receiver objects should
  * also implement the interface.
  *
- * @version $Id: Portal.java,v 1.11 2006-01-09 23:22:44 thies Exp $
+ * @version $Id: Portal.java,v 1.12 2006-01-09 23:41:51 thies Exp $
  */
 public abstract class Portal
 {
+    // counter to assign each stream a consistent identifier
+    private static int MAX_ID = 0;
+    // identifier of this stream (used for hashcode)
+    private int id = (MAX_ID++);
+
     protected ArrayList receivers; //List of Filters
     private int minLat,maxLat;
     /**
@@ -50,6 +55,15 @@ public abstract class Portal
     public Portal() {
 	this.receivers = new ArrayList();
 	this.SDEPCache = new HashMap();
+    }
+
+    /**
+     * Use the identifier of this stream as the hashcode, to ensure
+     * deterministic behavior in sets and containers (was causing
+     * unpredictable exceptions).
+     */
+    public int hashCode() {
+	return id;
     }
 
     public void setAnyLatency() // default to zero latency

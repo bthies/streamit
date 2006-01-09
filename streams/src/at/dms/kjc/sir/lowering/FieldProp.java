@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.32 2006-01-05 22:28:14 thies Exp $
+ * $Id: FieldProp.java,v 1.33 2006-01-09 22:11:29 thies Exp $
  */
 public class FieldProp implements Constants
 {
@@ -503,9 +503,21 @@ public class FieldProp implements Constants
                     {
                         // add entry to name->type mapping
                         types.put(ident, type);
-                    }
-                });
-        }
+			// notice arrays
+			if (type.isArrayType()) {
+			    JExpression[] dims = ((CArrayType)type).getDims();
+			    if (dims.length == 1 &&
+				dims[0] instanceof JIntLiteral) {
+				noticeArrayCreation
+				    (ident,
+				     ((JIntLiteral)dims[0]).intValue());
+			    } else {
+				invalidateField(ident);
+			    }
+			}
+		    }
+		});
+	}
 
         JMethodDeclaration[] meths = filter.getMethods();
         for (int i = 0; i < meths.length; i++)
@@ -531,21 +543,6 @@ public class FieldProp implements Constants
                             // otherwise.
                             if (right instanceof JLiteral)
                                 noticeFieldAssignment(name, right);
-                            else if (right instanceof JNewArrayExpression)
-                            {
-                                JNewArrayExpression nae =
-                                    (JNewArrayExpression)right;
-                                JExpression[] dims = nae.getDims();
-                                if (dims.length == 1 &&
-                                    dims[0] instanceof JIntLiteral)
-                                {
-                                    noticeArrayCreation
-                                        (name,
-                                         ((JIntLiteral)dims[0]).intValue());
-                                }
-                                else
-                                    invalidateField(name);
-                            }
                             else
                                 invalidateField(name);
                         }

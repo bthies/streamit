@@ -1,0 +1,19 @@
+<benchmark>
+  <name>constproptest</name>
+  <desc>Tests of various aspects of constant prop.</desc>
+  <description>
+These tests target various aspects of constant propagation.
+  </description>
+  <implementations>
+    <impl lang="StreamIt" id="constproptest1">
+      <desc>MIT, test simple propagation of a constant from one filter to another</desc>
+      <file class="source">ConstPropTest1.str</file>
+      <file class="output">ConstPropTest1.out</file>
+    </impl>
+    <impl lang="StreamIt" id="constproptest1">
+      <desc>MIT, test constant propagation through arrays</desc>
+      <file class="source">ConstPropTest2.str</file>
+      <file class="output">ConstPropTest2.out</file>
+    </impl>
+  </implementations>
+</benchmark>

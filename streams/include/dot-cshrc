@@ -16,7 +16,7 @@ setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/src
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty/cplex/cplex.jar
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jgraph/jgraph.jar
-setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jflex/jflex.jar
+setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty/JFlex/jflex.jar
 
 # for running dotty
 setenv LEFTYPATH /home/bits7/NO_BACKUP/streamit/dotty

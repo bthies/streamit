@@ -392,16 +392,15 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
 		    init_pop_count += extra - (init_peek - init_pop);
 	    }
 
-            for (int i = 0; i < init_pop_count; i++) {
+	    p.print("  for (int i=0; i<" + init_pop_count + "; i++) {\n");
+	    p.print("    __pop_buf__" + selfID + "[i]=");
 
-                p.print("  __pop_buf__" + selfID + "[" + i + "]=");
-
-                if (source_fused) {
-                    p.print(in.pop_name() + "();\n");
-                } else {
-                    p.print(in.consumer_name() + ".pop();\n");
-                }
-            }
+	    if (source_fused) {
+		p.print(in.pop_name() + "();\n");
+	    } else {
+		p.print(in.consumer_name() + ".pop();\n");
+	    }
+	    p.print("  }\n");
 
             p.print("  __tail__" + selfID + "=0;\n");
             p.print("  __head__" + selfID + "=" + init_pop_count + ";\n");

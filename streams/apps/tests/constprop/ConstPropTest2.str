@@ -1,0 +1,36 @@
+/**
+* Tests propagation of globals into an array field.
+*/
+
+static {
+  int[1] A;
+
+  init {
+      A[0] = 1;
+  }
+}
+
+void->void pipeline ConstPropTest2 {
+    add Source();
+    add Test();
+    add Printer();
+}
+
+int->int filter Test() {
+    int foo = A[0];
+    work pop 1 push foo {
+	int val = pop();
+	for (int i=0; i<foo; i++) {
+	    push(val);
+	}
+    }
+}
+
+void->int filter Source {
+    int i = 0;
+    work push 1 { push(i++); }
+}
+
+int->void filter Printer {
+    work pop 1 { println(pop()); }
+}

@@ -97,6 +97,7 @@ JAVA_TARGET = \
   streamit/library/StreamItPhasedFilter.class \
   streamit/library/StreamItPipeline.class \
   streamit/library/StreamItSplitJoin.class \
+  streamit/frontend/tojava/InsertInitConstructors.class \
   streamit/frontend/ToJava.class \
   streamit/frontend/ToKopi.class
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CArrayType.java,v 1.11 2006-01-05 22:26:28 thies Exp $
+ * $Id: CArrayType.java,v 1.12 2006-01-10 05:11:19 thies Exp $
  */
 
 package at.dms.kjc;
@@ -113,6 +113,27 @@ public class CArrayType extends CClassType {
    */
   public int getSize() {
     return 1;
+  }
+
+
+  /**
+   * Returns the stack size (conservative estimate of maximum number
+   * of bytes needed in C on 32-bit machine) used by a value of this
+   * type.
+   */
+  public int getSizeInC() {
+      // calculate the number of elements in array.  Require integer
+      // dimensions for this operation.
+      int numElements = 1;
+      for (int i=0; i<dims.length; i++) {
+	  if (!(dims[i] instanceof JIntLiteral)) {
+	      assert false : "Expected integer array dimension but found: " + dims[i];
+	  }
+	  int intDim = ((JIntLiteral)dims[i]).intValue();
+	  numElements = numElements * intDim;
+      }
+      // to get number of bytes, multiply by size of basetype
+      return numElements * baseType.getSizeInC();
   }
 
   /**

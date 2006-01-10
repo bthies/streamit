@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CType.java,v 1.5 2006-01-05 22:26:28 thies Exp $
+ * $Id: CType.java,v 1.6 2006-01-10 05:11:19 thies Exp $
  */
 
 package at.dms.kjc;
@@ -97,6 +97,13 @@ public abstract class CType extends at.dms.util.Utils implements Constants {
    * Appends the VM signature of this type to the specified buffer.
    */
   protected abstract void appendSignature(SimpleStringBuffer buffer);
+
+  /**
+   * Returns the stack size (conservative estimate of maximum number
+   * of bytes needed in C on 32-bit machine) used by a value of this
+   * type.
+   */
+  public abstract int getSizeInC();
 
   /**
    * Returns the stack size used by a value of this type.

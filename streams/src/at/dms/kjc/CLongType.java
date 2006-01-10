@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CLongType.java,v 1.3 2003-05-28 05:58:42 thies Exp $
+ * $Id: CLongType.java,v 1.4 2006-01-10 05:11:19 thies Exp $
  */
 
 package at.dms.kjc;
@@ -69,6 +69,15 @@ public class CLongType extends CNumericType {
    */
   protected void appendSignature(SimpleStringBuffer buffer) {
     buffer.append('J');
+  }
+
+  /**
+   * Returns the stack size (conservative estimate of maximum number
+   * of bytes needed in C on 32-bit machine) used by a value of this
+   * type.
+   */
+  public int getSizeInC() {
+    return 8;
   }
 
   /**

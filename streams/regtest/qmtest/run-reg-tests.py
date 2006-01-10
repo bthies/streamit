@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.26 2005-12-07 01:57:02 dimock Exp $
+# $Id: run-reg-tests.py,v 1.27 2006-01-10 16:25:43 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -64,37 +64,39 @@ class RunRegTests:
         os.environ['STREAMIT_HOME'] = self.streamit_home
         os.environ['TOPDIR'] = os.path.join(self.streamit_home, 'misc', 'raw')
         os.environ['PATH'] = self.streamit_home + \
+                             ":/usr/uns/jdk1.5.0_01/bin" + \
+                             ":/home/bits8/streamit/jikes-1.22-customized/bin" + \
                              ":/usr/uns/bin:/usr/bin/X11:/bin:/usr/bin"
 
         # Vaguely overcomplicated assembly of the CLASSPATH.
         # WIBNI we could read this from dot-bashrc?
         class_path = ['src', '3rdparty', '3rdparty/cplex/cplex.jar',
-                      '3rdparty/jgraph/jgraph.jar']
+                      '3rdparty/jgraph/jgraph.jar','3rdparty/JFlex/jflex.jar']
         class_path = map(lambda p: os.path.join(self.streamit_home, p),
                          class_path)
         class_path = ['.',
-                      '/usr/uns/jre/lib/rt.jar',
+                      '/usr/uns/jdk1.5.0_01/jre/lib/rt.jar',
                       '/usr/uns/java/antlr.jar'] + class_path
 
         # Eclipse crud:
         eclipse_base = '/home/bits7/NO_BACKUP/streamit/eclipse/plugins'
         ecl = eclipse_base + '/org.eclipse.'
         ecl_ver = '2.1.1'
-        class_path = class_path + \
-                     map(lambda (p, q):
-                         "%s%s_%s/%s" % (ecl, p, ecl_ver, q),
-                         [('ui.workbench.texteditor', 'texteditor.jar'),
-                          ('jface', 'jface.jar'),
-                          ('ui.editors', 'editors.jar'),
-                          ('jface.text', 'jfacetext.jar'),
-                          ('swt.motif', 'ws/motif/swt.jar'),
-                          ('ui.views', 'views.jar'),
-                          ('core.runtime', 'runtime.jar'),
-                          ('ui.workbench', 'workbench.jar'),
-                          ('text', 'text.jar'),
-                          ('jdt.core', 'jdtcore.jar'),
-                          ('jdt.ui', 'jdt.jar'),
-                          ('core.resources', 'resources.jar')])
+#        class_path = class_path + \
+#                     map(lambda (p, q):
+#                         "%s%s_%s/%s" % (ecl, p, ecl_ver, q),
+#                         [('ui.workbench.texteditor', 'texteditor.jar'),
+#                          ('jface', 'jface.jar'),
+#                          ('ui.editors', 'editors.jar'),
+#                          ('jface.text', 'jfacetext.jar'),
+#                          ('swt.motif', 'ws/motif/swt.jar'),
+#                          ('ui.views', 'views.jar'),
+#                          ('core.runtime', 'runtime.jar'),
+#                          ('ui.workbench', 'workbench.jar'),
+#                          ('text', 'text.jar'),
+#                          ('jdt.core', 'jdtcore.jar'),
+#                          ('jdt.ui', 'jdt.jar'),
+#                          ('core.resources', 'resources.jar')])
         
         os.environ['CLASSPATH'] = ':'.join(class_path)
 

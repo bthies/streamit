@@ -158,7 +158,10 @@ public class FuseSplit {
 
 	// get copy of child streams and rename them
         List children = sj.getParallelStreams();
-	doRenaming(children);
+        // rename components
+        doRenaming(children);
+	// inline phases
+        doPhaseInlining(children);
 
 	// calculate some helper information
 	RepInfo rep = RepInfo.calcReps(sj);
@@ -421,11 +424,21 @@ public class FuseSplit {
     }
 
     private static void doRenaming(List children) {
-        // Rename all of the child streams of this.
+	// Rename all of the child streams of this.
         Iterator iter = children.iterator();
         while (iter.hasNext()) {
-	    RenameAll.renameFilterContents((SIRFilter)iter.next());
+	    SIRFilter filter = (SIRFilter)iter.next();
+            RenameAll.renameFilterContents((SIRFilter)filter);
         }
+    }
+
+    private static void doPhaseInlining(List children) {
+	// inline all phases, as they aren't supported in fusion yet
+        Iterator iter = children.iterator();
+        while (iter.hasNext()) {
+	    SIRFilter filter = (SIRFilter)iter.next();
+	    InlinePhases.doit(filter);
+	}
     }
 	
     /**

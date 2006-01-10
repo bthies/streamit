@@ -75,6 +75,11 @@ class ShiftPipelineFusion {
      * <pipe>'s only child following this call.
      */
     public static void doFusion(SIRPipeline pipe) {
+	// inline phases
+	for (int i=0; i<pipe.size(); i++) {
+	    InlinePhases.doit((SIRFilter)pipe.get(i));
+	}
+
 	// construct set of filter info
 	List filterInfo = makeFilterInfo(pipe);
 

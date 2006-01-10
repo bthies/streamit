@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.27 2006-01-10 16:25:43 dimock Exp $
+# $Id: run-reg-tests.py,v 1.28 2006-01-10 18:50:30 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -79,9 +79,9 @@ class RunRegTests:
                       '/usr/uns/java/antlr.jar'] + class_path
 
         # Eclipse crud:
-        eclipse_base = '/home/bits7/NO_BACKUP/streamit/eclipse/plugins'
-        ecl = eclipse_base + '/org.eclipse.'
-        ecl_ver = '2.1.1'
+#        eclipse_base = '/home/bits7/NO_BACKUP/streamit/eclipse/plugins'
+#        ecl = eclipse_base + '/org.eclipse.'
+#        ecl_ver = '2.1.1'
 #        class_path = class_path + \
 #                     map(lambda (p, q):
 #                         "%s%s_%s/%s" % (ecl, p, ecl_ver, q),
@@ -147,6 +147,7 @@ class RunRegTests:
         os.makedirs(self.working_dir)
         os.chdir(self.working_dir)
 
+        self.run_and_log('printenv', 'envlog', 'Log working environment')
         self.run_and_log('cvs -d %s co streams' % cvs_root, 'cvslog',
                          'CVS checkout')
 

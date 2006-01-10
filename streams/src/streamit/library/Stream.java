@@ -672,7 +672,7 @@ public abstract class Stream extends Operator
     }
     
     // just a runtime hook to run the stream
-    static boolean scheduledRun = true;
+    public static boolean scheduledRun = true;
     public void run(String args[])
     {
         boolean printGraph = true;

@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.112 2006-01-06 23:46:16 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.113 2006-01-10 00:00:40 dimock Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -58,7 +58,7 @@ public class NodesToJava implements FEVisitor
         this.indent = "";
         this.libraryFormat = libraryFormat;
         this.varGen = varGen;
-	this.global = false;
+        this.global = false;
     }
 
     // Add two spaces to the indent.
@@ -1170,19 +1170,33 @@ public class NodesToJava implements FEVisitor
                 (String)stmt.getMinLatency().accept(this) + ", " +
                 (String)max.accept(this) + ")";
         }
-        
-        result += ";\n" + indent + receiver + ".enqueueMessage(this, \"" + stmt.getName() + "\", new Object[] {";
-        boolean first = true;
-        for (Iterator iter = stmt.getParams().iterator(); iter.hasNext(); )
-        {
-            Expression param = (Expression)iter.next();
-            if (!first) result += ", ";
-            first = false;
-	    // wrapInObject will take the primitive type output here
-	    // and wrap it in an object for the sake of reflection
-            result += receiver + ".wrapInObject(" + (String)param.accept(this) + ")";
+        result += ";\n";
+        if (libraryFormat) {
+            result += indent + receiver + ".enqueueMessage(this, \""
+                    + stmt.getName() + "\", new Object[] {";
+            boolean first = true;
+            for (Iterator iter = stmt.getParams().iterator(); iter.hasNext();) {
+                Expression param = (Expression) iter.next();
+                if (!first) { result += ", "; }
+                first = false;
+                // wrapInObject will take the primitive type output here
+                // and wrap it in an object for the sake of reflection
+                result += receiver + ".wrapInObject("
+                        + (String) param.accept(this) + ")";
+            }
+            result += "})";
+        } else {
+            // not library format: don't package parameters...
+            result += indent + receiver + "." + stmt.getName() + "(";
+            boolean first = true;
+            for (Iterator iter = stmt.getParams().iterator(); iter.hasNext();) {
+                Expression param = (Expression) iter.next();
+                if (!first) { result += ", "; }
+                first = false;
+                result += (String) param.accept(this);
+            }
+            result += ")";
         }
-        result += "})";
         return result;
     }
 

@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.23 2006-01-09 20:20:34 dimock Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.24 2006-01-10 18:38:26 thies Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -804,36 +804,16 @@ public class SIRToStreamIt
             p.print(")");
         }
 
-        // Print I/O rates for initWork function, if they're available.
-        if (ident.equals("initWork")) // or a phase function?
-        {
-            SIRTwoStageFilter filter = (SIRTwoStageFilter)theStream;
-	    p.print(" pop " + filter.getInitPop());
-	    p.print(" peek " + filter.getInitPeek());
-	    p.print(" push " + filter.getInitPush());
-        }
+        // Print I/O rates if they're available
+	if (self.doesIO()) {
+	    p.print(" pop ");
+	    self.getPop().accept(this);
+	    p.print(" peek ");
+	    self.getPeek().accept(this);
+	    p.print(" push ");
+	    self.getPush().accept(this);
+	}
 
-        // Print I/O rates for work function, if they're available.
-        if (ident.equals("work")) // or a phase function?
-        {
-            SIRFilter filter = (SIRFilter)theStream;
-            if (filter.getPop() != null)
-            {
-                p.print(" pop ");
-                filter.getPop().accept(this);
-            }
-            if (filter.getPeek() != null)
-            {
-                p.print(" peek ");
-                filter.getPeek().accept(this);
-            }
-            if (filter.getPush() != null)
-            {
-                p.print(" push ");
-                filter.getPush().accept(this);
-            }
-        }
-        
         if (declOnly)
         {
             p.print(";");

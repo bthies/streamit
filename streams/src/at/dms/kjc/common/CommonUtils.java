@@ -3,6 +3,7 @@ package at.dms.kjc.common;
 import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.CType;
+import at.dms.kjc.CBitType;
 import at.dms.kjc.CArrayType;
 import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JClassExpression;
@@ -32,6 +33,9 @@ public class CommonUtils {
 	} else if (s.toString().endsWith("Portal")) {
 	    // ignore the specific type of portal in the C library
 	    return "portal";
+	} else if (s instanceof CBitType) {
+	    // for now convert bit's to int's
+	    return "int";
 	} else {
            return s.toString();
 	}

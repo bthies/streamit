@@ -149,7 +149,7 @@ streamit-lib.jar: $(JAVA_TARGET)
 	jar cf $@ -C classes .
 	rm -rf classes
 
-at/dms/kjc/KjcScanner.java : at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex
+at/dms/kjc/KjcScanner.java : at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex  ../3rdparty/java_cup/runtime/Scanner.class   ../3rdparty/java_cup/runtime/lr_parser.class
 	@rm -f at/dms/kjc/KjcScanner.java
 	java JFlex.Main -d at/dms/kjc/ -skel at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex
 

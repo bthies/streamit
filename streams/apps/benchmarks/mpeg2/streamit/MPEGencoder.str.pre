@@ -47,7 +47,6 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
     portal<MotionEstimation> portal_bckMotion;
 
     // Eventually change so that these aren't passed around like parameters.
-    int downsample_data_size = (width*height*3)/2;
     int actual_intra_dc_precision = 8;  
     // Default Values for the quantiser_matrices
     int[64] default_intra_quantiser_matrix = 
@@ -70,47 +69,43 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
      16, 16, 16, 16, 16, 16, 16, 16};
     int q_scale_type = 0;
 
-    add PicturePreprocessing(width, height);
+    add PicturePreprocessing(width, height, numpictures);
     // Eventually Wrap in Programmable Splitjoin for Group of Pictures
-    add ReorderPictures(2+downsample_data_size);
+
+    add ReorderPictures(width, height);
     // Eventually Wrap in Programmable Splitjoin for Slices - Also need to communicate frame type.
 
     add splitjoin {
-        split roundrobin(2, downsample_data_size);
+        split roundrobin(2, (width*height*3)/2);
         add Identity<int>;
         add int->int splitjoin {
             split duplicate;
-            add IntraMotionPrediction(64*6, 64*6+5);
-            add MotionEstimation(64*6, 64*6+5, width, height, 0) to portal_fwdMotion;
-            add MotionEstimation(64*6, 64*6+5, width, height, 1) to portal_bckMotion;
+            add IntraMotionPrediction();
+            add MotionEstimation(width, height, 0) to portal_fwdMotion;
+            add MotionEstimation(width, height, 1) to portal_bckMotion;
             join roundrobin(64*6+5);
         }
-        join roundrobin(2, 3*(downsample_data_size*(64*6+5)/(64*6)));
+        join roundrobin(2, 3*(((width*height*3)/2)*(64*6+5)/(64*6)));
     }
 
-    int mp_data_size = (downsample_data_size*(64*6+5)/(64*6));
-    int mpd_data_size = (downsample_data_size*(64*6+1+5)/(64*6));
-
-    add MotionPredictionDecision(mp_data_size, mpd_data_size);
-
-    int macroblock_output_data_size = downsample_data_size*(64*6+5+8+1)/(64*6);
+    add MotionPredictionDecision(width, height);
 
     add int->int splitjoin {
-        split roundrobin(2, mpd_data_size);
+        split roundrobin(2, (((width*height*3)/2)*(64*6+1+4+1)/(64*6)));
         add Identity<int>;
         add splitjoin {
-            split roundrobin(64*6+1, 4, 1);
-            add MacroBlockEncode(default_intra_quantiser_matrix, default_non_intra_quantiser_matrix,
-                                 actual_intra_dc_precision-8, q_scale_type);       
+            split roundrobin(64*6+1, 4+1);
+            add MacroBlockEncode(default_intra_quantiser_matrix, 
+                                 default_non_intra_quantiser_matrix,
+                                 actual_intra_dc_precision - 8, 
+                                 q_scale_type);       
             add MotionVectorEncode(width/16);
-            add Identity<int>;
-            join roundrobin(64*6+5, 8, 1);
+            join roundrobin(64*6+5, 8+1);
         }
-        join roundrobin(2, macroblock_output_data_size);
+        join roundrobin(2, ((width*height*3)/2)*(64*6+5+8+1)/(64*6));
     }
- 
-    add ReferenceFrameHandler(macroblock_output_data_size,
-                              default_intra_quantiser_matrix, 
+
+    add ReferenceFrameHandler(default_intra_quantiser_matrix, 
                               default_non_intra_quantiser_matrix, 
                               actual_intra_dc_precision-8,
                               q_scale_type,
@@ -119,15 +114,16 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
                               portal_fwdMotion,
                               portal_bckMotion);
 
-    add MPEGStreamGenerator(width, height, numpictures,
+    add MPEGStreamGenerator(width, 
+                            height, 
+                            numpictures,
                             default_intra_quantiser_matrix, 
                             default_non_intra_quantiser_matrix, 
                             actual_intra_dc_precision-8,
                             q_scale_type);
 }
 
-int->int pipeline ReferenceFrameHandler(int macroblock_output_data_size,
-                                        int[64] intra_quantiser_matrix,
+int->int pipeline ReferenceFrameHandler(int[64] intra_quantiser_matrix,
                                         int[64] non_intra_quantiser_matrix,
                                         int intra_dc_precision,
                                         int q_scale_type,
@@ -135,12 +131,14 @@ int->int pipeline ReferenceFrameHandler(int macroblock_output_data_size,
                                         int height,
                                         portal<MotionEstimation> portal_fwdMotion,
                                         portal<MotionEstimation> portal_bckMotion) {
+
+    int macroblock_output_data_size = ((width*height*3)/2)*(64*6+5+8+1)/(64*6);
+
     add int->int splitjoin {
         // FEATURETODO - Some kind of message should ignore the right branch if its a B frame
         split duplicate;
         add Identity<int>;
-        add DecodeAndSendBackReferenceFrame(macroblock_output_data_size,
-                                            intra_quantiser_matrix, 
+        add DecodeAndSendBackReferenceFrame(intra_quantiser_matrix, 
                                             non_intra_quantiser_matrix, 
                                             intra_dc_precision,
                                             q_scale_type,
@@ -160,20 +158,36 @@ int->int pipeline ReferenceFrameHandler(int macroblock_output_data_size,
     }
 }                                        
 
-int->int splitjoin MotionVectorDecodeNoMessages(int macroblock_width) {
-    split roundrobin(2);
-    for (int i = 0; i < 4; i++) {
-        add IndividualMotionVectorDecode(macroblock_width);
+int->int pipeline MotionVectorDecodeNoMessages(int macroblock_width) {
+    add splitjoin {
+        split roundrobin(2);
+        for (int i = 0; i < 4; i++) {
+            add IndividualMotionVectorDecode(macroblock_width);
+        }
+        join roundrobin(1);
     }
-    join roundrobin(1);
 }
 
-int->int splitjoin MotionVectorEncode(int macroblock_width) {
-    split roundrobin(1);
-    for (int i = 0; i < 4; i++) {
-        add IndividualMotionVectorEncode(macroblock_width);
+int->int pipeline MotionVectorEncode(int macroblock_width) {
+    add splitjoin {
+        split roundrobin(4, 1);
+        add Identity<int>;
+        add Repeat(1, 5);
+        join roundrobin(4, 5);
     }
-    join roundrobin(2);
+    add splitjoin {
+        split roundrobin(8, 1);
+        add splitjoin {
+            split roundrobin(1);
+            add IndividualMotionVectorEncode(macroblock_width, 2);
+            add IndividualMotionVectorEncode(macroblock_width, 2);
+            add IndividualMotionVectorEncode(macroblock_width, 3);
+            add IndividualMotionVectorEncode(macroblock_width, 3);
+            join roundrobin(2);
+        }        
+        add Identity<int>;
+        join roundrobin(8, 1);
+    }
 }
 
 int->int filter IndividualMotionVectorDecode(int macro_width) {
@@ -225,72 +239,77 @@ int->int filter IndividualMotionVectorDecode(int macro_width) {
         
 }
 
-int->int filter IndividualMotionVectorEncode(int macro_width) {
-    // TODO This function hasn't been thoroughly checked for correctness yet.  
+int->int filter IndividualMotionVectorEncode(int macro_width, int vector_type) {
     int PMV;
     int f_code;
 
     init {
-        f_code = 9; // TODO temp
+        f_code = 9; // TODO - f_codes can vary in general, but we'll only put this
+        // into specific encoder implementations.
     }
 
-    work pop macro_width push 2*macro_width {
+    work pop 2*macro_width push 2*macro_width {
         PMV = 0;
         for (int i = 0; i < macro_width; i++) {
             oneBlock();
         }
     }
 
-    phase oneBlock pop 1 push 2 {
+    phase oneBlock pop 2 push 2 {
         int r_size = f_code-1;
         int f = 1 << r_size;
         int high = (16*f)-1;
         int low = ((-16)*f);
         int range = (32*f);
         int vectorp = pop();
+        int macroblock_type = pop();
 
-        // TODO: Note - motion prediction vectors get reset at picture boundaries and I THINK
-        // on slice changes. We need to reset these here. Upstream messaging on phase
-        // boundaries is probably the way to go? Other than that I THINK that motion vectors
-        // are working for the most part. 
+        if (!((macroblock_type == 3 && vector_type == 2) ||
+              (macroblock_type == 2 && vector_type == 3))) {
 
-        int prediction = PMV;
+            int prediction = PMV;
 
-        int delta = vectorp - prediction;
-
-        int motion_code = 0;
-        int motion_residual = 0;
-        if ((f == 1) || delta == 0) {
-            motion_code = delta;
-        } else {
-            int posdelta = (int) abs(delta);
-            int temp3 = posdelta - 1;
-            motion_residual = temp3 % f;
-            int temp1 = temp3 - motion_residual;
-            if (delta < 0) {
-                motion_code = (-1*temp1)/f - 1;
+            int delta = vectorp - prediction;
+            
+            int motion_code = 0;
+            int motion_residual = 0;
+            if ((f == 1) || delta == 0) {
+                motion_code = delta;
             } else {
-                motion_code = temp1/f + 1;
-            }      
-        }
-        push(motion_code);
-        push(motion_residual);
+                int posdelta = (int) abs(delta);
+                int temp3 = posdelta - 1;
+                motion_residual = temp3 % f;
+                int temp1 = temp3 - motion_residual;
+                if (delta < 0) {
+                    motion_code = (-1*temp1)/f - 1;
+                } else {
+                    motion_code = temp1/f + 1;
+                }      
+            }
+            push(motion_code);
+            push(motion_residual);
 
-        PMV = vectorp;
+            PMV = vectorp;
+        } else {
+            push(0);
+            push(0);
+        }
     }
 }
 
-int->int filter MotionPredictionDecision(int mp_data_size, 
-                                         int mpd_data_size) {
+int->int filter MotionPredictionDecision(int width, int height) {
+    int mp_data_size = (((width*height*3)/2)*(64*6+5)/(64*6));
+    int mpd_data_size = (((width*height*3)/2)*(64*6+1+4+1)/(64*6));
+
     work pop 2+3*mp_data_size push 2+mpd_data_size {
         pushpop(1);
-        // TODO - intra code P or B blocks?
+        // TODO - Could have intra coded blocks in P or B frames
         int picture_type = peek(0);
         pushpop(1);
         for (int macroblock = 0; macroblock < (mp_data_size/(64*6+4)); macroblock++) {
             int a = 64*6+4;
             if (picture_type == 1) { // I picture              
-                push(1); // macroblock_intra - todo change to messaging
+                push(1); // macroblock_intra - TODO change to messaging
                 pushpop(a);
                 deadpop(1);
                 deadpop(a);
@@ -321,8 +340,18 @@ int->int filter MotionPredictionDecision(int mp_data_size,
                     combo_data[i] = 0.5*(peek(i) + peek(64*6+5+i));
                     error_combo += combo_data[i];
                 }
+
+                int encode_decision; // 2 = P, 3 = B, 4 = P and B
                 if (((int) error_combo) < error_backward &&
                     ((int) error_combo) < error_forward) {
+                    encode_decision = 4;
+                } else if (error_backward <= error_forward) {
+                    encode_decision = 3;
+                } else {
+                    encode_decision = 2;
+                }
+
+                if (encode_decision == 4) {
                     // Encode with P and B vectors
                     for (int i = 0; i < 64*6; i++) {
                         push((int) (round(combo_data[i])));                      
@@ -336,8 +365,8 @@ int->int filter MotionPredictionDecision(int mp_data_size,
                     deadpop(1);
                     deadpop(a);
                     deadpop(1);
-                    push(4);
-                } else if (error_backward <= error_forward) { // Encode with B vectors
+                    push(encode_decision);
+                } else if (encode_decision == 3) { // Encode with B vectors
                     int b = 64*6;
                     pushpop(b);
                     push(peek(2));
@@ -351,13 +380,16 @@ int->int filter MotionPredictionDecision(int mp_data_size,
                     deadpop(1);
                     deadpop(a);
                     deadpop(1);
-                    push(3);
-                } else { // Encode with P vectors
+                    push(encode_decision);
+                } else if (encode_decision == 2) { // Encode with P vectors
                     deadpop(a);
                     deadpop(1);
+                    int b = 64*6;
                     pushpop(a); // Reorder
                     deadpop(1);
-                    push(2);
+                    push(encode_decision);
+                } else {
+                    println("ERROR ERROR - encode_decision must be 2, 3, or 4");
                 }
             }
             // the final value pushed follows this convention:
@@ -366,9 +398,10 @@ int->int filter MotionPredictionDecision(int mp_data_size,
     }
 }
 
-int->int filter IntraMotionPrediction(int block_input_data_size, int block_output_data_size) {
-    work pop block_input_data_size push block_output_data_size {
-        pushpop(block_input_data_size);
+int->int filter IntraMotionPrediction {
+    work pop 64*6 push 64*6+5 {
+        int a = 64*6;
+        pushpop(a);
         push(0);
         push(0);
         push(0);
@@ -378,13 +411,15 @@ int->int filter IntraMotionPrediction(int block_input_data_size, int block_outpu
     }
 }
 
-int->int filter MotionEstimation(int block_input_data_size, int block_output_data_size, int width, int height, int delay) {
+int->int filter MotionEstimation(int width, int height, int delay) {
+    int block_input_data_size = 64*6;
+    int macroblock_count = (width/16)*(height/16);
+    int block_output_data_size = 64*6+5;
 
     int[width][height] lum;
     int[width/2][height/2] cb;
     int[width/2][height/2] cr;
 
-    int macroblock_count = (width/16)*(height/16);
 
     work pop macroblock_count*block_input_data_size push macroblock_count*block_output_data_size {
         for (int blocky = 0; blocky < (height/16); blocky++) {
@@ -456,7 +491,7 @@ int->int filter MotionEstimation(int block_input_data_size, int block_output_dat
                         }
                     }
                 }
-
+                             
                 for (int lum_count = 0; lum_count < 4; lum_count++) {
                     for (int y = 0; y < 8; y++) {
                         for (int x = 0; x < 8; x++) {
@@ -495,12 +530,12 @@ int->int filter MotionEstimation(int block_input_data_size, int block_output_dat
         }
     }
 
-    handler referencePic(int testval,
-                         int[width][height] new_lum, 
+    handler referencePic(int[width][height] new_lum, 
                          int[width/2][height/2] new_cb, 
                          int[width/2][height/2] new_cr, 
-                         int[width/16][width/16][4] motion_vectors,
+                         int[width/16][height/16][4] motion_vectors,
                          int picture_type) {
+
         int[width][height] old_lum;
         int[width/2][height/2] old_cb;
         int[width/2][height/2] old_cr;
@@ -643,7 +678,7 @@ int->int pipeline TransformPicture(int width, int height) {
 // 1 = I-Picture
 // 2 = P-Picture
 // 3 = B-Picture
-int->int filter AssignPictureType(int width, int height) {
+int->int filter AssignPictureType(int width, int height, int numpictures) {
     int frameno;
 
     init {
@@ -658,11 +693,15 @@ int->int filter AssignPictureType(int width, int height) {
         int framecount = frameno % 12;
         if (framecount == 0) {
             pushval = 1;
-            //  == 1,2 is a hack TODO see above
-        } else if (framecount == 2 || framecount == 3 || framecount == 6 || framecount == 9) {
+        } else if (framecount == 3 || framecount == 6 || framecount == 9) { 
             pushval = 2;
         } else {
             pushval = 3;
+        }
+        if ((frameno == (numpictures-1)) && (pushval == 3)) {
+            // If the last frame of the video is not a reference frame, 
+            // make it one so that preceeding B pictures work correctly. 
+            pushval = 2; 
         }
         println("frame " + frameno + " gets type " + pushval);
         push(pushval);      
@@ -670,15 +709,16 @@ int->int filter AssignPictureType(int width, int height) {
     }
 }
 
-int->int splitjoin PicturePreprocessing(int width, int height) {
+int->int splitjoin PicturePreprocessing(int width, int height, int numpictures) {
     split duplicate;
     int downsample_data_size = (width*height*3)/2;
-    add AssignPictureType(width, height);
+    add AssignPictureType(width, height, numpictures);
     add TransformPicture(width, height);
     join roundrobin(2, downsample_data_size);
 }
 
-int->int filter ReorderPictures(int picture_data_size) {
+int->int filter ReorderPictures(int width, int height) {
+    int picture_data_size = 2+((width*height*3)/2);
     // This isn't ENTIRELY unbounded - it may be bounded by the implementation of PicturePreprocessing
     // and its implementation - in particular the vbv buffer concept might come into play here, but
     // I'll worry about that later TODO.
@@ -773,8 +813,7 @@ int->int splitjoin MacroBlockAndMotionVectorDecode(   int macroblock_input_data_
     join roundrobin(64*6, 4, 1);
 }
 
-int->int pipeline DecodeAndSendBackReferenceFrame(int macroblock_output_data_size,
-                                                  int[64] default_intra_quantiser_matrix,
+int->int pipeline DecodeAndSendBackReferenceFrame(int[64] default_intra_quantiser_matrix,
                                                   int[64] default_non_intra_quantiser_matrix,
                                                   int intra_dc_precision,
                                                   int q_scale_type,
@@ -782,6 +821,9 @@ int->int pipeline DecodeAndSendBackReferenceFrame(int macroblock_output_data_siz
                                                   int height,
                                                   portal<MotionEstimation> portal_fwdMotion,
                                                   portal<MotionEstimation> portal_bckMotion) {
+
+    int macroblock_output_data_size = ((width*height*3)/2)*(64*6+5+8+1)/(64*6);
+
     int downsample_data_size = (width*height*3)/2;
     int tempval = downsample_data_size*(64*6+4+1)/(64*6);
     add int->int splitjoin { 
@@ -868,10 +910,18 @@ int->int pipeline DecodeAndSendBackReferenceFrame(int macroblock_output_data_siz
                         deadpop(1);                        
                     }
                 }
-                portal_fwdMotion.referencePic(10, y_data, cb_data, cr_data, motion_vectors, frametype) [1:1];
+                portal_fwdMotion.referencePic(y_data, 
+                                              cb_data, 
+                                              cr_data, 
+                                              motion_vectors, 
+                                              frametype) [1:1];
                 // Note - TODO - might be a way to do this with delayed messages
                 if (!skipframe) {
-                    portal_bckMotion.referencePic(backward_y_data[0][0], backward_y_data, backward_cb_data, backward_cr_data, backward_motion_vectors, backward_frametype) [1:1];
+                    portal_bckMotion.referencePic(backward_y_data, 
+                                                  backward_cb_data, 
+                                                  backward_cr_data, 
+                                                  backward_motion_vectors, 
+                                                  backward_frametype) [1:1];
                 } else {
                     skipframe = false;
                 }
@@ -925,8 +975,6 @@ int->int filter undoQuantisation(int[64] intra_quantiser_matrix, int[64] non_int
         intra_dc_mult[3] = 1;
     }
 
-    // TODO - just thought of this, this comment goes elsewhere - make sure to eventually
-    // unfix the fcode from having a constant value.
     work pop (64*6+5) push (64*6) {
         int a = pop();
         if (a != 3278) {
@@ -939,14 +987,13 @@ int->int filter undoQuantisation(int[64] intra_quantiser_matrix, int[64] non_int
         // See (cite 1, P. 71) for more details.
         int k = 0;
         int W = 0;
-        for (int block = 0; block < 6; block++) { // TODO move out - also fixed for chroma
+        for (int block = 0; block < 6; block++) { 
             for (int count = 0; count < 64; count++) {
                 int QF = pop();
                 if (macroblock_intra == 1) {
                     k = 0;
                     W = intra_quantiser_matrix[count];
                 } else {
-                    // TODO not sure if this is right
                     if (QF > 0) {
                         k = 1;
                     } else if (QF < 0) {
@@ -998,8 +1045,8 @@ int->int filter Quantisation(int[64] intra_quantiser_matrix, int[64] non_intra_q
         push(3278);
         int quantiser_scale_code = 1;
         push(quantiser_scale_code);
-        push(0); // TODO temp motion_forward
-        push(0); // TODO temp motion_backward
+        push(0); // motion_forward
+        push(0); // motion_backward
         push(macroblock_intra);
         // See (cite 1, P. 71) for more details.
         // macroblock is INTRA TODO temp
@@ -1012,7 +1059,6 @@ int->int filter Quantisation(int[64] intra_quantiser_matrix, int[64] non_intra_q
                     k = 0;
                     W = intra_quantiser_matrix[count];
                 } else {
-                    // TODO not sure if this is right
                     if (F > 0) {
                         k = 1;
                     } else if (F < 0) {
@@ -1158,7 +1204,7 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
              16, 16, 16, 16, 16, 16, 16, 16,
              16, 16, 16, 16, 16, 16, 16, 16};
 
-            // Assumes no alternate_scan TODO
+            // Assumes no alternate_scan
             boolean intra_is_default = true;
             boolean non_intra_is_default = true;
             for (int i = 0; i < 64; i++) {
@@ -1182,7 +1228,6 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
                 pushs(1, load_intra_quantiser_matrix);
                 for (int i = 0; i < 64; i++) {
                     pushs(8, intra_quantiser_matrix[i]);
-                    // TODO - check about ZIGZAG ORDERING - IMPORTANT
                 }
             }
             int load_non_intra_quantiser_matrix;
@@ -1197,7 +1242,6 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
                 pushs(1, load_non_intra_quantiser_matrix);
                 for (int i = 0; i < 64; i++) {
                     pushs(8, non_intra_quantiser_matrix[i]);
-                    // TODO - check about ZIGZAG ORDERING - IMPORTANT
                 }
             }
 
@@ -1213,7 +1257,7 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
             // were fully MPEG2 compliant to some profile/level, but it isn't.
             pushs(8, profile_and_level_indication);
 
-            int progressive_sequence = 1; // TODO - Program Limitation
+            int progressive_sequence = 1; // Program Limitation
             // progressive_sequence 1: allows only progressive frames
             pushs(1, progressive_sequence);
 
@@ -1278,7 +1322,6 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
             int broken_link = 0;
             pushs(1, broken_link);
 
-            // hardcoded for now TODO maybe
             for (int pic = 0; pic < numpictures; pic++) {
                 // TODO Start of picture - this might later be broken up
                 // picture_header() (cite 1, P.30)
@@ -1529,7 +1572,6 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
                                 }
                             }
                         }
-                        // TODO: Remove that stuff from the Quantisation blocks.
 
                         tempval = 0;
                         tempval = tempval | macroblock_quant;
@@ -1568,7 +1610,7 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
                              picture_coding_type == 2)) {          
                             // not clear if we should do anything here TODO
                         }
-
+                        
                         if (macroblock_motion_forward == 1) {
                             // motion_vectors(0); (cite 1, P.36, 61)
                             // motion_vector(0,0);

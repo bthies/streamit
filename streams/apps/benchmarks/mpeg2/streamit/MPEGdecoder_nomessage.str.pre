@@ -120,7 +120,7 @@ void->void pipeline MPEGdecoder_nomessage() {
   } else if (parse_or_process == 6) {
     add FileReader<int>("../input/dec_nm_color_channels_input.int");
     add int->int splitjoin {
-      split roundrobin(4*74, 75, 75);
+      split roundrobin(4*75, 75, 75);
       add pipeline {
         add LuminanceChannelProcessing(width, height, the_chroma_format);
         add FileWriter<int>("./dec_nm_lum_channel_output.int");

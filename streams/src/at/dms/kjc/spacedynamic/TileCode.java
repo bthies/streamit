@@ -128,9 +128,6 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		fw.write("int " + Util.CSTIINTVAR + ";\n");
 	    }
 	    
-	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)
-		fw.write(createInitPath(joiner) + "\n");	    
-	    fw.write(createJoinerWork(joiner));
 	    //write the extern for the function to init the 
 	    //switch, but there is no switch for the magic network
 	    if (!KjcOptions.magic_net && !KjcOptions.decoupled) {

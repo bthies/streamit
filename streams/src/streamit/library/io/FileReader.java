@@ -17,6 +17,7 @@
 package streamit.library.io;
 
 import streamit.library.Filter;
+import streamit.library.Stream;
 import streamit.library.Channel;
 
 import java.io.*;
@@ -129,6 +130,15 @@ public class FileReader extends Filter
                 done = true;
             }
             catch (EOFException e) {
+		if (!Stream.scheduledRun) {
+		    // If in -nosched mode, return from work without
+		    // having done anything.  This will result in a
+		    // NoPushPopException and a switch to the next
+		    // sink.
+		    break;
+		} 
+		// otherwise hang, for now...
+
                 // try closing and opening file, to try again
                 // closeFile();
                 // openFile();

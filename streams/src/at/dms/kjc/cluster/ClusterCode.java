@@ -1,3 +1,4 @@
+
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -1467,6 +1468,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		p.print("extern void __declare_sockets_"+i+"();\n");
 		p.print("extern thread_info *__get_thread_info_"+i+"();\n");
 		p.print("extern void run_"+i+"();\n");
+		p.print("pthread_attr_t __pthread_attr_"+i+";\n");
 		p.print("pthread_t __pthread_"+i+";\n");
 		p.print("static void *run_thread_"+i+"(void *param) {\n");
 		p.print("  run_"+i+"();\n");
@@ -1533,12 +1535,15 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	for (int i = 0; i < threadNumber; i++) {
 
 	    FlatNode tmp = NodeEnumerator.getFlatNode(i);
-	    if (!ClusterFusion.isEliminated(tmp)) {	    
+	    if (!ClusterFusion.isEliminated(tmp)) {
+		// estimate stack size needed by this thread
+		int stackSize = NodeEnumerator.getStackSize(i);
 		p.print("  if (myip == init_instance::get_thread_ip("+i+")) {\n");
 		p.print("    thread_info *info = __get_thread_info_"+i+"();\n"); 
 		p.print("    int *state = info->get_state_flag();\n");
 		p.print("    *state = RUN_STATE;\n");
-		p.print("    pthread_create(&__pthread_"+i+", NULL, run_thread_"+i+", (void*)\"thread"+i+"\");\n");
+		p.print("    pthread_attr_setstacksize(&__pthread_attr_"+i+", PTHREAD_STACK_MIN+"+stackSize+");\n");
+		p.print("    pthread_create(&__pthread_"+i+", &__pthread_attr_"+i+", run_thread_"+i+", (void*)\"thread"+i+"\");\n");
 		p.print("    info->set_pthread(__pthread_"+i+");\n");
 		p.print("    info->set_active(true);\n");
 		p.print("  }\n");

@@ -3,6 +3,7 @@ package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.*;
 import java.lang.*;
 import java.util.*;
 
@@ -30,6 +31,63 @@ public class NodeEnumerator implements FlatVisitor {
 	return getSIROperatorId(node.contents);
     }
 
+    /**
+     * Returns an estimate of the maximum stack size needed to execute
+     * a given node.
+     *  
+     *  @param   nodeID   ID of node in question
+     *
+     *  @return  Estimated number of bytes needed for stack
+     */
+    public static int getStackSize(int nodeID) {
+	// the base allocation for any node (e.g., a splitter or
+	// joiner) in bytes
+	int BASE_ALLOCATION = 1*1024*1024;
+	// expand our estimate by this ratio, to give ourselves some slack
+	double EXPANSION_RATIO = 1.1;
+
+	SIROperator node = getOperator(nodeID);
+	if (!(node instanceof SIRStream)) {
+	    // plain SIROperators do not have methods, so just return
+	    // base allocation
+	    return BASE_ALLOCATION;
+	} else {
+	    // otherwise, estimate stack size from methods in stream...
+	    SIRStream str = (SIRStream)node;
+	    // for now, return the sum of all the variables allocated in
+	    // the methods of this operator.  This is an over-estimate,
+	    // but allows the functions to safely call each other.
+	    final int[] result = {0};
+	    JMethodDeclaration[] methods = str.getMethods();
+	    for (int i=0; i<methods.length; i++) {
+		methods[i].accept(new SLIREmptyVisitor() {
+			public void visitFormalParameters(JFormalParameter self,
+							  boolean isFinal,
+							  CType type,
+							  String ident) {
+			    // add size of each formal param
+			    result[0] += type.getSizeInC();
+			}
+			
+			public void visitVariableDefinition(JVariableDefinition self,
+							    int modifiers,
+							    CType type,
+							    String ident,
+							    JExpression expr) {
+			    // add size of each variable def
+			    result[0] += type.getSizeInC();
+			}
+		    });
+	    }
+	    
+	    // expand to allow some room for error (interaction with gcc, etc.)
+	    float exactEstimate = result[0];
+	    int estimateWithSlack = BASE_ALLOCATION + (int)(EXPANSION_RATIO*exactEstimate);
+	    
+	    return estimateWithSlack;
+	}
+    }
+    
     public static SIROperator getOperator(int nodeID) {
     
 	return (SIROperator)idToOperator.get(new Integer(nodeID));

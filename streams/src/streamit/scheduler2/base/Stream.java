@@ -33,7 +33,7 @@ abstract class Stream extends DestroyedClass implements StreamInterface
     // counter to assign each stream a consistent identifier
     private static int MAX_ID = 0;
     // identifier of this stream (used for hashcode)
-    private int id;
+    private int id = MAX_ID++;
     // turn on debugrates for printing out rates
     protected static boolean debugrates = false;
     // turn on debugsplitjoin for printing out splitjoin proportions 
@@ -51,7 +51,6 @@ abstract class Stream extends DestroyedClass implements StreamInterface
     {
         assert _streamIter != null;
         streamIter = _streamIter;
-	this.id = MAX_ID++;
     }
 
     /**

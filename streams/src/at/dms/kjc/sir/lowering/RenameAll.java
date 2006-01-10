@@ -91,6 +91,11 @@ public class RenameAll extends SLIRReplacingVisitor
 	f1.copyState(f2);
     }
 
+    public static void renamePhylum(JPhylum phylum) {
+	RenameAll ra = new RenameAll();
+	phylum.accept(ra);
+    }
+
     /**
      * Renames the contents of all filters in that are connected to
      * <str> or a parent of <str>, this will rename over all the filters.
@@ -398,6 +403,10 @@ public class RenameAll extends SLIRReplacingVisitor
                                    exceptions,
                                    (JBlock)body.accept(this),
                                    null, null);
+	// visit I/O rates
+	newdecl.setPush((JExpression)self.getPush().accept(this));
+	newdecl.setPeek((JExpression)self.getPeek().accept(this));
+	newdecl.setPop((JExpression)self.getPop().accept(this));
         // Return to previous symtab.
         symtab = ost;
         return newdecl;

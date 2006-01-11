@@ -1,0 +1,5 @@
+These classes demonstrate some seemingly-inescapable rounding
+discrepencies between Java and C.  Type "make demo" to see exact same
+code in Java and C lead to an integer difference in the value of "B".
+
+The StreamIt code inspiring this problem is in TestRound1.str.

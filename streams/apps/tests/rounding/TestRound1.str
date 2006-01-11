@@ -1,0 +1,64 @@
+/**
+ * This demonstrates a rounding problem between Java and C.  Example problem:
+ *
+ * cagfarm-50 % strc -library -i 3 TestRound1.str
+ * 207
+ * 207
+ * 207
+ *
+ * cagfarm-50 % strc -cluster 1 -fusion -standalone TestRound1.str && make -f Makefile.cluster
+ * cagfarm-50 % ./fusion -i 3
+ * 206
+ * 206
+ * 206
+ *
+ */
+void->void pipeline TestRound1 {
+    add Source();
+    add YCbCrtoRGBSimplified();
+    add Printer();
+}
+
+/**
+ * Converts a pixel in YCbCr format to a pixel in RGB format according to Recommendation
+ * ITU-R BT.709 for color space transformations. This is the default transformation that should
+ * be used for MPEG-2 videos. This transformation is given in Table 6-9 on P.47 of the MPEG-2 13818-2
+ * IEEE specification (entry #1). The recommendation specifies the transform from RGB to YCbCR. This
+ * function's transformation coefficients were calculated using MATLAB and an inverse matrix transform
+ * based on the RGB to YCbCr conversion.
+ * @input Three integers in YCbCr color space and order.
+ * @output Only the B color space -- for demonstrating round problem.
+ */
+int->int filter YCbCrtoRGBSimplified {
+  // My values are centered between +/- 128, and it expects values in the 
+  // 0 to 255 range, so we add first and then compute.
+  // Saturation of the output is performed downstream.
+  work pop 3 push 1 {
+      int Y = pop();// + 128;
+      int Cb = pop();// + 128;
+      int Cr = pop();// 128; 	
+      
+      float Ey = (((float) Y) - 16)/219.0;
+      float Epb = (((float) Cb)-128)/224.0;
+      float Epr = (((float) Cr)-128)/224.0;
+      
+      float EB = 1.001856*Ey + 1.855625*Epb + 0.001005*Epr;
+      
+      int B = (int) round(EB*256);
+      
+      push(B);
+      
+  }
+}
+
+void->int filter Source {
+    work push 3 { 
+	push(205);
+	push(121);
+	push(131);
+    }
+}
+
+int->void filter Printer {
+    work pop 1 { println(pop()); }
+}

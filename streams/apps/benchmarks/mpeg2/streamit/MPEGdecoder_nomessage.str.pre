@@ -59,9 +59,25 @@ void->void pipeline MPEGdecoder_nomessage() {
   // 1 = Perform only the variable length decoding
   // 2 = MPEG decoding without the file parsing
   // 3 = Full MPEG pipeline
-  // 4 = No file parsing, only perform block decoding.
-  // 5 = First half of the MPEG pipeline without file parsing - Block decoding and motion vector decoding
-  // 6 = Color Channel Processing - Upsampling for chrominance channels and motion compensation for all channels
+  // 4 = No file parsing, only perform block decoding. 
+  //       Need 1320 iterations (-i 1320) to process input.
+  // 5 = First half of the MPEG pipeline without file parsing
+  //     - Block decoding and motion vector decoding
+  //       Need 1320 iterations (-i 1320) to process input.
+  // 6 = Color Channel Processing  - Upsampling for chrominance channels 
+  //     and motion compensation for all channels
+  //       Needs 1 iteration in library, but 3 in cluster due to scheduling
+  //       differences.
+  // 7 = 4 + 5 + 6 as they appear in the contest of MPEG decoding.
+  //       Needs 1 iteration in library, but 3 in cluster due to scheduling
+  //       differences.
+  // 8 = The PictureReorder phase of MPEG decoding.
+  //       The in library with nosched: would expect to schedule and
+  //       run with -i 3, but for some reason hangs after only 2/3 of output.  
+  // 9 = The ColorSpaceConversion_YCbCrtoRGB phase of MPEG decoding.
+  //       Run with -i 253440 for correct amount of output (given correct
+  //       input from phase 8, else -i 168960 for 2/3-length input).
+
   // Dynamic Rate Graphs: 1, 3
   // Static Rate Graphs: 2, 4, 5, 6 
   // In terms of how these different run modes break up the application:
@@ -135,6 +151,48 @@ void->void pipeline MPEGdecoder_nomessage() {
       }
       join roundrobin(0, 0, 0);
     }
+  } else if (parse_or_process == 7) {
+      //MPEGStream_to_rawImageStream up to PictureReorder
+    add FileReader<int>("../input/dec_nm_parsed.int");
+  add int->int splitjoin {
+    split roundrobin(64*blocks_per_macroblock[the_chroma_format], 16, 3);
+    add BlockDecode();
+    add int->int pipeline {
+      add MotionVectorDecode();
+      add Repeat(8, blocks_per_macroblock[the_chroma_format]);
+    }
+    add Repeat(3, blocks_per_macroblock[the_chroma_format]); // macroblock_intra
+    join roundrobin(64, 8, 3);
+  }
+
+  // Each output channel is ordered left to right, top to bottom
+  add int->int splitjoin {
+//    if (the_chroma_format == 1) {
+      split roundrobin(4*75, 2*75);
+//    } else {
+//      split roundrobin(4*75, 4*75);
+//    }
+    add LuminanceChannelProcessing(width, height, the_chroma_format);
+    add int->int splitjoin {
+      split roundrobin(75);
+      add ChrominanceChannelProcessing(width, height, the_chroma_format);  
+      add ChrominanceChannelProcessing(width, height, the_chroma_format);  
+      join roundrobin(1, 1);
+    }
+    join roundrobin(1, 2);
+  }
+  add FileWriter<int>("./dec_nm_pre_reorder.int");
+  
+  } else if (parse_or_process == 8) {
+      // just the PictureReorder phase of MPEGStream_to_rawImageStream
+      add FileReader<int>("../input/dec_nm_pre_reorder.int");
+      add PictureReorder(width, height);
+      add FileWriter<int>("./dec_nm_pre_colorSpaceConv.int");
+  } else if (parse_or_process == 9) {
+      // just the ColorSpaceConversion_YCbCrtoRGB phase of MPEGStream_to_rawImageStream
+      add FileReader<int>("../input/dec_nm_pre_colorSpaceConv.int");
+      add ColorSpaceConversion_YCbCrtoRGB;
+      add FileWriter<int>("./dec_nm_output.int");
   }
 }
 

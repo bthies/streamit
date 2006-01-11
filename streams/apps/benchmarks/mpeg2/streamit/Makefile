@@ -1,6 +1,6 @@
 PREPROCESS = ${STREAMIT_HOME}/misc/scripts/preprocess.perl
 STREAMITDOC = ${STREAMIT_HOME}/misc/scripts/streamitdoc
-STRC_OPTIONS = -library #-nosched
+STRC_OPTIONS = -library -nosched
 #STRC_OPTIONS = -cluster 1
 
 DCT_HOME = ${STREAMIT_HOME}/apps/benchmarks/dct_ieee/streamit
@@ -52,6 +52,7 @@ docs:	${STREAMITDOC}
 	${STREAMITDOC} ColorSpace.str -o ColorSpace.str.html
 	${STREAMITDOC} Misc.str -o Misc.str.html
 	${STREAMITDOC} MPEGdecoder.str.pre -o MPEGdecoder.str.pre.html
+	${STREAMITDOC} MPEGencoder.str.pre -o MPEGencoder.str.pre.html
 	${STREAMITDOC} MPEGplayer.str -o MPEGplayer.str.html
 	${STREAMITDOC} MPEGtoBMP.str -o MPEGtoBMP.str.html
 

@@ -41,6 +41,18 @@
 // block of code and aren't sure what it is doing, find the previous citation
 // comment, and refer to the corresponding page in the MPEG 2 spec.
 
+/**
+ * Interprets an input stream of raw video and encodes a compressed MPEG-2 
+ * compliant bit stream, in accordance with the IEEE MPEG-2 specification.
+ * @param width The resolution width of the video.
+ * @param height The resolution height of the video.
+ * @param numpictures The number of pictures to be put into the video.
+ * @input A series of images representing the frames of the video. Each image
+ *        consists of 3 integers for each pixel, with the number of pixels per
+ *        image equalling the width * height of the video. Frames are output
+ *        in time order, top to bottom, left to right, and RGB color order.
+ * @output An MPEG-2 compliant bit stream of variable length.
+ */ 
 int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpictures) {
 
     portal<MotionEstimation> portal_fwdMotion;
@@ -94,8 +106,8 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
         add int->int splitjoin {
             split duplicate;
             add IntraMotionPrediction(pixeldata_per_macroblock);
-            add MotionEstimation(width, height, 0, pixeldata_per_macroblock) to portal_fwdMotion;
-            add MotionEstimation(width, height, 1, pixeldata_per_macroblock) to portal_bckMotion;
+            add MotionEstimation(width, height, 0, pixeldata_per_macroblock, 32) to portal_fwdMotion;
+            add MotionEstimation(width, height, 1, pixeldata_per_macroblock, 32) to portal_bckMotion;
             join roundrobin(pixeldata_per_macroblock+5);
         }
         join roundrobin(2, 3*(downsampled_data_per_image*(pixeldata_per_macroblock+5)/pixeldata_per_macroblock));
@@ -124,7 +136,7 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
 
     add ReferenceFrameHandler(default_intra_quantiser_matrix, 
                               default_non_intra_quantiser_matrix, 
-                              actual_intra_dc_precision-8,
+                              actual_intra_dc_precision - 8,
                               q_scale_type,
                               width,
                               height,
@@ -138,10 +150,13 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
                             numpictures,
                             default_intra_quantiser_matrix, 
                             default_non_intra_quantiser_matrix, 
-                            actual_intra_dc_precision-8,
+                            actual_intra_dc_precision - 8,
                             q_scale_type);
 }
 
+/**
+ * @internal
+ */
 int->int pipeline ReferenceFrameHandler(int[64] intra_quantiser_matrix,
                                         int[64] non_intra_quantiser_matrix,
                                         int intra_dc_precision,
@@ -181,7 +196,10 @@ int->int pipeline ReferenceFrameHandler(int[64] intra_quantiser_matrix,
     }
 }                                        
 
-int->int pipeline MotionVectorDecodeNoMessages(int macroblock_width) {
+/**
+ * @internal
+ */
+int->int pipeline MotionVectorDecodeNoMessage(int macroblock_width) {
     add splitjoin {
         split roundrobin(2);
         for (int i = 0; i < 4; i++) {
@@ -191,6 +209,9 @@ int->int pipeline MotionVectorDecodeNoMessages(int macroblock_width) {
     }
 }
 
+/**
+ * @internal
+ */
 int->int pipeline MotionVectorEncode(int macroblock_width) {
     add splitjoin {
         split roundrobin(4, 1);
@@ -213,6 +234,9 @@ int->int pipeline MotionVectorEncode(int macroblock_width) {
     }
 }
 
+/**
+ * @internal
+ */
 int->int filter IndividualMotionVectorDecode(int macro_width) {
 
     int PMV;
@@ -222,7 +246,6 @@ int->int filter IndividualMotionVectorDecode(int macro_width) {
         f_code = 9;
     }
 
-    // Todo - replace with message passing later
     work pop 2*macro_width push macro_width {
         PMV = 0;
         for (int i = 0; i < macro_width; i++) {
@@ -262,6 +285,9 @@ int->int filter IndividualMotionVectorDecode(int macro_width) {
         
 }
 
+/**
+ * @internal
+ */
 int->int filter IndividualMotionVectorEncode(int macro_width, int vector_type) {
     int PMV;
     int f_code;
@@ -320,6 +346,9 @@ int->int filter IndividualMotionVectorEncode(int macro_width, int vector_type) {
     }
 }
 
+/**
+ * @internal
+ */
 int->int filter MotionPredictionDecision(int width, 
                                          int height,
                                          int downsampled_data_per_image,
@@ -424,6 +453,9 @@ int->int filter MotionPredictionDecision(int width,
     }
 }
 
+/**
+ * @internal
+ */
 int->int filter IntraMotionPrediction(int pixeldata_per_macroblock) {
     work pop pixeldata_per_macroblock push pixeldata_per_macroblock+5 {
         pushpop(pixeldata_per_macroblock);
@@ -436,7 +468,12 @@ int->int filter IntraMotionPrediction(int pixeldata_per_macroblock) {
     }
 }
 
-int->int filter MotionEstimation(int width, int height, int delay, int pixeldata_per_macroblock) {
+/**
+ * @internal
+ */
+int->int filter MotionEstimation(int width, int height, int delay, int pixeldata_per_macroblock, int window) {
+    // The window size determines how many pixels on either side of the specified block that are checked for
+    // possible motion estimation matching.
     int macroblock_count = (width/16)*(height/16);
     int block_output_data_size = pixeldata_per_macroblock+5;
 
@@ -472,12 +509,10 @@ int->int filter MotionEstimation(int width, int height, int delay, int pixeldata
                     }
                 }
  
-                int best_motionx = 22;
-                int best_motiony = 22;
+                int best_motionx = 0;
+                int best_motiony = 0;
                 int best_error = 256*8*8*4*3; // todo - hacked for now to have a limited window size
-
-                int window = 32;
-                                                 
+                                                
                 int windowxleft = blockx*32-window;
                 if (windowxleft < 0)
                     windowxleft = 0;
@@ -619,6 +654,9 @@ int->int filter MotionEstimation(int width, int height, int delay, int pixeldata
     }
 }
 
+/**
+ * @internal
+ */
 int->int splitjoin MacroBlockScrambler(int width) {
     split roundrobin(16);
     for (int i = 0; i < (width/16); i++) {
@@ -633,6 +671,9 @@ int->int splitjoin MacroBlockScrambler(int width) {
     join roundrobin(16*16);
 }
 
+/**
+ * @internal
+ */
 int->int splitjoin MacroBlockOrder(int width) {
     split roundrobin(16);
     for (int i = 0; i < (width/16); i++) {
@@ -677,6 +718,9 @@ int->int pipeline ChannelDownsample(int width, int height) {
     }
 }
 
+/**
+ * @internal
+ */
 int->int pipeline TransformPicture(int width, int height) {
     add ColorSpaceConversion_RGBtoYCbCr;
     add int->int splitjoin {
@@ -692,17 +736,19 @@ int->int pipeline TransformPicture(int width, int height) {
     }
 }
 
-// TODO - AssignPictureType for now sends everything in a SINGLE Group_of_Pictures
-// It also assumes everything is a single scene, and just uses a static IPB
-// pattern: IBBPBBPBBPBB
-// todo: hack for now is IBPPBBPBBPBB
-// First Value Pushed: Temporal Reference (Frame Number)
-// Second Value Pushed: See interpretation below
-// Output Interpretation:
-// 1 = I-Picture
-// 2 = P-Picture
-// 3 = B-Picture
+/**
+ * @internal
+ */
 int->int filter AssignPictureType(int width, int height, int numpictures) {
+    // TODO - AssignPictureType for now sends everything in a SINGLE Group_of_Pictures
+    // It also assumes everything is a single scene, and just uses a static IPB
+    // pattern: IBBPBBPBBPBB
+    // First Value Pushed: Temporal Reference (Frame Number)
+    // Second Value Pushed: See interpretation below
+    // Output Interpretation:
+    // 1 = I-Picture
+    // 2 = P-Picture
+    // 3 = B-Picture
     int frameno;
 
     init {
@@ -733,6 +779,9 @@ int->int filter AssignPictureType(int width, int height, int numpictures) {
     }
 }
 
+/**
+ * @internal
+ */
 int->int splitjoin PicturePreprocessing(int width, int height, int numpictures, int downsampled_data_per_image) {
     split duplicate;
     add AssignPictureType(width, height, numpictures);
@@ -740,6 +789,9 @@ int->int splitjoin PicturePreprocessing(int width, int height, int numpictures, 
     join roundrobin(2, downsampled_data_per_image);
 }
 
+/**
+ * @internal
+ */
 int->int filter ReorderPictures(int downsampled_data_per_image) {
     int picture_data_size = 2+downsampled_data_per_image;
     // This isn't ENTIRELY unbounded - it may be bounded by the implementation of PicturePreprocessing
@@ -791,6 +843,9 @@ int->int filter ReorderPictures(int downsampled_data_per_image) {
     }
 }
 
+/**
+ * @internal
+ */
 int->int pipeline MacroBlockEncode(int[64] intra_quantiser_matrix, 
                                    int[64] non_intra_quantiser_matrix,
                                    int intra_dc_precision, 
@@ -815,6 +870,9 @@ int->int pipeline MacroBlockEncode(int[64] intra_quantiser_matrix,
     }
 }
 
+/**
+ * @internal
+ */
 int->int splitjoin MacroBlockAndMotionVectorDecode(int[64] default_intra_quantiser_matrix,
                                                    int[64] default_non_intra_quantiser_matrix,
                                                    int intra_dc_precision,
@@ -837,11 +895,14 @@ int->int splitjoin MacroBlockAndMotionVectorDecode(int[64] default_intra_quantis
                              pixeldata_per_macroblock);
         add iDCT8x8_ieee;
     }
-    add MotionVectorDecodeNoMessages(width/16);
+    add MotionVectorDecodeNoMessage(width/16);
     add Identity<int>;
     join roundrobin(pixeldata_per_macroblock, 4, 1);
 }
 
+/**
+ * @internal
+ */
 int->int pipeline DecodeAndSendBackReferenceFrame(int[64] default_intra_quantiser_matrix,
                                                   int[64] default_non_intra_quantiser_matrix,
                                                   int intra_dc_precision,
@@ -856,7 +917,7 @@ int->int pipeline DecodeAndSendBackReferenceFrame(int[64] default_intra_quantise
     int macroblock_output_data_size = downsampled_data_per_image*(pixeldata_per_macroblock+5+8+1)/pixeldata_per_macroblock;
 
     int downsample_data_size = downsampled_data_per_image;
-    int tempval = downsample_data_size*(pixeldata_per_macroblock+5)/pixeldata_per_macroblock;
+    int extended_data_size = downsample_data_size*(pixeldata_per_macroblock+5)/pixeldata_per_macroblock;
     add int->int splitjoin { 
         split roundrobin(2, macroblock_output_data_size);
         add Identity<int>;
@@ -867,121 +928,136 @@ int->int pipeline DecodeAndSendBackReferenceFrame(int[64] default_intra_quantise
                                             width,
                                             height,
                                             pixeldata_per_macroblock);
-        join roundrobin(2, tempval);
+        join roundrobin(2, extended_data_size);
     }
     
-    int outputconversionratio = 2+tempval;
+    add SendBackReferenceFrameEncoder(width, 
+                                      height, 
+                                      extended_data_size, 
+                                      portal_fwdMotion, 
+                                      portal_bckMotion);
+}
 
-    add int->int filter {
-        int[width][height] backward_y_data;
-        int[width/2][height/2] backward_cb_data;
-        int[width/2][height/2] backward_cr_data;
-        int[width/16][height/16][4] backward_motion_vectors;
-        int backward_frametype;
-        boolean skipframe; // skip sending the first frame backwards
+/**
+ * @internal
+ */
+int->int filter SendBackReferenceFrameEncoder(int width, 
+                                              int height, 
+                                              int extended_data_size,
+                                              portal<MotionEstimation> portal_fwdMotion,
+                                              portal<MotionEstimation> portal_bckMotion) {
+    // The word "Encoder" is at the end to avoid namespace conflicts with the SendBackReferenceFrame
+    // filter in the decoder, which is similar.
+    int[width][height] backward_y_data;
+    int[width/2][height/2] backward_cb_data;
+    int[width/2][height/2] backward_cr_data;
+    int[width/16][height/16][4] backward_motion_vectors;
+    int backward_frametype;
+    boolean skipframe; // skip sending the first frame backwards
+    
+    init {
+        skipframe = true;
+        backward_frametype = 0;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                backward_y_data[x][y] = 0;
+            }
+        }
+        for (int x = 0; x < width/2; x++) {
+            for (int y = 0; y < height/2; y++) {
+                backward_cb_data[x][y] = 0;
+                backward_cr_data[x][y] = 0;
+            }
+        }
+        for (int x = 0; x < width/16; x++) {
+            for (int y = 0; y < height/16; y++) {
+                for (int z = 0; z < 4; z++) {
+                    backward_motion_vectors[x][y][z] = 0;
+                }
+            }
+        }
+    }
 
-        init {
-            skipframe = true;
-            backward_frametype = 0;
+    work pop extended_data_size+2 push 1 {
+        int[width][height] y_data;
+        int[width/2][height/2] cb_data;
+        int[width/2][height/2] cr_data;
+        int[width/16][height/16][4] motion_vectors;
+        
+        int frameno = pop();
+        int frametype = pop();
+        
+        if (frametype < 3) {               
+            for (int macroblocky = 0; macroblocky < height/16; macroblocky++) {
+                for (int macroblockx = 0; macroblockx < width/16; macroblockx++) {
+                    for (int blocky = 0; blocky < 2; blocky++) {
+                        for (int blockx = 0; blockx < 2; blockx++) {
+                            for (int y = 0; y < 8; y++) {
+                                for (int x = 0; x < 8; x++) {
+                                    y_data[macroblockx*16+blockx*8+x][macroblocky*16+blocky*8+y] = pop();
+                                }
+                            }
+                        }
+                    }
+                    for (int y = 0; y < 8; y++) {
+                        for (int x = 0; x < 8; x++) {
+                            cb_data[macroblockx*8+x][macroblocky*8+y] = pop();
+                        }
+                    }
+                    for (int y = 0; y < 8; y++) {
+                        for (int x = 0; x < 8; x++) {
+                            cr_data[macroblockx*8+x][macroblocky*8+y] = pop();
+                        }
+                        }
+                    for (int i = 0; i < 4; i++) {
+                        motion_vectors[macroblockx][macroblocky][i] = pop();
+                    }                       
+                    deadpop(1);                        
+                }
+            }
+            portal_fwdMotion.referencePic(y_data, 
+                                          cb_data, 
+                                          cr_data, 
+                                          motion_vectors, 
+                                          frametype) [1:1];
+            if (!skipframe) {
+                portal_bckMotion.referencePic(backward_y_data, 
+                                              backward_cb_data, 
+                                              backward_cr_data, 
+                                              backward_motion_vectors, 
+                                              backward_frametype) [1:1];
+            } else {
+                skipframe = false;
+            }
+            backward_frametype = frametype;
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < height; y++) {
-                    backward_y_data[x][y] = 0;
+                    backward_y_data[x][y] = y_data[x][y];
                 }
             }
             for (int x = 0; x < width/2; x++) {
                 for (int y = 0; y < height/2; y++) {
-                    backward_cb_data[x][y] = 0;
-                    backward_cr_data[x][y] = 0;
+                    backward_cb_data[x][y] = cb_data[x][y];
+                    backward_cr_data[x][y] = cr_data[x][y];
                 }
             }
             for (int x = 0; x < width/16; x++) {
                 for (int y = 0; y < height/16; y++) {
                     for (int z = 0; z < 4; z++) {
-                        backward_motion_vectors[x][y][z] = 0;
+                        backward_motion_vectors[x][y][z] = motion_vectors[x][y][z];
                     }
                 }
             }
+        } else {
+            deadpop(extended_data_size);
         }
-
-        work pop outputconversionratio push 1 {
-            int[width][height] y_data;
-            int[width/2][height/2] cb_data;
-            int[width/2][height/2] cr_data;
-            int[width/16][height/16][4] motion_vectors;
-
-            int frameno = pop();
-            int frametype = pop();
-
-            if (frametype < 3) {               
-                for (int macroblocky = 0; macroblocky < height/16; macroblocky++) {
-                    for (int macroblockx = 0; macroblockx < width/16; macroblockx++) {
-                        for (int blocky = 0; blocky < 2; blocky++) {
-                            for (int blockx = 0; blockx < 2; blockx++) {
-                                for (int y = 0; y < 8; y++) {
-                                    for (int x = 0; x < 8; x++) {
-                                        y_data[macroblockx*16+blockx*8+x][macroblocky*16+blocky*8+y] = pop();
-                                    }
-                                }
-                            }
-                        }
-                        for (int y = 0; y < 8; y++) {
-                            for (int x = 0; x < 8; x++) {
-                                cb_data[macroblockx*8+x][macroblocky*8+y] = pop();
-                            }
-                        }
-                        for (int y = 0; y < 8; y++) {
-                            for (int x = 0; x < 8; x++) {
-                                cr_data[macroblockx*8+x][macroblocky*8+y] = pop();
-                            }
-                        }
-                        for (int i = 0; i < 4; i++) {
-                            motion_vectors[macroblockx][macroblocky][i] = pop();
-                        }                       
-                        deadpop(1);                        
-                    }
-                }
-                portal_fwdMotion.referencePic(y_data, 
-                                              cb_data, 
-                                              cr_data, 
-                                              motion_vectors, 
-                                              frametype) [1:1];
-                // Note - TODO - might be a way to do this with delayed messages
-                if (!skipframe) {
-                    portal_bckMotion.referencePic(backward_y_data, 
-                                                  backward_cb_data, 
-                                                  backward_cr_data, 
-                                                  backward_motion_vectors, 
-                                                  backward_frametype) [1:1];
-                } else {
-                    skipframe = false;
-                }
-                backward_frametype = frametype;
-                for (int x = 0; x < width; x++) {
-                    for (int y = 0; y < height; y++) {
-                        backward_y_data[x][y] = y_data[x][y];
-                    }
-                }
-                for (int x = 0; x < width/2; x++) {
-                    for (int y = 0; y < height/2; y++) {
-                        backward_cb_data[x][y] = cb_data[x][y];
-                        backward_cr_data[x][y] = cr_data[x][y];
-                    }
-                }
-                for (int x = 0; x < width/16; x++) {
-                    for (int y = 0; y < height/16; y++) {
-                        for (int z = 0; z < 4; z++) {
-                            backward_motion_vectors[x][y][z] = motion_vectors[x][y][z];
-                        }
-                    }
-                }
-            } else {
-                deadpop(tempval);
-            }
-            push(1999);
-        }
+        push(1999);
     }
 }
 
+/**
+ * @internal
+ */
 int->int filter undoQuantisation(int[64] intra_quantiser_matrix, 
                                  int[64] non_intra_quantiser_matrix,
                                  int intra_dc_precision, 
@@ -1048,6 +1124,9 @@ int->int filter undoQuantisation(int[64] intra_quantiser_matrix,
     }
 } 
 
+/**
+ * @internal
+ */
 int->int filter Quantisation(int[64] intra_quantiser_matrix, 
                              int[64] non_intra_quantiser_matrix,
                              int intra_dc_precision, 
@@ -1138,22 +1217,8 @@ int->int filter ZigZagOrdering {
     }
 }
 
-/** 
- * Notes: This is the sequence of Pop Operations
- * this will perform basically, and expect to
- * receive data in this fashion:
- * for each picture
- *   int temporal_reference = pop()
- *   int picture_coding_type = pop()
- *   for each slice
- *     for each macroblock
- *       int quantiser_scale_code = pop()
- *       int macroblock_motion_forward = pop()
- *       int macroblock_motion_backward = pop()
- *       int macroblock_intra = pop()    
- *       for each block (block_count)
- *         for j from 0 to 63
- *           QFS[i][j] = pop()
+/**
+ * @internal
  */
 int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
                                     int[64] intra_quantiser_matrix,
@@ -1868,10 +1933,10 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
             tempval = 0x000001B7;
             pushs(32, tempval);
             tempval = 0;
-            // To force flush, below:
+            // To force flush, below: FEATURETODO
             pushs(32, tempval);
             pushs(32, tempval);
-            pushs(32, tempval);
+            pushs(32, tempval);  
             pushs(32, tempval);
             println("Done Writing M2V File...");
         } else {

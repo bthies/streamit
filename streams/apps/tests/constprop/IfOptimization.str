@@ -1,0 +1,27 @@
+void->void pipeline IfOptimization {
+    add Source();
+    add Test();
+    add Printer();
+}
+
+float->float filter Test {
+    work pop 1 push 1 {
+	float i = pop();
+	// should optimize to "i = 0.0 - i;"
+	if ( 1 == 0) { } else { i = 0.0 - i; }
+	// should remove useless constant expression
+	if ( 1 == 0 ) {} else {}
+        // should optimize to "if (! (sin(i) > 0)) { i = i * 2.0; }"
+	if ( sin(i) > 0) {} else {i = i * 2.0; }
+	push(i);
+    }
+}
+
+void->float filter Source {
+    float i = 0.0;
+    work push 1 { push(i); i += 1.0; }
+}
+
+float->void filter Printer {
+    work pop 1 { println((int)(pop())); }
+}

@@ -15,5 +15,10 @@ These tests target various aspects of constant propagation.
       <file class="source">ConstPropTest2.str</file>
       <file class="output">ConstPropTest2.out</file>
     </impl>
+    <impl lang="StreamIt" id="ifoptimization">
+      <desc>MIT, test that some internal rewritings of ifs are correct</desc>
+      <file class="source">IfOptimization.str</file>
+      <file class="output">IfOptimization.out</file>
+    </impl>
   </implementations>
 </benchmark>

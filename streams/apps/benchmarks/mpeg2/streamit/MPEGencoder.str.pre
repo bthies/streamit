@@ -152,6 +152,32 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
                             default_non_intra_quantiser_matrix, 
                             actual_intra_dc_precision - 8,
                             q_scale_type);
+
+    // TODO temporary hack to bit-align the start codes
+    add bit->bit filter {
+        int position = 0;
+        // Fix up the start codes
+        work pop * push * {
+            int tempval;
+            peeks(24, tempval);
+            if (tempval == 1) {
+                int blah;
+                peeks(32, blah);
+                if (position == 0) {
+                    pushpop(32);
+                } else {
+                    for (int i = 0; i < 8 - position; i++) {
+                        push(0);        
+                    }
+                    pushpop(32);
+                    position = 0;
+                }
+            } else {
+                pushpop(1);
+                position = (position + 1) % 8;
+            }
+        }
+    }
 }
 
 /**
@@ -1321,9 +1347,6 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
             if (intra_is_default) {
                 load_intra_quantiser_matrix = 0;
                 pushs(1, load_intra_quantiser_matrix);
-                for (int i = 0; i < 64; i++) {
-                    pushs(8, default_intra_quantiser_matrix[i]);
-                }
             } else {
                 load_intra_quantiser_matrix = 1;
                 pushs(1, load_intra_quantiser_matrix);
@@ -1335,9 +1358,6 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
             if (non_intra_is_default) {
                 load_non_intra_quantiser_matrix = 0;
                 pushs(1, load_non_intra_quantiser_matrix);
-                for (int i = 0; i < 64; i++) {
-                    pushs(8, default_non_intra_quantiser_matrix[i]);
-                }
             } else {
                 load_non_intra_quantiser_matrix = 1;
                 pushs(1, load_non_intra_quantiser_matrix);
@@ -1400,6 +1420,7 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
             // Start of Group_of_Pictures
 
             // group_of_pictures_header() (cite 1, P.29)
+
             tempval = 0x000001B8;
             pushs(32, tempval);
 

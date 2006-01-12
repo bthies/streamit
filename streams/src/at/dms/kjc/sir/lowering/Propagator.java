@@ -9,7 +9,7 @@ import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
 import java.lang.Math;
 import at.dms.compiler.TokenReference;
-
+import at.dms.util.IRPrinter;    // debugging
 /**
  * This class propagates constants and partially evaluates all
  * expressions as much as possible.
@@ -463,18 +463,23 @@ public class Propagator extends SLIRReplacingVisitor {
 		elseClause.accept(this);
 	    //constants=saveConstants;
 	} else {
-	    /*
-	    SIRPrinter printer = new SIRPrinter();
-	    System.out.println("analyzing the expression");
-	    self.accept(printer);
-	    printer.close();
-	    System.out.println();
-	    */
-	    
-	    JExpression newExp = (JExpression)cond.accept(this);
+        /*
+        {
+            IRPrinter printer = new IRPrinter();
+            System.err.println("analyzing the expression");
+            self.accept(printer);
+            printer.close();
+            System.out.println();
+        }
+        */   
+
+        // propagate through (simplify) conditional
+        JExpression newExp = (JExpression)cond.accept(this);
 	    if (newExp!=cond) {
 		self.setCondition(newExp);
 	    }
+        // if conditional simplifies to boolean constant
+        // return only used branch
 	    if (newExp instanceof JBooleanLiteral)
 		{
 		    JBooleanLiteral bval = (JBooleanLiteral)newExp;
@@ -488,26 +493,41 @@ public class Propagator extends SLIRReplacingVisitor {
 	    // propagate through then and else
 	    Propagator thenProp=construct(cloneTable(constants, getFreeVars(thenClause)),true);
 	    Propagator elseProp=construct(cloneTable(constants, getFreeVars(elseClause)),true);
-	    thenClause.accept(thenProp);
+	    // then clause for any if
+        thenClause.accept(thenProp);
+        // else clause for two-branched if, and simplify "else {}" to one-branched
 	    if (elseClause != null) {
 		elseClause.accept(elseProp);
 		if((elseClause instanceof JBlock)&&(((JBlock)elseClause).size()==0))
 		    self.setElseClause(null);
 	    }
-	    if((self.getThenClause()==null)||((self.getThenClause() instanceof JBlock)&&(((JBlock)self.getThenClause()).size()==0))){
-		if((self.getElseClause()==null)||((self.getElseClause() instanceof JBlock)&&(((JBlock)self.getElseClause()).size()==0))) {
-		    return new JExpressionStatement(self.getTokenReference(),newExp,null);
-		} else {
-		    thenClause=self.getElseClause();
-		    elseClause=self.getThenClause();
-		    self.setThenClause(thenClause);
-		    self.setElseClause(elseClause);
-		    newExp=new JLogicalComplementExpression(cond.getTokenReference(),newExp);
-		    if((elseClause instanceof JBlock)&&(((JBlock)elseClause).size()==0))
-			self.setElseClause(null);
-		}
-	    }
-	    //if(self.getThenClause()==null)
+	    if ((self.getThenClause() == null)
+                    || ((self.getThenClause() instanceof JBlock) && (((JBlock) self
+                            .getThenClause()).size() == 0))) {
+            // if (exp) {} ...
+            if ((self.getElseClause() == null)
+                        || ((self.getElseClause() instanceof JBlock) && (((JBlock) self
+                                .getElseClause()).size() == 0))) {
+                // "if (exp) {} {}" simplifies to "exp;" (exp not a boolean
+                // constant here, may have side effects)
+                return new JExpressionStatement(self.getTokenReference(),
+                        newExp, null);
+            } else {
+                // "if (exp) {} {...}" simplifies to "if (!(exp)) {...}"
+                thenClause = self.getElseClause();
+                elseClause = self.getThenClause();
+                self.setThenClause(thenClause);
+                self.setElseClause(elseClause);
+                newExp = new JLogicalComplementExpression(cond
+                        .getTokenReference(), newExp);
+                self.setCondition(newExp);
+                if ((elseClause instanceof JBlock)
+                        && (((JBlock) elseClause).size() == 0))
+                    self.setElseClause(null);
+            }
+        }
+        
+        //if(self.getThenClause()==null)
 	    //if(self.getElseClause()==null)
 	    //return newExp;
 	    // reconstruct constants as those that are the same in

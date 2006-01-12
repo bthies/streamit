@@ -1634,6 +1634,10 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
 
         p.print(ident);
 
+        //we want single precision versions of the math functions
+        if (Utils.isMathMethod(prefix, ident)) 
+            p.print("f");
+
         if (!Utils.isMathMethod(prefix, ident) && ident.indexOf("::") == -1) {
             // don't rename the built-in math functions
             // don't rename calls to static functions

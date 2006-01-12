@@ -157,6 +157,9 @@ public class ClusterBackend implements FlatVisitor {
         System.err.println("// END str after ConstantProp");
     }
 
+	// convert round(x) to floor(0.5+x) to avoid obscure errors
+	RoundToFloor.doit(str);
+
     // add initPath functions
     EnqueueToInitPath.doInitPath(str);
 

@@ -62,6 +62,9 @@ public class SpaceTimeBackend
 	ConstantProp.propagateAndUnroll(str, true);
 	System.out.println("Done Constant Prop and Unroll...");
 
+	// convert round(x) to floor(0.5+x) to avoid obscure errors
+	RoundToFloor.doit(str);
+
 	// add initPath functions
         EnqueueToInitPath.doInitPath(str);
 

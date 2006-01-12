@@ -78,6 +78,9 @@ public class SpaceDynamicBackend {
 	IterFactory.createFactory().createIter(str).accept(printer1);
 	printer1.close();
 	
+	// convert round(x) to floor(0.5+x) to avoid obscure errors
+	RoundToFloor.doit(str);
+
         // add initPath functions
         EnqueueToInitPath.doInitPath(str);
 

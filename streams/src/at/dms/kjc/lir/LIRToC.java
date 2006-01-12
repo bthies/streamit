@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.106 2006-01-06 21:09:00 thies Exp $
+ * $Id: LIRToC.java,v 1.107 2006-01-12 18:10:24 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -979,6 +979,11 @@ public class LIRToC
         */
 
         p.print(ident);
+
+        //we want single precision versions of the math functions
+        if (Utils.isMathMethod(prefix, ident)) 
+            p.print("f");
+
         p.print("(");
         int i = 0;
         /* Ignore prefix, since it's just going to be a Java class name.

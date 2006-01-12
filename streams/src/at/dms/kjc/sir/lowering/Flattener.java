@@ -54,6 +54,9 @@ public class Flattener {
 	ConstantProp.propagateAndUnroll(str,true);
 	System.err.println("done.");
 
+	// convert round(x) to floor(0.5+x) to avoid obscure errors
+	RoundToFloor.doit(str);
+
     // Add initPath functions 
 	EnqueueToInitPath.doInitPath(str);
 

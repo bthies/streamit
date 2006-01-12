@@ -27,19 +27,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
      * The clone generator looks at this array to see which fields it
      * shouldn't clone.
      */
-    public static final String[] DO_NOT_CLONE_THESE_FIELDS = {
-	"parentStream",
-	"topLevel",
-        "trash",
-	"visitedSIROps",
-	"symbolTable",
-	"interfaceList",
-	"interfaceTableList",
-	"structureList", 
-        "methodToPushRate", 
-        "methodToPopRate", 
-        "methodToPeekRate"
-    };
+    public static final String[] DO_NOT_CLONE_THESE_FIELDS = { "parentStream",
+            "topLevel", "trash", "visitedSIROps", "symbolTable",
+            "interfaceList", "interfaceTableList", "structureList",
+            "methodToPushRate", "methodToPopRate", "methodToPeekRate" };
     
     /* The entire application */
     private JCompilationUnit[] application;
@@ -127,33 +118,19 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	symbolTable = new Hashtable(300);
 	interfaceList = new Vector(100);
 	interfaceTableList = new Vector(100);
-        structureList = new Vector(100);
-        helperList = new Vector(100);
+    structureList = new Vector(100);
+    helperList = new Vector(100);
 	global = null;
 	searchList = new LinkedList();
 	application = null;
 	initBuiltinFilters();
 	finalVars=new LinkedList();
-        nextLatency = SIRLatency.BEST_EFFORT;
+    nextLatency = null;
     }
 
     public Kopi2SIR(JCompilationUnit[] app) {
-	parentStream = null;
-	topLevel = null;
-
-	currentMethod = null;
-	visitedSIROps = new Hashtable(100);
-	symbolTable = new Hashtable(300);
-	interfaceList = new Vector(100);
-	interfaceTableList = new Vector(100);
-        structureList = new Vector(100);
-        helperList = new Vector(100);
-	global = null;
-	searchList = new LinkedList();
-	this.application = app;
-	initBuiltinFilters();
-	finalVars=new LinkedList();
-        nextLatency = SIRLatency.BEST_EFFORT;
+        this();
+        this.application = app;
     }
 
     private String printLine(JPhylum l) {
@@ -162,7 +139,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 
     //add any special filters to the symbol table
     //when they are added, they will be cloned and any parameters that need to be set
-    //will be set...
+    //will be set...  (because of nesting of constructor calls, initBuiltinFilters
+    // is not allowed to -- and doesn't -- use this.application)
     private void initBuiltinFilters() {
 	SIRFileReader fr = new SIRFileReader();
 	fr.setInit(SIRStream.makeEmptyInit());
@@ -549,6 +527,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	}
     }
 
+/* not currently used
+    
     private JMethodDeclaration[] buildPortalMethodArray(JClassDeclaration portal, 
 							JClassDeclaration clazz) 
     {
@@ -576,8 +556,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	}
 	return handlerMethods;
     }
-    
-		    
+*/    
 		    
     //private int spaces=0;
 	    
@@ -1739,8 +1718,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 						       JExpression prefix, 
 						       JExpression[] args)  
     {
-	//index of the method in the portal interface
-	int index = -1;
 	//Process the args
 	for (int i = 0; i < args.length; i++)
 	    args[i] = (JExpression) args[i].accept(this);
@@ -1759,7 +1736,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         // portals happen.
         /*
 	CMethod[] portalMethods = interfaces[0].getCClass().getMethods();
-
+    //index of the method in the portal interface
+    int index = -1;
 	for (int i = 0; i < portalMethods.length; i++) {
 	    if (portalMethods[i].getIdent().equals(methCall.getIdent())) {
 		index = i;
@@ -1771,9 +1749,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         */
         String interfaceName = interfaces[0].getIdent();
         
-	return new SIRMessageStatement(prefix, interfaceName,
-                                       methCall.getIdent(),
-				       args, nextLatency);
+        assert nextLatency != null: "Attempt to create message statement but latency not set";
+/*debugging System.err.println(printLine(methCall) + " latency " + nextLatency.toString()); */
+        return new SIRMessageStatement(prefix, interfaceName,
+                methCall.getIdent(),
+                args, nextLatency);
     }
 		
 
@@ -1784,7 +1764,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 						      JExpression prefix,
 						      SIRStream st) 
     {
-	CMethod meth = methCall.getMethod();
+	/* CMethod meth = */ methCall.getMethod();
 	//the index of the method in the interface
 	
 	//Extract the interface from the portal prefix variable
@@ -1942,106 +1922,103 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	
 	
 	if (isSIRExp(self)) {
-	    printMe("SIR Expression " + ident);
-	    //reset currentMethod on all returns
-	    currentMethod = parentMethod;
-	    return newSIRExp(self, args);
-	}
-	else if (ident.equals("regReceiver")) { 
-	    if (args.length > 1)
-		at.dms.util.Utils.fail(printLine(self) + 
-				       "Exactly one arg to add() allowed");
-	    SIRStream st = ((SIRInitStatement)args[0].accept(this)).getTarget();
-	    currentMethod = parentMethod;
-	    //prefix can either be a field or a local var, extract type
-	    if (prefix instanceof JLocalVariableExpression)
-		return createRegReceiver(self, ((JLocalVariableExpression)prefix).getVariable().getType(),
-					 prefix, st);
-	    else if (prefix instanceof JFieldAccessExpression)
-		return createRegReceiver(self, ((JFieldAccessExpression)prefix).getType(),
-					 prefix, st);
-	    else
-		at.dms.util.Utils.fail(printLine(self) + 
-				       "regReceiver all must have a portal prefix");
-	    return null;
-	}
-        else if (ident.equals("setAnyLatency")) {
-            nextLatency = SIRLatency.BEST_EFFORT;
-            return null;
-        }
-        else if (ident.equals("setMaxLatency")) {
+            printMe("SIR Expression " + ident);
+            // reset currentMethod on all returns
+            currentMethod = parentMethod;
+            return newSIRExp(self, args);
+        } else if (ident.equals("regReceiver")) {
             if (args.length > 1)
-                at.dms.util.Utils.fail(printLine(self) +
-                                       "Exactly one arg to setMaxLatency() allowed");
+                at.dms.util.Utils.fail(printLine(self)
+                        + "Exactly one arg to add() allowed");
+            SIRStream st = ((SIRInitStatement) args[0].accept(this))
+                    .getTarget();
+            currentMethod = parentMethod;
+            // prefix can either be a field or a local var, extract type
+            if (prefix instanceof JLocalVariableExpression)
+                return createRegReceiver(self,
+                        ((JLocalVariableExpression) prefix).getVariable()
+                                .getType(), prefix, st);
+            else if (prefix instanceof JFieldAccessExpression)
+                return createRegReceiver(self,
+                        ((JFieldAccessExpression) prefix).getType(), prefix, st);
+            else
+                at.dms.util.Utils.fail(printLine(self)
+                        + "regReceiver all must have a portal prefix");
+            return null;
+        } else if (ident.equals("setAnyLatency")) {
+            nextLatency = SIRLatency.BEST_EFFORT;
+/* debugging  System.err.println("nextLatency = SIRLatency.BEST_EFFORT"); */           
+            return null;
+        } else if (ident.equals("setMaxLatency")) {
+            if (args.length > 1)
+                at.dms.util.Utils.fail(printLine(self)
+                        + "Exactly one arg to setMaxLatency() allowed");
             nextLatency = new SIRLatencyMax(args[0]);
+/* debugging  System.err.println("nextLatency = SIRLatencyMax("+args[0]+")"); */ 
             return null;
-        }
-        else if (ident.equals("setLatency")) {
+        } else if (ident.equals("setLatency")) {
             if (args.length > 2)
-                at.dms.util.Utils.fail(printLine(self) +
-                                       "Exactly two args to setLatency() allowed");
-            nextLatency = new SIRLatencyRange(args[0],
-                                              args[1]);
+                at.dms.util.Utils.fail(printLine(self)
+                        + "Exactly two args to setLatency() allowed");
+/* debugging  System.err.println("nextLatency = SIRLatencyRange("+args[0]+","+args[1]+")"); */ 
+            nextLatency = new SIRLatencyRange(args[0], args[1]);
             return null;
+        } else if (ident.equals("add")) { // Handle an add call in a pipeline
+            // Parent must be a pipeline
+            if (!((parentStream instanceof SIRPipeline) || parentStream instanceof SIRSplitJoin))
+                at.dms.util.Utils.fail(printLine(self)
+                        + "Add not called on Pipeline or SplitJoin");
+            if (args.length > 1)
+                at.dms.util.Utils.fail(printLine(self)
+                        + "Exactly one arg to add() allowed");
+            // Visit the argument (Exactly one))
+            Object SIROp = args[0].accept(this);
+
+            // reset currentMethod on all returns
+            currentMethod = parentMethod;
+            // create the init statement
+            return createInitStatement(SIROp, ident);
+
+        } else if (ident.equals("setDelay")) {
+            if (!(parentStream instanceof SIRFeedbackLoop))
+                at.dms.util.Utils.fail(printLine(self)
+                        + "SetDelay called on Non-FeedbackLoop");
+            if (args.length > 1)
+                at.dms.util.Utils.fail(printLine(self)
+                        + "Too many args to setDelay");
+            JExpression delay = (JExpression) args[0].accept(this);
+            ((SIRFeedbackLoop) parentStream).setDelay(delay);
+            // reset currentMethod on all returns
+            currentMethod = parentMethod;
+            // we want to ignore remove this method from the block
+            return null;
+        } else if (ident.equals("setBody")) {
+            if (!(parentStream instanceof SIRFeedbackLoop))
+                at.dms.util.Utils.fail(printLine(self)
+                        + "setBody called on non-FeedbackLoop");
+            if (args.length > 1)
+                at.dms.util.Utils.fail(printLine(self)
+                        + "Exactly one arg to setBody() allowed");
+            // Visited the argument
+            Object SIROp = args[0].accept(this);
+            // reset currentMethod on all returns
+            currentMethod = parentMethod;
+            // create the init statement to return
+            return createInitStatement(SIROp, ident);
+        } else if (ident.equals("setLoop")) {
+            if (!(parentStream instanceof SIRFeedbackLoop))
+                at.dms.util.Utils.fail(printLine(self)
+                        + "setLoop called on non-FeedbackLoop");
+            if (args.length > 1)
+                at.dms.util.Utils.fail(printLine(self)
+                        + "Exactly one arg to setLoop() allowed");
+            //Visited the argument
+            Object SIROp = args[0].accept(this);
+            //reset currentMethod on all returns
+            currentMethod = parentMethod;
+            //create the init statement to return
+            return createInitStatement(SIROp, ident);
         }
-	else if (ident.equals("add")) {            //Handle an add call in a pipeline
-	    //Parent must be a pipeline
-	    if (!((parentStream instanceof SIRPipeline) || parentStream instanceof SIRSplitJoin)) 
-		at.dms.util.Utils.fail(printLine(self) + 
-				       "Add not called on Pipeline or SplitJoin");
-	    if (args.length > 1)
-		at.dms.util.Utils.fail(printLine(self) + 
-				       "Exactly one arg to add() allowed");
-	    //Visit the argument (Exactly one))
-	    Object SIROp = args[0].accept(this);
-	    	    
-	    //reset currentMethod on all returns
-	    currentMethod = parentMethod;
-	    //create the init statement 
-	    return createInitStatement(SIROp, ident);
-	    
-	} else if (ident.equals("setDelay")) {
-	    if (!(parentStream instanceof SIRFeedbackLoop))
-		at.dms.util.Utils.fail(printLine(self) + 
-				       "SetDelay called on Non-FeedbackLoop");
-	    if (args.length > 1)
-		at.dms.util.Utils.fail(printLine(self) + 
-				       "Too many args to setDelay");
-	    JExpression delay  = (JExpression)args[0].accept(this);
-	    ((SIRFeedbackLoop)parentStream).setDelay(delay);
-	    //reset currentMethod on all returns
-	    currentMethod = parentMethod;
-	    //we want to ignore remove this method from the block
-	    return null;
-	}
-	else if (ident.equals("setBody")) {
-	    if (!(parentStream instanceof SIRFeedbackLoop)) 
-		at.dms.util.Utils.fail(printLine(self) + 
-				       "setBody called on non-FeedbackLoop");
-	    if (args.length > 1)
-		at.dms.util.Utils.fail(printLine(self) + 
-				       "Exactly one arg to setBody() allowed");
-	    //Visited the argument
-	    Object SIROp = args[0].accept(this);
-	    //reset currentMethod on all returns
-	    currentMethod = parentMethod;
-	    //create the init statement to return
-	    return createInitStatement(SIROp, ident);
-	}
-	else if (ident.equals("setLoop")) {
-	    if (!(parentStream instanceof SIRFeedbackLoop)) 
-		at.dms.util.Utils.fail(printLine(self) + 
-				       "setLoop called on non-FeedbackLoop");
-	    if (args.length > 1)
-		at.dms.util.Utils.fail(printLine(self) + 
-				       "Exactly one arg to setLoop() allowed");
-	    //Visited the argument
-	    Object SIROp = args[0].accept(this);
-	     //reset currentMethod on all returns
-	    currentMethod = parentMethod;
-	    //create the init statement to return
-	    return createInitStatement(SIROp, ident);
-	}
        
 	else if (ident.equals("setSplitter")) {
 	    //we build the splitter here and set the global splitType

@@ -89,7 +89,7 @@ void->void pipeline MPEGdecoder_nomessage() {
   // All of these test cases can be run independently of each other.
   // For each output file, there is an associated output file without the "unver" extension
   // and an md5sum which can be compared against the actual output to make sure it's correct.
-  int parse_or_process = 2;
+  int parse_or_process = 3;
 
   int width=352;
   int height=240;
@@ -282,8 +282,6 @@ bit->int filter MPEGStreamParser(int width,
     
     while (ran < 2) {
     
-      SetupPeekBuffer();    // for the buffered peeks/pops
- 
       println("Parsing M2V File...");
       ran = 1;
  
@@ -291,11 +289,11 @@ bit->int filter MPEGStreamParser(int width,
 
       // video_sequence() (cite 1, P. 25)
 
-      buffered_next_start_code();
+      next_start_code();
 
       // sequence_header() (cite 1, P. 26)
 
-      bufferedpops(32,tempval);
+      pops(32,tempval);
       if (tempval != 0x000001B3)
         println("Error - Expected Video Sequence Start Code, Found " + tempval);
 
@@ -304,9 +302,9 @@ bit->int filter MPEGStreamParser(int width,
         frame_rate_code, bit_rate_value, vbv_buffer_size_value,
         constrained_parameters_flag, load_intra_quantiser_matrix, load_non_intra_quantiser_matrix;
       // (cite 1, P.55)
-      bufferedpops(12,horizontal_size_value);
-      bufferedpops(12,vertical_size_value);
-      bufferedpops(4,aspect_ratio_information);
+      pops(12,horizontal_size_value);
+      pops(12,vertical_size_value);
+      pops(4,aspect_ratio_information);
 
       // (cite 1, P.41 Table 6-3)
       if (aspect_ratio_information == 0)
@@ -316,7 +314,7 @@ bit->int filter MPEGStreamParser(int width,
       } else {
         println("Error - Program Limitation: Don't Know How to Handle Other Aspect Ratios");
       }
-      bufferedpops(4,frame_rate_code);
+      pops(4,frame_rate_code);
           // (cite 1, P.41-42 Table 6-4)
       float frame_rate_value = 0;
       if (frame_rate_code == 0)
@@ -327,11 +325,11 @@ bit->int filter MPEGStreamParser(int width,
       }
       else 
         println("Error - Program Limitation: Don't Know How to Handle Other Frame Rate Codes");
-      bufferedpops(18,bit_rate_value);
-      buffered_marker_bit();
+      pops(18,bit_rate_value);
+      marker_bit();
 
-      bufferedpops(10,vbv_buffer_size_value);
-      bufferedpops(1,constrained_parameters_flag);
+      pops(10,vbv_buffer_size_value);
+      pops(1,constrained_parameters_flag);
 
       // (cite 1, P. 43)
       if (constrained_parameters_flag != 0)
@@ -364,12 +362,12 @@ bit->int filter MPEGStreamParser(int width,
 					                20, 22, 33, 38, 46, 51, 55, 60,
 					                21, 34, 37, 47, 50, 56, 59, 61,
 					                35, 36, 48, 49, 57, 58, 62, 63};
-      bufferedpops(1,load_intra_quantiser_matrix);
+      pops(1,load_intra_quantiser_matrix);
       if (load_intra_quantiser_matrix == 1) {
         // println("  Loading Intra Quantiser Matrix from File");    
         int[64] tempOrder;
         for (int i = 0; i < 64; i++) {
-          bufferedpops(8,tempOrder[i]);
+          pops(8,tempOrder[i]);
         }
         for (int i = 0; i < 64; i++) {
           // Assumes no alternate_scan TODO
@@ -379,13 +377,13 @@ bit->int filter MPEGStreamParser(int width,
         // println("  Using Default Intra Quantiser Matrix");
         // Default Values Previously Loaded
       }
-      bufferedpops(1,load_non_intra_quantiser_matrix);
+      pops(1,load_non_intra_quantiser_matrix);
 
       if (load_non_intra_quantiser_matrix == 1) {
         // println("  Loading Non Intra Quantiser Matrix from File");
         int[64] tempOrder;
         for (int i = 0; i < 64; i++) {
-          bufferedpops(8,tempOrder[i]);
+          pops(8,tempOrder[i]);
         }
         for (int i = 0; i < 64; i++) {
           // Assumes no alternate_scan
@@ -396,27 +394,27 @@ bit->int filter MPEGStreamParser(int width,
         // Default Values Previously Loaded
       }
 
-      buffered_next_start_code();
+      next_start_code();
 
       // sequence_extension() (cite 1, P. 28)
 
-      bufferedpops(32,tempval);
+      pops(32,tempval);
       if (tempval != 0x000001B5)
         println("Error - Expected Extension Start Code, File Must be MPEG-1 " + tempval);
       int extension_start_code_identifier, profile_and_level_indication,
           progressive_sequence, chroma_format, horizontal_size_extension,
           vertical_size_extension, bit_rate_extension, vbv_buffer_size_extension,
           low_delay, frame_rate_extension_n, frame_rate_extension_d;
-      bufferedpops(4,extension_start_code_identifier);
+      pops(4,extension_start_code_identifier);
 
       if (extension_start_code_identifier != 0x1)
         println("Error - Expected Sequence Extension Identifier " + extension_start_code_identifier);
       
-      bufferedpops(8,profile_and_level_indication);
+      pops(8,profile_and_level_indication);
 
       // We don't really care about the profile_and_level indicator - this matters if this implementation
       // were fully MPEG2 compliant to some profile/level, but it isn't.
-      bufferedpops(1,progressive_sequence);
+      pops(1,progressive_sequence);
 
       if (progressive_sequence == 1) {
         // progressive_sequence 1: allows only progressive frames
@@ -424,25 +422,25 @@ bit->int filter MPEGStreamParser(int width,
         // progressive_sequence 0: allows interlaced and progressive frames
         println("Error - Program Limitation: Don't handle interlaced frames");
       }
-      bufferedpops(2,chroma_format);
+      pops(2,chroma_format);
       int block_count = blocks_per_macroblock[the_chroma_format]; // (cite 1, P. 62)
       if (chroma_format != the_chroma_format) {
         println("Error - Program specified with chroma " + the_chroma_format);
         println("        File has chroma " + chroma_format);
       }
-      bufferedpops(2,horizontal_size_extension);
+      pops(2,horizontal_size_extension);
       int horizontal_size = horizontal_size_value + (horizontal_size_extension << 12);
       int mb_width = (horizontal_size + 15) / 16;
-      bufferedpops(2,vertical_size_extension);
+      pops(2,vertical_size_extension);
       int vertical_size = vertical_size_value +  (vertical_size_extension << 12);
       int mb_height = (vertical_size + 15) / 16;
-      bufferedpops(12,bit_rate_extension);
+      pops(12,bit_rate_extension);
       // (cite 1, P.42)
       int bit_rate = 400 * (bit_rate_value + (bit_rate_extension << 18));
-      buffered_marker_bit();
-      bufferedpops(8,vbv_buffer_size_extension);
+      marker_bit();
+      pops(8,vbv_buffer_size_extension);
       int vbv_buffer_size = vbv_buffer_size_value + (vbv_buffer_size_extension << 10);
-      bufferedpops(1,low_delay);
+      pops(1,low_delay);
       if (low_delay == 1) {
         // low_delay 1 indicates that sequence contains no B-pictures
         println("Error - Program Limitation: Can't Handle This Case Yet");
@@ -450,41 +448,41 @@ bit->int filter MPEGStreamParser(int width,
         // low_delay 0 indicates that sequence is allowed to contain B-pictures
       }
 
-      bufferedpops(2,frame_rate_extension_n);
-      bufferedpops(5,frame_rate_extension_d);
+      pops(2,frame_rate_extension_n);
+      pops(5,frame_rate_extension_d);
       // (cite 1, P. P.41)
       float frame_rate = frame_rate_value * 
         ((float) (frame_rate_extension_n + 1)) / ((float) (frame_rate_extension_d + 1));
-      buffered_next_start_code();
+      next_start_code();
 
       boolean sequence_end_code_not_found = true;
       while (sequence_end_code_not_found) {
         // extension_and_user_data(0) (cite 1, P.26)
-        bufferedpeeks(32,tempval);
+        peeks(32,tempval);
         while (tempval == 0x000001B5 || tempval == 0x000001B2) {
-          bufferedpops(32,tempval);
+          pops(32,tempval);
           if (tempval == 0x000001B5) {
           // extension_data(0) (cite 1, P.27)
-            bufferedpeeks(4, tempval); 
+            peeks(4, tempval); 
             if (tempval == 2) { // extension_start_code_identifier
-              bufferedpops(4, tempval); 
+              pops(4, tempval); 
               int video_format;
-              bufferedpops(3, video_format);
+              pops(3, video_format);
               int color_description;
-              bufferedpops(1, color_description);
+              pops(1, color_description);
               if (color_description == 1) {
                 int color_primaries, transfer_characteristics, matrix_coefficients;
-                bufferedpops(8, color_primaries);
-                bufferedpops(8, transfer_characteristics);
-                bufferedpops(8, matrix_coefficients);
+                pops(8, color_primaries);
+                pops(8, transfer_characteristics);
+                pops(8, matrix_coefficients);
               }
               int display_horizontal_size;
-              bufferedpops(14, display_horizontal_size);
-              buffered_marker_bit();
+              pops(14, display_horizontal_size);
+              marker_bit();
               int display_vertical_size;
-              bufferedpops(14, display_vertical_size);
+              pops(14, display_vertical_size);
               // TODO - we don't do anything with this extra data we get out. Eventually we should.
-              buffered_next_start_code();
+              next_start_code();
             } else {
               println("Error - Program Limitation: Not Yet Support for Sequence Scalable Extension()");
             }
@@ -492,49 +490,49 @@ bit->int filter MPEGStreamParser(int width,
             if (tempval != 0x000001B2) {
               println("Error - Program Limitation: Not Yet Support for User_Data()");
             } 
-            bufferedpeeks(24, tempval);
+            peeks(24, tempval);
             while (tempval != 0x000001) {
               int user_data;
-              bufferedpops(8, user_data);
+              pops(8, user_data);
               // TODO we should probably do something with this data
-              bufferedpeeks(24, tempval);
+              peeks(24, tempval);
             }
-            buffered_next_start_code();
+            next_start_code();
           }
-          bufferedpeeks(32,tempval);
+          peeks(32,tempval);
         }
         
         boolean picture_or_group_start_code_found = true;
         while (picture_or_group_start_code_found) {
-          bufferedpeeks(32,tempval);
+          peeks(32,tempval);
           if (tempval == 0x000001B8) {
             // group_of_pictures_header() (cite 1, P.29)
-            bufferedpops(32,tempval);
+            pops(32,tempval);
             int drop_frame_flag, time_code_hours, time_code_minutes, time_code_seconds, 
                 time_code_pictures, closed_gop, broken_link;
             // -- Time Code - Not Used in Decoding Process --
             // (cite 1, P.49)
-            bufferedpops(1,drop_frame_flag);
-            bufferedpops(5,time_code_hours);
-            bufferedpops(6,time_code_minutes);
-            buffered_marker_bit();
-            bufferedpops(6,time_code_seconds);
-            bufferedpops(6,time_code_pictures);
+            pops(1,drop_frame_flag);
+            pops(5,time_code_hours);
+            pops(6,time_code_minutes);
+            marker_bit();
+            pops(6,time_code_seconds);
+            pops(6,time_code_pictures);
             // -- End of Time Code
      
-            bufferedpops(1,closed_gop);
-            bufferedpops(1,broken_link);
+            pops(1,closed_gop);
+            pops(1,broken_link);
             if (broken_link == 1)
               println("Error - Program Limitation: broken_link = 1");
-            buffered_next_start_code();
+            next_start_code();
             // extension_and_user_data(1) (cite 1, P.26)
-            bufferedpeeks(32,tempval);
+            peeks(32,tempval);
             if (tempval == 0x000001B5 || tempval == 0x000001B2)
               println("Error - Program Limitation: Not Yet Support for extension_and_user_data(1)");
           }
  
           // picture_header() (cite 1, P.30)
-          bufferedpops(32,tempval);
+          pops(32,tempval);
           if (tempval != 0x00000100) {
             println("Error - Picture Start Code Expected, " + tempval);
           }
@@ -542,8 +540,8 @@ bit->int filter MPEGStreamParser(int width,
           int temporal_reference, /* FEATURETODO picture_coding_type, */ vbv_delay, full_pel_forward_vector,
               forward_f_code, full_pel_backward_vector, backward_f_code;
           // (cite 1, P.50) for interpretation of the following fields
-          bufferedpops(10,temporal_reference);
-          bufferedpops(3,picture_coding_type);
+          pops(10,temporal_reference);
+          pops(3,picture_coding_type);
           if (picture_coding_type == 1) {
             // picture_coding_type = I-picture
           } else if (picture_coding_type == 2) {
@@ -554,35 +552,35 @@ bit->int filter MPEGStreamParser(int width,
             println("  Error: Forbidden picture_coding_type " + picture_coding_type);
           }
  
-         bufferedpops(16,vbv_delay);
+         pops(16,vbv_delay);
           // TODO unknown interpretation for vbv_delay, (cite 1, P.50)
           // The following is not used by the MPEG-2 specification (cite 1, P.51)
           // Supposed to have certain values, but not guaranteed for most files.
           if (picture_coding_type == 2 || picture_coding_type == 3) {
-            bufferedpops(1,full_pel_forward_vector);
-            bufferedpops(3,forward_f_code);
+            pops(1,full_pel_forward_vector);
+            pops(3,forward_f_code);
           } 
           if (picture_coding_type == 3) {
-            bufferedpops(1,full_pel_backward_vector);
-            bufferedpops(3,backward_f_code);
+            pops(1,full_pel_backward_vector);
+            pops(3,backward_f_code);
           }
-          bufferedpops(1,tempval);
+          pops(1,tempval);
           if (tempval == 1)
             println("Error: File conforms to some superset of the MPEG-2 specification");
-          buffered_next_start_code();
+          next_start_code();
             
           // picture_coding_extension() (cite 1, P.30)
-          bufferedpops(32,tempval);
+          pops(32,tempval);
           if (tempval != 0x000001B5)
             println("Error - Expecting extension start code " + tempval);
-          bufferedpops(4,extension_start_code_identifier);
+          pops(4,extension_start_code_identifier);
           if (extension_start_code_identifier != 0x8)
             println("Error - Expecting picture coding extension ID " + extension_start_code_identifier);
           int[2][2] f_code;
-          bufferedpops(4,f_code[0][0]);
-          bufferedpops(4,f_code[0][1]);
-          bufferedpops(4,f_code[1][0]);
-          bufferedpops(4,f_code[1][1]);
+          pops(4,f_code[0][0]);
+          pops(4,f_code[0][1]);
+          pops(4,f_code[1][0]);
+          pops(4,f_code[1][1]);
           // (cite 1, P.51)
           for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) {
@@ -597,22 +595,22 @@ bit->int filter MPEGStreamParser(int width,
           int intra_dc_precision, picture_structure, top_field_first, frame_pred_frame_dct, 
               concealment_motion_vectors, q_scale_type, intra_vlc_format, alternate_scan, 
               repeat_first_field, chroma_420_type, progressive_frame, composite_display_flag;
-          bufferedpops(2,intra_dc_precision);
+          pops(2,intra_dc_precision);
           int actual_intra_dc_precision = intra_dc_precision + 8;
-          bufferedpops(2,picture_structure);
+          pops(2,picture_structure);
           if (picture_structure != 3)
             println("Error - Program Limitation: Interlaced or bad picture structure");
-          bufferedpops(1,top_field_first); // Interpreted Later
-          bufferedpops(1,frame_pred_frame_dct);
+          pops(1,top_field_first); // Interpreted Later
+          pops(1,frame_pred_frame_dct);
           if (frame_pred_frame_dct != 1) 
             println("Error - Program Limitation or Bad Syntax: frame_pred_frame_dct must be 1");
-          bufferedpops(1,concealment_motion_vectors);
-          bufferedpops(1,q_scale_type);
-          bufferedpops(1,intra_vlc_format);
-          bufferedpops(1,alternate_scan);
+          pops(1,concealment_motion_vectors);
+          pops(1,q_scale_type);
+          pops(1,intra_vlc_format);
+          pops(1,alternate_scan);
           if (alternate_scan == 1)
             println("Error - Program Limitation - Doesn't handle alternate_scan right now");
-          bufferedpops(1,repeat_first_field);
+          pops(1,repeat_first_field);
           // TODO Assumes progressive_sequence = 1
           if (repeat_first_field == 0) {
             //  repeat_first_field = 0, one frame output
@@ -623,22 +621,22 @@ bit->int filter MPEGStreamParser(int width,
             else
               println("  repeat_first_field = 1, top_field_first = 1, three frames output");
           }
-          bufferedpops(1,chroma_420_type);
+          pops(1,chroma_420_type);
           // We don't really care about this, although it should be 1 for 4:2:0 chroma.
           // (cite 1, P.53)
-          bufferedpops(1,progressive_frame);
+          pops(1,progressive_frame);
           // Again, I don't think we care too much about this value, since we assume only a
           // base stream exists.
-          bufferedpops(1,composite_display_flag);
+          pops(1,composite_display_flag);
           if (composite_display_flag == 1) {
             println("Error - Program Limitation: Assumes no composite display information");
           } else {
             // composite_display_flag - not present
           }
-          buffered_next_start_code();
+          next_start_code();
          
           // extension_and_user_data(2)
-          bufferedpeeks(32,tempval);
+          peeks(32,tempval);
           if (tempval == 0x000001B5 || tempval == 0x000001B2)
             println("Error - Program Limitation: Not Yet Support for extension_and_user_data(2)");
           
@@ -647,11 +645,11 @@ bit->int filter MPEGStreamParser(int width,
           while (slice_start_code_follows) {
             // slice() (cite 1, P.34)
             // Reset motion vector predictors, (cite 1, P.77-80)
-            bufferedpops(24,tempval);
+            pops(24,tempval);
             if (tempval != 0x000001) 
               println("Error - Expecting slice_start_code " + tempval);
             int slice_vertical_position;
-            bufferedpops(8,slice_vertical_position);
+            pops(8,slice_vertical_position);
             if (slice_vertical_position < 0x01 || slice_vertical_position > 0xAF)
               println("Error - Invalid slice_vertical_position" + slice_vertical_position);
             if (vertical_size > 2800)
@@ -660,11 +658,11 @@ bit->int filter MPEGStreamParser(int width,
             mb_row = slice_vertical_position - 1;
             previous_macroblock_address = (mb_row * mb_width) - 1;
             int quantiser_scale_code;
-            bufferedpops(5,quantiser_scale_code);
-            bufferedpeeks(1,tempval);
+            pops(5,quantiser_scale_code);
+            peeks(1,tempval);
             if (tempval == 1)
               println("Error - Program Limitation: Doesn't handle intra_slice_flag");
-            bufferedpops(1,tempval);
+            pops(1,tempval);
             if (tempval == 1)
               println("Error - Extra_bit_slice must be 0");
             int[3] dc_dct_pred; // (cite 1, P.64-65)
@@ -678,14 +676,14 @@ bit->int filter MPEGStreamParser(int width,
             while (macroblock_next) {
               // macroblock() (cite 1, P.35)
               int macroblock_escape = 0;
-              bufferedpeeks(11,tempval);
+              peeks(11,tempval);
               while (tempval == 8) {
-                bufferedpops(11,tempval);
+                pops(11,tempval);
                 macroblock_escape += 33;
-                bufferedpeeks(11,tempval);
+                peeks(11,tempval);
               }
               
-              buffered_variable_length_code(tempval,const_macroblock_address_inc);
+              variable_length_code(tempval,const_macroblock_address_inc);
               int macroblock_address_increment = tempval + macroblock_escape;         
               int macroblock_address, mb_column;
               macroblock_address = previous_macroblock_address + macroblock_address_increment;
@@ -698,11 +696,11 @@ bit->int filter MPEGStreamParser(int width,
               // need to use tables B5,6,7,8 as well.
 
               if (picture_coding_type == 1) { // I-picture
-                buffered_variable_length_code(tempval,const_macroblock_type_Ipictures);
+                variable_length_code(tempval,const_macroblock_type_Ipictures);
               } else if (picture_coding_type == 2) { // P-picture
-                buffered_variable_length_code(tempval,const_macroblock_type_Ppictures);
+                variable_length_code(tempval,const_macroblock_type_Ppictures);
               } else if (picture_coding_type == 3) { // B-picture
-                buffered_variable_length_code(tempval,const_macroblock_type_Bpictures);
+                variable_length_code(tempval,const_macroblock_type_Bpictures);
               }
               int macroblock_quant, /* macroblock_motion_forward, macroblock_motion_backward, */
                   macroblock_pattern, /* macroblock_intra, */ spatial_temporal_weight_code_flag;
@@ -737,7 +735,7 @@ bit->int filter MPEGStreamParser(int width,
                 if (picture_structure == 3) {
                   if (frame_pred_frame_dct == 0) {
                     // (cite 1, P.60, Table 6-17)
-                    bufferedpops(2,tempval);
+                    pops(2,tempval);
                     if (tempval == 0) {
                       println("Error - Invalid frame_motion_type code");
                     } else if (tempval == 1) {
@@ -780,7 +778,7 @@ bit->int filter MPEGStreamParser(int width,
                 println("Error - Program Limitation, Doesn't Handle This Particular Case");
 
               if (macroblock_quant == 1) {
-                bufferedpops(5,quantiser_scale_code);
+                pops(5,quantiser_scale_code);
               }
 
 /*            int[2][2][2] motion_code;
@@ -809,10 +807,10 @@ bit->int filter MPEGStreamParser(int width,
                   // motion_vector(0,0);
                   // (cite 1, P.61)
                   for (int t = 0; t < 2; t++) {
-                    buffered_variable_length_code(motion_code[0][0][t],const_motion_code);
+                    variable_length_code(motion_code[0][0][t],const_motion_code);
                     if ((f_code[0][t] != 1) && (motion_code[0][0][t] != 0)) {
                       int r_size = f_code[0][t]-1;
-                      bufferedpops(r_size,motion_residual[0][0][t]);
+                      pops(r_size,motion_residual[0][0][t]);
                     }
                     if (dmv == 1) {
                       println("Error - Program Limitation: Don't handle case of dmv = 1");
@@ -834,10 +832,10 @@ bit->int filter MPEGStreamParser(int width,
                   // motion_vector(0,1);
                   // (cite 1, P.61)
                   for (int t = 0; t < 2; t++) {
-                    buffered_variable_length_code(motion_code[0][1][t],const_motion_code);
+                    variable_length_code(motion_code[0][1][t],const_motion_code);
                     if ((f_code[1][t] != 1) && (motion_code[0][1][t] != 0)) {
                       int r_size = f_code[1][t]-1;
-                      bufferedpops(r_size,motion_residual[0][1][t]);
+                      pops(r_size,motion_residual[0][1][t]);
                     }
                     if (dmv == 1) {
                       println("Error - Program Limitation: Don't handle the case of dmv = 1");
@@ -847,7 +845,7 @@ bit->int filter MPEGStreamParser(int width,
               }
 
               if (macroblock_intra == 1 && concealment_motion_vectors == 1) {
-                buffered_marker_bit();
+                marker_bit();
               }
 
               int[12] pattern_code;
@@ -863,7 +861,7 @@ bit->int filter MPEGStreamParser(int width,
               if (macroblock_pattern == 1) {
                 // coded_block_pattern() (cite 1, P.37, 62)
                 int cbp;
-                buffered_variable_length_code(cbp,const_coded_block_patterns);
+                variable_length_code(cbp,const_coded_block_patterns);
                 for (int i = 0; i < 6; i++) {
                   if ((cbp & (1 << (5-i))) > 0)
                     pattern_code[i] = 1;
@@ -873,7 +871,7 @@ bit->int filter MPEGStreamParser(int width,
                 }
                 if (chroma_format == 2) {
                   int coded_block_pattern_1;
-                  bufferedpops(2, coded_block_pattern_1);
+                  pops(2, coded_block_pattern_1);
                   for (int i = 6; i < 8; i++) {
                     if ((coded_block_pattern_1 & (1<< (7-i))) > 0)
                       pattern_code[i] = 1;
@@ -897,12 +895,12 @@ bit->int filter MPEGStreamParser(int width,
                   if (macroblock_intra == 1) {
                     if (i < 4) {
                       int dc_dct_size_luminance, dc_dct_differential_luminance, dc_dct_luminance;
-                      buffered_variable_length_code(dc_dct_size_luminance,const_dct_dc_size_luminance);
+                      variable_length_code(dc_dct_size_luminance,const_dct_dc_size_luminance);
                       int dct_diff; // This next section from (cite 1, P.65)
                       if (dc_dct_size_luminance == 0) {
                         dct_diff = 0;
                       } else {
-                        bufferedpops(dc_dct_size_luminance,dc_dct_differential_luminance);
+                        pops(dc_dct_size_luminance,dc_dct_differential_luminance);
                         int half_range = (int) pow(2,dc_dct_size_luminance-1);
                         if (dc_dct_differential_luminance >= half_range) {
                           dct_diff = dc_dct_differential_luminance;
@@ -917,12 +915,12 @@ bit->int filter MPEGStreamParser(int width,
                     } else {
                       // Other ones 
                       int dc_dct_size_chrominance, dc_dct_differential_chrominance, dc_dct_chrominance;
-                      buffered_variable_length_code(dc_dct_size_chrominance,const_dct_dc_size_chrominance);
+                      variable_length_code(dc_dct_size_chrominance,const_dct_dc_size_chrominance);
                       int dct_diff;
                       if (dc_dct_size_chrominance == 0) {
                         dct_diff = 0;
                       } else {
-                        bufferedpops(dc_dct_size_chrominance,dc_dct_differential_chrominance);
+                        pops(dc_dct_size_chrominance,dc_dct_differential_chrominance);
                         int half_range = (int) pow(2,dc_dct_size_chrominance-1);
                         if (dc_dct_differential_chrominance >= half_range) {
                           dct_diff = dc_dct_differential_chrominance;
@@ -951,10 +949,10 @@ bit->int filter MPEGStreamParser(int width,
                   while (QFS_current < 64) {
                     if (macroblock_intra == 0 && QFS_current == 0) {
                       // This section here from end of Table B.14 and 7.2.2.2 (cite 1, P.66)
-                      bufferedpeeks(1,tempval);
+                      peeks(1,tempval);
                       if (tempval == 1) {
-                        bufferedpops(1,tempval);
-                        bufferedpops(1,tempval);
+                        pops(1,tempval);
+                        pops(1,tempval);
                         if (tempval == 0)
                           QFS[i][0] = 1;
                         else 
@@ -962,20 +960,20 @@ bit->int filter MPEGStreamParser(int width,
                         QFS_current += 1;
                       }
                     } 
-                    bufferedpeeks(2,tempval);
+                    peeks(2,tempval);
                     if (tempval == 2) {
-                      bufferedpops(2,tempval);
+                      pops(2,tempval);
                       QFS_current = 64;
                     } else {
                       int signed_level, run;
-                      bufferedpeeks(6,tempval);
+                      peeks(6,tempval);
                       if (tempval == 1) { 
                         // Escape Code
-                        bufferedpops(6,tempval);
+                        pops(6,tempval);
                         int level, sign;
-                        bufferedpops(6,run);
-                        bufferedpops(1,sign);
-                        bufferedpops(11,level);
+                        pops(6,run);
+                        pops(1,sign);
+                        pops(11,level);
                         if (sign == 0) {
                           signed_level = level;
                         } else {
@@ -984,8 +982,8 @@ bit->int filter MPEGStreamParser(int width,
                       } else {
                         // Regular Code
                         int level, sign;
-                        buffered_variable_length_code_dct(run,level,const_dct_coefficients_table_zero);
-                        bufferedpops(1,sign);
+                        variable_length_code_dct(run,level,const_dct_coefficients_table_zero);
+                        pops(1,sign);
                         if (sign == 0) {
                           signed_level = level;
                         } else {
@@ -994,7 +992,7 @@ bit->int filter MPEGStreamParser(int width,
                       }
                       QFS_current += run;
                       if (QFS_current == 63) {
-                        bufferedpops(2,tempval);
+                        pops(2,tempval);
                         if (tempval != 2) {
                           println("Error - Reached End of Block, Expecting End of Block Code");
                         }
@@ -1031,7 +1029,7 @@ bit->int filter MPEGStreamParser(int width,
               push(macroblock_intra);
               push(macroblock_motion_forward);
               push(macroblock_motion_backward);
-              bufferedpeeks(23,tempval);
+              peeks(23,tempval);
               if (tempval == 0) {
                 macroblock_next = false;
               } else {
@@ -1039,15 +1037,15 @@ bit->int filter MPEGStreamParser(int width,
               }
             }
  
-            buffered_next_start_code();
-            bufferedpeeks(32,tempval);
+            next_start_code();
+            peeks(32,tempval);
             if (tempval > 0x000001AF || tempval < 0x00000101)
               slice_start_code_follows = false;
             else
               slice_start_code_follows = true;
           }
-          buffered_next_start_code();
-          bufferedpeeks(32,tempval);
+          next_start_code();
+          peeks(32,tempval);
 
           if (tempval == 0x00000100 || tempval == 0x000001B8) {
             picture_or_group_start_code_found = true;
@@ -1057,7 +1055,7 @@ bit->int filter MPEGStreamParser(int width,
 
         }
 
-        bufferedpeeks(32,tempval);
+        peeks(32,tempval);
         if (tempval != 0x000001B7) {
           println("Error - Program Limitation: Don't handle repeated sequence headers and sequence extensions");
         }

@@ -70,7 +70,10 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
 
     // private static int filterID = 0;
 
-    int PRINT_MSG_PARAM = -1;
+// used in hack for trying to print parameters for message sends when in
+// library format.  Should not be needed now that message sends have a
+// reasonable format for backends.
+//    int PRINT_MSG_PARAM = -1;
 
     private static int byteSize(CType type) {
         if (type instanceof CIntType)
@@ -1598,10 +1601,10 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
     public void visitMethodCallExpression(JMethodCallExpression self,
             JExpression prefix, String ident, JExpression[] args) {
 
-        if (PRINT_MSG_PARAM > -1) {
-            visitArgs(args, 0);
-            return;
-        }
+//        if (PRINT_MSG_PARAM > -1) {
+//            visitArgs(args, 0);
+//            return;
+//        }
 
         /*
          * if (ident != null && ident.equals(JAV_INIT)) { return; // we do not
@@ -1908,45 +1911,24 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
 
                 System.out.println("params size: " + params.length);
 
-                ident = ((JStringLiteral) params[1]).stringValue();
-
                 p.print("/*");
 
-                for (int y = 0;; y++) {
-                    // this causes only msg param to be output
-                    PRINT_MSG_PARAM = y;
-                    params[2].accept(this);
-                    if (PRINT_MSG_PARAM == -1)
-                        break; // no more params!
+//                for (int y = 0;; y++) {
+//                    // this causes only msg param to be output
+//                    PRINT_MSG_PARAM = y;
+//                    params[2].accept(this);
+//                    if (PRINT_MSG_PARAM == -1)
+//                        break; // no more params!
+//                    num_params++;
+//                    p.print(",");
+//                }
+                for (i = 0; i < params.length; i++) {
+                    params[i].accept(this);
                     num_params++;
-                    p.print(",");
+                    if (i < params.length - 1) { p.print(",");}
                 }
-
+                
                 p.print(" num_params: " + num_params + "*/\n");
-
-                /*
-                 try {
-
-                 p.print(((JStringLiteral)params[1]).stringValue());
-
-                 // params[1].accept(this); // name of the portal method! 
-                 
-                 p.newLine();
-
-                 for (int y = 0;; y++) {
-
-                 // this causes only msg param to be output
-                 PRINT_MSG_PARAM = y; 
-                 params[2].accept(this);
-                 if (PRINT_MSG_PARAM == -1) break; // no more params!
-                 }
-
-                 return;
-
-                 } catch (Exception ex) {
-                 ex.printStackTrace();
-                 }
-                 */
 
                 CClass pclass = ((SIRPortal) portal).getPortalType()
                         .getCClass();
@@ -1964,7 +1946,7 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
                     System.out
                             .println("/* has method: " + methods[t] + " */\n");
 
-                    if (methods[t].getIdent().equals(ident)) {
+                    if (methods[t].getIdent().equals(__ident)) {
                         index = t;
                         break;
                     }
@@ -2040,6 +2022,11 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
                             + "out->write_int(-1);\n");
                 }
 
+                assert params.length == method_params.length :
+                    "Message send parameter list length " + params.length 
+                    + " != formals list length " + method_params.length;
+                    ;
+                
                 if (params != null) {
                     for (int t = 0; t < method_params.length; t++) {
 
@@ -2062,10 +2049,12 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
                         // 			}
 
                         // print out the parameter!
-                        PRINT_MSG_PARAM = t;
-                        params[2].accept(this);
-                        PRINT_MSG_PARAM = -1;
-
+//                        PRINT_MSG_PARAM = t;
+//                        params[2].accept(this);
+//                        PRINT_MSG_PARAM = -1;
+                        params[t].accept(this);
+                        if (t < method_params.length - 1) { p.print(", "); }
+                        
                         p.print(");\n");
                     }
                 }
@@ -2213,25 +2202,6 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
 	    // sense to me.  --bft
             printType(type);
 	}
-    }
-
-    /**
-     * prints an array initializer expression
-     */
-    public void visitArrayInitializer(JArrayInitializer self,
-            JExpression[] elems) {
-
-        // only print message param
-        if (PRINT_MSG_PARAM > -1) {
-            if (PRINT_MSG_PARAM < elems.length) {
-                elems[PRINT_MSG_PARAM].accept(this);
-            } else {
-                PRINT_MSG_PARAM = -1;
-            }
-            return;
-        }
-
-        super.visitArrayInitializer(self, elems);
     }
 
     // ----------------------------------------------------------------------

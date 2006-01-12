@@ -71,7 +71,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    DetectConst.detect(node);
 	    FlatIRToCluster.generateCode(node);
-	    FlatIRToCluster2.generateCode(node);
+	    // FlatIRToCluster2.generateCode(node);
 
 	    //((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());
 

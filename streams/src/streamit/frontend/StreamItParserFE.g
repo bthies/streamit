@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.61 2005-12-23 15:08:42 dimock Exp $
+ * $Id: StreamItParserFE.g,v 1.62 2006-01-12 00:03:23 dimock Exp $
  */
 
 header {
@@ -313,10 +313,18 @@ helper_call_statement	returns [Statement s] { s = null; List l; }
 	;
 
 msg_statement returns [Statement s] { s = null; List l;
-  Expression minl = null, maxl = null; }
+  Expression minl = null, maxl = null; boolean var = false;}
 	:	p:ID DOT m:ID l=func_call_params
-		(LSQUARE (minl=right_expr)? COLON (maxl=right_expr)? RSQUARE)?
-		{ s = new StmtSendMessage(getContext(p),
+		(LSQUARE 
+			((minl=right_expr)? COLON (maxl=right_expr)?
+			 | STAR { var = true; }
+			 ) 
+		 RSQUARE)?
+		{   if (! var) {
+		 		if (minl == null) { minl = new ExprConstInt(0);}
+				if (maxl == null) { maxl = minl; }
+		    }
+			s = new StmtSendMessage(getContext(p),
 				new ExprVar(getContext(p), p.getText()),
 				m.getText(), l, minl, maxl); }
 	;

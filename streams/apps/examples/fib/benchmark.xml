@@ -7,9 +7,9 @@ work by pushing previous values around a feedback loop, so they can be
 calculated.
   </description>
   <implementations>
-    <impl lang="StreamIt" id="fib" run_time="3600">
+    <impl lang="StreamIt" id="fib">
       <desc>Basic implementation
-            Extra run time on cluster</desc>
+            Extra run time on cluster was probably a hang so removed</desc>
       <file class="source">Fib.str</file>
       <file class="output">Fib.out</file>
     </impl>
@@ -18,9 +18,9 @@ calculated.
       <file class="source">FibFeed.str</file>
       <file class="output">Fib.out</file>
     </impl>
-    <impl lang="StreamIt" id="fib2" run_time="3600">
+    <impl lang="StreamIt" id="fib2">
       <desc>With a round-robin splitter and no peeking
-            Extra run time on cluster</desc>
+            Extra run time on cluster was probably a hang so removed</desc>
       <file class="source">Fib2.str</file>
       <file class="output">Fib.out</file>
     </impl>

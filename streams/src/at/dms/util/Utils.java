@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.24 2005-02-17 00:12:08 thies Exp $
+ * $Id: Utils.java,v 1.25 2006-01-12 18:10:44 thies Exp $
  */
 
 package at.dms.util;
@@ -164,6 +164,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
 	     ident.equals("log") ||
 	     ident.equals("log10") ||
 	     ident.equals("pow") ||
+	     ident.equals("round") ||
 	     ident.equals("rint") ||
 	     ident.equals("sqrt") ||
 	     ident.equals("tanh") ||

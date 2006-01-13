@@ -430,7 +430,7 @@ compile options being tested are stored under $STREAMIT_HOME/apps.qms.
 
 When done, you can see a summary report similar to that from the
 nightly regression test using the commands:
-   qmtest -o ./results.xml ./results.qmr 
+   qmtest report  -o ./results.xml ./results.qmr 
    ./regtest/qmtest/summarize_xml_results ./results.xml
 however, for a substantial test, you will have to wait for a rather
 slow XML parser to do its work.  It may be easier to just capture the

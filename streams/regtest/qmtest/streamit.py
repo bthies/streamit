@@ -2,7 +2,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.13 2006-01-09 15:00:54 dimock Exp $
+# $Id: streamit.py,v 1.14 2006-01-13 00:10:33 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -202,12 +202,15 @@ class RunStrcTest(qm.test.test.Test):
           # cluster requires extra make step
           #e = TimedExecutable()
           e = qm.executable.RedirectedExecutable(self.timeout)
-          e.Run(['make', '-f', 'Makefile.cluster', 'run_cluster'], dir=test_home_dir)
+          # make with no optimization.  'CCFLAGS=""' will not work because
+          # of quoting problems...
+          e.Run(['make', 'CCFLAGS=-O0', '-f', 'Makefile.cluster'], dir=test_home_dir)
           result['RunStrcTest.stdout_makefile'] = e.stdout
           result['RunStrcTest.stderr_makefile'] = e.stderr
           makestatus = 1
-          if os.access(os.path.join(test_home_dir,'run_cluster'), os.F_OK):
-              makestatus=0
+          if os.access(os.path.join(test_home_dir,'run_cluster'), os.F_OK) \
+             or os.access(os.path.join(test_home_dir,'fusion'), os.F_OK):
+                makestatus=0
 
           InterpretExitCode(result, makestatus, self.exit_code, 'RunStrcTest_makefile')
 
@@ -238,7 +241,7 @@ class RunProgramTest(qm.test.test.Test):
     """Run a compiled program as a QMTest test.
 
     This runs the output of the StreamIt compiler.  This is only
-    meaningful for the uniprocessor and RAW backends, since 'strc'
+    meaningful for the uniprocessor, cluster and RAW backends, since 'strc'
     runs the program itself for the library backend."""
 
     arguments = [
@@ -309,8 +312,12 @@ class RunProgramTest(qm.test.test.Test):
         InterpretExitCode(result, status, None, 'RunProgramTest')
         
     def _RunClu(self, context, result):
-        self._RunNamedFile(context, result, 'run_cluster')
-
+        test_home_dir = context_to_dir(context)
+        if os.access(os.path.join(test_home_dir,'fusion'), os.F_OK):
+            self._RunNamedFile(context, result, 'fusion')
+        else:
+            self._RunNamedFile(context, result, 'run_cluster')
+            
     def _RunUni(self, context, result):
         self._RunNamedFile(context, result, 'a.out')
 

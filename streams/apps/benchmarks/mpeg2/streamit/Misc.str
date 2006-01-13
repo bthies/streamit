@@ -53,12 +53,30 @@ int->int filter Saturation(int min, int max) {
  * @input A sequence of numitems values.
  * @output A sequence of numitems values repeated numtimes.
  */
+/*
 int->int splitjoin Repeat(int numitems, int numtimes) {
   split duplicate;
   for (int i = 0; i < numtimes; i++)
     add Identity<int>;
   join roundrobin(numitems);
 }
+*/
+
+int->int filter Repeat(int numitems, int numtimes) {
+
+    work pop numitems push numitems * numtimes {
+	int[numitems] dataArray;
+	for (int i = 0; i < numitems; i++) {
+	    dataArray[i] = pop();
+	}
+	for (int j = 0; j < numtimes; j++) {
+	    for (int i = 0; i < numitems; i++) {
+		push(dataArray[i]);
+	    }
+	}
+    }
+}
+
 
 /** 
  * Divide every value in the stream by a given number, truncating to the nearest

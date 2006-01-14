@@ -116,6 +116,7 @@ public class Operator extends DestroyedClass
      * Register a pop, push, or peek.
      */
     public void registerPop() {
+	Profiler.registerPop();
         currentPopped++;
         // update peek index in case we've popped items without
         // peeking them.
@@ -124,6 +125,7 @@ public class Operator extends DestroyedClass
         }
     }
     public void registerPush() {
+	Profiler.registerPush();
         currentPushed++;
     }
     public void registerPeek(int i) {
@@ -1007,7 +1009,12 @@ public class Operator extends DestroyedClass
         allFilters.add (this);
     }
     
-    void runSinks ()
+    /**
+     * Returns whether or not anyone was able to execute.  If not, the
+     * caller should quit because noone else is going to execute in
+     * the future.
+     */
+    boolean runSinks ()
     {
         ListIterator iter;
         
@@ -1046,11 +1053,8 @@ public class Operator extends DestroyedClass
 	    } while (afterSink == beforeSink);
         }
 
-	// make sure that at least someone successfully executed;
-	// otherwise the stream is fully drained
-	if (executions==0) {
-	    System.exit(0);
-	}
+	// return whether or not someone executed
+	return executions>0;
     }
 
     /**

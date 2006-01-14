@@ -894,22 +894,26 @@ public abstract class Stream extends Operator
         }
         else
         {
-            if (!doRun)
+            if (!doRun) {
                 System.exit(0);
+	    }
 
-		/* RMR { in no sched case, nIters counts the executions of the sink
-		 * NOTE: need to clarify what happens in the case of multiple sinks
-		 */
-		while (nIters != 0)
-            {
-                runSinks();
-                drainChannels();
-		    /* RMR { decrement iteration count so driver knows when to stop */
-                if (nIters > 0)
-                    nIters--;
-		    /* } RMR */
-            }
-		/* } RMR */
+	    if (scheduledRun) {
+		// scheduled run: know how many times to try to execute
+		while (nIters != 0) {
+		    runSinks();
+		    drainChannels();
+		    if (nIters > 0) {
+			nIters--;
+		    }
+		}
+	    } else {
+		// unscheduled: run as long as someone fires
+		boolean makingProgress;
+		do {
+		    makingProgress = runSinks();
+		} while (makingProgress);
+	    }
         }
 	} catch (Throwable e) {
 	    /* Any unhandled error or exception in running the program

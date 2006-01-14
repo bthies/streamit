@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.113 2006-01-10 00:00:40 dimock Exp $
+ * @version $Id: NodesToJava.java,v 1.114 2006-01-14 03:15:43 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -45,6 +45,9 @@ public class NodesToJava implements FEVisitor
     // Allow tweaks when compiling for --library (from constructor)
     private boolean libraryFormat;
 
+    // Optionally instrument output with profile information
+    private boolean profile;
+
     // a generator for unique strings (from constructor)
     private TempVarGen varGen;
 
@@ -52,11 +55,12 @@ public class NodesToJava implements FEVisitor
     //(a.k.a. global) keyword.
     private boolean global;
 
-    public NodesToJava(boolean libraryFormat, TempVarGen varGen)
+    public NodesToJava(boolean libraryFormat, boolean profile, TempVarGen varGen)
     {
         this.ss = null;
         this.indent = "";
         this.libraryFormat = libraryFormat;
+        this.profile = profile;
         this.varGen = varGen;
         this.global = false;
     }
@@ -390,11 +394,11 @@ public class NodesToJava implements FEVisitor
     
     public Object visitExprBinary(ExprBinary exp)
     {
-        String result;
-        String op = null;
-        result = "(";
-        result += (String)exp.getLeft().accept(this);
-        switch (exp.getOp())
+	String result;
+	String op = null;
+	result = "(";
+	result += (String)exp.getLeft().accept(this);
+	switch (exp.getOp())
 	    {
 	    case ExprBinary.BINOP_ADD: op = "+"; break;
 	    case ExprBinary.BINOP_SUB: op = "-"; break;
@@ -416,11 +420,72 @@ public class NodesToJava implements FEVisitor
 	    case ExprBinary.BINOP_RSHIFT: op = ">>"; break;
 	    default: assert false : exp; break;
 	    }
-        result += " " + op + " ";
-        result += (String)exp.getRight().accept(this);
-        result += ")";
-        return result;
+	result += " " + op + " ";
+	result += (String)exp.getRight().accept(this);
+	result += ")";
+
+	// if profiling on, wrap this with instrumentation call
+	if (libraryFormat && profile) {
+	    return wrapWithProfiling(result, binopToProfilerId(exp.getOp()));
+	}
+
+	return result;
     }
+
+    /**
+     * Provides a mapping from binary operations in ExprBinary to the
+     * field name in the Java library profiler
+     * (streamit.library.Profiler).
+     */
+    private String binopToProfilerId(int binop) {
+	switch (binop) 
+	    {
+	    case ExprBinary.BINOP_ADD: 	  return "BINOP_ADD"; 
+	    case ExprBinary.BINOP_SUB: 	  return "BINOP_SUB"; 
+	    case ExprBinary.BINOP_MUL: 	  return "BINOP_MUL"; 
+	    case ExprBinary.BINOP_DIV: 	  return "BINOP_DIV"; 
+	    case ExprBinary.BINOP_MOD: 	  return "BINOP_MOD"; 
+	    case ExprBinary.BINOP_AND: 	  return "BINOP_AND"; 
+	    case ExprBinary.BINOP_OR:  	  return "BINOP_OR"; 
+	    case ExprBinary.BINOP_EQ:  	  return "BINOP_EQ"; 
+	    case ExprBinary.BINOP_NEQ: 	  return "BINOP_NEQ"; 
+	    case ExprBinary.BINOP_LT:  	  return "BINOP_LT"; 
+	    case ExprBinary.BINOP_LE:  	  return "BINOP_LE"; 
+	    case ExprBinary.BINOP_GT:  	  return "BINOP_GT"; 
+	    case ExprBinary.BINOP_GE:  	  return "BINOP_GE"; 
+	    case ExprBinary.BINOP_BAND:	  return "BINOP_BAND";
+	    case ExprBinary.BINOP_BOR: 	  return "BINOP_BOR"; 
+	    case ExprBinary.BINOP_BXOR:	  return "BINOP_BXOR"; 
+	    case ExprBinary.BINOP_LSHIFT: return "BINOP_LSHIFT"; 
+	    case ExprBinary.BINOP_RSHIFT: return "BINOP_RSHIFT"; 
+	    default: assert false : binop;
+	    }
+	// stupid compiler
+	return null;
+    }
+
+    /**
+     * Provides a mapping from java.Math functions to the field name
+     * in the Java library profiler (streamit.library.Profiler).
+     */
+    private String funcToProfilerId(String ident) {
+	// hope that we have also defined this function in the Java library
+	return "FUNC_" + ident.toUpperCase();
+    }
+
+    /**
+     * Given the generated code for an expression (expr) and the
+     * operation being performed (op), wrap that expression in a call
+     * to an instrumentation procedure in the library.
+     */
+    private String wrapWithProfiling(String exp, String profilerId) {
+	// generate a unique ID for this arith op
+	int id = (MAX_PROFILE_ID++);
+	// call to function in Java library (it returns <exp>)
+	return "Profiler.registerOp(Profiler." + profilerId + ", " + id + ", " + exp + ")";
+    }
+    // counter for wrapWithProfiling
+    private int MAX_PROFILE_ID = 0;
 
     public Object visitExprComplex(ExprComplex exp)
     {
@@ -487,6 +552,7 @@ public class NodesToJava implements FEVisitor
     {
 	String result;
         String name = exp.getName();
+	boolean mathFunction = false;
         // Local function?
         if (ss.getFuncNamed(name) != null) {
             result = name + "(";
@@ -527,6 +593,7 @@ public class NodesToJava implements FEVisitor
             // float's now, so add a cast to float.  Not sure if this is
             // the right thing to do for all math functions in all cases?
             result = "(float)Math." + name + "(";
+	    mathFunction = true;
 	}
         boolean first = true;
         for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
@@ -537,6 +604,13 @@ public class NodesToJava implements FEVisitor
 		result += (String)param.accept(this);
 	    }
         result += ")";
+
+	// if we called a math function and profiling is on, wrap with
+	// call to profiler
+	if (libraryFormat && profile && mathFunction) {
+	    result = wrapWithProfiling(result, funcToProfilerId(name));
+	}
+
         return result;
     }
 
@@ -991,9 +1065,17 @@ public class NodesToJava implements FEVisitor
         case 0: op = " = "; break;
         default: assert false: stmt; op = " = "; break;
         }
+	String lhs = (String)stmt.getLHS().accept(this);
+	String rhs = (String)stmt.getRHS().accept(this);
+
+	// if profiling on and we are not just assigning, wrap rhs
+	// with instrumentation call
+	if (libraryFormat && profile && stmt.getOp()!=0) {
+	    rhs = wrapWithProfiling(rhs, binopToProfilerId(stmt.getOp()));
+	}
+
         // Assume both sides are the right type.
-        return (String)stmt.getLHS().accept(this) + op +
-            (String)stmt.getRHS().accept(this);
+        return lhs + op + rhs;
     }
 
     public Object visitStmtBlock(StmtBlock stmt)
@@ -1520,6 +1602,11 @@ public class NodesToJava implements FEVisitor
 			result += indent + "program.run(args);\n";
 			if (libraryFormat) {
 			    result += indent + "FileWriter.closeAll();\n";
+			    if (profile) {
+				result += indent + "Profiler.summarize();\n";
+			    }
+			    // explicitly exit to terminate possible phased filter threads
+			    result += "System.exit(0);\n";
 			}
 			unIndent();
 			result += indent + "}\n";

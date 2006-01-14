@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.71 2006-01-05 22:28:31 thies Exp $
+ * @version $Id: ToJava.java,v 1.72 2006-01-14 03:15:40 thies Exp $
  */
 public class ToJava
 {
@@ -43,6 +43,7 @@ public class ToJava
 "\n" +
 "Options:\n" +
 "  --library      Output code suitable for the Java library\n" +
+"  --profile      Instrument code with profiling information\n" +
 "  --help         Print this message\n" +
 "  --output file  Write output to file, not stdout\n" +
 "\n");
@@ -50,6 +51,7 @@ public class ToJava
 
     private boolean printHelp = false;
     private boolean libraryFormat = false;
+    private boolean profile = false;
     private String outputFile = null;
     private List inputFiles = new java.util.ArrayList();
 
@@ -71,6 +73,8 @@ public class ToJava
                 outputFile = args[++i];
             else if (args[i].equals("--library"))
                 libraryFormat = true;
+            else if (args[i].equals("--profile"))
+                profile = true;
             else
                 // Maybe check for unrecognized options.
                 inputFiles.add(args[i]);
@@ -314,7 +318,7 @@ public class ToJava
             outWriter.write("import streamit.library.io.*;\n");
 
             String javaOut =
-                (String)prog.accept(new NodesToJava(libraryFormat, varGen));
+                (String)prog.accept(new NodesToJava(libraryFormat, profile, varGen));
             outWriter.write(javaOut);
             outWriter.flush();
         }

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.66 2006-01-05 21:19:04 thies Exp $
+# $Id: strc,v 1.67 2006-01-14 03:15:28 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -39,6 +39,8 @@ $have_fftw = "1";
 
 # Enable assertions globally:
 $java = $java . " -ea";
+# Run with profiling (output in java.hprof.txt)
+#$java = $java . " -Xrunhprof:cpu=samples -ea";
 
 use Getopt::Long;
 Getopt::Long::Configure("bundling", "bundling_override", "no_ignore_case");
@@ -406,8 +408,10 @@ sub new_to_old
     my $target = change_extension($fns->[0], "str", "java");
     my $libflag = "";
     $libflag = "--library" if $opts{library};
+    my $proflag = "";
+    $proflag = "--profile" if $opts{profile};
     my $result = call("$java $xmx $server streamit.frontend.ToJava --output $target " .
-		      "$libflag " . join(' ', @$fns));
+		      "$libflag $proflag " . join(' ', @$fns));
     return undef if $result != 0;
     return [$target];
   }

@@ -199,23 +199,31 @@ int->int pipeline DCT_2D_int(int size) {
  *         domain, ordered by row and then column.
  */
 float->float filter iDCT_1D(int size) {
-  work pop size push size {
-    float Cu;
-    for (int x = 0; x < size; x++) {
-      float tempsum = 0;
-      for (int u = 0; u < size; u++) {
-        if (u == 0)
-          Cu = 1/sqrt(2);
-        else
-          Cu = 1;
-        tempsum += Cu*peek(u)*cos(u*pi*(2.0*x+1)/(2.0*size));
-      }
-      push((1.0/2.0)*tempsum);
+    float[size][size] coeff;
+    init {
+	for (int x = 0; x < size; x++) {
+	    for (int u = 0; u < size; u++) {
+		float Cu;
+		if (u == 0) 
+		    Cu = 1/sqrt(2);
+		else
+		    Cu = 1;
+		coeff[x][u] = 0.5*Cu*cos(u*pi*(2.0*x+1)/(2.0*size));
+	    }
+	}
     }
-    for (int x = 0; x < size; x++) {
-      pop();
+    work pop size push size {
+	for (int x = 0; x < size; x++) {
+	    float tempsum = 0;
+	    for (int u = 0; u < size; u++) {
+		tempsum += coeff[x][u]*peek(u);
+	    }
+	    push(tempsum);
+	}
+	for (int x = 0; x < size; x++) {
+	    pop();
+	}
     }
-  }
 }
 
 /**
@@ -229,23 +237,32 @@ float->float filter iDCT_1D(int size) {
  *         increases along each row and horizontal frequency along each column.
  */
 float->float filter DCT_1D(int size) {
-  work pop size push size {
-    float Cu;
-    for (int u = 0; u < size; u++) {
-      if (u == 0) 
-        Cu = 1/sqrt(2);
-      else
-        Cu = 1;
-      float tempsum = 0;
-      for (int x = 0; x < size; x++) {
-        tempsum += peek(x)*cos(u*pi*(2.0*x+1)/(2.0*size));
-      }
-      push((1.0/2.0)*Cu*tempsum);
+    float[size][size] coeff;
+    init {
+	for (int u = 0; u < size; u++) {
+	    float Cu;
+	    if (u == 0) 
+		Cu = 1/sqrt(2);
+	    else
+		Cu = 1;
+	    for (int x = 0; x < size; x++) {
+		coeff[u][x] = 0.5*Cu*cos(u*pi*(2.0*x+1)/(2.0*size));
+	    }
+	}
     }
-    for (int x = 0; x < size; x++) {
-      pop();
+    
+    work pop size push size {
+	for (int u = 0; u < size; u++) {
+	    float tempsum = 0;
+	    for (int x = 0; x < size; x++) {
+		tempsum += peek(x)*coeff[u][x];
+	    }
+	    push(tempsum);
+	}
+	for (int x = 0; x < size; x++) {
+	    pop();
+	}
     }
-  }
 }
 
 /**

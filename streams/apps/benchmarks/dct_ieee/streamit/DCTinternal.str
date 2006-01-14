@@ -313,9 +313,13 @@ float->float pipeline DCT_1D_compute_value(int u, int size) {
  * @internal
  */
 float->float filter ComputeIntermediate(int x, int u, int size, float Cu) {
-  work pop 1 push 1 {
-    push(Cu*pop()*cos(u*pi*(2.0*x+1)/(2.0*size)));
-  }
+    float coeff;
+    init {
+	coeff = Cu*cos(u*pi*(2.0*x+1)/(2.0*size));
+    }
+    work pop 1 push 1 {
+	push(coeff*pop());
+    }
 }
 
 /**

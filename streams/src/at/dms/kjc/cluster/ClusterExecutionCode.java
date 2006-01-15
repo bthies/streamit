@@ -691,12 +691,16 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 								   var),
 				      new JIntLiteral(0)) };
 	JStatement init = new JExpressionListStatement(null, initExpr, null);
-	// if count==0, just return init statement
+	// if count==0, just return empty statement
 	if (count instanceof JIntLiteral) {
 	    int intCount = ((JIntLiteral)count).intValue();
 	    if (intCount<=0) {
 		// return assignment statement
 		return new JEmptyStatement(null, null);
+	    }
+	    if (intCount==1) {
+		// return body statement
+		return body;
 	    }
 	}
 	// make conditional - test if <var> less than <count>
@@ -884,8 +888,6 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	
 	JStatement incr_expr1 = new JExpressionStatement(null, new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var)), null);
 
-
-new JEmptyStatement(null, null);
 
 	JStatement init_stmt2 = new JExpressionStatement(null,
 					  (new JAssignmentExpression

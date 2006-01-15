@@ -370,6 +370,17 @@ class ModuloPipelineFusion {
     private static JStatement makeForLoop(JStatement body,
 					  JLocalVariable var,
 					  JExpression count) {
+	// if count==0, just return empty statement
+	if (count instanceof JIntLiteral) {
+	    int intCount = ((JIntLiteral)count).intValue();
+	    if (intCount<=0) {
+		// return empty statement
+		return new JEmptyStatement();
+	    }
+	    if (intCount==1) {
+		return body;
+	    }
+	}
 	// make init statement - assign zero to <var>.  We need to use
 	// an expression list statement to follow the convention of
 	// other for loops and to get the codegen right.
@@ -377,14 +388,6 @@ class ModuloPipelineFusion {
 	    new JAssignmentExpression(new JLocalVariableExpression(var),
 				      new JIntLiteral(0)) };
 	JStatement init = new JExpressionListStatement(initExpr);
-	// if count==0, just return init statement
-	if (count instanceof JIntLiteral) {
-	    int intCount = ((JIntLiteral)count).intValue();
-	    if (intCount<=0) {
-		// return empty statement
-		return new JEmptyStatement();
-	    }
-	}
 	// make conditional - test if <var> less than <count>
 	JExpression cond = 
 	    new JRelationalExpression(Constants.OPE_LT,

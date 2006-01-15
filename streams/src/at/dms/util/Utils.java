@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.25 2006-01-12 18:10:44 thies Exp $
+ * $Id: Utils.java,v 1.26 2006-01-15 23:01:23 thies Exp $
  */
 
 package at.dms.util;
@@ -402,15 +402,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * count is just one, then return the body instead of a loop.
      */
     public static JStatement makeForLoop(JStatement body, int count) {
-	if (count<=0) {
-	    // if the count isn't positive, return an empty statement
-	    return new JEmptyStatement(null, null); 
-	} else if (count==1) {
-	    // if the count is one, then just return the body
-	    return body;
-	} else {
-	    return makeForLoop(body, new JIntLiteral(count));
-	}
+	return makeForLoop(body, new JIntLiteral(count));
     }
 
     /**
@@ -418,6 +410,16 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * that executes <body> for <count> number of times.
      */
     public static JStatement makeForLoop(JStatement body, JExpression count) {
+	if (count instanceof JIntLiteral) {
+	    int intCount = ((JIntLiteral)count).intValue();
+	    if (intCount<=0) {
+		// if the count isn't positive, return an empty statement
+		return new JEmptyStatement(null, null); 
+	    } else if (intCount==1) {
+		// if the count is one, then just return the body
+		return body;
+	    }
+	}
 	return makeForLoop(body, count, 	    
 			   new JVariableDefinition(/* where */ null,
 						   /* modifiers */ 0,
@@ -443,6 +445,26 @@ public abstract class Utils implements Serializable, DeepCloneable {
 	// make a declaration statement for our new variable
 	JVariableDeclarationStatement varDecl =
 	    new JVariableDeclarationStatement(null, loopIndex, null);
+
+	// avoid loops for certain loop bounds
+	if (count instanceof JIntLiteral) {
+	    int intCount = ((JIntLiteral)count).intValue();
+	    if (intCount<=0) {
+		// if the count isn't positive, return the variable
+		// decl.  Return this rather than an empty statement
+		// in case some later code depends on the value of
+		// this variable on loop exit.  However, rstream seems
+		// not to need the VarDecl, so return only an empty
+		// statement there.
+		return (KjcOptions.rstream ? (JStatement)(new JEmptyStatement()) : (JStatement)varDecl);
+	    } else if (intCount==1) {
+		// if the count is one, then return the decl and the
+		// body (but rstream doesn't need the decl).
+		return (KjcOptions.rstream ? body :
+			new JBlock(null, new JStatement[] { varDecl, body }, null));
+	    }
+	}
+
 	// make a test if our variable is less than <count>
 	JExpression cond = 
 	    new JRelationalExpression(null,
@@ -488,6 +510,26 @@ public abstract class Utils implements Serializable, DeepCloneable {
 	// make a declaration statement for our new variable
 	JVariableDeclarationStatement varDecl =
 	    new JVariableDeclarationStatement(null, loopIndex, null);
+
+	// avoid loops for certain loop bounds
+	if (count instanceof JIntLiteral) {
+	    int intCount = ((JIntLiteral)count).intValue();
+	    if (intCount<=0) {
+		// if the count isn't positive, return the variable
+		// decl.  Return this rather than an empty statement
+		// in case some later code depends on the value of
+		// this variable on loop exit.  However, rstream seems
+		// not to need the VarDecl, so return only an empty
+		// statement there.
+		return (KjcOptions.rstream ? (JStatement)new JEmptyStatement() : (JStatement)varDecl);
+	    } else if (intCount==1) {
+		// if the count is one, then return the decl and the
+		// body (but rstream doesn't need the decl).
+		return (KjcOptions.rstream ? body :
+			new JBlock(null, new JStatement[] { varDecl, body }, null));
+	    }
+	}
+
 	// make a test if our variable is less than <count>
 	JExpression cond = 
 	    new JRelationalExpression(null,

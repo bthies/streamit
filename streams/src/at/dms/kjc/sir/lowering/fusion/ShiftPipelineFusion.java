@@ -578,11 +578,9 @@ class ShiftPipelineFusion {
 		return new JEmptyStatement(null, null);
 	    }
 	    if (intCount==1) {
-		System.err.println("No loop on " + var);
 		return body;
 	    }
 	}
-	System.err.println("Loop to " + count + " on " + var);
 	// make init statement - assign zero to <var>.  We need to use
 	// an expression list statement to follow the convention of
 	// other for loops and to get the codegen right.

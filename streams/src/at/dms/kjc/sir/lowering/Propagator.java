@@ -20,6 +20,10 @@ public class Propagator extends SLIRReplacingVisitor {
      */
     public static final String TEMP_VARIABLE_BASE = "__constpropvar_";
     /**
+     * Maximum number of elements in an array that we attempt to constant prop.
+     */
+    private static final int MAX_ARRAY_SIZE = 1024*1024;
+    /**
      * Map of known constants/Overloaded for copy prop (JLocalVariable -> JLiteral/JLocalVariableExpr/Array)
      * When storing information about an array JLiteral/JLocalVariablesExpr are stored in the Array being mapped to
      */
@@ -246,16 +250,29 @@ public class Propagator extends SLIRReplacingVisitor {
 	    changed.put(self,Boolean.TRUE);
 	    if(dims.length==1) {
 		if(dims[0] instanceof JIntLiteral) {
-		    Object[] array=new Object[((JIntLiteral)dims[0]).intValue()];
-		    constants.put(self,array);
-		    added=true;
+		    int dim1 = ((JIntLiteral)dims[0]).intValue();
+		    // only propagate arrays if they are under a threshold size
+		    if (dim1 < MAX_ARRAY_SIZE) {
+			Object[] array=new Object[dim1];
+			constants.put(self,array);
+			added=true;
+		    } else
+			constants.remove(self);
 		} else
 		    constants.remove(self);
 	    } else if(dims.length==2) {
 		if((dims[0] instanceof JIntLiteral)&&(dims[1] instanceof JIntLiteral)) {
-		    Object[][] array=new Object[((JIntLiteral)dims[0]).intValue()][((JIntLiteral)dims[1]).intValue()];
-		    constants.put(self,array);
-		    added=true;
+		    int dim1 = ((JIntLiteral)dims[0]).intValue();
+		    int dim2 = ((JIntLiteral)dims[1]).intValue();
+		    int numElements = dim1 * dim2;
+
+		    // only propagate arrays if they are under a threshold size
+		    if (numElements < MAX_ARRAY_SIZE) {
+			Object[][] array=new Object[dim1][dim2];
+			constants.put(self,array);
+			added=true;
+		    } else
+			constants.remove(self);
 		} else
 		    constants.remove(self);
 	    } else
@@ -319,45 +336,60 @@ public class Propagator extends SLIRReplacingVisitor {
 	
 	//NOTE: only handle 1 or 2 dimensional rectangular arrays right now
 	if (!(arrInit.getElems()[0] instanceof JArrayInitializer)) {
-	    Object[] array = new Object[arrInit.getElems().length];
 	    
-	    for (int i = 0; i < arrInit.getElems().length; i++) {
-		if (!(arrInit.getElems()[i] instanceof JLiteral)) {
-		    System.err.println("WARNING: Only rectangular one or two dimensional array" + 
-				       "initializers of literals supported in constant prop... ");
-		    return;
-		}
+	    int dim1 = arrInit.getElems().length;
+	    
+	    // only propagate arrays if they are under a threshold size
+	    if (dim1 < MAX_ARRAY_SIZE) {
+
+		Object[] array = new Object[dim1];
 		
-		array[i] = arrInit.getElems()[i];
+		for (int i = 0; i < arrInit.getElems().length; i++) {
+		    if (!(arrInit.getElems()[i] instanceof JLiteral)) {
+			System.err.println("WARNING: Only rectangular one or two dimensional array" + 
+					   "initializers of literals supported in constant prop... ");
+			return;
+		    }
+		    
+		    array[i] = arrInit.getElems()[i];
+		}
+		constants.put(self, array);
+		added = true;
+		return;
 	    }
-	    constants.put(self, array);
-	    added = true;
-	    return;
 	}  //now look for 2 dimensional rectangular arrays
 	else if (arrInit.getElems()[0] instanceof JArrayInitializer &&
 		 ((JArrayInitializer)arrInit.getElems()[0]).getElems().length > 0 &&
 		 !(((JArrayInitializer)arrInit.getElems()[0]).getElems()[0] instanceof JArrayInitializer)) {
-	    Object[][] array = new Object[arrInit.getElems().length]
-		[((JArrayInitializer)arrInit.getElems()[0]).getElems().length];
-	    
-	    for (int i = 0; i < array.length; i++) {
-		//check each element of the 1st dim to make sure it is an array init and it has 
-		//the same number of elements...
-		if (!(arrInit.getElems()[i] instanceof JArrayInitializer) ||
-		    ((JArrayInitializer)arrInit.getElems()[i]).getElems().length != array[0].length) {
-		    System.err.println("WARNING: Only rectangular one or two dimensional array" + 
-				       "initializers of literals supported in constant prop... ");
-		    return;
-		}   
-		for (int j = 0; j < array[0].length; j++) {
-		    //now place each initial val in the array we are placing in the hash table
-		    array[i][j] = ((JArrayInitializer)arrInit.getElems()[i]).getElems()[j];
+
+	    int dim1 = arrInit.getElems().length;
+	    int dim2 = ((JArrayInitializer)arrInit.getElems()[0]).getElems().length;
+	    int numElements = dim1*dim2;
+
+	    // only propagate arrays if they are under a threshold size
+	    if (numElements < MAX_ARRAY_SIZE) {
+		
+		Object[][] array = new Object[dim1][dim2];
+		
+		for (int i = 0; i < array.length; i++) {
+		    //check each element of the 1st dim to make sure it is an array init and it has 
+		    //the same number of elements...
+		    if (!(arrInit.getElems()[i] instanceof JArrayInitializer) ||
+			((JArrayInitializer)arrInit.getElems()[i]).getElems().length != array[0].length) {
+			System.err.println("WARNING: Only rectangular one or two dimensional array" + 
+					   "initializers of literals supported in constant prop... ");
+			return;
+		    }   
+		    for (int j = 0; j < array[0].length; j++) {
+			//now place each initial val in the array we are placing in the hash table
+			array[i][j] = ((JArrayInitializer)arrInit.getElems()[i]).getElems()[j];
+		    }
 		}
+		
+		constants.put(self, array);
+		added = true;
+		return;
 	    }
-	    
-	    constants.put(self, array);
-	    added = true;
-	    return;
 	}
 	System.err.println("WARNING: Only rectangular one or two dimensional array" + 
 				       "initializers of literals supported in constant prop... ");

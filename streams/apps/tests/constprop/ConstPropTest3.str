@@ -1,0 +1,33 @@
+/**
+* Tests constant propagation through arrays in a way that was causing
+* MPEG to fail.
+*/
+
+void->void pipeline ConstPropTest3 {
+    add Source();
+    add Test(10);
+    add Printer();
+}
+
+int->int filter Test(int N) {
+    work pop 4 push 1 {
+	int[2][2] f_code;
+	f_code[1][1] = 0;
+	for (int pops_i = 0; pops_i < (4-1); pops_i++) {
+            f_code[1][1] += pop();
+            f_code[1][1] <<= 1;
+	}
+	f_code[1][1] += pop();
+
+	push(f_code[1][1]);
+    }
+}
+
+void->int filter Source {
+    int i = 0;
+    work push 1 { push(i++); }
+}
+
+int->void filter Printer {
+    work pop 1 { println(pop()); }
+}

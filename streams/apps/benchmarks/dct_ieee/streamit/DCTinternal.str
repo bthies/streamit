@@ -260,14 +260,49 @@ float->float pipeline iDCT_1D_compute_value(int x, int size) {
 /**
  * @internal
  */
-float->float filter Add_float(int num) {
-  work pop num push 1 {
-    float total = 0;
-    for (int i = 0; i < num; i++) {
-      total += pop();
+float->float pipeline Add_float(int num) {
+    if (num == 8) {
+	// make sure the 8x8 case is unrolled for better performance.
+	// The branch and loop counter is a significant portion of
+	// cycles.
+	add Add_float8();
+    } else {
+	// otherwise use a loop
+	add Add_floatLoop(num);
     }
-    push(total);
-  }
+}
+
+/**
+ * @internal
+ */
+float->float filter Add_float8() {
+    // add exactly 8 inputs
+    work pop 8 push 1 {
+	float total = 0;
+	total += pop();
+	total += pop();
+	total += pop();
+	total += pop();
+	total += pop();
+	total += pop();
+	total += pop();
+	total += pop();
+	push(total);
+    }
+}
+
+/**
+ * @internal
+ */
+float->float filter Add_floatLoop(int num) {
+    // add <num> inputs
+    work pop num push 1 {
+	float total = 0;
+	for (int i = 0; i < num; i++) {
+	    total += pop();
+	}
+	push(total);
+    }
 }
 
 /**

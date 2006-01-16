@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.114 2006-01-14 03:15:43 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.115 2006-01-16 00:37:17 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -426,7 +426,7 @@ public class NodesToJava implements FEVisitor
 
 	// if profiling on, wrap this with instrumentation call
 	if (libraryFormat && profile) {
-	    return wrapWithProfiling(result, binopToProfilerId(exp.getOp()));
+	    return wrapWithProfiling(result, binaryOpToProfilerId(exp.getOp()));
 	}
 
 	return result;
@@ -437,7 +437,7 @@ public class NodesToJava implements FEVisitor
      * field name in the Java library profiler
      * (streamit.library.Profiler).
      */
-    private String binopToProfilerId(int binop) {
+    private String binaryOpToProfilerId(int binop) {
 	switch (binop) 
 	    {
 	    case ExprBinary.BINOP_ADD: 	  return "BINOP_ADD"; 
@@ -459,6 +459,27 @@ public class NodesToJava implements FEVisitor
 	    case ExprBinary.BINOP_LSHIFT: return "BINOP_LSHIFT"; 
 	    case ExprBinary.BINOP_RSHIFT: return "BINOP_RSHIFT"; 
 	    default: assert false : binop;
+	    }
+	// stupid compiler
+	return null;
+    }
+
+    /**
+     * Provides a mapping from unary operations in ExprUnary to the
+     * field name in the Java library profiler
+     * (streamit.library.Profiler).
+     */
+    private String unaryOpToProfilerId(int unop) {
+	switch (unop) 
+	    {
+	    case ExprUnary.UNOP_NOT:        return "UNOP_NOT";
+	    case ExprUnary.UNOP_NEG:        return "UNOP_NEG";
+	    case ExprUnary.UNOP_PREINC:     return "UNOP_PREINC";
+	    case ExprUnary.UNOP_POSTINC:    return "UNOP_POSTINC";
+	    case ExprUnary.UNOP_PREDEC:     return "UNOP_PREDEC";
+	    case ExprUnary.UNOP_POSTDEC:    return "UNOP_POSTDEC";
+	    case ExprUnary.UNOP_COMPLEMENT: return "UNOP_COMPLEMENT";
+	    default: assert false : unop;
 	    }
 	// stupid compiler
 	return null;
@@ -748,17 +769,26 @@ public class NodesToJava implements FEVisitor
     public Object visitExprUnary(ExprUnary exp)
     {
         String child = (String)exp.getExpr().accept(this);
+	String result = null;
+
         switch(exp.getOp())
 	    {
-	    case ExprUnary.UNOP_NOT: return "!" + child;
-	    case ExprUnary.UNOP_NEG: return "-" + child;
-	    case ExprUnary.UNOP_PREINC: return "++" + child;
-	    case ExprUnary.UNOP_POSTINC: return child + "++";
-	    case ExprUnary.UNOP_PREDEC: return "--" + child;
-	    case ExprUnary.UNOP_POSTDEC: return child + "--";
-	    case ExprUnary.UNOP_COMPLEMENT: return "~" + child;
-	    default: assert false : exp; return null;
+	    case ExprUnary.UNOP_NOT:        result = "!" + child; break;
+	    case ExprUnary.UNOP_NEG:        result = "-" + child; break;
+	    case ExprUnary.UNOP_PREINC:     result = "++" + child; break;
+	    case ExprUnary.UNOP_POSTINC:    result = child + "++"; break;
+	    case ExprUnary.UNOP_PREDEC:     result = "--" + child; break;
+	    case ExprUnary.UNOP_POSTDEC:    result = child + "--"; break;
+	    case ExprUnary.UNOP_COMPLEMENT: result = "~" + child; break;
+	    default: assert false : exp;    result = null; break;
 	    }
+
+	// if profiling on, wrap this with instrumentation call
+	if (libraryFormat && profile) {
+	    result = wrapWithProfiling(result, unaryOpToProfilerId(exp.getOp()));
+	}
+
+	return result;
     }
 
     public Object visitExprVar(ExprVar exp)
@@ -1071,7 +1101,7 @@ public class NodesToJava implements FEVisitor
 	// if profiling on and we are not just assigning, wrap rhs
 	// with instrumentation call
 	if (libraryFormat && profile && stmt.getOp()!=0) {
-	    rhs = wrapWithProfiling(rhs, binopToProfilerId(stmt.getOp()));
+	    rhs = wrapWithProfiling(rhs, binaryOpToProfilerId(stmt.getOp()));
 	}
 
         // Assume both sides are the right type.

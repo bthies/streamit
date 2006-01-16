@@ -908,11 +908,20 @@ public abstract class Stream extends Operator
 		    }
 		}
 	    } else {
-		// unscheduled: run as long as someone fires
-		boolean makingProgress;
-		do {
-		    makingProgress = runSinks();
-		} while (makingProgress);
+		// unscheduled: run for an iteration count if one is
+		// passed in, otherwise run as long as someone fires
+		if (nIters > 0) {
+		    // iteration count
+		    for (int i=0; i<nIters; i++) {
+			runSinks();
+		    }
+		} else {
+		    // as long as possible
+		    boolean makingProgress;
+		    do {
+			makingProgress = runSinks();
+		    } while (makingProgress);
+		}
 	    }
         }
 	} catch (Throwable e) {

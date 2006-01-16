@@ -798,14 +798,40 @@ class ClusterCodeGenerator {
 		  srcSteady+","+dstSteady+");\n");
 
 
-	    // TODO:  this loop can get too large to unroll at compile time:
+	    // This loop can get too large to unroll at compile time:
 	    // one example of size 1x10^6 cause gcc to crash.
 	    // If > threshold size then find contiguous sections with
 	    // the same sdep.getSrcPhase4DstPhase(y) and generate loops
-	    // rather than unrolling
-	    for (int y = 0; y < dstInit + dstSteady + 1; y++) {
-		r.add("  "+sdepname+"->setDst2SrcDependency("+y+","+sdep.getSrcPhase4DstPhase(y)+");\n");
-	    }
+	    // rather than unrolling (ignoring threshold size for now).
+        
+        { 
+            int prevVal = sdep.getSrcPhase4DstPhase(0);
+            int prevValAt = 0;
+            final String seg1 = "  "+sdepname+"->setDst2SrcDependency(";
+            final String seg2 = ");\n";
+            
+            for (int y = 0; y < dstInit + dstSteady + 1; y++) {
+                int thisVal = sdep.getSrcPhase4DstPhase(y);
+                if (thisVal != prevVal) {
+                    if (y == prevValAt + 1) {
+                        r.add(seg1 + prevValAt + "," + prevVal + seg2);
+                    } else { 
+                        r.add("  for (int __i = " + prevValAt + "; __i < " 
+                                + y
+                                + "; __i++) {\n");
+                        r.add("  " + seg1 + "__i," + prevVal + seg2);
+                        r.add("  }\n");
+                    }
+                    prevValAt = y;
+                    prevVal = thisVal;
+                }
+            }
+            r.add("  for (int __i = " + prevValAt + "; __i < " 
+                    + (dstInit + dstSteady + 1)
+                    + "; __i++) {\n");
+            r.add("  " + seg1 + "__i," + prevVal + seg2);
+            r.add("  }\n");
+        }
 	}
 
 	//r.add("  __steady_"+id+" = __init_iter;\n");

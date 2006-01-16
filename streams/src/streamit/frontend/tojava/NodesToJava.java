@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.115 2006-01-16 00:37:17 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.116 2006-01-16 17:42:23 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -839,10 +839,22 @@ public class NodesToJava implements FEVisitor
             result += convertType(func.getReturnType()) + " ";
         result += func.getName();
         String prefix = null;
-        if (func.getCls() == Function.FUNC_INIT) prefix = "final";
+
+	// save profiling
+	boolean oldProfile = profile;
+        if (func.getCls() == Function.FUNC_INIT) {
+	    // parameters should be final
+	    prefix = "final";
+	    // turn profiling off for init function
+	    profile = false;
+	}
         result += doParams(func.getParams(), prefix) + " ";
         result += (String)func.getBody().accept(this);
         result += "\n";
+
+	// restore profiling
+	profile = oldProfile;
+
         return result;
     }
     

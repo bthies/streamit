@@ -978,7 +978,16 @@ public class Propagator extends SLIRReplacingVisitor {
 	    }
 	} else if(left instanceof JArrayAccessExpression) {
 	    JExpression expr=((JArrayAccessExpression)left).getPrefix();
-	    if(expr instanceof JLocalVariableExpression) {
+	    // it seems that we have not implemented complete support
+	    // for propagating 2-D arrays, but at least mark the
+	    // variable as changed to avoid wrong code
+	    if (expr instanceof JArrayAccessExpression) {
+		JExpression pre=((JArrayAccessExpression)expr).getPrefix();
+		if(pre instanceof JLocalVariableExpression) {
+		    JLocalVariable var=((JLocalVariableExpression)pre).getVariable();
+		    changed.put(var,Boolean.TRUE);
+		}
+	    } else if(expr instanceof JLocalVariableExpression) {
 		JLocalVariable var=((JLocalVariableExpression)expr).getVariable();
 		JExpression accessor=((JArrayAccessExpression)left).getAccessor();
 		changed.put(var,Boolean.TRUE);

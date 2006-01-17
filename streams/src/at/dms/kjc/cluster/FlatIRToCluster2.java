@@ -21,8 +21,8 @@ import java.util.*;
 import at.dms.kjc.raw.*;
 
 /**
- * This class dumps the tile code for each filter into a file based 
- * on the tile number assigned 
+ * This class contains code generation for speculative execution,
+ * where individual threads are represented by c++ classes.
  */
 public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements StreamVisitor, CodeGenerator
 {

@@ -89,7 +89,7 @@ void->void pipeline MPEGdecoder_nomessage() {
   // All of these test cases can be run independently of each other.
   // For each output file, there is an associated output file without the "unver" extension
   // and an md5sum which can be compared against the actual output to make sure it's correct.
-  int parse_or_process = 3;
+  int parse_or_process = 1;
 
   int width=352;
   int height=240;
@@ -965,7 +965,7 @@ bit->int filter MPEGStreamParser(int width,
                       pops(2,tempval);
                       QFS_current = 64;
                     } else {
-                      int signed_level, run;
+                      int signed_level, run = 0;
                       peeks(6,tempval);
                       if (tempval == 1) { 
                         // Escape Code
@@ -981,8 +981,79 @@ bit->int filter MPEGStreamParser(int width,
                         }
                       } else {
                         // Regular Code
-                        int level, sign;
-                        variable_length_code_dct(run,level,const_dct_coefficients_table_zero);
+                        int level = 0, sign = 0;
+                        // begin variable length code
+                        peeks(16, tempval);
+                        // if (tempval >= 49152 && tempval <= 65535) { // 2
+                        if (tempval >= 49152) {
+                            pops(2, tempval);
+                            run = const_dct_coefficients_table_zero_len2[0].run;
+                            level = const_dct_coefficients_table_zero_len2[0].level; 
+                            // } else if (tempval >= 24576 && tempval <= 32767) { // 3
+                        } else if (tempval >= 24576) {
+                            pops(3, tempval);
+                            run = const_dct_coefficients_table_zero_len3[0].run;
+                            level = const_dct_coefficients_table_zero_len3[0].level; 
+                            // } else if (tempval >= 16384 && tempval <= 24575) { // 4
+                        } else if (tempval >= 16384) {
+                            pops(4, tempval);
+                            run = const_dct_coefficients_table_zero_len4[tempval-4].run;
+                            level = const_dct_coefficients_table_zero_len4[tempval-4].level; 
+                            // } else if (tempval >= 10240 && tempval <= 16383) { // 5
+                        } else if (tempval >= 10240) {
+                            pops(5, tempval);
+                            run = const_dct_coefficients_table_zero_len5[tempval-5].run;
+                            level = const_dct_coefficients_table_zero_len5[tempval-5].level; 
+                            // } else if (tempval >= 8192 && tempval <= 10239) { // 8
+                        } else if ( tempval >= 8192) {
+                            pops(8, tempval);
+                            run = const_dct_coefficients_table_zero_len8[tempval-32].run;
+                            level = const_dct_coefficients_table_zero_len8[tempval-32].level; 
+                            // } else if (tempval >= 4096 && tempval <= 8191) { // 6
+                        } else if (tempval >= 4096) {
+                            pops(6, tempval);
+                            run = const_dct_coefficients_table_zero_len6[tempval-4].run;
+                            level = const_dct_coefficients_table_zero_len6[tempval-4].level; 
+                            // } else if (tempval >= 2048 && tempval <= 4095) { // 7
+                        } else if (tempval >= 2048) {
+                            pops(7, tempval);
+                            run = const_dct_coefficients_table_zero_len7[tempval-4].run;
+                            level = const_dct_coefficients_table_zero_len7[tempval-4].level; 
+                            // } else if (tempval >= 512 && tempval <= 1023) { // 10
+                        } else if (tempval >= 512) {
+                            pops(10, tempval);
+                            run = const_dct_coefficients_table_zero_len10[tempval-8].run;
+                            level = const_dct_coefficients_table_zero_len10[tempval-8].level; 
+                            // } else if (tempval >= 256 && tempval <= 511) { // 12
+                        } else if (tempval >= 256) {
+                            pops(12, tempval); 
+                            run = const_dct_coefficients_table_zero_len12[tempval-16].run;
+                            level = const_dct_coefficients_table_zero_len12[tempval-16].level; 
+                            // } else if (tempval >= 128 && tempval <= 255) { // 13
+                        } else if (tempval >= 128) {
+                            pops(13, tempval); 
+                            run = const_dct_coefficients_table_zero_len13[tempval-16].run;
+                            level = const_dct_coefficients_table_zero_len13[tempval-16].level; 
+                            // } else if (tempval >= 64 && tempval <= 127) { // 14
+                        } else if (tempval >= 64) {
+                            pops(14, tempval); 
+                            run = const_dct_coefficients_table_zero_len14[tempval-16].run;
+                            level = const_dct_coefficients_table_zero_len14[tempval-16].level; 
+                            // } else if (tempval >= 32 && tempval <= 63) { // 15
+                        } else if (tempval >= 32) {
+                            pops(15, tempval); 
+                            run = const_dct_coefficients_table_zero_len15[tempval-16].run;
+                            level = const_dct_coefficients_table_zero_len15[tempval-16].level; 
+                            // } else if (tempval >= 16 && tempval <= 31) { // 16
+                        } else if (tempval >= 16) {
+                            pops(16, tempval);
+                            run = const_dct_coefficients_table_zero_len16[tempval-16].run;
+                            level = const_dct_coefficients_table_zero_len16[tempval-16].level; 
+                        }  else {
+                            print("Error - Unknown Huffman Symbol");
+                        }
+
+                        // end variable length code
                         pops(1,sign);
                         if (sign == 0) {
                           signed_level = level;

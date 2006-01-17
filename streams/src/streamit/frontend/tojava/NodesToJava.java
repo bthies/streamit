@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.118 2006-01-17 19:37:20 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.119 2006-01-17 21:17:46 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -503,7 +503,7 @@ public class NodesToJava implements FEVisitor
 	// generate a unique ID for this arith op
 	int id = (MAX_PROFILE_ID++);
 	// call to function in Java library (it returns <exp>)
-	return "Profiler.registerOp(Profiler." + profilerId + ", " + id + ", " + exp + ")";
+	return "Profiler.registerOp(Profiler." + profilerId + ", " + id + ", \"" + exp.replace('\"', '\'') + "\", " + exp + ")";
     }
     // counter for wrapWithProfiling
     private int MAX_PROFILE_ID = 0;

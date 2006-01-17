@@ -121,6 +121,8 @@ public class Profiler {
     // frontend.  This is similar to a line number, except that there
     // could be multiple operation ID's per line.
     static int[] idCounts;
+    // the actual line of code that is being computed at a given id
+    static String[] idCode;
 
     /**
      * One of the main callbacks from the instrumented StreamIt code.
@@ -129,10 +131,12 @@ public class Profiler {
      * @param op      The operation being performed.
      * @param id      A static identifier for the line of code calling this.
      * @param val     One of the values taking part in the operation.
+     * @param code    The code that computes this op.
      *
      * @return The value of the parameter <val>.
      */
-    public static int registerOp(int op, int id, int val) {
+    public static int registerOp(int op, int id, String code, int val) {
+	idCode[id] = code;
 	idCounts[id]++;
 	intOps[op]++;
 	intTotal++;
@@ -146,10 +150,12 @@ public class Profiler {
      * @param op      The operation being performed.
      * @param id      A static identifier for the line of code calling this.
      * @param val     One of the values taking part in the operation.
+     * @param code    The code that computes this op.
      *
      * @return The value of the parameter <val>.
      */
-    public static float registerOp(int op, int id, float val) {
+    public static float registerOp(int op, int id, String code, float val) {
+	idCode[id] = code;
 	idCounts[id]++;
 	floatOps[op]++;
 	floatTotal++;
@@ -163,10 +169,12 @@ public class Profiler {
      * @param op      The operation being performed.
      * @param id      A static identifier for the line of code calling this.
      * @param val     One of the values taking part in the operation.
+     * @param code    The code that computes this op.
      *
      * @return The value of the parameter <val>.
      */
-    public static boolean registerOp(int op, int id, boolean val) {
+    public static boolean registerOp(int op, int id, String code, boolean val) {
+	idCode[id] = code;
 	idCounts[id]++;
 	boolOps[op]++;
 	boolTotal++;
@@ -178,8 +186,9 @@ public class Profiler {
      * ID's there will be.
      */
     public static void setNumIds(int numIds) {
-	// initialize array of counts
+	// initialize arrays
 	idCounts = new int[numIds];
+	idCode = new String[numIds];
     }
 
     /**
@@ -192,7 +201,7 @@ public class Profiler {
      *
      * @return The value of the parameter <val>.
      */
-    public static String registerOp(int op, int id, String val) {
+    public static String registerOp(int op, int id, String code, String val) {
 	// don't profile string ops, should only be used for debugging
 	return val;
     }
@@ -267,12 +276,17 @@ public class Profiler {
 
 	// the count by actual statement in the code
 	out.println("\nCount for each static operation ID (see .java file for ID's):");
+	out.println("  ID        COUNT          % OF TOTAL    CODE (if no arith op, then on RHS of +=, *=, etc) ");
+	out.println("------------------------------------------------------------------------------------------");
 	for (int i=0; i<idCounts.length; i++) {
-	    out.println("  " + i + ": " + idCounts[i]);
+	    String code = (idCode[i] == null ? "" : idCode[i]);
+	    out.println("  " + format(i, 10) + format(idCounts[i], 15) + format(100*idCounts[i]/(float)opsTotal, 4) + "          " + code);
 	}
 
 	// the sorted count by actual statement in the code
 	out.println("\nSorted count for each static operation ID (see .java file for ID's):");
+	out.println("  ID        COUNT          % OF TOTAL    CODE (if no arith op, then on RHS of +=, *=, etc) ");
+	out.println("------------------------------------------------------------------------------------------");
 	// just do selection sort because I had it handy from C++ code
 	for (int i=0; i<idCounts.length; i++) {
 	    int max = 0;
@@ -283,9 +297,34 @@ public class Profiler {
 		}
 	    }
 	    // print greatest
-	    out.println("  " + max + ": " + idCounts[max]);
+	    String code = (idCode[max] == null ? "" : idCode[max]);
+	    out.println("  " + format(max, 10) + format(idCounts[max], 15) + format(100*idCounts[max]/(float)opsTotal, 4) + "          " + code);
 	    // zero-out greatest
 	    idCounts[max] = -1;
 	}
+    }
+
+    /**
+     * Formats <f> into an <n>-character string.
+     */
+    private static String format(float f, int n) {
+	String str = ""+f;
+	int length = str.length();
+	for (int j=length; j<n; j++) {
+	    str += " ";
+	}
+	return str.substring(0, n);
+    }
+
+    /**
+     * Formats <i> into an <n>-character string.
+     */
+    private static String format(int i, int n) {
+	String str = ""+i;
+	int length = str.length();
+	for (int j=length; j<n; j++) {
+	    str += " ";
+	}
+	return str;
     }
 }

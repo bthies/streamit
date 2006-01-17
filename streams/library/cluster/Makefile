@@ -12,7 +12,8 @@ LIBRARY_IA64 =  libcluster_ia64.a
 LIBRARY_ARM =   libcluster_arm.a
 LIBRARYP =      libcluster_p.a
 
-NAMES =		sock_dscr \
+NAMES =		profiler \
+		sock_dscr \
 		thread_info \
 		connection_info \
 		timer \

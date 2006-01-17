@@ -62,6 +62,9 @@ public class Profiler {
     public static final int BINOP_RSHIFT =    registerOp("rshift");
     // unary ops
     public static final int UNOP_NOT =        registerOp("unary_not");
+    // not sure what a unary positive really is, but kopi defines it,
+    // so put it here for consistency
+    public static final int UNOP_POS =        registerOp("unary_pos");
     public static final int UNOP_NEG =        registerOp("unary_neg");
     public static final int UNOP_PREINC =     registerOp("preinc");
     public static final int UNOP_POSTINC =    registerOp("postinc");
@@ -123,7 +126,7 @@ public class Profiler {
      * One of the main callbacks from the instrumented StreamIt code.
      * This version is for int values.
      *
-     * @param binop   The binary operation being performed.
+     * @param op      The operation being performed.
      * @param id      A static identifier for the line of code calling this.
      * @param val     One of the values taking part in the operation.
      *
@@ -140,7 +143,7 @@ public class Profiler {
      * One of the main callbacks from the instrumented StreamIt code.
      * This version is for float values.
      *
-     * @param binop   The binary operation being performed.
+     * @param op      The operation being performed.
      * @param id      A static identifier for the line of code calling this.
      * @param val     One of the values taking part in the operation.
      *
@@ -157,7 +160,7 @@ public class Profiler {
      * One of the main callbacks from the instrumented StreamIt code.
      * This version is for boolean values.
      *
-     * @param binop   The binary operation being performed.
+     * @param op      The operation being performed.
      * @param id      A static identifier for the line of code calling this.
      * @param val     One of the values taking part in the operation.
      *
@@ -176,14 +179,14 @@ public class Profiler {
      */
     public static void setNumIds(int numIds) {
 	// initialize array of counts
-	idCounts = new int[numIds+1];
+	idCounts = new int[numIds];
     }
 
     /**
      * One of the main callbacks from the instrumented StreamIt code.
      * This version is for string values.
      *
-     * @param binop   The binary operation being performed.
+     * @param op      The operation being performed.
      * @param id      A static identifier for the line of code calling this.
      * @param val     One of the values taking part in the operation.
      *
@@ -215,14 +218,14 @@ public class Profiler {
      */
     public static void summarize() {
 	try {
-	    PrintStream out = new PrintStream(new FileOutputStream("profile.log"));
+	    PrintStream out = new PrintStream(new FileOutputStream("profile.java.log"));
 	    summarize(out);
 	    out.close();
 	} catch (IOException e) {
 	    e.printStackTrace();
 	}
 
-	System.out.println("Profile information written to profile.log.");
+	System.out.println("Profile information written to profile.java.log.");
     }
 
     /**
@@ -232,9 +235,9 @@ public class Profiler {
 	// total ops 
 	int opsTotal = floatTotal + intTotal + boolTotal;
 	out.println("Total ops:    " + opsTotal);
-	out.println("  float ops: " + floatTotal);
-	out.println("  int ops:   " + intTotal);
-	out.println("  bool ops:  " + boolTotal);
+	out.println("  float ops:  " + floatTotal);
+	out.println("  int ops:    " + intTotal);
+	out.println("  bool ops:   " + boolTotal);
 
 	// communication
 	out.println();
@@ -261,10 +264,28 @@ public class Profiler {
 	for (int i=0; i<NUM_OPS; i++) {
 	    out.println("  " + OP_TO_NAME[i] + ": " + boolOps[i]);
 	}
+
 	// the count by actual statement in the code
 	out.println("\nCount for each static operation ID (see .java file for ID's):");
 	for (int i=0; i<idCounts.length; i++) {
 	    out.println("  " + i + ": " + idCounts[i]);
+	}
+
+	// the sorted count by actual statement in the code
+	out.println("\nSorted count for each static operation ID (see .java file for ID's):");
+	// just do selection sort because I had it handy from C++ code
+	for (int i=0; i<idCounts.length; i++) {
+	    int max = 0;
+	    // find greatest
+	    for (int j=0; j<idCounts.length; j++) {
+		if (idCounts[j] > idCounts[max]) {
+		    max = j;
+		}
+	    }
+	    // print greatest
+	    out.println("  " + max + ": " + idCounts[max]);
+	    // zero-out greatest
+	    idCounts[max] = -1;
 	}
     }
 }

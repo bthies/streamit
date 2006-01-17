@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.117 2006-01-17 15:54:13 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.118 2006-01-17 19:37:20 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -1641,7 +1641,7 @@ public class NodesToJava implements FEVisitor
 			addIndent();
 			if (profile) {
 			    // tell the profiler how many operations ID's there are
-			    result += indent + "Profiler.setNumIds(" + (MAX_PROFILE_ID-1) + ");\n";
+			    result += indent + "Profiler.setNumIds(" + MAX_PROFILE_ID + ");\n";
 			}
 			result += indent + spec.getName() + " program = new "
 					+ spec.getName() + "();\n";

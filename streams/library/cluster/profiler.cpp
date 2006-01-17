@@ -170,7 +170,8 @@ void profiler::summarize() {
   // the count by actual statement in the code
   fprintf(f, "\nCount for each static operation ID (see .cpp files for ID's):\n");
   for (int i=0; i<num_ids; i++) {
-    fprintf(f, "  %d: %d\n", i, id_counts[i]);
+    float percent = 100*id_counts[i]/(float)ops_total;
+    fprintf(f, "  %d: %d (%2.2f\%)\n", i, id_counts[i], percent);
   }
 
   // the sorted count by actual statement in the code
@@ -185,7 +186,8 @@ void profiler::summarize() {
       }
     }
     // print greatest
-    fprintf(f, "  %d: %d\n", max, id_counts[max]);
+    float percent = 100*id_counts[max]/(float)ops_total;
+    fprintf(f, "  %d: %d (%2.2f\%)\n", max, id_counts[max], percent);
     // zero-out greatest
     id_counts[max] = -1;
   }

@@ -25,7 +25,7 @@ import at.dms.kjc.raw.*;
  * This class dumps the tile code for each filter into a file based on the tile
  * number assigned.
  */
-public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
+public class FlatIRToCluster extends InsertProfiling implements
         StreamVisitor, CodeGenerator {
 
     //  override ToC with info that we generate 'bool' for 'boolean', not 'int'
@@ -1632,11 +1632,17 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
                 p.print(name + "_");
         }
 
-        p.print(ident);
-
         //we want single precision versions of the math functions
-        if (Utils.isMathMethod(prefix, ident)) 
+	boolean wrapping = false;
+        if (Utils.isMathMethod(prefix, ident)) {
+	    // also insert profiling code for math functions
+	    wrapping = true;
+	    super.beginWrapper("FUNC_" + ident.toUpperCase());
+	    p.print(ident);
             p.print("f");
+	} else {
+	    p.print(ident);
+	}
 
         if (!Utils.isMathMethod(prefix, ident) && ident.indexOf("::") == -1) {
             // don't rename the built-in math functions
@@ -1660,6 +1666,11 @@ public class FlatIRToCluster extends at.dms.kjc.common.ToC implements
          */
         visitArgs(args, i);
         p.print(")");
+
+	// close any profiling code we might have started
+	if (wrapping) {
+	    super.endWrapper();
+	}
     }
 
     /*

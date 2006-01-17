@@ -359,6 +359,9 @@ class FusionCode {
 	p.print("#include <read_setup.h>\n");
 	p.print("#include <timer.h>\n");
 	p.print("#include \"fusion.h\"\n");
+	if (KjcOptions.profile) {
+	    p.println("#include \"profiler.h\"");
+	}
 	p.newLine();
 	
 	p.print("int __max_iteration;\n");
@@ -419,7 +422,11 @@ class FusionCode {
 	p.newLine();
 
 	p.print("int main(int argc, char **argv) {\n");
-	p.print("  ");
+
+	// tell the profiler how many ID's there are
+	if (KjcOptions.profile) {
+	    p.print("  profiler::set_num_ids(" + InsertProfiling.getNumIds() + ");\n");
+	}
 
 	p.print("  read_setup::read_setup_file();\n");
 	p.print("  __max_iteration = read_setup::max_iteration;\n");
@@ -715,6 +722,11 @@ class FusionCode {
 
 	p.print("  tt.stop();\n");
 	p.print("  tt.output(stderr);\n");
+
+	// print profiling summary
+	if (KjcOptions.profile) {
+	    p.print("  profiler::summarize();\n");
+	}
 
 	p.print("  return 0;\n");
 	p.print("}");

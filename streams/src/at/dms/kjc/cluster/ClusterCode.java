@@ -1445,6 +1445,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <read_setup.h>\n");
 	p.print("#include <ccp.h>\n");
 	p.print("#include \"global.h\"\n");
+	if (KjcOptions.profile) {
+	    p.println("#include \"profiler.h\"");
+	}
 	p.newLine();
 
 	p.print("int __max_iteration;\n");
@@ -1561,6 +1564,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("  myip = get_myip();\n");
 
+	// tell the profiler how many ID's there are
+	if (KjcOptions.profile) {
+	    p.print("  profiler::set_num_ids(" + InsertProfiling.getNumIds() + ");\n");
+	}
+
 	p.print("  read_setup::read_setup_file();\n");
 	p.print("  __frequency_of_chkpts = read_setup::freq_of_chkpts;\n");
 	p.print("  __out_data_buffer = read_setup::out_data_buffer;\n");
@@ -1638,6 +1646,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	//p.print("  signal(3, sig_recv);\n\n");
 	p.print("  node->run(__ccp_ip);\n");
+
+	// print profiling summary
+	if (KjcOptions.profile) {
+	    p.print("  profiler::summarize();\n");
+	}
 
 	//p.print("  for (;;) {}\n");	
 	//p.print("  init_instance::close_sockets();\n");

@@ -20,6 +20,8 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 /**
@@ -111,6 +113,12 @@ public class Profiler {
     private static int[] intOps = new int[NUM_OPS];
     private static int[] boolOps = new int[NUM_OPS];
 
+    // counts of how many times each operation ID executed.  There is
+    // an ID assigned to each static arithmetic operation by the
+    // frontend.  This is similar to a line number, except that there
+    // could be multiple operation ID's per line.
+    static int[] idCounts;
+
     /**
      * One of the main callbacks from the instrumented StreamIt code.
      * This version is for int values.
@@ -122,6 +130,7 @@ public class Profiler {
      * @return The value of the parameter <val>.
      */
     public static int registerOp(int op, int id, int val) {
+	idCounts[id]++;
 	intOps[op]++;
 	intTotal++;
 	return val;
@@ -138,6 +147,7 @@ public class Profiler {
      * @return The value of the parameter <val>.
      */
     public static float registerOp(int op, int id, float val) {
+	idCounts[id]++;
 	floatOps[op]++;
 	floatTotal++;
 	return val;
@@ -154,9 +164,19 @@ public class Profiler {
      * @return The value of the parameter <val>.
      */
     public static boolean registerOp(int op, int id, boolean val) {
+	idCounts[id]++;
 	boolOps[op]++;
 	boolTotal++;
 	return val;
+    }
+
+    /**
+     * Called before execution to tell the profiler how many operation
+     * ID's there will be.
+     */
+    public static void setNumIds(int numIds) {
+	// initialize array of counts
+	idCounts = new int[numIds+1];
     }
 
     /**
@@ -212,9 +232,9 @@ public class Profiler {
 	// total ops 
 	int opsTotal = floatTotal + intTotal + boolTotal;
 	out.println("Total ops:    " + opsTotal);
-	out.println(" - float ops: " + floatTotal);
-	out.println(" - int ops:   " + intTotal);
-	out.println(" - bool ops:  " + boolTotal);
+	out.println("  float ops: " + floatTotal);
+	out.println("  int ops:   " + intTotal);
+	out.println("  bool ops:  " + boolTotal);
 
 	// communication
 	out.println();
@@ -223,8 +243,8 @@ public class Profiler {
 	// communication-to-computation ratio
 	out.println();
 	out.println("Ops / push:   " + (opsTotal / (float)pushTotal));
-	out.println(" float+int:   " + ((floatTotal + intTotal) / (float)pushTotal));
-	out.println(" bool:        " + (boolTotal / (float)pushTotal));
+	out.println("  float+int:  " + ((floatTotal + intTotal) / (float)pushTotal));
+	out.println("  bool:       " + (boolTotal / (float)pushTotal));
 
 	// float ops summary
 	out.println("\nFloat ops breakdown:");
@@ -240,6 +260,11 @@ public class Profiler {
 	out.println("\nBool ops breakdown:");
 	for (int i=0; i<NUM_OPS; i++) {
 	    out.println("  " + OP_TO_NAME[i] + ": " + boolOps[i]);
+	}
+	// the count by actual statement in the code
+	out.println("\nCount for each static operation ID (see .java file for ID's):");
+	for (int i=0; i<idCounts.length; i++) {
+	    out.println("  " + i + ": " + idCounts[i]);
 	}
     }
 }

@@ -574,8 +574,6 @@ public abstract class Stream extends Operator
         }
     }
 
-    HashMap oper2iter = new HashMap();
-
     void runSchedule(Object schedule, Object function)
     {
         if (schedule instanceof Operator)

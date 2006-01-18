@@ -52,6 +52,11 @@ public class Schedule extends AssertedClass
      */
     final private streamit.scheduler2.iriter.Iterator workStream;
 
+    // counter to assign each stream a consistent identifier
+    private static int MAX_ID = 0;
+    // identifier of this stream (used for hashcode)
+    private int id = MAX_ID++;
+
     /**
      * Create a schedule that will be used with many sub-schedules.
      */
@@ -171,4 +176,14 @@ public class Schedule extends AssertedClass
     {
         return workStream;
     }
+
+    /**
+     * Use the identifier of this stream as the hashcode, to ensure
+     * deterministic behavior in sets and containers (was causing
+     * unpredictable exceptions).
+     */
+    public int hashCode() {
+	return id;
+    }
+
 }

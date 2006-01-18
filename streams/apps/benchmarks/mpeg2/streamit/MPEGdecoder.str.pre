@@ -1560,6 +1560,65 @@ int->int splitjoin BlockDescrambler(int width) {
 
 /**
  * @internal
+ *
+ * This is a filter version of the block descrambler that should avoid
+ * some fusion overhead.  This version does not need any buffer, and
+ * should be able to be derived by linear analysis.  Unfortunately, no
+ * speedups were observed, but including it here for future reference.
+ */
+int->int filter BlockDescramblerFilter1(int width) {
+    work push 8*width pop 8*width {
+	for (int i=0; i<64; i+=8) {
+	    for (int j=0; j<width*8; j+=width) {
+		int k = i+j;
+		push(peek(k));
+		push(peek(k+1));
+		push(peek(k+2));
+		push(peek(k+3));
+		push(peek(k+4));
+		push(peek(k+5));
+		push(peek(k+6));
+		push(peek(k+7));
+	    }
+	}
+	for (int i=0; i<8*width; i++) {
+	    pop();
+	}
+    }
+}
+
+/**
+ * @internal
+ *
+ * This is a filter version of the block descrambler that should avoid
+ * some fusion overhead.  This version uses a buffer so that no peek
+ * statements are needed.  It is probably slower than
+ * BlockDescramblerFilter1, but including for future experiments.
+ */
+int->int filter BlockDescramblerFilter2(int width) {
+    work push 8*width pop 8*width {
+	int[8*width] buffer;
+	for (int i=0; i<width; i+=8) {
+	    for (int j=0; j<8; j++) {
+		int k = j*width+i;
+		buffer[k] = pop();
+		buffer[k+1] = pop();
+		buffer[k+2] = pop();
+		buffer[k+3] = pop();
+		buffer[k+4] = pop();
+		buffer[k+5] = pop();
+		buffer[k+6] = pop();
+		buffer[k+7] = pop();
+	    }
+	}
+	for (int i=0; i<8*width; i++) {
+	    push(buffer[i]);
+	}
+    }
+}
+
+/**
+ * @internal
  */
 int->int filter MotionPrediction(int width, int height) {
   int count;

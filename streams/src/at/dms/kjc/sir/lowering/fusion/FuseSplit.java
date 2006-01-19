@@ -1224,11 +1224,23 @@ public class FuseSplit {
 
     static class FuseSplitVisitor extends SLIRReplacingVisitor {
     
+    private boolean inExpressionStatement = false;
+        
 	SJChildInfo childInfo;
 
 	public FuseSplitVisitor(SJChildInfo childInfo) {
 	    this.childInfo = childInfo;
 	}
+
+	// determines if JExpressionStatement immediately wraps SIRPopExpression
+    public Object visitExpressionStatement(JExpressionStatement self, JExpression expr) {
+        boolean oldInExpressionStatement = inExpressionStatement;
+        if (expr instanceof SIRPopExpression) {inExpressionStatement = true;}
+        Object result = super.visitExpressionStatement(self,expr);
+        inExpressionStatement = oldInExpressionStatement;
+        return result;
+      }
+  
 
 	/**
 	 * Visits a push expression -- convert to pushing to array.
@@ -1246,9 +1258,29 @@ public class FuseSplit {
 	public Object visitPopExpression(SIRPopExpression oldSelf,
 					 CType oldTapeType) {
 	    SIRPopExpression self = (SIRPopExpression)super.visitPopExpression(oldSelf, oldTapeType);
-        assert self.getNumPop() == 1 
-            : "Need code here to handle multiple pop";
 
+	    // if not using the popped value, just adjust the index
+        if (inExpressionStatement) {
+            JExpression lhs = new JFieldAccessExpression
+                (null,  
+                 new JThisExpression(null),
+                 childInfo.peekBuffer.readIndex.getVariable().getIdent());
+            JExpression rhs = 
+                new JModuloExpression
+                    (null,
+                     new JAddExpression
+                        (new JFieldAccessExpression
+                            (null,  
+                             new JThisExpression(null),
+                             childInfo.peekBuffer.readIndex.getVariable().getIdent()),
+                             new JIntLiteral(self.getNumPop())),
+                    new JIntLiteral(childInfo.peekBuffer.size)
+                );
+            return new JAssignmentExpression(lhs, rhs);
+        }
+        // using the popped value.  Better not have multi-pops since 
+        // foo = pop(n) + pop(m) would require restructuring this code.
+        assert self.getNumPop() == 1 : "Need code here to handle multiple pop";
 	    return FuseSplit.makeBufferPop(childInfo.peekBuffer);
 	}
 

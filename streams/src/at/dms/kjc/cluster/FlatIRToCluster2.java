@@ -2782,7 +2782,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-
+	assert self.getNumPop() == 1: "Need support here for multiple pop";
 	NetStream in = RegisterStreams.getFilterInStream(filter);
 	//print("get_consumer("+in.getSource()+")->pop()");
 	print("pop()");

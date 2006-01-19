@@ -249,6 +249,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
      */
     public void visitPopExpression(SIRPopExpression self,
 				   CType tapeType) {
+	//assert self.getNumPops() == 1: "Need support here for multiple pop"; only if have MULTIPOP_EXPR
 	super.visitPopExpression(self, tapeType);
 	code_size += POP_EXPR;
 	code_at_level[for_loop_level] += POP_EXPR; 

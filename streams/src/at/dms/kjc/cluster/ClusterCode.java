@@ -509,7 +509,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.newLine();
 
 	p.print("void __splitter_"+thread_id+"_work(int ____n) {\n");
-	p.print("  for (;____n > 0; ____n--) {\n");
+	//p.println("// ClusterCode_1");
+    p.print("  for (;____n > 0; ____n--) {\n");
 	
 	FlatNode source = NodeEnumerator.getFlatNode(in.getSource());
 
@@ -580,6 +581,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    int _s2 = s.getSource();
 		    int _d2 = s.getDest();
 		
+            //p.println("// ClusterCode_2");
 		    p.print("  for (int k = 0; k < "+num/32+"; k++) {\n");
 			
 		    for (int y = 0; y < 32; y++) {
@@ -1044,7 +1046,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.newLine();
 
 	p.print("void __joiner_"+thread_id+"_work(int ____n) {\n");
-	p.print("  for (;____n > 0; ____n--) {\n");
+	//p.println("// ClusterCode_3");
+    p.print("  for (;____n > 0; ____n--) {\n");
 
 	FlatNode dest_flat = NodeEnumerator.getFlatNode(out.getSource());
 
@@ -1241,20 +1244,37 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("void __joiner_"+thread_id+"_main() {\n");
 	p.print("  int i, ii;\n");
 	
-	p.print("  if (__steady_"+thread_id+" == 0) {\n");
-	p.print("    for (i = 0; i < "+init_counts+"; i++) {\n");
-	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
-	p.print("      __joiner_"+thread_id+"_work(1);\n");
-	p.print("    }\n");
-	p.print("  }\n");
+    if (init_counts > 0) {
+        p.print("  if (__steady_" + thread_id + " == 0) {\n");
+        if (init_counts > 1) {
+            p.print("    for (i = 0; i < " + init_counts + "; i++) {\n");
+        }
+        p.print("      check_thread_status(__state_flag_" + thread_id
+                + ",__thread_" + thread_id + ");\n");
+        p.print("      __joiner_" + thread_id + "_work(1);\n");
+        if (init_counts > 1) {
+            p.print("    }\n");
+        }
+        p.print("  }\n");
+    }
 	p.print("  __steady_"+thread_id+"++;\n");
 
-	p.print("  for (i = 1; i <= __number_of_iterations_"+thread_id+"; i++, __steady_"+thread_id+"++) {\n");	
-	p.print("    for (ii = 0; ii < "+steady_counts+"; ii++) {\n");
-	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
-	p.print("      __joiner_"+thread_id+"_work(1);\n");
-	p.print("    }\n");
-
+    if (steady_counts > 0) {
+        //p.println("// ClusterCode_4");
+        p.print("  for (i = 1; i <= __number_of_iterations_" + thread_id
+                + "; i++, __steady_" + thread_id + "++) {\n");
+        if (steady_counts > 1) {
+            p.print("    for (ii = 0; ii < " + steady_counts
+                    + "; ii++) {\n");
+        }
+        p.print("      check_thread_status(__state_flag_" + thread_id
+                + ",__thread_" + thread_id + ");\n");
+        p.print("      __joiner_" + thread_id + "_work(1);\n");
+        if (steady_counts > 1) {
+            p.print("    }\n");
+        }
+    }
+    
 	p.print("    if (__frequency_of_chkpts != 0 && i % __frequency_of_chkpts == 0) save_state::save_to_file(__thread_"+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
 
 	p.print("  }\n");

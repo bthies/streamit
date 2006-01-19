@@ -677,7 +677,7 @@ class ClusterCodeGenerator {
 	}
 
 	if (init_counts > 0) {
-
+        //r.add("// ClusterCodeGenerator_1\n");
 	    r.add("    for (_tmp = 0; _tmp < "+init_counts+"; _tmp++) {\n");
 	    if (oper instanceof SIRFilter) {
 		r.add("      //check_status__"+id+"();\n");
@@ -704,6 +704,7 @@ class ClusterCodeGenerator {
 	r.add("  }\n");
 
 	r.add("  _steady++;\n");
+    //r.add("// ClusterCodeGenerator_2\n");
 	r.add("  for (; _steady <= _number; _steady++) {\n");
 
 	if (steady_counts > 1) {

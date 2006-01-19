@@ -91,6 +91,11 @@ public class FlatIRToCluster extends InsertProfiling implements
 
     public static void generateCode(FlatNode node) {
         SIRFilter contentsAsFilter = (SIRFilter) node.contents;
+        // make sure SIRPopExpression's only pop one element
+        // code generation doesn't handle generating multiple pops
+        // from a single SIRPopExpression
+        RemoveMultiPops.doit(contentsAsFilter);
+        
         FlatIRToCluster toC = new FlatIRToCluster(contentsAsFilter);
         // the code below only deals with user-defined filters.
         // on a PredefinedFilter we need to go generate special code.
@@ -395,18 +400,25 @@ public class FlatIRToCluster extends InsertProfiling implements
 		    init_pop_count += extra - (init_peek - init_pop);
 	    }
 
-	    p.print("  for (int i=0; i<" + init_pop_count + "; i++) {\n");
-	    p.print("    __pop_buf__" + selfID + "[i]=");
-
-	    if (source_fused) {
-		p.print(in.pop_name() + "();\n");
-	    } else {
-		p.print(in.consumer_name() + ".pop();\n");
-	    }
-	    p.print("  }\n");
-
-            p.print("  __tail__" + selfID + "=0;\n");
-            p.print("  __head__" + selfID + "=" + init_pop_count + ";\n");
+	    if (init_pop_count > 0) {
+            //p.println("// FlatIRToCluster_1");
+            if (init_pop_count > 1) {
+                p.print("  for (int i=0; i<" + init_pop_count + "; i++) {\n");
+                p.print("    __pop_buf__" + selfID + "[i]=");
+            } else {
+                p.print("    __pop_buf__" + selfID + "[0]=");
+            }
+            if (source_fused) {
+                p.print(in.pop_name() + "();\n");
+            } else {
+                p.print(in.consumer_name() + ".pop();\n");
+            }
+            if (init_pop_count > 1) {
+                p.print("  }\n");
+            }
+        }
+	    p.print("  __tail__" + selfID + "=0;\n");
+	    p.print("  __head__" + selfID + "=" + init_pop_count + ";\n");
 
             /*
              * 
@@ -450,31 +462,50 @@ public class FlatIRToCluster extends InsertProfiling implements
 
             p.print("void load_peek_buffer__" + selfID
                     + "(object_write_buffer *buf) {\n");
-            p.print("  for (int i = 0; i < " + extra + "; i++) {\n");
-            p.print("     buf->read(&__pop_buf__" + selfID + "[i] , sizeof("
-                    + ClusterUtils.CTypeToString(input_type) + "));\n");
-            p.print("  }\n");
+            if (extra > 0) {
+                if (extra > 1) {
+                    //p.println("// FlatIRToCluster_2");
+                    p.print("  for (int i = 0; i < " + extra + "; i++) {\n");
+                    p.print("     buf->read(&__pop_buf__" + selfID + "[i] , sizeof("
+                            + ClusterUtils.CTypeToString(input_type) + "));\n");
+                    p.print("  }\n");
+                } else {
+                    p.print("     buf->read(&__pop_buf__" + selfID + "[0] , sizeof("
+                            + ClusterUtils.CTypeToString(input_type) + "));\n");
+                }
+            }
             p.print("  __tail__" + selfID + "=0;\n");
             p.print("  __head__" + selfID + "=" + extra + ";\n");
             p.print("}\n");
             p.newLine();
+
 
             p.print("inline void __update_pop_buf__" + selfID + "() {\n");
 
             if (peek_n <= pop_n) {
 
                 // no peek beyond pop
-                
-                p.println("for (int i = 0; i < " + pop_n + "; i++) {");
-                p.indent();
-                p.print("  __pop_buf__" + selfID + "[i]="); 
-                if (source_fused) {
-                    p.println(in.pop_name() + "();"); 
-                } else {
-                    p.println(in.consumer_name() + ".pop();");
+
+                // TODO: candidate for partial unrolling?
+                if (pop_n > 0) {
+                    //p.println("// FlatIRToCluster_3");
+                    if (pop_n > 1) {
+                        p.println("for (int i = 0; i < " + pop_n + "; i++) {");
+                        p.indent();
+                        p.print("  __pop_buf__" + selfID + "[i]=");
+                    } else {
+                        p.print("  __pop_buf__" + selfID + "[0]=");
+                    }
+                    if (source_fused) {
+                        p.println(in.pop_name() + "();");
+                    } else {
+                        p.println(in.consumer_name() + ".pop();");
+                    }
+                    if (pop_n > 1) {
+                        p.outdent();
+                        p.println("}");
+                    }
                 }
-                p.outdent();
-                p.println("}");
                 
                 /* The following compile-time unrolling caused gcc to thrash
                  * on very large buffer sizes.  replaced with run-time loop.
@@ -497,20 +528,28 @@ public class FlatIRToCluster extends InsertProfiling implements
 
                 // peek beyond pop => circular buffer
 
-                
-                p.println("for (int i = 0; i < " + pop_n + "; i++) {");
-                p.indent();
-                p.print("  __pop_buf__" + selfID + "[__head__" + selfID + "]="); 
-                if (source_fused) {
-                    p.println(in.pop_name() + "();"); 
-                } else {
-                    p.println(in.consumer_name() + ".pop();");
+                // TODO: candidate for partial unrolling?
+                if (pop_n > 0) {
+                    //p.println("// FlatIRToCluster_4");
+                    if (pop_n > 1) {
+                        p.println("for (int i = 0; i < " + pop_n + "; i++) {");
+                        p.indent();
+                    }
+                    p.print("  __pop_buf__" + selfID + "[__head__" + selfID
+                            + "]=");
+                    if (source_fused) {
+                        p.println(in.pop_name() + "();");
+                    } else {
+                        p.println(in.consumer_name() + ".pop();");
+                    }
+                    p.print("__head__" + selfID + "++;");
+                    p.print("__head__" + selfID + "&=" + (peek_buf_size - 1)
+                            + ";\n");
+                    if (pop_n > 1) {
+                        p.outdent();
+                        p.println("}");
+                    }
                 }
-                p.print("__head__" + selfID + "++;");
-                p.print("__head__" + selfID + "&=" + (peek_buf_size - 1)
-                        + ";\n");
-                p.outdent();
-                p.println("}");
                 
                 /* The following compile-time unrolling caused gcc to thrash
                  * on very large buffer sizes.  replaced with run-time loop.
@@ -771,16 +810,23 @@ public class FlatIRToCluster extends InsertProfiling implements
 
             p.print("    " + out.pop_index() + " = 0;\n");
 
-            p.print("    for (_tmp = 0; _tmp < " + out_pop_num_iters
-                    + "; _tmp++) {\n");
-            p.print("      //check_status__" + selfID + "();\n");
-            p.print("      check_messages__" + selfID + "();\n");
-            p.print("      __update_pop_buf__" + selfID + "();\n");
-            p.print("      " + ClusterUtils.getWorkName(self, selfID)
-                    + "(1);\n");
-            p.print("      //send_credits__" + selfID + "();\n");
-            p.print("    }\n");
-
+            if (out_pop_num_iters > 0) {
+                //p.println("// FlatIRToCluster_5");
+                if (out_pop_num_iters > 1) {
+                    p.print("    for (_tmp = 0; _tmp < " + out_pop_num_iters
+                            + "; _tmp++) {\n");
+                }
+                p.print("      //check_status__" + selfID + "();\n");
+                p.print("      check_messages__" + selfID + "();\n");
+                p.print("      __update_pop_buf__" + selfID + "();\n");
+                p.print("      " + ClusterUtils.getWorkName(self, selfID)
+                        + "(1);\n");
+                p.print("      //send_credits__" + selfID + "();\n");
+                if (out_pop_num_iters > 1) {
+                    p.print("    }\n");
+                }
+            }
+            
             p.print("    " + out.pop_index() + " = 0;\n");
 
             /*
@@ -907,6 +953,7 @@ public class FlatIRToCluster extends InsertProfiling implements
             p.print("  } // while \n");
         }
 
+        //p.println("// FlatIRToCluster_6");
         p.print("  for (msg = __msg_stack_" + selfID
                 + "; msg != NULL; msg = msg->next) {\n");
         p.print("    if (msg->execute_at <= __counter_" + selfID + ") {\n");
@@ -1296,21 +1343,21 @@ public class FlatIRToCluster extends InsertProfiling implements
         method = self;
 
         // for testing: print out comments.
-        {
-            p.print("/* Method declaration comments:\n");
-            JavaStyleComment[] comments;
-            comments = body.getComments();
-            if (comments != null) {
-                for (int i = 0; i < comments.length; i++) {
-                    JavaStyleComment c = comments[i];
-                    p.print(c.getText());
-                    if (c.isLineComment() || c.hadSpaceAfter()) {
-                        p.newLine();
-                    }
-                }
-            }
-            p.print(" */\n");
-        }
+//        {
+//            p.print("/* Method declaration comments:\n");
+//            JavaStyleComment[] comments;
+//            comments = body.getComments();
+//            if (comments != null) {
+//                for (int i = 0; i < comments.length; i++) {
+//                    JavaStyleComment c = comments[i];
+//                    p.print(c.getText());
+//                    if (c.isLineComment() || c.hadSpaceAfter()) {
+//                        p.newLine();
+//                    }
+//               }
+//           }
+//           p.print(" */\n");
+//        }
 
         // set is init for dynamically allocating arrays...
         if (filter != null && self.getName().startsWith("init")) {
@@ -1410,12 +1457,23 @@ public class FlatIRToCluster extends InsertProfiling implements
      */
     public void visitForStatement(JForStatement self, JStatement init,
             JExpression cond, JStatement incr, JStatement body) {
+        // debugging:
+//        JavaStyleComment [] comments = self.getComments();
+//        if (comments != null && comments.length > 0) {
+//            p.println("/*");
+//            for (int i = 0; i < comments.length; i++) {
+//                p.println(comments[i].getText());
+//            }
+//            p.println("*/");
+//        }
+
+        
         // be careful, if you return prematurely, decrement me
         forLoopHeader++;
 
         boolean oldStatementContext = statementContext;
         p.print("for (");
-        statementContext = false; // expreeions here separated by ';'
+        statementContext = false; // expressions here separated by ';'
         if (init != null) {
             init.accept(this);
             // the ; will print in a statement visitor
@@ -1800,6 +1858,7 @@ public class FlatIRToCluster extends InsertProfiling implements
             p.print(RawExecutionCode.ARRAY_COPY + (dims.length - 1));
             p.print(";\n");
             for (int i = 0; i < dims.length; i++) {
+                //p.println("// FlatIRToCluster_7");
                 p.print("for (" + RawExecutionCode.ARRAY_COPY + i + " = 0; "
                         + RawExecutionCode.ARRAY_COPY + i + " < " + dims[i]
                         + "; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
@@ -2102,7 +2161,9 @@ public class FlatIRToCluster extends InsertProfiling implements
 
         NetStream in = RegisterStreams.getFilterInStream(filter);
         //p.print(in.consumer_name()+".pop()");
-        p.print("__pop__" + selfID + "()");
+        for (int i = 0; i < self.getNumPop(); i++) {
+            p.print("__pop__" + selfID + "()");
+        }
 
         //Utils.fail("FlatIRToCluster should see no pop expressions");
     }

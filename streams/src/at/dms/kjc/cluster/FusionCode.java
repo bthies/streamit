@@ -666,7 +666,8 @@ class FusionCode {
 			p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
 			p.print("    #ifdef __PEEK_BUF_SIZE_"+_s+"_"+_d+"\n");
 
-			p.print("      for (int __y = 0; __y < __PEEK_BUF_SIZE_"+_s+"_"+_d+"; __y++) {\n");
+			//p.println("// FusionCode_1");
+            p.print("      for (int __y = 0; __y < __PEEK_BUF_SIZE_"+_s+"_"+_d+"; __y++) {\n");
 			p.print("        BUFFER_"+_s+"_"+_d+"[__y] = BUFFER_"+_s+"_"+_d+"[__y + TAIL_"+_s+"_"+_d+"];\n");
 			p.print("      }\n");
 			p.print("      HEAD_"+_s+"_"+_d+" -= TAIL_"+_s+"_"+_d+";\n");
@@ -745,6 +746,13 @@ class FusionCode {
 
     private static String get_loop(int times, String code) {
         String res = "";
+        if (times == 0) {
+            return "";
+        }
+        if (times == 1) {
+            return code;
+        }
+        //res += "// FusionCode_2 " + times + "\n";
         if (times <= 4) {
             for (int i = 0; i < times; i++)
                 res += code;

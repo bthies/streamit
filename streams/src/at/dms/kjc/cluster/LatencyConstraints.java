@@ -116,7 +116,8 @@ public class LatencyConstraints {
 	return b.booleanValue();
     }
 
-    public static void detectConstraints(streamit.scheduler2.iriter.Iterator topStreamIter,
+    public static void detectConstraints(
+			     streamit.scheduler2.iriter.Iterator topStreamIter,
 			     SIRPortal portals[]) {
 
 	System.out.println("Number of portals is: "+portals.length);
@@ -179,7 +180,8 @@ public class LatencyConstraints {
 			}
 		    } 
 
-		    System.out.println("          minimum Latency: "+min_latency);
+		    System.out.println("          minimum Latency: "
+				       + min_latency);
 		}
 	    }
 
@@ -189,10 +191,12 @@ public class LatencyConstraints {
 		try {
 
 		    int id = NodeEnumerator.getSIROperatorId(receiver);
-		    System.out.println("        receiver: ("+receiver+") ID:"+id);
+		    System.out.println("        receiver: ("
+				       + receiver + ") ID:" + id);
 		} catch (Exception ex) {
 
-		    System.out.println("        receiver: ("+receiver+") ID: NOT FOUND");
+		    System.out.println("        receiver: ("
+				       + receiver + ") ID: NOT FOUND");
 		    
 		}
 	    }
@@ -211,7 +215,8 @@ public class LatencyConstraints {
 		for (int i2 = 0; i2 < receivers.length; i2++) {
 		    SIRStream receiver = receivers[i2];
 		    
-		    System.out.println("    sender: "+sender+" receiver: "+receiver);
+		    System.out.println("    sender: " + sender + " receiver: "
+				       + receiver);
 
 		    SIRFilter f1 = (SIRFilter)sender;
 		    SIRFilter f2 = (SIRFilter)receiver;
@@ -222,10 +227,13 @@ public class LatencyConstraints {
 		    FindPath.find(n1,n2);
 
 		    streamit.scheduler2.constrained.Scheduler cscheduler2 =
-			streamit.scheduler2.constrained.Scheduler.create(topStreamIter);
+			streamit.scheduler2.constrained.Scheduler.
+			   create(topStreamIter);
 
-		    streamit.scheduler2.iriter.Iterator iter1 = IterFactory.createFactory().createIter(f1);
-		    streamit.scheduler2.iriter.Iterator iter2 = IterFactory.createFactory().createIter(f2);
+		    streamit.scheduler2.iriter.Iterator iter1 = 
+			IterFactory.createFactory().createIter(f1);
+		    streamit.scheduler2.iriter.Iterator iter2 = 
+			IterFactory.createFactory().createIter(f2);
 
 		    streamit.scheduler2.SDEPData sdep2;
 
@@ -243,7 +251,8 @@ public class LatencyConstraints {
 
 			upstream = false;
 
-		    } catch (streamit.scheduler2.constrained.NoPathException ex) {
+		    } catch (streamit.scheduler2.constrained.
+			     NoPathException ex) {
 			
 			try {
 			    sdep2 = cscheduler2.computeSDEP(iter2, iter1);
@@ -251,18 +260,21 @@ public class LatencyConstraints {
 			    Vector v = new Vector();
 			    v.add(f1);
 			    v.add(f2);
-			    messageDirectionDownstream.put(v, new Boolean(false));
+			    messageDirectionDownstream.put(v, 
+							   new Boolean(false));
 			    System.out.println("sender: "+f1+" receiver: "+f2);
 
 			    // message is being sent upstream
 
 			    upstream = true;
 
-			} catch (streamit.scheduler2.constrained.NoPathException ex2) {
+			} catch (streamit.scheduler2.constrained.
+				 NoPathException ex2) {
 			    
 			    // no path between source and dest has been found
 			
-			    AssertedClass.ASSERT(cscheduler2, false, "no path found between source and destination of message");
+			    AssertedClass.ASSERT(cscheduler2, false, 
+                    "no path found between source and destination of message");
 			    
 			    // never executed
 
@@ -272,10 +284,14 @@ public class LatencyConstraints {
 
 		    }
 
-		    System.out.println("      Upstream Init Phases: "+sdep2.getNumSrcInitPhases());
-		    System.out.println("      Downstr. Init Phases: "+sdep2.getNumDstInitPhases());
-		    System.out.println("      Upstream Steady Phases: "+sdep2.getNumSrcSteadyPhases());
-		    System.out.println("      Downstr. Steady Phases: "+sdep2.getNumDstSteadyPhases());
+		    System.out.println("      Upstream Init Phases: "
+				       + sdep2.getNumSrcInitPhases());
+		    System.out.println("      Downstr. Init Phases: "
+				       + sdep2.getNumDstInitPhases());
+		    System.out.println("      Upstream Steady Phases: "
+				       + sdep2.getNumSrcSteadyPhases());
+		    System.out.println("      Downstr. Steady Phases: "
+				       + sdep2.getNumDstSteadyPhases());
 		    
 		    int upstreamSteady = sdep2.getNumSrcSteadyPhases();
 		    int downstreamSteady = sdep2.getNumDstSteadyPhases();
@@ -304,7 +320,8 @@ public class LatencyConstraints {
 			    if (last_dep > 1) break;
 			}
 
-			System.out.println("iter: "+iter+" last_dep: "+last_dep);
+			System.out.println("iter: " + iter
+					   + " last_dep: " + last_dep);
 			
 			int init = (iter-1)-min_latency-1;
 
@@ -323,10 +340,14 @@ public class LatencyConstraints {
 			last_dep = 0;
 			
 			for (int inc = 0; inc < upstreamSteady; inc++) {
-			    int current = sdep2.getDstPhase4SrcPhase(iter+inc)-1;
+			    int current = 
+				sdep2.getDstPhase4SrcPhase(iter+inc)-1;
 			    if (current > last_dep) {
 				
-				System.out.println("Can exec "+current+" at source iteration nr. "+(init+inc)+" array:"+current);
+				System.out.println("Can exec "+current
+						   +" at source iteration nr. "
+						   +(init+inc)
+						   +" array:"+current);
 				
 				constraint.setDependencyData(inc, 
 							     current); 
@@ -334,7 +355,9 @@ public class LatencyConstraints {
 				last_dep = current;
 			    } else {
 				
-				System.out.println("Can not advance dest. at source iteration nr. "+(init+inc)+" array:0");
+				System.out.println(
+                               "Can not advance dest. at source iteration nr. "
+			           +(init+inc)+" array:0");
 				
 				constraint.setDependencyData(inc, 
 							     0); 
@@ -348,7 +371,8 @@ public class LatencyConstraints {
 
 		    if (upstream && any_latency_found && min_latency <= 0) {
 
-			AssertedClass.ASSERT(topStreamIter, false, "Error: an upstream message is being sent with a non-positive latency.");
+			AssertedClass.ASSERT(topStreamIter, false, 
+      "Error: an upstream message is being sent with a non-positive latency.");
 			
 		    }
 		    
@@ -361,7 +385,8 @@ public class LatencyConstraints {
 			
 			restrictedExecutionFilters.add(receiver);
 
-			init_credit = sdep2.getSrcPhase4DstPhase(1 + min_latency) - 1;
+			init_credit = 
+			    sdep2.getSrcPhase4DstPhase(1 + min_latency) - 1;
 
 			setInitCredit((SIRFilter)receiver, init_credit);
 
@@ -383,21 +408,29 @@ public class LatencyConstraints {
 
 			int credit_sent = init_credit;
 
-			for (int offset = 0; offset < downstreamSteady; offset++) {
+			for (int offset = 0; offset < downstreamSteady; 
+			     offset++) {
 			    
-			    int credit = sdep2.getSrcPhase4DstPhase(offset + 2 + min_latency) - 1;
+			    int credit = 
+				sdep2.getSrcPhase4DstPhase(offset + 
+							   2 + min_latency)- 1;
 			    if (credit > credit_sent) { 
 
 				constraint.setDependencyData(offset, 
 							     credit); 
 
-				System.out.println("At end of iter: "+(offset+1)+" can send credit: "+credit); 
+				System.out.println("At end of iter: "
+						   +(offset+1)
+						   +" can send credit: "
+						   +credit); 
 			    } else {
 
 				constraint.setDependencyData(offset, 
 							     0); 
 
-				System.out.println("At end of iter: "+(offset+1)+" no additional credit."); 
+				System.out.println("At end of iter: "
+						   +(offset+1)
+						   +" no additional credit."); 
 			    }
 
 			    credit_sent = credit;

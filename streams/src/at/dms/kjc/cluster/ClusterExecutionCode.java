@@ -17,6 +17,7 @@ import java.util.ListIterator;
 //import at.dms.kjc.sir.lowering.*;
 //import java.util.Hashtable;
 //import java.math.BigInteger;
+//import at.dms.compiler.JavaStyleComment;
 
 public class ClusterExecutionCode extends at.dms.util.Utils 
     implements FlatVisitor, Constants
@@ -530,6 +531,8 @@ public class ClusterExecutionCode extends at.dms.util.Utils
     //convert the peek and pop expressions for a filter into
     //buffer accesses, do this for all functions just in case helper
     //functions call peek or pop
+    
+    /*
     private void convertCommExps(SIRFilter filter, boolean simple,
 				 LocalVariables localVars) 
     {
@@ -552,7 +555,7 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	    }
 	}
     }
-
+*/
 
     JStatement receiveCode(SIRFilter filter, CType type, LocalVariables localVariables) {
 	if (noBuffer(filter)) 
@@ -562,7 +565,7 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	//depend on type of the pop, by default set it to be the scalar receive
 	String receiveMethodName = receiveMethod;
 
-	JBlock statements = new JBlock(null, new JStatement[0], null);
+	// JBlock statements = new JBlock(null, new JStatement[0], null);
 	
 	//if it is not a scalar receive change the name to the appropriate 
 	//method call, from struct.h
@@ -660,16 +663,16 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 			   new JIntLiteral(initFire - 1));
     }
     
-    private int lcm(int x, int y) { // least common multiple
-	int v = x, u = y;
-	while (x != y)
-	    if (x > y) {
-		x -= y; v += u;
-	    } else {
-		y -= x; u += v;
-	    }
-	return (u+v)/2;
-    }
+//    private int lcm(int x, int y) { // least common multiple
+//	int v = x, u = y;
+//	while (x != y)
+//	    if (x > y) {
+//		x -= y; v += u;
+//	    } else {
+//		y -= x; u += v;
+//	    }
+//	return (u+v)/2;
+//    }
 
 
      // Returns a for loop that uses field <var> to count
@@ -717,8 +720,19 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 								   var));
 	JStatement incr = 
 	    new JExpressionStatement(null, incrExpr, null);
-
-	return new JForStatement(null, init, cond, incr, body, null);
+    
+    // debugging: print callse, and insert caller as comment on returned for loop
+/*
+    String caller;
+    {
+       Throwable tracer = new Throwable();
+       tracer.fillInStackTrace();
+       caller = "ClusterExecution.makeForLoop(" + count + "): " + tracer.getStackTrace()[1].toString();
+    }
+    JavaStyleComment comments [] = {new JavaStyleComment(caller,true,false,false)};
+    System.err.println(caller);
+*/
+	return new JForStatement(null, init, cond, incr, body, /*comments*/ null);
     }
 
 
@@ -833,9 +847,10 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 				    "__number_of_iterations_"+nodeID, 
 				    new JIntLiteral(0));
 
-	JVariableDeclarationStatement var_st = 
+/*	JVariableDeclarationStatement var_st = 
 	    new JVariableDeclarationStatement( null, var, null);
-
+*/
+    
 	// num iters = init + num_steady_iterations_specified_by_user * steady
 	Integer initCounts = (Integer)ClusterBackend.initExecutionCounts.get(node);
 	int init;
@@ -1214,9 +1229,9 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 					 CType oldTapeType) {
 	  
 	   // do the super
-	    SIRPopExpression self = 
-		(SIRPopExpression)
-		super.visitPopExpression(oldSelf, oldTapeType);
+	    SIRPopExpression self =
+		(SIRPopExpression) super.visitPopExpression(oldSelf, oldTapeType);
+	    assert self.getNumPop() == 1: "Need support here for multiple pop";
 
 	    //create the increment of the index var
 	    JPrefixExpression increment = 

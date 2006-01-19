@@ -341,10 +341,14 @@ public class FuseSimpleSplit {
             list.add(kLoop);
         }
         // pop the right number of items at the end
-        list.add(Utils.makeForLoop(new JExpressionStatement(null,
-                                                            new SIRPopExpression(type),
-                                                            null),
-                                   sumOfWeights * rep.splitter));
+        if (sumOfWeights * rep.splitter > 0) {
+            list.add(new JExpressionStatement(new SIRPopExpression(type, 
+                    sumOfWeights * rep.splitter)));
+        }
+//        list.add(Utils.makeForLoop(new JExpressionStatement(null,
+//                                                            new SIRPopExpression(type),
+//                                                            null),
+//                                   sumOfWeights * rep.splitter));
         return new JBlock(null, list, null);
     }
 
@@ -421,33 +425,43 @@ public class FuseSimpleSplit {
             JVariableDefinition _k = new JVariableDefinition(null, 0, CStdType.Integer, "_k", new JIntLiteral(0));
             // make loop body
             JStatement inner = new JExpressionStatement(null,
-                                                        new SIRPushExpression(new SIRPeekExpression(new JAddExpression(null,
-                                                                                                                       new JMultExpression(null,
-                                                                                                                                           new JLocalVariableExpression(null, _k),
-                                                                                                                                           new JArrayAccessExpression(null,
-                                                                                                                                                                      new JLocalVariableExpression(null, _weights),
-                                                                                                                                                                      new JLocalVariableExpression(null, _i))),
-                                                                                                                       new JAddExpression(null,
-                                                                                                                                          new JArrayAccessExpression(null,
-                                                                                                                                                                     new JLocalVariableExpression(null, _partialSum),
-                                                                                                                                                                     new JLocalVariableExpression(null, _i),
-                                                                                                                                                                     CStdType.Integer),
-                                                                                                                                          new JLocalVariableExpression(null, _j))),
-                                                                                                    type),
+                    new SIRPushExpression(new SIRPeekExpression(
+                            new JAddExpression(null, new JMultExpression(null,
+                                    new JLocalVariableExpression(null, _k),
+                                    new JArrayAccessExpression(null,
+                                            new JLocalVariableExpression(null,
+                                                    _weights),
+                                            new JLocalVariableExpression(null,
+                                                    _i))), new JAddExpression(
+                                    null, new JArrayAccessExpression(null,
+                                            new JLocalVariableExpression(null,
+                                                    _partialSum),
+                                            new JLocalVariableExpression(null,
+                                                    _i), CStdType.Integer),
+                                    new JLocalVariableExpression(null, _j))),
+                            type),
 
-                                                                              type),
-                                                        null);
+                    type), null);
             // add k loop
-            JStatement jLoop = Utils.makeForLoop(inner, new JArrayAccessExpression(null, new JLocalVariableExpression(null, _weights), new JLocalVariableExpression(null, _i)), _j);
-            JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(weights.length), _i);
-            JStatement kLoop = Utils.makeForLoop(iLoop, new JIntLiteral(rep.joiner), _k);
+            JStatement jLoop = Utils.makeForLoop(inner,
+                    new JArrayAccessExpression(null,
+                            new JLocalVariableExpression(null, _weights),
+                            new JLocalVariableExpression(null, _i)), _j);
+            JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(
+                    weights.length), _i);
+            JStatement kLoop = Utils.makeForLoop(iLoop, new JIntLiteral(
+                    rep.joiner), _k);
             list.add(kLoop);
         }
         // pop the right number of items at the end
-        list.add(Utils.makeForLoop(new JExpressionStatement(null,
-                                                            new SIRPopExpression(type),
-                                                            null),
-                                   sumOfWeights * rep.joiner));
+        if (sumOfWeights * rep.joiner > 0) {
+            list.add(new JExpressionStatement(new SIRPopExpression(type,
+                    sumOfWeights * rep.joiner)));
+        }
+// list.add(Utils.makeForLoop(new JExpressionStatement(null,
+// new SIRPopExpression(type),
+// null),
+// sumOfWeights * rep.joiner));
         return new JBlock(null, list, null);
     }
 
@@ -506,14 +520,14 @@ public class FuseSimpleSplit {
 
         // add a pop loop to statements that pops the right number of
         // times for the splitjoin
-        if (isDup) {
-            newStatements.
-                addStatement(Utils.
-                             makeForLoop(new JExpressionStatement(null,
-                                                                  new SIRPopExpression(sj.
-                                                                                       getInputType()),
-                                                                  null),
-                                         rep.splitter));
+        if (isDup && rep.splitter > 0) {
+            newStatements.addStatement(
+                    new JExpressionStatement(
+                            new SIRPopExpression(sj.getInputType(),rep.splitter)));
+                        
+// Utils.makeForLoop(new JExpressionStatement(null,
+//                new SIRPopExpression(sj.getInputType()), null),
+//                rep.splitter));
         }
 
         //add variable declarations calculated by FindVarDecls
@@ -556,21 +570,48 @@ public class FuseSimpleSplit {
 
         // adjust the contents of <orig> to be relative to <var>
         orig.accept(new SLIRReplacingVisitor() {
-                public Object visitPopExpression(SIRPopExpression oldSelf,
-                                                 CType oldTapeType) {
-                    // Recurse into children.
-                    SIRPopExpression self = (SIRPopExpression)
-                        super.visitPopExpression(oldSelf,
-                                                 oldTapeType);
-                    // reference our var
-                    JLocalVariableExpression ref = new JLocalVariableExpression(null,
-                                                                                var);
-                    // Return new peek expression.
-                    return new SIRPeekExpression(new JPostfixExpression(null,
-                                                                        OPE_POSTINC,
-                                                                        ref),
-                                                 oldTapeType);
+            // Whether we are in an ExpressionStatement or not affects
+            // behaviour of pops:  as an immediate subexpression of ExpressionStatment,
+            // they do not have to return a value.
+            
+            private boolean inExpressionStatement = false;
+               
+            public Object visitExpressionStatement(JExpressionStatement self, JExpression expr) {
+                boolean oldInExpressionStatement = inExpressionStatement;
+                if (expr instanceof SIRPopExpression) {inExpressionStatement = true;}
+                Object result = super.visitExpressionStatement(self,expr);
+                inExpressionStatement = oldInExpressionStatement;
+                return result;
+            }
+
+            public Object visitPopExpression(SIRPopExpression oldSelf,
+                    CType oldTapeType) {
+                // Recurse into children.
+                SIRPopExpression self = (SIRPopExpression) super
+                        .visitPopExpression(oldSelf, oldTapeType);
+ 
+                int ntimes = self.getNumPop();
+
+                if (inExpressionStatement) {
+                    JExpression lhs = new JLocalVariableExpression(null, var);
+                    JExpression rhs = new JAddExpression(
+                            new JLocalVariableExpression(null, var),
+                            new JIntLiteral(ntimes)
+                    );
+                    return new JAssignmentExpression(lhs,rhs);
                 }
+                // if assertion fires, need code to bump past numPop-1 items
+                // then peek
+                // the final popped item.
+                assert ntimes == 1 : "Need code here to handle multiple pop";
+                // reference our var
+                JLocalVariableExpression ref = new JLocalVariableExpression(
+                        null, var);
+                // Return new peek expression.
+                return new SIRPeekExpression(new JPostfixExpression(null,
+                        OPE_POSTINC, ref), oldTapeType);
+            }
+            
                 public Object visitPeekExpression(SIRPeekExpression oldSelf,
                                                   CType oldTapeType,
                                                   JExpression arg) {

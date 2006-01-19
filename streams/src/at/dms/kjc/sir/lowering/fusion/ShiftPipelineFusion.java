@@ -898,22 +898,49 @@ class ShiftPipelineFusion {
 	 */
 	private final boolean fuseWrites;
 
+    // Whether we are in an ExpressionStatement or not affects
+    // behaviour of pops:  as an immediate subexpression of ExpressionStatment,
+    // they do not have to return a value.
+    
+    private boolean inExpressionStatement;
+
 	public FusingVisitor(PhaseInfo curInfo, PhaseInfo nextInfo,
 			     boolean fuseReads, boolean fuseWrites) {
 	    this.curInfo = curInfo;
 	    this.nextInfo = nextInfo;
 	    this.fuseReads = fuseReads;
 	    this.fuseWrites = fuseWrites;
+        this.inExpressionStatement = false;
 	}
+
+    public Object visitExpressionStatement(JExpressionStatement self, JExpression expr) {
+        boolean oldInExpressionStatement = inExpressionStatement;
+        if (expr instanceof SIRPopExpression) inExpressionStatement = true;
+        Object result = super.visitExpressionStatement(self,expr);
+        inExpressionStatement = oldInExpressionStatement;
+        return result;
+    }
 
 	public Object visitPopExpression(SIRPopExpression self,
 					 CType tapeType) {
-	    // leave it alone not fusing reads
-	    if (!fuseReads) {
-		return super.visitPopExpression(self, tapeType);
-	    }
 
-	    // build ref to pop array
+        // leave it alone not fusing reads
+        if (!fuseReads) {
+            return super.visitPopExpression(self, tapeType);
+        }
+
+        if (inExpressionStatement) {
+            // no value needed...
+            // immediately emit expression to update popIndex
+            JExpression lhs = new JLocalVariableExpression(null,
+                       curInfo.popCounter);
+            JExpression rhs = new JAddExpression( 
+                    new JLocalVariableExpression(null,curInfo.popCounter),
+                    new JIntLiteral(self.getNumPop()));
+            return new JAssignmentExpression(lhs,rhs);
+        }
+        
+        // build ref to pop array
 	    JLocalVariableExpression lhs = 
 		new JLocalVariableExpression(null, curInfo.popBuffer);
 

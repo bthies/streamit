@@ -674,6 +674,12 @@ class ModuloPipelineFusion {
 	 * Whether or not push expressions should be fused.
 	 */
 	private final boolean fuseWrites;
+    
+    // Whether we are in an ExpressionStatement or not affects
+    // behaviour of pops:  as an immediate subexpression of ExpressionStatment,
+    // they do not have to return a value.
+    
+    private boolean inExpressionStatement;
 
 	public FusingVisitor(FilterInfo curInfo, FilterInfo nextInfo,
 			     boolean fuseReads, boolean fuseWrites) {
@@ -681,22 +687,44 @@ class ModuloPipelineFusion {
 	    this.nextInfo = nextInfo;
 	    this.fuseReads = fuseReads;
 	    this.fuseWrites = fuseWrites;
+        this.inExpressionStatement = false;
 	}
 
+    public Object visitExpressionStatement(JExpressionStatement self, JExpression expr) {
+        boolean oldInExpressionStatement = inExpressionStatement;
+        if (expr instanceof SIRPopExpression) {inExpressionStatement = true;}
+        Object result = super.visitExpressionStatement(self,expr);
+        inExpressionStatement = oldInExpressionStatement;
+        return result;
+    }
+    
 	// pop(i) -> buffer[pop_index]; 
 	// add to pendingStatements: pop_index = (pop_index + 1) % buffer_size
 	public Object visitPopExpression(SIRPopExpression self,
 					 CType tapeType) {
-	    // leave it alone not fusing reads
-	    if (!fuseReads) {
-		return super.visitPopExpression(self, tapeType);
-	    }
+
+        // leave it alone not fusing reads
+        if (!fuseReads) {
+            return super.visitPopExpression(self, tapeType);
+        }
 
 	    // get relevant names
 	    String bufferName = curInfo.buffer.getVariable().getIdent();
 	    String popIndexName = curInfo.popIndex.getVariable().getIdent();
 
-	    // build ref to buffer
+        if (inExpressionStatement) {
+            // no value needed...
+            // immediately emit expression to update popIndex
+            JExpression lhs = new JFieldAccessExpression(popIndexName);
+            JExpression rhs = new JBitwiseExpression(OPE_BAND,
+                        new JAddExpression(new JFieldAccessExpression(
+                                popIndexName), 
+                                new JIntLiteral(self.getNumPop())),
+                        new JIntLiteral(curInfo.bufferSize - 1));
+            return new JAssignmentExpression(lhs, rhs);
+        }
+        
+        // build ref to buffer
 	    JExpression lhs = new JFieldAccessExpression(bufferName);
 	    // build index
 	    JExpression rhs = new JFieldAccessExpression(popIndexName);

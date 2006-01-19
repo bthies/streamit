@@ -601,12 +601,14 @@ public class FuseSplit {
 	}
 	// pop items at end
 	int popCount = initMode ? rate.initPeek : rate.pop;
-	if (!initMode) {
-	    list.add(Utils.makeForLoop(new JExpressionStatement(null,
-								new SIRPopExpression(type),
-								null),
-				       popCount));
-	}
+	if (!initMode && popCount > 0) {
+        list.add(new JExpressionStatement(
+                new SIRPopExpression(type, popCount)));
+    }
+//	    list.add(Utils.makeForLoop(new JExpressionStatement(null,
+//								new SIRPopExpression(type),
+//								null),
+//				       popCount));
 	return new JBlock(null, list, null);
     }
     
@@ -900,13 +902,42 @@ public class FuseSplit {
 
 	// adjust the contents of <orig> to be relative to <var>
 	orig.accept(new SLIRReplacingVisitor() {
+        // Whether we are in an ExpressionStatement or not affects
+        // behaviour of pops:  as an immediate subexpression of ExpressionStatment,
+        // they do not have to return a value.
+        
+        private boolean inExpressionStatement = false;
+           
+        public Object visitExpressionStatement(JExpressionStatement self, JExpression expr) {
+            boolean oldInExpressionStatement = inExpressionStatement;
+            if (expr instanceof SIRPopExpression) {inExpressionStatement = true;}
+            Object result = super.visitExpressionStatement(self,expr);
+            inExpressionStatement = oldInExpressionStatement;
+            return result;
+        }
+
 		public Object visitPopExpression(SIRPopExpression oldSelf,
 						 CType oldTapeType) {
 		    // Recurse into children.
 		    SIRPopExpression self = (SIRPopExpression)
-			super.visitPopExpression(oldSelf,
-						 oldTapeType);
-		    // reference our var
+			super.visitPopExpression(oldSelf, oldTapeType);
+
+            int ntimes = self.getNumPop();
+
+            if (inExpressionStatement) {
+                JExpression lhs = new JLocalVariableExpression(null, var);
+                JExpression rhs = new JAddExpression(
+                        new JLocalVariableExpression(null, var),
+                        new JIntLiteral(ntimes)
+                );
+                return new JAssignmentExpression(lhs,rhs);
+            }
+            // if assertion fires, need code to bump past numPop-1 items
+            // then peek
+            // the final popped item.
+            assert ntimes == 1 : "Need code here to handle multiple pop";
+            
+            // reference our var
 		    JLocalVariableExpression ref = new JLocalVariableExpression(null,
 										var);
 		    // Return new peek expression.
@@ -1215,6 +1246,9 @@ public class FuseSplit {
 	public Object visitPopExpression(SIRPopExpression oldSelf,
 					 CType oldTapeType) {
 	    SIRPopExpression self = (SIRPopExpression)super.visitPopExpression(oldSelf, oldTapeType);
+        assert self.getNumPop() == 1 
+            : "Need code here to handle multiple pop";
+
 	    return FuseSplit.makeBufferPop(childInfo.peekBuffer);
 	}
 

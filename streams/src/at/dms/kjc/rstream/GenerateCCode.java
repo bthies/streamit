@@ -80,6 +80,10 @@ public class GenerateCCode
 	fields = new Vector();
 	functions = new Vector();
 	initFunctionCalls = new JBlock(null, new JStatement[0], null);
+    // make sure SIRPopExpression's only pop one element
+    // code generation doesn't handle generating multiple pops
+    // from a single SIRPopExpression
+    RemoveMultiPops.doit((SIRStream)top.contents);
 	//rename all filters so that names do not clash in the 
 	//resulting c file
 	renameFilterContents(top);

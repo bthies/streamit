@@ -1226,7 +1226,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	// (recvBuffer[++recvBufferIndex % recvBufferSize])
 	public Object visitPopExpression(SIRPopExpression oldSelf,
 					 CType oldTapeType) {
-	  
+	   assert oldSelf.getNumPop() == 0: "need to update code here for multiple pop";
 	   // do the super
 	    SIRPopExpression self = 
 		(SIRPopExpression)

@@ -140,7 +140,12 @@ public class SpaceTimeBackend
 		LinearDot.printGraph(str, "linear-replace.dot", lfa);
 	    }
 	}
-	
+
+    // make sure SIRPopExpression's only pop one element
+    // code generation doesn't handle generating multiple pops
+    // from a single SIRPopExpression
+    RemoveMultiPops.doit(str);
+    
 	//get the execution counts from the scheduler
 	HashMap[] executionCounts=SIRScheduler.getExecutionCounts(str);
 	//flatten the graph by running (super?) synch removal

@@ -225,7 +225,8 @@ public class DirectCommunication extends at.dms.util.Utils
 	    if (oldright instanceof JCastExpression && 
 		(((JCastExpression)oldright).getExpr() instanceof SIRPopExpression)) {
 		SIRPopExpression pop = (SIRPopExpression)((JCastExpression)oldright).getExpr();
-	    
+	    assert pop.getNumPop() == 1: "Need to update code here to deal with multiple pop";
+
 		if (pop.getType().isClassType()) {
 		    JExpression left = (JExpression)oldleft.accept(this);
 		

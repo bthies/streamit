@@ -49,7 +49,13 @@ public class FlatIRToC extends ToC implements StreamVisitor
     
     public static void generateCode(FlatNode node) 
     {
-        FlatIRToC toC = new FlatIRToC((SIRFilter)node.contents);
+        SIRFilter str = (SIRFilter)node.contents;
+        // make sure SIRPopExpression's only pop one element
+        // code generation doesn't handle generating multiple pops
+        // from a single SIRPopExpression
+        RemoveMultiPops.doit(str);
+        
+        FlatIRToC toC = new FlatIRToC(str);
         //FieldInitMover.moveStreamInitialAssignments((SIRFilter)node.contents);
         //FieldProp.doPropagate((SIRFilter)node.contents);
 

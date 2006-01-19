@@ -67,7 +67,13 @@ public class FlatIRToC extends ToC implements StreamVisitor
     public static void generateCode(StaticStreamGraph SSG, FlatNode node)
     {
         assert Layout.assignToATile(node);
-        FlatIRToC toC = new FlatIRToC((SIRFilter)node.contents);
+        SIRFilter str = (SIRFilter)node.contents;
+        // make sure SIRPopExpression's only pop one element
+        // code generation doesn't handle generating multiple pops
+        // from a single SIRPopExpression
+        RemoveMultiPops.doit(str);
+        
+        FlatIRToC toC = new FlatIRToC(str);
         toC.flatNode = node;
         toC.ssg = SSG;
         toC.layout = SSG.getStreamGraph().getLayout();

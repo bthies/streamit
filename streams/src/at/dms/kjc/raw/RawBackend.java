@@ -204,7 +204,12 @@ public class RawBackend {
 	    System.out.println("Flattener Begin...");
 	    executionCounts = SIRScheduler.getExecutionCounts(str);
 	    PartitionDot.printScheduleGraph(str, "schedule.dot", executionCounts);
-	    graphFlattener = new GraphFlattener(str);
+        // make sure SIRPopExpression's only pop one element
+        // code generation doesn't handle generating multiple pops
+        // from a single SIRPopExpression
+        RemoveMultiPops.doit(str);
+        //
+        graphFlattener = new GraphFlattener(str);
 	    System.out.println("Flattener End.");
 
 	    //create the execution counts for other passes

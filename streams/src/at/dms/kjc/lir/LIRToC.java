@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.107 2006-01-12 18:10:24 thies Exp $
+ * $Id: LIRToC.java,v 1.108 2006-01-19 22:47:31 rabbah Exp $
  */
 
 package at.dms.kjc.lir;
@@ -68,7 +68,6 @@ public class LIRToC
      * Generates code for <flatClass> and sends to System.out.
      */
     public static void generateCode(JClassDeclaration flat) {
-        System.out.println("*/");       
         System.out.println("#include \"streamit.h\"");
         System.out.println("#include <stdio.h>");
         System.out.println("#include <stdlib.h>");

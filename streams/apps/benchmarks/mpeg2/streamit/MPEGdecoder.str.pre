@@ -1126,10 +1126,13 @@ int->int pipeline BlockDecode(portal<InverseQuantization_AC_Coeff> UpdatePortal_
   add InverseQuantization(UpdatePortal_quantiser_data_ac,
                           UpdatePortal_quantiser_data_dc,
                           UpdatePortal_macroblock_intra);
-  add Saturation(-2048, 2047);
+  // Extreme bounds for both saturations are a best guess about how far off
+  // any invalid data could ever get.
+  // Bounded Saturation is roughly twice as fast as the regular Saturation
+  add BoundedSaturation(-2048, 2047, -2050, 2050);
   add MismatchControl();
   add iDCT8x8_ieee;
-  add Saturation(-256, 255);
+  add BoundedSaturation(-256, 255, -260, 260);
 }
 
 /**

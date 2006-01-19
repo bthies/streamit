@@ -89,7 +89,7 @@ void->void pipeline MPEGdecoder_nomessage() {
   // All of these test cases can be run independently of each other.
   // For each output file, there is an associated output file without the "unver" extension
   // and an md5sum which can be compared against the actual output to make sure it's correct.
-  int parse_or_process = 1;
+  int parse_or_process = 3;
 
   int width=352;
   int height=240;
@@ -1194,10 +1194,10 @@ int->int pipeline BlockDecode(
     // Assumes no alternate_scan TODO
     // Output of this corresponds to QF[v][u], (cite 1, P. 67)
   add InverseQuantization();
-  add Saturation(-2048, 2047);
+  add BoundedSaturation(-2048, 2047, -2050, 2050);
   add MismatchControl();
   add iDCT8x8_ieee;
-  add Saturation(-256, 255);
+  add BoundedSaturation(-256, 255, -260, 260);
 }
 
 /**

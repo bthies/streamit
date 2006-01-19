@@ -46,6 +46,41 @@ int->int filter Saturation(int min, int max) {
   }
 }
 
+/**
+ * Saturates a stream of integers known to lie within some larger range, 
+ * forcing them to lie within a specified range. Values
+ * greater than the maximum are saturated to have the max value, and values less than 
+ * the minimum are saturated to have the minimum value. If a value lies outside
+ * of the great range behavior is undefined. The BoundedSaturation, without the
+ * initialization cost, is roughly twice as fast as the regular Saturation.
+ * @param min The minimum value any integer in the stream is allowed to assume.
+ * @param max The maximum value any integer in the stream is allowed to assume.
+ * @param worst_input_min The absolute minimum value any input could ever take on.
+ * @param worst_input_max The absolute maximum value any input could ever take on.
+ * @input A stream of integers.
+ * @output A stream of integers lying between min and max, inclusive.
+ */
+int->int filter BoundedSaturation(int min, int max, int worst_input_min, int worst_input_max) {
+  int range;
+  int[2*(worst_input_max - worst_input_min + 1)] saturate; // TODO - fix static variables propogating in library
+  init {
+      range = worst_input_max - worst_input_min + 1; // Should come earlier but range not set correctly
+      for (int i = 0; i < range*2; i++) {
+          int val = i + worst_input_min;
+          if (val < min) {
+              saturate[i] = min;
+          } else if (val > max) {
+              saturate[i] = max;
+          } else {
+              saturate[i] = val;
+          }
+      }   
+  }
+  work pop 1 push 1 {
+      push(saturate[pop()-worst_input_min]);
+  }
+}
+
 /** 
  * Duplicates a sequence of data items a given number of times.
  * @param numitems The number of items in a sequence.

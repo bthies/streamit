@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 
 #ifndef PI
 # ifdef M_PI
@@ -45,8 +46,6 @@
 #define W7 565  /* 2048*sqrt(2)*cos(7*pi/16) */
 
 static double c[8][8]; /* transform coefficients */
-static int iclip[1024]; /* clipping table */
-static int *iclp;
 
 void init_dct()
 {
@@ -125,18 +124,9 @@ void idct(int* block)
       for (k=0; k<8; k++)
         partial_product+= c[k][i]*tmp[8*k+j];
 	
-      v = (int) floor(partial_product+0.499999);
-      block[8*i+j] = (v<-256) ? -256 : ((v>255) ? 255 : v);
+      v = (int) floor(partial_product+0.50);
+      block[8*i+j] = v;
     }
-}
-
-void init_fidct()
-{
-  int i;
-
-  iclp = iclip+512;
-  for (i= -512; i<512; i++)
-    iclp[i] = (i<-256) ? -256 : ((i>255) ? 255 : i);
 }
 
 static void idctrow(int* blk)
@@ -199,8 +189,7 @@ void idctcol(int* blk)
   if (!((x1 = (blk[8*4]<<8)) | (x2 = blk[8*6]) | (x3 = blk[8*2]) |
         (x4 = blk[8*1]) | (x5 = blk[8*7]) | (x6 = blk[8*5]) | (x7 = blk[8*3])))
   {
-    blk[8*0]=blk[8*1]=blk[8*2]=blk[8*3]=blk[8*4]=blk[8*5]=blk[8*6]=blk[8*7]=
-      iclp[(blk[8*0]+32)>>6];
+    blk[8*0]=blk[8*1]=blk[8*2]=blk[8*3]=blk[8*4]=blk[8*5]=blk[8*6]=blk[8*7]=(blk[8*0]+32)>>6;
     return;
   }
 
@@ -234,14 +223,14 @@ void idctcol(int* blk)
   x4 = (181*(x4-x5)+128)>>8;
   
   /* fourth stage */
-  blk[8*0] = iclp[(x7+x1)>>14];
-  blk[8*1] = iclp[(x3+x2)>>14];
-  blk[8*2] = iclp[(x0+x4)>>14];
-  blk[8*3] = iclp[(x8+x6)>>14];
-  blk[8*4] = iclp[(x8-x6)>>14];
-  blk[8*5] = iclp[(x0-x4)>>14];
-  blk[8*6] = iclp[(x3-x2)>>14];
-  blk[8*7] = iclp[(x7-x1)>>14];
+  blk[8*0] = (x7+x1)>>14;
+  blk[8*1] = (x3+x2)>>14;
+  blk[8*2] = (x0+x4)>>14;
+  blk[8*3] = (x8+x6)>>14;
+  blk[8*4] = (x8-x6)>>14;
+  blk[8*5] = (x0-x4)>>14;
+  blk[8*6] = (x3-x2)>>14;
+  blk[8*7] = (x7-x1)>>14;
 }
 
 void fidct(int* block)
@@ -257,28 +246,62 @@ void fidct(int* block)
   }
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-  int i;
-  int b[8*8];
-  int* p = &b[0];
+  int k;
+  volatile int b[8][8];
+  int* p = &(b[0][0]);
+  int  mode = atoi(argv[1]);
 
-  for (i = 0; i < 64; i++) {
-    float x = pow(3, i);
-    int   y = (int) x;
-    int   m = y % 75;
+  if (mode == 0) {
+    init_dct();
+    init_idct();
 
-    b[i] = m;
+    for (k=0; k<64; k++) {
+	float x = pow(3, k);
+	int   y = (int) x;
+	int   m = y % 75;
+	
+	p[k] = m;
+    }
+    
+    dct(p);
+    fidct(p);
+
+    for (k=0; k<64; k++) {
+	printf("%d\n", p[k]);
+    }
   }
+  else {
+    FILE* in  = fopen(argv[2], "r");
+    FILE* out = fopen(argv[3], "w");
+    int n     = atoi(argv[4]);
 
-  init_dct();
-  init_idct();
-  init_fidct();
+    if (mode == 1) {
+	init_dct();
+	for (k=0; k<n;k++) {
+	  fread(p, sizeof(int), 64, in);
+	  dct(p);
+	  fwrite(p, sizeof(int), 64, out);
+	}
+    }
+    else if (mode == 2) {
+	init_idct();
+	for (k=0; k<n;k++) {
+	  fread(p, sizeof(int), 64, in);
+	  idct(p);
+	  fwrite(p, sizeof(int), 64, out);
+	}
+    }
+    else if (mode == 3) {
+	for (k=0; k<n;k++) {
+	  fread(p, sizeof(int), 64, in);
+	  fidct(p);
+	  fwrite(p, sizeof(int), 64, out);
+	}
+    }
 
-  dct(p);
-  fidct(p);
-
-  for (i = 0; i < 64; i++) {
-    printf("%d\n", b[i]);
+    fclose(in);
+    fclose(out);
   }
 }

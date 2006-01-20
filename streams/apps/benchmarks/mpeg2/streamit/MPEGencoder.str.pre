@@ -880,7 +880,7 @@ int->int pipeline MacroBlockEncode(int[64] intra_quantiser_matrix,
     add splitjoin {
         split roundrobin(1, pixeldata_per_macroblock);
         add Identity<int>;
-        add DCT8x8_ieee;
+        add DCT8x8_ieee(1); // parallel
         join roundrobin(1, pixeldata_per_macroblock);
     }
     add Quantisation(intra_quantiser_matrix, 
@@ -919,7 +919,7 @@ int->int splitjoin MacroBlockAndMotionVectorDecode(int[64] default_intra_quantis
                              intra_dc_precision, 
                              q_scale_type,
                              pixeldata_per_macroblock);
-        add iDCT8x8_ieee;
+        add iDCT8x8_ieee(2); // fast iDCT
     }
     add MotionVectorDecodeNoMessage(width/16);
     add Identity<int>;

@@ -1196,7 +1196,7 @@ int->int pipeline BlockDecode(
   add InverseQuantization();
   add BoundedSaturation(-2048, 2047, -2050, 2050);
   add MismatchControl();
-  add iDCT8x8_ieee;
+  add iDCT8x8_ieee(2); // fast iDCT
   add BoundedSaturation(-256, 255, -260, 260);
 }
 

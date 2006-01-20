@@ -31,25 +31,24 @@ can be found in Appendix A of the MPEG-2 specification (ISO/IEC
 
 DCT VERSIONS
 
-The only executable pipeline in this package is a correctness 
-self-test. It's stream components are meant to be used within 
-other stream graphs. There are three versions of the library which 
-can be used:
+There are two executable pipelines in this package for correctness.
+The stream components are meant to be used within  other stream
+graphs. There are three versions of the library which can be used:
 
-* reference: A reference implementation based on the DCT code found
-within the C reference MPEG implementation.
+* reference-coarse (DCT and iDCT): A reference implementation based on
+the DCT/iDCT code found within the C reference MPEG implementation.
 
-* fast: An intuitive StreamIt DCT implementation based on the formula
-for the DCT and its natural representation in StreamIt. The
-2-Dimensional DCT is broken down into 1-Dimensional DCTs in
-perpendicular directions. (Note: It may not actually be faster than
-the reference implementation. However, ideally it will be.)
+* reference-fine (DCT and iDCT): A parallel DCT/iDCT
+implementation. The 2-Dimensional DCT is broken down into
+1-Dimensional DCTs in perpendicular directions.
 
-* comparison: Numerically equivalent to the reference
-implementation. However, this will run the numbers through both the
-reference DCT components and the fast DCT components and report
-discrepancies between the two. This version is substantially slower
-than either the reference or the fast DCT versions.
+* fast iDCT: An integer iDCT that uses bit-twiddling, but does not
+have the floating point precision of the reference codes.
+
+The two test pipelines are:
+
+* verify: verifies that a DCT followed by a iDCT results in an identity.
+* compare: compared the three iDCT implementation.
 
 For normal every day use, I recommend the fast version. It is not
 always numerically equivalent to the reference implementation;
@@ -64,52 +63,49 @@ version to see whether their outputs deviate, use the comparision DCT.
 
 DETAILED INSTRUCTIONS
 
-First, change to the source code directory.
-$ cd streamit
-
-Make the implementation of the DCT library you wish to use (reference,
-fast, or comparison)
-$ make <version>
-
-For example, to make the reference version type:
-$ make reference
-
-If no version is specified, the fast version is used.
-
 Only one version of the library may be used at a time. To change which
 version of the library your applications are using, just make the
 appropriate version.
 
 StreamIt programs which use the DCT library should link against
-[DCTinternal.str] and [DCTexternal.str]. DCTexternal.str will not
-exist until you make a version of the library.
+[DCT.str].
 
 In addition to providing the IEEE compliant 8x8 DCT and iDCT
 functions, the DCT library contains a number of DCT and iDCT functions
-for transforming arbitrary 1D and 2D signals of any size. If one only
-wants to use these functions they need only link against the
-DCTinternal.str library.
+for transforming arbitrary 1D and 2D signals of any size.
 
 This DCT library uses the experimental StreamItDocs program, which
 generates HTML code documentation similar to Javadocs. To generate
 these pages:
 $ make docs
 
-This will generate html files documenting the API for the
-DCTinternal.str and DCTexternal.str (if it exists) files. For details
-on using functions in this DCT library, please make the documentation
-and refer to that. 
+This will generate html files documenting the API for the DCT.str
+files. For details on using functions in this DCT library, please make
+the documentation and refer to that.
 
 CORRECTNESS CHECK
 
 To perform the self-test for correctness:
 
-$ make check_correct
+$ make verify
 
-This may or may not give a variety of Error messages. Basically this check takes a series of semi-random 8x8 integer blocks and transforms them and inverse transforms them using both the reference and fast versions and checks to make sure that the outputs match what they should. 
+This may or may not give a variety of Error messages. Basically this
+check takes a series of semi-random 8x8 integer blocks and transforms
+them and inverse transforms them using both the reference and fast
+versions and checks to make sure that the outputs match what they
+should.
 
-This test is not particularly usefor developers using this library. However, if you are trying to modify this library or want to change the implementation of any of the routines, or add support for new implementations, you may want to use or extend this test.
+This test is not particularly useful for developers using this
+library. However, if you are trying to modify this library or want to
+change the implementation of any of the routines, or add support for
+new implementations, you may want to use or extend this test.
 
-NOTE! The reference implementations included with this code are identical copies of the DCT and iDCT reference functions used by the MPEG Group's reference C encoder. These functions are not perfect inverses of each other - for most sample data input sets, the output of the iDCT does not correlate exactly with the input to the DCT. This means that the fast implementation may actually be more correct than the reference implementation, but these needs to be explored further.
+NOTE! The reference implementations included with this code are
+identical copies of the DCT and iDCT reference functions used by the
+MPEG Group's reference C encoder. These functions are not perfect
+inverses of each other - for most sample data input sets, the output
+of the iDCT does not correlate exactly with the input to the DCT. This
+means that the fast implementation may actually be more correct than
+the reference implementation, but these needs to be explored further.
 
 

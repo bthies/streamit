@@ -36,7 +36,6 @@ public abstract class PhasedFilter extends Filter implements Runnable
     private boolean firstWork = true;
 
     public void doWork() {
-        prepareToWork();
 	synchronized (this) {
 	    try {
 		if (firstWork) {
@@ -56,7 +55,9 @@ public abstract class PhasedFilter extends Filter implements Runnable
 
     public void run() {
         while (true) {
-            work();
+	    prepareToWork();
+	    work();
+	    cleanupWork();
         }
     }
 
@@ -67,7 +68,7 @@ public abstract class PhasedFilter extends Filter implements Runnable
     protected void contextSwitch() {
         synchronized (this) {
             try {
-		cleanupWork();
+		numExecutions++;
                 notify();
                 wait();
             } catch (InterruptedException e) {

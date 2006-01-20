@@ -110,7 +110,10 @@ public class Operator extends DestroyedClass
 	    throw new NoPushPopException();
 	}
 
-        numExecutions++;
+	// for phased filters, executions are incremented at phase boundaries
+	if (!(this instanceof PhasedFilter)) {
+	    numExecutions++;
+	}
     }
     /**
      * Register a pop, push, or peek.

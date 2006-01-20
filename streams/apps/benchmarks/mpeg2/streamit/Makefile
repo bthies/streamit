@@ -1,10 +1,9 @@
 PREPROCESS = ${STREAMIT_HOME}/misc/scripts/preprocess.perl
 STREAMITDOC = ${STREAMIT_HOME}/misc/scripts/streamitdoc
 STRC_OPTIONS = -library -nosched
-#STRC_OPTIONS = -cluster 1
 
 DCT_HOME = ${STREAMIT_HOME}/apps/benchmarks/dct_ieee/streamit
-LIBDCT = ${DCT_HOME}/DCTinternal.str ${DCT_HOME}/DCTexternal.str
+LIBDCT = ${DCT_HOME}/DCT.str
 
 # NOTE: BinaryFile.str is actually only needed for compiling outside the library
 # where one must use the FileReader<int>

@@ -67,3 +67,15 @@ bit->int filter BitStream2IntStream() {
     push(some_int);
   }
 }
+
+int->int filter IntStreamReorder() {
+    work pop 1 push 1 {
+        int some_int = pop();
+        int b0 = ((some_int >> 24) & 0x000000FF);
+        int b1 = (some_int & 0x00FF0000) >> 8;
+        int b2 = (some_int & 0x0000FF00) << 8;
+        int b3 = (some_int & 0x000000FF) << 24;
+        some_int = (b0 | b1 | b2 | b3);
+        push(some_int);
+    }
+}

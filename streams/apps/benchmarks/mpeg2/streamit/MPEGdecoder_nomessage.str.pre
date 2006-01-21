@@ -56,1232 +56,1273 @@
  */
               
 void->void pipeline MPEGdecoder_nomessage() {
-  // 1 = Perform only the variable length decoding
-  // 2 = MPEG decoding without the file parsing
-  // 3 = Full MPEG pipeline
-  // 4 = No file parsing, only perform block decoding. 
-  //       Need 1320 iterations (-i 1320) to process input.
-  // 5 = First half of the MPEG pipeline without file parsing
-  //     - Block decoding and motion vector decoding
-  //       Need 1320 iterations (-i 1320) to process input.
-  // 6 = Color Channel Processing  - Upsampling for chrominance channels 
-  //     and motion compensation for all channels
-  //       Needs 1 iteration in library, but 3 in cluster due to scheduling
-  //       differences.
-  // 7 = 4 + 5 + 6 as they appear in the contest of MPEG decoding.
-  //       Needs 1 iteration in library, but 3 in cluster due to scheduling
-  //       differences.
-  // 8 = The PictureReorder phase of MPEG decoding.
-  //       The in library with nosched: would expect to schedule and
-  //       run with -i 3, but for some reason hangs after only 2/3 of output.  
-  // 9 = The ColorSpaceConversion_YCbCrtoRGB phase of MPEG decoding.
-  //       Run with -i 253440 for correct amount of output (given correct
-  //       input from phase 8, else -i 168960 for 2/3-length input).
+    // 1 = Perform only the variable length decoding
+    // 2 = MPEG decoding without the file parsing
+    // 3 = Full MPEG pipeline
+    // 4 = No file parsing, only perform block decoding. 
+    //       Need 1320 iterations (-i 1320) to process input.
+    // 5 = First half of the MPEG pipeline without file parsing
+    //     - Block decoding and motion vector decoding
+    //       Need 1320 iterations (-i 1320) to process input.
+    // 6 = Color Channel Processing  - Upsampling for chrominance channels 
+    //     and motion compensation for all channels
+    //       Needs 1 iteration in library, but 3 in cluster due to scheduling
+    //       differences.
+    // 7 = 4 + 5 + 6 as they appear in the contest of MPEG decoding.
+    //       Needs 1 iteration in library, but 3 in cluster due to scheduling
+    //       differences.
+    // 8 = The PictureReorder phase of MPEG decoding.
+    //       The in library with nosched: would expect to schedule and
+    //       run with -i 3, but for some reason hangs after only 2/3 of output.  
+    // 9 = The ColorSpaceConversion_YCbCrtoRGB phase of MPEG decoding.
+    //       Run with -i 253440 for correct amount of output (given correct
+    //       input from phase 8, else -i 168960 for 2/3-length input).
 
-  // Dynamic Rate Graphs: 1, 3
-  // Static Rate Graphs: 2, 4, 5, 6 
-  // In terms of how these different run modes break up the application:
-  // If 3 does not run correctly, see if 1 and 2 run correctly
-  // If 2 does not run correctly, see if 5 and 6 run correctly
-  // If 5 does not run correctly, see if 4 runs correctly
-  // If 1, 4, or 6 don't run correctly, let me know and I'll subdivide those into smaller test cases.
+    // Dynamic Rate Graphs: 1, 3
+    // Static Rate Graphs: 2, 4, 5, 6 
+    // In terms of how these different run modes break up the application:
+    // If 3 does not run correctly, see if 1 and 2 run correctly
+    // If 2 does not run correctly, see if 5 and 6 run correctly
+    // If 5 does not run correctly, see if 4 runs correctly
+    // If 1, 4, or 6 don't run correctly, let me know and I'll subdivide those into smaller test cases.
 
-  // All of these test cases can be run independently of each other.
-  // For each output file, there is an associated output file without the "unver" extension
-  // and an md5sum which can be compared against the actual output to make sure it's correct.
-  int parse_or_process = 3;
+    // All of these test cases can be run independently of each other.
+    // For each output file, there is an associated output file without the "unver" extension
+    // and an md5sum which can be compared against the actual output to make sure it's correct.
+    int parse_or_process = 1;
 
-  int width=352;
-  int height=240;
-  int the_chroma_format = 1;
+    int width=352;
+    int height=240;
+    int the_chroma_format = 1;
 
-  if (parse_or_process == 3) {
-    add FileReader<bit>("../input/nomessage.m2v"); // Use this one for the nomessage decoder
-    add MPEGStreamParser(width, height, the_chroma_format);
-    add MPEGStream_to_rawImageStream(width, height, the_chroma_format);
-    add FileWriter<int>("./dec_nm_output.int");
-  } else if (parse_or_process == 1) {
-    add FileReader<bit>("../input/nomessage.m2v"); // Use this one for the nomessage decoder
-    add MPEGStreamParser(width, height, the_chroma_format);
-    add FileWriter<int>("./dec_nm_parsed.int");
-  } else if (parse_or_process == 2) {
-    add FileReader<int>("../input/dec_nm_parsed.int");
-    add MPEGStream_to_rawImageStream(width, height, the_chroma_format);
-    add FileWriter<int>("./dec_nm_output.int");
-  } else if (parse_or_process == 4) {
-    add FileReader<int>("../input/dec_nm_parsed.int");
-    add int->int filter {
-      work pop 64*6+19 push 64*6 {
-        int a = 64*6;
-        pushpop(a);
-        deadpop(16);
-        deadpop(3);
-      }
-    }
-    add BlockDecode();
-    add FileWriter<int>("./dec_nm_blockdecode.int");
-  } else if (parse_or_process == 5) {
-    add FileReader<int>("../input/dec_nm_parsed.int");
-    add int->int splitjoin {
-      split roundrobin(64*blocks_per_macroblock[the_chroma_format], 16, 3);
-      add BlockDecode();
-      add int->int pipeline {
-        add MotionVectorDecode();
-        add Repeat(8, blocks_per_macroblock[the_chroma_format]);
-      }
-      add Repeat(3, blocks_per_macroblock[the_chroma_format]); // macroblock_intra
-      join roundrobin(64, 8, 3);
-    } 
-    add FileWriter<int>("./dec_nm_color_channels_input.int");
-  } else if (parse_or_process == 6) {
-    add FileReader<int>("../input/dec_nm_color_channels_input.int");
-    add int->int splitjoin {
-      split roundrobin(4*75, 75, 75);
-      add pipeline {
-        add LuminanceChannelProcessing(width, height, the_chroma_format);
-        add FileWriter<int>("./dec_nm_lum_channel_output.int");
-      }
-      add pipeline {
-        add ChrominanceChannelProcessing(width, height, the_chroma_format);
-        add FileWriter<int>("./dec_nm_cb_channel_output.int");
-      }
-      add pipeline {
-        add ChrominanceChannelProcessing(width, height, the_chroma_format);
-        add FileWriter<int>("./dec_nm_cr_channel_output.int");
-      }
-      join roundrobin(0, 0, 0);
-    }
-  } else if (parse_or_process == 7) {
-      //MPEGStream_to_rawImageStream up to PictureReorder
-    add FileReader<int>("../input/dec_nm_parsed.int");
-  add int->int splitjoin {
-    split roundrobin(64*blocks_per_macroblock[the_chroma_format], 16, 3);
-    add BlockDecode();
-    add int->int pipeline {
-      add MotionVectorDecode();
-      add Repeat(8, blocks_per_macroblock[the_chroma_format]);
-    }
-    add Repeat(3, blocks_per_macroblock[the_chroma_format]); // macroblock_intra
-    join roundrobin(64, 8, 3);
-  }
+    if (parse_or_process == 3) {
+        add FileReader<int>("../input/nomessage.m2v");
+        add IntStreamReorder();
+        add MPEGStreamParser_InternalBuffering(width, height, the_chroma_format);
+        add MPEGStream_to_rawImageStream(width, height, the_chroma_format);
+        add FileWriter<int>("./dec_nm_output.int");
+    } else if (parse_or_process == 1) {
+        add FileReader<int>("../input/nomessage.m2v");
+        add IntStreamReorder();
+        add MPEGStreamParser_InternalBuffering(width, height, the_chroma_format);
+        add FileWriter<int>("./dec_nm_parsed.int");
+    } else if (parse_or_process == 2) {
+        add FileReader<int>("../input/dec_nm_parsed.int");
+        add MPEGStream_to_rawImageStream(width, height, the_chroma_format);
+        add FileWriter<int>("./dec_nm_output.int");
+    } else if (parse_or_process == 4) {
+        add FileReader<int>("../input/dec_nm_parsed.int");
+        add int->int filter {
+            work pop 64*6+19 push 64*6 {
+                int a = 64*6;
+                pushpop(a);
+                deadpop(16);
+                deadpop(3);
+            }
+        }
+        add BlockDecode();
+        add FileWriter<int>("./dec_nm_blockdecode.int");
+    } else if (parse_or_process == 5) {
+        add FileReader<int>("../input/dec_nm_parsed.int");
+        add int->int splitjoin {
+            split roundrobin(64*blocks_per_macroblock[the_chroma_format], 16, 3);
+            add BlockDecode();
+            add int->int pipeline {
+                add MotionVectorDecode();
+                add Repeat(8, blocks_per_macroblock[the_chroma_format]);
+            }
+            add Repeat(3, blocks_per_macroblock[the_chroma_format]); // macroblock_intra
+            join roundrobin(64, 8, 3);
+        } 
+        add FileWriter<int>("./dec_nm_color_channels_input.int");
+    } else if (parse_or_process == 6) {
+        add FileReader<int>("../input/dec_nm_color_channels_input.int");
+        add int->int splitjoin {
+            split roundrobin(4*75, 75, 75);
+            add pipeline {
+                add LuminanceChannelProcessing(width, height, the_chroma_format);
+                add FileWriter<int>("./dec_nm_lum_channel_output.int");
+            }
+            add pipeline {
+                add ChrominanceChannelProcessing(width, height, the_chroma_format);
+                add FileWriter<int>("./dec_nm_cb_channel_output.int");
+            }
+            add pipeline {
+                add ChrominanceChannelProcessing(width, height, the_chroma_format);
+                add FileWriter<int>("./dec_nm_cr_channel_output.int");
+            }
+            join roundrobin(0, 0, 0);
+        }
+    } else if (parse_or_process == 7) {
+        //MPEGStream_to_rawImageStream up to PictureReorder
+        add FileReader<int>("../input/dec_nm_parsed.int");
+        add int->int splitjoin {
+            split roundrobin(64*blocks_per_macroblock[the_chroma_format], 16, 3);
+            add BlockDecode();
+            add int->int pipeline {
+                add MotionVectorDecode();
+                add Repeat(8, blocks_per_macroblock[the_chroma_format]);
+            }
+            add Repeat(3, blocks_per_macroblock[the_chroma_format]); // macroblock_intra
+            join roundrobin(64, 8, 3);
+        }
 
-  // Each output channel is ordered left to right, top to bottom
-  add int->int splitjoin {
-//    if (the_chroma_format == 1) {
-      split roundrobin(4*75, 2*75);
-//    } else {
-//      split roundrobin(4*75, 4*75);
-//    }
-    add LuminanceChannelProcessing(width, height, the_chroma_format);
-    add int->int splitjoin {
-      split roundrobin(75);
-      add ChrominanceChannelProcessing(width, height, the_chroma_format);  
-      add ChrominanceChannelProcessing(width, height, the_chroma_format);  
-      join roundrobin(1, 1);
-    }
-    join roundrobin(1, 2);
-  }
-  add FileWriter<int>("./dec_nm_pre_reorder.int");
+        // Each output channel is ordered left to right, top to bottom
+        add int->int splitjoin {
+            //    if (the_chroma_format == 1) {
+            split roundrobin(4*75, 2*75);
+            //    } else {
+            //      split roundrobin(4*75, 4*75);
+            //    }
+            add LuminanceChannelProcessing(width, height, the_chroma_format);
+            add int->int splitjoin {
+                split roundrobin(75);
+                add ChrominanceChannelProcessing(width, height, the_chroma_format);  
+                add ChrominanceChannelProcessing(width, height, the_chroma_format);  
+                join roundrobin(1, 1);
+            }
+            join roundrobin(1, 2);
+        }
+        add FileWriter<int>("./dec_nm_pre_reorder.int");
   
-  } else if (parse_or_process == 8) {
-      // just the PictureReorder phase of MPEGStream_to_rawImageStream
-      add FileReader<int>("../input/dec_nm_pre_reorder.int");
-      add PictureReorder(width, height);
-      add FileWriter<int>("./dec_nm_pre_colorSpaceConv.int");
-  } else if (parse_or_process == 9) {
-      // just the ColorSpaceConversion_YCbCrtoRGB phase of MPEGStream_to_rawImageStream
-      add FileReader<int>("../input/dec_nm_pre_colorSpaceConv.int");
-      add ColorSpaceConversion_YCbCrtoRGB;
-      add FileWriter<int>("./dec_nm_output.int");
-  }
+    } else if (parse_or_process == 8) {
+        // just the PictureReorder phase of MPEGStream_to_rawImageStream
+        add FileReader<int>("../input/dec_nm_pre_reorder.int");
+        add PictureReorder(width, height);
+        add FileWriter<int>("./dec_nm_pre_colorSpaceConv.int");
+    } else if (parse_or_process == 9) {
+        // just the ColorSpaceConversion_YCbCrtoRGB phase of MPEGStream_to_rawImageStream
+        add FileReader<int>("../input/dec_nm_pre_colorSpaceConv.int");
+        add ColorSpaceConversion_YCbCrtoRGB;
+        add FileWriter<int>("./dec_nm_output.int");
+    }
 }
 
 int->int pipeline MPEGStream_to_rawImageStream(int width, int height,
                                                int the_chroma_format) {
-  // width, height, chroma: Hacked till we have reprogrammable splitjoins FEATURETODO
+    // width, height, chroma: Hacked till we have reprogrammable splitjoins FEATURETODO
 
-  add int->int splitjoin {
-    split roundrobin(64*blocks_per_macroblock[the_chroma_format], 16, 3);
-    add BlockDecode();
-    add int->int pipeline {
-      add MotionVectorDecode();
-      add Repeat(8, blocks_per_macroblock[the_chroma_format]);
-    }
-    add Repeat(3, blocks_per_macroblock[the_chroma_format]); // macroblock_intra
-    join roundrobin(64, 8, 3);
-  }
-
-  // Each output channel is ordered left to right, top to bottom
-  add int->int splitjoin {
-//    if (the_chroma_format == 1) {
-      split roundrobin(4*75, 2*75);
-//    } else {
-//      split roundrobin(4*75, 4*75);
-//    }
-    add LuminanceChannelProcessing(width, height, the_chroma_format);
     add int->int splitjoin {
-      split roundrobin(75);
-      add ChrominanceChannelProcessing(width, height, the_chroma_format);  
-      add ChrominanceChannelProcessing(width, height, the_chroma_format);  
-      join roundrobin(1, 1);
+        split roundrobin(64*blocks_per_macroblock[the_chroma_format], 16, 3);
+        add BlockDecode();
+        add int->int pipeline {
+            add MotionVectorDecode();
+            add Repeat(8, blocks_per_macroblock[the_chroma_format]);
+        }
+        add Repeat(3, blocks_per_macroblock[the_chroma_format]); // macroblock_intra
+        join roundrobin(64, 8, 3);
     }
-    join roundrobin(1, 2);
-  }
- 
-  // FEATURETODO This next component should also use the UpdatePortal_picture_type
-  // but it doesn't because of messaging limitations.
-  add PictureReorder(width, height);
 
-  // This function assumes that no sequence display extension was ever
-  // encountered in the data stream, and the default colorspace transformations 
-  // apply.
-  // (cite 1, P. 47, Table 6-9): Refer to entry 1, which is
-  // Recommendation ITU-R BT.709 for transformations.
-  add ColorSpaceConversion_YCbCrtoRGB;
+    // Each output channel is ordered left to right, top to bottom
+    add int->int splitjoin {
+        //    if (the_chroma_format == 1) {
+        split roundrobin(4*75, 2*75);
+        //    } else {
+        //      split roundrobin(4*75, 4*75);
+        //    }
+        add LuminanceChannelProcessing(width, height, the_chroma_format);
+        add int->int splitjoin {
+            split roundrobin(75);
+            add ChrominanceChannelProcessing(width, height, the_chroma_format);  
+            add ChrominanceChannelProcessing(width, height, the_chroma_format);  
+            join roundrobin(1, 1);
+        }
+        join roundrobin(1, 2);
+    }
+ 
+    // FEATURETODO This next component should also use the UpdatePortal_picture_type
+    // but it doesn't because of messaging limitations.
+    add PictureReorder(width, height);
+
+    // This function assumes that no sequence display extension was ever
+    // encountered in the data stream, and the default colorspace transformations 
+    // apply.
+    // (cite 1, P. 47, Table 6-9): Refer to entry 1, which is
+    // Recommendation ITU-R BT.709 for transformations.
+    add ColorSpaceConversion_YCbCrtoRGB;
 
 }
 
 int->int splitjoin ReorderCrCbBlocks(int blocks_per_macroblock) {
-  split roundrobin(75*4, 75*(blocks_per_macroblock-4));
-  add Identity<int>;
-  add int->int splitjoin {
-    split roundrobin(75);
+    split roundrobin(75*4, 75*(blocks_per_macroblock-4));
     add Identity<int>;
-    add Identity<int>;
-    join roundrobin(75*((blocks_per_macroblock-4)/2));
-  } 
-  join roundrobin(75*4, 75*(blocks_per_macroblock-4));
+    add int->int splitjoin {
+        split roundrobin(75);
+        add Identity<int>;
+        add Identity<int>;
+        join roundrobin(75*((blocks_per_macroblock-4)/2));
+    } 
+    join roundrobin(75*4, 75*(blocks_per_macroblock-4));
 }
 
 /**
  * @internal
  */
-bit->int filter MPEGStreamParser(int width,
-                                 int height,
-                                 int the_chroma_format) {
-  // FEATURETODO
-  // When phases can take parameters, get rid of this definition and
-  // uncomment the definition in the filter work function, and change
-  // the phase PushMacroblock() to use the parameter. 
-  int b_per_m = blocks_per_macroblock[the_chroma_format];
-  int[12][64] QFS; // Should be b_per_m, but b_per_m gets assigned later for some reason.
-  int picture_coding_type;
-  int macroblock_intra;
-  int macroblock_motion_forward;
-  int macroblock_motion_backward;
-  int[2][2][2] motion_code;
-  int[2][2][2] motion_residual;
+int->int filter MPEGStreamParser_InternalBuffering(int width,
+                                                   int height,
+                                                   int the_chroma_format) {
+    // FEATURETODO
+    // When phases can take parameters, get rid of this definition and
+    // uncomment the definition in the filter work function, and change
+    // the phase PushMacroblock() to use the parameter. 
+    int b_per_m = blocks_per_macroblock[the_chroma_format];
+    int[12][64] QFS; // Should be b_per_m, but b_per_m gets assigned later for some reason.
+    int picture_coding_type;
+    int macroblock_intra;
+    int macroblock_motion_forward;
+    int macroblock_motion_backward;
+    int[2][2][2] motion_code;
+    int[2][2][2] motion_residual;
 
-  int ran;
+    int ran;
 
-  init {
-    ran = 0;
-  } 
+    int i_buf = 0;
+    int i_buf_pos = 0;
 
-  work pop 624909 push (1320*(b_per_m*64+19)) {
-    
-    while (ran < 2) {
-    
-      println("Parsing M2V File...");
-      ran = 1;
- 
-      int tempval;
+    int i_amount;
+    int i_result;
 
-      // video_sequence() (cite 1, P. 25)
+    init {
+        ran = 0;
+    } 
 
-      next_start_code();
-
-      // sequence_header() (cite 1, P. 26)
-
-      pops(32,tempval);
-      if (tempval != 0x000001B3)
-        println("Error - Expected Video Sequence Start Code, Found " + tempval);
-
-      // Reading Sequence Header
-      int horizontal_size_value, vertical_size_value, aspect_ratio_information,
-        frame_rate_code, bit_rate_value, vbv_buffer_size_value,
-        constrained_parameters_flag, load_intra_quantiser_matrix, load_non_intra_quantiser_matrix;
-      // (cite 1, P.55)
-      pops(12,horizontal_size_value);
-      pops(12,vertical_size_value);
-      pops(4,aspect_ratio_information);
-
-      // (cite 1, P.41 Table 6-3)
-      if (aspect_ratio_information == 0)
-        println("Error - Forbidden Aspect Ratio");
-      else if (aspect_ratio_information == 1) {
-         // aspect_ratio_information == 1 -> aspect ratio is 1:1, this case is handled
-      } else {
-        println("Error - Program Limitation: Don't Know How to Handle Other Aspect Ratios");
-      }
-      pops(4,frame_rate_code);
-          // (cite 1, P.41-42 Table 6-4)
-      float frame_rate_value = 0;
-      if (frame_rate_code == 0)
-        println("Error - Forbidden Frame Rate Code");
-      else if (frame_rate_code == 4) {
-        // frame_rate_code 4
-        frame_rate_value = 30000.0/1001.0;
-      }
-      else 
-        println("Error - Program Limitation: Don't Know How to Handle Other Frame Rate Codes");
-      pops(18,bit_rate_value);
-      marker_bit();
-
-      pops(10,vbv_buffer_size_value);
-      pops(1,constrained_parameters_flag);
-
-      // (cite 1, P. 43)
-      if (constrained_parameters_flag != 0)
-        println("Error - Expected Constrained Parameters Flag To Be 0");
-      // Default Values for the quantiser_matrices
-      int[64] intra_quantiser_matrix = 
-        { 8, 16, 19, 22, 26, 27, 29, 34,
-         16, 16, 22, 24, 27, 29, 34, 37,
-         19, 22, 26, 27, 29, 34, 34, 38,
-         22, 22, 26, 27, 29, 34, 37, 40,
-         22, 26, 27, 29, 32, 35, 40, 48,
-         26, 27, 29, 32, 35, 40, 48, 58,
-         26, 27, 29, 34, 38, 46, 56, 69,
-         27, 29, 35, 38, 46, 56, 69, 83};
-      int[64] non_intra_quantiser_matrix =
-        {16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16,
-         16, 16, 16, 16, 16, 16, 16, 16};
-      // Assumes no alternate_scan TODO
-      int[64] Ordering = {00, 01, 05, 06, 14, 15, 27, 28,
-                          02, 04, 07, 13, 16, 26, 29, 42,
-				     	            03, 08, 12, 17, 25, 30, 41, 43,
-					                09, 11, 18, 24, 31, 40, 44, 53,
-					                10, 19, 23, 32, 39, 45, 52, 54,
-					                20, 22, 33, 38, 46, 51, 55, 60,
-					                21, 34, 37, 47, 50, 56, 59, 61,
-					                35, 36, 48, 49, 57, 58, 62, 63};
-      pops(1,load_intra_quantiser_matrix);
-      if (load_intra_quantiser_matrix == 1) {
-        // println("  Loading Intra Quantiser Matrix from File");    
-        int[64] tempOrder;
-        for (int i = 0; i < 64; i++) {
-          pops(8,tempOrder[i]);
-        }
-        for (int i = 0; i < 64; i++) {
-          // Assumes no alternate_scan TODO
-          intra_quantiser_matrix[i] = tempOrder[Ordering[i]];
-        }
-       } else {
-        // println("  Using Default Intra Quantiser Matrix");
-        // Default Values Previously Loaded
-      }
-      pops(1,load_non_intra_quantiser_matrix);
-
-      if (load_non_intra_quantiser_matrix == 1) {
-        // println("  Loading Non Intra Quantiser Matrix from File");
-        int[64] tempOrder;
-        for (int i = 0; i < 64; i++) {
-          pops(8,tempOrder[i]);
-        }
-        for (int i = 0; i < 64; i++) {
-          // Assumes no alternate_scan
-          non_intra_quantiser_matrix[i] = tempOrder[Ordering[i]];
-        }
-      } else {
-        // println("  Using Default Non Intra Quantiser Matrix");
-        // Default Values Previously Loaded
-      }
-
-      next_start_code();
-
-      // sequence_extension() (cite 1, P. 28)
-
-      pops(32,tempval);
-      if (tempval != 0x000001B5)
-        println("Error - Expected Extension Start Code, File Must be MPEG-1 " + tempval);
-      int extension_start_code_identifier, profile_and_level_indication,
-          progressive_sequence, chroma_format, horizontal_size_extension,
-          vertical_size_extension, bit_rate_extension, vbv_buffer_size_extension,
-          low_delay, frame_rate_extension_n, frame_rate_extension_d;
-      pops(4,extension_start_code_identifier);
-
-      if (extension_start_code_identifier != 0x1)
-        println("Error - Expected Sequence Extension Identifier " + extension_start_code_identifier);
-      
-      pops(8,profile_and_level_indication);
-
-      // We don't really care about the profile_and_level indicator - this matters if this implementation
-      // were fully MPEG2 compliant to some profile/level, but it isn't.
-      pops(1,progressive_sequence);
-
-      if (progressive_sequence == 1) {
-        // progressive_sequence 1: allows only progressive frames
-      } else {
-        // progressive_sequence 0: allows interlaced and progressive frames
-        println("Error - Program Limitation: Don't handle interlaced frames");
-      }
-      pops(2,chroma_format);
-      int block_count = blocks_per_macroblock[the_chroma_format]; // (cite 1, P. 62)
-      if (chroma_format != the_chroma_format) {
-        println("Error - Program specified with chroma " + the_chroma_format);
-        println("        File has chroma " + chroma_format);
-      }
-      pops(2,horizontal_size_extension);
-      int horizontal_size = horizontal_size_value + (horizontal_size_extension << 12);
-      int mb_width = (horizontal_size + 15) / 16;
-      pops(2,vertical_size_extension);
-      int vertical_size = vertical_size_value +  (vertical_size_extension << 12);
-      int mb_height = (vertical_size + 15) / 16;
-      pops(12,bit_rate_extension);
-      // (cite 1, P.42)
-      int bit_rate = 400 * (bit_rate_value + (bit_rate_extension << 18));
-      marker_bit();
-      pops(8,vbv_buffer_size_extension);
-      int vbv_buffer_size = vbv_buffer_size_value + (vbv_buffer_size_extension << 10);
-      pops(1,low_delay);
-      if (low_delay == 1) {
-        // low_delay 1 indicates that sequence contains no B-pictures
-        println("Error - Program Limitation: Can't Handle This Case Yet");
-      } else {
-        // low_delay 0 indicates that sequence is allowed to contain B-pictures
-      }
-
-      pops(2,frame_rate_extension_n);
-      pops(5,frame_rate_extension_d);
-      // (cite 1, P. P.41)
-      float frame_rate = frame_rate_value * 
-        ((float) (frame_rate_extension_n + 1)) / ((float) (frame_rate_extension_d + 1));
-      next_start_code();
-
-      boolean sequence_end_code_not_found = true;
-      while (sequence_end_code_not_found) {
-        // extension_and_user_data(0) (cite 1, P.26)
-        peeks(32,tempval);
-        while (tempval == 0x000001B5 || tempval == 0x000001B2) {
-          pops(32,tempval);
-          if (tempval == 0x000001B5) {
-          // extension_data(0) (cite 1, P.27)
-            peeks(4, tempval); 
-            if (tempval == 2) { // extension_start_code_identifier
-              pops(4, tempval); 
-              int video_format;
-              pops(3, video_format);
-              int color_description;
-              pops(1, color_description);
-              if (color_description == 1) {
-                int color_primaries, transfer_characteristics, matrix_coefficients;
-                pops(8, color_primaries);
-                pops(8, transfer_characteristics);
-                pops(8, matrix_coefficients);
-              }
-              int display_horizontal_size;
-              pops(14, display_horizontal_size);
-              marker_bit();
-              int display_vertical_size;
-              pops(14, display_vertical_size);
-              // TODO - we don't do anything with this extra data we get out. Eventually we should.
-              next_start_code();
+    phase I_Pops pop * {
+        if (i_buf_pos < i_amount) {
+            int ipt = i_amount - i_buf_pos;
+            if (ipt == 32) {
+                i_result = (pop() >> (32 - ipt));
+                i_buf = 0;
             } else {
-              println("Error - Program Limitation: Not Yet Support for Sequence Scalable Extension()");
+                i_result = (i_buf >> (32 - i_buf_pos)) & ((1 << i_buf_pos) - 1);
+                i_result <<= ipt;
+                i_buf = pop();
+                i_result += (i_buf >> (32 - ipt)) & ((1 << ipt) - 1);
+                i_buf <<= ipt;
             }
-          } else { // user_data() (cite 1, P.27)      
-            if (tempval != 0x000001B2) {
-              println("Error - Program Limitation: Not Yet Support for User_Data()");
-            } 
-            peeks(24, tempval);
-            while (tempval != 0x000001) {
-              int user_data;
-              pops(8, user_data);
-              // TODO we should probably do something with this data
-              peeks(24, tempval);
-            }
-            next_start_code();
-          }
-          peeks(32,tempval);
-        }
-        
-        boolean picture_or_group_start_code_found = true;
-        while (picture_or_group_start_code_found) {
-          peeks(32,tempval);
-          if (tempval == 0x000001B8) {
-            // group_of_pictures_header() (cite 1, P.29)
-            pops(32,tempval);
-            int drop_frame_flag, time_code_hours, time_code_minutes, time_code_seconds, 
-                time_code_pictures, closed_gop, broken_link;
-            // -- Time Code - Not Used in Decoding Process --
-            // (cite 1, P.49)
-            pops(1,drop_frame_flag);
-            pops(5,time_code_hours);
-            pops(6,time_code_minutes);
-            marker_bit();
-            pops(6,time_code_seconds);
-            pops(6,time_code_pictures);
-            // -- End of Time Code
-     
-            pops(1,closed_gop);
-            pops(1,broken_link);
-            if (broken_link == 1)
-              println("Error - Program Limitation: broken_link = 1");
-            next_start_code();
-            // extension_and_user_data(1) (cite 1, P.26)
-            peeks(32,tempval);
-            if (tempval == 0x000001B5 || tempval == 0x000001B2)
-              println("Error - Program Limitation: Not Yet Support for extension_and_user_data(1)");
-          }
- 
-          // picture_header() (cite 1, P.30)
-          pops(32,tempval);
-          if (tempval != 0x00000100) {
-            println("Error - Picture Start Code Expected, " + tempval);
-          }
-
-          int temporal_reference, /* FEATURETODO picture_coding_type, */ vbv_delay, full_pel_forward_vector,
-              forward_f_code, full_pel_backward_vector, backward_f_code;
-          // (cite 1, P.50) for interpretation of the following fields
-          pops(10,temporal_reference);
-          pops(3,picture_coding_type);
-          if (picture_coding_type == 1) {
-            // picture_coding_type = I-picture
-          } else if (picture_coding_type == 2) {
-            // picture_coding_type = P-picture
-          } else if (picture_coding_type == 3) {
-            // picture_coding_type = B-picture
-          } else {
-            println("  Error: Forbidden picture_coding_type " + picture_coding_type);
-          }
- 
-         pops(16,vbv_delay);
-          // TODO unknown interpretation for vbv_delay, (cite 1, P.50)
-          // The following is not used by the MPEG-2 specification (cite 1, P.51)
-          // Supposed to have certain values, but not guaranteed for most files.
-          if (picture_coding_type == 2 || picture_coding_type == 3) {
-            pops(1,full_pel_forward_vector);
-            pops(3,forward_f_code);
-          } 
-          if (picture_coding_type == 3) {
-            pops(1,full_pel_backward_vector);
-            pops(3,backward_f_code);
-          }
-          pops(1,tempval);
-          if (tempval == 1)
-            println("Error: File conforms to some superset of the MPEG-2 specification");
-          next_start_code();
-            
-          // picture_coding_extension() (cite 1, P.30)
-          pops(32,tempval);
-          if (tempval != 0x000001B5)
-            println("Error - Expecting extension start code " + tempval);
-          pops(4,extension_start_code_identifier);
-          if (extension_start_code_identifier != 0x8)
-            println("Error - Expecting picture coding extension ID " + extension_start_code_identifier);
-          int[2][2] f_code;
-          pops(4,f_code[0][0]);
-          pops(4,f_code[0][1]);
-          pops(4,f_code[1][0]);
-          pops(4,f_code[1][1]);
-          // (cite 1, P.51)
-          for (int i = 0; i < 2; i++) {
-            for (int j = 0; j < 2; j++) {
-              if (f_code[i][j] == 0 || (f_code[i][j] >= 10 && f_code[i][j] <= 14))
-                println("Error - Invalid f_code");
-              if (picture_coding_type == 1 && f_code[i][j] != 0xF)
-                println("Error - Program Limitation: I-frame has motion prediction");
-              if (picture_coding_type == 2 && f_code[1][j] != 0xF)
-                println("Error - Program Limitation: P-frame has backward motion prediction");
-            }
-          }
-          int intra_dc_precision, picture_structure, top_field_first, frame_pred_frame_dct, 
-              concealment_motion_vectors, q_scale_type, intra_vlc_format, alternate_scan, 
-              repeat_first_field, chroma_420_type, progressive_frame, composite_display_flag;
-          pops(2,intra_dc_precision);
-          int actual_intra_dc_precision = intra_dc_precision + 8;
-          pops(2,picture_structure);
-          if (picture_structure != 3)
-            println("Error - Program Limitation: Interlaced or bad picture structure");
-          pops(1,top_field_first); // Interpreted Later
-          pops(1,frame_pred_frame_dct);
-          if (frame_pred_frame_dct != 1) 
-            println("Error - Program Limitation or Bad Syntax: frame_pred_frame_dct must be 1");
-          pops(1,concealment_motion_vectors);
-          pops(1,q_scale_type);
-          pops(1,intra_vlc_format);
-          pops(1,alternate_scan);
-          if (alternate_scan == 1)
-            println("Error - Program Limitation - Doesn't handle alternate_scan right now");
-          pops(1,repeat_first_field);
-          // TODO Assumes progressive_sequence = 1
-          if (repeat_first_field == 0) {
-            //  repeat_first_field = 0, one frame output
-          }
-          else {
-            if (top_field_first == 0)
-              println("  repeat_first_field = 1, top_field_first = 0, two frames output");
-            else
-              println("  repeat_first_field = 1, top_field_first = 1, three frames output");
-          }
-          pops(1,chroma_420_type);
-          // We don't really care about this, although it should be 1 for 4:2:0 chroma.
-          // (cite 1, P.53)
-          pops(1,progressive_frame);
-          // Again, I don't think we care too much about this value, since we assume only a
-          // base stream exists.
-          pops(1,composite_display_flag);
-          if (composite_display_flag == 1) {
-            println("Error - Program Limitation: Assumes no composite display information");
-          } else {
-            // composite_display_flag - not present
-          }
-          next_start_code();
-         
-          // extension_and_user_data(2)
-          peeks(32,tempval);
-          if (tempval == 0x000001B5 || tempval == 0x000001B2)
-            println("Error - Program Limitation: Not Yet Support for extension_and_user_data(2)");
-          
-          // picture_data() (cite 1, P.34)
-          boolean slice_start_code_follows = true;
-          while (slice_start_code_follows) {
-            // slice() (cite 1, P.34)
-            // Reset motion vector predictors, (cite 1, P.77-80)
-            pops(24,tempval);
-            if (tempval != 0x000001) 
-              println("Error - Expecting slice_start_code " + tempval);
-            int slice_vertical_position;
-            pops(8,slice_vertical_position);
-            if (slice_vertical_position < 0x01 || slice_vertical_position > 0xAF)
-              println("Error - Invalid slice_vertical_position" + slice_vertical_position);
-            if (vertical_size > 2800)
-              println("Error - Program Limitation: Doesn't handle vertical_sizes > 2800");
-            int mb_row, previous_macroblock_address;
-            mb_row = slice_vertical_position - 1;
-            previous_macroblock_address = (mb_row * mb_width) - 1;
-            int quantiser_scale_code;
-            pops(5,quantiser_scale_code);
-            peeks(1,tempval);
-            if (tempval == 1)
-              println("Error - Program Limitation: Doesn't handle intra_slice_flag");
-            pops(1,tempval);
-            if (tempval == 1)
-              println("Error - Extra_bit_slice must be 0");
-            int[3] dc_dct_pred; // (cite 1, P.64-65)
-                                // I'm not sure about this - see P. 64 and getpic.c Line 1180
-                                // they disagree TODO
-            dc_dct_pred[0] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
-            dc_dct_pred[1] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
-            dc_dct_pred[2] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
-            boolean macroblock_next = true;
-
-            while (macroblock_next) {
-              // macroblock() (cite 1, P.35)
-              int macroblock_escape = 0;
-              peeks(11,tempval);
-              while (tempval == 8) {
-                pops(11,tempval);
-                macroblock_escape += 33;
-                peeks(11,tempval);
-              }
-              
-              variable_length_code(tempval,const_macroblock_address_inc);
-              int macroblock_address_increment = tempval + macroblock_escape;         
-              int macroblock_address, mb_column;
-              macroblock_address = previous_macroblock_address + macroblock_address_increment;
-              previous_macroblock_address = macroblock_address;
-              mb_column = macroblock_address % mb_width;
-              // TODO - Don't actually check to make sure that macroblocks are skipped which aren't
-              // allowed to be skipped - this should be done, the rules are on (cite 1, P.60)
-              // macroblock_modes, (cite 1, P.36)
-              // TODO - If a sequence_scalable_extension present in bitstream, then may possibly
-              // need to use tables B5,6,7,8 as well.
-
-              if (picture_coding_type == 1) { // I-picture
-                variable_length_code(tempval,const_macroblock_type_Ipictures);
-              } else if (picture_coding_type == 2) { // P-picture
-                variable_length_code(tempval,const_macroblock_type_Ppictures);
-              } else if (picture_coding_type == 3) { // B-picture
-                variable_length_code(tempval,const_macroblock_type_Bpictures);
-              }
-              int macroblock_quant, /* macroblock_motion_forward, macroblock_motion_backward, */
-                  macroblock_pattern, /* macroblock_intra, */ spatial_temporal_weight_code_flag;
-              spatial_temporal_weight_code_flag = tempval & 0x01;
-              tempval >>= 1;
-              macroblock_intra = tempval & 0x01;
-              tempval >>= 1;
-              macroblock_pattern = tempval & 0x01;
-              tempval >>= 1;
-              macroblock_motion_backward = tempval & 0x01;
-              tempval >>= 1;
-              macroblock_motion_forward = tempval & 0x01;
-              tempval >>= 1;
-              macroblock_quant = tempval & 0x01;
-
-              if (spatial_temporal_weight_code_flag == 1)
-                println("Error - Program Limitation - Expects spatial_temporal_weight_code_flag to be 0");
-              // (cite 1, P.60, Table 6-17)
-              int prediction_type = 0; // 0 = reserved, 1 = field-based, 2=frame-based, 3=dual-prime
-              int motion_vector_count = 0;
-              int mv_format = 0; // 0 = field, 1 = frame
-              int dmv = 0; 
-              if (frame_pred_frame_dct == 1) {
-                // See comments on P.60 regarding what happens if frame_motion_type
-                // is omitted.
-                prediction_type = 2;
-                motion_vector_count = 1;
-                mv_format = 1;
-                dmv = 0;
-              }
-              if (macroblock_motion_forward == 1 || macroblock_motion_backward == 1) {
-                if (picture_structure == 3) {
-                  if (frame_pred_frame_dct == 0) {
-                    // (cite 1, P.60, Table 6-17)
-                    pops(2,tempval);
-                    if (tempval == 0) {
-                      println("Error - Invalid frame_motion_type code");
-                    } else if (tempval == 1) {
-                      if (spatial_temporal_weight_code_flag < 2) {
-                        println("Error - Don't handle this case of frame_motion_type");
-                      } else {
-                        println("Error - Don't handle this case of frame_motion_type");
-                      }
-                    } else if (tempval == 2) {
-                      prediction_type = 2;
-                      motion_vector_count = 1;
-                      mv_format = 1;
-                      dmv = 0;
-                    } else if (tempval == 3) {
-                      prediction_type = 3;
-                      motion_vector_count = 1;
-                      mv_format = 0;
-                      dmv = 1;
-                    }
-                    if (prediction_type == 0)
-                      println("Error - Invalid prediction_type");
-                    else if (prediction_type == 1)
-                      println("  prediction_type field-based");
-                    else if (prediction_type == 2)
-                      println("  prediction_type frame-based");
-                    else if (prediction_type == 3)
-                      println("  prediction_type dual-prime");
-                    println("  motion_vector_count " + motion_vector_count);
-                    if (mv_format == 0)
-                      println("  mv_format field");
-                    else
-                      println("  mv_format frame");
-                    println("  dmv " + dmv);
-                  }
-                } else {
-                  println("Error - Program Limitation: Doesn't handle this case");
-                }
-              }
-              if ((picture_structure == 3) && (frame_pred_frame_dct == 0) && ((macroblock_intra == 1) || (macroblock_pattern == 1)))
-                println("Error - Program Limitation, Doesn't Handle This Particular Case");
-
-              if (macroblock_quant == 1) {
-                pops(5,quantiser_scale_code);
-              }
-
-/*            int[2][2][2] motion_code;
-              int[2][2][2] motion_residual; FEATURETODO */
-              for (int i = 0; i < 2; i++)
-                 for (int j = 0; j < 2; j++)
-                    for (int k = 0; k < 2; k++) {
-                       motion_code[i][j][k] = 0;
-                       motion_residual[i][j][k] = 0;
-                    }
-
-              // Motion Vector Predictor Reset, (cite 1, P.80)
-              if ((macroblock_intra == 1 && concealment_motion_vectors == 0) ||
-                  (macroblock_intra == 0 && macroblock_motion_forward == 0 && 
-                   picture_coding_type == 2)) {
-              }
-
-              if (macroblock_motion_forward == 1 || 
-                  (macroblock_intra == 1 && concealment_motion_vectors == 1)) {
-                // motion_vectors(0); (cite 1, P.36, 61)
-                if (motion_vector_count == 1) {
-                  if ((mv_format == 0) && (dmv != 1)) {
-                    println("Error - Program Limitation: Don't handle this case with mv_format and dmv.");
-                    println("mv_format " + mv_format + " dmv " + dmv);
-                  }
-                  // motion_vector(0,0);
-                  // (cite 1, P.61)
-                  for (int t = 0; t < 2; t++) {
-                    variable_length_code(motion_code[0][0][t],const_motion_code);
-                    if ((f_code[0][t] != 1) && (motion_code[0][0][t] != 0)) {
-                      int r_size = f_code[0][t]-1;
-                      pops(r_size,motion_residual[0][0][t]);
-                    }
-                    if (dmv == 1) {
-                      println("Error - Program Limitation: Don't handle case of dmv = 1");
-                    }
-                  } 
-                
-                } else {
-                  println("Error - Program Limitation: Don't handle field motion vectors");
-                }
-              }
-              if (macroblock_motion_backward == 1) {
-                
-                // motion_vectors(1); (cite 1, P.36, 61)
-                if (motion_vector_count == 1) {
-                  if ((mv_format == 0) && (dmv != 1)) {
-                    println("Error - Program Limitation: Don't handle this case with mv_format and dmv.");
-                    println("mv_format " + mv_format + " dmv " + dmv);
-                  }
-                  // motion_vector(0,1);
-                  // (cite 1, P.61)
-                  for (int t = 0; t < 2; t++) {
-                    variable_length_code(motion_code[0][1][t],const_motion_code);
-                    if ((f_code[1][t] != 1) && (motion_code[0][1][t] != 0)) {
-                      int r_size = f_code[1][t]-1;
-                      pops(r_size,motion_residual[0][1][t]);
-                    }
-                    if (dmv == 1) {
-                      println("Error - Program Limitation: Don't handle the case of dmv = 1");
-                    }
-                  }
-                }
-              }
-
-              if (macroblock_intra == 1 && concealment_motion_vectors == 1) {
-                marker_bit();
-              }
-
-              int[12] pattern_code;
-              // The meaning of pattern_code is defined somewhat poorly
-              // on (cite 1, P.62) in the code block
-              for (int i = 0; i < 12; i++) {
-                if (macroblock_intra == 1) {
-                  pattern_code[i] = 1;
-                } else {
-                  pattern_code[i] = 0;
-                }
-              }
-              if (macroblock_pattern == 1) {
-                // coded_block_pattern() (cite 1, P.37, 62)
-                int cbp;
-                variable_length_code(cbp,const_coded_block_patterns);
-                for (int i = 0; i < 6; i++) {
-                  if ((cbp & (1 << (5-i))) > 0)
-                    pattern_code[i] = 1;
-                }
-                if (chroma_format == 1 && cbp == 0) {
-                  println("Error - cbp not allowed to be zero in 4:2:0 format");
-                }
-                if (chroma_format == 2) {
-                  int coded_block_pattern_1;
-                  pops(2, coded_block_pattern_1);
-                  for (int i = 6; i < 8; i++) {
-                    if ((coded_block_pattern_1 & (1<< (7-i))) > 0)
-                      pattern_code[i] = 1;
-                  }
-                }
-                if (chroma_format == 3) {
-                  println("Error - Program Limitation: Doesn't handle 4:4:4 format");
-                }
-              }
-
-              for (int i = 0; i < block_count; i++) {
-                int QFS_current;
-                QFS_current = 0;
-                for (int j = 0; j < 64; j++) {
-                  QFS[i][j] = 0;
-                } 
-
-                // block(i) (cite 1, P.38)
-                // if macroblocks are skipped, predictor is reset
-                if (pattern_code[i] == 1) {
-                  if (macroblock_intra == 1) {
-                    if (i < 4) {
-                      int dc_dct_size_luminance, dc_dct_differential_luminance, dc_dct_luminance;
-                      variable_length_code(dc_dct_size_luminance,const_dct_dc_size_luminance);
-                      int dct_diff; // This next section from (cite 1, P.65)
-                      if (dc_dct_size_luminance == 0) {
-                        dct_diff = 0;
-                      } else {
-                        pops(dc_dct_size_luminance,dc_dct_differential_luminance);
-                        int half_range = (int) pow(2,dc_dct_size_luminance-1);
-                        if (dc_dct_differential_luminance >= half_range) {
-                          dct_diff = dc_dct_differential_luminance;
-                        } else {
-                          dct_diff = (dc_dct_differential_luminance + 1) - (2*half_range);
-                        }
-                      }
-                      dc_dct_luminance = dc_dct_pred[0] + dct_diff;
-                      dc_dct_pred[0] = dc_dct_luminance;
-                      QFS[i][0] = dc_dct_luminance;
-                      QFS_current = 1;
-                    } else {
-                      // Other ones 
-                      int dc_dct_size_chrominance, dc_dct_differential_chrominance, dc_dct_chrominance;
-                      variable_length_code(dc_dct_size_chrominance,const_dct_dc_size_chrominance);
-                      int dct_diff;
-                      if (dc_dct_size_chrominance == 0) {
-                        dct_diff = 0;
-                      } else {
-                        pops(dc_dct_size_chrominance,dc_dct_differential_chrominance);
-                        int half_range = (int) pow(2,dc_dct_size_chrominance-1);
-                        if (dc_dct_differential_chrominance >= half_range) {
-                          dct_diff = dc_dct_differential_chrominance;
-                        } else {
-                          dct_diff = (dc_dct_differential_chrominance + 1) - (2*half_range);
-                        }
-                      }
-                      // Blocks 4, 6, 8, and 10 go into [1]
-                      // Blocks 5, 7, 9, 11 go into [2]
-                      int temp_index = (i % 2) + 1;
-                      dc_dct_chrominance = dc_dct_pred[temp_index] + dct_diff;
-                      dc_dct_pred[temp_index] = dc_dct_chrominance;
-                      QFS[i][0] = dc_dct_chrominance;
-                      QFS_current = 1;
-                    }
-                  } else {
-                    // I don't think we really need to do anything here... if we let this just
-                    // fall through it should get handled in the next section, right?
-                    // Reset predictors, (cite 1, P. 64)
-                    dc_dct_pred[0] = 0;
-                    dc_dct_pred[1] = 0;
-                    dc_dct_pred[2] = 0;  
-                  }
-                  if (intra_vlc_format == 1 && macroblock_intra == 1)
-                    println("Error - Program Limitation: Need to use B15 to decode DCT coefficients instead of B14");
-                  while (QFS_current < 64) {
-                    if (macroblock_intra == 0 && QFS_current == 0) {
-                      // This section here from end of Table B.14 and 7.2.2.2 (cite 1, P.66)
-                      peeks(1,tempval);
-                      if (tempval == 1) {
-                        pops(1,tempval);
-                        pops(1,tempval);
-                        if (tempval == 0)
-                          QFS[i][0] = 1;
-                        else 
-                          QFS[i][0] = -1;
-                        QFS_current += 1;
-                      }
-                    } 
-                    peeks(2,tempval);
-                    if (tempval == 2) {
-                      pops(2,tempval);
-                      QFS_current = 64;
-                    } else {
-                      int signed_level, run = 0;
-                      peeks(6,tempval);
-                      if (tempval == 1) { 
-                        // Escape Code
-                        pops(6,tempval);
-                        int level, sign;
-                        pops(6,run);
-                        pops(1,sign);
-                        pops(11,level);
-                        if (sign == 0) {
-                          signed_level = level;
-                        } else {
-                          signed_level = level - 2048;
-                        }
-                      } else {
-                        // Regular Code
-                        int level = 0, sign = 0;
-                        // begin variable length code
-                        peeks(16, tempval);
-                        // if (tempval >= 49152 && tempval <= 65535) { // 2
-                        if (tempval >= 49152) {
-                            pops(2, tempval);
-                            run = const_dct_coefficients_table_zero_len2[0].run;
-                            level = const_dct_coefficients_table_zero_len2[0].level; 
-                            // } else if (tempval >= 24576 && tempval <= 32767) { // 3
-                        } else if (tempval >= 24576) {
-                            pops(3, tempval);
-                            run = const_dct_coefficients_table_zero_len3[0].run;
-                            level = const_dct_coefficients_table_zero_len3[0].level; 
-                            // } else if (tempval >= 16384 && tempval <= 24575) { // 4
-                        } else if (tempval >= 16384) {
-                            pops(4, tempval);
-                            run = const_dct_coefficients_table_zero_len4[tempval-4].run;
-                            level = const_dct_coefficients_table_zero_len4[tempval-4].level; 
-                            // } else if (tempval >= 10240 && tempval <= 16383) { // 5
-                        } else if (tempval >= 10240) {
-                            pops(5, tempval);
-                            run = const_dct_coefficients_table_zero_len5[tempval-5].run;
-                            level = const_dct_coefficients_table_zero_len5[tempval-5].level; 
-                            // } else if (tempval >= 8192 && tempval <= 10239) { // 8
-                        } else if ( tempval >= 8192) {
-                            pops(8, tempval);
-                            run = const_dct_coefficients_table_zero_len8[tempval-32].run;
-                            level = const_dct_coefficients_table_zero_len8[tempval-32].level; 
-                            // } else if (tempval >= 4096 && tempval <= 8191) { // 6
-                        } else if (tempval >= 4096) {
-                            pops(6, tempval);
-                            run = const_dct_coefficients_table_zero_len6[tempval-4].run;
-                            level = const_dct_coefficients_table_zero_len6[tempval-4].level; 
-                            // } else if (tempval >= 2048 && tempval <= 4095) { // 7
-                        } else if (tempval >= 2048) {
-                            pops(7, tempval);
-                            run = const_dct_coefficients_table_zero_len7[tempval-4].run;
-                            level = const_dct_coefficients_table_zero_len7[tempval-4].level; 
-                            // } else if (tempval >= 512 && tempval <= 1023) { // 10
-                        } else if (tempval >= 512) {
-                            pops(10, tempval);
-                            run = const_dct_coefficients_table_zero_len10[tempval-8].run;
-                            level = const_dct_coefficients_table_zero_len10[tempval-8].level; 
-                            // } else if (tempval >= 256 && tempval <= 511) { // 12
-                        } else if (tempval >= 256) {
-                            pops(12, tempval); 
-                            run = const_dct_coefficients_table_zero_len12[tempval-16].run;
-                            level = const_dct_coefficients_table_zero_len12[tempval-16].level; 
-                            // } else if (tempval >= 128 && tempval <= 255) { // 13
-                        } else if (tempval >= 128) {
-                            pops(13, tempval); 
-                            run = const_dct_coefficients_table_zero_len13[tempval-16].run;
-                            level = const_dct_coefficients_table_zero_len13[tempval-16].level; 
-                            // } else if (tempval >= 64 && tempval <= 127) { // 14
-                        } else if (tempval >= 64) {
-                            pops(14, tempval); 
-                            run = const_dct_coefficients_table_zero_len14[tempval-16].run;
-                            level = const_dct_coefficients_table_zero_len14[tempval-16].level; 
-                            // } else if (tempval >= 32 && tempval <= 63) { // 15
-                        } else if (tempval >= 32) {
-                            pops(15, tempval); 
-                            run = const_dct_coefficients_table_zero_len15[tempval-16].run;
-                            level = const_dct_coefficients_table_zero_len15[tempval-16].level; 
-                            // } else if (tempval >= 16 && tempval <= 31) { // 16
-                        } else if (tempval >= 16) {
-                            pops(16, tempval);
-                            run = const_dct_coefficients_table_zero_len16[tempval-16].run;
-                            level = const_dct_coefficients_table_zero_len16[tempval-16].level; 
-                        }  else {
-                            print("Error - Unknown Huffman Symbol");
-                        }
-
-                        // end variable length code
-                        pops(1,sign);
-                        if (sign == 0) {
-                          signed_level = level;
-                        } else {
-                          signed_level = -level;
-                        }
-                      }
-                      QFS_current += run;
-                      if (QFS_current == 63) {
-                        pops(2,tempval);
-                        if (tempval != 2) {
-                          println("Error - Reached End of Block, Expecting End of Block Code");
-                        }
-                      }
-                      QFS[i][QFS_current] = signed_level;
-                      QFS_current++;
-                    }
-                    if (QFS_current > 64)
-                      println("Error - QFS_current > 64 " + QFS_current);
-                  }
-                } else {
-                  // Skipped block
-                  // This indicates a skipped block, but not a skipped macroblock. 
-                  for (int index = 0; index < 64; index++) {
-                    QFS[i][index] = 0;
-                  }
-                }
-              }
-              for (int ppi = 0; ppi < blocks_per_macroblock[the_chroma_format]; ppi++) {
-                for (int pj = 0; pj < 64; pj++) {
-                  push(QFS[ppi][pj]);
-                }
-              }
-              for (int pr = 0; pr < 2; pr++) 
-                for (int ps = 0; ps < 2; ps++)
-                   for (int pt = 0; pt < 2; pt++) {
-                      push(motion_code[pr][ps][pt]);
-                   }
-              for (int pr = 0; pr < 2; pr++) 
-                for (int ps = 0; ps < 2; ps++)
-                  for (int pt = 0; pt < 2; pt++) {
-                     push(motion_residual[pr][ps][pt]);
-                  }
-              push(macroblock_intra);
-              push(macroblock_motion_forward);
-              push(macroblock_motion_backward);
-              peeks(23,tempval);
-              if (tempval == 0) {
-                macroblock_next = false;
-              } else {
-                macroblock_next = true;
-              }
-            }
- 
-            next_start_code();
-            peeks(32,tempval);
-            if (tempval > 0x000001AF || tempval < 0x00000101)
-              slice_start_code_follows = false;
-            else
-              slice_start_code_follows = true;
-          }
-          next_start_code();
-          peeks(32,tempval);
-
-          if (tempval == 0x00000100 || tempval == 0x000001B8) {
-            picture_or_group_start_code_found = true;
-          } else {
-            picture_or_group_start_code_found = false;
-          }
-
-        }
-
-        peeks(32,tempval);
-        if (tempval != 0x000001B7) {
-          println("Error - Program Limitation: Don't handle repeated sequence headers and sequence extensions");
-        }
-  
-        if (tempval != 0x000001B7) {
-          sequence_end_code_not_found = true;
+            i_buf_pos += 32;
         } else {
-          sequence_end_code_not_found = false;
+            i_result = (i_buf >> (32 - i_amount)) & ((1 << i_amount) - 1);
+            if (i_amount == 32) {
+                i_buf = 0;
+            } else {
+                i_buf = i_buf << i_amount;
+            }
         }
-      }
-      println("Done Parsing M2V File...");
-      println("Generating fake last frame to push out last real frame of video.");
-      ran = 2;
-      for (int i = 0; i < blocks_per_macroblock[the_chroma_format]; i++) {
-        for (int j = 0; j < 64; j++) {
-          QFS[i][j] = 0;
+        i_buf_pos -= i_amount;
+    }
+
+    phase I_Peeks pop * {
+        if (i_buf_pos <= i_amount) {
+            int ipt = i_amount - i_buf_pos;
+            if (i_buf_pos == 32) {
+                i_result = i_buf;
+            } else {
+                i_result = (i_buf >> (32 - i_buf_pos)) & ((1 << i_buf_pos) - 1);
+            }
+            if (ipt == 32) {
+                i_result = peek(0);
+            } else {
+                i_result = (i_result << ipt) + 
+                    ((peek(0) >> (32 - ipt)) & ((1 << ipt) -1));
+            }
+        } else {
+            if (i_amount == 32) {
+                i_result = (i_buf >> (32 - i_amount)) & ((1 << i_amount) - 1);
+            } else {
+                i_result = (i_buf >> (32 - i_amount)) & ((1 << i_amount) - 1);
+            }
         }
-      }
-      for (int r = 0; r < 2; r++) 
-        for (int s = 0; s < 2; s++)
-          for (int t = 0; t < 2; t++) {
-              motion_code[r][s][t] = 0;
-          }
-      for (int r = 0; r < 2; r++) 
-        for (int s = 0; s < 2; s++)
-          for (int t = 0; t < 2; t++) {
-              motion_residual[r][s][t] = 0;
-          }
-      macroblock_intra = 1;
-      macroblock_motion_forward = 0;
-      macroblock_motion_backward = 0;
-      for (int i = 0; i < (width/16); i++) {
-        for (int j = 0; j < (height/16); j++) {
-            for (int ppi = 0; ppi < blocks_per_macroblock[the_chroma_format]; ppi++) {
-                for (int pj = 0; pj < 64; pj++) {
-                    push(QFS[ppi][pj]);
+    }
+
+
+    phase PushMacroblock push (b_per_m*64+19) {
+        for (int i = 0; i < blocks_per_macroblock[the_chroma_format]; i++) {
+            for (int j = 0; j < 64; j++) {
+                push(QFS[i][j]);
+            }
+        }
+        for (int r = 0; r < 2; r++) 
+            for (int s = 0; s < 2; s++)
+                for (int t = 0; t < 2; t++) {
+                    push(motion_code[r][s][t]);
+                }
+        for (int r = 0; r < 2; r++) 
+            for (int s = 0; s < 2; s++)
+                for (int t = 0; t < 2; t++) {
+                    push(motion_residual[r][s][t]);
+                }
+        push(macroblock_intra);
+        push(macroblock_motion_forward);
+        push(macroblock_motion_backward);
+    }
+    
+    work pop 19539 push (1320*(b_per_m*64+19)) {
+        while (ran < 2) {
+    
+            println("Parsing M2V File...");
+            ran = 1;
+ 
+            int tempval;
+
+            // video_sequence() (cite 1, P. 25)
+
+            i_next_start_code();
+
+            // sequence_header() (cite 1, P. 26)
+
+            i_pops(32,tempval);
+            if (tempval != 0x000001B3)
+                println("Error - Expected Video Sequence Start Code, Found " + tempval);
+
+            // Reading Sequence Header
+            int horizontal_size_value, vertical_size_value, aspect_ratio_information,
+                frame_rate_code, bit_rate_value, vbv_buffer_size_value,
+                constrained_parameters_flag, load_intra_quantiser_matrix, load_non_intra_quantiser_matrix;
+            // (cite 1, P.55)
+            i_pops(12,horizontal_size_value);
+            i_pops(12,vertical_size_value);
+            i_pops(4,aspect_ratio_information);
+
+            // (cite 1, P.41 Table 6-3)
+            if (aspect_ratio_information == 0)
+                println("Error - Forbidden Aspect Ratio");
+            else if (aspect_ratio_information == 1) {
+                // aspect_ratio_information == 1 -> aspect ratio is 1:1, this case is handled
+            } else {
+                println("Error - Program Limitation: Don't Know How to Handle Other Aspect Ratios");
+            }
+            i_pops(4,frame_rate_code);
+            // (cite 1, P.41-42 Table 6-4)
+            float frame_rate_value = 0;
+            if (frame_rate_code == 0)
+                println("Error - Forbidden Frame Rate Code");
+            else if (frame_rate_code == 4) {
+                // frame_rate_code 4
+                frame_rate_value = 30000.0/1001.0;
+            }
+            else 
+                println("Error - Program Limitation: Don't Know How to Handle Other Frame Rate Codes");
+            i_pops(18,bit_rate_value);
+            i_marker_bit();
+
+            i_pops(10,vbv_buffer_size_value);
+            i_pops(1,constrained_parameters_flag);
+
+            // (cite 1, P. 43)
+            if (constrained_parameters_flag != 0)
+                println("Error - Expected Constrained Parameters Flag To Be 0");
+            // Default Values for the quantiser_matrices
+            int[64] intra_quantiser_matrix = 
+                { 8, 16, 19, 22, 26, 27, 29, 34,
+                  16, 16, 22, 24, 27, 29, 34, 37,
+                  19, 22, 26, 27, 29, 34, 34, 38,
+                  22, 22, 26, 27, 29, 34, 37, 40,
+                  22, 26, 27, 29, 32, 35, 40, 48,
+                  26, 27, 29, 32, 35, 40, 48, 58,
+                  26, 27, 29, 34, 38, 46, 56, 69,
+                  27, 29, 35, 38, 46, 56, 69, 83};
+            int[64] non_intra_quantiser_matrix =
+                {16, 16, 16, 16, 16, 16, 16, 16,
+                 16, 16, 16, 16, 16, 16, 16, 16,
+                 16, 16, 16, 16, 16, 16, 16, 16,
+                 16, 16, 16, 16, 16, 16, 16, 16,
+                 16, 16, 16, 16, 16, 16, 16, 16,
+                 16, 16, 16, 16, 16, 16, 16, 16,
+                 16, 16, 16, 16, 16, 16, 16, 16,
+                 16, 16, 16, 16, 16, 16, 16, 16};
+            // Assumes no alternate_scan TODO
+            int[64] Ordering = {00, 01, 05, 06, 14, 15, 27, 28,
+                                02, 04, 07, 13, 16, 26, 29, 42,
+                                03, 08, 12, 17, 25, 30, 41, 43,
+                                09, 11, 18, 24, 31, 40, 44, 53,
+                                10, 19, 23, 32, 39, 45, 52, 54,
+                                20, 22, 33, 38, 46, 51, 55, 60,
+                                21, 34, 37, 47, 50, 56, 59, 61,
+                                35, 36, 48, 49, 57, 58, 62, 63};
+            i_pops(1,load_intra_quantiser_matrix);
+            if (load_intra_quantiser_matrix == 1) {
+                // println("  Loading Intra Quantiser Matrix from File");    
+                int[64] tempOrder;
+                for (int i = 0; i < 64; i++) {
+                    i_pops(8,tempOrder[i]);
+                }
+                for (int i = 0; i < 64; i++) {
+                    // Assumes no alternate_scan TODO
+                    intra_quantiser_matrix[i] = tempOrder[Ordering[i]];
+                }
+            } else {
+                // println("  Using Default Intra Quantiser Matrix");
+                // Default Values Previously Loaded
+            }
+            i_pops(1,load_non_intra_quantiser_matrix);
+
+            if (load_non_intra_quantiser_matrix == 1) {
+                // println("  Loading Non Intra Quantiser Matrix from File");
+                int[64] tempOrder;
+                for (int i = 0; i < 64; i++) {
+                    i_pops(8,tempOrder[i]);
+                }
+                for (int i = 0; i < 64; i++) {
+                    // Assumes no alternate_scan
+                    non_intra_quantiser_matrix[i] = tempOrder[Ordering[i]];
+                }
+            } else {
+                // println("  Using Default Non Intra Quantiser Matrix");
+                // Default Values Previously Loaded
+            }
+
+            i_next_start_code();
+
+            // sequence_extension() (cite 1, P. 28)
+
+            i_pops(32,tempval);
+            if (tempval != 0x000001B5)
+                println("Error - Expected Extension Start Code, File Must be MPEG-1 " + tempval);
+            int extension_start_code_identifier, profile_and_level_indication,
+                progressive_sequence, chroma_format, horizontal_size_extension,
+                vertical_size_extension, bit_rate_extension, vbv_buffer_size_extension,
+                low_delay, frame_rate_extension_n, frame_rate_extension_d;
+            i_pops(4,extension_start_code_identifier);
+
+            if (extension_start_code_identifier != 0x1)
+                println("Error - Expected Sequence Extension Identifier " + extension_start_code_identifier);
+      
+            i_pops(8,profile_and_level_indication);
+
+            // We don't really care about the profile_and_level indicator - this matters if this implementation
+            // were fully MPEG2 compliant to some profile/level, but it isn't.
+            i_pops(1,progressive_sequence);
+
+            if (progressive_sequence == 1) {
+                // progressive_sequence 1: allows only progressive frames
+            } else {
+                // progressive_sequence 0: allows interlaced and progressive frames
+                println("Error - Program Limitation: Don't handle interlaced frames");
+            }
+            i_pops(2,chroma_format);
+            int block_count = blocks_per_macroblock[the_chroma_format]; // (cite 1, P. 62)
+            if (chroma_format != the_chroma_format) {
+                println("Error - Program specified with chroma " + the_chroma_format);
+                println("        File has chroma " + chroma_format);
+            }
+            i_pops(2,horizontal_size_extension);
+            int horizontal_size = horizontal_size_value + (horizontal_size_extension << 12);
+            int mb_width = (horizontal_size + 15) / 16;
+            i_pops(2,vertical_size_extension);
+            int vertical_size = vertical_size_value +  (vertical_size_extension << 12);
+            int mb_height = (vertical_size + 15) / 16;
+            i_pops(12,bit_rate_extension);
+            // (cite 1, P.42)
+            int bit_rate = 400 * (bit_rate_value + (bit_rate_extension << 18));
+            i_marker_bit();
+            i_pops(8,vbv_buffer_size_extension);
+            int vbv_buffer_size = vbv_buffer_size_value + (vbv_buffer_size_extension << 10);
+            i_pops(1,low_delay);
+            if (low_delay == 1) {
+                // low_delay 1 indicates that sequence contains no B-pictures
+                println("Error - Program Limitation: Can't Handle This Case Yet");
+            } else {
+                // low_delay 0 indicates that sequence is allowed to contain B-pictures
+            }
+
+            i_pops(2,frame_rate_extension_n);
+            i_pops(5,frame_rate_extension_d);
+            // (cite 1, P. P.41)
+            float frame_rate = frame_rate_value * 
+                ((float) (frame_rate_extension_n + 1)) / ((float) (frame_rate_extension_d + 1));
+            i_next_start_code();
+
+            boolean sequence_end_code_not_found = true;
+
+            while (sequence_end_code_not_found) {
+                // extension_and_user_data(0) (cite 1, P.26)
+                i_peeks(32,tempval);
+                while (tempval == 0x000001B5 || tempval == 0x000001B2) {
+                    i_pops(32,tempval);
+                    if (tempval == 0x000001B5) {
+                        // extension_data(0) (cite 1, P.27)
+                        i_peeks(4, tempval); 
+                        if (tempval == 2) { // extension_start_code_identifier
+                            i_pops(4, tempval); 
+                            int video_format;
+                            i_pops(3, video_format);
+                            int color_description;
+                            i_pops(1, color_description);
+                            if (color_description == 1) {
+                                int color_primaries, transfer_characteristics, matrix_coefficients;
+                                i_pops(8, color_primaries);
+                                i_pops(8, transfer_characteristics);
+                                i_pops(8, matrix_coefficients);
+                            }
+                            int display_horizontal_size;
+                            i_pops(14, display_horizontal_size);
+                            i_marker_bit();
+                            int display_vertical_size;
+                            i_pops(14, display_vertical_size);
+                            // TODO - we don't do anything with this extra data we get out. Eventually we should.
+                            i_next_start_code();
+                        } else {
+                            println("Error - Program Limitation: Not Yet Support for Sequence Scalable Extension()");
+                        }
+                    } else { // user_data() (cite 1, P.27)      
+                        if (tempval != 0x000001B2) {
+                            println("Error - Program Limitation: Not Yet Support for User_Data()");
+                        } 
+                        i_peeks(24, tempval);
+                        while (tempval != 0x000001) {
+                            int user_data;
+                            i_pops(8, user_data);
+                            // TODO we should probably do something with this data
+                            i_peeks(24, tempval);
+                        }
+                        i_next_start_code();
+                    }
+                    i_peeks(32,tempval);
+                }
+        
+                boolean picture_or_group_start_code_found = true;
+                while (picture_or_group_start_code_found) {
+                    i_peeks(32,tempval);
+                    if (tempval == 0x000001B8) {
+                        // group_of_pictures_header() (cite 1, P.29)
+                        i_pops(32,tempval);
+                        int drop_frame_flag, time_code_hours, time_code_minutes, time_code_seconds, 
+                            time_code_pictures, closed_gop, broken_link;
+                        // -- Time Code - Not Used in Decoding Process --
+                        // (cite 1, P.49)
+                        i_pops(1,drop_frame_flag);
+                        i_pops(5,time_code_hours);
+                        i_pops(6,time_code_minutes);
+                        i_marker_bit();
+                        i_pops(6,time_code_seconds);
+                        i_pops(6,time_code_pictures);
+                        // -- End of Time Code
+     
+                        i_pops(1,closed_gop);
+                        i_pops(1,broken_link);
+                        if (broken_link == 1)
+                            println("Error - Program Limitation: broken_link = 1");
+                        i_next_start_code();
+                        // extension_and_user_data(1) (cite 1, P.26)
+                        i_peeks(32,tempval);
+                        if (tempval == 0x000001B5 || tempval == 0x000001B2)
+                            println("Error - Program Limitation: Not Yet Support for extension_and_user_data(1)");
+                    }
+ 
+                    // picture_header() (cite 1, P.30)
+                    i_pops(32,tempval);
+                    if (tempval != 0x00000100) {
+                        println("Error - Picture Start Code Expected, " + tempval);
+                    }
+
+                    int temporal_reference, /* FEATURETODO picture_coding_type, */ vbv_delay, full_pel_forward_vector,
+                        forward_f_code, full_pel_backward_vector, backward_f_code;
+                    // (cite 1, P.50) for interpretation of the following fields
+                    i_pops(10,temporal_reference);
+                    i_pops(3,picture_coding_type);
+                    if (picture_coding_type == 1) {
+                        // picture_coding_type = I-picture
+                    } else if (picture_coding_type == 2) {
+                        // picture_coding_type = P-picture
+                    } else if (picture_coding_type == 3) {
+                        // picture_coding_type = B-picture
+                    } else {
+                        println("  Error: Forbidden picture_coding_type " + picture_coding_type);
+                    }
+ 
+                    i_pops(16,vbv_delay);
+                    // TODO unknown interpretation for vbv_delay, (cite 1, P.50)
+                    // The following is not used by the MPEG-2 specification (cite 1, P.51)
+                    // Supposed to have certain values, but not guaranteed for most files.
+                    if (picture_coding_type == 2 || picture_coding_type == 3) {
+                        i_pops(1,full_pel_forward_vector);
+                        i_pops(3,forward_f_code);
+                    } 
+                    if (picture_coding_type == 3) {
+                        i_pops(1,full_pel_backward_vector);
+                        i_pops(3,backward_f_code);
+                    }
+                    i_pops(1,tempval);
+                    if (tempval == 1)
+                        println("Error: File conforms to some superset of the MPEG-2 specification");
+                    i_next_start_code();
+            
+                    // picture_coding_extension() (cite 1, P.30)
+                    i_pops(32,tempval);
+                    if (tempval != 0x000001B5)
+                        println("Error - Expecting extension start code " + tempval);
+                    i_pops(4,extension_start_code_identifier);
+                    if (extension_start_code_identifier != 0x8)
+                        println("Error - Expecting picture coding extension ID " + extension_start_code_identifier);
+                    int[2][2] f_code;
+                    i_pops(4,f_code[0][0]);
+                    i_pops(4,f_code[0][1]);
+                    i_pops(4,f_code[1][0]);
+                    i_pops(4,f_code[1][1]);
+                    // (cite 1, P.51)
+                    for (int i = 0; i < 2; i++) {
+                        for (int j = 0; j < 2; j++) {
+                            if (f_code[i][j] == 0 || (f_code[i][j] >= 10 && f_code[i][j] <= 14))
+                                println("Error - Invalid f_code");
+                            if (picture_coding_type == 1 && f_code[i][j] != 0xF)
+                                println("Error - Program Limitation: I-frame has motion prediction");
+                            if (picture_coding_type == 2 && f_code[1][j] != 0xF)
+                                println("Error - Program Limitation: P-frame has backward motion prediction");
+                        }
+                    }
+                    int intra_dc_precision, picture_structure, top_field_first, frame_pred_frame_dct, 
+                        concealment_motion_vectors, q_scale_type, intra_vlc_format, alternate_scan, 
+                        repeat_first_field, chroma_420_type, progressive_frame, composite_display_flag;
+                    i_pops(2,intra_dc_precision);
+                    int actual_intra_dc_precision = intra_dc_precision + 8;
+                    i_pops(2,picture_structure);
+                    if (picture_structure != 3)
+                        println("Error - Program Limitation: Interlaced or bad picture structure");
+                    i_pops(1,top_field_first); // Interpreted Later
+                    i_pops(1,frame_pred_frame_dct);
+                    if (frame_pred_frame_dct != 1) 
+                        println("Error - Program Limitation or Bad Syntax: frame_pred_frame_dct must be 1");
+                    i_pops(1,concealment_motion_vectors);
+                    i_pops(1,q_scale_type);
+                    i_pops(1,intra_vlc_format);
+                    i_pops(1,alternate_scan);
+                    if (alternate_scan == 1)
+                        println("Error - Program Limitation - Doesn't handle alternate_scan right now");
+                    i_pops(1,repeat_first_field);
+                    // TODO Assumes progressive_sequence = 1
+                    if (repeat_first_field == 0) {
+                        //  repeat_first_field = 0, one frame output
+                    }
+                    else {
+                        if (top_field_first == 0)
+                            println("  repeat_first_field = 1, top_field_first = 0, two frames output");
+                        else
+                            println("  repeat_first_field = 1, top_field_first = 1, three frames output");
+                    }
+                    i_pops(1,chroma_420_type);
+                    // We don't really care about this, although it should be 1 for 4:2:0 chroma.
+                    // (cite 1, P.53)
+                    i_pops(1,progressive_frame);
+                    // Again, I don't think we care too much about this value, since we assume only a
+                    // base stream exists.
+                    i_pops(1,composite_display_flag);
+                    if (composite_display_flag == 1) {
+                        println("Error - Program Limitation: Assumes no composite display information");
+                    } else {
+                        // composite_display_flag - not present
+                    }
+                    i_next_start_code();
+         
+                    // extension_and_user_data(2)
+                    i_peeks(32,tempval);
+                    if (tempval == 0x000001B5 || tempval == 0x000001B2)
+                        println("Error - Program Limitation: Not Yet Support for extension_and_user_data(2)");
+          
+                    // picture_data() (cite 1, P.34)
+                    boolean slice_start_code_follows = true;
+                    while (slice_start_code_follows) {
+                        // slice() (cite 1, P.34)
+                        // Reset motion vector predictors, (cite 1, P.77-80)
+                        i_pops(24,tempval);
+                        if (tempval != 0x000001) 
+                            println("Error - Expecting slice_start_code " + tempval);
+                        int slice_vertical_position;
+                        i_pops(8,slice_vertical_position);
+                        if (slice_vertical_position < 0x01 || slice_vertical_position > 0xAF)
+                            println("Error - Invalid slice_vertical_position" + slice_vertical_position);
+                        if (vertical_size > 2800)
+                            println("Error - Program Limitation: Doesn't handle vertical_sizes > 2800");
+                        int mb_row, previous_macroblock_address;
+                        mb_row = slice_vertical_position - 1;
+                        previous_macroblock_address = (mb_row * mb_width) - 1;
+                        int quantiser_scale_code;
+                        i_pops(5,quantiser_scale_code);
+                        i_peeks(1,tempval);
+                        if (tempval == 1)
+                            println("Error - Program Limitation: Doesn't handle intra_slice_flag");
+                        i_pops(1,tempval);
+                        if (tempval == 1)
+                            println("Error - Extra_bit_slice must be 0");
+                        int[3] dc_dct_pred; // (cite 1, P.64-65)
+                        // I'm not sure about this - see P. 64 and getpic.c Line 1180
+                        // they disagree TODO
+                        dc_dct_pred[0] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
+                        dc_dct_pred[1] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
+                        dc_dct_pred[2] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
+                        boolean macroblock_next = true;
+
+                        while (macroblock_next) {
+                            // macroblock() (cite 1, P.35)
+                            int macroblock_escape = 0;
+                            i_peeks(11,tempval);
+                            while (tempval == 8) {
+                                i_pops(11,tempval);
+                                macroblock_escape += 33;
+                                i_peeks(11,tempval);
+                            }
+              
+                            i_variable_length_code(tempval,const_macroblock_address_inc);
+                            int macroblock_address_increment = tempval + macroblock_escape;         
+                            int macroblock_address, mb_column;
+                            macroblock_address = previous_macroblock_address + macroblock_address_increment;
+                            previous_macroblock_address = macroblock_address;
+                            mb_column = macroblock_address % mb_width;
+                            // TODO - Don't actually check to make sure that macroblocks are skipped which aren't
+                            // allowed to be skipped - this should be done, the rules are on (cite 1, P.60)
+                            // macroblock_modes, (cite 1, P.36)
+                            // TODO - If a sequence_scalable_extension present in bitstream, then may possibly
+                            // need to use tables B5,6,7,8 as well.
+                            if (picture_coding_type == 1) { // I-picture
+                                i_variable_length_code(tempval,const_macroblock_type_Ipictures);
+                            } else if (picture_coding_type == 2) { // P-picture
+                                i_variable_length_code(tempval,const_macroblock_type_Ppictures);
+                            } else if (picture_coding_type == 3) { // B-picture
+                                i_variable_length_code(tempval,const_macroblock_type_Bpictures);
+                            }
+                            int macroblock_quant, /* macroblock_motion_forward, macroblock_motion_backward, */
+                                macroblock_pattern, /* macroblock_intra, */ spatial_temporal_weight_code_flag;
+                            spatial_temporal_weight_code_flag = tempval & 0x01;
+                            tempval >>= 1;
+                            macroblock_intra = tempval & 0x01;
+                            tempval >>= 1;
+                            macroblock_pattern = tempval & 0x01;
+                            tempval >>= 1;
+                            macroblock_motion_backward = tempval & 0x01;
+                            tempval >>= 1;
+                            macroblock_motion_forward = tempval & 0x01;
+                            tempval >>= 1;
+                            macroblock_quant = tempval & 0x01;
+
+                            if (spatial_temporal_weight_code_flag == 1)
+                                println("Error - Program Limitation - Expects spatial_temporal_weight_code_flag to be 0");
+                            // (cite 1, P.60, Table 6-17)
+                            int prediction_type = 0; // 0 = reserved, 1 = field-based, 2=frame-based, 3=dual-prime
+                            int motion_vector_count = 0;
+                            int mv_format = 0; // 0 = field, 1 = frame
+                            int dmv = 0; 
+                            if (frame_pred_frame_dct == 1) {
+                                // See comments on P.60 regarding what happens if frame_motion_type
+                                // is omitted.
+                                prediction_type = 2;
+                                motion_vector_count = 1;
+                                mv_format = 1;
+                                dmv = 0;
+                            }
+                            if (macroblock_motion_forward == 1 || macroblock_motion_backward == 1) {
+                                if (picture_structure == 3) {
+                                    if (frame_pred_frame_dct == 0) {
+                                        // (cite 1, P.60, Table 6-17)
+                                        i_pops(2,tempval);
+                                        if (tempval == 0) {
+                                            println("Error - Invalid frame_motion_type code");
+                                        } else if (tempval == 1) {
+                                            if (spatial_temporal_weight_code_flag < 2) {
+                                                println("Error - Don't handle this case of frame_motion_type");
+                                            } else {
+                                                println("Error - Don't handle this case of frame_motion_type");
+                                            }
+                                        } else if (tempval == 2) {
+                                            prediction_type = 2;
+                                            motion_vector_count = 1;
+                                            mv_format = 1;
+                                            dmv = 0;
+                                        } else if (tempval == 3) {
+                                            prediction_type = 3;
+                                            motion_vector_count = 1;
+                                            mv_format = 0;
+                                            dmv = 1;
+                                        }
+                                        if (prediction_type == 0)
+                                            println("Error - Invalid prediction_type");
+                                        else if (prediction_type == 1)
+                                            println("  prediction_type field-based");
+                                        else if (prediction_type == 2)
+                                            println("  prediction_type frame-based");
+                                        else if (prediction_type == 3)
+                                            println("  prediction_type dual-prime");
+                                        println("  motion_vector_count " + motion_vector_count);
+                                        if (mv_format == 0)
+                                            println("  mv_format field");
+                                        else
+                                            println("  mv_format frame");
+                                        println("  dmv " + dmv);
+                                    }
+                                } else {
+                                    println("Error - Program Limitation: Doesn't handle this case");
+                                }
+                            }
+                            if ((picture_structure == 3) && (frame_pred_frame_dct == 0) && ((macroblock_intra == 1) || (macroblock_pattern == 1)))
+                                println("Error - Program Limitation, Doesn't Handle This Particular Case");
+
+                            if (macroblock_quant == 1) {
+                                i_pops(5,quantiser_scale_code);
+                            }
+
+                            /*            int[2][2][2] motion_code;
+                                          int[2][2][2] motion_residual; FEATURETODO */
+                            for (int i = 0; i < 2; i++)
+                                for (int j = 0; j < 2; j++)
+                                    for (int k = 0; k < 2; k++) {
+                                        motion_code[i][j][k] = 0;
+                                        motion_residual[i][j][k] = 0;
+                                    }
+
+                            // Motion Vector Predictor Reset, (cite 1, P.80)
+                            if ((macroblock_intra == 1 && concealment_motion_vectors == 0) ||
+                                (macroblock_intra == 0 && macroblock_motion_forward == 0 && 
+                                 picture_coding_type == 2)) {
+                            }
+
+                            if (macroblock_motion_forward == 1 || 
+                                (macroblock_intra == 1 && concealment_motion_vectors == 1)) {
+                                // motion_vectors(0); (cite 1, P.36, 61)
+                                if (motion_vector_count == 1) {
+                                    if ((mv_format == 0) && (dmv != 1)) {
+                                        println("Error - Program Limitation: Don't handle this case with mv_format and dmv.");
+                                        println("mv_format " + mv_format + " dmv " + dmv);
+                                    }
+                                    // motion_vector(0,0);
+                                    // (cite 1, P.61)
+                                    for (int t = 0; t < 2; t++) {
+                                        i_variable_length_code(motion_code[0][0][t],const_motion_code);
+                                        if ((f_code[0][t] != 1) && (motion_code[0][0][t] != 0)) {
+                                            int r_size = f_code[0][t]-1;
+                                            i_pops(r_size,motion_residual[0][0][t]);
+                                        }
+                                        if (dmv == 1) {
+                                            println("Error - Program Limitation: Don't handle case of dmv = 1");
+                                        }
+                                    } 
+                
+                                } else {
+                                    println("Error - Program Limitation: Don't handle field motion vectors");
+                                }
+                            }
+                            if (macroblock_motion_backward == 1) {
+                
+                                // motion_vectors(1); (cite 1, P.36, 61)
+                                if (motion_vector_count == 1) {
+                                    if ((mv_format == 0) && (dmv != 1)) {
+                                        println("Error - Program Limitation: Don't handle this case with mv_format and dmv.");
+                                        println("mv_format " + mv_format + " dmv " + dmv);
+                                    }
+                                    // motion_vector(0,1);
+                                    // (cite 1, P.61)
+                                    for (int t = 0; t < 2; t++) {
+                                        i_variable_length_code(motion_code[0][1][t],const_motion_code);
+                                        if ((f_code[1][t] != 1) && (motion_code[0][1][t] != 0)) {
+                                            int r_size = f_code[1][t]-1;
+                                            i_pops(r_size,motion_residual[0][1][t]);
+                                        }
+                                        if (dmv == 1) {
+                                            println("Error - Program Limitation: Don't handle the case of dmv = 1");
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (macroblock_intra == 1 && concealment_motion_vectors == 1) {
+                                i_marker_bit();
+                            }
+
+                            int[12] pattern_code;
+                            // The meaning of pattern_code is defined somewhat poorly
+                            // on (cite 1, P.62) in the code block
+                            for (int i = 0; i < 12; i++) {
+                                if (macroblock_intra == 1) {
+                                    pattern_code[i] = 1;
+                                } else {
+                                    pattern_code[i] = 0;
+                                }
+                            }
+                            if (macroblock_pattern == 1) {
+                                // coded_block_pattern() (cite 1, P.37, 62)
+                                int cbp;
+                                i_variable_length_code(cbp,const_coded_block_patterns);
+                                for (int i = 0; i < 6; i++) {
+                                    if ((cbp & (1 << (5-i))) > 0)
+                                        pattern_code[i] = 1;
+                                }
+                                if (chroma_format == 1 && cbp == 0) {
+                                    println("Error - cbp not allowed to be zero in 4:2:0 format");
+                                }
+                                if (chroma_format == 2) {
+                                    int coded_block_pattern_1;
+                                    i_pops(2, coded_block_pattern_1);
+                                    for (int i = 6; i < 8; i++) {
+                                        if ((coded_block_pattern_1 & (1<< (7-i))) > 0)
+                                            pattern_code[i] = 1;
+                                    }
+                                }
+                                if (chroma_format == 3) {
+                                    println("Error - Program Limitation: Doesn't handle 4:4:4 format");
+                                }
+                            }
+
+                            for (int i = 0; i < block_count; i++) {
+                                int QFS_current;
+                                QFS_current = 0;
+                                for (int j = 0; j < 64; j++) {
+                                    QFS[i][j] = 0;
+                                } 
+
+                                // block(i) (cite 1, P.38)
+                                // if macroblocks are skipped, predictor is reset
+                                if (pattern_code[i] == 1) {
+                                    if (macroblock_intra == 1) {
+                                        if (i < 4) {
+                                            int dc_dct_size_luminance, dc_dct_differential_luminance, dc_dct_luminance;
+                                            i_variable_length_code(dc_dct_size_luminance,const_dct_dc_size_luminance);
+                                            int dct_diff; // This next section from (cite 1, P.65)
+                                            if (dc_dct_size_luminance == 0) {
+                                                dct_diff = 0;
+                                            } else {
+                                                i_pops(dc_dct_size_luminance,dc_dct_differential_luminance);
+                                                int half_range = (int) pow(2,dc_dct_size_luminance-1);
+                                                if (dc_dct_differential_luminance >= half_range) {
+                                                    dct_diff = dc_dct_differential_luminance;
+                                                } else {
+                                                    dct_diff = (dc_dct_differential_luminance + 1) - (2*half_range);
+                                                }
+                                            }
+                                            dc_dct_luminance = dc_dct_pred[0] + dct_diff;
+                                            dc_dct_pred[0] = dc_dct_luminance;
+                                            QFS[i][0] = dc_dct_luminance;
+                                            QFS_current = 1;
+                                        } else {
+                                            // Other ones 
+                                            int dc_dct_size_chrominance, dc_dct_differential_chrominance, dc_dct_chrominance;
+                                            i_variable_length_code(dc_dct_size_chrominance,const_dct_dc_size_chrominance);
+                                            int dct_diff;
+                                            if (dc_dct_size_chrominance == 0) {
+                                                dct_diff = 0;
+                                            } else {
+                                                i_pops(dc_dct_size_chrominance,dc_dct_differential_chrominance);
+                                                int half_range = (int) pow(2,dc_dct_size_chrominance-1);
+                                                if (dc_dct_differential_chrominance >= half_range) {
+                                                    dct_diff = dc_dct_differential_chrominance;
+                                                } else {
+                                                    dct_diff = (dc_dct_differential_chrominance + 1) - (2*half_range);
+                                                }
+                                            }
+                                            // Blocks 4, 6, 8, and 10 go into [1]
+                                            // Blocks 5, 7, 9, 11 go into [2]
+                                            int temp_index = (i % 2) + 1;
+                                            dc_dct_chrominance = dc_dct_pred[temp_index] + dct_diff;
+                                            dc_dct_pred[temp_index] = dc_dct_chrominance;
+                                            QFS[i][0] = dc_dct_chrominance;
+                                            QFS_current = 1;
+                                        }
+                                    } else {
+                                        // I don't think we really need to do anything here... if we let this just
+                                        // fall through it should get handled in the next section, right?
+                                        // Reset predictors, (cite 1, P. 64)
+                                        dc_dct_pred[0] = 0;
+                                        dc_dct_pred[1] = 0;
+                                        dc_dct_pred[2] = 0;  
+                                    }
+                                    if (intra_vlc_format == 1 && macroblock_intra == 1)
+                                        println("Error - Program Limitation: Need to use B15 to decode DCT coefficients instead of B14");
+                                    while (QFS_current < 64) {
+                                        if (macroblock_intra == 0 && QFS_current == 0) {
+                                            // This section here from end of Table B.14 and 7.2.2.2 (cite 1, P.66)
+                                            i_peeks(1,tempval);
+                                            if (tempval == 1) {
+                                                i_pops(1,tempval);
+                                                i_pops(1,tempval);
+                                                if (tempval == 0)
+                                                    QFS[i][0] = 1;
+                                                else 
+                                                    QFS[i][0] = -1;
+                                                QFS_current += 1;
+                                            }
+                                        } 
+                                        i_peeks(2,tempval);
+                                        if (tempval == 2) {
+                                            i_pops(2,tempval);
+                                            QFS_current = 64;
+                                        } else {
+                                            int signed_level, run = 0;
+                                            i_peeks(6,tempval);
+                                            if (tempval == 1) { 
+                                                // Escape Code
+                                                i_pops(6,tempval);
+                                                int level, sign;
+                                                i_pops(6,run);
+                                                i_pops(1,sign);
+                                                i_pops(11,level);
+                                                if (sign == 0) {
+                                                    signed_level = level;
+                                                } else {
+                                                    signed_level = level - 2048;
+                                                }
+                                            } else {
+                                                // Regular Code
+                                                int level = 0, sign = 0;
+                                                // begin variable length code
+                                                i_peeks(16, tempval);
+                                                // if (tempval >= 49152 && tempval <= 65535) { // 2
+                                                if (tempval >= 49152) {
+                                                    i_pops(2, tempval);
+                                                    run = const_dct_coefficients_table_zero_len2[0].run;
+                                                    level = const_dct_coefficients_table_zero_len2[0].level; 
+                                                    // } else if (tempval >= 24576 && tempval <= 32767) { // 3
+                                                } else if (tempval >= 24576) {
+                                                    i_pops(3, tempval);
+                                                    run = const_dct_coefficients_table_zero_len3[0].run;
+                                                    level = const_dct_coefficients_table_zero_len3[0].level; 
+                                                    // } else if (tempval >= 16384 && tempval <= 24575) { // 4
+                                                } else if (tempval >= 16384) {
+                                                    i_pops(4, tempval);
+                                                    run = const_dct_coefficients_table_zero_len4[tempval-4].run;
+                                                    level = const_dct_coefficients_table_zero_len4[tempval-4].level; 
+                                                    // } else if (tempval >= 10240 && tempval <= 16383) { // 5
+                                                } else if (tempval >= 10240) {
+                                                    i_pops(5, tempval);
+                                                    run = const_dct_coefficients_table_zero_len5[tempval-5].run;
+                                                    level = const_dct_coefficients_table_zero_len5[tempval-5].level; 
+                                                    // } else if (tempval >= 8192 && tempval <= 10239) { // 8
+                                                } else if ( tempval >= 8192) {
+                                                    i_pops(8, tempval);
+                                                    run = const_dct_coefficients_table_zero_len8[tempval-32].run;
+                                                    level = const_dct_coefficients_table_zero_len8[tempval-32].level; 
+                                                    // } else if (tempval >= 4096 && tempval <= 8191) { // 6
+                                                } else if (tempval >= 4096) {
+                                                    i_pops(6, tempval);
+                                                    run = const_dct_coefficients_table_zero_len6[tempval-4].run;
+                                                    level = const_dct_coefficients_table_zero_len6[tempval-4].level; 
+                                                    // } else if (tempval >= 2048 && tempval <= 4095) { // 7
+                                                } else if (tempval >= 2048) {
+                                                    i_pops(7, tempval);
+                                                    run = const_dct_coefficients_table_zero_len7[tempval-4].run;
+                                                    level = const_dct_coefficients_table_zero_len7[tempval-4].level; 
+                                                    // } else if (tempval >= 512 && tempval <= 1023) { // 10
+                                                } else if (tempval >= 512) {
+                                                    i_pops(10, tempval);
+                                                    run = const_dct_coefficients_table_zero_len10[tempval-8].run;
+                                                    level = const_dct_coefficients_table_zero_len10[tempval-8].level; 
+                                                    // } else if (tempval >= 256 && tempval <= 511) { // 12
+                                                } else if (tempval >= 256) {
+                                                    i_pops(12, tempval); 
+                                                    run = const_dct_coefficients_table_zero_len12[tempval-16].run;
+                                                    level = const_dct_coefficients_table_zero_len12[tempval-16].level; 
+                                                    // } else if (tempval >= 128 && tempval <= 255) { // 13
+                                                } else if (tempval >= 128) {
+                                                    i_pops(13, tempval); 
+                                                    run = const_dct_coefficients_table_zero_len13[tempval-16].run;
+                                                    level = const_dct_coefficients_table_zero_len13[tempval-16].level; 
+                                                    // } else if (tempval >= 64 && tempval <= 127) { // 14
+                                                } else if (tempval >= 64) {
+                                                    i_pops(14, tempval); 
+                                                    run = const_dct_coefficients_table_zero_len14[tempval-16].run;
+                                                    level = const_dct_coefficients_table_zero_len14[tempval-16].level; 
+                                                    // } else if (tempval >= 32 && tempval <= 63) { // 15
+                                                } else if (tempval >= 32) {
+                                                    i_pops(15, tempval); 
+                                                    run = const_dct_coefficients_table_zero_len15[tempval-16].run;
+                                                    level = const_dct_coefficients_table_zero_len15[tempval-16].level; 
+                                                    // } else if (tempval >= 16 && tempval <= 31) { // 16
+                                                } else if (tempval >= 16) {
+                                                    i_pops(16, tempval);
+                                                    run = const_dct_coefficients_table_zero_len16[tempval-16].run;
+                                                    level = const_dct_coefficients_table_zero_len16[tempval-16].level; 
+                                                }  else {
+                                                    print("Error - Unknown Huffman Symbol");
+                                                }
+
+                                                // end variable length code
+                                                i_pops(1,sign);
+                                                if (sign == 0) {
+                                                    signed_level = level;
+                                                } else {
+                                                    signed_level = -level;
+                                                }
+                                            }
+                                            QFS_current += run;
+                                            if (QFS_current == 63) {
+                                                i_pops(2,tempval);
+                                                if (tempval != 2) {
+                                                    println("Error - Reached End of Block, Expecting End of Block Code");
+                                                }
+                                            }
+                                            QFS[i][QFS_current] = signed_level;
+                                            QFS_current++;
+                                        }
+                                        if (QFS_current > 64)
+                                            println("Error - QFS_current > 64 " + QFS_current);
+                                    }
+                                } else {
+                                    // Skipped block
+                                    // This indicates a skipped block, but not a skipped macroblock. 
+                                    for (int index = 0; index < 64; index++) {
+                                        QFS[i][index] = 0;
+                                    }
+                                }
+                            }
+                            PushMacroblock();
+                            i_peeks(23,tempval);
+                            if (tempval == 0) {
+                                macroblock_next = false;
+                            } else {
+                                macroblock_next = true;
+                            }
+                        }
+ 
+                        i_next_start_code();
+                        i_peeks(32,tempval);
+                        if (tempval > 0x000001AF || tempval < 0x00000101)
+                            slice_start_code_follows = false;
+                        else
+                            slice_start_code_follows = true;
+                    }
+                    i_next_start_code();
+                    i_peeks(32,tempval);
+
+                    if (tempval == 0x00000100 || tempval == 0x000001B8) {
+                        picture_or_group_start_code_found = true;
+                    } else {
+                        picture_or_group_start_code_found = false;
+                    }
+
+                }
+
+                i_peeks(32,tempval);
+                if (tempval != 0x000001B7) {
+                    println("Error - Program Limitation: Don't handle repeated sequence headers and sequence extensions");
+                }
+  
+                if (tempval != 0x000001B7) {
+                    sequence_end_code_not_found = true;
+                } else {
+                    sequence_end_code_not_found = false;
                 }
             }
-            for (int pr = 0; pr < 2; pr++) 
-                for (int ps = 0; ps < 2; ps++)
-                    for (int pt = 0; pt < 2; pt++) {
-                        push(motion_code[pr][ps][pt]);
+            println("Done Parsing M2V File...");
+            println("Generating fake last frame to push out last real frame of video.");
+            ran = 2;
+            for (int i = 0; i < blocks_per_macroblock[the_chroma_format]; i++) {
+                for (int j = 0; j < 64; j++) {
+                    QFS[i][j] = 0;
+                }
+            }
+            for (int r = 0; r < 2; r++) 
+                for (int s = 0; s < 2; s++)
+                    for (int t = 0; t < 2; t++) {
+                        motion_code[r][s][t] = 0;
                     }
-            for (int pr = 0; pr < 2; pr++) 
-                for (int ps = 0; ps < 2; ps++)
-                    for (int pt = 0; pt < 2; pt++) {
-                        push(motion_residual[pr][ps][pt]);
+            for (int r = 0; r < 2; r++) 
+                for (int s = 0; s < 2; s++)
+                    for (int t = 0; t < 2; t++) {
+                        motion_residual[r][s][t] = 0;
                     }
-            push(macroblock_intra);
-            push(macroblock_motion_forward);
-            push(macroblock_motion_backward);
-        } 
-      }
-      println("Done generating fake frame");
+            macroblock_intra = 1;
+            macroblock_motion_forward = 0;
+            macroblock_motion_backward = 0;
+            for (int i = 0; i < (width/16); i++) {
+                for (int j = 0; j < (height/16); j++) {
+                    PushMacroblock();
+                } 
+            }
+            println("Done generating fake frame");
+        }
     }
-  }
 }
 
 /**
  * @internal
  */
-int->int pipeline BlockDecode(
-                             ) {
-  add ZigZagUnordering;
+int->int pipeline BlockDecode() {
+    add ZigZagUnordering;
     // Assumes no alternate_scan TODO
     // Output of this corresponds to QF[v][u], (cite 1, P. 67)
-  add InverseQuantization();
-  add BoundedSaturation(-2048, 2047, -2050, 2050);
-  add MismatchControl();
-  add iDCT8x8_ieee(2); // fast iDCT
-  add BoundedSaturation(-256, 255, -260, 260);
+    add InverseQuantization();
+    add BoundedSaturation(-2048, 2047, -2050, 2050);
+    add MismatchControl();
+    add iDCT8x8_ieee(2); // 0 = reference coarse, 1 = reference fine, 2 = fast, fine,  
+    add BoundedSaturation(-256, 255, -260, 260);
 }
 
 /**
  * @internal
  */
 int->int filter ZigZagUnordering {
-  int[64] Ordering = {00, 01, 05, 06, 14, 15, 27, 28,
-                      02, 04, 07, 13, 16, 26, 29, 42,
-					            03, 08, 12, 17, 25, 30, 41, 43,
-					            09, 11, 18, 24, 31, 40, 44, 53,
-					            10, 19, 23, 32, 39, 45, 52, 54,
-					            20, 22, 33, 38, 46, 51, 55, 60,
-					            21, 34, 37, 47, 50, 56, 59, 61,
-					            35, 36, 48, 49, 57, 58, 62, 63};
-  work pop 64 push 64 {
-    int[64] peekSubstitute;
-    for (int i = 0; i < 64; i++) {
-      peekSubstitute[i] = pop();
+    int[64] Ordering = {00, 01, 05, 06, 14, 15, 27, 28,
+                        02, 04, 07, 13, 16, 26, 29, 42,
+                        03, 08, 12, 17, 25, 30, 41, 43,
+                        09, 11, 18, 24, 31, 40, 44, 53,
+                        10, 19, 23, 32, 39, 45, 52, 54,
+                        20, 22, 33, 38, 46, 51, 55, 60,
+                        21, 34, 37, 47, 50, 56, 59, 61,
+                        35, 36, 48, 49, 57, 58, 62, 63};
+    work pop 64 push 64 {
+        int[64] peekSubstitute;
+        for (int i = 0; i < 64; i++) {
+            peekSubstitute[i] = pop();
+        }
+        for (int i = 0; i < 64; i++) {
+            push(peekSubstitute[Ordering[i]]);
+        }
     }
-    for (int i = 0; i < 64; i++) {
-      push(peekSubstitute[Ordering[i]]);
-    }
-  }
 }
 
 /**
  * @internal
  */
-int->int pipeline InverseQuantization(  
-) {
+int->int pipeline InverseQuantization() {
 
-  // The handling of the intra DC coefficient is described on (cite 1, P.69)
-  add int->int splitjoin {
-    split duplicate;
-    // Intra Coded Macroblocks
+    // The handling of the intra DC coefficient is described on (cite 1, P.69)
     add int->int splitjoin {
-      split roundrobin(1, 63); 
-      add InverseQuantization_DC_Intra_Coeff; // (cite 1, P.69)
-      add InverseQuantization_AC_Coeff(1);
-      join roundrobin(1, 63); 
+        split duplicate;
+        // Intra Coded Macroblocks
+        add int->int splitjoin {
+            split roundrobin(1, 63); 
+            add InverseQuantization_DC_Intra_Coeff; // (cite 1, P.69)
+            add InverseQuantization_AC_Coeff(1);
+            join roundrobin(1, 63); 
+        }
+        // Non Intra Coded Macroblocks
+        add InverseQuantization_AC_Coeff(0);
+        join roundrobin(64, 64);  
     }
-    // Non Intra Coded Macroblocks
-    add InverseQuantization_AC_Coeff(0);
-    join roundrobin(64, 64);  
-  }
   
-  // Selects which stream - FEATURETODO eventually programmable splitjoin and only one of the two
-  // above branches gets taken instead of both.
+    // Selects which stream - FEATURETODO eventually programmable splitjoin and only one of the two
+    // above branches gets taken instead of both.
  
-  add InverseQuantizationJoinerSubstitute();
+    add InverseQuantizationJoinerSubstitute();
 }
 
 /**
  * @internal
  */
 int->int filter InverseQuantizationJoinerSubstitute {
-  int macroblock_intra;
+    int macroblock_intra;
  
-  init {
-    macroblock_intra = 1;
-  }
-   
-  work pop (128) push 64 {
-    if (macroblock_intra == -1) {
-      println("  Error: macroblock_intra should not be -1, should have recieved update message");
-    } else if (macroblock_intra == 1) {
-      // It was Intra Coded
-      for (int i = 0; i < 64; i++) {
-        push(pop());
-      }
-      for (int i = 0; i < 64; i++) {
-        pop();
-      }
-    } else {
-      // It was Non Intra Coded
-      for (int i = 0; i < 64; i++) {
-        pop();
-      }
-      for (int i = 0; i < 64; i++) {
-        push(pop());
-      }
+    init {
+        macroblock_intra = 1;
     }
+   
+    work pop (128) push 64 {
+        if (macroblock_intra == -1) {
+            println("  Error: macroblock_intra should not be -1, should have recieved update message");
+        } else if (macroblock_intra == 1) {
+            // It was Intra Coded
+            for (int i = 0; i < 64; i++) {
+                push(pop());
+            }
+            for (int i = 0; i < 64; i++) {
+                pop();
+            }
+        } else {
+            // It was Non Intra Coded
+            for (int i = 0; i < 64; i++) {
+                pop();
+            }
+            for (int i = 0; i < 64; i++) {
+                push(pop());
+            }
+        }
     
-  } 
+    } 
 
 }
 
@@ -1290,21 +1331,21 @@ int->int filter InverseQuantizationJoinerSubstitute {
  * @internal
  */
 int->int filter InverseQuantization_DC_Intra_Coeff() {
-  // (cite 1, P.69)
-  int[4] intra_dc_mult;
-  int intra_dc_precision;
+    // (cite 1, P.69)
+    int[4] intra_dc_mult;
+    int intra_dc_precision;
 
-  init {
-    intra_dc_mult[0] = 8;
-    intra_dc_mult[1] = 4;
-    intra_dc_mult[2] = 2;
-    intra_dc_mult[3] = 1;
-    intra_dc_precision = 0; 
-  }
+    init {
+        intra_dc_mult[0] = 8;
+        intra_dc_mult[1] = 4;
+        intra_dc_mult[2] = 2;
+        intra_dc_mult[3] = 1;
+        intra_dc_precision = 0; 
+    }
 
-  work pop 1 push 1 {
-    push(intra_dc_mult[intra_dc_precision] * pop());
-  }
+    work pop 1 push 1 {
+        push(intra_dc_mult[intra_dc_precision] * pop());
+    }
 
 }
 
@@ -1312,81 +1353,81 @@ int->int filter InverseQuantization_DC_Intra_Coeff() {
  * @internal
  */
 int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
-  // Assumes 4:2:0 data
-  // (cite 1, P.69)
-  // intra = 1: This is dequantizing the non-DC part of an intra coded block
-  // intra = 0: This is dequantizing the DC and AC part of a non-intra coded block
+    // Assumes 4:2:0 data
+    // (cite 1, P.69)
+    // intra = 1: This is dequantizing the non-DC part of an intra coded block
+    // intra = 0: This is dequantizing the DC and AC part of a non-intra coded block
 
-  // These are all assigned by messages and MUST be assigned before the first 
-  // call to work()
-  int quantiser_scale_code;
-  int q_scale_type;
-  int[64] intra_quantiser_matrix = { 8, 16, 19, 22, 26, 27, 29, 34,
-                                    16, 16, 22, 24, 27, 29, 34, 37,
-                                    19, 22, 26, 27, 29, 34, 34, 38,
-                                    22, 22, 26, 27, 29, 34, 37, 40,
-                                    22, 26, 27, 29, 32, 35, 40, 48,
-                                    26, 27, 29, 32, 35, 40, 48, 58,
-                                    26, 27, 29, 34, 38, 46, 56, 69,
-                                    27, 29, 35, 38, 46, 56, 69, 83};
-  int[64] non_intra_quantiser_matrix = {16, 16, 16, 16, 16, 16, 16, 16,
-                                        16, 16, 16, 16, 16, 16, 16, 16,
-                                        16, 16, 16, 16, 16, 16, 16, 16,
-                                        16, 16, 16, 16, 16, 16, 16, 16,
-                                        16, 16, 16, 16, 16, 16, 16, 16,
-                                        16, 16, 16, 16, 16, 16, 16, 16,
-                                        16, 16, 16, 16, 16, 16, 16, 16,
-                                        16, 16, 16, 16, 16, 16, 16, 16};
+    // These are all assigned by messages and MUST be assigned before the first 
+    // call to work()
+    int quantiser_scale_code;
+    int q_scale_type;
+    int[64] intra_quantiser_matrix = { 8, 16, 19, 22, 26, 27, 29, 34,
+                                       16, 16, 22, 24, 27, 29, 34, 37,
+                                       19, 22, 26, 27, 29, 34, 34, 38,
+                                       22, 22, 26, 27, 29, 34, 37, 40,
+                                       22, 26, 27, 29, 32, 35, 40, 48,
+                                       26, 27, 29, 32, 35, 40, 48, 58,
+                                       26, 27, 29, 34, 38, 46, 56, 69,
+                                       27, 29, 35, 38, 46, 56, 69, 83};
+    int[64] non_intra_quantiser_matrix = {16, 16, 16, 16, 16, 16, 16, 16,
+                                          16, 16, 16, 16, 16, 16, 16, 16,
+                                          16, 16, 16, 16, 16, 16, 16, 16,
+                                          16, 16, 16, 16, 16, 16, 16, 16,
+                                          16, 16, 16, 16, 16, 16, 16, 16,
+                                          16, 16, 16, 16, 16, 16, 16, 16,
+                                          16, 16, 16, 16, 16, 16, 16, 16,
+                                          16, 16, 16, 16, 16, 16, 16, 16};
 
-  // (cite 1, P.70 Table 7-6)
-  int[2][32] quantiser_scale =
-    // Note that quantiser_scale[x][0] is a Forbidden Value
-    {{ 0,  2,  4,  6,  8, 10, 12, 14,
-      16, 18, 20, 22, 24, 26, 28, 30,
-      32, 34, 36, 38, 40, 42, 44, 46,
-      48, 50, 52, 54, 56, 58, 60, 62},
-     { 0,  1,  2,  3,  4,  5,  6,  7,
-       8, 10, 12, 14, 16, 18, 20, 22,
-      24, 28, 32, 36, 40, 44, 48, 52, 
-      56, 64, 72, 80, 88, 96, 104, 112}};
+    // (cite 1, P.70 Table 7-6)
+    int[2][32] quantiser_scale =
+        // Note that quantiser_scale[x][0] is a Forbidden Value
+        {{ 0,  2,  4,  6,  8, 10, 12, 14,
+           16, 18, 20, 22, 24, 26, 28, 30,
+           32, 34, 36, 38, 40, 42, 44, 46,
+           48, 50, 52, 54, 56, 58, 60, 62},
+         { 0,  1,  2,  3,  4,  5,  6,  7,
+           8, 10, 12, 14, 16, 18, 20, 22,
+           24, 28, 32, 36, 40, 44, 48, 52, 
+           56, 64, 72, 80, 88, 96, 104, 112}};
 
-  init {
-    quantiser_scale_code = 1; // Guarantees that this throws an error
-                              // if it doesn't get a quantiser message
-                              // before getting some data.
-    q_scale_type = 0; // Another nice error if no message received in time.
-  }
-
-  work pop (64-macroblock_intra) push (64-macroblock_intra) {
-    if (quantiser_scale_code == 0)
-      println("Error - quantiser_scale_code not allowed to be 0 " + macroblock_intra);
-    for (int i = macroblock_intra; i < 64; i++) {
-      int QF = pop();
-      // (cite 1, P.71)
-      int k = 0;
-      if (macroblock_intra == 1) {
-        k = 0;
-      } else {
-        // TODO - I think I'm interpreting this part of the spec correctly, check though.
-        if (QF > 0) {
-          k = 1;
-        } else if (QF < 0) {
-          k = -1;
-        } else {
-          k = 0;
-        }          
-      }
-      int W = 0;
-      if (macroblock_intra == 1) {
-        W = intra_quantiser_matrix[i];
-      } else {
-        W = non_intra_quantiser_matrix[i];
-      }
-      int F = (2 * QF + k) * W * 
-              quantiser_scale[q_scale_type][quantiser_scale_code] / 32;
-      push(F);
+    init {
+        quantiser_scale_code = 1; // Guarantees that this throws an error
+        // if it doesn't get a quantiser message
+        // before getting some data.
+        q_scale_type = 0; // Another nice error if no message received in time.
     }
-  }
+
+    work pop (64-macroblock_intra) push (64-macroblock_intra) {
+        if (quantiser_scale_code == 0)
+            println("Error - quantiser_scale_code not allowed to be 0 " + macroblock_intra);
+        for (int i = macroblock_intra; i < 64; i++) {
+            int QF = pop();
+            // (cite 1, P.71)
+            int k = 0;
+            if (macroblock_intra == 1) {
+                k = 0;
+            } else {
+                // TODO - I think I'm interpreting this part of the spec correctly, check though.
+                if (QF > 0) {
+                    k = 1;
+                } else if (QF < 0) {
+                    k = -1;
+                } else {
+                    k = 0;
+                }          
+            }
+            int W = 0;
+            if (macroblock_intra == 1) {
+                W = intra_quantiser_matrix[i];
+            } else {
+                W = non_intra_quantiser_matrix[i];
+            }
+            int F = (2 * QF + k) * W * 
+                quantiser_scale[q_scale_type][quantiser_scale_code] / 32;
+            push(F);
+        }
+    }
 
 } 
 
@@ -1394,107 +1435,107 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
  * @internal
  */
 int->int filter MismatchControl() {
-  // (cite 1, P.71)
-  work pop 64 push 64 {
-    int sum, val;
-    sum = 0;
-    for (int i = 0; i < 63; i++) {
-      val = pop();
-      sum += val;
-      push(val);
+    // (cite 1, P.71)
+    work pop 64 push 64 {
+        int sum, val;
+        sum = 0;
+        for (int i = 0; i < 63; i++) {
+            val = pop();
+            sum += val;
+            push(val);
+        }
+        val = pop();
+        sum += val;
+        if ((sum & 0x1) == 0x1) {
+            push(val);
+        } else {
+            if ((val * 0x1) == 0x1) {
+                push(val-1);
+            } else {
+                push(val+1);
+            }
+        }
     }
-    val = pop();
-    sum += val;
-    if ((sum & 0x1) == 0x1) {
-      push(val);
-    } else {
-      if ((val * 0x1) == 0x1) {
-        push(val-1);
-      } else {
-        push(val+1);
-      }
-    }
-  }
 }
 
 /**
  * @internal
  */
 int->int filter MotionVectorDecode() {
-  // Note - at first glance, this filter looks like it OUGHT to handle. only a single motion vector instead
-  // of all 8, and then it would be wrapped inside an 8 way splitjoin. This is only because of currently
-  // existing limitations in this code, however. More general MPEG-2 bitstreams allow for concealment
-  // motion vectors (to help in the case of errors introduced during transmission of the bitstream), and
-  // when concealment motion vectors are introduced, then dependencies are introduced between the 
-  // vectors. These dependencies will make it hard to use an 8-way splitjoin approach without a 
-  // message passing scheme that allows for across splitjoin messaging. 
+    // Note - at first glance, this filter looks like it OUGHT to handle. only a single motion vector instead
+    // of all 8, and then it would be wrapped inside an 8 way splitjoin. This is only because of currently
+    // existing limitations in this code, however. More general MPEG-2 bitstreams allow for concealment
+    // motion vectors (to help in the case of errors introduced during transmission of the bitstream), and
+    // when concealment motion vectors are introduced, then dependencies are introduced between the 
+    // vectors. These dependencies will make it hard to use an 8-way splitjoin approach without a 
+    // message passing scheme that allows for across splitjoin messaging. 
 
-  // Section 7.6.3.1 covers this. (cite 1, P.77)
-  int[2][2][2] PMV;
+    // Section 7.6.3.1 covers this. (cite 1, P.77)
+    int[2][2][2] PMV;
 
-  int mv_format; // HACKED TODO - MESSAGING
-  int picture_structure; // HACKED TODO - MESSAGING
+    int mv_format; // HACKED TODO - MESSAGING
+    int picture_structure; // HACKED TODO - MESSAGING
 
-  init {
-    mv_format = 1; // HACKD TODO MESSAGING
-    picture_structure = 1; // HACKED TODO - MESSAGING
-  }
+    init {
+        mv_format = 1; // HACKD TODO MESSAGING
+        picture_structure = 1; // HACKED TODO - MESSAGING
+    }
 
-  work pop 16 push 8 {
-    int[2][2][2] motion_code;
-    for (int r = 0; r < 2; r++)
-      for (int s = 0; s < 2; s++) 
-        for (int t = 0; t < 2; t++) {
-          motion_code[r][s][t] = pop();
-        }
-    int[2][2][2] motion_residual;
-    for (int r = 0; r < 2; r++)
-      for (int s = 0; s < 2; s++) 
-        for (int t = 0; t < 2; t++) {
-          motion_residual[r][s][t] = pop();
-        }
-    int[2][2][2] vectorp;
-    for (int r = 0; r < 1; r++) {
-    // NOTE TODO - Hacked right now, don't know when we need the second motion vector.
-      for (int s = 0; s < 2; s++) {
-        for (int t = 0; t < 2; t++) {
-          int r_size = 14;
-          int f = 1 << r_size;
-          int high = (16*f)-1;
-          int low = ((-16)*f);
-          int range = (32*f);
-          int delta;
-          if ((f == 1) || (motion_code[r][s][t] == 0)) {
-            delta = motion_code[r][s][t];
-          } else {
-            delta = ((int) (abs(motion_code[r][s][t])-1)*f) + 
-                    motion_residual[r][s][t]+1;
-            if (motion_code[r][s][t]<0)
-              delta = -delta;
-          }
-          int prediction = PMV[r][s][t];
-          if ((mv_format == 0) && (t == 1) && (picture_structure == 3))
-            println("Error - Program Limitation: May not be correct in decoding motion vectors");
-          vectorp[r][s][t] = prediction + delta;
-          if (vectorp[r][s][t] < low)
-            vectorp[r][s][t] = vectorp[r][s][t] + range;
-          if (vectorp[r][s][t] > high)
-            vectorp[r][s][t] = vectorp[r][s][t] - range;
-          if ((mv_format == 0) && (t == 1) && (picture_structure == 3))
-            println("Error - Program Limitation: May not be correct in decoding motion vectors");
-          else 
-            PMV[r][s][t] = vectorp[r][s][t];
-          // TODO handle updating missed motion_vectors
-          // section 7.6.3.3 
-        }
-      }
-    } 
-    for (int r = 0; r < 2; r++)
-      for (int s = 0; s < 2; s++) 
-        for (int t = 0; t < 2; t++) {
-          push(vectorp[r][s][t]);
-        }
-  }
+    work pop 16 push 8 {
+        int[2][2][2] motion_code;
+        for (int r = 0; r < 2; r++)
+            for (int s = 0; s < 2; s++) 
+                for (int t = 0; t < 2; t++) {
+                    motion_code[r][s][t] = pop();
+                }
+        int[2][2][2] motion_residual;
+        for (int r = 0; r < 2; r++)
+            for (int s = 0; s < 2; s++) 
+                for (int t = 0; t < 2; t++) {
+                    motion_residual[r][s][t] = pop();
+                }
+        int[2][2][2] vectorp;
+        for (int r = 0; r < 1; r++) {
+            // NOTE TODO - Hacked right now, don't know when we need the second motion vector.
+            for (int s = 0; s < 2; s++) {
+                for (int t = 0; t < 2; t++) {
+                    int r_size = 14;
+                    int f = 1 << r_size;
+                    int high = (16*f)-1;
+                    int low = ((-16)*f);
+                    int range = (32*f);
+                    int delta;
+                    if ((f == 1) || (motion_code[r][s][t] == 0)) {
+                        delta = motion_code[r][s][t];
+                    } else {
+                        delta = ((int) (abs(motion_code[r][s][t])-1)*f) + 
+                            motion_residual[r][s][t]+1;
+                        if (motion_code[r][s][t]<0)
+                            delta = -delta;
+                    }
+                    int prediction = PMV[r][s][t];
+                    if ((mv_format == 0) && (t == 1) && (picture_structure == 3))
+                        println("Error - Program Limitation: May not be correct in decoding motion vectors");
+                    vectorp[r][s][t] = prediction + delta;
+                    if (vectorp[r][s][t] < low)
+                        vectorp[r][s][t] = vectorp[r][s][t] + range;
+                    if (vectorp[r][s][t] > high)
+                        vectorp[r][s][t] = vectorp[r][s][t] - range;
+                    if ((mv_format == 0) && (t == 1) && (picture_structure == 3))
+                        println("Error - Program Limitation: May not be correct in decoding motion vectors");
+                    else 
+                        PMV[r][s][t] = vectorp[r][s][t];
+                    // TODO handle updating missed motion_vectors
+                    // section 7.6.3.3 
+                }
+            }
+        } 
+        for (int r = 0; r < 2; r++)
+            for (int s = 0; s < 2; s++) 
+                for (int t = 0; t < 2; t++) {
+                    push(vectorp[r][s][t]);
+                }
+    }
   
 }
 
@@ -1502,11 +1543,10 @@ int->int filter MotionVectorDecode() {
  * @internal
  */
 int->int pipeline LuminanceChannelProcessing(int width, 
-                                                int height,
-                                                
-                                                int the_chroma_format) {
-  add MacroBlockDescrambler(width, 64+11, 2);
-  add DescrambleAndMotionCompensate(width, height, 1, 1, 1, the_chroma_format);
+                                             int height,
+                                             int the_chroma_format) {
+    add MacroBlockDescrambler(width, 64+11, 2);
+    add DescrambleAndMotionCompensate(width, height, 1, 1, 1, the_chroma_format);
 }
 
 /**
@@ -1514,77 +1554,75 @@ int->int pipeline LuminanceChannelProcessing(int width,
  */
 int->int pipeline ChrominanceChannelProcessing(int width, 
                                                int height,
-                                               
                                                int the_chroma_format) {
-  // Assumes 4:2:0 to 4:4:4 or 4:2:2 to 4:4:4
-  // Adding 4:4:4 support requires some additional block reordering.
-  if (the_chroma_format == 2) {
-    add MacroBlockDescrambler(width/2, 64+11, 1);
-  }
-  int vertical_upsample_factor;
-  if (the_chroma_format == 1) {
-    vertical_upsample_factor = 2;
-  } else {
-    vertical_upsample_factor = 1;
-  }
-  add DescrambleAndMotionCompensate(width, height, vertical_upsample_factor, 2, 0, the_chroma_format);
-  if (the_chroma_format == 1) {
-    add ChannelUpsample_Vert_and_Horz(width/2, height/2);
-  } else {
-    add ChannelUpsample_Horizontal(width/2, height);
-  }
+    // Assumes 4:2:0 to 4:4:4 or 4:2:2 to 4:4:4
+    // Adding 4:4:4 support requires some additional block reordering.
+    if (the_chroma_format == 2) {
+        add MacroBlockDescrambler(width/2, 64+11, 1);
+    }
+    int vertical_upsample_factor;
+    if (the_chroma_format == 1) {
+        vertical_upsample_factor = 2;
+    } else {
+        vertical_upsample_factor = 1;
+    }
+    add DescrambleAndMotionCompensate(width, height, vertical_upsample_factor, 2, 0, the_chroma_format);
+    if (the_chroma_format == 1) {
+        add ChannelUpsample_Vert_and_Horz(width/2, height/2);
+    } else {
+        add ChannelUpsample_Horizontal(width/2, height);
+    }
 }
 
 /**
  * @internal
  */
 int->int splitjoin MacroBlockDescrambler(int width, int block_data_size, int horiz_blockwidth) {
-  split roundrobin(block_data_size*horiz_blockwidth);
-  for (int i = 0; i < 2; i++) {
-    add Identity<int>;
-  }
-  join roundrobin((width/8)*block_data_size);
+    split roundrobin(block_data_size*horiz_blockwidth);
+    for (int i = 0; i < 2; i++) {
+        add Identity<int>;
+    }
+    join roundrobin((width/8)*block_data_size);
 }
 
 /**
  * @internal
  */
 int->int pipeline DescrambleAndMotionCompensate(int width, 
-                                                  int height, 
-                                                  int vertical_upsample_factor,
-                                                  int horizontal_upsample_factor,
-                                                  
-                                                  int temp,
-                                                  int the_chroma_format) {
-  int datasize = (width/horizontal_upsample_factor)*(height/vertical_upsample_factor);
-  add int->int splitjoin {
-    split roundrobin(64, 8, 1, 1, 1);
-    //add BlockDescrambler(width/horizontal_upsample_factor);
-    add Identity<int>;
-    add int->int splitjoin { // vectorp->vector (cite 1, P.82) 
-      split roundrobin(1, 1); 
-      add DivideBy(horizontal_upsample_factor);
-      add DivideBy(vertical_upsample_factor);
-      join roundrobin(1, 1);
-    }
-    add Identity<int>;
-    add Identity<int>;
-    add Identity<int>;
-//    join roundrobin(datasize, (datasize/64)*8, datasize/64, datasize/64, datasize/64); 
-    join roundrobin(64, 8, 1, 1, 1);
-  }  
-  add MotionPrediction(width/horizontal_upsample_factor, height/vertical_upsample_factor);
+                                                int height, 
+                                                int vertical_upsample_factor,
+                                                int horizontal_upsample_factor,
+                                                int temp,
+                                                int the_chroma_format) {
+    int datasize = (width/horizontal_upsample_factor)*(height/vertical_upsample_factor);
+    add int->int splitjoin {
+        split roundrobin(64, 8, 1, 1, 1);
+        //add BlockDescrambler(width/horizontal_upsample_factor);
+        add Identity<int>;
+        add int->int splitjoin { // vectorp->vector (cite 1, P.82) 
+            split roundrobin(1, 1); 
+            add DivideBy(horizontal_upsample_factor);
+            add DivideBy(vertical_upsample_factor);
+            join roundrobin(1, 1);
+        }
+        add Identity<int>;
+        add Identity<int>;
+        add Identity<int>;
+        //    join roundrobin(datasize, (datasize/64)*8, datasize/64, datasize/64, datasize/64); 
+        join roundrobin(64, 8, 1, 1, 1);
+    }  
+    add MotionPrediction(width/horizontal_upsample_factor, height/vertical_upsample_factor);
 }
 
 /**
  * @internal
  */
 int->int splitjoin BlockDescrambler(int width) {
-  split roundrobin(8);
-  for (int i = 0; i < 8; i++) {
-    add Identity<int>;
-  }
-  join roundrobin(width);
+    split roundrobin(8);
+    for (int i = 0; i < 8; i++) {
+        add Identity<int>;
+    }
+    join roundrobin(width);
 }
 
 /**
@@ -1597,22 +1635,22 @@ int->int splitjoin BlockDescrambler(int width) {
  */
 int->int filter BlockDescramblerFilter1(int width) {
     work push 8*width pop 8*width {
-	for (int i=0; i<64; i+=8) {
-	    for (int j=0; j<width*8; j+=width) {
-		int k = i+j;
-		push(peek(k));
-		push(peek(k+1));
-		push(peek(k+2));
-		push(peek(k+3));
-		push(peek(k+4));
-		push(peek(k+5));
-		push(peek(k+6));
-		push(peek(k+7));
-	    }
-	}
-	for (int i=0; i<8*width; i++) {
-	    pop();
-	}
+        for (int i=0; i<64; i+=8) {
+            for (int j=0; j<width*8; j+=width) {
+                int k = i+j;
+                push(peek(k));
+                push(peek(k+1));
+                push(peek(k+2));
+                push(peek(k+3));
+                push(peek(k+4));
+                push(peek(k+5));
+                push(peek(k+6));
+                push(peek(k+7));
+            }
+        }
+        for (int i=0; i<8*width; i++) {
+            pop();
+        }
     }
 }
 
@@ -1626,23 +1664,23 @@ int->int filter BlockDescramblerFilter1(int width) {
  */
 int->int filter BlockDescramblerFilter2(int width) {
     work push 8*width pop 8*width {
-	int[8*width] buffer;
-	for (int i=0; i<width; i+=8) {
-	    for (int j=0; j<8; j++) {
-		int k = j*width+i;
-		buffer[k] = pop();
-		buffer[k+1] = pop();
-		buffer[k+2] = pop();
-		buffer[k+3] = pop();
-		buffer[k+4] = pop();
-		buffer[k+5] = pop();
-		buffer[k+6] = pop();
-		buffer[k+7] = pop();
-	    }
-	}
-	for (int i=0; i<8*width; i++) {
-	    push(buffer[i]);
-	}
+        int[8*width] buffer;
+        for (int i=0; i<width; i+=8) {
+            for (int j=0; j<8; j++) {
+                int k = j*width+i;
+                buffer[k] = pop();
+                buffer[k+1] = pop();
+                buffer[k+2] = pop();
+                buffer[k+3] = pop();
+                buffer[k+4] = pop();
+                buffer[k+5] = pop();
+                buffer[k+6] = pop();
+                buffer[k+7] = pop();
+            }
+        }
+        for (int i=0; i<8*width; i++) {
+            push(buffer[i]);
+        }
     }
 }
 
@@ -1650,253 +1688,264 @@ int->int filter BlockDescramblerFilter2(int width) {
  * @internal
  */
 int->int filter MotionPrediction(int width, int height) {
-  int count;
+    int count;
 
-  int lastSeenFrame;
+    int lastSeenFrame;
 
-  int datarate = (width*height/64*(64+8+1+1+1));
-  int pushrate = width*height;
+    int datarate = (width*height/64*(64+8+1+1+1));
+    int pushrate = width*height;
   
-  int[width][height] prev_picture;
-  int[width][height] next_picture;
+    int[width][height] prev_picture;
+    int[width][height] next_picture;
 
-  int next_picture_type;
+    int next_picture_type;
 
-  init {
-    next_picture_type = 1;
-    count = 0;
-  }
-
-  work pop datarate push pushrate {
-    if (next_picture_type == -1) {
-      println("Error - Should have received a picture type message before motion prediction can process");
-    } 
-    if (next_picture_type == 1 || next_picture_type == 2) {
-      prev_picture = next_picture;
-      if (next_picture_type == 1) {
-        readIPicture();
-      } else {
-        readPPicture();
-      }
-    } else {
-      readBPicture();
-    }
-    count++;
-  }
-
-  phase readIPicture pop datarate push pushrate {
-    lastSeenFrame = 1;
-    int[width][height] temp_picture;
- 
-    for (int blocky = 0; blocky < (height/8); blocky++) {
-      for (int blockx = 0; blockx < (width/8); blockx++) {
-        for (int y = 0; y < 8; y++) {
-          for (int x = 0; x < 8; x++) {
-            temp_picture[x+blockx*8][y+blocky*8] = pop();
-          }
-        }
-        for (int i = 0; i < 8; i++) {
-          pop();
-        }
-        pop();
-        pop();
-        pop();
-      }
+    init {
+        next_picture_type = 1;
+        count = 0;
     }
 
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        next_picture[x][y] = temp_picture[x][y];
-        push(temp_picture[x][y]);
-      }
-    }
-  }
-
-  phase readPPicture pop datarate push pushrate {
-    lastSeenFrame = 2;
-    int[width][height] temp_picture;
-    int[width/8][height/8][2][2][2] vector;
-    int[width/8][height/8] macroblock_intra;
-
-    for (int blocky = 0; blocky < height/8; blocky++) {
-      for (int blockx = 0; blockx < width/8; blockx++) {
-        for (int y = 0; y < 8; y++) {
-          for (int x = 0; x < 8; x++) {
-            temp_picture[x+blockx*8][y+blocky*8] = pop();
-          }
-        }
-        for (int r = 0; r < 2; r++) {
-          for (int s = 0; s < 2; s++) {
-            for (int t = 0; t < 2; t++) {
-              vector[blockx][blocky][r][s][t] = pop();
-            }
-          }
-        }
-        macroblock_intra[blockx][blocky] = pop();
-        pop();
-        pop();
-      }
-    }
-
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        if (macroblock_intra[x/8][y/8] == 0) {
-          int sample_data;
-          sample_data = predictMotionPixel(prev_picture, vector, 0, x, y);
-          next_picture[x][y] = temp_picture[x][y] + sample_data;
-        } else {
-          next_picture[x][y] = temp_picture[x][y];
-        }
-        push(next_picture[x][y]);
-        if (next_picture[x][y] > 127) {
-          next_picture[x][y] = 127;
-        } else if (next_picture[x][y] < -128) {
-          next_picture[x][y] = -128;
-        }
-      }
-    }
-  }
-
-  phase readBPicture pop datarate push pushrate {
-    lastSeenFrame = 3;
-    int[width][height] temp_picture;
-    int[width/8][height/8][2][2][2] vector;
-    int[width/8][height/8] macroblock_intra;
-    int[width/8][height/8] macroblock_motion_forward;
-    int[width/8][height/8] macroblock_motion_backward;
-
-    for (int blocky = 0; blocky < height/8; blocky++) {
-      for (int blockx = 0; blockx < width/8; blockx++) {
-        for (int y = 0; y < 8; y++) {
-          for (int x = 0; x < 8; x++) {
-            temp_picture[x+blockx*8][y+blocky*8] = pop();
-          }
-        }
-        for (int r = 0; r < 2; r++) {
-          for (int s = 0; s < 2; s++) {
-            for (int t = 0; t < 2; t++) {
-              vector[blockx][blocky][r][s][t] = pop();
-            }
-          }
-        }
-        macroblock_intra[blockx][blocky] = pop();
-        macroblock_motion_forward[blockx][blocky] = pop();
-        macroblock_motion_backward[blockx][blocky] = pop();
-      }
-    }
-
-    int[width][height] permsample;
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        int pushval;
-        if (macroblock_intra[x/8][y/8] == 0) {
-          int[2] sample_data;
-          if (macroblock_motion_forward[x/8][y/8] == 1) {
-            sample_data[0] = predictMotionPixel(prev_picture, vector, 0, x, y);
-          }
-          if (macroblock_motion_backward[x/8][y/8] == 1) {
-            sample_data[1] = predictMotionPixel(next_picture, vector, 1, x, y);
-          }
-          if (macroblock_motion_forward[x/8][y/8] == 1) {
-            if (macroblock_motion_backward[x/8][y/8] == 1) {
-                permsample[x][y] = (1+sample_data[0]+sample_data[1]+256)/2-128;
+    work pop datarate push pushrate {
+        if (next_picture_type == -1) {
+            println("Error - Should have received a picture type message before motion prediction can process");
+        } 
+        if (next_picture_type == 1 || next_picture_type == 2) {
+            prev_picture = next_picture;
+            if (next_picture_type == 1) {
+                readIPicture();
             } else {
-              permsample[x][y] = sample_data[0];  
+                readPPicture();
             }
-          } else {
-            permsample[x][y] = sample_data[1];
-          }
         } else {
-          permsample[x][y] = 0;
+            readBPicture();
         }
-        pushval = temp_picture[x][y] + permsample[x][y];
-        push(pushval);
-      }
+        count++;
     }
-  }
 
-  int predictPixelHorizHalfPelVertHalfPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
-    int sample_data;
-    sample_data = (predict_pic[(horiz_vector-1)/2][(vert_vector-1)/2] +
-                   predict_pic[(horiz_vector-1)/2][(vert_vector+1)/2] +
-                   predict_pic[(horiz_vector+1)/2][(vert_vector-1)/2] +
-                   predict_pic[(horiz_vector+1)/2][(vert_vector+1)/2]);
-    sample_data += 128*4;
-    if (sample_data > 0) {
-      sample_data += 2;
-    } else if (sample_data < 0) {
-      println("Error - Shouldn't be less than zero " + sample_data);
+    phase readIPicture pop datarate push pushrate {
+        lastSeenFrame = 1;
+        int[width][height] temp_picture;
+ 
+        for (int blocky = 0; blocky < (height/8); blocky++) {
+            for (int blockx = 0; blockx < (width/8); blockx++) {
+                for (int y = 0; y < 8; y++) {
+                    for (int x = 0; x < 8; x++) {
+                        temp_picture[x+blockx*8][y+blocky*8] = pop();
+                    }
+                }
+                for (int i = 0; i < 8; i++) {
+                    pop();
+                }
+                pop();
+                pop();
+                pop();
+            }
+        }
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                next_picture[x][y] = temp_picture[x][y];
+                push(temp_picture[x][y]);
+            }
+        }
     }
-    sample_data = sample_data / 4;
-    sample_data -= 128;
-    return sample_data;
-  }
 
-  int predictPixelHorizHalfPelVertFullPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
-    int sample_data;
-    sample_data = (predict_pic[(horiz_vector-1)/2][vert_vector/2] +
-                   predict_pic[(horiz_vector+1)/2][vert_vector/2]);
-    sample_data += 128*2;
-    if (sample_data > 0) {
-      sample_data += 1;
-    } else if (sample_data < 0) { 
-      println("Error - Shouldn't be less than zero " + sample_data);
+    phase readPPicture pop datarate push pushrate {
+        lastSeenFrame = 2;
+        int[width][height] temp_picture;
+        int[width/8][height/8][2][2][2] vector;
+        int[width/8][height/8] macroblock_intra;
+
+        for (int blocky = 0; blocky < height/8; blocky++) {
+            for (int blockx = 0; blockx < width/8; blockx++) {
+                for (int y = 0; y < 8; y++) {
+                    for (int x = 0; x < 8; x++) {
+                        temp_picture[x+blockx*8][y+blocky*8] = pop();
+                    }
+                }
+                for (int r = 0; r < 2; r++) {
+                    for (int s = 0; s < 2; s++) {
+                        for (int t = 0; t < 2; t++) {
+                            vector[blockx][blocky][r][s][t] = pop();
+                        }
+                    }
+                }
+                macroblock_intra[blockx][blocky] = pop();
+                pop();
+                pop();
+            }
+        }
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                if (macroblock_intra[x/8][y/8] == 0) {
+                    int sample_data;
+                    sample_data = predictMotionPixel(prev_picture, vector, 0, x, y);
+                    next_picture[x][y] = temp_picture[x][y] + sample_data;
+                } else {
+                    next_picture[x][y] = temp_picture[x][y];
+                }
+                push(next_picture[x][y]);
+                if (next_picture[x][y] > 127) {
+                    next_picture[x][y] = 127;
+                } else if (next_picture[x][y] < -128) {
+                    next_picture[x][y] = -128;
+                }
+            }
+        }
     }
-    sample_data = sample_data / 2;
-    sample_data -= 128;
-    return sample_data;
-  }
 
-  int predictPixelHorizFullPelVertHalfPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
-    int sample_data;
-    sample_data = (predict_pic[horiz_vector/2][(vert_vector-1)/2] +
-                   predict_pic[horiz_vector/2][(vert_vector+1)/2]);
-    sample_data += 128*2;
-    if (sample_data > 0) {
-      sample_data += 1;
-    } else if (sample_data < 0) {
-      println("Error - Shouldn't be less than zero " + sample_data);
+    phase readBPicture pop datarate push pushrate {
+        lastSeenFrame = 3;
+        int[width][height] temp_picture;
+        int[width/8][height/8][2][2][2] vector;
+        int[width/8][height/8] macroblock_intra;
+        int[width/8][height/8] macroblock_motion_forward;
+        int[width/8][height/8] macroblock_motion_backward;
+
+        for (int blocky = 0; blocky < height/8; blocky++) {
+            for (int blockx = 0; blockx < width/8; blockx++) {
+                for (int y = 0; y < 8; y++) {
+                    for (int x = 0; x < 8; x++) {
+                        temp_picture[x+blockx*8][y+blocky*8] = pop();
+                    }
+                }
+                for (int r = 0; r < 2; r++) {
+                    for (int s = 0; s < 2; s++) {
+                        for (int t = 0; t < 2; t++) {
+                            vector[blockx][blocky][r][s][t] = pop();
+                        }
+                    }
+                }
+                macroblock_intra[blockx][blocky] = pop();
+                macroblock_motion_forward[blockx][blocky] = pop();
+                macroblock_motion_backward[blockx][blocky] = pop();
+            }
+        }
+
+        int[width][height] permsample;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int pushval;
+                if (macroblock_intra[x/8][y/8] == 0) {
+                    int[2] sample_data;
+                    if (macroblock_motion_forward[x/8][y/8] == 1) {
+                        sample_data[0] = predictMotionPixel(prev_picture, vector, 0, x, y);
+                    }
+                    if (macroblock_motion_backward[x/8][y/8] == 1) {
+                        sample_data[1] = predictMotionPixel(next_picture, vector, 1, x, y);
+                    }
+                    if (macroblock_motion_forward[x/8][y/8] == 1) {
+                        if (macroblock_motion_backward[x/8][y/8] == 1) {
+                            permsample[x][y] = (1+sample_data[0]+sample_data[1]+256)/2-128;
+                        } else {
+                            permsample[x][y] = sample_data[0];  
+                        }
+                    } else {
+                        permsample[x][y] = sample_data[1];
+                    }
+                } else {
+                    permsample[x][y] = 0;
+                }
+                pushval = temp_picture[x][y] + permsample[x][y];
+                push(pushval);
+            }
+        }
     }
-    sample_data = sample_data / 2;
-    sample_data -= 128;
-    return sample_data;
-  }
 
-  int predictPixelHorizFullPelVertFullPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
-    int sample_data;
-    sample_data = predict_pic[horiz_vector/2][vert_vector/2];
-    return sample_data;
-  }
-
-  int predictMotionPixel(int[width][height] predict_pic, int[width/8][height/8][2][2][2] vector, 
-                         int whichvect, int x, int y) {
-  // whichvect = 0 for forward motion prediction
-  // whichvect = 1 for backward motion prediction
-    int horiz_vector = vector[x/8][y/8][0][whichvect][0] + (x*2);
-    int vert_vector = vector[x/8][y/8][0][whichvect][1] + (y*2);
-    int sample_data;
-    if (vert_vector < 0 || vert_vector >= (height*2-1) || 
-        horiz_vector < 0 || horiz_vector >= (width*2-1)) {
-       sample_data = 0;
-    } else if ((horiz_vector & 0x1) == 1) {
-      if ((vert_vector & 0x1) == 1) {
-        sample_data = predictPixelHorizHalfPelVertHalfPel(predict_pic, horiz_vector, vert_vector);
-      } else {
-        sample_data = predictPixelHorizHalfPelVertFullPel(predict_pic, horiz_vector, vert_vector);
-      }
-    } else {
-      if ((vert_vector & 0x1) == 1) {
-        sample_data = predictPixelHorizFullPelVertHalfPel(predict_pic, horiz_vector, vert_vector);
-      } else {
-        sample_data = predictPixelHorizFullPelVertFullPel(predict_pic, horiz_vector, vert_vector);
-      }
+    int predictPixelHorizHalfPelVertHalfPel(int[width][height] predict_pic, 
+                                            int horiz_vector, 
+                                            int vert_vector) {
+        int sample_data;
+        sample_data = (predict_pic[(horiz_vector-1)/2][(vert_vector-1)/2] +
+                       predict_pic[(horiz_vector-1)/2][(vert_vector+1)/2] +
+                       predict_pic[(horiz_vector+1)/2][(vert_vector-1)/2] +
+                       predict_pic[(horiz_vector+1)/2][(vert_vector+1)/2]);
+        sample_data += 128*4;
+        if (sample_data > 0) {
+            sample_data += 2;
+        } else if (sample_data < 0) {
+            println("Error - Shouldn't be less than zero " + sample_data);
+        }
+        sample_data = sample_data / 4;
+        sample_data -= 128;
+        return sample_data;
     }
-    if (sample_data > 127)
-      sample_data = 127;
-    else if (sample_data < -128)
-      sample_data = -128;
-    return sample_data;
-  }
+
+    int predictPixelHorizHalfPelVertFullPel(int[width][height] predict_pic, 
+                                            int horiz_vector, 
+                                            int vert_vector) {
+        int sample_data;
+        sample_data = (predict_pic[(horiz_vector-1)/2][vert_vector/2] +
+                       predict_pic[(horiz_vector+1)/2][vert_vector/2]);
+        sample_data += 128*2;
+        if (sample_data > 0) {
+            sample_data += 1;
+        } else if (sample_data < 0) { 
+            println("Error - Shouldn't be less than zero " + sample_data);
+        }
+        sample_data = sample_data / 2;
+        sample_data -= 128;
+        return sample_data;
+    }
+
+    int predictPixelHorizFullPelVertHalfPel(int[width][height] predict_pic, 
+                                            int horiz_vector, 
+                                            int vert_vector) {
+        int sample_data;
+        sample_data = (predict_pic[horiz_vector/2][(vert_vector-1)/2] +
+                       predict_pic[horiz_vector/2][(vert_vector+1)/2]);
+        sample_data += 128*2;
+        if (sample_data > 0) {
+            sample_data += 1;
+        } else if (sample_data < 0) {
+            println("Error - Shouldn't be less than zero " + sample_data);
+        }
+        sample_data = sample_data / 2;
+        sample_data -= 128;
+        return sample_data;
+    }
+
+    int predictPixelHorizFullPelVertFullPel(int[width][height] predict_pic, 
+                                            int horiz_vector, 
+                                            int vert_vector) {
+        int sample_data;
+        sample_data = predict_pic[horiz_vector/2][vert_vector/2];
+        return sample_data;
+    }
+
+    int predictMotionPixel(int[width][height] predict_pic, 
+                           int[width/8][height/8][2][2][2] vector, 
+                           int whichvect, 
+                           int x, 
+                           int y) {
+        // whichvect = 0 for forward motion prediction
+        // whichvect = 1 for backward motion prediction
+        int horiz_vector = vector[x/8][y/8][0][whichvect][0] + (x*2);
+        int vert_vector = vector[x/8][y/8][0][whichvect][1] + (y*2);
+        int sample_data;
+        if (vert_vector < 0 || vert_vector >= (height*2-1) || 
+            horiz_vector < 0 || horiz_vector >= (width*2-1)) {
+            sample_data = 0;
+        } else if ((horiz_vector & 0x1) == 1) {
+            if ((vert_vector & 0x1) == 1) {
+                sample_data = predictPixelHorizHalfPelVertHalfPel(predict_pic, horiz_vector, vert_vector);
+            } else {
+                sample_data = predictPixelHorizHalfPelVertFullPel(predict_pic, horiz_vector, vert_vector);
+            }
+        } else {
+            if ((vert_vector & 0x1) == 1) {
+                sample_data = predictPixelHorizFullPelVertHalfPel(predict_pic, horiz_vector, vert_vector);
+            } else {
+                sample_data = predictPixelHorizFullPelVertFullPel(predict_pic, horiz_vector, vert_vector);
+            }
+        }
+        if (sample_data > 127)
+            sample_data = 127;
+        else if (sample_data < -128)
+            sample_data = -128;
+        return sample_data;
+    }
 
 }
 
@@ -1908,76 +1957,78 @@ int->int filter MotionPrediction(int width, int height) {
 /**
  * @internal
  */
-int->int pipeline ChannelUpsample_Vert_and_Horz(int sourcewidth, int sourceheight) {
-  add ChannelUpsample_Vertical(sourcewidth, sourceheight);
-  add ChannelUpsample_Horizontal(sourcewidth, sourceheight);
+int->int pipeline ChannelUpsample_Vert_and_Horz(int sourcewidth, 
+                                                int sourceheight) {
+    add ChannelUpsample_Vertical(sourcewidth, sourceheight);
+    add ChannelUpsample_Horizontal(sourcewidth, sourceheight);
 }
 
-int->int splitjoin ChannelUpsample_Vertical(int sourcewidth, int sourceheight) {
-  split roundrobin(1);
-  for (int i = 0; i < sourcewidth; i++) {
-    add ChannelUpsample_1D(sourceheight, 0.75, 0.25);
-  }
-  join roundrobin(1);
+int->int splitjoin ChannelUpsample_Vertical(int sourcewidth, 
+                                            int sourceheight) {
+    split roundrobin(1);
+    for (int i = 0; i < sourcewidth; i++) {
+        add ChannelUpsample_1D(sourceheight, 0.75, 0.25);
+    }
+    join roundrobin(1);
 }
 
-int->int splitjoin ChannelUpsample_Horizontal(int sourcewidth, int sourceheight) {
-  split roundrobin(sourcewidth);
-  for (int i = 0; i < sourceheight; i++) {
-    add ChannelUpsample_1D(sourcewidth, 0.5, 0.5);
-  }
-  join roundrobin(sourcewidth*2);
+int->int splitjoin ChannelUpsample_Horizontal(int sourcewidth, 
+                                              int sourceheight) {
+    split roundrobin(sourcewidth);
+    for (int i = 0; i < sourceheight; i++) {
+        add ChannelUpsample_1D(sourcewidth, 0.5, 0.5);
+    }
+    join roundrobin(sourcewidth*2);
 }
 
 /**
  * @internal
  */
-int->int filter ChannelUpsample_1D(int sourcelen, float weight1, float weight2) {
-  work pop sourcelen push sourcelen*2 {
-    int val1 = 0, val2 = 0;
-    val1 = pop();
-    push(val1);
-    for (int i = 0; i < sourcelen-1; i++) {
-      val2 = pop();
-      float outval = (weight1*val1+weight2*val2);
-      push((int) round(outval));
-      outval = (weight2*val1+weight1*val2);
-      push((int) round(outval));
-      val1 = val2;
-    }
-    push(val2);
-  }    
+int->int filter ChannelUpsample_1D(int sourcelen, 
+                                   float weight1, 
+                                   float weight2) {
+    work pop sourcelen push sourcelen*2 {
+        int val1 = 0, val2 = 0;
+        val1 = pop();
+        push(val1);
+        for (int i = 0; i < sourcelen-1; i++) {
+            val2 = pop();
+            float outval = (weight1*val1+weight2*val2);
+            push((int) round(outval));
+            outval = (weight2*val1+weight1*val2);
+            push((int) round(outval));
+            val1 = val2;
+        }
+        push(val2);
+    }    
 }
 
 /**
  * @internal
  */
-int->int filter PictureReorder(int width, int height) {
-  int datarate = (width*height*3);
-  int[(width*height*3)] databuffer;
-  int next_picture_type = 1;
+int->int filter PictureReorder(int width, 
+                               int height) {
+    int datarate = (width*height*3);
+    int[(width*height*3)] databuffer;
+    int next_picture_type = 1;
 
-  prework pop datarate {
-    for (int i = 0; i < datarate; i++) {
-      databuffer[i] = pop();
+    prework pop datarate {
+        for (int i = 0; i < datarate; i++) {
+            databuffer[i] = pop();
+        }
     }
-  }
 
-  work pop datarate push datarate {
-    if (next_picture_type == 3) {
-      for (int i = 0; i < datarate; i++) {
-        push(pop());
-      }
-    } else {
-      for (int i = 0; i < datarate; i++) {
-        push(databuffer[i]);
-        databuffer[i] = pop();
-      }
-    }     
-  }
+    work pop datarate push datarate {
+        if (next_picture_type == 3) {
+            for (int i = 0; i < datarate; i++) {
+                push(pop());
+            }
+        } else {
+            for (int i = 0; i < datarate; i++) {
+                push(databuffer[i]);
+                databuffer[i] = pop();
+            }
+        }     
+    }
 
 }
-
-
-
-

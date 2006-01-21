@@ -107,7 +107,7 @@ public class Operator extends DestroyedClass
 	// if we have not pushed or popped anything, throw exception.
 	// Do not count this as an execution.
 	if (currentPopped==0 && currentPushed==0) {
-	    throw new NoPushPopException();
+	    throw new NoPushPopException(this.toString() + " did not push or pop anything.");
 	}
 
 	// for phased filters, executions are incremented at phase boundaries

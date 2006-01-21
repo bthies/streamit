@@ -34,6 +34,13 @@ public abstract class PhasedFilter extends Filter implements Runnable
     public PhasedFilter(int a) { super(a); }
 
     private boolean firstWork = true;
+    /**
+     * A variable to transfer exceptions between threads.  (We have
+     * two threads, and the one that runs the actual work function is
+     * different than the one called by the scheduler.  So we have to
+     * stand on our head to move the exception to the caller).
+     */
+    private RuntimeException pendingException = null;
 
     public void doWork() {
 	synchronized (this) {
@@ -50,15 +57,38 @@ public abstract class PhasedFilter extends Filter implements Runnable
 	    } catch (InterruptedException e) {
 		e.printStackTrace();
 	    }
+	    // if a pending exception was found, raise it in this thread
+	    if (pendingException != null) {
+		// clear the exception
+		RuntimeException e = pendingException;
+		pendingException = null;
+		// throw the exception
+		throw e;
+	    }
 	}
     }
 
     public void run() {
-        while (true) {
-	    prepareToWork();
-	    work();
-	    cleanupWork();
-        }
+	while (true) {
+	    try {
+		prepareToWork();
+		work();
+		cleanupWork();
+	    } catch (NoPushPopException e) {
+		// the exception is caught by the other thread, so
+		// move it through a local variable so the other
+		// thread will see it.
+		pendingException = e;
+		try {
+		    synchronized(this) {
+			notify();
+			wait();
+		    }
+		} catch (InterruptedException ie) {
+		    ie.printStackTrace();
+		}
+	    }
+	}
     }
 
     /**

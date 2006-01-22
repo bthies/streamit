@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.119 2006-01-17 21:17:46 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.120 2006-01-22 06:21:57 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -45,8 +45,8 @@ public class NodesToJava implements FEVisitor
     // Allow tweaks when compiling for --library (from constructor)
     private boolean libraryFormat;
 
-    // Optionally instrument output with profile information
-    private boolean profile;
+    // Optionally instrument output to count arith ops
+    private boolean countops;
 
     // a generator for unique strings (from constructor)
     private TempVarGen varGen;
@@ -55,12 +55,12 @@ public class NodesToJava implements FEVisitor
     //(a.k.a. global) keyword.
     private boolean global;
 
-    public NodesToJava(boolean libraryFormat, boolean profile, TempVarGen varGen)
+    public NodesToJava(boolean libraryFormat, boolean countops, TempVarGen varGen)
     {
         this.ss = null;
         this.indent = "";
         this.libraryFormat = libraryFormat;
-        this.profile = profile;
+        this.countops = countops;
         this.varGen = varGen;
         this.global = false;
     }
@@ -425,7 +425,7 @@ public class NodesToJava implements FEVisitor
 	result += ")";
 
 	// if profiling on, wrap this with instrumentation call
-	if (libraryFormat && profile) {
+	if (libraryFormat && countops) {
 	    return wrapWithProfiling(result, binaryOpToProfilerId(exp.getOp()));
 	}
 
@@ -628,7 +628,7 @@ public class NodesToJava implements FEVisitor
 
 	// if we called a math function and profiling is on, wrap with
 	// call to profiler
-	if (libraryFormat && profile && mathFunction) {
+	if (libraryFormat && countops && mathFunction) {
 	    result = wrapWithProfiling(result, funcToProfilerId(name));
 	}
 
@@ -784,7 +784,7 @@ public class NodesToJava implements FEVisitor
 	    }
 
 	// if profiling on, wrap this with instrumentation call
-	if (libraryFormat && profile) {
+	if (libraryFormat && countops) {
 	    result = wrapWithProfiling(result, unaryOpToProfilerId(exp.getOp()));
 	}
 
@@ -841,19 +841,19 @@ public class NodesToJava implements FEVisitor
         String prefix = null;
 
 	// save profiling
-	boolean oldProfile = profile;
+	boolean oldCountOps = countops;
         if (func.getCls() == Function.FUNC_INIT) {
 	    // parameters should be final
 	    prefix = "final";
 	    // turn profiling off for init function
-	    profile = false;
+	    countops = false;
 	}
         result += doParams(func.getParams(), prefix) + " ";
         result += (String)func.getBody().accept(this);
         result += "\n";
 
 	// restore profiling
-	profile = oldProfile;
+	countops = oldCountOps;
 
         return result;
     }
@@ -1112,7 +1112,7 @@ public class NodesToJava implements FEVisitor
 
 	// if profiling on and we are not just assigning, wrap rhs
 	// with instrumentation call
-	if (libraryFormat && profile && stmt.getOp()!=0) {
+	if (libraryFormat && countops && stmt.getOp()!=0) {
 	    rhs = wrapWithProfiling(rhs, binaryOpToProfilerId(stmt.getOp()));
 	}
 
@@ -1639,7 +1639,7 @@ public class NodesToJava implements FEVisitor
 		if (isTopLevelSpec(spec) && libraryFormat) {
 			result += indent + "public static void main(String[] args) {\n";
 			addIndent();
-			if (profile) {
+			if (countops) {
 			    // tell the profiler how many operations ID's there are
 			    result += indent + "Profiler.setNumIds(" + MAX_PROFILE_ID + ");\n";
 			}
@@ -1648,7 +1648,7 @@ public class NodesToJava implements FEVisitor
 			result += indent + "program.run(args);\n";
 			if (libraryFormat) {
 			    result += indent + "FileWriter.closeAll();\n";
-			    if (profile) {
+			    if (countops) {
 				result += indent + "Profiler.summarize();\n";
 			    }
 			    // explicitly exit to terminate possible phased filter threads

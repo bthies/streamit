@@ -227,14 +227,14 @@ public class Profiler {
      */
     public static void summarize() {
 	try {
-	    PrintStream out = new PrintStream(new FileOutputStream("profile.java.log"));
+	    PrintStream out = new PrintStream(new FileOutputStream("countops.java.log"));
 	    summarize(out);
 	    out.close();
 	} catch (IOException e) {
 	    e.printStackTrace();
 	}
 
-	System.out.println("Profile information written to profile.java.log.");
+	System.out.println("Operation counts written to countops.java.log.");
     }
 
     /**

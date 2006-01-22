@@ -12,77 +12,77 @@ public class StreaMITMain {
     
     //Only use from backends after done with params
     public static void clearParams() {
-	params[0]=null;
-	params[1]=null;
-	params[2]=null;
-	params[3]=null;
-	params[4]=null;
-	params[5]=null;
-	params=null;
-	paramTypes[0]=null;
-	paramTypes[1]=null;
-	paramTypes[2]=null;
-	paramTypes[3]=null;	
-	paramTypes[4]=null;	
-	paramTypes[5]=null;	
+        params[0]=null;
+        params[1]=null;
+        params[2]=null;
+        params[3]=null;
+        params[4]=null;
+        params[5]=null;
+        params=null;
+        paramTypes[0]=null;
+        paramTypes[1]=null;
+        paramTypes[2]=null;
+        paramTypes[3]=null;     
+        paramTypes[4]=null;     
+        paramTypes[5]=null;     
     }
 
     /**
      * Prints out C code for the program being compiled.
      */
     public static void compile(JCompilationUnit[] app) {
-	//using the raw backend to generate uniprocessor code
-	//so set the number of tiles to 1 and 
-	//turn partitioning on...
-	//make sure that cluster option has not been turned on
-	if ((KjcOptions.standalone || KjcOptions.rstream) && KjcOptions.cluster == -1) {
-	    KjcOptions.raw = 1;
-	    KjcOptions.partition_dp = true;
-	}
+        //using the raw backend to generate uniprocessor code
+        //so set the number of tiles to 1 and 
+        //turn partitioning on...
+        //make sure that cluster option has not been turned on
+        if ((KjcOptions.standalone || KjcOptions.rstream) && KjcOptions.cluster == -1) {
+            KjcOptions.raw = 1;
+            KjcOptions.partition_dp = true;
+        }
 
-	if (KjcOptions.malloczeros) 
-	    System.out.println("\n***  --malloczeros enabled, make sure your raw simulator initializes memory with zeros ***\n");
-	
-	if (KjcOptions.altcodegen &&
-	    KjcOptions.standalone)
-	    at.dms.util.Utils.fail("The options altcodegen and standalone are mutually exclusive.");
+        if (KjcOptions.malloczeros) 
+            System.out.println("\n***  --malloczeros enabled, make sure your raw simulator initializes memory with zeros ***\n");
+        
+        if (KjcOptions.altcodegen &&
+            KjcOptions.standalone)
+            at.dms.util.Utils.fail("The options altcodegen and standalone are mutually exclusive.");
 
-	if (KjcOptions.altcodegen &&
-	    KjcOptions.decoupled)
-	    at.dms.util.Utils.fail("The options altcodegen and decoupled are mutually exclusive.");
+        if (KjcOptions.altcodegen &&
+            KjcOptions.decoupled)
+            at.dms.util.Utils.fail("The options altcodegen and decoupled are mutually exclusive.");
 
-	if (KjcOptions.outputs > 0 &&
-	    KjcOptions.numbers > 0)
-	    at.dms.util.Utils.fail("The options outputs and numbers are mutually exclusive.");
-	    
-	if (KjcOptions.magic_net &&
-	    KjcOptions.decoupled)
-	    at.dms.util.Utils.fail("The options magic_net and decoupled are mutually exclusive.");
+        if (KjcOptions.outputs > 0 &&
+            KjcOptions.numbers > 0)
+            at.dms.util.Utils.fail("The options outputs and numbers are mutually exclusive.");
+            
+        if (KjcOptions.magic_net &&
+            KjcOptions.decoupled)
+            at.dms.util.Utils.fail("The options magic_net and decoupled are mutually exclusive.");
 
-	if (KjcOptions.countops && (KjcOptions.cluster>0) && !KjcOptions.standalone) {
-	    at.dms.util.Utils.fail("To use --countops, you must also use --standalone.");
-	}
-	
-	System.err.println("Starting Kopi2SIR..");
+        if (KjcOptions.countops && (KjcOptions.cluster>0) && !KjcOptions.standalone) {
+            at.dms.util.Utils.fail("To use --countops, you must also use --standalone.");
+        }
+        
+        System.err.println("Starting Kopi2SIR..");
 
-	if(!KjcOptions.graph)
-	    System.out.println("/*");
-	Kopi2SIR k2s = new Kopi2SIR(app);
-	SIRStream stream = null;
-	for (int i = 0; i < app.length; i++) {
-	    //System.err.println("Visiting "+i+" of "+(app.length-1));
-	    SIRStream top = (SIRStream)app[i].accept(k2s);
-	    if (top != null) {
-	    	stream = top;
-	    }
-	}
+ //       if(!KjcOptions.graph)
+ //           System.out.println("/*");
+        Kopi2SIR k2s = new Kopi2SIR(app);
+        SIRStream stream = null;
+        for (int i = 0; i < app.length; i++) {
+            //System.err.println("Visiting "+i+" of "+(app.length-1));
+            SIRStream top = (SIRStream)app[i].accept(k2s);
+            if (top != null) {
+                stream = top;
+            }
+        }
 
-	System.err.println("Done Kopi2SIR..");
+        System.err.println("Done Kopi2SIR..");
 
-	SemanticChecker.doCheck(stream);
+        SemanticChecker.doCheck(stream);
 
-        System.out.println("Out of semantic checker.");
-	System.err.println("Done Semantic Check..");
+//        System.err.println("Out of semantic checker.");
+        System.err.println("Done Semantic Check..");
 
         String backendClass = null;
         String backendMethod = "run";
@@ -90,19 +90,19 @@ public class StreaMITMain {
             backendClass = KjcOptions.backend;
         } else if (KjcOptions.graph) {
             backendClass = "streamit.eclipse.grapheditor.graph.GraphEncoder";
-	} else if (KjcOptions.rstream) {
-	    backendClass = "at.dms.kjc.rstream.StrToRStream";
+        } else if (KjcOptions.rstream) {
+            backendClass = "at.dms.kjc.rstream.StrToRStream";
         } else if (KjcOptions.raw != -1) {
-            System.out.println("*/");
+//            System.out.println("*/");
             if (KjcOptions.spacetime) {
                 backendClass = "at.dms.kjc.spacetime.SpaceTimeBackend";
             } else if (KjcOptions.spacedynamic) {
-		backendClass = "at.dms.kjc.spacedynamic.SpaceDynamicBackend";
-	    } else {
+                backendClass = "at.dms.kjc.spacedynamic.SpaceDynamicBackend";
+            } else {
                 backendClass = "at.dms.kjc.raw.RawBackend";
             }
         } else if (KjcOptions.cluster != -1) {
-            System.out.println("*/");
+//            System.out.println("*/");
             backendClass = "at.dms.kjc.cluster.ClusterBackend";
         } else {
             backendClass = "at.dms.kjc.sir.lowering.Flattener";
@@ -119,59 +119,59 @@ public class StreaMITMain {
         params[4] = k2s.getHelpers();
         params[5] = k2s.getGlobal();
 
-	Method theMethod = null;
-	Class theBackend = null;
-	
+        Method theMethod = null;
+        Class theBackend = null;
+        
     try {
         paramTypes[0] = Class.forName("at.dms.kjc.sir.SIRStream");
         paramTypes[5] = Class.forName("at.dms.kjc.sir.SIRGlobal");
         for (int i = 1; i < 5; i++) {
             paramTypes[i] = params[i].getClass(); }
-	} catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
         System.err.println("*** The class " + e.getMessage() +
                            " does not exist.");
-	    return;
+            return;
     }
 
-	try {
+        try {
             theBackend = Class.forName(backendClass);
     } catch (ClassNotFoundException e) {
             System.err.println("*** The class " + e.getMessage() +
                                " does not exist.");
             return;
-    }	    
-	    
-	try {
+    }       
+            
+        try {
             theMethod = theBackend.getMethod(backendMethod, paramTypes);
     } catch (NoSuchMethodException e) {
 
-	    //try the old calling convention
+            //try the old calling convention
 
-	    Object old_params[] = new Object[4];
-	    Class old_paramTypes[] = new Class[4];
-	    for (int i = 0; i < 4; i++) {
-	        old_params[i] = params[i];
-	        old_paramTypes[i] = paramTypes[i];
-	    }
-	    params = old_params;
-	    paramTypes = old_paramTypes;
+            Object old_params[] = new Object[4];
+            Class old_paramTypes[] = new Class[4];
+            for (int i = 0; i < 4; i++) {
+                old_params[i] = params[i];
+                old_paramTypes[i] = paramTypes[i];
+            }
+            params = old_params;
+            paramTypes = old_paramTypes;
 
-	    try {
-	        theMethod = theBackend.getMethod(backendMethod, paramTypes);
-	    } catch (NoSuchMethodException e2) {
-	        System.err.println("*** The backend method " +
-				   backendClass + "." + backendMethod + "()" +
-				   " does not exist.");
-	    }
-	}
+            try {
+                theMethod = theBackend.getMethod(backendMethod, paramTypes);
+            } catch (NoSuchMethodException e2) {
+                System.err.println("*** The backend method " +
+                                   backendClass + "." + backendMethod + "()" +
+                                   " does not exist.");
+            }
+        }
 
-	stream=null;
-	k2s=null;
-	System.gc();
+        stream=null;
+        k2s=null;
+        System.gc();
 
-	try {
+        try {
             theMethod.invoke(null, params);
-	} catch (IllegalAccessException e) {
+        } catch (IllegalAccessException e) {
             System.err.println("*** Not allowed to invoke backend " +
                                backendClass);
             System.exit(1);
@@ -179,13 +179,9 @@ public class StreaMITMain {
             // Loses debugging information on the exception, sigh.
             // We can't blindly rethrow the exception because it might
             // not be a RuntimeException.  I hate Java.  Die as best we can.
-	    e.getTargetException().printStackTrace();
-	    System.exit(1);
+            e.getTargetException().printStackTrace();
+            System.exit(1);
         }
 
     }
 }
-
-
-
-

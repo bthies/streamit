@@ -135,6 +135,8 @@ public class RawBackend {
 	    str = Flattener.doLinearAnalysis(str);
 	    str = Flattener.doStateSpaceAnalysis(str);
 
+	    MarkFilterBoundaries.doit(str);
+
 	    if (KjcOptions.fusion) {
 		System.out.println("Running FuseAll...");
 		str = FuseAll.fuse(str);

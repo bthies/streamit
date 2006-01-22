@@ -147,6 +147,8 @@ public class Flattener {
 
 	str = doStateSpaceAnalysis(str);
 
+	MarkFilterBoundaries.doit(str);
+
 	if (KjcOptions.manual != null) {
 	    System.err.print("Running manual optimizations...");
 	    str = ManualPartition.doit(str);

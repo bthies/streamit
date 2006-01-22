@@ -25,7 +25,7 @@ import at.dms.kjc.raw.*;
  * This class dumps the tile code for each filter into a file based on the tile
  * number assigned.
  */
-public class FlatIRToCluster extends InsertProfiling implements
+public class FlatIRToCluster extends InsertTimers implements
         StreamVisitor, CodeGenerator {
 
     //  override ToC with info that we generate 'bool' for 'boolean', not 'int'
@@ -848,6 +848,16 @@ public class FlatIRToCluster extends InsertProfiling implements
             p.print("}\n");
             p.newLine();
         }
+
+        // +=============================+
+        // | Declare timers |
+        // +=============================+
+
+	// declare profiling timers
+	if (KjcOptions.profile) {
+	    p.println("extern proc_timer timers[];");
+	}
+	p.newLine();
 
         // +=============================+
         // | Method Bodies |

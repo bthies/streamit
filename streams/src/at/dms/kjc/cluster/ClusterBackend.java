@@ -273,6 +273,8 @@ public class ClusterBackend implements FlatVisitor {
 	int implicit_mult =
 	    IncreaseFilterMult.scheduleMultAfterScaling(steady1, steady2);
 
+	MarkFilterBoundaries.doit(str);
+
 	System.out.println("Implicit schedule mult increase due to peek scaling is: "+implicit_mult);
 
 

@@ -153,7 +153,7 @@ class ClusterCodeGenerator {
 	p.println("#include \"fusion.h\"");
 	//p.println("#include \"structs.h\"");
 	p.println("#include \"global.h\"");
-	if (KjcOptions.profile) {
+	if (KjcOptions.countops) {
 	    p.println("#include \"profiler.h\"");
 	}
 	p.println("");

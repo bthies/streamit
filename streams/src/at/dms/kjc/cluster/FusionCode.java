@@ -359,7 +359,7 @@ class FusionCode {
 	p.print("#include <read_setup.h>\n");
 	p.print("#include <timer.h>\n");
 	p.print("#include \"fusion.h\"\n");
-	if (KjcOptions.profile) {
+	if (KjcOptions.countops) {
 	    p.println("#include \"profiler.h\"");
 	}
 	p.newLine();
@@ -368,7 +368,25 @@ class FusionCode {
 	p.print("int __timer_enabled = 0;\n");
 	p.print("int __frequency_of_chkpts;\n");
 	p.print("volatile int __vol;\n");
-	p.print("proc_timer tt;\n");
+	p.print("proc_timer tt(\"total runtime\");\n");
+	p.newLine();
+
+	// declare profiling timers
+	if (KjcOptions.profile) {
+	    String ident = InsertTimers.getIdentifier();
+	    p.println("proc_timer " + ident + "[" + InsertTimers.getNumTimers() + "] = {");
+	    p.indent();
+	    for (int i=0; i<InsertTimers.getNumTimers(); i++) { 
+		String name = InsertTimers.getTimerName(i);
+		p.print("proc_timer(\"" + name + "\")");
+		if (i!=InsertTimers.getNumTimers()-1) { 
+		    p.print(", ");
+		}
+		p.println("// " + ident + "[" + i + "]");
+	    }
+	    p.outdent();
+	    p.println("};");
+	}
 	p.newLine();
 
 	for (int i = 0; i < threadNumber; i++) {
@@ -424,8 +442,8 @@ class FusionCode {
 	p.print("int main(int argc, char **argv) {\n");
 
 	// tell the profiler how many ID's there are
-	if (KjcOptions.profile) {
-	    p.print("  profiler::set_num_ids(" + InsertProfiling.getNumIds() + ");\n");
+	if (KjcOptions.countops) {
+	    p.println("  profiler::set_num_ids(" + InsertCounters.getNumIds() + ");");
 	}
 
 	p.print("  read_setup::read_setup_file();\n");
@@ -721,17 +739,33 @@ class FusionCode {
 	
 	//p.print("  }\n");
 
-	p.print("  tt.stop();\n");
-	p.print("  tt.output(stderr);\n");
+	p.indent();
+
+	p.println("tt.stop();");
+	p.println("tt.output(stderr);");
+
+	// print timer summary
+	p.println();
+	if (KjcOptions.profile) {
+	    String ident = InsertTimers.getIdentifier();
+	    p.println("FILE* timer_output = fopen(\"profile.c.log\", \"w\");");
+	    p.println("for (int i = 0; i<" + InsertTimers.getNumTimers() + "; i++) {"); 
+	    p.println("  " + ident + "[i].output(timer_output);");
+	    p.println("}");
+	    p.println("fclose(timer_output);");
+	    p.println("printf(\"Profiling information written to profile.c.log.\\n\");");
+	}
+	p.println();
 
 	// print profiling summary
-	if (KjcOptions.profile) {
-	    p.print("  profiler::summarize();\n");
+	if (KjcOptions.countops) {
+	    p.println("  profiler::summarize();");
 	}
 
-	p.print("  return 0;\n");
-	p.print("}");
-	p.newLine();
+	p.println("return 0;");
+	p.outdent();
+
+	p.println("}");
 
 	try {
 	    FileWriter fw = new FileWriter("fusion.cpp");

@@ -4,20 +4,21 @@ import at.dms.kjc.*;
 import at.dms.kjc.common.CodegenPrintWriter;
 
 /**
- * This class inserts insrumentation calls for counting the number of
- * operations in the C runtime.  If KjcOptions.profile is false, then
- * this layer of code generation is a no-op.
+ * If KjcOptions.countops is enabled, this class inserts
+ * insrumentation calls for counting the number of operations in the C
+ * runtime.  If KjcOptions.countops is false, then this layer of code
+ * generation is a no-op.
  *
  * Instrumentation calls are primarily to the profiler::register_op
  * function, documented in the cluster library.
  */
-public class InsertProfiling extends at.dms.kjc.common.ToC implements Constants {
+public class InsertCounters extends at.dms.kjc.common.ToC implements Constants {
 
-    public InsertProfiling() {
+    public InsertCounters() {
         super();
     }
 
-    public InsertProfiling(CodegenPrintWriter p) {
+    public InsertCounters(CodegenPrintWriter p) {
         super(p);
     }
 
@@ -93,7 +94,7 @@ public class InsertProfiling extends at.dms.kjc.common.ToC implements Constants 
      * executed.
      */
     protected void beginWrapper(String op) {
-	if (KjcOptions.profile) {
+	if (KjcOptions.countops) {
 	    // generate a unique ID for this arith op
 	    int id = MAX_PROFILE_ID++;
 	    // call to function in Java library (it returns the
@@ -109,7 +110,7 @@ public class InsertProfiling extends at.dms.kjc.common.ToC implements Constants 
      * If profiling is enabled, close an emitted call to the profiler.
      */
     protected void endWrapper() {
-	if (KjcOptions.profile) {
+	if (KjcOptions.countops) {
 	    // just close the function call that was started in
 	    // beginWrapper
 	    p.print(")");

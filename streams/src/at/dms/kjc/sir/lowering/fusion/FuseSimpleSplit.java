@@ -270,6 +270,9 @@ public class FuseSimpleSplit {
         // make list of statements for work function
         LinkedList list = new LinkedList();
 
+	// mark beginning of splitter
+	list.add(MarkFilterBoundaries.makeBeginMarker(split));
+
         // see how many statements we would generate
         int numStatements = 0;
         for (int k=0; k<weights.length; k++) {
@@ -349,6 +352,9 @@ public class FuseSimpleSplit {
 //                                                            new SIRPopExpression(type),
 //                                                            null),
 //                                   sumOfWeights * rep.splitter));
+
+	// mark end of splitter
+	list.add(MarkFilterBoundaries.makeEndMarker(split));
         return new JBlock(null, list, null);
     }
 
@@ -374,6 +380,9 @@ public class FuseSimpleSplit {
         int sumOfWeights = join.getSumOfWeights();
         // make list of statements for work function
         LinkedList list = new LinkedList();
+
+	// mark end of splitter
+	list.add(MarkFilterBoundaries.makeBeginMarker(join));
 
         // see how many statements we would generate
         int numStatements = 0;
@@ -462,6 +471,10 @@ public class FuseSimpleSplit {
 // new SIRPopExpression(type),
 // null),
 // sumOfWeights * rep.joiner));
+
+	// mark end of splitter
+	list.add(MarkFilterBoundaries.makeEndMarker(join));
+
         return new JBlock(null, list, null);
     }
 

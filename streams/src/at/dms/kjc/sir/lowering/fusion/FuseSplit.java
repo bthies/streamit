@@ -796,7 +796,9 @@ public class FuseSplit {
         JBlock newStatements = new JBlock();
 
 	// do peeking/popping
+	newStatements.addStatement(MarkFilterBoundaries.makeBeginMarker(sj.getSplitter()));
 	newStatements.addStatement(doPeeking(sj.getSplitter(), childInfo, rep, rate, sj.getInputType(), true));
+	newStatements.addStatement(MarkFilterBoundaries.makeEndMarker(sj.getSplitter()));
 
 	// do work
 	for (int i=0; i<childInfo.length; i++) {
@@ -840,7 +842,9 @@ public class FuseSplit {
 	FindVarDecls findVarDecls = new FindVarDecls();
 
 	// do peeking/popping
+	newStatements.addStatement(MarkFilterBoundaries.makeBeginMarker(sj.getSplitter()));
 	newStatements.addStatement(doPeeking(sj.getSplitter(), childInfo, rep, rate, sj.getInputType(), false));
+	newStatements.addStatement(MarkFilterBoundaries.makeBeginMarker(sj.getSplitter()));
 
 	// do work
 	for (int i=0; i<childInfo.length; i++) {
@@ -860,7 +864,9 @@ public class FuseSplit {
         }
 
 	// do pushing
+	newStatements.addStatement(MarkFilterBoundaries.makeBeginMarker(sj.getJoiner()));
 	newStatements.addStatement(doPushing(sj.getJoiner(), childInfo, rep, rate, sj.getOutputType()));
+	newStatements.addStatement(MarkFilterBoundaries.makeBeginMarker(sj.getJoiner()));
 
 	//add variable declarations calculated by FindVarDecls
 	if (KjcOptions.rename1) {

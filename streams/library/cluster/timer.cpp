@@ -23,28 +23,19 @@ void timer::output(FILE *f) {
   fprintf(f, "%s\n", get_str());
 }
 
-
-
-
-void proc_timer::start() {
-  times(&t_start);
-}
-
-void proc_timer::stop() {
-  times(&t_end);
+proc_timer::proc_timer(char* _name) {
+  name = _name;
+  user = 0.0;
+  system = 0.0;
 }
 
 void proc_timer::output(FILE *f) {
   int ticks_per_sec = sysconf(_SC_CLK_TCK);
-
-  double user = t_end.tms_utime - t_start.tms_utime;
-  double system = t_end.tms_stime - t_start.tms_stime;
-
+  
   user /= ticks_per_sec;
   system /= ticks_per_sec;
 
-  fprintf(f, "user: %.02f sys: %.02f (%d ticks/sec)\n",
-	 user, system, ticks_per_sec);
-
+  fprintf(f, "%s: user %.02f; sys %.02f (%d ticks/sec)\n",
+	 name, user, system, ticks_per_sec);
 }
 

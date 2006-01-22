@@ -136,7 +136,7 @@ void profiler::set_num_ids(int _num_ids) {
  * Called when the program has finished, to print results, etc.
  */
 void profiler::summarize() {
-  FILE *f = fopen("./profile.c.log", "w");
+  FILE *f = fopen("./countops.c.log", "w");
 
   // total ops 
   int ops_total = float_total + int_total;
@@ -194,5 +194,5 @@ void profiler::summarize() {
 
   fclose(f);
 
-  printf("Profile information written to profile.c.log.\n");
+  printf("Profile information written to countops.c.log.\n");
 }

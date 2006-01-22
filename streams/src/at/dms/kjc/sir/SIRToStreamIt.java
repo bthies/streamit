@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.24 2006-01-10 18:38:26 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.25 2006-01-22 06:21:15 thies Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -2216,6 +2216,14 @@ public class SIRToStreamIt
 //        assert false : "TODO: implement SIR messaging";
     }
 
+    public void visitMarker(SIRMarker self) {
+	if (self instanceof SIRBeginMarker) {
+	    p.println("// mark begin: " + ((SIRBeginMarker)self).getName());
+	}
+	if (self instanceof SIREndMarker) {
+	    p.println("// mark end: " + ((SIRBeginMarker)self).getName());
+	}
+    }
 
     /**
      * Visits a file reader.

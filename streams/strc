@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.67 2006-01-14 03:15:28 thies Exp $
+# $Id: strc,v 1.68 2006-01-22 06:18:14 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -40,7 +40,7 @@ $have_fftw = "1";
 # Enable assertions globally:
 $java = $java . " -ea";
 # Run with profiling (output in java.hprof.txt)
-#$java = $java . " -Xrunhprof:cpu=samples -ea";
+#$java = $java . " -Xrunhprof:cpu=samples,heap=all -ea";
 
 use Getopt::Long;
 Getopt::Long::Configure("bundling", "bundling_override", "no_ignore_case");
@@ -170,6 +170,8 @@ Options available for all backends:
 * --tokopi            Use experimental frontend-to-SIR conversion
 + --sync              Turn on sync removal
   --unroll, -u        Specify loop unrolling limit
++ --countops          Add instrumentation to count arith ops (library or cluster)
++ --profile           Add a timer for each filter body (cluster)
 
 Options specific to Raw backend:
   --partition, -p     Automatically partition stream graph
@@ -209,7 +211,6 @@ Options specific to uniprocessor backend:
                       Automatically selecting targets of linear analyses
 * --atlas             Use ATLAS for generated matrix multiplies
 + --poptopeek         Convert all pop expressions into peeks
-  --profile           Compile with profiling information
 
 Options specific to the RStream backend:
   --doloops           Generate doloops instead of for loops where possible
@@ -250,6 +251,7 @@ sub get_options
 			    "atlas!",
 			    "backend=s",
 			    "clone-with-serialization|clone_with_serialization",
+			    "countops!",
 			    "debug!",
 			    "decoupled",
 			    "dpscaling",
@@ -408,10 +410,12 @@ sub new_to_old
     my $target = change_extension($fns->[0], "str", "java");
     my $libflag = "";
     $libflag = "--library" if $opts{library};
-    my $proflag = "";
-    $proflag = "--profile" if $opts{profile};
+    my $opsflag = "";
+    # only tell the frontend to profile on the library path.
+    # Otherwise, the compiler gets the profile flag.
+    $opsflag = "--countops" if $opts{countops} && $opts{library};
     my $result = call("$java $xmx $server streamit.frontend.ToJava --output $target " .
-		      "$libflag $proflag " . join(' ', @$fns));
+		      "$libflag $opsflag " . join(' ', @$fns));
     return undef if $result != 0;
     return [$target];
   }
@@ -528,7 +532,7 @@ sub c_to_out
 	  $incflags = "-L$sh/library/c";
 	  $libflags = "-I$sh/library/c";
 
-	  if ($opts{profile}) 
+	  if ($opts{profile})
 	  {
 		$gcc  .= " -pg -a";
 		$libs .= " -nodefaultlibs -lstreamit_p";
@@ -563,6 +567,7 @@ sub get_kjc_opts
     $opts{atlas} && ($kjcopts .= " --atlas");
     $opts{backend} && ($kjcopts .= " --backend " . $opts{backend});
     $opts{'clone-with-serialization'} && ($kjcopts .= " --clone_with_serialization");
+    $opts{countops} && ($kjcopts .= " --countops");
     $opts{debug} && ($kjcopts .= " --debug");
     $opts{decoupled} && ($kjcopts .= " --decoupled");
     $opts{dpscaling} && ($kjcopts .= " --dpscaling");
@@ -585,6 +590,7 @@ sub get_kjc_opts
     $opts{numbers} && ($kjcopts .= " --numbers " . $opts{numbers});
     $opts{poptopeek} && ($kjcopts .= " --poptopeek");
     $opts{'print-partitioned-source'} && ($kjcopts .= " --print_partitioned_source");
+    $opts{profile} && ($kjcopts .= " --profile");
     $opts{ptraccess} && ($kjcopts .= " --ptraccess");
     $opts{ratematch} && ($kjcopts .= " --ratematch");
     $opts{rawcol} && ($kjcopts .= " --rawcol ". $opts{rawcol});

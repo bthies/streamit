@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.29 2005-02-17 00:08:28 thies Exp $
+ * $Id: SLIRVisitor.java,v 1.30 2006-01-22 06:20:11 thies Exp $
  */
 
 package at.dms.kjc;
@@ -130,6 +130,12 @@ public interface SLIRVisitor extends KjcVisitor
     void visitRegSenderStatement(SIRRegSenderStatement self,
 				 String portal,
 				 SIRLatency latency);
+
+
+    /**
+     * Visit SIRMarker.
+     */
+    void visitMarker(SIRMarker self);
 
     /**
      * LIR NODES.

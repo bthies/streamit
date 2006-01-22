@@ -59,8 +59,8 @@ public class StreaMITMain {
 	    KjcOptions.decoupled)
 	    at.dms.util.Utils.fail("The options magic_net and decoupled are mutually exclusive.");
 
-	if (KjcOptions.profile && (KjcOptions.cluster>0) && !KjcOptions.standalone) {
-	    at.dms.util.Utils.fail("To use --profile, you must also use --standalone.");
+	if (KjcOptions.countops && (KjcOptions.cluster>0) && !KjcOptions.standalone) {
+	    at.dms.util.Utils.fail("To use --countops, you must also use --standalone.");
 	}
 	
 	System.err.println("Starting Kopi2SIR..");

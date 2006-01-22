@@ -243,6 +243,13 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     }
 
     /**
+     * Visit SIRMarker.
+     */
+    public Object visitMarker(SIRMarker self) {
+	return self;
+    }
+
+    /**
      * LIR NODES.
      */
 

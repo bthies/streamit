@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.17 2005-12-07 01:18:51 dimock Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.18 2006-01-22 06:20:11 thies Exp $
  */
 
 package at.dms.kjc;
@@ -164,6 +164,13 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
 					String portal,
 					SIRLatency latency) {
 	latency.accept(this);
+    }
+
+
+    /**
+     * Visit SIRMarker.
+     */
+    public void visitMarker(SIRMarker self) {
     }
 
     /**

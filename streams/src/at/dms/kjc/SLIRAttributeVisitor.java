@@ -125,6 +125,12 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
 				 String portal,
 				 SIRLatency latency);
 
+
+    /**
+     * Visit SIRMaker.
+     */
+    Object visitMarker(SIRMarker self);
+
     /**
      * LIR NODES.
      */

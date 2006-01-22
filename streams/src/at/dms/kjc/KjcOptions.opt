@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.69 2006-01-17 19:37:03 thies Exp $
+ * $Id: KjcOptions.opt,v 1.70 2006-01-22 06:20:11 thies Exp $
  */
 
 prefix Kjc
@@ -111,10 +111,15 @@ longname		"filter"
 
 // Begin StreamIt Options ----------------------------------------------
 
+longname		"countops"
+	type		boolean
+	default		"false"
+	help		"Output instrumentation hooks for counting each arith op."
+
 longname		"profile"
 	type		boolean
 	default		"false"
-	help		"Output profiling hooks for instrumention each operation."
+	help		"Output timers for timing execution in each filter."
 
 longname		"manual"
 	type		String

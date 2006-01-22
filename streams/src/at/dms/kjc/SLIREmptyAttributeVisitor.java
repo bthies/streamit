@@ -221,6 +221,13 @@ public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor
     }
 
     /**
+     * Visit SIRMarker.
+     */
+    public Object visitMarker(SIRMarker self) {
+	return self;
+    }
+
+    /**
      * LIR NODES.
      */
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.29 2006-01-08 21:16:09 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.30 2006-01-22 06:20:11 thies Exp $
  */
 
 package at.dms.kjc;
@@ -714,7 +714,7 @@ public class JMethodDeclaration extends JMemberDeclaration {
 
 /** Returns a deep clone of this object. */
 public Object deepClone() {
-  at.dms.kjc.JMethodDeclaration other = new at.dms.kjc.JMethodDeclaration(this.ident);
+  at.dms.kjc.JMethodDeclaration other = new at.dms.kjc.JMethodDeclaration();
   at.dms.kjc.AutoCloner.register(this, other);
   deepCloneInto(other);
   return other;

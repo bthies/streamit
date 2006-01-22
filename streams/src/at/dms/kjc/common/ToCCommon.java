@@ -807,6 +807,19 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     	}
     }
 
+
+    /**
+     * Print marker as a comment.
+     */
+    public void visitMarker(SIRMarker self) {
+	if (self instanceof SIRBeginMarker) {
+	    p.println("// mark begin: " + ((SIRBeginMarker)self).getName());
+	}
+	if (self instanceof SIREndMarker) {
+	    p.println("// mark end: " + ((SIREndMarker)self).getName());
+	}
+    }
+
     /**
      * Prints a declaration for the given type with the given
      * identifier.  Prints int x[10][10] for arrays.

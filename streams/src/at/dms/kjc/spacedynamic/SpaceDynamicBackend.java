@@ -162,6 +162,8 @@ public class SpaceDynamicBackend {
 		//ssg.setTopLevelSIR(Flattener.doLinearAnalysis(ssg.getTopLevelSIR()));
 		//ssg.setTopLevelSIR(Flattener.doStateSpaceAnalysis(ssg.getTopLevelSIR()));
 		
+		MarkFilterBoundaries.doit(str);
+
 		if (KjcOptions.fusion) {
 		    System.out.println("Running FuseAll...");
 		    ssg.setTopLevelSIR(FuseAll.fuse(ssg.getTopLevelSIR()));

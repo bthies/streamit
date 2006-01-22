@@ -1651,6 +1651,13 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	Utils.fail("Printing reg. sender statements unimplemented");
     }
 
+    /**
+     * Visits a marker statement.
+     */
+    public void visitMarker(SIRMarker self) {
+	blockStart("SIRMarker");
+	blockEnd();
+    }
 
     /**
      * LIR NODES.

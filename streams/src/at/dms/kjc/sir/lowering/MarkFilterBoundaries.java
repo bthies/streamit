@@ -17,17 +17,43 @@ public class MarkFilterBoundaries extends EmptyStreamVisitor {
     }
 
     /**
+     * Returns name for a given SIROperator.  This name is different
+     * than some other names because it is designed to be useful for
+     * profiling.  Currently we collapse all instances of a given
+     * filter type across the stream graph into a single name.
+     */
+    private static String getName(SIROperator op) {
+	// for example: "class at.dms.kjc.sir.SIRSplitter"
+	String longClass = ""+op.getClass();
+	// for example: "SIRSplitter"
+	String shortClass = longClass.substring(1+longClass.lastIndexOf("."));
+
+	// for example: "DCT__100"
+	String longIdent = op.getIdent();
+	// for example: "DCT"
+	String shortIdent;
+	if (longIdent.indexOf("__") > 0) {
+	    shortIdent = longIdent.substring(0, longIdent.lastIndexOf("__"));
+	}  else {
+	    shortIdent = longIdent;
+	}
+
+	// for example: "SIRFilter DCT"
+	return shortClass + " " + shortIdent;
+    }
+
+    /**
      * Return begin marker for <op>.
      */
     public static SIRBeginMarker makeBeginMarker(SIROperator op) {
-	return new SIRBeginMarker(op.getClass() + " " + op.getIdent());
+	return new SIRBeginMarker(getName(op));
     }
 
     /**
      * Return end marker for <op>.
      */
     public static SIREndMarker makeEndMarker(SIROperator op) {
-	return new SIREndMarker(op.getClass() + " " + op.getIdent());
+	return new SIREndMarker(getName(op));
     }
 
     /* visit a filter */

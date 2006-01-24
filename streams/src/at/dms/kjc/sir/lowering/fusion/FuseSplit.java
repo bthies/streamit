@@ -860,7 +860,7 @@ public class FuseSplit {
 	    // to reps
 	    JStatement loop = Utils.makeForLoop(statements, rep.child[i]);
 	    // add the loop to the new work function
-            newStatements.addStatement(loop);
+            newStatements.addStatement(Utils.peelMarkers(loop));
         }
 
 	// do pushing

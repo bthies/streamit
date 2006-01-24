@@ -527,7 +527,7 @@ public class FuseSimpleSplit {
                     loop = popToPeek(loop);
                 }
                 // add the loop to the new work function
-                newStatements.addStatement(loop);
+                newStatements.addStatement(Utils.peelMarkers(loop));
                 i++;
             }
 

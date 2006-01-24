@@ -335,20 +335,18 @@ class ModuloPipelineFusion {
 		    fuser = new FusingVisitor(cur, next, i!=0, i!=filterInfo.size()-1);
 		    initBody.accept(fuser);
 		    statements.addStatement(initBody);
-		    if(curPhase.num>1)
-			statements.addStatement(makeForLoop(body,
-							    curPhase.loopCounterWork,
-							    new 
-							    JIntLiteral(curPhase.num-1))
-						);
+		    if(curPhase.num>1) {
+			JStatement loop = makeForLoop(body,
+						      curPhase.loopCounterWork,
+						      new JIntLiteral(curPhase.num-1));
+			statements.addStatement(Utils.peelMarkers(loop));
+		    }
 		} else {
-		    
 		    // get <body> into a loop in <statements>
-		    statements.addStatement(makeForLoop(body,
-							curPhase.loopCounterWork,
-							new 
-							JIntLiteral(curPhase.num))
-					    );
+		    JStatement loop = makeForLoop(body,
+						  curPhase.loopCounterWork,
+						  new JIntLiteral(curPhase.num));
+		    statements.addStatement(Utils.peelMarkers(loop));
 		}
 	    } else {
 		if(init&&(cur.filter instanceof SIRTwoStageFilter))

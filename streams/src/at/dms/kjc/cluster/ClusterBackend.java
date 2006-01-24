@@ -380,6 +380,16 @@ public class ClusterBackend implements FlatVisitor {
 	//create the execution counts for other passes
 	createExecutionCounts(str, graphFlattener);
 
+    if (debugPrint) {
+        SIRGlobal[] globals;
+        if (global != null) {
+            globals = new SIRGlobal[1];
+            globals[0] = global;
+        } else globals = new SIRGlobal[0];
+        System.out.println("// str before Cluster-specific code");
+        SIRToStreamIt.run(str,interfaces,interfaceTables,structs,globals);
+        System.out.println("// END str before Cluster-specific code");
+   }
 
 	////////////////////////////////////////////////
 	// the cluster specific code begins here

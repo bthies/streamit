@@ -54,7 +54,7 @@ abstract public class Scheduler extends AssertedClass
     }
 
     /**
-     * compute a schedule.
+     * compute a schedule. 
      * This function computes a schedule corresponding to a particular
      * stream structure. It must reset optimizedSchedule and scheduleBuffers
      * to null (or compute them).
@@ -65,10 +65,20 @@ abstract public class Scheduler extends AssertedClass
     {
         if (optimizer == null)
         {
+//            System.err.println("Printing input to optmizeSchedule -----------------------------------------------------");
+//            printSchedule(initSchedule, steadySchedule);
+//            System.err.println("End of   input to optmizeSchedule -----------------------------------------------------");
             optimizer = new ScheduleOptimizer(initSchedule, steadySchedule, this);
             optimizer.optimize();
             optimizedInitSchedule = optimizer.getOptimizedInitSched();
             optimizedSteadySchedule = optimizer.getOptimizedSteadySched();
+//            System.err.println("Printing output of optmizeSchedule -----------------------------------------------------");
+//            printSchedule(initSchedule, steadySchedule);
+//            System.err.println("End of   output of optmizeSchedule -----------------------------------------------------");
+//            System.err.println("Printing reps for optmizeSchedule -----------------------------------------------------");
+//            printReps();
+//            System.err.println("End of   reps for optmizeSchedule -----------------------------------------------------");
+            
         }
     }
 
@@ -87,6 +97,16 @@ abstract public class Scheduler extends AssertedClass
         optimizeSchedule();
         return optimizedSteadySchedule;
     }
+
+    // Should only be needed for debugging.  Otherwise use optimized!
+    public Schedule getUnoptimizedInitSchedule() {
+        return initSchedule;
+    }
+    public Schedule getUnoptimizedSteadySchedule() {
+        return steadySchedule;
+    }
+    
+    
 
     public void computeBufferUse()
     {
@@ -156,7 +176,7 @@ abstract public class Scheduler extends AssertedClass
             scheds.put(sched, new Integer (symbolicIdx));
 
             // and now print self:
-            System.out.print("$" + symbolicIdx + " = { ");
+            System.err.print("$" + symbolicIdx + " = { ");
             for (int nPhase = 0; nPhase < sched.getNumPhases(); nPhase++)
             {
                 int times = sched.getSubSchedNumExecs(nPhase);
@@ -165,12 +185,12 @@ abstract public class Scheduler extends AssertedClass
                         .intValue();
 
                 if (times > 1)
-                    System.out.print("{" + times + " $" + idx + "} ");
+                    System.err.print("{" + times + " $" + idx + "} ");
                 else
-                    System.out.print("$" + idx + " ");
+                    System.err.print("$" + idx + " ");
 
             }
-            System.out.println("}");
+            System.err.println("}");
         }
         else
         {
@@ -178,7 +198,7 @@ abstract public class Scheduler extends AssertedClass
             // a single entry - the schedule
             int symbolicIdx = scheds.size();
             scheds.put(sched, new Integer (symbolicIdx));
-            System.out.println(
+            System.err.println(
 			       "$"
 			       + symbolicIdx
 			       + " = "
@@ -239,14 +259,14 @@ abstract public class Scheduler extends AssertedClass
 	HashMap[] counts = getExecutionCounts();
 	// print init schedule
 	for (int i=0; i<2; i++) {
-	    System.out.println("Repetitions in " + (i==0 ? "initial" : "steady") + " schedule:");
+	    System.err.println("Repetitions in " + (i==0 ? "initial" : "steady") + " schedule:");
 	    java.util.Set keys = counts[i].keySet();
 	    for (java.util.Iterator it = keys.iterator(); it.hasNext(); ) {
 		Object obj = it.next();
 		int[] reps = (int[])counts[i].get(obj);
-		System.out.println(reps[0] + " reps for " + obj + " (hashcode=" + obj.hashCode() + ")");
+		System.err.println(reps[0] + " reps for " + obj + " (hashcode=" + obj.hashCode() + ")");
 	    }
-	    System.out.println();
+	    System.err.println();
 	}
     }
 }

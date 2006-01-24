@@ -2,7 +2,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.14 2006-01-13 00:10:33 dimock Exp $
+# $Id: streamit.py,v 1.15 2006-01-24 00:40:58 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -169,6 +169,8 @@ class RunStrcTest(qm.test.test.Test):
       # Figure out what flags to use for the backend
       if self.backend == 'uni':
           backend = []
+      elif self.backend == 'rstream':
+          backend = ['--rstream']
       elif self.backend == 'library':
           backend = ['--library']
       elif self.backend == 'raw4':
@@ -271,7 +273,7 @@ class RunProgramTest(qm.test.test.Test):
 #      print "timeout: ", str(self.timeout), "\n"
       if self.backend == 'raw4':
           return self._RunRaw(context, result)
-      elif self.backend == 'uni':
+      elif self.backend == 'uni' or self.backend == 'rstream':
           return self._RunUni(context, result)
       elif self.backend == 'cluster':
           return self._RunClu(context, result)
@@ -298,7 +300,7 @@ class RunProgramTest(qm.test.test.Test):
         test_home_dir = context_to_dir(context)
 
         path = os.path.join('.', filename)
-        arguments = [path, '-i ' + str(self.runopts[1])]
+        arguments = ['time ', path, '-i ' + str(self.runopts[1])]
         #e = TimedExecutable()
         e = qm.executable.RedirectedExecutable(self.timeout)
         status = e.Run(arguments, dir=test_home_dir, path=path)

@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.25 2006-01-22 06:21:15 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.26 2006-01-24 16:25:49 dimock Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -2151,12 +2151,11 @@ public class SIRToStreamIt
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-        // LIRToC tests:
-	// if (self.getNumPop()>1) {
-        //   ...
-        // }
-        // Maybe we should care.
-        p.print("pop()");
+	if (self.getNumPop()>1) {
+	    p.print("pop(/*"+self.getNumPop()+" times */)");
+        } else {
+	    p.print("pop()");
+	}
     }
     
     public void visitPortal(SIRPortal self)

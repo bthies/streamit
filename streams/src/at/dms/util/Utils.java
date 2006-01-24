@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.26 2006-01-15 23:01:23 thies Exp $
+ * $Id: Utils.java,v 1.27 2006-01-24 18:02:27 thies Exp $
  */
 
 package at.dms.util;
@@ -395,6 +395,58 @@ public abstract class Utils implements Serializable, DeepCloneable {
   public static String[] splitQualifiedName(String name) {
     return splitQualifiedName(name, '/');
   }
+
+
+    /**
+     * If the first and last SIRMarker's in <stmt> mark the beginning
+     * and end of the same segment, then move those markers to the
+     * outermost edges of <stmt>.  The purpose of this routine is to
+     * lift markers of filter boundaries out of loops.
+     */
+    public static JStatement peelMarkers(JStatement stmt) {
+	final SIRBeginMarker[] first = { null };
+	final SIREndMarker[] last = { null };
+	// find first and last marker
+	stmt.accept(new SLIREmptyVisitor() {
+		public void visitMarker(SIRMarker self) {
+		    // record first and last
+		    if (self instanceof SIRBeginMarker && first[0] == null) {
+			first[0] = (SIRBeginMarker)self;
+		    }
+		    if (self instanceof SIREndMarker) {
+			last[0] = (SIREndMarker)self;
+		    }
+		}
+	    });
+
+	// if we didn't find two markers, or if first and last marker
+	// have different names, then there is nothing to peel, so
+	// return
+	if (first[0] == null || last[0] == null) return stmt;
+	if (!first[0].getName().equals(last[0].getName())) return stmt;
+
+	// otherwise, we are going to move the markers to the outside
+	// of the statement.  replace the markers with empty
+	// statements in the IR
+	stmt.accept(new SLIRReplacingVisitor() {
+		public Object visitMarker(SIRMarker self) {
+		    if (self==first[0] || self==last[0]) {
+			return new JEmptyStatement();
+		    } else {
+			return self;
+		    }
+		}
+	    });
+
+	// finally, create a new block that begins with the first
+	// marker, then has the statement, then has the last marker
+	JBlock result = new JBlock();
+	result.addStatement(first[0]);
+	result.addStatement(stmt);
+	result.addStatement(last[0]);
+
+	return result;
+    }
 
     /**
      * Returns a block with a loop counter declaration and a for loop

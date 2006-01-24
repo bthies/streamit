@@ -1595,6 +1595,25 @@ int->int pipeline DescrambleAndMotionCompensate(int width,
                                                 int temp,
                                                 int the_chroma_format) {
     int datasize = (width/horizontal_upsample_factor)*(height/vertical_upsample_factor);
+
+    // this filter is a hand-fused version of the splitjoin below
+    add int->int filter {
+	work push 75 pop 75 {
+	    for (int i=0; i<64; i++) {
+		push(pop());
+	    }
+	    // vectorp->vector (cite 1, P.82) 
+	    for (int i=0; i<4; i++) {
+		push(pop()/horizontal_upsample_factor);
+		push(pop()/vertical_upsample_factor);
+	    }
+	    push(pop());
+	    push(pop());
+	    push(pop());
+	}
+    }
+
+    /*
     add int->int splitjoin {
         split roundrobin(64, 8, 1, 1, 1);
         //add BlockDescrambler(width/horizontal_upsample_factor);
@@ -1611,6 +1630,8 @@ int->int pipeline DescrambleAndMotionCompensate(int width,
         //    join roundrobin(datasize, (datasize/64)*8, datasize/64, datasize/64, datasize/64); 
         join roundrobin(64, 8, 1, 1, 1);
     }  
+    */
+
     add MotionPrediction(width/horizontal_upsample_factor, height/vertical_upsample_factor);
 }
 

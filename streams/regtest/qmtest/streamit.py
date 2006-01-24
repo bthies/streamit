@@ -2,7 +2,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.15 2006-01-24 00:40:58 dimock Exp $
+# $Id: streamit.py,v 1.16 2006-01-24 15:40:33 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -309,6 +309,7 @@ class RunProgramTest(qm.test.test.Test):
         f = open(os.path.join(test_home_dir,self.runopts[0]), 'w')
         f.write(e.stdout)
         f.close()
+        result['RunProgramTest.stderr'] = e.stderr
 
         # Mostly, note if the program died an unholy death.
         InterpretExitCode(result, status, None, 'RunProgramTest')

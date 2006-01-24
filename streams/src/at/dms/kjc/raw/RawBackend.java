@@ -144,6 +144,12 @@ public class RawBackend {
 		System.out.println("Done FuseAll...");
 	    }
 
+	    // make sure SIRPopExpression's only pop one element
+	    // code generation doesn't handle generating multiple pops
+	    // from a single SIRPopExpression (Fusion can intorduce these.)
+	    RemoveMultiPops.doit(str);
+
+
 	    if (KjcOptions.fission>1) {
 		System.out.println("Running Vertical Fission...");
 		FissionReplacer.doit(str, KjcOptions.fission);
@@ -171,12 +177,14 @@ public class RawBackend {
 		System.err.println("Running Manual Partitioning...");
 		str = ManualPartition.doit(str);
 		System.err.println("Done Manual Partitioning...");
+        RemoveMultiPops.doit(str);
 	    }
 
 	    if (partitioning) {
 		System.err.println("Running Partitioning...");
 		str = Partitioner.doit(str, count, numTiles, true, false);
 		System.err.println("Done Partitioning...");
+        RemoveMultiPops.doit(str);
 	    }
 
 	    if (KjcOptions.sjtopipe) {
@@ -206,10 +214,6 @@ public class RawBackend {
 	    System.out.println("Flattener Begin...");
 	    executionCounts = SIRScheduler.getExecutionCounts(str);
 	    PartitionDot.printScheduleGraph(str, "schedule.dot", executionCounts);
-        // make sure SIRPopExpression's only pop one element
-        // code generation doesn't handle generating multiple pops
-        // from a single SIRPopExpression
-        RemoveMultiPops.doit(str);
         //
         graphFlattener = new GraphFlattener(str);
 	    System.out.println("Flattener End.");
